@@ -10,7 +10,6 @@ using TaleWorlds.Localization;
 using TaleWorlds.ObjectSystem;
 using Helpers;
 using Enlisted.Features.Enlistment.Behaviors;
-using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
@@ -596,10 +595,9 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 _lastSelectedTroopId = selectedTroop.StringId;
 
-                // Update formation based on selected troop (always)
+                // Phase 1: Formation/Duties system deleted
+                // Formation preferences will be tracked via native traits in later phase
                 var formation = DetectTroopFormation(selectedTroop);
-                var duties = EnlistedDutiesBehavior.Instance;
-                duties?.SetPlayerFormation(formation.ToString().ToLower());
                 
                 if (autoIssueEquipment)
                 {

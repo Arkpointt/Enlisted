@@ -1,0 +1,11 @@
+<Prefab>
+	<Window>
+		<!-- Row container for provision cards (horizontal layout) -->
+		<ListPanel DataSource="{Cards}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="HorizontalLeftToRight" MarginBottom="10">
+			<ItemTemplate>
+				<QuartermasterProvisionCard />
+			</ItemTemplate>
+		</ListPanel>
+	</Window>
+</Prefab>
+

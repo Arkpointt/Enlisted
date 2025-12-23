@@ -11,11 +11,11 @@
 
 Replacing the overlay-based Camp Bulletin with a full-screen **Kingdom-style Camp Management** interface. Five tabs organize all camp features:
 
-- **Lance** - Your lance roster, member status, leader info
+- **Squad** - Your squad roster, member status, NCO info
 - **Orders** - View/manage daily schedule (tier-based authority)
 - **Activities** - Camp activities grid (rest, train, patrol, etc.)
 - **Reports** - News feed, dispatches, bulletin
-- **Party** - Other lances in lord's party (T5+ only, situational awareness)
+- **Party** - Other squads in lord's party (T5+ only, situational awareness)
 
 This matches native Bannerlord UI patterns (like Kingdom Screen) and sets the foundation for all future camp features.
 
@@ -27,7 +27,7 @@ This matches native Bannerlord UI patterns (like Kingdom Screen) and sets the fo
 
 **Release:** Q2 2026 (~2 months)
 
-Leadership assigns your lance duties based on the current situation. Different activities happen at different times of day (dawn drills, afternoon patrols, night watch). The **Orders tab** in Camp Management shows your daily schedule.
+Leadership assigns your squad duties based on the current situation. Different activities happen at different times of day (dawn drills, afternoon patrols, night watch). The **Orders tab** in Camp Management shows your daily schedule.
 
 **Authority Model:**
 - **Schedule controlled by:** Lord/AI by default
@@ -37,12 +37,12 @@ Leadership assigns your lance duties based on the current situation. Different a
 **Schedule Authority by Tier/Role:**
 - **T1-T2:** View only - follow assigned orders
 - **T3-T4:** Can request schedule changes (approval roll based on lord relation)
-- **T5-T6 (not Lance Leader):** Lance Second/Senior NCO - guided management (AI recommends, player decides)
-- **Lance Leader (T5-T6):** Full control over lance schedule (requires Lance Leader promotion)
+- **T5-T6 (not Squad Leader):** Squad Second/Senior NCO - guided management (AI recommends, player decides)
+- **Squad Leader (T5-T6):** Full control over squad schedule (requires Squad Leader promotion)
 
-Once you're promoted to **Lance Leader** (can happen at T5 or T6 when a vacancy exists), you set the schedule. Until then, leadership decides and you serve.
+Once you're promoted to **Squad Leader** (can happen at T5 or T6 when a vacancy exists), you set the schedule. Until then, leadership decides and you serve.
 
-**Note:** Lance Leader is a **role/promotion**, not automatic with tier. Requires vacancy and meeting promotion requirements.
+**Note:** Squad Leader is a **role/promotion**, not automatic with tier. Requires vacancy and meeting promotion requirements.
 
 No more aimless downtime. Your service has purpose.
 
@@ -65,52 +65,52 @@ Today's Schedule (Day 7 of 12)
 
 ---
 
-##  v0.8.0 - Lance Life Simulation
+##  v0.8.0 - Squad Life Simulation
 
 **Release:** Q3 2026 (~3 months)
 
-Your lance members get injured, die, and ask you for help. When Harald twists his ankle on patrol, he asks you to cover his guard duty. Help him and earn favor. Refuse and he remembers. When Bjorn dies in battle, you attend his memorial.
+Your squad members get injured, die, and ask you for help. When Harald twists his ankle on patrol, he asks you to cover his guard duty. Help him and earn favor. Refuse and he remembers. When Bjorn dies in battle, you attend his memorial.
 
 Promotions happen for real reasons: officer killed, officer transferred, army expanded, battlefield commission. No more random rank-ups.
 
-Your lance feels like actual people who need each other.
+Your squad feels like actual people who need each other.
 
 ---
 
-##  v0.9.0 - Persistent Lance Leaders
+##  v0.9.0 - Persistent NCO Leaders
 
 **Release:** Q4 2026 (~2.5 months)
 
-Your lance leader remembers recent battles, who died, and what you did. Three personality types react differently:
+Your NCO remembers recent battles, who died, and what you did. Three personality types react differently:
 
 - **Grizzled Veteran:** "Saw you left Harald hanging. Don't expect favors back."
 - **Noble Officer:** "Harald spoke to me. A soldier helps his brothers."
 - **Ambitious Climber:** "You turned down Harald? Noted."
 
-When your leader dies, you get a new one with a different personality. Start fresh.
+When your NCO dies, you get a new one with a different personality. Start fresh.
 
 ---
 
-##  Version 1.0.0 - Party Lance Activity Simulation (Optional Feature)
+##  Version 1.0.0 - Party Squad Activity Simulation (Optional Feature)
 
 **Status:** Planned for after core systems complete  
 **Release:** Q1 2027 (estimated 2 months development)
 
-**Note:** This feature is for **T5+ officers only** - you need rank to see what other lances are doing.
+**Note:** This feature is for **T5+ officers only** - you need rank to see what other squads are doing.
 
 ### What You'll Get:
 
 #### Party-Wide Awareness (T5+ Only):
-- **Other Lances in Lord's Party** - See 8-15 peer lances serving alongside yours:
-  - "3rd Lance (Ironsides Warband) - On patrol duty"
-  - "5th Lance (Hawk Company) - Training at camp"
-  - "7th Lance (Shield Brothers) - Recovering from injuries"
-- **Lance Activity Reports** - Camp bulletin shows what peer lances are doing:
-  - "3rd Lance returned from successful patrol - captured 3 bandits"
-  - "5th Lance training went well - readiness improved"
-  - "7th Lance ambushed on foraging run - 2 wounded, 1 killed"
-- **Meaningful Cover Requests** - Other lances ask YOUR lance for help:
-  - Their lance is exhausted from repeated patrols
+- **Other Squads in Lord's Party** - See 8-15 peer squads serving alongside yours:
+  - "3rd Squad (Ironsides Warband) - On patrol duty"
+  - "5th Squad (Hawk Company) - Training at camp"
+  - "7th Squad (Shield Brothers) - Recovering from injuries"
+- **Squad Activity Reports** - Camp bulletin shows what peer squads are doing:
+  - "3rd Squad returned from successful patrol - captured 3 bandits"
+  - "5th Squad training went well - readiness improved"
+  - "7th Squad ambushed on foraging run - 2 wounded, 1 killed"
+- **Meaningful Cover Requests** - Other squads ask YOUR squad for help:
+  - Their squad is exhausted from repeated patrols
   - They're undermanned due to injuries
   - **Your choice matters:** Help prevents them from taking casualties
 
@@ -123,7 +123,7 @@ This feature can be DISABLED entirely if you prefer arcade gameplay. When enable
   - Scout missions can get spotted -> brief combat
   - Guard duty accidents, disease, desertion
 - **Your Army Weakens Over Time** - Armies lose troops to routine operations, not just battles
-- **Strategic Depth** - Can't send lances on dangerous missions constantly
+- **Strategic Depth** - Can't send squads on dangerous missions constantly
 - **Fully Configurable:**
   - **Casual Mode:** Disabled - pure storytelling, no casualties
   - **Normal Mode:** Light attrition (5-8% monthly) - player army only
@@ -131,22 +131,22 @@ This feature can be DISABLED entirely if you prefer arcade gameplay. When enable
   - **Hardcore Mode:** Heavy attrition (15-25% monthly) - challenging campaign management
 
 ### Why It Matters:
-Your army feels like a real military organization with multiple units operating simultaneously. You see the bigger picture beyond just your lance. Adds immersion and optional strategic challenge.
+Your army feels like a real military organization with multiple units operating simultaneously. You see the bigger picture beyond just your squad. Adds immersion and optional strategic challenge.
 
 **Example Bulletin Entries:**
 ```
 [Camp Bulletin - Today's Activity]
 
-3rd Lance (The Ironsides): On patrol north of camp
+3rd Squad (The Ironsides): On patrol north of camp
 - Status: 2 hours out, expected return at dusk
 
-5th Lance (Hawk Company): Training with recruits
+5th Squad (Hawk Company): Training with recruits
 - Status: Building readiness after last battle
 
-7th Lance (Shield Brothers): Requests cover for foraging duty
+7th Squad (Shield Brothers): Requests cover for foraging duty
 - They're at 40% readiness, risk of casualties if sent alone
-- [Accept: Your lance goes, -6 fatigue, prevents 7th Lance casualties]
-- [Decline: 7th Lance goes anyway, may take losses]
+- [Accept: Your squad goes, -6 fatigue, prevents 7th Squad casualties]
+- [Decline: 7th Squad goes anyway, may take losses]
 ```
 
 ---
@@ -157,9 +157,9 @@ Your army feels like a real military organization with multiple units operating 
 |---------|---------|----------|------------------|
 | **v0.6.1** | Camp Bulletin Polish | Q1 2026 | 1-2 weeks |
 | **v0.7.0** | AI Daily Schedule | Q2 2026 | ~8 weeks |
-| **v0.8.0** | Lance Life Simulation | Q3 2026 | ~12 weeks |
-| **v0.9.0** | Persistent Lance Leaders | Q4 2026 | ~10 weeks |
-| **v1.0.0** | Army Lance Activity | Q1 2027 | ~8 weeks |
+| **v0.8.0** | Squad Life Simulation | Q3 2026 | ~12 weeks |
+| **v0.9.0** | Persistent NCO Leaders | Q4 2026 | ~10 weeks |
+| **v1.0.0** | Army Squad Activity | Q1 2027 | ~8 weeks |
 
 **Total estimated development:** ~6-9 months for full feature set
 
@@ -170,14 +170,14 @@ Your army feels like a real military organization with multiple units operating 
 Don't forget what you already have access to:
 
 [x] **Core Military Service** - Enlist, ranks, formations, pay system  
-[x] **Lance System** - Join culture-specific military units  
+[x] **Squad System** - Join culture-specific military units  
 [x] **Duties System** - Formation-based job assignments  
 [x] **Fatigue & Camp Activities** - Stamina management and camp interaction  
 [x] **Pay Tension System** - Financial crisis gameplay with moral choices  
 [x] **Companion Management** - Battle participation toggle  
 [x] **Commander's Retinue** - Personal troops at T7-T9  
 [x] **Formation Training** - Daily skill XP  
-[x] **Lance Life Events** - Random military life events  
+[x] **Squad Life Events** - Random military life events  
 [x] **Camp Life Simulation** - Dynamic camp conditions  
 [x] **Quartermaster System** - Equipment, provisions, personality  
 [x] **Story Packs** - Modular event content  

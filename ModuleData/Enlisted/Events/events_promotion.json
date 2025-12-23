@@ -21,7 +21,7 @@
       },
       "content": {
         "title": "Finding Your Place",
-        "setup": "{LANCE_LEADER_SHORT} looks you over after the morning drill. 'You've proven yourself, {PLAYER_NAME}. Time to find your place in the line. What are you trained for?'",
+        "setup": "{SERGEANT} looks you over after the morning drill. 'You've proven yourself, {PLAYER_NAME}. Time to find your place in the line. What are you trained for?'",
         "options": [
           {
             "id": "choose_infantry",
@@ -90,7 +90,7 @@
       },
       "content": {
         "title": "The Sergeant's Test",
-        "setup": "{LANCE_LEADER_SHORT} pulls you aside after camp is set. 'The men look up to you now, {PLAYER_NAME}. But leading isn't just about fighting. Tell me — a recruit loses his rations gambling. What do you do?'",
+        "setup": "{SERGEANT} pulls you aside after camp is set. 'The men look up to you now, {PLAYER_NAME}. But leading isn't just about fighting. Tell me — a recruit loses his rations gambling. What do you do?'",
         "options": [
           {
             "id": "discipline_hard",
@@ -101,18 +101,18 @@
               "character_tag": "disciplinarian",
               "promotes": true
             },
-            "outcome": "{LANCE_LEADER_SHORT} nods slowly. 'Hard but fair. The men will respect that. You're ready for the next rank, {NEXT_RANK}.'"
+            "outcome": "{SERGEANT} nods slowly. 'Hard but fair. The men will respect that. You're ready for the next rank, {NEXT_RANK}.'"
           },
           {
             "id": "mercy",
             "text": "\"Give him a chance to earn it back. One mistake shouldn't define a man.\"",
             "tooltip": "Show mercy and give a second chance.",
             "effects": {
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "character_tag": "merciful",
               "promotes": true
             },
-            "outcome": "{LANCE_LEADER_SHORT} smiles faintly. 'Compassion has its place. The men will remember your kindness. Welcome to {NEXT_RANK}.'"
+            "outcome": "{SERGEANT} smiles faintly. 'Compassion has its place. The men will remember your kindness. Welcome to {NEXT_RANK}.'"
           },
           {
             "id": "practical",
@@ -121,7 +121,7 @@
             "effects": {
               "promotes": true
             },
-            "outcome": "{LANCE_LEADER_SHORT} chuckles. 'Practical. I like it. You think like a soldier should. Congratulations, {NEXT_RANK}.'"
+            "outcome": "{SERGEANT} chuckles. 'Practical. I like it. You think like a soldier should. Congratulations, {NEXT_RANK}.'"
           }
         ]
       }
@@ -145,7 +145,7 @@
       },
       "content": {
         "title": "Crisis of Command",
-        "setup": "The battle was chaos. {LANCE_LEADER_SHORT} went down with an arrow to the shoulder, and the line wavered. For a moment, all eyes turned to you. Now, in the aftermath, {LORD_NAME} summons you.\n\n'I heard what happened out there,' the lord says. 'The men say you held them together. Tell me what you did.'",
+        "setup": "The battle was chaos. {SERGEANT} went down with an arrow to the shoulder, and the line wavered. For a moment, all eyes turned to you. Now, in the aftermath, {LORD_NAME} summons you.\n\n'I heard what happened out there,' the lord says. 'The men say you held them together. Tell me what you did.'",
         "options": [
           {
             "id": "aggressive",
@@ -163,7 +163,7 @@
             "tooltip": "You prioritized defense and protecting allies.",
             "effects": {
               "character_tag": "defender",
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "promotes": true
             },
             "outcome": "{LORD_NAME} regards you thoughtfully. 'Loyalty to your comrades is rare these days. The rank of {NEXT_RANK} suits you. Lead them well.'"
@@ -182,7 +182,7 @@
       }
     },
     {
-      "id": "promotion_t4_t5_lance_vote",
+      "id": "promotion_t4_t5_squad_vote",
       "category": "promotion",
       "delivery": {
         "method": "automatic",
@@ -199,18 +199,18 @@
         "one_time": true
       },
       "content": {
-        "title": "The Lance's Vote",
-        "setup": "The veterans of your lance gather around the fire. {LANCE_LEADER_SHORT} stands and clears his throat.\n\n'We've been watching you, {PLAYER_NAME}. Some of us think you're ready to wear the stripes of {NEXT_RANK}. But rank isn't given — it's earned by the trust of those you lead.'\n\nThe men look to you expectantly. This is your moment to speak.",
+        "title": "The Squad's Vote",
+        "setup": "The veterans of your squad gather around the fire. {SERGEANT} stands and clears his throat.\n\n'We've been watching you, {PLAYER_NAME}. Some of us think you're ready to wear the stripes of {NEXT_RANK}. But rank isn't given — it's earned by the trust of those you lead.'\n\nThe men look to you expectantly. This is your moment to speak.",
         "options": [
           {
             "id": "humble",
-            "text": "\"I'm nothing without this lance. Whatever you decide, I'll accept.\"",
+            "text": "\"I'm nothing without this squad. Whatever you decide, I'll accept.\"",
             "tooltip": "Show humility and defer to the group.",
             "effects": {
-              "lance_reputation": 10,
+              "soldierRep": 10,
               "promotes": true
             },
-            "outcome": "The men exchange glances and nod. {LANCE_LEADER_SHORT} claps you on the shoulder. 'That's the right answer. Welcome to {NEXT_RANK}, soldier. The lance has spoken.'"
+            "outcome": "The men exchange glances and nod. {SERGEANT} claps you on the shoulder. 'That's the right answer. Welcome to {NEXT_RANK}, soldier. The squad has spoken.'"
           },
           {
             "id": "confident",
@@ -220,18 +220,18 @@
               "discipline": -1,
               "promotes": true
             },
-            "outcome": "{LANCE_LEADER_SHORT} grins. 'Confidence. Good. A {NEXT_RANK} needs that.' The veterans raise their cups. 'To {PLAYER_NAME}!'"
+            "outcome": "{SERGEANT} grins. 'Confidence. Good. A {NEXT_RANK} needs that.' The veterans raise their cups. 'To {PLAYER_NAME}!'"
           },
           {
             "id": "promise",
-            "text": "\"Give me the chance, and I swear no one in this lance goes hungry or forgotten.\"",
+            "text": "\"Give me the chance, and I swear no one in this squad goes hungry or forgotten.\"",
             "tooltip": "Make a promise to look after your men.",
             "effects": {
               "character_tag": "protector",
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "promotes": true
             },
-            "outcome": "Silence falls. Then {SECOND_SHORT} stands. 'I believe him.' One by one, the others nod. {LANCE_LEADER_SHORT} smiles. 'Then it's decided. {NEXT_RANK} {PLAYER_NAME}.'"
+            "outcome": "Silence falls. Then {SECOND_SHORT} stands. 'I believe him.' One by one, the others nod. {SERGEANT} smiles. 'Then it's decided. {NEXT_RANK} {PLAYER_NAME}.'"
           }
         ]
       }
@@ -278,12 +278,12 @@
             "outcome": "{LORD_NAME} pauses, then nods slowly. 'A principled answer. The realm needs soldiers like you. You are {NEXT_RANK} now. May you serve the kingdom with honor.'"
           },
           {
-            "id": "loyal_to_lance",
+            "id": "loyal_to_soldiers",
             "text": "\"My loyalty is to the soldiers beside me. They're why I fight.\"",
             "tooltip": "Declare loyalty to your comrades above politics.",
             "effects": {
               "loyalty_tag": "lance_bound",
-              "lance_reputation": 10,
+              "soldierRep": 10,
               "promotes": true
             },
             "outcome": "{LORD_NAME} studies you for a long moment. 'Rare, to find such devotion to the common soldier. Very well, {NEXT_RANK}. Lead your men. I suspect they'd follow you anywhere.'"
@@ -310,7 +310,7 @@
       },
       "content": {
         "title": "Commander's Commission",
-        "setup": "{LORD_NAME} calls you to the command tent. Maps are spread across the table, markers showing troop positions.\n\n'You've proven yourself, {PLAYER_NAME}. The rank of {NEXT_RANK} comes with command — twenty soldiers, yours to lead. This is no small responsibility. Are you ready?'",
+        "setup": "{LORD_NAME} summons you. Maps are spread across the table, markers showing troop positions.\n\n'You've proven yourself, {PLAYER_NAME}. The rank of {NEXT_RANK} comes with command — twenty soldiers, yours to lead. This is no small responsibility. Are you ready?'",
         "options": [
           {
             "id": "accept_command",
@@ -330,6 +330,99 @@
               "character_tag": "cautious"
             },
             "outcome": "{LORD_NAME} studies you carefully. 'An honest answer. Command isn't for everyone, and it's better to know that now than in battle. The offer stands — when you're ready, speak to me.'"
+          }
+        ]
+      }
+    },
+    {
+      "id": "promotion_t7_t8_expanded_command",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["ai_safe"]
+      },
+      "requirements": {
+        "tier": { "min": 7, "max": 7 }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Expanded Command",
+        "setup": "{LORD_NAME} finds you after the morning drills. Your retinue has performed well.\n\n'Your soldiers fight like veterans, {PLAYER_NAME}. I'm impressed. The rank of {NEXT_RANK} comes with expanded command — ten more soldiers to add to your retinue. You've earned this.'",
+        "options": [
+          {
+            "id": "accept_expansion",
+            "text": "\"Thank you, my lord. I'll put them to good use.\"",
+            "tooltip": "Accept promotion and receive 10 additional soldiers for your retinue (total: 30).",
+            "effects": {
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} clasps your shoulder. 'Good. Ten more recruits have been assigned to your command. You've proven you can lead — now prove you can lead more.'"
+          },
+          {
+            "id": "defer_promotion",
+            "text": "\"I'd prefer to master what I have before taking on more.\"",
+            "tooltip": "Decline expansion for now. You can request promotion later.",
+            "effects": {
+            },
+            "outcome": "{LORD_NAME} nods slowly. 'Wisdom, perhaps. The offer stands when you're ready. Your current retinue is strong — keep it that way.'"
+          }
+        ]
+      }
+    },
+    {
+      "id": "promotion_t8_t9_elite_commander",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["ai_safe"]
+      },
+      "requirements": {
+        "tier": { "min": 8, "max": 8 }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Elite Commander",
+        "setup": "{LORD_NAME} calls you to the command tent. The other officers regard you with respect.\n\n'{PLAYER_NAME}, you've become one of my most capable commanders. The rank of {NEXT_RANK} is the highest a soldier can achieve in my service. Forty soldiers will answer to your command — an elite force within my army. Are you prepared for this responsibility?'",
+        "options": [
+          {
+            "id": "accept_elite",
+            "text": "\"I've trained for this moment. I'm ready.\"",
+            "tooltip": "Accept promotion to Elite Commander with maximum retinue capacity (40 soldiers).",
+            "effects": {
+              "character_tag": "elite_commander",
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} stands and extends their hand. 'Welcome to the highest ranks, Commander. Ten more soldiers join your retinue. Lead them well — your legend is just beginning.'"
+          },
+          {
+            "id": "humble_acceptance",
+            "text": "\"The honor is mine. I'll make you proud, my lord.\"",
+            "tooltip": "Accept with humility, gaining lord's favor.",
+            "effects": {
+              "lordRep": 5,
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} smiles approvingly. 'Humility in a commander is rare. The men will respect you for it. Ten more soldiers are yours — lead them as you've led the rest.'"
+          },
+          {
+            "id": "decline_elite",
+            "text": "\"I'm content with what I have. Perhaps another time.\"",
+            "tooltip": "Decline elite rank for now. You can request promotion later.",
+            "effects": {
+            },
+            "outcome": "{LORD_NAME} raises an eyebrow but accepts your decision. 'Very well. The offer remains when you change your mind. Few turn down such an honor, but I respect your judgment.'"
           }
         ]
       }

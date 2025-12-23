@@ -265,7 +265,8 @@ namespace Enlisted.Mod.Core.Logging
 			}
 			catch
 			{
-				return Path.Combine(logDir, "conflicts.log");
+				// Fallback: use a placeholder filename - no longer create legacy "conflicts.log"
+				return Path.Combine(logDir, "_.log");
 			}
 		}
 

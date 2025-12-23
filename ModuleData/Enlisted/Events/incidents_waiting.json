@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 2,
+  "category": "map_incident",
+  "description": "Map incidents triggered while waiting in settlements (waiting_in_settlement context). 4 total incidents.",
+  "events": [
+    {
+      "id": "mi_wait_opportunity",
+      "category": "map_incident",
+      "titleId": "mi_wait_opportunity_title",
+      "title": "Passing Opportunity",
+      "setupId": "mi_wait_opportunity_setup",
+      "setup": "Garrison duty is dull, but it creates opportunities. A merchant needs guards for a quick job. A local lord is hiring for a private matter. Something to break the tedium—and maybe fill your purse.",
+      "requirements": {
+        "context": "waiting_in_settlement",
+        "role": "Any",
+        "tier": { "min": 2, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "take_opportunity",
+          "textId": "mi_wait_opportunity_take",
+          "text": "Take the opportunity",
+          "resultTextId": "mi_wait_opportunity_take_result",
+          "resultText": "You slip away for a few hours and earn some extra coin. The job is simple enough, and you're back before anyone notices you were gone.",
+          "risk": "moderate",
+          "effects": {
+            "gold": 35,
+            "scrutiny": 2
+          }
+        },
+        {
+          "id": "pass_opportunity",
+          "textId": "mi_wait_opportunity_pass",
+          "text": "Pass on it, duty comes first",
+          "resultTextId": "mi_wait_opportunity_pass_result",
+          "resultText": "You shake your head. 'I'm on duty.' The opportunity passes to someone else. Maybe that's for the best.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Honor": 5
+            }
+          }
+        },
+        {
+          "id": "investigate_first",
+          "textId": "mi_wait_opportunity_investigate",
+          "text": "Investigate before committing",
+          "requirements": {
+            "minSkills": {
+              "Scouting": 30
+            }
+          },
+          "resultTextId": "mi_wait_opportunity_investigate_result",
+          "resultText": "You ask questions and check details. The job is legitimate—low risk, decent pay. You take it with confidence.",
+          "tooltip": "Requires Scouting 30+",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Scouting": 10
+            }
+          },
+          "effects": {
+            "gold": 40,
+            "scrutiny": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_wait_encounter",
+      "category": "map_incident",
+      "titleId": "mi_wait_encounter_title",
+      "title": "Chance Encounter",
+      "setupId": "mi_wait_encounter_setup",
+      "setup": "Someone interesting crosses your path while you wait. A traveling scholar with strange tales, a veteran soldier with battle wisdom, or a mysterious stranger who knows more than they should.",
+      "requirements": {
+        "context": "waiting_in_settlement",
+        "role": "Any",
+        "tier": { "min": 1, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "engage",
+          "textId": "mi_wait_encounter_engage",
+          "text": "Engage them in conversation",
+          "resultTextId": "mi_wait_encounter_engage_result",
+          "resultText": "You share stories and learn something new. The world is larger than battlefields and barracks. A pleasant reminder.",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Charm": 10
+            }
+          },
+          "effects": {
+            "companyNeeds": {
+              "Morale": 5
+            }
+          }
+        },
+        {
+          "id": "observe",
+          "textId": "mi_wait_encounter_observe",
+          "text": "Watch and listen from a distance",
+          "resultTextId": "mi_wait_encounter_observe_result",
+          "resultText": "You keep your distance but pay attention. Interesting bits of information, useful details—a soldier learns to gather intelligence everywhere.",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Scouting": 8
+            }
+          },
+          "effects": {
+            "traitXp": {
+              "Calculating": 3
+            }
+          }
+        },
+        {
+          "id": "avoid_encounter",
+          "textId": "mi_wait_encounter_avoid",
+          "text": "Avoid them entirely",
+          "resultTextId": "mi_wait_encounter_avoid_result",
+          "resultText": "You slip away before they notice you. Later, you hear the men talking about the fascinating stranger—tales of distant lands, news of the war, predictions that proved true. You missed something. Whether it mattered, you'll never know.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 2
+            },
+            "companyNeeds": {
+              "Morale": -2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_wait_trouble_brewing",
+      "category": "map_incident",
+      "titleId": "mi_wait_trouble_brewing_title",
+      "title": "Trouble Brewing",
+      "setupId": "mi_wait_trouble_brewing_setup",
+      "setup": "You sense something about to go wrong. Angry locals gathering in a square. Soldiers drinking too much and getting rowdy. A confrontation forming that could turn ugly.",
+      "requirements": {
+        "context": "waiting_in_settlement",
+        "role": "Any",
+        "tier": { "min": 2, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 12,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "prevent",
+          "textId": "mi_wait_trouble_prevent",
+          "text": "Try to prevent the trouble",
+          "requirements": {
+            "minSkills": {
+              "Leadership": 40
+            }
+          },
+          "resultTextId": "mi_wait_trouble_prevent_result",
+          "resultText": "You step in before fists fly. A firm voice, a steady presence—the situation defuses. Some will thank you; others will call you a busybody.",
+          "tooltip": "Requires Leadership 40+",
+          "risk": "moderate",
+          "rewards": {
+            "skillXp": {
+              "Leadership": 15
+            }
+          },
+          "effects": {
+            "officerRep": 8,
+            "soldierRep": -3,
+            "discipline": -2
+          }
+        },
+        {
+          "id": "prepare",
+          "textId": "mi_wait_trouble_prepare",
+          "text": "Prepare for when it goes wrong",
+          "resultTextId": "mi_wait_trouble_prepare_result",
+          "resultText": "You position yourself near the exit and loosen your blade. When the brawl erupts, you're ready. Sometimes the best move is being prepared to move.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 5
+            }
+          }
+        },
+        {
+          "id": "ignore_trouble",
+          "textId": "mi_wait_trouble_ignore",
+          "text": "Mind your own business",
+          "resultTextId": "mi_wait_trouble_ignore_result",
+          "resultText": "You look away and let events unfold. Whatever happens, it's not your responsibility. The garrison watch will sort it out.",
+          "risk": "safe",
+          "effects": {
+            "discipline": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_wait_boredom",
+      "category": "map_incident",
+      "titleId": "mi_wait_boredom_title",
+      "title": "Garrison Tedium",
+      "setupId": "mi_wait_boredom_setup",
+      "setup": "Another day of nothing. The men are getting antsy—dice games turning sour, tempers fraying, petty disputes festering. Garrison duty is wearing on everyone.",
+      "requirements": {
+        "context": "waiting_in_settlement",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 8,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "find_activity",
+          "textId": "mi_wait_boredom_activity",
+          "text": "Find something useful to do",
+          "resultTextId": "mi_wait_boredom_activity_result",
+          "resultText": "You organize equipment maintenance, run impromptu drills, or find work that needs doing. It's not exciting, but it keeps hands busy and minds occupied.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 5,
+            "companyNeeds": {
+              "Equipment": 3,
+              "Morale": 3
+            }
+          }
+        },
+        {
+          "id": "maintain_discipline",
+          "textId": "mi_wait_boredom_discipline",
+          "text": "Crack down on troublemakers",
+          "resultTextId": "mi_wait_boredom_discipline_result",
+          "resultText": "You single out the worst offenders and make examples of them. The grumbling stops, replaced by sullen obedience. Order is maintained.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 8,
+            "soldierRep": -8,
+            "discipline": -3
+          }
+        },
+        {
+          "id": "let_it_be",
+          "textId": "mi_wait_boredom_let",
+          "text": "Let the men sort themselves out",
+          "resultTextId": "mi_wait_boredom_let_result",
+          "resultText": "You stay out of it. Soldiers will be soldiers. A few black eyes and bruised egos won't hurt the company. Probably.",
+          "risk": "safe",
+          "effects": {
+            "discipline": 2,
+            "companyNeeds": {
+              "Morale": -5
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

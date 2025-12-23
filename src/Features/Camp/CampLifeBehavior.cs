@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem;
@@ -12,14 +12,13 @@ using TaleWorlds.CampaignSystem.Settlements;
 namespace Enlisted.Features.Camp
 {
     /// <summary>
-    /// Phase 3 (Roadmap): Daily camp-conditions snapshot + lightweight integrations.
+    /// Manages the daily camp-conditions snapshot and related integrations.
     ///
-    /// This is an internal simulation layer:
-    /// - Only runs while enlisted
-    /// - Stores small numeric meters (0–100) updated once per day
-    /// - Feeds Enlisted-owned systems (Quartermaster pricing/mood, Pay Muster text/options, Lance Life triggers)
-    ///
-    /// It avoids world scanning by using CampaignEvents + a few small rolling counters.
+    /// This internal simulation layer runs only while the player is enlisted. It 
+    /// stores small numeric meters that are updated once per day to feed other 
+    /// systems such as Quartermaster pricing and mood, Pay Muster text and options, 
+    /// and Lance Life triggers. It avoids heavy world scanning by using campaign 
+    /// events and a few small rolling counters.
     /// </summary>
     public sealed class CampLifeBehavior : CampaignBehaviorBase
     {
@@ -28,11 +27,12 @@ namespace Enlisted.Features.Camp
         public static CampLifeBehavior Instance { get; private set; }
 
         // Snapshot meters (0–100)
+        // These internal values drive Quartermaster mood and other systems.
+        // Player-visible crime suspicion uses Scrutiny in EscalationState instead.
         private float _logisticsStrain;
         private float _moraleShock;
         private float _territoryPressure;
         private float _payTension;
-        private float _contrabandHeat;
 
         // Daily update gate
         private int _lastSnapshotDayNumber = -1;
@@ -54,7 +54,6 @@ namespace Enlisted.Features.Camp
         public float MoraleShock => _moraleShock;
         public float TerritoryPressure => _territoryPressure;
         public float PayTension => _payTension;
-        public float ContrabandHeat => _contrabandHeat;
         public QuartermasterMoodTier QuartermasterMoodTier => _quartermasterMoodTier;
 
         public override void RegisterEvents()
@@ -72,7 +71,6 @@ namespace Enlisted.Features.Camp
                 dataStore.SyncData("cl_moraleShock", ref _moraleShock);
                 dataStore.SyncData("cl_territoryPressure", ref _territoryPressure);
                 dataStore.SyncData("cl_payTension", ref _payTension);
-                dataStore.SyncData("cl_contrabandHeat", ref _contrabandHeat);
 
                 var mood = (int)_quartermasterMoodTier;
                 dataStore.SyncData("cl_qmMoodTier", ref mood);
@@ -114,11 +112,6 @@ namespace Enlisted.Features.Camp
             return IsActiveWhileEnlisted() && _payTension >= (cfg?.PayTensionHighThreshold ?? 70f);
         }
 
-        public bool IsHeatHigh()
-        {
-            var cfg = ConfigurationManager.LoadCampLifeConfig();
-            return IsActiveWhileEnlisted() && _contrabandHeat >= (cfg?.HeatHighThreshold ?? 70f);
-        }
 
         public float GetQuartermasterPurchaseMultiplier()
         {
@@ -223,15 +216,12 @@ namespace Enlisted.Features.Camp
                 }
                 _moraleShock = Clamp01Hundred(_moraleShock + (_battlesThisWeek > 2 ? 5f : 0f));
 
-                // Territory pressure: light placeholder for now (expanded in later phases).
+                // Territory pressure: light placeholder for now.
                 _territoryPressure = Clamp01Hundred(_villagesLootedThisWeek * 12f);
 
-                // Pay tension: read from EnlistmentBehavior pay system (Phase 1-2 implementation)
+                // Pay tension: read from EnlistmentBehavior pay system.
                 // This is the authoritative source - tracks actual pay delays, backpay, and tension escalation
                 _payTension = enlistment.PayTension;
-
-                // Contraband heat: owned by later phases. Keep it stable for now.
-                _contrabandHeat = Clamp01Hundred(_contrabandHeat * 0.95f);
 
                 _quartermasterMoodTier = ComputeQuartermasterMoodTier(_logisticsStrain, _moraleShock, _payTension);
 
@@ -308,9 +298,8 @@ namespace Enlisted.Features.Camp
 
         private static QuartermasterMoodTier ComputeQuartermasterMoodTier(float logisticsStrain, float moraleShock, float payTension)
         {
-            // A small stable blend (0–100) that matches the design intent:
-            // - logistics and pay drive the "predatory clerk" feel the most
-            // - morale shock adds a lighter pressure toward sour mood
+            // A small stable blend (0–100). Logistics strain and pay tension drive the score the most, and morale
+            // shock adds lighter pressure toward a sour mood.
             var score = (logisticsStrain * 0.55f) + (payTension * 0.35f) + (moraleShock * 0.15f);
             score = Clamp01Hundred(score);
 

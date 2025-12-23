@@ -14,12 +14,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 {
     /// <summary>
     /// Registers and triggers custom incidents used by Enlisted.
-    /// Currently handles the enlistment bag-check incident.
+    /// Handles enlistment bag-check incident and pay muster incident.
     /// </summary>
     public sealed class EnlistedIncidentsBehavior : CampaignBehaviorBase
     {
         private Incident _bagCheckIncident;
         private Incident _payMusterIncident;
+        
         public static EnlistedIncidentsBehavior Instance { get; private set; }
 
         public EnlistedIncidentsBehavior()
@@ -221,7 +222,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         ? new TextObject("{=enlisted_final_muster_hint}Process your discharge now.").ToString()
                         : new TextObject("{=enlisted_pay_standard_hint}Take your accumulated muster pay.").ToString()));
 
-                // Promissory note (IOU) when pay tension is high (Camp Life Phase 3).
+                // Promissory note (IOU) when pay tension is high.
                 // This keeps pay disruption internal: we simply defer payout and retry soon.
                 if (!dischargePending && payDisrupted)
                 {

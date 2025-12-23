@@ -1,6 +1,6 @@
 using System;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core.Config;
 using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Ranks

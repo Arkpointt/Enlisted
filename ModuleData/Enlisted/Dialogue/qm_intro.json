@@ -1,0 +1,847 @@
+{
+  "schemaVersion": 1,
+  "dialogueType": "quartermaster",
+  "nodes": [
+    {
+      "_comment": "========== FIRST MEETING GREETING: 6 Archetypes ==========",
+      "id": "qm_intro_greeting",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_greeting_veteran",
+      "text": "New face. You one of the fresh recruits? What do they call you?",
+      "context": {
+        "is_introduced": false,
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "intro_tone_direct",
+          "textId": "qm_intro_tone_direct",
+          "text": "I'm {PLAYER_NAME}. Just tell me what you've got.",
+          "tooltip": "Get to business quickly (-2 reputation)",
+          "next_node": "qm_intro_ack_direct",
+          "action": "set_player_style",
+          "action_data": { "style": "direct", "rep_change": -2 }
+        },
+        {
+          "id": "intro_tone_military",
+          "textId": "qm_intro_tone_military",
+          "text": "{PLAYER_NAME}, reporting for kit.",
+          "tooltip": "Standard military protocol (no change)",
+          "next_node": "qm_intro_ack_military",
+          "action": "set_player_style",
+          "action_data": { "style": "military", "rep_change": 0 }
+        },
+        {
+          "id": "intro_tone_friendly",
+          "textId": "qm_intro_tone_friendly",
+          "text": "Name's {PLAYER_NAME}. Looking forward to working with you.",
+          "tooltip": "Build rapport (+3 reputation)",
+          "next_node": "qm_intro_ack_friendly",
+          "action": "set_player_style",
+          "action_data": { "style": "friendly", "rep_change": 3 }
+        },
+        {
+          "id": "intro_tone_flattering",
+          "textId": "qm_intro_tone_flattering",
+          "text": "They call me {PLAYER_NAME}. I've heard you're the one to know.",
+          "tooltip": "Flatter the quartermaster (+5 reputation)",
+          "next_node": "qm_intro_ack_flattering",
+          "action": "set_player_style",
+          "action_data": { "style": "flattering", "rep_change": 5 }
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_greeting",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_greeting_merchant",
+      "text": "Ah, a new customer. Haven't done business with you before. Name?",
+      "context": {
+        "is_introduced": false,
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "intro_tone_direct",
+          "textId": "qm_intro_tone_direct",
+          "text": "I'm {PLAYER_NAME}. Just tell me what you've got.",
+          "tooltip": "Get to business quickly (-2 reputation)",
+          "next_node": "qm_intro_ack_direct",
+          "action": "set_player_style",
+          "action_data": { "style": "direct", "rep_change": -2 }
+        },
+        {
+          "id": "intro_tone_military",
+          "textId": "qm_intro_tone_military",
+          "text": "{PLAYER_NAME}, reporting for kit.",
+          "tooltip": "Standard military protocol (no change)",
+          "next_node": "qm_intro_ack_military",
+          "action": "set_player_style",
+          "action_data": { "style": "military", "rep_change": 0 }
+        },
+        {
+          "id": "intro_tone_friendly",
+          "textId": "qm_intro_tone_friendly",
+          "text": "Name's {PLAYER_NAME}. Looking forward to working with you.",
+          "tooltip": "Build rapport (+3 reputation)",
+          "next_node": "qm_intro_ack_friendly",
+          "action": "set_player_style",
+          "action_data": { "style": "friendly", "rep_change": 3 }
+        },
+        {
+          "id": "intro_tone_flattering",
+          "textId": "qm_intro_tone_flattering",
+          "text": "They call me {PLAYER_NAME}. I've heard you're the one to know.",
+          "tooltip": "Flatter the quartermaster (+5 reputation)",
+          "next_node": "qm_intro_ack_flattering",
+          "action": "set_player_style",
+          "action_data": { "style": "flattering", "rep_change": 5 }
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_greeting",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_greeting_bookkeeper",
+      "text": "I don't have you in my ledger. New arrival? State your name for the record.",
+      "context": {
+        "is_introduced": false,
+        "archetype": "bookkeeper"
+      },
+      "options": [
+        {
+          "id": "intro_tone_direct",
+          "textId": "qm_intro_tone_direct",
+          "text": "I'm {PLAYER_NAME}. Just tell me what you've got.",
+          "tooltip": "Get to business quickly (-2 reputation)",
+          "next_node": "qm_intro_ack_direct",
+          "action": "set_player_style",
+          "action_data": { "style": "direct", "rep_change": -2 }
+        },
+        {
+          "id": "intro_tone_military",
+          "textId": "qm_intro_tone_military",
+          "text": "{PLAYER_NAME}, reporting for kit.",
+          "tooltip": "Standard military protocol (no change)",
+          "next_node": "qm_intro_ack_military",
+          "action": "set_player_style",
+          "action_data": { "style": "military", "rep_change": 0 }
+        },
+        {
+          "id": "intro_tone_friendly",
+          "textId": "qm_intro_tone_friendly",
+          "text": "Name's {PLAYER_NAME}. Looking forward to working with you.",
+          "tooltip": "Build rapport (+3 reputation)",
+          "next_node": "qm_intro_ack_friendly",
+          "action": "set_player_style",
+          "action_data": { "style": "friendly", "rep_change": 3 }
+        },
+        {
+          "id": "intro_tone_flattering",
+          "textId": "qm_intro_tone_flattering",
+          "text": "They call me {PLAYER_NAME}. I've heard you're the one to know.",
+          "tooltip": "Flatter the quartermaster (+5 reputation)",
+          "next_node": "qm_intro_ack_flattering",
+          "action": "set_player_style",
+          "action_data": { "style": "flattering", "rep_change": 5 }
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_greeting",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_greeting_scoundrel",
+      "text": "Well, well. Fresh meat. What's your name, soldier?",
+      "context": {
+        "is_introduced": false,
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "intro_tone_direct",
+          "textId": "qm_intro_tone_direct",
+          "text": "I'm {PLAYER_NAME}. Just tell me what you've got.",
+          "tooltip": "Get to business quickly (-2 reputation)",
+          "next_node": "qm_intro_ack_direct",
+          "action": "set_player_style",
+          "action_data": { "style": "direct", "rep_change": -2 }
+        },
+        {
+          "id": "intro_tone_military",
+          "textId": "qm_intro_tone_military",
+          "text": "{PLAYER_NAME}, reporting for kit.",
+          "tooltip": "Standard military protocol (no change)",
+          "next_node": "qm_intro_ack_military",
+          "action": "set_player_style",
+          "action_data": { "style": "military", "rep_change": 0 }
+        },
+        {
+          "id": "intro_tone_friendly",
+          "textId": "qm_intro_tone_friendly",
+          "text": "Name's {PLAYER_NAME}. Looking forward to working with you.",
+          "tooltip": "Build rapport (+3 reputation)",
+          "next_node": "qm_intro_ack_friendly",
+          "action": "set_player_style",
+          "action_data": { "style": "friendly", "rep_change": 3 }
+        },
+        {
+          "id": "intro_tone_flattering",
+          "textId": "qm_intro_tone_flattering",
+          "text": "They call me {PLAYER_NAME}. I've heard you're the one to know.",
+          "tooltip": "Flatter the quartermaster (+5 reputation)",
+          "next_node": "qm_intro_ack_flattering",
+          "action": "set_player_style",
+          "action_data": { "style": "flattering", "rep_change": 5 }
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_greeting",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_greeting_believer",
+      "text": "The Lord sends us new brothers in arms. What name were you given, friend?",
+      "context": {
+        "is_introduced": false,
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "intro_tone_direct",
+          "textId": "qm_intro_tone_direct",
+          "text": "I'm {PLAYER_NAME}. Just tell me what you've got.",
+          "tooltip": "Get to business quickly (-2 reputation)",
+          "next_node": "qm_intro_ack_direct",
+          "action": "set_player_style",
+          "action_data": { "style": "direct", "rep_change": -2 }
+        },
+        {
+          "id": "intro_tone_military",
+          "textId": "qm_intro_tone_military",
+          "text": "{PLAYER_NAME}, reporting for kit.",
+          "tooltip": "Standard military protocol (no change)",
+          "next_node": "qm_intro_ack_military",
+          "action": "set_player_style",
+          "action_data": { "style": "military", "rep_change": 0 }
+        },
+        {
+          "id": "intro_tone_friendly",
+          "textId": "qm_intro_tone_friendly",
+          "text": "Name's {PLAYER_NAME}. Looking forward to working with you.",
+          "tooltip": "Build rapport (+3 reputation)",
+          "next_node": "qm_intro_ack_friendly",
+          "action": "set_player_style",
+          "action_data": { "style": "friendly", "rep_change": 3 }
+        },
+        {
+          "id": "intro_tone_flattering",
+          "textId": "qm_intro_tone_flattering",
+          "text": "They call me {PLAYER_NAME}. I've heard you're the one to know.",
+          "tooltip": "Flatter the quartermaster (+5 reputation)",
+          "next_node": "qm_intro_ack_flattering",
+          "action": "set_player_style",
+          "action_data": { "style": "flattering", "rep_change": 5 }
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_greeting",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_greeting_eccentric",
+      "text": "A new star in my constellation! What sign were you born under? ...No, wait. What's your name?",
+      "context": {
+        "is_introduced": false,
+        "archetype": "eccentric"
+      },
+      "options": [
+        {
+          "id": "intro_tone_direct",
+          "textId": "qm_intro_tone_direct",
+          "text": "I'm {PLAYER_NAME}. Just tell me what you've got.",
+          "tooltip": "Get to business quickly (-2 reputation)",
+          "next_node": "qm_intro_ack_direct",
+          "action": "set_player_style",
+          "action_data": { "style": "direct", "rep_change": -2 }
+        },
+        {
+          "id": "intro_tone_military",
+          "textId": "qm_intro_tone_military",
+          "text": "{PLAYER_NAME}, reporting for kit.",
+          "tooltip": "Standard military protocol (no change)",
+          "next_node": "qm_intro_ack_military",
+          "action": "set_player_style",
+          "action_data": { "style": "military", "rep_change": 0 }
+        },
+        {
+          "id": "intro_tone_friendly",
+          "textId": "qm_intro_tone_friendly",
+          "text": "Name's {PLAYER_NAME}. Looking forward to working with you.",
+          "tooltip": "Build rapport (+3 reputation)",
+          "next_node": "qm_intro_ack_friendly",
+          "action": "set_player_style",
+          "action_data": { "style": "friendly", "rep_change": 3 }
+        },
+        {
+          "id": "intro_tone_flattering",
+          "textId": "qm_intro_tone_flattering",
+          "text": "They call me {PLAYER_NAME}. I've heard you're the one to know.",
+          "tooltip": "Flatter the quartermaster (+5 reputation)",
+          "next_node": "qm_intro_ack_flattering",
+          "action": "set_player_style",
+          "action_data": { "style": "flattering", "rep_change": 5 }
+        }
+      ]
+    },
+    {
+      "_comment": "Default greeting when archetype is unknown",
+      "id": "qm_intro_greeting",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_greeting_default",
+      "text": "Haven't seen you before. You new? What's your name?",
+      "context": {
+        "is_introduced": false
+      },
+      "options": [
+        {
+          "id": "intro_tone_direct",
+          "textId": "qm_intro_tone_direct",
+          "text": "I'm {PLAYER_NAME}. Just tell me what you've got.",
+          "tooltip": "Get to business quickly (-2 reputation)",
+          "next_node": "qm_intro_ack_direct",
+          "action": "set_player_style",
+          "action_data": { "style": "direct", "rep_change": -2 }
+        },
+        {
+          "id": "intro_tone_military",
+          "textId": "qm_intro_tone_military",
+          "text": "{PLAYER_NAME}, reporting for kit.",
+          "tooltip": "Standard military protocol (no change)",
+          "next_node": "qm_intro_ack_military",
+          "action": "set_player_style",
+          "action_data": { "style": "military", "rep_change": 0 }
+        },
+        {
+          "id": "intro_tone_friendly",
+          "textId": "qm_intro_tone_friendly",
+          "text": "Name's {PLAYER_NAME}. Looking forward to working with you.",
+          "tooltip": "Build rapport (+3 reputation)",
+          "next_node": "qm_intro_ack_friendly",
+          "action": "set_player_style",
+          "action_data": { "style": "friendly", "rep_change": 3 }
+        },
+        {
+          "id": "intro_tone_flattering",
+          "textId": "qm_intro_tone_flattering",
+          "text": "They call me {PLAYER_NAME}. I've heard you're the one to know.",
+          "tooltip": "Flatter the quartermaster (+5 reputation)",
+          "next_node": "qm_intro_ack_flattering",
+          "action": "set_player_style",
+          "action_data": { "style": "flattering", "rep_change": 5 }
+        }
+      ]
+    },
+
+    {
+      "_comment": "========== ACKNOWLEDGMENT: DIRECT TONE (all archetypes) ==========",
+      "id": "qm_intro_ack_direct",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_direct_veteran",
+      "text": "A soldier who gets to the point. Fair enough. I'm the quartermaster here. You need kit, you come to me.",
+      "context": {
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_direct",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_direct_merchant",
+      "text": "Straight to business? I can work with that. But manners cost nothing, {PLAYER_NAME}.",
+      "context": {
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_direct",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_direct_bookkeeper",
+      "text": "{PLAYER_NAME}. Noted. I appreciate efficiency, though a little courtesy wouldn't hurt your record.",
+      "context": {
+        "archetype": "bookkeeper"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_direct",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_direct_scoundrel",
+      "text": "[Shrugs] All right, all right. Keep your attitude, see if I care. Just don't expect any favors.",
+      "context": {
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_direct",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_direct_believer",
+      "text": "The Lord teaches patience, but I see you have little. Very well. I'll pray for your manners, {PLAYER_NAME}.",
+      "context": {
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_direct",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_direct_eccentric",
+      "text": "Ooh, a fiery one! Mars in ascendant, surely. Very well, {PLAYER_NAME}. Business it is.",
+      "context": {
+        "archetype": "eccentric"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_direct",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_direct_default",
+      "text": "Right, straight to business then. Fair enough. I'm the quartermaster. You need gear, you come to me.",
+      "context": {},
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+
+    {
+      "_comment": "========== ACKNOWLEDGMENT: MILITARY TONE (all archetypes) ==========",
+      "id": "qm_intro_ack_military",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_military_veteran",
+      "text": "Good. You know how this works. Draw your kit, keep it maintained, and we'll get along fine, {PLAYER_NAME}.",
+      "context": {
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_military",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_military_merchant",
+      "text": "By the book, are you? That's fine by me. Standard procedure, standard prices. Welcome to the company, {PLAYER_NAME}.",
+      "context": {
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_military",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_military_bookkeeper",
+      "text": "{PLAYER_NAME}, soldier, reporting for equipment. Logged. Follow procedure and we'll have no problems.",
+      "context": {
+        "archetype": "bookkeeper"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_military",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_military_scoundrel",
+      "text": "A proper soldier, eh? Fine, {PLAYER_NAME}. Just don't go reporting every little irregularity you see.",
+      "context": {
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_military",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_military_believer",
+      "text": "A disciplined soul. The Lord approves of order, {PLAYER_NAME}. You'll do well here, I think.",
+      "context": {
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_military",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_military_eccentric",
+      "text": "Ah, a Saturn soul! Disciplined, orderly. The stars placed you well, {PLAYER_NAME}. Let's get you equipped.",
+      "context": {
+        "archetype": "eccentric"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_military",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_military_default",
+      "text": "Good. You know the drill, {PLAYER_NAME}. Report when you need equipment. Welcome to the company.",
+      "context": {},
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+
+    {
+      "_comment": "========== ACKNOWLEDGMENT: FRIENDLY TONE (all archetypes) ==========",
+      "id": "qm_intro_ack_friendly",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_friendly_veteran",
+      "text": "Good to meet you too, {PLAYER_NAME}. I've seen too many soldiers forget who keeps them armed. You won't regret being civil.",
+      "context": {
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_friendly",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_friendly_merchant",
+      "text": "A pleasure doing business, {PLAYER_NAME}. Friendly customers are my favorite kind. We'll get along just fine.",
+      "context": {
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_friendly",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_friendly_bookkeeper",
+      "text": "{PLAYER_NAME}, recorded with a favorable note. It's refreshing to meet a polite soldier for once.",
+      "context": {
+        "archetype": "bookkeeper"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_friendly",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_friendly_scoundrel",
+      "text": "[Grins] Friendly, eh? I like that. Might have some special opportunities for someone who knows how to talk, {PLAYER_NAME}.",
+      "context": {
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_friendly",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_friendly_believer",
+      "text": "The Lord blesses those with kind hearts, {PLAYER_NAME}. Welcome to our family. May you serve well.",
+      "context": {
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_friendly",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_friendly_eccentric",
+      "text": "Venus smiles on you, {PLAYER_NAME}! Such warmth! I see good things in your alignment. Welcome, welcome!",
+      "context": {
+        "archetype": "eccentric"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_friendly",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_friendly_default",
+      "text": "Nice to meet you too, {PLAYER_NAME}. It's good to have soldiers who remember their manners. Welcome to the company.",
+      "context": {},
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+
+    {
+      "_comment": "========== ACKNOWLEDGMENT: FLATTERING TONE (all archetypes) ==========",
+      "id": "qm_intro_ack_flattering",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_flattering_veteran",
+      "text": "[Nods approvingly] Smart. You learn fast who matters in an army. Stay on my good side, {PLAYER_NAME}, and I'll see you right.",
+      "context": {
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_flattering",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_flattering_merchant",
+      "text": "[Chuckles] You've heard right, {PLAYER_NAME}. I'm the one who keeps this army running. And I remember those who appreciate quality.",
+      "context": {
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_flattering",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_flattering_bookkeeper",
+      "text": "[Adjusts ledger] Well. {PLAYER_NAME}. Someone who recognizes competence. I'm making a special note here.",
+      "context": {
+        "archetype": "bookkeeper"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_flattering",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_flattering_scoundrel",
+      "text": "[Laughs] I like you already, {PLAYER_NAME}. A smooth tongue opens many doors. Including some that should stay shut, if you catch my meaning.",
+      "context": {
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_flattering",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_flattering_believer",
+      "text": "The Lord rewards humility, but honest praise is no sin. You've a good soul, {PLAYER_NAME}. I'll keep you in my prayers.",
+      "context": {
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_flattering",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_flattering_eccentric",
+      "text": "[Beams] Mercury's gift of eloquence! Oh, {PLAYER_NAME}, we shall be great allies. The stars told me you'd come!",
+      "context": {
+        "archetype": "eccentric"
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "id": "qm_intro_ack_flattering",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_ack_flattering_default",
+      "text": "[Smiles] You've heard right, {PLAYER_NAME}. I'm the one to know. And I'll remember that you knew it first.",
+      "context": {},
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    }
+  ]
+}

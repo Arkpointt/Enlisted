@@ -59,7 +59,7 @@
                                        "titleId":  "ll_evt_qm_supply_inventory_title",
                                        "setupId":  "ll_evt_qm_supply_inventory_setup",
                                        "title":  "Supply Inventory",
-                                       "setup":  "{LANCE_LEADER_SHORT} catches your eye. \"Quartermaster duty, {PLAYER_NAME}. We need a full count before we resupply. Get it done.\"\n\nThe supply wagons are a mess. Someone\u0027s been helping themselves, or the count was wrong to begin with.",
+                                       "setup":  "{SERGEANT} catches your eye. \"Quartermaster duty, {PLAYER_NAME}. We need a full count before we resupply. Get it done.\"\n\nThe supply wagons are a mess. Someone\u0027s been helping themselves, or the count was wrong to begin with.",
                                        "options":  [
                                                        {
                                                            "id":  "count_everything_properly_note_d",
@@ -88,9 +88,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -133,9 +133,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -179,9 +179,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -225,9 +225,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  2,
+                                                                           "scrutiny":  2,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -333,9 +333,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -378,9 +378,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -424,9 +424,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -469,9 +469,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  1,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -577,9 +577,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -623,9 +623,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -669,9 +669,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -714,9 +714,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  3,
+                                                                           "scrutiny":  3,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -794,7 +794,7 @@
                                        "titleId":  "ll_evt_qm_requisition_request_title",
                                        "setupId":  "ll_evt_qm_requisition_request_setup",
                                        "title":  "Equipment Distribution",
-                                       "setup":  "New equipment arrived, but there\u0027s not enough to go around. The veterans want first pick. The recruits need it more. {LANCE_LEADER_SHORT} left it to you.\n\n\"Your call, Quartermaster.\"",
+                                       "setup":  "New equipment arrived, but there\u0027s not enough to go around. The veterans want first pick. The recruits need it more. {SERGEANT} left it to you.\n\n\"Your call, Quartermaster.\"",
                                        "options":  [
                                                        {
                                                            "id":  "veterans_first_they_ve_earned_it",
@@ -822,9 +822,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -867,9 +867,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -913,9 +913,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -958,9 +958,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  2,
+                                                                           "scrutiny":  2,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1005,7 +1005,7 @@
                                                     "is_enlisted",
                                                     "ai_safe",
                                                     "has_duty:quartermaster",
-                                                    "heat \u003e= 2"
+                                                    "scrutiny \u003e= 2"
                                                 ],
                                         "any":  [
 
@@ -1067,9 +1067,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1112,9 +1112,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1157,9 +1157,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  0,
+                                                                           "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1202,9 +1202,9 @@
                                                                                      ]
                                                                        },
                                                            "effects":  {
-                                                                           "heat":  3,
+                                                                           "scrutiny":  3,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },

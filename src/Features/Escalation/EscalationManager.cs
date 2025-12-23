@@ -1,7 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 
@@ -12,7 +13,7 @@ namespace Enlisted.Features.Escalation
     ///
     /// Responsibilities:
     /// - Owns the persisted EscalationState (save/load via CampaignBehavior SyncData)
-    /// - Provides track modification APIs (Heat/Discipline/LanceRep/MedicalRisk)
+    /// - Provides track modification APIs (Scrutiny/Discipline/SoldierRep/MedicalRisk)
     /// - Provides readable "state" descriptions for UI ("Watched", "Hot", "Trusted", etc.)
     /// - Provides passive decay logic (integration into daily tick is a later step)
     ///
@@ -28,6 +29,7 @@ namespace Enlisted.Features.Escalation
 
         private readonly EscalationState _state = new EscalationState();
         private int _lastDailyTickDayNumber = -1;
+        private HashSet<int> _declinedPromotions = new HashSet<int>();
 
         public EscalationState State => _state;
 
@@ -79,30 +81,51 @@ namespace Enlisted.Features.Escalation
             SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
                 // Track values
-                var heat = _state.Heat;
+                var scrutiny = _state.Scrutiny;
                 var discipline = _state.Discipline;
-                var rep = _state.LanceReputation;
+                var soldierRep = _state.SoldierReputation;
+                var lordRep = _state.LordReputation;
+                var officerRep = _state.OfficerReputation;
                 var medical = _state.MedicalRisk;
 
-                dataStore.SyncData("esc_heat", ref heat);
+                dataStore.SyncData("esc_scrutiny", ref scrutiny);
                 dataStore.SyncData("esc_discipline", ref discipline);
-                dataStore.SyncData("esc_rep", ref rep);
+                
+                // Migration: Load old LanceReputation into SoldierReputation
+                if (dataStore.IsLoading)
+                {
+                    int oldLanceRep = 0;
+                    dataStore.SyncData("esc_rep", ref oldLanceRep);
+                    soldierRep = oldLanceRep;
+                    
+                    // Initialize new reputation fields at neutral
+                    lordRep = 50;
+                    officerRep = 50;
+                }
+                else
+                {
+                    // Save new reputation system
+                    dataStore.SyncData("esc_soldierRep", ref soldierRep);
+                    dataStore.SyncData("esc_lordRep", ref lordRep);
+                    dataStore.SyncData("esc_officerRep", ref officerRep);
+                }
+                
                 dataStore.SyncData("esc_medical", ref medical);
 
                 // Timestamps
-                var lastHeatRaised = _state.LastHeatRaisedTime;
-                var lastHeatDecay = _state.LastHeatDecayTime;
+                var lastScrutinyRaised = _state.LastScrutinyRaisedTime;
+                var lastScrutinyDecay = _state.LastScrutinyDecayTime;
                 var lastDiscRaised = _state.LastDisciplineRaisedTime;
                 var lastDiscDecay = _state.LastDisciplineDecayTime;
-                var lastRepDecay = _state.LastLanceReputationDecayTime;
+                var lastSoldierRepDecay = _state.LastSoldierReputationDecayTime;
                 var lastMedicalDecay = _state.LastMedicalRiskDecayTime;
                 var lastThresholdEvent = _state.LastThresholdEventTime;
 
-                dataStore.SyncData("esc_lastHeatRaised", ref lastHeatRaised);
-                dataStore.SyncData("esc_lastHeatDecay", ref lastHeatDecay);
+                dataStore.SyncData("esc_lastScrutinyRaised", ref lastScrutinyRaised);
+                dataStore.SyncData("esc_lastScrutinyDecay", ref lastScrutinyDecay);
                 dataStore.SyncData("esc_lastDiscRaised", ref lastDiscRaised);
                 dataStore.SyncData("esc_lastDiscDecay", ref lastDiscDecay);
-                dataStore.SyncData("esc_lastRepDecay", ref lastRepDecay);
+                dataStore.SyncData("esc_lastRepDecay", ref lastSoldierRepDecay);
                 dataStore.SyncData("esc_lastMedicalDecay", ref lastMedicalDecay);
                 dataStore.SyncData("esc_lastThresholdEvent", ref lastThresholdEvent);
 
@@ -117,18 +140,38 @@ namespace Enlisted.Features.Escalation
                 var thresholdCount = thresholdKeys.Count;
                 dataStore.SyncData("esc_thresholdCount", ref thresholdCount);
 
+                // Event pacing timestamps
+                var lastNarrativeEvent = _state.LastNarrativeEventTime;
+                var nextNarrativeWindow = _state.NextNarrativeEventWindow;
+                dataStore.SyncData("esc_lastNarrativeEvent", ref lastNarrativeEvent);
+                dataStore.SyncData("esc_nextNarrativeWindow", ref nextNarrativeWindow);
+
+                // Event cooldown map (same pattern as threshold cooldowns)
+                var eventKeys = (_state.EventLastFired ?? Enumerable.Empty<System.Collections.Generic.KeyValuePair<string, CampaignTime>>())
+                    .Select(k => k.Key)
+                    .ToList();
+                var eventCooldownCount = eventKeys.Count;
+                dataStore.SyncData("esc_eventCooldownCount", ref eventCooldownCount);
+
+                // One-time events fired
+                var oneTimeKeys = (_state.OneTimeEventsFired ?? Enumerable.Empty<string>()).ToList();
+                var oneTimeCount = oneTimeKeys.Count;
+                dataStore.SyncData("esc_oneTimeCount", ref oneTimeCount);
+
                 if (dataStore.IsLoading)
                 {
-                    _state.Heat = heat;
+                    _state.Scrutiny = scrutiny;
                     _state.Discipline = discipline;
-                    _state.LanceReputation = rep;
+                    _state.SoldierReputation = soldierRep;
+                    _state.LordReputation = lordRep;
+                    _state.OfficerReputation = officerRep;
                     _state.MedicalRisk = medical;
 
-                    _state.LastHeatRaisedTime = lastHeatRaised;
-                    _state.LastHeatDecayTime = lastHeatDecay;
+                    _state.LastScrutinyRaisedTime = lastScrutinyRaised;
+                    _state.LastScrutinyDecayTime = lastScrutinyDecay;
                     _state.LastDisciplineRaisedTime = lastDiscRaised;
                     _state.LastDisciplineDecayTime = lastDiscDecay;
-                    _state.LastLanceReputationDecayTime = lastRepDecay;
+                    _state.LastSoldierReputationDecayTime = lastSoldierRepDecay;
                     _state.LastMedicalRiskDecayTime = lastMedicalDecay;
                     _state.LastThresholdEventTime = lastThresholdEvent;
 
@@ -146,6 +189,36 @@ namespace Enlisted.Features.Escalation
                         }
                     }
 
+                    // Load event pacing timestamps
+                    _state.LastNarrativeEventTime = lastNarrativeEvent;
+                    _state.NextNarrativeEventWindow = nextNarrativeWindow;
+
+                    // Load event cooldown map
+                    _state.EventLastFired = new System.Collections.Generic.Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < eventCooldownCount; i++)
+                    {
+                        var key = string.Empty;
+                        var time = CampaignTime.Zero;
+                        dataStore.SyncData($"esc_event_{i}_id", ref key);
+                        dataStore.SyncData($"esc_event_{i}_time", ref time);
+                        if (!string.IsNullOrWhiteSpace(key))
+                        {
+                            _state.EventLastFired[key] = time;
+                        }
+                    }
+
+                    // Load one-time events set
+                    _state.OneTimeEventsFired = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < oneTimeCount; i++)
+                    {
+                        var eventId = string.Empty;
+                        dataStore.SyncData($"esc_onetime_{i}", ref eventId);
+                        if (!string.IsNullOrWhiteSpace(eventId))
+                        {
+                            _state.OneTimeEventsFired.Add(eventId);
+                        }
+                    }
+
                     _state.ClampAll();
                 }
                 else
@@ -158,6 +231,129 @@ namespace Enlisted.Features.Escalation
                         var time = _state.ThresholdStoryLastFired.TryGetValue(key, out var t) ? t : CampaignTime.Zero;
                         dataStore.SyncData($"esc_threshold_{i}_id", ref key);
                         dataStore.SyncData($"esc_threshold_{i}_time", ref time);
+                    }
+
+                    // Save event cooldown map
+                    eventKeys.Sort(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < eventKeys.Count; i++)
+                    {
+                        var key = eventKeys[i];
+                        var time = _state.EventLastFired.TryGetValue(key, out var t) ? t : CampaignTime.Zero;
+                        dataStore.SyncData($"esc_event_{i}_id", ref key);
+                        dataStore.SyncData($"esc_event_{i}_time", ref time);
+                    }
+
+                    // Save one-time events set
+                    oneTimeKeys.Sort(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < oneTimeKeys.Count; i++)
+                    {
+                        var eventId = oneTimeKeys[i];
+                        dataStore.SyncData($"esc_onetime_{i}", ref eventId);
+                    }
+                }
+                
+                // Onboarding state serialization
+                var onboardingStage = _state.OnboardingStage;
+                var onboardingTrack = _state.OnboardingTrack ?? string.Empty;
+                var onboardingStartTime = _state.OnboardingStartTime;
+                
+                dataStore.SyncData("esc_onboardingStage", ref onboardingStage);
+                dataStore.SyncData("esc_onboardingTrack", ref onboardingTrack);
+                dataStore.SyncData("esc_onboardingStartTime", ref onboardingStartTime);
+                
+                if (dataStore.IsLoading)
+                {
+                    _state.OnboardingStage = onboardingStage;
+                    _state.OnboardingTrack = onboardingTrack ?? string.Empty;
+                    _state.OnboardingStartTime = onboardingStartTime;
+                    
+                    // Validate onboarding state to handle old saves or corrupted data
+                    _state.ValidateOnboardingState();
+                }
+
+                // Global event pacing state (prevents event spam across all automatic sources)
+                var lastAutoEvent = _state.LastAutoEventTime;
+                var autoEventsToday = _state.AutoEventsToday;
+                var autoEventDayNum = _state.AutoEventDayNumber;
+                var autoEventsWeek = _state.AutoEventsThisWeek;
+                var autoEventWeekNum = _state.AutoEventWeekNumber;
+                var isQuietDay = _state.IsQuietDay;
+
+                dataStore.SyncData("esc_lastAutoEvent", ref lastAutoEvent);
+                dataStore.SyncData("esc_autoEventsToday", ref autoEventsToday);
+                dataStore.SyncData("esc_autoEventDayNum", ref autoEventDayNum);
+                dataStore.SyncData("esc_autoEventsWeek", ref autoEventsWeek);
+                dataStore.SyncData("esc_autoEventWeekNum", ref autoEventWeekNum);
+                dataStore.SyncData("esc_isQuietDay", ref isQuietDay);
+
+                // Category cooldown map (tracks last fired time per category)
+                var categoryKeys = (_state.CategoryLastFired ?? Enumerable.Empty<System.Collections.Generic.KeyValuePair<string, CampaignTime>>())
+                    .Select(k => k.Key)
+                    .ToList();
+                var categoryCount = categoryKeys.Count;
+                dataStore.SyncData("esc_categoryCooldownCount", ref categoryCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _state.LastAutoEventTime = lastAutoEvent;
+                    _state.AutoEventsToday = autoEventsToday;
+                    _state.AutoEventDayNumber = autoEventDayNum;
+                    _state.AutoEventsThisWeek = autoEventsWeek;
+                    _state.AutoEventWeekNumber = autoEventWeekNum;
+                    _state.IsQuietDay = isQuietDay;
+
+                    // Load category cooldown map
+                    _state.CategoryLastFired = new System.Collections.Generic.Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < categoryCount; i++)
+                    {
+                        var key = string.Empty;
+                        var time = CampaignTime.Zero;
+                        dataStore.SyncData($"esc_category_{i}_id", ref key);
+                        dataStore.SyncData($"esc_category_{i}_time", ref time);
+                        if (!string.IsNullOrWhiteSpace(key))
+                        {
+                            _state.CategoryLastFired[key] = time;
+                        }
+                    }
+                }
+                else
+                {
+                    // Save category cooldown map
+                    categoryKeys.Sort(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < categoryKeys.Count; i++)
+                    {
+                        var key = categoryKeys[i];
+                        var time = _state.CategoryLastFired[key];
+                        dataStore.SyncData($"esc_category_{i}_id", ref key);
+                        dataStore.SyncData($"esc_category_{i}_time", ref time);
+                    }
+                }
+
+                // Declined promotion tracking
+                var declinedCount = _declinedPromotions.Count;
+                dataStore.SyncData("esc_declinedPromotionsCount", ref declinedCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _declinedPromotions = new HashSet<int>();
+                    for (var i = 0; i < declinedCount; i++)
+                    {
+                        var tier = 0;
+                        dataStore.SyncData($"esc_declinedPromo_{i}", ref tier);
+                        if (tier > 0)
+                        {
+                            _declinedPromotions.Add(tier);
+                        }
+                    }
+                }
+                else
+                {
+                    var tiers = _declinedPromotions.ToList();
+                    tiers.Sort();
+                    for (var i = 0; i < tiers.Count; i++)
+                    {
+                        var tier = tiers[i];
+                        dataStore.SyncData($"esc_declinedPromo_{i}", ref tier);
                     }
                 }
             });
@@ -250,13 +446,13 @@ namespace Enlisted.Features.Escalation
         private string PickBestThresholdCandidateId(int cooldownDays)
         {
             // Priority is deterministic and "highest threshold wins" per track.
-            // Order across tracks: Heat, Discipline, Medical, Lance Reputation.
-            var heatCandidates = new[]
+            // Order across tracks: Scrutiny, Discipline, Medical, Soldier Reputation.
+            var scrutinyCandidates = new[]
             {
-                (_state.Heat >= EscalationThresholds.HeatExposed, "heat_exposed"),
-                (_state.Heat >= EscalationThresholds.HeatAudit, "heat_audit"),
-                (_state.Heat >= EscalationThresholds.HeatShakedown, "heat_shakedown"),
-                (_state.Heat >= EscalationThresholds.HeatWarning, "heat_warning")
+                (_state.Scrutiny >= EscalationThresholds.ScrutinyExposed, "scrutiny_exposed"),
+                (_state.Scrutiny >= EscalationThresholds.ScrutinyAudit, "scrutiny_audit"),
+                (_state.Scrutiny >= EscalationThresholds.ScrutinyShakedown, "scrutiny_shakedown"),
+                (_state.Scrutiny >= EscalationThresholds.ScrutinyWarning, "scrutiny_warning")
             };
             var disciplineCandidates = new[]
             {
@@ -273,13 +469,13 @@ namespace Enlisted.Features.Escalation
             };
             var repCandidates = new[]
             {
-                (_state.LanceReputation <= EscalationThresholds.LanceSabotage, "lance_sabotage"),
-                (_state.LanceReputation <= EscalationThresholds.LanceIsolated, "lance_isolated"),
-                (_state.LanceReputation >= EscalationThresholds.LanceBonded, "lance_bonded"),
-                (_state.LanceReputation >= EscalationThresholds.LanceTrusted, "lance_trusted")
+                (_state.SoldierReputation <= EscalationThresholds.SoldierSabotage, "soldier_sabotage"),
+                (_state.SoldierReputation <= EscalationThresholds.SoldierIsolated, "soldier_isolated"),
+                (_state.SoldierReputation >= EscalationThresholds.SoldierBonded, "soldier_bonded"),
+                (_state.SoldierReputation >= EscalationThresholds.SoldierTrusted, "soldier_trusted")
             };
 
-            foreach (var (ok, id) in heatCandidates)
+            foreach (var (ok, id) in scrutinyCandidates)
             {
                 if (ok && !IsThresholdStoryOnCooldown(id, cooldownDays))
                 {
@@ -313,33 +509,34 @@ namespace Enlisted.Features.Escalation
 
         #region Track modification
 
-        public void ModifyHeat(int delta, string reason = null)
+        public void ModifyScrutiny(int delta, string reason = null)
         {
             if (!IsEnabled())
             {
                 return;
             }
 
-            var oldValue = _state.Heat;
+            var oldValue = _state.Scrutiny;
             var next = oldValue + delta;
-            _state.Heat = Clamp(next, EscalationState.HeatMin, EscalationState.HeatMax);
+            _state.Scrutiny = Clamp(next, EscalationState.ScrutinyMin, EscalationState.ScrutinyMax);
 
             if (delta > 0)
             {
-                // Heat decay requires a "quiet period" (no corrupt choices) since the last raise.
-                _state.LastHeatRaisedTime = CampaignTime.Now;
+                // Scrutiny decay requires a "quiet period" (no corrupt choices) since the last raise.
+                _state.LastScrutinyRaisedTime = CampaignTime.Now;
             }
 
-            LogTrackChange("Heat", oldValue, _state.Heat, reason);
+            LogTrackChange("Scrutiny", oldValue, _state.Scrutiny, reason);
+            CheckThresholdCrossing("Scrutiny", oldValue, _state.Scrutiny, new[] { 2, 4, 6, 8, 10 });
 
-            // Show UI notification for heat changes (only when increasing - "attention" from authorities)
-            if (_state.Heat != oldValue && delta > 0)
+            // Show UI notification for scrutiny changes (only when increasing - "attention" from authorities)
+            if (_state.Scrutiny != oldValue && delta > 0)
             {
-                var statusText = GetHeatStatus();
-                var color = _state.Heat >= EscalationThresholds.HeatShakedown
+                var statusText = GetScrutinyStatus();
+                var color = _state.Scrutiny >= EscalationThresholds.ScrutinyShakedown
                     ? TaleWorlds.Library.Colors.Red
                     : TaleWorlds.Library.Colors.Yellow;
-                var msg = new TaleWorlds.Localization.TextObject("{=esc_heat_changed}Heat increased (+{DELTA}) - Status: {STATUS}");
+                var msg = new TaleWorlds.Localization.TextObject("{=esc_scrutiny_changed}Scrutiny increased (+{DELTA}) - Status: {STATUS}");
                 msg.SetTextVariable("DELTA", delta);
                 msg.SetTextVariable("STATUS", statusText);
                 TaleWorlds.Library.InformationManager.DisplayMessage(
@@ -366,6 +563,7 @@ namespace Enlisted.Features.Escalation
             }
 
             LogTrackChange("Discipline", oldValue, _state.Discipline, reason);
+            CheckThresholdCrossing("Discipline", oldValue, _state.Discipline, new[] { 2, 4, 6, 8, 10 });
 
             // Show UI notification for discipline changes (only when increasing - problems brewing)
             if (_state.Discipline != oldValue && delta > 0)
@@ -384,33 +582,98 @@ namespace Enlisted.Features.Escalation
             EvaluateThresholdsAndQueueIfNeeded();
         }
 
-        public void ModifyLanceReputation(int delta, string reason = null)
+        public void ModifySoldierReputation(int delta, string reason = null)
         {
             if (!IsEnabled())
             {
                 return;
             }
 
-            var oldValue = _state.LanceReputation;
+            var oldValue = _state.SoldierReputation;
             var next = oldValue + delta;
-            _state.LanceReputation = Clamp(next, EscalationState.LanceReputationMin, EscalationState.LanceReputationMax);
-            LogTrackChange("LanceReputation", oldValue, _state.LanceReputation, reason);
+            _state.SoldierReputation = Clamp(next, EscalationState.SoldierReputationMin, EscalationState.SoldierReputationMax);
+            LogTrackChange("SoldierReputation", oldValue, _state.SoldierReputation, reason);
 
-            // Show UI notification for lance reputation changes
-            if (_state.LanceReputation != oldValue)
+            // Show UI notification for soldier reputation changes
+            if (_state.SoldierReputation != oldValue)
             {
-                var change = _state.LanceReputation - oldValue;
+                var change = _state.SoldierReputation - oldValue;
                 var sign = change > 0 ? "+" : "";
-                var statusText = GetLanceReputationStatus();
+                var statusText = GetSoldierReputationStatus();
                 var color = change > 0 ? TaleWorlds.Library.Colors.Cyan : TaleWorlds.Library.Colors.Yellow;
-                var msg = new TaleWorlds.Localization.TextObject("{=esc_rep_changed}Lance Reputation: {CHANGE} ({STATUS})");
+                var msg = new TaleWorlds.Localization.TextObject("{=esc_rep_changed}Soldier Reputation: {CHANGE} ({STATUS})");
                 msg.SetTextVariable("CHANGE", $"{sign}{change}");
                 msg.SetTextVariable("STATUS", statusText);
                 TaleWorlds.Library.InformationManager.DisplayMessage(
                     new TaleWorlds.Library.InformationMessage(msg.ToString(), color));
             }
 
+            // Report significant changes to news system
+            if (Math.Abs(delta) >= 10 && Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            {
+                string message = GetReputationChangeMessage("Soldier", delta, _state.SoldierReputation);
+                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddReputationChange(
+                    target: "Soldier",
+                    delta: delta,
+                    newValue: _state.SoldierReputation,
+                    message: message,
+                    dayNumber: (int)CampaignTime.Now.ToDays
+                );
+            }
+
             EvaluateThresholdsAndQueueIfNeeded();
+        }
+
+        public void ModifyLordReputation(int delta, string reason = null)
+        {
+            if (!IsEnabled())
+            {
+                return;
+            }
+
+            var oldValue = _state.LordReputation;
+            var next = oldValue + delta;
+            _state.LordReputation = Clamp(next, EscalationState.LordReputationMin, EscalationState.LordReputationMax);
+            LogTrackChange("LordReputation", oldValue, _state.LordReputation, reason);
+
+            // Report significant changes to news system
+            if (Math.Abs(delta) >= 10 && Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            {
+                string message = GetReputationChangeMessage("Lord", delta, _state.LordReputation);
+                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddReputationChange(
+                    target: "Lord",
+                    delta: delta,
+                    newValue: _state.LordReputation,
+                    message: message,
+                    dayNumber: (int)CampaignTime.Now.ToDays
+                );
+            }
+        }
+
+        public void ModifyOfficerReputation(int delta, string reason = null)
+        {
+            if (!IsEnabled())
+            {
+                return;
+            }
+
+            var oldValue = _state.OfficerReputation;
+            var next = oldValue + delta;
+            _state.OfficerReputation = Clamp(next, EscalationState.OfficerReputationMin, EscalationState.OfficerReputationMax);
+            LogTrackChange("OfficerReputation", oldValue, _state.OfficerReputation, reason);
+
+            // Report significant changes to news system
+            if (Math.Abs(delta) >= 10 && Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            {
+                string message = GetReputationChangeMessage("Officer", delta, _state.OfficerReputation);
+                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddReputationChange(
+                    target: "Officer",
+                    delta: delta,
+                    newValue: _state.OfficerReputation,
+                    message: message,
+                    dayNumber: (int)CampaignTime.Now.ToDays
+                );
+            }
         }
 
         public void ModifyMedicalRisk(int delta, string reason = null)
@@ -424,6 +687,7 @@ namespace Enlisted.Features.Escalation
             var next = oldValue + delta;
             _state.MedicalRisk = Clamp(next, EscalationState.MedicalRiskMin, EscalationState.MedicalRiskMax);
             LogTrackChange("MedicalRisk", oldValue, _state.MedicalRisk, reason);
+            CheckThresholdCrossing("MedicalRisk", oldValue, _state.MedicalRisk, new[] { 2, 3, 4, 5 });
             EvaluateThresholdsAndQueueIfNeeded();
         }
 
@@ -453,15 +717,15 @@ namespace Enlisted.Features.Escalation
             var cfg = ConfigurationManager.LoadEscalationConfig() ?? new EscalationConfig();
             var now = CampaignTime.Now;
 
-            // Heat: -1 per 7 days with no corrupt choices.
+            // Scrutiny: -1 per 7 days with no corrupt choices.
             {
-                var old = _state.Heat;
-                if (TryDecayDown(old, _state.LastHeatDecayTime, _state.LastHeatRaisedTime, cfg.HeatDecayIntervalDays, 1,
-                        EscalationState.HeatMin, EscalationState.HeatMax, now, out var updated, out var updatedTime))
+                var old = _state.Scrutiny;
+                if (TryDecayDown(old, _state.LastScrutinyDecayTime, _state.LastScrutinyRaisedTime, cfg.ScrutinyDecayIntervalDays, 1,
+                        EscalationState.ScrutinyMin, EscalationState.ScrutinyMax, now, out var updated, out var updatedTime))
                 {
-                    _state.Heat = updated;
-                    _state.LastHeatDecayTime = updatedTime;
-                    ModLogger.Debug(LogCategory, $"Heat decayed: {old} -> {updated}");
+                    _state.Scrutiny = updated;
+                    _state.LastScrutinyDecayTime = updatedTime;
+                    ModLogger.Debug(LogCategory, $"Scrutiny decayed: {old} -> {updated}");
                 }
             }
 
@@ -477,15 +741,15 @@ namespace Enlisted.Features.Escalation
                 }
             }
 
-            // Lance reputation: trends toward 0 by 1 per 14 days.
+            // Soldier reputation: trends toward 0 by 1 per 14 days.
             {
-                var old = _state.LanceReputation;
-                if (TryDecayTowardZero(old, _state.LastLanceReputationDecayTime, cfg.LanceReputationDecayIntervalDays, 1,
-                        EscalationState.LanceReputationMin, EscalationState.LanceReputationMax, now, out var updated, out var updatedTime))
+                var old = _state.SoldierReputation;
+                if (TryDecayTowardZero(old, _state.LastSoldierReputationDecayTime, cfg.SoldierReputationDecayIntervalDays, 1,
+                        EscalationState.SoldierReputationMin, EscalationState.SoldierReputationMax, now, out var updated, out var updatedTime))
                 {
-                    _state.LanceReputation = updated;
-                    _state.LastLanceReputationDecayTime = updatedTime;
-                    ModLogger.Debug(LogCategory, $"Lance reputation decayed: {old} -> {updated}");
+                    _state.SoldierReputation = updated;
+                    _state.LastSoldierReputationDecayTime = updatedTime;
+                    ModLogger.Debug(LogCategory, $"Soldier reputation decayed: {old} -> {updated}");
                 }
             }
         }
@@ -644,26 +908,26 @@ namespace Enlisted.Features.Escalation
 
         #region Readable status labels (for UI)
 
-        public string GetHeatStatus()
+        public string GetScrutinyStatus()
         {
-            var heat = _state.Heat;
-            if (heat <= 0)
+            var scrutiny = _state.Scrutiny;
+            if (scrutiny <= 0)
             {
                 return "Clean";
             }
-            if (heat <= 2)
+            if (scrutiny <= 2)
             {
                 return "Watched";
             }
-            if (heat <= 4)
+            if (scrutiny <= 4)
             {
                 return "Noticed";
             }
-            if (heat <= 6)
+            if (scrutiny <= 6)
             {
                 return "Hot";
             }
-            if (heat <= 9)
+            if (scrutiny <= 9)
             {
                 return "Burning";
             }
@@ -696,9 +960,9 @@ namespace Enlisted.Features.Escalation
             return "Breaking";
         }
 
-        public string GetLanceReputationStatus()
+        public string GetSoldierReputationStatus()
         {
-            var rep = _state.LanceReputation;
+            var rep = _state.SoldierReputation;
             if (rep >= 40)
             {
                 return "Bonded";
@@ -726,6 +990,58 @@ namespace Enlisted.Features.Escalation
             return "Hated";
         }
 
+        public string GetLordReputationStatus()
+        {
+            var rep = _state.LordReputation;
+            if (rep >= 80)
+            {
+                return "Celebrated";
+            }
+            if (rep >= 60)
+            {
+                return "Trusted";
+            }
+            if (rep >= 40)
+            {
+                return "Respected";
+            }
+            if (rep >= 20)
+            {
+                return "Promising";
+            }
+            if (rep >= 10)
+            {
+                return "Neutral";
+            }
+            return "Questionable";
+        }
+
+        public string GetOfficerReputationStatus()
+        {
+            var rep = _state.OfficerReputation;
+            if (rep >= 80)
+            {
+                return "Celebrated";
+            }
+            if (rep >= 60)
+            {
+                return "Trusted";
+            }
+            if (rep >= 40)
+            {
+                return "Respected";
+            }
+            if (rep >= 20)
+            {
+                return "Promising";
+            }
+            if (rep >= 10)
+            {
+                return "Neutral";
+            }
+            return "Questionable";
+        }
+
         public string GetMedicalRiskStatus()
         {
             var risk = _state.MedicalRisk;
@@ -750,6 +1066,40 @@ namespace Enlisted.Features.Escalation
 
         #endregion
 
+        #region Declined Promotion Tracking
+
+        /// <summary>
+        /// Records that the player declined a promotion to the specified tier.
+        /// The player must then request promotion via dialog.
+        /// </summary>
+        public void RecordDeclinedPromotion(int tier)
+        {
+            _declinedPromotions.Add(tier);
+            ModLogger.Info(LogCategory, $"Recorded declined promotion to tier {tier}");
+        }
+
+        /// <summary>
+        /// Checks if the player has previously declined promotion to the specified tier.
+        /// </summary>
+        public bool HasDeclinedPromotion(int tier)
+        {
+            return _declinedPromotions.Contains(tier);
+        }
+
+        /// <summary>
+        /// Clears the declined promotion flag for the specified tier.
+        /// Called when the player accepts the promotion via dialog.
+        /// </summary>
+        public void ClearDeclinedPromotion(int tier)
+        {
+            if (_declinedPromotions.Remove(tier))
+            {
+                ModLogger.Info(LogCategory, $"Cleared declined promotion flag for tier {tier}");
+            }
+        }
+
+        #endregion
+
         private static int Clamp(int value, int min, int max)
         {
             if (value < min)
@@ -768,6 +1118,114 @@ namespace Enlisted.Features.Escalation
 
             var why = string.IsNullOrWhiteSpace(reason) ? string.Empty : $" ({reason})";
             ModLogger.Info(LogCategory, $"{track}: {oldValue} -> {newValue}{why}");
+        }
+
+        /// <summary>
+        ///     Checks if any thresholds were crossed and triggers threshold events when crossed upward.
+        ///     Logs threshold crossings and queues appropriate events for delivery.
+        /// </summary>
+        private void CheckThresholdCrossing(string track, int oldValue, int newValue, int[] thresholds)
+        {
+            if (oldValue == newValue)
+            {
+                return;
+            }
+
+            foreach (var threshold in thresholds)
+            {
+                // Check if we crossed this threshold (either direction)
+                bool crossedUp = oldValue < threshold && newValue >= threshold;
+                bool crossedDown = oldValue >= threshold && newValue < threshold;
+
+                if (crossedUp)
+                {
+                    ModLogger.Info(LogCategory, $"{track} crossed threshold {threshold} (increased from {oldValue} to {newValue})");
+                    TryTriggerThresholdEvent(track, threshold);
+                }
+                else if (crossedDown)
+                {
+                    ModLogger.Info(LogCategory, $"{track} crossed threshold {threshold} (decreased from {oldValue} to {newValue})");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Attempts to trigger a threshold event when a track crosses a threshold upward.
+        /// Maps track name and threshold to event ID and queues the event if it exists.
+        /// </summary>
+        private void TryTriggerThresholdEvent(string track, int threshold)
+        {
+            // Map track name to event ID pattern
+            string eventId = track switch
+            {
+                "Scrutiny" => $"evt_scrutiny_{threshold}",
+                "Discipline" => $"evt_discipline_{threshold}",
+                "MedicalRisk" => $"evt_medical_{threshold}",
+                _ => null
+            };
+
+            if (string.IsNullOrEmpty(eventId))
+            {
+                return;
+            }
+
+            var evt = Content.EventCatalog.GetEvent(eventId);
+            if (evt != null && Content.EventDeliveryManager.Instance != null)
+            {
+                Content.EventDeliveryManager.Instance.QueueEvent(evt);
+                ModLogger.Info(LogCategory, $"Queued threshold event: {eventId}");
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, $"Threshold event not found: {eventId}");
+            }
+        }
+
+        /// <summary>
+        /// Generates a contextual message for a reputation change based on target and magnitude.
+        /// </summary>
+        private static string GetReputationChangeMessage(string target, int delta, int newValue)
+        {
+            if (delta >= 20)
+            {
+                return target switch
+                {
+                    "Lord" => "Your lord took special notice of your recent performance",
+                    "Officer" => "The captain publicly commended your work",
+                    "Soldier" => "The men respect you greatly after your recent actions",
+                    _ => $"{target} reputation significantly improved"
+                };
+            }
+            else if (delta >= 10)
+            {
+                return target switch
+                {
+                    "Lord" => "Your lord's confidence in you is growing",
+                    "Officer" => "You've impressed the officers with your recent work",
+                    "Soldier" => "Your standing with the men has improved",
+                    _ => $"{target} reputation improved"
+                };
+            }
+            else if (delta <= -20)
+            {
+                return target switch
+                {
+                    "Lord" => "You've seriously disappointed your lord",
+                    "Officer" => "The officers question your competence",
+                    "Soldier" => "The men have lost respect for you",
+                    _ => $"{target} reputation significantly damaged"
+                };
+            }
+            else // delta <= -10
+            {
+                return target switch
+                {
+                    "Lord" => "Your lord's confidence in you has declined",
+                    "Officer" => "The officers are disappointed in your recent performance",
+                    "Soldier" => "Your standing with the men has suffered",
+                    _ => $"{target} reputation declined"
+                };
+            }
         }
     }
 }

@@ -1,0 +1,411 @@
+{
+  "schemaVersion": 2,
+  "category": "map_incident",
+  "description": "Map incidents triggered when leaving settlements (leaving_settlement context). 6 total incidents.",
+  "events": [
+    {
+      "id": "mi_leave_hangover",
+      "category": "map_incident",
+      "titleId": "mi_leave_hangover_title",
+      "title": "Morning After",
+      "setupId": "mi_leave_hangover_setup",
+      "setup": "The company is preparing to march. Your head pounds like a war drum, and every ray of sunlight feels like a blade. You drank too much last night, and now you're paying for it.",
+      "requirements": {
+        "context": "leaving_settlement",
+        "role": "Any",
+        "tier": { "min": 1, "max": 5 }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "push_through",
+          "textId": "mi_leave_hangover_push",
+          "text": "Grit your teeth and march",
+          "resultTextId": "mi_leave_hangover_push_result",
+          "resultText": "You force yourself forward, step by agonizing step. The day is miserable, but you don't fall behind. The sergeant notices your suffering but says nothing.",
+          "risk": "moderate",
+          "effects": {
+            "companyNeeds": {
+              "Rest": -5
+            },
+            "officerRep": 3
+          }
+        },
+        {
+          "id": "seek_remedy",
+          "textId": "mi_leave_hangover_remedy",
+          "text": "Find a remedy from the surgeon",
+          "requirements": {
+            "minSkills": {
+              "Medicine": 25
+            }
+          },
+          "resultTextId": "mi_leave_hangover_remedy_result",
+          "resultText": "The surgeon gives you a bitter tonic and a knowing look. 'This will help,' he says, 'but next time, drink less.' The relief is immediate.",
+          "tooltip": "Requires Medicine 25+",
+          "risk": "safe",
+          "effects": {
+            "gold": -5,
+            "companyNeeds": {
+              "Rest": 5
+            }
+          }
+        },
+        {
+          "id": "rest_first",
+          "textId": "mi_leave_hangover_rest",
+          "text": "Ask for a delay to recover",
+          "resultTextId": "mi_leave_hangover_rest_result",
+          "resultText": "The sergeant is not amused. 'March now or face discipline,' he growls. You join the column, shame burning worse than the headache.",
+          "risk": "risky",
+          "effects": {
+            "officerRep": -8,
+            "soldierRep": 3,
+            "discipline": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_leave_stolen",
+      "category": "map_incident",
+      "titleId": "mi_leave_stolen_title",
+      "title": "Something's Missing",
+      "setupId": "mi_leave_stolen_setup",
+      "setup": "As you pack your gear, you realize your coin purse is lighter than it should be. Someone helped themselves while you slept—or while you drank.",
+      "requirements": {
+        "context": "leaving_settlement",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "accept_loss",
+          "textId": "mi_leave_stolen_accept",
+          "text": "Accept the loss and move on",
+          "resultTextId": "mi_leave_stolen_accept_result",
+          "resultText": "Coin comes and goes. You've lost worse. You shoulder your pack and join the column, poorer but wiser.",
+          "risk": "safe",
+          "effects": {
+            "gold": -25,
+            "traitXp": {
+              "Calculating": 3
+            }
+          }
+        },
+        {
+          "id": "investigate_theft",
+          "textId": "mi_leave_stolen_investigate",
+          "text": "Investigate before leaving",
+          "requirements": {
+            "minSkills": {
+              "Scouting": 35
+            }
+          },
+          "resultTextId": "mi_leave_stolen_investigate_result",
+          "resultText": "You retrace your steps and find the thief—a local cutpurse, still counting your coin. He drops everything and runs. Most of your money is recovered.",
+          "tooltip": "Requires Scouting 35+",
+          "risk": "moderate",
+          "rewards": {
+            "skillXp": {
+              "Scouting": 15
+            }
+          },
+          "effects": {
+            "gold": -5
+          }
+        },
+        {
+          "id": "accuse_comrade",
+          "textId": "mi_leave_stolen_accuse",
+          "text": "Accuse a suspicious comrade",
+          "resultTextId": "mi_leave_stolen_accuse_result",
+          "resultText": "You confront the soldier you suspect. He denies it furiously, and others step in. Whether he's guilty or not, you've made an enemy—and you're still short on coin.",
+          "risk": "risky",
+          "effects": {
+            "gold": -25,
+            "soldierRep": -10,
+            "discipline": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_leave_farewell",
+      "category": "map_incident",
+      "titleId": "mi_leave_farewell_title",
+      "title": "The Farewell",
+      "setupId": "mi_leave_farewell_setup",
+      "setup": "Someone you met during your stay doesn't want you to go. They stand at the edge of town, watching the column form. A wave, a lingering look—this is the life of a soldier.",
+      "requirements": {
+        "context": "leaving_settlement",
+        "role": "Any",
+        "tier": { "min": 1, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "linger",
+          "textId": "mi_leave_farewell_linger",
+          "text": "Linger for a proper goodbye",
+          "resultTextId": "mi_leave_farewell_linger_result",
+          "resultText": "You break from the column for a moment. Words are exchanged, perhaps a touch. The sergeant shouts your name, and duty reclaims you.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Morale": 5
+            },
+            "officerRep": -3
+          }
+        },
+        {
+          "id": "quick_goodbye",
+          "textId": "mi_leave_farewell_quick",
+          "text": "A quick wave and keep moving",
+          "resultTextId": "mi_leave_farewell_quick_result",
+          "resultText": "You raise a hand, hold their gaze for a moment, and then turn back to the road. It's enough. It has to be.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Morale": 3
+            }
+          }
+        },
+        {
+          "id": "silent_departure",
+          "textId": "mi_leave_farewell_silent",
+          "text": "Leave without looking back",
+          "resultTextId": "mi_leave_farewell_silent_result",
+          "resultText": "You keep your eyes on the road ahead. Attachments are a liability. The march continues, and the town disappears behind you.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_leave_intel",
+      "category": "map_incident",
+      "titleId": "mi_leave_intel_title",
+      "title": "Road Ahead",
+      "setupId": "mi_leave_intel_setup",
+      "setup": "A traveling merchant offers information about the road ahead—bandits, broken bridges, enemy patrols. Useful knowledge, but he wants coin for it.",
+      "requirements": {
+        "context": "leaving_settlement",
+        "role": "Any",
+        "tier": { "min": 2, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 12,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "pay_details",
+          "textId": "mi_leave_intel_pay",
+          "text": "Pay for the information",
+          "resultTextId": "mi_leave_intel_pay_result",
+          "resultText": "You hand over coin, and the merchant talks. His information proves accurate—the patrol avoids an ambush, and the company saves time. Money well spent.",
+          "risk": "safe",
+          "effects": {
+            "gold": -15,
+            "officerRep": 5
+          }
+        },
+        {
+          "id": "scout_yourself",
+          "textId": "mi_leave_intel_scout",
+          "text": "Scout the road yourself",
+          "requirements": {
+            "minSkills": {
+              "Scouting": 45
+            }
+          },
+          "resultTextId": "mi_leave_intel_scout_result",
+          "resultText": "You ride ahead of the column and see what you need to see. It takes time, but you don't have to trust a stranger's word—or pay for it.",
+          "tooltip": "Requires Scouting 45+",
+          "risk": "risky",
+          "risk_chance": 75,
+          "rewards": {
+            "skillXp": {
+              "Scouting": 20
+            }
+          },
+          "effects": {
+            "officerRep": 8
+          },
+          "effects_failure": {
+            "hpChange": -15,
+            "scrutiny": 1
+          },
+          "failure_resultText": "Your scouting draws attention from enemy pickets. You escape, but barely, and with fresh wounds."
+        },
+        {
+          "id": "trust_luck",
+          "textId": "mi_leave_intel_luck",
+          "text": "Trust to luck and save your coin",
+          "resultTextId": "mi_leave_intel_luck_result",
+          "resultText": "You wave the merchant off. The road will reveal its secrets soon enough. As the column marches, you notice the merchant approaching an officer instead. Someone else will get credit for that intelligence. Your coin stays in your purse, but so does your opportunity.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": -2,
+            "traitXp": {
+              "Calculating": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_leave_stowaway",
+      "category": "map_incident",
+      "titleId": "mi_leave_stowaway_title",
+      "title": "The Stowaway",
+      "setupId": "mi_leave_stowaway_setup",
+      "setup": "You spot movement in one of the supply wagons—someone is hiding, trying to leave town with the company. A runaway, perhaps, or a criminal fleeing justice.",
+      "requirements": {
+        "context": "leaving_settlement",
+        "role": "Any",
+        "tier": { "min": 2, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "turn_in",
+          "textId": "mi_leave_stowaway_turn",
+          "text": "Turn them in to the officers",
+          "resultTextId": "mi_leave_stowaway_turn_result",
+          "resultText": "You drag the stowaway out and call for the sergeant. The wagon is searched, the intruder ejected. Proper procedure, by the book.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 8,
+            "traitXp": {
+              "Honor": 3
+            }
+          }
+        },
+        {
+          "id": "help_hide",
+          "textId": "mi_leave_stowaway_help",
+          "text": "Help hide them better",
+          "resultTextId": "mi_leave_stowaway_help_result",
+          "resultText": "You shift some crates to provide better cover and say nothing. Everyone deserves a second chance. Or maybe you just remember what desperation feels like.",
+          "risk": "risky",
+          "effects": {
+            "scrutiny": 3,
+            "traitXp": {
+              "Mercy": 8
+            }
+          }
+        },
+        {
+          "id": "ignore_stowaway",
+          "textId": "mi_leave_stowaway_ignore",
+          "text": "Pretend you didn't see anything",
+          "resultTextId": "mi_leave_stowaway_ignore_result",
+          "resultText": "You look away and keep walking. Not your problem, not your concern. Whatever happens, you didn't see a thing.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_leave_purchase",
+      "category": "map_incident",
+      "titleId": "mi_leave_purchase_title",
+      "title": "Last-Minute Purchase",
+      "setupId": "mi_leave_purchase_setup",
+      "setup": "A merchant catches you as the column forms. 'Wait, soldier! I have just what you need—good price, won't find better on the road.' He waves a bundle of quality goods.",
+      "requirements": {
+        "context": "leaving_settlement",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 8,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "buy_quick",
+          "textId": "mi_leave_purchase_buy",
+          "text": "Make a quick purchase",
+          "resultTextId": "mi_leave_purchase_buy_result",
+          "resultText": "You hand over coin and take the goods. The quality is decent—useful supplies that will serve you well on the road ahead.",
+          "risk": "safe",
+          "effects": {
+            "gold": -20,
+            "companyNeeds": {
+              "Supplies": 5
+            }
+          }
+        },
+        {
+          "id": "haggle_quick",
+          "textId": "mi_leave_purchase_haggle",
+          "text": "Haggle for a better deal",
+          "requirements": {
+            "minSkills": {
+              "Trade": 30
+            }
+          },
+          "resultTextId": "mi_leave_purchase_haggle_result",
+          "resultText": "'Half that,' you say, already turning away. 'Fine, fine!' the merchant yelps. A soldier who knows his prices is a rare thing.",
+          "tooltip": "Requires Trade 30+",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Trade": 10
+            }
+          },
+          "effects": {
+            "gold": -10,
+            "companyNeeds": {
+              "Supplies": 5
+            }
+          }
+        },
+        {
+          "id": "walk_on",
+          "textId": "mi_leave_purchase_walk",
+          "text": "Walk on without stopping",
+          "resultTextId": "mi_leave_purchase_walk_result",
+          "resultText": "You shake your head and keep moving. The merchant shrugs and turns to the next soldier. Three days later, when supplies run low and prices double, you wonder if you made the right choice. But your coin is still yours.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 2
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

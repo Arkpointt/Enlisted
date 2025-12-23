@@ -1,25 +1,23 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Mod.Core.Logging;
 using Newtonsoft.Json;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Conditions
 {
     /// <summary>
-    /// Phase 5: Player condition system (injury/illness/exhaustion).
+    /// Manages the player condition system, including injuries, illnesses, and exhaustion.
     ///
-    /// - Feature-flagged (player_conditions.enabled)
-    /// - Safe persistence (only primitives/strings)
-    /// - Enlisted-only behavior
-    /// - Integrates with Phase 4 MedicalRisk escalation (untreated -> risk rises; treatment -> resets)
+    /// This system is feature-flagged and only active while the player is enlisted. 
+    /// It uses safe persistence by storing only primitives and strings, and integrates 
+    /// with the MedicalRisk escalation track where untreated conditions increase risk 
+    /// and treatment resets it.
     /// </summary>
     public sealed class PlayerConditionBehavior : CampaignBehaviorBase
     {
@@ -171,9 +169,7 @@ namespace Enlisted.Features.Conditions
                 _state.IllnessDaysRemaining = Math.Max(0, _state.IllnessDaysRemaining - recoveryTicks);
             }
 
-            // Phase 4 medical risk integration:
-            // - Untreated conditions raise medical risk slowly
-            // - Treatment resets medical risk (see ApplyTreatment)
+            // Medical risk rises slowly when conditions are untreated. Treatment resets it (see ApplyTreatment).
             if ((_state.HasInjury || _state.HasIllness) && !_state.UnderMedicalCare)
             {
                 EscalationManager.Instance?.ModifyMedicalRisk(1, "condition_untreated");
@@ -345,9 +341,9 @@ namespace Enlisted.Features.Conditions
 
             try
             {
-                var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new Enlisted.Features.Assignments.Core.PlayerConditionsConfig();
+                var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new Mod.Core.Config.PlayerConditionsConfig();
                 var rel = cfg.DefinitionsFile ?? "Conditions\\condition_defs.json";
-                var path = EnlistedConfig.GetModuleDataPathForConsumers(rel);
+                var path = Path.Combine(EnlistedConfig.GetModuleDataPathForConsumers(), rel);
                 if (!File.Exists(path))
                 {
                     ModLogger.Warn(LogCategory, $"Condition definitions missing at: {path}");

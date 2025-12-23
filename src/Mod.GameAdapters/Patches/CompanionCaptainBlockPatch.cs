@@ -1,5 +1,5 @@
-using System;
-using Enlisted.Features.CommandTent.Core;
+﻿using System;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;

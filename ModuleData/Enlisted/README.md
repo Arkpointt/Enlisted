@@ -1,44 +1,464 @@
-# ModuleData/Enlisted (Blueprint)
+# Enlisted Mod Configuration Guide
 
-This folder holds the **shipping, editable data** for Enlisted.
+**For Players:** This folder contains all the configuration files and content data that control how the Enlisted mod works. You can adjust settings, tune gameplay, and understand how the mod's systems operate.
 
-Principles:
-- **Content is data**: where possible, gameplay knobs and story/action content live in JSON, not hardcoded.
-- **Localization lives in XML**: player-facing text is in `ModuleData/Languages/enlisted_strings.xml` and referenced by `{=id}`.
+---
 
-## What’s here (shipping)
+## Quick Navigation
 
-### Core configs (JSON)
-| File | Purpose |
+**Jump to:**
+- [Summary](#summary) - What this folder contains
+- [Index by Theme](#index-by-theme) - Find configs by topic
+- [Config Files Reference](#config-files-reference) - Detailed file descriptions
+- [Content Files Reference](#content-files-reference) - Events, orders, decisions
+- [How to Customize](#how-to-customize) - Safe editing tips
+
+---
+
+## Summary
+
+This folder (`Modules\Enlisted\ModuleData\Enlisted\`) contains:
+
+1. **Configuration Files** - Control gameplay rules, pacing, and features
+2. **Content Files** - Events, orders, decisions, and incidents (all in JSON)
+3. **Localization** - Player-facing text in `../Languages/enlisted_strings.xml`
+
+All files use JSON format and can be edited with any text editor. Changes take effect when you restart the game.
+
+**Important:** Always backup files before editing. Invalid JSON will cause the mod to fail loading.
+
+---
+
+## Index by Theme
+
+### XP & Progression
+- **[progression_config.json](#progression_configjson)** - Tier XP requirements, rank names, formation selection
+- **[enlisted_config.json](#enlisted_configjson)** → `xp_sources` - Daily XP, battle XP, kill XP
+- **[events_training.json](#events-folder)** - Training events and skill rewards
+- **[events_promotion.json](#events-folder)** - Promotion events and proving challenges
+
+### Retirement & Service Terms
+- **[enlisted_config.json](#enlisted_configjson)** → `retirement` section:
+  - First term length (default: 252 days)
+  - Renewal term length (default: 84 days)
+  - Discharge bonuses and penalties
+  - Re-enlistment bonuses
+  - Pension rates (honorable/veteran)
+  - Severance pay
+  - Probation rules for re-entry
+
+### Pay & Wages
+- **[enlisted_config.json](#enlisted_configjson)** → `finance` section:
+  - Payday interval (default: 12 days)
+  - Wage formula (base, tier multipliers, level scaling)
+  - Army bonus multiplier
+- **[progression_config.json](#progression_configjson)** → `wage_system`:
+  - Base daily wage
+  - Duty assignment multipliers (scout, engineer, quartermaster, etc.)
+  - Maximum wage caps
+- **[events_pay_tension.json](#events-folder)** - Late pay events
+- **[events_pay_mutiny.json](#events-folder)** - Mutiny events when pay is very late
+- **[events_pay_loyal.json](#events-folder)** - Loyalty events during pay issues
+
+### Equipment & Quartermaster
+- **[equipment_pricing.json](#equipment_pricingjson)** - Quartermaster pricing and retirement costs
+- **[enlisted_config.json](#enlisted_configjson)** → `quartermaster`:
+  - Soldier tax (default: 1.2x market price)
+  - Buyback rate (default: 0.5x)
+  - Officer stock tax (default: 1.35x)
+- **[enlisted_config.json](#enlisted_configjson)** → `camp_life`:
+  - QM pricing modifiers based on company morale/logistics
+  - Purchase/buyback rates when conditions are fine/tense/sour/predatory
+- **[events_duty_quartermaster.json](#events-folder)** - Quartermaster duty events
+
+### Camp Life & Activities
+- **[enlisted_config.json](#enlisted_configjson)** → `camp_life`:
+  - Enabled/disabled toggle
+  - Threshold values for high/low conditions
+  - QM pricing modifiers
+- **[enlisted_config.json](#enlisted_configjson)** → `camp_activities`:
+  - Enabled/disabled toggle
+  - Activities definition file location
+- **[camp_events.json](#events-folder)** - Camp context events
+- **[events_general.json](#events-folder)** - General camp and march events
+
+### Events & Pacing
+- **[enlisted_config.json](#enlisted_configjson)** → `decision_events.pacing`:
+  - Max events per day/week
+  - Minimum hours between events
+  - Event window (3-5 days)
+  - Cooldown periods
+  - Evaluation hours (when events fire)
+  - Quiet day system
+- **[events_decisions.json](#events-folder)** - All player-initiated decisions
+- **[events_player_decisions.json](#events-folder)** - Additional player decisions
+
+### Duties & Orders
+- **[Orders folder](#orders-folder)** - Military orders by tier (T1-T3, T4-T6, T7-T9)
+- **[events_duty_*.json](#events-folder)** - Duty-specific events for each role:
+  - Armorer, Scout, Field Medic, Quartermaster
+  - Engineer, Lookout, Messenger, Runner
+  - Boatswain, Navigator (War Sails DLC)
+
+### Reputation & Discipline
+- **[enlisted_config.json](#enlisted_configjson)** → `escalation`:
+  - Scrutiny decay interval (default: 7 days)
+  - Discipline decay interval (default: 14 days)
+  - Soldier rep decay interval (default: 14 days)
+  - Medical risk decay interval (default: 1 day)
+  - Threshold event cooldown (default: 7 days)
+- **[events_escalation_thresholds.json](#events-folder)** - Events triggered by high scrutiny/discipline/medical risk
+
+### Retinue & Commander Track
+- **[retinue_config.json](#retinue_configjson)** - Retinue capacity, trickle rates, economics
+- **[enlisted_config.json](#enlisted_configjson)** → `gameplay.reserve_troop_threshold` - Troop threshold for retinue
+
+### Onboarding & Discharge
+- **[events_onboarding.json](#events-folder)** - New recruit introduction chain
+- **[enlisted_config.json](#enlisted_configjson)** → `retirement` - Discharge rules and bonuses
+
+### Map Incidents
+- **[incidents_battle.json](#events-folder)** - After-battle events
+- **[incidents_town.json](#events-folder)** - Town/settlement events
+- **[incidents_village.json](#events-folder)** - Village events
+- **[incidents_siege.json](#events-folder)** - Siege events
+- **[incidents_leaving.json](#events-folder)** - Leaving settlement events
+- **[incidents_waiting.json](#events-folder)** - Waiting/idle events
+
+### Personas & Squad Identity
+- **[enlisted_config.json](#enlisted_configjson)** → `lance_personas`:
+  - Enabled/disabled toggle
+  - Female character chances by role
+  - Seed salt for randomization
+
+### Player Conditions (Injury/Illness)
+- **[enlisted_config.json](#enlisted_configjson)** → `player_conditions`:
+  - Enabled/disabled toggle
+  - Treatment multipliers (basic, thorough, herbal)
+  - Exhaustion system toggle
+  - Condition definitions file location
+
+---
+
+## Config Files Reference
+
+### enlisted_config.json
+
+**Purpose:** Master configuration file controlling all major systems and gameplay tuning.
+
+**Key Sections:**
+
+| Section | What It Controls |
+|---------|------------------|
+| `system_info` | Mod version, compatible game versions |
+| `gameplay` | Reserve troop threshold, desertion grace period, leave duration |
+| `quartermaster` | Soldier tax, buyback rate, officer stock pricing |
+| `retirement` | Service terms, discharge bonuses, pensions, probation rules |
+| `finance` | Payday interval, wage formula, clan tooltip |
+| `camp_life` | Camp life system toggle, thresholds, QM pricing modifiers |
+| `escalation` | Reputation/discipline decay rates, threshold event cooldowns |
+| `lance_personas` | Squad identity system, female character chances |
+| `player_conditions` | Injury/illness system, treatment multipliers |
+| `camp_activities` | Camp activities system toggle |
+| `decision_events` | Event system toggle, pacing rules, tier gates |
+
+**Most Common Edits:**
+- `retirement.first_term_days` - Change how long your first service term lasts
+- `finance.payday_interval_days` - Change how often you get paid
+- `decision_events.pacing.max_per_day` - Control event frequency
+- `camp_life.enabled` - Toggle camp life simulation on/off
+- `escalation.enabled` - Toggle reputation/discipline systems on/off
+
+### progression_config.json
+
+**Purpose:** Controls tier progression, rank names, and wage scaling.
+
+**Key Sections:**
+
+| Section | What It Controls |
+|---------|------------------|
+| `tier_progression.requirements` | XP needed for each tier (1-9), rank names, estimated duration |
+| `tier_progression.formation_selection` | When you choose your formation, cooldowns, free changes |
+| `culture_ranks` | Culture-specific rank names (Empire, Vlandia, Sturgia, etc.) |
+| `wage_system` | Base wage formula, duty assignment multipliers, army bonuses |
+| `xp_sources` | Daily XP, battle XP, XP per kill |
+| `promotion_benefits` | Equipment access, officer/commander track unlocks |
+| `track_definitions` | Enlisted/Officer/Commander track definitions |
+
+**Most Common Edits:**
+- `tier_progression.requirements[].xp_required` - Change XP needed for each tier
+- `wage_system.assignment_multipliers` - Adjust pay for different duties
+- `xp_sources.daily_base` - Change base daily XP gain
+- `formation_selection.change_cooldown_days` - How often you can change formations
+
+### equipment_pricing.json
+
+**Purpose:** Controls quartermaster pricing and retirement equipment costs.
+
+**Structure:** Contains pricing rules for equipment purchases and retirement gear stripping.
+
+**Most Common Edits:**
+- Adjust pricing multipliers for equipment tiers
+- Change retirement equipment buyback rates
+
+### retinue_config.json
+
+**Purpose:** Controls retinue system for commander-tier players.
+
+**Key Settings:**
+- Retinue capacity by tier
+- Troop trickle rates
+- Economic costs for maintaining retinue
+
+### strategic_context_config.json
+
+**Purpose:** Defines war stance contexts and strategic situations.
+
+**Structure:** War stance definitions used by the strategic context system.
+
+### menu_config.json
+
+**Purpose:** Game menu definitions (future use).
+
+**Note:** Currently used for menu structure definitions.
+
+### settings.json
+
+**Purpose:** Logging levels and debug flags.
+
+**Most Common Edits:**
+- Adjust logging verbosity
+- Enable/disable debug features
+
+---
+
+## Content Files Reference
+
+### Events Folder
+
+Contains all narrative events triggered by context, role, or player action.
+
+**Event Files:**
+
+| File | Content | Count |
+|------|---------|-------|
+| `events_general.json` | Universal camp/march events | ~50+ |
+| `events_training.json` | Training decisions and outcomes | ~40+ |
+| `events_onboarding.json` | New recruit introduction chain | ~20+ |
+| `events_promotion.json` | Promotion events | ~8 |
+| `events_escalation_thresholds.json` | Scrutiny/Discipline/Medical threshold events | 14 |
+| `events_pay_tension.json` | Pay tension events | ~10 |
+| `events_pay_mutiny.json` | Mutiny events | ~10 |
+| `events_pay_loyal.json` | Loyalty events | ~8 |
+| `events_decisions.json` | Player-initiated decisions | ~30+ |
+| `events_player_decisions.json` | Additional player decisions | ~10+ |
+| `camp_events.json` | Camp context events | ~8 |
+| `muster_events.json` | Muster cycle events | ~6 |
+
+**Duty Events (10 files):**
+
+| File | Role |
+|------|------|
+| `events_duty_armorer.json` | Armorer duty events |
+| `events_duty_scout.json` | Scout duty events |
+| `events_duty_field_medic.json` | Field Medic duty events |
+| `events_duty_quartermaster.json` | Quartermaster duty events |
+| `events_duty_engineer.json` | Engineer duty events |
+| `events_duty_lookout.json` | Lookout duty events |
+| `events_duty_messenger.json` | Messenger duty events |
+| `events_duty_runner.json` | Runner duty events |
+| `events_duty_boatswain.json` | Boatswain duty events (War Sails DLC) |
+| `events_duty_navigator.json` | Navigator duty events (War Sails DLC) |
+
+**Map Incidents:**
+
+| File | Trigger |
 |------|---------|
-| `settings.json` | Logging levels + runtime behavior flags |
-| `enlisted_config.json` | Feature flags + tuning (camp life, escalation, personas, conditions, activities) plus finance/retirement/gameplay |
-| `progression_config.json` | Tier thresholds + rank names |
-| `duties_system.json` | Duties/professions + formation training tuning |
-| `equipment_kits.json` | Troop equipment pools for Quartermaster |
-| `equipment_pricing.json` | Pricing multipliers and tuning |
-| `lances_config.json` | Lance styles, lance names, and culture mapping |
+| `incidents_battle.json` | After battle ends |
+| `incidents_town.json` | Entering/leaving towns |
+| `incidents_village.json` | Entering/leaving villages |
+| `incidents_siege.json` | During sieges |
+| `incidents_leaving.json` | Leaving settlements |
+| `incidents_waiting.json` | While waiting/idle |
 
-### Content folders (JSON)
-| Path | Purpose |
-|------|---------|
-| `StoryPacks/LanceLife/*.json` | Lance Life stories (data-driven incidents) |
-| `LancePersonas/name_pools.json` | Name pools for text-only lance personas |
-| `Conditions/condition_defs.json` | Player condition definitions (injury/illness) |
-| `Activities/activities.json` | Camp Activities menu actions (data-driven XP/fatigue) |
-| `Events/*.json` | Lance Life Events catalog packs (delivery via menu/inquiry/incident) |
-| `Events/schema_version.json` | Schema marker for Events packs |
+### Orders Folder
 
-### Event Packs
-| File | Purpose |
-|------|---------|
-| `events_general.json` | General camp and training events |
-| `events_onboarding.json` | New recruit onboarding chain |
-| `events_training.json` | Formation training events |
-| `events_pay_tension.json` | Pay grumbling, theft, confrontation, mutiny brewing |
-| `events_pay_loyal.json` | Loyal path missions (collect debts, escort, raid) |
-| `events_pay_mutiny.json` | Desertion planning, mutiny resolution chains |
+Contains military orders from your chain of command.
 
-## Where behavior is documented
-Docs are the source-of-truth for feature behavior (not this file):
-- `docs/Features/index.md`
+**Order Files:**
+
+| File | Tier Range | Count |
+|------|------------|-------|
+| `orders_t1_t3.json` | Basic Soldier (T1-T3) | 6 |
+| `orders_t4_t6.json` | Specialist (T4-T6) | 6 |
+| `orders_t7_t9.json` | Leadership (T7-T9) | 5 |
+
+### Decisions Folder
+
+Contains player-initiated decisions from camp menu.
+
+**Note:** Most decisions are now in `Events/events_decisions.json` and `Events/events_player_decisions.json`.
+
+---
+
+## How to Customize
+
+### Safe Editing Tips
+
+1. **Always backup first** - Copy the file before editing
+2. **Use a proper text editor** - Notepad++, VS Code, or similar (NOT Microsoft Word)
+3. **Validate JSON** - Use an online JSON validator to check for syntax errors
+4. **Test incrementally** - Make small changes and test in-game
+5. **Check logs** - If the mod fails to load, check `Modules\Enlisted\Debugging\Session-A_*.log`
+
+### Common Customizations
+
+**Make service terms shorter:**
+```json
+// In enlisted_config.json → retirement section
+"first_term_days": 126,  // Changed from 252 (half the time)
+"renewal_term_days": 42,  // Changed from 84 (half the time)
+```
+
+**Get paid more often:**
+```json
+// In enlisted_config.json → finance section
+"payday_interval_days": 6,  // Changed from 12 (twice as often)
+```
+
+**Level up faster:**
+```json
+// In progression_config.json → xp_sources section
+"daily_base": 50,  // Changed from 25 (double XP)
+"battle_participation": 50,  // Changed from 25
+"xp_per_kill": 4  // Changed from 2
+```
+
+**Reduce event frequency:**
+```json
+// In enlisted_config.json → decision_events.pacing section
+"max_per_day": 1,  // Changed from 2
+"max_per_week": 4,  // Changed from 8
+"min_hours_between": 12  // Changed from 6
+```
+
+**Disable camp life simulation:**
+```json
+// In enlisted_config.json → camp_life section
+"enabled": false  // Changed from true
+```
+
+**Adjust quartermaster prices:**
+```json
+// In enlisted_config.json → quartermaster section
+"soldier_tax": 1.0,  // Changed from 1.2 (no markup)
+"buyback_rate": 0.75  // Changed from 0.5 (better buyback)
+```
+
+### Event Content Editing
+
+Events use a standardized JSON schema. Each event has:
+- `event_id` - Unique identifier
+- `titleId` / `title` - Event title (localized/fallback)
+- `setupId` / `setup` - Event description (localized/fallback)
+- `requirements` - Conditions for the event to fire
+- `options` - Player choices and their effects
+
+**Example event structure:**
+```json
+{
+  "event_id": "evt_example",
+  "titleId": "evt_example_title",
+  "title": "Fallback Title",
+  "setupId": "evt_example_setup",
+  "setup": "Fallback description text.",
+  "requirements": { "tier_min": 1, "context": ["camp"] },
+  "options": [
+    {
+      "option_id": "opt_1",
+      "textId": "evt_example_opt1",
+      "text": "Option text",
+      "effects": { "soldierRep": 5, "officerRep": 0 }
+    }
+  ]
+}
+```
+
+**Effect fields you can use:**
+- `soldierRep`, `officerRep`, `lordRep` - Reputation changes
+- `scrutiny`, `discipline` - Escalation meter changes
+- `gold` - Gold reward/penalty
+- `xp` - XP reward
+- `skill_xp` - Skill XP (e.g., `{"Scouting": 50}`)
+- `trait_xp` - Trait XP (e.g., `{"Valor": 10}`)
+- `company_needs` - Company need changes (e.g., `{"Readiness": -10}`)
+- `medical_risk` - Medical risk escalation
+- `denars` - Gold reward/penalty
+- `renown` - Renown reward/penalty
+- `hp_loss` - Player HP damage
+- `troop_loss` - Troop casualties (e.g., `{"min": 1, "max": 3}`)
+
+**Text placeholders you can use:**
+- Player: `{PLAYER_NAME}`, `{PLAYER_RANK}`
+- NCO/Officers: `{SERGEANT}`, `{SERGEANT_NAME}`, `{OFFICER_NAME}`, `{CAPTAIN_NAME}`
+- Soldiers: `{SOLDIER_NAME}`, `{COMRADE_NAME}`, `{VETERAN_1_NAME}`, `{RECRUIT_NAME}`
+- Lord/Faction: `{LORD_NAME}`, `{LORD_TITLE}`, `{FACTION_NAME}`, `{KINGDOM_NAME}`
+- Location: `{SETTLEMENT_NAME}`, `{COMPANY_NAME}`
+
+---
+
+## Localization
+
+All player-facing text is in `../Languages/enlisted_strings.xml`.
+
+**String ID Prefixes:**
+- `evt_*` - Event text
+- `dec_*` - Decision text
+- `ord_*` - Order text
+- `inc_*` - Map incident text
+- `ui_*` - UI labels
+
+To add translations, see the [Translation Guide](../Languages/README.md).
+
+---
+
+## Schema & Documentation
+
+**Event Schema:** Events use schema version 2. See `Events/schema_version.json`.
+
+**Full Documentation:**
+- Complete content catalog: `docs/Content/content-index.md`
+- Event system reference: `docs/Features/Content/event-system-schemas.md`
+- Content system architecture: `docs/Features/Content/content-system-architecture.md`
+
+---
+
+## Content Counts
+
+| Category | Count |
+|----------|-------|
+| Orders | 17 |
+| Decisions | 34+ |
+| Events | 100+ |
+| Map Incidents | 45+ |
+
+---
+
+## Support
+
+**If something breaks:**
+1. Check `Modules\Enlisted\Debugging\Session-A_*.log` for errors
+2. Restore your backup
+3. Validate your JSON syntax
+4. Report issues with the error code from the log
+
+**Common error codes:**
+- `E-CONFIG-*` - Configuration file errors
+- `E-EVENT-*` - Event system errors
+- `E-SAVELOAD-*` - Save/load errors
+
+---
+
+**Last Updated:** 2025-12-23  
+**Mod Version:** 0.9.0  
+**For full documentation, see:** `docs/index.md`

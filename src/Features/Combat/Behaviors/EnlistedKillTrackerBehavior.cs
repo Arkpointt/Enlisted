@@ -3,7 +3,7 @@ using TaleWorlds.MountAndBlade;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using Enlisted.Mod.Core.Logging;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 
 namespace Enlisted.Features.Combat.Behaviors
 {

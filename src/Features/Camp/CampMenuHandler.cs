@@ -1,25 +1,20 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
-using Enlisted.Features.Assignments.Behaviors;
-// Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
-using Enlisted.Features.Camp.UI.Management;
-using Enlisted.Features.CommandTent.Core;
+using Enlisted.Features.Retinue.Core;
+using Enlisted.Features.Retinue.Systems;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
-using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 
 namespace Enlisted.Features.Camp
 {
@@ -51,19 +46,19 @@ namespace Enlisted.Features.Camp
 
 
         // Ensure Camp dialogs never pause the campaign clock.
-        private static bool ShouldPauseDuringCommandTentInquiry() => false;
+        private static bool ShouldPauseDuringRetinueInquiry() => false;
 
         #region Wait Menu Handlers (enables spacebar time control like Quartermaster menus)
         
         /// <summary>
         /// Wait condition - always returns true since we control exit via menu options.
         /// </summary>
-        private static bool CommandTentWaitCondition(MenuCallbackArgs args) => true;
+        private static bool CampWaitCondition(MenuCallbackArgs args) => true;
         
         /// <summary>
         /// Wait consequence - empty since we handle exit via menu options.
         /// </summary>
-        private static void CommandTentWaitConsequence(MenuCallbackArgs args)
+        private static void CampWaitConsequence(MenuCallbackArgs args)
         {
             // No consequence needed - we never let progress reach 100%
         }
@@ -75,7 +70,7 @@ namespace Enlisted.Features.Camp
         /// UnstoppableFastForward, but this fought with user input - when the user clicked
         /// fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
         /// </summary>
-        private static void CommandTentWaitTick(MenuCallbackArgs args, CampaignTime dt)
+        private static void CampWaitTick(MenuCallbackArgs args, CampaignTime dt)
         {
             // Intentionally empty - time mode is handled in menu init, not per-tick
             // The old code here fought with user speed input and caused pausing issues
@@ -111,7 +106,7 @@ namespace Enlisted.Features.Camp
         // Companion Assignment Menu IDs
         private const string CompanionAssignmentsMenuId = "enlisted_companions";
 
-        // Phase 8: PayTension Action Menu IDs
+        // PayTension Action Menu IDs
         private const string DesperateMeasuresMenuId = "enlisted_desperate";
         private const string HelpTheLordMenuId = "enlisted_help_lord";
 
@@ -185,494 +180,21 @@ namespace Enlisted.Features.Camp
             // Lifetime Summary display
             AddLifetimeSummaryMenu(starter);
 
-            // Retinue menus (Phase 4)
+            // Retinue menus
             AddRetinueMenu(starter);
             AddRetinuePurchaseMenu(starter);
             AddRetinueDismissMenu(starter);
 
-            // Requisition menu (Phase 5)
+            // Requisition menu
             AddRetinueRequisitionMenu(starter);
 
-            // Companion Assignments menu (Phase 8)
+            // Companion Assignments menu
             AddCompanionAssignmentsMenu(starter);
 
-            // Phase 8: PayTension Action Menus
+            // PayTension Action Menus
             AddDesperateMeasuresMenu(starter);
             AddHelpTheLordMenu(starter);
         }
-
-        #region Main Camp Menu
-
-        /// <summary>
-        /// Creates the main Camp menu with introduction text.
-        /// </summary>
-        private void AddMainCommandTentMenu(CampaignGameStarter starter)
-        {
-            // Use wait menu with hidden progress to allow spacebar time control (like Quartermaster)
-            starter.AddWaitGameMenu(
-                CampHubMenuId,
-                "{CT_MAIN_TEXT}",
-                OnCommandTentInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
-
-            // Service Records option - Manage icon (scroll/quill)
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_service_records",
-                "Review Service Records",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    return true;
-                },
-                _ => SwitchToMenuPreserveTime(LifetimeSummaryMenuId),
-                false,
-                1);
-
-            // Seek Medical Attention (moved from main enlisted menu into Camp)
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_seek_medical",
-                "{=Enlisted_Menu_SeekMedical}Seek Medical Attention",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    var conditions = Conditions.PlayerConditionBehavior.Instance;
-                    if (conditions?.IsEnabled() != true || conditions.State?.HasAnyCondition != true)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject("{=menu_disabled_healthy}You are in good health. No treatment needed.");
-                        return true;
-                    }
-
-                    args.Tooltip = new TextObject("{=menu_tooltip_seek_medical}Visit the surgeon's tent.");
-                    return true;
-                },
-                _ =>
-                {
-                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                    GameMenu.SwitchToMenu("enlisted_medical");
-                },
-                false,
-                2);
-
-            // Visit Camp - Visual camp hub (settlement-style UI with Reports, Lance, Activities, etc.)
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_visit_camp",
-                "Reports",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    args.Tooltip = new TextObject("{=ct_visit_camp_tooltip}Enter the camp area - view reports, manage lance, and access camp activities.");
-                    return true;
-                },
-                _ => 
-                {
-                    // Camp Activities moved to Camp Management - open Reports tab (tab 3)
-                    Enlisted.Features.Camp.UI.Management.CampManagementScreen.Open(3);
-                },
-                false,
-                3);
-            
-            // TEST: Kingdom-style Camp Management Screen
-            // This is a test menu option for the new full-screen camp management UI.
-            // Will replace the overlay bulletin eventually.
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_camp_management_test",
-                "[TEST] Camp Management (Kingdom-style)",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    args.Tooltip = new TextObject("{=ct_camp_mgmt_test}Test the new Kingdom-style Camp Management screen with policy-based scheduling.");
-                    return true;
-                },
-                _ => 
-                {
-                    CampManagementScreen.Open(1); // Open to Schedule tab
-                },
-                false,
-                4);
-
-
-            // ========================================
-            // PAYTENSION ACTION MENUS (Phase 8)
-            // ========================================
-
-            // Desperate Measures (corruption path) - only visible at tension 40+
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_desperate_measures",
-                "{=ct_desperate_measures}Desperate Measures...",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
-                    var enlistment = EnlistmentBehavior.Instance;
-                    var tension = enlistment?.PayTension ?? 0;
-                    
-                    if (tension < 40)
-                    {
-                        return false; // Hide completely below threshold
-                    }
-                    
-                    args.Tooltip = new TextObject("{=ct_desperate_tooltip}When times are hard, some turn to... creative solutions.");
-                    return true;
-                },
-                _ => SwitchToMenuPreserveTime(DesperateMeasuresMenuId),
-                false,
-                7);
-
-            // Help the Lord (loyalty path) - only visible at tension 40+
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_help_lord",
-                "{=ct_help_lord}Help the Lord with Finances",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Mission;
-                    var enlistment = EnlistmentBehavior.Instance;
-                    var tension = enlistment?.PayTension ?? 0;
-                    
-                    if (tension < 40)
-                    {
-                        return false; // Hide completely below threshold
-                    }
-                    
-                    args.Tooltip = new TextObject("{=ct_help_lord_tooltip}Volunteer for missions that might help the lord pay his debts.");
-                    return true;
-                },
-                _ => SwitchToMenuPreserveTime(HelpTheLordMenuId),
-                false,
-                8);
-
-            // Baggage Train (stash access) - Submenu icon
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_baggage_train",
-                "{=enlisted_baggage_train}Visit Baggage Train",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    args.Tooltip = new TextObject("{=qm_baggage_tooltip}Access your stored belongings (fatigue cost by rank).");
-                    return true;
-                },
-                _ => EnlistmentBehavior.Instance?.TryOpenBaggageTrain(),
-                false,
-                9);
-
-            // Request Discharge (Final Muster) / Cancel (toggle)
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_request_discharge",
-                "{CT_DISCHARGE_OPTION_TEXT}",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment?.IsPendingDischarge == true)
-                    {
-                        MBTextManager.SetTextVariable("CT_DISCHARGE_OPTION_TEXT",
-                            new TextObject("{=ct_cancel_discharge_short}Cancel Discharge Request"));
-                        args.Tooltip = new TextObject("{=ct_cancel_discharge_tooltip}Withdraw your discharge request and remain in service.");
-                        return true;
-                    }
-
-                    MBTextManager.SetTextVariable("CT_DISCHARGE_OPTION_TEXT",
-                        new TextObject("{=ct_request_discharge_short}Request Discharge"));
-                    args.Tooltip = new TextObject("{=ct_discharge_tooltip}Request formal discharge with final pay settlement (resolves at next muster).");
-                    return true;
-                },
-                _ =>
-                {
-                    var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment == null)
-                    {
-                        return;
-                    }
-
-                    if (enlistment.IsPendingDischarge)
-                    {
-                        if (enlistment.CancelDischarge())
-                        {
-                            InformationManager.DisplayMessage(new InformationMessage(
-                                new TextObject("{=ct_discharge_cancelled}Pending discharge cancelled.").ToString()));
-                            SwitchToMenuPreserveTime(CampHubMenuId);
-                        }
-                        return;
-                    }
-
-                    ShowRequestDischargeConfirmPopup();
-                },
-                false,
-                4);
-
-            // Personal Retinue option - TroopSelection icon (soldiers)
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_retinue",
-                "{=ct_option_retinue}Muster Personal Retinue",
-                IsRetinueAvailable,
-                _ => SwitchToMenuPreserveTime(RetinueMenuId),
-                false,
-                3);
-
-            // Companion Assignments option - Conversation icon (speech)
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_companions",
-                "{=ct_option_companions}Companion Assignments",
-                IsCompanionAssignmentsAvailable,
-                _ => SwitchToMenuPreserveTime(CompanionAssignmentsMenuId),
-                false,
-                3);
-
-            // Back to camp option - Leave icon (door)
-            starter.AddGameMenuOption(
-                CampHubMenuId,
-                "ct_back",
-                "{=ct_option_back}Return to Camp",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    return true;
-                },
-                _ => SwitchToMenuPreserveTime("enlisted_status"),
-                true,
-                100);
-        }
-
-        /// <summary>
-        /// Initializes the main Camp menu.
-        /// </summary>
-        private void OnCommandTentInit(MenuCallbackArgs args)
-        {
-            // Refresh inline icons in case they were cleared
-            SetupInlineIcons();
-            MBTextManager.SetTextVariable("CT_MAIN_TEXT", BuildCampMainMenuText());
-            ModLogger.Debug(LogCategory, "Camp menu initialized");
-        }
-
-        /// <summary>
-        /// Builds the main Camp menu text (overview + news + camp bulletin).
-        /// </summary>
-        private static string BuildCampMainMenuText()
-        {
-            try
-            {
-                var enlistment = EnlistmentBehavior.Instance;
-                var svc = ServiceRecordManager.Instance;
-                var campLife = CampLifeBehavior.Instance;
-                var cond = Conditions.PlayerConditionBehavior.Instance;
-                var news = EnlistedNewsBehavior.Instance;
-
-                var sb = new StringBuilder();
-                sb.AppendLine(new TextObject("{=ct_menu_intro}Maps and tallies cover the makeshift table. Your small corner of the army's camp.").ToString());
-                sb.AppendLine();
-
-                // News / what's happening (keep this screen focused on "what's going on")
-                var personalNews = news?.BuildPersonalNewsSection(2);
-                if (!string.IsNullOrWhiteSpace(personalNews))
-                {
-                    sb.AppendLine(personalNews.TrimEnd());
-                }
-
-                var kingdomNews = news?.BuildKingdomNewsSection(2);
-                if (!string.IsNullOrWhiteSpace(kingdomNews))
-                {
-                    sb.AppendLine(kingdomNews.TrimEnd());
-                }
-
-                // Compact personal overview (few key stats only)
-                sb.AppendLine();
-                sb.AppendLine("— Overview —");
-                sb.AppendLine();
-
-                if (enlistment != null)
-                {
-                    sb.AppendLine($"Rank Tier: {enlistment.EnlistmentTier}");
-                    sb.AppendLine($"Days Served: {(int)enlistment.DaysServed}");
-                    sb.AppendLine($"Fatigue: {enlistment.FatigueCurrent}/{enlistment.FatigueMax}");
-                }
-
-                if (cond?.IsEnabled() == true && cond.State?.HasAnyCondition == true)
-                {
-                    var parts = new List<string>();
-                    if (cond.State.HasInjury)
-                    {
-                        parts.Add($"Injured ({cond.State.InjuryDaysRemaining}d)");
-                    }
-                    if (cond.State.HasIllness)
-                    {
-                        parts.Add($"Ill ({cond.State.IllnessDaysRemaining}d)");
-                    }
-                    if (parts.Count > 0)
-                    {
-                        sb.AppendLine($"Condition: {string.Join(", ", parts)}");
-                    }
-                }
-
-                // Keep term details in Service Records (avoid clutter here)
-                if (svc != null && svc.CurrentTermBattles > 0)
-                {
-                    sb.AppendLine($"This Term: {svc.CurrentTermBattles} battles, {svc.CurrentTermKills} kills");
-                }
-
-                // Camp bulletin / news
-                sb.AppendLine();
-                sb.AppendLine("— Camp Bulletin —");
-                sb.AppendLine();
-
-                if (campLife != null && campLife.IsActiveWhileEnlisted())
-                {
-                    sb.AppendLine($"Quartermaster Mood: {campLife.QuartermasterMoodTier}");
-
-                    // Short, readable "news" lines driven by the meters.
-                    if (campLife.IsLogisticsHigh())
-                    {
-                        sb.AppendLine("Supplies are tight. Quartermasters are getting sharp-eyed about requisitions.");
-                    }
-
-                    if (campLife.IsMoraleLow())
-                    {
-                        sb.AppendLine("The men are weary after recent fighting. Tempers are short around the fires.");
-                    }
-
-                    if (campLife.IsPayTensionHigh())
-                    {
-                        sb.AppendLine("Pay is late. Grumbling is turning into open talk.");
-                    }
-
-                    if (!campLife.IsLogisticsHigh() && !campLife.IsMoraleLow() && !campLife.IsPayTensionHigh())
-                    {
-                        sb.AppendLine("Routine holds. Drill, rations, and watch rotations grind on.");
-                    }
-                }
-                else
-                {
-                    sb.AppendLine("Camp routines continue. (CampLife is disabled.)");
-                }
-
-                return sb.ToString();
-            }
-            catch
-            {
-                return new TextObject("{=ct_menu_intro}Maps and tallies cover the makeshift table. Your small corner of the army's camp.").ToString();
-            }
-        }
-
-        /// <summary>
-        /// Confirmation popup for requesting discharge (final muster next payday).
-        /// </summary>
-        private static void ShowRequestDischargeConfirmPopup()
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted != true)
-            {
-                return;
-            }
-
-            var daysServed = (int)enlistment.DaysServed;
-            var pendingPay = enlistment.PendingMusterPay;
-
-            // Predict discharge "band" using the same thresholds as FinalizePendingDischarge().
-            var cfg = EnlistedConfig.LoadRetirementConfig();
-            var band = daysServed >= 200 ? "veteran" : daysServed >= 100 ? "honorable" : "washout";
-
-            var lord = enlistment.CurrentLord;
-            if ((band == "honorable" || band == "veteran") && lord != null && Hero.MainHero.GetRelation(lord) < 0)
-            {
-                band = "washout";
-            }
-
-            var lordRelation = 0;
-            var factionLeaderRelation = 0;
-            var severance = 0;
-
-            switch (band)
-            {
-                case "veteran":
-                    lordRelation = 30;
-                    factionLeaderRelation = 15;
-                    severance = Math.Max(0, cfg?.SeveranceVeteran ?? 3000);
-                    break;
-                case "honorable":
-                    lordRelation = 10;
-                    factionLeaderRelation = 5;
-                    severance = Math.Max(0, cfg?.SeveranceHonorable ?? 3000);
-                    break;
-                default:
-                    lordRelation = -10;
-                    factionLeaderRelation = -10;
-                    severance = 0;
-                    break;
-            }
-
-            var payout = Math.Max(0, pendingPay) + Math.Max(0, severance);
-
-            var sb = new StringBuilder();
-            sb.AppendLine("Request discharge?");
-            sb.AppendLine();
-            sb.AppendLine("This will take effect at your next pay muster.");
-            sb.AppendLine();
-            sb.AppendLine("— Expected Outcome —");
-            sb.AppendLine($"Discharge quality: {band}");
-            sb.AppendLine($"Final payout (estimate): {payout} (Pending pay {pendingPay} + Severance {severance})");
-            sb.AppendLine();
-            sb.AppendLine("— Relationship Impact (estimate) —");
-            sb.AppendLine($"Lord: {(lordRelation >= 0 ? "+" : "")}{lordRelation}");
-            sb.AppendLine($"Faction leader: {(factionLeaderRelation >= 0 ? "+" : "")}{factionLeaderRelation}");
-            sb.AppendLine();
-            sb.AppendLine("Note: If your relation with your lord is negative at discharge, honorable/veteran exit is not granted.");
-
-            InformationManager.ShowInquiry(
-                new InquiryData(
-                    new TextObject("{=ct_request_discharge_confirm_title}Request Discharge").ToString(),
-                    sb.ToString(),
-                    true,
-                    true,
-                    new TextObject("{=ct_yes}Yes").ToString(),
-                    new TextObject("{=ct_no}No").ToString(),
-                    () =>
-                    {
-                        if (enlistment.RequestDischarge())
-                        {
-                            InformationManager.DisplayMessage(new InformationMessage(
-                                new TextObject("{=ct_discharge_requested}Discharge requested. It will resolve at the next pay muster.").ToString()));
-                            SwitchToMenuPreserveTime(CampHubMenuId);
-                        }
-                    },
-                    () => { }),
-                false);
-        }
-
-        /// <summary>
-        /// Resolves an activity text ID to localized text.
-        /// </summary>
-        private static string ResolveActivityText(string textId, string fallback)
-        {
-            if (string.IsNullOrEmpty(textId))
-            {
-                return fallback;
-            }
-
-            try
-            {
-                var t = new TextObject("{=" + textId + "}" + fallback);
-                return t.ToString();
-            }
-            catch
-            {
-                return fallback;
-            }
-        }
-
-        #endregion
-
-
         #region Menu Background and Audio
         
         /// <summary>
@@ -691,7 +213,7 @@ namespace Enlisted.Features.Camp
         [GameMenuInitializationHandler(RetinueDismissMenuId)]
         [GameMenuInitializationHandler(RetinueRequisitionMenuId)]
         [GameMenuInitializationHandler(CompanionAssignmentsMenuId)]
-        public static void CommandTentMenuBackgroundInit(MenuCallbackArgs args)
+        public static void CampMenuBackgroundInit(MenuCallbackArgs args)
         {
             // Use a military meeting/camp background
             args.MenuContext.SetBackgroundMeshName("encounter_meeting");
@@ -702,24 +224,6 @@ namespace Enlisted.Features.Camp
             // NOTE: We intentionally do NOT call StartWait() here. Camp menus rely on
             // the wait-menu type for layout/options, but we keep time control unchanged and
             // preserve the player's captured time mode when hopping between submenus.
-        }
-
-        /// <summary>
-        /// Checks if retinue option is available (Tier 4+ only).
-        /// Uses TroopSelection icon for soldier management.
-        /// </summary>
-        private bool IsRetinueAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
-            var enlistment = EnlistmentBehavior.Instance;
-            if ((enlistment?.EnlistmentTier ?? 1) < 4)
-            {
-                args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=ct_warn_tier_locked}You must reach Tier 4 to command soldiers.");
-                return true;
-            }
-            args.Tooltip = new TextObject("{=ct_retinue_tooltip}Recruit and manage your personal retinue of soldiers.");
-            return true;
         }
 
         #endregion
@@ -735,9 +239,9 @@ namespace Enlisted.Features.Camp
                 ServiceRecordsMenuId,
                 "{=ct_records_intro}Your service history and military records.",
                 OnServiceRecordsInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Current Posting
@@ -799,7 +303,17 @@ namespace Enlisted.Features.Camp
 
         private void OnServiceRecordsInit(MenuCallbackArgs args)
         {
-            _ = args;
+            // Start wait to enable time controls for the wait menu
+            args.MenuContext.GameMenu.StartWait();
+
+            // Unlock time control so player can change speed, then restore their prior state
+            Campaign.Current.SetTimeControlModeLock(false);
+
+            // Restore captured time using stoppable equivalents, preserving Stop when paused
+            var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+            var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+            Campaign.Current.TimeControlMode = normalized;
+
             ModLogger.Debug(LogCategory, "Service Records menu initialized");
         }
 
@@ -816,9 +330,9 @@ namespace Enlisted.Features.Camp
                 CurrentPostingMenuId,
                 "{CURRENT_POSTING_TEXT}",
                 OnCurrentPostingInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
@@ -841,9 +355,19 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private void OnCurrentPostingInit(MenuCallbackArgs args)
         {
-            _ = args;
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var text = BuildCurrentPostingText();
                 MBTextManager.SetTextVariable("CURRENT_POSTING_TEXT", text);
                 ModLogger.Debug(LogCategory, "Current Posting display initialized");
@@ -890,7 +414,7 @@ namespace Enlisted.Features.Camp
             var pensionStatus = GetPensionStatus(enlistment);
 
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_posting_header_record}— Current Service Record —").ToString());
+            sb.AppendLine(new TextObject("{=enl_posting_header_record}â€” Current Service Record â€”").ToString());
             sb.AppendLine();
 
             var postingLine = new TextObject("{=enl_posting_line_posting}Posting: Army of {FACTION}");
@@ -915,7 +439,7 @@ namespace Enlisted.Features.Camp
             contractLine.SetTextVariable("CONTRACT", daysRemaining ?? string.Empty);
             sb.AppendLine(contractLine.ToString());
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_posting_header_pay}— Pay Muster —").ToString());
+            sb.AppendLine(new TextObject("{=enl_posting_header_pay}â€” Pay Muster â€”").ToString());
             sb.AppendLine();
 
             var pendingLine = new TextObject("{=enl_posting_line_pending_pay}Pending Muster Pay: {PAY} denars");
@@ -938,7 +462,7 @@ namespace Enlisted.Features.Camp
                 sb.AppendLine(new TextObject("{=enl_posting_status_discharge_pending}Status: Discharge pending (will resolve at next pay muster)").ToString());
             }
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_posting_header_pension}— Pension —").ToString());
+            sb.AppendLine(new TextObject("{=enl_posting_header_pension}â€” Pension â€”").ToString());
             sb.AppendLine();
 
             var pensionLine = new TextObject("{=enl_posting_line_pension_daily}Daily Pension: {PAY} denars");
@@ -949,7 +473,7 @@ namespace Enlisted.Features.Camp
             pensionStatusLine.SetTextVariable("STATUS", pensionStatus ?? string.Empty);
             sb.AppendLine(pensionStatusLine.ToString());
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_posting_header_term}— This Term —").ToString());
+            sb.AppendLine(new TextObject("{=enl_posting_header_term}â€” This Term â€”").ToString());
             sb.AppendLine();
 
             var battlesLine = new TextObject("{=enl_posting_line_battles}Battles Fought: {COUNT}");
@@ -990,7 +514,7 @@ namespace Enlisted.Features.Camp
         {
             try
             {
-                var remainingDays = 0;
+                int remainingDays;
 
                 var retirementConfig = EnlistedConfig.LoadRetirementConfig();
                 var termEnd = enlistment.EnlistmentDate + CampaignTime.Days(retirementConfig.FirstTermDays);
@@ -1025,9 +549,9 @@ namespace Enlisted.Features.Camp
                 FactionRecordsMenuId,
                 "{FACTION_RECORDS_TEXT}",
                 OnFactionRecordsInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Dynamic faction options will be added during init
@@ -1051,9 +575,19 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private void OnFactionRecordsInit(MenuCallbackArgs args)
         {
-            _ = args;
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var text = BuildFactionRecordsListText();
                 MBTextManager.SetTextVariable("FACTION_RECORDS_TEXT", text);
                 ModLogger.Debug(LogCategory, "Faction Records list initialized");
@@ -1077,7 +611,7 @@ namespace Enlisted.Features.Camp
             var records = recordManager?.GetAllRecords();
 
             sb.AppendLine();
-            sb.AppendLine("— Faction Service Records —");
+            sb.AppendLine("â€” Faction Service Records â€”");
             sb.AppendLine();
 
             if (records == null || records.Count == 0)
@@ -1091,8 +625,8 @@ namespace Enlisted.Features.Camp
                 foreach (var record in records.Values.OrderByDescending(r => r.TotalDaysServed))
                 {
                     var factionType = FormatFactionType(record.FactionType);
-                    sb.AppendLine($"• {record.FactionDisplayName}");
-                    sb.AppendLine($"  {factionType} — {record.TermsCompleted} terms, {record.TotalDaysServed} days");
+                    sb.AppendLine($"â€¢ {record.FactionDisplayName}");
+                    sb.AppendLine($"  {factionType} â€” {record.TermsCompleted} terms, {record.TotalDaysServed} days");
                     sb.AppendLine($"  Kills: {record.TotalKills}");
                     sb.AppendLine();
                 }
@@ -1130,9 +664,9 @@ namespace Enlisted.Features.Camp
                 FactionDetailMenuId,
                 "{FACTION_DETAIL_TEXT}",
                 OnFactionDetailInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
@@ -1157,6 +691,17 @@ namespace Enlisted.Features.Camp
         {
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var text = BuildFactionDetailText(_selectedFactionKey);
                 MBTextManager.SetTextVariable("FACTION_DETAIL_TEXT", text);
                 ModLogger.Debug(LogCategory, $"Faction Detail initialized for: {_selectedFactionKey}");
@@ -1187,14 +732,14 @@ namespace Enlisted.Features.Camp
             var highestRank = GetRankName(record.HighestTier);
 
             sb.AppendLine();
-            sb.AppendLine($"— {record.FactionDisplayName} —");
+            sb.AppendLine($"â€” {record.FactionDisplayName} â€”");
             sb.AppendLine();
             sb.AppendLine($"Enlistments: {record.Enlistments}");
             sb.AppendLine($"Terms Completed: {record.TermsCompleted}");
             sb.AppendLine($"Days Served: {record.TotalDaysServed}");
             sb.AppendLine($"Highest Rank: {highestRank} (Tier {record.HighestTier})");
             sb.AppendLine();
-            sb.AppendLine("— Combat Record —");
+            sb.AppendLine("â€” Combat Record â€”");
             sb.AppendLine();
             sb.AppendLine($"Battles Fought: {record.BattlesFought}");
             sb.AppendLine($"Enemies Slain: {record.TotalKills}");
@@ -1225,9 +770,9 @@ namespace Enlisted.Features.Camp
                 LifetimeSummaryMenuId,
                 "{LIFETIME_SUMMARY_TEXT}",
                 OnLifetimeSummaryInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
@@ -1250,9 +795,19 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private void OnLifetimeSummaryInit(MenuCallbackArgs args)
         {
-            _ = args;
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var text = BuildLifetimeSummaryText();
                 MBTextManager.SetTextVariable("LIFETIME_SUMMARY_TEXT", text);
                 ModLogger.Debug(LogCategory, "Lifetime Summary initialized");
@@ -1276,7 +831,7 @@ namespace Enlisted.Features.Camp
             var lifetime = recordManager?.LifetimeRecord;
 
             sb.AppendLine();
-            sb.AppendLine("— Lifetime Service Summary —");
+            sb.AppendLine("â€” Lifetime Service Summary â€”");
             sb.AppendLine();
 
             if (lifetime == null)
@@ -1307,7 +862,7 @@ namespace Enlisted.Features.Camp
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted == true)
                 {
-                    sb.AppendLine("— Current Enlistment —");
+                    sb.AppendLine("â€” Current Enlistment â€”");
                     sb.AppendLine();
                     sb.AppendLine($"Tier: {enlistment.EnlistmentTier}");
                     sb.AppendLine($"Service XP: {enlistment.EnlistmentXP}");
@@ -1316,7 +871,8 @@ namespace Enlisted.Features.Camp
 
                     if (enlistment.EnlistmentTier < 6)
                     {
-                        var nextTierXp = Enlisted.Features.Assignments.Core.ConfigurationManager.GetXpRequiredForTier(enlistment.EnlistmentTier);
+                        var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
+                        var nextTierXp = enlistment.EnlistmentTier < tierXp.Length ? tierXp[enlistment.EnlistmentTier] : tierXp[tierXp.Length - 1];
                         sb.AppendLine($"Next Tier Requirement: {nextTierXp} XP");
                     }
                     else
@@ -1340,15 +896,15 @@ namespace Enlisted.Features.Camp
                     }
 
                     sb.AppendLine();
-                    sb.AppendLine("— XP Sources —");
+                    sb.AppendLine("â€” XP Sources â€”");
                     sb.AppendLine();
-                    sb.AppendLine("• Battles: XP for participating in combat");
-                    sb.AppendLine("• Duties: Daily XP for assigned tasks");
-                    sb.AppendLine("• Activities: Skill XP from camp and lance activities");
-                    sb.AppendLine("• Service: Passive XP for time served");
+                    sb.AppendLine("â€¢ Battles: XP for participating in combat");
+                    sb.AppendLine("â€¢ Duties: Daily XP for assigned tasks");
+                    sb.AppendLine("â€¢ Activities: Skill XP from camp and lance activities");
+                    sb.AppendLine("â€¢ Service: Passive XP for time served");
                     sb.AppendLine();
 
-                    sb.AppendLine("— This Term —");
+                    sb.AppendLine("â€” This Term â€”");
                     sb.AppendLine();
                     sb.AppendLine($"Battles: {recordManager.CurrentTermBattles}");
                     sb.AppendLine($"Kills: {recordManager.CurrentTermKills}");
@@ -1358,7 +914,7 @@ namespace Enlisted.Features.Camp
                 // List factions served
                 if (lifetime.FactionsServed != null && lifetime.FactionsServed.Count > 0)
                 {
-                    sb.AppendLine("— Factions Served —");
+                    sb.AppendLine("â€” Factions Served â€”");
                     sb.AppendLine();
 
                     var allRecords = recordManager.GetAllRecords();
@@ -1369,13 +925,13 @@ namespace Enlisted.Features.Camp
                             var terms = record.TermsCompleted > 0
                                 ? $"{record.TermsCompleted} term{(record.TermsCompleted > 1 ? "s" : "")}"
                                 : "in progress";
-                            sb.AppendLine($"• {record.FactionDisplayName} ({terms})");
+                            sb.AppendLine($"â€¢ {record.FactionDisplayName} ({terms})");
                         }
                     }
                     sb.AppendLine();
                 }
 
-                sb.AppendLine("— Combat Statistics —");
+                sb.AppendLine("â€” Combat Statistics â€”");
                 sb.AppendLine();
                 sb.AppendLine($"Total Battles: {lifetime.TotalBattlesFought}");
                 sb.AppendLine($"Enemies Slain: {lifetime.LifetimeKills}");
@@ -1397,9 +953,9 @@ namespace Enlisted.Features.Camp
                 RetinueMenuId,
                 "{RETINUE_STATUS_TEXT}",
                 OnRetinueMenuInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Current Muster option - ManageGarrison icon (soldiers/shield)
@@ -1462,12 +1018,13 @@ namespace Enlisted.Features.Camp
                 false,
                 2);
 
-            // Requisition Soldiers option - Trade icon (coins)
+            // Request Reinforcements option - Trade icon (coins)
+            // Uses relation-based pricing and cooldown
             starter.AddGameMenuOption(
                 RetinueMenuId,
-                "ct_retinue_requisition",
-                "{REQUISITION_OPTION_TEXT}",
-                IsRequisitionAvailable,
+                "ct_retinue_request_reinforcements",
+                "{REQUEST_REINFORCEMENTS_TEXT}",
+                IsRequestReinforcementsAvailable,
                 _ => SwitchToMenuPreserveTime(RetinueRequisitionMenuId),
                 false,
                 3);
@@ -1513,14 +1070,24 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private void OnRetinueMenuInit(MenuCallbackArgs args)
         {
-            _ = args;
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var text = BuildRetinueStatusText();
                 MBTextManager.SetTextVariable("RETINUE_STATUS_TEXT", text);
 
-                // Set requisition option text with cost display
-                SetRequisitionOptionText();
+                // Set Request Reinforcements option text with lord name and cost
+                SetRequestReinforcementsOptionText();
 
                 ModLogger.Debug(LogCategory, "Retinue menu initialized");
             }
@@ -1533,45 +1100,57 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Sets the requisition menu option text with cost and cooldown info.
-        /// Uses inline gold icon for currency display.
+        /// Sets the Request Reinforcements menu option text with lord name and relation info.
+        /// Shows cost with relation-based discount if applicable.
         /// </summary>
-        private static void SetRequisitionOptionText()
+        private static void SetRequestReinforcementsOptionText()
         {
             var manager = RetinueManager.Instance;
-            if (manager == null)
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = enlistment?.EnlistedLord;
+
+            if (manager == null || lord == null)
             {
-                MBTextManager.SetTextVariable("REQUISITION_OPTION_TEXT",
-                    new TextObject("{=enl_retinue_option_requisition}Requisition Men").ToString());
+                MBTextManager.SetTextVariable("REQUEST_REINFORCEMENTS_TEXT",
+                    new TextObject("{=enl_retinue_option_request}Request Reinforcements").ToString());
                 return;
             }
 
-            var cost = manager.CalculateRequisitionCost();
+            var relation = RetinueManager.GetLordRelation();
+            var cost = manager.CalculateReinforcementRequestCost();
+            var cooldownDays = manager.GetReinforcementRequestCooldownDays();
             var missing = manager.GetMissingSoldierCount();
-            var cooldownDays = manager.GetRequisitionCooldownDays();
 
             string optionText;
-            if (cooldownDays > 0)
+            if (relation < RetinueManager.MinRelationForRequest)
             {
-                var t = new TextObject("{=enl_retinue_option_requisition_cooldown}Requisition Men ({DAYS}d cooldown)");
+                // Low relation - show blocked
+                var t = new TextObject("{=enl_retinue_option_request_blocked}Request Reinforcements (relation too low)");
+                optionText = t.ToString();
+            }
+            else if (cooldownDays > 0)
+            {
+                // On cooldown
+                var t = new TextObject("{=enl_retinue_option_request_cooldown}Request Reinforcements ({DAYS}d cooldown)");
                 t.SetTextVariable("DAYS", cooldownDays);
                 optionText = t.ToString();
             }
             else if (missing <= 0)
             {
-                optionText = new TextObject("{=enl_retinue_option_requisition_at_capacity}Requisition Men (at capacity)").ToString();
+                // At capacity
+                optionText = new TextObject("{=enl_retinue_option_request_capacity}Request Reinforcements (at capacity)").ToString();
             }
             else
             {
-                // Use inline gold icon for cost display
-                var t = new TextObject("{=enl_retinue_option_requisition_cost}Requisition Men ({COST}{GOLD_ICON})");
+                // Available - show cost with lord name
+                var t = new TextObject("{=enl_retinue_option_request_cost}Request from {LORD} ({COST}{GOLD_ICON})");
+                t.SetTextVariable("LORD", lord.Name);
                 t.SetTextVariable("COST", cost);
-                // GOLD_ICON is expected as an inline icon token in menu text.
                 t.SetTextVariable("GOLD_ICON", "{GOLD_ICON}");
                 optionText = t.ToString();
             }
 
-            MBTextManager.SetTextVariable("REQUISITION_OPTION_TEXT", optionText);
+            MBTextManager.SetTextVariable("REQUEST_REINFORCEMENTS_TEXT", optionText);
         }
 
         /// <summary>
@@ -1601,7 +1180,7 @@ namespace Enlisted.Features.Camp
             var currentMembers = PartyBase.MainParty?.NumberOfAllMembers ?? 0;
 
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_retinue_header_personal}— Personal Retinue —").ToString());
+            sb.AppendLine(new TextObject("{=enl_retinue_header_personal}â€” Personal Retinue â€”").ToString());
             sb.AppendLine();
 
             var rankLine = new TextObject("{=enl_retinue_line_rank}Rank: {RANK_NAME} (Tier {TIER})");
@@ -1613,7 +1192,7 @@ namespace Enlisted.Features.Camp
             limitLine.SetTextVariable("UNIT_NAME", unitName ?? string.Empty);
             sb.AppendLine(limitLine.ToString());
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_retinue_header_current_muster}— Current Muster —").ToString());
+            sb.AppendLine(new TextObject("{=enl_retinue_header_current_muster}â€” Current Muster â€”").ToString());
             sb.AppendLine();
 
             if (string.IsNullOrEmpty(selectedType))
@@ -1641,7 +1220,7 @@ namespace Enlisted.Features.Camp
             }
 
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_retinue_header_party_capacity}— Party Capacity —").ToString());
+            sb.AppendLine(new TextObject("{=enl_retinue_header_party_capacity}â€” Party Capacity â€”").ToString());
             sb.AppendLine();
 
             var partyLimitLine = new TextObject("{=enl_retinue_line_party_limit}Party Limit: {LIMIT}");
@@ -1662,6 +1241,71 @@ namespace Enlisted.Features.Camp
                 sb.AppendLine(new TextObject("{=enl_retinue_party_limits_retinue}Party size limits your retinue.").ToString());
             }
 
+            // Add reinforcement status section
+            sb.AppendLine();
+            sb.AppendLine(new TextObject("{=enl_retinue_header_reinforcement}-- Reinforcement Status --").ToString());
+            sb.AppendLine();
+
+            var state = manager?.State;
+            if (state != null)
+            {
+                // Show last battle outcome
+                var daysSinceBattle = state.GetDaysSinceLastBattle();
+                if (daysSinceBattle >= 0)
+                {
+                    var outcomeText = state.LastBattleWon ? "Victory" : "Defeat";
+                    var battleLine = new TextObject("{=enl_retinue_last_battle}Last battle: {OUTCOME} ({DAYS} days ago)");
+                    battleLine.SetTextVariable("OUTCOME", outcomeText);
+                    battleLine.SetTextVariable("DAYS", (int)daysSinceBattle);
+                    sb.AppendLine(battleLine.ToString());
+                }
+                else
+                {
+                    sb.AppendLine(new TextObject("{=enl_retinue_no_battle}No recent battles").ToString());
+                }
+
+                // Show trickle status using the new helper method
+                var (contextDesc, daysUntilNext, isBlocked) = RetinueTrickleSystem.GetTrickleStatusInfo();
+
+                if (isBlocked && contextDesc == "Morale recovering")
+                {
+                    sb.AppendLine(new TextObject("{=enl_retinue_delayed}Replacements delayed (morale recovering)").ToString());
+                    if (daysUntilNext > 0)
+                    {
+                        var resumeLine = new TextObject("{=enl_retinue_resume}Resume in: {DAYS} days");
+                        resumeLine.SetTextVariable("DAYS", daysUntilNext);
+                        sb.AppendLine(resumeLine.ToString());
+                    }
+                }
+                else if (currentSoldiers < tierCapacity)
+                {
+                    var statusLine = new TextObject("{=enl_retinue_status}Status: {CONTEXT}");
+                    statusLine.SetTextVariable("CONTEXT", contextDesc);
+                    sb.AppendLine(statusLine.ToString());
+
+                    if (daysUntilNext > 0)
+                    {
+                        var nextLine = new TextObject("{=enl_retinue_next_recruit}Next recruit expected: {DAYS} days");
+                        nextLine.SetTextVariable("DAYS", daysUntilNext);
+                        sb.AppendLine(nextLine.ToString());
+                    }
+                    else
+                    {
+                        sb.AppendLine(new TextObject("{=enl_retinue_arriving}Recruit arriving soon").ToString());
+                    }
+                }
+                else
+                {
+                    sb.AppendLine(new TextObject("{=enl_retinue_at_capacity}Retinue at full capacity").ToString());
+                }
+
+                // Show territory status
+                var territory = RetinueTrickleSystem.IsInFriendlyTerritory() ? "Friendly" : "Hostile/Neutral";
+                var territoryLine = new TextObject("{=enl_retinue_territory}Territory: {TERRITORY}");
+                territoryLine.SetTextVariable("TERRITORY", territory);
+                sb.AppendLine(territoryLine.ToString());
+            }
+
             return sb.ToString();
         }
 
@@ -1678,9 +1322,9 @@ namespace Enlisted.Features.Camp
                 RetinuePurchaseMenuId,
                 "{RETINUE_PURCHASE_TEXT}",
                 OnRetinuePurchaseInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Infantry option - Men-at-Arms
@@ -1744,9 +1388,19 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private void OnRetinuePurchaseInit(MenuCallbackArgs args)
         {
-            _ = args;
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var enlistment = EnlistmentBehavior.Instance;
                 var culture = enlistment?.CurrentLord?.Culture;
                 var tier = enlistment?.EnlistmentTier ?? 4;
@@ -1754,7 +1408,7 @@ namespace Enlisted.Features.Camp
 
                 var sb = new StringBuilder();
                 sb.AppendLine();
-                sb.AppendLine("— Purchase Soldiers —");
+                sb.AppendLine("â€” Purchase Soldiers â€”");
                 sb.AppendLine();
                 sb.AppendLine("Select the type of soldiers to muster.");
                 sb.AppendLine();
@@ -1841,10 +1495,8 @@ namespace Enlisted.Features.Camp
                 return true;
             }
 
-            // Formation match check - players can only recruit soldiers matching their own formation type
-            // An infantry soldier leads infantry, a cavalryman leads cavalry, etc.
-            var duties = EnlistedDutiesBehavior.Instance;
-            var playerFormation = duties?.PlayerFormation?.ToLowerInvariant() ?? "infantry";
+            // Detect player's actual formation from equipment
+            var playerFormation = QuartermasterManager.Instance?.GetPlayerFormationString() ?? "infantry";
             
             // Map player formation to retinue type for comparison
             var playerRetinueType = playerFormation switch
@@ -1990,7 +1642,7 @@ namespace Enlisted.Features.Camp
             message.SetTextVariable("UPKEEP", count * 2);
 
             // pauseGameActiveState = false so dialogs don't freeze game time
-            var pauseGameActiveState = ShouldPauseDuringCommandTentInquiry();
+            var pauseGameActiveState = ShouldPauseDuringCampInquiry();
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -2060,7 +1712,7 @@ namespace Enlisted.Features.Camp
             message.SetTextVariable("COUNT", currentCount);
 
             // pauseGameActiveState = false so dialogs don't freeze game time
-            var pauseGameActiveState = ShouldPauseDuringCommandTentInquiry();
+            var pauseGameActiveState = ShouldPauseDuringCampInquiry();
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -2098,9 +1750,9 @@ namespace Enlisted.Features.Camp
                 RetinueDismissMenuId,
                 "{RETINUE_DISMISS_TEXT}",
                 OnRetinueDismissInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Confirm dismiss option
@@ -2137,15 +1789,25 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private void OnRetinueDismissInit(MenuCallbackArgs args)
         {
-            _ = args;
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var manager = RetinueManager.Instance;
                 var currentCount = manager?.State?.TotalSoldiers ?? 0;
 
                 var sb = new StringBuilder();
                 sb.AppendLine();
-                sb.AppendLine("— Dismiss Soldiers —");
+                sb.AppendLine("â€” Dismiss Soldiers â€”");
                 sb.AppendLine();
                 sb.AppendLine("Are you certain?");
                 sb.AppendLine();
@@ -2187,28 +1849,41 @@ namespace Enlisted.Features.Camp
         #region Requisition Menu
 
         /// <summary>
-        /// Checks if the requisition menu option should be available.
-        /// Shows disabled state with tooltip when on cooldown or at capacity.
+        /// Checks if the Request Reinforcements option should be available.
+        /// Uses relation-based checks and shows appropriate tooltips.
         /// </summary>
-        private static bool IsRequisitionAvailable(MenuCallbackArgs args)
+        private static bool IsRequestReinforcementsAvailable(MenuCallbackArgs args)
         {
             var manager = RetinueManager.Instance;
+            var enlistment = EnlistmentBehavior.Instance;
 
             // Must have a retinue type selected
             if (manager?.State?.HasTypeSelected != true)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=ct_requisition_no_type}You must select a soldier type first.");
+                args.Tooltip = new TextObject("{=ct_request_no_type}You must select a soldier type first.");
+                args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                return true;
+            }
+
+            // Check relation with lord
+            var relation = RetinueManager.GetLordRelation();
+            if (relation < RetinueManager.MinRelationForRequest)
+            {
+                args.IsEnabled = false;
+                var tooltip = new TextObject("{=ct_request_relation_low}Your lord will not spare soldiers for you. Improve your standing first (requires {REQ}+ relation).");
+                tooltip.SetTextVariable("REQ", RetinueManager.MinRelationForRequest);
+                args.Tooltip = tooltip;
                 args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                 return true;
             }
 
             // Check cooldown
-            if (!manager.IsRequisitionAvailable())
+            if (!manager.IsReinforcementRequestAvailable())
             {
                 args.IsEnabled = false;
-                var days = manager.GetRequisitionCooldownDays();
-                var tooltip = new TextObject("{=ct_requisition_cooldown}Requisition on cooldown: {DAYS} days remaining.");
+                var days = manager.GetReinforcementRequestCooldownDays();
+                var tooltip = new TextObject("{=ct_request_cooldown}Request on cooldown: {DAYS} days remaining.");
                 tooltip.SetTextVariable("DAYS", days);
                 args.Tooltip = tooltip;
                 args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
@@ -2226,7 +1901,7 @@ namespace Enlisted.Features.Camp
             }
 
             // Check affordability
-            var cost = manager.CalculateRequisitionCost();
+            var cost = manager.CalculateReinforcementRequestCost();
             var playerGold = Hero.MainHero?.Gold ?? 0;
             if (playerGold < cost)
             {
@@ -2236,6 +1911,12 @@ namespace Enlisted.Features.Camp
                 args.Tooltip = tooltip;
                 args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                 return true;
+            }
+
+            // Show relation bonus info in tooltip
+            if (relation >= RetinueManager.HighRelationThreshold)
+            {
+                args.Tooltip = new TextObject("{=ct_request_relation_high}Your lord is pleased with your service. Reduced cost and shorter cooldown.");
             }
 
             args.optionLeaveType = GameMenuOption.LeaveType.Trade;
@@ -2251,9 +1932,9 @@ namespace Enlisted.Features.Camp
                 RetinueRequisitionMenuId,
                 "{REQUISITION_MENU_TEXT}",
                 OnRetinueRequisitionInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Confirm requisition option
@@ -2293,65 +1974,108 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Initializes the requisition menu with cost breakdown.
-        /// Uses clean formatting with inline gold icons.
+        /// Initializes the reinforcement request menu with relation-based pricing.
+        /// Shows lord dialogue that varies based on relationship level.
         /// </summary>
         private static void OnRetinueRequisitionInit(MenuCallbackArgs args)
         {
-            _ = args;
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var manager = RetinueManager.Instance;
+                var enlistment = EnlistmentBehavior.Instance;
+                var lord = enlistment?.EnlistedLord;
                 var missing = manager?.GetMissingSoldierCount() ?? 0;
-                var cost = manager?.CalculateRequisitionCost() ?? 0;
-                var perSoldier = missing > 0 ? cost / missing : 0;
+                var baseCost = manager?.CalculateRequisitionCost() ?? 0;
+                var adjustedCost = manager?.CalculateReinforcementRequestCost() ?? 0;
                 var playerGold = Hero.MainHero?.Gold ?? 0;
-                var cooldownDays = manager?.GetRequisitionCooldownDays() ?? 0;
+                var relation = RetinueManager.GetLordRelation();
+                var cooldownDays = RetinueManager.GetRelationCooldownDays();
+                var cooldownRemaining = manager?.GetReinforcementRequestCooldownDays() ?? 0;
 
                 var sb = new StringBuilder();
                 sb.AppendLine();
-                sb.AppendLine("— Requisition Men —");
+                var lordName = lord?.Name?.ToString() ?? "your lord";
+                sb.AppendLine($"-- Request Reinforcements from {lordName} --");
                 sb.AppendLine();
-                sb.AppendLine("A word to the right quartermaster, a few coins changing hands, and fresh soldiers report for duty.");
+
+                // Relation-based dialogue
+                if (relation >= RetinueManager.HighRelationThreshold)
+                {
+                    sb.AppendLine($"\"{Hero.MainHero?.Name}, your men fought well. I can spare some from the reserves.\"");
+                    sb.AppendLine();
+                    sb.AppendLine("(Lord is pleased - reduced cost, 7-day cooldown)");
+                }
+                else if (relation >= RetinueManager.MinRelationForRequest)
+                {
+                    sb.AppendLine("\"Reinforcements? I'll see what I can do. It won't be free.\"");
+                    sb.AppendLine();
+                    sb.AppendLine("(Standard terms - full cost, 14-day cooldown)");
+                }
+                else
+                {
+                    sb.AppendLine("\"You want soldiers? Prove your worth first.\"");
+                    sb.AppendLine();
+                    sb.AppendLine("(Relation too low - request unavailable)");
+                }
+
                 sb.AppendLine();
                 sb.AppendLine($"Missing Soldiers: {missing}");
-                sb.AppendLine($"Cost per Soldier: {perSoldier}{{GOLD_ICON}}");
-                sb.AppendLine($"Total Cost: {cost}{{GOLD_ICON}}");
+                sb.AppendLine($"Cost: {adjustedCost}{{GOLD_ICON}}");
+
+                if (adjustedCost < baseCost)
+                {
+                    sb.AppendLine($"  (Reduced from {baseCost}{{GOLD_ICON}} due to lord's favor)");
+                }
+
                 sb.AppendLine();
                 sb.AppendLine($"Your Gold: {playerGold}{{GOLD_ICON}}");
                 sb.AppendLine();
 
-                var cooldownLine = cooldownDays > 0
-                    ? $"Cooldown: {cooldownDays} days remaining"
-                    : "Requisition available now";
-                sb.AppendLine(cooldownLine);
+                if (cooldownRemaining > 0)
+                {
+                    sb.AppendLine($"Cooldown: {cooldownRemaining} days remaining");
+                }
+                else
+                {
+                    sb.AppendLine("Request available now");
+                }
 
-                sb.AppendLine();
-                sb.AppendLine("After requisition: 14 day cooldown");
+                sb.AppendLine($"After request: {cooldownDays} day cooldown");
 
                 MBTextManager.SetTextVariable("REQUISITION_MENU_TEXT", sb.ToString());
 
                 // Set confirm button text with gold icon
-                var confirmText = new TextObject("{=enl_camp_retinue_requisition_confirm_full}Requisition {COUNT} soldiers ({COST}{GOLD_ICON})");
+                var confirmText = new TextObject("{=enl_camp_retinue_request_confirm}Request {COUNT} soldiers ({COST}{GOLD_ICON})");
                 confirmText.SetTextVariable("COUNT", missing);
-                confirmText.SetTextVariable("COST", cost);
+                confirmText.SetTextVariable("COST", adjustedCost);
                 confirmText.SetTextVariable("GOLD_ICON", "{GOLD_ICON}");
                 MBTextManager.SetTextVariable("REQUISITION_CONFIRM_TEXT", confirmText.ToString());
 
-                ModLogger.Debug(LogCategory, "Requisition menu initialized");
+                ModLogger.Debug(LogCategory, "Reinforcement request menu initialized");
             }
             catch (Exception ex)
             {
-                ModLogger.ErrorCode(LogCategory, "E-CAMP-011", "Error initializing requisition menu", ex);
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-011", "Error initializing reinforcement request menu", ex);
                 MBTextManager.SetTextVariable("REQUISITION_MENU_TEXT",
-                    new TextObject("{=enl_camp_error_retinue_requisition}Error loading requisition details.").ToString());
+                    new TextObject("{=enl_camp_error_retinue_request}Error loading request details.").ToString());
                 MBTextManager.SetTextVariable("REQUISITION_CONFIRM_TEXT",
-                    new TextObject("{=enl_camp_retinue_requisition_confirm}Requisition").ToString());
+                    new TextObject("{=enl_camp_retinue_request_confirm_short}Request Reinforcements").ToString());
             }
         }
 
         /// <summary>
-        /// Executes the instant requisition of soldiers.
+        /// Executes the reinforcement request from the lord.
         /// </summary>
         private void ExecuteRequisition()
         {
@@ -2363,18 +2087,18 @@ namespace Enlisted.Features.Camp
                 return;
             }
 
-            if (manager.TryRequisition(out var message))
+            if (manager.TryRequestReinforcements(out var message))
             {
-                var successMsg = new TextObject("{=ct_requisition_success}{MESSAGE}");
+                var successMsg = new TextObject("{=ct_request_success}{MESSAGE}");
                 successMsg.SetTextVariable("MESSAGE", message);
                 InformationManager.DisplayMessage(new InformationMessage(successMsg.ToString(), Colors.Green));
 
-                ModLogger.Info(LogCategory, $"Requisition complete: {message}");
+                ModLogger.Info(LogCategory, $"Reinforcement request complete: {message}");
             }
             else
             {
                 InformationManager.DisplayMessage(new InformationMessage(message, Colors.Red));
-                ModLogger.Warn(LogCategory, $"Requisition failed: {message}");
+                ModLogger.Warn(LogCategory, $"Reinforcement request failed: {message}");
             }
 
             SwitchToMenuPreserveTime(RetinueMenuId);
@@ -2385,32 +2109,6 @@ namespace Enlisted.Features.Camp
         #region Companion Assignments Menu
 
         /// <summary>
-        /// Checks if companion assignments option is available (Tier 4+ and has companions).
-        /// Uses Conversation icon for companion management.
-        /// </summary>
-        private static bool IsCompanionAssignmentsAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
-            var enlistment = EnlistmentBehavior.Instance;
-            if ((enlistment?.EnlistmentTier ?? 1) < 4)
-            {
-                args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=ct_companions_tier_locked}You must reach Tier 4 to manage companion assignments.");
-                return true;
-            }
-            var manager = CompanionAssignmentManager.Instance;
-            var companions = manager?.GetAssignableCompanions() ?? new List<Hero>();
-            if (companions.Count == 0)
-            {
-                args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=ct_companions_none}No companions in your command.");
-                return true;
-            }
-            args.Tooltip = new TextObject("{=ct_companions_tooltip}Assign companions to roles in your retinue.");
-            return true;
-        }
-
-        /// <summary>
         /// Creates the Companion Assignments submenu showing each companion with toggle options.
         /// </summary>
         private void AddCompanionAssignmentsMenu(CampaignGameStarter starter)
@@ -2419,9 +2117,9 @@ namespace Enlisted.Features.Camp
                 CompanionAssignmentsMenuId,
                 "{COMPANION_ASSIGNMENTS_TEXT}",
                 OnCompanionAssignmentsInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Dynamic companion options are added via menu init text since GameMenu doesn't support 
@@ -2464,15 +2162,25 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private void OnCompanionAssignmentsInit(MenuCallbackArgs args)
         {
-            _ = args;
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var manager = CompanionAssignmentManager.Instance;
                 _cachedCompanions = manager?.GetAssignableCompanions() ?? new List<Hero>();
 
                 var sb = new StringBuilder();
                 sb.AppendLine();
-                sb.AppendLine("— Companion Assignments —");
+                sb.AppendLine("â€” Companion Assignments â€”");
                 sb.AppendLine();
                 sb.AppendLine("Companions set to 'Stay Back' will not spawn in battle.");
                 sb.AppendLine("They remain safe, immune to death, wounds, or capture.");
@@ -2676,7 +2384,7 @@ namespace Enlisted.Features.Camp
 
         #endregion
 
-        #region Phase 8: PayTension Action Menus
+        #region PayTension Action Menus
 
         /// <summary>
         /// Creates the Desperate Measures menu - corruption path options.
@@ -2689,9 +2397,9 @@ namespace Enlisted.Features.Camp
                 "{=dm_menu_intro}Desperate Measures\n\nWhen legitimate channels fail, some turn to darker paths. " +
                 "Choose carefully - your reputation and honor are at stake.\n\n{DESPERATE_STATUS}",
                 OnDesperateMeasuresInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Option 1: Bribe Paymaster's Clerk (40+ tension)
@@ -2705,7 +2413,10 @@ namespace Enlisted.Features.Camp
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
                     
-                    if (tension < 40) return false;
+                    if (tension < 40)
+                    {
+                        return false;
+                    }
                     
                     if (Hero.MainHero.Gold < 50)
                     {
@@ -2733,7 +2444,10 @@ namespace Enlisted.Features.Camp
                     var tension = enlistment?.PayTension ?? 0;
                     var duty = enlistment?.SelectedDuty ?? "";
                     
-                    if (tension < 40) return false;
+                    if (tension < 40)
+                    {
+                        return false;
+                    }
                     
                     var isSupplyDuty = duty == "quartermaster" || duty == "armorer";
                     if (!isSupplyDuty)
@@ -2760,7 +2474,10 @@ namespace Enlisted.Features.Camp
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
                     
-                    if (tension < 50) return false;
+                    if (tension < 50)
+                    {
+                        return false;
+                    }
                     
                     args.Tooltip = new TextObject("{=dm_black_market_tooltip}Seek out illicit traders. Buy or sell contraband for profit.");
                     return true;
@@ -2779,7 +2496,10 @@ namespace Enlisted.Features.Camp
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
                     
-                    if (tension < 60) return false;
+                    if (tension < 60)
+                    {
+                        return false;
+                    }
                     
                     args.Tooltip = new TextObject("{=dm_sell_gear_tooltip}Sell equipment you were issued. Risky - you'll need to replace it or face punishment.");
                     return true;
@@ -2798,7 +2518,10 @@ namespace Enlisted.Features.Camp
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
                     
-                    if (tension < 70) return false;
+                    if (tension < 70)
+                    {
+                        return false;
+                    }
                     
                     args.Tooltip = new TextObject("{=dm_desertion_tooltip}Some soldiers are planning to slip away. Hear what they have to say.");
                     return true;
@@ -2825,15 +2548,33 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private void OnDesperateMeasuresInit(MenuCallbackArgs args)
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            var tension = enlistment?.PayTension ?? 0;
-            
-            var status = $"Current PayTension: {tension}/100\n";
-            status += tension >= 70 ? "The situation is critical. Desperate times call for desperate measures."
-                    : tension >= 50 ? "The men are angry. Options are limited."
-                    : "Things are getting difficult. Some are already bending the rules.";
-            
-            MBTextManager.SetTextVariable("DESPERATE_STATUS", status);
+            try
+            {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
+                var enlistment = EnlistmentBehavior.Instance;
+                var tension = enlistment?.PayTension ?? 0;
+
+                var status = $"Current PayTension: {tension}/100\n";
+                status += tension >= 70 ? "The situation is critical. Desperate times call for desperate measures."
+                        : tension >= 50 ? "The men are angry. Options are limited."
+                        : "Things are getting difficult. Some are already bending the rules.";
+
+                MBTextManager.SetTextVariable("DESPERATE_STATUS", status);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error initializing Desperate Measures menu", ex);
+            }
         }
 
         /// <summary>
@@ -2847,9 +2588,9 @@ namespace Enlisted.Features.Camp
                 "{=hlm_menu_intro}Help the Lord\n\nThe lord's coffers are running low, but loyal soldiers can help. " +
                 "Volunteer for missions that bring coin to the treasury.\n\n{HELP_LORD_STATUS}",
                 OnHelpTheLordInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Option 1: Collect Debts (40+ tension)
@@ -2863,7 +2604,10 @@ namespace Enlisted.Features.Camp
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
                     
-                    if (tension < 40) return false;
+                    if (tension < 40)
+                    {
+                        return false;
+                    }
                     
                     args.Tooltip = new TextObject("{=hlm_debts_tooltip}Visit merchants who owe the lord money. Persuade them to pay. (-10 PayTension on success)");
                     return true;
@@ -2882,7 +2626,10 @@ namespace Enlisted.Features.Camp
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
                     
-                    if (tension < 50) return false;
+                    if (tension < 50)
+                    {
+                        return false;
+                    }
                     
                     args.Tooltip = new TextObject("{=hlm_escort_tooltip}Guard a friendly merchant through dangerous territory. The lord takes a cut. (-15 PayTension)");
                     return true;
@@ -2901,7 +2648,10 @@ namespace Enlisted.Features.Camp
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
                     
-                    if (tension < 60) return false;
+                    if (tension < 60)
+                    {
+                        return false;
+                    }
                     
                     var tradeSkill = Hero.MainHero?.GetSkillValue(DefaultSkills.Trade) ?? 0;
                     if (tradeSkill < 50)
@@ -2928,7 +2678,10 @@ namespace Enlisted.Features.Camp
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
                     
-                    if (tension < 70) return false;
+                    if (tension < 70)
+                    {
+                        return false;
+                    }
                     
                     // Check if lord is at war with anyone - simplified check
                     var lordKingdom = enlistment?.CurrentLord?.MapFaction;
@@ -2967,14 +2720,32 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private void OnHelpTheLordInit(MenuCallbackArgs args)
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            var tension = enlistment?.PayTension ?? 0;
-            var lordName = enlistment?.CurrentLord?.Name?.ToString() ?? "the lord";
-            
-            var status = $"Current PayTension: {tension}/100\n";
-            status += $"Lord {lordName} needs your help to restore the treasury.";
-            
-            MBTextManager.SetTextVariable("HELP_LORD_STATUS", status);
+            try
+            {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
+                var enlistment = EnlistmentBehavior.Instance;
+                var tension = enlistment?.PayTension ?? 0;
+                var lordName = enlistment?.CurrentLord?.Name?.ToString() ?? "the lord";
+
+                var status = $"Current PayTension: {tension}/100\n";
+                status += $"Lord {lordName} needs your help to restore the treasury.";
+
+                MBTextManager.SetTextVariable("HELP_LORD_STATUS", status);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error initializing Help The Lord menu", ex);
+            }
         }
 
         // ========================================
@@ -2984,10 +2755,19 @@ namespace Enlisted.Features.Camp
         private void OnBribeClerk()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
+
+            var hero = Hero.MainHero;
+            if (hero == null)
+            {
+                return;
+            }
 
             // Pay the bribe
-            Hero.MainHero.ChangeHeroGold(-50);
+            hero.ChangeHeroGold(-50);
 
             // Roll for success/caught
             var successChance = 70; // 70% chance of success
@@ -2996,7 +2776,7 @@ namespace Enlisted.Features.Camp
             if (roll < successChance)
             {
                 // Success - gain more than you paid
-                Hero.MainHero.ChangeHeroGold(70);
+                hero.ChangeHeroGold(70);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=dm_bribe_success}The clerk adjusts the records in your favor. You gain 20 gold net.").ToString(),
                     Colors.Green));
@@ -3018,10 +2798,19 @@ namespace Enlisted.Features.Camp
         private void OnSkimSupplies()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
+
+            var hero = Hero.MainHero;
+            if (hero == null)
+            {
+                return;
+            }
 
             // Gain supplies (as gold equivalent)
-            Hero.MainHero.ChangeHeroGold(30);
+            hero.ChangeHeroGold(30);
             
             InformationManager.DisplayMessage(new InformationMessage(
                 new TextObject("{=dm_skim_success}You quietly divert some supplies for yourself. +30 gold worth of goods.").ToString(),
@@ -3101,7 +2890,10 @@ namespace Enlisted.Features.Camp
         private void OnCollectDebts()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             // Simple skill check based on Charm
             var charm = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm) ?? 0;
@@ -3131,7 +2923,10 @@ namespace Enlisted.Features.Camp
         {
             // Always succeeds but costs fatigue
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             // Cost fatigue
             enlistment.TryConsumeFatigue(4, "escort_mission");
@@ -3150,7 +2945,10 @@ namespace Enlisted.Features.Camp
         private void OnNegotiateLoan()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             // Skill check
             var trade = Hero.MainHero?.GetSkillValue(DefaultSkills.Trade) ?? 0;
@@ -3178,11 +2976,19 @@ namespace Enlisted.Features.Camp
         private void OnVolunteerRaid()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
+
+            var hero = Hero.MainHero;
+            if (hero == null)
+            {
+                return;
+            }
 
             // Risky mission - chance of injury
-            var combatSkill = (Hero.MainHero?.GetSkillValue(DefaultSkills.OneHanded) ?? 0) +
-                             (Hero.MainHero?.GetSkillValue(DefaultSkills.TwoHanded) ?? 0);
+            var combatSkill = hero.GetSkillValue(DefaultSkills.OneHanded) + hero.GetSkillValue(DefaultSkills.TwoHanded);
             var injuryChance = Math.Max(10, 50 - (combatSkill / 10)); // 10-50% based on skill
             var roll = MBRandom.RandomInt(100);
 
@@ -3190,7 +2996,7 @@ namespace Enlisted.Features.Camp
             {
                 // Injured
                 var damage = MBRandom.RandomInt(20, 50);
-                Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - damage);
+                hero.HitPoints = Math.Max(1, hero.HitPoints - damage);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=hlm_raid_wounded}The raid succeeds but you're wounded! (-{DAMAGE} HP, -25 PayTension)")
                         .SetTextVariable("DAMAGE", damage).ToString(),
@@ -3207,7 +3013,7 @@ namespace Enlisted.Features.Camp
             ReducePayTension(25);
 
             // Gain some gold personally
-            Hero.MainHero.ChangeHeroGold(50);
+            hero.ChangeHeroGold(50);
 
             ModLogger.Info(LogCategory, "Volunteer raid mission");
             SwitchToMenuPreserveTime(HelpTheLordMenuId);
@@ -3219,12 +3025,24 @@ namespace Enlisted.Features.Camp
         private static void ReducePayTension(int amount)
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             enlistment.ReducePayTension(amount);
         }
 
         #endregion
+
+        /// <summary>
+        /// Determine if the game should pause during Camp inquiries.
+        /// </summary>
+        private bool ShouldPauseDuringCampInquiry()
+        {
+            // Inquiries should not pause the game time to keep simulation running.
+            return false;
+        }
     }
 }
 

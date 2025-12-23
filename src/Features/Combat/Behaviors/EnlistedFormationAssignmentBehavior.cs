@@ -1,8 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Enlisted.Features.Assignments.Behaviors;
-using Enlisted.Features.CommandTent.Core;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
@@ -18,8 +17,8 @@ namespace Enlisted.Features.Combat.Behaviors
     ///     Mission behavior that automatically assigns enlisted players to their designated formation
     ///     (Infantry, Ranged, Cavalry, Horse Archer) based on their duty when a battle starts.
     ///     
-    ///     At Commander tier (T7+), players can command their own formation (sergeant mode) - their retinue and
-    ///     companions are assigned to the same formation and the formation is made player-controllable.
+    ///     At Commander tier (T7+), players can command their own formation (sergeant mode). Their retinue and
+    ///     companions are assigned to the same formation, and the formation is made player-controllable.
     ///     Below T7, players join the formation but cannot issue commands.
     ///     
     ///     FIX: Also teleports the player to the correct position within their formation to handle
@@ -154,7 +153,7 @@ namespace Enlisted.Features.Combat.Behaviors
         /// <summary>
         ///     Called when an agent is built.
         ///     This catches late joins, respawns, and reinforcements immediately.
-        ///     Also handles Phase 8: "Stay Back" companions are immediately retreated from battle.
+        ///     Also handles "Stay Back" companions, ensuring they are immediately retreated from battle.
         /// </summary>
         public override void OnAgentBuild(Agent agent, Banner banner)
         {
@@ -167,7 +166,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
                 else
                 {
-                    // Phase 8: Check if this is a "stay back" companion and remove them from battle
+                    // Check if this is a "stay back" companion and remove them from battle.
                     TryRemoveStayBackCompanion(agent);
                 }
             }
@@ -178,7 +177,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Phase 8: Queues "stay back" companions for deferred removal from battle.
+        /// Queues "stay back" companions for deferred removal from battle.
         /// We can't remove them during OnAgentBuild because that corrupts the native spawn loop
         /// and causes crashes in Mission.SpawnAgent. Instead, we queue them for removal
         /// after the spawn phase completes.
@@ -349,8 +348,8 @@ namespace Enlisted.Features.Combat.Behaviors
                     _needsLordAttachRetry = false;
                 }
                 
-                // Phase 7: Handle player party (companions + retinue) formation assignment
-                // Agents may not all be spawned in the first few ticks, so we keep trying
+                // Handle player party (companions and retinue) formation assignment.
+                // Agents may not all be spawned in the first few ticks, so we keep trying.
                 if (_needsPartyAssignment && !_partyAssignmentComplete && 
                     _partyAssignmentAttempts < MaxPartyAssignmentAttempts)
                 {
@@ -358,8 +357,8 @@ namespace Enlisted.Features.Combat.Behaviors
                     TryAssignPlayerPartyToFormation();
                 }
                 
-                // Phase 8: Process deferred companion removals after spawn phase completes
-                // This prevents crashes from FadeOut during OnAgentBuild corrupting the spawn loop
+                // Process deferred companion removals after the spawn phase completes.
+                // This prevents crashes from FadeOut during OnAgentBuild corrupting the spawn loop.
                 ProcessDeferredCompanionRemovals();
             }
             catch (Exception ex)
@@ -456,8 +455,8 @@ namespace Enlisted.Features.Combat.Behaviors
             var enlistmentTier = enlistment.EnlistmentTier;
             var isTier4Plus = enlistmentTier >= RetinueManager.CommanderTier1;
             
-            var duties = EnlistedDutiesBehavior.Instance;
-            var formationString = duties?.PlayerFormation ?? "infantry";
+            // The player's formation defaults to infantry while active duty assignments are being updated.
+            var formationString = "infantry";
             var formationClass = GetFormationClassFromString(formationString);
 
             // Get the formation from the team
@@ -588,7 +587,6 @@ namespace Enlisted.Features.Combat.Behaviors
                         var preferred = missionTeam.GetFormation(desiredClass);
                         if (preferred != null && preferred.CountOfUnits > 1)
                         {
-                            bestAlliedFormation ??= preferred;
                             if (bestAlliedFormation == null || preferred.CountOfUnits > bestAlliedFormation.CountOfUnits)
                             {
                                 bestAlliedFormation = preferred;
@@ -599,7 +597,10 @@ namespace Enlisted.Features.Combat.Behaviors
                         foreach (var formation in missionTeam.FormationsIncludingSpecialAndEmpty)
                         {
                             if (formation == null || formation.CountOfUnits <= 1)
+                            {
                                 continue;
+                            }
+
                             if (bestAlliedFormation == null || formation.CountOfUnits > bestAlliedFormation.CountOfUnits)
                             {
                                 bestAlliedFormation = formation;
@@ -609,7 +610,7 @@ namespace Enlisted.Features.Combat.Behaviors
 
                     foreach (var agent in missionTeam.ActiveAgents)
                     {
-                        if (agent?.Character == currentLord.CharacterObject)
+                        if (agent?.Character != null && agent.Character == currentLord.CharacterObject)
                         {
                             lordFormation = agent.Formation;
                             lordTeam = missionTeam;
@@ -658,7 +659,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     if (!_loggedSoloAttachOutcome)
                     {
                         ModLogger.Info("FormationAssignment",
-                            $"[{caller}] Joined lord formation (index {lordFormation.FormationIndex}, units {lordFormation.CountOfUnits}, side={lordTeam?.Side})");
+                            $"[{caller}] Joined lord formation (index {lordFormation.FormationIndex}, units {lordFormation.CountOfUnits}, side={lordTeam.Side})");
                         _loggedSoloAttachOutcome = true;
                     }
 
@@ -745,9 +746,8 @@ namespace Enlisted.Features.Combat.Behaviors
                 var playerPosition = playerAgent.Position;
                 var mainParty = PartyBase.MainParty;
 
-                // Get the player's formation class from duties (Infantry, Ranged, Cavalry, HorseArcher)
-                var duties = EnlistedDutiesBehavior.Instance;
-                var formationString = duties?.PlayerFormation ?? "infantry";
+                // The player is typically assigned to the infantry formation unless specified by an order.
+                var formationString = "infantry";
                 var formationClass = GetFormationClassFromString(formationString);
                 var currentLord = enlistment.CurrentLord;
                 Vec3 targetPosition = Vec3.Invalid;
@@ -784,16 +784,18 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
                 
                 // FALLBACK 1: If no allied formation found, fall back to LORD position
-                if (!targetPosition.IsValid && currentLord != null)
+                if (!targetPosition.IsValid && currentLord != null && Mission.Current?.Teams != null)
                 {
                     foreach (var missionTeam in Mission.Current.Teams)
                     {
                         if (missionTeam.Side != team.Side)
+                        {
                             continue;
-                        
+                        }
+
                         foreach (var agent in missionTeam.ActiveAgents)
                         {
-                            if (agent?.Character == currentLord.CharacterObject)
+                            if (agent?.Character != null && agent.Character == currentLord.CharacterObject)
                             {
                                 targetPosition = agent.Position;
                                 formationDirection = formation.Direction.IsValid ? formation.Direction : Vec2.Forward;
@@ -801,31 +803,46 @@ namespace Enlisted.Features.Combat.Behaviors
                                 break;
                             }
                         }
-                        if (targetPosition.IsValid) break;
+
+                        if (targetPosition.IsValid)
+                        {
+                            break;
+                        }
                     }
                 }
-                
+
                 // FALLBACK 2: If still nothing, use ANY non-player-party agent (last resort)
-                if (!targetPosition.IsValid)
+                if (!targetPosition.IsValid && Mission.Current?.Teams != null)
                 {
                     foreach (var missionTeam in Mission.Current.Teams)
                     {
                         if (missionTeam.Side != team.Side)
+                        {
                             continue;
-                        
+                        }
+
                         foreach (var agent in missionTeam.ActiveAgents)
                         {
                             if (agent == null || !agent.IsActive() || agent == playerAgent)
+                            {
                                 continue;
+                            }
+
                             if (agent.Origin is PartyGroupAgentOrigin partyOrigin && partyOrigin.Party == mainParty)
+                            {
                                 continue;
-                            
+                            }
+
                             targetPosition = agent.Position;
                             formationDirection = formation.Direction.IsValid ? formation.Direction : Vec2.Forward;
                             teleportSource = "allied agent (fallback)";
                             break;
                         }
-                        if (targetPosition.IsValid) break;
+
+                        if (targetPosition.IsValid)
+                        {
+                            break;
+                        }
                     }
                 }
                 
@@ -975,7 +992,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Assigns all agents from the player's party (companions + retinue) to the same formation.
+        ///     Assigns all agents from the player's party (companions and retinue) to the same formation.
         ///     At Commander tier (T7+), the player commands a unified squad of their personal troops.
         ///     This ensures companions and retinue soldiers fight together with the player.
         ///     FIX: Now also teleports reassigned soldiers to the player's position, since they may have
@@ -1382,7 +1399,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Phase 8: Checks if a companion should spawn and fight in battle.
+        /// Checks if a companion should spawn and fight in battle.
         /// Delegates to CompanionAssignmentManager for the actual check.
         /// </summary>
         private static bool ShouldCompanionFight(Hero companion)

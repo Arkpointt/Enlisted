@@ -335,7 +335,7 @@ def _parse_reward_xp(reward: str) -> Dict[str, int]:
 
 def _parse_escalation_effects_from_text(text: str) -> Dict[str, int]:
     text = (text or "").strip()
-    effects = {"heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0}
+    effects = {"scrutiny": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0}
 
     def _add(label: str, key: str) -> None:
         m = re.search(rf"([+\-−])\s*(\d+)\s*{label}", text, flags=re.IGNORECASE)
@@ -348,7 +348,7 @@ def _parse_escalation_effects_from_text(text: str) -> Dict[str, int]:
         else:
             effects[key] += val
 
-    _add("Heat", "heat")
+    _add("Scrutiny", "scrutiny")
     _add("Discipline", "discipline")
     # Content tables sometimes say "Lance Rep"
     _add("Lance Rep", "lance_reputation")
@@ -456,7 +456,7 @@ def _extract_setup_and_options(block: str, default_injury_type: str) -> Tuple[st
         eff_from_cost = _parse_escalation_effects_from_text(cost)
         eff_from_reward = _parse_escalation_effects_from_text(reward)
         effects = {
-            "heat": eff_from_cost["heat"] + eff_from_reward["heat"],
+            "scrutiny": eff_from_cost["scrutiny"] + eff_from_reward["scrutiny"],
             "discipline": eff_from_cost["discipline"] + eff_from_reward["discipline"],
             "lance_reputation": eff_from_cost["lance_reputation"] + eff_from_reward["lance_reputation"],
             "medical_risk": eff_from_cost["medical_risk"] + eff_from_reward["medical_risk"],
@@ -963,7 +963,7 @@ def convert_onboarding_pack(md: str) -> Dict:
 
             # Only keep the escalation-like effects the engine supports today.
             eff = {
-                "heat": int(effects.get("heat") or 0),
+                "scrutiny": int(effects.get("scrutiny") or 0),
                 "discipline": int(effects.get("discipline") or 0),
                 "lance_reputation": int(effects.get("lance_reputation") or 0),
                 "medical_risk": int(effects.get("medical_risk") or 0),
@@ -1014,7 +1014,7 @@ def convert_thresholds_pack(md: str) -> Dict:
     """
     events: List[Dict] = []
 
-    # Split by "### " headings like "HEAT-01: The Warning"
+    # Split by "### " headings like "SCRUTINY-01: The Warning"
     blocks = _split_blocks_by_heading(md, "### ")
     for heading, block in blocks:
         if ":" not in heading:
@@ -1036,8 +1036,8 @@ def convert_thresholds_pack(md: str) -> Dict:
         threshold_val = int(m_thr.group(1)) if m_thr else 0
 
         trigger_token = ""
-        if track == "heat":
-            trigger_token = f"heat_{threshold_val}"
+        if track == "scrutiny":
+            trigger_token = f"scrutiny_{threshold_val}"
         elif track == "discipline":
             trigger_token = f"discipline_{threshold_val}"
         elif "lance reputation" in track:
@@ -1105,7 +1105,7 @@ def convert_thresholds_pack(md: str) -> Dict:
                     outcome = s[1].strip()
                     outcome_failure = s[2].strip()
 
-            base_eff = eff_map.get(opt_key_norm, {"heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0})
+            base_eff = eff_map.get(opt_key_norm, {"scrutiny": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0})
 
             # Success/failure effects can be encoded by naming like "comply (success)" in the effects table
             eff_success = eff_map.get(f"{opt_key_norm} (success)", None)

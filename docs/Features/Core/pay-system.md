@@ -1,170 +1,199 @@
 # Pay System
 
-The pay system tracks wages, bonuses, and pay tension for enlisted soldiers.
+**Summary:** The pay system manages daily wages, muster payouts, battle loot sharing, and pay tension for enlisted soldiers. Pay accumulates daily based on a dynamic formula and is distributed every 12 days at muster, with progression scaling and various bonus mechanisms.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-23  
+**Related Docs:** [Enlistment](enlistment.md), [Core Gameplay](core-gameplay.md)
+
+---
+
+## Index
+
+- [Overview](#overview)
+- [Daily Wage Calculation](#daily-wage-calculation)
+- [Pay Muster](#pay-muster)
+- [Pay Tension](#pay-tension)
+- [Free Desertion](#free-desertion)
+- [Battle Loot Share](#battle-loot-share)
+- [Tier-Gated Loot](#tier-gated-loot)
+- [News Integration](#news-integration)
+
+---
 
 ## Overview
 
 | Component | Purpose |
 |-----------|---------|
-| **Daily Wage** | Base pay + modifiers, calculated each day |
-| **Pay Muster** | Periodic payout events (~12 days) |
-| **Pay Tension** | Escalation counter (0-100) when pay is late |
-| **Battle Loot Share** | Gold bonus from victories |
-| **Lance Fund** | 5% deduction for shared supplies |
-| **Tier-Gated Loot** | T4+ access native loot screens |
+| **Daily Wage** | Dynamic formula based on tier, level, XP, and modifiers. |
+| **Pay Muster** | Periodic payout events (every 12 days ±1 day jitter). |
+| **Pay Tension** | Escalation counter (0-100) when pay is late or disrupted. |
+| **Battle Loot Share** | Gold bonus from victories, with tier-based percentages. |
+| **Tier-Gated Loot** | T4+ soldiers access native loot screens. |
 
 ---
 
 ## Daily Wage Calculation
 
+Daily wages are calculated using a formula from `enlisted_config.json` that scales with your progression and current duty status.
+
+### Wage Formula
+
 ```
-Final Wage = Base Pay × Culture Modifier × Wartime Modifier × Lord Wealth Modifier × Duty Multiplier
+DailyWage = (BaseWage + Level×LevelMult + Tier×TierMult + XP/XPDivisor) × Modifiers
 ```
 
-### Base Pay by Tier
+**Config Values** (from `enlisted_config.json`):
+- `base_wage`: 10
+- `level_multiplier`: 1
+- `tier_multiplier`: 5
+- `xp_divisor`: 200
+- Minimum: 24 denars/day
+- Maximum: 150 denars/day
 
-| Tier | Base Pay | Track |
-|------|----------|-------|
-| T1 | 3 | Enlisted |
-| T2 | 6 | Enlisted |
-| T3 | 12 | Enlisted |
-| T4 | 24 | Enlisted |
-| T5 | 40 | Officer |
-| T6 | 60 | Officer |
-| T7 | 80 | Commander |
-| T8 | 100 | Commander |
-| T9 | 120 | Commander |
+### Example Calculations
 
-### Modifiers
+| Tier | Level | XP | Base Formula | Daily Wage |
+|------|-------|----|--------------|-----------:|
+| T1 | 5 | 0 | 10 + 5×1 + 1×5 + 0 | 20 denars |
+| T3 | 10 | 600 | 10 + 10×1 + 3×5 + 3 | 38 denars |
+| T5 | 15 | 2000 | 10 + 15×1 + 5×5 + 10 | 60 denars |
+| T7 | 20 | 5000 | 10 + 20×1 + 7×5 + 25 | 90 denars |
+| T9 | 25 | 10000 | 10 + 25×1 + 9×5 + 50 | 130 denars |
 
-**Culture Modifier:**
-| Culture | Modifier |
-|---------|----------|
-| Aserai | +10% |
-| Empire | +5% |
-| Vlandia | 0% |
-| Battania | -5% |
-| Khuzait | -5% |
-| Sturgia | -10% |
+### Active Modifiers
 
-**Wartime Modifier:** +20% hazard pay when lord is at war.
-
-**Lord Wealth Status:**
-| Status | Modifier | Condition |
-|--------|----------|-----------|
-| Wealthy | +25% | Gold > 50,000 |
-| Comfortable | +10% | Gold > 20,000 |
-| Adequate | 0% | Gold > 5,000 |
-| Strained | -10% | Gold > 1,000 |
-| Broke | -25% | Gold ≤ 1,000 |
+- **Army Bonus**: ×1.2 when your lord's party is in an active army (config: `army_bonus_multiplier`)
+- **Probation Penalty**: ×0.5 when on probation after desertion or washout (config: `probation_wage_multiplier`)
+- **Duties Multiplier**: Future orders system integration (currently returns 1.0)
 
 ---
 
 ## Pay Muster
 
-Every ~12 days, a pay muster event occurs. The lord attempts to pay accumulated wages.
+Every 12 days (±1 day jitter from config), a pay muster event triggers, delivered as a map incident popup.
 
 ### Payment Outcomes
 
-| Scenario | Result |
-|----------|--------|
-| **Full Payment** | Reset PayTension to 0, -5 per day since paid |
-| **Partial Payment** | Some backpay, PayTension reduced proportionally |
-| **Promissory Note (IOU)** | No payment today, backpay remains owed, retry in 3 days |
-| **No Payment** | Backpay accumulates, +5 PayTension per missed payment |
+The lord's financial status determines what happens at muster:
 
-### Promissory Notes (IOU)
+**Full Payment**
+- Lord pays all pending wages plus any backpay
+- Pay Tension reduced by 30
+- Clears consecutive delay counter
+- Player receives full amount immediately
 
-When camp conditions disrupt payroll (high pay tension, logistics strain, territory losses), the player can accept a promissory note instead of waiting for full payment.
+**Partial Payment**
+- Lord pays current period + 50% of backpay
+- Pay Tension reduced by 10
+- Remaining backpay carries forward
+- Message indicates still-owed amount
 
-**How It Works:**
-- Available when `payDisrupted` flag is true (driven by camp conditions)
-- Menu option: "Accept a promissory note (IOU)"
-- No payment occurs, all backpay remains in ledger
-- Next pay muster scheduled in 3 days (instead of ~12 days)
-- Player can resolve pay when conditions improve
+**Payment Delayed**
+- Lord cannot afford wages
+- Backpay accumulates
+- Pay Tension increases (10 base + 5 per week overdue)
+- Consecutive delays counter increments
 
-**Benefits:**
-- Avoids long wait for next regular muster
-- No penalties or consequences
-- Backpay preserved and tracked
-- Quick retry allows flexible resolution
+**Alternative Options** (available in pay muster popup):
+- **Promissory Note (IOU)**: Accept delay, retry in 3 days
+- **Side Deal**: Take 40% payout immediately, costs 6 fatigue
+- **Corruption**: Skill check to get 95% payout through illicit channels
 
-**Implementation:**
-```csharp
-internal void ResolvePromissoryMuster()
-{
-    _lastPayOutcome = $"promissory:{_pendingMusterPay}";
-    _payMusterPending = false;
-    _nextPayday = CampaignTime.Now + CampaignTime.Days(3f);
-}
-```
+### Lord Wealth Checks
 
-### Lance Fund
+Lord affordability is checked with buffers to prevent draining them:
+- Full payment: `LordGold >= Amount + 500`
+- Partial payment: `LordGold >= (Amount/2) + 200`
 
-5% of each payment is deducted for lance shared supplies.
-- Accumulates in `LanceFundBalance`
-- Returned on honorable discharge
-- Forfeit on desertion
+Wealth thresholds for reference:
+- Wealthy: >50,000 denars
+- Comfortable: >20,000 denars
+- Struggling: >5,000 denars
+- Poor: >1,000 denars
+- Broke: ≤1,000 denars
 
 ---
 
 ## Pay Tension (0-100)
 
-Tracks soldier desperation when pay is late.
+Tracks soldier dissatisfaction when pay is delayed or irregular.
 
-### Effects
+### Tension Increases
 
-| Tension | Morale | Discipline | NPC Desertion |
-|---------|--------|------------|---------------|
-| 0-19 | 0 | Normal | 0% |
-| 20-39 | -3 | Normal | 0% |
-| 40-59 | -6 | +5% incidents | 0% |
-| 60-79 | -10 | +10% incidents | 1%/day |
-| 80-89 | -15 | +20% incidents | 3%/day |
-| 90-100 | -15 | +20% incidents | 5%/day |
+- **Pay Delayed**: 10 base + 5 per week overdue
+- **Consecutive Delays**: Compounds tension buildup
+- **Max Value**: 100
 
-### Tension Changes
+### Tension Decreases
 
-| Event | Change |
-|-------|--------|
-| Full payment | -5 per day since paid, reset to 0 |
-| Partial payment | Proportional reduction |
-| Promissory note (IOU) | No change (deferred, retry in 3 days) |
-| Missed payment | +5 per event |
-| Loyal path mission | -10 to -25 depending on mission |
+- **Full Payment**: -30 tension
+- **Partial Payment**: -10 tension
+- **Player Assists Lord**: Custom reduction from events
+
+### Effects by Level
+
+| Tension | Morale Penalty | Discipline Risk | NPC Desertion Risk |
+|---------|----------------|-----------------|---------------------|
+| 0-19 | None | None | None |
+| 20-39 | -3 | None | None |
+| 40-59 | -6 | +5% chance | Low |
+| 60-79 | -10 | +10% chance | Medium |
+| 80+ | -15 | +20% chance | High |
+
+When tension reaches 80+, NPC soldiers may desert from the lord's party. The player can check tension in the Camp Hub menu.
 
 ---
 
 ## Free Desertion
 
-When PayTension ≥ 60, the player can leave without penalty:
-- -5 relation with lord only (they understand)
-- No crime penalty
-- Keep equipment
-- No pension
-- Menu option: "Leave Without Penalty"
+When **Pay Tension ≥ 60**, the player can leave service without standard desertion penalties:
+
+**Standard Desertion Consequences**
+- Major lord relation penalty
+- Crime rating increase
+- Gear may be stripped
+- Pension forfeited
+
+**Free Desertion (High Pay Tension)**
+- Minimal lord relation hit
+- No crime rating penalty
+- Keep all current equipment
+- Pension still forfeited
+
+The lord understands if soldiers leave when wages aren't being paid.
 
 ---
 
 ## Battle Loot Share
 
-T1-T3 soldiers don't access loot screens but receive gold compensation.
+Enlisted soldiers receive automatic gold payouts after victories based on tier. This compensates for restricted loot access at lower ranks.
 
-### Gold Share Calculation
+### Loot Share Formula
 
-```csharp
-int baseShare = tier switch
-{
-    1 => 5,
-    2 => 10,
-    3 => 20,
-    _ => 0  // T4+ use native loot
-};
-
-int bonus = playerWon ? enemyCasualties : enemyCasualties / 2;
-int total = baseShare + bonus;
 ```
+EstimatedLoot = EnemyCasualties × 20 denars
+LootPool = EstimatedLoot × 0.5 (T1-T6) or EstimatedLoot (T7-T9)
+GoldEarned = LootPool × SharePercent + VictoryBonus
+```
+
+### Share Percentages by Tier
+
+| Tier | Share % | Pool Type | Example (100 casualties) |
+|------|---------|-----------|--------------------------|
+| T1 | 5% | Troop (50%) | 50 denars |
+| T2 | 10% | Troop (50%) | 100 denars |
+| T3 | 10% | Troop (50%) | 100 denars |
+| T4 | 15% | Troop (50%) | 150 denars |
+| T5 | 15% | Troop (50%) | 150 denars |
+| T6 | 15% | Troop (50%) | 150 denars |
+| T7 | 10% | Total (100%) | 200 denars |
+| T8 | 15% | Total (100%) | 300 denars |
+| T9 | 20% | Total (100%) | 400 denars |
+
+**Victory Bonus**: 5-20 denars based on battle size (5 + casualties/10, max 20)
+
+**Commander Privilege (T7+)**: Commanders take their share from total loot before the lord's split, representing their command authority.
 
 ---
 
@@ -172,82 +201,46 @@ int total = baseShare + bonus;
 
 | Tier | Loot Access | Compensation |
 |------|-------------|--------------|
-| T1-T3 | **Blocked** | Gold share |
-| T4+ | **Allowed** | Native loot screens |
+| T1-T3 | **Blocked** | Automatic gold share only |
+| T4-T6 | **Allowed** | Native loot screens + gold share |
+| T7-T9 | **Allowed** | Native loot screens + commander share |
 
-Implementation: `LootBlockPatch.ShouldBlockLoot()` checks tier.
-
----
-
-## Events
-
-### Pay Tension Events
-
-| Event | Tension | Trigger |
-|-------|---------|---------|
-| Grumbling | 20+ | Post-battle |
-| Theft Invitation | 45+ | Post-battle (15% chance) |
-| Loot the Dead | 50+ | Post-battle |
-| Confrontation | 60+ | Post-battle |
-| Mutiny Brewing | 85+ | Post-battle |
-
-### Loyal Path Missions
-
-| Mission | Tension | Effect |
-|---------|---------|--------|
-| Collect Debts | 40+ | -10 to -15 tension |
-| Escort Merchant | 50+ | -15 tension |
-| Negotiate Loan | 60+ | -15 to -25 tension |
-| Raid Enemy | 70+ | -25 tension |
-
-### Mutiny & Desertion Chains
-
-| Event | Trigger |
-|-------|---------|
-| Desertion Planning | After joining desertion plot |
-| Mutiny Resolution | After joining mutiny |
-| Mutiny Aftermath | After mutiny success |
-| Mutiny Trial | After mutiny failure |
+T4+ soldiers can use the standard Bannerlord post-battle loot interface and still receive their automatic gold share on top of any loot they take.
 
 ---
 
-## API Reference
+## News Integration
 
-### EnlistmentBehavior Properties
+Pay muster outcomes are recorded to the Personal Feed for historical review. Players can track their payment history and identify patterns like repeated delays.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `PayTension` | int | Current tension (0-100) |
-| `OwedBackpay` | int | Accumulated unpaid wages |
-| `DaysSincePay` | int | Days since last payment |
-| `IsPayOverdue` | bool | True if > 7 days since pay |
-| `LanceFundBalance` | int | Accumulated 5% deductions |
-| `IsFreeDesertionAvailable` | bool | True if tension ≥ 60 |
+### Personal Feed Entries
 
-### EnlistmentBehavior Methods
+Each muster generates an outcome-specific headline:
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `CalculateDailyWage()` | int | Wage with all modifiers |
-| `GetWageBreakdown()` | string | Tooltip text with breakdown |
-| `GetPayTensionMoralePenalty()` | int | -3 to -15 based on tension |
-| `GetPayTensionDisciplineModifier()` | float | 0.05 to 0.20 incident chance |
-| `ProcessFreeDesertion()` | void | Execute free desertion |
-| `AwardBattleLootShare(MapEvent)` | int | Calculate and award gold |
-| `ResolvePromissoryMuster()` | void | Accept IOU, defer payment, schedule retry in 3 days |
+| Outcome | Personal Feed Entry |
+|---------|---------------------|
+| **Full Payment** | "The paymaster counts out your coin. {AMOUNT} denars received in full." |
+| **Partial Payment** | "The paymaster's purse is light. {AMOUNT} denars paid, {OWED} still owed." |
+| **Delayed** | "The paymaster shakes his head. No coin today. {OWED} denars now owed." |
+| **Promissory Note** | "A promissory note replaces coin. The lord's seal promises payment soon." |
+| **Corruption** | "Coin changes hands in the shadows. {AMOUNT} denars, and no questions asked." |
+| **Side Deal** | "A deal was struck aside the muster line. {AMOUNT} denars, quick and quiet." |
 
----
+### Implementation
 
-## File Locations
+Called from `EnlistmentBehavior` payment processing methods:
 
-| File | Purpose |
-|------|---------|
-| `EnlistmentBehavior.cs` | Core pay state and methods (including `ResolvePromissoryMuster`) |
-| `EnlistedIncidentsBehavior.cs` | Pay muster inquiry presentation (IOU option) |
-| `CampLifeBehavior.cs` | Camp conditions that trigger `payDisrupted` flag |
-| `LootBlockPatch.cs` | Tier-gated loot blocking |
-| `events_pay_tension.json` | Tension event definitions |
-| `events_pay_loyal.json` | Loyal path missions |
-| `events_pay_mutiny.json` | Mutiny/desertion chains |
-| `enlisted_strings.xml` | Localization strings (including `enlisted_pay_iou`) |
+```csharp
+// In ProcessFullPayment, ProcessPartialPayment, ProcessPayDelay
+EnlistedNewsBehavior.Instance?.AddPayMusterNews(outcome, amountPaid, amountOwed);
+```
 
+Localization strings use `News_PayMuster_{Outcome}` keys in `enlisted_strings.xml`.
+
+### Player Value
+
+This historical record helps players:
+- Identify lords who consistently fail to pay
+- Track total backpay owed over time
+- Make informed decisions about service continuation
+- Understand why Pay Tension might be elevated

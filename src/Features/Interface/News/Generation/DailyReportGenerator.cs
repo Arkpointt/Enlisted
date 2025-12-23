@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Interface.News.Models;
 using Enlisted.Features.Interface.News.Templates;
+using TaleWorlds.Core;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Interface.News.Generation
 {
@@ -36,6 +38,66 @@ namespace Enlisted.Features.Interface.News.Generation
 
             var candidates = new List<Candidate>();
 
+            // ===== Strategic Context: The overarching "WHY" (HIGH PRIORITY) =====
+            if (!string.IsNullOrWhiteSpace(snapshot.StrategicContextTag))
+            {
+                string narrationId = $"context_narration_{snapshot.StrategicContextTag}";
+                TextObject narrationText = GameTexts.FindText(narrationId);
+                
+                // If targeting a settlement, add that context if possible
+                string narration = narrationText.ToString();
+                if (!string.IsNullOrWhiteSpace(context.TargetSettlementName))
+                {
+                    narration = narration.Replace("{target}", context.TargetSettlementName);
+                }
+                else
+                {
+                    narration = narration.Replace("{target}", "the enemy");
+                }
+
+                candidates.Add(Candidate.Raw(
+                    line: narration,
+                    priority: 92, // High priority but below recent critical order outcomes
+                    severity: 0,
+                    confidence: 1.0f));
+            }
+
+            // ===== Player Actions: Recent order outcomes (HIGHEST PRIORITY) =====
+            if (Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            {
+                var recentOrders = Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.GetRecentOrderOutcomes(maxDaysOld: 1);
+                foreach (var order in recentOrders)
+                {
+                    candidates.Add(Candidate.Raw(
+                        line: order.BriefSummary,
+                        priority: 98,
+                        severity: order.Success ? 10 : 70,
+                        confidence: 1.0f));
+                }
+
+                // ===== Player Actions: Significant reputation changes =====
+                var repChanges = Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.GetRecentReputationChanges(maxDaysOld: 1);
+                foreach (var change in repChanges)
+                {
+                    candidates.Add(Candidate.Raw(
+                        line: change.Message,
+                        priority: 85,
+                        severity: 30,
+                        confidence: 0.9f));
+                }
+
+                // ===== Player Actions: Company need changes =====
+                var needChanges = Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.GetRecentCompanyNeedChanges(maxDaysOld: 1);
+                foreach (var change in needChanges)
+                {
+                    candidates.Add(Candidate.Raw(
+                        line: change.Message,
+                        priority: 80,
+                        severity: change.NewValue < 30 ? 80 : 20,
+                        confidence: 0.9f));
+                }
+            }
+
             // ===== Company: urgent objective (battle/siege) =====
             if (!string.IsNullOrWhiteSpace(snapshot.BattleTag))
             {
@@ -57,11 +119,11 @@ namespace Enlisted.Features.Interface.News.Generation
                 }
             }
 
-            // ===== Lance: health deltas =====
+            // ===== Unit: health deltas (casualties) =====
             if (snapshot.DeadDelta > 0)
             {
                 candidates.Add(Candidate.Template(
-                    templateId: "lance_health_dead",
+                    templateId: "unit_casualties_dead",
                     priority: 100,
                     severity: Math.Min(100, snapshot.DeadDelta * 10),
                     confidence: 0.9f,
@@ -70,7 +132,7 @@ namespace Enlisted.Features.Interface.News.Generation
             else if (snapshot.WoundedDelta > 0)
             {
                 candidates.Add(Candidate.Template(
-                    templateId: "lance_health_wounded",
+                    templateId: "unit_casualties_wounded",
                     priority: 80,
                     severity: Math.Min(80, snapshot.WoundedDelta * 5),
                     confidence: 0.85f,
@@ -79,13 +141,13 @@ namespace Enlisted.Features.Interface.News.Generation
             else if (snapshot.SickDelta > 0)
             {
                 candidates.Add(Candidate.Template(
-                    templateId: "lance_health_sick",
+                    templateId: "unit_casualties_sick",
                     priority: 70,
                     severity: Math.Min(70, snapshot.SickDelta * 4),
                     confidence: 0.75f,
                     tokens: new Dictionary<string, string> { { "COUNT", snapshot.SickDelta.ToString() } }));
             }
-            // Quiet day: we’ll prefer a training/routine line instead of “nothing happened” if we have room.
+            // Quiet day: we'll prefer a training/routine line instead of "nothing happened" if we have room.
 
             // ===== Company: movement =====
             if (!string.IsNullOrWhiteSpace(context.AttachedArmyLeaderName))
@@ -139,7 +201,7 @@ namespace Enlisted.Features.Interface.News.Generation
                     }));
             }
 
-            // ===== Lance: training / routine =====
+            // ===== Unit: training / routine =====
             if (string.IsNullOrWhiteSpace(snapshot.BattleTag) &&
                 snapshot.DeadDelta <= 0 &&
                 snapshot.WoundedDelta <= 0 &&
@@ -147,9 +209,9 @@ namespace Enlisted.Features.Interface.News.Generation
             {
                 var trainingTemplate = snapshot.TrainingTag switch
                 {
-                    TrainingTag.Inspection => "lance_training_inspection",
-                    TrainingTag.Sparring => "lance_training_sparring",
-                    _ => "lance_training_routine"
+                    TrainingTag.Inspection => "unit_training_inspection",
+                    TrainingTag.Sparring => "unit_training_sparring",
+                    _ => "unit_training_routine"
                 };
 
                 candidates.Add(Candidate.Template(
@@ -159,14 +221,14 @@ namespace Enlisted.Features.Interface.News.Generation
                     confidence: 0.75f));
             }
 
-            // ===== Lance: discipline pressure =====
+            // ===== Unit: discipline pressure =====
             if (snapshot.DisciplineIssues >= 0)
             {
                 if (snapshot.DisciplineIssues >= 7 || string.Equals(snapshot.DisciplineTag, "critical", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(snapshot.DisciplineTag, "breaking", StringComparison.OrdinalIgnoreCase))
                 {
                     candidates.Add(Candidate.Template(
-                        templateId: "lance_discipline_critical",
+                        templateId: "unit_discipline_critical",
                         priority: 55,
                         severity: 60,
                         confidence: 0.85f));
@@ -174,7 +236,7 @@ namespace Enlisted.Features.Interface.News.Generation
                 else if (snapshot.DisciplineIssues >= 5 || string.Equals(snapshot.DisciplineTag, "serious", StringComparison.OrdinalIgnoreCase))
                 {
                     candidates.Add(Candidate.Template(
-                        templateId: "lance_discipline_serious",
+                        templateId: "unit_discipline_serious",
                         priority: 45,
                         severity: 40,
                         confidence: 0.8f));

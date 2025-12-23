@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Enlisted.Features.Camp;
+using Enlisted.Features.Company;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Escalation;
 using Enlisted.Features.Interface.News.Generation;
 using Enlisted.Features.Interface.News.Generation.Producers;
 using Enlisted.Features.Interface.News.Models;
 using Enlisted.Features.Interface.News.State;
-using Enlisted.Features.Schedule.Behaviors;
-using Enlisted.Features.Lances.Events;
-using Enlisted.Features.Lances.Events.Decisions;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem;
@@ -26,10 +26,7 @@ namespace Enlisted.Features.Interface.Behaviors
 {
     /// <summary>
     /// Manages kingdom-wide and personal news/dispatch feeds.
-    /// Read-only observer of campaign events; generates localized headlines.
-    ///
-    /// Phase 0: Infrastructure and persistence structure.
-    /// Phase 1+: Event wiring and news generation.
+    /// Read-only observer of campaign events that generates localized headlines.
     /// </summary>
     public sealed class EnlistedNewsBehavior : CampaignBehaviorBase
     {
@@ -67,11 +64,26 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         /// Daily Brief lines (stable for the day).
-        /// Stored as raw values (without "Company:"/"Lance:"/"Kingdom:" prefixes) so UIs can format as needed.
+        /// Stored as raw values (without "Company:"/"Unit:"/"Kingdom:" prefixes) so UIs can format as needed.
         /// </summary>
         private string _dailyBriefCompany = string.Empty;
-        private string _dailyBriefLance = string.Empty;
+        private string _dailyBriefUnit = string.Empty;
         private string _dailyBriefKingdom = string.Empty;
+
+        /// <summary>
+        /// Tracks when the player last participated in a battle (for "battle aftermath" flavor).
+        /// </summary>
+        private CampaignTime _lastPlayerBattleTime = CampaignTime.Zero;
+        
+        /// <summary>
+        /// Type of the last battle: "bandit", "army", "siege", or empty if none.
+        /// </summary>
+        private string _lastPlayerBattleType = string.Empty;
+        
+        /// <summary>
+        /// Whether the player won their last battle.
+        /// </summary>
+        private bool _lastPlayerBattleWon;
 
         /// <summary>
         /// Cached battle initial strengths for pyrrhic detection.
@@ -84,19 +96,65 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private bool _lordHadArmyYesterday;
 
-        // Camp News (Phase 2): persisted Daily Report + rolling ledger.
+        /// <summary>
+        /// Last time skill progress was checked (cached for 6 hours to avoid expensive recalculation).
+        /// </summary>
+        private CampaignTime _lastSkillProgressCheck = CampaignTime.Zero;
+        
+        /// <summary>
+        /// Cached skill progress line result (empty string if no skills near level-up).
+        /// </summary>
+        private string _cachedSkillProgressLine = string.Empty;
+
+        // Persisted Daily Report and rolling ledger state.
         private CampNewsState _campNewsState = new CampNewsState();
 
-        // Phase 5: expose the last generated snapshot to other systems (Decisions) without forcing recomputation.
-        // This snapshot contains primitives only; it is safe to cache and share as read-only.
-        private DailyReportSnapshot _lastDailyReportSnapshot;
-        private int _lastDailyReportSnapshotDayNumber = -1;
+        // "Since last muster" counters for camp news display. Reset at each muster cycle.
+        private int _lostSinceLastMuster;
+        private int _sickSinceLastMuster;
 
-        // Phase 4: producer pattern to populate snapshot facts without sprawl.
+        /// <summary>
+        /// Track order outcomes for display in daily brief and detailed reports.
+        /// </summary>
+        private List<OrderOutcomeRecord> _orderOutcomes = new List<OrderOutcomeRecord>();
+
+        /// <summary>
+        /// Track reputation changes for display in reports.
+        /// </summary>
+        private List<ReputationChangeRecord> _reputationChanges = new List<ReputationChangeRecord>();
+
+        /// <summary>
+        /// Track company need changes for display in reports.
+        /// </summary>
+        private List<CompanyNeedChangeRecord> _companyNeedChanges = new List<CompanyNeedChangeRecord>();
+
+        /// <summary>
+        /// Track event outcomes for Personal Feed headlines and Daily Brief context.
+        /// Shows what events fired, choices made, and effects applied.
+        /// </summary>
+        private List<EventOutcomeRecord> _eventOutcomes = new List<EventOutcomeRecord>();
+
+        /// <summary>
+        /// Track pending chain events for Daily Brief context hints.
+        /// Shows reminders like "A comrade owes you money" before the follow-up event fires.
+        /// </summary>
+        private List<PendingEventRecord> _pendingEvents = new List<PendingEventRecord>();
+
+        /// <summary>
+        /// Track muster outcomes for camp news display and daily brief.
+        /// One entry per muster cycle, showing pay, rations, and unit status.
+        /// </summary>
+        private List<MusterOutcomeRecord> _musterOutcomes = new List<MusterOutcomeRecord>();
+
+        // Expose the last generated snapshot to other systems (for example, Decisions) without forcing a
+        // recomputation. The snapshot contains primitives only, so it is safe to cache and share as read-only.
+        private DailyReportSnapshot _lastDailyReportSnapshot;
+
+        // Producer set used to populate snapshot facts without scattering logic across the behavior.
         private static readonly IDailyReportFactProducer[] DailyReportFactProducers =
         {
             new CompanyMovementObjectiveProducer(),
-            new LanceStatusFactProducer(),
+            new UnitStatusFactProducer(),
             new KingdomHeadlineFactProducer()
         };
 
@@ -147,7 +205,7 @@ namespace Enlisted.Features.Interface.Behaviors
             CampaignEvents.WarDeclared.AddNonSerializedListener(this, OnWarDeclared);
             CampaignEvents.MakePeace.AddNonSerializedListener(this, OnPeaceMade);
 
-            ModLogger.Info(LogCategory, "News behavior registered (Phase 5: personal news feed)");
+            ModLogger.Info(LogCategory, "News behavior registered");
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -155,12 +213,13 @@ namespace Enlisted.Features.Interface.Behaviors
             SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
                 // Sync kingdom feed as individual primitives (lists of complex types require manual handling)
-                var kingdomCount = _kingdomFeed?.Count ?? 0;
+                _kingdomFeed ??= new List<DispatchItem>();
+                var kingdomCount = _kingdomFeed.Count;
                 dataStore.SyncData("en_news_kingdomCount", ref kingdomCount);
 
                 if (dataStore.IsLoading)
                 {
-                    _kingdomFeed = new List<DispatchItem>();
+                    _kingdomFeed.Clear();
                     for (var i = 0; i < kingdomCount; i++)
                     {
                         var item = LoadDispatchItem(dataStore, $"en_news_k_{i}");
@@ -177,12 +236,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 // Sync personal feed
-                var personalCount = _personalFeed?.Count ?? 0;
+                _personalFeed ??= new List<DispatchItem>();
+                var personalCount = _personalFeed.Count;
                 dataStore.SyncData("en_news_personalCount", ref personalCount);
 
                 if (dataStore.IsLoading)
                 {
-                    _personalFeed = new List<DispatchItem>();
+                    _personalFeed.Clear();
                     for (var i = 0; i < personalCount; i++)
                     {
                         var item = LoadDispatchItem(dataStore, $"en_news_p_{i}");
@@ -204,21 +264,32 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Sync Daily Brief (once-per-day RP digest)
                 // Ensure strings are never null before syncing (Bannerlord SyncData requires non-null refs)
                 _dailyBriefCompany ??= string.Empty;
-                _dailyBriefLance ??= string.Empty;
+                _dailyBriefUnit ??= string.Empty;
                 _dailyBriefKingdom ??= string.Empty;
 
                 dataStore.SyncData("en_news_dailyBriefDay", ref _lastDailyBriefDayNumber);
                 dataStore.SyncData("en_news_dailyBriefCompany", ref _dailyBriefCompany);
-                dataStore.SyncData("en_news_dailyBriefLance", ref _dailyBriefLance);
+                dataStore.SyncData("en_news_dailyBriefUnit", ref _dailyBriefUnit);
                 dataStore.SyncData("en_news_dailyBriefKingdom", ref _dailyBriefKingdom);
+                
+                // Battle aftermath tracking for daily brief flavor
+                _lastPlayerBattleType ??= string.Empty;
+                dataStore.SyncData("en_news_lastBattleTime", ref _lastPlayerBattleTime);
+                dataStore.SyncData("en_news_lastBattleType", ref _lastPlayerBattleType);
+                dataStore.SyncData("en_news_lastBattleWon", ref _lastPlayerBattleWon);
+
+                // "Since last muster" counters for camp news display
+                dataStore.SyncData("en_news_lostSinceMuster", ref _lostSinceLastMuster);
+                dataStore.SyncData("en_news_sickSinceMuster", ref _sickSinceLastMuster);
 
                 // Sync battle snapshots (for pyrrhic detection across save/load)
-                var snapshotCount = _battleSnapshots?.Count ?? 0;
+                _battleSnapshots ??= new Dictionary<string, BattleSnapshot>();
+                var snapshotCount = _battleSnapshots.Count;
                 dataStore.SyncData("en_news_snapshotCount", ref snapshotCount);
 
                 if (dataStore.IsLoading)
                 {
-                    _battleSnapshots = new Dictionary<string, BattleSnapshot>();
+                    _battleSnapshots.Clear();
                     for (var i = 0; i < snapshotCount; i++)
                     {
                         var snapshot = LoadBattleSnapshot(dataStore, $"en_news_bs_{i}");
@@ -240,17 +311,132 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Sync army tracking state
                 dataStore.SyncData("en_news_lordHadArmy", ref _lordHadArmyYesterday);
 
-                // Phase 2: Camp News state (Daily Report archive + ledger)
+                // Persisted camp news state (Daily Report archive + ledger).
                 _campNewsState ??= new CampNewsState();
                 _campNewsState.SyncData(dataStore);
+
+                // Sync order outcomes tracking
+                _orderOutcomes ??= new List<OrderOutcomeRecord>();
+                var orderOutcomesCount = _orderOutcomes.Count;
+                dataStore.SyncData("en_news_orderOutcomesCount", ref orderOutcomesCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _orderOutcomes.Clear();
+                    for (var i = 0; i < orderOutcomesCount; i++)
+                    {
+                        var record = LoadOrderOutcomeRecord(dataStore, $"en_news_order_{i}");
+                        _orderOutcomes.Add(record);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < orderOutcomesCount; i++)
+                    {
+                        SaveOrderOutcomeRecord(dataStore, $"en_news_order_{i}", _orderOutcomes[i]);
+                    }
+                }
+
+                // Sync reputation changes tracking
+                _reputationChanges ??= new List<ReputationChangeRecord>();
+                var reputationChangesCount = _reputationChanges.Count;
+                dataStore.SyncData("en_news_reputationChangesCount", ref reputationChangesCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _reputationChanges.Clear();
+                    for (var i = 0; i < reputationChangesCount; i++)
+                    {
+                        var record = LoadReputationChangeRecord(dataStore, $"en_news_rep_{i}");
+                        _reputationChanges.Add(record);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < reputationChangesCount; i++)
+                    {
+                        SaveReputationChangeRecord(dataStore, $"en_news_rep_{i}", _reputationChanges[i]);
+                    }
+                }
+
+                // Sync company need changes tracking
+                _companyNeedChanges ??= new List<CompanyNeedChangeRecord>();
+                var needChangesCount = _companyNeedChanges.Count;
+                dataStore.SyncData("en_news_needChangesCount", ref needChangesCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _companyNeedChanges.Clear();
+                    for (var i = 0; i < needChangesCount; i++)
+                    {
+                        var record = LoadCompanyNeedChangeRecord(dataStore, $"en_news_need_{i}");
+                        _companyNeedChanges.Add(record);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < needChangesCount; i++)
+                    {
+                        SaveCompanyNeedChangeRecord(dataStore, $"en_news_need_{i}", _companyNeedChanges[i]);
+                    }
+                }
+
+                // Sync event outcomes tracking
+                _eventOutcomes ??= new List<EventOutcomeRecord>();
+                var eventOutcomesCount = _eventOutcomes.Count;
+                dataStore.SyncData("en_news_eventOutcomesCount", ref eventOutcomesCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _eventOutcomes.Clear();
+                    for (var i = 0; i < eventOutcomesCount; i++)
+                    {
+                        var record = LoadEventOutcomeRecord(dataStore, $"en_news_evt_{i}");
+                        _eventOutcomes.Add(record);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < eventOutcomesCount; i++)
+                    {
+                        SaveEventOutcomeRecord(dataStore, $"en_news_evt_{i}", _eventOutcomes[i]);
+                    }
+                }
+
+                // Sync pending events tracking
+                _pendingEvents ??= new List<PendingEventRecord>();
+                var pendingEventsCount = _pendingEvents.Count;
+                dataStore.SyncData("en_news_pendingEventsCount", ref pendingEventsCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _pendingEvents.Clear();
+                    for (var i = 0; i < pendingEventsCount; i++)
+                    {
+                        var record = LoadPendingEventRecord(dataStore, $"en_news_pend_{i}");
+                        _pendingEvents.Add(record);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < pendingEventsCount; i++)
+                    {
+                        SavePendingEventRecord(dataStore, $"en_news_pend_{i}", _pendingEvents[i]);
+                    }
+                }
 
                 // Safe initialization for null collections after load
                 _kingdomFeed ??= new List<DispatchItem>();
                 _personalFeed ??= new List<DispatchItem>();
                 _battleSnapshots ??= new Dictionary<string, BattleSnapshot>();
+                _orderOutcomes ??= new List<OrderOutcomeRecord>();
+                _reputationChanges ??= new List<ReputationChangeRecord>();
+                _companyNeedChanges ??= new List<CompanyNeedChangeRecord>();
+                _eventOutcomes ??= new List<EventOutcomeRecord>();
+                _pendingEvents ??= new List<PendingEventRecord>();
 
                 _dailyBriefCompany ??= string.Empty;
-                _dailyBriefLance ??= string.Empty;
+                _dailyBriefUnit ??= string.Empty;
                 _dailyBriefKingdom ??= string.Empty;
 
                 // Trim feeds to max size
@@ -263,8 +449,27 @@ namespace Enlisted.Features.Interface.Behaviors
         #region Public API (Menu Integration)
 
         /// <summary>
-        /// Builds the once-per-day Daily Brief section (Company/Lance/Kingdom).
-        /// This replaces the old "Kingdom News" block on the main enlisted menu.
+        /// Builds the player status RP flavor line for use in menus.
+        /// Returns tier-appropriate, context-aware text about the player's current condition.
+        /// </summary>
+        public string BuildPlayerStatusLine(EnlistmentBehavior enlistment)
+        {
+            return BuildDailyUnitLine(enlistment ?? EnlistmentBehavior.Instance);
+        }
+
+        /// <summary>
+        /// Returns the last battle the player participated in (if any), for contextual menu flavor.
+        /// </summary>
+        public bool TryGetLastPlayerBattleSummary(out CampaignTime battleTime, out bool playerWon)
+        {
+            battleTime = _lastPlayerBattleTime;
+            playerWon = _lastPlayerBattleWon;
+            return battleTime != CampaignTime.Zero;
+        }
+
+        /// <summary>
+        /// Builds the once-per-day Daily Brief as a single flowing RP narrative paragraph.
+        /// Combines company situation, casualties, player status, and kingdom news into immersive text.
         /// </summary>
         public string BuildDailyBriefSection()
         {
@@ -277,37 +482,610 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 EnsureDailyBriefGenerated();
 
-                // If generation produced no content (should be rare), hide the section rather than showing empties.
+                // If generation produced no content, hide the section
                 if (string.IsNullOrWhiteSpace(_dailyBriefCompany) &&
-                    string.IsNullOrWhiteSpace(_dailyBriefLance) &&
+                    string.IsNullOrWhiteSpace(_dailyBriefUnit) &&
                     string.IsNullOrWhiteSpace(_dailyBriefKingdom))
                 {
                     return string.Empty;
                 }
 
-                var sb = new StringBuilder();
-                sb.AppendLine(new TextObject("{=en_daily_brief_header}--- Daily Brief (Today) ---").ToString());
-
+                // Build a flowing narrative paragraph instead of labeled lines
+                var parts = new List<string>();
+                
                 if (!string.IsNullOrWhiteSpace(_dailyBriefCompany))
                 {
-                    sb.AppendLine($"Company: {_dailyBriefCompany}");
+                    parts.Add(_dailyBriefCompany);
                 }
 
-                if (!string.IsNullOrWhiteSpace(_dailyBriefLance))
+                // Add supply context when relevant (< 70%)
+                var supplyContext = BuildSupplyContextLine();
+                if (!string.IsNullOrWhiteSpace(supplyContext))
                 {
-                    sb.AppendLine($"Lance:   {_dailyBriefLance}");
+                    parts.Add(supplyContext);
                 }
 
+                // Add casualty report with RP flavor (losses and wounded since last muster)
+                var casualtyLine = BuildCasualtyReportLine();
+                if (!string.IsNullOrWhiteSpace(casualtyLine))
+                {
+                    parts.Add(casualtyLine);
+                }
+
+                // Add recent event aftermath (events in last 24 hours)
+                var recentEventLine = BuildRecentEventLine();
+                if (!string.IsNullOrWhiteSpace(recentEventLine))
+                {
+                    parts.Add(recentEventLine);
+                }
+
+                // Add pending chain event hints
+                var pendingLine = BuildPendingEventsLine();
+                if (!string.IsNullOrWhiteSpace(pendingLine))
+                {
+                    parts.Add(pendingLine);
+                }
+
+                // Add flag-based personality context
+                var flagContext = BuildFlagContextLine();
+                if (!string.IsNullOrWhiteSpace(flagContext))
+                {
+                    parts.Add(flagContext);
+                }
+
+                // Add skill progress hint if any skill is close to level-up
+                var skillProgress = BuildSkillProgressLine();
+                if (!string.IsNullOrWhiteSpace(skillProgress))
+                {
+                    parts.Add(skillProgress);
+                }
+
+                // Add retinue context for commanders (T7+)
+                var retinueContext = BuildRetinueContextLine();
+                if (!string.IsNullOrWhiteSpace(retinueContext))
+                {
+                    parts.Add(retinueContext);
+                }
+                    
+                if (!string.IsNullOrWhiteSpace(_dailyBriefUnit))
+                {
+                    parts.Add(_dailyBriefUnit);
+                }
+                    
                 if (!string.IsNullOrWhiteSpace(_dailyBriefKingdom))
                 {
-                    sb.AppendLine($"Kingdom: {_dailyBriefKingdom}");
+                    parts.Add(_dailyBriefKingdom);
                 }
 
-                return sb.ToString().TrimEnd();
+                // Join sentences into a flowing paragraph
+                var paragraph = string.Join(" ", parts);
+                
+                return paragraph;
             }
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "Error building Daily Brief section", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds an RP-flavored casualty report line for the daily brief.
+        /// Shows losses and wounded since last muster in narrative style.
+        /// </summary>
+        private string BuildCasualtyReportLine()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var lord = enlistment?.CurrentLord;
+                var lordParty = lord?.PartyBelongedTo;
+                
+                var lostCount = _lostSinceLastMuster;
+                var woundedCount = lordParty?.MemberRoster?.TotalWounded ?? 0;
+                
+                // No casualties to report
+                if (lostCount <= 0 && woundedCount <= 0)
+                {
+                    return string.Empty;
+                }
+
+                // Heavy losses - somber tone
+                if (lostCount >= 10)
+                {
+                    var text = new TextObject("{=brief_casualties_heavy}The company has paid dearly — {COUNT} souls lost since last muster. The men speak in hushed tones and sleep comes hard.");
+                    text.SetTextVariable("COUNT", lostCount);
+                    return text.ToString();
+                }
+                
+                // Moderate losses with wounded
+                if (lostCount >= 5)
+                {
+                    if (woundedCount >= 10)
+                    {
+                        var text = new TextObject("{=brief_casualties_moderate_wounded}Hard fighting has cost us {DEAD} dead and left {WOUNDED} nursing wounds. The surgeons work through the night.");
+                        text.SetTextVariable("DEAD", lostCount);
+                        text.SetTextVariable("WOUNDED", woundedCount);
+                        return text.ToString();
+                    }
+                    var text2 = new TextObject("{=brief_casualties_moderate}We've lost {COUNT} good soldiers since the last muster. Their names are spoken at the evening fire.");
+                    text2.SetTextVariable("COUNT", lostCount);
+                    return text2.ToString();
+                }
+
+                // Some losses
+                if (lostCount >= 2)
+                {
+                    if (woundedCount >= 15)
+                    {
+                        var text = new TextObject("{=brief_casualties_few_manywounded}The wounded fill the medical tents, groaning through the night. {COUNT} didn't make it.");
+                        text.SetTextVariable("COUNT", lostCount);
+                        return text.ToString();
+                    }
+                    if (woundedCount >= 5)
+                    {
+                        var text = new TextObject("{=brief_casualties_few_somewounded}{DEAD} fallen, {WOUNDED} wounded — the cost of the march weighs on every man.");
+                        text.SetTextVariable("DEAD", lostCount);
+                        text.SetTextVariable("WOUNDED", woundedCount);
+                        return text.ToString();
+                    }
+                    var text2 = new TextObject("{=brief_casualties_few}{COUNT} soldiers have fallen since last muster.");
+                    text2.SetTextVariable("COUNT", lostCount);
+                    return text2.ToString();
+                }
+
+                // Single loss
+                if (lostCount == 1)
+                {
+                    if (woundedCount >= 10)
+                    {
+                        var text = new TextObject("{=brief_casualties_one_manywounded}One of ours didn't make it. {WOUNDED} others nurse their wounds and pray they're luckier.");
+                        text.SetTextVariable("WOUNDED", woundedCount);
+                        return text.ToString();
+                    }
+                    return new TextObject("{=brief_casualties_one}One of ours didn't make it through. The lads are quiet today.").ToString();
+                }
+
+                // No deaths but significant wounded
+                if (woundedCount >= 20)
+                {
+                    var text = new TextObject("{=brief_wounded_many}The surgeons are overwhelmed — {COUNT} wounded fill the medical tents, and the air reeks of blood and poultices.");
+                    text.SetTextVariable("COUNT", woundedCount);
+                    return text.ToString();
+                }
+                if (woundedCount >= 10)
+                {
+                    var text = new TextObject("{=brief_wounded_moderate}{COUNT} soldiers recovering from their wounds. The company marches slower for it.");
+                    text.SetTextVariable("COUNT", woundedCount);
+                    return text.ToString();
+                }
+                if (woundedCount >= 5)
+                {
+                    var text = new TextObject("{=brief_wounded_few}A handful of wounded among us — {COUNT} in all, patched up and carrying on.");
+                    text.SetTextVariable("COUNT", woundedCount);
+                    return text.ToString();
+                }
+
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building casualty report: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a supply context line for the Daily Brief.
+        /// Shows warnings when supply levels are concerning.
+        /// </summary>
+        private string BuildSupplyContextLine()
+        {
+            try
+            {
+                var supply = EnlistmentBehavior.Instance?.CompanyNeeds?.Supplies ?? 100;
+
+                if (supply < 30)
+                {
+                    return new TextObject("{=brief_supply_critical}The supply wagons are nearly empty. Men eye what remains with worry, and the quartermaster has locked the stores. Equipment requisitions are on hold until the next resupply.").ToString();
+                }
+                if (supply < 50)
+                {
+                    return new TextObject("{=brief_supply_low}Supplies are running thin. Rations have been cut and the quartermaster counts every bolt and bandage with a furrowed brow.").ToString();
+                }
+                if (supply < 70)
+                {
+                    return new TextObject("{=brief_supply_moderate}Supplies are adequate but dwindling. The men grumble about the portions, though there's enough for now.").ToString();
+                }
+
+                // Good supply levels don't need mention
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building supply context: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a retinue status line for the Daily Brief.
+        /// Shows context about the player's personal retinue when they have commander rank.
+        /// </summary>
+        private static string BuildRetinueContextLine()
+        {
+            try
+            {
+                var state = Retinue.Core.RetinueManager.Instance?.State;
+                if (state == null || !state.HasTypeSelected)
+                {
+                    // Not a commander or no retinue type selected
+                    return string.Empty;
+                }
+
+                var loyalty = state.RetinueLoyalty;
+                var soldierCount = state.TotalSoldiers;
+                var veteranCount = state.NamedVeterans?.Count ?? 0;
+                
+                // Get capacity from tier
+                var enlistment = EnlistmentBehavior.Instance;
+                var capacity = enlistment != null 
+                    ? Retinue.Core.RetinueManager.GetTierCapacity(enlistment.EnlistmentTier)
+                    : 20;
+
+                // Build context based on loyalty and composition
+                if (soldierCount == 0)
+                {
+                    return new TextObject("{=brief_ret_empty}Your retinue stands empty. You must acquire soldiers to rebuild your personal command.").ToString();
+                }
+
+                if (loyalty < 20)
+                {
+                    return new TextObject("{=brief_ret_critical}Your retinue's loyalty is dangerously low. The men eye you with barely-concealed resentment. Desertion seems imminent.").ToString();
+                }
+
+                if (loyalty < 40)
+                {
+                    var line = new TextObject("{=brief_ret_low}Your {COUNT} retinue soldiers serve grudgingly. Morale is poor, and complaints circulate openly.");
+                    line.SetTextVariable("COUNT", soldierCount);
+                    return line.ToString();
+                }
+
+                if (loyalty >= 80)
+                {
+                    if (veteranCount > 0)
+                    {
+                        var line = new TextObject("{=brief_ret_high_vets}Your retinue of {COUNT} stands loyal and eager. Your {VET_COUNT} named veterans speak well of you around the campfire.");
+                        line.SetTextVariable("COUNT", soldierCount);
+                        line.SetTextVariable("VET_COUNT", veteranCount);
+                        return line.ToString();
+                    }
+                    else
+                    {
+                        var line = new TextObject("{=brief_ret_high}Your retinue of {COUNT} soldiers stands ready and devoted. They trust your command.");
+                        line.SetTextVariable("COUNT", soldierCount);
+                        return line.ToString();
+                    }
+                }
+
+                // Normal range - only show if at capacity or have veterans
+                if (veteranCount > 0)
+                {
+                    var line = new TextObject("{=brief_ret_vets}Among your {COUNT} retinue soldiers, {VET_COUNT} named veterans stand out as battle-hardened warriors.");
+                    line.SetTextVariable("COUNT", soldierCount);
+                    line.SetTextVariable("VET_COUNT", veteranCount);
+                    return line.ToString();
+                }
+
+                if (soldierCount >= capacity)
+                {
+                    var line = new TextObject("{=brief_ret_full}Your retinue has reached its full complement of {COUNT} soldiers.");
+                    line.SetTextVariable("COUNT", soldierCount);
+                    return line.ToString();
+                }
+
+                // Normal state with nothing notable
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building retinue context: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a recent event aftermath line for the Daily Brief.
+        /// Shows flavor text for events that fired in the last 24 hours.
+        /// </summary>
+        private string BuildRecentEventLine()
+        {
+            try
+            {
+                _eventOutcomes ??= new List<EventOutcomeRecord>();
+
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var recentEvents = _eventOutcomes
+                    .Where(e => currentDay - e.DayNumber <= 1)
+                    .OrderByDescending(e => e.DayNumber)
+                    .Take(1)
+                    .ToList();
+
+                if (recentEvents.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                var recent = recentEvents[0];
+                var eventId = recent.EventId?.ToLowerInvariant() ?? string.Empty;
+
+                // Dice/gambling aftermath
+                if (eventId.Contains("dice") || eventId.Contains("gambling") || eventId.Contains("wager"))
+                {
+                    return new TextObject("{=brief_event_dice}The men still talk about your dice game — coin changed hands, and some are richer for it.").ToString();
+                }
+
+                // Training aftermath
+                if (eventId.Contains("training") || eventId.Contains("drill") || eventId.Contains("practice"))
+                {
+                    return new TextObject("{=brief_event_training}Yesterday's training session left your arms sore and your muscles aching, but your skills are sharper for it.").ToString();
+                }
+
+                // Hunt aftermath
+                if (eventId.Contains("hunt"))
+                {
+                    return new TextObject("{=brief_event_hunt}Fresh game from the hunt sizzles over the cookfires. The men eat well tonight.").ToString();
+                }
+
+                // Loan aftermath
+                if (eventId.Contains("lend") || eventId.Contains("loan"))
+                {
+                    if (eventId.Contains("repay") || eventId.Contains("return"))
+                    {
+                        return string.Empty; // Repayment doesn't need aftermath
+                    }
+                    return new TextObject("{=brief_event_loan}A comrade owes you coin. He catches your eye across the camp and nods, remembering his debt.").ToString();
+                }
+
+                // Tavern aftermath
+                if (eventId.Contains("tavern") || eventId.Contains("drinking"))
+                {
+                    return new TextObject("{=brief_event_tavern}Last night's drinking still echoes in your head. The ale was strong, and the songs were louder.").ToString();
+                }
+
+                // Battle loot aftermath
+                if (eventId.Contains("loot") || eventId.Contains("battlefield"))
+                {
+                    return new TextObject("{=brief_event_loot}The spoils of battle weigh in your pack. Some men did well, others came away empty-handed.").ToString();
+                }
+
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building recent event line: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a pending chain events line for the Daily Brief.
+        /// Shows context hints for upcoming events.
+        /// </summary>
+        private string BuildPendingEventsLine()
+        {
+            try
+            {
+                _pendingEvents ??= new List<PendingEventRecord>();
+
+                if (_pendingEvents.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var lines = new List<string>();
+
+                foreach (var pending in _pendingEvents)
+                {
+                    var daysRemaining = pending.ScheduledDay - currentDay;
+                    var chainId = pending.ChainEventId?.ToLowerInvariant() ?? string.Empty;
+
+                    // Skip stale pending events (more than 7 days overdue)
+                    if (daysRemaining < -7)
+                    {
+                        continue;
+                    }
+
+                    // Loan repayment pending
+                    if (chainId.Contains("repay") || chainId.Contains("return") || chainId.Contains("debt"))
+                    {
+                        if (daysRemaining <= 1)
+                        {
+                            lines.Add(new TextObject("{=brief_pending_repay_due}A comrade promised to repay you today. You catch him avoiding your gaze across the camp.").ToString());
+                        }
+                        else
+                        {
+                            // Clamp to minimum 1 to avoid negative or zero display
+                            var daysSince = Math.Max(1, currentDay - pending.CreatedDay);
+                            var text = new TextObject("{=brief_pending_repay_waiting}A comrade owes you coin. It's been {DAYS} days, and you're starting to wonder if he'll make good on it.");
+                            text.SetTextVariable("DAYS", daysSince);
+                            lines.Add(text.ToString());
+                        }
+                    }
+                    // Gratitude pending
+                    else if (chainId.Contains("gratitude") || chainId.Contains("thank") || chainId.Contains("favor"))
+                    {
+                        lines.Add(new TextObject("{=brief_pending_gratitude}Someone in the company remembers your kindness. A favor owed, perhaps.").ToString());
+                    }
+                    // Revenge/grudge pending
+                    else if (chainId.Contains("revenge") || chainId.Contains("grudge"))
+                    {
+                        lines.Add(new TextObject("{=brief_pending_grudge}You've made an enemy. Someone watches you with hard eyes when they think you're not looking.").ToString());
+                    }
+                    // Generic hint from the record
+                    else if (!string.IsNullOrEmpty(pending.ContextHint))
+                    {
+                        lines.Add(pending.ContextHint);
+                    }
+                }
+
+                // Return only the most relevant (first) to avoid spam
+                return lines.Count > 0 ? lines[0] : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building pending events line: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a flag-based context line for the Daily Brief.
+        /// Shows personality hints based on active escalation flags.
+        /// </summary>
+        private string BuildFlagContextLine()
+        {
+            try
+            {
+                var state = EscalationManager.Instance?.State;
+                if (state == null)
+                {
+                    return string.Empty;
+                }
+
+                var lines = new List<string>();
+
+                if (state.HasFlag("has_helped_comrade") || state.HasFlag("helped_comrade"))
+                {
+                    lines.Add(new TextObject("{=brief_flag_helpful}Word has spread that you look out for your comrades. Men nod when you pass.").ToString());
+                }
+                if (state.HasFlag("dice_winner") || state.HasFlag("gambling_winner"))
+                {
+                    lines.Add(new TextObject("{=brief_flag_lucky}Your luck at dice is remembered. Some men avoid gambling with you; others can't resist trying their fortune.").ToString());
+                }
+                if (state.HasFlag("shared_winnings") || state.HasFlag("generous"))
+                {
+                    lines.Add(new TextObject("{=brief_flag_generous}The men appreciate your generosity. When you have coin, you share it, and that's not forgotten.").ToString());
+                }
+                if (state.HasFlag("officer_attention") || state.HasFlag("noticed_by_officers"))
+                {
+                    lines.Add(new TextObject("{=brief_flag_noticed}Officers have taken notice of you lately. Whether that's good or bad remains to be seen.").ToString());
+                }
+                if (state.HasFlag("training_focused") || state.HasFlag("dedicated_training"))
+                {
+                    lines.Add(new TextObject("{=brief_flag_training}Your dedication to training has been noted. The drill sergeant speaks well of your discipline.").ToString());
+                }
+                if (state.HasFlag("good_hunter") || state.HasFlag("skilled_hunter"))
+                {
+                    lines.Add(new TextObject("{=brief_flag_hunter}Your hunting skills are well regarded. When the company needs fresh meat, they look to you.").ToString());
+                }
+                if (state.HasFlag("drinks_with_soldiers") || state.HasFlag("tavern_regular"))
+                {
+                    lines.Add(new TextObject("{=brief_flag_drinker}You're known to drink with the common soldiers. They count you as one of their own.").ToString());
+                }
+
+                // Return one random context to avoid spam and add variety
+                if (lines.Count > 0)
+                {
+                    var index = MBRandom.RandomInt(lines.Count);
+                    return lines[index];
+                }
+
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building flag context line: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Checks main combat skills for level-up progress and returns a hint if any skill is within 20% of leveling.
+        /// Results are cached for 6 hours to avoid expensive recalculation.
+        /// </summary>
+        private string BuildSkillProgressLine()
+        {
+            try
+            {
+                // Use cached result if checked within last 6 hours
+                var hoursSinceCheck = CampaignTime.Now.ToHours - _lastSkillProgressCheck.ToHours;
+                if (hoursSinceCheck < 6.0f && !string.IsNullOrEmpty(_cachedSkillProgressLine))
+                {
+                    return _cachedSkillProgressLine;
+                }
+
+                var hero = Hero.MainHero;
+                if (hero?.HeroDeveloper == null)
+                {
+                    _lastSkillProgressCheck = CampaignTime.Now;
+                    _cachedSkillProgressLine = string.Empty;
+                    return string.Empty;
+                }
+
+                var model = Campaign.Current?.Models?.CharacterDevelopmentModel;
+                if (model == null)
+                {
+                    _lastSkillProgressCheck = CampaignTime.Now;
+                    _cachedSkillProgressLine = string.Empty;
+                    return string.Empty;
+                }
+
+                // Check main combat skills for level-up progress
+                var combatSkills = new[]
+                {
+                    DefaultSkills.OneHanded,
+                    DefaultSkills.TwoHanded,
+                    DefaultSkills.Polearm,
+                    DefaultSkills.Bow,
+                    DefaultSkills.Crossbow
+                };
+
+                foreach (var skill in combatSkills)
+                {
+                    try
+                    {
+                        var skillValue = hero.GetSkillValue(skill);
+                        
+                        // Skip skills at max level (330)
+                        if (skillValue >= 330)
+                        {
+                            continue;
+                        }
+
+                        var xpProgress = hero.HeroDeveloper.GetSkillXpProgress(skill);
+                        var xpNeeded = model.GetXpRequiredForSkillLevel(skillValue + 1) - model.GetXpRequiredForSkillLevel(skillValue);
+
+                        // Skip if XP calculation is invalid (shouldn't happen in vanilla, but guards against mod edge cases)
+                        if (xpNeeded <= 0)
+                        {
+                            continue;
+                        }
+
+                        // Check if within 20% of next level
+                        if (xpProgress > xpNeeded * 0.8f)
+                        {
+                            _lastSkillProgressCheck = CampaignTime.Now;
+                            _cachedSkillProgressLine = $"Your {skill.Name.ToString()} skill is nearly ready to advance.";
+                            return _cachedSkillProgressLine;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Debug(LogCategory, $"Error checking skill progress for {(skill != null ? skill.Name.ToString() : "unknown")}: {ex.Message}");
+                        continue;
+                    }
+                }
+
+                // No skills close to level-up
+                _lastSkillProgressCheck = CampaignTime.Now;
+                _cachedSkillProgressLine = string.Empty;
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building skill progress line: {ex.Message}");
                 return string.Empty;
             }
         }
@@ -433,10 +1211,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     return string.Empty;
                 }
 
-                // Select which items are "currently visible" based on priority and backlog rules.
-                // - Every item must stay visible for at least 1 day once shown.
-                // - Important items stay visible for 2 days (MinDisplayDays = 2).
-                // - Items can be replaced by newer updates with the same StoryKey.
+                // Select which items are "currently visible" based on priority and backlog rules. Every item stays
+                // visible for at least one day once shown. Important items stay visible for two days. An item can be
+                // replaced by a newer update with the same StoryKey.
                 var currentDay = (int)CampaignTime.Now.ToDays;
                 var candidates = _kingdomFeed
                     .Where(x =>
@@ -564,7 +1341,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         #endregion
 
-        #region Event Handlers (Phase 1 Stubs)
+        #region Event Handlers
 
         /// <summary>
         /// Daily tick: check for bulletin generation and army formation detection.
@@ -583,8 +1360,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Generate the daily brief once per day while enlisted so the main menu can display it without jitter.
                 EnsureDailyBriefGenerated();
 
-                // Phase 2: Generate the Daily Report once per in-game day (persisted, stable).
+                // Generate the Daily Report once per in-game day (persisted, stable).
                 EnsureDailyReportGenerated();
+
+                // Clean up stale pending events that never fired
+                CleanupStalePendingEvents();
 
                 CheckForArmyFormation();
             }
@@ -595,8 +1375,39 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Phase 2: Ensure we have a persisted Daily Report for the current day.
-        /// This does not change UI yet; Phase 3 consumes the record to show an excerpt on the main menu.
+        /// Removes pending events that are more than 7 days overdue.
+        /// Handles cases where chain events were scheduled but never fired
+        /// (e.g., event definition removed, mod conflict, or game state issue).
+        /// </summary>
+        private void CleanupStalePendingEvents()
+        {
+            try
+            {
+                _pendingEvents ??= new List<PendingEventRecord>();
+
+                if (_pendingEvents.Count == 0)
+                {
+                    return;
+                }
+
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var staleThreshold = 7; // Remove events more than 7 days overdue
+
+                var removed = _pendingEvents.RemoveAll(p => currentDay - p.ScheduledDay > staleThreshold);
+
+                if (removed > 0)
+                {
+                    ModLogger.Info(LogCategory, $"Cleaned up {removed} stale pending event(s)");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error cleaning up stale pending events: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Ensure we have a persisted Daily Report for the current day.
         /// </summary>
         private void EnsureDailyReportGenerated()
         {
@@ -622,9 +1433,8 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var snapshot = BuildDailyReportSnapshot(enlistment, dayNumber, out var aggregate, out var context);
 
-                // Cache snapshot for other systems (Phase 5 situation flags).
+                // Cache snapshot for other systems that need day facts.
                 _lastDailyReportSnapshot = snapshot;
-                _lastDailyReportSnapshotDayNumber = dayNumber;
 
                 // Generate final report lines (templated strings) and persist them.
                 var lines = DailyReportGenerator.Generate(snapshot, context, maxLines: 8);
@@ -654,21 +1464,14 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Phase 5: provides the current day’s Daily Report snapshot (facts), ensuring it exists first.
-        /// Intended for systems like Decisions that need the same “day facts” without duplicating producer logic.
+        /// Provides the current day's Daily Report snapshot (facts), ensuring it exists first.
+        /// Intended for systems that need the same "day facts" without duplicating producer logic.
         /// </summary>
         public DailyReportSnapshot GetTodayDailyReportSnapshot()
         {
             try
             {
                 EnsureDailyReportGenerated();
-
-                var today = (int)CampaignTime.Now.ToDays;
-                if (_lastDailyReportSnapshot != null && _lastDailyReportSnapshotDayNumber == today)
-                {
-                    return _lastDailyReportSnapshot;
-                }
-
                 return _lastDailyReportSnapshot;
             }
             catch
@@ -678,7 +1481,872 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Phase 5: posts a short high-signal personal dispatch line (used by decision outcomes).
+        /// Returns rolling totals from the camp life ledger for the specified window.
+        /// Useful for displaying recent losses, wounded, sick over time.
+        /// </summary>
+        public CampLifeRollingTotals GetRollingTotals(int windowDays = 7)
+        {
+            try
+            {
+                _campNewsState?.EnsureInitialized();
+                return _campNewsState?.Ledger?.GetRollingTotals(windowDays) 
+                       ?? new CampLifeRollingTotals(0, 0, 0, 0, 0, 0);
+            }
+            catch
+            {
+                return new CampLifeRollingTotals(0, 0, 0, 0, 0, 0);
+            }
+        }
+
+        /// <summary>
+        /// Soldiers lost since the last muster cycle. Resets when muster completes.
+        /// </summary>
+        public int LostSinceLastMuster => _lostSinceLastMuster;
+
+        /// <summary>
+        /// Soldiers who fell sick since the last muster cycle. Resets when muster completes.
+        /// </summary>
+        public int SickSinceLastMuster => _sickSinceLastMuster;
+
+        /// <summary>
+        /// Resets the "since last muster" counters. Called by EnlistmentBehavior.OnMusterCycleComplete().
+        /// </summary>
+        public void ResetMusterCounters()
+        {
+            _lostSinceLastMuster = 0;
+            _sickSinceLastMuster = 0;
+            ModLogger.Debug(LogCategory, "Muster counters reset");
+        }
+
+        /// <summary>
+        /// Records an order outcome for display in daily brief and detailed reports.
+        /// </summary>
+        public void AddOrderOutcome(string orderTitle, bool success, string briefSummary,
+            string detailedSummary, string issuer, int dayNumber)
+        {
+            try
+            {
+                _orderOutcomes ??= new List<OrderOutcomeRecord>();
+                
+                _orderOutcomes.Add(new OrderOutcomeRecord
+                {
+                    OrderTitle = orderTitle ?? string.Empty,
+                    Success = success,
+                    BriefSummary = briefSummary ?? string.Empty,
+                    DetailedSummary = detailedSummary ?? string.Empty,
+                    Issuer = issuer ?? string.Empty,
+                    DayNumber = dayNumber
+                });
+
+                // Keep only last 10 order outcomes
+                if (_orderOutcomes.Count > 10)
+                {
+                    _orderOutcomes.RemoveAt(0);
+                }
+
+                ModLogger.Debug(LogCategory, $"Order outcome recorded: {orderTitle} (success={success}, day={dayNumber})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add order outcome", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a reputation change for display in reports.
+        /// </summary>
+        public void AddReputationChange(string target, int delta, int newValue,
+            string message, int dayNumber)
+        {
+            try
+            {
+                _reputationChanges ??= new List<ReputationChangeRecord>();
+                
+                _reputationChanges.Add(new ReputationChangeRecord
+                {
+                    Target = target ?? string.Empty,
+                    Delta = delta,
+                    NewValue = newValue,
+                    Message = message ?? string.Empty,
+                    DayNumber = dayNumber
+                });
+
+                // Keep only last 10 reputation changes
+                if (_reputationChanges.Count > 10)
+                {
+                    _reputationChanges.RemoveAt(0);
+                }
+
+                ModLogger.Debug(LogCategory, $"Reputation change recorded: {target} {delta:+#;-#;0} (day={dayNumber})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add reputation change", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a company need change for display in reports.
+        /// </summary>
+        public void AddCompanyNeedChange(string need, int delta, int oldValue, int newValue,
+            string message, int dayNumber)
+        {
+            try
+            {
+                _companyNeedChanges ??= new List<CompanyNeedChangeRecord>();
+                
+                _companyNeedChanges.Add(new CompanyNeedChangeRecord
+                {
+                    Need = need ?? string.Empty,
+                    Delta = delta,
+                    OldValue = oldValue,
+                    NewValue = newValue,
+                    Message = message ?? string.Empty,
+                    DayNumber = dayNumber
+                });
+
+                // Keep only last 10 need changes
+                if (_companyNeedChanges.Count > 10)
+                {
+                    _companyNeedChanges.RemoveAt(0);
+                }
+
+                ModLogger.Debug(LogCategory, $"Company need change recorded: {need} {delta:+#;-#;0} (day={dayNumber})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add company need change", ex);
+            }
+        }
+
+        /// <summary>
+        /// Returns recent order outcomes within the specified number of days.
+        /// </summary>
+        public List<OrderOutcomeRecord> GetRecentOrderOutcomes(int maxDaysOld = 3)
+        {
+            try
+            {
+                _orderOutcomes ??= new List<OrderOutcomeRecord>();
+                
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                return _orderOutcomes
+                    .Where(o => currentDay - o.DayNumber <= maxDaysOld)
+                    .OrderByDescending(o => o.DayNumber)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get recent order outcomes", ex);
+                return new List<OrderOutcomeRecord>();
+            }
+        }
+
+        /// <summary>
+        /// Returns recent reputation changes within the specified number of days.
+        /// </summary>
+        public List<ReputationChangeRecord> GetRecentReputationChanges(int maxDaysOld = 3)
+        {
+            try
+            {
+                _reputationChanges ??= new List<ReputationChangeRecord>();
+                
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                return _reputationChanges
+                    .Where(r => currentDay - r.DayNumber <= maxDaysOld)
+                    .OrderByDescending(r => r.DayNumber)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get recent reputation changes", ex);
+                return new List<ReputationChangeRecord>();
+            }
+        }
+
+        /// <summary>
+        /// Returns recent company need changes within the specified number of days.
+        /// </summary>
+        public List<CompanyNeedChangeRecord> GetRecentCompanyNeedChanges(int maxDaysOld = 3)
+        {
+            try
+            {
+                _companyNeedChanges ??= new List<CompanyNeedChangeRecord>();
+                
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                return _companyNeedChanges
+                    .Where(c => currentDay - c.DayNumber <= maxDaysOld)
+                    .OrderByDescending(c => c.DayNumber)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get recent company need changes", ex);
+                return new List<CompanyNeedChangeRecord>();
+            }
+        }
+
+        /// <summary>
+        /// Records an event outcome after an event popup is resolved.
+        /// Adds to Personal Feed with a formatted headline showing effects.
+        /// </summary>
+        public void AddEventOutcome(EventOutcomeRecord outcome)
+        {
+            try
+            {
+                if (outcome == null)
+                {
+                    ModLogger.Warn(LogCategory, "Attempted to add null event outcome");
+                    return;
+                }
+
+                _eventOutcomes ??= new List<EventOutcomeRecord>();
+
+                // Check for duplicate (same event on same day)
+                var existingIndex = _eventOutcomes.FindIndex(e =>
+                    e.EventId == outcome.EventId && e.DayNumber == outcome.DayNumber);
+                if (existingIndex >= 0)
+                {
+                    ModLogger.Debug(LogCategory, $"Event outcome already recorded: {outcome.EventId} day {outcome.DayNumber}");
+                    return;
+                }
+
+                _eventOutcomes.Add(outcome);
+
+                // Keep only last 20 event outcomes
+                if (_eventOutcomes.Count > 20)
+                {
+                    _eventOutcomes.RemoveAt(0);
+                }
+
+                // Add to personal feed with formatted headline
+                var headline = BuildEventHeadline(outcome);
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "EVENT_TITLE", outcome.EventTitle ?? outcome.EventId },
+                    { "OPTION", outcome.OptionChosen ?? string.Empty },
+                    { "EFFECTS", outcome.OutcomeSummary ?? string.Empty }
+                };
+
+                // Replace placeholders in headline
+                foreach (var kvp in placeholders)
+                {
+                    headline = headline.Replace($"{{{kvp.Key}}}", kvp.Value);
+                }
+
+                AddPersonalNews("event", headline, placeholders, $"event:{outcome.EventId}:{outcome.DayNumber}", 2);
+
+                ModLogger.Info(LogCategory, $"Event outcome recorded: {outcome.EventId} - {outcome.OptionChosen}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add event outcome", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records retinue casualties after battle for display in Personal Feed.
+        /// Shows how many retinue soldiers were killed or wounded in the last engagement.
+        /// </summary>
+        public void AddRetinueCasualtyReport(int killed, int wounded, string battleContext)
+        {
+            try
+            {
+                if (killed <= 0 && wounded <= 0)
+                {
+                    return;
+                }
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                var headline = killed > 0 && wounded > 0
+                    ? new TextObject("{=news_ret_casualties_both}Your retinue suffered {KILLED} killed and {WOUNDED} wounded{CONTEXT}.")
+                    : killed > 0
+                        ? new TextObject("{=news_ret_casualties_killed}Your retinue lost {KILLED} soldier{KILLED_PLURAL}{CONTEXT}.")
+                        : new TextObject("{=news_ret_casualties_wounded}Your retinue had {WOUNDED} soldier{WOUNDED_PLURAL} wounded{CONTEXT}.");
+
+                headline.SetTextVariable("KILLED", killed);
+                headline.SetTextVariable("WOUNDED", wounded);
+                headline.SetTextVariable("KILLED_PLURAL", killed == 1 ? "" : "s");
+                headline.SetTextVariable("WOUNDED_PLURAL", wounded == 1 ? "" : "s");
+                headline.SetTextVariable("CONTEXT", string.IsNullOrEmpty(battleContext) ? "" : $" in {battleContext}");
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "KILLED", killed.ToString() },
+                    { "WOUNDED", wounded.ToString() }
+                };
+
+                AddPersonalNews("retinue", headline.ToString(), placeholders, $"retinue:casualties:{dayNumber}", 2);
+                ModLogger.Info(LogCategory, $"Retinue casualty report: {killed} killed, {wounded} wounded");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add retinue casualty report", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a named veteran emerging from the retinue for display in Personal Feed.
+        /// These events are memorable milestones in the player's command.
+        /// </summary>
+        public void AddVeteranEmergence(string veteranName, string trait)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(veteranName))
+                {
+                    return;
+                }
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                var headline = new TextObject("{=news_vet_emergence}{NAME} the {TRAIT} has distinguished themselves in your retinue.");
+                headline.SetTextVariable("NAME", veteranName);
+                headline.SetTextVariable("TRAIT", trait ?? "Steady");
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "NAME", veteranName },
+                    { "TRAIT", trait ?? "Steady" }
+                };
+
+                AddPersonalNews("retinue", headline.ToString(), placeholders, $"veteran:emergence:{veteranName}", 3);
+                ModLogger.Info(LogCategory, $"Veteran emergence reported: {veteranName} the {trait}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add veteran emergence news", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a named veteran's death for display in Personal Feed.
+        /// These deaths are impactful narrative moments.
+        /// </summary>
+        public void AddVeteranDeath(string veteranName, int battlesSurvived, int kills)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(veteranName))
+                {
+                    return;
+                }
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                var headline = battlesSurvived > 5
+                    ? new TextObject("{=news_vet_death_legend}{NAME}, a legend of {BATTLES} battles and {KILLS} kills, has fallen.")
+                    : new TextObject("{=news_vet_death}{NAME}, who served through {BATTLES} battles, has been slain.");
+                headline.SetTextVariable("NAME", veteranName);
+                headline.SetTextVariable("BATTLES", battlesSurvived);
+                headline.SetTextVariable("KILLS", kills);
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "NAME", veteranName },
+                    { "BATTLES", battlesSurvived.ToString() },
+                    { "KILLS", kills.ToString() }
+                };
+
+                AddPersonalNews("retinue", headline.ToString(), placeholders, $"veteran:death:{veteranName}", 3);
+                ModLogger.Info(LogCategory, $"Veteran death reported: {veteranName} ({battlesSurvived} battles, {kills} kills)");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add veteran death news", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a promotion to the personal feed with immersive military flavor.
+        /// Called after a player is promoted to a new tier.
+        /// </summary>
+        /// <param name="newTier">The tier the player was promoted to (2-9).</param>
+        /// <param name="rankName">The culture-specific rank title.</param>
+        /// <param name="retinueSoldiers">Number of retinue soldiers granted (0 for non-commander tiers).</param>
+        public void AddPromotionNews(int newTier, string rankName, int retinueSoldiers = 0)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(rankName))
+                {
+                    rankName = $"Tier {newTier}";
+                }
+
+                // Select tier-appropriate headline with RP flavor
+                var headlineKey = newTier switch
+                {
+                    2 => "News_Promotion_T2",      // First real rank
+                    3 => "News_Promotion_T3",      // Proven soldier
+                    4 => "News_Promotion_T4",      // Veteran status
+                    5 => "News_Promotion_T5",      // Officer track begins
+                    6 => "News_Promotion_T6",      // Senior NCO
+                    7 => "News_Promotion_T7",      // Commander with retinue
+                    8 => "News_Promotion_T8",      // Expanded command
+                    9 => "News_Promotion_T9",      // Senior commander
+                    _ => "News_Promotion_Generic"
+                };
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "RANK", rankName },
+                    { "TIER", newTier.ToString() },
+                    { "RETINUE_SIZE", retinueSoldiers.ToString() }
+                };
+
+                AddPersonalNews("promotion", headlineKey, placeholders, $"promotion:t{newTier}", 3);
+                ModLogger.Info(LogCategory, $"Promotion recorded: {rankName} (T{newTier})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add promotion news", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a pay muster outcome to the personal feed.
+        /// Provides historical record of payment for player review.
+        /// </summary>
+        /// <param name="outcome">Outcome type: "full", "partial", "delayed", "promissory", "corruption", "side_deal".</param>
+        /// <param name="amountPaid">Gold actually received (0 for delayed/promissory).</param>
+        /// <param name="amountOwed">Backpay still owed after this muster (0 if fully paid).</param>
+        public void AddPayMusterNews(string outcome, int amountPaid, int amountOwed = 0)
+        {
+            try
+            {
+                // Select outcome-appropriate headline with RP flavor
+                var headlineKey = outcome?.ToLowerInvariant() switch
+                {
+                    "full" or "standard" or "backpay" => "News_PayMuster_Full",
+                    "partial" or "partial_backpay" => "News_PayMuster_Partial",
+                    "delayed" => "News_PayMuster_Delayed",
+                    "promissory" or "iou" => "News_PayMuster_Promissory",
+                    "corruption" or "corruption_success" => "News_PayMuster_Corruption",
+                    "side_deal" => "News_PayMuster_SideDeal",
+                    _ => "News_PayMuster_Generic"
+                };
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "AMOUNT", amountPaid.ToString() },
+                    { "OWED", amountOwed.ToString() }
+                };
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                AddPersonalNews("pay", headlineKey, placeholders, $"pay:muster:{dayNumber}", 2);
+                ModLogger.Info(LogCategory, $"Pay muster recorded: {outcome} - {amountPaid} paid, {amountOwed} owed");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add pay muster news", ex);
+            }
+        }
+
+        /// <summary>
+        /// Schedules a pending chain event for context display in Daily Brief.
+        /// Shows hints like "A comrade owes you money" before the follow-up fires.
+        /// </summary>
+        public void AddPendingEvent(string sourceId, string chainId, string hint, int delayDays)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(chainId))
+                {
+                    return;
+                }
+
+                // Validate delay is at least 1 day
+                if (delayDays < 1)
+                {
+                    ModLogger.Debug(LogCategory, $"Pending event skipped - delay too short: {chainId} ({delayDays} days)");
+                    return;
+                }
+
+                _pendingEvents ??= new List<PendingEventRecord>();
+
+                // Remove any existing pending event with the same chain ID
+                _pendingEvents.RemoveAll(p => p.ChainEventId == chainId);
+
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                _pendingEvents.Add(new PendingEventRecord
+                {
+                    SourceEventId = sourceId ?? string.Empty,
+                    ChainEventId = chainId,
+                    ContextHint = hint ?? string.Empty,
+                    CreatedDay = currentDay,
+                    ScheduledDay = currentDay + delayDays
+                });
+
+                // Capacity limit: keep only the 10 most recent pending events
+                if (_pendingEvents.Count > 10)
+                {
+                    // Remove oldest (first added) events
+                    _pendingEvents.RemoveAt(0);
+                    ModLogger.Debug(LogCategory, "Pending events trimmed to capacity limit of 10");
+                }
+
+                ModLogger.Debug(LogCategory, $"Pending event added: {chainId} scheduled for day {currentDay + delayDays}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add pending event", ex);
+            }
+        }
+
+        /// <summary>
+        /// Clears a pending chain event when it fires.
+        /// Called when the chain event is delivered.
+        /// </summary>
+        public void ClearPendingEvent(string chainEventId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(chainEventId))
+                {
+                    return;
+                }
+
+                _pendingEvents ??= new List<PendingEventRecord>();
+                var removed = _pendingEvents.RemoveAll(p => p.ChainEventId == chainEventId);
+
+                if (removed > 0)
+                {
+                    ModLogger.Debug(LogCategory, $"Pending event cleared: {chainEventId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to clear pending event", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a muster outcome for camp news display.
+        /// Called at the end of each muster cycle to summarize pay, rations, and unit status.
+        /// </summary>
+        public void AddMusterOutcome(MusterOutcomeRecord record)
+        {
+            try
+            {
+                if (record == null)
+                {
+                    return;
+                }
+
+                _musterOutcomes ??= new List<MusterOutcomeRecord>();
+                _musterOutcomes.Add(record);
+
+                // Keep only the last 5 muster records (roughly 2 months of game time)
+                while (_musterOutcomes.Count > 5)
+                {
+                    _musterOutcomes.RemoveAt(0);
+                }
+
+                ModLogger.Debug(LogCategory, $"Muster outcome recorded: pay={record.PayOutcome}, ration={record.RationOutcome}, supply={record.SupplyLevel}%");
+
+                // Add to personal feed with formatted summary
+                var headline = BuildMusterHeadline(record);
+                if (!string.IsNullOrEmpty(headline))
+                {
+                    AddToPersonalFeed(headline, record.DayNumber);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add muster outcome", ex);
+            }
+        }
+
+        /// <summary>
+        /// Returns the most recent muster outcome, or null if none recorded.
+        /// </summary>
+        public MusterOutcomeRecord GetLastMusterOutcome()
+        {
+            try
+            {
+                _musterOutcomes ??= new List<MusterOutcomeRecord>();
+                return _musterOutcomes.Count > 0 ? _musterOutcomes[_musterOutcomes.Count - 1] : null;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get last muster outcome", ex);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Returns a formatted muster summary for display in menus.
+        /// Uses straightforward military language appropriate for the setting.
+        /// </summary>
+        public string GetLastMusterSummary()
+        {
+            try
+            {
+                var record = GetLastMusterOutcome();
+                if (record == null)
+                {
+                    return "No muster on record.";
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine($"Last Muster (Day {record.DayNumber})");
+
+                // Pay line
+                var payText = record.PayOutcome switch
+                {
+                    "paid" => $"Pay: {record.PayAmount} denars received",
+                    "partial" => $"Pay: {record.PayAmount} denars (partial, backpay still owed)",
+                    "delayed" => "Pay: Delayed — lord short on funds",
+                    "promissory" => $"Pay: Promissory note for {record.PayAmount} denars",
+                    "corruption" => $"Pay: {record.PayAmount} denars (with certain arrangements)",
+                    "side_deal" => $"Pay: {record.PayAmount} denars (side deal)",
+                    _ => $"Pay: {record.PayOutcome}"
+                };
+                sb.AppendLine(payText);
+
+                // Ration line
+                var rationText = record.RationOutcome switch
+                {
+                    "issued" => $"Rations: {GetRationDisplayName(record.RationItemId)} issued",
+                    "none_low_supply" => "Rations: None issued — supplies too low",
+                    "none_critical" => "Rations: None issued — supplies critically low",
+                    "officer_exempt" => "Rations: Not applicable (officer provision)",
+                    "commander_exempt" => "Rations: Not applicable (commander provision)",
+                    _ => $"Rations: {record.RationOutcome}"
+                };
+                sb.AppendLine(rationText);
+
+                // Supply status
+                var supplyStatus = record.SupplyLevel switch
+                {
+                    >= 80 => "well-stocked",
+                    >= 60 => "adequate",
+                    >= 40 => "limited",
+                    >= 30 => "low",
+                    _ => "critical"
+                };
+                sb.AppendLine($"Supplies: {record.SupplyLevel}% ({supplyStatus})");
+
+                // Unit status (only if there were losses or sick)
+                if (record.LostSinceLast > 0 || record.SickSinceLast > 0)
+                {
+                    var unitParts = new List<string>();
+                    if (record.LostSinceLast > 0)
+                    {
+                        unitParts.Add($"{record.LostSinceLast} lost");
+                    }
+                    if (record.SickSinceLast > 0)
+                    {
+                        unitParts.Add($"{record.SickSinceLast} sick");
+                    }
+                    sb.AppendLine($"Unit: {string.Join(", ", unitParts)} since last muster");
+                }
+
+                return sb.ToString().TrimEnd();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get muster summary", ex);
+                return "Muster records unavailable.";
+            }
+        }
+
+        /// <summary>
+        /// Builds a headline for the personal feed from a muster outcome.
+        /// </summary>
+        private string BuildMusterHeadline(MusterOutcomeRecord record)
+        {
+            try
+            {
+                // Lead with the most notable aspect of the muster
+                if (record.PayOutcome == "delayed")
+                {
+                    return "Muster: Pay delayed this cycle.";
+                }
+                if (record.RationOutcome == "none_critical")
+                {
+                    return "Muster: No rations — supplies critically low.";
+                }
+                if (record.RationOutcome == "none_low_supply")
+                {
+                    return "Muster: No rations issued due to supply shortage.";
+                }
+                if (record.LostSinceLast >= 5)
+                {
+                    return $"Muster: Heavy losses this cycle — {record.LostSinceLast} men gone.";
+                }
+                if (record.PayOutcome == "corruption" || record.PayOutcome == "side_deal")
+                {
+                    return $"Muster: Pay collected with certain arrangements.";
+                }
+
+                // Standard muster
+                if (record.RationOutcome == "issued" && !string.IsNullOrEmpty(record.RationItemId))
+                {
+                    return $"Muster: {record.PayAmount} denars paid, {GetRationDisplayName(record.RationItemId)} issued.";
+                }
+
+                return $"Muster: {record.PayAmount} denars paid.";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to build muster headline", ex);
+                return "Muster completed.";
+            }
+        }
+
+        /// <summary>
+        /// Converts a ration item ID to a display-friendly name.
+        /// </summary>
+        private static string GetRationDisplayName(string itemId)
+        {
+            return itemId?.ToLowerInvariant() switch
+            {
+                "meat" => "meat ration",
+                "cheese" => "cheese ration",
+                "butter" => "butter ration",
+                "grain" => "grain ration",
+                _ => itemId ?? "ration"
+            };
+        }
+
+        /// <summary>
+        /// Adds an item to the personal feed with the specified headline and day.
+        /// Uses a direct headline key for muster-related messages.
+        /// </summary>
+        private void AddToPersonalFeed(string headline, int dayNumber)
+        {
+            try
+            {
+                _personalFeed ??= new List<DispatchItem>();
+                _personalFeed.Add(new DispatchItem
+                {
+                    HeadlineKey = headline, // Direct text for muster headlines
+                    DayCreated = dayNumber,
+                    Category = "muster",
+                    Type = DispatchType.Report,
+                    Confidence = 100,
+                    MinDisplayDays = 1,
+                    FirstShownDay = -1
+                });
+
+                // Trim to capacity
+                while (_personalFeed.Count > MaxPersonalFeedItems)
+                {
+                    _personalFeed.RemoveAt(0);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add to personal feed", ex);
+            }
+        }
+
+        /// <summary>
+        /// Returns recent event outcomes within the specified number of days.
+        /// </summary>
+        public List<EventOutcomeRecord> GetRecentEventOutcomes(int maxDaysOld = 3)
+        {
+            try
+            {
+                _eventOutcomes ??= new List<EventOutcomeRecord>();
+
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                return _eventOutcomes
+                    .Where(e => currentDay - e.DayNumber <= maxDaysOld)
+                    .OrderByDescending(e => e.DayNumber)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get recent event outcomes", ex);
+                return new List<EventOutcomeRecord>();
+            }
+        }
+
+        /// <summary>
+        /// Builds a context-appropriate headline for an event outcome.
+        /// Uses event type patterns to generate immersive headlines.
+        /// </summary>
+        private string BuildEventHeadline(EventOutcomeRecord outcome)
+        {
+            var eventId = outcome.EventId?.ToLowerInvariant() ?? string.Empty;
+            var effects = outcome.OutcomeSummary ?? string.Empty;
+
+            // Dice/gambling events
+            if (eventId.Contains("dice") || eventId.Contains("gambling") || eventId.Contains("wager"))
+            {
+                return string.IsNullOrEmpty(effects)
+                    ? "Dice game in camp"
+                    : $"Dice game in camp — {effects}";
+            }
+
+            // Training events
+            if (eventId.Contains("training") || eventId.Contains("drill") || eventId.Contains("practice"))
+            {
+                return string.IsNullOrEmpty(effects)
+                    ? "Training session"
+                    : $"Training session — {effects}";
+            }
+
+            // Hunt events
+            if (eventId.Contains("hunt"))
+            {
+                return string.IsNullOrEmpty(effects)
+                    ? "Hunt with the lord"
+                    : $"Hunt with the lord — {effects}";
+            }
+
+            // Lending/loan events
+            if (eventId.Contains("lend") || eventId.Contains("loan"))
+            {
+                if (eventId.Contains("repay") || eventId.Contains("return"))
+                {
+                    return string.IsNullOrEmpty(effects)
+                        ? "Debt repaid"
+                        : $"Debt repaid — {effects}";
+                }
+                return "Lent money to a comrade";
+            }
+
+            // Scrutiny/attention events
+            if (eventId.Contains("scrutiny") || eventId.Contains("attention") || eventId.Contains("noticed"))
+            {
+                return string.IsNullOrEmpty(effects)
+                    ? "Unwanted attention"
+                    : $"Unwanted attention — {effects}";
+            }
+
+            // Discipline events
+            if (eventId.Contains("discipline") || eventId.Contains("punishment") || eventId.Contains("infraction"))
+            {
+                return string.IsNullOrEmpty(effects)
+                    ? "Disciplinary matter"
+                    : $"Disciplinary matter — {effects}";
+            }
+
+            // Loot/battlefield events
+            if (eventId.Contains("loot") || eventId.Contains("battlefield") || eventId.Contains("corpse"))
+            {
+                return string.IsNullOrEmpty(effects)
+                    ? "Battlefield opportunity"
+                    : $"Battlefield opportunity — {effects}";
+            }
+
+            // Tavern/settlement events
+            if (eventId.Contains("tavern") || eventId.Contains("drinking"))
+            {
+                return string.IsNullOrEmpty(effects)
+                    ? "Evening at the tavern"
+                    : $"Evening at the tavern — {effects}";
+            }
+
+            // Generic fallback with title
+            var title = outcome.EventTitle ?? outcome.EventId ?? "Event";
+            return string.IsNullOrEmpty(effects)
+                ? title
+                : $"{title} — {effects}";
+        }
+
+        /// <summary>
+        /// Posts a short high-signal personal dispatch line (used by decision outcomes).
         /// </summary>
         public void PostPersonalDispatchText(string category, string text, string storyKey, int minDisplayDays = 2)
         {
@@ -722,7 +2390,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     LordParty = enlistment?.CurrentLord?.PartyBelongedTo,
                     TriggerTracker = CampaignTriggerTrackerBehavior.Instance,
                     CampLife = CampLifeBehavior.Instance,
-                    Schedule = ScheduleBehavior.Instance,
+                    // The unit schedule is managed through direct orders.
                     NewsState = _campNewsState,
                     NewsBehavior = this,
                     Generation = context
@@ -747,6 +2415,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 aggregate.SickToday = Math.Max(0, snapshot.SickDelta);
                 // TrainingIncidents/DecisionsResolved/Dispatches tracked in later phases.
 
+                // Accumulate "since last muster" counters (reset at each muster).
+                if (snapshot.DeadDelta > 0)
+                {
+                    _lostSinceLastMuster += snapshot.DeadDelta;
+                }
+                if (snapshot.SickDelta > 0)
+                {
+                    _sickSinceLastMuster += snapshot.SickDelta;
+                }
+
                 snapshot.Normalize();
                 return snapshot;
             }
@@ -758,7 +2436,7 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Phase 2 helper: get the latest Daily Report lines (already templated) if available.
+        /// Helper: get the latest Daily Report lines (already templated) if available.
         /// </summary>
         public IReadOnlyList<string> GetLatestDailyReportLines()
         {
@@ -780,8 +2458,7 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Phase 2 helper: returns a compact excerpt suitable for a main-menu paragraph.
-        /// Phase 3 will switch the enlisted_status display over to this.
+        /// Helper: returns a compact excerpt suitable for a main-menu paragraph.
         /// </summary>
         public string GetLatestDailyReportExcerpt(int maxLines = 3, int maxChars = 260)
         {
@@ -812,10 +2489,10 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var excerpt = string.Join(" ", parts).Trim();
 
-                // Phase 5.5: append one short "Opportunities" sentence when player decisions are available.
-                // This is deliberately dynamic (not persisted) so it reflects resolved decisions without regenerating the Daily Report.
+                // Check for any urgent matters that require the soldier's attention.
                 try
                 {
+                    /*
                     var decisionBehavior = DecisionEventBehavior.Instance;
                     var available = decisionBehavior?.GetAvailablePlayerDecisions();
                     var count = available?.Count ?? 0;
@@ -874,6 +2551,7 @@ namespace Enlisted.Features.Interface.Behaviors
                                 : opp.Substring(0, maxChars).TrimEnd() + "...";
                         }
                     }
+                    */
                 }
                 catch
                 {
@@ -916,10 +2594,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     var placeholders = new Dictionary<string, string>
                     {
-                        { "LORD", lord?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
+                        { "LORD", lord.Name.ToString() }
                     };
 
-                    AddPersonalNews("army", "News_ArmyForming", placeholders, $"army:{lord?.StringId}", 2);
+                    AddPersonalNews("army", "News_ArmyForming", placeholders, $"army:{lord.StringId}", 2);
                 }
 
                 _lordHadArmyYesterday = hasArmyNow;
@@ -941,7 +2619,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var currentDay = (int)CampaignTime.Now.ToDays;
                 if (_lastDailyBriefDayNumber == currentDay &&
                     (!string.IsNullOrWhiteSpace(_dailyBriefCompany) ||
-                     !string.IsNullOrWhiteSpace(_dailyBriefLance) ||
+                     !string.IsNullOrWhiteSpace(_dailyBriefUnit) ||
                      !string.IsNullOrWhiteSpace(_dailyBriefKingdom)))
                 {
                     return;
@@ -952,14 +2630,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     _lastDailyBriefDayNumber = currentDay;
                     _dailyBriefCompany = string.Empty;
-                    _dailyBriefLance = string.Empty;
+                    _dailyBriefUnit = string.Empty;
                     _dailyBriefKingdom = string.Empty;
                     return;
                 }
 
                 _lastDailyBriefDayNumber = currentDay;
                 _dailyBriefCompany = BuildDailyCompanyLine(enlistment);
-                _dailyBriefLance = BuildDailyLanceLine(enlistment);
+                _dailyBriefUnit = BuildDailyUnitLine(enlistment);
                 _dailyBriefKingdom = BuildDailyKingdomLine(enlistment);
             }
             catch (Exception ex)
@@ -976,78 +2654,322 @@ namespace Enlisted.Features.Interface.Behaviors
                 var party = lord?.PartyBelongedTo;
                 if (party == null)
                 {
-                    return "No company details available.";
+                    return new TextObject("{=brief_company_none}No company details available.").ToString();
                 }
 
+                var lordName = lord.Name?.ToString() ?? new TextObject("{=brief_the_lord}the lord").ToString();
+                var partySize = party.MemberRoster?.TotalManCount ?? 0;
+                var sizeDescId = partySize switch
+                {
+                    < 30 => "{=brief_size_small}small",
+                    < 80 => "{=brief_size_sizeable}sizeable",
+                    < 150 => "{=brief_size_large}large",
+                    _ => "{=brief_size_formidable}formidable"
+                };
+                var sizeDesc = new TextObject(sizeDescId).ToString();
+
+                // Active battle
                 if (party.Party?.MapEvent != null)
                 {
-                    return "Engaged in battle.";
+                    var enemyLeader = party.Party.MapEvent.GetLeaderParty(
+                        party.Party.Side == BattleSideEnum.Attacker ? BattleSideEnum.Defender : BattleSideEnum.Attacker)?.LeaderHero?.Name?.ToString();
+                    if (!string.IsNullOrEmpty(enemyLeader))
+                    {
+                        var text = new TextObject("{=brief_battle_enemy}The company is locked in battle against the forces of {ENEMY}. Steel clashes and war cries fill the air.");
+                        text.SetTextVariable("ENEMY", enemyLeader);
+                        return text.ToString();
+                    }
+                    return new TextObject("{=brief_battle_generic}The company is engaged in battle. The clash of steel and shouts of men echo across the field.").ToString();
                 }
 
+                // Active siege
                 if (party.Party?.SiegeEvent != null)
                 {
-                    return "Committed to siege operations.";
+                    var siegeTarget = party.Party.SiegeEvent.BesiegedSettlement?.Name?.ToString();
+                    if (!string.IsNullOrEmpty(siegeTarget))
+                    {
+                        var isAttacker = party.Party.Side == BattleSideEnum.Attacker;
+                        if (isAttacker)
+                        {
+                            var text = new TextObject("{=brief_siege_attack}The siege of {SETTLEMENT} continues. Siege engines creak and groan as the engineers work through the night. The walls loom ahead, defiant.");
+                            text.SetTextVariable("SETTLEMENT", siegeTarget);
+                            return text.ToString();
+                        }
+                        var textDef = new TextObject("{=brief_siege_defend}The company holds {SETTLEMENT} against the besiegers. The enemy camps spread across the horizon, their fires burning through the night.");
+                        textDef.SetTextVariable("SETTLEMENT", siegeTarget);
+                        return textDef.ToString();
+                    }
+                    return new TextObject("{=brief_siege_generic}The company is committed to siege operations. The days blend together in a rhythm of labor and watchfulness.").ToString();
                 }
 
+                // In settlement
                 if (party.CurrentSettlement != null)
                 {
-                    return $"Camped at {party.CurrentSettlement.Name}.";
+                    var settlement = party.CurrentSettlement;
+                    var settlementName = settlement.Name?.ToString() ?? new TextObject("{=brief_the_settlement}the settlement").ToString();
+                    
+                    if (settlement.IsTown)
+                    {
+                        var text = new TextObject("{=brief_rest_town}The company rests at {SETTLEMENT}. The sounds of the town drift into camp — merchants hawking wares, the clatter of cart wheels, the murmur of townsfolk going about their business.");
+                        text.SetTextVariable("SETTLEMENT", settlementName);
+                        return text.ToString();
+                    }
+                    if (settlement.IsCastle)
+                    {
+                        var text = new TextObject("{=brief_rest_castle}The company is garrisoned at {SETTLEMENT}. The castle walls provide welcome shelter, and the men take the chance to rest properly for once.");
+                        text.SetTextVariable("SETTLEMENT", settlementName);
+                        return text.ToString();
+                    }
+                    if (settlement.IsVillage)
+                    {
+                        var text = new TextObject("{=brief_rest_village}The company has made camp near {SETTLEMENT}. Smoke rises from village hearths, and the smell of cooking fires reminds you of simpler times.");
+                        text.SetTextVariable("SETTLEMENT", settlementName);
+                        return text.ToString();
+                    }
+                    var textGeneric = new TextObject("{=brief_rest_generic}The company is camped at {SETTLEMENT}.");
+                    textGeneric.SetTextVariable("SETTLEMENT", settlementName);
+                    return textGeneric.ToString();
                 }
 
+                // Part of army
                 if (party.Army != null)
                 {
-                    var leader = party.Army.LeaderParty?.LeaderHero?.Name?.ToString() ?? "the army leader";
-                    return $"Marching with the army of {leader}.";
+                    var armyLeader = party.Army.LeaderParty?.LeaderHero?.Name?.ToString() ?? new TextObject("{=brief_the_marshal}the marshal").ToString();
+                    var armySize = party.Army.TotalManCount;
+                    var armySizeDescId = armySize switch
+                    {
+                        < 200 => "{=brief_army_gathered}The gathered host",
+                        < 500 => "{=brief_army_formidable}A formidable army",
+                        < 1000 => "{=brief_army_great}A great host",
+                        _ => "{=brief_army_mighty}A mighty army"
+                    };
+                    var armySizeDesc = new TextObject(armySizeDescId).ToString();
+                    
+                    var text = new TextObject("{=brief_march_army}{ARMY_DESC} marches under the banner of {LEADER}. {LORD}'s {SIZE} company moves with the column, one warband among many.");
+                    text.SetTextVariable("ARMY_DESC", armySizeDesc);
+                    text.SetTextVariable("LEADER", armyLeader);
+                    text.SetTextVariable("LORD", lordName);
+                    text.SetTextVariable("SIZE", sizeDesc);
+                    return text.ToString();
                 }
 
+                // Moving toward target
                 if (party.TargetSettlement != null)
                 {
-                    return $"Marching toward {party.TargetSettlement.Name}.";
+                    var target = party.TargetSettlement.Name?.ToString() ?? new TextObject("{=brief_destination}destination").ToString();
+                    var terrain = GetTerrainFlavor(party);
+                    var text = new TextObject("{=brief_march_target}The company marches toward {TARGET}. {TERRAIN}");
+                    text.SetTextVariable("TARGET", target);
+                    text.SetTextVariable("TERRAIN", terrain);
+                    return text.ToString();
                 }
 
-                return "On the march.";
+                // Default march
+                var defaultTerrain = GetTerrainFlavor(party);
+                var defaultText = new TextObject("{=brief_march_default}{LORD}'s {SIZE} company is on the move. {TERRAIN}");
+                defaultText.SetTextVariable("LORD", lordName);
+                defaultText.SetTextVariable("SIZE", sizeDesc);
+                defaultText.SetTextVariable("TERRAIN", defaultTerrain);
+                return defaultText.ToString();
             }
             catch
             {
-                return "On the march.";
+                return new TextObject("{=brief_company_fallback}The company marches onward.").ToString();
             }
         }
-
-        private static string BuildDailyLanceLine(EnlistmentBehavior enlistment)
+        
+        // Provides flavor text based on terrain and time of day for march descriptions.
+        private static string GetTerrainFlavor(MobileParty party)
         {
             try
             {
-                var lanceName = enlistment?.CurrentLanceName;
-                if (string.IsNullOrWhiteSpace(lanceName))
+                var hour = CampaignTime.Now.GetHourOfDay;
+                var isNight = hour < 6 || hour >= 20;
+                var isMorning = hour >= 6 && hour < 10;
+                var isEvening = hour >= 17 && hour < 20;
+                
+                // Get terrain type from party position if available
+                var terrainType = Campaign.Current?.MapSceneWrapper?.GetFaceTerrainType(party.CurrentNavigationFace);
+                
+                var terrainId = terrainType switch
                 {
-                    return "No lance assigned.";
-                }
+                    TerrainType.Mountain or TerrainType.Canyon => isNight
+                        ? "{=brief_terrain_mountain_night}The mountain passes are treacherous in the dark, and the column moves slowly."
+                        : "{=brief_terrain_mountain_day}Rocky slopes and narrow passes slow the advance, but the views stretch for leagues.",
+                    TerrainType.Forest => isNight
+                        ? "{=brief_terrain_forest_night}The forest grows dark and the men keep close, wary of what lurks between the trees."
+                        : "{=brief_terrain_forest_day}The shade of the trees offers respite from the sun, though the undergrowth slows the wagons.",
+                    TerrainType.Desert or TerrainType.Dune => isNight
+                        ? "{=brief_terrain_desert_night}The desert cools at night, and the column makes good time across the sands."
+                        : "{=brief_terrain_desert_day}Heat shimmers off the sand, and the men wrap their faces against the biting wind.",
+                    TerrainType.Steppe => isNight
+                        ? "{=brief_terrain_steppe_night}The endless steppe stretches dark beneath the stars, the grass whispering in the wind."
+                        : "{=brief_terrain_steppe_day}The open steppe allows swift travel, the column stretching across the grasslands.",
+                    TerrainType.Snow => 
+                        "{=brief_terrain_cold}The cold bites at exposed skin, and the men huddle in their cloaks as they march.",
+                    TerrainType.Bridge or TerrainType.Fording =>
+                        "{=brief_terrain_crossing}The crossing slows the column as men and wagons navigate the water.",
+                    TerrainType.Plain or TerrainType.Water or TerrainType.River or TerrainType.Lake => isNight
+                        ? "{=brief_terrain_plain_night}The column moves by torchlight, the road stretching dark ahead."
+                        : isMorning
+                            ? "{=brief_terrain_plain_morning}Morning mist rises from the fields as the column forms up for the day's march."
+                            : isEvening
+                                ? "{=brief_terrain_plain_evening}The sun sinks low, casting long shadows as the men look for a place to make camp."
+                                : "{=brief_terrain_plain_day}Dust rises from the road as boots and hooves churn the packed earth.",
+                    _ => isNight
+                        ? "{=brief_terrain_default_night}The column marches through the night, torches bobbing in the darkness."
+                        : "{=brief_terrain_default_day}The road stretches ahead, and the men settle into the rhythm of the march."
+                };
+                
+                return new TextObject(terrainId).ToString();
+            }
+            catch
+            {
+                return new TextObject("{=brief_terrain_fallback}The road stretches ahead.").ToString();
+            }
+        }
 
-                // Keep this light and RP-flavored; detailed stats belong in Camp screens.
-                var cond = Enlisted.Features.Conditions.PlayerConditionBehavior.Instance;
+        private static readonly Random FlavorRng = new Random();
+        
+        private string BuildDailyUnitLine(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var tier = enlistment?.EnlistmentTier ?? 1;
+                var hour = CampaignTime.Now.GetHourOfDay;
+                var tierKey = GetTierKey(tier);
+                
+                // Priority 1: Recent battle aftermath (within 1 day)
+                if (_lastPlayerBattleTime != CampaignTime.Zero)
+                {
+                    var hoursSinceBattle = (CampaignTime.Now - _lastPlayerBattleTime).ToHours;
+                    if (hoursSinceBattle < 24 && !string.IsNullOrEmpty(_lastPlayerBattleType))
+                    {
+                        var outcomeKey = _lastPlayerBattleWon ? "won" : "lost";
+                        var prefix = $"brief_{_lastPlayerBattleType}_{outcomeKey}_{tierKey}_";
+                        var text = PickRandomLocalizedString(prefix, 3);
+                        if (!string.IsNullOrEmpty(text))
+                        {
+                            return text;
+                        }
+                    }
+                }
+                
+                // Priority 2: Injuries/illness (from PlayerConditionBehavior)
+                var cond = PlayerConditionBehavior.Instance;
                 if (cond?.IsEnabled() == true && cond.State?.HasAnyCondition == true)
                 {
                     if (cond.State.HasInjury)
                     {
-                        return $"{lanceName} keeps a slower pace while you recover.";
+                        var prefix = $"brief_injury_{tierKey}_";
+                        return PickRandomLocalizedString(prefix, 3, "brief_fallback_injury");
                     }
                     if (cond.State.HasIllness)
                     {
-                        return $"{lanceName} covers for you while sickness runs its course.";
+                        var prefix = $"brief_illness_{tierKey}_";
+                        return PickRandomLocalizedString(prefix, 3, "brief_fallback_illness");
                     }
                 }
 
-                if (enlistment != null && enlistment.FatigueMax > 0 && enlistment.FatigueCurrent <= enlistment.FatigueMax / 4)
+                // Priority 2b: Medical Risk escalation (brewing sickness, not yet a full condition)
+                var escalation = EscalationManager.Instance;
+                if (escalation?.State != null && escalation.State.MedicalRisk >= 2)
                 {
-                    return $"{lanceName} looks worn down after long days.";
+                    var medRisk = escalation.State.MedicalRisk;
+                    if (medRisk >= 4)
+                    {
+                        // Serious/Critical - urgent
+                        return new TextObject("{=brief_medrisk_serious}Fever won't break. Surgeon's tent calls.").ToString();
+                    }
+                    if (medRisk >= 3)
+                    {
+                        // Concerning - getting worse
+                        return new TextObject("{=brief_medrisk_concerning}The ache is constant now. Rest or surgeon.").ToString();
+                    }
+                    // Med Risk 2 - early warning
+                    return new TextObject("{=brief_medrisk_mild}Something's off. Tired. Aching. Watch it.").ToString();
                 }
 
-                return $"{lanceName} holds steady and in good order.";
+                // Priority 3: Fatigue
+                if (enlistment != null && enlistment.FatigueMax > 0)
+                {
+                    var fatiguePct = (float)enlistment.FatigueCurrent / enlistment.FatigueMax;
+                    
+                    if (fatiguePct <= 0.25f)
+                    {
+                        var prefix = $"brief_exhausted_{tierKey}_";
+                        return PickRandomLocalizedString(prefix, 3, "brief_fallback_exhausted");
+                    }
+                    if (fatiguePct <= 0.5f)
+                    {
+                        var prefix = $"brief_tired_{tierKey}_";
+                        return PickRandomLocalizedString(prefix, 3, "brief_fallback_tired");
+                    }
+                }
+
+                // Priority 4: Good condition - vary by tier and time of day
+                var timeKey = GetTimeKey(hour);
+                var prefix2 = $"brief_good_{tierKey}_{timeKey}_";
+                return PickRandomLocalizedString(prefix2, 3, "brief_fallback_default");
             }
-            catch
+            catch (Exception ex)
             {
-                return "Your lance holds steady.";
+                ModLogger.Error(LogCategory, "Error building daily unit line", ex);
+                return new TextObject("{=brief_fallback_default}You're ready for whatever comes.").ToString();
             }
+        }
+        
+        private static string GetTierKey(int tier)
+        {
+            if (tier <= 2)
+            {
+                return "recruit";
+            }
+            if (tier <= 4)
+            {
+                return "soldier";
+            }
+            if (tier <= 6)
+            {
+                return "nco";
+            }
+            return "veteran";
+        }
+        
+        private static string GetTimeKey(int hour)
+        {
+            if (hour < 6 || hour >= 20)
+            {
+                return "night";
+            }
+            if (hour < 10)
+            {
+                return "morning";
+            }
+            if (hour >= 17)
+            {
+                return "evening";
+            }
+            return "day";
+        }
+        
+        private static string PickRandomLocalizedString(string prefix, int count, string fallbackId = null)
+        {
+            var index = FlavorRng.Next(1, count + 1);
+            var id = $"{prefix}{index}";
+            var text = new TextObject($"{{={id}}}").ToString();
+            
+            // If TextObject didn't resolve (returned the ID), try fallback
+            if (text.Contains($"{{={id}}}") || text == id)
+            {
+                if (!string.IsNullOrEmpty(fallbackId))
+                {
+                    return new TextObject($"{{={fallbackId}}}").ToString();
+                }
+                return string.Empty;
+            }
+            
+            return text;
         }
 
         private string BuildDailyKingdomLine(EnlistmentBehavior enlistment)
@@ -1066,16 +2988,71 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 var kingdom = enlistment?.CurrentLord?.MapFaction as Kingdom;
-                if (kingdom?.Name != null)
+                if (kingdom == null)
                 {
-                    return $"The banners of {kingdom.Name} remain in the field.";
+                    return new TextObject("{=brief_realm_quiet}The realm is quiet, for now.").ToString();
                 }
+                
+                var kingdomName = kingdom.Name?.ToString() ?? new TextObject("{=brief_the_realm}the realm").ToString();
 
-                return "The realm is quiet, for now.";
+                // Check active wars for strategic context using FactionManager
+                var enemyKingdoms = Kingdom.All
+                    .Where(k => k != kingdom && FactionManager.IsAtWarAgainstFaction(kingdom, k))
+                    .ToList();
+                
+                var warCount = enemyKingdoms.Count;
+                
+                // Count active sieges in the realm (where kingdom is involved)
+                var activeSieges = Campaign.Current?.SiegeEventManager?.SiegeEvents?
+                    .Count(s => s.BesiegedSettlement?.MapFaction == kingdom || 
+                               s.BesiegerCamp?.LeaderParty?.MapFaction == kingdom) ?? 0;
+
+                // Multi-front war with sieges
+                if (warCount >= 2 && activeSieges > 0)
+                {
+                    var text = new TextObject("{=brief_realm_multifront}{KINGDOM} fights on multiple fronts. Siege engines stand ready, and the roads are thick with soldiers marching to war.");
+                    text.SetTextVariable("KINGDOM", kingdomName);
+                    return text.ToString();
+                }
+                
+                // Multiple wars, no active sieges
+                if (warCount >= 2)
+                {
+                    var text = new TextObject("{=brief_realm_manywars}{KINGDOM} is pressed on all sides. Lords ride hard between campaigns, and the levies are called up again and again.");
+                    text.SetTextVariable("KINGDOM", kingdomName);
+                    return text.ToString();
+                }
+                
+                // Single war with active siege
+                if (warCount == 1 && activeSieges > 0)
+                {
+                    var enemyKingdom = enemyKingdoms[0];
+                    var enemyName = enemyKingdom?.Name?.ToString() ?? new TextObject("{=brief_the_enemy}the enemy").ToString();
+                    
+                    var text = new TextObject("{=brief_realm_war_siege}The war with {ENEMY} grinds on. Castle walls are contested, and the outcome hangs in the balance.");
+                    text.SetTextVariable("ENEMY", enemyName);
+                    return text.ToString();
+                }
+                
+                // Single war, no siege
+                if (warCount == 1)
+                {
+                    var enemyKingdom = enemyKingdoms[0];
+                    var enemyName = enemyKingdom?.Name?.ToString() ?? new TextObject("{=brief_the_enemy}the enemy").ToString();
+                    
+                    var text = new TextObject("{=brief_realm_war}The banners of {KINGDOM} march against {ENEMY}. Scouts bring word of enemy movements, and the lords sharpen their blades.");
+                    text.SetTextVariable("KINGDOM", kingdomName);
+                    text.SetTextVariable("ENEMY", enemyName);
+                    return text.ToString();
+                }
+                
+                // Peace time
+                var text2 = new TextObject("{=brief_realm_peace}The realm is at peace, for now. Lords tend to their estates and the common folk go about their business, though every soldier knows it won't last.");
+                return text2.ToString();
             }
             catch
             {
-                return "The realm is quiet, for now.";
+                return new TextObject("{=brief_realm_fallback}The realm is quiet, for now.").ToString();
             }
         }
 
@@ -1202,6 +3179,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         /// Checks if player participated in the battle and generates personal news.
+        /// Also records battle details for daily brief flavor.
         /// </summary>
         private void CheckPlayerBattleParticipation(MapEvent mapEvent, BattleSideEnum winnerSide)
         {
@@ -1239,6 +3217,29 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var playerWon = (winnerSide == BattleSideEnum.Attacker && playerOnAttacker)
                              || (winnerSide == BattleSideEnum.Defender && playerOnDefender);
+
+                // Record battle details for daily brief flavor
+                _lastPlayerBattleTime = CampaignTime.Now;
+                _lastPlayerBattleWon = playerWon;
+                
+                // Determine battle type
+                var attackerFaction = mapEvent.AttackerSide?.LeaderParty?.MapFaction;
+                var defenderFaction = mapEvent.DefenderSide?.LeaderParty?.MapFaction;
+                var isBandit = (attackerFaction?.IsBanditFaction == true) || (defenderFaction?.IsBanditFaction == true);
+                var isSiege = mapEvent.IsSiegeAssault || mapEvent.MapEventSettlement?.IsFortification == true;
+                
+                if (isSiege)
+                {
+                    _lastPlayerBattleType = "siege";
+                }
+                else if (isBandit)
+                {
+                    _lastPlayerBattleType = "bandit";
+                }
+                else
+                {
+                    _lastPlayerBattleType = "army";
+                }
 
                 var headlineKey = playerWon ? "News_PlayerBattle" : "News_PlayerDefeat";
                 AddPersonalNews("participation", headlineKey, placeholders);
@@ -2113,6 +4114,276 @@ namespace Enlisted.Features.Interface.Behaviors
             };
         }
 
+        /// <summary>
+        /// Saves an order outcome record to the data store.
+        /// </summary>
+        private static void SaveOrderOutcomeRecord(IDataStore dataStore, string prefix, OrderOutcomeRecord record)
+        {
+            var orderTitle = record.OrderTitle ?? string.Empty;
+            var success = record.Success;
+            var briefSummary = record.BriefSummary ?? string.Empty;
+            var detailedSummary = record.DetailedSummary ?? string.Empty;
+            var issuer = record.Issuer ?? string.Empty;
+            var dayNumber = record.DayNumber;
+
+            dataStore.SyncData($"{prefix}_title", ref orderTitle);
+            dataStore.SyncData($"{prefix}_success", ref success);
+            dataStore.SyncData($"{prefix}_brief", ref briefSummary);
+            dataStore.SyncData($"{prefix}_detail", ref detailedSummary);
+            dataStore.SyncData($"{prefix}_issuer", ref issuer);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+        }
+
+        /// <summary>
+        /// Loads an order outcome record from the data store.
+        /// </summary>
+        private static OrderOutcomeRecord LoadOrderOutcomeRecord(IDataStore dataStore, string prefix)
+        {
+            var orderTitle = string.Empty;
+            var success = false;
+            var briefSummary = string.Empty;
+            var detailedSummary = string.Empty;
+            var issuer = string.Empty;
+            var dayNumber = 0;
+
+            dataStore.SyncData($"{prefix}_title", ref orderTitle);
+            dataStore.SyncData($"{prefix}_success", ref success);
+            dataStore.SyncData($"{prefix}_brief", ref briefSummary);
+            dataStore.SyncData($"{prefix}_detail", ref detailedSummary);
+            dataStore.SyncData($"{prefix}_issuer", ref issuer);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+
+            return new OrderOutcomeRecord
+            {
+                OrderTitle = orderTitle,
+                Success = success,
+                BriefSummary = briefSummary,
+                DetailedSummary = detailedSummary,
+                Issuer = issuer,
+                DayNumber = dayNumber
+            };
+        }
+
+        /// <summary>
+        /// Saves a reputation change record to the data store.
+        /// </summary>
+        private static void SaveReputationChangeRecord(IDataStore dataStore, string prefix, ReputationChangeRecord record)
+        {
+            var target = record.Target ?? string.Empty;
+            var delta = record.Delta;
+            var newValue = record.NewValue;
+            var message = record.Message ?? string.Empty;
+            var dayNumber = record.DayNumber;
+
+            dataStore.SyncData($"{prefix}_target", ref target);
+            dataStore.SyncData($"{prefix}_delta", ref delta);
+            dataStore.SyncData($"{prefix}_newVal", ref newValue);
+            dataStore.SyncData($"{prefix}_msg", ref message);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+        }
+
+        /// <summary>
+        /// Loads a reputation change record from the data store.
+        /// </summary>
+        private static ReputationChangeRecord LoadReputationChangeRecord(IDataStore dataStore, string prefix)
+        {
+            var target = string.Empty;
+            var delta = 0;
+            var newValue = 0;
+            var message = string.Empty;
+            var dayNumber = 0;
+
+            dataStore.SyncData($"{prefix}_target", ref target);
+            dataStore.SyncData($"{prefix}_delta", ref delta);
+            dataStore.SyncData($"{prefix}_newVal", ref newValue);
+            dataStore.SyncData($"{prefix}_msg", ref message);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+
+            return new ReputationChangeRecord
+            {
+                Target = target,
+                Delta = delta,
+                NewValue = newValue,
+                Message = message,
+                DayNumber = dayNumber
+            };
+        }
+
+        /// <summary>
+        /// Saves a company need change record to the data store.
+        /// </summary>
+        private static void SaveCompanyNeedChangeRecord(IDataStore dataStore, string prefix, CompanyNeedChangeRecord record)
+        {
+            var need = record.Need ?? string.Empty;
+            var delta = record.Delta;
+            var oldValue = record.OldValue;
+            var newValue = record.NewValue;
+            var message = record.Message ?? string.Empty;
+            var dayNumber = record.DayNumber;
+
+            dataStore.SyncData($"{prefix}_need", ref need);
+            dataStore.SyncData($"{prefix}_delta", ref delta);
+            dataStore.SyncData($"{prefix}_oldVal", ref oldValue);
+            dataStore.SyncData($"{prefix}_newVal", ref newValue);
+            dataStore.SyncData($"{prefix}_msg", ref message);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+        }
+
+        /// <summary>
+        /// Loads a company need change record from the data store.
+        /// </summary>
+        private static CompanyNeedChangeRecord LoadCompanyNeedChangeRecord(IDataStore dataStore, string prefix)
+        {
+            var need = string.Empty;
+            var delta = 0;
+            var oldValue = 0;
+            var newValue = 0;
+            var message = string.Empty;
+            var dayNumber = 0;
+
+            dataStore.SyncData($"{prefix}_need", ref need);
+            dataStore.SyncData($"{prefix}_delta", ref delta);
+            dataStore.SyncData($"{prefix}_oldVal", ref oldValue);
+            dataStore.SyncData($"{prefix}_newVal", ref newValue);
+            dataStore.SyncData($"{prefix}_msg", ref message);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+
+            return new CompanyNeedChangeRecord
+            {
+                Need = need,
+                Delta = delta,
+                OldValue = oldValue,
+                NewValue = newValue,
+                Message = message,
+                DayNumber = dayNumber
+            };
+        }
+
+        /// <summary>
+        /// Saves an event outcome record to the data store.
+        /// </summary>
+        private static void SaveEventOutcomeRecord(IDataStore dataStore, string prefix, EventOutcomeRecord record)
+        {
+            var eventId = record.EventId ?? string.Empty;
+            var eventTitle = record.EventTitle ?? string.Empty;
+            var optionChosen = record.OptionChosen ?? string.Empty;
+            var outcomeSummary = record.OutcomeSummary ?? string.Empty;
+            var dayNumber = record.DayNumber;
+
+            dataStore.SyncData($"{prefix}_eventId", ref eventId);
+            dataStore.SyncData($"{prefix}_title", ref eventTitle);
+            dataStore.SyncData($"{prefix}_option", ref optionChosen);
+            dataStore.SyncData($"{prefix}_summary", ref outcomeSummary);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+
+            // Save effects dictionary as key-value pairs
+            var effectsCount = record.EffectsApplied?.Count ?? 0;
+            dataStore.SyncData($"{prefix}_effectsCount", ref effectsCount);
+
+            if (record.EffectsApplied != null)
+            {
+                var i = 0;
+                foreach (var kvp in record.EffectsApplied)
+                {
+                    var key = kvp.Key;
+                    var value = kvp.Value;
+                    dataStore.SyncData($"{prefix}_eff_{i}_k", ref key);
+                    dataStore.SyncData($"{prefix}_eff_{i}_v", ref value);
+                    i++;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Loads an event outcome record from the data store.
+        /// </summary>
+        private static EventOutcomeRecord LoadEventOutcomeRecord(IDataStore dataStore, string prefix)
+        {
+            var eventId = string.Empty;
+            var eventTitle = string.Empty;
+            var optionChosen = string.Empty;
+            var outcomeSummary = string.Empty;
+            var dayNumber = 0;
+
+            dataStore.SyncData($"{prefix}_eventId", ref eventId);
+            dataStore.SyncData($"{prefix}_title", ref eventTitle);
+            dataStore.SyncData($"{prefix}_option", ref optionChosen);
+            dataStore.SyncData($"{prefix}_summary", ref outcomeSummary);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+
+            // Load effects dictionary
+            var effectsCount = 0;
+            dataStore.SyncData($"{prefix}_effectsCount", ref effectsCount);
+
+            var effects = new Dictionary<string, int>();
+            for (var i = 0; i < effectsCount; i++)
+            {
+                var key = string.Empty;
+                var value = 0;
+                dataStore.SyncData($"{prefix}_eff_{i}_k", ref key);
+                dataStore.SyncData($"{prefix}_eff_{i}_v", ref value);
+                if (!string.IsNullOrEmpty(key))
+                {
+                    effects[key] = value;
+                }
+            }
+
+            return new EventOutcomeRecord
+            {
+                EventId = eventId,
+                EventTitle = eventTitle,
+                OptionChosen = optionChosen,
+                OutcomeSummary = outcomeSummary,
+                DayNumber = dayNumber,
+                EffectsApplied = effects
+            };
+        }
+
+        /// <summary>
+        /// Saves a pending event record to the data store.
+        /// </summary>
+        private static void SavePendingEventRecord(IDataStore dataStore, string prefix, PendingEventRecord record)
+        {
+            var sourceEventId = record.SourceEventId ?? string.Empty;
+            var chainEventId = record.ChainEventId ?? string.Empty;
+            var contextHint = record.ContextHint ?? string.Empty;
+            var scheduledDay = record.ScheduledDay;
+            var createdDay = record.CreatedDay;
+
+            dataStore.SyncData($"{prefix}_sourceId", ref sourceEventId);
+            dataStore.SyncData($"{prefix}_chainId", ref chainEventId);
+            dataStore.SyncData($"{prefix}_hint", ref contextHint);
+            dataStore.SyncData($"{prefix}_scheduled", ref scheduledDay);
+            dataStore.SyncData($"{prefix}_created", ref createdDay);
+        }
+
+        /// <summary>
+        /// Loads a pending event record from the data store.
+        /// </summary>
+        private static PendingEventRecord LoadPendingEventRecord(IDataStore dataStore, string prefix)
+        {
+            var sourceEventId = string.Empty;
+            var chainEventId = string.Empty;
+            var contextHint = string.Empty;
+            var scheduledDay = 0;
+            var createdDay = 0;
+
+            dataStore.SyncData($"{prefix}_sourceId", ref sourceEventId);
+            dataStore.SyncData($"{prefix}_chainId", ref chainEventId);
+            dataStore.SyncData($"{prefix}_hint", ref contextHint);
+            dataStore.SyncData($"{prefix}_scheduled", ref scheduledDay);
+            dataStore.SyncData($"{prefix}_created", ref createdDay);
+
+            return new PendingEventRecord
+            {
+                SourceEventId = sourceEventId,
+                ChainEventId = chainEventId,
+                ContextHint = contextHint,
+                ScheduledDay = scheduledDay,
+                CreatedDay = createdDay
+            };
+        }
+
         #endregion
     }
 
@@ -2211,5 +4482,112 @@ namespace Enlisted.Features.Interface.Behaviors
         /// Defender side troop count at battle start.
         /// </summary>
         public int DefenderInitialStrength { get; set; }
+    }
+
+    /// <summary>
+    /// Records an order outcome for display in reports and daily brief.
+    /// </summary>
+    public sealed class OrderOutcomeRecord
+    {
+        public string OrderTitle { get; set; }
+        public bool Success { get; set; }
+        public string BriefSummary { get; set; }
+        public string DetailedSummary { get; set; }
+        public string Issuer { get; set; }
+        public int DayNumber { get; set; }
+    }
+
+    /// <summary>
+    /// Records a reputation change for display in reports.
+    /// </summary>
+    public sealed class ReputationChangeRecord
+    {
+        public string Target { get; set; } // "Lord", "Officer", "Soldier", "Retinue"
+        public int Delta { get; set; }
+        public int NewValue { get; set; }
+        public string Message { get; set; }
+        public int DayNumber { get; set; }
+    }
+
+    /// <summary>
+    /// Records a company need change for display in reports.
+    /// </summary>
+    public sealed class CompanyNeedChangeRecord
+    {
+        public string Need { get; set; }
+        public int Delta { get; set; }
+        public int OldValue { get; set; }
+        public int NewValue { get; set; }
+        public string Message { get; set; }
+        public int DayNumber { get; set; }
+    }
+
+    /// <summary>
+    /// Records an event outcome for display in Personal Feed and reports.
+    /// Tracks what event fired, which option was chosen, and effects applied.
+    /// </summary>
+    public sealed class EventOutcomeRecord
+    {
+        public string EventId { get; set; }
+        public string EventTitle { get; set; }
+        public string OptionChosen { get; set; }
+        public string OutcomeSummary { get; set; }
+        public int DayNumber { get; set; }
+
+        /// <summary>
+        /// Individual effect values applied (for headline formatting).
+        /// Keys: "Gold", "SoldierRep", "OfficerRep", "LordRep", "Scrutiny", skill names for XP.
+        /// </summary>
+        public Dictionary<string, int> EffectsApplied { get; set; }
+    }
+
+    /// <summary>
+    /// Tracks a pending chain event for context display in Daily Brief.
+    /// Shows hints like "A comrade owes you money" before the event fires.
+    /// </summary>
+    public sealed class PendingEventRecord
+    {
+        public string SourceEventId { get; set; }
+        public string ChainEventId { get; set; }
+        public string ContextHint { get; set; }
+        public int ScheduledDay { get; set; }
+        public int CreatedDay { get; set; }
+    }
+
+    /// <summary>
+    /// Records muster outcomes for display in camp news and daily brief.
+    /// Each muster cycle generates one record summarizing pay, rations, and unit status.
+    /// </summary>
+    public sealed class MusterOutcomeRecord
+    {
+        /// <summary>Day number when this muster occurred.</summary>
+        public int DayNumber { get; set; }
+
+        /// <summary>Pay outcome: "paid", "partial", "delayed", "promissory", "corruption", etc.</summary>
+        public string PayOutcome { get; set; } = string.Empty;
+
+        /// <summary>Amount of gold received (0 if none).</summary>
+        public int PayAmount { get; set; }
+
+        /// <summary>Ration outcome: "issued", "none_low_supply", "none_critical", "officer_exempt".</summary>
+        public string RationOutcome { get; set; } = string.Empty;
+
+        /// <summary>Item ID of ration issued (empty if none).</summary>
+        public string RationItemId { get; set; } = string.Empty;
+
+        /// <summary>QM reputation at time of issue (affects ration quality).</summary>
+        public int QmReputation { get; set; }
+
+        /// <summary>Company supply level at muster (0-100).</summary>
+        public int SupplyLevel { get; set; }
+
+        /// <summary>Number of soldiers lost since previous muster.</summary>
+        public int LostSinceLast { get; set; }
+
+        /// <summary>Number of soldiers sick since previous muster.</summary>
+        public int SickSinceLast { get; set; }
+
+        /// <summary>Flavor text shown to player about the ration.</summary>
+        public string RationFlavorText { get; set; } = string.Empty;
     }
 }

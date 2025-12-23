@@ -1,59 +1,64 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Enlisted.Features.Assignments.Behaviors;
-using Enlisted.Features.CommandTent.Core;
+using System.Linq;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
+using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
+using ConfigurationManager = Enlisted.Mod.Core.Config.ConfigurationManager;
 
 namespace Enlisted.Features.Ranks.Behaviors
 {
     /// <summary>
-    ///     Phase 7: Requirements for promotion to each tier.
-    ///     Based on the Phase 7 promotion requirements table.
+    /// Requirements for promotion to each tier.
+    /// Based on the standard promotion requirements table.
     /// </summary>
     public sealed class PromotionRequirements
     {
         public int XP { get; set; }
         public int DaysInRank { get; set; }
-        public int EventsRequired { get; set; }
         public int BattlesRequired { get; set; }
-        public int MinLanceReputation { get; set; }
+        public int MinSoldierReputation { get; set; }
         public int MinLeaderRelation { get; set; }
         public int MaxDiscipline { get; set; }
 
         /// <summary>
         ///     Get promotion requirements for a specific tier transition.
+        ///     Note: XP requirements come from progression_config.json, not this table.
+        ///     This table defines other requirements: days, battles, reputation, etc.
         /// </summary>
         public static PromotionRequirements GetForTier(int targetTier)
         {
-            // Phase 7 promotion requirements table:
-            // | Promotion | XP | Days | Events | Battles | Lance Rep | Leader Rel | Max Disc |
-            // |-----------|-----|------|--------|---------|-----------|------------|----------|
-            // | T1→T2 | 700 | 14 | 5 | 2 | ≥0 | ≥0 | <8 |
-            // | T2→T3 | 2,200 | 35 | 12 | 6 | ≥10 | ≥10 | <7 |
-            // | T3→T4 | 4,400 | 56 | 25 | 12 | ≥20 | ≥20 | <6 |
-            // | T4→T5 | 6,600 | 56 | 40 | 20 | ≥30 | ≥30 | <5 |
-            // | T5→T6 | 8,800 | 56 | 55 | 30 | ≥40 | ≥15 | <4 |
-            // | T6→T7 | 11,000 | 70 | 70 | 40 | ≥50 | ≥20 | <3 |
-            // | T7→T8 | 14,000 | 84 | 85 | 50 | ≥60 | ≥25 | <2 |
-            // | T8→T9 | 18,000 | 112 | 100 | 60 | ≥70 | ≥30 | <1 |
+            // Promotion requirements table (XP values shown for reference only - actual values from progression_config.json):
+            // | Promotion | XP | Days | Battles | Soldier Rep | Leader Rel | Max Disc |
+            // |-----------|-----|------|---------|-------------|------------|----------|
+            // | T1â†’T2 | 700 | 14 | 2 | â‰¥0 | â‰¥0 | <8 |
+            // | T2â†’T3 | 2,200 | 35 | 6 | â‰¥10 | â‰¥10 | <7 |
+            // | T3â†’T4 | 4,400 | 56 | 12 | â‰¥20 | â‰¥20 | <6 |
+            // | T4â†’T5 | 6,600 | 56 | 20 | â‰¥30 | â‰¥30 | <5 |
+            // | T5â†’T6 | 8,800 | 56 | 30 | â‰¥40 | â‰¥15 | <4 |
+            // | T6â†’T7 | 11,000 | 70 | 40 | â‰¥50 | â‰¥20 | <3 |
+            // | T7â†’T8 | 14,000 | 84 | 50 | â‰¥60 | â‰¥25 | <2 |
+            // | T8â†’T9 | 18,000 | 112 | 60 | â‰¥70 | â‰¥30 | <1 |
 
             return targetTier switch
             {
-                2 => new PromotionRequirements { XP = 700, DaysInRank = 14, EventsRequired = 5, BattlesRequired = 2, MinLanceReputation = 0, MinLeaderRelation = 0, MaxDiscipline = 8 },
-                3 => new PromotionRequirements { XP = 2200, DaysInRank = 35, EventsRequired = 12, BattlesRequired = 6, MinLanceReputation = 10, MinLeaderRelation = 10, MaxDiscipline = 7 },
-                4 => new PromotionRequirements { XP = 4400, DaysInRank = 56, EventsRequired = 25, BattlesRequired = 12, MinLanceReputation = 20, MinLeaderRelation = 20, MaxDiscipline = 6 },
-                5 => new PromotionRequirements { XP = 6600, DaysInRank = 56, EventsRequired = 40, BattlesRequired = 20, MinLanceReputation = 30, MinLeaderRelation = 30, MaxDiscipline = 5 },
-                6 => new PromotionRequirements { XP = 8800, DaysInRank = 56, EventsRequired = 55, BattlesRequired = 30, MinLanceReputation = 40, MinLeaderRelation = 15, MaxDiscipline = 4 },
-                7 => new PromotionRequirements { XP = 11000, DaysInRank = 70, EventsRequired = 70, BattlesRequired = 40, MinLanceReputation = 50, MinLeaderRelation = 20, MaxDiscipline = 3 },
-                8 => new PromotionRequirements { XP = 14000, DaysInRank = 84, EventsRequired = 85, BattlesRequired = 50, MinLanceReputation = 60, MinLeaderRelation = 25, MaxDiscipline = 2 },
-                9 => new PromotionRequirements { XP = 18000, DaysInRank = 112, EventsRequired = 100, BattlesRequired = 60, MinLanceReputation = 70, MinLeaderRelation = 30, MaxDiscipline = 1 },
-                _ => new PromotionRequirements { XP = int.MaxValue, DaysInRank = 999, EventsRequired = 999, BattlesRequired = 999, MinLanceReputation = 999, MinLeaderRelation = 999, MaxDiscipline = 0 }
+                2 => new PromotionRequirements { XP = 700, DaysInRank = 14, BattlesRequired = 2, MinSoldierReputation = 0, MinLeaderRelation = 0, MaxDiscipline = 8 },
+                3 => new PromotionRequirements { XP = 2200, DaysInRank = 35, BattlesRequired = 6, MinSoldierReputation = 10, MinLeaderRelation = 10, MaxDiscipline = 7 },
+                4 => new PromotionRequirements { XP = 4400, DaysInRank = 56, BattlesRequired = 12, MinSoldierReputation = 20, MinLeaderRelation = 20, MaxDiscipline = 6 },
+                5 => new PromotionRequirements { XP = 6600, DaysInRank = 56, BattlesRequired = 20, MinSoldierReputation = 30, MinLeaderRelation = 30, MaxDiscipline = 5 },
+                6 => new PromotionRequirements { XP = 8800, DaysInRank = 56, BattlesRequired = 30, MinSoldierReputation = 40, MinLeaderRelation = 15, MaxDiscipline = 4 },
+                7 => new PromotionRequirements { XP = 11000, DaysInRank = 70, BattlesRequired = 40, MinSoldierReputation = 50, MinLeaderRelation = 20, MaxDiscipline = 3 },
+                8 => new PromotionRequirements { XP = 14000, DaysInRank = 84, BattlesRequired = 50, MinSoldierReputation = 60, MinLeaderRelation = 25, MaxDiscipline = 2 },
+                9 => new PromotionRequirements { XP = 18000, DaysInRank = 112, BattlesRequired = 60, MinSoldierReputation = 70, MinLeaderRelation = 30, MaxDiscipline = 1 },
+                _ => new PromotionRequirements { XP = int.MaxValue, DaysInRank = 999, BattlesRequired = 999, MinSoldierReputation = 999, MinLeaderRelation = 999, MaxDiscipline = 0 }
             };
         }
     }
@@ -72,8 +77,8 @@ namespace Enlisted.Features.Ranks.Behaviors
         private CampaignTime _lastPromotionCheck = CampaignTime.Zero;
 
         /// <summary>
-        ///     Phase 7: Track pending promotion tier to prevent event spam.
-        ///     Reset when promotion completes or is cancelled.
+        /// Track pending promotion tier to prevent event spam.
+        /// Reset when promotion completes or is cancelled.
         /// </summary>
         private int _pendingPromotionTier;
 
@@ -101,7 +106,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Get the proving event ID for a tier transition.
+        /// Get the proving event ID for a tier transition.
         /// </summary>
         private static string GetProvingEventId(int fromTier, int toTier)
         {
@@ -111,7 +116,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 1 => "promotion_t1_t2_finding_your_place",
                 2 => "promotion_t2_t3_sergeants_test",
                 3 => "promotion_t3_t4_crisis_of_command",
-                4 => "promotion_t4_t5_lance_vote",
+                4 => "promotion_t4_t5_veterans_vote",
                 5 => "promotion_t5_t6_lord_audience",
                 6 => "promotion_t6_t7_commanders_commission",
                 _ => $"promotion_t{fromTier}_t{toTier}" // Fallback pattern
@@ -119,11 +124,26 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Clear the pending promotion flag (called when event completes).
+        /// Clear the pending promotion flag when the event completes.
         /// </summary>
         public void ClearPendingPromotion()
         {
             _pendingPromotionTier = 0;
+        }
+
+        /// <summary>
+        /// Fallback direct promotion when proving events are unavailable.
+        /// Ensures promotion still works even if event system is disabled or events missing.
+        /// </summary>
+        private void FallbackDirectPromotion(int targetTier, EnlistmentBehavior enlistment)
+        {
+            ModLogger.Info("Promotion", $"Processing direct promotion to T{targetTier}");
+            _pendingPromotionTier = 0;
+
+            // SetTier handles retinue grant for T7/T8/T9 promotions
+            enlistment.SetTier(targetTier);
+            Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
+            TriggerPromotionNotification(targetTier);
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -132,8 +152,8 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Check if player meets all requirements for promotion to the next tier.
-        ///     Returns a tuple of (canPromote, failureReasons).
+        /// Check if player meets all requirements for promotion to the next tier.
+        /// Returns a tuple of (canPromote, failureReasons).
         /// </summary>
         public (bool CanPromote, List<string> FailureReasons) CanPromote()
         {
@@ -147,7 +167,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             }
 
             var currentTier = enlistment.EnlistmentTier;
-            var maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
+            var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
             
             if (currentTier >= maxTier)
             {
@@ -160,7 +180,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             var escalation = EscalationManager.Instance;
             
             // XP thresholds are owned by progression_config.json (single source of truth).
-            var tierXp = Assignments.Core.ConfigurationManager.GetTierXpRequirements();
+            var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
             var requiredXp = currentTier < tierXp.Length ? tierXp[currentTier] : tierXp[tierXp.Length - 1];
 
             // Check XP threshold
@@ -175,25 +195,19 @@ namespace Enlisted.Features.Ranks.Behaviors
                 reasons.Add($"Days in rank: {enlistment.DaysInRank}/{req.DaysInRank}");
             }
 
-            // Check events completed
-            if (enlistment.EventsCompleted < req.EventsRequired)
-            {
-                reasons.Add($"Events: {enlistment.EventsCompleted}/{req.EventsRequired}");
-            }
-
             // Check battles survived
             if (enlistment.BattlesSurvived < req.BattlesRequired)
             {
                 reasons.Add($"Battles: {enlistment.BattlesSurvived}/{req.BattlesRequired}");
             }
 
-            // Check lance reputation (escalation system)
+            // Check soldier reputation (escalation system)
             if (escalation?.IsEnabled() == true)
             {
-                var lanceRep = escalation.State?.LanceReputation ?? 0;
-                if (lanceRep < req.MinLanceReputation)
+                var soldierRep = escalation.State?.SoldierReputation ?? 0;
+                if (soldierRep < req.MinSoldierReputation)
                 {
-                    reasons.Add($"Lance reputation: {lanceRep}/{req.MinLanceReputation}");
+                    reasons.Add($"Soldier reputation: {soldierRep}/{req.MinSoldierReputation}");
                 }
 
                 var discipline = escalation.State?.Discipline ?? 0;
@@ -224,13 +238,13 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Get promotion progress as a percentage (0-100).
-        ///     Useful for UI display.
+        /// Get promotion progress as a percentage (0-100).
+        /// Useful for UI display.
         /// </summary>
         public int GetPromotionProgress()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            var maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
+            var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
             
             if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier >= maxTier)
             {
@@ -239,17 +253,16 @@ namespace Enlisted.Features.Ranks.Behaviors
 
             var req = PromotionRequirements.GetForTier(enlistment.EnlistmentTier + 1);
             var escalation = EscalationManager.Instance;
-            var tierXp = Assignments.Core.ConfigurationManager.GetTierXpRequirements();
+            var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
             var requiredXp = enlistment.EnlistmentTier < tierXp.Length ? tierXp[enlistment.EnlistmentTier] : tierXp[tierXp.Length - 1];
 
             // Calculate progress for each requirement
             var xpProgress = Math.Min(100, enlistment.EnlistmentXP * 100 / Math.Max(1, requiredXp));
             var daysProgress = Math.Min(100, enlistment.DaysInRank * 100 / Math.Max(1, req.DaysInRank));
-            var eventsProgress = Math.Min(100, enlistment.EventsCompleted * 100 / Math.Max(1, req.EventsRequired));
             var battlesProgress = Math.Min(100, enlistment.BattlesSurvived * 100 / Math.Max(1, req.BattlesRequired));
 
             // Average progress (can weight differently if desired)
-            var average = (xpProgress + daysProgress + eventsProgress + battlesProgress) / 4;
+            var average = (xpProgress + daysProgress + battlesProgress) / 3;
             return average;
         }
 
@@ -268,7 +281,7 @@ namespace Enlisted.Features.Ranks.Behaviors
 
         /// <summary>
         ///     Check if player has reached promotion thresholds.
-        ///     Phase 7: Now checks all promotion requirements (XP, days, events, battles, reputation).
+        ///     Check all promotion requirements, including XP, days, events, battles, and reputation.
         /// </summary>
         private void CheckForPromotion()
         {
@@ -282,7 +295,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             {
                 var currentTier = enlistment.EnlistmentTier;
                 var previousTier = currentTier;
-                var maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
+                var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
 
                 // Already at max tier
                 if (currentTier >= maxTier)
@@ -290,7 +303,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                     return;
                 }
 
-                // Phase 7: Check all promotion requirements
+                // Check all promotion requirements
                 var (canPromote, failureReasons) = CanPromote();
                 
                 if (!canPromote)
@@ -305,10 +318,15 @@ namespace Enlisted.Features.Ranks.Behaviors
                     return;
                 }
 
-                // Phase 7: Player meets all requirements - trigger proving event instead of auto-promoting
-                // The event's `promotes: true` effect will handle the actual tier advancement
+                // Player meets all requirements
                 var targetTier = currentTier + 1;
-                var eventId = GetProvingEventId(currentTier, targetTier);
+
+                // Check if player has previously declined this promotion (must request via dialog)
+                if (EscalationManager.Instance?.HasDeclinedPromotion(targetTier) == true)
+                {
+                    ModLogger.Debug("Promotion", $"Promotion to T{targetTier} previously declined - must request via dialog");
+                    return;
+                }
 
                 // Check if we've already triggered this promotion event recently (prevent spam)
                 if (_pendingPromotionTier == targetTier)
@@ -318,21 +336,21 @@ namespace Enlisted.Features.Ranks.Behaviors
 
                 _pendingPromotionTier = targetTier;
 
-                // Try to show the proving event
-                if (Lances.Events.LanceLifeEventRuntime.TryShowEventById(eventId))
+                // Try to queue the proving event
+                var eventId = GetProvingEventId(currentTier, targetTier);
+                var provingEvent = Content.EventCatalog.GetEventById(eventId);
+
+                if (provingEvent != null && Content.EventDeliveryManager.Instance != null)
                 {
-                    ModLogger.Info("Promotion", $"Triggered proving event for T{currentTier}→T{targetTier}: {eventId}");
+                    // Queue the proving event popup
+                    ModLogger.Info("Promotion", $"Queuing proving event: {eventId} (T{currentTier} to T{targetTier})");
+                    Content.EventDeliveryManager.Instance.QueueEvent(provingEvent);
                 }
                 else
                 {
-                    // Fallback: If event not found or failed, do direct promotion
-                    ModLogger.Warn("Promotion", $"Proving event {eventId} not found, using fallback promotion");
-                    _pendingPromotionTier = 0;
-                    
-                    // SetTier handles retinue grant for T7/T8/T9 promotions
-                    enlistment.SetTier(targetTier);
-                    Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
-                    TriggerPromotionNotification(targetTier);
+                    // Fallback to direct promotion if event system unavailable
+                    ModLogger.Warn("Promotion", $"Proving event '{eventId}' not found or EventDeliveryManager unavailable - using direct promotion");
+                    FallbackDirectPromotion(targetTier, enlistment);
                 }
             }
             catch (Exception ex)
@@ -365,6 +383,15 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
+        /// Public entry point for triggering promotion notifications from other systems.
+        /// Called by EventDeliveryManager after a proving event grants promotion.
+        /// </summary>
+        public void TriggerPromotionNotificationPublic(int newTier)
+        {
+            TriggerPromotionNotification(newTier);
+        }
+
+        /// <summary>
         ///     Trigger promotion notification with immersive roleplay text.
         ///     Each tier has unique narrative describing what the promotion means.
         /// </summary>
@@ -381,11 +408,12 @@ namespace Enlisted.Features.Ranks.Behaviors
                 popupMessage.SetTextVariable("PLAYER_NAME", playerName);
                 popupMessage.SetTextVariable("RANK", rankName);
 
-                // Show short notification in chat
+                // Show short notification in chat with rank variable
                 var chatMessage = GetPromotionChatMessage(newTier);
+                chatMessage.SetTextVariable("RANK", rankName);
                 InformationManager.DisplayMessage(new InformationMessage(chatMessage.ToString(), Colors.Green));
 
-                // Phase 7: Show quartermaster prompt after promotion (no auto-equip)
+                // Show quartermaster prompt after promotion.
                 var qmPrompt = new TextObject("{=promo_qm_prompt}Report to the Quartermaster for your new kit.");
                 InformationManager.DisplayMessage(new InformationMessage(qmPrompt.ToString(), Colors.Cyan));
 
@@ -407,6 +435,16 @@ namespace Enlisted.Features.Ranks.Behaviors
 
                 // pauseGameActiveState = false so notifications don't freeze game time
                 InformationManager.ShowInquiry(data, false);
+
+                // Record promotion in Personal Feed for historical review
+                var retinueSoldiers = newTier switch
+                {
+                    7 => 20,
+                    8 => 30,
+                    9 => 40,
+                    _ => 0
+                };
+                EnlistedNewsBehavior.Instance?.AddPromotionNews(newTier, rankName, retinueSoldiers);
 
                 ModLogger.Info("Promotion", $"Promotion notification triggered for {rankName} (Tier {newTier})");
             }
@@ -485,16 +523,13 @@ namespace Enlisted.Features.Ranks.Behaviors
                 // This can be enhanced with an interactive selection menu later
                 var currentFormation = DetectPlayerFormation();
 
-                var duties = EnlistedDutiesBehavior.Instance;
-                duties?.SetPlayerFormation(currentFormation.ToString().ToLower());
-
                 var formationName = GetFormationDisplayName(currentFormation);
                 var message = new TextObject("{=formation_assigned}Formation assigned: {FORMATION}. Your training and equipment will reflect your role.");
                 message.SetTextVariable("FORMATION", formationName);
 
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Cyan));
 
-                // Phase 7: Prompt to visit Quartermaster for formation-specific gear (no auto-equip)
+                // Prompt to visit the Quartermaster for formation-specific gear.
                 var qmPrompt = new TextObject("{=formation_qm_prompt}Report to the Quartermaster for your {FORMATION} kit.");
                 qmPrompt.SetTextVariable("FORMATION", formationName);
                 InformationManager.DisplayMessage(new InformationMessage(qmPrompt.ToString(), Colors.Cyan));
@@ -526,13 +561,8 @@ namespace Enlisted.Features.Ranks.Behaviors
                     return FormationType.Infantry; // Default fallback
                 }
 
-                // Detect military formation based on equipment characteristics
-                // The formation type is determined by whether the character uses ranged weapons
-                // and whether they are mounted, creating four distinct categories:
-                // - Horse Archer: Ranged weapon + Mount
-                // - Cavalry: Melee weapon + Mount
-                // - Archer: Ranged weapon + No mount
-                // - Infantry: Melee weapon + No mount (default)
+                // Detect military formation based on equipment characteristics. We treat ranged+mounted as horse
+                // archer, mounted as cavalry, ranged as archer, and everything else as infantry.
                 if (characterObject.IsRanged && characterObject.IsMounted)
                 {
                     return FormationType.HorseArcher;

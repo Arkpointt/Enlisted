@@ -1,1077 +1,826 @@
-# Retinue System — Commander's Personal Force
+# Retinue System
 
-**Status**: Implemented (v3.0)  
-**Category**: Core Feature  
-**Dependencies**: Formation Training, Companion Management, Provisions System
+**Summary:** The retinue system provides high-rank enlisted commanders (T7+) with a personal military force. Players select their formation type at T7, manage reinforcements through context-aware trickle and lord requests, track loyalty, respond to narrative events, and lead named veterans through battles. The system transforms gameplay from individual soldier to commander of men.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-23  
+**Related Docs:** [Promotion System](promotion-system.md), [Core Gameplay](core-gameplay.md), [Training System](../Combat/training-system.md), [News & Reporting](../UI/news-reporting-system.md)
+
+---
+
+## Index
+
+1. [Overview](#overview)
+2. [Command Progression](#command-progression)
+3. [Formation Selection](#formation-selection)
+4. [Granting Recruits](#granting-recruits)
+5. [Reinforcement System](#reinforcement-system)
+6. [Retinue Loyalty](#retinue-loyalty)
+7. [Training & Development](#training--development)
+8. [Battle Integration](#battle-integration)
+9. [Casualty Tracking](#casualty-tracking)
+10. [Retinue Events](#retinue-events)
+11. [Post-Battle Incidents](#post-battle-incidents)
+12. [Camp Decisions](#camp-decisions)
+13. [Named Veterans](#named-veterans)
+14. [News Integration](#news-integration)
+15. [Technical Details](#technical-details)
+
+---
 
 ## Overview
 
-The retinue system provides enlisted players with a personal military force that grows with their rank. Companions can be managed from T1, and at T7+ (Commander track) players receive personal command of regular soldiers—starting with raw recruits that must be trained and developed through combat.
+As you advance into the Commander tiers (T7-T9), you are assigned a personal squad of soldiers. These troops are embedded within your formation and look to you for leadership. The retinue system provides:
 
-## System (v3.0)
-
-- **T1 (All tiers)**: Companion management
-- **T7 (Commander I)**: 20 raw recruits + companions
-- **T8 (Commander II)**: 30 soldiers + companions
-- **T9 (Commander III)**: 40 soldiers + companions
-- Initial recruits granted automatically on promotion
-- Reinforcements via trickle system (1 recruit every 2-3 days)
-- Provisions system for feeding retinue (v3.0)
-
----
-
-## Table of Contents
-
-- [Quick Reference](#quick-reference)
-- [Design Philosophy](#design-philosophy)
-- [Companion Management (T1+)](#companion-management-t1)
-- [Commander's Retinue (T7-T9)](#commanders-retinue-t7-t9)
-- [Recruit Training System](#recruit-training-system)
-- [Reinforcement & Trickle System](#reinforcement--trickle-system)
-- [Battle Integration](#battle-integration)
-- [Casualty Tracking](#casualty-tracking)
-- [Implementation Phases](#implementation-phases)
-- [Technical Details](#technical-details)
-- [API Reference](#api-reference)
+- **Formation Choice**: Select infantry, archers, cavalry, or horse archers at T7
+- **Context-Aware Replenishment**: Reinforcements arrive faster after victories, slower after defeats
+- **Relation-Based Requests**: Request reinforcements from your lord with pricing based on relationship
+- **Loyalty Tracking**: Maintain your soldiers' morale through choices and care
+- **Narrative Events**: 10 retinue-specific events with meaningful command decisions
+- **Post-Battle Incidents**: 6 map incidents firing after battles with retinue present
+- **Camp Decisions**: 4 commander-specific decisions for inspections, drills, and morale
+- **Named Veterans**: Individual soldiers emerge with names, traits, and battle histories
+- **News Integration**: Retinue activities appear in Personal Feed and Daily Brief
 
 ---
 
-## Quick Reference
+## Command Progression
 
-| Tier | Rank Track | Companions | Soldiers | Total Force | Grant Method |
-|------|------------|------------|----------|-------------|--------------|
-| T1-T6 | Enlisted/Officer | Managed | 0 | Companions only | N/A |
-| T7 | Commander I | Managed | 20 | 20 + companions | Auto-grant raw recruits |
-| T8 | Commander II | Managed | 30 | 30 + companions | +10 recruits on promotion |
-| T9 | Commander III | Managed | 40 | 40 + companions | +10 recruits on promotion |
+Your retinue size scales with your enlistment tier:
 
-**Key Features:**
-- Companions managed from day one (T1)
-- Soldiers granted as raw recruits, not purchased
-- Automatic reinforcement via trickle system (2-3 days per soldier)
-- Formation-specific recruit types match player's specialization
-- Training progression: Recruit -> Regular -> Veteran
-- Battle participation toggle for companions
-- Unified formation command in battles
+| Tier | Rank Track | Soldiers | Total Force |
+|------|------------|----------|-------------|
+| T1-T6 | Enlisted/Officer | 0 | Companions Only |
+| T7 | Commander I | 20 | 20 + Companions |
+| T8 | Commander II | 30 | 30 + Companions |
+| T9 | Commander III | 40 | 40 + Companions |
 
----
+**Proving Events:**
 
-## Design Philosophy
+Promotions to Commander ranks trigger proving events where your lord summons you:
+- **T6→T7**: "Commander's Commission" - Accept immediate command or request later via dialog
+- **T7→T8**: "Expanded Command" - Lord acknowledges your success, grants 10 more soldiers
+- **T8→T9**: "Elite Commander" - Recognition as veteran leader, final 10 soldiers granted
 
-### Earned Command, Not Purchased Power
+**Player Agency:**
 
-**Core Principles:**
-1. **Progression Reward**: Commander rank grants personal force automatically
-2. **Investment Required**: Raw recruits need time and battle experience to develop
-3. **Strategic Choices**: Formation specialization determines recruit type
-4. **Living Force**: Casualties matter, reinforcements take time
-5. **Companion Value**: Early-game companions remain valuable throughout career
-
-### Why Raw Recruits?
-
-- **Authenticity**: Mirrors real military command progression
-- **Challenge**: Managing green troops teaches player to protect their force
-- **Satisfaction**: Watching recruits grow into veterans creates attachment
-- **Balance**: Prevents instant powerful army; requires player investment
-- **Story Integration**: Recruit training events, hazing rituals, veteran bonding
+You can decline promotions and request them later via lord dialog. The "My lord, I have proven myself..." option appears when you're eligible for T7+ and have declined.
 
 ---
 
-## Companion Management (T1+)
+## Formation Selection
 
-### Overview
+### First-Time Selection (T7 Promotion)
 
-From the moment of enlistment (T1), players can manage their companions' battle participation. Companions serve in the player's personal roster throughout entire career.
+When first promoted to T7, you choose your retinue's formation type via dialog:
 
-### Location & Control
+**Formation Options:**
+- **Infantry** - Foot soldiers with sword and shield
+- **Archers** - Skilled bowmen for ranged support
+- **Cavalry** - Mounted lancers, swift and deadly
+- **Horse Archers** - Mounted bowmen of the steppe (culture-restricted)
 
-| Tier | Companion Location | Battle Control |
-|------|-------------------|----------------|
-| T1-T9 | Player's party roster | Full toggle control |
+**Culture Restrictions:**
 
-**Key Changes from Previous System:**
-- **Removed**: T1-T3 companions in lord's party
-- **New**: Companions always in player's party from T1
-- **Enhanced**: Battle participation toggle available immediately
+Horse archers are only available for cultures that historically used them:
+- **Available**: Aserai, Khuzait, Empire
+- **Not Available**: Vlandia, Battania, Sturgia
 
-### Battle Participation Toggle
+**Selection Dialog:**
 
-**Location**: Camp -> Companion Assignments
+```
+Title: "Choose Your Retinue"
 
-**Options per companion:**
-- **Fight**: Spawns in battle, faces all risks, gains experience
-- **Stay Back**: Remains in roster, immune to casualties, no XP gain
+Setup: "As a Commander, you lead your own soldiers. 
+Choose the type of troops you wish to command."
 
-**Use Cases:**
-- Protect valuable companions during dangerous battles
-- Control which heroes gain combat experience
-- Manage wounds and recovery strategically
-- Avoid permadeath risk for favorite characters
+[Infantry] [Archers] [Cavalry] [Horse Archers*]
 
-### Formation Integration
+*Horse Archers shown only for appropriate cultures
+```
 
-At T7+, companions fight alongside the player's retinue in unified squad:
-- All spawn in player's formation (Infantry/Archer/Cavalry/Horse Archer)
-- Player commands own unit (not entire army)
-- Companions cannot become formation captains or generals
-- "Stay Back" companions don't spawn, remain safe in roster
+**Persistent Choice:**
+
+Your selection is stored in `RetinueState.SelectedTypeId` and persists through:
+- T8/T9 expansions (no re-selection, additional soldiers match your formation)
+- Save/load
+- Discharge and re-enlistment (until you enlist with incompatible culture)
+
+**Culture Mismatch Handling:**
+
+If you re-enlist with a lord whose culture doesn't support your previous formation (e.g., had horse archers with Khuzait, now enlist with Vlandia), you must select a new formation type.
 
 ---
 
-## Commander's Retinue (T7-T9)
+## Granting Recruits
 
-### Unlock & Initial Grant
+### Initial Grant at T7
 
-**T6->T7 Promotion Event: "Commander's Commission"**
+When you accept T7 promotion (via event or dialog):
+1. Formation selection dialog appears (if first time at T7)
+2. You choose formation type
+3. 20 raw recruits of selected type are added to your party
+4. Notification: "Twenty raw recruits have joined your command."
 
-When promoted to T7, player receives initial command:
-- **20 raw recruits** automatically added to roster
-- Recruit type matches player's formation specialization
-- Event narrative: Lord recognizes leadership, assigns first command
-- No cost, no shopping — command is granted as reward
+### Expansion Grants at T8/T9
 
-**Example Flow:**
-1. Player reaches T7 XP threshold
-2. Proving event: "You're ready to lead. Here are your soldiers."
-3. 20 recruits (Recruit I) appear in party roster
-4. Formation type: Infantry recruits if player is infantry specialist, etc.
+**T8 Promotion:**
+- Adds 10 additional recruits of your existing formation type
+- No formation re-selection
+- Notification acknowledges expanded command
 
-### Capacity Progression
+**T9 Promotion:**
+- Adds final 10 recruits of your existing formation type
+- Reaches maximum retinue capacity
+- Notification acknowledges elite commander status
 
-| Tier | Capacity | Grant on Promotion | Existing Soldiers |
-|------|----------|-------------------|-------------------|
-| T7 | 20 | +20 raw recruits | 0 -> 20 |
-| T8 | 30 | +10 recruits | 20 -> 30 |
-| T9 | 40 | +10 recruits | 30 -> 40 |
-
-**Promotion Grants:**
-- T7: Initial grant of 20
-- T8: +10 more (if under capacity)
-- T9: +10 more (if under capacity)
-- Always raw recruits (Recruit I tier)
-- Formation-specific type (Infantry/Archer/Cavalry/Horse Archer)
-
-### Formation Specialization
-
-Recruit type determined by player's formation choice (made at T1->T2):
-
-| Player Formation | Recruit Type | Example Troops |
-|-----------------|--------------|----------------|
-| Infantry | Infantry Recruits | Levy, Footmen, Militia |
-| Archer | Ranged Recruits | Archer Recruits, Crossbow Militia |
-| Cavalry | Cavalry Recruits | Mounted Recruits, Light Cavalry |
-| Horse Archer | Horse Archer Recruits | Mounted Archers, Nomad Recruits |
+### Recruit Quality
 
 **Culture Integration:**
-- Recruit pool matches enlisted lord's culture
-- Empire infantry, Vlandia cavalry, Khuzait horse archers, etc.
-- Authentic unit names and progression trees
+
+Recruits match your enlisted lord's culture troop tree:
+- **Vlandia**: Vlandian Levy, Vlandian Infantry Recruit, etc.
+- **Khuzait**: Khuzait Nomad, Khuzait Archer, etc.
+- **Empire**: Imperial Recruit, Imperial Vigla Recruit, etc.
+
+**Formation Matching:**
+
+The system selects the lowest-tier troop from your lord's culture that matches your formation:
+- Infantry: Finds troops in Infantry formation class
+- Archers: Finds troops in Ranged formation class
+- Cavalry: Finds troops in Cavalry formation class
+- Horse Archers: Finds troops in HorseArcher formation class
 
 ---
 
-## Recruit Training System
+## Reinforcement System
 
-### Troop Progression
+The reinforcement system uses two mechanisms: automatic context-aware trickle and relation-based manual requests.
 
-Raw recruits develop through combat experience and time served:
+### Context-Aware Trickle
+
+Reinforcements arrive automatically based on campaign context. The system tracks your last battle and adjusts trickle rates accordingly.
+
+**Trickle Rates:**
+
+| Context | Rate | Narrative |
+|---------|------|-----------|
+| **Victory** (within 3 days) | 1 per 2 days | Battle survivors join up |
+| **Defeat** (within 5 days) | BLOCKED | Morale recovering |
+| **Friendly Territory** | 1 per 3 days | Local levies assigned |
+| **At Peace** (5+ days no battle) | 1 per 2 days | Training complete |
+| **On Campaign** (default) | 1 per 4 days | Rearguard transfers |
+
+**Context Detection:**
+
+The system uses `RetinueState.LastBattleTime` and `RetinueState.LastBattleWon` to determine context:
+- Recent victory: Faster reinforcements (post-battle survivors)
+- Recent defeat: Blocked reinforcements (morale must recover)
+- Friendly territory: Bonus reinforcements (local recruitment)
+- Peace time: Faster reinforcements (training camps productive)
+
+**Friendly Territory Detection:**
+
+Uses `Settlement.FindSettlementsAroundPosition()` to check for friendly settlements within 30 map units of lord's party.
+
+**Contextual Notifications:**
+
+Trickle notifications change based on context:
+- Victory: "A survivor from the battle has joined your retinue."
+- Friendly Territory: "A local levy has been assigned to your command."
+- Default: "A soldier from the rearguard has been transferred to your retinue."
+
+### Request Reinforcements (Relation-Based)
+
+You can manually request reinforcements from your lord via Camp menu, with cost and cooldown based on relationship.
+
+**Access Requirements:**
+- Must have selected retinue formation type
+- Must be below tier capacity
+- Lord relation must be 20+ (blocks hostile lords)
+
+**Relation-Based Terms:**
+
+| Lord Relation | Cost Multiplier | Cooldown | Lord Response |
+|---------------|-----------------|----------|---------------|
+| **50+** (Pleased) | 0.75× (25% discount) | 7 days | "Your men fought well. I can spare some from the reserves." |
+| **20-49** (Neutral) | 1.0× (full cost) | 14 days | "Reinforcements? I'll see what I can do. It won't be free." |
+| **<20** (Unfriendly) | BLOCKED | N/A | "Improve your standing first." |
+
+**Cost Calculation:**
 
 ```
-Recruit I (raw) -> Recruit II (trained) -> Regular I -> Regular II -> Veteran I -> Veteran II
-  Grant          +100 XP            +200 XP      +400 XP       +800 XP     +1600 XP
-  (free)        7-14 days          2-3 battles  4-6 battles  10+ battles  Elite status
+Base Cost per Soldier = CharacterObject.TroopWage × 10
+Adjusted Cost = Base Cost × Relation Multiplier
+Total Cost = Adjusted Cost × Missing Soldiers
 ```
 
-**Progression Mechanics:**
-- Native Bannerlord troop upgrade system (XP-based)
-- Automatic upgrades when XP thresholds met
-- Player can manually upgrade with gold (accelerated path)
-- Participation in battles grants XP naturally
-- Wounded soldiers continue gaining passive XP while recovering
+**Request Flow:**
 
-### Training Events (Optional Flavor)
+1. Open Camp menu → "Retinue" → "Request Reinforcements from [LORD]"
+2. Dialog shows relation tier, cost, cooldown
+3. Accept: Pay gold, receive soldiers immediately
+4. Cooldown applied (7 or 14 days)
 
-**Lance Life Integration:**
-- "Recruit Hazing" — Veterans test new arrivals (Discipline check)
-- "Field Promotion" — Exceptional recruit earns early upgrade
-- "Training Accident" — Recruit injured during drills (Medical event)
-- "Veteran Mentorship" — Experienced soldier trains recruits (+XP boost)
+**Menu Status Display:**
 
-**Benefits:**
-- Creates narrative attachment to retinue
-- Provides player choices affecting development speed
-- Integrates with existing lance life event system
-- Optional: Can be disabled in config if player prefers pure combat progression
+The Retinue menu shows:
+- Current retinue count vs capacity
+- Last battle outcome and days since
+- Trickle status:
+  - "Replacements delayed (morale recovering)" if post-defeat
+  - "New recruit expected: N days" if active
+  - "Resume in: N days" if blocked
+- Territory status (Friendly / Hostile)
+- Next request available date
 
-### Manual Training
+### Post-Battle Volunteer Event
 
-**Location**: Camp -> Retinue Management -> Train Soldiers
+After victorious battles (T7+ with retinue below capacity), the `evt_ret_post_battle_volunteers` event may fire:
+
+**Event Setup:**
+
+"The battle is won. As your men regroup, you notice soldiers from other units looking your way. Your reputation precedes you, Commander.
+
+A corporal approaches. 'Sir, some of the lads want to join your retinue. What should I tell them?'"
 
 **Options:**
-- **Drill Soldiers** (costs gold): Grants bonus XP to all recruits
-- **Individual Training** (costs gold + time): Upgrade specific soldier immediately
-- **Veteran Mentorship** (costs influence): Pair recruit with veteran for XP boost
+- **Accept Volunteers**: +2-4 soldiers, Leadership XP. Leadership 50+ grants +2 bonus.
+- **Request Transfers**: +4 soldiers, -5 lord relation (taking from his forces).
+- **Decline**: +5 retinue loyalty (quality over quantity).
+
+**Cooldown:** 5 days
 
 ---
 
-## Reinforcement & Trickle System
+## Retinue Loyalty
 
-### Existing Trickle System (Preserved)
+Your retinue has a loyalty track (0-100) representing their morale and devotion. Starts at 50 (neutral).
 
-**Current Implementation:**
-- 1 soldier added every 2-3 days automatically
-- Free reinforcement (no cost)
-- Continues until capacity reached
-- Formation-specific type
+### Loyalty Effects
 
-**Enhancements for New System:**
-- Trickle soldiers arrive as raw recruits (Recruit I)
-- Player sees notification: "New recruit reports for duty"
-- Integration with camp life: Logistics strain affects trickle rate
-- Higher tension = slower reinforcements (3-5 days instead of 2-3)
+| Loyalty Level | Threshold | Effects |
+|---------------|-----------|---------|
+| **High** | 80+ | Bonus morale in battle, positive events |
+| **Neutral** | 30-79 | Normal operation |
+| **Low** | 20-29 | Performance warnings, grumbling events |
+| **Critical** | 10-19 | Desertion risk, combat penalties |
+| **Near Mutiny** | <10 | Address immediately or lose men |
 
-### Casualty Replacement
+### Loyalty Modifiers
 
-**Smart Trickle Priority:**
-1. If below capacity due to casualties -> priority trickle (2 days)
-2. If near capacity -> normal trickle (2-3 days)
-3. If at capacity -> trickle paused
+Actions that affect loyalty:
 
-**Example:**
-- Player has 12/15 soldiers (3 casualties)
-- Next trickle in 2 days (priority)
-- Recruit arrives, now 13/15
-- Next trickle in 2 days (still priority)
-- Reaches 15/15, trickle pauses
+| Action | Loyalty Change | Context |
+|--------|----------------|---------|
+| **Share rations with men** | +5 to +10 | Camp decision, costs gold |
+| **Lead from front** | +3 | Participate in battles with retinue |
+| **Discipline fairly** | -2 to +2 | Event responses |
+| **Protect men from orders** | +10 | Refuse dangerous lord orders |
+| **Get men killed recklessly** | -10 to -15 | Heavy casualties without cause |
+| **Discipline harshly** | -5 to -10 | Brutal punishment choices |
+| **Pay for medical care** | +5 | Camp decision, costs gold |
+| **Ignore wounded** | -8 | Event choices |
+| **Sacrifice men for lord** | -15 | Event choices |
 
-### Desertion Impact
+### Loyalty Threshold Events
 
-When soldiers desert due to high pay tension (80-100):
-- Retinue soldiers can desert (1-5% chance per day at high tension)
-- Creates capacity gaps for trickle system to fill
-- Reinforcements help rebuild after morale crisis
-- Narrative: "Your command is falling apart, need fresh recruits"
+Special events fire when loyalty crosses thresholds:
+
+**Low Loyalty (<30):**
+- `evt_ret_morale_low` - Men grumbling, morale crisis
+- Risk: Must address or face desertion
+
+**High Loyalty (>80):**
+- `evt_ret_loyalty_high` - Men devoted, would follow anywhere
+- Benefit: Combat bonus, better performance
+
+### Daily Brief Integration
+
+Low or high loyalty appears in Daily Brief context lines:
+- Low (<30): "Your men are restless. Morale among your retinue is worryingly low."
+- High (>80): "Your soldiers are devoted. They would follow you into any fight."
+
+---
+
+## Training & Development
+
+Retinue soldiers develop through service:
+
+**Combat Experience:**
+- Soldiers gain XP naturally through battle participation
+- XP scales with enemy difficulty
+- Veteran retinue members level faster
+
+**Upgrades:**
+- Troops follow their native culture's upgrade tree
+- Automatic upgrades when XP thresholds met
+- Elite troops emerge after multiple battles
+
+**Manual Training:**
+
+The `dec_ret_drill` Camp Hub decision allows active training:
+
+**Cost:** 1-3 fatigue, 4-day cooldown  
+**Options:**
+- **Hard Training**: Discipline +3, TroopXP +25, Loyalty -5 (harsh)
+- **Balanced Training**: Discipline +2, TroopXP +15, Loyalty ±0
+- **Light Training**: Discipline +1, TroopXP +8, Loyalty +3 (gentle)
+
+**Leadership Skill Check:**
+
+Leadership 60+ improves training outcomes, reduces injury risk.
 
 ---
 
 ## Battle Integration
 
-### Unified Squad Formation
+In battle, your companions and retinue form a **Unified Squad**.
 
-**T7-T9 Battle Deployment:**
-- Player + Companions + Retinue = Unified Squad
-- All spawn in player's formation (Infantry/Archer/Cavalry/Horse Archer)
-- Player commands own unit (F1-F6 keys work for own formation)
-- Cannot command other formations or full army (no Order of Battle screen)
+**Deployment:**
+- All retinue members spawn in your designated formation
+- Formation matches your selected type (Infantry/Archers/Cavalry/Horse Archers)
+- Companions join the same formation
 
-**Formation Assignment:**
-```
-Player Formation = Infantry
-  - Player (Infantry)
-  - Companion 1 (Infantry, reassigned from their natural class)
-  - Companion 2 (Infantry, reassigned)
-  - 15x Infantry retinue soldiers
-  - Total: 18 units in player's command
-```
+**Direct Command:**
+- You have direct control using F1-F6 command keys
+- Order retinue separately from lord's main force
+- Position and tactic orders apply to your squad
 
-### Battle Behavior
+**Reinforcement Phases:**
+- During battle reinforcement waves, your retinue automatically routes to your position
+- Named veterans prioritized in spawn order (if implemented)
 
-**Reinforcement Spawning:**
-- Initial deployment: Squad spawns together near formation position
-- Reinforcement phase: Squad spawns at map edge, teleported to formation
-- Stay Back companions don't spawn, remain safe in roster
+**Casualty Tracking:**
 
-**Casualty Handling:**
-- Native system handles kills/wounds/captures automatically
-- Casualty tracker reconciles retinue state post-battle
-- Wounded soldiers: Recovery time based on severity (1-7 days)
-- Killed soldiers: Permanent loss, trickle system replaces over time
-
-**Formation Reassignment:**
-- Retinue soldiers may spawn in "wrong" formation (e.g., cavalry in infantry)
-- System detects and reassigns to player's formation
-- Soldiers teleported to player's position
-- All fight together regardless of natural troop class
+The system meticulously tracks retinue health:
+1. **Pre-Battle Snapshot**: Retinue state recorded before battle
+2. **Battle Participation**: Retinue members fight, may be killed/wounded
+3. **Post-Battle Reconciliation**: Casualties calculated, state updated
+4. **Recovery**: Wounded soldiers recover over time
+5. **News Reporting**: Casualties reported in Personal Feed
 
 ---
 
 ## Casualty Tracking
 
-### Existing System (Enhanced)
+### Pre-Battle State
 
-**Pre-Battle Snapshot:**
-- System records exact troop counts before battle
-- Tracks by CharacterObject ID (troop type)
+Before each battle, the system records:
+- Total retinue count
+- Healthy vs wounded split
+- Named veteran status
 
-**Post-Battle Reconciliation:**
-- Compare snapshot vs. actual roster
-- Calculate: casualties = pre-battle count - post-battle count
-- Update retinue state tracking
-- Enable trickle replacements
+### Post-Battle Reconciliation
 
-**Wound Recovery:**
-- Wounded soldiers remain in roster
-- Daily recovery check (native system)
-- Retinue state doesn't change during recovery
-- Fully healed soldiers available again
+After battle ends:
+1. Compare pre-battle vs post-battle roster
+2. Calculate killed retinue soldiers
+3. Calculate wounded retinue soldiers
+4. Update `RetinueState.TroopCounts` to match actual roster
+5. Check named veteran casualties (see [Named Veterans](#named-veterans))
 
-**Permadeath:**
-- Killed soldiers removed from roster permanently
-- Retinue state decrements immediately
-- Trickle system begins replacement process
-- Player sees: "Lost 3 soldiers in battle, reinforcements in 6 days"
+### Sync Protection
 
----
+The system syncs `RetinueState` with actual party roster:
+- On daily tick
+- Before displaying retinue menu
+- After every battle
 
-## Implementation Phases
+This prevents desync between tracked state and actual soldiers.
 
-### Phase 1: Companion Management Update (T1+) Priority
+### News Reporting
 
-**Goal**: Move companions to player party at T1, enable battle toggle immediately
+Retinue casualties are reported separately from main force:
 
-**Tasks:**
-1. **Update companion transfer logic** (`CompanionAssignmentManager.cs`)
-   - Remove T4 tier gate
-   - Transfer companions to player party at enlistment (T1)
-   - Companions stay in player party for entire enlisted career
+**Personal Feed:**
+- "Your retinue suffered losses: N killed, M wounded."
 
-2. **Update companion battle participation** (Already exists)
-   - Verify toggle works at T1
-   - Test "Stay Back" mechanic with lower-tier battles
-
-3. **Update formation assignment** (`EnlistedFormationAssignmentBehavior.cs`)
-   - Companions fight in player's formation from T1
-   - All tiers (T1-T9) use same formation logic
-   - Remove T4 gate from unified squad behavior
-
-4. **Documentation updates**
-   - `companion-management.md`: Update tier tables T1+ for all features
-   - `README.md`: Update companion section to reflect T1 availability
-
-**Testing:**
-- Enlist at T1, verify companions in player party
-- Test battle toggle at T1-T3
-- Verify companions fight in player's formation
-
-**Estimated Effort**: 4-6 hours
+**Daily Brief:**
+- Includes retinue casualties in casualty report section
+- Distinguishes retinue losses from lord's troop losses
 
 ---
 
-### Phase 2: Capacity & Tier Updates (T7-T9) Required
+## Retinue Events
 
-**Goal**: Update tier capacity system for new T7-T9 commander structure
+10 narrative events fire for T7+ commanders with retinue, creating command decision moments.
 
-**Tasks:**
-1. **Update `RetinueManager.cs` constants**
-   ```csharp
-   // OLD
-   public const int LanceTier = 4;      // 5 soldiers
-   public const int SquadTier = 5;      // 10 soldiers
-   public const int RetinueTier = 6;    // 20 soldiers
-   
-   // NEW
-   public const int CommanderTier1 = 7; // 15 soldiers
-   public const int CommanderTier2 = 8; // 25 soldiers
-   public const int CommanderTier3 = 9; // 35 soldiers
-   ```
+**Trigger Requirements:**
+- All: `is_enlisted`, `ai_safe`, `has_retinue`, T7-T9
+- Contexts: `camp_daily` (automatic daily evaluation)
+- Cooldowns: 10-25 days to prevent spam
 
-2. **Update `GetTierCapacity()` method**
-   ```csharp
-   public static int GetTierCapacity(int tier)
-   {
-       return tier switch
-       {
-           >= CommanderTier3 => 35,
-           CommanderTier2 => 25,
-           CommanderTier1 => 15,
-           _ => 0  // No soldiers T1-T6
-       };
-   }
-   ```
+**Event List:**
 
-3. **Update `GetUnitName()` method**
-   ```csharp
-   public static string GetUnitName(int tier)
-   {
-       return tier switch
-       {
-           >= CommanderTier3 => "Command (Elite)",
-           CommanderTier2 => "Command (Veteran)",
-           CommanderTier1 => "Command (Regular)",
-           _ => "None"
-       };
-   }
-   ```
+| Event ID | Title | Situation | Core Conflict |
+|----------|-------|-----------|---------------|
+| `evt_ret_soldier_dispute` | Trouble in the Ranks | Two soldiers fighting | Discipline vs. morale |
+| `evt_ret_leave_request` | A Soldier's Plea | Soldier asks for leave | Humanity vs. readiness |
+| `evt_ret_theft` | Missing Rations | Rations stolen | Trust vs. punishment |
+| `evt_ret_veteran_questions` | The Old Hand | Veteran questions order | Authority vs. wisdom |
+| `evt_ret_new_recruits` | Raw Meat | New recruits arrive | Harsh welcome vs. gentle |
+| `evt_ret_loyalty_test` | Expendable | Lord orders risky mission | Obey vs. protect men |
+| `evt_ret_morale_low` | Grumbling | Men are unhappy | Share rations vs. enforce |
+| `evt_ret_desertion` | The Runner | Soldier caught fleeing | Report, stop, or let go |
+| `evt_ret_promotion` | From the Ranks | Soldier distinguishes self | Promote publicly vs. private |
+| `evt_ret_illness` | Fever in Camp | Sickness spreading | Quarantine vs. march on |
 
-4. **Update UI strings** (`enlisted_strings.xml`)
-   - Commander rank titles
-   - Capacity descriptions
-   - Grant notifications
+**Example Event: Trouble in the Ranks**
 
-**Testing:**
-- Verify capacity at each tier: 0 (T1-T6), 15 (T7), 25 (T8), 35 (T9)
-- Check UI displays correct unit names
-- Test trickle system respects new capacities
+```
+Setup: "Shouting draws you to the fire pit. Two of your soldiers are at 
+each other's throats. Your men watch, waiting to see what their 
+commander does."
 
-**Estimated Effort**: 3-4 hours
+Options:
+1. Discipline both (harsh, order maintained, warmth lost)
+2. Investigate (Leadership 50+, best outcome, men respect you)
+3. Let them fight (30% injury, honor satisfied)
+4. Dismiss (weak leadership, men lose respect)
+
+Effects:
+- Option 1: Loyalty -5, Discipline +1, OfficerRep +5
+- Option 2: Loyalty +8, SoldierRep +5, Leadership XP +15
+- Option 3: Loyalty +3, Discipline +1, 30% one wounded
+- Option 4: Loyalty -8, SoldierRep -5
+```
+
+**Effect Types Used:**
+
+- `retinueLoyalty`: Modify loyalty track directly
+- `retinueGain`: Add soldiers (volunteers, transfers)
+- `retinueLoss`: Remove soldiers (casualties, desertion)
+- `retinueWounded`: Wound soldiers (accidents, illness)
+- Standard effects: `gold`, `officerRep`, `soldierRep`, `discipline`, `skillXp`
 
 ---
 
-### Phase 3: Auto-Grant System (T7 Initial, T8-T9 Expansion) - Core Feature
+## Post-Battle Incidents
 
-**Goal**: Automatically grant raw recruits on promotion instead of requiring purchase
+6 map incidents fire after battles when player has retinue (T7+).
 
-**Tasks:**
-1. **Create recruitment grant system** (new file: `RetinueRecruitmentGrant.cs`)
-   ```csharp
-   public sealed class RetinueRecruitmentGrant
-   {
-       /// <summary>
-       /// Grants raw recruits when player reaches commander tier.
-       /// Called during promotion event completion.
-       /// </summary>
-       public static void GrantCommanderRetinue(int newTier)
-       {
-           var count = newTier switch
-           {
-               7 => 15,  // Initial grant
-               8 => 10,  // Expansion
-               9 => 10,  // Final expansion
-               _ => 0
-           };
-           
-           if (count > 0)
-           {
-               GrantRawRecruits(count, GetPlayerFormationType());
-           }
-       }
-       
-       private static void GrantRawRecruits(int count, string formationType)
-       {
-           // Find appropriate recruit troop from enlisted lord's culture
-           var recruitTroop = FindCultureRecruit(formationType);
-           
-           // Add to player party roster
-           var party = MobileParty.MainParty;
-           party.MemberRoster.AddToCounts(recruitTroop, count);
-           
-           // Update retinue state
-           RetinueManager.Instance.State.AddSoldiers(recruitTroop.StringId, count);
-           
-           // Notification
-           ShowRecruitGrantNotification(count);
-       }
-   }
-   ```
+**Trigger:** `leaving_battle` context with `has_retinue` condition  
+**Cooldowns:** 10-20 days
 
-2. **Hook into promotion system** (`PromotionBehavior.cs`)
-   - Call `RetinueRecruitmentGrant.GrantCommanderRetinue(newTier)` after T7/T8/T9 proving events
-   - Add confirmation dialog: "You now command 15 soldiers"
+**Incident List:**
 
-3. **Create culture-based recruit finder**
-   ```csharp
-   private static CharacterObject FindCultureRecruit(string formationType)
-   {
-       var lord = EnlistmentBehavior.Instance?.CurrentLord;
-       var culture = lord?.Culture?.StringId ?? "empire";
-       
-       // Search for lowest-tier troop matching formation and culture
-       // Examples:
-       // - Empire + Infantry = "imperial_recruit" or "imperial_levy"
-       // - Vlandia + Cavalry = "vlandian_light_cavalry_recruit"
-       // - Khuzait + Horse Archer = "khuzait_nomad"
-       
-       return FindLowestTierTroop(culture, formationType);
-   }
-   ```
+| Incident ID | Situation | Key Choices |
+|-------------|-----------|-------------|
+| `mi_ret_wounded_soldier` | One of your men is dying | Stay with him, send surgeon, move on |
+| `mi_ret_first_command` | First battle as commander (one-time) | Reflect, rally men, mourn losses |
+| `mi_ret_cowardice` | A soldier ran from battle | Discipline, understand (Leadership 60+), ignore |
+| `mi_ret_looting` | Men looting before permission | Allow, stop, join |
+| `mi_ret_prisoner_mercy` | Enemy begs for mercy | Kill, spare, let men decide (vote) |
+| `mi_ret_recognition` | Lord praises your retinue (victory only) | Accept humbly, credit men, boast |
 
-4. **Remove purchase UI for T7+ soldiers**
-   - Disable "Add Soldiers" button at T7-T9
-   - Show message: "Recruits granted automatically on promotion"
-   - Keep purchase UI for T4-T6 (legacy compatibility during transition)
+**Example Incident: Wounded Soldier**
 
-**Testing:**
-- Promote to T7, verify 15 raw recruits appear
-- Check recruits match player formation type
-- Verify culture-appropriate troops (Empire gets Empire recruits, etc.)
-- Promote to T8, verify +10 more recruits
-- Test with different formations and cultures
+```
+Setup: "One of your men lies bleeding on the field. The surgeon's tent 
+is far. The march waits for no one. Your men watch to see what you do."
 
-**Estimated Effort**: 8-12 hours
+Options:
+1. Stay with him: +10 Loyalty, 2-hour delay, may save him (Medicine check)
+2. Send surgeon: -50 gold, 60% save chance
+3. Leave him: -15 Loyalty, "He'll be found"
+4. Mercy kill: -5 Loyalty, "Quick end" (if critically wounded)
+
+Effects depend on Medicine skill and choice
+```
+
+**First Command Special:**
+
+`mi_ret_first_command` fires only once (999-day cooldown = never repeats). Marks the first time leading retinue in battle, allows reflection on new responsibility.
 
 ---
 
-### Phase 4: Raw Recruit Identification & Progression - Quality of Life
+## Camp Decisions
 
-**Goal**: Ensure granted recruits are lowest tier, track progression visually
+4 commander-specific decisions available in Camp Hub (T7+ with retinue).
 
-**Tasks:**
-1. **Create recruit tier identifier**
-   ```csharp
-   public static bool IsRawRecruit(CharacterObject troop)
-   {
-       // Check if troop is lowest tier in upgrade tree
-       // Method 1: Has no downgrade path (is root)
-       // Method 2: Level <= 5
-       // Method 3: Name contains "Recruit" or "Levy"
-       
-       return troop.Level <= 5 && 
-              troop.UpgradeTargets?.Length > 0 &&
-              !HasDowngradePath(troop);
-   }
-   ```
+**Access:** Camp Hub → Retinue section
 
-2. **Add progression tracking** to retinue state
-   ```csharp
-   // Track recruit levels for UI display
-   public Dictionary<string, int> TroopLevels { get; set; }
-   
-   // Count recruits vs. regulars vs. veterans
-   public int CountByTier(TroopTier tier)
-   {
-       // Recruit: Level 0-10
-       // Regular: Level 11-20
-       // Veteran: Level 21+
-   }
-   ```
+| Decision ID | Title | Cost | Cooldown | Effect |
+|-------------|-------|------|----------|--------|
+| `dec_ret_inspect` | Inspect Your Retinue | 1-2 fatigue | 5 days | +2 to +5 Loyalty, +2 Discipline |
+| `dec_ret_drill` | Drill Your Soldiers | 1-3 fatigue | 4 days | ±Loyalty, +8 to +25 TroopXP, +1 to +3 Discipline |
+| `dec_ret_share_rations` | Share Your Rations | 20-50 gold | 7 days | +5 to +10 Loyalty, +2 to +5 SoldierRep |
+| `dec_ret_address_men` | Address Your Men | 1 fatigue | 10 days | +2 to +8 Loyalty, +1 to +4 Discipline, Leadership check |
 
-3. **UI enhancements** (Camp -> Retinue Management)
-   - Show troop progression: "5 Recruits, 7 Regulars, 3 Veterans"
-   - Color-code by experience: Green (recruit), Blue (regular), Gold (veteran)
-   - Display average retinue level
-   - Show XP to next upgrade per soldier type
+**Decision Details:**
 
-4. **Training event integration** (optional, Phase 5)
-   - Lance life events trigger for raw recruits
-   - "Green Recruit Mistakes" event at recruit tier
-   - "Veteran Recognition" event when soldier reaches veteran
+### Inspect Your Retinue
 
-**Testing:**
-- Verify granted troops are lowest tier in culture's tree
-- Check UI shows correct recruit/regular/veteran counts
-- Test progression tracking after battles (XP gain)
+Walk through camp, check equipment, talk to men.
 
-**Estimated Effort**: 6-8 hours
+**Options:**
+- **Thorough Inspection**: 2 fatigue, +5 Loyalty, +2 Discipline
+- **Quick Check**: 1 fatigue, +2 Loyalty, +1 Discipline
+
+### Drill Your Soldiers
+
+Active combat training with your retinue.
+
+**Options:**
+- **Hard Training**: 3 fatigue, +25 TroopXP, +3 Discipline, -5 Loyalty (brutal)
+- **Balanced Training**: 2 fatigue, +15 TroopXP, +2 Discipline, ±0 Loyalty
+- **Light Training**: 1 fatigue, +8 TroopXP, +1 Discipline, +3 Loyalty (gentle)
+
+### Share Your Rations
+
+Buy extra food and distribute to men.
+
+**Options:**
+- **Feast**: 50 gold, +10 Loyalty, +5 SoldierRep (generous)
+- **Modest Share**: 20 gold, +5 Loyalty, +2 SoldierRep
+
+### Address Your Men
+
+Give a speech to your retinue.
+
+**Options:**
+- **Inspire**: Leadership check, +8 Loyalty on success, +4 Discipline
+- **Discipline Lecture**: +4 Discipline, +2 Loyalty, no check
+- **Casual Talk**: +2 Loyalty, +1 Discipline, builds rapport
 
 ---
 
-### Phase 5: Training Events & Flavor (Optional) - Enhancement
+## Named Veterans
 
-**Goal**: Add narrative flavor to recruit development, integrate with lance life system
+Individual soldiers "emerge" with names and stats after surviving multiple battles, creating personal connections.
 
-**Tasks:**
-1. **Create training event pack** (`events_retinue_training.json`)
-   - "First Blood" — Recruit's first kill (+morale, +XP)
-   - "Veteran's Lesson" — Old soldier trains recruits (+XP to all recruits)
-   - "Training Accident" — Recruit injured during drills (Medical event)
-   - "Promotion Ceremony" — Soldier reaches Regular status (morale event)
-   - "Deserter Contemplates" — Low morale recruit considers leaving (tension tie-in)
+### Emergence Criteria
 
-2. **Add retinue triggers to event system**
-   ```json
-   "triggers": {
-       "all": ["has_recruits", "camp"],
-       "any": []
-   }
-   ```
+**Requirements:**
+- Retinue has participated in 3+ battles
+- Not at max named veterans (5 max)
+- Has living soldiers in retinue
 
-3. **Create retinue persona system** (expansion of lance personas)
-   - Generate simple names for retinue soldiers
-   - Track individual soldier stories (kills, battles survived, wounds)
-   - Surface in events: "{RECRUIT_NAME} looks nervous before the battle"
+**Emergence Chance:** 15% per eligible battle
 
-4. **Integration with existing systems**
-   - Heat/Discipline: Training accidents raise heat
-   - Medical: Wounded recruits in training
-   - Pay Tension: Recruits more likely to desert when unpaid
-   - Fatigue: Training drills cost fatigue
+**Emergence Timing:** After battle ends, during casualty reconciliation
 
-**Testing:**
-- Verify events fire at appropriate times
-- Check persona names generate correctly
-- Test event outcomes affect recruit XP/stats
+### Veteran Data
 
-**Estimated Effort**: 12-16 hours (optional, can be Phase 6+)
+Each named veteran tracks:
+
+```csharp
+- Id: Unique identifier (timestamp + random)
+- Name: Culture-appropriate name (via NameGenerator)
+- BattlesSurvived: Count (starts at 3)
+- Kills: Rough count for flavor
+- IsWounded: Wounded veterans skip next battle
+- Trait: One of five positive traits
+- EmergenceTimeInDays: Campaign time when emerged
+```
+
+**Traits:**
+- **Brave**: Stands firm in danger
+- **Lucky**: Survives impossible situations
+- **Sharp-Eyed**: Spots threats early
+- **Steady**: Reliable under pressure
+- **Iron Will**: Never breaks
+
+### Veteran Emergence Notification
+
+When a veteran emerges:
+
+**Notification (Cyan):**
+"[Name], a soldier in your retinue, has distinguished themselves in battle."
+
+**News Feed:**
+Added to Personal Feed with priority 2.
+
+### Veteran Death
+
+**Death Chance:**
+
+After each battle with casualties:
+1. Calculate casualty rate: `casualties / retinue_size`
+2. Named veterans have 30% survival bonus
+3. Roll death chance per veteran: `casualty_rate × 0.7`
+4. Wounded veterans skip death rolls (already wounded, not in battle)
+
+**Death Notification (Red):**
+"[Name], who served N battles under your command, has fallen."
+
+**Memorial Event:**
+
+When a veteran dies, `evt_ret_veteran_memorial` is queued:
+
+```
+Setup: "The men gather around the fire. [Veteran Name] is gone. [Count] 
+battles they fought at your side. The soldiers look to you."
+
+Options:
+1. Hold Memorial: 2-hour ceremony, +8 Loyalty, +5 SoldierRep
+2. Move On: No cost, -3 Loyalty ("Commander doesn't care")
+3. Harsh Response: "Death is expected", +2 Discipline, -5 Loyalty
+4. Personal Tribute: Share story, +10 Loyalty, +3 SoldierRep, Leadership XP
+```
+
+### Veteran Display
+
+**Retinue Menu:**
+
+Shows named veterans with:
+- Name
+- Battles survived
+- Trait
+- Wounded status
+
+**Daily Brief:**
+
+If you have 3+ named veterans with high loyalty:
+"Your veterans—[Name1], [Name2], [Name3]—are the backbone of your command."
 
 ---
 
-### Phase 6: Documentation & Polish - Required
+## News Integration
 
-**Goal**: Update all documentation to reflect new system
+The retinue system integrates with the News & Reporting system.
 
-**Tasks:**
-1. **Create this document** (`retinue-system.md`) (done)
-2. **Update existing docs**
-   - `companion-management.md`: T1+ changes
-   - `README.md`: Commander retinue section
-   - `lance-assignments.md`: Commander rank descriptions
-   - `pay-system.md`: Retinue impact on finances (optional: soldier pay?)
+### Personal Feed
 
-3. **Create modding guide**
-   - How to add custom recruit types
-   - How to create training events
-   - How to modify capacity/trickle rates
+Retinue activities appear as dispatches:
 
-4. **UI/UX polish**
-   - Better recruit grant notifications
-   - Retinue management menu improvements
-   - Formation type display in retinue UI
-   - Average level / experience bar
+**Retinue Events:**
+- Automatic via `EventDeliveryManager.AddEventOutcome()`
+- All 10 retinue events logged with options chosen
+- Format: "[Event Title]: [Outcome]"
 
-5. **Localization**
-   - All new strings in `enlisted_strings.xml`
-   - French translations (if available)
-   - Support for other languages
+**Veteran Activities:**
+- Emergence: "[Name] has distinguished themselves in battle."
+- Death: "[Name], who served N battles, has fallen."
 
-**Testing:**
-- Full playthrough T1->T9
-- Test all companion management features
-- Verify auto-grant at T7/T8/T9
-- Check UI displays correctly
-- Test with different cultures and formations
+**Casualties:**
+- "Your retinue suffered losses: N killed, M wounded."
+- Reported separately from lord's casualties
 
-**Estimated Effort**: 6-8 hours
+### Daily Brief
+
+Retinue context appears in multiple sections:
+
+**Company Context Section:**
+
+`BuildRetinueContextLine()` checks retinue status:
+- **Under-strength**: "Your retinue is at X of Y. Z replacements needed."
+- **Low loyalty**: "Your men are restless. Morale among your retinue is worryingly low."
+- **High loyalty**: "Your soldiers are devoted. They would follow you into any fight."
+
+**Casualty Report Section:**
+
+Retinue casualties included in `BuildCasualtyReportLine()`:
+- Distinguished from lord's troop casualties
+- Shows retinue losses separately
+
+**Skill Progress Section:**
+
+Leadership XP from retinue events/decisions contributes to levelup hints.
+
+### Reputation Changes
+
+Retinue loyalty changes recorded as reputation changes:
+
+```csharp
+ReputationChangeRecord {
+    Target: "Retinue",
+    Delta: +5,
+    NewValue: 65,
+    Message: "Shared rations with men",
+    DayNumber: 1247
+}
+```
+
+These appear in service record ledger.
 
 ---
 
 ## Technical Details
 
-### Companion Transfer (Phase 1)
+### Data Model
 
-**Current Code** (`CompanionAssignmentManager.cs` or similar):
+**RetinueState (serialized):**
+
 ```csharp
-// OLD: Transfer companions at T4
-if (tier >= 4)
+public class RetinueState
 {
-    TransferCompanionsToPlayer();
+    public string SelectedTypeId { get; set; }          // "infantry", "archers", etc.
+    public Dictionary<string, int> TroopCounts { get; set; } // CharacterID -> count
+    public int RetinueLoyalty { get; set; }              // 0-100
+    public CampaignTime LastBattleTime { get; set; }     // For context trickle
+    public bool LastBattleWon { get; set; }              // Victory/defeat tracking
+    public List<NamedVeteran> NamedVeterans { get; set; } // Max 5
+    public int BattlesParticipated { get; set; }         // Battle count
+    public int MaxNamedVeterans => 5;
+    
+    // Computed properties
+    public int TotalSoldiers => TroopCounts?.Values.Sum() ?? 0;
+    public bool HasRetinue => !string.IsNullOrEmpty(SelectedTypeId);
+    public bool HasTypeSelected => !string.IsNullOrEmpty(SelectedTypeId);
 }
 ```
 
-**New Code**:
+**NamedVeteran (serialized):**
+
 ```csharp
-// NEW: Companions always with player from T1
-public void OnEnlistmentStart()
+public class NamedVeteran
 {
-    // All companions immediately transfer to player party
-    TransferCompanionsToPlayer();
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public int BattlesSurvived { get; set; }
+    public int Kills { get; set; }
+    public bool IsWounded { get; set; }
+    public string Trait { get; set; }
+    public float EmergenceTimeInDays { get; set; }
 }
 ```
 
-### Capacity System (Phase 2)
+### Party Architecture
 
-**File**: `RetinueManager.cs`
+**Player's Hidden Party:**
 
-**Changes**:
-```csharp
-// Update constants
-public const int CommanderTier1 = 7;
-public const int CommanderTier2 = 8;
-public const int CommanderTier3 = 9;
+While enlisted, player uses an invisible party:
+- `MobileParty.MainParty.IsVisible = false`
+- `MobileParty.MainParty.IsActive = true`
+- `MobileParty.MainParty.IgnoreByOtherPartiesTill = 1 year`
+- `MobileParty.MainParty.SetMoveEscortParty(lordParty)`
 
-public const int CommanderCapacity1 = 15;
-public const int CommanderCapacity2 = 25;
-public const int CommanderCapacity3 = 35;
+**Retinue Storage:**
 
-// Update capacity logic
-public static int GetTierCapacity(int tier)
-{
-    return tier switch
-    {
-        >= CommanderTier3 => CommanderCapacity3,
-        CommanderTier2 => CommanderCapacity2,
-        CommanderTier1 => CommanderCapacity1,
-        _ => 0  // T1-T6 have no soldier retinue (companions only)
-    };
-}
-```
+Retinue soldiers stored in `MobileParty.MainParty.MemberRoster`:
+- Separate from lord's troops (in `lordParty.MemberRoster`)
+- Player controls retinue + companions in battle
+- Lord controls his own troops
 
-### Auto-Grant System (Phase 3)
+### Effect System
 
-**New File**: `src/Features/CommandTent/Core/RetinueRecruitmentGrant.cs`
+**New Effect Types:**
 
-**Key Methods**:
-```csharp
-public sealed class RetinueRecruitmentGrant
-{
-    private const string LogCategory = "RecruitGrant";
-    
-    /// <summary>
-    /// Grants recruits when player reaches commander tier.
-    /// </summary>
-    public static void GrantCommanderRetinue(int newTier, int previousTier)
-    {
-        // Only grant on promotion to T7/T8/T9
-        if (newTier < 7 || previousTier >= newTier)
-        {
-            return;
-        }
-        
-        var count = CalculateGrantCount(newTier, previousTier);
-        if (count <= 0)
-        {
-            return;
-        }
-        
-        var formation = GetPlayerFormationType();
-        var culture = GetEnlistedLordCulture();
-        
-        GrantRawRecruits(count, formation, culture);
-    }
-    
-    private static int CalculateGrantCount(int newTier, int previousTier)
-    {
-        // Initial grant at T7
-        if (newTier >= 7 && previousTier < 7)
-        {
-            return 15;
-        }
-        
-        // Expansion grants
-        if (newTier == 8 && previousTier < 8)
-        {
-            return 10;
-        }
-        
-        if (newTier == 9 && previousTier < 9)
-        {
-            return 10;
-        }
-        
-        return 0;
-    }
-    
-    private static void GrantRawRecruits(int count, string formation, string culture)
-    {
-        var recruitTroop = FindCultureRecruit(culture, formation);
-        if (recruitTroop == null)
-        {
-            ModLogger.Error(LogCategory, 
-                $"Could not find recruit for culture={culture}, formation={formation}");
-            return;
-        }
-        
-        // Add to player party
-        var party = MobileParty.MainParty;
-        party.MemberRoster.AddToCounts(recruitTroop, count);
-        
-        // Update retinue state
-        var manager = RetinueManager.Instance;
-        manager?.State.AddSoldiers(recruitTroop.StringId, count);
-        
-        ModLogger.Info(LogCategory, 
-            $"Granted {count}x {recruitTroop.Name} (culture={culture}, formation={formation})");
-        
-        ShowGrantNotification(count, recruitTroop.Name);
-    }
-    
-    private static CharacterObject FindCultureRecruit(string culture, string formation)
-    {
-        // Search troop tree for lowest-tier troop matching formation
-        var allTroops = CharacterObject.All;
-        
-        var formationClass = formation.ToLower() switch
-        {
-            "infantry" => FormationClass.Infantry,
-            "archer" => FormationClass.Ranged,
-            "cavalry" => FormationClass.Cavalry,
-            "horsearcher" => FormationClass.HorseArcher,
-            _ => FormationClass.Infantry
-        };
-        
-        var candidates = allTroops
-            .Where(t => t.Culture?.StringId == culture)
-            .Where(t => t.IsBasicTroop)
-            .Where(t => MatchesFormation(t, formationClass))
-            .Where(t => t.Level <= 10)  // Raw recruits only
-            .Where(t => !t.IsHero)
-            .OrderBy(t => t.Level)
-            .ThenBy(t => t.Tier)
-            .ToList();
-        
-        return candidates.FirstOrDefault();
-    }
-    
-    private static bool MatchesFormation(CharacterObject troop, FormationClass formation)
-    {
-        // Check if troop's default formation matches desired formation
-        return troop.DefaultFormationClass == formation;
-    }
-    
-    private static void ShowGrantNotification(int count, TextObject troopName)
-    {
-        var msg = new TextObject(
-            "{=retinue_grant}{COUNT} {TROOP_TYPE} have been assigned to your command.")
-            .SetTextVariable("COUNT", count)
-            .SetTextVariable("TROOP_TYPE", troopName);
-        
-        MBInformationManager.AddQuickInformation(msg, 
-            soundEventPath: "event:/ui/notification/army_created");
-    }
-}
-```
+| Effect | JSON Key | Target | Implementation |
+|--------|----------|--------|----------------|
+| Retinue Gain | `retinueGain` | Player's roster + state | `ApplyRetinueGain()` |
+| Retinue Loss | `retinueLoss` | Player's roster + state | `ApplyRetinueLoss()` |
+| Retinue Wounded | `retinueWounded` | Player's roster + state | `ApplyRetinueWounded()` |
+| Retinue Loyalty | `retinueLoyalty` | RetinueState | `ApplyRetinueLoyalty()` |
 
-### Promotion Integration (Phase 3)
+**Implementation:**
 
-**File**: `src/Features/Ranks/Behaviors/PromotionBehavior.cs`
+Effects are applied in `EventDeliveryManager.cs`:
+- Check retinue exists and has soldiers
+- Modify roster via `MobileParty.MainParty.MemberRoster`
+- Update `RetinueState.TroopCounts` to match
+- Display notification with count
+- Log to ModLogger
 
-**Hook Point**:
-```csharp
-private void OnProvingEventCompleted(int newTier)
-{
-    // ... existing promotion logic ...
-    
-    // Grant commander retinue if reaching T7/T8/T9
-    if (newTier >= 7)
-    {
-        var previousTier = _currentTier;  // Stored before promotion
-        RetinueRecruitmentGrant.GrantCommanderRetinue(newTier, previousTier);
-    }
-    
-    // ... rest of promotion logic ...
-}
-```
+### Custom Conditions
 
-### Trickle System Updates (Phase 3)
+**New Requirement Conditions:**
 
-**File**: `RetinueTrickleSystem.cs`
+| Condition | JSON Key | Check |
+|-----------|----------|-------|
+| Has Retinue | `has_retinue` | `RetinueManager.Instance?.State?.HasRetinue == true` |
+| Below Capacity | `retinue_below_capacity` | `TotalSoldiers < GetTierCapacity()` |
+| Last Battle Won | `last_battle_won` | `LastBattleWon && daysSinceBattle < 1` |
+| Loyalty Low | `retinue_loyalty_low` | `RetinueLoyalty < 30` |
+| Loyalty High | `retinue_loyalty_high` | `RetinueLoyalty >= 80` |
+| Retinue Wounded | `retinue_wounded` | Has wounded soldiers in roster |
 
-**Changes**:
-```csharp
-// Update tier gate from T4 to T7
-private static bool CanTrickleReplenish(out string reason)
-{
-    // ... existing checks ...
-    
-    if (enlistment.EnlistmentTier < RetinueManager.CommanderTier1)
-    {
-        reason = $"tier {enlistment.EnlistmentTier} < {RetinueManager.CommanderTier1}";
-        return false;
-    }
-    
-    // ... rest of checks ...
-}
-```
+**Implementation:**
 
-**Ensure recruits are granted as raw:**
-```csharp
-private void TrickleAddSoldier()
-{
-    // Get formation type and culture
-    var formation = GetPlayerFormationType();
-    var culture = GetEnlistedLordCulture();
-    
-    // Find raw recruit (same logic as grant system)
-    var recruitTroop = RetinueRecruitmentGrant.FindCultureRecruit(culture, formation);
-    
-    // Add to party
-    var party = MobileParty.MainParty;
-    party.MemberRoster.AddToCounts(recruitTroop, 1);
-    
-    // Update state
-    RetinueManager.Instance.State.AddSoldiers(recruitTroop.StringId, 1);
-}
-```
+Conditions checked in `EventRequirementChecker.CheckCustomCondition()`.
+
+### Files Modified/Created
+
+**Core Files:**
+- `src/Features/Retinue/Data/RetinueState.cs` - Added loyalty, battle tracking, veterans
+- `src/Features/Retinue/Data/NamedVeteran.cs` - NEW: Veteran data class
+- `src/Features/Retinue/Core/RetinueManager.cs` - Added request reinforcements, loyalty methods
+- `src/Features/Retinue/Core/RetinueRecruitmentGrant.cs` - Formation selection dialog
+- `src/Features/Retinue/Systems/RetinueTrickleSystem.cs` - Context-aware rates
+- `src/Features/Retinue/Systems/RetinueCasualtyTracker.cs` - Veteran emergence/death
+- `src/Features/Camp/CampMenuHandler.cs` - Enhanced status, relation-based pricing
+- `src/Features/Content/EventDefinition.cs` - Added retinue effect properties
+- `src/Features/Content/EventCatalog.cs` - Parse retinue effects
+- `src/Features/Content/EventDeliveryManager.cs` - Apply retinue effects
+- `src/Features/Content/EventRequirementChecker.cs` - Added retinue conditions
+- `src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs` - Added retinue news methods
+
+**Content Files:**
+- `ModuleData/Enlisted/Events/events_retinue.json` - 10 retinue narrative events + volunteer event
+- `ModuleData/Enlisted/Events/incidents_retinue.json` - 6 post-battle map incidents
+- `ModuleData/Enlisted/Decisions/decisions.json` - 4 retinue camp decisions
+- `ModuleData/Languages/enlisted_strings.xml` - 100+ retinue localization strings
+
+### Save/Load Compatibility
+
+All retinue data persists through:
+- `RetinueManager.SyncData()` - Serializes RetinueState
+- `RetinueState` includes all new fields (loyalty, battle tracking, veterans)
+- `NamedVeteran` list serialized as part of state
+- No breaking changes to existing save format
 
 ---
 
-## API Reference
-
-### RetinueManager
-
-```csharp
-// Capacity queries
-public static int GetTierCapacity(int tier);
-public static string GetUnitName(int tier);
-public bool CanHaveRetinue(int tier);
-
-// Current state
-public RetinueState State { get; }
-public int CurrentCapacity { get; }
-public int AvailableSlots { get; }
-
-// Soldier management
-public bool TryAddSoldiers(int count, string typeId, out int added, out string message);
-public bool TryRemoveSoldiers(string typeId, int count);
-public void ClearRetinue(string reason);
-
-// Formation queries
-public static bool IsFormationAvailable(string culture, string formationType);
-public CharacterObject GetDefaultRecruitForFormation(string formation);
-```
-
-### RetinueRecruitmentGrant (NEW)
-
-```csharp
-// Grant system
-public static void GrantCommanderRetinue(int newTier, int previousTier);
-public static CharacterObject FindCultureRecruit(string culture, string formation);
-
-// Helpers
-public static bool IsRawRecruit(CharacterObject troop);
-public static int GetRecruitLevel(CharacterObject troop);
-public static string GetFormationType(CharacterObject troop);
-```
-
-### CompanionAssignmentManager
-
-```csharp
-// Companion control (updated for T1+)
-public void SetCompanionBattleParticipation(Hero companion, bool shouldFight);
-public bool ShouldCompanionFight(Hero companion);
-public Dictionary<string, bool> GetAllCompanionSettings();
-
-// Companion transfers (T1 immediate)
-public void TransferCompanionsToPlayer();
-public void RestoreCompanionsToPlayer();
-public List<Hero> GetPlayerCompanions();
-```
-
-### RetinueTrickleSystem
-
-```csharp
-// Trickle configuration
-public const int TrickleMinDays = 2;
-public const int TrickleMaxDays = 3;
-public const int SoldiersPerTrickle = 1;
-
-// State queries
-public bool CanTrickleReplenish(out string reason);
-public int GetTrickleInterval();
-public int DaysSinceLastTrickle { get; }
-```
-
----
-
-## Config Reference
-
-### enlisted_config.json
-
-```json
-{
-  "retinue": {
-    "enabled": true,
-    "companion_management_tier": 1,
-    "commander_tier_1": 7,
-    "commander_capacity_1": 15,
-    "commander_tier_2": 8,
-    "commander_capacity_2": 25,
-    "commander_tier_3": 9,
-    "commander_capacity_3": 35,
-    "auto_grant_enabled": true,
-    "grant_as_raw_recruits": true,
-    "trickle_enabled": true,
-    "trickle_min_days": 2,
-    "trickle_max_days": 3,
-    "priority_trickle_when_casualties": true,
-    "training_events_enabled": true
-  }
-}
-```
-
----
-
-## Testing Checklist
-
-### Phase 1: Companion Management
-- [ ] Companions in player party at T1 enlistment
-- [ ] Battle toggle available at T1
-- [ ] "Stay Back" companions don't spawn in battle
-- [ ] "Fight" companions spawn and gain XP
-- [ ] Companions fight in player's formation (T1-T9)
-- [ ] No crashes with 0-6 companions
-
-### Phase 2: Capacity Updates
-- [ ] T1-T6: 0 soldier capacity, companions only
-- [ ] T7: 15 soldier capacity
-- [ ] T8: 25 soldier capacity
-- [ ] T9: 35 soldier capacity
-- [ ] UI shows correct capacity limits
-- [ ] Trickle system respects new capacities
-
-### Phase 3: Auto-Grant
-- [ ] T6->T7: 15 raw recruits granted automatically
-- [ ] T7->T8: +10 more recruits granted
-- [ ] T8->T9: +10 more recruits granted
-- [ ] Recruits match player formation type
-- [ ] Recruits match enlisted lord's culture
-- [ ] Recruits are lowest tier (raw)
-- [ ] No purchase UI at T7-T9
-- [ ] Grant notification displays correctly
-
-### Phase 4: Progression
-- [ ] Recruits upgrade via combat XP
-- [ ] UI shows recruit/regular/veteran counts
-- [ ] Manual training option works
-- [ ] Progression tracking persists across saves
-
-### Phase 5: Training Events (Optional)
-- [ ] Training events fire for raw recruits
-- [ ] Events grant appropriate XP bonuses
-- [ ] Persona names generate for soldiers
-- [ ] Events integrate with heat/discipline/medical
-
-### Phase 6: Full Integration
-- [ ] Complete T1->T9 playthrough
-- [ ] All documentation updated
-- [ ] All UI strings localized
-- [ ] No console errors or crashes
-- [ ] Save/load preserves all state
-
----
-
-## Related Documentation
-
-- [Companion Management](companion-management.md) — Detailed companion system
-- [Lance Assignments](lance-assignments.md) — Culture ranks and unit identity
-- [Formation Training](formation-training.md) — Daily skill XP by formation
-- [Pay System](pay-system.md) — Wages and financial management
-- [Lance Life Events](../Gameplay/lance-life.md) — Story event system
-
----
-
-## Implementation Timeline
-
-| Phase | Priority | Effort | Dependencies | Deliverable |
-|-------|----------|--------|--------------|-------------|
-| 1 | High | 4-6h | None | Companions at T1 |
-| 2 | High | 3-4h | Phase 1 | T7-T9 capacities |
-| 3 | High | 8-12h | Phase 2 | Auto-grant recruits |
-| 4 | Medium | 6-8h | Phase 3 | Progression tracking |
-| 5 | Low | 12-16h | Phase 4 | Training events (optional) |
-| 6 | Medium | 6-8h | All phases | Documentation & polish |
-
-**Total Estimated Effort**: 39-54 hours (27-38 hours if Phase 5 skipped)
-
-**Recommended Order**: Phase 1 -> Phase 2 -> Phase 3 -> Phase 6 (skip Phase 4-5 for MVP)
-
----
-
-## Future Enhancements (Post-Launch)
-
-### Retinue Specialization
-- Choose formation type for retinue independent of player formation
-- Mixed-formation retinues (3 infantry + 2 archers, etc.)
-- Elite unit selection (choose specific troops beyond raw recruits)
-
-### Advanced Training
-- Training camp mini-game
-- Veteran soldier "mentor" assignment
-- Formation drills that grant passive XP
-- Morale-based training effectiveness
-
-### Permadeath & Legacy
-- Soldiers with high kill counts become "heroes"
-- Funeral events for fallen veterans
-- Memorial system tracking lost soldiers
-- "Replacement" recruits arrive with names of fallen comrades
-
-### Command Abilities
-- Special formation orders unlocked at T7-T9
-- Retinue-specific tactics in battle
-- Group charge, shield wall, archer volley commands
-- Integration with native tactical AI
-
----
-
-**Document Version**: 1.0  
-**Last Updated**: 2025-01-13  
-**Status**: Implementation Ready
+**End of Document**

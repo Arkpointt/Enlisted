@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 2,
+  "enabled": true,
+  "description": "Configuration for Retinue system - soldier types, replenishment, and faction availability. NOTE: Tier capacities are controlled by code constants in RetinueManager.cs (T7:20, T8:30, T9:40).",
+
+  "capacity_note": "Retinue unlocks at Commander track (T7+). T1-T6 have companions only. Capacity values are hardcoded in RetinueManager.cs for stability.",
+
+  "soldier_types": {
+    "infantry": {
+      "id": "infantry",
+      "display_key": "{=ct_type_infantry}Men-at-Arms",
+      "description_key": "{=ct_type_infantry_desc}Foot soldiers with sword and shield. Steady in the line.",
+      "formation_class": "Infantry",
+      "available_all_factions": true
+    },
+    "archers": {
+      "id": "archers",
+      "display_key": "{=ct_type_archers}Bowmen",
+      "description_key": "{=ct_type_archers_desc}Skilled archers to loose volleys upon your command.",
+      "formation_class": "Ranged",
+      "available_all_factions": true
+    },
+    "cavalry": {
+      "id": "cavalry",
+      "display_key": "{=ct_type_cavalry}Mounted Lancers",
+      "description_key": "{=ct_type_cavalry_desc}Horsemen with lance and sword. Swift and deadly.",
+      "formation_class": "Cavalry",
+      "available_all_factions": true
+    },
+    "horse_archers": {
+      "id": "horse_archers",
+      "display_key": "{=ct_type_horse_archers}Mounted Bowmen",
+      "description_key": "{=ct_type_horse_archers_desc}Riders who loose arrows from the saddle.",
+      "formation_class": "HorseArcher",
+      "available_all_factions": false,
+      "faction_whitelist": ["empire", "khuzait", "aserai"]
+    }
+  },
+
+  "faction_overrides": {
+    "vlandia": {
+      "archers_display_key": "{=ct_type_crossbowmen}Crossbowmen",
+      "archers_description_key": "{=ct_type_crossbowmen_desc}Armored crossbowmen with deadly bolts.",
+      "unavailable_types": ["horse_archers"]
+    },
+    "battania": {
+      "archers_display_key": "{=ct_type_fians}Fian Archers",
+      "archers_description_key": "{=ct_type_fians_desc}Legendary woodland archers of Battania.",
+      "unavailable_types": ["horse_archers"]
+    },
+    "sturgia": {
+      "unavailable_types": ["horse_archers"]
+    },
+    "khuzait": {
+      "horse_archers_display_key": "{=ct_type_khuzait_ha}Steppe Riders"
+    },
+    "aserai": {
+      "horse_archers_display_key": "{=ct_type_mameluke}Mameluke Cavalry"
+    }
+  },
+
+  "replenishment": {
+    "trickle": {
+      "enabled": true,
+      "min_days": 2,
+      "max_days": 3,
+      "soldiers_per_tick": 1
+    },
+    "requisition": {
+      "enabled": true,
+      "cooldown_days": 14,
+      "cost_multiplier": 1.0
+    }
+  },
+
+  "economics": {
+    "daily_upkeep_per_soldier": 2,
+    "desertion_enabled": true
+  }
+}

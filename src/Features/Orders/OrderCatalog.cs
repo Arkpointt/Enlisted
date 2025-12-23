@@ -1,0 +1,615 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Identity;
+using Enlisted.Features.Orders.Models;
+using Enlisted.Features.Ranks;
+using Enlisted.Mod.Core.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.CharacterDevelopment;
+using TaleWorlds.CampaignSystem.Extensions;
+using TaleWorlds.Core;
+using TaleWorlds.Library;
+
+namespace Enlisted.Features.Orders
+{
+    /// <summary>
+    /// Catalog of military orders available based on rank, role, and campaign context.
+    /// Loads orders from ModuleData/Enlisted/Orders/*.json files.
+    /// </summary>
+    public static class OrderCatalog
+    {
+        private const string LogCategory = "OrderCatalog";
+        private static readonly List<Order> _orders = [];
+        private static bool _initialized;
+
+        /// <summary>
+        /// Initializes the order catalog by loading orders from JSON files.
+        /// </summary>
+        public static void Initialize()
+        {
+            if (_initialized)
+            {
+                return;
+            }
+
+            _orders.Clear();
+
+            var ordersPath = GetOrdersBasePath();
+            if (string.IsNullOrEmpty(ordersPath) || !Directory.Exists(ordersPath))
+            {
+                ModLogger.Error(LogCategory, $"Orders directory not found: {ordersPath}");
+                _initialized = true;
+                return;
+            }
+
+            var jsonFiles = Directory.GetFiles(ordersPath, "*.json", SearchOption.TopDirectoryOnly);
+            var ordersLoaded = 0;
+
+            foreach (var filePath in jsonFiles)
+            {
+                try
+                {
+                    var count = LoadOrdersFromFile(filePath);
+                    ordersLoaded += count;
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.Error(LogCategory, $"Failed to load orders from {Path.GetFileName(filePath)}", ex);
+                }
+            }
+
+            _initialized = true;
+            ModLogger.Info(LogCategory, $"Loaded {ordersLoaded} orders from {jsonFiles.Length} files");
+        }
+
+        /// <summary>
+        /// Selects an appropriate order based on player rank, role, and campaign context.
+        /// </summary>
+        public static Order SelectOrder()
+        {
+            if (!_initialized)
+            {
+                Initialize();
+            }
+
+            if (_orders.Count == 0)
+            {
+                ModLogger.Warn(LogCategory, "No orders available in catalog");
+                return null;
+            }
+
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                return null;
+            }
+
+            var tier = enlistment.EnlistmentTier;
+            var context = GetCampaignContext();
+            var role = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
+
+            // Filter by tier eligibility
+            var eligibleOrders = _orders
+                .Where(o => tier >= o.Requirements.TierMin && tier <= o.Requirements.TierMax)
+                .ToList();
+
+            if (eligibleOrders.Count == 0)
+            {
+                ModLogger.Debug(LogCategory, $"No orders for tier {tier}");
+                return null;
+            }
+
+            // Filter by skill/trait requirements
+            eligibleOrders = eligibleOrders
+                .Where(o => MeetsSkillRequirements(o) && MeetsTraitRequirements(o))
+                .ToList();
+
+            if (eligibleOrders.Count == 0)
+            {
+                ModLogger.Debug(LogCategory, $"No orders matching skill/trait requirements for tier {tier}");
+                return null;
+            }
+
+            // Prefer orders matching context + role
+            var contextOrders = eligibleOrders
+                .Where(o => o.Tags.Any(t => t.Equals(context, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            var roleOrders = eligibleOrders
+                .Where(o => o.Tags.Any(t => t.Equals(role, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            var roleContextOrders = contextOrders
+                .Where(o => o.Tags.Any(t => t.Equals(role, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            // Priority: Role + Context > Context > Role > Any Eligible
+            if (roleContextOrders.Count > 0)
+            {
+                return roleContextOrders.GetRandomElement();
+            }
+
+            if (contextOrders.Count > 0)
+            {
+                return contextOrders.GetRandomElement();
+            }
+
+            if (roleOrders.Count > 0)
+            {
+                return roleOrders.GetRandomElement();
+            }
+
+            return eligibleOrders.GetRandomElement();
+        }
+
+        /// <summary>
+        /// Determines who issues the order based on player rank and order type.
+        /// Typically issuer is 2-3 tiers above player.
+        /// </summary>
+        public static string DetermineOrderIssuer(int playerTier, Order order)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = enlistment?.CurrentLord;
+            var culture = lord?.Culture?.StringId ?? "empire";
+
+            int issuerTier;
+            if (playerTier <= 2)
+            {
+                issuerTier = 4; // NCO
+            }
+            else if (playerTier <= 4)
+            {
+                issuerTier = 6; // Officer
+            }
+            else if (playerTier <= 6)
+            {
+                issuerTier = 8; // Commander
+            }
+            else
+            {
+                issuerTier = 9; // Lord-level
+            }
+
+            // Strategic orders from high ranks come directly from lord
+            if (playerTier >= 7 && lord != null && order.Tags.Any(t => t.Equals("strategic", StringComparison.OrdinalIgnoreCase)))
+            {
+                return lord.Name?.ToString() ?? "Your Lord";
+            }
+
+            // Get culture-specific rank title for issuer
+            var issuerRankTitle = RankHelper.GetRankTitle(issuerTier, culture);
+            return issuerRankTitle;
+        }
+
+        /// <summary>
+        /// Gets the current campaign context for order selection.
+        /// </summary>
+        private static string GetCampaignContext()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                return "Peace";
+            }
+
+            var lord = enlistment.CurrentLord;
+            if (lord?.PartyBelongedTo == null)
+            {
+                return "Peace";
+            }
+
+            var party = lord.PartyBelongedTo;
+
+            if (party.BesiegerCamp != null || party.SiegeEvent != null)
+            {
+                return "Siege";
+            }
+
+            if (party.MapEvent != null)
+            {
+                return "Battle";
+            }
+
+            // Check for war state - check if at war with any faction
+            if (lord.MapFaction != null)
+            {
+                foreach (var kingdom in Kingdom.All)
+                {
+                    if (kingdom != lord.MapFaction && FactionManager.IsAtWarAgainstFaction(lord.MapFaction, kingdom))
+                    {
+                        return "War";
+                    }
+                }
+            }
+
+            if (party.CurrentSettlement != null)
+            {
+                return "Town";
+            }
+
+            return "Peace";
+        }
+
+        /// <summary>
+        /// Checks if the player meets the skill requirements for an order.
+        /// </summary>
+        private static bool MeetsSkillRequirements(Order order)
+        {
+            if (order.Requirements?.MinSkills == null || order.Requirements.MinSkills.Count == 0)
+            {
+                return true;
+            }
+
+            var hero = Hero.MainHero;
+            foreach (var skillReq in order.Requirements.MinSkills)
+            {
+                var skill = GetSkillByName(skillReq.Key);
+                if (skill == null)
+                {
+                    continue;
+                }
+
+                if (hero.GetSkillValue(skill) < skillReq.Value)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if the player meets the trait requirements for an order.
+        /// </summary>
+        private static bool MeetsTraitRequirements(Order order)
+        {
+            if (order.Requirements?.MinTraits == null || order.Requirements.MinTraits.Count == 0)
+            {
+                return true;
+            }
+
+            var hero = Hero.MainHero;
+            foreach (var traitReq in order.Requirements.MinTraits)
+            {
+                var trait = GetTraitByName(traitReq.Key);
+                if (trait == null)
+                {
+                    continue;
+                }
+
+                if (hero.GetTraitLevel(trait) < traitReq.Value)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static SkillObject GetSkillByName(string skillName)
+        {
+            return Skills.All.FirstOrDefault(s =>
+                s.StringId.Equals(skillName, StringComparison.OrdinalIgnoreCase) ||
+                s.Name.ToString().Equals(skillName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static TraitObject GetTraitByName(string traitName)
+        {
+            // Check common traits by string ID match
+            if (traitName.Equals("Surgery", StringComparison.OrdinalIgnoreCase))
+            {
+                return DefaultTraits.Surgery;
+            }
+            if (traitName.Equals("ScoutSkills", StringComparison.OrdinalIgnoreCase))
+            {
+                return DefaultTraits.ScoutSkills;
+            }
+            if (traitName.Equals("RogueSkills", StringComparison.OrdinalIgnoreCase))
+            {
+                return DefaultTraits.RogueSkills;
+            }
+            if (traitName.Equals("Siegecraft", StringComparison.OrdinalIgnoreCase))
+            {
+                return DefaultTraits.Siegecraft;
+            }
+            if (traitName.Equals("Commander", StringComparison.OrdinalIgnoreCase))
+            {
+                return DefaultTraits.Commander;
+            }
+            if (traitName.Equals("SergeantCommandSkills", StringComparison.OrdinalIgnoreCase))
+            {
+                return DefaultTraits.SergeantCommandSkills;
+            }
+
+            // Try personality traits
+            foreach (var trait in DefaultTraits.Personality)
+            {
+                if (trait.StringId.Equals(traitName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return trait;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the base path for order JSON files.
+        /// </summary>
+        private static string GetOrdersBasePath()
+        {
+            try
+            {
+                var gameRoot = BasePath.Name;
+                var modulePath = Path.Combine(gameRoot, "Modules", "Enlisted");
+
+                if (Directory.Exists(modulePath))
+                {
+                    return Path.Combine(modulePath, "ModuleData", "Enlisted", "Orders");
+                }
+
+                // Fallback for development environment
+                var devPath = Path.Combine(gameRoot, "..", "..", "Enlisted");
+                if (Directory.Exists(devPath))
+                {
+                    return Path.Combine(Path.GetFullPath(devPath), "ModuleData", "Enlisted", "Orders");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to determine orders path", ex);
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Loads orders from a single JSON file.
+        /// Returns the number of orders loaded.
+        /// </summary>
+        private static int LoadOrdersFromFile(string filePath)
+        {
+            var json = File.ReadAllText(filePath);
+            var ordersArray = JArray.Parse(json);
+
+            var ordersLoaded = 0;
+
+            foreach (var orderToken in ordersArray)
+            {
+                try
+                {
+                    var order = ParseOrder(orderToken as JObject);
+                    if (order != null && !string.IsNullOrEmpty(order.Id))
+                    {
+                        _orders.Add(order);
+                        ordersLoaded++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.Error(LogCategory, $"Failed to parse order in {Path.GetFileName(filePath)}", ex);
+                }
+            }
+
+            return ordersLoaded;
+        }
+
+        /// <summary>
+        /// Parses a single order from JSON.
+        /// </summary>
+        private static Order ParseOrder(JObject orderJson)
+        {
+            if (orderJson == null)
+            {
+                return null;
+            }
+
+            var order = new Order
+            {
+                Id = orderJson["id"]?.ToString() ?? string.Empty,
+                Title = orderJson["title"]?.ToString() ?? string.Empty,
+                Description = orderJson["description"]?.ToString() ?? string.Empty,
+                Issuer = orderJson["issuer"]?.ToString() ?? "auto",
+                Tags = ParseStringList(orderJson["tags"]),
+                Requirements = ParseRequirements(orderJson["requirements"] as JObject),
+                Consequences = ParseConsequences(orderJson["consequences"] as JObject)
+            };
+
+            return order;
+        }
+
+        /// <summary>
+        /// Parses requirement fields from JSON.
+        /// </summary>
+        private static OrderRequirement ParseRequirements(JObject reqJson)
+        {
+            var req = new OrderRequirement();
+
+            if (reqJson == null)
+            {
+                return req;
+            }
+
+            req.TierMin = reqJson["tier_min"]?.Value<int>() ?? 1;
+            req.TierMax = reqJson["tier_max"]?.Value<int>() ?? 9;
+
+            // Parse min skills
+            var minSkillsJson = reqJson["min_skills"] as JObject;
+            if (minSkillsJson != null)
+            {
+                foreach (var prop in minSkillsJson.Properties())
+                {
+                    var value = prop.Value?.Value<int>() ?? 0;
+                    if (value > 0)
+                    {
+                        req.MinSkills[prop.Name] = value;
+                    }
+                }
+            }
+
+            // Parse min traits
+            var minTraitsJson = reqJson["min_traits"] as JObject;
+            if (minTraitsJson != null)
+            {
+                foreach (var prop in minTraitsJson.Properties())
+                {
+                    var value = prop.Value?.Value<int>() ?? 0;
+                    if (value > 0)
+                    {
+                        req.MinTraits[prop.Name] = value;
+                    }
+                }
+            }
+
+            return req;
+        }
+
+        /// <summary>
+        /// Parses consequence fields from JSON.
+        /// </summary>
+        private static OrderConsequence ParseConsequences(JObject consJson)
+        {
+            var cons = new OrderConsequence
+            {
+                Success = ParseOutcome(consJson?["success"] as JObject),
+                Failure = ParseOutcome(consJson?["failure"] as JObject),
+                CriticalFailure = ParseOutcome(consJson?["critical_failure"] as JObject),
+                Decline = ParseOutcome(consJson?["decline"] as JObject)
+            };
+
+            return cons;
+        }
+
+        /// <summary>
+        /// Parses a single outcome (success/failure/decline) from JSON.
+        /// </summary>
+        private static OrderOutcome ParseOutcome(JObject outcomeJson)
+        {
+            if (outcomeJson == null)
+            {
+                return null;
+            }
+
+            var outcome = new OrderOutcome
+            {
+                Text = outcomeJson["text"]?.ToString() ?? string.Empty,
+                Denars = outcomeJson["denars"]?.Value<int>(),
+                Renown = outcomeJson["renown"]?.Value<int>(),
+                HpLoss = outcomeJson["hp_loss"]?.Value<int>(),
+                MedicalRisk = outcomeJson["medical_risk"]?.Value<int>()
+            };
+
+            // Parse reputation changes
+            var repJson = outcomeJson["reputation"] as JObject;
+            if (repJson != null)
+            {
+                foreach (var prop in repJson.Properties())
+                {
+                    var value = prop.Value?.Value<int>() ?? 0;
+                    if (value != 0)
+                    {
+                        outcome.Reputation[prop.Name] = value;
+                    }
+                }
+            }
+
+            // Parse company needs changes
+            var needsJson = outcomeJson["company_needs"] as JObject;
+            if (needsJson != null)
+            {
+                foreach (var prop in needsJson.Properties())
+                {
+                    var value = prop.Value?.Value<int>() ?? 0;
+                    if (value != 0)
+                    {
+                        outcome.CompanyNeeds[prop.Name] = value;
+                    }
+                }
+            }
+
+            // Parse skill XP
+            var skillXpJson = outcomeJson["skill_xp"] as JObject;
+            if (skillXpJson != null)
+            {
+                foreach (var prop in skillXpJson.Properties())
+                {
+                    var value = prop.Value?.Value<int>() ?? 0;
+                    if (value != 0)
+                    {
+                        outcome.SkillXp[prop.Name] = value;
+                    }
+                }
+            }
+
+            // Parse trait XP
+            var traitXpJson = outcomeJson["trait_xp"] as JObject;
+            if (traitXpJson != null)
+            {
+                foreach (var prop in traitXpJson.Properties())
+                {
+                    var value = prop.Value?.Value<int>() ?? 0;
+                    if (value != 0)
+                    {
+                        outcome.TraitXp[prop.Name] = value;
+                    }
+                }
+            }
+
+            // Parse escalation changes
+            var escalationJson = outcomeJson["escalation"] as JObject;
+            if (escalationJson != null)
+            {
+                foreach (var prop in escalationJson.Properties())
+                {
+                    var value = prop.Value?.Value<int>() ?? 0;
+                    if (value != 0)
+                    {
+                        outcome.Escalation[prop.Name] = value;
+                    }
+                }
+            }
+
+            // Parse troop loss
+            var troopLossJson = outcomeJson["troop_loss"] as JObject;
+            if (troopLossJson != null)
+            {
+                outcome.TroopLossMin = troopLossJson["min"]?.Value<int>();
+                outcome.TroopLossMax = troopLossJson["max"]?.Value<int>();
+            }
+
+            return outcome;
+        }
+
+        /// <summary>
+        /// Parses a string array from JSON token.
+        /// </summary>
+        private static List<string> ParseStringList(JToken token)
+        {
+            if (token == null)
+            {
+                return [];
+            }
+
+            if (token is JArray array)
+            {
+                return array.Select(t => t.Value<string>()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+            }
+
+            return [];
+        }
+
+        /// <summary>
+        /// Clears the catalog and resets initialization state. Used for testing.
+        /// </summary>
+        public static void Reset()
+        {
+            _orders.Clear();
+            _initialized = false;
+        }
+    }
+}

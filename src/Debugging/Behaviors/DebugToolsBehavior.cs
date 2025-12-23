@@ -1,7 +1,8 @@
 using System;
+using System.Linq;
+using Enlisted.Features.Content;
 using Enlisted.Features.Enlistment.Behaviors;
-using Enlisted.Features.Lances.Events;
-using Enlisted.Features.Lances.UI;
+using Enlisted.Features.Escalation;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Library;
@@ -66,102 +67,170 @@ namespace Enlisted.Debugging.Behaviors
                 return;
             }
 
-            ModLogger.Info("Debug", "TestOnboardingScreen: Creating test event...");
+            // Event screen testing is currently inactive.
+            ModLogger.Info("Debug", "TestOnboardingScreen: This feature is currently disabled.");
+            return;
 
-            // Create a test onboarding event
-            var testEvent = new LanceLifeEventDefinition
+            /* Original test code has been removed. */
+        }
+
+        /// <summary>
+        /// Forces an immediate event selection attempt, bypassing the pacing window.
+        /// Useful for testing event selection and delivery without waiting 3-5 days.
+        /// </summary>
+        public static void ForceEventSelection()
+        {
+            var pacingManager = EventPacingManager.Instance;
+            if (pacingManager == null)
             {
-                Id = "debug_test_onboarding",
-                Category = "onboarding",
-                Track = "enlisted",
-                TitleFallback = "Test Event - Welcome to Enlisted",
-                SetupFallback = "This is a test of the custom Gauntlet event screen.\n\nThe modern UI should display:\n- This story text\n- Character visualization (if configured)\n- Your escalation tracks (heat, discipline, reputation)\n- Multiple choice buttons below\n\nThis is a debug test to verify the UI is working correctly.",
-                Options = new System.Collections.Generic.List<LanceLifeEventOptionDefinition>
-                {
-                    new LanceLifeEventOptionDefinition
-                    {
-                        Id = "test_option_1",
-                        TextFallback = "This looks great! Close the screen.",
-                        Tooltip = "Test option 1",
-                        Risk = "safe",
-                        OutcomeTextFallback = "Screen test successful! The custom Gauntlet UI is working.\n\nCheck the logs for detailed information about the screen opening process.",
-                        Effects = new LanceLifeEventEscalationEffects
-                        {
-                            Heat = 0,
-                            Discipline = 0,
-                            LanceReputation = 0
-                        }
-                    },
-                    new LanceLifeEventOptionDefinition
-                    {
-                        Id = "test_option_2",
-                        TextFallback = "Test a different choice",
-                        Tooltip = "Test option 2",
-                        Risk = "safe",
-                        OutcomeTextFallback = "You selected the second option. Everything is working as expected!",
-                        Effects = new LanceLifeEventEscalationEffects
-                        {
-                            Heat = 1,
-                            Discipline = -1,
-                            LanceReputation = 0
-                        }
-                    }
-                }
-            };
-
-            ModLogger.Info("Debug", $"TestOnboardingScreen: Attempting to show test event directly (bypass bag check)");
-
-            // Temporarily clear bag check flag for testing
-            var wasPending = enlist.IsBagCheckPending;
-            if (wasPending)
-            {
-                ModLogger.Info("Debug", "TestOnboardingScreen: Temporarily bypassing bag check for test");
-                // Force clear the pending flag for testing
-                try
-                {
-                    var field = typeof(EnlistmentBehavior).GetField("_isBagCheckPending", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                    if (field != null)
-                    {
-                        field.SetValue(enlist, false);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ModLogger.Warn("Debug", $"Could not bypass bag check: {ex.Message}");
-                }
-            }
-
-            // Try to show using the modern presenter
-            var shown = ModernEventPresenter.TryShowWithFallback(testEvent, enlist, useModernUI: true);
-
-            // Restore bag check flag
-            if (wasPending)
-            {
-                try
-                {
-                    var field = typeof(EnlistmentBehavior).GetField("_isBagCheckPending", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                    if (field != null)
-                    {
-                        field.SetValue(enlist, wasPending);
-                    }
-                }
-                catch { }
-            }
-
-            if (shown)
-            {
-                ModLogger.Info("Debug", "TestOnboardingScreen: Event screen queued successfully");
-                var msg = new TextObject("{=dbg_test_event_shown}Test event screen queued. Check for the popup!");
-                InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
-            }
-            else
-            {
-                ModLogger.Warn("Debug", "TestOnboardingScreen: Failed to show event screen");
-                var warn = new TextObject("{=dbg_test_event_failed}Failed to show test event screen. Check logs.");
+                var warn = new TextObject("Cannot force event - EventPacingManager not found.");
                 InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
+                ModLogger.Warn("Debug", "ForceEventSelection: EventPacingManager.Instance is null");
+                return;
             }
 
-            SessionDiagnostics.LogEvent("Debug", "TestOnboardingScreen", $"shown={shown}");
+            var enlist = EnlistmentBehavior.Instance;
+            if (enlist?.IsEnlisted != true)
+            {
+                var warn = new TextObject("Cannot force event - not enlisted.");
+                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
+                return;
+            }
+
+            pacingManager.ForceEventAttempt();
+            var msg = new TextObject("Event selection forced (debug). Check if popup appears.");
+            InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+            SessionDiagnostics.LogEvent("Debug", "ForceEventSelection", "Forced immediate event attempt");
+        }
+
+        /// <summary>
+        /// Resets the event pacing window to now, allowing the next daily tick to fire an event.
+        /// </summary>
+        public static void ResetEventWindow()
+        {
+            var pacingManager = EventPacingManager.Instance;
+            if (pacingManager == null)
+            {
+                var warn = new TextObject("Cannot reset window - EventPacingManager not found.");
+                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
+                return;
+            }
+
+            pacingManager.ResetPacingWindow();
+            var msg = new TextObject("Event window reset to now. Next daily tick will attempt event selection.");
+            InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+            SessionDiagnostics.LogEvent("Debug", "ResetEventWindow", "Pacing window reset");
+        }
+
+        /// <summary>
+        /// Lists all currently eligible events (meet requirements, not on cooldown).
+        /// </summary>
+        public static void ListEligibleEvents()
+        {
+            var eligibleCount = EventSelector.GetEligibleEventCount();
+            var totalCount = EventCatalog.EventCount;
+
+            var msg = new TextObject("{C} eligible events out of {T} total. Check log for details.");
+            msg.SetTextVariable("C", eligibleCount);
+            msg.SetTextVariable("T", totalCount);
+            InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+
+            ModLogger.Info("Debug", $"Eligible events: {eligibleCount}/{totalCount}");
+            SessionDiagnostics.LogEvent("Debug", "ListEligibleEvents", $"eligible={eligibleCount}, total={totalCount}");
+        }
+
+        /// <summary>
+        /// Clears all event cooldowns, allowing any event to fire again.
+        /// Useful for testing event variety without waiting for cooldowns.
+        /// </summary>
+        public static void ClearEventCooldowns()
+        {
+            var escalationState = EscalationManager.Instance?.State;
+            if (escalationState == null)
+            {
+                var warn = new TextObject("Cannot clear cooldowns - EscalationManager not found.");
+                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
+                return;
+            }
+
+            var clearedCount = escalationState.EventLastFired?.Count ?? 0;
+            escalationState.EventLastFired?.Clear();
+
+            var msg = new TextObject("Cleared {C} event cooldowns. All events can fire again.");
+            msg.SetTextVariable("C", clearedCount);
+            InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+            SessionDiagnostics.LogEvent("Debug", "ClearEventCooldowns", $"cleared={clearedCount}");
+        }
+
+        /// <summary>
+        /// Shows information about the next event window and pacing state.
+        /// </summary>
+        public static void ShowEventPacingInfo()
+        {
+            var pacingManager = EventPacingManager.Instance;
+            var escalationState = EscalationManager.Instance?.State;
+
+            if (pacingManager == null || escalationState == null)
+            {
+                var warn = new TextObject("Cannot show pacing info - managers not found.");
+                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
+                return;
+            }
+
+            var daysUntilNext = pacingManager.GetDaysUntilNextWindow();
+            var lastEventTime = escalationState.LastNarrativeEventTime;
+            var nextWindow = escalationState.NextNarrativeEventWindow;
+
+            var msg = daysUntilNext >= 0
+                ? new TextObject("Next event in {D} days. Last event: {L} days ago.")
+                : new TextObject("Event window not initialized yet.");
+
+            if (daysUntilNext >= 0)
+            {
+                msg.SetTextVariable("D", $"{daysUntilNext:F1}");
+                var daysSinceLast = (CampaignTime.Now - lastEventTime).ToDays;
+                msg.SetTextVariable("L", $"{daysSinceLast:F1}");
+            }
+
+            InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+            ModLogger.Info("Debug", $"Next event window: {daysUntilNext:F1} days, Last: {(CampaignTime.Now - lastEventTime).ToDays:F1} days ago");
+        }
+
+        /// <summary>
+        /// Fires a specific event by ID, bypassing selection and requirements.
+        /// Useful for testing specific event content.
+        /// </summary>
+        public static void FireSpecificEvent(string eventId)
+        {
+            if (string.IsNullOrEmpty(eventId))
+            {
+                var warn = new TextObject("No event ID provided. Usage: enlisted.fire_event <event_id>");
+                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
+                return;
+            }
+
+            var evt = EventCatalog.GetEvent(eventId);
+            if (evt == null)
+            {
+                var warn = new TextObject("Event '{ID}' not found in catalog.");
+                warn.SetTextVariable("ID", eventId);
+                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
+                return;
+            }
+
+            var deliveryManager = EventDeliveryManager.Instance;
+            if (deliveryManager == null)
+            {
+                var warn = new TextObject("Cannot fire event - EventDeliveryManager not found.");
+                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
+                return;
+            }
+
+            deliveryManager.QueueEvent(evt);
+            var msg = new TextObject("Queued event '{ID}' for delivery.");
+            msg.SetTextVariable("ID", eventId);
+            InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+            SessionDiagnostics.LogEvent("Debug", "FireSpecificEvent", $"eventId={eventId}");
         }
     }
 }

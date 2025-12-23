@@ -1,0 +1,113 @@
+# Enlisted Documentation Index
+
+**Summary:** Single entry point for all Enlisted mod documentation, providing organized access to core systems, gameplay features, UI documentation, and technical references. This index reflects the current state of the mod (v0.9.0) targeting Bannerlord v1.3.12.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-23  
+**Mod Version:** v0.9.0  
+**Game Target:** v1.3.12
+
+---
+
+## Index
+
+- [Quick Links](#quick-links)
+- [How It All Works (End-to-End)](#how-it-all-works-end-to-end)
+- [Core Systems](#core-systems)
+- [User Interface](#user-interface)
+- [Gameplay Features](#gameplay-features)
+- [Technical Systems](#technical-systems)
+- [Story Content & Events](#story-content--events)
+
+---
+
+## Quick Links
+
+| What You Need | Where To Go |
+|---------------|-------------|
+| **Understand the core gameplay** | [Core Gameplay (Consolidated)](core-gameplay.md) |
+| **Understand the roadmap** | [ROADMAP](../../ROADMAP.md) |
+| **Browse content** | [Content Catalog](../../Content/event-catalog-by-system.md) |
+| **Check implementation status** | [ROADMAP](../../ROADMAP.md) |
+
+---
+
+## How It All Works (End-to-End)
+
+### 1) Enlist
+Enlist with a lord to begin your career. Your party is hidden, and you follow the lord's movements on the campaign map.
+- Doc: **[Enlistment System](enlistment.md)**
+
+### 2) Initial Inspection: Bag Check
+About one hour after enlisting, you must stash or liquidate your personal gear to adhere to military regulations.
+- Doc: **[Enlistment System](enlistment.md)** (Behavior section)
+
+### 3) Receive Orders
+Instead of passive assignments, you receive explicit **Orders** from the chain of command every 3-5 days (config-driven). Success builds your reputation; failure damages it.
+- Doc: **[Core Gameplay](core-gameplay.md)** (Orders System section)
+
+### 4) build Your Identity
+Your role (Scout, Medic, Officer) emerges dynamically from your native skills and traits. We track your reputation with the Lord, the Officers, and your fellow Soldiers.
+- Doc: **[Core Gameplay](core-gameplay.md)** (Emergent Identity section)
+
+### 5) Strategic Context & War Stance
+The unit's experience is now strategically aware. Your orders and events reflect the lord's actual campaign plans, whether you're in a "Grand Campaign" offensive or a "Winter Camp" rest period.
+- Doc: **[Core Gameplay](core-gameplay.md)** (Strategic Context section)
+
+### 6) Monitor Company Status
+The unit's effectiveness is tracked via five core needs: Readiness, Morale, Supplies, Equipment, and Rest. The **Company Status Report** provides immersive descriptions of each need with contextual explanations.
+- Doc: **[News & Reporting System](../UI/news-reporting-system.md)** (Company Status section)
+
+### 7) Read the Daily Brief
+Each day, the **Daily Brief** summarizes your company's situation, casualties, supply status, recent events, and kingdom news in immersive narrative form.
+- Doc: **[News & Reporting System](../UI/news-reporting-system.md)** (Daily Brief section)
+
+### 8) Visit the Quartermaster
+The Quartermaster is your primary contact for gear and provisions. Access is gated by your reputation and the unit's supply levels.
+- Doc: **[Quartermaster System](../Equipment/quartermaster-system.md)**
+
+---
+
+## Core Systems
+
+The foundational systems that enable the Enlisted experience.
+
+- **[Enlistment System](enlistment.md)** - Service mechanics, army following, and discharge.
+- **[Promotion System](promotion-system.md)** - Rank progression T1-T9: XP sources, multi-factor requirements, proving events, culture-specific ranks.
+- **[Pay System](pay-system.md)** - Wages, pay muster, and pay tension.
+- **[Company Events](company-events.md)** - Role-based narrative and social events.
+- **[Retinue System](retinue-system.md)** - Commander's personal force (T7+): formation selection, context-aware reinforcements, loyalty tracking, named veterans, and command decisions.
+- **[Core Gameplay](core-gameplay.md)** - Consolidated overview of orders, identity, and progression.
+
+---
+
+## User Interface
+
+Enlisted uses the native Bannerlord Game Menu system for all interactions.
+
+- **[Native Menus](core-gameplay.md#native-game-menu-interface)** - Overview of the menu hub.
+- **[News & Reporting System](../UI/news-reporting-system.md)** - Immersive narrative feedback: Daily Brief, Company Status, and kingdom news.
+- **[UI Systems Master](../UI/ui-systems-master.md)** - Technical reference for all UI components.
+
+---
+
+## Gameplay Features
+
+- **[Temporary Leave](../Gameplay/temporary-leave.md)** - Suspend service while preserving progression.
+- **[Camp Life Simulation](../Gameplay/camp-life-simulation.md)** - Detailed tracking of unit-wide company needs.
+- **[Provisions System](../Gameplay/provisions-system.md)** - Manage morale and fatigue through rations.
+- **[Town Access](../Gameplay/town-access-system.md)** - Safe exploration of settlements while enlisted.
+
+---
+
+## Technical Systems
+
+- **[Encounter Safety](../Technical/encounter-safety.md)** - Crash prevention and state management.
+- **[Formation Assignment](../Technical/formation-assignment.md)** - Battle deployment logic.
+
+---
+
+## Story Content & Events
+
+- **[Content System Architecture](../Content/content-system-architecture.md)** - Single source of truth for all story systems and event schemas.
+- **[Event Catalog](../../Content/event-catalog-by-system.md)** - Complete catalog of all events, decisions, and orders.

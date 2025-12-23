@@ -79,7 +79,7 @@ namespace Enlisted.Features.Conditions
         public string IllnessType { get; set; } = string.Empty;
         public int IllnessDaysRemaining { get; set; }
 
-        // Exhaustion (Phase 5: optional; disabled by default)
+        // Exhaustion tracking is currently disabled by default.
         public ExhaustionLevel Exhaustion { get; set; }
 
         // Treatment

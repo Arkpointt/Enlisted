@@ -1,0 +1,1768 @@
+{
+  "schemaVersion": 2,
+  "packId": "decisions_catalog",
+  "category": "decision",
+  "description": "All 38 player-initiated decisions from Camp Hub menu (34 core + 4 retinue T7+)",
+  "events": [
+    {
+      "id": "dec_rest",
+      "category": "decision",
+      "titleId": "dec_rest_title",
+      "title": "Rest",
+      "setupId": "dec_rest_setup",
+      "setup": "Your legs ache from the march and your eyes burn from too many watches. A soldier learns to grab sleep wherever he can find it.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "rest_short",
+          "textId": "dec_rest_short",
+          "text": "Find a shady spot and steal what rest you can.",
+          "rewards": {
+            "fatigueRelief": 2
+          },
+          "resultTextId": "dec_rest_short_result",
+          "resultText": "You wedge yourself between supply crates, cloak bundled as a pillow. The camp noise fades. When you stir, the shadows have moved but you feel lighter."
+        },
+        {
+          "id": "rest_with_men",
+          "textId": "dec_rest_with_men",
+          "text": "Rest near the fire with the other soldiers.",
+          "rewards": {
+            "fatigueRelief": 1
+          },
+          "effects": {
+            "soldierRep": 1
+          },
+          "resultTextId": "dec_rest_with_men_result",
+          "resultText": "You doze at the fire's edge, half-listening to the men's talk. Not deep sleep, but the company keeps the darker thoughts at bay."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_rest_cancel",
+          "text": "Push through. Sleep is for the garrison.",
+          "resultTextId": "dec_rest_cancel_result",
+          "resultText": "You shake off the weariness. The campaign waits for no man's comfort."
+        }
+      ]
+    },
+    {
+      "id": "dec_rest_extended",
+      "category": "decision",
+      "titleId": "dec_rest_extended_title",
+      "title": "Extended Rest",
+      "setupId": "dec_rest_extended_setup",
+      "setup": "You need real sleep, not just a nap. A full night's rest would do wonders, but you'd be unavailable for a while.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "low"
+      },
+      "options": [
+        {
+          "id": "rest_full",
+          "textId": "dec_rest_extended_full",
+          "text": "Find your bedroll and get proper sleep.",
+          "costs": {
+            "time_hours": 8
+          },
+          "rewards": {
+            "fatigueRelief": 5
+          },
+          "effects": {
+            "hpChange": 10
+          },
+          "resultTextId": "dec_rest_extended_result",
+          "resultText": "You sleep deeply and wake feeling like a new man. Your body thanks you for the rest."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_rest_extended_cancel",
+          "text": "I can sleep when I'm dead.",
+          "resultTextId": "dec_rest_extended_cancel_result",
+          "resultText": "You push through the exhaustion. Sleep can wait."
+        }
+      ]
+    },
+    {
+      "id": "dec_seek_treatment",
+      "category": "decision",
+      "titleId": "dec_seek_treatment_title",
+      "title": "Seek Treatment",
+      "setupId": "dec_seek_treatment_setup",
+      "setup": "The surgeon's tent. Time to deal with your wounds properly. It'll cost coin, but proper care prevents worse problems.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "hp_below": 80
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "treatment_full",
+          "textId": "dec_seek_treatment_full",
+          "text": "Pay for proper treatment. (30 gold)",
+          "costs": {
+            "gold": 30
+          },
+          "effects": {
+            "hpChange": 30,
+            "medicalRisk": -3
+          },
+          "resultTextId": "dec_seek_treatment_full_result",
+          "resultText": "The surgeon cleans and binds your wounds with practiced hands. It stings like hell, but you'll heal clean."
+        },
+        {
+          "id": "treatment_basic",
+          "textId": "dec_seek_treatment_basic",
+          "text": "Just the basics - bandages and salve. (10 gold)",
+          "costs": {
+            "gold": 10
+          },
+          "effects": {
+            "hpChange": 15,
+            "medicalRisk": -1
+          },
+          "resultTextId": "dec_seek_treatment_basic_result",
+          "resultText": "Basic supplies change hands. It's not fancy, but it helps."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_seek_treatment_cancel",
+          "text": "I'll manage on my own.",
+          "resultTextId": "dec_seek_treatment_cancel_result",
+          "resultText": "You leave the surgeon's tent. Time and luck will have to do the work."
+        }
+      ]
+    },
+    {
+      "id": "dec_weapon_drill",
+      "category": "decision",
+      "titleId": "dec_weapon_drill_title",
+      "title": "Weapon Drill",
+      "setupId": "dec_weapon_drill_setup",
+      "setup": "Practice forms with the training posts. Basic work, but it builds muscle memory.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 2,
+        "priority": "normal"
+      },
+      "injury_risk": 0.05,
+      "options": [
+        {
+          "id": "drill",
+          "textId": "dec_weapon_drill_do",
+          "text": "Work through the basic forms.",
+          "costs": {
+            "fatigue": 2
+          },
+          "rewards": {
+            "skillXp": { "OneHanded": 20 }
+          },
+          "resultTextId": "dec_weapon_drill_result",
+          "resultText": "Swing, block, thrust, recover. You run through the forms until your arms burn. It's honest work."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_weapon_drill_cancel",
+          "text": "Not now.",
+          "resultTextId": "dec_weapon_drill_cancel_result",
+          "resultText": "The training posts will be there tomorrow."
+        }
+      ]
+    },
+    {
+      "id": "dec_spar",
+      "category": "decision",
+      "titleId": "dec_spar_title",
+      "title": "Sparring Match",
+      "setupId": "dec_spar_setup",
+      "setup": "The drill ground is busy. A few soldiers are working through forms, but the real learning happens when blades cross. {SOLDIER_NAME} catches your eye and tilts his head toward the practice ring.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "normal"
+      },
+      "injury_risk": 0.25,
+      "skill_check": {
+        "skill": "OneHanded",
+        "threshold": 40
+      },
+      "options": [
+        {
+          "id": "spar_friendly",
+          "textId": "dec_spar_friendly",
+          "text": "Accept the invitation. Keep it friendly.",
+          "costs": {
+            "fatigue": 2
+          },
+          "rewards": {
+            "skillXp": { "OneHanded": 25, "Athletics": 10 }
+          },
+          "effects": {
+            "soldierRep": 2
+          },
+          "resultTextId": "dec_spar_friendly_result",
+          "resultText": "Wooden blades crack together as you circle, testing each other's guards. Neither of you holds back, but nobody's trying to prove anything. You're both better for it."
+        },
+        {
+          "id": "spar_hard",
+          "textId": "dec_spar_hard",
+          "text": "Make it count. Fight like you mean it.",
+          "costs": {
+            "fatigue": 4
+          },
+          "rewards": {
+            "skillXp": { "OneHanded": 40, "Athletics": 20 }
+          },
+          "effects": {
+            "soldierRep": 3,
+            "hpChange": -8
+          },
+          "resultTextId": "dec_spar_hard_result",
+          "resultText": "This one draws blood. You go at each other like there's a real grudge, and the watching soldiers fall quiet. When it's done, you're both breathing hard and sporting fresh bruises. Word will spread about this bout."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_spar_cancel",
+          "text": "Not today. Shake your head and move on.",
+          "resultTextId": "dec_spar_cancel_result",
+          "resultText": "{SOLDIER_NAME} shrugs and finds another partner. No shame in knowing when to save your strength."
+        }
+      ]
+    },
+    {
+      "id": "dec_endurance",
+      "category": "decision",
+      "titleId": "dec_endurance_title",
+      "title": "Endurance Training",
+      "setupId": "dec_endurance_setup",
+      "setup": "Run the camp perimeter until your lungs burn. Soldiers live and die by their stamina.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 2,
+        "priority": "normal"
+      },
+      "injury_risk": 0.10,
+      "skill_check": {
+        "skill": "Athletics",
+        "threshold": 60,
+        "effect": "reduces injury risk"
+      },
+      "options": [
+        {
+          "id": "run",
+          "textId": "dec_endurance_run",
+          "text": "Run laps around the camp.",
+          "costs": {
+            "fatigue": 3
+          },
+          "rewards": {
+            "skillXp": { "Athletics": 35 }
+          },
+          "resultTextId": "dec_endurance_result",
+          "resultText": "You run until your chest heaves and your legs scream for mercy. Each lap makes you harder to kill."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_endurance_cancel",
+          "text": "Save my energy.",
+          "resultTextId": "dec_endurance_cancel_result",
+          "resultText": "You decide to conserve your strength for when it matters."
+        }
+      ]
+    },
+    {
+      "id": "dec_study_tactics",
+      "category": "decision",
+      "titleId": "dec_study_tactics_title",
+      "title": "Study Tactics",
+      "setupId": "dec_study_tactics_setup",
+      "setup": "Borrow a map, think about formations. Wars are won by those who think before they fight.",
+      "requirements": {
+        "tier": { "min": 3, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 4,
+        "priority": "low"
+      },
+      "skill_check": {
+        "skill": "Tactics",
+        "threshold": 60,
+        "effect": "bonus insight"
+      },
+      "options": [
+        {
+          "id": "study",
+          "textId": "dec_study_tactics_do",
+          "text": "Study the maps and think about what you've seen.",
+          "costs": {
+            "fatigue": 1
+          },
+          "rewards": {
+            "skillXp": { "Tactics": 25 }
+          },
+          "resultTextId": "dec_study_tactics_result",
+          "resultText": "You pore over old battle maps, considering terrain, formation, and timing. The patterns of war become clearer."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_study_tactics_cancel",
+          "text": "Maps can wait.",
+          "resultTextId": "dec_study_tactics_cancel_result",
+          "resultText": "You set aside the scrolls. Practice beats theory anyway."
+        }
+      ]
+    },
+    {
+      "id": "dec_practice_medicine",
+      "category": "decision",
+      "titleId": "dec_practice_medicine_title",
+      "title": "Practice Medicine",
+      "setupId": "dec_practice_medicine_setup",
+      "setup": "Offer to help the surgeon with simple cases. Field medicine isn't pretty, but it saves lives.",
+      "requirements": {
+        "tier": { "min": 2, "max": 999 },
+        "skill": { "Medicine": 40 }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "assist",
+          "textId": "dec_practice_medicine_assist",
+          "text": "Help the surgeon with patients.",
+          "costs": {
+            "fatigue": 2
+          },
+          "rewards": {
+            "skillXp": { "Medicine": 30 }
+          },
+          "effects": {
+            "soldierRep": 2
+          },
+          "resultTextId": "dec_practice_medicine_result",
+          "resultText": "You spend hours helping with wounds and illnesses. The surgeon grunts approval at your work. The patients appreciate a steady hand."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_practice_medicine_cancel",
+          "text": "Not today.",
+          "resultTextId": "dec_practice_medicine_cancel_result",
+          "resultText": "The surgeon has other helpers. Your hands stay clean."
+        }
+      ]
+    },
+    {
+      "id": "dec_train_troops",
+      "category": "decision",
+      "titleId": "dec_train_troops_title",
+      "title": "Train the Men",
+      "setupId": "dec_train_troops_setup",
+      "setup": "Take recruits through drills. They'll learn from your experience - assuming you don't break them first.",
+      "requirements": {
+        "tier": { "min": 4, "max": 999 },
+        "skill": { "Leadership": 40 }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal"
+      },
+      "injury_risk": 0.20,
+      "skill_check": {
+        "skill": "Leadership",
+        "threshold": 80,
+        "effect": "no deaths possible"
+      },
+      "options": [
+        {
+          "id": "train",
+          "textId": "dec_train_troops_do",
+          "text": "Take charge of training drills.",
+          "costs": {
+            "fatigue": 3
+          },
+          "rewards": {
+            "skillXp": { "Leadership": 25 }
+          },
+          "effects": {
+            "troopXp": 15,
+            "officerRep": 3,
+            "soldierRep": 2
+          },
+          "resultTextId": "dec_train_troops_result",
+          "resultText": "You put the recruits through their paces. They curse your name, but they'll fight better for it. The officers nod approvingly."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_train_troops_cancel",
+          "text": "Let someone else handle it.",
+          "resultTextId": "dec_train_troops_cancel_result",
+          "resultText": "Training is someone else's responsibility today."
+        }
+      ]
+    },
+    {
+      "id": "dec_combat_drill",
+      "category": "decision",
+      "titleId": "dec_combat_drill_title",
+      "title": "Combat Drill",
+      "setupId": "dec_combat_drill_setup",
+      "setup": "Request extra drill time with the sergeant. Hard work, but it sharpens your equipped weapon skills.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "normal"
+      },
+      "uses_equipped_weapon": true,
+      "options": [
+        {
+          "id": "drill",
+          "textId": "dec_combat_drill_do",
+          "text": "Practice with your equipped weapon.",
+          "costs": {
+            "fatigue": 2
+          },
+          "rewards": {
+            "dynamic_skill_xp": "equipped_weapon",
+            "xp_amount": 25
+          },
+          "resultTextId": "dec_combat_drill_result",
+          "resultText": "The sergeant works you hard, focusing on the weapon you carry. Your movements become more fluid, more deadly."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_combat_drill_cancel",
+          "text": "Maybe later.",
+          "resultTextId": "dec_combat_drill_cancel_result",
+          "resultText": "The drill grounds can wait."
+        }
+      ]
+    },
+    {
+      "id": "dec_weapon_specialization",
+      "category": "decision",
+      "titleId": "dec_weapon_specialization_title",
+      "title": "Weapon Specialization",
+      "setupId": "dec_weapon_specialization_setup",
+      "setup": "Focus your training on the weapon you use most. Specialists kill faster than generalists.",
+      "requirements": {
+        "tier": { "min": 3, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal"
+      },
+      "uses_equipped_weapon": true,
+      "options": [
+        {
+          "id": "specialize",
+          "textId": "dec_weapon_specialization_do",
+          "text": "Focus on mastering your main weapon.",
+          "costs": {
+            "fatigue": 3
+          },
+          "rewards": {
+            "dynamic_skill_xp": "equipped_weapon",
+            "xp_amount": 40
+          },
+          "resultTextId": "dec_weapon_specialization_result",
+          "resultText": "Hours of focused practice. Your hands know this weapon like an extension of your body now."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_weapon_specialization_cancel",
+          "text": "I prefer variety.",
+          "resultTextId": "dec_weapon_specialization_cancel_result",
+          "resultText": "Specialization can wait. Flexibility has its merits."
+        }
+      ]
+    },
+    {
+      "id": "dec_lead_drill",
+      "category": "decision",
+      "titleId": "dec_lead_drill_title",
+      "title": "Lead Drill Practice",
+      "setupId": "dec_lead_drill_setup",
+      "setup": "Lead drill practice for younger soldiers. Teaching reinforces your own skills while building your reputation.",
+      "requirements": {
+        "tier": { "min": 7, "max": 999 },
+        "skill": { "Leadership": 60 }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "lead",
+          "textId": "dec_lead_drill_do",
+          "text": "Take charge of junior soldiers' training.",
+          "costs": {
+            "fatigue": 2
+          },
+          "rewards": {
+            "skillXp": { "Leadership": 20 }
+          },
+          "effects": {
+            "troopXp": 20,
+            "officerRep": 4,
+            "soldierRep": 3
+          },
+          "resultTextId": "dec_lead_drill_result",
+          "resultText": "You command the drill with authority. The young soldiers respond to your orders crisply. Officers watching from the sidelines look impressed."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_lead_drill_cancel",
+          "text": "Let the sergeants handle it.",
+          "resultTextId": "dec_lead_drill_cancel_result",
+          "resultText": "Training others isn't your job today."
+        }
+      ]
+    },
+    {
+      "id": "dec_join_men",
+      "category": "decision",
+      "titleId": "dec_join_men_title",
+      "title": "Join the Men",
+      "setupId": "dec_join_men_setup",
+      "setup": "Sit by their fire, share stories. Good for morale - theirs and yours.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 2,
+        "priority": "normal"
+      },
+      "injury_risk": 0.05,
+      "options": [
+        {
+          "id": "join",
+          "textId": "dec_join_men_do",
+          "text": "Sit with the soldiers at their fire.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "soldierRep": 4,
+            "scrutiny": 1
+          },
+          "resultTextId": "dec_join_men_result",
+          "resultText": "You share warmth and stories with your comrades. They appreciate an equal. The officers might not approve, but camaraderie is earned, not assigned."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_join_men_cancel",
+          "text": "Keep my distance.",
+          "resultTextId": "dec_join_men_cancel_result",
+          "resultText": "You stay apart. Sometimes a soldier needs his own company."
+        }
+      ]
+    },
+    {
+      "id": "dec_join_drinking",
+      "category": "decision",
+      "titleId": "dec_join_drinking_title",
+      "title": "Join the Drinking",
+      "setupId": "dec_join_drinking_setup",
+      "setup": "Someone's opened a cask. Join in? Drinking builds bonds but attracts attention.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "low"
+      },
+      "injury_risk": 0.15,
+      "options": [
+        {
+          "id": "drink_moderate",
+          "textId": "dec_join_drinking_moderate",
+          "text": "Have a few drinks with the lads.",
+          "costs": {
+            "fatigue": 2
+          },
+          "effects": {
+            "soldierRep": 5,
+            "scrutiny": 2,
+            "medicalRisk": 1
+          },
+          "resultTextId": "dec_join_drinking_moderate_result",
+          "resultText": "You share drink and laughter. The night blurs pleasantly. Tomorrow's headache will be worth tonight's camaraderie."
+        },
+        {
+          "id": "drink_heavy",
+          "textId": "dec_join_drinking_heavy",
+          "text": "Drink deep and let the night take you.",
+          "costs": {
+            "fatigue": 4
+          },
+          "effects": {
+            "soldierRep": 7,
+            "scrutiny": 4,
+            "medicalRisk": 2,
+            "discipline": 2
+          },
+          "resultTextId": "dec_join_drinking_heavy_result",
+          "resultText": "You drink until the stars spin. They'll talk about this night. Whether that's good or bad remains to be seen."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_join_drinking_cancel",
+          "text": "I'll pass.",
+          "resultTextId": "dec_join_drinking_cancel_result",
+          "resultText": "You decline the drink. Clear heads have their value."
+        }
+      ]
+    },
+    {
+      "id": "dec_seek_officers",
+      "category": "decision",
+      "titleId": "dec_seek_officers_title",
+      "title": "Seek the Officers",
+      "setupId": "dec_seek_officers_setup",
+      "setup": "Linger near the command tent, look useful. Ambition requires visibility.",
+      "requirements": {
+        "tier": { "min": 2, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 4,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "linger",
+          "textId": "dec_seek_officers_do",
+          "text": "Make yourself visible to the officers.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "officerRep": 3,
+            "soldierRep": -2
+          },
+          "resultTextId": "dec_seek_officers_result",
+          "resultText": "You find reasons to be near the command tent. The officers notice. The men notice too - and they don't always approve of climbers."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_seek_officers_cancel",
+          "text": "Stay with my own rank.",
+          "resultTextId": "dec_seek_officers_cancel_result",
+          "resultText": "You stay with the men. Advancement can come naturally."
+        }
+      ]
+    },
+    {
+      "id": "dec_keep_to_self",
+      "category": "decision",
+      "titleId": "dec_keep_to_self_title",
+      "title": "Keep to Yourself",
+      "setupId": "dec_keep_to_self_setup",
+      "setup": "Sometimes solitude is worth more than company. Find a quiet spot away from the crowd.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "low"
+      },
+      "options": [
+        {
+          "id": "solitude",
+          "textId": "dec_keep_to_self_do",
+          "text": "Find somewhere quiet and be alone.",
+          "rewards": {
+            "fatigueRelief": 3
+          },
+          "effects": {
+            "soldierRep": -1
+          },
+          "resultTextId": "dec_keep_to_self_result",
+          "resultText": "You find a quiet corner of camp and let your thoughts settle. The silence is a relief after the constant noise of military life."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_keep_to_self_cancel",
+          "text": "Maybe I should be social.",
+          "resultTextId": "dec_keep_to_self_cancel_result",
+          "resultText": "You reconsider. The company of others has its merits."
+        }
+      ]
+    },
+    {
+      "id": "dec_write_letter",
+      "category": "decision",
+      "titleId": "dec_write_letter_title",
+      "title": "Write a Letter Home",
+      "setupId": "dec_write_letter_setup",
+      "setup": "Ink, paper, and memories of another life. Someone back home might appreciate hearing from you.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "low"
+      },
+      "options": [
+        {
+          "id": "write_reassuring",
+          "textId": "dec_write_letter_reassuring",
+          "text": "Write a reassuring letter, downplaying the dangers.",
+          "costs": {
+            "gold": 5
+          },
+          "rewards": {
+            "fatigueRelief": 2
+          },
+          "resultTextId": "dec_write_letter_reassuring_result",
+          "resultText": "You craft careful words of safety and good fortune. No need to worry those waiting for you. The courier takes your letter with the next dispatch."
+        },
+        {
+          "id": "write_honest",
+          "textId": "dec_write_letter_honest",
+          "text": "Write honestly about your experiences.",
+          "costs": {
+            "gold": 5
+          },
+          "rewards": {
+            "fatigueRelief": 1
+          },
+          "resultTextId": "dec_write_letter_honest_result",
+          "resultText": "The truth flows onto the page - the fear, the boredom, the moments of strange pride. It feels good to be honest, even if the words might worry them."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_write_letter_cancel",
+          "text": "The words won't come today.",
+          "resultTextId": "dec_write_letter_cancel_result",
+          "resultText": "You set aside the paper. Another time."
+        }
+      ]
+    },
+    {
+      "id": "dec_confront_rival",
+      "category": "decision",
+      "titleId": "dec_confront_rival_title",
+      "title": "Confront Your Rival",
+      "setupId": "dec_confront_rival_setup",
+      "setup": "This has gone on long enough. There's someone in camp who's been making your life difficult. Time to settle it.",
+      "requirements": {
+        "tier": { "min": 2, "max": 999 },
+        "flag": "has_rival"
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal"
+      },
+      "injury_risk": 0.40,
+      "options": [
+        {
+          "id": "confront_words",
+          "textId": "dec_confront_rival_words",
+          "text": "Confront them directly, with words.",
+          "effects": {
+            "soldierRep": 3,
+            "discipline": 1
+          },
+          "resultTextId": "dec_confront_rival_words_result",
+          "resultText": "You find your rival and say what needs saying. The tension breaks - for better or worse, the air is cleared."
+        },
+        {
+          "id": "confront_fists",
+          "textId": "dec_confront_rival_fists",
+          "text": "Settle it with fists, away from officers.",
+          "costs": {
+            "fatigue": 2
+          },
+          "effects": {
+            "soldierRep": 5,
+            "discipline": 3,
+            "hpChange": -15
+          },
+          "resultTextId": "dec_confront_rival_fists_result",
+          "resultText": "You trade blows behind the supply wagons. Win or lose, it's done. The men respect those who handle their problems directly."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_confront_rival_cancel",
+          "text": "Let it go, for now.",
+          "resultTextId": "dec_confront_rival_cancel_result",
+          "resultText": "You swallow your anger. Some battles aren't worth fighting."
+        }
+      ]
+    },
+    {
+      "id": "dec_gamble_low",
+      "category": "decision",
+      "titleId": "dec_gamble_low_title",
+      "title": "Gamble (Low Stakes)",
+      "setupId": "dec_gamble_low_setup",
+      "setup": "Behind the supply wagons, a circle of soldiers hunches over a blanket. Dice clatter, coins change hands. Someone spots you watching and waves you over. \"Room for one more, if your coin's good.\"",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "gold": 10
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "low"
+      },
+      "injury_risk": 0.05,
+      "options": [
+        {
+          "id": "play_casual",
+          "textId": "dec_gamble_low_casual",
+          "text": "Toss in your copper and play for laughs. (10 gold stake)",
+          "costs": {
+            "gold": 10
+          },
+          "success_chance": 0.5,
+          "rewards": {
+            "gold": 25
+          },
+          "effects": {
+            "soldierRep": 2,
+            "scrutiny": 1
+          },
+          "resultTextId": "dec_gamble_low_win_result",
+          "resultText": "The bones love you tonight. You sweep a modest pot toward yourself while the others groan and call for another round. Easy money, easy company.",
+          "failure_resultText": "The dice turn cold. Your stake vanishes into other purses, but you share the groans and laughter with the rest. Cost of camaraderie."
+        },
+        {
+          "id": "play_shrewd",
+          "textId": "dec_gamble_low_shrewd",
+          "text": "Play carefully. Watch the odds. (10 gold stake)",
+          "costs": {
+            "gold": 10
+          },
+          "success_chance": 0.65,
+          "rewards": {
+            "gold": 18
+          },
+          "effects": {
+            "soldierRep": 0
+          },
+          "resultTextId": "dec_gamble_low_shrewd_result",
+          "resultText": "You play tight, fold when the odds turn, push when they favor you. The pot's smaller, but it's yours. The others eye you with something between respect and annoyance.",
+          "failure_resultText": "Even careful play can't beat a cold run. You walk away lighter, but at least you didn't chase your losses."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_gamble_low_cancel",
+          "text": "\"Not tonight, lads.\" Keep walking.",
+          "resultTextId": "dec_gamble_low_cancel_result",
+          "resultText": "You wave them off and move on. Your purse stays full, but you miss the camaraderie of the circle."
+        }
+      ]
+    },
+    {
+      "id": "dec_gamble_high",
+      "category": "decision",
+      "titleId": "dec_gamble_high_title",
+      "title": "Gamble (High Stakes)",
+      "setupId": "dec_gamble_high_setup",
+      "setup": "Real money. Real risk. The kind of game where fortunes change hands.",
+      "requirements": {
+        "tier": { "min": 2, "max": 999 },
+        "gold": 50
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "low"
+      },
+      "injury_risk": 0.15,
+      "options": [
+        {
+          "id": "play",
+          "textId": "dec_gamble_high_play",
+          "text": "Put real money on the table. (50 gold stake)",
+          "costs": {
+            "gold": 50
+          },
+          "success_chance": 0.45,
+          "rewards": {
+            "gold": 150
+          },
+          "effects": {
+            "soldierRep": 3,
+            "scrutiny": 2
+          },
+          "resultTextId": "dec_gamble_high_win_result",
+          "resultText": "Fortune favors the bold! You rake in a substantial pot. The losers eye you with new respect - or jealousy.",
+          "failure_resultText": "The dice betray you. Your stake is gone, and then some. The winners smirk as you count what's left."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_gamble_high_cancel",
+          "text": "Too rich for my blood.",
+          "resultTextId": "dec_gamble_high_cancel_result",
+          "resultText": "You keep your gold in your purse. Wisdom, or cowardice? Only you know."
+        }
+      ]
+    },
+    {
+      "id": "dec_side_work",
+      "category": "decision",
+      "titleId": "dec_side_work_title",
+      "title": "Side Work",
+      "setupId": "dec_side_work_setup",
+      "setup": "Someone in camp needs labor. Pays decent - if you don't mind the sweat.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 4,
+        "priority": "normal"
+      },
+      "injury_risk": 0.10,
+      "options": [
+        {
+          "id": "work",
+          "textId": "dec_side_work_do",
+          "text": "Put in extra labor for coin.",
+          "costs": {
+            "fatigue": 3
+          },
+          "rewards": {
+            "gold": 20
+          },
+          "effects": {
+            "hpChange": -5
+          },
+          "resultTextId": "dec_side_work_result",
+          "resultText": "Hours of hard labor - hauling, digging, lifting. Your back aches, but your purse is heavier."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_side_work_cancel",
+          "text": "My duty is enough.",
+          "resultTextId": "dec_side_work_cancel_result",
+          "resultText": "You pass on the extra work. Rest has value too."
+        }
+      ]
+    },
+    {
+      "id": "dec_shady_deal",
+      "category": "decision",
+      "titleId": "dec_shady_deal_title",
+      "title": "Shady Deal",
+      "setupId": "dec_shady_deal_setup",
+      "setup": "A man knows a man who has something to sell. The goods look legitimate enough, but the price is suspiciously low.",
+      "requirements": {
+        "tier": { "min": 2, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "low"
+      },
+      "injury_risk": 0.20,
+      "options": [
+        {
+          "id": "deal",
+          "textId": "dec_shady_deal_do",
+          "text": "Make the deal. Don't ask questions.",
+          "costs": {
+            "gold": 30
+          },
+          "rewards": {
+            "gold": 60
+          },
+          "effects": {
+            "scrutiny": 3,
+            "hpChange": -5
+          },
+          "resultTextId": "dec_shady_deal_result",
+          "resultText": "Coin changes hands in shadows. You don't know where the goods came from, and you don't ask. Profit is profit."
+        },
+        {
+          "id": "report",
+          "textId": "dec_shady_deal_report",
+          "text": "Report the suspicious offer.",
+          "effects": {
+            "officerRep": 3,
+            "soldierRep": -2,
+            "scrutiny": -2
+          },
+          "resultTextId": "dec_shady_deal_report_result",
+          "resultText": "You tell the officers about the offer. They nod approvingly. The shady man disappears before anyone can question him."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_shady_deal_cancel",
+          "text": "Walk away.",
+          "resultTextId": "dec_shady_deal_cancel_result",
+          "resultText": "You want no part of whatever this is. Clean hands are worth more than dirty coin."
+        }
+      ]
+    },
+    {
+      "id": "dec_visit_market",
+      "category": "decision",
+      "titleId": "dec_visit_market_title",
+      "title": "Visit the Market",
+      "setupId": "dec_visit_market_setup",
+      "setup": "Browse what the town has to offer. Supplies, luxuries, maybe something useful.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "context": "settlement"
+      },
+      "timing": {
+        "cooldown_days": 2,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "browse",
+          "textId": "dec_visit_market_browse",
+          "text": "Spend some time browsing the stalls.",
+          "costs": {
+            "fatigue": 1
+          },
+          "resultTextId": "dec_visit_market_result",
+          "resultText": "You wander the market, examining wares. The variety is a pleasant change from camp rations and military issue."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_visit_market_cancel",
+          "text": "No time for shopping.",
+          "resultTextId": "dec_visit_market_cancel_result",
+          "resultText": "Duty calls louder than commerce."
+        }
+      ]
+    },
+    {
+      "id": "dec_request_audience",
+      "category": "decision",
+      "titleId": "dec_request_audience_title",
+      "title": "Request an Audience",
+      "setupId": "dec_request_audience_setup",
+      "setup": "The lord's banner hangs above the command tent. Guards stand watch, and officers come and go on important business. A common soldier doesn't just walk in—but your rank has earned you the right to petition, if you've something worth saying.",
+      "requirements": {
+        "tier": { "min": 3, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "low"
+      },
+      "options": [
+        {
+          "id": "request_recognition",
+          "textId": "dec_request_audience_recognition",
+          "text": "Remind the lord of your service. Speak of what you've done.",
+          "effects": {
+            "lordRep": 5,
+            "officerRep": 2,
+            "scrutiny": -2
+          },
+          "rewards": {
+            "xp": { "enlisted": 50 }
+          },
+          "resultTextId": "dec_request_audience_recognition_result",
+          "resultText": "{LORD_NAME} hears you out, eyes sharp. When you finish, there's a pause—then a single nod. \"I know your face now, soldier. Continue to serve well.\" It's not much, but from a lord, it's everything."
+        },
+        {
+          "id": "request_pay",
+          "textId": "dec_request_audience_pay",
+          "text": "Humbly request an advance on wages. Debts press hard.",
+          "condition": "gold < 100",
+          "rewards": {
+            "gold": 50
+          },
+          "effects": {
+            "lordRep": -1,
+            "scrutiny": 2
+          },
+          "resultTextId": "dec_request_audience_pay_result",
+          "resultText": "You explain your circumstances as briefly as you can. The lord's expression is unreadable, but he gestures to his steward. A purse of coins lands in your palm. \"See that it's repaid in service.\" You're in debt now—of a different kind."
+        },
+        {
+          "id": "request_opportunity",
+          "textId": "dec_request_audience_opportunity",
+          "text": "Ask for the chance to prove yourself in some special task.",
+          "effects": {
+            "lordRep": 3,
+            "officerRep": -2
+          },
+          "set_flags": ["volunteered_for_lord"],
+          "flag_duration_days": 14,
+          "resultTextId": "dec_request_audience_opportunity_result",
+          "resultText": "The lord's eyebrow rises. Ambition, or foolishness? \"I'll remember your eagerness, soldier. When something needs doing, perhaps I'll send for you.\" You've put your name forward. Now you must prove worthy of it."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_request_audience_cancel",
+          "text": "Lose your nerve. This isn't the time.",
+          "resultTextId": "dec_request_audience_cancel_result",
+          "resultText": "You hover at the tent's edge, then turn away. The guards don't even glance at you. Better to wait for a stronger hand to play."
+        }
+      ]
+    },
+    {
+      "id": "dec_volunteer_duty",
+      "category": "decision",
+      "titleId": "dec_volunteer_duty_title",
+      "title": "Volunteer for Duty",
+      "setupId": "dec_volunteer_duty_setup",
+      "setup": "Tell the sergeant you want extra work. Initiative is noticed - for better or worse.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "volunteer",
+          "textId": "dec_volunteer_duty_do",
+          "text": "Volunteer for additional duties.",
+          "costs": {
+            "fatigue": 2
+          },
+          "effects": {
+            "officerRep": 4,
+            "soldierRep": -1
+          },
+          "rewards": {
+            "xp": { "enlisted": 20 }
+          },
+          "resultTextId": "dec_volunteer_duty_result",
+          "resultText": "{NCO_NAME} nods at your offer. Extra work finds you quickly. The officers appreciate initiative. Some of the men think you're showing off."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_volunteer_duty_cancel",
+          "text": "My regular duties are enough.",
+          "resultTextId": "dec_volunteer_duty_cancel_result",
+          "resultText": "You stay quiet. No need to stand out more than necessary."
+        }
+      ]
+    },
+    {
+      "id": "dec_request_leave",
+      "category": "decision",
+      "titleId": "dec_request_leave_title",
+      "title": "Request Leave",
+      "setupId": "dec_request_leave_setup",
+      "setup": "Ask permission to visit town on your own time. Officers don't always approve, but it doesn't hurt to ask.",
+      "requirements": {
+        "tier": { "min": 2, "max": 999 },
+        "context": "near_settlement"
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "low"
+      },
+      "options": [
+        {
+          "id": "request",
+          "textId": "dec_request_leave_do",
+          "text": "Request permission for leave.",
+          "effects": {
+            "officerRep": -1
+          },
+          "success_chance": 0.6,
+          "resultTextId": "dec_request_leave_granted_result",
+          "resultText": "Permission granted, with conditions. You have until evening. Don't make them regret it.",
+          "failure_resultText": "Request denied. The officer barely looks up. 'We march soon. Stay with the company.'"
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_request_leave_cancel",
+          "text": "Never mind.",
+          "resultTextId": "dec_request_leave_cancel_result",
+          "resultText": "You decide not to ask. There will be other opportunities."
+        }
+      ]
+    },
+    {
+      "id": "dec_listen_rumors",
+      "category": "decision",
+      "titleId": "dec_listen_rumors_title",
+      "title": "Listen to Rumors",
+      "setupId": "dec_listen_rumors_setup",
+      "setup": "Keep your ears open around camp. Information is currency in any army.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "low"
+      },
+      "options": [
+        {
+          "id": "listen",
+          "textId": "dec_listen_rumors_do",
+          "text": "Drift through camp, listening to talk.",
+          "costs": {
+            "fatigue": 1
+          },
+          "resultTextId": "dec_listen_rumors_result",
+          "resultText": "You catch fragments of conversation - troop movements, noble politics, fears and hopes. Some of it might even be true."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_listen_rumors_cancel",
+          "text": "Rumors are for bored soldiers.",
+          "resultTextId": "dec_listen_rumors_cancel_result",
+          "resultText": "You have better things to do than gossip."
+        }
+      ]
+    },
+    {
+      "id": "dec_scout_area",
+      "category": "decision",
+      "titleId": "dec_scout_area_title",
+      "title": "Scout the Surroundings",
+      "setupId": "dec_scout_area_setup",
+      "setup": "Take a walk beyond the camp perimeter. Know the land - it might save your life.",
+      "requirements": {
+        "tier": { "min": 2, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 4,
+        "priority": "normal"
+      },
+      "injury_risk": 0.15,
+      "options": [
+        {
+          "id": "scout",
+          "textId": "dec_scout_area_do",
+          "text": "Walk the perimeter and beyond.",
+          "costs": {
+            "fatigue": 2
+          },
+          "rewards": {
+            "skillXp": { "Scouting": 20 }
+          },
+          "effects": {
+            "hpChange": -5
+          },
+          "resultTextId": "dec_scout_area_result",
+          "resultText": "You explore the terrain around camp - paths, hiding spots, approaches. Knowledge that might matter when swords are drawn."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_scout_area_cancel",
+          "text": "Stay inside the perimeter.",
+          "resultTextId": "dec_scout_area_cancel_result",
+          "resultText": "The camp is safe enough. No need to wander."
+        }
+      ]
+    },
+    {
+      "id": "dec_check_supplies",
+      "category": "decision",
+      "titleId": "dec_check_supplies_title",
+      "title": "Check Supply Situation",
+      "setupId": "dec_check_supplies_setup",
+      "setup": "Ask the quartermaster how we're doing. Good to know before things get desperate.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "low"
+      },
+      "options": [
+        {
+          "id": "ask",
+          "textId": "dec_check_supplies_do",
+          "text": "Inquire about the company's supplies.",
+          "resultTextId": "dec_check_supplies_result",
+          "resultText": "The quartermaster shares the state of things - food stores, fodder, equipment. Information is power, even in small matters."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_check_supplies_cancel",
+          "text": "I'll find out when everyone else does.",
+          "resultTextId": "dec_check_supplies_cancel_result",
+          "resultText": "Ignorance has its comforts. You'll know when you need to know."
+        }
+      ]
+    },
+    {
+      "id": "dec_maintain_gear",
+      "category": "decision",
+      "titleId": "dec_maintain_gear_title",
+      "title": "Maintain Your Gear",
+      "setupId": "dec_maintain_gear_setup",
+      "setup": "Oil, polish, sharpen. Keep it battle-ready. A soldier's gear is his life.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "maintain",
+          "textId": "dec_maintain_gear_do",
+          "text": "Spend time maintaining your equipment.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "equipment_condition": 10,
+            "discipline": -1
+          },
+          "resultTextId": "dec_maintain_gear_result",
+          "resultText": "You work methodically - cleaning rust, sharpening edges, oiling leather. Your gear is ready for whatever comes."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_maintain_gear_cancel",
+          "text": "Good enough for now.",
+          "resultTextId": "dec_maintain_gear_cancel_result",
+          "resultText": "Your gear will survive another day. Probably."
+        }
+      ]
+    },
+    {
+      "id": "dec_visit_quartermaster",
+      "category": "decision",
+      "titleId": "dec_visit_quartermaster_title",
+      "title": "Visit the Quartermaster",
+      "setupId": "dec_visit_quartermaster_setup",
+      "setup": "See what's available, maybe make a request. The quartermaster has what you need - for a price.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 4,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "visit",
+          "textId": "dec_visit_quartermaster_do",
+          "text": "See what the quartermaster has in stock.",
+          "resultTextId": "dec_visit_quartermaster_result",
+          "resultText": "You browse the quartermaster's stores. Weapons, armor, supplies - all available for coin or requisition. Good to know what's possible."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_visit_quartermaster_cancel",
+          "text": "I have what I need.",
+          "resultTextId": "dec_visit_quartermaster_cancel_result",
+          "resultText": "Your current kit will serve. No need to spend coin you don't have."
+        }
+      ]
+    },
+    {
+      "id": "dec_dangerous_wager",
+      "category": "decision",
+      "titleId": "dec_dangerous_wager_title",
+      "title": "Accept a Dangerous Wager",
+      "setupId": "dec_dangerous_wager_setup",
+      "setup": "The men are getting creative with boredom. {SOLDIER_NAME} grins at you across the fire. \"Heard you've got brass ones. Bet you twenty denars you can't...\" What follows is either incredibly dangerous or incredibly stupid. Possibly both.",
+      "requirements": {
+        "tier": { "min": 2, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "low"
+      },
+      "injury_risk": 0.50,
+      "options": [
+        {
+          "id": "accept_bold",
+          "textId": "dec_dangerous_wager_accept",
+          "text": "\"You're on.\" Stand up and prove it.",
+          "costs": {
+            "gold": 20
+          },
+          "success_chance": 0.5,
+          "rewards": {
+            "gold": 100
+          },
+          "effects": {
+            "soldierRep": 6,
+            "valor": 2,
+            "hpChange": -15
+          },
+          "resultTextId": "dec_dangerous_wager_win_result",
+          "resultText": "Your heart pounds, the men roar, and somehow—you pull it off. {SOLDIER_NAME}'s coins land in your palm while the camp erupts. They'll be telling this story for weeks. You'll be feeling it for just as long.",
+          "failure_resultText": "Pride goes before the fall. You hit the ground hard, or burn yourself, or whatever fool thing you were attempting goes wrong. The men wince. The coin goes to {SOLDIER_NAME}. Your pride goes to the mud."
+        },
+        {
+          "id": "accept_careful",
+          "textId": "dec_dangerous_wager_careful",
+          "text": "\"Double or nothing—but on my terms.\"",
+          "costs": {
+            "gold": 40
+          },
+          "success_chance": 0.6,
+          "rewards": {
+            "gold": 120
+          },
+          "effects": {
+            "soldierRep": 3,
+            "hpChange": -8
+          },
+          "resultTextId": "dec_dangerous_wager_careful_result",
+          "resultText": "You turn the challenge around, stack the odds your way. It's still risky, but calculated. When you succeed, the winnings are sweeter—and you barely limp afterward.",
+          "failure_resultText": "Even the clever approach goes wrong sometimes. You're out more coin and nursing new bruises. At least you tried to be smart about it."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_dangerous_wager_cancel",
+          "text": "\"I've nothing to prove to you.\" Stay seated.",
+          "effects": {
+            "soldierRep": -1
+          },
+          "resultTextId": "dec_dangerous_wager_cancel_result",
+          "resultText": "You shake your head. {SOLDIER_NAME} shrugs, calls you sensible or coward depending on the drink in him. Tomorrow, nobody will remember you turned it down. Or maybe they will."
+        }
+      ]
+    },
+    {
+      "id": "dec_prove_courage",
+      "category": "decision",
+      "titleId": "dec_prove_courage_title",
+      "title": "Prove Your Courage",
+      "setupId": "dec_prove_courage_setup",
+      "setup": "Do something reckless to earn respect. The men respect courage - even the foolish kind.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "low"
+      },
+      "injury_risk": 0.35,
+      "options": [
+        {
+          "id": "prove",
+          "textId": "dec_prove_courage_do",
+          "text": "Do something bold and reckless.",
+          "costs": {
+            "fatigue": 2
+          },
+          "effects": {
+            "soldierRep": 6,
+            "valor": 2,
+            "hpChange": -10
+          },
+          "resultTextId": "dec_prove_courage_result",
+          "resultText": "You do something brave and stupid. The men cheer. The officers groan. Your body pays the price, but your reputation doesn't."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_prove_courage_cancel",
+          "text": "Courage can wait.",
+          "resultTextId": "dec_prove_courage_cancel_result",
+          "resultText": "You decide against showboating. Real courage shows in battle, not in camp stunts."
+        }
+      ]
+    },
+    {
+      "id": "dec_challenge",
+      "category": "decision",
+      "titleId": "dec_challenge_title",
+      "title": "Challenge Someone",
+      "setupId": "dec_challenge_setup",
+      "setup": "Call them out. Settle it properly, with witnesses. The old ways still matter.",
+      "requirements": {
+        "tier": { "min": 2, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "low"
+      },
+      "injury_risk": 0.60,
+      "options": [
+        {
+          "id": "challenge_formal",
+          "textId": "dec_challenge_formal",
+          "text": "Issue a formal challenge.",
+          "costs": {
+            "fatigue": 3
+          },
+          "effects": {
+            "soldierRep": 5,
+            "discipline": 2,
+            "valor": 3,
+            "hpChange": -25
+          },
+          "resultTextId": "dec_challenge_result",
+          "resultText": "Steel rings, blood flows. Win or lose, you've made a statement. The officers will hear about this - as will everyone else."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_challenge_cancel",
+          "text": "Some insults aren't worth dying for.",
+          "resultTextId": "dec_challenge_cancel_result",
+          "resultText": "You let it pass. The smart choice, if not the satisfying one."
+        }
+      ]
+    },
+    {
+      "id": "dec_ret_inspect",
+      "category": "decision",
+      "titleId": "dec_ret_inspect_title",
+      "title": "Inspect Your Retinue",
+      "setupId": "dec_ret_inspect_setup",
+      "setup": "Walk the line. Check gear, check morale, check readiness. Your men need to see you care about their condition.",
+      "requirements": {
+        "tier": { "min": 7, "max": 999 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "inspect_thorough",
+          "textId": "dec_ret_inspect_thorough",
+          "text": "Conduct a thorough inspection. Check every soldier personally.",
+          "costs": {
+            "fatigue": 2
+          },
+          "effects": {
+            "retinueLoyalty": 5,
+            "discipline": 2
+          },
+          "resultTextId": "dec_ret_inspect_thorough_result",
+          "resultText": "You walk the line slowly, speaking to each man. You notice worn straps, dull blades, blisters that need tending. They see you noticing. That matters."
+        },
+        {
+          "id": "inspect_quick",
+          "textId": "dec_ret_inspect_quick",
+          "text": "Quick pass. Show your face, keep it moving.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "retinueLoyalty": 2
+          },
+          "resultTextId": "dec_ret_inspect_quick_result",
+          "resultText": "A brisk walk down the line. They straighten as you pass. It's not much, but it shows you haven't forgotten them."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_ret_inspect_cancel",
+          "text": "They're fine without my supervision.",
+          "resultTextId": "dec_ret_inspect_cancel_result",
+          "resultText": "Your men can handle themselves. No need to hover."
+        }
+      ]
+    },
+    {
+      "id": "dec_ret_drill",
+      "category": "decision",
+      "titleId": "dec_ret_drill_title",
+      "title": "Drill Your Soldiers",
+      "setupId": "dec_ret_drill_setup",
+      "setup": "Run your men through combat drills. Hard work builds discipline and readiness, but push too hard and morale suffers.",
+      "requirements": {
+        "tier": { "min": 7, "max": 999 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 4,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "drill_hard",
+          "textId": "dec_ret_drill_hard",
+          "text": "Push them hard. No mercy, no excuses.",
+          "costs": {
+            "fatigue": 3
+          },
+          "effects": {
+            "retinueLoyalty": -3,
+            "troopXp": 25,
+            "discipline": 3
+          },
+          "resultTextId": "dec_ret_drill_hard_result",
+          "resultText": "You drive them until they curse your name. Shield walls crash, formations wheel, weapons sing. They hate it now, but they'll thank you when steel crosses steel."
+        },
+        {
+          "id": "drill_balanced",
+          "textId": "dec_ret_drill_balanced",
+          "text": "Firm but fair. Work them, but don't break them.",
+          "costs": {
+            "fatigue": 2
+          },
+          "effects": {
+            "retinueLoyalty": 2,
+            "troopXp": 15,
+            "discipline": 1
+          },
+          "resultTextId": "dec_ret_drill_balanced_result",
+          "resultText": "You push them through the forms with a firm hand and an occasional word of encouragement. They sweat, they learn, they respect the work."
+        },
+        {
+          "id": "drill_light",
+          "textId": "dec_ret_drill_light",
+          "text": "Keep it light. Build confidence, not exhaustion.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "retinueLoyalty": 4,
+            "troopXp": 8
+          },
+          "resultTextId": "dec_ret_drill_light_result",
+          "resultText": "You run them through basic drills without breaking a sweat. They appreciate the easy day. Whether that makes them better soldiers is another question."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_ret_drill_cancel",
+          "text": "They've drilled enough.",
+          "resultTextId": "dec_ret_drill_cancel_result",
+          "resultText": "Training can wait. Rest is part of readiness too."
+        }
+      ]
+    },
+    {
+      "id": "dec_ret_share_rations",
+      "category": "decision",
+      "titleId": "dec_ret_share_rations_title",
+      "title": "Share Your Rations",
+      "setupId": "dec_ret_share_rations_setup",
+      "setup": "Your men are on standard field rations. You have better food in your personal stores. Sharing builds loyalty, but costs coin to replace.",
+      "requirements": {
+        "tier": { "min": 7, "max": 999 },
+        "custom": ["has_retinue"],
+        "gold": 20
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "share_feast",
+          "textId": "dec_ret_share_rations_feast",
+          "text": "Break out the good stuff. Make it a proper meal. (50 gold)",
+          "costs": {
+            "gold": 50,
+            "fatigue": 1
+          },
+          "effects": {
+            "retinueLoyalty": 10,
+            "soldierRep": 5
+          },
+          "resultTextId": "dec_ret_share_rations_feast_result",
+          "resultText": "You share meat, bread, and even a skin of wine. Your men feast like officers for one night. They won't forget this."
+        },
+        {
+          "id": "share_modest",
+          "textId": "dec_ret_share_rations_modest",
+          "text": "Share what you can spare. Simple generosity. (20 gold)",
+          "costs": {
+            "gold": 20
+          },
+          "effects": {
+            "retinueLoyalty": 5,
+            "soldierRep": 2
+          },
+          "resultTextId": "dec_ret_share_rations_modest_result",
+          "resultText": "You hand out dried meat and cheese from your personal stores. It's not a feast, but the gesture matters."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_ret_share_rations_cancel",
+          "text": "They're paid soldiers. They can buy their own food.",
+          "resultTextId": "dec_ret_share_rations_cancel_result",
+          "resultText": "You keep your stores to yourself. They get what they're issued, like everyone else."
+        }
+      ]
+    },
+    {
+      "id": "dec_ret_address_men",
+      "category": "decision",
+      "titleId": "dec_ret_address_men_title",
+      "title": "Address Your Men",
+      "setupId": "dec_ret_address_men_setup",
+      "setup": "Your soldiers are assembled. Time to speak to them as their commander. What you say now will set the tone of your leadership.",
+      "requirements": {
+        "tier": { "min": 7, "max": 999 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal"
+      },
+      "skill_check": {
+        "skill": "Leadership",
+        "threshold": 80,
+        "effect": "bonus loyalty on inspire option"
+      },
+      "options": [
+        {
+          "id": "inspire",
+          "textId": "dec_ret_address_men_inspire",
+          "text": "Speak of honor, duty, and shared glory.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "retinueLoyalty": 8,
+            "soldierRep": 3,
+            "valor": 1
+          },
+          "resultTextId": "dec_ret_address_men_inspire_result",
+          "resultText": "You speak from the heart. Words about brotherhood, courage, and the battles to come. Some men stand straighter. A few even look inspired."
+        },
+        {
+          "id": "discipline",
+          "textId": "dec_ret_address_men_discipline",
+          "text": "Set clear expectations. Demand excellence.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "retinueLoyalty": 2,
+            "discipline": 4
+          },
+          "resultTextId": "dec_ret_address_men_discipline_result",
+          "resultText": "You lay out standards and consequences. No room for weakness, no tolerance for failure. They understand what's expected."
+        },
+        {
+          "id": "casual",
+          "textId": "dec_ret_address_men_casual",
+          "text": "Keep it brief and practical. We have work to do.",
+          "effects": {
+            "retinueLoyalty": 3
+          },
+          "resultTextId": "dec_ret_address_men_casual_result",
+          "resultText": "You keep it short. No grand speeches, no theatrics. Just a commander talking to soldiers. They appreciate not wasting time."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_ret_address_men_cancel",
+          "text": "Actions speak louder than words.",
+          "resultTextId": "dec_ret_address_men_cancel_result",
+          "resultText": "You decide to let your deeds speak for you. The men disperse without ceremony."
+        }
+      ]
+    }
+  ]
+}
+

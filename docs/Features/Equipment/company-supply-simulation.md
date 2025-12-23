@@ -1,9 +1,10 @@
 # Company Supply Simulation System
 
-> **Purpose**: Document how Company Supply is calculated, consumed, and replenished to create realistic military logistics gameplay.
+**Summary:** The company supply system tracks logistical health of the military unit including equipment maintenance materials, ammunition/consumables, and fodder/animal care supplies. Supply levels are calculated from inventory, consumed through time and combat, and replenished through quartermaster purchases, creating realistic military logistics gameplay.
 
-**Last Updated**: December 18, 2025  
-**Status**: Design Phase
+**Status:** ⚠️ Mixed (Core implemented, enhancements planned)  
+**Last Updated:** 2025-12-23  
+**Related Docs:** [Quartermaster System](quartermaster-system.md), [Provisions & Rations](provisions-rations-system.md)
 
 ---
 
@@ -16,12 +17,17 @@
 - Camp supplies (tents, rope, tools, firewood)
 - **Note:** Food is tracked separately by vanilla Bannerlord's native food system
 
-**Tracked Value:** `LanceNeedsState.Supplies` (0-100%)
+**Tracked Value:** `CompanyNeedsState.Supplies` (0-100%) — backed by `CompanySupplyManager`
 
-**Impact:**
+**Current Impact (Implemented):**
 - < 30% = Cannot access equipment changes (quartermaster menu blocked)
-- < 50% = Warning messages, morale penalties
-- < 20% = Critical - Heat increases, troops desert
+- < 50% = Warning logged to mod console
+- Warning thresholds trigger log messages only (no in-game popups yet)
+
+**Planned Impact (Not Yet Implemented):**
+- < 50% = UI warning messages, morale penalties
+- < 20% = Critical - Scrutiny increases, troops desert
+- < 10% = Automatic desertion events
 
 ---
 
@@ -171,7 +177,9 @@ public int CalculateBattleSupplyLoss(int troopsLost, bool playerVictory)
 - Defeat with 20 casualties: -7% supply (2% + 5% abandoned)
 - Siege assault victory: -8% supply (5% casualties + 3% siege equipment)
 
-### **Special Events:**
+### **Special Events (Planned - Not Yet Implemented):**
+
+These events are designed but not yet created in the content system:
 
 | Event | Supply Loss | Description |
 |-------|-------------|-------------|
@@ -227,9 +235,9 @@ public void DailyNonFoodResupply()
 - In owned settlement: +5% per day
 - **Food:** Automatically updates based on lord's party food status (vanilla system handles buying)
 
-### **2. Quartermaster Duties (Player Actions)**
+### **2. Quartermaster Duties (Planned - Not Yet Connected)**
 
-When player performs supply-related duties:
+The `AddNonFoodSupplies()` method exists but no duties currently call it. When connected:
 
 | Duty/Activity | Non-Food Gain | Food Impact | Notes |
 |---------------|---------------|-------------|-------|
@@ -239,11 +247,13 @@ When player performs supply-related duties:
 | **Negotiate with Merchants** | +5 to +10% | Indirect | Buy supplies (costs gold, helps lord buy food) |
 | **Hunt Wildlife** | +1% | Indirect | Supplement food (adds food items to lord's party) |
 
-**Note:** Food-related duties (foraging, hunting) add food items to the lord's party's inventory via vanilla systems. This indirectly improves our Food Component by increasing the lord's days of food remaining.
+**Note:** Food-related duties (foraging, hunting) would add food items to the lord's party's inventory via vanilla systems. This indirectly improves our Food Component by increasing the lord's days of food remaining.
 
-### **3. Supply Wagon Events**
+**Implementation Note:** The API is ready (`CompanySupplyManager.Instance.AddNonFoodSupplies(amount, "source")`) but duty handlers need to be updated to call it.
 
-**Supply Caravan Arrival:**
+### **3. Supply Wagon Events (Planned - Not Yet Implemented)**
+
+**Supply Caravan Arrival (Design):**
 ```
 Every 7-14 days (random), if lord is with army:
   Supply wagon arrives: +20% supply
@@ -285,8 +295,11 @@ public int CalculateNonFoodSupplyLoot(int enemyTroopsKilled, string enemyFaction
 
 **Food Looting:** Vanilla system handles food items automatically (loot screen)
 
-### **5. Player Purchases**
+### **5. Player Purchases (Partial - Needs Completion)**
 
+**Current State:** A basic supply purchase stub exists in `QuartermasterManager.OnSupplyPurchaseSelected()` that costs 50g and adds grain + tools to the player's roster. However, it does NOT call `AddNonFoodSupplies()` to update the supply percentage.
+
+**Planned Full System:**
 ```
 Visit town merchant:
   [Buy Supplies] → Opens purchase menu
@@ -301,6 +314,8 @@ Visit town merchant:
     - Player Trade skill (higher = cheaper)
     - War/peace (war = 50% markup)
 ```
+
+**To Complete:** Update `OnSupplyPurchaseSelected()` to call `CompanySupplyManager.Instance?.AddNonFoodSupplies(amount, "purchase")` after adding items.
 
 ---
 
@@ -341,27 +356,39 @@ Player must:
 
 ---
 
-## Supply Crisis Events
+## Supply Crisis Events (Planned - Not Yet Implemented)
 
-### **Low Supply Warnings:**
+> **Note:** These events are designed but the JSON definitions do not exist yet. The event IDs below are placeholders for future content.
 
-**50% Supply:**
+**Currently Implemented:**
+- Equipment menu blocked at <30% supply (in `QuartermasterManager`)
+- Warning messages logged at 50% and 30% thresholds (via `ModLogger`)
+
+**Planned Event System:**
+
+| Threshold | Event ID (Planned) | Effect |
+|-----------|----------|-------------|
+| 50% | `evt_supply_warning` | UI warning message |
+| 30% | `evt_supply_critical_gate` | Equipment menu blocked (✅ this works now) |
+| 20% | `evt_supply_critical` | Crisis event with player choices |
+| 10% | `evt_supply_catastrophic` | Automatic desertion effects |
+
+### **Planned Threshold Effects (Design):**
+
+**50% Supply (Design):**
 ```
 QM: "Supplies are running low. We should restock soon."
 Effect: Yellow warning on main menu
 ```
 
-**30% Supply (CRITICAL):**
+**30% Supply - IMPLEMENTED:**
 ```
-QM: "We're nearly out of supplies! Equipment changes blocked."
 Effect:
-  - Cannot access Master at Arms (equipment menu blocked)
-  - -5 Morale per day
-  - +1 Heat per day
-  - Chance of desertion increases
+  - ✅ Cannot access Master at Arms (equipment menu blocked)
+  - ⏳ Morale/Scrutiny penalties (not yet connected)
 ```
 
-**20% Supply (CRISIS):**
+**20% Supply (Design):**
 ```
 Event fires:
   "Starvation in Camp"
@@ -375,11 +402,11 @@ Event fires:
     [Desert] → Leave service to avoid catastrophe
 ```
 
-**10% Supply (CATASTROPHIC):**
+**10% Supply (Design):**
 ```
 Automatic effects:
   - 1d6 troops desert per day
-  - +5 Heat per day
+  - +5 Scrutiny per day
   - -20 Morale per day
   - Lord may dismiss you for incompetence
 ```
@@ -525,48 +552,39 @@ public class CompanySupplyManager
 
 ## Integration with Existing Systems
 
-### **1. Lance Needs System**
+### **1. Company Needs System (Implemented)**
 
-Supply is already tracked in `LanceNeedsState.Supplies` (0-100):
+Supply is tracked via `CompanyNeedsState.Supplies` which delegates to `CompanySupplyManager`:
 
 ```csharp
-public class LanceNeedsState
+// Actual implementation in CompanyNeedsState.cs
+public class CompanyNeedsState
 {
-    public int Supplies 
-    { 
-        get => _companySupplyManager.TotalSupply; 
-    }
-    
-    private CompanySupplyManager _companySupplyManager = new CompanySupplyManager();
-    
-    // Hook into daily tick
-    public void OnDailyTick()
+    public int Supplies
     {
-        _companySupplyManager.DailyNonFoodUpdate();
-        
-        // Check thresholds and fire warnings/events
-        if (Supplies < 30)
-        {
-            // Block quartermaster menu
-            // Fire low supply events
-        }
+        get => CompanySupplyManager.Instance?.TotalSupply ?? _suppliesFallback;
+        set => _suppliesFallback = (int)MathF.Clamp(value, 0, 100);
     }
     
-    // Player actions call manager directly
-    public void OnForagingDutyComplete(int foodItemsGained, float nonFoodGained)
-    {
-        // Add food items to lord's party (vanilla system)
-        _companySupplyManager.AddFoodToLordParty(GetFoodItem(), foodItemsGained);
-        
-        // Add non-food supplies (our system)
-        _companySupplyManager.AddNonFoodSupplies(nonFoodGained);
-    }
+    private int _suppliesFallback = 60;
+}
+
+// Daily tick is called from EnlistmentBehavior.OnDailyTick():
+CompanySupplyManager.Instance?.DailyUpdate();
+
+// Equipment blocking is in QuartermasterManager:
+var supplyLevel = enlistment.CompanyNeeds?.Supplies ?? 100;
+if (supplyLevel < 30)
+{
+    // Block equipment menu with message
 }
 ```
 
-### **2. Schedule Activities**
+**Not Yet Connected:** Foraging duties don't call `AddNonFoodSupplies()` - this is the main gap.
 
-Certain scheduled activities affect supply:
+### **2. Schedule Activities (Planned - Not Yet Connected)**
+
+These integrations are designed but not implemented:
 
 | Activity | Supply Effect |
 |----------|---------------|
@@ -575,9 +593,9 @@ Certain scheduled activities affect supply:
 | **Work Detail** | +1% (organize supplies) |
 | **Rest** | -0.5% (lower consumption) |
 
-### **3. Quartermaster Relationship**
+### **3. Quartermaster Relationship (Planned - Not Yet Connected)**
 
-QM relationship affects supply management:
+QM relationship bonuses are designed but not integrated with `CompanySupplyManager`:
 
 | QM Rep | Supply Bonus |
 |--------|--------------|
@@ -586,9 +604,9 @@ QM relationship affects supply management:
 | **0-35** | Normal consumption |
 | **<0** | +10% consumption (wasteful, sabotage) |
 
-### **4. Duty System**
+### **4. Duty System (Planned - Not Yet Connected)**
 
-Quartermaster duty holders get supply bonuses:
+Quartermaster duty bonuses are designed but not implemented:
 
 ```
 If player has "quartermaster" duty:
@@ -601,39 +619,42 @@ If player has "quartermaster" duty:
 
 ## Implementation Checklist
 
-### **Phase 1: Basic Consumption**
+### **Core System (Implemented Dec 2025)**
 
-- [ ] Add daily supply consumption calculation
-- [ ] Hook into hourly tick for time-based updates
-- [ ] Apply activity and terrain multipliers
-- [ ] Display supply % in main menu
+- [x] `CompanySupplyManager` class with hybrid 40/60 model (`src/Features/Logistics/CompanySupplyManager.cs`)
+- [x] `TotalSupply` property combining food observation + non-food simulation
+- [x] `CalculateFoodComponent()` - observes lord's party food days (read-only)
+- [x] `CalculateNonFoodConsumption()` with 1.5% base rate
+- [x] Size multiplier (partySize / 100)
+- [x] Activity multiplier (siege=2.5x, settlement=0.3x, patrol=1.2x, etc.)
+- [x] Terrain multiplier (desert=1.2x, mountain=1.3x, snow=1.4x, water=1.1x)
+- [x] `CalculateNonFoodResupply()` - settlement-based resupply (+3-5% per day)
+- [x] `DailyUpdate()` called from `EnlistmentBehavior.OnDailyTick`
+- [x] `ProcessBattleSupplyChanges()` - casualties, defeat penalty, siege penalty, loot
+- [x] Warning logging at 50% and 30% thresholds via `ModLogger`
+- [x] Equipment menu blocked at <30% supply (in `QuartermasterManager`)
+- [x] Save/load non-food supply value (serialization in EnlistmentBehavior)
+- [x] Initialize/Shutdown lifecycle (on enlist/discharge)
+- [x] `AddNonFoodSupplies(float, string)` API ready for duty integration
+- [x] Edge cases: lord captured, on leave, grace period re-enlistment
 
-### **Phase 2: Resupply Sources**
+### **Partial/Stub Implementations**
 
-- [ ] Implement settlement auto-resupply (+5% per day)
-- [ ] Add foraging duty supply gains (+3-8%)
-- [ ] Add post-battle supply looting (+1-6%)
-- [ ] Add supply purchase from merchants
+- [~] Supply purchase option exists (`OnSupplyPurchaseSelected`) but doesn't call `AddNonFoodSupplies()`
 
-### **Phase 3: Supply Losses**
+### **Future Enhancements (Not Yet Implemented)**
 
-- [ ] Implement battle supply losses
+- [ ] Display supply % in main menu UI
+- [ ] Connect foraging duty to `AddNonFoodSupplies()` (+3-8%)
+- [ ] Complete supply purchase system (call `AddNonFoodSupplies()`)
+- [ ] Add supply crisis events to JSON (`evt_supply_*`)
 - [ ] Add special loss events (raid, fire, spoilage)
 - [ ] Track deserter supply theft
-
-### **Phase 4: Crisis Management**
-
-- [ ] Add low supply warnings (50%, 30%)
-- [ ] Block equipment menu at <30% supply
-- [ ] Implement critical supply events (<20%)
 - [ ] Add automatic desertion at <10%
-
-### **Phase 5: Integration**
-
 - [ ] Connect to QM rep system (efficiency bonus)
 - [ ] Connect to quartermaster duty (consumption reduction)
-- [ ] Add supply tracking to schedule activities
 - [ ] Add supply caravan events (every 7-14 days)
+- [ ] UI warning popups (not just logging)
 
 ---
 
@@ -735,31 +756,31 @@ Result: Intense siege pressure, realistic logistics, required active management
 
 ## Summary: Why This Hybrid Approach Works
 
-### **Respects Vanilla AI:**
+### **Respects Vanilla AI (Implemented):**
 ✅ Lord's AI continues to buy food automatically via `PartiesBuyFoodCampaignBehavior`  
 ✅ AI decision-making (raids, sieges) still uses `GetNumDaysForFoodToLast()`  
 ✅ Army food sharing continues to work naturally  
 ✅ Starvation mechanics remain intact  
 
-### **Adds Depth Without Conflicts:**
+### **Adds Depth Without Conflicts (Implemented):**
 ✅ Non-food logistics (60% of supply) are fully simulated by us  
 ✅ Food status (40% of supply) is observed, not modified  
-✅ Player can still influence food via adding items (vanilla-compatible)  
 ✅ Equipment gate is based on our hybrid supply metric  
+⏳ Player agency via duties (API ready, needs connection)  
 
-### **Mod Compatibility:**
+### **Mod Compatibility (Implemented):**
 ✅ No modifications to native `MobileParty` properties  
 ✅ No interference with other mods' food/party systems  
 ✅ All changes are additive (our own systems)  
 ✅ Read-only observation of vanilla state  
 
-### **Gameplay Benefits:**
+### **Gameplay Benefits (Partial):**
 ✅ Realistic siege pressure (food + non-food both deplete)  
-✅ Player agency (manage non-food via duties)  
 ✅ Automatic food handling (lord's AI prevents micro-management)  
 ✅ Meaningful equipment gate (tied to overall logistics)  
+⏳ Player agency via duties (planned, not connected)  
 
-### **Implementation Simplicity:**
+### **Implementation Simplicity (Implemented):**
 ✅ One manager class (`CompanySupplyManager`)  
 ✅ Two independent components (food observed, non-food simulated)  
 ✅ Clean separation of concerns  
@@ -767,13 +788,27 @@ Result: Intense siege pressure, realistic logistics, required active management
 
 ---
 
-**Status**: Ready for review and implementation planning.
+**Status**: Core implementation complete (December 2025). Player-facing features need connection.
+
+**What Works Now:**
+1. ✅ `CompanySupplyManager` class with hybrid 40/60 model
+2. ✅ Daily consumption based on activity, terrain, party size
+3. ✅ Settlement auto-resupply (+3-5% per day)
+4. ✅ Battle supply changes (losses and loot)
+5. ✅ Equipment menu blocked at <30% supply
+6. ✅ Save/load persistence
+7. ✅ Warning logging at thresholds
+
+**Main Gaps:**
+1. ⏳ No duties call `AddNonFoodSupplies()` - foraging duty needs connection
+2. ⏳ Supply purchase stub exists but doesn't update supply %
+3. ⏳ No supply crisis events in JSON (event IDs are placeholders)
+4. ⏳ No UI display of supply percentage
 
 **Next Steps:**
-1. Implement `CompanySupplyManager` class
-2. Hook into `LanceNeedsState.Supplies` property
-3. Add daily tick handler for non-food consumption
-4. Update duty completion handlers to add non-food supplies
-5. Test with various lord behaviors (siege, travel, peace)
-6. Balance consumption/resupply rates based on playtesting
+1. Connect foraging/quartermaster duties to `AddNonFoodSupplies()`
+2. Fix `OnSupplyPurchaseSelected()` to call `AddNonFoodSupplies()`
+3. Create supply crisis events (`evt_supply_*`) in JSON
+4. Add supply % to Camp Hub status display
+5. Balance consumption/resupply rates based on playtesting
 

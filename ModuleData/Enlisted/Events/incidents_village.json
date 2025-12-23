@@ -1,0 +1,426 @@
+{
+  "schemaVersion": 2,
+  "category": "map_incident",
+  "description": "Map incidents triggered when entering villages (entering_village context). 6 total incidents.",
+  "events": [
+    {
+      "id": "mi_village_gratitude",
+      "category": "map_incident",
+      "titleId": "mi_village_gratitude_title",
+      "title": "Village Welcome",
+      "setupId": "mi_village_gratitude_setup",
+      "setup": "The villagers greet the company with relief and gratitude. They've been raided before, and your lord's banner means protection. An elder offers bread and cheese to the soldiers. Simple fare, but freely given.",
+      "requirements": {
+        "context": "entering_village",
+        "role": "Any",
+        "tier": { "min": 1, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "accept_graciously",
+          "textId": "mi_village_gratitude_accept",
+          "text": "Accept their hospitality with thanks",
+          "resultTextId": "mi_village_gratitude_accept_result",
+          "resultText": "You take the bread and cheese with genuine gratitude. The elder's wife presses a wrapped package into your hands—extra provisions for the road. 'For a kind soldier,' she says. Simple kindness goes a long way.",
+          "risk": "safe",
+          "rewards": {
+            "fatigueRelief": 2
+          },
+          "effects": {
+            "soldierRep": 5,
+            "companyNeeds": {
+              "Morale": 5,
+              "Supplies": 3
+            }
+          }
+        },
+        {
+          "id": "decline",
+          "textId": "mi_village_gratitude_decline",
+          "text": "Politely decline, they need it more",
+          "resultTextId": "mi_village_gratitude_decline_result",
+          "resultText": "You wave off the food. 'Save it for your children,' you say. The elder nods with respect, and the villagers whisper among themselves.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": 8,
+              "Generosity": 5
+            },
+            "soldierRep": 3
+          }
+        },
+        {
+          "id": "take_advantage",
+          "textId": "mi_village_gratitude_demand",
+          "text": "Demand more provisions as tribute",
+          "resultTextId": "mi_village_gratitude_demand_result",
+          "resultText": "The elder's face falls, but he complies. You take extra food, coin, and whatever else catches your eye. A child cries as you pocket her mother's bread. Your comrades watch in silence. Some things can't be taken back.",
+          "risk": "dangerous",
+          "effects": {
+            "gold": 35,
+            "soldierRep": -12,
+            "officerRep": -5,
+            "scrutiny": 4,
+            "traitXp": {
+              "Mercy": -15,
+              "Honor": -8
+            },
+            "companyNeeds": {
+              "Supplies": 8
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_village_resentment",
+      "category": "map_incident",
+      "titleId": "mi_village_resentment_title",
+      "title": "Cold Reception",
+      "setupId": "mi_village_resentment_setup",
+      "setup": "These people don't want soldiers here. Doors close as you approach, and eyes watch from behind shuttered windows. The last army that came through took more than it protected.",
+      "requirements": {
+        "context": "entering_village",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 12,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "be_polite",
+          "textId": "mi_village_resentment_polite",
+          "text": "Be polite and give them space",
+          "resultTextId": "mi_village_resentment_polite_result",
+          "resultText": "You keep your distance, speak softly, and cause no trouble. By the time you leave, a few villagers nod in grudging respect.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 3,
+            "traitXp": {
+              "Mercy": 5
+            }
+          }
+        },
+        {
+          "id": "demand_respect",
+          "textId": "mi_village_resentment_demand",
+          "text": "Demand the respect soldiers deserve",
+          "resultTextId": "mi_village_resentment_demand_result",
+          "resultText": "You bang on a door and demand hospitality. The villager complies, but hatred burns in his eyes. You've made enemies here.",
+          "risk": "risky",
+          "effects": {
+            "companyNeeds": {
+              "Supplies": 3
+            },
+            "soldierRep": -5,
+            "scrutiny": 2,
+            "traitXp": {
+              "Mercy": -8
+            }
+          }
+        },
+        {
+          "id": "leave_quickly",
+          "textId": "mi_village_resentment_leave",
+          "text": "Leave quickly, this place isn't safe",
+          "resultTextId": "mi_village_resentment_leave_result",
+          "resultText": "You urge the company to move on. Some places aren't worth the trouble. The village disappears behind you, and good riddance.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_village_sick",
+      "category": "map_incident",
+      "titleId": "mi_village_sick_title",
+      "title": "The Sick Child",
+      "setupId": "mi_village_sick_setup",
+      "setup": "A villager begs for help. Her child is fevered, burning up. The local healer is dead, gone in the last raid. She clutches your arm with desperate strength.",
+      "requirements": {
+        "context": "entering_village",
+        "role": "Any",
+        "tier": { "min": 1, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "help_medicine",
+          "textId": "mi_village_sick_help",
+          "text": "Try to help with your medical knowledge",
+          "requirements": {
+            "minSkills": {
+              "Medicine": 35
+            }
+          },
+          "resultTextId": "mi_village_sick_help_result",
+          "resultText": "You examine the child and recognize the fever. Willow bark tea and cool cloths—simple remedies, but they work. The mother weeps with relief.",
+          "tooltip": "Requires Medicine 35+",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Medicine": 20
+            }
+          },
+          "effects": {
+            "traitXp": {
+              "Mercy": 10
+            },
+            "soldierRep": 5
+          }
+        },
+        {
+          "id": "give_supplies",
+          "textId": "mi_village_sick_give",
+          "text": "Give her your healing supplies",
+          "resultTextId": "mi_village_sick_give_result",
+          "resultText": "You press your own medicines into her hands. 'These might help,' you say. Her gratitude is overwhelming, though you'll miss those supplies later.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Supplies": -5
+            },
+            "traitXp": {
+              "Mercy": 8,
+              "Generosity": 5
+            }
+          }
+        },
+        {
+          "id": "cant_help",
+          "textId": "mi_village_sick_cant",
+          "text": "Apologize, you can't help",
+          "resultTextId": "mi_village_sick_cant_result",
+          "resultText": "You shake your head sadly. 'I'm a soldier, not a healer.' She turns away, hope fading from her eyes. There's nothing more you can do.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": -3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_village_rumor",
+      "category": "map_incident",
+      "titleId": "mi_village_rumor_title",
+      "title": "Village Rumors",
+      "setupId": "mi_village_rumor_setup",
+      "setup": "Old women talk by the well. They've seen troops moving to the east, they say. Soldiers with strange banners, riding hard. The kind of gossip that wins battles—or loses them.",
+      "requirements": {
+        "context": "entering_village",
+        "role": "Any",
+        "tier": { "min": 2, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "listen_rumor",
+          "textId": "mi_village_rumor_listen",
+          "text": "Listen carefully and gather details",
+          "resultTextId": "mi_village_rumor_listen_result",
+          "resultText": "You ask careful questions. Numbers, banners, direction of travel—the old women know more than they realize. This could be valuable intelligence.",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Scouting": 15
+            }
+          },
+          "effects": {
+            "officerRep": 5
+          }
+        },
+        {
+          "id": "dismiss_rumor",
+          "textId": "mi_village_rumor_dismiss",
+          "text": "Dismiss it as peasant gossip",
+          "resultTextId": "mi_village_rumor_dismiss_result",
+          "resultText": "You shrug and walk on. Old women see ghosts in every shadow. Later, you hear the captain cursing about an ambush that could have been avoided. Probably unrelated. Probably.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": -2
+            }
+          }
+        },
+        {
+          "id": "investigate_rumor",
+          "textId": "mi_village_rumor_investigate",
+          "text": "Investigate the area they described",
+          "requirements": {
+            "minSkills": {
+              "Scouting": 40
+            }
+          },
+          "resultTextId": "mi_village_rumor_investigate_result",
+          "resultText": "You slip away and scout the eastern road. Fresh tracks, many horses, heading north. The rumors were true. You report back with valuable information.",
+          "tooltip": "Requires Scouting 40+",
+          "risk": "risky",
+          "risk_chance": 75,
+          "rewards": {
+            "skillXp": {
+              "Scouting": 25
+            }
+          },
+          "effects": {
+            "lordRep": 8,
+            "officerRep": 10
+          },
+          "effects_failure": {
+            "hpChange": -15,
+            "scrutiny": 1
+          },
+          "failure_resultText": "You're spotted by enemy scouts and have to fight your way back. The intelligence is valuable, but so is your blood."
+        }
+      ]
+    },
+    {
+      "id": "mi_village_theft",
+      "category": "map_incident",
+      "titleId": "mi_village_theft_title",
+      "title": "Caught Stealing",
+      "setupId": "mi_village_theft_setup",
+      "setup": "You see it happen—a soldier from your company, taking food from a villager's basket while she isn't looking. He catches your eye and freezes, stolen bread in hand.",
+      "requirements": {
+        "context": "entering_village",
+        "role": "Any",
+        "tier": { "min": 2, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "intervene",
+          "textId": "mi_village_theft_intervene",
+          "text": "Intervene and make him return it",
+          "resultTextId": "mi_village_theft_intervene_result",
+          "resultText": "'Put it back.' Your voice is quiet but firm. He hesitates, then complies. The villager never knows how close she came to losing her meal.",
+          "risk": "moderate",
+          "effects": {
+            "soldierRep": -3,
+            "traitXp": {
+              "Honor": 8
+            },
+            "discipline": -1
+          }
+        },
+        {
+          "id": "report_theft",
+          "textId": "mi_village_theft_report",
+          "text": "Report him to the sergeant",
+          "resultTextId": "mi_village_theft_report_result",
+          "resultText": "You find the sergeant and explain what you saw. The thief is disciplined—flogged, probably. He won't forget who reported him.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 8,
+            "soldierRep": -8,
+            "discipline": -2,
+            "traitXp": {
+              "Honor": 5
+            }
+          }
+        },
+        {
+          "id": "ignore_theft",
+          "textId": "mi_village_theft_ignore",
+          "text": "Look away and pretend you didn't see",
+          "resultTextId": "mi_village_theft_ignore_result",
+          "resultText": "You turn your head and keep walking. It's not your problem. The soldier relaxes and pockets his prize. These things happen.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 3,
+            "traitXp": {
+              "Honor": -5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_village_recruit",
+      "category": "map_incident",
+      "titleId": "mi_village_recruit_title",
+      "title": "Eager Youth",
+      "setupId": "mi_village_recruit_setup",
+      "setup": "A young villager approaches, eyes bright with foolish dreams. 'Take me with you,' he begs. 'I want to be a soldier, fight for the lord, see the world.' His mother watches from a doorway, fear in her face.",
+      "requirements": {
+        "context": "entering_village",
+        "role": "Any",
+        "tier": { "min": 3, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "encourage",
+          "textId": "mi_village_recruit_encourage",
+          "text": "Encourage his dreams",
+          "resultTextId": "mi_village_recruit_encourage_result",
+          "resultText": "You tell him where to find the recruiting sergeant. His face lights up with joy. His mother's face crumbles with grief. War needs bodies.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 5,
+            "traitXp": {
+              "Calculating": 3
+            }
+          }
+        },
+        {
+          "id": "discourage",
+          "textId": "mi_village_recruit_discourage",
+          "text": "Tell him the truth about soldier life",
+          "resultTextId": "mi_village_recruit_discourage_result",
+          "resultText": "You describe the mud, the blood, the friends you've buried. His enthusiasm fades. 'Stay home,' you say. 'There's nothing glorious about dying in a ditch.'",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": 8,
+              "Honor": 3
+            }
+          }
+        },
+        {
+          "id": "let_decide",
+          "textId": "mi_village_recruit_let",
+          "text": "Let him make his own choice",
+          "resultTextId": "mi_village_recruit_let_result",
+          "resultText": "'It's your life,' you say. 'Think carefully before you throw it away.' His mother catches your eye as you pass—a look of gratitude mixed with fear. You gave him neither hope nor despair. Perhaps that's wisdom.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Honor": 2
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

@@ -53,7 +53,7 @@
         "titleId": "ll_evt_discipline_blocked_title",
         "setupId": "ll_evt_discipline_blocked_setup",
         "title": "Promotion Blocked",
-        "setup": "The promotion list goes up. Your name should be on it — the experience, the time served, the battles. But it's not there.\n\n{LANCE_LEADER_SHORT} finds you staring at the roster.\n\n\"Your record, {PLAYER_NAME}. Too many marks. The captain won't sign off on promoting someone with your... history.\" They actually look sympathetic. \"Clean it up. Prove them wrong. Maybe next time.\"\n\nNext time. If there is one.",
+        "setup": "The promotion list goes up. Your name should be on it — the experience, the time served, the battles. But it's not there.\n\n{SERGEANT_NAME} finds you staring at the roster.\n\n\"Your record, {PLAYER_NAME}. Too many marks. The captain won't sign off on promoting someone with your... history.\" They actually look sympathetic. \"Clean it up. Prove them wrong. Maybe next time.\"\n\nNext time. If there is one.",
         "options": [
           {
             "id": "accept",
@@ -74,9 +74,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -1,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -84,7 +84,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT} nods. \"That's the spirit. Keep your head down, do good work. They'll notice.\" A setback, not a defeat. The path forward is clear, if harder.",
+            "outcome": "{SERGEANT_NAME} nods. \"That's the spirit. Keep your head down, do good work. They'll notice.\" A setback, not a defeat. The path forward is clear, if harder.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -111,9 +111,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -121,7 +121,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "\"Maybe.\" {LANCE_LEADER_SHORT} doesn't argue. \"But politics or not, you gave them ammunition. Stop doing that.\" Cold comfort. True, though.",
+            "outcome": "\"Maybe.\" {SERGEANT_NAME} doesn't argue. \"But politics or not, you gave them ammunition. Stop doing that.\" Cold comfort. True, though.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -148,23 +148,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -2,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -198,9 +198,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -208,7 +208,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT} grabs your shoulder. \"None of that. You're a soldier, act like one.\" Harsh. But sometimes harsh is what you need.",
+            "outcome": "{SERGEANT_NAME} grabs your shoulder. \"None of that. You're a soldier, act like one.\" Harsh. But sometimes harsh is what you need.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -270,12 +270,12 @@
         "titleId": "ll_evt_discipline_discharge_title",
         "setupId": "ll_evt_discipline_discharge_setup",
         "title": "Facing Discharge",
-        "setup": "\"Dishonorable discharge.\"\n\nThe words hang in the air. The captain doesn't look pleased to say them — or maybe they do. Hard to tell.\n\n\"Your record speaks for itself. Consistent failure to meet standards. Repeated infractions despite correction. You've left us no choice.\"\n\n{LANCE_NAME} watches from the edge of the assembly. {LANCE_LEADER_SHORT}'s face is stone.\n\n\"You have one opportunity to speak before the sentence is carried out. Make it count.\"",
+        "setup": "\"Dishonorable discharge.\"\n\nThe words hang in the air. The captain doesn't look pleased to say them — or maybe they do. Hard to tell.\n\n\"Your record speaks for itself. Consistent failure to meet standards. Repeated infractions despite correction. You've left us no choice.\"\n\nthe company watches from the edge of the assembly. {SERGEANT_NAME}'s face is stone.\n\n\"You have one opportunity to speak before the sentence is carried out. Make it count.\"",
         "options": [
           {
             "id": "accept",
             "text": "\"I have nothing to say. I accept the judgment.\"",
-            "tooltip": null,
+            "tooltip": "Accept discharge. 90-day re-enlistment block with this faction.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -291,11 +291,12 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
-              "fatigue_relief": 0
+              "fatigue_relief": 0,
+              "triggers_discharge": "dishonorable"
             },
             "effects_success": null,
             "effects_failure": null,
@@ -312,7 +313,7 @@
           {
             "id": "beg",
             "text": "\"Please — one more chance. I'll be different. I swear it.\"",
-            "tooltip": null,
+            "tooltip": "25% chance to avoid discharge. Failure: dishonorable discharge.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 25,
@@ -328,25 +329,26 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
-              "discipline": 0,
-              "lance_reputation": -20,
+              "scrutiny": 0,
+              "discipline": -5,
+              "soldierRep": -20,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
-              "fatigue_relief": 0
+              "fatigue_relief": 0,
+              "triggers_discharge": "dishonorable"
             },
             "flags_set": [],
             "flags_clear": [],
@@ -362,7 +364,7 @@
           {
             "id": "defiant",
             "text": "\"Discharge me then. This army never valued me anyway.\"",
-            "tooltip": null,
+            "tooltip": "Accept discharge with defiance. 90-day re-enlistment block.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -378,11 +380,12 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": -10,
               "medical_risk": 0,
-              "fatigue_relief": 0
+              "fatigue_relief": 0,
+              "triggers_discharge": "dishonorable"
             },
             "effects_success": null,
             "effects_failure": null,
@@ -399,7 +402,7 @@
           {
             "id": "service",
             "text": "\"My service record — the battles, the duties, the blood I've shed for {LORD_NAME}—\"",
-            "tooltip": null,
+            "tooltip": "40% chance: demotion but stay enlisted. Failure: discharged.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 40,
@@ -415,25 +418,26 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
-              "discipline": 0,
-              "lance_reputation": 0,
+              "scrutiny": 0,
+              "discipline": -5,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
-              "fatigue_relief": 0
+              "fatigue_relief": 0,
+              "triggers_discharge": "dishonorable"
             },
             "flags_set": [],
             "flags_clear": [],
@@ -500,7 +504,7 @@
         "titleId": "ll_evt_discipline_extra_duty_title",
         "setupId": "ll_evt_discipline_extra_duty_setup",
         "title": "Extra Duty",
-        "setup": "The duty roster goes up. Your name's on it. Again. And again. And twice more after that.\n\nExtra duty — the army's favorite corrective measure. Latrine digging, night watch, hauling water, whatever's worst. Your infractions have been noticed, and this is the price.\n\n{LANCE_LEADER_SHORT} shrugs when you look at them. \"Out of my hands. Sergeant's orders.\"\n\nA week of this, minimum.",
+        "setup": "The duty roster goes up. Your name's on it. Again. And again. And twice more after that.\n\nExtra duty — the army's favorite corrective measure. Latrine digging, night watch, hauling water, whatever's worst. Your infractions have been noticed, and this is the price.\n\n{SERGEANT_NAME} shrugs when you look at them. \"Out of my hands. Sergeant's orders.\"\n\nA week of this, minimum.",
         "options": [
           {
             "id": "accept",
@@ -521,9 +525,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -2,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -558,9 +562,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -595,9 +599,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -3,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -632,9 +636,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -725,9 +729,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -2,
-              "lance_reputation": 10,
+              "soldierRep": 10,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -762,23 +766,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -3,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -812,9 +816,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -3,
-              "lance_reputation": -15,
+              "soldierRep": -15,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -822,7 +826,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "\"Interesting.\" The captain makes notes. \"We'll be speaking to these individuals.\" You've deflected heat. But someone's going to know you named names.",
+            "outcome": "\"Interesting.\" The captain makes notes. \"We'll be speaking to these individuals.\" You've deflected scrutiny. But someone's going to know you named names.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -849,23 +853,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -4,
-              "lance_reputation": 15,
+              "soldierRep": 15,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -934,7 +938,7 @@
         "titleId": "ll_evt_discipline_warning_title",
         "setupId": "ll_evt_discipline_warning_setup",
         "title": "On Notice",
-        "setup": "{LANCE_LEADER_SHORT} doesn't look happy.\n\n\"You're on notice, {PLAYER_NAME}. The sergeant's been keeping track — late to muster, sloppy kit, that business with the—\" they wave a hand. \"Doesn't matter. Point is, you're building a reputation, and not the good kind.\"\n\nThey lower their voice.\n\n\"I can only cover for you so many times. Get it together.\"",
+        "setup": "{SERGEANT_NAME} doesn't look happy.\n\n\"You're on notice, {PLAYER_NAME}. The sergeant's been keeping track — late to muster, sloppy kit, that business with the—\" they wave a hand. \"Doesn't matter. Point is, you're building a reputation, and not the good kind.\"\n\nThey lower their voice.\n\n\"I can only cover for you so many times. Get it together.\"",
         "options": [
           {
             "id": "apologize",
@@ -955,9 +959,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -1,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -965,7 +969,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT} nods slowly. \"See that it doesn't.\" The warning's been delivered. Ball's in your court now.",
+            "outcome": "{SERGEANT_NAME} nods slowly. \"See that it doesn't.\" The warning's been delivered. Ball's in your court now.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -992,9 +996,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1002,7 +1006,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT}'s expression hardens. \"There are always circumstances. The question is whether you rise above them.\" They walk away. Not convinced.",
+            "outcome": "{SERGEANT_NAME}'s expression hardens. \"There are always circumstances. The question is whether you rise above them.\" They walk away. Not convinced.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -1029,9 +1033,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1039,7 +1043,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "\"I don't want to hear it.\" {LANCE_LEADER_SHORT} cuts you off. \"Everyone's got complaints. Not everyone makes them the camp's problem.\" The message is clear: shut up and soldier.",
+            "outcome": "\"I don't want to hear it.\" {SERGEANT_NAME} cuts you off. \"Everyone's got complaints. Not everyone makes them the camp's problem.\" The message is clear: shut up and soldier.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -1066,9 +1070,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -1,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1089,7 +1093,7 @@
       "variants": {}
     },
     {
-      "id": "heat_audit",
+      "id": "scrutiny_audit",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -1109,7 +1113,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "heat_7"
+          "scrutiny_7"
         ],
         "any": [],
         "time_of_day": [
@@ -1135,8 +1139,8 @@
         }
       },
       "content": {
-        "titleId": "ll_evt_heat_audit_title",
-        "setupId": "ll_evt_heat_audit_setup",
+        "titleId": "ll_evt_scrutiny_audit_title",
+        "setupId": "ll_evt_scrutiny_audit_setup",
         "title": "The Audit",
         "setup": "The captain's clerk finds you after morning muster. His smile doesn't reach his eyes.\n\n\"The captain's ordered a review of supply records. Your name came up several times — requisitions, distributions, inventory counts.\" He produces a ledger. \"Some discrepancies need explaining.\"\n\nThis is it. The numbers don't add up because you made sure they wouldn't. The question is whether you can talk your way out, or if the noose is already tightening.\n\n\"The captain will see you at midday. I suggest you have answers ready.\"",
         "options": [
@@ -1159,9 +1163,9 @@
               "items": []
             },
             "effects": {
-              "heat": -3,
+              "scrutiny": -3,
               "discipline": 3,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1174,8 +1178,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_audit_opt_honest_text",
-            "resultTextId": "ll_evt_heat_audit_opt_honest_outcome"
+            "textId": "ll_evt_scrutiny_audit_opt_honest_text",
+            "resultTextId": "ll_evt_scrutiny_audit_opt_honest_outcome"
           },
           {
             "id": "excuse",
@@ -1196,23 +1200,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": -2,
+              "scrutiny": -2,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 2,
+              "scrutiny": 2,
               "discipline": 2,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1223,9 +1227,9 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_audit_opt_excuse_text",
-            "resultTextId": "ll_evt_heat_audit_opt_excuse_outcome",
-            "resultFailureTextId": "ll_evt_heat_audit_opt_excuse_outcome_failure"
+            "textId": "ll_evt_scrutiny_audit_opt_excuse_text",
+            "resultTextId": "ll_evt_scrutiny_audit_opt_excuse_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_audit_opt_excuse_outcome_failure"
           },
           {
             "id": "implicate",
@@ -1246,9 +1250,9 @@
               "items": []
             },
             "effects": {
-              "heat": -5,
+              "scrutiny": -5,
               "discipline": 2,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1261,8 +1265,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_audit_opt_implicate_text",
-            "resultTextId": "ll_evt_heat_audit_opt_implicate_outcome"
+            "textId": "ll_evt_scrutiny_audit_opt_implicate_text",
+            "resultTextId": "ll_evt_scrutiny_audit_opt_implicate_outcome"
           },
           {
             "id": "records",
@@ -1283,23 +1287,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": -4,
+              "scrutiny": -4,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 3,
+              "scrutiny": 3,
               "discipline": 4,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1310,16 +1314,16 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_audit_opt_records_text",
-            "resultTextId": "ll_evt_heat_audit_opt_records_outcome",
-            "resultFailureTextId": "ll_evt_heat_audit_opt_records_outcome_failure"
+            "textId": "ll_evt_scrutiny_audit_opt_records_text",
+            "resultTextId": "ll_evt_scrutiny_audit_opt_records_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_audit_opt_records_outcome_failure"
           }
         ]
       },
       "variants": {}
     },
     {
-      "id": "heat_exposed",
+      "id": "scrutiny_exposed",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -1339,7 +1343,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "heat_10"
+          "scrutiny_10"
         ],
         "any": [],
         "time_of_day": [
@@ -1365,10 +1369,10 @@
         }
       },
       "content": {
-        "titleId": "ll_evt_heat_exposed_title",
-        "setupId": "ll_evt_heat_exposed_setup",
+        "titleId": "ll_evt_scrutiny_exposed_title",
+        "setupId": "ll_evt_scrutiny_exposed_setup",
         "title": "Exposed",
-        "setup": "Guards. Four of them, armed, surrounding your tent at dawn.\n\n\"On your feet, soldier. Captain's orders. You're under arrest for theft of army supplies, falsification of records, and conduct unbecoming.\"\n\nNo warnings this time. No audits. They've built their case and now they're collecting.\n\n{LANCE_LEADER_SHORT} watches from a distance. Their expression is unreadable. They can't help you. Maybe they wouldn't if they could.\n\n\"Come quietly, or don't. Makes no difference to us.\"",
+        "setup": "Guards. Four of them, armed, surrounding your tent at dawn.\n\n\"On your feet, soldier. Captain's orders. You're under arrest for theft of army supplies, falsification of records, and conduct unbecoming.\"\n\nNo warnings this time. No audits. They've built their case and now they're collecting.\n\n{SERGEANT_NAME} watches from a distance. Their expression is unreadable. They can't help you. Maybe they wouldn't if they could.\n\n\"Come quietly, or don't. Makes no difference to us.\"",
         "options": [
           {
             "id": "surrender",
@@ -1389,9 +1393,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 5,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1404,8 +1408,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_exposed_opt_surrender_text",
-            "resultTextId": "ll_evt_heat_exposed_opt_surrender_outcome"
+            "textId": "ll_evt_scrutiny_exposed_opt_surrender_text",
+            "resultTextId": "ll_evt_scrutiny_exposed_opt_surrender_outcome"
           },
           {
             "id": "beg",
@@ -1426,23 +1430,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 3,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 5,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1453,9 +1457,9 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_exposed_opt_beg_text",
-            "resultTextId": "ll_evt_heat_exposed_opt_beg_outcome",
-            "resultFailureTextId": "ll_evt_heat_exposed_opt_beg_outcome_failure"
+            "textId": "ll_evt_scrutiny_exposed_opt_beg_text",
+            "resultTextId": "ll_evt_scrutiny_exposed_opt_beg_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_exposed_opt_beg_outcome_failure"
           },
           {
             "id": "fight",
@@ -1476,23 +1480,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 7,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1503,9 +1507,9 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_exposed_opt_fight_text",
-            "resultTextId": "ll_evt_heat_exposed_opt_fight_outcome",
-            "resultFailureTextId": "ll_evt_heat_exposed_opt_fight_outcome_failure"
+            "textId": "ll_evt_scrutiny_exposed_opt_fight_text",
+            "resultTextId": "ll_evt_scrutiny_exposed_opt_fight_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_exposed_opt_fight_outcome_failure"
           },
           {
             "id": "leverage",
@@ -1526,23 +1530,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
-              "lance_reputation": -30,
+              "soldierRep": -30,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 5,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1553,16 +1557,16 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_exposed_opt_leverage_text",
-            "resultTextId": "ll_evt_heat_exposed_opt_leverage_outcome",
-            "resultFailureTextId": "ll_evt_heat_exposed_opt_leverage_outcome_failure"
+            "textId": "ll_evt_scrutiny_exposed_opt_leverage_text",
+            "resultTextId": "ll_evt_scrutiny_exposed_opt_leverage_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_exposed_opt_leverage_outcome_failure"
           }
         ]
       },
       "variants": {}
     },
     {
-      "id": "heat_shakedown",
+      "id": "scrutiny_shakedown",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -1582,7 +1586,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "heat_5"
+          "scrutiny_5"
         ],
         "any": [],
         "time_of_day": [
@@ -1608,10 +1612,10 @@
         }
       },
       "content": {
-        "titleId": "ll_evt_heat_shakedown_title",
-        "setupId": "ll_evt_heat_shakedown_setup",
+        "titleId": "ll_evt_scrutiny_shakedown_title",
+        "setupId": "ll_evt_scrutiny_shakedown_setup",
         "title": "The Shakedown",
-        "setup": "\"Kit inspection! Everyone out, gear on the ground, NOW!\"\n\n{SERGEANT_NAME} — not your lance's sergeant, one of the captain's dogs — is tearing through the camp with two soldiers. Random inspection, they're calling it. But the way they looked at you when they announced it... this isn't random.\n\nYour kit is laid out. There's nothing obviously wrong with it. But if they look closely at the coin pouch, or check the false bottom in your pack...",
+        "setup": "\"Kit inspection! Everyone out, gear on the ground, NOW!\"\n\n{SERGEANT_NAME} — not your squad's sergeant, one of the captain's dogs — is tearing through the camp with two soldiers. Random inspection, they're calling it. But the way they looked at you when they announced it... this isn't random.\n\nYour kit is laid out. There's nothing obviously wrong with it. But if they look closely at the coin pouch, or check the false bottom in your pack...",
         "options": [
           {
             "id": "comply",
@@ -1632,23 +1636,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": -1,
+              "scrutiny": -1,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 2,
+              "scrutiny": 2,
               "discipline": 2,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1659,9 +1663,9 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_shakedown_opt_comply_text",
-            "resultTextId": "ll_evt_heat_shakedown_opt_comply_outcome",
-            "resultFailureTextId": "ll_evt_heat_shakedown_opt_comply_outcome_failure"
+            "textId": "ll_evt_scrutiny_shakedown_opt_comply_text",
+            "resultTextId": "ll_evt_scrutiny_shakedown_opt_comply_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_shakedown_opt_comply_outcome_failure"
           },
           {
             "id": "bribe",
@@ -1682,23 +1686,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": -2,
+              "scrutiny": -2,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 3,
+              "scrutiny": 3,
               "discipline": 3,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1709,9 +1713,9 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_shakedown_opt_bribe_text",
-            "resultTextId": "ll_evt_heat_shakedown_opt_bribe_outcome",
-            "resultFailureTextId": "ll_evt_heat_shakedown_opt_bribe_outcome_failure"
+            "textId": "ll_evt_scrutiny_shakedown_opt_bribe_text",
+            "resultTextId": "ll_evt_scrutiny_shakedown_opt_bribe_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_shakedown_opt_bribe_outcome_failure"
           },
           {
             "id": "distraction",
@@ -1732,9 +1736,9 @@
               "items": []
             },
             "effects": {
-              "heat": -2,
+              "scrutiny": -2,
               "discipline": 0,
-              "lance_reputation": -10,
+              "soldierRep": -10,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1747,8 +1751,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_shakedown_opt_distraction_text",
-            "resultTextId": "ll_evt_heat_shakedown_opt_distraction_outcome"
+            "textId": "ll_evt_scrutiny_shakedown_opt_distraction_text",
+            "resultTextId": "ll_evt_scrutiny_shakedown_opt_distraction_outcome"
           },
           {
             "id": "dump",
@@ -1769,23 +1773,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": -3,
+              "scrutiny": -3,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": -1,
+              "scrutiny": -1,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1796,16 +1800,16 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_shakedown_opt_dump_text",
-            "resultTextId": "ll_evt_heat_shakedown_opt_dump_outcome",
-            "resultFailureTextId": "ll_evt_heat_shakedown_opt_dump_outcome_failure"
+            "textId": "ll_evt_scrutiny_shakedown_opt_dump_text",
+            "resultTextId": "ll_evt_scrutiny_shakedown_opt_dump_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_shakedown_opt_dump_outcome_failure"
           }
         ]
       },
       "variants": {}
     },
     {
-      "id": "heat_warning",
+      "id": "scrutiny_warning",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -1825,7 +1829,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "heat_3"
+          "scrutiny_3"
         ],
         "any": [],
         "time_of_day": [
@@ -1851,14 +1855,14 @@
         }
       },
       "content": {
-        "titleId": "ll_evt_heat_warning_title",
-        "setupId": "ll_evt_heat_warning_setup",
+        "titleId": "ll_evt_scrutiny_warning_title",
+        "setupId": "ll_evt_scrutiny_warning_setup",
         "title": "The Warning",
-        "setup": "{LANCE_LEADER_SHORT} pulls you aside after evening meal. Their voice is low, eyes checking that no one's close enough to hear.\n\n\"I'm going to say this once, {PLAYER_NAME}. Whatever you're doing — the extra coins, the supply discrepancies, the 'gifts' from merchants — people are starting to notice.\"\n\nThey lean closer.\n\n\"I don't care what you do on your own time. But if it comes back on {LANCE_NAME}, we're going to have a problem. Understand?\"",
+        "setup": "{SERGEANT_NAME} pulls you aside after evening meal. Their voice is low, eyes checking that no one's close enough to hear.\n\n\"I'm going to say this once, {PLAYER_NAME}. Whatever you're doing — the extra coins, the supply discrepancies, the 'gifts' from merchants — people are starting to notice.\"\n\nThey lean closer.\n\n\"I don't care what you do on your own time. But if it comes back on the company, we're going to have a problem. Understand?\"",
         "options": [
           {
             "id": "deny",
-            "text": "\"I don't know what you're talking about, {LANCE_LEADER_RANK}.\"",
+            "text": "\"I don't know what you're talking about, {SERGEANT}.\"",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -1875,9 +1879,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1885,13 +1889,13 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT} stares at you for a long moment. \"Right. You don't.\" They walk away. The warning's been given. What you do with it is your business.",
+            "outcome": "{SERGEANT_NAME} stares at you for a long moment. \"Right. You don't.\" They walk away. The warning's been given. What you do with it is your business.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_warning_opt_deny_text",
-            "resultTextId": "ll_evt_heat_warning_opt_deny_outcome"
+            "textId": "ll_evt_scrutiny_warning_opt_deny_text",
+            "resultTextId": "ll_evt_scrutiny_warning_opt_deny_outcome"
           },
           {
             "id": "acknowledge",
@@ -1912,9 +1916,9 @@
               "items": []
             },
             "effects": {
-              "heat": -1,
+              "scrutiny": -1,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1922,13 +1926,13 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "A curt nod. \"See that you are.\" {LANCE_LEADER_SHORT} leaves. You've been warned — by someone who could've reported you instead. That's worth something.",
+            "outcome": "A curt nod. \"See that you are.\" {SERGEANT_NAME} leaves. You've been warned — by someone who could've reported you instead. That's worth something.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_warning_opt_acknowledge_text",
-            "resultTextId": "ll_evt_heat_warning_opt_acknowledge_outcome"
+            "textId": "ll_evt_scrutiny_warning_opt_acknowledge_text",
+            "resultTextId": "ll_evt_scrutiny_warning_opt_acknowledge_outcome"
           },
           {
             "id": "deflect",
@@ -1949,9 +1953,9 @@
               "items": []
             },
             "effects": {
-              "heat": 1,
+              "scrutiny": 1,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1959,13 +1963,13 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "\"Everyone's NOT doing it,\" {LANCE_LEADER_SHORT} snaps. \"And the ones who are? They're better at it than you.\" The words sting because they're true.",
+            "outcome": "\"Everyone's NOT doing it,\" {SERGEANT_NAME} snaps. \"And the ones who are? They're better at it than you.\" The words sting because they're true.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_warning_opt_deflect_text",
-            "resultTextId": "ll_evt_heat_warning_opt_deflect_outcome"
+            "textId": "ll_evt_scrutiny_warning_opt_deflect_text",
+            "resultTextId": "ll_evt_scrutiny_warning_opt_deflect_outcome"
           },
           {
             "id": "ask_help",
@@ -1986,9 +1990,9 @@
               "items": []
             },
             "effects": {
-              "heat": -2,
+              "scrutiny": -2,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1996,20 +2000,20 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT} sighs. \"Keep your head down for a while. Volunteer for the shit jobs. Be visible doing honest work.\" They pause. \"And stop. Whatever it is, just stop.\"",
+            "outcome": "{SERGEANT_NAME} sighs. \"Keep your head down for a while. Volunteer for the shit jobs. Be visible doing honest work.\" They pause. \"And stop. Whatever it is, just stop.\"",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_warning_opt_ask_help_text",
-            "resultTextId": "ll_evt_heat_warning_opt_ask_help_outcome"
+            "textId": "ll_evt_scrutiny_warning_opt_ask_help_text",
+            "resultTextId": "ll_evt_scrutiny_warning_opt_ask_help_outcome"
           }
         ]
       },
       "variants": {}
     },
     {
-      "id": "lance_bonded",
+      "id": "squad_bonded",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -2029,7 +2033,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "lance_rep_40"
+          "soldier_rep_40"
         ],
         "any": [],
         "time_of_day": [
@@ -2058,7 +2062,7 @@
         "titleId": "ll_evt_lance_bonded_title",
         "setupId": "ll_evt_lance_bonded_setup",
         "title": "Bonded",
-        "setup": "{LANCE_LEADER_SHORT} pulls you aside after weapons inspection. Their voice is barely above a whisper.\n\n\"The sergeant's planning a kit inspection tomorrow. The captain's hound — looking for contraband, extra rations, anything they can nail someone for.\"\n\nThey meet your eyes.\n\n\"Thought you should know. In case you've got anything that needs... relocating.\"\n\nThis is a warning. The kind you don't give to just anyone. The kind that could get {LANCE_LEADER_SHORT} in serious trouble if anyone found out.\n\nYou're family now. {LANCE_NAME} protects its own.",
+        "setup": "{SERGEANT_NAME} pulls you aside after weapons inspection. Their voice is barely above a whisper.\n\n\"The sergeant's planning a kit inspection tomorrow. The captain's hound — looking for contraband, extra rations, anything they can nail someone for.\"\n\nThey meet your eyes.\n\n\"Thought you should know. In case you've got anything that needs... relocating.\"\n\nThis is a warning. The kind you don't give to just anyone. The kind that could get {SERGEANT_NAME} in serious trouble if anyone found out.\n\nYou're family now. the company protects its own.",
         "options": [
           {
             "id": "grateful",
@@ -2079,9 +2083,9 @@
               "items": []
             },
             "effects": {
-              "heat": -3,
+              "scrutiny": -3,
               "discipline": 0,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2089,7 +2093,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT} nods. \"Just don't make me regret it.\" You won't. This is what a lance is supposed to be — watching each other's backs. Even when the enemy wears the same uniform.",
+            "outcome": "{SERGEANT_NAME} nods. \"Just don't make me regret it.\" You won't. This is what a squad is supposed to be — watching each other's backs. Even when the enemy wears the same uniform.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2116,9 +2120,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 3,
+              "soldierRep": 3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2126,7 +2130,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "\"Good.\" {LANCE_LEADER_SHORT} looks relieved. \"Keep it that way.\" They didn't have to warn you. They did anyway. That means something.",
+            "outcome": "\"Good.\" {SERGEANT_NAME} looks relieved. \"Keep it that way.\" They didn't have to warn you. They did anyway. That means something.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2136,7 +2140,7 @@
           },
           {
             "id": "share",
-            "text": "\"Anyone else in the lance need to know?\"",
+            "text": "\"Anyone else in the squad need to know?\"",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -2153,9 +2157,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 10,
+              "soldierRep": 10,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2163,7 +2167,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT} considers. \"I'll handle it. Quietly.\" They move off to warn the others. You're not the only one they're protecting. But you were first. That means something too.",
+            "outcome": "{SERGEANT_NAME} considers. \"I'll handle it. Quietly.\" They move off to warn the others. You're not the only one they're protecting. But you were first. That means something too.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2190,9 +2194,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 15,
+              "soldierRep": 15,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2200,7 +2204,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "\"You sure?\" You nod. Over the next hour, quiet words are exchanged. By morning, the lance is clean. The inspection finds nothing. {LANCE_LEADER_SHORT} never gets connected to the warning.",
+            "outcome": "\"You sure?\" You nod. Over the next hour, quiet words are exchanged. By morning, the squad is clean. The inspection finds nothing. {SERGEANT_NAME} never gets connected to the warning.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2213,7 +2217,7 @@
       "variants": {}
     },
     {
-      "id": "lance_isolated",
+      "id": "squad_isolated",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -2233,7 +2237,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "lance_rep_0"
+          "soldier_rep_0"
         ],
         "any": [],
         "time_of_day": [
@@ -2262,7 +2266,7 @@
         "titleId": "ll_evt_lance_isolated_title",
         "setupId": "ll_evt_lance_isolated_setup",
         "title": "Isolated",
-        "setup": "The fire circle again. But tonight, the gaps around you are wider. Conversations die when you approach. Laughter stops.\n\n{SOLDIER_NAME} doesn't even look up when you sit down. {VETERAN_1_NAME} finds somewhere else to be. {RECRUIT_NAME} follows them.\n\n{LANCE_LEADER_SHORT} watches from across the fire. Measuring. Not intervening.\n\nYou're still part of {LANCE_NAME}. Technically. But the warmth is gone. You're a stranger wearing a familiar uniform.\n\nThis is what isolation feels like.",
+        "setup": "The fire circle again. But tonight, the gaps around you are wider. Conversations die when you approach. Laughter stops.\n\n{SOLDIER_NAME} doesn't even look up when you sit down. {VETERAN_1_NAME} finds somewhere else to be. {RECRUIT_NAME} follows them.\n\n{SERGEANT_NAME} watches from across the fire. Measuring. Not intervening.\n\nYou're still part of the company. Technically. But the warmth is gone. You're a stranger wearing a familiar uniform.\n\nThis is what isolation feels like.",
         "options": [
           {
             "id": "approach",
@@ -2283,23 +2287,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 3,
+              "soldierRep": 3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": -2,
+              "soldierRep": -2,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2333,9 +2337,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2370,23 +2374,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": -5,
+              "soldierRep": -5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2403,7 +2407,7 @@
           },
           {
             "id": "leader",
-            "text": "Find {LANCE_LEADER_SHORT}. Ask what happened.",
+            "text": "Find {SERGEANT_NAME}. Ask what happened.",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -2420,9 +2424,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 2,
+              "soldierRep": 2,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2443,7 +2447,7 @@
       "variants": {}
     },
     {
-      "id": "lance_sabotage",
+      "id": "squad_sabotage",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -2463,7 +2467,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "lance_rep_0"
+          "soldier_rep_0"
         ],
         "any": [],
         "time_of_day": [
@@ -2492,7 +2496,7 @@
         "titleId": "ll_evt_lance_sabotage_title",
         "setupId": "ll_evt_lance_sabotage_setup",
         "title": "Sabotage",
-        "setup": "Your kit is wrong.\n\nNothing obvious — nothing that would fail inspection. But your straps are loosened. Your blade is dull. Your waterskin has a slow leak you didn't notice until half your water was gone.\n\nSomeone did this. Someone in {LANCE_NAME}.\n\n{LANCE_LEADER_SHORT} isn't going to help. They're part of this, or they're looking the other way. Same result.\n\nYou're on your own. In a unit that wants you gone — or worse.",
+        "setup": "Your kit is wrong.\n\nNothing obvious — nothing that would fail inspection. But your straps are loosened. Your blade is dull. Your waterskin has a slow leak you didn't notice until half your water was gone.\n\nSomeone did this. Someone in the company.\n\n{SERGEANT_NAME} isn't going to help. They're part of this, or they're looking the other way. Same result.\n\nYou're on your own. In a unit that wants you gone — or worse.",
         "options": [
           {
             "id": "endure",
@@ -2513,9 +2517,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2550,23 +2554,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
-              "lance_reputation": -5,
+              "soldierRep": -5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2583,7 +2587,7 @@
           },
           {
             "id": "report",
-            "text": "Take it to the sergeant. This is beyond lance politics.",
+            "text": "Take it to the sergeant. This is beyond squad politics.",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -2600,9 +2604,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2620,7 +2624,7 @@
           },
           {
             "id": "transfer",
-            "text": "Request reassignment. This lance is done with you.",
+            "text": "Request reassignment. This squad is done with you.",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -2637,9 +2641,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2647,7 +2651,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT} doesn't argue. The paperwork goes through. New lance, new people, fresh start. You're leaving enemies behind. Whether you're also leaving the problem behind... time will tell.",
+            "outcome": "{SERGEANT_NAME} doesn't argue. The paperwork goes through. New squad, new people, fresh start. You're leaving enemies behind. Whether you're also leaving the problem behind... time will tell.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2660,7 +2664,7 @@
       "variants": {}
     },
     {
-      "id": "lance_trusted",
+      "id": "squad_trusted",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -2680,7 +2684,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "lance_rep_20"
+          "soldier_rep_20"
         ],
         "any": [],
         "time_of_day": [
@@ -2730,9 +2734,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 10,
+              "soldierRep": 10,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2767,9 +2771,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 15,
+              "soldierRep": 15,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2804,9 +2808,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": -10,
+              "soldierRep": -10,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2841,9 +2845,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2858,6 +2862,238 @@
             "advances_onboarding": false,
             "textId": "ll_evt_lance_trusted_opt_leverage_text",
             "resultTextId": "ll_evt_lance_trusted_opt_leverage_outcome"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "medical_onset",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "medical_2"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_medical_onset_title",
+        "setupId": "ll_evt_medical_onset_setup",
+        "title": "Feeling Unwell",
+        "setup": "Something's wrong.\n\nStarts small. Fatigue that won't lift. An ache that wasn't there yesterday. You tell yourself it's nothing. The march. Bad sleep. The usual.\n\nBut it's not lifting.\n\n{COMRADE_NAME} catches you wincing. \"You alright?\"",
+        "options": [
+          {
+            "id": "rest",
+            "text": "\"Just tired. Need sleep.\"",
+            "tooltip": "Rest it off. Safe, minor recovery.",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": -1,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You sleep hard that night. By morning, it's fading. Maybe nothing after all.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_onset_opt_rest_text",
+            "resultTextId": "ll_evt_medical_onset_opt_rest_outcome"
+          },
+          {
+            "id": "push_through",
+            "text": "\"I'm fine. Back to it.\"",
+            "tooltip": "Push through. 50% chance it gets worse.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 2,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 1,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You push through. It fades. Body knows what it's doing.",
+            "outcome_failure": "Doesn't fade. Worse by evening. Should've listened.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_onset_opt_push_text",
+            "resultTextId": "ll_evt_medical_onset_opt_push_outcome",
+            "resultFailureTextId": "ll_evt_medical_onset_opt_push_outcome_failure"
+          },
+          {
+            "id": "see_surgeon",
+            "text": "\"Should see the surgeon.\"",
+            "tooltip": "Get proper treatment. Clears condition.",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": -2,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The surgeon looks you over. \"Caught it early. Smart.\" Day's treatment. Back to normal.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_onset_opt_surgeon_text",
+            "resultTextId": "ll_evt_medical_onset_opt_surgeon_outcome"
+          },
+          {
+            "id": "herbal",
+            "text": "\"Got herbs in my kit.\"",
+            "tooltip": "Self-treat. 60% success, +Medicine XP.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 60,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "Medicine": 10
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": -1,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "Tastes terrible. Works anyway. Functional by morning.",
+            "outcome_failure": "Herbs don't help. Still aching. Needed a professional.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_onset_opt_herbal_text",
+            "resultTextId": "ll_evt_medical_onset_opt_herbal_outcome",
+            "resultFailureTextId": "ll_evt_medical_onset_opt_herbal_outcome_failure"
           }
         ]
       },
@@ -2913,7 +3149,7 @@
         "titleId": "ll_evt_medical_complication_title",
         "setupId": "ll_evt_medical_complication_setup",
         "title": "Complication",
-        "setup": "Fever hits in the night.\n\nThe {CONDITION_TYPE} has become something else — something worse. {COMPLICATION_NAME}, the surgeon would probably call it. Infection, inflammation, your body turning against itself.\n\nYou wake drenched in sweat, shaking. {LANCE_MATE_NAME} is there, looking worried.\n\n\"You're burning up. Can you walk?\"\n\nWalking sounds impossible. The surgeon's tent sounds very far away.",
+        "setup": "Fever hits in the night.\n\nThe {CONDITION_TYPE} has become something else — something worse. {COMPLICATION_NAME}, the surgeon would probably call it. Infection, inflammation, your body turning against itself.\n\nYou wake drenched in sweat, shaking. {COMRADE_NAME} is there, looking worried.\n\n\"You're burning up. Can you walk?\"\n\nWalking sounds impossible. The surgeon's tent sounds very far away.",
         "options": [
           {
             "id": "help",
@@ -2934,9 +3170,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2944,7 +3180,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_MATE_NAME} half-carries you across camp. The surgeon takes one look and starts working. Treatment is aggressive — and necessary. You're going to be out for a while. But you're going to live.",
+            "outcome": "{COMRADE_NAME} half-carries you across camp. The surgeon takes one look and starts working. Treatment is aggressive — and necessary. You're going to be out for a while. But you're going to live.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2971,23 +3207,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": -2,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 1,
               "fatigue_relief": 0
             },
@@ -3021,30 +3257,30 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": -2,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 1,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "Whatever you had stashed works. The fever eases. Not cured, but stable. {LANCE_MATE_NAME} watches through the night. By dawn, you're coherent again.",
-            "outcome_failure": "Wrong medicine. Or not enough. The fever climbs. You don't remember {LANCE_MATE_NAME} carrying you to the surgeon. You're told about it later.",
+            "outcome": "Whatever you had stashed works. The fever eases. Not cured, but stable. {COMRADE_NAME} watches through the night. By dawn, you're coherent again.",
+            "outcome_failure": "Wrong medicine. Or not enough. The fever climbs. You don't remember {COMRADE_NAME} carrying you to the surgeon. You're told about it later.",
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
@@ -3053,8 +3289,8 @@
             "resultFailureTextId": "ll_evt_medical_complication_opt_medicine_outcome_failure"
           },
           {
-            "id": "lance_leader",
-            "text": "\"Get {LANCE_LEADER_SHORT}. They'll know what to do.\"",
+            "id": "get_sergeant",
+            "text": "\"Get {SERGEANT_NAME}. They'll know what to do.\"",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -3071,9 +3307,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -3081,7 +3317,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT} arrives, assesses, takes charge. \"Surgeon. Now. No arguments.\" They organize a carry. The surgeon isn't gentle, but they're effective. {LANCE_LEADER_SHORT} checks on you twice. That means something.",
+            "outcome": "{SERGEANT_NAME} arrives, assesses, takes charge. \"Surgeon. Now. No arguments.\" They organize a carry. The surgeon isn't gentle, but they're effective. {SERGEANT_NAME} checks on you twice. That means something.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -3143,7 +3379,7 @@
         "titleId": "ll_evt_medical_emergency_title",
         "setupId": "ll_evt_medical_emergency_setup",
         "title": "Emergency",
-        "setup": "You collapse.\n\nOne moment you're standing, the next you're on the ground. Voices around you, distant and echoey. Someone's shouting for the surgeon. Someone else is pressing something against the {CONDITION_LOCATION}.\n\nThe sky is very bright. Or very dark. Hard to tell.\n\n{LANCE_LEADER_SHORT}'s face swims into view. Their mouth moves. The words don't reach you.\n\nEverything goes sideways.",
+        "setup": "You collapse.\n\nOne moment you're standing, the next you're on the ground. Voices around you, distant and echoey. Someone's shouting for the surgeon. Someone else is pressing something against the {CONDITION_LOCATION}.\n\nThe sky is very bright. Or very dark. Hard to tell.\n\n{SERGEANT_NAME}'s face swims into view. Their mouth moves. The words don't reach you.\n\nEverything goes sideways.",
         "options": [
           {
             "id": "fight",
@@ -3164,23 +3400,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -3214,9 +3450,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -3224,7 +3460,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "You stop fighting. The darkness is almost peaceful. When you wake, it's to the surgeon's tent, the smell of herbs, and {LANCE_MATE_NAME} dozing in a chair beside you. Still here.",
+            "outcome": "You stop fighting. The darkness is almost peaceful. When you wake, it's to the surgeon's tent, the smell of herbs, and {COMRADE_NAME} dozing in a chair beside you. Still here.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -3251,29 +3487,29 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "Words come out. Maybe coherent. {LANCE_LEADER_SHORT} nods. \"We know. Rest now.\" You said what needed saying.",
+            "outcome": "Words come out. Maybe coherent. {SERGEANT_NAME} nods. \"We know. Rest now.\" You said what needed saying.",
             "outcome_failure": "Just sounds. No words. Then nothing.",
             "injury_risk": null,
             "triggers_event": null,
@@ -3336,7 +3572,7 @@
         "titleId": "ll_evt_medical_worsening_title",
         "setupId": "ll_evt_medical_worsening_setup",
         "title": "Worsening",
-        "setup": "It's worse today.\n\nWhat started as a manageable {CONDITION_TYPE} has become something harder to ignore. The {SYMPTOM_1} is constant now. {SYMPTOM_2} makes sleep difficult.\n\nYou've been pushing through. The army doesn't stop for one soldier's discomfort. But your body is sending messages you can't keep ignoring.\n\n{LANCE_MATE_NAME} notices you wincing. \"You should see the surgeon.\"\n\nMaybe they're right.",
+        "setup": "It's worse today.\n\nWhat started as a manageable {CONDITION_TYPE} has become something harder to ignore. The {SYMPTOM_1} is constant now. {SYMPTOM_2} makes sleep difficult.\n\nYou've been pushing through. The army doesn't stop for one soldier's discomfort. But your body is sending messages you can't keep ignoring.\n\n{COMRADE_NAME} notices you wincing. \"You should see the surgeon.\"\n\nMaybe they're right.",
         "options": [
           {
             "id": "surgeon",
@@ -3357,9 +3593,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -3394,30 +3630,30 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": -1,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 2,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "outcome": "You power through. The symptoms peak, then start to fade. Natural recovery, or maybe just stubbornness. Either way, you're still standing.",
-            "outcome_failure": "Your body disagrees. The {SYMPTOM_1} spikes. You stagger. {LANCE_MATE_NAME} catches you. \"Get the surgeon. Now.\"",
+            "outcome_failure": "Your body disagrees. The {SYMPTOM_1} spikes. You stagger. {COMRADE_NAME} catches you. \"Get the surgeon. Now.\"",
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
@@ -3444,9 +3680,9 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": -2,
               "fatigue_relief": 0
             },
@@ -3481,23 +3717,23 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": -2,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 1,
               "fatigue_relief": 0
             },

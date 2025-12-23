@@ -1,6 +1,5 @@
 using System;
 using System.Text;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -10,7 +9,7 @@ using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 
 namespace Enlisted.Features.Conditions
 {
@@ -97,14 +96,9 @@ namespace Enlisted.Features.Conditions
             args.optionLeaveType = GameMenuOption.LeaveType.Manage;
 
             // Urgent indicator if condition is worsening
-            if (IsConditionWorsening())
-            {
-                args.Tooltip = new TextObject("{=medical_urgent}[!] Your condition requires attention.");
-            }
-            else
-            {
-                args.Tooltip = new TextObject("{=medical_tooltip}Visit the surgeon's tent.");
-            }
+            args.Tooltip = IsConditionWorsening()
+                ? new TextObject("{=medical_urgent}[!] Your condition requires attention.")
+                : new TextObject("{=medical_tooltip}Visit the surgeon's tent.");
 
             return true;
         }
@@ -136,7 +130,7 @@ namespace Enlisted.Features.Conditions
                 MedicalMenuId,
                 "{MEDICAL_MENU_TEXT}",
                 OnMedicalMenuInit,
-                args => true,
+                _ => true,
                 null,
                 OnMedicalMenuTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
@@ -152,7 +146,7 @@ namespace Enlisted.Features.Conditions
                     args.Tooltip = new TextObject("{=medical_surgeon_hint}Surgeon will treat your condition. Recovery rate +100%. Costs 2 fatigue.");
                     return HasTreatableCondition();
                 },
-                args => ApplyTreatment("surgeon"),
+                _ => ApplyTreatment("surgeon"),
                 false, 1);
 
             // Self-treat (if Field Medic profession)
@@ -161,7 +155,7 @@ namespace Enlisted.Features.Conditions
                 "medical_self_treat",
                 "{=medical_self_treat}Treat Yourself (Field Medic)",
                 IsSelfTreatAvailable,
-                args => ApplyTreatment("self"),
+                _ => ApplyTreatment("self"),
                 false, 2);
 
             // Purchase herbal remedy
@@ -170,7 +164,7 @@ namespace Enlisted.Features.Conditions
                 "medical_herbal",
                 "{HERBAL_OPTION_TEXT}",
                 IsHerbalAvailable,
-                args => ApplyTreatment("herbal"),
+                _ => ApplyTreatment("herbal"),
                 false, 3);
 
             // Rest in camp (light duty)
@@ -184,7 +178,7 @@ namespace Enlisted.Features.Conditions
                     args.Tooltip = new TextObject("{=medical_rest_hint}Skip activities for today. Recovery rate +50%. No duty events while resting.");
                     return true;
                 },
-                args => ApplyRest(),
+                _ => ApplyRest(),
                 false, 4);
 
             // View detailed status
@@ -197,7 +191,7 @@ namespace Enlisted.Features.Conditions
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                     return true;
                 },
-                args => ShowDetailedConditionPopup(),
+                _ => ShowDetailedConditionPopup(),
                 false, 5);
 
             // Back
@@ -210,7 +204,7 @@ namespace Enlisted.Features.Conditions
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                args => GameMenu.SwitchToMenu("enlisted_status"),
+                _ => GameMenu.SwitchToMenu("enlisted_status"),
                 true, 99);
         }
 
@@ -327,21 +321,14 @@ namespace Enlisted.Features.Conditions
 
         private bool IsSelfTreatAvailable(MenuCallbackArgs args)
         {
-            // Check for Field Medic profession
-            var duties = Enlisted.Features.Assignments.Behaviors.EnlistedDutiesBehavior.Instance;
-            var hasFieldMedic = duties?.ActiveDuties?.Contains("field_medic") == true ||
-                               duties?.ActiveDuties?.Contains("medic") == true;
-
-            if (!hasFieldMedic)
-            {
-                return false;
-            }
-
             var cond = PlayerConditionBehavior.Instance;
             if (cond?.State == null || !cond.State.HasAnyCondition)
             {
                 return false;
             }
+
+            // Placeholder: currently no Field Medic profession check implemented
+            // return false;
 
             // Can only self-treat minor/moderate conditions
             var isSevere = cond.State.InjuryDaysRemaining > 7 || cond.State.IllnessDaysRemaining > 7;
@@ -354,7 +341,7 @@ namespace Enlisted.Features.Conditions
 
             args.optionLeaveType = GameMenuOption.LeaveType.Manage;
             args.Tooltip = new TextObject("{=medical_self_hint}Use your medical knowledge. Recovery rate +50%. Gain Medicine XP.");
-            return true;
+            return false; // Disabled until Field Medic profession is implemented
         }
 
         private bool IsHerbalAvailable(MenuCallbackArgs args)
@@ -420,7 +407,7 @@ namespace Enlisted.Features.Conditions
         {
             var cond = PlayerConditionBehavior.Instance;
             var enlistment = EnlistmentBehavior.Instance;
-            var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new PlayerConditionsConfig();
+            var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new Mod.Core.Config.PlayerConditionsConfig();
 
             if (cond?.IsEnabled() != true)
             {
@@ -473,7 +460,7 @@ namespace Enlisted.Features.Conditions
         private void ApplyRest()
         {
             var cond = PlayerConditionBehavior.Instance;
-            var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new PlayerConditionsConfig();
+            var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new Mod.Core.Config.PlayerConditionsConfig();
 
             if (cond?.IsEnabled() == true)
             {
@@ -539,8 +526,7 @@ namespace Enlisted.Features.Conditions
                     new TextObject("{=medical_detail_close}Close").ToString(),
                     string.Empty,
                     () => { },
-                    null),
-                false);
+                    null));
         }
     }
 }

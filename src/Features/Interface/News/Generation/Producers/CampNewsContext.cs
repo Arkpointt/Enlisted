@@ -2,7 +2,6 @@ using Enlisted.Features.Camp;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Interface.News.State;
-using Enlisted.Features.Schedule.Behaviors;
 using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
@@ -24,7 +23,7 @@ namespace Enlisted.Features.Interface.News.Generation.Producers
 
         public CampaignTriggerTrackerBehavior TriggerTracker { get; set; }
         public CampLifeBehavior CampLife { get; set; }
-        public ScheduleBehavior Schedule { get; set; }
+        // ScheduleBehavior deleted in Phase 1
 
         // Camp News state + owning behavior.
         public CampNewsState NewsState { get; set; }

@@ -5,12 +5,14 @@ using TaleWorlds.CampaignSystem;
 namespace Enlisted.Features.Escalation
 {
     /// <summary>
-    /// Persisted escalation tracks (Phase 4).
+    /// Persisted escalation tracks.
     ///
-    /// Ranges (per docs/research/escalation_system.md):
-    /// - Heat: 0–10
+    /// Ranges (per docs/Features/Core/core-gameplay.md):
+    /// - Scrutiny: 0–10
     /// - Discipline: 0–10
-    /// - Lance reputation: -50..+50
+    /// - Soldier reputation: -50..+50 (renamed from LanceReputation)
+    /// - Lord reputation: 0–100 (NEW)
+    /// - Officer reputation: 0–100 (NEW)
     /// - Medical risk: 0–5
     ///
     /// This class is intentionally "dumb storage". All rules live in EscalationManager.
@@ -18,30 +20,36 @@ namespace Enlisted.Features.Escalation
     [Serializable]
     public sealed class EscalationState
     {
-        public const int HeatMin = 0;
-        public const int HeatMax = 10;
+        public const int ScrutinyMin = 0;
+        public const int ScrutinyMax = 10;
         public const int DisciplineMin = 0;
         public const int DisciplineMax = 10;
-        public const int LanceReputationMin = -50;
-        public const int LanceReputationMax = 50;
+        public const int SoldierReputationMin = -50;
+        public const int SoldierReputationMax = 50;
+        public const int LordReputationMin = 0;
+        public const int LordReputationMax = 100;
+        public const int OfficerReputationMin = 0;
+        public const int OfficerReputationMax = 100;
         public const int MedicalRiskMin = 0;
         public const int MedicalRiskMax = 5;
 
         // Track values
-        public int Heat { get; set; }
+        public int Scrutiny { get; set; }
         public int Discipline { get; set; }
-        public int LanceReputation { get; set; }
+        public int SoldierReputation { get; set; }
+        public int LordReputation { get; set; }
+        public int OfficerReputation { get; set; }
         public int MedicalRisk { get; set; }
 
         // Timestamps used for passive decay rules.
         // We store "last raised time" for tracks where decay requires a quiet period.
-        public CampaignTime LastHeatRaisedTime { get; set; } = CampaignTime.Zero;
-        public CampaignTime LastHeatDecayTime { get; set; } = CampaignTime.Zero;
+        public CampaignTime LastScrutinyRaisedTime { get; set; } = CampaignTime.Zero;
+        public CampaignTime LastScrutinyDecayTime { get; set; } = CampaignTime.Zero;
 
         public CampaignTime LastDisciplineRaisedTime { get; set; } = CampaignTime.Zero;
         public CampaignTime LastDisciplineDecayTime { get; set; } = CampaignTime.Zero;
 
-        public CampaignTime LastLanceReputationDecayTime { get; set; } = CampaignTime.Zero;
+        public CampaignTime LastSoldierReputationDecayTime { get; set; } = CampaignTime.Zero;
 
         // Medical risk is special: it should reset when treated and decay only when resting.
         public CampaignTime LastMedicalRiskDecayTime { get; set; } = CampaignTime.Zero;
@@ -56,15 +64,330 @@ namespace Enlisted.Features.Escalation
         public Dictionary<string, CampaignTime> ThresholdStoryLastFired { get; set; } =
             new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
 
+        // Event system cooldown tracking (key = event id, value = last fired time).
+        // Used by EventSelector to prevent the same event from firing within its cooldown period.
+        public Dictionary<string, CampaignTime> EventLastFired { get; set; } =
+            new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+        // One-time events that have already fired (stored by event id).
+        // These events cannot fire again for the rest of the playthrough.
+        public HashSet<string> OneTimeEventsFired { get; set; } =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Pacing system: timestamp of the last narrative event delivered.
+        public CampaignTime LastNarrativeEventTime { get; set; } = CampaignTime.Zero;
+
+        // Pacing system: next window when an event can fire (set to random 3-5 days after last event).
+        public CampaignTime NextNarrativeEventWindow { get; set; } = CampaignTime.Zero;
+
+        // Global event pacing: tracks events across ALL automatic sources (EventPacingManager + MapIncidentManager).
+        // These enforce the limits from decision_events.pacing config to prevent event spam.
+        public CampaignTime LastAutoEventTime { get; set; } = CampaignTime.Zero;
+        public int AutoEventsToday { get; set; } = 0;
+        public int AutoEventDayNumber { get; set; } = -1;
+        public int AutoEventsThisWeek { get; set; } = 0;
+        public int AutoEventWeekNumber { get; set; } = -1;
+
+        // Quiet day flag: if true, no automatic events fire today (rolled once per day).
+        public bool IsQuietDay { get; set; } = false;
+
+        // Per-category cooldown tracking (key = category name, value = last fired time).
+        // Used by GlobalEventPacer to enforce per_category_cooldown_days config.
+        public Dictionary<string, CampaignTime> CategoryLastFired { get; set; } =
+            new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+        // Flag system: active flags and their expiration times.
+        // Key: flag name, Value: expiration time (CampaignTime.Never for permanent).
+        // Flags are temporary boolean states that gate access to decisions/events.
+        public Dictionary<string, CampaignTime> ActiveFlags { get; set; } =
+            new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+        // Chain event system: pending chain events scheduled for future delivery.
+        // Key: event ID, Value: scheduled delivery time.
+        // Used for delayed follow-up events (e.g., friend repays loan after 7 days).
+        public Dictionary<string, CampaignTime> PendingChainEvents { get; set; } =
+            new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+        // Onboarding system: tracks progress through introductory events based on experience track.
+        // Stage 0 = not started or complete, 1-3 = active onboarding stages.
+        // Experience track: "green", "seasoned", "veteran" - determines which onboarding content fires.
+        // Default to 0 (not started) so old saves and fresh games don't trigger false onboarding.
+        public int OnboardingStage { get; set; } = 0;
+        public string OnboardingTrack { get; set; } = string.Empty;
+        public CampaignTime OnboardingStartTime { get; set; } = CampaignTime.Zero;
+
+        /// <summary>
+        /// Checks if onboarding is still in progress (not yet complete).
+        /// </summary>
+        public bool IsOnboardingActive => OnboardingStage > 0 && OnboardingStage <= 3;
+
+        /// <summary>
+        /// Checks if the player is at a specific onboarding stage.
+        /// </summary>
+        public bool IsOnboardingStage(int stage) => OnboardingStage == stage;
+
+        /// <summary>
+        /// Advances to the next onboarding stage. Marks complete when stage 3 is finished.
+        /// </summary>
+        public void AdvanceOnboardingStage()
+        {
+            if (OnboardingStage >= 1 && OnboardingStage <= 3)
+            {
+                OnboardingStage++;
+                if (OnboardingStage > 3)
+                {
+                    OnboardingStage = 0; // 0 = complete
+                }
+            }
+        }
+
+        /// <summary>
+        /// Initializes onboarding for a new enlistment.
+        /// </summary>
+        public void InitializeOnboarding(string track)
+        {
+            OnboardingStage = 1;
+            OnboardingTrack = track ?? "seasoned";
+            OnboardingStartTime = CampaignTime.Now;
+        }
+
+        /// <summary>
+        /// Resets onboarding state (called on discharge).
+        /// </summary>
+        public void ResetOnboarding()
+        {
+            OnboardingStage = 0;
+            OnboardingTrack = string.Empty;
+            OnboardingStartTime = CampaignTime.Zero;
+        }
+        
+        /// <summary>
+        /// Validates and repairs corrupted onboarding state.
+        /// Called after save/load to handle edge cases from old saves or data corruption.
+        /// </summary>
+        public void ValidateOnboardingState()
+        {
+            // Active onboarding with no track = corrupted, reset to complete
+            if (OnboardingStage > 0 && OnboardingStage <= 3 && string.IsNullOrEmpty(OnboardingTrack))
+            {
+                OnboardingStage = 0;
+                OnboardingStartTime = CampaignTime.Zero;
+            }
+            
+            // Out of range stage value = corrupted, reset
+            if (OnboardingStage < 0 || OnboardingStage > 3)
+            {
+                OnboardingStage = 0;
+                OnboardingTrack = string.Empty;
+                OnboardingStartTime = CampaignTime.Zero;
+            }
+        }
+
+        /// <summary>
+        /// Checks if a flag is currently active (set and not expired).
+        /// </summary>
+        public bool HasFlag(string flagName)
+        {
+            if (string.IsNullOrEmpty(flagName))
+            {
+                return false;
+            }
+
+            ActiveFlags ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+            if (!ActiveFlags.TryGetValue(flagName, out var expiryTime))
+            {
+                return false;
+            }
+
+            // Check if expired
+            if (expiryTime != CampaignTime.Never && CampaignTime.Now >= expiryTime)
+            {
+                ActiveFlags.Remove(flagName);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Sets a flag with optional expiration.
+        /// </summary>
+        public void SetFlag(string flagName, int durationDays = 0)
+        {
+            if (string.IsNullOrEmpty(flagName))
+            {
+                return;
+            }
+
+            ActiveFlags ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+            var expiryTime = durationDays > 0
+                ? CampaignTime.DaysFromNow(durationDays)
+                : CampaignTime.Never;
+
+            ActiveFlags[flagName] = expiryTime;
+        }
+
+        /// <summary>
+        /// Clears a flag.
+        /// </summary>
+        public void ClearFlag(string flagName)
+        {
+            if (string.IsNullOrEmpty(flagName))
+            {
+                return;
+            }
+
+            ActiveFlags ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            ActiveFlags.Remove(flagName);
+        }
+
+        /// <summary>
+        /// Schedules a chain event for future delivery.
+        /// If an event with the same ID is already scheduled, it will be rescheduled with the new delay.
+        /// </summary>
+        public void ScheduleChainEvent(string eventId, int delayHours)
+        {
+            if (string.IsNullOrEmpty(eventId))
+            {
+                return;
+            }
+
+            if (delayHours <= 0)
+            {
+                return;
+            }
+
+            PendingChainEvents ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+            var deliveryTime = CampaignTime.HoursFromNow(delayHours);
+            PendingChainEvents[eventId] = deliveryTime;
+        }
+
+        /// <summary>
+        /// Gets and removes any chain events that are ready to fire.
+        /// Returns a list of event IDs that should be delivered now.
+        /// </summary>
+        public List<string> PopReadyChainEvents()
+        {
+            PendingChainEvents ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+            var ready = new List<string>();
+            var toRemove = new List<string>();
+
+            foreach (var kvp in PendingChainEvents)
+            {
+                if (CampaignTime.Now >= kvp.Value)
+                {
+                    ready.Add(kvp.Key);
+                    toRemove.Add(kvp.Key);
+                }
+            }
+
+            foreach (var key in toRemove)
+            {
+                PendingChainEvents.Remove(key);
+            }
+
+            return ready;
+        }
+
+        /// <summary>
+        /// Checks if a specific event is on cooldown based on its last fired time and cooldown duration.
+        /// Returns true if the event should not fire yet (still in cooldown).
+        /// </summary>
+        public bool IsEventOnCooldown(string eventId, int cooldownDays)
+        {
+            if (string.IsNullOrEmpty(eventId) || cooldownDays <= 0)
+            {
+                return false;
+            }
+
+            EventLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+            if (!EventLastFired.TryGetValue(eventId, out var lastFired))
+            {
+                return false; // Never fired before, not on cooldown
+            }
+
+            var daysSinceLastFired = (CampaignTime.Now - lastFired).ToDays;
+            return daysSinceLastFired < cooldownDays;
+        }
+
+        /// <summary>
+        /// Records that an event was just fired, updating its last-fired timestamp.
+        /// </summary>
+        public void RecordEventFired(string eventId)
+        {
+            if (string.IsNullOrEmpty(eventId))
+            {
+                return;
+            }
+
+            EventLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            EventLastFired[eventId] = CampaignTime.Now;
+        }
+
+        /// <summary>
+        /// Marks a one-time event as fired so it won't fire again this playthrough.
+        /// </summary>
+        public void RecordOneTimeEventFired(string eventId)
+        {
+            if (string.IsNullOrEmpty(eventId))
+            {
+                return;
+            }
+
+            OneTimeEventsFired ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            OneTimeEventsFired.Add(eventId);
+        }
+
+        /// <summary>
+        /// Checks if a one-time event has already fired.
+        /// </summary>
+        public bool HasOneTimeEventFired(string eventId)
+        {
+            if (string.IsNullOrEmpty(eventId))
+            {
+                return false;
+            }
+
+            OneTimeEventsFired ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            return OneTimeEventsFired.Contains(eventId);
+        }
+
+        /// <summary>
+        /// Records that an event category was just fired, updating its last-fired timestamp.
+        /// Used by GlobalEventPacer for per-category cooldown tracking.
+        /// </summary>
+        public void RecordCategoryFired(string category)
+        {
+            if (string.IsNullOrEmpty(category))
+            {
+                return;
+            }
+
+            CategoryLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            CategoryLastFired[category] = CampaignTime.Now;
+        }
+
         public void ClampAll()
         {
-            Heat = Clamp(Heat, HeatMin, HeatMax);
+            Scrutiny = Clamp(Scrutiny, ScrutinyMin, ScrutinyMax);
             Discipline = Clamp(Discipline, DisciplineMin, DisciplineMax);
-            LanceReputation = Clamp(LanceReputation, LanceReputationMin, LanceReputationMax);
+            SoldierReputation = Clamp(SoldierReputation, SoldierReputationMin, SoldierReputationMax);
+            LordReputation = Clamp(LordReputation, LordReputationMin, LordReputationMax);
+            OfficerReputation = Clamp(OfficerReputation, OfficerReputationMin, OfficerReputationMax);
             MedicalRisk = Clamp(MedicalRisk, MedicalRiskMin, MedicalRiskMax);
 
             PendingThresholdStoryId ??= string.Empty;
             ThresholdStoryLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            EventLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            OneTimeEventsFired ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            ActiveFlags ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            PendingChainEvents ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            CategoryLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
         }
 
         private static int Clamp(int value, int min, int max)

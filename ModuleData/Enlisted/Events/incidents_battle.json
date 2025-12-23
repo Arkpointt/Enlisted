@@ -1,0 +1,768 @@
+{
+  "schemaVersion": 2,
+  "category": "map_incident",
+  "description": "Map incidents triggered after battles (leaving_battle context). 11 total incidents.",
+  "events": [
+    {
+      "id": "mi_loot_decision",
+      "category": "map_incident",
+      "titleId": "mi_loot_title",
+      "title": "Dead Man's Purse",
+      "setupId": "mi_loot_setup",
+      "setup": "The battle is over. Bodies are scattered across the field. You notice a glint of gold on a corpse near your feet—someone's purse, spilled open. Officers aren't looking this way. No one would know.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 1, "max": 5 }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "take",
+          "textId": "mi_loot_take",
+          "text": "Take the gold",
+          "resultTextId": "mi_loot_take_result",
+          "resultText": "You pocket the coins quickly, glancing around. No one saw. The weight feels heavier than it should.",
+          "risk": "moderate",
+          "effects": {
+            "gold": 25,
+            "scrutiny": 2
+          }
+        },
+        {
+          "id": "leave",
+          "textId": "mi_loot_leave",
+          "text": "Leave it be",
+          "resultTextId": "mi_loot_leave_result",
+          "resultText": "You step over the body and move on. Some things aren't worth the risk—or the guilt.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Honor": 5
+            }
+          }
+        },
+        {
+          "id": "report",
+          "textId": "mi_loot_report",
+          "text": "Report the find to an officer",
+          "resultTextId": "mi_loot_report_result",
+          "resultText": "An officer nods and pockets the purse himself. He slips you a few coins for your honesty. 'Good soldier,' he mutters.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 5,
+            "gold": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_wounded_enemy",
+      "category": "map_incident",
+      "titleId": "mi_wounded_enemy_title",
+      "title": "The Wounded Enemy",
+      "setupId": "mi_wounded_enemy_setup",
+      "setup": "A wounded enemy soldier lies in the mud, blood pooling beneath him. He's watching you, eyes wide with fear and pain. He's not dead yet. No one else is around.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "kill",
+          "textId": "mi_wounded_enemy_kill",
+          "text": "End his suffering",
+          "resultTextId": "mi_wounded_enemy_kill_result",
+          "resultText": "You draw your blade and finish it quickly. Mercy or cruelty—you're not sure which. The field is quieter now.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": -5,
+              "Valor": 3
+            }
+          }
+        },
+        {
+          "id": "spare",
+          "textId": "mi_wounded_enemy_spare",
+          "text": "Leave him to his fate",
+          "resultTextId": "mi_wounded_enemy_spare_result",
+          "resultText": "You walk away. His labored breathing fades behind you. He might live, he might not. That's not your decision to make.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": 3
+            }
+          }
+        },
+        {
+          "id": "help",
+          "textId": "mi_wounded_enemy_help",
+          "text": "Call for a medic",
+          "requirements": {
+            "minSkills": {
+              "Medicine": 20
+            }
+          },
+          "resultTextId": "mi_wounded_enemy_help_result",
+          "resultText": "You signal for the surgeon's assistant. He looks at you oddly but comes over. 'Strange to waste bandages on them,' he says, but he does it anyway.",
+          "tooltip": "Requires Medicine 20+",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": 10
+            },
+            "soldierRep": -3,
+            "officerRep": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_first_kill",
+      "category": "map_incident",
+      "titleId": "mi_first_kill_title",
+      "title": "The First Kill",
+      "setupId": "mi_first_kill_setup",
+      "setup": "You stare at your hands, still trembling. The blood isn't yours. You remember the moment—the shock on his face, the way he fell. If this was your first, it's hitting you now.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 1, "max": 3 }
+      },
+      "timing": {
+        "cooldown_days": 30,
+        "priority": "high",
+        "one_time": true
+      },
+      "options": [
+        {
+          "id": "process",
+          "textId": "mi_first_kill_process",
+          "text": "Let it sink in",
+          "resultTextId": "mi_first_kill_process_result",
+          "resultText": "You find a quiet spot and sit for a long moment, staring at nothing. Something has changed in you. The trembling stops. When you stand, you're different—harder, maybe, but steadier. This is what you came here to become.",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "OneHanded": 15
+            }
+          },
+          "effects": {
+            "traitXp": {
+              "Valor": 8,
+              "Honor": 3
+            }
+          }
+        },
+        {
+          "id": "push_down",
+          "textId": "mi_first_kill_push",
+          "text": "Push it down, move on",
+          "resultTextId": "mi_first_kill_push_result",
+          "resultText": "You shake your head and force your legs to carry you forward. There's no time for this. Not here, not now. You bury it deep, with all the other things you don't think about. It works. For now.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 5
+            },
+            "medicalRisk": 1
+          }
+        },
+        {
+          "id": "seek_company",
+          "textId": "mi_first_kill_company",
+          "text": "Find the other soldiers",
+          "resultTextId": "mi_first_kill_company_result",
+          "resultText": "An older soldier sees the look on your face and nods. 'First one's the hardest,' he says quietly. 'Gets easier. Shouldn't, but it does.' You don't feel better, but you feel less alone.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 5,
+            "companyNeeds": {
+              "Morale": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_officer_notice",
+      "category": "map_incident",
+      "titleId": "mi_officer_notice_title",
+      "title": "The Captain's Eye",
+      "setupId": "mi_officer_notice_setup",
+      "setup": "As you clean your blade, the captain approaches. 'You fought well today,' he says, loud enough for others to hear. Men are watching. Public recognition from an officer is rare.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 2, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "accept_humble",
+          "textId": "mi_officer_notice_humble",
+          "text": "Accept humbly",
+          "resultTextId": "mi_officer_notice_humble_result",
+          "resultText": "'Just doing my duty, sir.' The captain nods approvingly. Some of the men exchange glances—respect, maybe, or jealousy.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 8,
+            "soldierRep": 3
+          }
+        },
+        {
+          "id": "accept_proud",
+          "textId": "mi_officer_notice_proud",
+          "text": "Accept with pride",
+          "resultTextId": "mi_officer_notice_proud_result",
+          "resultText": "'Thank you, sir. I've trained hard for moments like this.' The captain smiles slightly. The other soldiers are less impressed with your ego.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 10,
+            "soldierRep": -5
+          }
+        },
+        {
+          "id": "deflect",
+          "textId": "mi_officer_notice_deflect",
+          "text": "Deflect praise to the squad",
+          "requirements": {
+            "minSkills": {
+              "Charm": 30
+            }
+          },
+          "resultTextId": "mi_officer_notice_deflect_result",
+          "resultText": "'We all did our part, sir. The men beside me earned this recognition as much as I did.' The soldiers grin. The captain looks thoughtful.",
+          "tooltip": "Requires Charm 30+",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 5,
+            "soldierRep": 10,
+            "traitXp": {
+              "Generosity": 5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_comrade_down",
+      "category": "map_incident",
+      "titleId": "mi_comrade_down_title",
+      "title": "Fallen Comrade",
+      "setupId": "mi_comrade_down_setup",
+      "setup": "Someone you knew is dead. Not well, perhaps—a face from the campfire, a voice from the march—but dead all the same. Burial detail is forming. They could use another pair of hands.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "help_burial",
+          "textId": "mi_comrade_down_help",
+          "text": "Help with the burial",
+          "resultTextId": "mi_comrade_down_help_result",
+          "resultText": "You dig alongside the others in silence. The work is hard, but it feels right. These men deserve better than a shallow pit.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 8,
+            "companyNeeds": {
+              "Morale": 3
+            }
+          }
+        },
+        {
+          "id": "pay_respects",
+          "textId": "mi_comrade_down_respects",
+          "text": "Pay your respects quietly",
+          "resultTextId": "mi_comrade_down_respects_result",
+          "resultText": "You stand at a distance, watching the detail work. You say nothing, but someone notices you there. It's enough.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 3,
+            "traitXp": {
+              "Honor": 3
+            }
+          }
+        },
+        {
+          "id": "move_on",
+          "textId": "mi_comrade_down_move",
+          "text": "Move on, there's work to do",
+          "resultTextId": "mi_comrade_down_move_result",
+          "resultText": "You turn away. Death is part of this life. Sentiment won't bring them back, and the living need attention too.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 5
+            },
+            "soldierRep": -3
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_battlefield_find",
+      "category": "map_incident",
+      "titleId": "mi_battlefield_find_title",
+      "title": "Battlefield Discovery",
+      "setupId": "mi_battlefield_find_setup",
+      "setup": "While sifting through the aftermath, you notice something valuable half-buried in the mud—a well-crafted weapon, a noble's signet ring, or a pouch of foreign coin. It's worth more than a soldier's pay for a month.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 1, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "keep",
+          "textId": "mi_battlefield_find_keep",
+          "text": "Keep it hidden",
+          "resultTextId": "mi_battlefield_find_keep_result",
+          "resultText": "You slip the item into your pack, covering it with a torn cloak. Your heart pounds, but no one saw. You hope.",
+          "risk": "risky",
+          "effects": {
+            "gold": 80,
+            "scrutiny": 3
+          }
+        },
+        {
+          "id": "turn_in",
+          "textId": "mi_battlefield_find_turn_in",
+          "text": "Turn it in to the quartermaster",
+          "resultTextId": "mi_battlefield_find_turn_in_result",
+          "resultText": "The quartermaster weighs the item in his hand, impressed. 'Honest work gets rewarded,' he says, and gives you a share of the value—less than it's worth, but clean coin.",
+          "risk": "safe",
+          "effects": {
+            "gold": 30,
+            "officerRep": 8,
+            "scrutiny": -2
+          }
+        },
+        {
+          "id": "sell_later",
+          "textId": "mi_battlefield_find_sell",
+          "text": "Hide it and sell it in town later",
+          "requirements": {
+            "minSkills": {
+              "Roguery": 30
+            }
+          },
+          "resultTextId": "mi_battlefield_find_sell_result",
+          "resultText": "You know a merchant who won't ask questions. You tuck the item away, planning your next visit to town. This could be profitable.",
+          "tooltip": "Requires Roguery 30+",
+          "risk": "dangerous",
+          "effects": {
+            "gold": 120,
+            "scrutiny": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_triage_call",
+      "category": "map_incident",
+      "titleId": "mi_triage_call_title",
+      "title": "Call for Medics",
+      "setupId": "mi_triage_call_setup",
+      "setup": "Wounded are screaming across the field. The surgeon is overwhelmed, moving from body to body. He sees you and calls out—another pair of hands could save lives.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 1, "max": 7 },
+        "minSkills": {
+          "Medicine": 40
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "help_triage",
+          "textId": "mi_triage_call_help",
+          "text": "Help with the wounded",
+          "resultTextId": "mi_triage_call_help_result",
+          "resultText": "You kneel in the blood and mud, doing what you can. Some you save. Some you can't. The surgeon nods at you when it's over—the highest praise he ever gives.",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Medicine": 25
+            }
+          },
+          "effects": {
+            "soldierRep": 10,
+            "traitXp": {
+              "Mercy": 8
+            }
+          }
+        },
+        {
+          "id": "carry_wounded",
+          "textId": "mi_triage_call_carry",
+          "text": "Carry the wounded to safety",
+          "resultTextId": "mi_triage_call_carry_result",
+          "resultText": "You can't heal, but you can lift. You haul wounded men to the surgeon's tent until your arms burn. Lives are saved because you were strong enough.",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Athletics": 15
+            }
+          },
+          "effects": {
+            "soldierRep": 8,
+            "traitXp": {
+              "Mercy": 5
+            }
+          }
+        },
+        {
+          "id": "move_on_triage",
+          "textId": "mi_triage_call_move",
+          "text": "Move on, it's not your duty",
+          "resultTextId": "mi_triage_call_move_result",
+          "resultText": "You pretend not to hear and keep walking. The surgeon's stare follows you. Some things are someone else's problem.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": -5,
+            "traitXp": {
+              "Mercy": -5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_enemy_intel",
+      "category": "map_incident",
+      "titleId": "mi_enemy_intel_title",
+      "title": "Enemy Documents",
+      "setupId": "mi_enemy_intel_setup",
+      "setup": "A dead officer lies in a ditch, his satchel spilled open. Papers flutter in the wind—maps, orders, possibly valuable intelligence. You could take them to your lord, or you could see what they say first.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 2, "max": 8 },
+        "minSkills": {
+          "Scouting": 30
+        }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "report_intel",
+          "textId": "mi_enemy_intel_report",
+          "text": "Report the find immediately",
+          "resultTextId": "mi_enemy_intel_report_result",
+          "resultText": "You gather the papers and bring them to the captain. His eyes widen as he reads. 'Good work, soldier. The lord will hear about this.'",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Scouting": 15
+            }
+          },
+          "effects": {
+            "lordRep": 10,
+            "officerRep": 8
+          }
+        },
+        {
+          "id": "read_first",
+          "textId": "mi_enemy_intel_read",
+          "text": "Read them first, then report",
+          "requirements": {
+            "minSkills": {
+              "Scouting": 50
+            }
+          },
+          "resultTextId": "mi_enemy_intel_read_result",
+          "resultText": "You scan the documents quickly—troop movements, supply routes, a name that might matter. Knowledge is power. You bring them to the captain, keeping what you learned to yourself.",
+          "tooltip": "Requires Scouting 50+",
+          "risk": "moderate",
+          "rewards": {
+            "skillXp": {
+              "Scouting": 25
+            }
+          },
+          "effects": {
+            "lordRep": 8,
+            "scrutiny": 1
+          }
+        },
+        {
+          "id": "keep_quiet",
+          "textId": "mi_enemy_intel_keep",
+          "text": "Keep quiet about it",
+          "resultTextId": "mi_enemy_intel_keep_result",
+          "resultText": "You pocket the papers without a word. This information could be worth something to the right buyer. Or it could get you killed.",
+          "risk": "dangerous",
+          "effects": {
+            "scrutiny": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_battle_trophy",
+      "category": "map_incident",
+      "titleId": "mi_battle_trophy_title",
+      "title": "Battle Trophy",
+      "setupId": "mi_battle_trophy_setup",
+      "setup": "A fallen enemy carried a fine blade, an ornate helmet, or a banner worth keeping. You could take it as a trophy—a memento of what you survived today.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 12,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "take_trophy",
+          "textId": "mi_battle_trophy_take",
+          "text": "Take the trophy",
+          "resultTextId": "mi_battle_trophy_take_result",
+          "resultText": "You claim the item and attach it to your gear. Other soldiers nod with approval—a warrior's right to spoils.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 5,
+            "traitXp": {
+              "Valor": 5
+            }
+          }
+        },
+        {
+          "id": "leave_trophy",
+          "textId": "mi_battle_trophy_leave",
+          "text": "Leave it with the dead",
+          "resultTextId": "mi_battle_trophy_leave_result",
+          "resultText": "You leave the item where it lies. The dead deserve their dignity, and you don't need trinkets to remember this day.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Honor": 5,
+              "Mercy": 3
+            }
+          }
+        },
+        {
+          "id": "give_comrade",
+          "textId": "mi_battle_trophy_give",
+          "text": "Give it to a comrade who fought harder",
+          "resultTextId": "mi_battle_trophy_give_result",
+          "resultText": "You press the trophy into a fellow soldier's hands. 'You earned this more than me.' His surprised gratitude is worth more than any trinket.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 10,
+            "traitXp": {
+              "Generosity": 8
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_survivors_choice",
+      "category": "map_incident",
+      "titleId": "mi_survivors_choice_title",
+      "title": "The Survivors",
+      "setupId": "mi_survivors_choice_setup",
+      "setup": "A handful of enemy soldiers have surrendered—wounded, exhausted, and terrified. They sit in the mud, hands raised. Some of your comrades are eyeing them with dark intent. What happens next is up to those who have swords.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 3, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "high",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "protect",
+          "textId": "mi_survivors_choice_protect",
+          "text": "Protect the prisoners",
+          "requirements": {
+            "minSkills": {
+              "Leadership": 40
+            }
+          },
+          "resultTextId": "mi_survivors_choice_protect_result",
+          "resultText": "'They surrendered. That means they're prisoners, not targets.' Your voice carries weight. The angry soldiers back off, and the prisoners are taken to the officers.",
+          "tooltip": "Requires Leadership 40+",
+          "risk": "moderate",
+          "effects": {
+            "traitXp": {
+              "Mercy": 15,
+              "Honor": 10
+            },
+            "soldierRep": -5,
+            "officerRep": 8
+          }
+        },
+        {
+          "id": "ignore",
+          "textId": "mi_survivors_choice_ignore",
+          "text": "Walk away and let it happen",
+          "resultTextId": "mi_survivors_choice_ignore_result",
+          "resultText": "You turn your back. What happens behind you is not your responsibility. The sounds fade quickly. War is ugly.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": -10
+            },
+            "discipline": 1
+          }
+        },
+        {
+          "id": "ensure_silence",
+          "textId": "mi_survivors_choice_silence",
+          "text": "Ensure their silence permanently",
+          "resultTextId": "mi_survivors_choice_silence_result",
+          "resultText": "You step forward and do what needs doing. Quick, efficient, final. The men watch without comment. This is the reality of war.",
+          "risk": "dangerous",
+          "effects": {
+            "traitXp": {
+              "Mercy": -20,
+              "Valor": 5
+            },
+            "soldierRep": 3,
+            "discipline": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_ambush_losses",
+      "category": "map_incident",
+      "titleId": "mi_ambush_losses_title",
+      "title": "Ambush!",
+      "setupId": "mi_ambush_losses_setup",
+      "setup": "The battle seemed over, but enemy survivors rallied in the trees. Arrows fly, steel clashes—you're in the middle of a counter-attack. Men are going down around you.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 3, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "critical",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "rally",
+          "textId": "mi_ambush_losses_rally",
+          "text": "Rally the men",
+          "requirements": {
+            "minSkills": {
+              "Tactics": 50
+            }
+          },
+          "resultTextId": "mi_ambush_losses_rally_result",
+          "resultText": "'Form up! Shields together!' Your voice cuts through the chaos. Men respond, forming a defensive line. The ambush falters against organized resistance.",
+          "tooltip": "Requires Tactics 50+",
+          "risk": "risky",
+          "risk_chance": 70,
+          "rewards": {
+            "skillXp": {
+              "Tactics": 30,
+              "Leadership": 20
+            }
+          },
+          "effects": {
+            "officerRep": 15,
+            "soldierRep": 10,
+            "traitXp": {
+              "Valor": 10
+            }
+          },
+          "effects_failure": {
+            "hpChange": -25,
+            "troopLoss": 2
+          },
+          "failure_resultText": "You try to organize a defense, but the chaos is too complete. Men fall before they can respond. You take a wound yourself."
+        },
+        {
+          "id": "retreat",
+          "textId": "mi_ambush_losses_retreat",
+          "text": "Fight your way back to the main force",
+          "resultTextId": "mi_ambush_losses_retreat_result",
+          "resultText": "You grab the nearest soldiers and push toward the main body. It's ugly, brutal, and some don't make it—but you survive.",
+          "risk": "risky",
+          "risk_chance": 60,
+          "effects": {
+            "troopLoss": 1,
+            "hpChange": -10
+          },
+          "effects_failure": {
+            "hpChange": -30,
+            "troopLoss": 3
+          },
+          "failure_resultText": "The retreat turns into a rout. You're wounded badly, and too many men fall before reaching safety."
+        },
+        {
+          "id": "hold",
+          "textId": "mi_ambush_losses_hold",
+          "text": "Hold position and fight",
+          "resultTextId": "mi_ambush_losses_hold_result",
+          "resultText": "You plant your feet and fight whoever comes at you. The ambushers break when they realize you're not running. Your blade is slick with blood, but you're still standing.",
+          "risk": "dangerous",
+          "risk_chance": 50,
+          "rewards": {
+            "skillXp": {
+              "OneHanded": 20
+            }
+          },
+          "effects": {
+            "traitXp": {
+              "Valor": 15
+            },
+            "soldierRep": 8
+          },
+          "effects_failure": {
+            "hpChange": -40,
+            "troopLoss": 2
+          },
+          "failure_resultText": "You're overwhelmed. A blade finds your side, and you go down. When you wake, the fighting is over, and the cost was high."
+        }
+      ]
+    }
+  ]
+}

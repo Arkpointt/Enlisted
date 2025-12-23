@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 2,
+  "packId": "camp_events",
+  "category": "general",
+  "events": [
+    {
+      "id": "evt_camp_gambling",
+      "category": "general",
+      "titleId": "evt_camp_gambling_title",
+      "setupId": "evt_camp_gambling_setup",
+      "requirements": {
+        "minTier": 1,
+        "role": "Any",
+        "context": "Camp"
+      },
+      "timing": {
+        "cooldownDays": 8,
+        "priority": "normal",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "play",
+          "textId": "evt_camp_gambling_opt_play",
+          "resultTextId": "evt_camp_gambling_opt_play_result",
+          "tooltip": "Join the game. Risk your coin.",
+          "risk": "moderate",
+          "effects": {
+            "gold": 50,
+            "soldierRep": 5,
+            "skillXp": { "Roguery": 8 }
+          }
+        },
+        {
+          "id": "watch",
+          "textId": "evt_camp_gambling_opt_watch",
+          "resultTextId": "evt_camp_gambling_opt_watch_result",
+          "tooltip": "Watch and learn without risking your coin.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 2,
+            "skillXp": { "Roguery": 3 }
+          }
+        },
+        {
+          "id": "report",
+          "textId": "evt_camp_gambling_opt_report",
+          "resultTextId": "evt_camp_gambling_opt_report_result",
+          "tooltip": "Report the gambling to the officers.",
+          "risk": "risky",
+          "effects": {
+            "officerRep": 6,
+            "soldierRep": -12,
+            "scrutiny": -5,
+            "discipline": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "evt_camp_storytelling",
+      "category": "general",
+      "titleId": "evt_camp_storytelling_title",
+      "setupId": "evt_camp_storytelling_setup",
+      "requirements": {
+        "minTier": 2,
+        "role": "Any",
+        "context": "Camp"
+      },
+      "timing": {
+        "cooldownDays": 10,
+        "priority": "normal",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "tell_battle",
+          "textId": "evt_camp_storytelling_opt_tell_battle",
+          "resultTextId": "evt_camp_storytelling_opt_tell_battle_result",
+          "tooltip": "Share tales of past battles you've witnessed.",
+          "risk": "safe",
+          "requirements": {
+            "minSkills": { "Charm": 20 }
+          },
+          "effects": {
+            "skillXp": { "Charm": 12, "Leadership": 8 },
+            "soldierRep": 6,
+            "officerRep": 3
+          }
+        },
+        {
+          "id": "tell_legend",
+          "textId": "evt_camp_storytelling_opt_tell_legend",
+          "resultTextId": "evt_camp_storytelling_opt_tell_legend_result",
+          "tooltip": "Recount ancient legends and hero tales.",
+          "risk": "safe",
+          "requirements": {
+            "minSkills": { "Charm": 35 }
+          },
+          "effects": {
+            "skillXp": { "Charm": 18 },
+            "soldierRep": 8,
+            "troopXp": 20
+          }
+        },
+        {
+          "id": "listen",
+          "textId": "evt_camp_storytelling_opt_listen",
+          "resultTextId": "evt_camp_storytelling_opt_listen_result",
+          "tooltip": "Listen to the veterans' stories.",
+          "risk": "safe",
+          "effects": {
+            "skillXp": { "Charm": 5, "Tactics": 5 },
+            "soldierRep": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "evt_camp_supply_shortage",
+      "category": "general",
+      "titleId": "evt_camp_supply_shortage_title",
+      "setupId": "evt_camp_supply_shortage_setup",
+      "requirements": {
+        "minTier": 2,
+        "role": "Any",
+        "context": "Camp"
+      },
+      "timing": {
+        "cooldownDays": 15,
+        "priority": "high",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "share",
+          "textId": "evt_camp_supply_shortage_opt_share",
+          "resultTextId": "evt_camp_supply_shortage_opt_share_result",
+          "tooltip": "Share your personal rations with hungry soldiers.",
+          "risk": "safe",
+          "effects": {
+            "foodLoss": 3,
+            "soldierRep": 10,
+            "officerRep": 4,
+            "traitXp": { "GenerousCommander": 40 }
+          }
+        },
+        {
+          "id": "forage",
+          "textId": "evt_camp_supply_shortage_opt_forage",
+          "resultTextId": "evt_camp_supply_shortage_opt_forage_result",
+          "tooltip": "Lead a foraging party into the countryside.",
+          "risk": "moderate",
+          "requirements": {
+            "minSkills": { "Scouting": 40, "Athletics": 30 }
+          },
+          "effects": {
+            "skillXp": { "Scouting": 20, "Athletics": 15 },
+            "soldierRep": 8,
+            "officerRep": 6,
+            "foodLoss": -5
+          }
+        },
+        {
+          "id": "hoard",
+          "textId": "evt_camp_supply_shortage_opt_hoard",
+          "resultTextId": "evt_camp_supply_shortage_opt_hoard_result",
+          "tooltip": "Keep your rations. Survival of the prepared.",
+          "risk": "moderate",
+          "effects": {
+            "soldierRep": -8,
+            "officerRep": -3,
+            "scrutiny": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "evt_camp_brawl",
+      "category": "general",
+      "titleId": "evt_camp_brawl_title",
+      "setupId": "evt_camp_brawl_setup",
+      "requirements": {
+        "minTier": 1,
+        "role": "Any",
+        "context": "Camp"
+      },
+      "timing": {
+        "cooldownDays": 9,
+        "priority": "normal",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "intervene",
+          "textId": "evt_camp_brawl_opt_intervene",
+          "resultTextId": "evt_camp_brawl_opt_intervene_result",
+          "tooltip": "Step between them and break it up.",
+          "risk": "moderate",
+          "requirements": {
+            "minSkills": { "OneHanded": 25 },
+            "minTier": 2
+          },
+          "effects": {
+            "skillXp": { "OneHanded": 12, "Leadership": 10 },
+            "officerRep": 8,
+            "soldierRep": 4,
+            "discipline": -5
+          }
+        },
+        {
+          "id": "back_soldier",
+          "textId": "evt_camp_brawl_opt_back_soldier",
+          "resultTextId": "evt_camp_brawl_opt_back_soldier_result",
+          "tooltip": "Back your fellow soldier in the fight.",
+          "risk": "risky",
+          "effects": {
+            "skillXp": { "OneHanded": 8 },
+            "soldierRep": 12,
+            "officerRep": -10,
+            "hpChange": -5,
+            "discipline": 10
+          }
+        },
+        {
+          "id": "fetch_officer",
+          "textId": "evt_camp_brawl_opt_fetch_officer",
+          "resultTextId": "evt_camp_brawl_opt_fetch_officer_result",
+          "tooltip": "Run and fetch an officer immediately.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 5,
+            "soldierRep": -6,
+            "discipline": 12
+          }
+        }
+      ]
+    }
+  ]
+}
+

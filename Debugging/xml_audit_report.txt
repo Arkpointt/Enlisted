@@ -1,0 +1,4879 @@
+﻿================================================================================
+XML STRING AUDIT REPORT
+Generated: 2025-12-22 21:21:35
+================================================================================
+
+SUMMARY
+-------
+Total XML String IDs:     3240
+Used Strings:             519
+Unused Strings:           2721
+Total Code References:    538
+Usage Rate:               16.02%
+
+================================================================================
+UNUSED STRINGS (Potential Dead Code)
+================================================================================
+The following 2721 string IDs were not found in any C# source files:
+
+  - act_back
+  - act_camp_check_comrades
+  - act_camp_check_comrades_hint
+  - act_camp_help_soldier
+  - act_camp_help_soldier_hint
+  - act_camp_settle_dispute
+  - act_camp_settle_dispute_hint
+  - act_camp_share_rations
+  - act_camp_share_rations_hint
+  - act_camp_talk_sergeant
+  - act_camp_talk_sergeant_hint
+  - act_camp_train_recruits
+  - act_camp_train_recruits_hint
+  - act_completed
+  - act_fail_condition
+  - act_fail_cooldown
+  - act_fail_disabled
+  - act_fail_invalid
+  - act_fail_not_enlisted
+  - act_fail_too_fatigued
+  - act_failed
+  - act_failed_generic
+  - act_header_available
+  - act_header_camp
+  - act_header_events_available
+  - act_header_fatigue
+  - act_header_social
+  - act_header_tasks
+  - act_header_training
+  - act_menu_header
+  - act_menu_intro
+  - act_menu_intro_with_news
+  - act_not_found
+  - act_option_placeholder
+  - act_social_dice
+  - act_social_dice_hint
+  - act_social_drink
+  - act_social_drink_hint
+  - act_social_fire_circle
+  - act_social_fire_circle_hint
+  - act_social_letter
+  - act_social_letter_hint
+  - act_social_meal
+  - act_social_meal_hint
+  - act_social_war_stories
+  - act_social_war_stories_hint
+  - act_success_camp
+  - act_success_generic
+  - act_success_social
+  - act_success_tasks
+  - act_success_training
+  - act_task_forage
+  - act_task_forage_hint
+  - act_task_forge
+  - act_task_forge_hint
+  - act_task_help_surgeon
+  - act_task_help_surgeon_hint
+  - act_task_maintain
+  - act_task_maintain_hint
+  - act_task_stand_watch
+  - act_task_stand_watch_hint
+  - act_task_water_horses
+  - act_task_water_horses_hint
+  - act_tooltip_condition
+  - act_tooltip_cooldown
+  - act_tooltip_too_fatigued
+  - act_training_archery
+  - act_training_archery_hint
+  - act_training_crossbow_range
+  - act_training_crossbow_range_hint
+  - act_training_formation_drill
+  - act_training_formation_drill_hint
+  - act_training_polearm_drill
+  - act_training_polearm_drill_hint
+  - act_training_riding
+  - act_training_riding_hint
+  - act_training_sparring
+  - act_training_sparring_hint
+  - act_training_throwing_practice
+  - act_training_throwing_practice_hint
+  - act_training_two_handed_drill
+  - act_training_two_handed_drill_hint
+  - act_training_weapons
+  - act_training_weapons_hint
+  - brief_army_lost_recruit_1
+  - brief_army_lost_recruit_2
+  - brief_army_lost_recruit_3
+  - brief_army_lost_soldier_1
+  - brief_army_lost_soldier_2
+  - brief_army_lost_soldier_3
+  - brief_army_lost_veteran_1
+  - brief_army_lost_veteran_2
+  - brief_army_lost_veteran_3
+  - brief_army_won_recruit_1
+  - brief_army_won_recruit_2
+  - brief_army_won_recruit_3
+  - brief_army_won_soldier_1
+  - brief_army_won_soldier_2
+  - brief_army_won_soldier_3
+  - brief_army_won_veteran_1
+  - brief_army_won_veteran_2
+  - brief_army_won_veteran_3
+  - brief_bandit_lost_recruit_1
+  - brief_bandit_lost_recruit_2
+  - brief_bandit_lost_recruit_3
+  - brief_bandit_lost_soldier_1
+  - brief_bandit_lost_soldier_2
+  - brief_bandit_lost_soldier_3
+  - brief_bandit_lost_veteran_1
+  - brief_bandit_lost_veteran_2
+  - brief_bandit_lost_veteran_3
+  - brief_bandit_won_recruit_1
+  - brief_bandit_won_recruit_2
+  - brief_bandit_won_recruit_3
+  - brief_bandit_won_soldier_1
+  - brief_bandit_won_soldier_2
+  - brief_bandit_won_soldier_3
+  - brief_bandit_won_veteran_1
+  - brief_bandit_won_veteran_2
+  - brief_bandit_won_veteran_3
+  - brief_exhausted_recruit_1
+  - brief_exhausted_recruit_2
+  - brief_exhausted_recruit_3
+  - brief_exhausted_soldier_1
+  - brief_exhausted_soldier_2
+  - brief_exhausted_soldier_3
+  - brief_exhausted_veteran_1
+  - brief_exhausted_veteran_2
+  - brief_exhausted_veteran_3
+  - brief_good_nco_day_1
+  - brief_good_nco_day_2
+  - brief_good_nco_day_3
+  - brief_good_nco_evening_1
+  - brief_good_nco_evening_2
+  - brief_good_nco_evening_3
+  - brief_good_nco_morning_1
+  - brief_good_nco_morning_2
+  - brief_good_nco_morning_3
+  - brief_good_nco_night_1
+  - brief_good_nco_night_2
+  - brief_good_nco_night_3
+  - brief_good_recruit_day_1
+  - brief_good_recruit_day_2
+  - brief_good_recruit_day_3
+  - brief_good_recruit_evening_1
+  - brief_good_recruit_evening_2
+  - brief_good_recruit_evening_3
+  - brief_good_recruit_morning_1
+  - brief_good_recruit_morning_2
+  - brief_good_recruit_morning_3
+  - brief_good_recruit_night_1
+  - brief_good_recruit_night_2
+  - brief_good_recruit_night_3
+  - brief_good_soldier_day_1
+  - brief_good_soldier_day_2
+  - brief_good_soldier_day_3
+  - brief_good_soldier_evening_1
+  - brief_good_soldier_evening_2
+  - brief_good_soldier_evening_3
+  - brief_good_soldier_morning_1
+  - brief_good_soldier_morning_2
+  - brief_good_soldier_morning_3
+  - brief_good_soldier_night_1
+  - brief_good_soldier_night_2
+  - brief_good_soldier_night_3
+  - brief_good_veteran_day_1
+  - brief_good_veteran_day_2
+  - brief_good_veteran_day_3
+  - brief_good_veteran_evening_1
+  - brief_good_veteran_evening_2
+  - brief_good_veteran_evening_3
+  - brief_good_veteran_morning_1
+  - brief_good_veteran_morning_2
+  - brief_good_veteran_morning_3
+  - brief_good_veteran_night_1
+  - brief_good_veteran_night_2
+  - brief_good_veteran_night_3
+  - brief_illness_recruit_1
+  - brief_illness_recruit_2
+  - brief_illness_recruit_3
+  - brief_illness_soldier_1
+  - brief_illness_soldier_2
+  - brief_illness_soldier_3
+  - brief_illness_veteran_1
+  - brief_illness_veteran_2
+  - brief_illness_veteran_3
+  - brief_injury_recruit_1
+  - brief_injury_recruit_2
+  - brief_injury_recruit_3
+  - brief_injury_soldier_1
+  - brief_injury_soldier_2
+  - brief_injury_soldier_3
+  - brief_injury_veteran_1
+  - brief_injury_veteran_2
+  - brief_injury_veteran_3
+  - brief_siege_lost_recruit_1
+  - brief_siege_lost_recruit_2
+  - brief_siege_lost_recruit_3
+  - brief_siege_lost_soldier_1
+  - brief_siege_lost_soldier_2
+  - brief_siege_lost_soldier_3
+  - brief_siege_lost_veteran_1
+  - brief_siege_lost_veteran_2
+  - brief_siege_lost_veteran_3
+  - brief_siege_won_recruit_1
+  - brief_siege_won_recruit_2
+  - brief_siege_won_recruit_3
+  - brief_siege_won_soldier_1
+  - brief_siege_won_soldier_2
+  - brief_siege_won_soldier_3
+  - brief_siege_won_veteran_1
+  - brief_siege_won_veteran_2
+  - brief_siege_won_veteran_3
+  - brief_tired_recruit_1
+  - brief_tired_recruit_2
+  - brief_tired_recruit_3
+  - brief_tired_soldier_1
+  - brief_tired_soldier_2
+  - brief_tired_soldier_3
+  - brief_tired_veteran_1
+  - brief_tired_veteran_2
+  - brief_tired_veteran_3
+  - camp_atmo_aftermath_lost_1
+  - camp_atmo_aftermath_lost_2
+  - camp_atmo_aftermath_lost_3
+  - camp_atmo_aftermath_won_1
+  - camp_atmo_aftermath_won_2
+  - camp_atmo_aftermath_won_3
+  - camp_atmo_army_day_1
+  - camp_atmo_army_day_2
+  - camp_atmo_army_day_3
+  - camp_atmo_army_evening_1
+  - camp_atmo_army_evening_2
+  - camp_atmo_army_evening_3
+  - camp_atmo_army_morning_1
+  - camp_atmo_army_morning_2
+  - camp_atmo_army_morning_3
+  - camp_atmo_army_night_1
+  - camp_atmo_army_night_2
+  - camp_atmo_army_night_3
+  - camp_atmo_fallback
+  - camp_atmo_march_day_1
+  - camp_atmo_march_day_2
+  - camp_atmo_march_day_3
+  - camp_atmo_march_evening_1
+  - camp_atmo_march_evening_2
+  - camp_atmo_march_evening_3
+  - camp_atmo_march_morning_1
+  - camp_atmo_march_morning_2
+  - camp_atmo_march_morning_3
+  - camp_atmo_march_night_1
+  - camp_atmo_march_night_2
+  - camp_atmo_march_night_3
+  - camp_atmo_settlement_day_1
+  - camp_atmo_settlement_day_2
+  - camp_atmo_settlement_day_3
+  - camp_atmo_settlement_evening_1
+  - camp_atmo_settlement_evening_2
+  - camp_atmo_settlement_evening_3
+  - camp_atmo_settlement_morning_1
+  - camp_atmo_settlement_morning_2
+  - camp_atmo_settlement_morning_3
+  - camp_atmo_settlement_night_1
+  - camp_atmo_settlement_night_2
+  - camp_atmo_settlement_night_3
+  - camp_atmo_siege_day_1
+  - camp_atmo_siege_day_2
+  - camp_atmo_siege_day_3
+  - camp_atmo_siege_evening_1
+  - camp_atmo_siege_evening_2
+  - camp_atmo_siege_evening_3
+  - camp_atmo_siege_morning_1
+  - camp_atmo_siege_morning_2
+  - camp_atmo_siege_morning_3
+  - camp_atmo_siege_night_1
+  - camp_atmo_siege_night_2
+  - camp_atmo_siege_night_3
+  - camp_back_hint
+  - camp_check_wounded
+  - camp_close
+  - camp_honor_fallen
+  - camp_honor_fallen_hint
+  - camp_honor_title
+  - camp_no_fallen
+  - camp_position
+  - camp_roster_close
+  - camp_roster_full_header
+  - camp_roster_header
+  - camp_roster_title
+  - camp_roster_tooltip
+  - camp_stats
+  - camp_stats_title
+  - camp_stats_tooltip
+  - camp_talk_close
+  - camp_talk_second
+  - camp_talk_second_body
+  - camp_talk_second_hint
+  - camp_talk_second_title
+  - camp_talk_sergeant
+  - camp_talk_sergeant_body
+  - camp_talk_sergeant_hint
+  - camp_talk_sergeant_title
+  - camp_view_roster
+  - camp_view_stats
+  - camp_wounded_body_active
+  - camp_wounded_body_none
+  - camp_wounded_close
+  - camp_wounded_title
+  - camp_wounded_tooltip_active
+  - camp_wounded_tooltip_none
+  - cond_illness_camp_fever
+  - cond_illness_flux
+  - cond_injury_arrow_wound
+  - cond_injury_blade_cut
+  - cond_injury_twisted_knee
+  - cond_menu_apply
+  - cond_menu_body_header
+  - cond_menu_body_illness
+  - cond_menu_body_injury
+  - cond_menu_cancel
+  - cond_menu_title
+  - cond_status_header
+  - cond_status_illness
+  - cond_status_injury
+  - cond_status_under_care
+  - cond_treat_basic
+  - cond_treat_basic_hint
+  - cond_treat_herbal
+  - cond_treat_herbal_hint
+  - cond_treat_thorough
+  - cond_treat_thorough_hint
+  - context_narration_coordinated_offensive
+  - context_narration_desperate_defense
+  - context_narration_garrison_duty
+  - context_narration_patrol_peacetime
+  - context_narration_raid_operation
+  - context_narration_recruitment_drive
+  - context_narration_siege_operation
+  - context_narration_winter_camp
+  - ct_battle_casualties
+  - ct_battle_no_casualties
+  - ct_battle_wiped
+  - ct_companion_fight
+  - ct_companion_intro
+  - ct_companion_low_tier
+  - ct_companion_save
+  - ct_companion_saved
+  - ct_companion_stay_back
+  - ct_companions_none
+  - ct_companions_tier_locked
+  - ct_companions_title
+  - ct_companions_tooltip
+  - ct_desperate_measures
+  - ct_desperate_tooltip
+  - ct_help_lord
+  - ct_help_lord_tooltip
+  - ct_menu_enter
+  - ct_menu_intro
+  - ct_menu_tooltip
+  - ct_naval_dismount_warning
+  - ct_no_pending_discharge
+  - ct_not_enlisted
+  - ct_option_back
+  - ct_option_companions
+  - ct_option_records
+  - ct_retinue_intro
+  - ct_retinue_none
+  - ct_retinue_title
+  - ct_retinue_upkeep
+  - ct_type_archers
+  - ct_type_archers_desc
+  - ct_type_cavalry
+  - ct_type_cavalry_desc
+  - ct_type_crossbowmen
+  - ct_type_crossbowmen_desc
+  - ct_type_fians
+  - ct_type_fians_desc
+  - ct_type_horse_archers
+  - ct_type_horse_archers_desc
+  - ct_type_infantry
+  - ct_type_infantry_desc
+  - ct_type_khuzait_ha
+  - ct_type_mameluke
+  - ct_unit_retinue
+  - ct_unit_squad
+  - ct_upkeep_charged
+  - ct_upkeep_desertion
+  - ct_warn_party_limited
+  - ct_warn_tier_locked
+  - debug_gain_xp
+  - dec_challenge_cancel
+  - dec_challenge_cancel_result
+  - dec_challenge_formal
+  - dec_challenge_result
+  - dec_challenge_setup
+  - dec_challenge_title
+  - dec_check_supplies_cancel
+  - dec_check_supplies_cancel_result
+  - dec_check_supplies_do
+  - dec_check_supplies_result
+  - dec_check_supplies_setup
+  - dec_check_supplies_title
+  - dec_combat_drill_cancel
+  - dec_combat_drill_cancel_result
+  - dec_combat_drill_do
+  - dec_combat_drill_result
+  - dec_combat_drill_setup
+  - dec_combat_drill_title
+  - dec_confront_rival_cancel
+  - dec_confront_rival_cancel_result
+  - dec_confront_rival_fists
+  - dec_confront_rival_fists_result
+  - dec_confront_rival_setup
+  - dec_confront_rival_title
+  - dec_confront_rival_words
+  - dec_confront_rival_words_result
+  - dec_dangerous_wager_accept
+  - dec_dangerous_wager_cancel
+  - dec_dangerous_wager_cancel_result
+  - dec_dangerous_wager_careful
+  - dec_dangerous_wager_careful_lose
+  - dec_dangerous_wager_careful_result
+  - dec_dangerous_wager_lose_result
+  - dec_dangerous_wager_setup
+  - dec_dangerous_wager_title
+  - dec_dangerous_wager_win_result
+  - dec_endurance_cancel
+  - dec_endurance_cancel_result
+  - dec_endurance_result
+  - dec_endurance_run
+  - dec_endurance_setup
+  - dec_endurance_title
+  - dec_gamble_high_cancel
+  - dec_gamble_high_cancel_result
+  - dec_gamble_high_lose_result
+  - dec_gamble_high_play
+  - dec_gamble_high_setup
+  - dec_gamble_high_title
+  - dec_gamble_high_win_result
+  - dec_gamble_low_cancel
+  - dec_gamble_low_cancel_result
+  - dec_gamble_low_casual
+  - dec_gamble_low_lose_result
+  - dec_gamble_low_setup
+  - dec_gamble_low_shrewd
+  - dec_gamble_low_shrewd_lose
+  - dec_gamble_low_shrewd_result
+  - dec_gamble_low_title
+  - dec_gamble_low_win_result
+  - dec_join_drinking_cancel
+  - dec_join_drinking_cancel_result
+  - dec_join_drinking_heavy
+  - dec_join_drinking_heavy_result
+  - dec_join_drinking_moderate
+  - dec_join_drinking_moderate_result
+  - dec_join_drinking_setup
+  - dec_join_drinking_title
+  - dec_join_men_cancel
+  - dec_join_men_cancel_result
+  - dec_join_men_do
+  - dec_join_men_result
+  - dec_join_men_setup
+  - dec_join_men_title
+  - dec_keep_to_self_cancel
+  - dec_keep_to_self_cancel_result
+  - dec_keep_to_self_do
+  - dec_keep_to_self_result
+  - dec_keep_to_self_setup
+  - dec_keep_to_self_title
+  - dec_lead_drill_cancel
+  - dec_lead_drill_cancel_result
+  - dec_lead_drill_do
+  - dec_lead_drill_result
+  - dec_lead_drill_setup
+  - dec_lead_drill_title
+  - dec_listen_rumors_cancel
+  - dec_listen_rumors_cancel_result
+  - dec_listen_rumors_do
+  - dec_listen_rumors_result
+  - dec_listen_rumors_setup
+  - dec_listen_rumors_title
+  - dec_maintain_gear_cancel
+  - dec_maintain_gear_cancel_result
+  - dec_maintain_gear_do
+  - dec_maintain_gear_result
+  - dec_maintain_gear_setup
+  - dec_maintain_gear_title
+  - dec_practice_medicine_assist
+  - dec_practice_medicine_cancel
+  - dec_practice_medicine_cancel_result
+  - dec_practice_medicine_result
+  - dec_practice_medicine_setup
+  - dec_practice_medicine_title
+  - dec_prove_courage_cancel
+  - dec_prove_courage_cancel_result
+  - dec_prove_courage_do
+  - dec_prove_courage_result
+  - dec_prove_courage_setup
+  - dec_prove_courage_title
+  - dec_request_audience_cancel
+  - dec_request_audience_cancel_result
+  - dec_request_audience_opportunity
+  - dec_request_audience_opportunity_result
+  - dec_request_audience_pay
+  - dec_request_audience_pay_result
+  - dec_request_audience_recognition
+  - dec_request_audience_recognition_result
+  - dec_request_audience_setup
+  - dec_request_audience_title
+  - dec_request_leave_cancel
+  - dec_request_leave_cancel_result
+  - dec_request_leave_denied_result
+  - dec_request_leave_do
+  - dec_request_leave_granted_result
+  - dec_request_leave_setup
+  - dec_request_leave_title
+  - dec_rest_cancel
+  - dec_rest_cancel_result
+  - dec_rest_extended_cancel
+  - dec_rest_extended_cancel_result
+  - dec_rest_extended_full
+  - dec_rest_extended_result
+  - dec_rest_extended_setup
+  - dec_rest_extended_title
+  - dec_rest_setup
+  - dec_rest_short
+  - dec_rest_short_result
+  - dec_rest_title
+  - dec_rest_with_men
+  - dec_rest_with_men_result
+  - dec_scout_area_cancel
+  - dec_scout_area_cancel_result
+  - dec_scout_area_do
+  - dec_scout_area_result
+  - dec_scout_area_setup
+  - dec_scout_area_title
+  - dec_seek_officers_cancel
+  - dec_seek_officers_cancel_result
+  - dec_seek_officers_do
+  - dec_seek_officers_result
+  - dec_seek_officers_setup
+  - dec_seek_officers_title
+  - dec_seek_treatment_basic
+  - dec_seek_treatment_basic_result
+  - dec_seek_treatment_cancel
+  - dec_seek_treatment_cancel_result
+  - dec_seek_treatment_full
+  - dec_seek_treatment_full_result
+  - dec_seek_treatment_setup
+  - dec_seek_treatment_title
+  - dec_shady_deal_cancel
+  - dec_shady_deal_cancel_result
+  - dec_shady_deal_do
+  - dec_shady_deal_report
+  - dec_shady_deal_report_result
+  - dec_shady_deal_result
+  - dec_shady_deal_setup
+  - dec_shady_deal_title
+  - dec_side_work_cancel
+  - dec_side_work_cancel_result
+  - dec_side_work_do
+  - dec_side_work_result
+  - dec_side_work_setup
+  - dec_side_work_title
+  - dec_spar_cancel
+  - dec_spar_cancel_result
+  - dec_spar_friendly
+  - dec_spar_friendly_result
+  - dec_spar_hard
+  - dec_spar_hard_result
+  - dec_spar_setup
+  - dec_spar_title
+  - dec_study_tactics_cancel
+  - dec_study_tactics_cancel_result
+  - dec_study_tactics_do
+  - dec_study_tactics_result
+  - dec_study_tactics_setup
+  - dec_study_tactics_title
+  - dec_train_troops_cancel
+  - dec_train_troops_cancel_result
+  - dec_train_troops_do
+  - dec_train_troops_result
+  - dec_train_troops_setup
+  - dec_train_troops_title
+  - dec_visit_market_browse
+  - dec_visit_market_cancel
+  - dec_visit_market_cancel_result
+  - dec_visit_market_result
+  - dec_visit_market_setup
+  - dec_visit_market_title
+  - dec_visit_quartermaster_cancel
+  - dec_visit_quartermaster_cancel_result
+  - dec_visit_quartermaster_do
+  - dec_visit_quartermaster_result
+  - dec_visit_quartermaster_setup
+  - dec_visit_quartermaster_title
+  - dec_volunteer_duty_cancel
+  - dec_volunteer_duty_cancel_result
+  - dec_volunteer_duty_do
+  - dec_volunteer_duty_result
+  - dec_volunteer_duty_setup
+  - dec_volunteer_duty_title
+  - dec_weapon_drill_cancel
+  - dec_weapon_drill_cancel_result
+  - dec_weapon_drill_do
+  - dec_weapon_drill_result
+  - dec_weapon_drill_setup
+  - dec_weapon_drill_title
+  - dec_weapon_specialization_cancel
+  - dec_weapon_specialization_cancel_result
+  - dec_weapon_specialization_do
+  - dec_weapon_specialization_result
+  - dec_weapon_specialization_setup
+  - dec_weapon_specialization_title
+  - dec_write_letter_cancel
+  - dec_write_letter_cancel_result
+  - dec_write_letter_honest
+  - dec_write_letter_honest_result
+  - dec_write_letter_reassuring
+  - dec_write_letter_reassuring_result
+  - dec_write_letter_setup
+  - dec_write_letter_title
+  - decision_dice_body
+  - decision_dice_bold_outcome
+  - decision_dice_decline
+  - decision_dice_decline_outcome
+  - decision_dice_join_bold
+  - decision_dice_join_careful
+  - decision_dice_join_outcome
+  - decision_dice_title
+  - decision_favor_body
+  - decision_favor_generous
+  - decision_favor_generous_outcome
+  - decision_favor_modest
+  - decision_favor_modest_outcome
+  - decision_favor_refuse
+  - decision_favor_refuse_outcome
+  - decision_favor_title
+  - decision_gratitude_accept
+  - decision_gratitude_accept_outcome
+  - decision_gratitude_body
+  - decision_gratitude_refuse
+  - decision_gratitude_refuse_outcome
+  - decision_gratitude_title
+  - decision_lord_hunt_accept
+  - decision_lord_hunt_accept_outcome
+  - decision_lord_hunt_body
+  - decision_lord_hunt_decline
+  - decision_lord_hunt_decline_outcome
+  - decision_lord_hunt_title
+  - decision_medic_charge
+  - decision_medic_charge_outcome
+  - decision_medic_emergency_body
+  - decision_medic_emergency_title
+  - decision_medic_help
+  - decision_medic_help_outcome
+  - decision_qm_audit_bribe
+  - decision_qm_audit_bribe_outcome
+  - decision_qm_audit_burn
+  - decision_qm_audit_burn_outcome
+  - decision_qm_audit_cooperate
+  - decision_qm_audit_cooperate_outcome
+  - decision_qm_audit_pressure_body
+  - decision_qm_audit_pressure_title
+  - decision_qm_deal_body
+  - decision_qm_deal_title
+  - decision_qm_official
+  - decision_qm_official_outcome
+  - decision_qm_report
+  - decision_qm_report_outcome
+  - decision_qm_supply_run_body
+  - decision_qm_supply_run_official
+  - decision_qm_supply_run_official_outcome
+  - decision_qm_supply_run_quiet
+  - decision_qm_supply_run_quiet_outcome
+  - decision_qm_supply_run_ration
+  - decision_qm_supply_run_ration_outcome
+  - decision_qm_supply_run_title
+  - decision_qm_unofficial
+  - decision_qm_unofficial_outcome
+  - decision_repayment_accept
+  - decision_repayment_accept_outcome
+  - decision_repayment_body
+  - decision_repayment_refuse
+  - decision_repayment_refuse_outcome
+  - decision_repayment_title
+  - decision_scout_accept
+  - decision_scout_accept_outcome
+  - decision_scout_assignment_body
+  - decision_scout_assignment_title
+  - decision_scout_decline
+  - decision_scout_decline_outcome
+  - decision_training_accept
+  - decision_training_accept_outcome
+  - decision_training_decline
+  - decision_training_decline_outcome
+  - decision_training_offer_body
+  - decision_training_offer_title
+  - duty_tooltip_enlisted
+  - duty_tooltip_forager
+  - duty_tooltip_messenger
+  - duty_tooltip_pioneer
+  - duty_tooltip_sentry
+  - enl_act_fail_condition
+  - enl_act_fail_cooldown
+  - enl_act_fail_default
+  - enl_act_fail_disabled
+  - enl_act_fail_not_enlisted
+  - enl_act_fail_too_fatigued
+  - enl_camp_duties_current_none
+  - enl_camp_duties_current_prefix
+  - enl_camp_duties_formation_line
+  - enl_camp_duties_header
+  - enl_camp_duties_none_for_rank
+  - enl_camp_duties_not_enlisted
+  - enl_camp_duties_request_assignment
+  - enl_camp_duties_select_prompt
+  - enl_camp_duties_soldier_rep_label
+  - enl_camp_duties_transfer_available
+  - enl_camp_duties_transfer_cooldown
+  - enl_camp_duties_transfer_unlock
+  - enl_camp_hub_fatigue_line
+  - enl_camp_hub_now_line
+  - enl_camp_hub_title
+  - enl_camp_mgmt_title
+  - enl_camp_not_enlisted
+  - enl_camp_squad_fallen
+  - enl_camp_squad_members_header
+  - enl_camp_squad_type
+  - enl_camp_tab_army
+  - enl_camp_tab_duties
+  - enl_camp_tab_orders
+  - enl_camp_tab_reports
+  - enl_camp_tab_squad
+  - enl_camp_ui_failed_to_load
+  - enl_camp_ui_failed_to_open
+  - enl_duty_assign_hint
+  - enl_duty_assign_label
+  - enl_duty_assigned_to
+  - enl_duty_change_failed
+  - enl_duty_cooldown_hint
+  - enl_duty_current_hint
+  - enl_duty_current_label
+  - enl_duty_incompatible_formation
+  - enl_duty_locked_label
+  - enl_duty_locked_tier
+  - enl_duty_no_description
+  - enl_duty_not_available
+  - enl_duty_not_available_dot
+  - enl_duty_not_found
+  - enl_duty_not_selectable
+  - enl_duty_on_cooldown
+  - enl_duty_on_cooldown_label
+  - enl_duty_request_denied
+  - enl_duty_request_hint
+  - enl_duty_requirements_line
+  - enl_duty_requirements_none
+  - enl_duty_requires_tier
+  - enl_duty_same
+  - enl_duty_wrong_formation
+  - enl_formation_infantry
+  - enl_persona_default_first_name
+  - enl_reports_chosen_line
+  - enl_reports_company_reports
+  - enl_reports_general_orders
+  - enl_reports_kingdom_reports
+  - enl_reports_no_matters_today
+  - enl_reports_no_opportunities_not_enlisted
+  - enl_reports_no_player_decisions
+  - enl_reports_no_recent_outcomes
+  - enl_reports_opportunities
+  - enl_reports_opportunities_not_enlisted_detail
+  - enl_reports_outcomes_placeholder
+  - enl_reports_recent_outcomes
+  - enl_reports_squad_reports
+  - enl_reports_title
+  - enl_retinue_msg_no_soldiers_needed
+  - enl_retinue_reason_no_party
+  - enl_retinue_reason_no_space_companions
+  - enl_sched_block_desc_fallback
+  - enl_sched_block_foraging_duty
+  - enl_sched_block_free_time
+  - enl_sched_block_patrol_duty
+  - enl_sched_block_scouting_mission
+  - enl_sched_block_sentry_duty
+  - enl_sched_effect_fatigue
+  - enl_sched_effect_xp
+  - enl_sched_popup_foraging_body
+  - enl_sched_popup_foraging_title
+  - enl_sched_popup_free_time_body
+  - enl_sched_popup_free_time_title
+  - enl_sched_popup_patrol_body
+  - enl_sched_popup_patrol_title
+  - enl_sched_popup_rest_body
+  - enl_sched_popup_rest_title
+  - enl_sched_popup_scout_body
+  - enl_sched_popup_scout_title
+  - enl_sched_popup_sentry_body
+  - enl_sched_popup_sentry_title
+  - enl_sched_popup_training_body
+  - enl_sched_popup_training_title
+  - enl_sched_popup_watch_body
+  - enl_sched_popup_watch_title
+  - enl_sched_popup_work_detail_body
+  - enl_sched_popup_work_detail_title
+  - enl_sched_popup_xp_gained
+  - enl_sched_status_complete
+  - enl_sched_status_completed
+  - enl_sched_status_in_progress
+  - enl_sched_status_pending
+  - enl_schedule_activity_default_desc
+  - enl_schedule_activity_default_title
+  - enl_schedule_no_description
+  - enl_schedule_unknown
+  - enl_schedule_unknown_activity
+  - enl_term_lady
+  - enl_term_lord
+  - enl_term_sergeant
+  - enl_term_the_sergeant
+  - enl_timeblock_afternoon
+  - enl_timeblock_dusk
+  - enl_timeblock_morning
+  - enl_timeblock_night
+  - enl_ui_available
+  - enl_ui_camp_scene
+  - enl_ui_done
+  - enl_ui_event_occurred
+  - enl_ui_event_title_default
+  - enl_ui_na
+  - enl_ui_notice
+  - enl_ui_opportunity
+  - enl_ui_outcome_default
+  - enl_ui_outcome_title
+  - enlisted_camp_morale_shaken
+  - enlisted_camp_morale_steady
+  - enlisted_camp_pay_normal
+  - enlisted_camp_pay_tense
+  - enlisted_camp_status_header
+  - enlisted_camp_status_line
+  - enlisted_camp_supply_stable
+  - enlisted_camp_supply_tight
+  - enlisted_daypart_dawn
+  - enlisted_daypart_day
+  - enlisted_daypart_dusk
+  - enlisted_daypart_night
+  - Enlisted_Duty_Desc_Enlisted
+  - Enlisted_Duty_Desc_Forager
+  - Enlisted_Duty_Desc_Messenger
+  - Enlisted_Duty_Desc_Pioneer
+  - Enlisted_Duty_Desc_Sentry
+  - Enlisted_Duty_Name_Enlisted
+  - Enlisted_Duty_Name_Forager
+  - Enlisted_Duty_Name_Messenger
+  - Enlisted_Duty_Name_Pioneer
+  - Enlisted_Duty_Name_Sentry
+  - Enlisted_Menu_Duty_Title
+  - Enlisted_Menu_Header_Duties
+  - Enlisted_Menu_Header_Professions
+  - Enlisted_Menu_Medical
+  - Enlisted_Menu_MyCamp
+  - Enlisted_Menu_ReportDuty
+  - Enlisted_Message_DesertedFromKingdom
+  - Enlisted_Message_DutyChanged
+  - Enlisted_Message_HeaderInfo_Duties
+  - Enlisted_Message_HeaderInfo_Professions
+  - Enlisted_Message_ProfessionChanged
+  - Enlisted_Message_Tier3Required
+  - Enlisted_Objective_Label
+  - Enlisted_Prof_Desc_Drillmaster
+  - Enlisted_Prof_Desc_FieldMedic
+  - Enlisted_Prof_Desc_None
+  - Enlisted_Prof_Desc_Quarterhand
+  - Enlisted_Prof_Desc_Saboteur
+  - Enlisted_Prof_Desc_Siegewright
+  - Enlisted_Prof_Desc_Unknown
+  - Enlisted_Prof_Name_Drillmaster
+  - Enlisted_Prof_Name_FieldMedic
+  - Enlisted_Prof_Name_Quarterhand
+  - Enlisted_Prof_Name_Saboteur
+  - Enlisted_Prof_Name_SiegewrightAide
+  - Enlisted_Rank_BannerSergeant
+  - Enlisted_Rank_Footman
+  - Enlisted_Rank_HouseholdGuard
+  - Enlisted_Rank_Levy
+  - Enlisted_Rank_ManAtArms
+  - Enlisted_Rank_Serjeant
+  - enlisted_standing_discipline_line
+  - enlisted_standing_header
+  - enlisted_standing_medical_line
+  - enlisted_standing_rep_line
+  - enlisted_standing_scrutiny_line
+  - Enlisted_Status_Backpay
+  - Enlisted_Status_CampStatus
+  - Enlisted_Status_Condition
+  - enlisted_status_days_from_town
+  - Enlisted_Status_DaysEnlisted
+  - Enlisted_Status_Discipline
+  - Enlisted_Status_Formation
+  - Enlisted_Status_MedicalAvailable
+  - Enlisted_Status_MedicalRestocking
+  - Enlisted_Status_NextXP
+  - Enlisted_Status_OfficerRole
+  - Enlisted_Status_PayStatus
+  - Enlisted_Status_PromotionAvailable
+  - Enlisted_Status_RetirementEligible
+  - Enlisted_Status_Scrutiny
+  - Enlisted_Status_SoldierRep
+  - Enlisted_Status_TermRemaining
+  - Enlisted_Status_Tier
+  - enlisted_status_time_of_day
+  - Enlisted_Status_Wage
+  - Enlisted_Status_XP
+  - Enlisted_Symbol_Selected
+  - Enlisted_Symbol_Unselected
+  - Enlisted_Term_TheArmy
+  - esc_disc_breaking
+  - esc_disc_clean
+  - esc_disc_critical
+  - esc_disc_minor
+  - esc_disc_serious
+  - esc_disc_troubled
+  - esc_med_concerning
+  - esc_med_critical
+  - esc_med_mild
+  - esc_med_none
+  - esc_med_serious
+  - esc_rep_accepted
+  - esc_rep_bonded
+  - esc_rep_disliked
+  - esc_rep_hated
+  - esc_rep_neutral
+  - esc_rep_outcast
+  - esc_rep_trusted
+  - esc_scrutiny_burning
+  - esc_scrutiny_clean
+  - esc_scrutiny_exposed
+  - esc_scrutiny_hot
+  - esc_scrutiny_noticed
+  - esc_scrutiny_watched
+  - evt_camp_brawl_opt_back_soldier
+  - evt_camp_brawl_opt_back_soldier_result
+  - evt_camp_brawl_opt_fetch_officer
+  - evt_camp_brawl_opt_fetch_officer_result
+  - evt_camp_brawl_opt_intervene
+  - evt_camp_brawl_opt_intervene_result
+  - evt_camp_brawl_setup
+  - evt_camp_brawl_title
+  - evt_camp_fire_opt_inspire
+  - evt_camp_fire_opt_inspire_result
+  - evt_camp_fire_opt_leave
+  - evt_camp_fire_opt_leave_result
+  - evt_camp_fire_opt_listen
+  - evt_camp_fire_opt_listen_result
+  - evt_camp_fire_opt_share
+  - evt_camp_fire_opt_share_result
+  - evt_camp_fire_setup
+  - evt_camp_fire_title
+  - evt_camp_gambling_opt_play
+  - evt_camp_gambling_opt_play_result
+  - evt_camp_gambling_opt_report
+  - evt_camp_gambling_opt_report_result
+  - evt_camp_gambling_opt_watch
+  - evt_camp_gambling_opt_watch_result
+  - evt_camp_gambling_setup
+  - evt_camp_gambling_title
+  - evt_camp_storytelling_opt_listen
+  - evt_camp_storytelling_opt_listen_result
+  - evt_camp_storytelling_opt_tell_battle
+  - evt_camp_storytelling_opt_tell_battle_result
+  - evt_camp_storytelling_opt_tell_legend
+  - evt_camp_storytelling_opt_tell_legend_result
+  - evt_camp_storytelling_setup
+  - evt_camp_storytelling_title
+  - evt_camp_supply_shortage_opt_forage
+  - evt_camp_supply_shortage_opt_forage_result
+  - evt_camp_supply_shortage_opt_hoard
+  - evt_camp_supply_shortage_opt_hoard_result
+  - evt_camp_supply_shortage_opt_share
+  - evt_camp_supply_shortage_opt_share_result
+  - evt_camp_supply_shortage_setup
+  - evt_camp_supply_shortage_title
+  - evt_muster_inspection_opt_perfect
+  - evt_muster_inspection_opt_perfect_result
+  - evt_muster_inspection_opt_standard
+  - evt_muster_inspection_opt_standard_result
+  - evt_muster_inspection_opt_unprepared
+  - evt_muster_inspection_opt_unprepared_result
+  - evt_muster_inspection_setup
+  - evt_muster_inspection_title
+  - evt_muster_new_recruit_opt_haze
+  - evt_muster_new_recruit_opt_haze_result
+  - evt_muster_new_recruit_opt_ignore
+  - evt_muster_new_recruit_opt_ignore_result
+  - evt_muster_new_recruit_opt_mentor
+  - evt_muster_new_recruit_opt_mentor_result
+  - evt_muster_new_recruit_setup
+  - evt_muster_new_recruit_title
+  - evt_scout_enemy_patrol_opt_follow
+  - evt_scout_enemy_patrol_opt_follow_result
+  - evt_scout_enemy_patrol_opt_intercept
+  - evt_scout_enemy_patrol_opt_intercept_result
+  - evt_scout_enemy_patrol_opt_observe
+  - evt_scout_enemy_patrol_opt_observe_result
+  - evt_scout_enemy_patrol_setup
+  - evt_scout_enemy_patrol_title
+  - evt_scout_night_watch_opt_alert
+  - evt_scout_night_watch_opt_alert_result
+  - evt_scout_night_watch_opt_doze
+  - evt_scout_night_watch_opt_doze_result
+  - evt_scout_night_watch_opt_investigate
+  - evt_scout_night_watch_opt_investigate_result
+  - evt_scout_night_watch_setup
+  - evt_scout_night_watch_title
+  - evt_scout_terrain_mastery_opt_shortcut
+  - evt_scout_terrain_mastery_opt_shortcut_result
+  - evt_scout_terrain_mastery_opt_teach
+  - evt_scout_terrain_mastery_opt_teach_result
+  - evt_scout_terrain_mastery_setup
+  - evt_scout_terrain_mastery_title
+  - evt_scout_tracks_opt_ambush
+  - evt_scout_tracks_opt_ambush_result
+  - evt_scout_tracks_opt_investigate
+  - evt_scout_tracks_opt_investigate_result
+  - evt_scout_tracks_opt_report
+  - evt_scout_tracks_opt_report_result
+  - evt_scout_tracks_setup
+  - evt_scout_tracks_title
+  - evt_scrutiny_2_opt_deflect
+  - evt_scrutiny_2_opt_deflect_result
+  - evt_scrutiny_2_opt_laylow
+  - evt_scrutiny_2_opt_laylow_result
+  - evt_scrutiny_2_opt_normal
+  - evt_scrutiny_2_opt_normal_result
+  - evt_scrutiny_2_setup
+  - evt_scrutiny_2_title
+  - ll_default_title
+  - ll_evt_arch_train_hunting_opt_hunt_carefully_stalk_properly_outcome
+  - ll_evt_arch_train_hunting_opt_hunt_carefully_stalk_properly_text
+  - ll_evt_arch_train_hunting_opt_let_others_hunt_watch_and_learn_outcome
+  - ll_evt_arch_train_hunting_opt_let_others_hunt_watch_and_learn_text
+  - ll_evt_arch_train_hunting_opt_range_far_find_good_game_outcome
+  - ll_evt_arch_train_hunting_opt_range_far_find_good_game_text
+  - ll_evt_arch_train_hunting_opt_set_snares_combine_methods_outcome
+  - ll_evt_arch_train_hunting_opt_set_snares_combine_methods_text
+  - ll_evt_arch_train_hunting_setup
+  - ll_evt_arch_train_hunting_title
+  - ll_evt_arch_train_moving_opt_focus_on_tracking_and_lead_outcome
+  - ll_evt_arch_train_moving_opt_focus_on_tracking_and_lead_text
+  - ll_evt_arch_train_moving_opt_mixed_practice_various_targets_outcome
+  - ll_evt_arch_train_moving_opt_mixed_practice_various_targets_text
+  - ll_evt_arch_train_moving_opt_practice_against_cavalry_targets_outcome
+  - ll_evt_arch_train_moving_opt_practice_against_cavalry_targets_text
+  - ll_evt_arch_train_moving_opt_speed_over_accuracy_volume_fire_outcome
+  - ll_evt_arch_train_moving_opt_speed_over_accuracy_volume_fire_text
+  - ll_evt_arch_train_moving_setup
+  - ll_evt_arch_train_moving_title
+  - ll_evt_arch_train_target_opt_help_newer_archers_with_techniqu_outcome
+  - ll_evt_arch_train_target_opt_help_newer_archers_with_techniqu_text
+  - ll_evt_arch_train_target_opt_long_range_shots_push_your_limit_outcome
+  - ll_evt_arch_train_target_opt_long_range_shots_push_your_limit_text
+  - ll_evt_arch_train_target_opt_speed_shooting_loose_fast_outcome
+  - ll_evt_arch_train_target_opt_speed_shooting_loose_fast_text
+  - ll_evt_arch_train_target_opt_steady_practice_work_on_consiste_outcome
+  - ll_evt_arch_train_target_opt_steady_practice_work_on_consiste_text
+  - ll_evt_arch_train_target_setup
+  - ll_evt_arch_train_target_title
+  - ll_evt_arch_train_volley_opt_call_the_volleys_leadership_prac_outcome
+  - ll_evt_arch_train_volley_opt_call_the_volleys_leadership_prac_text
+  - ll_evt_arch_train_volley_opt_focus_on_timing_with_the_unit_outcome
+  - ll_evt_arch_train_volley_opt_focus_on_timing_with_the_unit_text
+  - ll_evt_arch_train_volley_opt_high_arc_shots_hit_behind_cover_outcome
+  - ll_evt_arch_train_volley_opt_high_arc_shots_hit_behind_cover_text
+  - ll_evt_arch_train_volley_opt_work_on_rapid_reload_outcome
+  - ll_evt_arch_train_volley_opt_work_on_rapid_reload_text
+  - ll_evt_arch_train_volley_setup
+  - ll_evt_arch_train_volley_title
+  - ll_evt_arm_battle_repairs_opt_claim_materials_are_short_refuse_outcome
+  - ll_evt_arm_battle_repairs_opt_claim_materials_are_short_refuse_text
+  - ll_evt_arm_battle_repairs_opt_explain_it_s_beyond_repair_offer_outcome
+  - ll_evt_arm_battle_repairs_opt_explain_it_s_beyond_repair_offer_text
+  - ll_evt_arm_battle_repairs_opt_patch_it_functional_but_not_pret_outcome
+  - ll_evt_arm_battle_repairs_opt_patch_it_functional_but_not_pret_text
+  - ll_evt_arm_battle_repairs_opt_reforge_it_properly_takes_time_outcome
+  - ll_evt_arm_battle_repairs_opt_reforge_it_properly_takes_time_text
+  - ll_evt_arm_battle_repairs_setup
+  - ll_evt_arm_battle_repairs_title
+  - ll_evt_arm_captured_equipment_opt_adjust_it_properly_takes_hours_outcome
+  - ll_evt_arm_captured_equipment_opt_adjust_it_properly_takes_hours_text
+  - ll_evt_arm_captured_equipment_opt_figure_it_out_yourself_outcome
+  - ll_evt_arm_captured_equipment_opt_figure_it_out_yourself_text
+  - ll_evt_arm_captured_equipment_opt_quick_adjustments_good_enough_outcome
+  - ll_evt_arm_captured_equipment_opt_quick_adjustments_good_enough_text
+  - ll_evt_arm_captured_equipment_opt_teach_them_to_adjust_it_themselv_outcome
+  - ll_evt_arm_captured_equipment_opt_teach_them_to_adjust_it_themselv_text
+  - ll_evt_arm_captured_equipment_setup
+  - ll_evt_arm_captured_equipment_title
+  - ll_evt_arm_equipment_inspection_opt_focus_on_weapons_they_matter_mos_outcome
+  - ll_evt_arm_equipment_inspection_opt_focus_on_weapons_they_matter_mos_text
+  - ll_evt_arm_equipment_inspection_opt_quick_check_trust_the_soldiers_t_outcome
+  - ll_evt_arm_equipment_inspection_opt_quick_check_trust_the_soldiers_t_text
+  - ll_evt_arm_equipment_inspection_opt_thorough_inspection_fix_everythi_outcome
+  - ll_evt_arm_equipment_inspection_opt_thorough_inspection_fix_everythi_text
+  - ll_evt_arm_equipment_inspection_opt_work_through_the_night_outcome
+  - ll_evt_arm_equipment_inspection_opt_work_through_the_night_text
+  - ll_evt_arm_equipment_inspection_setup
+  - ll_evt_arm_equipment_inspection_title
+  - ll_evt_arm_material_shortage_opt_ask_the_local_smith_for_help_outcome
+  - ll_evt_arm_material_shortage_opt_ask_the_local_smith_for_help_text
+  - ll_evt_arm_material_shortage_opt_push_through_accept_imperfect_re_outcome
+  - ll_evt_arm_material_shortage_opt_push_through_accept_imperfect_re_text
+  - ll_evt_arm_material_shortage_opt_take_time_to_fix_it_properly_outcome
+  - ll_evt_arm_material_shortage_opt_take_time_to_fix_it_properly_text
+  - ll_evt_arm_material_shortage_opt_work_around_it_adapt_your_techni_outcome
+  - ll_evt_arm_material_shortage_opt_work_around_it_adapt_your_techni_text
+  - ll_evt_arm_material_shortage_setup
+  - ll_evt_arm_material_shortage_title
+  - ll_evt_arm_weapon_modification_opt_evaluate_everything_carefully_outcome
+  - ll_evt_arm_weapon_modification_opt_evaluate_everything_carefully_text
+  - ll_evt_arm_weapon_modification_opt_keep_the_best_scrap_the_rest_outcome
+  - ll_evt_arm_weapon_modification_opt_keep_the_best_scrap_the_rest_text
+  - ll_evt_arm_weapon_modification_opt_mark_the_best_pieces_for_reforgi_outcome
+  - ll_evt_arm_weapon_modification_opt_mark_the_best_pieces_for_reforgi_text
+  - ll_evt_arm_weapon_modification_opt_set_aside_the_finest_piece_for_y_outcome
+  - ll_evt_arm_weapon_modification_opt_set_aside_the_finest_piece_for_y_text
+  - ll_evt_arm_weapon_modification_setup
+  - ll_evt_arm_weapon_modification_title
+  - ll_evt_boat_crew_dispute_opt_let_them_fight_it_out_controlled_outcome
+  - ll_evt_boat_crew_dispute_opt_let_them_fight_it_out_controlled_text
+  - ll_evt_boat_crew_dispute_opt_punish_both_no_fighting_aboard_outcome
+  - ll_evt_boat_crew_dispute_opt_punish_both_no_fighting_aboard_text
+  - ll_evt_boat_crew_dispute_opt_separate_them_hear_both_sides_outcome
+  - ll_evt_boat_crew_dispute_opt_separate_them_hear_both_sides_text
+  - ll_evt_boat_crew_dispute_opt_take_sides_with_the_senior_man_outcome
+  - ll_evt_boat_crew_dispute_opt_take_sides_with_the_senior_man_text
+  - ll_evt_boat_crew_dispute_setup
+  - ll_evt_boat_crew_dispute_title
+  - ll_evt_boat_deck_management_opt_extra_duty_punishment_through_wo_outcome
+  - ll_evt_boat_deck_management_opt_extra_duty_punishment_through_wo_text
+  - ll_evt_boat_deck_management_opt_ignore_it_not_worth_the_trouble_outcome
+  - ll_evt_boat_deck_management_opt_ignore_it_not_worth_the_trouble_text
+  - ll_evt_boat_deck_management_opt_private_warning_give_them_one_ch_outcome
+  - ll_evt_boat_deck_management_opt_private_warning_give_them_one_ch_text
+  - ll_evt_boat_deck_management_opt_public_discipline_make_an_exampl_outcome
+  - ll_evt_boat_deck_management_opt_public_discipline_make_an_exampl_text
+  - ll_evt_boat_deck_management_setup
+  - ll_evt_boat_deck_management_title
+  - ll_evt_boat_man_overboard_opt_he_s_gone_don_t_risk_more_lives_outcome
+  - ll_evt_boat_man_overboard_opt_he_s_gone_don_t_risk_more_lives_text
+  - ll_evt_boat_man_overboard_opt_jump_in_yourself_outcome
+  - ll_evt_boat_man_overboard_opt_jump_in_yourself_text
+  - ll_evt_boat_man_overboard_opt_organize_immediate_rescue_outcome
+  - ll_evt_boat_man_overboard_opt_organize_immediate_rescue_text
+  - ll_evt_boat_man_overboard_opt_throw_the_line_guide_from_deck_outcome
+  - ll_evt_boat_man_overboard_opt_throw_the_line_guide_from_deck_text
+  - ll_evt_boat_man_overboard_setup
+  - ll_evt_boat_man_overboard_title
+  - ll_evt_boat_storm_rigging_opt_cut_the_line_lose_the_sail_save__outcome
+  - ll_evt_boat_storm_rigging_opt_cut_the_line_lose_the_sail_save__text
+  - ll_evt_boat_storm_rigging_opt_direct_from_deck_guide_the_sailo_outcome
+  - ll_evt_boat_storm_rigging_opt_direct_from_deck_guide_the_sailo_text
+  - ll_evt_boat_storm_rigging_opt_lead_the_crew_up_yourself_outcome
+  - ll_evt_boat_storm_rigging_opt_lead_the_crew_up_yourself_text
+  - ll_evt_boat_storm_rigging_opt_send_the_most_experienced_sailor_outcome
+  - ll_evt_boat_storm_rigging_opt_send_the_most_experienced_sailor_text
+  - ll_evt_boat_storm_rigging_setup
+  - ll_evt_boat_storm_rigging_title
+  - ll_evt_boat_supply_rationing_opt_catch_fish_to_supplement_outcome
+  - ll_evt_boat_supply_rationing_opt_catch_fish_to_supplement_text
+  - ll_evt_boat_supply_rationing_opt_implement_fair_rationing_explain_outcome
+  - ll_evt_boat_supply_rationing_opt_implement_fair_rationing_explain_text
+  - ll_evt_boat_supply_rationing_opt_officers_eat_full_crew_gets_cut_outcome
+  - ll_evt_boat_supply_rationing_opt_officers_eat_full_crew_gets_cut_text
+  - ll_evt_boat_supply_rationing_opt_short_the_rations_quietly_don_t__outcome
+  - ll_evt_boat_supply_rationing_opt_short_the_rations_quietly_don_t__text
+  - ll_evt_boat_supply_rationing_setup
+  - ll_evt_boat_supply_rationing_title
+  - ll_evt_cav_train_charge_opt_focus_on_approach_and_timing_outcome
+  - ll_evt_cav_train_charge_opt_focus_on_approach_and_timing_text
+  - ll_evt_cav_train_charge_opt_full_speed_maximum_impact_outcome
+  - ll_evt_cav_train_charge_opt_full_speed_maximum_impact_text
+  - ll_evt_cav_train_charge_opt_lead_the_practice_charge_outcome
+  - ll_evt_cav_train_charge_opt_lead_the_practice_charge_text
+  - ll_evt_cav_train_charge_opt_standard_charge_proper_form_outcome
+  - ll_evt_cav_train_charge_opt_standard_charge_proper_form_text
+  - ll_evt_cav_train_charge_setup
+  - ll_evt_cav_train_charge_title
+  - ll_evt_cav_train_horse_rotation_opt_focus_on_the_difficult_horse_outcome
+  - ll_evt_cav_train_horse_rotation_opt_focus_on_the_difficult_horse_text
+  - ll_evt_cav_train_horse_rotation_opt_help_others_with_their_mounts_outcome
+  - ll_evt_cav_train_horse_rotation_opt_help_others_with_their_mounts_text
+  - ll_evt_cav_train_horse_rotation_opt_quick_assessment_basic_handling_outcome
+  - ll_evt_cav_train_horse_rotation_opt_quick_assessment_basic_handling_text
+  - ll_evt_cav_train_horse_rotation_opt_take_time_with_each_horse_outcome
+  - ll_evt_cav_train_horse_rotation_opt_take_time_with_each_horse_text
+  - ll_evt_cav_train_horse_rotation_setup
+  - ll_evt_cav_train_horse_rotation_title
+  - ll_evt_cav_train_mounted_combat_opt_full_speed_passes_outcome
+  - ll_evt_cav_train_mounted_combat_opt_full_speed_passes_text
+  - ll_evt_cav_train_mounted_combat_opt_practice_mounted_combat_outcome
+  - ll_evt_cav_train_mounted_combat_opt_practice_mounted_combat_text
+  - ll_evt_cav_train_mounted_combat_opt_practice_sword_from_horseback_outcome
+  - ll_evt_cav_train_mounted_combat_opt_practice_sword_from_horseback_text
+  - ll_evt_cav_train_mounted_combat_opt_work_on_archery_from_horseback_outcome
+  - ll_evt_cav_train_mounted_combat_opt_work_on_archery_from_horseback_text
+  - ll_evt_cav_train_mounted_combat_setup
+  - ll_evt_cav_train_mounted_combat_title
+  - ll_evt_cav_train_skirmish_opt_focus_on_evasion_and_retreat_outcome
+  - ll_evt_cav_train_skirmish_opt_focus_on_evasion_and_retreat_text
+  - ll_evt_cav_train_skirmish_opt_full_mock_battle_outcome
+  - ll_evt_cav_train_skirmish_opt_full_mock_battle_text
+  - ll_evt_cav_train_skirmish_opt_practice_javelin_throws_outcome
+  - ll_evt_cav_train_skirmish_opt_practice_javelin_throws_text
+  - ll_evt_cav_train_skirmish_opt_work_on_bow_from_horseback_outcome
+  - ll_evt_cav_train_skirmish_opt_work_on_bow_from_horseback_text
+  - ll_evt_cav_train_skirmish_setup
+  - ll_evt_cav_train_skirmish_title
+  - ll_evt_commander_onboard_01_commission_opt_first_time_confident_outcome
+  - ll_evt_commander_onboard_01_commission_opt_first_time_confident_text
+  - ll_evt_commander_onboard_01_commission_opt_first_time_honest_outcome
+  - ll_evt_commander_onboard_01_commission_opt_first_time_honest_text
+  - ll_evt_commander_onboard_01_commission_opt_first_time_questions_outcome
+  - ll_evt_commander_onboard_01_commission_opt_first_time_questions_text
+  - ll_evt_commander_onboard_01_commission_opt_first_time_ready_outcome
+  - ll_evt_commander_onboard_01_commission_opt_first_time_ready_text
+  - ll_evt_commander_onboard_01_commission_opt_return_needed_outcome
+  - ll_evt_commander_onboard_01_commission_opt_return_needed_text
+  - ll_evt_commander_onboard_01_commission_opt_return_reasons_outcome
+  - ll_evt_commander_onboard_01_commission_opt_return_reasons_text
+  - ll_evt_commander_onboard_01_commission_opt_return_rusty_outcome
+  - ll_evt_commander_onboard_01_commission_opt_return_rusty_text
+  - ll_evt_commander_onboard_01_commission_opt_return_sharp_outcome
+  - ll_evt_commander_onboard_01_commission_opt_return_sharp_text
+  - ll_evt_commander_onboard_01_commission_opt_transfer_humble_outcome
+  - ll_evt_commander_onboard_01_commission_opt_transfer_humble_text
+  - ll_evt_commander_onboard_01_commission_opt_transfer_professional_outcome
+  - ll_evt_commander_onboard_01_commission_opt_transfer_professional_text
+  - ll_evt_commander_onboard_01_commission_opt_transfer_record_outcome
+  - ll_evt_commander_onboard_01_commission_opt_transfer_record_text
+  - ll_evt_commander_onboard_01_commission_opt_transfer_why_here_outcome
+  - ll_evt_commander_onboard_01_commission_opt_transfer_why_here_text
+  - ll_evt_commander_onboard_01_commission_setup
+  - ll_evt_commander_onboard_01_commission_setup_first_time
+  - ll_evt_commander_onboard_01_commission_setup_return
+  - ll_evt_commander_onboard_01_commission_setup_transfer
+  - ll_evt_commander_onboard_01_commission_title
+  - ll_evt_commander_onboard_02_meet_troops_opt_all_defer_outcome
+  - ll_evt_commander_onboard_02_meet_troops_opt_all_defer_text
+  - ll_evt_commander_onboard_02_meet_troops_opt_all_speech_outcome
+  - ll_evt_commander_onboard_02_meet_troops_opt_all_speech_text
+  - ll_evt_commander_onboard_02_meet_troops_opt_all_train_outcome
+  - ll_evt_commander_onboard_02_meet_troops_opt_all_train_text
+  - ll_evt_commander_onboard_02_meet_troops_opt_all_walk_line_outcome
+  - ll_evt_commander_onboard_02_meet_troops_opt_all_walk_line_text
+  - ll_evt_commander_onboard_02_meet_troops_setup
+  - ll_evt_commander_onboard_02_meet_troops_setup_all
+  - ll_evt_commander_onboard_02_meet_troops_title
+  - ll_evt_commander_onboard_03_first_blood_opt_all_drink_outcome
+  - ll_evt_commander_onboard_03_first_blood_opt_all_drink_text
+  - ll_evt_commander_onboard_03_first_blood_opt_all_face_it_outcome
+  - ll_evt_commander_onboard_03_first_blood_opt_all_face_it_text
+  - ll_evt_commander_onboard_03_first_blood_opt_all_practical_outcome
+  - ll_evt_commander_onboard_03_first_blood_opt_all_practical_text
+  - ll_evt_commander_onboard_03_first_blood_opt_all_talk_outcome
+  - ll_evt_commander_onboard_03_first_blood_opt_all_talk_text
+  - ll_evt_commander_onboard_03_first_blood_setup
+  - ll_evt_commander_onboard_03_first_blood_setup_all
+  - ll_evt_commander_onboard_03_first_blood_title
+  - ll_evt_desert_clean_opt_bandit
+  - ll_evt_desert_clean_opt_bandit_outcome
+  - ll_evt_desert_clean_opt_kingdom
+  - ll_evt_desert_clean_opt_kingdom_outcome
+  - ll_evt_desert_clean_opt_town
+  - ll_evt_desert_clean_opt_town_outcome
+  - ll_evt_desert_clean_setup
+  - ll_evt_desert_clean_title
+  - ll_evt_desert_plan_when_opt_battle
+  - ll_evt_desert_plan_when_opt_battle_outcome
+  - ll_evt_desert_plan_when_opt_battle_outcome_failure
+  - ll_evt_desert_plan_when_opt_stay
+  - ll_evt_desert_plan_when_opt_stay_outcome
+  - ll_evt_desert_plan_when_opt_tonight
+  - ll_evt_desert_plan_when_opt_tonight_outcome
+  - ll_evt_desert_plan_when_opt_tonight_outcome_failure
+  - ll_evt_desert_plan_when_opt_town
+  - ll_evt_desert_plan_when_opt_town_outcome
+  - ll_evt_desert_plan_when_opt_town_outcome_failure
+  - ll_evt_desert_plan_when_setup
+  - ll_evt_desert_plan_when_title
+  - ll_evt_discipline_blocked_opt_accept_outcome
+  - ll_evt_discipline_blocked_opt_accept_text
+  - ll_evt_discipline_blocked_opt_appeal_outcome
+  - ll_evt_discipline_blocked_opt_appeal_outcome_failure
+  - ll_evt_discipline_blocked_opt_appeal_text
+  - ll_evt_discipline_blocked_opt_bitter_outcome
+  - ll_evt_discipline_blocked_opt_bitter_text
+  - ll_evt_discipline_blocked_opt_despair_outcome
+  - ll_evt_discipline_blocked_opt_despair_text
+  - ll_evt_discipline_blocked_setup
+  - ll_evt_discipline_blocked_title
+  - ll_evt_discipline_discharge_opt_accept_outcome
+  - ll_evt_discipline_discharge_opt_accept_text
+  - ll_evt_discipline_discharge_opt_beg_outcome
+  - ll_evt_discipline_discharge_opt_beg_outcome_failure
+  - ll_evt_discipline_discharge_opt_beg_text
+  - ll_evt_discipline_discharge_opt_defiant_outcome
+  - ll_evt_discipline_discharge_opt_defiant_text
+  - ll_evt_discipline_discharge_opt_service_outcome
+  - ll_evt_discipline_discharge_opt_service_outcome_failure
+  - ll_evt_discipline_discharge_opt_service_text
+  - ll_evt_discipline_discharge_setup
+  - ll_evt_discipline_discharge_title
+  - ll_evt_discipline_extra_duty_opt_accept_outcome
+  - ll_evt_discipline_extra_duty_opt_accept_text
+  - ll_evt_discipline_extra_duty_opt_complain_outcome
+  - ll_evt_discipline_extra_duty_opt_complain_text
+  - ll_evt_discipline_extra_duty_opt_excel_outcome
+  - ll_evt_discipline_extra_duty_opt_excel_text
+  - ll_evt_discipline_extra_duty_opt_shirk_outcome
+  - ll_evt_discipline_extra_duty_opt_shirk_text
+  - ll_evt_discipline_extra_duty_setup
+  - ll_evt_discipline_extra_duty_title
+  - ll_evt_discipline_hearing_opt_accountable_outcome
+  - ll_evt_discipline_hearing_opt_accountable_text
+  - ll_evt_discipline_hearing_opt_blame_outcome
+  - ll_evt_discipline_hearing_opt_blame_text
+  - ll_evt_discipline_hearing_opt_challenge_outcome
+  - ll_evt_discipline_hearing_opt_challenge_outcome_failure
+  - ll_evt_discipline_hearing_opt_challenge_text
+  - ll_evt_discipline_hearing_opt_explain_outcome
+  - ll_evt_discipline_hearing_opt_explain_outcome_failure
+  - ll_evt_discipline_hearing_opt_explain_text
+  - ll_evt_discipline_hearing_setup
+  - ll_evt_discipline_hearing_title
+  - ll_evt_discipline_warning_opt_apologize_outcome
+  - ll_evt_discipline_warning_opt_apologize_text
+  - ll_evt_discipline_warning_opt_excuse_outcome
+  - ll_evt_discipline_warning_opt_excuse_text
+  - ll_evt_discipline_warning_opt_grateful_outcome
+  - ll_evt_discipline_warning_opt_grateful_text
+  - ll_evt_discipline_warning_opt_resentful_outcome
+  - ll_evt_discipline_warning_opt_resentful_text
+  - ll_evt_discipline_warning_setup
+  - ll_evt_discipline_warning_title
+  - ll_evt_eng_bridge_assessment_opt_full_repair_do_it_right_outcome
+  - ll_evt_eng_bridge_assessment_opt_full_repair_do_it_right_text
+  - ll_evt_eng_bridge_assessment_opt_improvise_with_available_materia_outcome
+  - ll_evt_eng_bridge_assessment_opt_improvise_with_available_materia_text
+  - ll_evt_eng_bridge_assessment_opt_patch_it_it_ll_hold_for_a_few_sh_outcome
+  - ll_evt_eng_bridge_assessment_opt_patch_it_it_ll_hold_for_a_few_sh_text
+  - ll_evt_eng_bridge_assessment_opt_report_it_beyond_repair_outcome
+  - ll_evt_eng_bridge_assessment_opt_report_it_beyond_repair_text
+  - ll_evt_eng_bridge_assessment_setup
+  - ll_evt_eng_bridge_assessment_title
+  - ll_evt_eng_equipment_repair_opt_direct_from_the_surface_let_othe_outcome
+  - ll_evt_eng_equipment_repair_opt_direct_from_the_surface_let_othe_text
+  - ll_evt_eng_equipment_repair_opt_lead_the_mining_crew_personally_outcome
+  - ll_evt_eng_equipment_repair_opt_lead_the_mining_crew_personally_text
+  - ll_evt_eng_equipment_repair_opt_shore_up_the_tunnel_properly_slo_outcome
+  - ll_evt_eng_equipment_repair_opt_shore_up_the_tunnel_properly_slo_text
+  - ll_evt_eng_equipment_repair_opt_volunteer_for_the_breach_moment_outcome
+  - ll_evt_eng_equipment_repair_opt_volunteer_for_the_breach_moment_text
+  - ll_evt_eng_equipment_repair_setup
+  - ll_evt_eng_equipment_repair_title
+  - ll_evt_eng_fortification_work_opt_focus_on_the_critical_sections_o_outcome
+  - ll_evt_eng_fortification_work_opt_focus_on_the_critical_sections_o_text
+  - ll_evt_eng_fortification_work_opt_push_the_men_harder_get_it_done__outcome
+  - ll_evt_eng_fortification_work_opt_push_the_men_harder_get_it_done__text
+  - ll_evt_eng_fortification_work_opt_supervise_and_direct_maximize_ef_outcome
+  - ll_evt_eng_fortification_work_opt_supervise_and_direct_maximize_ef_text
+  - ll_evt_eng_fortification_work_opt_work_alongside_the_men_lead_by_e_outcome
+  - ll_evt_eng_fortification_work_opt_work_alongside_the_men_lead_by_e_text
+  - ll_evt_eng_fortification_work_setup
+  - ll_evt_eng_fortification_work_title
+  - ll_evt_eng_mining_operation_opt_delegate_to_the_sergeants_approv_outcome
+  - ll_evt_eng_mining_operation_opt_delegate_to_the_sergeants_approv_text
+  - ll_evt_eng_mining_operation_opt_plan_it_carefully_explain_to_the_outcome
+  - ll_evt_eng_mining_operation_opt_plan_it_carefully_explain_to_the_text
+  - ll_evt_eng_mining_operation_opt_quick_layout_trust_experience_outcome
+  - ll_evt_eng_mining_operation_opt_quick_layout_trust_experience_text
+  - ll_evt_eng_mining_operation_opt_walk_the_ground_first_find_the_b_outcome
+  - ll_evt_eng_mining_operation_opt_walk_the_ground_first_find_the_b_text
+  - ll_evt_eng_mining_operation_setup
+  - ll_evt_eng_mining_operation_title
+  - ll_evt_eng_siege_preparation_opt_inspect_thoroughly_give_accurate_outcome
+  - ll_evt_eng_siege_preparation_opt_inspect_thoroughly_give_accurate_text
+  - ll_evt_eng_siege_preparation_opt_it_ll_hold_confident_guess_outcome
+  - ll_evt_eng_siege_preparation_opt_it_ll_hold_confident_guess_text
+  - ll_evt_eng_siege_preparation_opt_reinforce_the_weak_points_first_outcome
+  - ll_evt_eng_siege_preparation_opt_reinforce_the_weak_points_first_text
+  - ll_evt_eng_siege_preparation_opt_test_it_with_a_small_group_first_outcome
+  - ll_evt_eng_siege_preparation_opt_test_it_with_a_small_group_first_text
+  - ll_evt_eng_siege_preparation_setup
+  - ll_evt_eng_siege_preparation_title
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_cocky_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_cocky_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_eager_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_eager_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_quiet_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_quiet_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_respectful_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_respectful_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_return_confident_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_return_confident_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_return_honest_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_return_honest_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_return_humble_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_return_humble_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_return_private_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_return_private_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_mention_experience_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_mention_experience_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_professional_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_professional_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_quiet_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_quiet_text
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_respectful_outcome
+  - ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_respectful_text
+  - ll_evt_enlisted_onboard_01_meet_squad_setup
+  - ll_evt_enlisted_onboard_01_meet_squad_setup_first_time
+  - ll_evt_enlisted_onboard_01_meet_squad_setup_return
+  - ll_evt_enlisted_onboard_01_meet_squad_setup_transfer
+  - ll_evt_enlisted_onboard_01_meet_squad_title
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_alone_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_alone_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_help_serve_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_help_serve_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_recruits_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_recruits_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_veterans_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_veterans_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_return_ghosts_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_return_ghosts_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_return_mentor_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_return_mentor_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_return_modest_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_return_modest_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_return_share_wisdom_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_return_share_wisdom_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_bring_drink_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_bring_drink_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_earn_spot_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_earn_spot_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_listen_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_listen_text
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_tell_stories_outcome
+  - ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_tell_stories_text
+  - ll_evt_enlisted_onboard_02_fire_circle_setup
+  - ll_evt_enlisted_onboard_02_fire_circle_setup_first_time
+  - ll_evt_enlisted_onboard_02_fire_circle_setup_return
+  - ll_evt_enlisted_onboard_02_fire_circle_setup_transfer
+  - ll_evt_enlisted_onboard_02_fire_circle_title
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_return_all_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_return_all_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_delegate_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_delegate_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_efficient_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_efficient_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_outcome
+  - ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_text
+  - ll_evt_enlisted_onboard_03_prove_yourself_setup
+  - ll_evt_enlisted_onboard_03_prove_yourself_setup_first_time
+  - ll_evt_enlisted_onboard_03_prove_yourself_setup_return
+  - ll_evt_enlisted_onboard_03_prove_yourself_setup_transfer
+  - ll_evt_enlisted_onboard_03_prove_yourself_title
+  - ll_evt_free_desertion_opt_leave
+  - ll_evt_free_desertion_opt_leave_outcome
+  - ll_evt_free_desertion_opt_stay
+  - ll_evt_free_desertion_opt_stay_outcome
+  - ll_evt_free_desertion_setup
+  - ll_evt_free_desertion_title
+  - ll_evt_gen_dawn_cold_start_opt_check_for_frostbite_outcome
+  - ll_evt_gen_dawn_cold_start_opt_check_for_frostbite_text
+  - ll_evt_gen_dawn_cold_start_opt_exercises_to_warm_up_outcome
+  - ll_evt_gen_dawn_cold_start_opt_exercises_to_warm_up_text
+  - ll_evt_gen_dawn_cold_start_opt_get_up_first_restart_the_fire_outcome
+  - ll_evt_gen_dawn_cold_start_opt_get_up_first_restart_the_fire_text
+  - ll_evt_gen_dawn_cold_start_opt_wait_for_someone_else_to_fix_it_outcome
+  - ll_evt_gen_dawn_cold_start_opt_wait_for_someone_else_to_fix_it_text
+  - ll_evt_gen_dawn_cold_start_setup
+  - ll_evt_gen_dawn_cold_start_title
+  - ll_evt_gen_dawn_early_duty_opt_ask_comrade_to_cover_outcome
+  - ll_evt_gen_dawn_early_duty_opt_ask_comrade_to_cover_text
+  - ll_evt_gen_dawn_early_duty_opt_go_but_say_it_s_fine_outcome
+  - ll_evt_gen_dawn_early_duty_opt_go_but_say_it_s_fine_text
+  - ll_evt_gen_dawn_early_duty_opt_go_get_checked_out_outcome
+  - ll_evt_gen_dawn_early_duty_opt_go_get_checked_out_text
+  - ll_evt_gen_dawn_early_duty_opt_tough_it_out_another_day_outcome
+  - ll_evt_gen_dawn_early_duty_opt_tough_it_out_another_day_text
+  - ll_evt_gen_dawn_early_duty_setup
+  - ll_evt_gen_dawn_early_duty_title
+  - ll_evt_gen_dawn_muster_opt_fall_in_first_look_sharp_outcome
+  - ll_evt_gen_dawn_muster_opt_fall_in_first_look_sharp_text
+  - ll_evt_gen_dawn_muster_opt_fall_in_with_the_rest_outcome
+  - ll_evt_gen_dawn_muster_opt_fall_in_with_the_rest_text
+  - ll_evt_gen_dawn_muster_opt_kick_comrade_awake_outcome
+  - ll_evt_gen_dawn_muster_opt_kick_comrade_awake_text
+  - ll_evt_gen_dawn_muster_opt_sleep_through_it_outcome
+  - ll_evt_gen_dawn_muster_opt_sleep_through_it_text
+  - ll_evt_gen_dawn_muster_setup
+  - ll_evt_gen_dawn_muster_title
+  - ll_evt_gen_day_comrade_request_opt_get_sergeant_outcome
+  - ll_evt_gen_day_comrade_request_opt_get_sergeant_text
+  - ll_evt_gen_day_comrade_request_opt_let_them_fight_keep_watch_for_of_outcome
+  - ll_evt_gen_day_comrade_request_opt_let_them_fight_keep_watch_for_of_text
+  - ll_evt_gen_day_comrade_request_opt_step_between_them_break_it_up_outcome
+  - ll_evt_gen_day_comrade_request_opt_step_between_them_break_it_up_text
+  - ll_evt_gen_day_comrade_request_opt_take_sides_with_comrade_outcome
+  - ll_evt_gen_day_comrade_request_opt_take_sides_with_comrade_text
+  - ll_evt_gen_day_comrade_request_setup
+  - ll_evt_gen_day_comrade_request_title
+  - ll_evt_gen_day_drill_summons_opt_deal_outcome
+  - ll_evt_gen_day_drill_summons_opt_deal_text
+  - ll_evt_gen_day_drill_summons_opt_i_should_report_this_outcome
+  - ll_evt_gen_day_drill_summons_opt_i_should_report_this_text
+  - ll_evt_gen_day_drill_summons_opt_not_interested_outcome
+  - ll_evt_gen_day_drill_summons_opt_not_interested_text
+  - ll_evt_gen_day_drill_summons_opt_show_me_negotiate_outcome
+  - ll_evt_gen_day_drill_summons_opt_show_me_negotiate_text
+  - ll_evt_gen_day_drill_summons_setup
+  - ll_evt_gen_day_drill_summons_title
+  - ll_evt_gen_day_officer_inspection_opt_i_ve_got_training_second_rank_outcome
+  - ll_evt_gen_day_officer_inspection_opt_i_ve_got_training_second_rank_text
+  - ll_evt_gen_day_officer_inspection_opt_latrine_duty_worst_fastest_outcome
+  - ll_evt_gen_day_officer_inspection_opt_latrine_duty_worst_fastest_text
+  - ll_evt_gen_day_officer_inspection_opt_water_hauling_heavy_outcome
+  - ll_evt_gen_day_officer_inspection_opt_water_hauling_heavy_text
+  - ll_evt_gen_day_officer_inspection_opt_wood_gathering_moderate_outcome
+  - ll_evt_gen_day_officer_inspection_opt_wood_gathering_moderate_text
+  - ll_evt_gen_day_officer_inspection_setup
+  - ll_evt_gen_day_officer_inspection_title
+  - ll_evt_gen_dusk_sunset_watch_opt_accept_a_drink_outcome
+  - ll_evt_gen_dusk_sunset_watch_opt_accept_a_drink_text
+  - ll_evt_gen_dusk_sunset_watch_opt_listen_and_learn_outcome
+  - ll_evt_gen_dusk_sunset_watch_opt_listen_and_learn_text
+  - ll_evt_gen_dusk_sunset_watch_opt_share_your_own_story_outcome
+  - ll_evt_gen_dusk_sunset_watch_opt_share_your_own_story_text
+  - ll_evt_gen_dusk_sunset_watch_opt_turn_in_early_outcome
+  - ll_evt_gen_dusk_sunset_watch_opt_turn_in_early_text
+  - ll_evt_gen_dusk_sunset_watch_setup
+  - ll_evt_gen_dusk_sunset_watch_title
+  - ll_evt_gen_dusk_supply_arrival_opt_i_ll_take_a_cut_to_stay_quiet_outcome
+  - ll_evt_gen_dusk_supply_arrival_opt_i_ll_take_a_cut_to_stay_quiet_text
+  - ll_evt_gen_dusk_supply_arrival_opt_i_m_not_interested_outcome
+  - ll_evt_gen_dusk_supply_arrival_opt_i_m_not_interested_text
+  - ll_evt_gen_dusk_supply_arrival_opt_i_should_report_you_outcome
+  - ll_evt_gen_dusk_supply_arrival_opt_i_should_report_you_text
+  - ll_evt_gen_dusk_supply_arrival_opt_what_s_the_split_negotiate_outcome
+  - ll_evt_gen_dusk_supply_arrival_opt_what_s_the_split_negotiate_text
+  - ll_evt_gen_dusk_supply_arrival_setup
+  - ll_evt_gen_dusk_supply_arrival_title
+  - ll_evt_gen_dusk_veteran_story_opt_gambling_s_trouble_leave_outcome
+  - ll_evt_gen_dusk_veteran_story_opt_gambling_s_trouble_leave_text
+  - ll_evt_gen_dusk_veteran_story_opt_just_watch_outcome
+  - ll_evt_gen_dusk_veteran_story_opt_just_watch_text
+  - ll_evt_gen_dusk_veteran_story_opt_play_a_few_rounds_small_stakes_outcome
+  - ll_evt_gen_dusk_veteran_story_opt_play_a_few_rounds_small_stakes_text
+  - ll_evt_gen_dusk_veteran_story_opt_play_big_high_stakes_outcome
+  - ll_evt_gen_dusk_veteran_story_opt_play_big_high_stakes_text
+  - ll_evt_gen_dusk_veteran_story_setup
+  - ll_evt_gen_dusk_veteran_story_title
+  - ll_evt_gen_evening_fire_circle_opt_get_in_line_early_outcome
+  - ll_evt_gen_evening_fire_circle_opt_get_in_line_early_text
+  - ll_evt_gen_evening_fire_circle_opt_help_serve_outcome
+  - ll_evt_gen_evening_fire_circle_opt_help_serve_text
+  - ll_evt_gen_evening_fire_circle_opt_skip_the_line_intimidate_outcome
+  - ll_evt_gen_evening_fire_circle_opt_skip_the_line_intimidate_text
+  - ll_evt_gen_evening_fire_circle_opt_trade_for_better_food_outcome
+  - ll_evt_gen_evening_fire_circle_opt_trade_for_better_food_text
+  - ll_evt_gen_evening_fire_circle_setup
+  - ll_evt_gen_evening_fire_circle_title
+  - ll_evt_gen_evening_gambling_opt_ask_if_they_re_alright_outcome
+  - ll_evt_gen_evening_gambling_opt_ask_if_they_re_alright_text
+  - ll_evt_gen_evening_gambling_opt_give_them_space_outcome
+  - ll_evt_gen_evening_gambling_opt_give_them_space_text
+  - ll_evt_gen_evening_gambling_opt_mind_your_own_business_outcome
+  - ll_evt_gen_evening_gambling_opt_mind_your_own_business_text
+  - ll_evt_gen_evening_gambling_opt_offer_to_help_write_a_reply_outcome
+  - ll_evt_gen_evening_gambling_opt_offer_to_help_write_a_reply_text
+  - ll_evt_gen_evening_gambling_setup
+  - ll_evt_gen_evening_gambling_title
+  - ll_evt_gen_evening_letter_home_opt_ask_for_more_time_outcome
+  - ll_evt_gen_evening_letter_home_opt_ask_for_more_time_text
+  - ll_evt_gen_evening_letter_home_opt_double_or_nothing_outcome
+  - ll_evt_gen_evening_letter_home_opt_double_or_nothing_text
+  - ll_evt_gen_evening_letter_home_opt_pay_up_honest_outcome
+  - ll_evt_gen_evening_letter_home_opt_pay_up_honest_text
+  - ll_evt_gen_evening_letter_home_opt_what_debt_deny_outcome
+  - ll_evt_gen_evening_letter_home_opt_what_debt_deny_text
+  - ll_evt_gen_evening_letter_home_setup
+  - ll_evt_gen_evening_letter_home_title
+  - ll_evt_gen_late_night_emergency_opt_alert_the_nearest_soldier_quietl_outcome
+  - ll_evt_gen_late_night_emergency_opt_alert_the_nearest_soldier_quietl_text
+  - ll_evt_gen_late_night_emergency_opt_investigate_quietly_outcome
+  - ll_evt_gen_late_night_emergency_opt_investigate_quietly_text
+  - ll_evt_gen_late_night_emergency_opt_it_s_nothing_continue_watch_outcome
+  - ll_evt_gen_late_night_emergency_opt_it_s_nothing_continue_watch_text
+  - ll_evt_gen_late_night_emergency_opt_sound_the_alarm_outcome
+  - ll_evt_gen_late_night_emergency_opt_sound_the_alarm_text
+  - ll_evt_gen_late_night_emergency_setup
+  - ll_evt_gen_late_night_emergency_title
+  - ll_evt_gen_late_night_nightmare_opt_help_ease_the_pain_if_supplies_outcome
+  - ll_evt_gen_late_night_nightmare_opt_help_ease_the_pain_if_supplies_text
+  - ll_evt_gen_late_night_nightmare_opt_pray_with_them_if_religious_outcome
+  - ll_evt_gen_late_night_nightmare_opt_pray_with_them_if_religious_text
+  - ll_evt_gen_late_night_nightmare_opt_sit_with_them_outcome
+  - ll_evt_gen_late_night_nightmare_opt_sit_with_them_text
+  - ll_evt_gen_late_night_nightmare_opt_you_can_t_face_it_leave_outcome
+  - ll_evt_gen_late_night_nightmare_opt_you_can_t_face_it_leave_text
+  - ll_evt_gen_late_night_nightmare_setup
+  - ll_evt_gen_late_night_nightmare_title
+  - ll_evt_gen_late_night_watch_end_opt_let_them_go_outcome
+  - ll_evt_gen_late_night_watch_end_opt_let_them_go_text
+  - ll_evt_gen_late_night_watch_end_opt_sound_the_alarm_outcome
+  - ll_evt_gen_late_night_watch_end_opt_sound_the_alarm_text
+  - ll_evt_gen_late_night_watch_end_opt_stop_them_yourself_outcome
+  - ll_evt_gen_late_night_watch_end_opt_stop_them_yourself_text
+  - ll_evt_gen_late_night_watch_end_opt_talk_to_them_first_outcome
+  - ll_evt_gen_late_night_watch_end_opt_talk_to_them_first_text
+  - ll_evt_gen_late_night_watch_end_setup
+  - ll_evt_gen_late_night_watch_end_title
+  - ll_evt_gen_night_cant_sleep_opt_form_up_with_squad_outcome
+  - ll_evt_gen_night_cant_sleep_opt_form_up_with_squad_text
+  - ll_evt_gen_night_cant_sleep_opt_help_others_get_ready_outcome
+  - ll_evt_gen_night_cant_sleep_opt_help_others_get_ready_text
+  - ll_evt_gen_night_cant_sleep_opt_rush_toward_the_alarm_outcome
+  - ll_evt_gen_night_cant_sleep_opt_rush_toward_the_alarm_text
+  - ll_evt_gen_night_cant_sleep_opt_stay_alert_watch_for_secondary_t_outcome
+  - ll_evt_gen_night_cant_sleep_opt_stay_alert_watch_for_secondary_t_text
+  - ll_evt_gen_night_cant_sleep_setup
+  - ll_evt_gen_night_cant_sleep_title
+  - ll_evt_gen_night_confession_opt_drink_until_you_sleep_outcome
+  - ll_evt_gen_night_confession_opt_drink_until_you_sleep_text
+  - ll_evt_gen_night_confession_opt_talk_to_them_outcome
+  - ll_evt_gen_night_confession_opt_talk_to_them_text
+  - ll_evt_gen_night_confession_opt_walk_the_camp_outcome
+  - ll_evt_gen_night_confession_opt_walk_the_camp_text
+  - ll_evt_gen_night_confession_opt_write_in_a_journal_outcome
+  - ll_evt_gen_night_confession_opt_write_in_a_journal_text
+  - ll_evt_gen_night_confession_setup
+  - ll_evt_gen_night_confession_title
+  - ll_evt_gen_night_disturbance_opt_find_a_good_spot_stay_still_and__outcome
+  - ll_evt_gen_night_disturbance_opt_find_a_good_spot_stay_still_and__text
+  - ll_evt_gen_night_disturbance_opt_practice_with_your_weapon_quiet_outcome
+  - ll_evt_gen_night_disturbance_opt_practice_with_your_weapon_quiet_text
+  - ll_evt_gen_night_disturbance_opt_rest_your_eyes_trust_your_ears_outcome
+  - ll_evt_gen_night_disturbance_opt_rest_your_eyes_trust_your_ears_text
+  - ll_evt_gen_night_disturbance_opt_stay_sharp_walk_the_line_outcome
+  - ll_evt_gen_night_disturbance_opt_stay_sharp_walk_the_line_text
+  - ll_evt_gen_night_disturbance_setup
+  - ll_evt_gen_night_disturbance_title
+  - ll_evt_inf_train_march_opt_help_stragglers_keep_up_outcome
+  - ll_evt_inf_train_march_opt_help_stragglers_keep_up_text
+  - ll_evt_inf_train_march_opt_match_the_pace_endure_outcome
+  - ll_evt_inf_train_march_opt_match_the_pace_endure_text
+  - ll_evt_inf_train_march_opt_pace_yourself_smart_conserve_ene_outcome
+  - ll_evt_inf_train_march_opt_pace_yourself_smart_conserve_ene_text
+  - ll_evt_inf_train_march_opt_push_ahead_set_the_pace_outcome
+  - ll_evt_inf_train_march_opt_push_ahead_set_the_pace_text
+  - ll_evt_inf_train_march_setup
+  - ll_evt_inf_train_march_title
+  - ll_evt_inf_train_shield_wall_opt_focus_on_footwork_and_positionin_outcome
+  - ll_evt_inf_train_shield_wall_opt_focus_on_footwork_and_positionin_text
+  - ll_evt_inf_train_shield_wall_opt_help_the_weaker_soldiers_hold_outcome
+  - ll_evt_inf_train_shield_wall_opt_help_the_weaker_soldiers_hold_text
+  - ll_evt_inf_train_shield_wall_opt_hold_the_line_no_breaks_outcome
+  - ll_evt_inf_train_shield_wall_opt_hold_the_line_no_breaks_text
+  - ll_evt_inf_train_shield_wall_opt_push_to_the_front_take_more_hits_outcome
+  - ll_evt_inf_train_shield_wall_opt_push_to_the_front_take_more_hits_text
+  - ll_evt_inf_train_shield_wall_setup
+  - ll_evt_inf_train_shield_wall_title
+  - ll_evt_inf_train_sparring_opt_challenge_veteran_1_name_outcome
+  - ll_evt_inf_train_sparring_opt_challenge_veteran_1_name_text
+  - ll_evt_inf_train_sparring_opt_fight_hard_don_t_hold_back_outcome
+  - ll_evt_inf_train_sparring_opt_fight_hard_don_t_hold_back_text
+  - ll_evt_inf_train_sparring_opt_spar_carefully_focus_on_techniqu_outcome
+  - ll_evt_inf_train_sparring_opt_spar_carefully_focus_on_techniqu_text
+  - ll_evt_inf_train_sparring_opt_watch_and_learn_spar_later_outcome
+  - ll_evt_inf_train_sparring_opt_watch_and_learn_spar_later_text
+  - ll_evt_inf_train_sparring_setup
+  - ll_evt_inf_train_sparring_title
+  - ll_evt_inf_train_twohanded_opt_focus_on_defensive_recovery_outcome
+  - ll_evt_inf_train_twohanded_opt_focus_on_defensive_recovery_text
+  - ll_evt_inf_train_twohanded_opt_partner_drill_strike_and_counter_outcome
+  - ll_evt_inf_train_twohanded_opt_partner_drill_strike_and_counter_text
+  - ll_evt_inf_train_twohanded_opt_practice_basic_forms_outcome
+  - ll_evt_inf_train_twohanded_opt_practice_basic_forms_text
+  - ll_evt_inf_train_twohanded_opt_work_on_power_strikes_outcome
+  - ll_evt_inf_train_twohanded_opt_work_on_power_strikes_text
+  - ll_evt_inf_train_twohanded_setup
+  - ll_evt_inf_train_twohanded_title
+  - ll_evt_look_movement_spotted_opt_alert_sergeant_quietly_outcome
+  - ll_evt_look_movement_spotted_opt_alert_sergeant_quietly_text
+  - ll_evt_look_movement_spotted_opt_investigate_first_confirm_the_th_outcome
+  - ll_evt_look_movement_spotted_opt_investigate_first_confirm_the_th_text
+  - ll_evt_look_movement_spotted_opt_sound_the_alarm_immediately_outcome
+  - ll_evt_look_movement_spotted_opt_sound_the_alarm_immediately_text
+  - ll_evt_look_movement_spotted_opt_wait_and_watch_confirm_before_ac_outcome
+  - ll_evt_look_movement_spotted_opt_wait_and_watch_confirm_before_ac_text
+  - ll_evt_look_movement_spotted_setup
+  - ll_evt_look_movement_spotted_title
+  - ll_evt_look_night_watch_opt_find_a_good_vantage_point_stay_s_outcome
+  - ll_evt_look_night_watch_opt_find_a_good_vantage_point_stay_s_text
+  - ll_evt_look_night_watch_opt_practice_with_your_weapon_quietl_outcome
+  - ll_evt_look_night_watch_opt_practice_with_your_weapon_quietl_text
+  - ll_evt_look_night_watch_opt_rest_your_eyes_trust_your_ears_outcome
+  - ll_evt_look_night_watch_opt_rest_your_eyes_trust_your_ears_text
+  - ll_evt_look_night_watch_opt_stay_sharp_walk_the_perimeter_outcome
+  - ll_evt_look_night_watch_opt_stay_sharp_walk_the_perimeter_text
+  - ll_evt_look_night_watch_setup
+  - ll_evt_look_night_watch_title
+  - ll_evt_look_relief_late_opt_count_carefully_report_accuratel_outcome
+  - ll_evt_look_relief_late_opt_count_carefully_report_accuratel_text
+  - ll_evt_look_relief_late_opt_estimate_by_formations_and_stand_outcome
+  - ll_evt_look_relief_late_opt_estimate_by_formations_and_stand_text
+  - ll_evt_look_relief_late_opt_move_closer_for_a_better_look_outcome
+  - ll_evt_look_relief_late_opt_move_closer_for_a_better_look_text
+  - ll_evt_look_relief_late_opt_round_up_better_safe_than_sorry_outcome
+  - ll_evt_look_relief_late_opt_round_up_better_safe_than_sorry_text
+  - ll_evt_look_relief_late_setup
+  - ll_evt_look_relief_late_title
+  - ll_evt_look_signal_fire_opt_guess_it_s_the_signal_wake_the_c_outcome
+  - ll_evt_look_signal_fire_opt_guess_it_s_the_signal_wake_the_c_text
+  - ll_evt_look_signal_fire_opt_report_it_as_the_signal_outcome
+  - ll_evt_look_signal_fire_opt_report_it_as_the_signal_text
+  - ll_evt_look_signal_fire_opt_send_a_runner_to_verify_outcome
+  - ll_evt_look_signal_fire_opt_send_a_runner_to_verify_text
+  - ll_evt_look_signal_fire_opt_watch_longer_confirm_the_pattern_outcome
+  - ll_evt_look_signal_fire_opt_watch_longer_confirm_the_pattern_text
+  - ll_evt_look_signal_fire_setup
+  - ll_evt_look_signal_fire_title
+  - ll_evt_look_weather_watch_opt_predict_clear_advise_movement_outcome
+  - ll_evt_look_weather_watch_opt_predict_clear_advise_movement_text
+  - ll_evt_look_weather_watch_opt_predict_storm_advise_waiting_outcome
+  - ll_evt_look_weather_watch_opt_predict_storm_advise_waiting_text
+  - ll_evt_look_weather_watch_opt_report_honestly_uncertain_outcome
+  - ll_evt_look_weather_watch_opt_report_honestly_uncertain_text
+  - ll_evt_look_weather_watch_opt_suggest_sending_a_scout_ahead_outcome
+  - ll_evt_look_weather_watch_opt_suggest_sending_a_scout_ahead_text
+  - ll_evt_look_weather_watch_setup
+  - ll_evt_look_weather_watch_title
+  - ll_evt_medic_comrade_injury_opt_bring_it_to_the_surgeon_s_attent_outcome
+  - ll_evt_medic_comrade_injury_opt_bring_it_to_the_surgeon_s_attent_text
+  - ll_evt_medic_comrade_injury_opt_clean_it_properly_treat_aggressi_outcome
+  - ll_evt_medic_comrade_injury_opt_clean_it_properly_treat_aggressi_text
+  - ll_evt_medic_comrade_injury_opt_prepare_them_for_amputation_outcome
+  - ll_evt_medic_comrade_injury_opt_prepare_them_for_amputation_text
+  - ll_evt_medic_comrade_injury_opt_try_a_poultice_you_learned_from__outcome
+  - ll_evt_medic_comrade_injury_opt_try_a_poultice_you_learned_from__text
+  - ll_evt_medic_comrade_injury_setup
+  - ll_evt_medic_comrade_injury_title
+  - ll_evt_medic_disease_outbreak_opt_focus_on_the_worst_cases_outcome
+  - ll_evt_medic_disease_outbreak_opt_focus_on_the_worst_cases_text
+  - ll_evt_medic_disease_outbreak_opt_identify_the_source_stop_the_spr_outcome
+  - ll_evt_medic_disease_outbreak_opt_identify_the_source_stop_the_spr_text
+  - ll_evt_medic_disease_outbreak_opt_volunteer_for_plague_duty_high_e_outcome
+  - ll_evt_medic_disease_outbreak_opt_volunteer_for_plague_duty_high_e_text
+  - ll_evt_medic_disease_outbreak_opt_work_the_sick_tent_all_day_outcome
+  - ll_evt_medic_disease_outbreak_opt_work_the_sick_tent_all_day_text
+  - ll_evt_medic_disease_outbreak_setup
+  - ll_evt_medic_disease_outbreak_title
+  - ll_evt_medic_medicine_shortage_opt_ask_locals_for_guidance_outcome
+  - ll_evt_medic_medicine_shortage_opt_ask_locals_for_guidance_text
+  - ll_evt_medic_medicine_shortage_opt_quick_gathering_common_plants_on_outcome
+  - ll_evt_medic_medicine_shortage_opt_quick_gathering_common_plants_on_text
+  - ll_evt_medic_medicine_shortage_opt_search_methodically_identify_car_outcome
+  - ll_evt_medic_medicine_shortage_opt_search_methodically_identify_car_text
+  - ll_evt_medic_medicine_shortage_opt_venture_into_dangerous_terrain_f_outcome
+  - ll_evt_medic_medicine_shortage_opt_venture_into_dangerous_terrain_f_text
+  - ll_evt_medic_medicine_shortage_setup
+  - ll_evt_medic_medicine_shortage_title
+  - ll_evt_medic_surgical_assist_opt_ask_to_learn_show_me_how_outcome
+  - ll_evt_medic_surgical_assist_opt_ask_to_learn_show_me_how_text
+  - ll_evt_medic_surgical_assist_opt_assist_calmly_follow_instruction_outcome
+  - ll_evt_medic_surgical_assist_opt_assist_calmly_follow_instruction_text
+  - ll_evt_medic_surgical_assist_opt_comfort_the_patient_keep_him_cal_outcome
+  - ll_evt_medic_surgical_assist_opt_comfort_the_patient_keep_him_cal_text
+  - ll_evt_medic_surgical_assist_opt_take_initiative_anticipate_needs_outcome
+  - ll_evt_medic_surgical_assist_opt_take_initiative_anticipate_needs_text
+  - ll_evt_medic_surgical_assist_setup
+  - ll_evt_medic_surgical_assist_title
+  - ll_evt_medic_treating_wounded_opt_focus_on_veteran_1_name_outcome
+  - ll_evt_medic_treating_wounded_opt_focus_on_veteran_1_name_text
+  - ll_evt_medic_treating_wounded_opt_save_who_you_can_save_skip_the_h_outcome
+  - ll_evt_medic_treating_wounded_opt_save_who_you_can_save_skip_the_h_text
+  - ll_evt_medic_treating_wounded_opt_triage_by_severity_worst_first_outcome
+  - ll_evt_medic_treating_wounded_opt_triage_by_severity_worst_first_text
+  - ll_evt_medic_treating_wounded_opt_work_until_you_drop_outcome
+  - ll_evt_medic_treating_wounded_opt_work_until_you_drop_text
+  - ll_evt_medic_treating_wounded_setup
+  - ll_evt_medic_treating_wounded_title
+  - ll_evt_medical_complication_opt_get_sergeant_outcome
+  - ll_evt_medical_complication_opt_get_sergeant_text
+  - ll_evt_medical_complication_opt_help_outcome
+  - ll_evt_medical_complication_opt_help_text
+  - ll_evt_medical_complication_opt_medicine_outcome
+  - ll_evt_medical_complication_opt_medicine_outcome_failure
+  - ll_evt_medical_complication_opt_medicine_text
+  - ll_evt_medical_complication_opt_refuse_outcome
+  - ll_evt_medical_complication_opt_refuse_outcome_failure
+  - ll_evt_medical_complication_opt_refuse_text
+  - ll_evt_medical_complication_setup
+  - ll_evt_medical_complication_title
+  - ll_evt_medical_emergency_opt_fight_outcome
+  - ll_evt_medical_emergency_opt_fight_outcome_failure
+  - ll_evt_medical_emergency_opt_fight_text
+  - ll_evt_medical_emergency_opt_speak_outcome
+  - ll_evt_medical_emergency_opt_speak_outcome_failure
+  - ll_evt_medical_emergency_opt_speak_text
+  - ll_evt_medical_emergency_opt_surrender_outcome
+  - ll_evt_medical_emergency_opt_surrender_text
+  - ll_evt_medical_emergency_setup
+  - ll_evt_medical_emergency_title
+  - ll_evt_medical_worsening_opt_herbs_outcome
+  - ll_evt_medical_worsening_opt_herbs_outcome_failure
+  - ll_evt_medical_worsening_opt_herbs_text
+  - ll_evt_medical_worsening_opt_push_outcome
+  - ll_evt_medical_worsening_opt_push_outcome_failure
+  - ll_evt_medical_worsening_opt_push_text
+  - ll_evt_medical_worsening_opt_rest_outcome
+  - ll_evt_medical_worsening_opt_rest_text
+  - ll_evt_medical_worsening_opt_surgeon_outcome
+  - ll_evt_medical_worsening_opt_surgeon_text
+  - ll_evt_medical_worsening_setup
+  - ll_evt_medical_worsening_title
+  - ll_evt_mission_debts_opt_aggressive
+  - ll_evt_mission_debts_opt_aggressive_outcome
+  - ll_evt_mission_debts_opt_aggressive_outcome_failure
+  - ll_evt_mission_debts_opt_decline
+  - ll_evt_mission_debts_opt_decline_outcome
+  - ll_evt_mission_debts_opt_polite
+  - ll_evt_mission_debts_opt_polite_outcome
+  - ll_evt_mission_debts_opt_skim
+  - ll_evt_mission_debts_opt_skim_outcome
+  - ll_evt_mission_debts_opt_skim_outcome_failure
+  - ll_evt_mission_debts_setup
+  - ll_evt_mission_debts_title
+  - ll_evt_mission_escort_opt_decline
+  - ll_evt_mission_escort_opt_decline_outcome
+  - ll_evt_mission_escort_opt_volunteer
+  - ll_evt_mission_escort_opt_volunteer_outcome
+  - ll_evt_mission_escort_opt_volunteer_outcome_failure
+  - ll_evt_mission_escort_setup
+  - ll_evt_mission_escort_title
+  - ll_evt_mission_loan_opt_charm
+  - ll_evt_mission_loan_opt_charm_outcome
+  - ll_evt_mission_loan_opt_charm_outcome_failure
+  - ll_evt_mission_loan_opt_decline
+  - ll_evt_mission_loan_opt_decline_outcome
+  - ll_evt_mission_loan_opt_intimidate
+  - ll_evt_mission_loan_opt_intimidate_outcome
+  - ll_evt_mission_loan_opt_intimidate_outcome_failure
+  - ll_evt_mission_loan_opt_savings
+  - ll_evt_mission_loan_opt_savings_outcome
+  - ll_evt_mission_loan_setup
+  - ll_evt_mission_loan_title
+  - ll_evt_mission_raid_opt_decline
+  - ll_evt_mission_raid_opt_decline_outcome
+  - ll_evt_mission_raid_opt_volunteer
+  - ll_evt_mission_raid_opt_volunteer_outcome
+  - ll_evt_mission_raid_opt_volunteer_outcome_failure
+  - ll_evt_mission_raid_setup
+  - ll_evt_mission_raid_title
+  - ll_evt_msg_enemy_lines_opt_avoid_detour_through_rough_terra_outcome
+  - ll_evt_msg_enemy_lines_opt_avoid_detour_through_rough_terra_text
+  - ll_evt_msg_enemy_lines_opt_destroy_the_message_if_captured_outcome
+  - ll_evt_msg_enemy_lines_opt_destroy_the_message_if_captured_text
+  - ll_evt_msg_enemy_lines_opt_hide_and_wait_them_out_outcome
+  - ll_evt_msg_enemy_lines_opt_hide_and_wait_them_out_text
+  - ll_evt_msg_enemy_lines_opt_ride_through_fast_trust_your_hor_outcome
+  - ll_evt_msg_enemy_lines_opt_ride_through_fast_trust_your_hor_text
+  - ll_evt_msg_enemy_lines_setup
+  - ll_evt_msg_enemy_lines_title
+  - ll_evt_msg_intercepted_opt_ask_clarifying_questions_outcome
+  - ll_evt_msg_intercepted_opt_ask_clarifying_questions_text
+  - ll_evt_msg_intercepted_opt_i_understand_my_lord_wing_it_outcome
+  - ll_evt_msg_intercepted_opt_i_understand_my_lord_wing_it_text
+  - ll_evt_msg_intercepted_opt_memorize_it_perfectly_repeat_twi_outcome
+  - ll_evt_msg_intercepted_opt_memorize_it_perfectly_repeat_twi_text
+  - ll_evt_msg_intercepted_opt_write_it_in_code_anyway_outcome
+  - ll_evt_msg_intercepted_opt_write_it_in_code_anyway_text
+  - ll_evt_msg_intercepted_setup
+  - ll_evt_msg_intercepted_title
+  - ll_evt_msg_return_report_opt_ask_for_clarification_diplomatic_outcome
+  - ll_evt_msg_return_report_opt_ask_for_clarification_diplomatic_text
+  - ll_evt_msg_return_report_opt_carry_the_reply_faithfully_outcome
+  - ll_evt_msg_return_report_opt_carry_the_reply_faithfully_text
+  - ll_evt_msg_return_report_opt_suggest_putting_it_in_writing_outcome
+  - ll_evt_msg_return_report_opt_suggest_putting_it_in_writing_text
+  - ll_evt_msg_return_report_opt_warn_your_lord_privately_about_t_outcome
+  - ll_evt_msg_return_report_opt_warn_your_lord_privately_about_t_text
+  - ll_evt_msg_return_report_setup
+  - ll_evt_msg_return_report_title
+  - ll_evt_msg_urgent_dispatch_opt_read_the_letter_first_outcome
+  - ll_evt_msg_urgent_dispatch_opt_read_the_letter_first_text
+  - ll_evt_msg_urgent_dispatch_opt_ride_hard_main_roads_outcome
+  - ll_evt_msg_urgent_dispatch_opt_ride_hard_main_roads_text
+  - ll_evt_msg_urgent_dispatch_opt_ride_harder_push_your_horse_outcome
+  - ll_evt_msg_urgent_dispatch_opt_ride_harder_push_your_horse_text
+  - ll_evt_msg_urgent_dispatch_opt_take_back_roads_avoid_trouble_outcome
+  - ll_evt_msg_urgent_dispatch_opt_take_back_roads_avoid_trouble_text
+  - ll_evt_msg_urgent_dispatch_setup
+  - ll_evt_msg_urgent_dispatch_title
+  - ll_evt_msg_verbal_orders_opt_join_the_winning_side_briefly_outcome
+  - ll_evt_msg_verbal_orders_opt_join_the_winning_side_briefly_text
+  - ll_evt_msg_verbal_orders_opt_ride_around_long_way_outcome
+  - ll_evt_msg_verbal_orders_opt_ride_around_long_way_text
+  - ll_evt_msg_verbal_orders_opt_ride_through_the_edge_outcome
+  - ll_evt_msg_verbal_orders_opt_ride_through_the_edge_text
+  - ll_evt_msg_verbal_orders_opt_wait_for_it_to_end_outcome
+  - ll_evt_msg_verbal_orders_opt_wait_for_it_to_end_text
+  - ll_evt_msg_verbal_orders_setup
+  - ll_evt_msg_verbal_orders_title
+  - ll_evt_mutiny_after_opt_command
+  - ll_evt_mutiny_after_opt_command_outcome
+  - ll_evt_mutiny_after_opt_command_outcome_failure
+  - ll_evt_mutiny_after_opt_execute
+  - ll_evt_mutiny_after_opt_execute_outcome
+  - ll_evt_mutiny_after_opt_ransom
+  - ll_evt_mutiny_after_opt_ransom_outcome
+  - ll_evt_mutiny_after_opt_release
+  - ll_evt_mutiny_after_opt_release_outcome
+  - ll_evt_mutiny_after_setup
+  - ll_evt_mutiny_after_title
+  - ll_evt_mutiny_res_opt_flee
+  - ll_evt_mutiny_res_opt_flee_outcome
+  - ll_evt_mutiny_res_opt_hold
+  - ll_evt_mutiny_res_opt_hold_outcome
+  - ll_evt_mutiny_res_opt_hold_outcome_failure
+  - ll_evt_mutiny_res_opt_storm
+  - ll_evt_mutiny_res_opt_storm_outcome
+  - ll_evt_mutiny_res_opt_storm_outcome_failure
+  - ll_evt_mutiny_res_opt_switch
+  - ll_evt_mutiny_res_opt_switch_outcome
+  - ll_evt_mutiny_res_opt_switch_outcome_failure
+  - ll_evt_mutiny_resolution_setup
+  - ll_evt_mutiny_resolution_title
+  - ll_evt_mutiny_trial_opt_beg
+  - ll_evt_mutiny_trial_opt_beg_outcome
+  - ll_evt_mutiny_trial_opt_beg_outcome_failure
+  - ll_evt_mutiny_trial_opt_blame
+  - ll_evt_mutiny_trial_opt_blame_outcome
+  - ll_evt_mutiny_trial_opt_blame_outcome_failure
+  - ll_evt_mutiny_trial_opt_defiant
+  - ll_evt_mutiny_trial_opt_defiant_outcome
+  - ll_evt_mutiny_trial_opt_service
+  - ll_evt_mutiny_trial_opt_service_outcome
+  - ll_evt_mutiny_trial_opt_service_outcome_failure
+  - ll_evt_mutiny_trial_setup
+  - ll_evt_mutiny_trial_title
+  - ll_evt_nav_course_setting_opt_coastal_route_landmarks_safe_har_outcome
+  - ll_evt_nav_course_setting_opt_coastal_route_landmarks_safe_har_text
+  - ll_evt_nav_course_setting_opt_direct_route_fastest_but_riskier_outcome
+  - ll_evt_nav_course_setting_opt_direct_route_fastest_but_riskier_text
+  - ll_evt_nav_course_setting_opt_safe_route_longer_but_reliable_outcome
+  - ll_evt_nav_course_setting_opt_safe_route_longer_but_reliable_text
+  - ll_evt_nav_course_setting_opt_suggest_waiting_for_better_weath_outcome
+  - ll_evt_nav_course_setting_opt_suggest_waiting_for_better_weath_text
+  - ll_evt_nav_course_setting_setup
+  - ll_evt_nav_course_setting_title
+  - ll_evt_nav_dead_reckoning_opt_admit_uncertainty_advise_caution_outcome
+  - ll_evt_nav_dead_reckoning_opt_admit_uncertainty_advise_caution_text
+  - ll_evt_nav_dead_reckoning_opt_dead_reckoning_trust_your_calcul_outcome
+  - ll_evt_nav_dead_reckoning_opt_dead_reckoning_trust_your_calcul_text
+  - ll_evt_nav_dead_reckoning_opt_heave_to_ride_out_the_storm_reca_outcome
+  - ll_evt_nav_dead_reckoning_opt_heave_to_ride_out_the_storm_reca_text
+  - ll_evt_nav_dead_reckoning_opt_run_before_the_wind_go_where_it__outcome
+  - ll_evt_nav_dead_reckoning_opt_run_before_the_wind_go_where_it__text
+  - ll_evt_nav_dead_reckoning_setup
+  - ll_evt_nav_dead_reckoning_title
+  - ll_evt_nav_landfall_opt_approach_cautiously_sound_as_we__outcome
+  - ll_evt_nav_landfall_opt_approach_cautiously_sound_as_we__text
+  - ll_evt_nav_landfall_opt_signal_for_pilot_boat_get_local__outcome
+  - ll_evt_nav_landfall_opt_signal_for_pilot_boat_get_local__text
+  - ll_evt_nav_landfall_opt_study_the_coastline_identify_lan_outcome
+  - ll_evt_nav_landfall_opt_study_the_coastline_identify_lan_text
+  - ll_evt_nav_landfall_opt_that_s_destination_port_i_m_cert_outcome
+  - ll_evt_nav_landfall_opt_that_s_destination_port_i_m_cert_text
+  - ll_evt_nav_landfall_setup
+  - ll_evt_nav_landfall_title
+  - ll_evt_nav_reef_warning_opt_advise_turning_back_outcome
+  - ll_evt_nav_reef_warning_opt_advise_turning_back_text
+  - ll_evt_nav_reef_warning_opt_keep_the_coastline_in_sight_outcome
+  - ll_evt_nav_reef_warning_opt_keep_the_coastline_in_sight_text
+  - ll_evt_nav_reef_warning_opt_map_as_you_go_careful_progress_outcome
+  - ll_evt_nav_reef_warning_opt_map_as_you_go_careful_progress_text
+  - ll_evt_nav_reef_warning_opt_use_stars_currents_bird_signs_outcome
+  - ll_evt_nav_reef_warning_opt_use_stars_currents_bird_signs_text
+  - ll_evt_nav_reef_warning_setup
+  - ll_evt_nav_reef_warning_title
+  - ll_evt_nav_star_navigation_opt_drop_anchor_scout_in_small_boat_outcome
+  - ll_evt_nav_star_navigation_opt_drop_anchor_scout_in_small_boat_text
+  - ll_evt_nav_star_navigation_opt_post_lookouts_slow_to_half_outcome
+  - ll_evt_nav_star_navigation_opt_post_lookouts_slow_to_half_text
+  - ll_evt_nav_star_navigation_opt_sound_the_depths_adjust_course_outcome
+  - ll_evt_nav_star_navigation_opt_sound_the_depths_adjust_course_text
+  - ll_evt_nav_star_navigation_opt_trust_the_charts_maintain_speed_outcome
+  - ll_evt_nav_star_navigation_opt_trust_the_charts_maintain_speed_text
+  - ll_evt_nav_star_navigation_setup
+  - ll_evt_nav_star_navigation_title
+  - ll_evt_nav_train_boarding_opt_focus_on_defending_our_deck_outcome
+  - ll_evt_nav_train_boarding_opt_focus_on_defending_our_deck_text
+  - ll_evt_nav_train_boarding_opt_full_mock_boarding_outcome
+  - ll_evt_nav_train_boarding_opt_full_mock_boarding_text
+  - ll_evt_nav_train_boarding_opt_lead_a_boarding_team_outcome
+  - ll_evt_nav_train_boarding_opt_lead_a_boarding_team_text
+  - ll_evt_nav_train_boarding_opt_practice_rope_work_and_swings_outcome
+  - ll_evt_nav_train_boarding_opt_practice_rope_work_and_swings_text
+  - ll_evt_nav_train_boarding_setup
+  - ll_evt_nav_train_boarding_title
+  - ll_evt_nav_train_navigation_opt_ask_about_unusual_situations_outcome
+  - ll_evt_nav_train_navigation_opt_ask_about_unusual_situations_text
+  - ll_evt_nav_train_navigation_opt_calculate_our_current_position_outcome
+  - ll_evt_nav_train_navigation_opt_calculate_our_current_position_text
+  - ll_evt_nav_train_navigation_opt_practice_dead_reckoning_outcome
+  - ll_evt_nav_train_navigation_opt_practice_dead_reckoning_text
+  - ll_evt_nav_train_navigation_opt_study_star_positions_and_charts_outcome
+  - ll_evt_nav_train_navigation_opt_study_star_positions_and_charts_text
+  - ll_evt_nav_train_navigation_setup
+  - ll_evt_nav_train_navigation_title
+  - ll_evt_nav_train_rigging_opt_climb_and_work_steadily_outcome
+  - ll_evt_nav_train_rigging_opt_climb_and_work_steadily_text
+  - ll_evt_nav_train_rigging_opt_help_newer_sailors_learn_outcome
+  - ll_evt_nav_train_rigging_opt_help_newer_sailors_learn_text
+  - ll_evt_nav_train_rigging_opt_practice_knots_and_line_work_outcome
+  - ll_evt_nav_train_rigging_opt_practice_knots_and_line_work_text
+  - ll_evt_nav_train_rigging_opt_race_to_the_top_outcome
+  - ll_evt_nav_train_rigging_opt_race_to_the_top_text
+  - ll_evt_nav_train_rigging_setup
+  - ll_evt_nav_train_rigging_title
+  - ll_evt_nav_train_storm_drill_opt_coordinate_crew_positions_outcome
+  - ll_evt_nav_train_storm_drill_opt_coordinate_crew_positions_text
+  - ll_evt_nav_train_storm_drill_opt_handle_emergency_rigging_outcome
+  - ll_evt_nav_train_storm_drill_opt_handle_emergency_rigging_text
+  - ll_evt_nav_train_storm_drill_opt_man_the_pumps_outcome
+  - ll_evt_nav_train_storm_drill_opt_man_the_pumps_text
+  - ll_evt_nav_train_storm_drill_opt_secure_cargo_below_outcome
+  - ll_evt_nav_train_storm_drill_opt_secure_cargo_below_text
+  - ll_evt_nav_train_storm_drill_setup
+  - ll_evt_nav_train_storm_drill_title
+  - ll_evt_not_enough_fatigue
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_steady_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_steady_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_return_honest_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_return_honest_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_return_private_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_return_private_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_return_rusty_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_return_rusty_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_return_sharp_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_return_sharp_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_assert_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_assert_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_inspect_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_inspect_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_prove_yourself_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_prove_yourself_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_respect_experience_outcome
+  - ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_respect_experience_text
+  - ll_evt_officer_onboard_01_shoulder_tabs_setup
+  - ll_evt_officer_onboard_01_shoulder_tabs_setup_first_time
+  - ll_evt_officer_onboard_01_shoulder_tabs_setup_return
+  - ll_evt_officer_onboard_01_shoulder_tabs_setup_transfer
+  - ll_evt_officer_onboard_01_shoulder_tabs_title
+  - ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_outcome
+  - ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_text
+  - ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_outcome
+  - ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_text
+  - ll_evt_officer_onboard_02_first_command_opt_all_stream_outcome
+  - ll_evt_officer_onboard_02_first_command_opt_all_stream_text
+  - ll_evt_officer_onboard_02_first_command_opt_all_trees_outcome
+  - ll_evt_officer_onboard_02_first_command_opt_all_trees_text
+  - ll_evt_officer_onboard_02_first_command_setup
+  - ll_evt_officer_onboard_02_first_command_setup_all
+  - ll_evt_officer_onboard_02_first_command_title
+  - ll_evt_officer_onboard_03_tested_opt_all_by_the_book_outcome
+  - ll_evt_officer_onboard_03_tested_opt_all_by_the_book_text
+  - ll_evt_officer_onboard_03_tested_opt_all_harsh_outcome
+  - ll_evt_officer_onboard_03_tested_opt_all_harsh_text
+  - ll_evt_officer_onboard_03_tested_opt_all_let_sergeant_outcome
+  - ll_evt_officer_onboard_03_tested_opt_all_let_sergeant_text
+  - ll_evt_officer_onboard_03_tested_opt_all_understand_outcome
+  - ll_evt_officer_onboard_03_tested_opt_all_understand_text
+  - ll_evt_officer_onboard_03_tested_setup
+  - ll_evt_officer_onboard_03_tested_setup_all
+  - ll_evt_officer_onboard_03_tested_title
+  - ll_evt_pay_confrontation_opt_calm
+  - ll_evt_pay_confrontation_opt_calm_outcome
+  - ll_evt_pay_confrontation_opt_join
+  - ll_evt_pay_confrontation_opt_join_outcome
+  - ll_evt_pay_confrontation_opt_lead
+  - ll_evt_pay_confrontation_opt_lead_outcome
+  - ll_evt_pay_confrontation_opt_out
+  - ll_evt_pay_confrontation_opt_out_outcome
+  - ll_evt_pay_confrontation_opt_warn
+  - ll_evt_pay_confrontation_opt_warn_outcome
+  - ll_evt_pay_confrontation_setup
+  - ll_evt_pay_confrontation_title
+  - ll_evt_pay_grumbling_opt_defend
+  - ll_evt_pay_grumbling_opt_defend_outcome
+  - ll_evt_pay_grumbling_opt_join
+  - ll_evt_pay_grumbling_opt_join_outcome
+  - ll_evt_pay_grumbling_opt_quiet
+  - ll_evt_pay_grumbling_opt_quiet_outcome
+  - ll_evt_pay_grumbling_opt_rabble
+  - ll_evt_pay_grumbling_opt_rabble_outcome
+  - ll_evt_pay_grumbling_setup
+  - ll_evt_pay_grumbling_title
+  - ll_evt_pay_loot_dead_opt_enemy
+  - ll_evt_pay_loot_dead_opt_enemy_outcome
+  - ll_evt_pay_loot_dead_opt_everyone
+  - ll_evt_pay_loot_dead_opt_everyone_outcome
+  - ll_evt_pay_loot_dead_opt_leave
+  - ll_evt_pay_loot_dead_opt_leave_outcome
+  - ll_evt_pay_loot_dead_opt_stop
+  - ll_evt_pay_loot_dead_opt_stop_outcome
+  - ll_evt_pay_loot_dead_opt_weapon
+  - ll_evt_pay_loot_dead_opt_weapon_outcome
+  - ll_evt_pay_loot_dead_setup
+  - ll_evt_pay_loot_dead_title
+  - ll_evt_pay_mutiny_opt_join
+  - ll_evt_pay_mutiny_opt_join_outcome
+  - ll_evt_pay_mutiny_opt_officers
+  - ll_evt_pay_mutiny_opt_officers_outcome
+  - ll_evt_pay_mutiny_opt_officers_outcome_failure
+  - ll_evt_pay_mutiny_opt_slip
+  - ll_evt_pay_mutiny_opt_slip_outcome
+  - ll_evt_pay_mutiny_opt_stop
+  - ll_evt_pay_mutiny_opt_stop_outcome
+  - ll_evt_pay_mutiny_opt_stop_outcome_failure
+  - ll_evt_pay_mutiny_setup
+  - ll_evt_pay_mutiny_title
+  - ll_evt_pay_theft_invite_opt_decline
+  - ll_evt_pay_theft_invite_opt_decline_outcome
+  - ll_evt_pay_theft_invite_opt_join
+  - ll_evt_pay_theft_invite_opt_join_outcome
+  - ll_evt_pay_theft_invite_opt_join_outcome_failure
+  - ll_evt_pay_theft_invite_opt_report
+  - ll_evt_pay_theft_invite_opt_report_outcome
+  - ll_evt_pay_theft_invite_opt_watch
+  - ll_evt_pay_theft_invite_opt_watch_outcome
+  - ll_evt_pay_theft_invite_opt_watch_outcome_failure
+  - ll_evt_pay_theft_invite_setup
+  - ll_evt_pay_theft_invite_title
+  - ll_evt_qm_accounting_discrepancy_opt_cover_it_up_absorb_the_loss_quie_outcome
+  - ll_evt_qm_accounting_discrepancy_opt_cover_it_up_absorb_the_loss_quie_text
+  - ll_evt_qm_accounting_discrepancy_opt_investigate_thoroughly_find_the__outcome
+  - ll_evt_qm_accounting_discrepancy_opt_investigate_thoroughly_find_the__text
+  - ll_evt_qm_accounting_discrepancy_opt_trust_the_driver_blame_the_guard_outcome
+  - ll_evt_qm_accounting_discrepancy_opt_trust_the_driver_blame_the_guard_text
+  - ll_evt_qm_accounting_discrepancy_opt_trust_the_guards_report_bandits_outcome
+  - ll_evt_qm_accounting_discrepancy_opt_trust_the_guards_report_bandits_text
+  - ll_evt_qm_accounting_discrepancy_setup
+  - ll_evt_qm_accounting_discrepancy_title
+  - ll_evt_qm_merchant_negotiation_opt_find_alternative_suppliers_takes_outcome
+  - ll_evt_qm_merchant_negotiation_opt_find_alternative_suppliers_takes_text
+  - ll_evt_qm_merchant_negotiation_opt_haggle_hard_refuse_to_be_gouged_outcome
+  - ll_evt_qm_merchant_negotiation_opt_haggle_hard_refuse_to_be_gouged_text
+  - ll_evt_qm_merchant_negotiation_opt_pay_the_price_secure_supplies_outcome
+  - ll_evt_qm_merchant_negotiation_opt_pay_the_price_secure_supplies_text
+  - ll_evt_qm_merchant_negotiation_opt_suggest_he_reconsider_intimidate_outcome
+  - ll_evt_qm_merchant_negotiation_opt_suggest_he_reconsider_intimidate_text
+  - ll_evt_qm_merchant_negotiation_setup
+  - ll_evt_qm_merchant_negotiation_title
+  - ll_evt_qm_requisition_request_opt_keep_the_best_piece_for_yourself_outcome
+  - ll_evt_qm_requisition_request_opt_keep_the_best_piece_for_yourself_text
+  - ll_evt_qm_requisition_request_opt_recruits_first_they_ll_die_witho_outcome
+  - ll_evt_qm_requisition_request_opt_recruits_first_they_ll_die_witho_text
+  - ll_evt_qm_requisition_request_opt_split_it_fairly_by_lottery_outcome
+  - ll_evt_qm_requisition_request_opt_split_it_fairly_by_lottery_text
+  - ll_evt_qm_requisition_request_opt_veterans_first_they_ve_earned_it_outcome
+  - ll_evt_qm_requisition_request_opt_veterans_first_they_ve_earned_it_text
+  - ll_evt_qm_requisition_request_setup
+  - ll_evt_qm_requisition_request_title
+  - ll_evt_qm_spoiled_supplies_opt_find_who_sold_us_this_document_f_outcome
+  - ll_evt_qm_spoiled_supplies_opt_find_who_sold_us_this_document_f_text
+  - ll_evt_qm_spoiled_supplies_opt_mix_the_bad_with_the_good_hope_n_outcome
+  - ll_evt_qm_spoiled_supplies_opt_mix_the_bad_with_the_good_hope_n_text
+  - ll_evt_qm_spoiled_supplies_opt_report_it_honestly_take_the_blam_outcome
+  - ll_evt_qm_spoiled_supplies_opt_report_it_honestly_take_the_blam_text
+  - ll_evt_qm_spoiled_supplies_opt_salvage_what_you_can_stretch_the_outcome
+  - ll_evt_qm_spoiled_supplies_opt_salvage_what_you_can_stretch_the_text
+  - ll_evt_qm_spoiled_supplies_setup
+  - ll_evt_qm_spoiled_supplies_title
+  - ll_evt_qm_supply_inventory_opt_adjust_the_numbers_to_hide_the_s_outcome
+  - ll_evt_qm_supply_inventory_opt_adjust_the_numbers_to_hide_the_s_text
+  - ll_evt_qm_supply_inventory_opt_count_everything_properly_note_d_outcome
+  - ll_evt_qm_supply_inventory_opt_count_everything_properly_note_d_text
+  - ll_evt_qm_supply_inventory_opt_cover_the_shortage_from_your_own_outcome
+  - ll_evt_qm_supply_inventory_opt_cover_the_shortage_from_your_own_text
+  - ll_evt_qm_supply_inventory_opt_do_a_quick_count_estimate_the_re_outcome
+  - ll_evt_qm_supply_inventory_opt_do_a_quick_count_estimate_the_re_text
+  - ll_evt_qm_supply_inventory_setup
+  - ll_evt_qm_supply_inventory_title
+  - ll_evt_run_battle_runner_opt_ask_what_s_happening_first_outcome
+  - ll_evt_run_battle_runner_opt_ask_what_s_happening_first_text
+  - ll_evt_run_battle_runner_opt_run_steadily_find_him_fast_outcome
+  - ll_evt_run_battle_runner_opt_run_steadily_find_him_fast_text
+  - ll_evt_run_battle_runner_opt_shout_the_message_keep_moving_outcome
+  - ll_evt_run_battle_runner_opt_shout_the_message_keep_moving_text
+  - ll_evt_run_battle_runner_opt_sprint_every_second_counts_outcome
+  - ll_evt_run_battle_runner_opt_sprint_every_second_counts_text
+  - ll_evt_run_battle_runner_setup
+  - ll_evt_run_battle_runner_title
+  - ll_evt_run_camp_coordination_opt_check_for_valuables_while_you_se_outcome
+  - ll_evt_run_camp_coordination_opt_check_for_valuables_while_you_se_text
+  - ll_evt_run_camp_coordination_opt_focus_on_our_soldiers_first_outcome
+  - ll_evt_run_camp_coordination_opt_focus_on_our_soldiers_first_text
+  - ll_evt_run_camp_coordination_opt_help_carry_the_wounded_yourself_outcome
+  - ll_evt_run_camp_coordination_opt_help_carry_the_wounded_yourself_text
+  - ll_evt_run_camp_coordination_opt_systematic_search_mark_everyone_outcome
+  - ll_evt_run_camp_coordination_opt_systematic_search_mark_everyone_text
+  - ll_evt_run_camp_coordination_setup
+  - ll_evt_run_camp_coordination_title
+  - ll_evt_run_night_summons_opt_find_each_unit_deliver_correctio_outcome
+  - ll_evt_run_night_summons_opt_find_each_unit_deliver_correctio_text
+  - ll_evt_run_night_summons_opt_grab_others_to_help_spread_the_w_outcome
+  - ll_evt_run_night_summons_opt_grab_others_to_help_spread_the_w_text
+  - ll_evt_run_night_summons_opt_run_to_the_officers_first_let_th_outcome
+  - ll_evt_run_night_summons_opt_run_to_the_officers_first_let_th_text
+  - ll_evt_run_night_summons_opt_sprint_to_the_most_critical_unit_outcome
+  - ll_evt_run_night_summons_opt_sprint_to_the_most_critical_unit_text
+  - ll_evt_run_night_summons_setup
+  - ll_evt_run_night_summons_title
+  - ll_evt_run_supply_run_opt_eat_some_yourself_on_the_way_outcome
+  - ll_evt_run_supply_run_opt_eat_some_yourself_on_the_way_text
+  - ll_evt_run_supply_run_opt_run_fast_food_still_warm_outcome
+  - ll_evt_run_supply_run_opt_run_fast_food_still_warm_text
+  - ll_evt_run_supply_run_opt_sprint_race_the_rain_outcome
+  - ll_evt_run_supply_run_opt_sprint_race_the_rain_text
+  - ll_evt_run_supply_run_opt_walk_carefully_don_t_spill_outcome
+  - ll_evt_run_supply_run_opt_walk_carefully_don_t_spill_text
+  - ll_evt_run_supply_run_setup
+  - ll_evt_run_supply_run_title
+  - ll_evt_run_water_run_opt_find_a_closer_source_risky_scout_outcome
+  - ll_evt_run_water_run_opt_find_a_closer_source_risky_scout_text
+  - ll_evt_run_water_run_opt_make_all_six_trips_steady_pace_outcome
+  - ll_evt_run_water_run_opt_make_all_six_trips_steady_pace_text
+  - ll_evt_run_water_run_opt_make_three_trips_report_barrels__outcome
+  - ll_evt_run_water_run_opt_make_three_trips_report_barrels__text
+  - ll_evt_run_water_run_opt_recruit_help_organize_a_water_ch_outcome
+  - ll_evt_run_water_run_opt_recruit_help_organize_a_water_ch_text
+  - ll_evt_run_water_run_setup
+  - ll_evt_run_water_run_title
+  - ll_evt_scout_enemy_contact_opt_create_a_distraction_lead_them_a_outcome
+  - ll_evt_scout_enemy_contact_opt_create_a_distraction_lead_them_a_text
+  - ll_evt_scout_enemy_contact_opt_shadow_them_back_to_their_camp_outcome
+  - ll_evt_scout_enemy_contact_opt_shadow_them_back_to_their_camp_text
+  - ll_evt_scout_enemy_contact_opt_slip_away_report_what_you_saw_outcome
+  - ll_evt_scout_enemy_contact_opt_slip_away_report_what_you_saw_text
+  - ll_evt_scout_enemy_contact_opt_stay_hidden_observe_and_count_outcome
+  - ll_evt_scout_enemy_contact_opt_stay_hidden_observe_and_count_text
+  - ll_evt_scout_enemy_contact_setup
+  - ll_evt_scout_enemy_contact_title
+  - ll_evt_scout_map_update_opt_bring_help_search_as_a_group_outcome
+  - ll_evt_scout_map_update_opt_bring_help_search_as_a_group_text
+  - ll_evt_scout_map_update_opt_move_fast_cover_more_ground_outcome
+  - ll_evt_scout_map_update_opt_move_fast_cover_more_ground_text
+  - ll_evt_scout_map_update_opt_report_them_lost_conserve_resour_outcome
+  - ll_evt_scout_map_update_opt_report_them_lost_conserve_resour_text
+  - ll_evt_scout_map_update_opt_track_them_systematically_outcome
+  - ll_evt_scout_map_update_opt_track_them_systematically_text
+  - ll_evt_scout_map_update_setup
+  - ll_evt_scout_map_update_title
+  - ll_evt_scout_night_patrol_opt_ask_locals_if_friendly_territory_outcome
+  - ll_evt_scout_night_patrol_opt_ask_locals_if_friendly_territory_text
+  - ll_evt_scout_night_patrol_opt_hunt_along_the_way_outcome
+  - ll_evt_scout_night_patrol_opt_hunt_along_the_way_text
+  - ll_evt_scout_night_patrol_opt_requisition_from_a_farm_outcome
+  - ll_evt_scout_night_patrol_opt_requisition_from_a_farm_text
+  - ll_evt_scout_night_patrol_opt_systematic_search_cover_all_grou_outcome
+  - ll_evt_scout_night_patrol_opt_systematic_search_cover_all_grou_text
+  - ll_evt_scout_night_patrol_setup
+  - ll_evt_scout_night_patrol_title
+  - ll_evt_scout_route_finding_opt_accept_move_careful_observe_only_outcome
+  - ll_evt_scout_route_finding_opt_accept_move_careful_observe_only_text
+  - ll_evt_scout_route_finding_opt_accept_try_to_sabotage_something_outcome
+  - ll_evt_scout_route_finding_opt_accept_try_to_sabotage_something_text
+  - ll_evt_scout_route_finding_opt_decline_too_dangerous_outcome
+  - ll_evt_scout_route_finding_opt_decline_too_dangerous_text
+  - ll_evt_scout_route_finding_opt_suggest_someone_else_outcome
+  - ll_evt_scout_route_finding_opt_suggest_someone_else_text
+  - ll_evt_scout_route_finding_setup
+  - ll_evt_scout_route_finding_title
+  - ll_evt_scout_terrain_recon_opt_climb_high_ground_for_overview_outcome
+  - ll_evt_scout_terrain_recon_opt_climb_high_ground_for_overview_text
+  - ll_evt_scout_terrain_recon_opt_push_deep_get_close_to_enemy_pos_outcome
+  - ll_evt_scout_terrain_recon_opt_push_deep_get_close_to_enemy_pos_text
+  - ll_evt_scout_terrain_recon_opt_quick_sweep_report_early_outcome
+  - ll_evt_scout_terrain_recon_opt_quick_sweep_report_early_text
+  - ll_evt_scout_terrain_recon_opt_standard_reconnaissance_stay_cau_outcome
+  - ll_evt_scout_terrain_recon_opt_standard_reconnaissance_stay_cau_text
+  - ll_evt_scout_terrain_recon_setup
+  - ll_evt_scout_terrain_recon_title
+  - ll_evt_scrutiny_audit_opt_excuse_outcome
+  - ll_evt_scrutiny_audit_opt_excuse_outcome_failure
+  - ll_evt_scrutiny_audit_opt_excuse_text
+  - ll_evt_scrutiny_audit_opt_honest_outcome
+  - ll_evt_scrutiny_audit_opt_honest_text
+  - ll_evt_scrutiny_audit_opt_implicate_outcome
+  - ll_evt_scrutiny_audit_opt_implicate_text
+  - ll_evt_scrutiny_audit_opt_records_outcome
+  - ll_evt_scrutiny_audit_opt_records_outcome_failure
+  - ll_evt_scrutiny_audit_opt_records_text
+  - ll_evt_scrutiny_audit_setup
+  - ll_evt_scrutiny_audit_title
+  - ll_evt_scrutiny_exposed_opt_beg_outcome
+  - ll_evt_scrutiny_exposed_opt_beg_outcome_failure
+  - ll_evt_scrutiny_exposed_opt_beg_text
+  - ll_evt_scrutiny_exposed_opt_fight_outcome
+  - ll_evt_scrutiny_exposed_opt_fight_outcome_failure
+  - ll_evt_scrutiny_exposed_opt_fight_text
+  - ll_evt_scrutiny_exposed_opt_leverage_outcome
+  - ll_evt_scrutiny_exposed_opt_leverage_outcome_failure
+  - ll_evt_scrutiny_exposed_opt_leverage_text
+  - ll_evt_scrutiny_exposed_opt_surrender_outcome
+  - ll_evt_scrutiny_exposed_opt_surrender_text
+  - ll_evt_scrutiny_exposed_setup
+  - ll_evt_scrutiny_exposed_title
+  - ll_evt_scrutiny_shakedown_opt_bribe_outcome
+  - ll_evt_scrutiny_shakedown_opt_bribe_outcome_failure
+  - ll_evt_scrutiny_shakedown_opt_bribe_text
+  - ll_evt_scrutiny_shakedown_opt_comply_outcome
+  - ll_evt_scrutiny_shakedown_opt_comply_outcome_failure
+  - ll_evt_scrutiny_shakedown_opt_comply_text
+  - ll_evt_scrutiny_shakedown_opt_distraction_outcome
+  - ll_evt_scrutiny_shakedown_opt_distraction_text
+  - ll_evt_scrutiny_shakedown_opt_dump_outcome
+  - ll_evt_scrutiny_shakedown_opt_dump_outcome_failure
+  - ll_evt_scrutiny_shakedown_opt_dump_text
+  - ll_evt_scrutiny_shakedown_setup
+  - ll_evt_scrutiny_shakedown_title
+  - ll_evt_scrutiny_warning_opt_acknowledge_outcome
+  - ll_evt_scrutiny_warning_opt_acknowledge_text
+  - ll_evt_scrutiny_warning_opt_ask_help_outcome
+  - ll_evt_scrutiny_warning_opt_ask_help_text
+  - ll_evt_scrutiny_warning_opt_deflect_outcome
+  - ll_evt_scrutiny_warning_opt_deflect_text
+  - ll_evt_scrutiny_warning_opt_deny_outcome
+  - ll_evt_scrutiny_warning_opt_deny_text
+  - ll_evt_scrutiny_warning_setup
+  - ll_evt_scrutiny_warning_title
+  - ll_evt_squad_bonded_opt_clean_outcome
+  - ll_evt_squad_bonded_opt_clean_text
+  - ll_evt_squad_bonded_opt_grateful_outcome
+  - ll_evt_squad_bonded_opt_grateful_text
+  - ll_evt_squad_bonded_opt_share_outcome
+  - ll_evt_squad_bonded_opt_share_text
+  - ll_evt_squad_bonded_opt_warn_others_outcome
+  - ll_evt_squad_bonded_opt_warn_others_text
+  - ll_evt_squad_bonded_setup
+  - ll_evt_squad_bonded_title
+  - ll_evt_squad_isolated_opt_alone_outcome
+  - ll_evt_squad_isolated_opt_alone_text
+  - ll_evt_squad_isolated_opt_approach_outcome
+  - ll_evt_squad_isolated_opt_approach_outcome_failure
+  - ll_evt_squad_isolated_opt_approach_text
+  - ll_evt_squad_isolated_opt_confront_outcome
+  - ll_evt_squad_isolated_opt_confront_outcome_failure
+  - ll_evt_squad_isolated_opt_confront_text
+  - ll_evt_squad_isolated_opt_leader_outcome
+  - ll_evt_squad_isolated_opt_leader_text
+  - ll_evt_squad_isolated_setup
+  - ll_evt_squad_isolated_title
+  - ll_evt_squad_sabotage_opt_confront_outcome
+  - ll_evt_squad_sabotage_opt_confront_outcome_failure
+  - ll_evt_squad_sabotage_opt_confront_text
+  - ll_evt_squad_sabotage_opt_endure_outcome
+  - ll_evt_squad_sabotage_opt_endure_text
+  - ll_evt_squad_sabotage_opt_report_outcome
+  - ll_evt_squad_sabotage_opt_report_text
+  - ll_evt_squad_sabotage_opt_transfer_outcome
+  - ll_evt_squad_sabotage_opt_transfer_text
+  - ll_evt_squad_sabotage_setup
+  - ll_evt_squad_sabotage_title
+  - ll_evt_squad_trusted_opt_decline_outcome
+  - ll_evt_squad_trusted_opt_decline_text
+  - ll_evt_squad_trusted_opt_help_outcome
+  - ll_evt_squad_trusted_opt_help_text
+  - ll_evt_squad_trusted_opt_leverage_outcome
+  - ll_evt_squad_trusted_opt_leverage_text
+  - ll_evt_squad_trusted_opt_money_outcome
+  - ll_evt_squad_trusted_opt_money_text
+  - ll_evt_squad_trusted_setup
+  - ll_evt_squad_trusted_title
+  - ll_inquiry_choose
+  - ll_inquiry_leave
+  - ll_not_enough_coin
+  - ll_story_camp_quartermaster_ledger_skim_body
+  - ll_story_camp_quartermaster_ledger_skim_opt_refuse_hint
+  - ll_story_camp_quartermaster_ledger_skim_opt_refuse_text
+  - ll_story_camp_quartermaster_ledger_skim_opt_tip_hint
+  - ll_story_camp_quartermaster_ledger_skim_opt_tip_text
+  - ll_story_camp_quartermaster_ledger_skim_title
+  - ll_story_camp_scrounge_rations_body
+  - ll_story_camp_scrounge_rations_opt_buy_hint
+  - ll_story_camp_scrounge_rations_opt_buy_text
+  - ll_story_camp_scrounge_rations_opt_forage_hint
+  - ll_story_camp_scrounge_rations_opt_forage_text
+  - ll_story_camp_scrounge_rations_opt_nothing_hint
+  - ll_story_camp_scrounge_rations_opt_nothing_text
+  - ll_story_camp_scrounge_rations_title
+  - ll_story_discipline_dawn_inspection_body
+  - ll_story_discipline_dawn_inspection_opt_polish_hint
+  - ll_story_discipline_dawn_inspection_opt_polish_text
+  - ll_story_discipline_dawn_inspection_opt_standard_hint
+  - ll_story_discipline_dawn_inspection_opt_standard_text
+  - ll_story_discipline_dawn_inspection_title
+  - ll_story_discipline_mess_line_fight_body
+  - ll_story_discipline_mess_line_fight_opt_breakit_hint
+  - ll_story_discipline_mess_line_fight_opt_breakit_text
+  - ll_story_discipline_mess_line_fight_opt_lookaway_hint
+  - ll_story_discipline_mess_line_fight_opt_lookaway_text
+  - ll_story_discipline_mess_line_fight_opt_stepin_hint
+  - ll_story_discipline_mess_line_fight_opt_stepin_text
+  - ll_story_discipline_mess_line_fight_title
+  - ll_story_medical_aid_tent_shift_body
+  - ll_story_medical_aid_tent_shift_opt_help_hint
+  - ll_story_medical_aid_tent_shift_opt_help_text
+  - ll_story_medical_aid_tent_shift_opt_leave_hint
+  - ll_story_medical_aid_tent_shift_opt_leave_text
+  - ll_story_medical_aid_tent_shift_opt_watch_hint
+  - ll_story_medical_aid_tent_shift_opt_watch_text
+  - ll_story_medical_aid_tent_shift_title
+  - ll_story_medical_bandage_drill_body
+  - ll_story_medical_bandage_drill_opt_half_hint
+  - ll_story_medical_bandage_drill_opt_half_text
+  - ll_story_medical_bandage_drill_opt_serious_hint
+  - ll_story_medical_bandage_drill_opt_serious_text
+  - ll_story_medical_bandage_drill_title
+  - ll_story_morale_after_battle_words_body
+  - ll_story_morale_after_battle_words_opt_gentle_hint
+  - ll_story_morale_after_battle_words_opt_gentle_text
+  - ll_story_morale_after_battle_words_opt_steady_hint
+  - ll_story_morale_after_battle_words_opt_steady_text
+  - ll_story_morale_after_battle_words_title
+  - ll_story_morale_campfire_song_body
+  - ll_story_morale_campfire_song_opt_lead_hint
+  - ll_story_morale_campfire_song_opt_lead_text
+  - ll_story_morale_campfire_song_opt_listen_hint
+  - ll_story_morale_campfire_song_opt_listen_text
+  - ll_story_morale_campfire_song_opt_turnin_hint
+  - ll_story_morale_campfire_song_opt_turnin_text
+  - ll_story_morale_campfire_song_title
+  - ll_story_squad_drill_night_sparring_body
+  - ll_story_squad_drill_night_sparring_opt_delegate_hint
+  - ll_story_squad_drill_night_sparring_opt_delegate_text
+  - ll_story_squad_drill_night_sparring_opt_lead_hint
+  - ll_story_squad_drill_night_sparring_opt_lead_text
+  - ll_story_squad_drill_night_sparring_opt_turnin_hint
+  - ll_story_squad_drill_night_sparring_opt_turnin_text
+  - ll_story_squad_drill_night_sparring_title
+  - ll_term_camp
+  - ll_thr_disc_blocked_body
+  - ll_thr_disc_blocked_opt_accept_hint
+  - ll_thr_disc_blocked_opt_accept_result
+  - ll_thr_disc_blocked_opt_accept_text
+  - ll_thr_disc_blocked_opt_volunteer_hint
+  - ll_thr_disc_blocked_opt_volunteer_result
+  - ll_thr_disc_blocked_opt_volunteer_text
+  - ll_thr_disc_blocked_title
+  - ll_thr_disc_discharge_body
+  - ll_thr_disc_discharge_opt_defy_hint
+  - ll_thr_disc_discharge_opt_defy_result
+  - ll_thr_disc_discharge_opt_defy_text
+  - ll_thr_disc_discharge_opt_plead_hint
+  - ll_thr_disc_discharge_opt_plead_result
+  - ll_thr_disc_discharge_opt_plead_text
+  - ll_thr_disc_discharge_title
+  - ll_thr_disc_extra_body
+  - ll_thr_disc_extra_opt_do_hint
+  - ll_thr_disc_extra_opt_do_result
+  - ll_thr_disc_extra_opt_do_text
+  - ll_thr_disc_extra_opt_mouth_hint
+  - ll_thr_disc_extra_opt_mouth_result
+  - ll_thr_disc_extra_opt_mouth_text
+  - ll_thr_disc_extra_title
+  - ll_thr_disc_hearing_body
+  - ll_thr_disc_hearing_opt_blame_hint
+  - ll_thr_disc_hearing_opt_blame_result
+  - ll_thr_disc_hearing_opt_blame_text
+  - ll_thr_disc_hearing_opt_own_hint
+  - ll_thr_disc_hearing_opt_own_result
+  - ll_thr_disc_hearing_opt_own_text
+  - ll_thr_disc_hearing_title
+  - ll_thr_med_complication_body
+  - ll_thr_med_complication_opt_push_hint
+  - ll_thr_med_complication_opt_push_result
+  - ll_thr_med_complication_opt_push_text
+  - ll_thr_med_complication_opt_seek_hint
+  - ll_thr_med_complication_opt_seek_result
+  - ll_thr_med_complication_opt_seek_text
+  - ll_thr_med_complication_title
+  - ll_thr_med_emergency_body
+  - ll_thr_med_emergency_opt_rest_hint
+  - ll_thr_med_emergency_opt_rest_result
+  - ll_thr_med_emergency_opt_rest_text
+  - ll_thr_med_emergency_opt_stumble_hint
+  - ll_thr_med_emergency_opt_stumble_result
+  - ll_thr_med_emergency_opt_stumble_text
+  - ll_thr_med_emergency_title
+  - ll_thr_med_worsening_body
+  - ll_thr_med_worsening_opt_ignore_hint
+  - ll_thr_med_worsening_opt_ignore_result
+  - ll_thr_med_worsening_opt_ignore_text
+  - ll_thr_med_worsening_opt_rest_hint
+  - ll_thr_med_worsening_opt_rest_result
+  - ll_thr_med_worsening_opt_rest_text
+  - ll_thr_med_worsening_title
+  - ll_thr_rep_bonded_body
+  - ll_thr_rep_bonded_opt_accept_hint
+  - ll_thr_rep_bonded_opt_accept_result
+  - ll_thr_rep_bonded_opt_accept_text
+  - ll_thr_rep_bonded_opt_wave_hint
+  - ll_thr_rep_bonded_opt_wave_result
+  - ll_thr_rep_bonded_opt_wave_text
+  - ll_thr_rep_bonded_title
+  - ll_thr_rep_isolated_body
+  - ll_thr_rep_isolated_opt_head_hint
+  - ll_thr_rep_isolated_opt_head_result
+  - ll_thr_rep_isolated_opt_head_text
+  - ll_thr_rep_isolated_opt_snap_hint
+  - ll_thr_rep_isolated_opt_snap_result
+  - ll_thr_rep_isolated_opt_snap_text
+  - ll_thr_rep_isolated_title
+  - ll_thr_rep_sabotage_body
+  - ll_thr_rep_sabotage_opt_confront_hint
+  - ll_thr_rep_sabotage_opt_confront_result
+  - ll_thr_rep_sabotage_opt_confront_text
+  - ll_thr_rep_sabotage_opt_loss_hint
+  - ll_thr_rep_sabotage_opt_loss_result
+  - ll_thr_rep_sabotage_opt_loss_text
+  - ll_thr_rep_sabotage_title
+  - ll_thr_rep_trusted_body
+  - ll_thr_rep_trusted_opt_decline_hint
+  - ll_thr_rep_trusted_opt_decline_result
+  - ll_thr_rep_trusted_opt_decline_text
+  - ll_thr_rep_trusted_opt_help_hint
+  - ll_thr_rep_trusted_opt_help_result
+  - ll_thr_rep_trusted_opt_help_text
+  - ll_thr_rep_trusted_title
+  - ll_thr_scrutiny_audit_body
+  - ll_thr_scrutiny_audit_opt_confess_hint
+  - ll_thr_scrutiny_audit_opt_confess_result
+  - ll_thr_scrutiny_audit_opt_confess_text
+  - ll_thr_scrutiny_audit_opt_cooperate_hint
+  - ll_thr_scrutiny_audit_opt_cooperate_result
+  - ll_thr_scrutiny_audit_opt_cooperate_text
+  - ll_thr_scrutiny_audit_title
+  - ll_thr_scrutiny_exposed_body
+  - ll_thr_scrutiny_exposed_opt_deny_hint
+  - ll_thr_scrutiny_exposed_opt_deny_result
+  - ll_thr_scrutiny_exposed_opt_deny_text
+  - ll_thr_scrutiny_exposed_opt_fine_hint
+  - ll_thr_scrutiny_exposed_opt_fine_result
+  - ll_thr_scrutiny_exposed_opt_fine_text
+  - ll_thr_scrutiny_exposed_title
+  - ll_thr_scrutiny_shakedown_body
+  - ll_thr_scrutiny_shakedown_opt_comply_hint
+  - ll_thr_scrutiny_shakedown_opt_comply_result
+  - ll_thr_scrutiny_shakedown_opt_comply_text
+  - ll_thr_scrutiny_shakedown_opt_pay_hint
+  - ll_thr_scrutiny_shakedown_opt_pay_result
+  - ll_thr_scrutiny_shakedown_opt_pay_text
+  - ll_thr_scrutiny_shakedown_title
+  - ll_thr_scrutiny_warning_body
+  - ll_thr_scrutiny_warning_opt_clean_hint
+  - ll_thr_scrutiny_warning_opt_clean_result
+  - ll_thr_scrutiny_warning_opt_clean_text
+  - ll_thr_scrutiny_warning_opt_shrug_hint
+  - ll_thr_scrutiny_warning_opt_shrug_result
+  - ll_thr_scrutiny_warning_opt_shrug_text
+  - ll_thr_scrutiny_warning_title
+  - lp_rank_aserai_leader
+  - lp_rank_aserai_recruit
+  - lp_rank_aserai_second
+  - lp_rank_aserai_senior_veteran
+  - lp_rank_aserai_soldier
+  - lp_rank_aserai_veteran
+  - lp_rank_battania_leader
+  - lp_rank_battania_recruit
+  - lp_rank_battania_second
+  - lp_rank_battania_senior_veteran
+  - lp_rank_battania_soldier
+  - lp_rank_battania_veteran
+  - lp_rank_empire_leader
+  - lp_rank_empire_recruit
+  - lp_rank_empire_second
+  - lp_rank_empire_senior_veteran
+  - lp_rank_empire_soldier
+  - lp_rank_empire_veteran
+  - lp_rank_khuzait_leader
+  - lp_rank_khuzait_recruit
+  - lp_rank_khuzait_second
+  - lp_rank_khuzait_senior_veteran
+  - lp_rank_khuzait_soldier
+  - lp_rank_khuzait_veteran
+  - lp_rank_sturgia_leader
+  - lp_rank_sturgia_recruit
+  - lp_rank_sturgia_second
+  - lp_rank_sturgia_senior_veteran
+  - lp_rank_sturgia_soldier
+  - lp_rank_sturgia_veteran
+  - lp_rank_vlandia_leader
+  - lp_rank_vlandia_recruit
+  - lp_rank_vlandia_second
+  - lp_rank_vlandia_senior_veteran
+  - lp_rank_vlandia_soldier
+  - lp_rank_vlandia_veteran
+  - menu_disabled_activities
+  - menu_disabled_no_settlement
+  - menu_disabled_not_enlisted
+  - menu_disabled_squads
+  - menu_tooltip_duty
+  - menu_tooltip_leave
+  - menu_tooltip_medical
+  - menu_tooltip_my_camp
+  - menu_tooltip_my_camp_tension
+  - player_dice_cancel
+  - player_dice_cancel_outcome
+  - player_dice_high
+  - player_dice_high_success
+  - player_dice_setup
+  - player_dice_small
+  - player_dice_small_outcome
+  - player_dice_title
+  - player_letter_cancel
+  - player_letter_cancel_outcome
+  - player_letter_honest
+  - player_letter_honest_outcome
+  - player_letter_reassuring
+  - player_letter_reassuring_outcome
+  - player_letter_setup
+  - player_letter_title
+  - player_petition_cancel
+  - player_petition_cancel_outcome
+  - player_petition_pay
+  - player_petition_pay_outcome
+  - player_petition_recognition
+  - player_petition_recognition_outcome
+  - player_petition_setup
+  - player_petition_title
+  - player_qm_favor_call_in
+  - player_qm_favor_call_in_outcome
+  - player_qm_favor_hold
+  - player_qm_favor_hold_outcome
+  - player_qm_favor_setup
+  - player_qm_favor_title
+  - player_training_cancel
+  - player_training_cancel_outcome
+  - player_training_request
+  - player_training_request_outcome
+  - player_training_setup
+  - player_training_title
+  - player_wounded_cancel
+  - player_wounded_cancel_outcome
+  - player_wounded_setup
+  - player_wounded_title
+  - player_wounded_visit
+  - player_wounded_visit_outcome
+  - prof_tooltip_drill
+  - prof_tooltip_medic
+  - prof_tooltip_quarterhand
+  - prof_tooltip_saboteur
+  - prof_tooltip_siege
+  - prof_tooltip_tier_locked
+  - qm_btn_understood
+  - qm_insufficient_equipment
+  - qm_item_limit_reached
+  - qm_retinue_starving
+  - qm_retinue_warning
+  - qm_status_free
+  - qm_status_get_another
+  - qm_status_limit
+  - qm_status_limit_hint
+  - Squad_Select_Body
+  - Squad_Select_Cancel
+  - Squad_Select_Confirm
+  - Squad_Select_Finalized
+  - Squad_Select_Title
+  - Squad_StylePrompt_Body
+  - Squad_StylePrompt_Cancel
+  - Squad_StylePrompt_Confirm
+  - Squad_StylePrompt_Title
+  - strategic_context_coordinated_offensive
+  - strategic_context_desperate_defense
+  - strategic_context_garrison_duty
+  - strategic_context_patrol_peacetime
+  - strategic_context_raid_operation
+  - strategic_context_recruitment_drive
+  - strategic_context_siege_operation
+  - strategic_context_winter_camp
+  - strategic_value_critical
+  - strategic_value_high
+  - strategic_value_low
+  - strategic_value_moderate
+  - war_stance_balanced
+  - war_stance_defensive
+  - war_stance_desperate
+  - war_stance_offensive
+
+================================================================================
+USED STRINGS BY CATEGORY
+================================================================================
+
+brief_* : 5 strings
+
+camp_* : 1 strings
+
+combat_* : 5 strings
+
+cond_* : 14 strings
+
+ct_* : 50 strings
+
+dm_* : 25 strings
+
+enl_* : 107 strings
+
+enlist_* : 11 strings
+
+enlisted_* : 104 strings
+
+eq_* : 5 strings
+
+esc_* : 3 strings
+
+formation_* : 2 strings
+
+hlm_* : 20 strings
+
+ll_* : 1 strings
+
+menu_* : 22 strings
+
+News_* : 23 strings
+
+promo_* : 20 strings
+
+qm_* : 101 strings
+
+================================================================================
+DETAILED USAGE REPORT
+================================================================================
+
+brief_fallback_default
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+brief_fallback_exhausted
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+brief_fallback_illness
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+brief_fallback_injury
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+brief_fallback_tired
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+camp_back
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+combat_rejoin_battle
+  Used in 1 file(s):
+    - src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs
+
+combat_reserve_siege_disabled
+  Used in 1 file(s):
+    - src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs
+
+combat_reserve_siege_disabled_full
+  Used in 1 file(s):
+    - src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs
+
+combat_too_demoralized
+  Used in 1 file(s):
+    - src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs
+
+combat_wait_reserve
+  Used in 1 file(s):
+    - src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs
+
+cond_illness_gained
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_illness_generic
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_injury_gained
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_injury_generic
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_recovered
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_sev_ill_critical
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_sev_ill_mild
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_sev_ill_moderate
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_sev_ill_severe
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_sev_injury_critical
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_sev_injury_minor
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_sev_injury_moderate
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_sev_injury_severe
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+cond_treatment_applied
+  Used in 1 file(s):
+    - src\Features\Conditions\PlayerConditionBehavior.cs
+
+ct_back_factions
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_back_records
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_back_retinue
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_back_tent
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_cancel_discharge_tooltip
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+ct_capture_retinue_lost
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueLifecycleHandler.cs
+
+ct_companion_toggled
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_companions_reclaimed
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+ct_companions_retained
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+ct_confirm_no
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_confirm_yes
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_defeat_retinue_lost
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueLifecycleHandler.cs
+
+ct_desert_retinue_lost
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueLifecycleHandler.cs
+
+ct_discharge_tooltip
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+ct_dismiss_cancel
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_dismiss_confirm_btn
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_dismiss_success
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_enlist_end_retinue
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueLifecycleHandler.cs
+
+ct_leadership_acknowledge
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+ct_leadership_message
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+ct_leadership_title
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+ct_lord_died_retinue
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueLifecycleHandler.cs
+
+ct_naval_cavalry_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_naval_horse_archer_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_option_current
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_option_faction
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_option_lifetime
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_option_retinue
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+ct_purchase_confirm_msg
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_purchase_confirm_title
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_purchase_success
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_records_intro
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_requisition_cancel
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_requisition_cooldown
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_requisition_no_type
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_requisition_success
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_retinue_current_muster
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_retinue_dismiss
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_retinue_muster
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_retinue_no_soldiers
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_retinue_purchase
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_retinue_tooltip
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+ct_trickle_added
+  Used in 1 file(s):
+    - src\Features\Retinue\Systems\RetinueTrickleSystem.cs
+
+ct_type_change_dismiss
+  Used in 2 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+    - src\Features\Retinue\Core\RetinueLifecycleHandler.cs
+
+ct_type_change_msg
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_type_change_title
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_warn_cannot_afford
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_warn_faction_unavailable
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_warn_full_retinue
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ct_warn_party_full
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_back
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_black_market
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_black_market_contact
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_black_market_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_bribe_caught
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_bribe_clerk
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_bribe_success
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_bribe_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_desertion_accept
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_desertion_body
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_desertion_decline
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_desertion_not_ready
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_desertion_talk
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_desertion_title
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_desertion_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_menu_intro
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_no_gold
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_sell_gear
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_sell_gear_success
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_sell_gear_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_skim_success
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_skim_supplies
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_skim_suspicious
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_skim_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+dm_wrong_duty
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_error_companion_assignments
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_error_current_posting
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_error_faction_detail
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_error_faction_records
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_error_lifetime_summary
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_error_retinue_dismiss
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_error_retinue_purchase
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_error_retinue_requisition
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_hub_lord_line
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_camp_hub_not_enlisted
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_camp_hub_objective_line
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_camp_hub_unavailable
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_camp_retinue_requisition_confirm
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_retinue_requisition_confirm_full
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_status_fight
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_camp_status_stay_back
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_days_count
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_faction_bandit_clan
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_faction_type_clan
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_faction_type_kingdom
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_faction_type_merc
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_faction_type_minor
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_master_at_arms_after_t1_note
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+
+enl_master_at_arms_promotion_line
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+
+enl_master_at_arms_specializations_count
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+
+enl_master_at_arms_summons_intro
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+
+enl_news_countryside
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+enl_news_unknown_forces
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+enl_posting_header_pay
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_header_pension
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_header_record
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_header_term
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_battles
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_commander
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_contract
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_days_served
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_kills
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_last_outcome
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_next_payday
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_pending_pay
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_pension_daily
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_posting
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_rank
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_line_status
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_not_enlisted
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_pension_active
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_pension_paused
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_pension_unknown
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_status_discharge_pending
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_posting_status_muster_queued
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_qm_cost_line
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+enl_qm_cost_line_cant_afford
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+enl_qm_request_equipment
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+enl_qm_select_armor_slot_desc
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+enl_qm_select_armor_slot_title
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+enl_qm_select_equipment_desc
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+enl_qm_select_equipment_title
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+enl_retinue_error_loading_status
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_header_current_muster
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_header_party_capacity
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_header_personal
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_line_command_limit
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_line_party_limit
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_line_party_members
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_line_party_space
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_line_rank
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_line_soldiers
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_line_type
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_line_upkeep
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_msg_cannot_add
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_msg_full_capacity
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_msg_must_be_enlisted
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_msg_no_culture
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_msg_no_party
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_msg_party_full
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_msg_party_limit_reached
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_none_mustered
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_not_enlisted
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_option_requisition
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_option_requisition_at_capacity
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_option_requisition_cooldown
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_option_requisition_cost
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_party_limits_retinue
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_retinue_reason_full_strength
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_reason_must_be_enlisted
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_reason_must_be_enlisted_requisition
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_reason_not_enough_gold
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_reason_requires_commander
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_reason_requires_commander_min
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_reason_requisition_cooldown
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_reason_select_type
+  Used in 1 file(s):
+    - src\Features\Retinue\Core\RetinueManager.cs
+
+enl_retinue_select_type_prompt
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_term_complete
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enl_ui_back
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_ui_cancel
+  Used in 3 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_ui_desert_confirm
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_ui_leave_granted
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_ui_request_leave
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_ui_request_leave_desc
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_ui_request_leave_title
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_ui_select_equipment_to_use_desc
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+
+enl_ui_select_equipment_to_use_title
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+
+enl_ui_select_lord_title
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_ui_tag_new
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+enl_ui_talk
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enl_ui_unknown
+  Used in 5 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+enl_unknown
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+enlist_army_defeated_ended
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlist_army_dispersed
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlist_companions_rejoined
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlist_fallback_army
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlist_following_battle
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlist_kingdom_fallen
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlist_lord_captured_ended
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlist_naval_remain
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlist_player_captured
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlist_promotion_blocked_discipline
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlist_promotion_quartermaster
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlisted_army_leader_acknowledge
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_army_leader_rejection
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_farewell_troops
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_final_muster
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_final_muster_hint
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_final_muster_smuggle
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_final_muster_smuggle_hint
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_joining_siege_assault
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enlisted_joining_siege_battle
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enlisted_keep_troops
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+Enlisted_Menu_AskLeave
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_BackToStatus
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_DebugTools
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_DesertArmy
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_FreeDesert
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_JoinSiege
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_MasterAtArms
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_ReturnToCamp
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_Status_Title
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_TalkToLord
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_VisitQuartermaster
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_VisitSettlement
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Menu_VisitSettlementNamed
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Message_AlreadyInService
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_BecameVassal
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_BoundByGrace
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_BrandedDeserter
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_DesertedToOtherKingdom
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_Discharged
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_LeaveExpiredDeserter
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_LeaveExpiredVassal
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_LeaveRemaining
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_LordFallenDischarged
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_LordFallenEnded
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_LordFallenGrace
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_LordNoParty
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_MadeItToShore
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_MinorFactionCooldown
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_MinorFactionDeserter
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_MustDisbandArmy
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_MustSpeakToNoble
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_NoMainParty
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_OnLeaveCannotJoin
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_OnLeaveReportBack
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_PromotionAchieved
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_QuitMercenaryDesertion
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_ReEnlistedBonus
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_ReEnlistedRank
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_RejoinedKingdom
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_RetiredHonor
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_ServiceEndedGrace
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_TermCompleted
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_TermEndedDischarge
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Message_WashedAshore
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlisted_minor_accept_reenlist
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_accept_retirement
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_continue_confirmed
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_continue_service
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_discuss_retirement
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_early_discharge
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_early_discharge_granted
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_enlistment_accepted
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_farewell_troops
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_keep_troops
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_reenlist_confirmed
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_release_troops
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_renewal_complete
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_renewal_discharge
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_renewal_farewell
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_renewal_options
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_request_service
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_retinue_ask
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_retirement_benefits
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_retirement_farewell
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_retirement_later
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_return_accepted
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_minor_return_from_leave
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_no_siege_battle
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Objective_Army
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Objective_Battle
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Objective_DirectOrders
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Objective_Patrol
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Objective_Stationed
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enlisted_pay_corruption
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_pay_corruption_hint
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_pay_iou
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_pay_iou_hint
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_pay_muster_body
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_pay_muster_body_tense
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_pay_muster_title
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_pay_sidedeal
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_pay_sidedeal_hint
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_pay_standard
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+enlisted_pay_standard_hint
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+
+Enlisted_Promotion_Available
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlisted_release_troops
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_request_service_army_leader
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+enlisted_retinue_ask
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+Enlisted_Status_ErrorNoLord
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+Enlisted_Status_NotEnlisted
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+enlisted_success_notification
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+Enlisted_Term_ThisFaction
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+Enlisted_Term_YourKingdom
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+enlisted_wage_income
+  Used in 1 file(s):
+    - src\Mod.Core\Config\ConfigurationManager.cs
+
+eq_insufficient_upgrade
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\EquipmentManager.cs
+
+eq_must_be_enlisted
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+
+eq_no_eligible_troops
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+
+eq_promoted_new_equipment
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+
+eq_upgraded
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\EquipmentManager.cs
+
+esc_discipline_changed
+  Used in 1 file(s):
+    - src\Features\Escalation\EscalationManager.cs
+
+esc_rep_changed
+  Used in 1 file(s):
+    - src\Features\Escalation\EscalationManager.cs
+
+esc_scrutiny_changed
+  Used in 1 file(s):
+    - src\Features\Escalation\EscalationManager.cs
+
+formation_assigned
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+formation_select_msg
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+hlm_back
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_collect_debts
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_debts_fail
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_debts_success
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_debts_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_escort_merchant
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_escort_success
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_escort_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_loan_fail
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_loan_no_skill
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_loan_success
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_loan_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_menu_intro
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_negotiate_loan
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_no_war
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_raid_success
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_raid_tooltip
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_raid_wounded
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+hlm_tension_stabilized
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+hlm_volunteer_raid
+  Used in 1 file(s):
+    - src\Features\Camp\CampMenuHandler.cs
+
+ll_default_continue
+  Used in 2 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+    - src\Features\Equipment\Behaviors\TroopSelectionManager.cs
+
+menu_conversation_error
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_disabled_healthy
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_disabled_no_lords
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_disabled_on_leave
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_disabled_pay_ok
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_field_battle
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_lord_not_available
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_lord_not_in_settlement
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_master_unavailable
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_must_be_enlisted_lords
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_must_be_enlisted_qm
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_no_lords_available
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_qm_error
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_qm_unavailable
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_tooltip_debug
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_tooltip_desert
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_tooltip_free_desert
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_tooltip_master
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_tooltip_quartermaster
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_tooltip_talk
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_tooltip_visit
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+menu_town_interface_error
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs
+
+News_ArmyDisbanded
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_ArmyForming
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Butchery
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Captured
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Costly
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Executed
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_ExecutedNoExecutor
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Fallen
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Inconclusive
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Peace
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_PlayerBattle
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_PlayerDefeat
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_PrisonerCapturedBy
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_PrisonerEscaped
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_PrisonerReleased
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_PrisonerTaken
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Pyrrhic
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Raid
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_SectionHeader_Kingdom
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_SectionHeader_Personal
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Siege
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_Victory
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+News_War
+  Used in 1 file(s):
+    - src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs
+
+promo_btn_command
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_btn_understood
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_chat_2
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_chat_3
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_chat_4
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_chat_5
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_chat_6
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_chat_default
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_msg_2
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_msg_3
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_msg_4
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_msg_5
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_msg_6
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_msg_default
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_title_2
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_title_3
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_title_4
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_title_5
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_title_6
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+promo_title_default
+  Used in 1 file(s):
+    - src\Features\Ranks\Behaviors\PromotionBehavior.cs
+
+qm_added_to_inventory
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_already_equipped
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_already_have_variant
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_bagcheck_body
+  Used in 2 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_bagcheck_title
+  Used in 2 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_baggage_no_fatigue
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_black_market
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_black_market_response
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_cannot_afford
+  Used in 2 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+
+qm_chat
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_continue
+  Used in 2 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_equipment_issued
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_equipment_issued_buy
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_error_selecting
+  Used in 1 file(s):
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+
+qm_fee_paid
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_help_lord
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_help_lord_response
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_insufficient_funds
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_intro_dialogue
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_intro_dialogue_fine
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_intro_dialogue_predatory
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_intro_dialogue_sour
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_intro_dialogue_tense
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_leave
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_liquidate_gain
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_menu_back_status
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_manage_supplies
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_optimize_food
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_purchase_supplies
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_rations
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_reorganize_inventory
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_request_accessories
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_request_armor
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_request_mounts
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_request_weapons
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_return_equipment
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_menu_supplies_back
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_moral_guidance
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_moral_guidance_response
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_no_accessory_variants
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_no_armor_variants
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_no_helmet_variants
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_no_mount_variants
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_no_weapon_slots
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_no_weapon_variants
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_optimized_food
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_provisions_response
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_purchased_supplies
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_commander
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_current
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_desc
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_error
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_gold
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_intro
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_no_gold
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_not_enlisted
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_officer
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_rank
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_standard
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_rations_supplemental
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_reorganized_inventory
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_request_equipment
+  Used in 2 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_request_provisions
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_retinue_bare
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_retinue_error
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_retinue_good
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_retinue_header
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_retinue_no_gold
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_retinue_no_soldiers
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_retinue_not_enlisted
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_retinue_officer
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_retinue_standard
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_retirement_gear
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\EquipmentManager.cs
+
+qm_return_error
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_return_intro
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_return_line
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_return_none
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_return_none_left
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_return_option_label
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_return_success
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_return_tooltip
+  Used in 1 file(s):
+    - src\Features\Equipment\Behaviors\QuartermasterManager.cs
+
+qm_sell_all
+  Used in 2 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_sell_equipment
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_sell_hint
+  Used in 2 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_smuggle_fail
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_smuggle_hint
+  Used in 2 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_smuggle_one
+  Used in 2 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_smuggle_success
+  Used in 1 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_status_available
+  Used in 1 file(s):
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+
+qm_status_equipped
+  Used in 1 file(s):
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+
+qm_stow_all
+  Used in 2 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_stow_hint
+  Used in 2 file(s):
+    - src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs
+    - src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs
+
+qm_survival_advice
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_survival_advice_response
+  Used in 1 file(s):
+    - src\Features\Conversations\Behaviors\EnlistedDialogManager.cs
+
+qm_ui_empty
+  Used in 1 file(s):
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+
+qm_ui_empty_equipment_slot
+  Used in 1 file(s):
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+
+qm_ui_empty_slot_label
+  Used in 1 file(s):
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+
+qm_ui_error
+  Used in 1 file(s):
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+
+qm_ui_error_loading_item
+  Used in 1 file(s):
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+
+qm_ui_preview
+  Used in 1 file(s):
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+
+qm_ui_unequip_not_supported
+  Used in 1 file(s):
+    - src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs
+

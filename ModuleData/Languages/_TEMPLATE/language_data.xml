@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+  TEMPLATE: Copy this folder and rename it to your language code (e.g., FR, DE, ES)
+  
+  Instructions:
+  1. Rename "_TEMPLATE" folder to your language code (2 letters, uppercase)
+  2. Edit this file:
+     - Change "YourLanguage" to your language name in native script
+     - Change "XX" to your 2-letter language code (lowercase)
+     - Update supported_iso with your language's ISO codes
+  3. Rename "enlisted_strings_template.xml" to "enlisted_strings_XX.xml"
+  4. Translate all text attributes in that file
+  5. Test in-game!
+-->
+<LanguageData id="YourLanguage" name="YourLanguage" subtitle_extension="XX" supported_iso="XX,xxx" under_development="true">
+  <LanguageFile xml_path="XX/enlisted_strings_XX.xml" />
+</LanguageData>
+
+<!-- 
+  Examples:
+  
+  French:
+  <LanguageData id="Français" name="Français" subtitle_extension="fr" supported_iso="fr,fra,fr-fr" under_development="false">
+    <LanguageFile xml_path="FR/enlisted_strings_fr.xml" />
+  </LanguageData>
+  
+  German:
+  <LanguageData id="Deutsch" name="Deutsch" subtitle_extension="de" supported_iso="de,ger,de-de" under_development="false">
+    <LanguageFile xml_path="DE/enlisted_strings_de.xml" />
+  </LanguageData>
+  
+  Spanish:
+  <LanguageData id="Español" name="Español" subtitle_extension="es" supported_iso="es,spa,es-es" under_development="false">
+    <LanguageFile xml_path="ES/enlisted_strings_es.xml" />
+  </LanguageData>
+-->
+
