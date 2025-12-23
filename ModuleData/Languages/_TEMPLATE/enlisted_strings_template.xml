@@ -24,23 +24,23 @@
     <string id="promo_title_6" text="Welcomed to the Household" />
 
     <!-- Tier-Specific Promotion Popup Messages (Roleplay - Field/Camp Context) -->
-    <string id="promo_msg_2" text="The serjeant-at-arms looks you up and down with grudging approval.\n\n'You've survived the mud, the marching, and the misery. No longer a green levyâ€”you're one of the lads now, {PLAYER_NAME}. A proper Footman.'\n\nYou may now choose your military formation and specialize your training. Better equipment awaits at the quartermaster's wagon." />
+    <string id="promo_msg_2" text="The serjeant-at-arms looks you up and down with grudging approval.\n\n'You've survived the mud, the marching, and the misery. No longer a green levy—you're one of the lads now, {PLAYER_NAME}. A proper soldier.'\n\nYou have chosen your military formation. Better equipment awaits at the quartermaster's wagon." />
     
-    <string id="promo_msg_3" text="You're summoned to the camp headquarters as evening falls over the camp.\n\n'Word of your deeds has reached my ears, soldier. You've shown courage and cunning where others showed cowardice. From this day, you bear the rank of Serjeant.'\n\nAs Serjeant, you may now choose a military professionâ€”Quarterhand, Field Medic, Drillmaster, or other specialized roles that grant unique abilities and bonuses." />
+    <string id="promo_msg_3" text="You're summoned to the camp headquarters as evening falls.\n\n'Word of your deeds has reached my ears, soldier. You've shown courage and cunning where others showed cowardice. From this day, you bear the rank of {RANK}.'\n\nYou've earned your place among the veterans. The quartermaster has better gear waiting for you." />
     
-    <string id="promo_msg_4" text="Before the assembled company at the morning muster, your lord speaks:\n\n'Step forward, Serjeant. You have proven yourself worthy of greater trust. I hereby swear you into my service as a Man-at-Arms. You shall command a squad of five soldiers in battleâ€”their lives are now your responsibility.'\n\nVisit Camp to muster your personal retinue. Each soldier costs 2 denars per day in upkeep." />
+    <string id="promo_msg_4" text="Before the assembled company at the morning muster, your lord speaks:\n\n'Step forward, soldier. You have proven yourself worthy of greater trust. I hereby recognize you as {RANK}. Your experience and judgment are now relied upon by the men around you.'\n\nVisit the quartermaster for equipment befitting your new station." />
     
-    <string id="promo_msg_5" text="At dusk, as the camp settles, a runner summons you to your lord's tent.\n\n'For valor shown and battles won, I entrust you with the company banner. You are now Banner Serjeantâ€”a veteran of the highest order. Your command extends to ten soldiers.'\n\nYour retinue capacity has increased. Visit Camp to expand your forces." />
+    <string id="promo_msg_5" text="At dusk, as the camp settles, a runner summons you to your lord's tent.\n\n'For valor shown and battles won, I recognize your worth. You are now {RANK}—a veteran of the highest order. The officers look to you for guidance in the field.'\n\nYou're approaching the pinnacle of enlisted service. The officer's provisions are now available." />
     
-    <string id="promo_msg_6" text="Around the officers' fire, with the camp spread beneath the stars, your lord addresses the gathered veterans.\n\n'Few soldiers ever stand where you stand today. By your blood and your blade, you have earned a place among my Household Guardâ€”the finest warriors under my banner. Twenty men shall march beneath your command.'\n\nYou have reached the pinnacle of enlisted service. Your retinue capacity is now at maximum." />
+    <string id="promo_msg_6" text="Around the officers' fire, with the camp spread beneath the stars, your lord addresses the gathered veterans.\n\n'Few soldiers ever stand where you stand today. By your blood and your blade, you have earned a place among my {RANK}—the finest warriors under my banner.'\n\nYou have reached the pinnacle of enlisted service. At the next tier, you may be offered command of your own retinue." />
 
     <!-- Promotion Chat Messages (shorter, for notification bar) -->
-    <string id="promo_chat_2" text="Your service is recognized! You have been promoted to Footman. Visit the quartermaster for new equipment." />
-    <string id="promo_chat_3" text="By order of your captain, you have been promoted to Serjeant! Professions are now available." />
-    <string id="promo_chat_4" text="You have been sworn in as a Man-at-Arms! You may now command soldiers. Visit Camp." />
-    <string id="promo_chat_5" text="The banner is yours to bear! Promoted to Banner Serjeant. Your retinue capacity has increased." />
-    <string id="promo_chat_6" text="You have joined the Household Guard! Maximum retinue capacity unlocked." />
-    <string id="promo_chat_default" text="You have been promoted!" />
+    <string id="promo_chat_2" text="Your service is recognized! Promoted to {RANK}. Visit the quartermaster for new equipment." />
+    <string id="promo_chat_3" text="By order of your captain, you have been promoted to {RANK}!" />
+    <string id="promo_chat_4" text="You have been recognized as {RANK}! Better equipment is now available." />
+    <string id="promo_chat_5" text="Promoted to {RANK}! Officer provisions are now available from the quartermaster." />
+    <string id="promo_chat_6" text="You have joined the {RANK}! Command may soon be offered." />
+    <string id="promo_chat_default" text="You have been promoted to {RANK}!" />
 
     <!-- Promotion Button Text -->
     <string id="promo_btn_understood" text="Understood" />
@@ -512,6 +512,7 @@
     <string id="qm_intro_dialogue_sour" text="&quot;Need kit? Buy it here. Supply's tight and my patience is thinner. Pay what the ledger says.&quot;" />
     <string id="qm_intro_dialogue_predatory" text="&quot;Need kit? Buy it here. Wagons are dry and prices rise. If you don't like it, march naked.&quot;" />
     <string id="qm_cannot_afford" text="You can't afford this. Cost: {COST} denars." />
+    <string id="qm_supply_blocked" text="We can't issue equipment right now. Supplies are critically low." />
     <string id="qm_equipment_issued_buy" text="Purchased {ITEM_NAME} for {COST} denars." />
     <string id="qm_item_limit_reached" text="You already have {COUNT} of {ITEM_NAME}." />
     <string id="qm_equipment_issued" text="Purchased: {ITEM_NAME}." />

@@ -533,6 +533,43 @@ namespace Enlisted.Features.Content
         /// Null or empty means no discharge is triggered.
         /// </summary>
         public string TriggersDischarge { get; set; }
+
+        /// <summary>
+        /// Tier to promote player to when this option is chosen.
+        /// Used by proving events to grant promotions after proving worthy.
+        /// Null means no promotion is triggered.
+        /// </summary>
+        public int? Promotes { get; set; }
+
+        /// <summary>
+        /// Number of soldiers to add to the player's retinue.
+        /// Used by post-battle volunteer events and similar.
+        /// Only applies if player has Commander rank (T7+) and has a retinue type selected.
+        /// </summary>
+        public int? RetinueGain { get; set; }
+
+        /// <summary>
+        /// Modifier to retinue loyalty (affects Commander's relationship with their retinue).
+        /// Positive values increase loyalty, negative decrease it. Range: -100 to +100.
+        /// Only applies if player has Commander rank (T7+) and has a retinue.
+        /// </summary>
+        public int? RetinueLoyalty { get; set; }
+
+        /// <summary>
+        /// Number of soldiers to remove from the player's retinue.
+        /// Removes only troops tracked in RetinueState (does not affect lord's main force).
+        /// Used for dramatic events like ambush, betrayal, or desertion.
+        /// Only applies if player has Commander rank (T7+) and has a retinue.
+        /// </summary>
+        public int? RetinueLoss { get; set; }
+
+        /// <summary>
+        /// Number of soldiers to wound in the player's retinue.
+        /// Wounds only troops tracked in RetinueState (moves healthy to wounded roster).
+        /// Used for events involving skirmishes, accidents, or hardship.
+        /// Only applies if player has Commander rank (T7+) and has a retinue.
+        /// </summary>
+        public int? RetinueWounded { get; set; }
     }
 }
 

@@ -32,6 +32,36 @@ namespace Enlisted.Features.Equipment.UI
         [DataSourceProperty]
         public bool IsEnabled { get; private set; }
         
+        /// <summary>
+        /// Quantity available for purchase (Phase 7: Inventory & Pricing System).
+        /// </summary>
+        [DataSourceProperty]
+        public int QuantityAvailable { get; private set; }
+        
+        /// <summary>
+        /// Whether this item is available for purchase (has stock).
+        /// </summary>
+        [DataSourceProperty]
+        public bool IsAvailable { get; private set; }
+        
+        /// <summary>
+        /// Display text for quantity available (e.g., "Available: 3").
+        /// </summary>
+        [DataSourceProperty]
+        public string QuantityText { get; private set; }
+        
+        /// <summary>
+        /// Whether to show the quantity display (only show when quantity is limited).
+        /// </summary>
+        [DataSourceProperty]
+        public bool ShowQuantity { get; private set; }
+        
+        /// <summary>
+        /// Alpha factor for card (0.5 when unavailable, 1.0 when available).
+        /// </summary>
+        [DataSourceProperty]
+        public float CardAlpha { get; private set; }
+        
         [DataSourceProperty]
         public ItemImageIdentifierVM Image { get; private set; }
         
@@ -136,6 +166,26 @@ namespace Enlisted.Features.Equipment.UI
                 var item = _variant.Item;
                 CostText = $"Price: {_variant.Cost} denars";
                 
+                // Phase 7: Set availability properties
+                QuantityAvailable = _variant.QuantityAvailable;
+                IsAvailable = _variant.QuantityAvailable > 0;
+                
+                // Show quantity if limited (< 999 means actual tracked quantity)
+                ShowQuantity = QuantityAvailable < 999;
+                if (ShowQuantity)
+                {
+                    QuantityText = QuantityAvailable > 0 
+                        ? $"Available: {QuantityAvailable}" 
+                        : "Out of Stock";
+                }
+                else
+                {
+                    QuantityText = "";
+                }
+                
+                // Grey out unavailable items (Alpha = 0.5)
+                CardAlpha = IsAvailable ? 1.0f : 0.5f;
+                
                 // Set item name with quality modifier if present
                 var baseName = item.Name?.ToString() ?? "Unknown Item";
                 
@@ -178,7 +228,12 @@ namespace Enlisted.Features.Equipment.UI
                 WeaponDetails = $"{PrimaryStats}\n{SecondaryStats}";
                 
                 // Purchase-based status (no issue limits / no accountability).
-                if (_variant.IsCurrent)
+                // Phase 7: Show out of stock status
+                if (QuantityAvailable <= 0)
+                {
+                    StatusText = new TextObject("{=qm_status_out_of_stock}(Out of Stock)").ToString();
+                }
+                else if (_variant.IsCurrent)
                 {
                     StatusText = new TextObject("{=qm_status_equipped}Equipped").ToString();
                 }
@@ -193,7 +248,8 @@ namespace Enlisted.Features.Equipment.UI
 
                 // Disable buying the currently-equipped non-weapon item (no-op purchase).
                 // Weapons can be purchased repeatedly (another copy goes to an empty weapon slot or inventory).
-                IsEnabled = _variant.CanAfford && (isWeaponSlot || !_variant.IsCurrent);
+                // Phase 7: Also disable if out of stock
+                IsEnabled = _variant.CanAfford && (isWeaponSlot || !_variant.IsCurrent) && IsAvailable;
                 
                 // Notify UI of property changes for data binding updates
                 OnPropertyChanged(nameof(ItemName));
@@ -202,6 +258,11 @@ namespace Enlisted.Features.Equipment.UI
                 OnPropertyChanged(nameof(IsCurrentEquipment));
                 OnPropertyChanged(nameof(CanAfford));
                 OnPropertyChanged(nameof(IsEnabled));
+                OnPropertyChanged(nameof(QuantityAvailable));
+                OnPropertyChanged(nameof(IsAvailable));
+                OnPropertyChanged(nameof(QuantityText));
+                OnPropertyChanged(nameof(ShowQuantity));
+                OnPropertyChanged(nameof(CardAlpha));
                 OnPropertyChanged(nameof(Image));
                 OnPropertyChanged(nameof(PrimaryStats));
                 OnPropertyChanged(nameof(SecondaryStats));

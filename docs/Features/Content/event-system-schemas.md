@@ -3,8 +3,8 @@
 **Summary:** Authoritative JSON schema definitions for events, decisions, and orders. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22 (Phase 6: Map incident contexts)  
-**Related Docs:** [Content System Architecture](content-system-architecture.md), [Event Catalog](../../Content/event-catalog-by-system.md)
+**Last Updated:** 2025-12-23 (Added dialogue schema reference)  
+**Related Docs:** [Content System Architecture](content-system-architecture.md), [Event Catalog](../../Content/event-catalog-by-system.md), [Quartermaster System](../Equipment/quartermaster-system.md)
 
 ---
 
@@ -671,6 +671,31 @@ Before committing content:
 - [ ] Flag-gated events use `triggers.all` with `has_flag:` conditions
 - [ ] Pay tension events use `triggers.escalation_requirements.pay_tension_min`
 - [ ] Escalation track names match supported values (case variants accepted)
+
+---
+
+## Related Schemas
+
+### Quartermaster Dialogue Schema
+
+The Quartermaster system uses a dedicated dialogue JSON schema for conversation trees. This follows similar patterns to the event system but with dialogue-specific features:
+
+- **Context-conditional nodes** - Multiple nodes with same ID, different contexts
+- **Gate nodes** - RP responses when player doesn't meet requirements
+- **Actions** - Trigger UI/system behaviors (open Gauntlet, set flags)
+
+**Location:** `ModuleData/Enlisted/Dialogue/qm_*.json`
+
+**Schema:** Defined in `QMDialogueCatalog.cs` - see [Quartermaster System](../Equipment/quartermaster-system.md) for documentation.
+
+**Key Differences from Events:**
+| Feature | Events | Dialogue |
+|---------|--------|----------|
+| Root Array | `"events"` | `"nodes"` |
+| Delivery | Popup inquiry | Conversation flow |
+| Branching | `chainsTo` | `next_node` |
+| Conditions | `requirements` + `triggers` | `context` + `gate` |
+| Actions | `effects` | `action` + `action_data` |
 
 ---
 

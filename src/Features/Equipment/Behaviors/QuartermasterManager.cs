@@ -14,6 +14,7 @@ using TaleWorlds.ObjectSystem;
 using Helpers;
 using Enlisted.Features.Camp;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Equipment.Managers;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
@@ -55,6 +56,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         private readonly HashSet<string> _outOfStockItems = new(StringComparer.OrdinalIgnoreCase);
         private int _lastStockRollSupplyLevel = -1;
         
+        // Inventory state for Phase 7: Inventory & Pricing System
+        // Tracks stock quantities and refreshes every 12 days at muster
+        private QMInventoryState _inventoryState;
+        
         // Conversation tracking for dynamic equipment selection
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "May be used for future conversation-based equipment selection")]
         private Dictionary<int, EquipmentVariantOption> _conversationWeaponVariants = new Dictionary<int, EquipmentVariantOption>();
@@ -91,6 +96,29 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             Instance = this;
             InitializeVariantCache();
+            _inventoryState = new QMInventoryState();
+        }
+        
+        /// <summary>
+        /// Gets the current QM reputation from the enlistment system.
+        /// Higher reputation = better prices and access to premium items.
+        /// </summary>
+        public int Reputation
+        {
+            get
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                return enlistment?.GetQMReputation() ?? 0;
+            }
+        }
+        
+        /// <summary>
+        /// Get the inventory state for stock tracking.
+        /// Used by provisions UI to show available quantities.
+        /// </summary>
+        public QMInventoryState GetInventoryState()
+        {
+            return _inventoryState;
         }
         
         #region Time-Preserving Menu Helpers
@@ -255,7 +283,16 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         public override void SyncData(IDataStore dataStore)
         {
-            // Quartermaster has no persistent state - all data comes from runtime discovery
+            // Sync inventory state for Phase 7: Inventory & Pricing System
+            // Persists stock quantities and refresh timing across save/load
+            dataStore.SyncData("_qmInventoryState", ref _inventoryState);
+            
+            // Ensure inventory state is initialized after load
+            if (dataStore.IsLoading && _inventoryState == null)
+            {
+                _inventoryState = new QMInventoryState();
+                ModLogger.Info("Quartermaster", "Initialized new inventory state after load");
+            }
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -438,8 +475,8 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                 var tier = enlistment.EnlistmentTier;
                 var culture = enlistment.EnlistedLord?.Culture;
-                // Phase 1: Formation system deleted, default to infantry for equipment filtering
-                var formation = "infantry";
+                // Detect player's actual formation from equipment for proper equipment filtering
+                var formation = GetPlayerFormationString();
 
                 // Only update if tier actually changed
                 if (tier <= _lastPromotionTier)
@@ -594,8 +631,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return null;
                 }
                 
-                // Phase 1: Formation system deleted, default to infantry
-                var formation = "infantry";
+                // Detect player's actual formation from equipment for proper troop matching
+                var formation = GetPlayerFormationString();
                 var culture = enlistment.EnlistedLord?.Culture;
                 var tier = enlistment.EnlistmentTier;
                 
@@ -658,6 +695,117 @@ namespace Enlisted.Features.Equipment.Behaviors
                 return FormationType.Infantry;
             }
         }
+
+        /// <summary>
+        /// Detect player's current formation based on their equipped items.
+        /// Used to determine which equipment category (infantry/cavalry/archer) to show.
+        /// </summary>
+        public FormationType DetectPlayerFormation()
+        {
+            try
+            {
+                var hero = Hero.MainHero;
+                if (hero?.CharacterObject == null)
+                {
+                    return FormationType.Infantry;
+                }
+
+                var characterObject = hero.CharacterObject;
+
+                // Check if player has horse + ranged = horse archer
+                if (characterObject.IsRanged && characterObject.IsMounted)
+                {
+                    return FormationType.HorseArcher;
+                }
+
+                // Check if player has a horse equipped = cavalry
+                if (characterObject.IsMounted)
+                {
+                    return FormationType.Cavalry;
+                }
+
+                // Check if player has ranged weapon = archer
+                if (characterObject.IsRanged)
+                {
+                    return FormationType.Archer;
+                }
+
+                // Default to infantry
+                return FormationType.Infantry;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error detecting player formation", ex);
+                return FormationType.Infantry;
+            }
+        }
+
+        /// <summary>
+        /// Check if cavalry is available at the player's current tier for their culture.
+        /// Cavalry becomes available when the culture's troop tree includes mounted troops at or below the player's tier.
+        /// </summary>
+        public bool IsCavalryUnlockedForPlayer()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    return false;
+                }
+
+                var tier = enlistment.EnlistmentTier;
+                var culture = enlistment.EnlistedLord?.Culture;
+
+                if (culture == null)
+                {
+                    return false;
+                }
+
+                // Scan all troops from this culture at or below the player's tier
+                var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
+                
+                foreach (var troop in allTroops)
+                {
+                    // Skip heroes and other cultures
+                    if (troop.IsHero || troop.Culture != culture)
+                    {
+                        continue;
+                    }
+
+                    var troopTier = troop.GetBattleTier();
+                    if (troopTier < 1 || troopTier > tier)
+                    {
+                        continue;
+                    }
+
+                    // Check if this troop is cavalry or horse archer
+                    if (troop.IsMounted)
+                    {
+                        ModLogger.Debug("Quartermaster", 
+                            $"Cavalry unlocked: {troop.Name} is mounted at tier {troopTier} (player tier: {tier})");
+                        return true;
+                    }
+                }
+
+                ModLogger.Debug("Quartermaster", 
+                    $"Cavalry NOT unlocked: No mounted troops in {culture.Name} at tier {tier} or below");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error checking cavalry unlock", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get the player's formation as a lowercase string for equipment filtering.
+        /// </summary>
+        public string GetPlayerFormationString()
+        {
+            return DetectPlayerFormation().ToString().ToLowerInvariant();
+        }
         
         /// <summary>
         /// Calculate cost for requesting a specific equipment variant.
@@ -708,13 +856,21 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Calculate the quartermaster purchase price from a base price value.
         /// Use this when the base price already includes item modifier price multipliers.
-        /// Applies QM reputation and camp mood multipliers.
+        /// Applies supply scarcity, QM reputation, and camp mood multipliers.
+        /// 
+        /// Combined pricing formula:
+        /// finalPrice = basePrice × supplyModifier × repModifier × campModifier
         /// </summary>
         private int CalculateQuartermasterPriceFromBase(int basePrice)
         {
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
+
+                // Supply scarcity pricing - low supply increases prices
+                // 80-100% (Excellent): 1.0× | 60-79% (Good): 1.0× | 40-59% (Fair): 1.1× (+10%)
+                // 30-39% (Low): 1.25× (+25%) | 0-29% (Critical): 1.5× (+50%)
+                var supplyMultiplier = GetSupplyPriceMultiplier();
 
                 // QM reputation-based pricing multiplier (0.70 = 30% discount to 1.40 = 40% markup)
                 var repMultiplier = enlistment?.IsEnlisted == true
@@ -724,7 +880,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Camp mood provides small day-to-day price variation (0.98-1.15)
                 var campMultiplier = CampLifeBehavior.Instance?.GetQuartermasterPurchaseMultiplier() ?? 1.0f;
 
-                var price = basePrice * repMultiplier * campMultiplier;
+                var price = basePrice * supplyMultiplier * repMultiplier * campMultiplier;
                 var roundedPrice = Convert.ToInt32(MathF.Round(price));
                 var finalPrice = Math.Max(5, roundedPrice);
 
@@ -733,6 +889,97 @@ namespace Enlisted.Features.Equipment.Behaviors
             catch
             {
                 return 25; // Safe fallback
+            }
+        }
+
+        /// <summary>
+        /// Get the supply-based price multiplier for scarcity pricing.
+        /// Low supply increases equipment prices.
+        /// </summary>
+        private float GetSupplyPriceMultiplier()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var supplyLevel = enlistment?.CompanyNeeds?.Supplies ?? 100;
+
+            // Supply scarcity pricing per spec
+            if (supplyLevel >= 60)
+            {
+                return 1.0f; // Excellent/Good: no markup
+            }
+            if (supplyLevel >= 40)
+            {
+                return 1.1f; // Fair: +10% markup
+            }
+            if (supplyLevel >= 30)
+            {
+                return 1.25f; // Low: +25% markup
+            }
+            // Critical (< 30%): +50% markup
+            return 1.5f;
+        }
+        
+        /// <summary>
+        /// Get the QM reputation-based price multiplier for Phase 7 spec.
+        /// Reputation provides discounts (trusted) or markups (hostile).
+        /// Range: 0.85× (Trusted, -15%) to 1.25× (Hostile, +25%)
+        /// </summary>
+        private float GetReputationPriceMultiplier()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return 1.0f; // Neutral when not enlisted
+            }
+            
+            var qmRep = enlistment.GetQMReputation();
+            
+            // Phase 7 spec: Reputation affects pricing
+            // Trusted (65+): 0.85× (-15%)
+            // Friendly (35-64): 0.92× (-8%)
+            // Neutral (10-34): 1.0× (base)
+            // Wary (-10 to 9): 1.1× (+10%)
+            // Hostile (< -10): 1.25× (+25%)
+            
+            if (qmRep >= 65)
+            {
+                return 0.85f; // Trusted: 15% discount
+            }
+            if (qmRep >= 35)
+            {
+                return 0.92f; // Friendly: 8% discount
+            }
+            if (qmRep >= 10)
+            {
+                return 1.0f; // Neutral: no modifier
+            }
+            if (qmRep >= -10)
+            {
+                return 1.1f; // Wary: 10% markup
+            }
+            // Hostile: 25% markup
+            return 1.25f;
+        }
+        
+        /// <summary>
+        /// Calculate final price with Phase 7 combined pricing formula.
+        /// Formula: basePrice × supplyModifier × repModifier
+        /// </summary>
+        public int CalculateFinalPrice(int basePrice)
+        {
+            try
+            {
+                var supplyModifier = GetSupplyPriceMultiplier();
+                var repModifier = GetReputationPriceMultiplier();
+                
+                var finalPrice = basePrice * supplyModifier * repModifier;
+                var roundedPrice = (int)MathF.Ceiling(finalPrice);
+                
+                return Math.Max(1, roundedPrice); // Minimum 1 denar
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error calculating final price", ex);
+                return basePrice; // Fallback to base price
             }
         }
 
@@ -823,6 +1070,17 @@ namespace Enlisted.Features.Equipment.Behaviors
                     ModLogger.Warn("Quartermaster", "Equipment request blocked: player not enlisted");
                     return;
                 }
+
+                // SUPPLY GATE - purchases blocked when company supply is critically low (< 30%)
+                const int criticalSupplyThreshold = 30;
+                var supplyLevel = enlistment.CompanyNeeds?.Supplies ?? 100;
+                if (supplyLevel < criticalSupplyThreshold)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_supply_blocked}We can't issue equipment right now. Supplies are critically low.").ToString(), Colors.Red));
+                    ModLogger.Info("Quartermaster", $"Purchase blocked: Supply at {supplyLevel}% (threshold: {criticalSupplyThreshold}%)");
+                    return;
+                }
                 
                 var hero = Hero.MainHero;
                 var requestedItem = variant.Item;
@@ -901,6 +1159,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 {
                     // Charge cost
                     ChargeGold(hero, cost, requestedItem);
+                    
+                    // Phase 7: Decrement inventory stock
+                    _inventoryState?.TryPurchase(requestedItem.StringId, 1);
+                    
                     return;
                 }
                 
@@ -935,6 +1197,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 // Charge cost
                 ChargeGold(hero, cost, requestedItem);
+                
+                // Phase 7: Decrement inventory stock
+                _inventoryState?.TryPurchase(requestedItem.StringId, 1);
                 
                 ModLogger.Info("Quartermaster", $"Purchased {requestedItem.Name} for {cost} denars to slot {targetSlot} (replaced {previousItemName})");
             }
@@ -1034,7 +1299,9 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
 
         /// <summary>
-        /// Build a list of returnable items with their total counts.
+        /// Build a list of returnable items from the player's equipped gear.
+        /// Only includes items currently equipped (battle and civilian equipment).
+        /// Party inventory (baggage train) is excluded to prevent selling army supplies or loot.
         /// Groups items by both StringId AND modifier, so "Fine Sword" and "Rusty Sword" are separate entries.
         /// </summary>
         private List<ReturnOption> BuildReturnOptions()
@@ -1066,45 +1333,49 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
             }
 
-            // Battle equipment
+            // Battle equipment - only items currently equipped by the player
             for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
             {
                 TryAddElement(hero.BattleEquipment[slot]);
             }
 
-            // Civilian equipment
+            // Civilian equipment - only items currently equipped by the player
             for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
             {
                 TryAddElement(hero.CivilianEquipment[slot]);
             }
 
-            // Party inventory - each roster entry may have a different modifier
-            var roster = PartyBase.MainParty?.ItemRoster;
-            if (roster != null)
-            {
-                for (var i = 0; i < roster.Count; i++)
-                {
-                    var rosterElement = roster.GetElementCopyAtIndex(i);
-                    if (rosterElement.Amount <= 0)
-                    {
-                        continue;
-                    }
-
-                    var key = ReturnOption.GetGroupKey(rosterElement.EquipmentElement);
-                    if (optionsByKey.TryGetValue(key, out var existing))
-                    {
-                        existing.Count += rosterElement.Amount;
-                    }
-                    else
-                    {
-                        optionsByKey[key] = new ReturnOption 
-                        { 
-                            Element = rosterElement.EquipmentElement, 
-                            Count = rosterElement.Amount 
-                        };
-                    }
-                }
-            }
+            // NOTE: Party inventory (baggage train) is intentionally excluded from selling.
+            // The quartermaster only buys back equipment currently equipped by the soldier.
+            // This prevents players from selling army supplies or loot from the baggage train.
+            
+            // OLD CODE (REMOVED - was allowing baggage train items to be sold):
+            // var roster = PartyBase.MainParty?.ItemRoster;
+            // if (roster != null)
+            // {
+            //     for (var i = 0; i < roster.Count; i++)
+            //     {
+            //         var rosterElement = roster.GetElementCopyAtIndex(i);
+            //         if (rosterElement.Amount <= 0)
+            //         {
+            //             continue;
+            //         }
+            //         
+            //         var key = ReturnOption.GetGroupKey(rosterElement.EquipmentElement);
+            //         if (optionsByKey.TryGetValue(key, out var existing))
+            //         {
+            //             existing.Count += rosterElement.Amount;
+            //         }
+            //         else
+            //         {
+            //             optionsByKey[key] = new ReturnOption 
+            //             { 
+            //                 Element = rosterElement.EquipmentElement, 
+            //                 Count = rosterElement.Amount 
+            //             };
+            //         }
+            //     }
+            // }
 
             return optionsByKey.Values
                 .OrderByDescending(o => o.Count)
@@ -1690,7 +1961,17 @@ namespace Enlisted.Features.Equipment.Behaviors
             _forceHorseOnly = true;
         }
 
+        /// <summary>
+        /// Sets filter to show officer-grade equipment (premium items for T7+ players).
+        /// Enables access to culture-wide equipment variants beyond standard troop equipment.
+        /// </summary>
+        public void SetFilterToOfficerEquipment()
+        {
+            _forceOfficerEquipment = true;
+        }
+
         private bool _forceHorseOnly;
+        private bool _forceOfficerEquipment;
 
         private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> BuildVariantOptions(
             Dictionary<EquipmentIndex, List<ItemObject>> variants)
@@ -1710,36 +1991,42 @@ namespace Enlisted.Features.Equipment.Behaviors
                 options[slotVariants.Key] = new List<ItemObject>(slotVariants.Value);
             }
             
-            // Phase 1: Duties system deleted, no officer-based equipment expansion
-            var isProvisioner = false;
-            var isQuartermaster = false;
+            // Check if officer equipment access is enabled (Officers' Armory for T7+ players)
+            var isOfficerEquipmentAccess = _forceOfficerEquipment;
+            _forceOfficerEquipment = false; // Reset after use
             
-            if (isProvisioner || isQuartermaster)
+            // Track which items are officer-exclusive (from higher tiers)
+            var officerExclusiveItems = new HashSet<string>();
+            
+            if (isOfficerEquipmentAccess)
             {
-                ModLogger.Info("Quartermaster", "Applying quartermaster officer enhancements - expanding equipment access");
+                ModLogger.Info("Quartermaster", "Officers' Armory: Expanding equipment access to higher tier items");
                 
-                // Add culture-wide equipment variants for quartermaster officers
-                var cultureVariants = GetCultureEquipmentVariants(enlistment?.CurrentLord?.Culture, enlistment?.EnlistmentTier ?? 1);
+                // Get elite equipment from higher tiers (above player's normal access)
+                var officerVariants = GetCultureEquipmentVariants(enlistment?.CurrentLord?.Culture, enlistment?.EnlistmentTier ?? 1);
                 
-                foreach (var cultureSlot in cultureVariants)
+                foreach (var officerSlot in officerVariants)
                 {
-                    var slot = cultureSlot.Key;
-                    var cultureItems = cultureSlot.Value;
+                    var slot = officerSlot.Key;
+                    var officerItems = officerSlot.Value;
                     
                     if (!options.ContainsKey(slot))
                     {
                         options[slot] = new List<ItemObject>();
                     }
                     
-                    // Add culture items not already in troop variants
-                    foreach (var item in cultureItems)
+                    // Add officer items and track them for quality bonus
+                    foreach (var item in officerItems)
                     {
                         if (!options[slot].Contains(item))
                         {
                             options[slot].Add(item);
+                            officerExclusiveItems.Add(item.StringId); // Track for quality bonus
                         }
                     }
                 }
+                
+                ModLogger.Info("Quartermaster", $"Officers' Armory: Added {officerExclusiveItems.Count} exclusive higher-tier items");
             }
             
             // Ensure horse and harness options are available for cavalry/horse archer archetypes
@@ -1791,13 +2078,25 @@ namespace Enlisted.Features.Equipment.Behaviors
                     foreach (var item in items)
                     {
                         var isCurrent = item == currentItem;
+                        var isOfficerItem = officerExclusiveItems.Contains(item.StringId);
 
                         var allowsDuplicate = IsWeaponSlot(slot) || IsConsumableItem(item);
                         var limit = allowsDuplicate ? 2 : 1;
                         var isAtLimit = GetPlayerItemCount(hero, item.StringId) >= limit;
                         
-                        // Roll quality modifier for this item
-                        var rolledQuality = RollItemQualityByReputation();
+                        // Roll quality modifier - officer items get BETTER quality rolls
+                        ItemQuality rolledQuality;
+                        if (isOfficerItem)
+                        {
+                            // Officers' Armory items use premium quality tier
+                            var officerQualities = GetOfficerArmoryQualityTiers();
+                            rolledQuality = officerQualities[MBRandom.RandomInt(officerQualities.Count)];
+                        }
+                        else
+                        {
+                            // Regular items use standard reputation-based roll
+                            rolledQuality = RollItemQualityByReputation();
+                        }
                         var (modifier, actualQuality) = GetRandomModifierForQuality(item, rolledQuality);
                         
                         // Calculate price with modifier applied
@@ -1817,6 +2116,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                             modifiedName = $"{modifier.Name} {item.Name}";
                         }
 
+                        // Phase 7: Get quantity from inventory state
+                        var quantityAvailable = _inventoryState?.GetAvailableQuantity(item.StringId) ?? 999;
+                        var isAvailable = quantityAvailable > 0;
+                        
                         variantOptions.Add(new EquipmentVariantOption
                         {
                             Item = item,
@@ -1824,11 +2127,12 @@ namespace Enlisted.Features.Equipment.Behaviors
                             IsCurrent = isCurrent,
                             CanAfford = canAfford,
                             Slot = slot,
-                            IsOfficerExclusive = !variants.ContainsKey(slot) || !variants[slot].Contains(item),
+                            IsOfficerExclusive = isOfficerItem,
                             AllowsDuplicatePurchase = allowsDuplicate,
                             IsAtLimit = isAtLimit,
                             IsNewlyUnlocked = IsNewlyUnlockedItem(item),
-                            IsInStock = isInStock,
+                            IsInStock = isInStock && isAvailable, // Both old system and new inventory must have stock
+                            QuantityAvailable = quantityAvailable,
                             Modifier = modifier,
                             Quality = actualQuality,
                             ModifiedName = modifiedName
@@ -1847,10 +2151,20 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Get culture-wide equipment variants for quartermaster officers.
-        /// Provides equipment variant access beyond standard troop equipment.
+        /// Get Officers' Armory equipment with tier bonus and quality modifiers.
+        /// Per spec: T7+ with Rep 60+ gets access to equipment above their tier with quality modifiers.
+        /// 
+        /// Tier Access by Rep:
+        /// - 60-74: Current tier + 1
+        /// - 75-89: Current tier + 1-2
+        /// - 90+:   Current tier + 2
+        /// 
+        /// Quality by Rep:
+        /// - 60-74: Common, Fine
+        /// - 75-89: Common, Fine, some Masterwork
+        /// - 90+:   Fine, Masterwork, rare Legendary
         /// </summary>
-        private Dictionary<EquipmentIndex, List<ItemObject>> GetCultureEquipmentVariants(CultureObject culture, int maxTier)
+        private Dictionary<EquipmentIndex, List<ItemObject>> GetCultureEquipmentVariants(CultureObject culture, int playerTier)
         {
             try
             {
@@ -1858,19 +2172,51 @@ namespace Enlisted.Features.Equipment.Behaviors
                 {
                     return new Dictionary<EquipmentIndex, List<ItemObject>>();
                 }
+
+                var enlistment = EnlistmentBehavior.Instance;
+                var qmRep = enlistment?.GetQMReputation() ?? 0;
+
+                // Calculate tier bonus based on reputation
+                // Note: playerTier is enlistment tier (1-9), troop battle tiers typically go 1-6
+                int tierBonus;
+                if (qmRep >= 90)
+                {
+                    tierBonus = 2;
+                }
+                else if (qmRep >= 75)
+                {
+                    // 75-89: +1 to +2 (weighted toward +1)
+                    tierBonus = MBRandom.RandomFloat < 0.7f ? 1 : 2;
+                }
+                else
+                {
+                    tierBonus = 1; // 60-74: +1 tier
+                }
+
+                // For officers (T7+), they already have access to top-tier troops (T6)
+                // Officers' Armory provides the QUALITY bonus, not necessarily higher tiers
+                // We look for troops above current access but don't artificially cap
+                var maxTroopTier = playerTier + tierBonus; // No cap - let query return what exists
                 
+                ModLogger.Info("Quartermaster", 
+                    $"Officers Armory: Player tier {playerTier}, QM rep {qmRep}, tier bonus +{tierBonus}, searching troop tiers {playerTier + 1} to {maxTroopTier}");
+
                 var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
                 var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
                 
-                // Get all troops from this culture at or below the player's tier
-                var cultureTroops = allTroops.Where(troop => 
+                // Get troops from tiers ABOVE player's normal access (the premium equipment)
+                // Only include tiers that are strictly above playerTier to avoid duplicates
+                // Note: If player is at high tier (T7+), there may be no higher troop tiers available
+                // In that case, the quality bonus is still the main benefit of Officers' Armory
+                var eliteTroops = allTroops.Where(troop => 
                     troop.Culture == culture &&
-                    troop.GetBattleTier() <= maxTier &&
+                    troop.GetBattleTier() > playerTier &&
+                    troop.GetBattleTier() <= maxTroopTier &&
                     !troop.IsHero &&
                     troop.BattleEquipments.Any()).ToList();
                 
-                // Extract all equipment from culture troops
-                foreach (var troop in cultureTroops)
+                // Extract all equipment from elite troops
+                foreach (var troop in eliteTroops)
                 {
                     foreach (var equipment in troop.BattleEquipments)
                     {
@@ -1893,14 +2239,76 @@ namespace Enlisted.Features.Equipment.Behaviors
                     }
                 }
                 
-                ModLogger.Info("Quartermaster", $"Officer enhancement: Added {variants.Sum(kvp => kvp.Value.Count)} culture-wide equipment options");
+                var itemCount = variants.Sum(kvp => kvp.Value.Count);
+                ModLogger.Info("Quartermaster", 
+                    $"Officers Armory: Found {itemCount} elite equipment items from {eliteTroops.Count} higher-tier troops");
+                
                 return variants;
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", "Error getting culture equipment variants", ex);
+                ModLogger.Error("Quartermaster", "Error getting officer armory equipment", ex);
                 return new Dictionary<EquipmentIndex, List<ItemObject>>();
             }
+        }
+
+        /// <summary>
+        /// Get the quality tiers available for Officers' Armory based on QM reputation.
+        /// Higher rep = better quality modifiers available.
+        /// </summary>
+        private List<ItemQuality> GetOfficerArmoryQualityTiers()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var qmRep = enlistment?.GetQMReputation() ?? 0;
+
+            var qualities = new List<ItemQuality>();
+
+            if (qmRep >= 90)
+            {
+                // 90+: Fine, Masterwork, rare Legendary
+                qualities.Add(ItemQuality.Fine);
+                qualities.Add(ItemQuality.Masterwork);
+                if (MBRandom.RandomFloat < 0.15f) // 15% chance for Legendary
+                {
+                    qualities.Add(ItemQuality.Legendary);
+                }
+            }
+            else if (qmRep >= 75)
+            {
+                // 75-89: Common, Fine, some Masterwork
+                qualities.Add(ItemQuality.Common);
+                qualities.Add(ItemQuality.Fine);
+                if (MBRandom.RandomFloat < 0.3f) // 30% chance for Masterwork
+                {
+                    qualities.Add(ItemQuality.Masterwork);
+                }
+            }
+            else
+            {
+                // 60-74: Common, Fine
+                qualities.Add(ItemQuality.Common);
+                qualities.Add(ItemQuality.Fine);
+            }
+
+            return qualities;
+        }
+
+        /// <summary>
+        /// Check if Officers' Armory is accessible to the player.
+        /// Requirements: T7+ rank, QM Rep 60+
+        /// </summary>
+        public bool IsOfficersArmoryAccessible()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return false;
+            }
+
+            var playerTier = enlistment.EnlistmentTier;
+            var qmRep = enlistment.GetQMReputation();
+
+            return playerTier >= 7 && qmRep >= 60;
         }
 
         private Dictionary<EquipmentIndex, List<ItemObject>> GetCultureHorseGear(CultureObject culture, int maxTier)
@@ -2003,9 +2411,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Current standing and assignment details
                 var enlistment = EnlistmentBehavior.Instance;
                 var rankName = Ranks.RankHelper.GetCurrentRank(enlistment);
-                var formation = "Infantry"; // Default service role
+                var formation = DetectPlayerFormation().ToString();
                 sb.AppendLine($"Rank: {rankName}");
-                sb.AppendLine($"Formation: {formation.ToTitleCase()}");
+                sb.AppendLine($"Formation: {formation}");
                 sb.AppendLine($"Troop Type: {_selectedTroop?.Name?.ToString() ?? "Unknown"}");
                 sb.AppendLine();
                 sb.AppendLine($"Your Gold: {Hero.MainHero.Gold:N0} denars");
@@ -3367,6 +3775,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                         var isCurrent = item == currentItem;
                         var canAfford = hero.Gold >= cost;
                         
+                        // Phase 7: Get quantity from inventory state
+                        var quantityAvailable = _inventoryState?.GetAvailableQuantity(item.StringId) ?? 999;
+                        var isAvailable = quantityAvailable > 0;
+                        
                         optionList.Add(new EquipmentVariantOption
                         {
                             Item = item,
@@ -3376,7 +3788,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                             Slot = slot,
                             IsOfficerExclusive = false,
                             AllowsDuplicatePurchase = allowsDuplicate,
-                            IsAtLimit = isAtLimit
+                            IsAtLimit = isAtLimit,
+                            IsInStock = isAvailable,
+                            QuantityAvailable = quantityAvailable
                         });
                     }
 
@@ -4236,6 +4650,17 @@ namespace Enlisted.Features.Equipment.Behaviors
 
             _outOfStockItems.Clear();
             _lastStockRollSupplyLevel = supplyLevel;
+            
+            // Phase 7: Check if inventory needs refresh (12-day cycle)
+            if (_inventoryState == null)
+            {
+                _inventoryState = new QMInventoryState();
+            }
+            
+            if (_inventoryState.NeedsRefresh())
+            {
+                RefreshInventoryAtMuster(supplyLevel);
+            }
 
             // Calculate out-of-stock probability based on supply level
             // >= 60%: All items in stock (0% out of stock chance)
@@ -4258,7 +4683,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 outOfStockChance = 0.50f;
             }
 
-            // Roll for each item in the variant cache
+            // Roll for each item in the variant cache (regular tier equipment)
             var itemsRolled = 0;
             var itemsOutOfStock = 0;
 
@@ -4275,6 +4700,36 @@ namespace Enlisted.Features.Equipment.Behaviors
                         {
                             _outOfStockItems.Add(item.StringId);
                             itemsOutOfStock++;
+                        }
+                    }
+                }
+            }
+
+            // Also roll for Officers' Armory items (higher tier equipment)
+            // Officer items have HIGHER out-of-stock chance (premium items are scarcer)
+            var officerOutOfStockChance = Math.Min(outOfStockChance * 1.5f, 0.75f);
+            var officerItemsRolled = 0;
+            var officerItemsOutOfStock = 0;
+
+            if (enlistment?.IsEnlisted == true && enlistment.EnlistmentTier >= 7)
+            {
+                var culture = enlistment.EnlistedLord?.Culture;
+                var playerTier = enlistment.EnlistmentTier;
+                
+                if (culture != null)
+                {
+                    // Get officer-tier equipment (tiers above player's normal access)
+                    var officerEquipment = GetOfficerTierEquipmentForStockRoll(culture, playerTier);
+                    
+                    foreach (var item in officerEquipment)
+                    {
+                        if (item == null || _outOfStockItems.Contains(item.StringId)) continue;
+                        
+                        officerItemsRolled++;
+                        if (MBRandom.RandomFloat < officerOutOfStockChance)
+                        {
+                            _outOfStockItems.Add(item.StringId);
+                            officerItemsOutOfStock++;
                         }
                     }
                 }
@@ -4333,9 +4788,123 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
             }
 
+            var totalRolled = itemsRolled + officerItemsRolled;
+            var totalOutOfStock = itemsOutOfStock + officerItemsOutOfStock;
+            
             ModLogger.Info("Quartermaster", 
-                $"Stock roll complete: Supplies at {supplyLevel}% ({outOfStockChance:P0} out-of-stock chance), " +
-                $"{itemsOutOfStock}/{itemsRolled} items out of stock (after stock floor)");
+                $"Stock roll complete: Supplies at {supplyLevel}% ({outOfStockChance:P0} base out-of-stock chance), " +
+                $"Regular: {itemsOutOfStock}/{itemsRolled}, Officer: {officerItemsOutOfStock}/{officerItemsRolled}, " +
+                $"Total: {totalOutOfStock}/{totalRolled} items out of stock (after stock floor)");
+        }
+
+        /// <summary>
+        /// Gets all equipment from officer tiers (above player tier) for stock rolling.
+        /// Used to include Officers' Armory items in the muster stock roll.
+        /// </summary>
+        private List<ItemObject> GetOfficerTierEquipmentForStockRoll(CultureObject culture, int playerTier)
+        {
+            var items = new HashSet<ItemObject>();
+            
+            try
+            {
+                if (culture == null) return items.ToList();
+
+                // Calculate max tier access (same as GetCultureEquipmentVariants)
+                var enlistment = EnlistmentBehavior.Instance;
+                var qmRep = enlistment?.GetQMReputation() ?? 0;
+                
+                int tierBonus = qmRep >= 90 ? 2 : (qmRep >= 75 ? 2 : 1);
+                var maxTroopTier = playerTier + tierBonus; // No artificial cap
+
+                var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
+                
+                // Get troops from tiers above player's normal access
+                var eliteTroops = allTroops.Where(troop => 
+                    troop.Culture == culture &&
+                    troop.GetBattleTier() > playerTier &&
+                    troop.GetBattleTier() <= maxTroopTier &&
+                    !troop.IsHero &&
+                    troop.BattleEquipments.Any()).ToList();
+
+                foreach (var troop in eliteTroops)
+                {
+                    foreach (var equipment in troop.BattleEquipments)
+                    {
+                        for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                        {
+                            var item = equipment[slot].Item;
+                            if (item != null)
+                            {
+                                items.Add(item);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error getting officer tier equipment for stock roll", ex);
+            }
+
+            return items.ToList();
+        }
+        
+        /// <summary>
+        /// Refresh inventory at muster based on supply level.
+        /// Generates new stock quantities for all available items.
+        /// </summary>
+        private void RefreshInventoryAtMuster(float supplyLevel)
+        {
+            try
+            {
+                // Collect all available items from variant cache
+                var availableItems = new List<ItemObject>();
+                
+                foreach (var troopEntry in _troopEquipmentVariants)
+                {
+                    foreach (var slotEntry in troopEntry.Value)
+                    {
+                        foreach (var item in slotEntry.Value)
+                        {
+                            if (item != null && !availableItems.Contains(item))
+                            {
+                                availableItems.Add(item);
+                            }
+                        }
+                    }
+                }
+                
+                // Also include Officers' Armory items if player is T7+
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted == true && enlistment.EnlistmentTier >= 7)
+                {
+                    var culture = enlistment.EnlistedLord?.Culture;
+                    var playerTier = enlistment.EnlistmentTier;
+                    
+                    if (culture != null)
+                    {
+                        var officerItems = GetOfficerTierEquipmentForStockRoll(culture, playerTier);
+                        foreach (var item in officerItems)
+                        {
+                            if (item != null && !availableItems.Contains(item))
+                            {
+                                availableItems.Add(item);
+                            }
+                        }
+                    }
+                }
+                
+                // Refresh inventory state with new stock quantities
+                _inventoryState.RefreshInventory(supplyLevel, availableItems);
+                
+                ModLogger.Info("Quartermaster", 
+                    $"Inventory refreshed at muster: {availableItems.Count} items in pool, " +
+                    $"{_inventoryState.CurrentStock.Count} items stocked, supply: {supplyLevel:F1}%");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error refreshing inventory at muster", ex);
+            }
         }
         
         /// <summary>
@@ -4738,6 +5307,12 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Stock availability is rolled at each muster based on company supply levels.
         /// </summary>
         public bool IsInStock { get; set; } = true;
+        
+        /// <summary>
+        /// Quantity available for purchase (Phase 7: Inventory & Pricing System).
+        /// 0 means out of stock. Decrements with each purchase until next muster refresh.
+        /// </summary>
+        public int QuantityAvailable { get; set; } = 999; // Default to unlimited for backwards compatibility
         
         /// <summary>
         /// Quality modifier applied to this item (Poor/Inferior/Common/Fine/Masterwork/Legendary).

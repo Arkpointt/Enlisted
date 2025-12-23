@@ -1,40 +1,9 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "enabled": true,
-  "description": "Configuration for Camp system - retinue management, tier capacities, and faction availability",
+  "description": "Configuration for Retinue system - soldier types, replenishment, and faction availability. NOTE: Tier capacities are controlled by code constants in RetinueManager.cs (T7:20, T8:30, T9:40).",
 
-  "capacity_by_tier": {
-    "4": {
-      "name": "Squad",
-      "max_soldiers": 5,
-      "tier_distribution": {
-        "infantry": { "2": 40, "3": 60 },
-        "archers": { "2": 40, "3": 60 },
-        "cavalry": { "3": 100 },
-        "horse_archers": { "2": 30, "3": 70 }
-      }
-    },
-    "5": {
-      "name": "Squad",
-      "max_soldiers": 10,
-      "tier_distribution": {
-        "infantry": { "2": 30, "3": 70 },
-        "archers": { "2": 30, "3": 70 },
-        "cavalry": { "2": 20, "3": 80 },
-        "horse_archers": { "2": 20, "3": 80 }
-      }
-    },
-    "6": {
-      "name": "Retinue",
-      "max_soldiers": 20,
-      "tier_distribution": {
-        "infantry": { "3": 60, "4": 40 },
-        "archers": { "3": 60, "4": 40 },
-        "cavalry": { "3": 50, "4": 50 },
-        "horse_archers": { "3": 50, "4": 50 }
-      }
-    }
-  },
+  "capacity_note": "Retinue unlocks at Commander track (T7+). T1-T6 have companions only. Capacity values are hardcoded in RetinueManager.cs for stability.",
 
   "soldier_types": {
     "infantry": {
@@ -77,19 +46,13 @@
     "battania": {
       "archers_display_key": "{=ct_type_fians}Fian Archers",
       "archers_description_key": "{=ct_type_fians_desc}Legendary woodland archers of Battania.",
-      "unavailable_types": ["horse_archers"],
-      "tier_distribution_override": {
-        "archers": { "3": 80, "4": 20 }
-      }
+      "unavailable_types": ["horse_archers"]
     },
     "sturgia": {
       "unavailable_types": ["horse_archers"]
     },
     "khuzait": {
-      "horse_archers_display_key": "{=ct_type_khuzait_ha}Steppe Riders",
-      "tier_distribution_override": {
-        "horse_archers": { "2": 40, "3": 60 }
-      }
+      "horse_archers_display_key": "{=ct_type_khuzait_ha}Steppe Riders"
     },
     "aserai": {
       "horse_archers_display_key": "{=ct_type_mameluke}Mameluke Cavalry"
@@ -113,12 +76,5 @@
   "economics": {
     "daily_upkeep_per_soldier": 2,
     "desertion_enabled": true
-  },
-
-  "tier_unlock": {
-    "lance_tier": 4,
-    "squad_tier": 5,
-    "retinue_tier": 6
   }
 }
-

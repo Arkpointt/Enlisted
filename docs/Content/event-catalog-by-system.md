@@ -1,10 +1,10 @@
 # Enlisted Content System
 
-**Summary:** Single source of truth for all narrative content including Events (63), Map Incidents (42), Orders (17), and Decisions (30). This comprehensive catalog organizes content by system and role, providing IDs, descriptions, requirements, effects, and implementation status for all content in the mod.
+**Summary:** Single source of truth for all narrative content including Events (74), Map Incidents (51), Orders (17), and Decisions (34). This comprehensive catalog organizes content by system and role, providing IDs, descriptions, requirements, effects, and implementation status for all content in the mod.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22 (Phase 6: 45 map incidents across 6 contexts)  
-**Related Docs:** [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md)
+**Last Updated:** 2025-12-23 (Added: Retinue system - 11 events, 6 incidents, 4 decisions for T7+ commanders)  
+**Related Docs:** [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md), [Retinue System](../Features/Core/retinue-system.md)
 
 ---
 
@@ -13,11 +13,13 @@
 | Category | Count | Breakdown |
 |----------|-------|-----------|
 | **Orders** | 17 | 6 T1-T3, 6 T4-T6, 5 T7-T9 |
-| **Decisions** | 30 | 3 Self-Care, 5 Training, 6 Social, 5 Economic, 3 Career, 3 Info, 2 Equipment, 3 Risk-Taking |
-| **Events** | 63 | 14 Escalation (5 Scrutiny, 5 Discipline, 4 Medical) + 49 Role/Universal |
-| **Map Incidents** | 45 | 11 Battle, 10 Siege, 8 Town, 6 Village, 6 Leaving, 4 Waiting |
+| **Decisions** | 38 | Player-initiated Camp Hub menu actions (dec_* prefix) |
+| **Events** | 80+ | Narrative events across multiple files (camp, general, duty roles, pay, promotion, training, retinue, etc.) |
+| **Map Incidents** | 51 | 11 Battle, 10 Siege, 8 Town, 6 Village, 6 Leaving, 4 Waiting, 6 Retinue (T7+) |
 
-**Total**: 155 content pieces across all systems.
+**Total**: 186+ content pieces across all systems.
+
+**Note:** Event count includes all event definitions from Events/ directory. Many events have multiple options, and the system loads content recursively from all JSON files. The actual number of player-facing choices is significantly higher when counting all event options.
 
 ---
 
@@ -295,6 +297,8 @@ Failure isn't catastrophic—you tried and it didn't work. Decline is a choice n
 ## 2. DECISIONS
 
 Player-initiated choices from the Camp Hub menu. These have costs, cooldowns, and risks.
+
+**Current Count:** 38 decisions loaded from `ModuleData/Enlisted/Decisions/decisions.json`
 
 ### Cost Types
 
@@ -1098,29 +1102,40 @@ These variables are automatically populated when events are displayed. Character
 ## File Organization
 
 ```
-ModuleData/Enlisted/Events/
-├── Core/
-│   ├── events_escalation.json      (Scrutiny, Discipline, Medical thresholds)
-│   ├── events_milestones.json      (Reputation thresholds)
-│   └── events_onboarding.json      (Static guaranteed events)
-├── Orders/
-│   ├── orders_t1_t3.json           (6 basic orders)
-│   ├── orders_t4_t6.json           (6 specialist orders)
-│   └── orders_t7_t9.json           (5 leadership orders)
-├── Decisions/
+ModuleData/Enlisted/
+├── Events/                         (Loaded recursively by EventCatalog)
+│   ├── camp_events.json            (General camp life events)
+│   ├── events_general.json         (Universal soldier events)
+│   ├── events_escalation_thresholds.json  (Scrutiny/Discipline/Medical thresholds)
+│   ├── events_onboarding.json      (First-enlistment guaranteed events)
+│   ├── events_promotion.json       (Promotion and proving events)
+│   ├── events_training.json        (Training-related events)
+│   ├── events_retinue.json         (Retinue events for T7+ commanders)
+│   ├── events_duty_scout.json      (Scout duty events)
+│   ├── events_duty_medic.json      (Medic duty events)
+│   ├── events_duty_engineer.json   (Engineer duty events)
+│   ├── events_duty_*.json          (7 more duty role files)
+│   ├── events_pay_tension.json     (Pay tension events)
+│   ├── events_pay_loyal.json       (Pay loyalty events)
+│   ├── events_pay_mutiny.json      (Pay mutiny events)
+│   ├── events_player_decisions.json (Player-initiated events, legacy)
+│   ├── incidents_battle.json       (LeavingBattle incidents)
+│   ├── incidents_siege.json        (DuringSiege incidents)
+│   ├── incidents_town.json         (EnteringTown incidents)
+│   ├── incidents_village.json      (EnteringVillage incidents)
+│   ├── incidents_leaving.json      (LeavingSettlement incidents)
+│   ├── incidents_waiting.json      (WaitingInSettlement incidents)
+│   ├── incidents_retinue.json      (Retinue post-battle incidents)
+│   ├── muster_events.json          (Muster and recruitment events)
+│   ├── schema_version.json         (Schema metadata, not loaded)
+│   └── Role/
+│       └── scout_events.json       (Scout role-specific events)
+├── Decisions/                      (Loaded recursively by EventCatalog)
 │   └── decisions.json              (34 player-initiated Camp Hub decisions, dec_* prefix)
-├── MapIncidents/
-│   ├── incidents_battle.json       (LeavingBattle)
-│   ├── incidents_siege.json        (DuringSiege)
-│   ├── incidents_town.json         (EnteringTown, LeavingSettlement)
-│   └── incidents_village.json      (EnteringVillage)
-├── Role/
-│   ├── events_role_scout.json
-│   ├── events_role_medic.json
-│   ├── events_role_engineer.json
-│   ├── events_role_officer.json
-│   ├── events_role_operative.json
-│   └── events_role_nco.json
-└── Universal/
-    └── events_camp_life.json       (Any role, daily life)
+└── Orders/                         (Loaded by OrderCatalog)
+    ├── orders_t1_t3.json           (6 basic orders)
+    ├── orders_t4_t6.json           (6 specialist orders)
+    └── orders_t7_t9.json           (5 leadership orders)
 ```
+
+**Note:** EventCatalog loads all .json files from Events/ and Decisions/ directories recursively, excluding schema_version.json. OrderCatalog loads orders separately from the Orders/ directory.

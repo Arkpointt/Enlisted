@@ -569,6 +569,53 @@ namespace Enlisted.Features.Retinue.Core
             var enlistment = EnlistmentBehavior.Instance;
             var tier = enlistment?.EnlistmentTier ?? 1;
             OnEnlistmentStarted(lord, tier);
+
+            // EC14: Validate formation type is available for new culture
+            ValidateFormationTypeForCulture(lord);
+        }
+
+        /// <summary>
+        /// EC14: Validates that the player's selected formation type is available for the new lord's culture.
+        /// If player has horse archers but joins a faction without horse archers, clears selection
+        /// to force re-selection at T7.
+        /// </summary>
+        private void ValidateFormationTypeForCulture(Hero lord)
+        {
+            if (_retinueState == null || !_retinueState.HasTypeSelected)
+            {
+                return; // No formation selected yet, nothing to validate
+            }
+
+            var culture = lord?.Culture;
+            if (culture == null)
+            {
+                return;
+            }
+
+            var selectedType = _retinueState.SelectedTypeId;
+            if (string.IsNullOrEmpty(selectedType))
+            {
+                return;
+            }
+
+            // Check if the selected type is available for this culture
+            if (!RetinueManager.IsSoldierTypeAvailable(selectedType, culture))
+            {
+                ModLogger.Warn(LogCategory,
+                    $"EC14: Formation type '{selectedType}' not available for culture '{culture.StringId}' - clearing selection");
+
+                // Clear the formation type to force re-selection
+                var previousType = _retinueState.SelectedTypeId;
+                _retinueState.SelectedTypeId = null;
+
+                // Notify player
+                var msg = new TaleWorlds.Localization.TextObject(
+                    "{=enl_culture_mismatch}Your previous retinue type ({TYPE}) is not available in {CULTURE}. You will select a new formation type upon reaching commander rank.");
+                msg.SetTextVariable("TYPE", previousType);
+                msg.SetTextVariable("CULTURE", culture.Name);
+                TaleWorlds.Library.InformationManager.DisplayMessage(
+                    new TaleWorlds.Library.InformationMessage(msg.ToString(), TaleWorlds.Library.Colors.Yellow));
+            }
         }
 
         private void HandleEnlistmentEnded(string reason)

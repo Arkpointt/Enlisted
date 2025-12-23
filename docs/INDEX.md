@@ -2,8 +2,10 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2025-12-22  
+**Last Updated:** 2025-12-23  
 **Total Documents:** 40+
+
+> **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
 
 ---
 
@@ -21,6 +23,7 @@
 |--------------|----------|
 | Understand the project scope | [BLUEPRINT.md](BLUEPRINT.md) → "For AI Assistants" |
 | Learn core game mechanics | [Features/Core/core-gameplay.md](Features/Core/core-gameplay.md) |
+| Understand rank progression | [Features/Core/promotion-system.md](Features/Core/promotion-system.md) |
 | Find how a feature works | Search this INDEX, check [Features/Core/](#core-systems) |
 | See all events/decisions/orders | [Content/event-catalog-by-system.md](Content/event-catalog-by-system.md) |
 | Verify Bannerlord APIs | [Reference/native-apis.md](Reference/native-apis.md) |
@@ -65,10 +68,10 @@
 | [index.md](Features/Core/index.md) | Core features index | ✅ Current |
 | [core-gameplay.md](Features/Core/core-gameplay.md) | Complete gameplay overview | ✅ Current |
 | [enlistment.md](Features/Core/enlistment.md) | Enlistment system mechanics | ✅ Current |
+| [promotion-system.md](Features/Core/promotion-system.md) | Rank progression T1-T9: XP sources, multi-factor requirements (days/battles/reputation/discipline), proving events, culture-specific ranks, equipment unlocks | ✅ Current |
 | [pay-system.md](Features/Core/pay-system.md) | Wages and payment | ✅ Current |
 | [company-events.md](Features/Core/company-events.md) | Company-wide events | ✅ Current |
-| [quartermaster-hero-system.md](Features/Core/quartermaster-hero-system.md) | Quartermaster character system | ✅ Current |
-| [retinue-system.md](Features/Core/retinue-system.md) | Service records and retinue | ✅ Current |
+| [retinue-system.md](Features/Core/retinue-system.md) | Commander's retinue (T7+): formation selection, context-aware trickle, relation-based reinforcements, loyalty tracking, 11 narrative events, 6 post-battle incidents, 4 camp decisions, named veterans | ✅ Current |
 | [companion-management.md](Features/Core/companion-management.md) | Companion integration | ✅ Current |
 | [camp-fatigue.md](Features/Core/camp-fatigue.md) | Rest and fatigue system | ✅ Current |
 | [onboarding-discharge-system.md](Features/Core/onboarding-discharge-system.md) | Onboarding and discharge | ✅ Current |
@@ -78,9 +81,10 @@
 
 | Document | Topic | Status |
 |----------|-------|--------|
-| [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Complete quartermaster system with conversation interface, equipment quality, upgrades, and contextual dialogue | ✅ Current |
+| [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Complete quartermaster system: JSON dialogue, first-meeting intro, equipment quality, upgrades, provisions UI, tier gates, sell gating | ✅ Current |
 | [provisions-rations-system.md](Features/Equipment/provisions-rations-system.md) | Food and rations (T1-T4 issued, T5+ provisions shop) | ✅ Current |
-| [company-supply-simulation.md](Features/Equipment/company-supply-simulation.md) | Company supply tracking and effects | ✅ Current |
+| [company-supply-simulation.md](Features/Equipment/company-supply-simulation.md) | Company supply tracking and effects (core implemented, enhancements planned) | ⚠️ Mixed |
+| [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md) | Baggage train access gating based on march state, rank, and context | 📋 Specification |
 
 ### Identity & Traits
 **Location:** `Features/Identity/`

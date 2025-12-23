@@ -1,0 +1,483 @@
+{
+  "schemaVersion": 2,
+  "category": "map_incident",
+  "description": "Map incidents triggered after battles for T7+ commanders with retinue (leaving_battle context). 6 total incidents.",
+  "events": [
+    {
+      "id": "mi_ret_wounded_soldier",
+      "category": "retinue",
+      "titleId": "mi_ret_wounded_soldier_title",
+      "title": "One of Your Own",
+      "setupId": "mi_ret_wounded_soldier_setup",
+      "setup": "The battle is over. As you count heads, you find one of your men lying in the mud, gut wound, bleeding out. He recognizes you. Tries to speak. The surgeon is already overwhelmed with critical cases.\n\nYour men are watching. Waiting to see what you do.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 7, "max": 9 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "high",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "stay",
+          "textId": "mi_ret_wounded_soldier_stay",
+          "text": "Stay with him until the end",
+          "tooltip": "Lose 2 hours. High loyalty gain.",
+          "resultTextId": "mi_ret_wounded_soldier_stay_result",
+          "resultText": "You kneel beside him. Hold his hand. He dies quietly, knowing he wasn't alone. Your men see this. They remember.",
+          "risk": "safe",
+          "costs": {
+            "time_hours": 2
+          },
+          "effects": {
+            "retinueLoyalty": 15,
+            "soldierRep": 10
+          }
+        },
+        {
+          "id": "surgeon",
+          "textId": "mi_ret_wounded_soldier_surgeon",
+          "text": "Demand the surgeon treat him now",
+          "tooltip": "30% chance to save him. Costs 50 gold. May anger surgeon.",
+          "resultTextId": "mi_ret_wounded_soldier_surgeon_result",
+          "resultText": "The surgeon scowls but complies. Your man survives, barely. The surgeon won't forget this.",
+          "resultTextFailure": "mi_ret_wounded_soldier_surgeon_failure",
+          "resultFailure": "The surgeon tries, but it's too late. Your man dies on the table. The surgeon blames you for wasting his time.",
+          "risk": "moderate",
+          "riskChance": 70,
+          "costs": {
+            "gold": 50
+          },
+          "effects": {
+            "retinueLoyalty": 8
+          },
+          "effectsSuccess": {
+            "retinueWounded": -1,
+            "officerRep": -5
+          },
+          "effectsFailure": {
+            "retinueLoss": 1,
+            "officerRep": -10
+          }
+        },
+        {
+          "id": "move_on",
+          "textId": "mi_ret_wounded_soldier_move_on",
+          "text": "There's nothing you can do. Move on.",
+          "tooltip": "Practical, but cold. Loyalty loss.",
+          "resultTextId": "mi_ret_wounded_soldier_move_on_result",
+          "resultText": "You stand and walk away. His eyes follow you until they don't. Your men exchange looks. They understand. They don't like it.",
+          "risk": "safe",
+          "effects": {
+            "retinueLoyalty": -10,
+            "soldierRep": -5,
+            "traitXp": {
+              "Calculating": 5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_ret_first_command",
+      "category": "retinue",
+      "titleId": "mi_ret_first_command_title",
+      "title": "First Command",
+      "setupId": "mi_ret_first_command_setup",
+      "setup": "Your first battle as a commander is over. You led men into the fight. Some followed your orders perfectly. Some hesitated. Some didn't come back.\n\nYou're standing alone now, watching your soldiers tend their wounds. This is what command feels like.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 7, "max": 7 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 999,
+        "priority": "high",
+        "one_time": true
+      },
+      "options": [
+        {
+          "id": "reflect",
+          "textId": "mi_ret_first_command_reflect",
+          "text": "Take a moment. Process what just happened.",
+          "tooltip": "Wisdom gain. Prepares you for future battles.",
+          "resultTextId": "mi_ret_first_command_reflect_result",
+          "resultText": "You breathe. Think. Remember the mistakes and the successes. Command is weight. You'll carry it better next time.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 10
+            },
+            "skillXp": {
+              "Leadership": 20
+            }
+          }
+        },
+        {
+          "id": "rally",
+          "textId": "mi_ret_first_command_rally",
+          "text": "Rally your men. Show strength.",
+          "tooltip": "Loyalty gain. Establishes your leadership style.",
+          "resultTextId": "mi_ret_first_command_rally_result",
+          "resultText": "You walk among them, checking wounds, offering words. They see you as their commander now. Not just a promoted soldier.",
+          "risk": "safe",
+          "effects": {
+            "retinueLoyalty": 10,
+            "soldierRep": 8,
+            "skillXp": {
+              "Leadership": 15
+            }
+          }
+        },
+        {
+          "id": "mourn",
+          "textId": "mi_ret_first_command_mourn",
+          "text": "Count the losses. Remember the names.",
+          "tooltip": "Honor gain. Your men see you care.",
+          "resultTextId": "mi_ret_first_command_mourn_result",
+          "resultText": "You go through the list. Every man lost, every name. Your soldiers watch you do it. They know you'll remember them too.",
+          "risk": "safe",
+          "effects": {
+            "retinueLoyalty": 12,
+            "traitXp": {
+              "Honor": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_ret_cowardice",
+      "category": "retinue",
+      "titleId": "mi_ret_cowardice_title",
+      "title": "The Coward",
+      "setupId": "mi_ret_cowardice_setup",
+      "setup": "One of your men ran. You saw it during the fighting—turned and fled while the rest held the line. Now the battle is over and he's back, trying to blend in with the others.\n\nYour sergeant is waiting for your order. The men are watching.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 7, "max": 9 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 15,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "discipline",
+          "textId": "mi_ret_cowardice_discipline",
+          "text": "Public flogging. Make an example.",
+          "tooltip": "Harsh discipline. Order maintained, loyalty damaged.",
+          "resultTextId": "mi_ret_cowardice_discipline_result",
+          "resultText": "He takes the lashes without a sound. The men watch in silence. They won't run. But they won't love you for this.",
+          "risk": "safe",
+          "effects": {
+            "retinueLoyalty": -8,
+            "discipline": 10,
+            "officerRep": 5,
+            "soldierRep": -10
+          }
+        },
+        {
+          "id": "understand",
+          "textId": "mi_ret_cowardice_understand",
+          "text": "Talk to him privately. Find out why.",
+          "tooltip": "Requires Leadership 60+. Best outcome if successful.",
+          "resultTextId": "mi_ret_cowardice_understand_result",
+          "resultText": "He breaks down. First battle. Saw his brother die in the last war. You assign him to the rear for now. The men respect that you listened.",
+          "resultTextFailure": "mi_ret_cowardice_understand_failure",
+          "resultFailure": "He makes excuses. Lies. Your men see weakness in both of you. Should have been harsher.",
+          "tooltip": "Leadership 60+ for success",
+          "risk": "moderate",
+          "riskChance": 70,
+          "requirements": {
+            "minSkills": {
+              "Leadership": 60
+            }
+          },
+          "effects": {},
+          "effectsSuccess": {
+            "retinueLoyalty": 10,
+            "soldierRep": 8,
+            "skillXp": {
+              "Leadership": 20
+            }
+          },
+          "effectsFailure": {
+            "retinueLoyalty": -5,
+            "soldierRep": -5,
+            "discipline": -5
+          }
+        },
+        {
+          "id": "dismiss",
+          "textId": "mi_ret_cowardice_dismiss",
+          "text": "Remove him from your retinue. Send him back to the main force.",
+          "tooltip": "Lose 1 soldier. Neutral outcome.",
+          "resultTextId": "mi_ret_cowardice_dismiss_result",
+          "resultText": "He's reassigned. Your men nod approval. You don't tolerate cowardice, but you're not cruel about it.",
+          "risk": "safe",
+          "effects": {
+            "retinueLoss": 1,
+            "retinueLoyalty": 3,
+            "soldierRep": 5
+          }
+        },
+        {
+          "id": "ignore",
+          "textId": "mi_ret_cowardice_ignore",
+          "text": "Let it go. Everyone has a bad day.",
+          "tooltip": "Weak leadership. Discipline suffers.",
+          "resultTextId": "mi_ret_cowardice_ignore_result",
+          "resultText": "You say nothing. The men exchange glances. If running is acceptable, what else is? Your authority weakens.",
+          "risk": "safe",
+          "effects": {
+            "retinueLoyalty": -3,
+            "discipline": -10,
+            "soldierRep": -8
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_ret_looting",
+      "category": "retinue",
+      "titleId": "mi_ret_looting_title",
+      "title": "Early Looters",
+      "setupId": "mi_ret_looting_setup",
+      "setup": "The fighting just ended. Bodies are still warm. You find some of your men already rifling through enemy packs, pocketing valuables.\n\nLooting rights haven't been called yet. Technically, this is theft from the army's share. But soldiers have always done this. The question is whether you stop it.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 7, "max": 9 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 12,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "allow",
+          "textId": "mi_ret_looting_allow",
+          "text": "Look the other way. Let them have it.",
+          "tooltip": "Loyalty gain, but scrutiny risk if caught.",
+          "resultTextId": "mi_ret_looting_allow_result",
+          "resultText": "You turn and walk away. Your men grin and keep working. They'll remember this. So might the officers, if they notice.",
+          "risk": "moderate",
+          "riskChance": 70,
+          "effects": {
+            "retinueLoyalty": 8,
+            "soldierRep": 10
+          },
+          "effectsSuccess": {
+            "gold": 30
+          },
+          "effectsFailure": {
+            "scrutiny": 5,
+            "officerRep": -8
+          }
+        },
+        {
+          "id": "stop",
+          "textId": "mi_ret_looting_stop",
+          "text": "Stop them. Order them back to formation.",
+          "tooltip": "By the book. Loyalty loss, officer approval.",
+          "resultTextId": "mi_ret_looting_stop_result",
+          "resultText": "They grumble but comply. You're following regulations. Your men think you're a stickler. The officers think you're reliable.",
+          "risk": "safe",
+          "effects": {
+            "retinueLoyalty": -5,
+            "soldierRep": -5,
+            "officerRep": 8,
+            "discipline": 5
+          }
+        },
+        {
+          "id": "join",
+          "textId": "mi_ret_looting_join",
+          "text": "Help them. Take a share for yourself.",
+          "tooltip": "High loyalty gain, high scrutiny risk.",
+          "resultTextId": "mi_ret_looting_join_result",
+          "resultText": "You kneel down and start searching bodies with them. They laugh. You're one of them now. Command just got more complicated.",
+          "risk": "risky",
+          "riskChance": 50,
+          "effects": {
+            "retinueLoyalty": 15,
+            "soldierRep": 15,
+            "gold": 50
+          },
+          "effectsSuccess": {},
+          "effectsFailure": {
+            "scrutiny": 10,
+            "officerRep": -15,
+            "discipline": -10
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_ret_prisoner_mercy",
+      "category": "retinue",
+      "titleId": "mi_ret_prisoner_mercy_title",
+      "title": "The Prisoner's Plea",
+      "setupId": "mi_ret_prisoner_mercy_setup",
+      "setup": "Your men have captured an enemy officer. He's wounded, disarmed, and begging for his life. Says he has a family. Offers ransom.\n\nOne of your soldiers—a veteran—spits at him. \"His kind killed my brother. Let me finish him.\"\n\nYour decision. Your responsibility.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 7, "max": 9 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 20,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "execute",
+          "textId": "mi_ret_prisoner_mercy_execute",
+          "text": "Let your man have his revenge.",
+          "tooltip": "Soldier loyalty gain. Honor loss.",
+          "resultTextId": "mi_ret_prisoner_mercy_execute_result",
+          "resultText": "Your soldier draws his blade. It's over quickly. The prisoner dies cursing you. Your men nod approval. You've chosen their side.",
+          "risk": "safe",
+          "effects": {
+            "retinueLoyalty": 8,
+            "soldierRep": 10,
+            "traitXp": {
+              "Honor": -10,
+              "Mercy": -10
+            }
+          }
+        },
+        {
+          "id": "spare",
+          "textId": "mi_ret_prisoner_mercy_spare",
+          "text": "Take him prisoner. He's worth more alive.",
+          "tooltip": "Ransom gold. Soldier disapproval.",
+          "resultTextId": "mi_ret_prisoner_mercy_spare_result",
+          "resultText": "You order him bound and sent to the rear. Your soldier glares at you. The prisoner thanks you. Gold is gold, but this cost you something.",
+          "risk": "safe",
+          "effects": {
+            "gold": 100,
+            "retinueLoyalty": -5,
+            "soldierRep": -5,
+            "traitXp": {
+              "Honor": 5,
+              "Mercy": 10
+            }
+          }
+        },
+        {
+          "id": "let_men_decide",
+          "textId": "mi_ret_prisoner_mercy_let_men_decide",
+          "text": "Ask your men to vote. Their call.",
+          "tooltip": "Loyalty gain. Outcome uncertain.",
+          "resultTextId": "mi_ret_prisoner_mercy_let_men_decide_result",
+          "resultText": "You put it to them. They argue. Eventually they vote to spare him for the ransom. Your soldier accepts it, barely. You've shown you trust their judgment.",
+          "resultTextFailure": "mi_ret_prisoner_mercy_let_men_decide_failure",
+          "resultFailure": "The vote is swift and brutal. Execute. You've given them power, and they've used it. The prisoner dies. You're complicit.",
+          "risk": "moderate",
+          "riskChance": 60,
+          "effects": {
+            "retinueLoyalty": 10
+          },
+          "effectsSuccess": {
+            "gold": 80,
+            "traitXp": {
+              "Mercy": 5
+            }
+          },
+          "effectsFailure": {
+            "soldierRep": 8,
+            "traitXp": {
+              "Mercy": -5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_ret_recognition",
+      "category": "retinue",
+      "titleId": "mi_ret_recognition_title",
+      "title": "Recognition",
+      "setupId": "mi_ret_recognition_setup",
+      "setup": "The battle is won. Your lord rides up, surveying the field. He sees you with your men and nods.\n\n\"Your retinue fought well, Commander. They held the flank when others wavered. I'm pleased.\"\n\nYour men straighten up, hearing this. How you respond matters.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "tier": { "min": 7, "max": 9 },
+        "custom": ["has_retinue", "last_battle_won"]
+      },
+      "timing": {
+        "cooldown_days": 15,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "accept_humbly",
+          "textId": "mi_ret_recognition_accept_humbly",
+          "text": "\"Thank you, my lord. We did our duty.\"",
+          "tooltip": "Modest. Lord approval.",
+          "resultTextId": "mi_ret_recognition_accept_humbly_result",
+          "resultText": "Your lord nods, satisfied. Your men appreciate the humility. You're a commander, but you're not arrogant about it.",
+          "risk": "safe",
+          "effects": {
+            "lordRep": 8,
+            "retinueLoyalty": 5,
+            "traitXp": {
+              "Honor": 5
+            }
+          }
+        },
+        {
+          "id": "credit_men",
+          "textId": "mi_ret_recognition_credit_men",
+          "text": "\"The credit belongs to my men, my lord. They're the ones who bled.\"",
+          "tooltip": "High loyalty gain. Shows you value them.",
+          "resultTextId": "mi_ret_recognition_credit_men_result",
+          "resultText": "Your men exchange glances. You just gave them the glory. They'll remember this. Your lord smiles slightly—good leadership.",
+          "risk": "safe",
+          "effects": {
+            "lordRep": 5,
+            "retinueLoyalty": 15,
+            "soldierRep": 12,
+            "skillXp": {
+              "Leadership": 15
+            }
+          }
+        },
+        {
+          "id": "boast",
+          "textId": "mi_ret_recognition_boast",
+          "text": "\"We held because I trained them well, my lord.\"",
+          "tooltip": "Arrogant. Loyalty loss, lord disapproval.",
+          "resultTextId": "mi_ret_recognition_boast_result",
+          "resultText": "Your lord's smile fades. Your men shift uncomfortably. You just took all the credit. That's not how you build loyalty.",
+          "risk": "safe",
+          "effects": {
+            "lordRep": -5,
+            "retinueLoyalty": -10,
+            "soldierRep": -8,
+            "traitXp": {
+              "Calculating": -5
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

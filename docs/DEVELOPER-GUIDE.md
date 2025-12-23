@@ -405,11 +405,12 @@ if (eb?.IsEnlisted == true)
   - **Gauntlet UI layout** lives in XML prefabs under `GUI/Prefabs/**.xml`
   - **Localized strings** live in `ModuleData/Languages/enlisted_strings.xml`
   - In code, prefer `TextObject("{=some_key}Fallback text")` and add the same key to `enlisted_strings.xml`
-  - **Dynamic dialogue**: For contextual text (like quartermaster responses), use XML strings with C# logic:
-    - Build string ID dynamically: `string id = $"qm_supply_{archetype}_{level}";`
-    - Load with safe wrapper: `GetLocalizedTextSafe(id, "fallback text")`
-    - Always provide fallback strings for missing IDs
-    - See `EnlistedDialogManager.cs` Phase 6 implementation for reference
+  - **Dynamic dialogue**: For contextual text (like quartermaster responses), use the data-driven JSON pattern with dynamic runtime evaluation (see Blueprint).
+    - Define dialogue variants in JSON with context requirements.
+    - Register multiple variants per node ID.
+    - Use condition delegates to evaluate context on every display turn.
+    - Always provide fallback strings for missing IDs in JSON.
+    - See `EnlistedDialogManager.cs` for reference.
 - **Gameplay/config data** remains JSON (`ModuleData/Enlisted/*.json`) unless there's a specific reason to use XML
 
 ### Development Practices

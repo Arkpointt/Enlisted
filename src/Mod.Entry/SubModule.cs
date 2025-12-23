@@ -347,6 +347,9 @@ namespace Enlisted.Mod.Entry
                     // Quartermaster UI: provides the grid-based equipment selection interface where players
                     // can view stats and select variants.
                     campaignStarter.AddBehavior(new QuartermasterEquipmentSelectorBehavior());
+                    
+                    // Quartermaster Provisions UI: visual grid for food item purchases (Phase 8).
+                    campaignStarter.AddBehavior(new QuartermasterProvisionsBehavior());
 
                     // Foundation for shared trigger vocabulary and minimal recent-history persistence.
                     campaignStarter.AddBehavior(new CampaignTriggerTrackerBehavior());

@@ -67,7 +67,7 @@
 																								<!-- Current quality display -->
 																								<Widget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="220" HorizontalAlignment="Left" MarginTop="75">
 																									<Children>
-																										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="SPGeneral.SmallText" Brush.FontSize="12" Text="{=qm_upgrade_current}Current:" />
+																										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="SPGeneral.SmallText" Brush.FontSize="12" Text="Current:" />
 																										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginLeft="65" Brush="SPGeneral.MediumText" Brush.FontSize="14" Brush.TextColor="@CurrentQualityColor" Text="@CurrentQualityText" />
 																									</Children>
 																								</Widget>
@@ -81,7 +81,7 @@
 																								<Widget IsVisible="@HasUpgrades" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren">
 																									<Children>
 																										<!-- Label -->
-																										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Left" Brush="SPGeneral.MediumText" Brush.FontSize="13" Text="{=qm_upgrade_available}Available Upgrades:" />
+																										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Left" Brush="SPGeneral.MediumText" Brush.FontSize="13" Text="Available Upgrades:" />
 																										
 																										<!-- List of upgrade tier options -->
 																										<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" DataSource="{UpgradeOptions}" StackLayout.LayoutMethod="HorizontalLeftToRight" MarginTop="30" MarginLeft="10">
@@ -104,7 +104,7 @@
 																																		<!-- Upgrade button -->
 																																		<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="35" SuggestedWidth="130" HorizontalAlignment="Center" VerticalAlignment="Bottom" Brush="ButtonBrush1" Command.Click="ExecuteUpgrade" IsEnabled="@IsEnabled">
 																																			<Children>
-																																				<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="13" Text="{=qm_upgrade_btn}Improve" />
+																																				<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="13" Text="Improve" />
 																																			</Children>
 																																		</ButtonWidget>
 																																	</Children>
@@ -156,7 +156,7 @@
 								<!-- Close button -->
 								<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="45" SuggestedWidth="150" HorizontalAlignment="Center" Brush="ButtonBrush1" Command.Click="ExecuteClose">
 									<Children>
-										<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="16" Text="{=str_done}Done" />
+										<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="16" Text="Done" />
 									</Children>
 								</ButtonWidget>
 							</Children>

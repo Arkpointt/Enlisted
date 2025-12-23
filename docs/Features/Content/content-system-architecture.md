@@ -3,7 +3,7 @@
 **Summary:** The unified content system manages all narrative content (events, decisions, orders, map incidents) through a centralized delivery pipeline. The system uses JSON content definitions, XML localization, requirement checking, and effect application to create dynamic player experiences that integrate with enlistment, reputation, and progression systems.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22 (Phase 6: Map Incidents + waiting_in_settlement implementation)  
+**Last Updated:** 2025-12-23  
 **Related Docs:** [Event Catalog](../../Content/event-catalog-by-system.md), [Training System](../Combat/training-system.md)
 
 ---
@@ -431,6 +431,16 @@ public bool MeetsRequirements(EventRequirements req)
 }
 ```
 
+**Retinue Effects (T7+ Commanders):**
+```json
+{
+  "retinueGain": 3,
+  "retinueLoss": 2,
+  "retinueWounded": 5,
+  "retinueLoyalty": 10
+}
+```
+
 **Special Effects:**
 ```json
 {
@@ -439,6 +449,50 @@ public bool MeetsRequirements(EventRequirements req)
   "unlocks_decision": "decision_advanced_training"
 }
 ```
+
+### Retinue Effects (T7+ Commanders)
+
+Special effects for managing the Commander's retinue:
+
+| Effect | Type | Target | When Used |
+|--------|------|--------|-----------|
+| `retinueGain` | int | Player's retinue | Add soldiers (volunteers, transfers, reinforcements) |
+| `retinueLoss` | int | Player's retinue | Remove soldiers (casualties, desertion) |
+| `retinueWounded` | int | Player's retinue | Wound soldiers (accidents, illness) |
+| `retinueLoyalty` | int | Loyalty track | Modify retinue morale (-100 to +100) |
+
+**Implementation:**
+
+Retinue effects operate on the player's personal retinue (T7+ commanders only):
+- Effects check `RetinueManager.Instance?.State?.HasRetinue` before applying
+- Modify `MobileParty.MainParty.MemberRoster` for actual soldiers
+- Update `RetinueState.TroopCounts` to maintain sync
+- Display contextual notifications for player feedback
+- Only affect retinue soldiers, not lord's troops or companions
+
+**Loyalty Tracking:**
+
+`retinueLoyalty` modifies the retinue's loyalty track (0-100):
+- Low loyalty (<30): Triggers grumbling events, performance warnings
+- High loyalty (>80): Triggers devotion events, combat bonuses
+- Appears in Daily Brief when notable
+- Used as gating condition for some events
+
+**Example Usage in Events:**
+
+```json
+{
+  "option_id": "share_rations",
+  "text": "Buy extra food and share with your men.",
+  "costs": { "gold": 30 },
+  "effects": {
+    "retinueLoyalty": 8,
+    "soldierRep": 5
+  }
+}
+```
+
+**See:** [Retinue System Documentation](../Core/retinue-system.md) for complete retinue mechanics.
 
 ### Risky Options
 
@@ -714,7 +768,9 @@ JSON files include fallback text for development:
 | `ModuleData/Enlisted/Events/incidents_village.json` | Map incidents: entering_village (6 incidents) |
 | `ModuleData/Enlisted/Events/incidents_leaving.json` | Map incidents: leaving_settlement (6 incidents) |
 | `ModuleData/Enlisted/Events/incidents_waiting.json` | Map incidents: waiting_in_settlement (4 incidents) |
-| `ModuleData/Enlisted/Decisions/decisions.json` | 34 Camp Hub decisions (dec_* prefix, inline menu) |
+| `ModuleData/Enlisted/Events/events_retinue.json` | Retinue narrative events (10) + post-battle volunteers (T7+) |
+| `ModuleData/Enlisted/Events/incidents_retinue.json` | Retinue post-battle incidents (6, T7+) |
+| `ModuleData/Enlisted/Decisions/decisions.json` | 38 Camp Hub decisions (dec_* prefix, inline menu) including 4 retinue decisions (T7+) |
 
 ### Localization
 

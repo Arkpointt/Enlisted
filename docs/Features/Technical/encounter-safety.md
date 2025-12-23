@@ -224,8 +224,8 @@ public static void EnableEncounters()
 - Ship assignment: `NavalBattleShipAssignmentPatch` provides five patches to prevent crashes:
 
   **Patch 1 - GetSuitablePlayerShip:** Intercepts before Naval DLC calls `MinBy` on empty ship collection:
-  - Tier 1-5: Always board lord's ship (soldiers don't command vessels)
-  - Tier 6+ with retinue AND ships: Can command own vessel (rare edge case)
+  - Tier 1-6: Always board lord's ship (soldiers don't command vessels)
+  - Tier 7+ with retinue AND ships: Can command own vessel (rare edge case)
   - Capacity-aware: Prefers ships that can fit player's party size, falls back to largest
   - Logs ship name, hull health, capacity, and fleet composition per battle
 

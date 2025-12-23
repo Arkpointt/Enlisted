@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Linq;
 using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Localization;
 
@@ -11,25 +14,41 @@ namespace Enlisted.Features.Retinue.Systems
 {
     /// <summary>
     /// Handles the free, slow replenishment of retinue soldiers via daily tick.
-    /// Every 2-3 days, adds one soldier to the player's retinue at no cost.
+    /// Uses context-aware rates based on battle outcomes, territory, and peace/war status.
+    /// 
+    /// Trickle Rates:
+    ///   Victory (within 3 days): 1 per 2 days (battle survivors join up)
+    ///   Defeat (within 5 days): 0 - BLOCKED (morale recovering)
+    ///   Friendly territory: 1 per 3 days (local levies assigned)
+    ///   On campaign (default): 1 per 4-5 days (transfers from rearguard)
+    ///   At peace (5+ days no battle): 1 per 2 days (training complete)
     /// 
     /// V2.0: Now requires Commander rank (T7+) for trickle to activate.
-    /// Recruits match player's formation and lord's culture.
-    /// Includes overfill protection for both tier capacity and party size limits.
+    /// V2.1: Context-aware trickle rates based on campaign state.
     /// </summary>
     public sealed class RetinueTrickleSystem : CampaignBehaviorBase
     {
         private const string LogCategory = "Trickle";
 
         // Configurable trickle parameters
-        private const int TrickleMinDays = 2;
-        private const int TrickleMaxDays = 3;
         private const int SoldiersPerTrickle = 1;
 
-        // Random interval for this session (set once per eligibility)
-        private int _currentTrickleInterval;
+        // Context-aware trickle intervals (in days)
+        private const int VictoryInterval = 2;       // Fast: battle survivors join
+        private const int PeaceInterval = 2;         // Fast: training complete
+        private const int FriendlyTerritoryInterval = 3;  // Medium: local levies
+        private const int CampaignInterval = 4;      // Slow: rearguard transfers
+        private const int DefeatBlockDays = 5;       // Blocked after defeat
+        private const int VictoryBonusDays = 3;      // Victory bonus window
+        private const int PeaceThresholdDays = 5;    // Days without battle for peace bonus
+
+        // Friendly territory search radius
+        private const float FriendlyTerritoryRadius = 30f;
 
         public static RetinueTrickleSystem Instance { get; private set; }
+
+        // Tracks the last trickle context for notification flavor
+        private TrickleContext _lastTrickleContext = TrickleContext.Default;
 
         public RetinueTrickleSystem()
         {
@@ -39,7 +58,78 @@ namespace Enlisted.Features.Retinue.Systems
         public override void RegisterEvents()
         {
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
-            ModLogger.Debug(LogCategory, "RetinueTrickleSystem registered for daily tick");
+            CampaignEvents.MapEventEnded.AddNonSerializedListener(this, OnMapEventEnded);
+            ModLogger.Debug(LogCategory, "RetinueTrickleSystem registered for daily tick and battle tracking");
+        }
+
+        /// <summary>
+        /// Tracks battle outcomes when map events (battles) end.
+        /// Updates RetinueState with last battle time and result.
+        /// </summary>
+        private void OnMapEventEnded(MapEvent mapEvent)
+        {
+            try
+            {
+                // Only track battles where the player participated
+                if (!mapEvent.IsPlayerMapEvent)
+                {
+                    return;
+                }
+
+                // Only track actual battles (not raids/sieges without combat)
+                if (mapEvent.EventType != MapEvent.BattleTypes.FieldBattle &&
+                    mapEvent.EventType != MapEvent.BattleTypes.Siege &&
+                    mapEvent.EventType != MapEvent.BattleTypes.SallyOut)
+                {
+                    return;
+                }
+
+                var state = RetinueManager.Instance?.State;
+                if (state == null)
+                {
+                    return;
+                }
+
+                // Record battle outcome with granular handling (EC5)
+                state.LastBattleTime = CampaignTime.Now;
+
+                // Determine outcome with withdrawal/draw detection
+                if (mapEvent.HasWinner)
+                {
+                    // Clear winner exists
+                    state.LastBattleWon = mapEvent.WinningSide == mapEvent.PlayerSide;
+                    state.LastBattleOutcome = state.LastBattleWon 
+                        ? Data.BattleOutcome.Victory 
+                        : Data.BattleOutcome.Defeat;
+                }
+                else
+                {
+                    // No winner - was it a withdrawal or a draw?
+                    // Check if player side took casualties - indicates a tactical withdrawal
+                    var playerSideEnum = mapEvent.PlayerSide;
+                    var playerSideData = mapEvent.GetMapEventSide(playerSideEnum);
+                    var playerCasualties = playerSideData?.TroopCasualties ?? 0;
+
+                    if (playerCasualties > 0)
+                    {
+                        // Took casualties without resolution = withdrawal
+                        state.LastBattleOutcome = Data.BattleOutcome.Withdrawal;
+                        state.LastBattleWon = false; // Treat as non-victory for legacy
+                    }
+                    else
+                    {
+                        // No casualties, no resolution = draw/standoff
+                        state.LastBattleOutcome = Data.BattleOutcome.Draw;
+                        state.LastBattleWon = false; // Treat as non-victory for legacy
+                    }
+                }
+
+                ModLogger.Info(LogCategory, $"Battle ended: {state.LastBattleOutcome}. Trickle rate will be adjusted.");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error tracking battle outcome", ex);
+            }
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -50,6 +140,7 @@ namespace Enlisted.Features.Retinue.Systems
 
         /// <summary>
         /// Daily tick handler - checks eligibility and potentially adds a soldier.
+        /// Uses context-aware trickle intervals based on battle outcomes and territory.
         /// </summary>
         private void OnDailyTick()
         {
@@ -72,20 +163,32 @@ namespace Enlisted.Features.Retinue.Systems
                     return;
                 }
 
-                // Increment days since last trickle
-                state.DaysSinceLastTrickle++;
+                // Get current trickle context and interval
+                var context = GetCurrentTrickleContext(state);
+                var interval = GetContextualInterval(context);
 
-                // Check if we've reached the trickle interval
-                if (state.DaysSinceLastTrickle < GetTrickleInterval())
+                // Check if trickle is blocked (after defeat)
+                if (context == TrickleContext.PostDefeat)
                 {
-                    ModLogger.Debug(LogCategory,
-                        $"Trickle waiting: day {state.DaysSinceLastTrickle}/{GetTrickleInterval()}");
+                    var resumeIn = DefeatBlockDays - (int)state.GetDaysSinceLastBattle();
+                    ModLogger.Debug(LogCategory, $"Trickle blocked: morale recovering, resumes in {resumeIn} days");
                     return;
                 }
 
-                // Reset counter and attempt to add a soldier
+                // Increment days since last trickle
+                state.DaysSinceLastTrickle++;
+
+                // Check if we've reached the contextual trickle interval
+                if (state.DaysSinceLastTrickle < interval)
+                {
+                    ModLogger.Debug(LogCategory,
+                        $"Trickle waiting: day {state.DaysSinceLastTrickle}/{interval} ({context})");
+                    return;
+                }
+
+                // Reset counter
                 state.DaysSinceLastTrickle = 0;
-                RollNewTrickleInterval();
+                _lastTrickleContext = context;
 
                 // Calculate safe add count with overfill protection
                 var safeCount = CalculateSafeAddCount(SoldiersPerTrickle);
@@ -103,10 +206,10 @@ namespace Enlisted.Features.Retinue.Systems
                     var tierCapacity = RetinueManager.GetTierCapacity(enlistment?.EnlistmentTier ?? RetinueManager.CommanderTier1);
 
                     ModLogger.Info(LogCategory,
-                        $"Trickle added {added} soldier ({currentCount}/{tierCapacity})");
+                        $"Trickle added {added} soldier ({currentCount}/{tierCapacity}) via {context}");
 
-                    // Show subtle notification to player
-                    ShowTrickleNotification();
+                    // Show contextual notification to player
+                    ShowTrickleNotification(context);
                 }
                 else
                 {
@@ -117,6 +220,189 @@ namespace Enlisted.Features.Retinue.Systems
             {
                 ModLogger.ErrorCode(LogCategory, "E-RETINUE-001", "Error in daily trickle tick", ex);
             }
+        }
+
+        /// <summary>
+        /// Determines the current trickle context based on battle history and location.
+        /// Priority: PostDefeat (blocked) > PostVictory (bonus) > FriendlyTerritory > Peace > Default
+        /// </summary>
+        private TrickleContext GetCurrentTrickleContext(Data.RetinueState state)
+        {
+            var daysSinceBattle = state.GetDaysSinceLastBattle();
+
+            // Check post-battle states first (highest priority)
+            if (daysSinceBattle >= 0)
+            {
+                // Use granular outcome if available (EC5), fall back to LastBattleWon for legacy saves
+                var outcome = state.LastBattleOutcome;
+
+                // Handle each outcome type with appropriate time window
+                switch (outcome)
+                {
+                    case Data.BattleOutcome.Defeat:
+                        // Post-defeat: blocked for 5 days
+                        if (daysSinceBattle < DefeatBlockDays)
+                        {
+                            return TrickleContext.PostDefeat;
+                        }
+                        break;
+
+                    case Data.BattleOutcome.Victory:
+                        // Post-victory: bonus rate for 3 days
+                        if (daysSinceBattle < VictoryBonusDays)
+                        {
+                            return TrickleContext.PostVictory;
+                        }
+                        break;
+
+                    case Data.BattleOutcome.Withdrawal:
+                        // Withdrawal: no bonus, no penalty - uses default rate for 3 days
+                        if (daysSinceBattle < VictoryBonusDays)
+                        {
+                            return TrickleContext.PostWithdrawal;
+                        }
+                        break;
+
+                    case Data.BattleOutcome.Draw:
+                        // Draw: slight bonus for 3 days (treated like friendly territory)
+                        if (daysSinceBattle < VictoryBonusDays)
+                        {
+                            return TrickleContext.PostDraw;
+                        }
+                        break;
+
+                    case Data.BattleOutcome.Unknown:
+                    default:
+                        // Fall back to legacy LastBattleWon check
+                        if (!state.LastBattleWon && daysSinceBattle < DefeatBlockDays)
+                        {
+                            return TrickleContext.PostDefeat;
+                        }
+                        if (state.LastBattleWon && daysSinceBattle < VictoryBonusDays)
+                        {
+                            return TrickleContext.PostVictory;
+                        }
+                        break;
+                }
+
+                // Long peace (5+ days without battle): training complete
+                if (daysSinceBattle >= PeaceThresholdDays)
+                {
+                    return TrickleContext.Peace;
+                }
+            }
+            else
+            {
+                // No battle tracked yet, treat as peace
+                return TrickleContext.Peace;
+            }
+
+            // Check territory
+            if (IsInFriendlyTerritory())
+            {
+                return TrickleContext.FriendlyTerritory;
+            }
+
+            // Default: on campaign
+            return TrickleContext.Default;
+        }
+
+        /// <summary>
+        /// Gets the trickle interval in days for a given context.
+        /// </summary>
+        private static int GetContextualInterval(TrickleContext context)
+        {
+            return context switch
+            {
+                TrickleContext.PostVictory => VictoryInterval,        // 2 days
+                TrickleContext.Peace => PeaceInterval,                 // 2 days
+                TrickleContext.FriendlyTerritory => FriendlyTerritoryInterval, // 3 days
+                TrickleContext.PostDraw => FriendlyTerritoryInterval,  // 3 days (slight bonus)
+                TrickleContext.PostWithdrawal => CampaignInterval,     // 4 days (neutral, no bonus/penalty)
+                TrickleContext.PostDefeat => int.MaxValue,             // Blocked
+                _ => CampaignInterval                                   // 4 days
+            };
+        }
+
+        /// <summary>
+        /// Checks if the lord's party is in or near a friendly settlement (same faction).
+        /// A settlement is friendly if its owner is in the same kingdom as the lord's faction.
+        /// </summary>
+        public static bool IsInFriendlyTerritory()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lordParty = enlistment?.EnlistedLord?.PartyBelongedTo;
+            if (lordParty == null)
+            {
+                return false;
+            }
+
+            // Check if currently in a friendly settlement
+            var currentSettlement = lordParty.CurrentSettlement;
+            if (currentSettlement != null)
+            {
+                var isFriendly = currentSettlement.MapFaction == lordParty.MapFaction ||
+                                 (currentSettlement.OwnerClan?.Kingdom == lordParty.MapFaction as Kingdom);
+                if (isFriendly)
+                {
+                    return true;
+                }
+            }
+
+            // Check if we're near friendly territory by examining the closest settlement
+            // Using SettlementHelper to find settlements around the party
+            var searchData = Settlement.StartFindingLocatablesAroundPosition(
+                lordParty.Position.ToVec2(), FriendlyTerritoryRadius);
+
+            for (var settlement = Settlement.FindNextLocatable(ref searchData);
+                 settlement != null;
+                 settlement = Settlement.FindNextLocatable(ref searchData))
+            {
+                // Check if this settlement belongs to our faction
+                if (settlement.MapFaction == lordParty.MapFaction ||
+                    (settlement.OwnerClan?.Kingdom == lordParty.MapFaction as Kingdom))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Gets information about the current trickle rate for UI display.
+        /// </summary>
+        /// <returns>Tuple of (context description, days until next recruit, is blocked)</returns>
+        public static (string ContextDescription, int DaysUntilNext, bool IsBlocked) GetTrickleStatusInfo()
+        {
+            var manager = RetinueManager.Instance;
+            var state = manager?.State;
+            if (state == null || !state.HasTypeSelected)
+            {
+                return ("No retinue", -1, true);
+            }
+
+            var context = Instance?.GetCurrentTrickleContext(state) ?? TrickleContext.Default;
+            var interval = GetContextualInterval(context);
+
+            if (context == TrickleContext.PostDefeat)
+            {
+                var resumeIn = DefeatBlockDays - (int)state.GetDaysSinceLastBattle();
+                return ("Morale recovering", resumeIn, true);
+            }
+
+            var daysUntilNext = Math.Max(0, interval - state.DaysSinceLastTrickle);
+            var desc = context switch
+            {
+                TrickleContext.PostVictory => "Victory bonus",
+                TrickleContext.PostDraw => "Standoff recovery",
+                TrickleContext.PostWithdrawal => "Regrouping",
+                TrickleContext.Peace => "Training complete",
+                TrickleContext.FriendlyTerritory => "Friendly territory",
+                _ => "On campaign"
+            };
+
+            return (desc, daysUntilNext, false);
         }
 
         /// <summary>
@@ -233,35 +519,48 @@ namespace Enlisted.Features.Retinue.Systems
         }
 
         /// <summary>
-        /// Gets the current trickle interval in days. Rolls a new interval if not set.
+        /// Shows a contextual notification when a soldier is added via trickle.
+        /// Message varies based on how the soldier was acquired.
         /// </summary>
-        private int GetTrickleInterval()
+        private static void ShowTrickleNotification(TrickleContext context)
         {
-            if (_currentTrickleInterval < TrickleMinDays)
+            TextObject msg = context switch
             {
-                RollNewTrickleInterval();
-            }
-            return _currentTrickleInterval;
-        }
+                TrickleContext.PostVictory => new TextObject("{=ct_trickle_battle_survivor}A survivor from the battle has joined your retinue."),
+                TrickleContext.FriendlyTerritory => new TextObject("{=ct_trickle_local_levy}A local levy has been assigned to your command."),
+                TrickleContext.Peace => new TextObject("{=ct_trickle_training_complete}A recruit has completed training and joined your retinue."),
+                _ => new TextObject("{=ct_trickle_transfer}A soldier from the rearguard has been transferred to your retinue.")
+            };
 
-        /// <summary>
-        /// Rolls a new random trickle interval between min and max days.
-        /// </summary>
-        private void RollNewTrickleInterval()
-        {
-            // MBRandom is Bannerlord's random generator, thread-safe and seeded appropriately
-            _currentTrickleInterval = MBRandom.RandomInt(TrickleMinDays, TrickleMaxDays + 1);
-            ModLogger.Debug(LogCategory, $"New trickle interval: {_currentTrickleInterval} days");
-        }
-
-        /// <summary>
-        /// Shows a subtle notification when a soldier is added via trickle.
-        /// </summary>
-        private static void ShowTrickleNotification()
-        {
-            var msg = new TextObject("{=ct_trickle_added}A new soldier has reported for duty.");
             MBInformationManager.AddQuickInformation(msg, soundEventPath: "event:/ui/notification/quest_update");
         }
+    }
+
+    /// <summary>
+    /// Represents the current campaign context for determining trickle rates.
+    /// </summary>
+    public enum TrickleContext
+    {
+        /// <summary>Default on-campaign rate (1 per 4 days).</summary>
+        Default,
+
+        /// <summary>Victory within 3 days grants faster replenishment (1 per 2 days).</summary>
+        PostVictory,
+
+        /// <summary>Defeat within 5 days blocks replenishment entirely.</summary>
+        PostDefeat,
+
+        /// <summary>Withdrawal within 3 days - no bonus, no penalty (default rate).</summary>
+        PostWithdrawal,
+
+        /// <summary>Draw within 3 days grants slight bonus (1 per 3 days).</summary>
+        PostDraw,
+
+        /// <summary>Near friendly settlement grants medium rate (1 per 3 days).</summary>
+        FriendlyTerritory,
+
+        /// <summary>5+ days without battle grants peace bonus (1 per 2 days).</summary>
+        Peace
     }
 }
 

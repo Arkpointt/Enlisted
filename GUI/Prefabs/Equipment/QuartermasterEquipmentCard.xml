@@ -1,7 +1,8 @@
 <Prefab>
 	<Window>
 		<!-- Equipment Card - Modern layout with stats below image -->
-		<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="185" SuggestedHeight="340" MarginTop="10" MarginLeft="10" Tooltip="@TooltipText">
+		<!-- Phase 7: Grey out unavailable items with Alpha modifier -->
+		<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="185" SuggestedHeight="340" MarginTop="10" MarginLeft="10" Tooltip="@TooltipText" AlphaFactor="@CardAlpha">
 			<Children>
 				<!-- Card background with subtle border -->
 				<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element">
@@ -32,6 +33,9 @@
 								
 								<!-- Cost Display (prominent) -->
 								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="150" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Text="@CostText"/>
+								
+								<!-- Quantity Available Display (Phase 7) -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="170" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextHorizontalAlignment="Center" Text="@QuantityText" IsVisible="@ShowQuantity"/>
 								
 								<!-- Primary Stats (armor/damage values) -->
 								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="180" MarginLeft="4" MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="12" Brush.TextHorizontalAlignment="Center" Text="@PrimaryStats"/>

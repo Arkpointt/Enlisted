@@ -1,10 +1,10 @@
 # Enlistment System
 
-**Summary:** The enlistment system manages how players join a lord's service, progress through ranks (T1-T9), and eventually leave through discharge or desertion. This document covers the deep-dive technical details of enlistment mechanics, muster cycles, discharge types, and re-entry as a reservist.
+**Summary:** The enlistment system manages how players join a lord's service, progress through 9 military ranks (T1-T9), and leave through discharge or desertion. Covers deep technical details of enlistment mechanics, invisible party management, XP progression, wage calculation, baggage handling, grace periods, and service records for re-enlistment.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22  
-**Related Docs:** [Core Gameplay](core-gameplay.md), [Onboarding & Discharge](onboarding-discharge-system.md), [Pay System](pay-system.md)
+**Last Updated:** 2025-12-23  
+**Related Docs:** [Core Gameplay](core-gameplay.md), [Onboarding & Discharge](onboarding-discharge-system.md), [Pay System](pay-system.md), [Promotion System](promotion-system.md)
 
 > **Note:** For high-level gameplay overview, see `core-gameplay.md`. This document provides technical implementation details.
 
@@ -16,20 +16,20 @@
 - [Purpose](#purpose)
 - [Inputs/Outputs](#inputsoutputs)
 - [Behavior](#behavior)
-- [Discharge & Final Muster (Pending Discharge Flow)](#discharge--final-muster-pending-discharge-flow)
+- [Discharge & Final Muster](#discharge--final-muster)
 - [Re-entry & Reservist System](#re-entry--reservist-system)
+- [Experience Tracks & Starting Tier](#experience-tracks--starting-tier)
 - [Technical Implementation](#technical-implementation)
 - [Edge Cases](#edge-cases)
 - [Acceptance Criteria](#acceptance-criteria)
-- [Debugging](#debugging)
 
 ---
 
 ## Overview
-Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and advance through a rank-based progression system (T1-T9). The experience is driven by orders from the chain of command and emergent identity through traits and reputation.
+Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and advance through a 9-tier rank progression system (T1-T9). The player's party becomes invisible on the map while escorting the lord's party. Military progression is driven by orders from the chain of command, battle participation, and reputation with Lords, Officers, and Soldiers.
 
 ## Purpose
-Provide the foundation for military service: enlist with a lord, follow their movements, participate in battles, progress through tiers, and earn wages via the muster ledger. Progression is gated by orders and proving events, and the player's identity is defined by their reputation with the Lord, Officers, and Soldiers.
+Provide the foundation for military service: enlist with a lord, follow their movements automatically, participate in battles, progress through 9 tiers, and earn wages paid every ~12 days at muster. Promotion is gated by multi-factor requirements (XP, days in rank, battles, reputation, discipline). Re-enlistment benefits depend on discharge type (veteran/honorable/washout/dishonorable/deserter/grace).
 
 ## Inputs/Outputs
 
@@ -63,49 +63,66 @@ Related systems (shipping):
 4. Player confirms -> Immediate enlistment with safety measures
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
-7. **Cross-Faction Baggage Check**: If player has belongings stored with a different faction, they're prompted to handle them before proceeding:
+7. **First-Enlistment Bag Check** (T1-T6 only, fires once per career):
+   - Deferred **1 hour** after enlistment; fires as native map incident (fallback: inquiry prompt).
+   - **Stow it all (50g)**: Stashes all inventory + equipped items into baggage train.
+   - **Sell it all (60%)**: Liquidates inventory + equipped items at 60% value.
+   - **I'm keeping one thing (Roguery 30+)**: Smuggle check; if failed, item confiscated.
+   - Baggage is tagged with current faction ID for cross-faction tracking.
+   - Skipped at T7+ (commanders have baggage authority).
+8. **Cross-Faction Baggage Transfer**: If player has baggage stored with a different faction, prompted before enlistment:
    - **Send a courier (50g + 5% of value)**: Items arrive in 3 days, posted to personal news feed.
-   - **Sell remotely (40%)**: Immediate gold at reduced rate.
+   - **Sell remotely (40%)**: Immediate gold at reduced rate (worse than in-person sale).
    - **Abandon**: Items lost forever.
-8. Bag check is deferred **1 in-game hour** after enlistment and fires as a native map incident. It only triggers when safe and falls back to the inquiry prompt.
-   - **Stow it all (50g)**: stashes all inventory + equipped items into the baggage train.
-   - **Sell it all (60%)**: liquidates inventory + equipped items at **60%**.
-   - **I'm keeping one thing (Roguery 30+)**: attempts to keep a single item.
-   - Baggage is tagged with the current faction for cross-faction tracking.
+   - **Grace period exception**: Re-enlisting within same kingdom during grace period skips this prompt.
 9. **Minor factions only:** Mirror the lord faction's current wars to the player clan.
 10. **Onboarding Events**: New enlistees receive introductory events based on their experience track (green/seasoned/veteran). Events fire in stages (1→2→3→complete) and certain options advance the stage.
 
 **Daily Service:**
-- Follow enlisted lord's army movements.
+- Follow enlisted lord's party movements automatically (invisible escort AI).
 - **Strategic Context Awareness**: Experience changes based on faction position (Desperate to Offensive) and 8 distinct strategic contexts (e.g., Grand Campaign, Winter Camp).
-- Receive **Orders** every 3-5 days from the chain of command (config-driven timing), filtered by strategic tags to match the current situation.
-- Manage **Company Needs** through choices and activities in the Camp menu, with predictions for upcoming requirements.
-- Participate in battles when lord fights.
-- Accrue daily wages into the muster ledger; periodic pay muster incident handles payouts.
-- Earn XP: +25 daily, +25 per battle, +1 per enemy killed.
+- Receive **Orders** every 3-5 days from the chain of command (configurable: `event_window_min_days: 3`, `event_window_max_days: 5`), filtered by strategic tags.
+- Manage **Company Needs** (Readiness, Morale, Supplies, Equipment, Rest) through choices and activities.
+- Participate in battles when lord fights; battle XP awarded once per battle.
+- Wages accrue daily into muster ledger; paid every ~12 days.
+- **XP Sources**: +25 daily base, +25 per battle, +2 per enemy killed (from `progression_config.json`).
 
 **Wage Breakdown (muster ledger):**
-- Soldier's Pay: Base wage from config (default 10)
-- Combat Exp: +1 per player level
-- Rank Pay: +5 per tier
-- Service Seniority: +1 per 200 XP accumulated
-- Army/Campaign Bonus: +20% when lord is in army
-- Order Multipliers: Completion of high-priority orders can grant bonuses.
-- Probation Multiplier: Applied if on probation (reduces wage).
-- Wages accrue daily into `_pendingMusterPay`; paid out at pay muster (~12 days).
 
-**Tier Progression:**
-Rank progression is gated by proving events and meeting service requirements (XP, reputation, time in rank).
+Wages accrue daily and are paid every ~12 days (configurable: `payday_interval_days: 12`).
 
-| Tier | XP Required | Title (Empire Example) | Authority |
-|------|-------------|------------------------|-----------|
-| 1 | 0 | Tiro | Raw Recruit |
-| 2 | 800 | Miles | Formation Choice |
-| 3 | 3,000 | Immunes | Specialist Roles |
-| 4 | 6,000 | Principalis | Squad Command (5) |
-| 5 | 11,000 | Evocatus | NCO Leadership |
-| 6 | 19,000 | Centurion | Officer Command |
-| 7-9 | 30k+ | Strategic Ranks | Strategic Command |
+**Formula** (from `enlisted_config.json` → `wage_formula`):
+```
+Base = 10
++ (Player Level × 1)
++ (Tier × 5)
++ (Total XP ÷ 200)
+× Army Bonus (1.2 if lord is in an army)
+× Duty Multiplier (0.8-1.6 based on selected duty)
+× Probation Multiplier (0.5 if on probation)
+```
+
+**Example**: T3 soldier (level 15, 4000 XP) in an army = (10 + 15 + 15 + 20) × 1.2 = 72 gold/day
+
+**Duty Multipliers** (from `progression_config.json`):
+- Grunt Work: 0.8 | Guard Duty: 0.9 | Scout: 1.1 | Surgeon: 1.3 | Engineer: 1.4 | Sergeant: 1.5 | Strategist: 1.6
+
+Wages accrue daily; paid at muster. If pay is late, Pay Tension rises and triggers corruption/desertion events.
+
+**Tier Progression (T1-T9):**
+Rank progression is gated by multi-factor requirements: XP threshold, days in rank, battles survived, reputation levels, and discipline score.
+
+| Tier | XP Required | Generic Title | Empire Title | Authority & Benefits |
+|------|-------------|---------------|--------------|----------------------|
+| T1 | 0 | Follower | Tiro | Raw recruit; issued T1 gear |
+| T2 | 800 | Recruit | Miles | Formation selection unlock |
+| T3 | 3,000 | Free Sword | Immunes | Specialist roles; T3 gear |
+| T4 | 6,000 | Veteran | Principalis | Squad leadership |
+| T5 | 11,000 | Blade | Evocatus | Officer track; T5 gear |
+| T6 | 19,000 | Chosen | Centurion | Senior NCO; T6 gear |
+| T7 | 30,000 | Captain | Primus Pilus | Commander track; Retinue (20 troops) |
+| T8 | 45,000 | Commander | Tribune | Mid commander; Retinue (30 troops) |
+| T9 | 65,000 | Marshal | Legate | Senior commander; Retinue (40 troops) |
 
 **Culture-Specific Ranks:**
 Rank names are determined by the enlisted lord's culture:
@@ -123,58 +140,205 @@ Identity is tracked via three reputation scales (-50 to +100):
 **Orders System:**
 Instead of passive assignments, players receive explicit orders:
 - **T1-T3**: Group tasks and basic duties (Scouting, Guarding).
-- **T4-T6**: Tactical missions and squad leadership.
-- **T7-T9**: Strategic directives from the Lord.
+- **T4-T6**: Tactical missions and advanced responsibilities.
+- **T7-T9**: Strategic directives and command authority.
 Success improves reputation and company needs; failure or declining orders carries heavy penalties.
 
-**Promotion Requirements (T2+):**
-- XP threshold (varies by tier)
-- Days in rank (minimum service time)
-- Orders completed
-- Battles survived
-- Reputation (minimum threshold for Lord/Officer/Soldier)
-- Discipline (not too high)
+**Promotion Requirements:**
+
+Each promotion requires meeting ALL of the following:
+
+| Promotion | XP Req | Days in Rank | Battles | Soldier Rep | Leader Rel | Max Discipline |
+|-----------|--------|--------------|---------|-------------|------------|----------------|
+| T1→T2 | 800 | 14 | 2 | ≥0 | ≥0 | <8 |
+| T2→T3 | 3,000 | 35 | 6 | ≥10 | ≥10 | <7 |
+| T3→T4 | 6,000 | 56 | 12 | ≥20 | ≥20 | <6 |
+| T4→T5 | 11,000 | 56 | 20 | ≥30 | ≥30 | <5 |
+| T5→T6 | 19,000 | 56 | 30 | ≥40 | ≥15 | <4 |
+| T6→T7 | 30,000 | 70 | 40 | ≥50 | ≥20 | <3 |
+| T7→T8 | 45,000 | 84 | 50 | ≥60 | ≥25 | <2 |
+| T8→T9 | 65,000 | 112 | 60 | ≥70 | ≥30 | <1 |
+
+**Note:** If you decline a promotion when offered, you must request it manually from your NCO via dialog.
 
 **Service Monitoring:**
 - Continuous checking of lord status (alive, army membership, etc.)
 - 14-day grace period if lord dies, is captured, or army defeated.
 - The player clan stays inside the kingdom throughout the grace window.
 
-**Service Transfer (Leave/Grace):**
-- While on leave or in grace period, player can talk to other lords in the same faction to transfer service.
-- Transfer preserves all progression (tier, XP, reputation, kills).
+**Grace Period (Lord Death/Capture):**
 
-## Discharge & Final Muster (Pending Discharge Flow)
+When the enlisted lord dies or is captured, a **14-day grace period** begins (configurable: `desertion_grace_period_days: 14`).
 
-- Managed discharge is requested from the **Camp** menu.
-- Selecting "Request Discharge" sets `IsPendingDischarge = true`; resolves at the next pay muster.
-- Discharge rewards scale by service length (Washout <100, Honorable 100-199, Veteran/Heroic 200+).
-- **Washout**: -10 lord / -10 officer rep; no pension; gear stripped; probation on re-entry.
-- **Honorable**: +10 lord / +5 officer rep; severance gold; pension; keep armor, return weapons.
-- **Veteran/Heroic**: +30 lord / +15 officer rep; larger severance/pension; keep armor.
-- **Smuggle**: Deserter path; keep all gear; crime rating gain; reputation hit.
+**Triggers:**
+- Lord killed in battle
+- Lord captured by enemy
+- Army defeated and lord taken prisoner
+
+**During Grace Period:**
+- Player leaves kingdom but all progression is preserved (tier, XP, reputation, troop selection)
+- Can re-enlist with any lord in the same kingdom to resume service seamlessly
+- No relationship penalties
+- Kingdom membership is NOT lost during the 14 days
+
+**Grace Period Options:**
+1. **Transfer Service**: Talk to another lord in same kingdom → full tier/XP/reputation preservation, no discharge recorded
+2. **Leave Voluntarily**: Request discharge → "Grace" band (100% rep restoration on return, no cooldown)
+3. **Wait Out Grace**: If 14 days expire without re-enlisting → automatic deserter discharge (-30 relation, +30 crime, 90-day block)
+
+**Grace Period Transfer vs. Normal Transfer:**
+- **Grace Transfer**: Preserves exact tier, XP, and reputation (not player's fault lord died)
+- **Leave Transfer**: Standard leave mechanics, must manually request from Camp menu
+
+## Discharge & Final Muster
+
+Managed discharge is requested from the Camp menu or via dialog with the lord. Six discharge bands determine re-enlistment outcomes:
+
+| Discharge Band | Trigger | Cooldown | Relation Changes | Re-Entry Effects |
+|----------------|---------|----------|------------------|------------------|
+| **Veteran** | 200+ days, T4+ | 0 days | +30 lord, +15 faction | Start T4, +1000 XP, 75% rep restore |
+| **Honorable** | 100-199 days, neutral+ | 0 days | +10 lord, +5 faction | Start T3, +500 XP, 50% rep restore |
+| **Washout** | <100 days OR negative rep | 30 days | -10 all | Start T1, probation |
+| **Dishonorable** | Discipline = 10 (kicked out) | 90 days | -20 all | Start T1, probation, scrutiny |
+| **Deserter** | Abandoned service | 90 days | -30 all, +30 crime | Start T1, probation, criminal |
+| **Grace** | Lord died/captured | 0 days | None | Full restoration (100% rep) |
+
+**Severance & Pension** (from `enlisted_config.json` → `retirement`):
+- **Honorable**: 3,000g severance + 50g/day pension
+- **Veteran**: 10,000g severance + 100g/day pension
+- Pension continues until lord relation drops below 0
 
 ## Re-entry & Reservist System
 
-- **Washout/Deserter**: Start at Tier 1, probation status (reduced wage, fatigue cap).
-- **Honorable**: Start at Tier 3, XP bonus, reputation bonus.
-- **Veteran/Heroic**: Start at Tier 4, larger XP/reputation bonuses.
+**Re-Enlistment Blocks:**
+- **Washout**: 30-day block
+- **Dishonorable/Deserter**: 90-day block
+- **Honorable/Veteran/Grace**: No block (immediate re-entry)
+
+**Reservist Benefits** (only applies when re-enlisting with same faction):
+
+| Prior Discharge | Starting Tier | Bonus XP | Reputation Restore |
+|----------------|---------------|----------|-------------------|
+| Veteran | T4 | +1,000 | 75% (3/4 of saved) |
+| Honorable | T3 | +500 | 50% (1/2 of saved) |
+| Grace | Preserved tier | Half XP | 100% (full restore) |
+| Washout/Dishonorable/Deserter | T1 | 0 | 0% |
+
+**Probation Status** (bad discharges):
+- Duration: 12 days (configurable: `probation_days`)
+- Wage: 50% penalty (`probation_wage_multiplier: 0.5`)
+- Fatigue Cap: Reduced to 18/24 (`probation_fatigue_cap: 18`)
+
+## Experience Tracks & Starting Tier
+
+The starting tier for a new enlistment is determined by player level (experience track) and prior service history:
+
+**Experience Tracks** (from `ExperienceTrackHelper.cs`):
+
+| Track | Player Level | Base Tier | Training XP Modifier |
+|-------|--------------|-----------|---------------------|
+| Green | 1-9 | T1 | +20% (learns quickly) |
+| Seasoned | 10-20 | T2 | Normal (1.0×) |
+| Veteran | 21+ | T3 | -10% (diminishing returns) |
+
+**Starting Tier Calculation:**
+1. **Base Tier**: Determined by experience track (T1-T3)
+2. **Faction History Bonus**: If returning to same faction with good service → `HighestTier - 2` (capped at T3)
+3. **Reservist Bonus**: If veteran/honorable discharge → T3/T4 (overrides faction bonus)
+4. **Bad Discharge Penalty**: Washout/dishonorable/deserter → T1 (probation), no faction bonus
+
+**Example Calculations:**
+```
+Level 25 Player, First Enlistment:
+  Track: Veteran → Base: T3 → Final: T3
+
+Level 15 Player, Returning (Reached T5, Honorable Discharge):
+  Track: Seasoned → Base: T2 → Reservist: T3 → Final: T3
+
+Level 30 Player, Returning (Reached T6, Veteran Discharge):
+  Track: Veteran → Base: T3 → Reservist: T4 → Final: T4
+
+Level 10 Player, Returning (Deserter):
+  Track: Seasoned → Base: T2 → Bad Discharge: T1 → Final: T1 (probation)
+```
 
 ## Technical Implementation
 
-- **EnlistmentBehavior.cs**: Core service state and lord tracking.
-- **OrderManager.cs**: Selection and execution of missions.
-- **EscalationManager.cs**: Tracking of Lord, Officer, and Soldier reputation.
-- **EnlistedMenuBehavior.cs**: Native Game Menu implementation for all status and camp functions.
-- **CompanyNeedsManager.cs**: Tracking of company-wide needs (Readiness, Morale, etc.).
+**Core Files:**
+- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`: Core service state, lord tracking, party following, bag check, grace period
+- `src/Features/Ranks/Behaviors/PromotionBehavior.cs`: Multi-factor promotion requirements, proving events
+- `src/Features/Orders/Behaviors/OrderManager.cs`: Chain of command orders, pacing, rewards
+- `src/Features/Escalation/EscalationManager.cs`: Triple reputation system (Lord, Officer, Soldier), discipline, scrutiny
+- `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`: Native game menu implementation (Camp Hub, Reports)
+- `src/Features/Company/CompanyNeedsManager.cs`: Company needs simulation (Readiness, Morale, Supplies, Equipment, Rest)
+- `src/Features/Retinue/Core/ServiceRecordManager.cs`: Per-faction service records, discharge bands, reservist bonuses
+- `src/Features/Content/ExperienceTrackHelper.cs`: Experience track calculation, starting tier logic
+
+**Configuration Files:**
+- `ModuleData/Enlisted/enlisted_config.json`: Core gameplay config (grace period, wages, pacing, probation)
+- `ModuleData/Enlisted/progression_config.json`: Tier XP thresholds, culture-specific ranks, promotion benefits
+- `ModuleData/Enlisted/Orders/*.json`: Order definitions (17 total orders across T1-T9)
+- `ModuleData/Languages/enlisted_strings.xml`: All localized strings
 
 ## Edge Cases
-(Standard edge cases for enlistment system)
+
+**Army Leadership:**
+- Player leading an army cannot enlist (dialog blocks with explanation)
+- Must disband army first via kingdom menu
+
+**Cross-Faction Enlistment:**
+- Switching factions triggers baggage transfer prompt (unless grace period same-kingdom)
+- Bad discharge blocks from same faction for 30-90 days
+
+**Grace Period Edge Cases:**
+- Courier baggage arrival during grace period: deferred until re-enlistment
+- Player captured during grace period: grace timer continues
+- Grace expires during player captivity: deserter penalties applied on release
+
+**Promotion Edge Cases:**
+- Declining a promotion requires manual request from NCO to receive it later
+- High discipline (≥8) temporarily blocks promotion until decay reduces it
+- Missing promotion requirements: tooltip shows exact blockers
+
+**Baggage Edge Cases:**
+- Bag check fires 1 hour after enlistment (never blocks enlistment flow)
+- T7+ commanders skip bag check entirely (assumed baggage authority)
+- Smuggle attempt failed: item confiscated, no reputation penalty (expected risk)
 
 ## Acceptance Criteria
-- [x] Can enlist with any lord that accepts player.
-- [x] Orders issue correctly based on rank and role.
-- [x] Reputation changes apply based on order outcomes.
-- [x] Native Game Menu displays all relevant status info.
-- [x] Discharge and Re-entry flows function as intended.
-- [x] Company Needs affect gameplay (e.g., equipment access).
+
+**Enlistment:**
+- [x] Player can enlist with any lord (kingdom or minor faction)
+- [x] Player party becomes invisible and follows lord automatically
+- [x] Bag check fires 1 hour after enlistment (T1-T6 only)
+- [x] Cross-faction baggage transfer prompt works correctly
+- [x] Army leaders blocked from enlisting until army disbanded
+
+**Progression:**
+- [x] XP awarded correctly: +25 daily, +25 battle, +2 per kill
+- [x] Promotion requirements enforced (XP, days, battles, rep, discipline)
+- [x] All 9 tiers (T1-T9) achievable with correct XP thresholds
+- [x] Culture-specific rank names display correctly
+
+**Wages:**
+- [x] Wages accrue daily using correct formula (base + level + tier + XP/200 × modifiers)
+- [x] Payday occurs every ~12 days
+- [x] Duty multipliers apply correctly (0.8-1.6)
+- [x] Probation reduces wage by 50%
+
+**Discharge:**
+- [x] All 6 discharge bands function correctly (veteran/honorable/washout/dishonorable/deserter/grace)
+- [x] Re-enlistment blocks enforced (30/90 days for bad discharges)
+- [x] Severance and pension paid for veteran/honorable
+- [x] Reputation snapshots saved and restored correctly
+
+**Grace Period:**
+- [x] 14-day grace period triggers on lord death/capture
+- [x] Player can transfer within same kingdom without penalties
+- [x] Grace expiration triggers deserter discharge
+- [x] 100% reputation restoration on grace discharge
+
+**Service Records:**
+- [x] Per-faction records track days, battles, kills, tiers
+- [x] Reservist bonuses apply correctly on re-enlistment
+- [x] Experience tracks determine starting tier (green/seasoned/veteran)

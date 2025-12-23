@@ -34,15 +34,21 @@ Enlisted v0.9.0 uses a unified event delivery pipeline that is **Role-Based** an
 
 ## Event Packs
 
-Events are organized into packs based on roles and special contexts:
+Events are organized into packs by context and role:
 
-| Pack | Role / Context | Purpose |
+| Pack | Context / Role | Purpose |
 |------|----------------|---------|
-| `events_soldier.json` | General Soldier | Daily life, social interactions, random encounters. |
-| `events_scout.json` | Scout Role | Reconnaissance, tracking, intelligence gathering. |
-| `events_officer.json` | Officer Role | Leadership challenges, disciplinary actions, strategic choices. |
-| `events_medic.json` | Medic Role | Triage, treatment decisions, health management. |
-| `events_escalation.json` | High Scrutiny/Discipline | Crisis moments when reputation or discipline thresholds are crossed. |
+| `camp_events.json` | General Camp Life | Daily life, social interactions, gambling, storytelling. |
+| `events_general.json` | Universal Soldier | General enlisted experiences, muster, daily duties. |
+| `events_escalation_thresholds.json` | Crisis Triggers | Scrutiny, Discipline, and Medical threshold events. |
+| `events_onboarding.json` | First Enlistment | Guaranteed first-day experiences for new enlisted. |
+| `events_promotion.json` | Rank Progression | Promotion opportunities, proving events, leadership tests. |
+| `events_training.json` | Training Activities | Training-related events and progression. |
+| `events_retinue.json` | Commander (T7+) | Retinue management events for high-rank commanders. |
+| `events_duty_*.json` | Role-Specific | Duty events for scouts, medics, engineers, etc. (10 files). |
+| `events_pay_*.json` | Payment Context | Pay tension, loyalty, and mutiny events (3 files). |
+| `Role/scout_events.json` | Scout Role | Reconnaissance, tracking, intelligence gathering. |
+| `incidents_*.json` | Map Incidents | Battle, siege, town, village, leaving, waiting contexts (7 files). |
 
 ---
 
@@ -114,8 +120,26 @@ When an option is selected, effects are applied through centralized managers:
 
 | Path | Purpose |
 |------|---------|
-| `ModuleData/Enlisted/Events/*.json` | Event pack definitions. |
+| `ModuleData/Enlisted/Events/` | Event JSON definitions (loaded recursively). |
+| `ModuleData/Enlisted/Decisions/` | Player-initiated decision definitions. |
+| `ModuleData/Enlisted/Orders/` | Chain of command order definitions (3 files by tier). |
 | `ModuleData/Languages/enlisted_strings.xml` | Localized text and templates. |
-| `src/Features/Events/` | Role-based event routing and logic. |
-| `src/Features/Orders/` | The distinct Orders system (mission-driven directives). |
+| `src/Features/Content/` | Event system implementation (EventCatalog, EventDeliveryManager, etc.). |
+
+**Current Event Files:**
+- `camp_events.json` - General camp life events
+- `events_general.json` - Universal soldier events
+- `events_escalation_thresholds.json` - Escalation (Scrutiny/Discipline/Medical) threshold events
+- `events_onboarding.json` - First-enlistment guaranteed events
+- `events_promotion.json` - Promotion and proving events
+- `events_training.json` - Training-related events
+- `events_retinue.json` - Retinue events (T7+ commanders)
+- `events_duty_*.json` - Role-specific duty events (scout, medic, engineer, etc.)
+- `events_pay_*.json` - Pay-related events (tension, loyalty, mutiny)
+- `events_player_decisions.json` - Player-initiated events (legacy)
+- `incidents_*.json` - Map incident events (battle, siege, town, village, leaving, waiting, retinue)
+- `muster_events.json` - Muster and recruitment events
+- `Role/scout_events.json` - Scout role-specific events
+
+The EventCatalog loads all JSON files from Events/ and Decisions/ directories recursively at startup.
 

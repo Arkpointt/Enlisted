@@ -3,8 +3,10 @@ using Enlisted.Features.Context;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Identity;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Party;
 
 namespace Enlisted.Features.Content
 {
@@ -423,6 +425,7 @@ namespace Enlisted.Features.Content
         /// <summary>
         /// Checks if a trigger condition string is met.
         /// Supports flag: and has_flag: prefixes for flag checking.
+        /// Also supports custom retinue-related conditions.
         /// </summary>
         public static bool CheckTriggerCondition(string condition)
         {
@@ -445,8 +448,143 @@ namespace Enlisted.Features.Content
                 return EscalationManager.Instance?.State?.HasFlag(flagName) ?? false;
             }
 
-            // For other conditions, return true (handled elsewhere or not implemented yet)
-            return true;
+            // Check custom conditions
+            return CheckCustomCondition(condition);
+        }
+
+        /// <summary>
+        /// Checks custom requirement conditions for events.
+        /// Supports retinue-related conditions for post-battle events and loyalty-based events.
+        /// </summary>
+        private static bool CheckCustomCondition(string condition)
+        {
+            return condition.ToLowerInvariant() switch
+            {
+                "retinue_below_capacity" => CheckRetinueBelowCapacity(),
+                "last_battle_won" => CheckLastBattleWon(),
+                "has_retinue" => CheckHasRetinue(),
+                "retinue_loyalty_low" => CheckRetinueLoyaltyLow(),
+                "retinue_loyalty_high" => CheckRetinueLoyaltyHigh(),
+                "retinue_wounded" => CheckRetinueWounded(),
+                _ => true // Unknown conditions pass by default
+            };
+        }
+
+        /// <summary>
+        /// Checks if player's retinue is below tier capacity.
+        /// Used by post-battle reinforcement events.
+        /// </summary>
+        private static bool CheckRetinueBelowCapacity()
+        {
+            var manager = RetinueManager.Instance;
+            var enlistment = EnlistmentBehavior.Instance;
+            if (manager?.State == null || enlistment == null)
+            {
+                return false;
+            }
+
+            var capacity = RetinueManager.GetTierCapacity(enlistment.EnlistmentTier);
+            return manager.State.TotalSoldiers < capacity;
+        }
+
+        /// <summary>
+        /// Checks if player won their last battle.
+        /// Only returns true if a battle was fought within the last day.
+        /// </summary>
+        private static bool CheckLastBattleWon()
+        {
+            var state = RetinueManager.Instance?.State;
+            if (state == null)
+            {
+                return false;
+            }
+
+            // Must have fought recently (within 1 day) and won
+            var daysSinceBattle = state.GetDaysSinceLastBattle();
+            return daysSinceBattle is >= 0 and < 1 && state.LastBattleWon;
+        }
+
+        /// <summary>
+        /// Checks if the player has an active retinue with soldiers.
+        /// </summary>
+        private static bool CheckHasRetinue()
+        {
+            return RetinueManager.Instance?.State?.HasRetinue == true;
+        }
+
+        /// <summary>
+        /// Checks if retinue loyalty is low (below 30).
+        /// Used to trigger warning events about morale problems.
+        /// </summary>
+        private static bool CheckRetinueLoyaltyLow()
+        {
+            var state = RetinueManager.Instance?.State;
+            if (state == null || !state.HasRetinue)
+            {
+                return false;
+            }
+
+            return state.RetinueLoyalty < 30;
+        }
+
+        /// <summary>
+        /// Checks if retinue loyalty is high (above 70).
+        /// Used to trigger positive events about high morale and bonding.
+        /// </summary>
+        private static bool CheckRetinueLoyaltyHigh()
+        {
+            var state = RetinueManager.Instance?.State;
+            if (state == null || !state.HasRetinue)
+            {
+                return false;
+            }
+
+            return state.RetinueLoyalty > 70;
+        }
+
+        /// <summary>
+        /// Checks if the retinue has wounded soldiers.
+        /// Used to trigger medical care or recovery events.
+        /// </summary>
+        private static bool CheckRetinueWounded()
+        {
+            var manager = RetinueManager.Instance;
+            var state = manager?.State;
+            if (state == null || !state.HasRetinue)
+            {
+                return false;
+            }
+
+            var party = MobileParty.MainParty;
+            if (party?.MemberRoster == null)
+            {
+                return false;
+            }
+
+            var roster = party.MemberRoster;
+
+            // Check if any retinue troops are wounded
+            foreach (var kvp in state.TroopCounts)
+            {
+                var characterId = kvp.Key;
+                var character = CharacterObject.Find(characterId);
+                if (character == null)
+                {
+                    continue;
+                }
+
+                var rosterIndex = roster.FindIndexOfTroop(character);
+                if (rosterIndex >= 0)
+                {
+                    var element = roster.GetElementCopyAtIndex(rosterIndex);
+                    if (element.WoundedNumber > 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

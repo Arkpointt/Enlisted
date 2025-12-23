@@ -212,28 +212,27 @@ Find: GetPosition2D() → Vec2 (NOT Position2D property)
 - **In Code:** Use `TextObject("{=stringId}Fallback text")`
 - Add string keys to enlisted_strings.xml even if only using English
 
-**Dynamic Dialogue Pattern (Phase 6 Approach):**
-For context-sensitive dialogue that varies by game state (like quartermaster responses):
-1. Store strings in XML with predictable naming: `qm_supply_{archetype}_{level}`
-2. Build string IDs dynamically in C#: `string id = $"qm_supply_{archetype}_{level}";`
-3. Load with safe wrapper that provides fallbacks: `GetLocalizedTextSafe(id, "fallback")`
-4. Always validate inputs (null checks, archetype validation, value clamping)
-5. Never assume XML strings exist - always provide fallback text
+**Dynamic Dialogue Pattern (Data-Driven Approach):**
+For context-sensitive dialogue that varies by game state (like quartermaster responses), we use a JSON-driven catalog with dynamic runtime evaluation:
+1. **Define in JSON:** Store dialogue nodes with context conditions (`supply_level`, `reputation`, etc.).
+2. **Dynamic Registration:** At startup, register dialogue lines for every contextual variant of a node ID.
+3. **Runtime Evaluation:** Use Bannerlord `OnConditionDelegate` to call `GetCurrentDialogueContext()` every time a line is considered for display.
+4. **Specificity Matching:** The system selects the most specific matching variant (highest specificity count).
+5. **XML Support:** Use standard `textId` fields for localization, with JSON `text` fields as fallbacks.
 
-**Example:**
+**Example Implementation:**
 ```csharp
-// Validate and normalize input
-archetype = ValidateArchetype(archetype); // Returns "default" if invalid
-supplies = Clamp(supplies, 0, 100);
+// Condition delegate evaluated every time dialogue navigates to this node
+ConversationSentence.OnConditionDelegate condition = () => {
+    var currentContext = GetCurrentDialogueContext();
+    return nodeContext.Matches(currentContext);
+};
 
-// Build dynamic string ID
-string stringId = $"qm_supply_{archetype}_{supplyLevel}";
-
-// Load with fallback
-string text = GetLocalizedTextSafe(stringId, "Supplies are adequate.");
+// Register with Bannerlord system
+starter.AddDialogLine(id, inputToken, outputToken, text, condition, consequence, priority);
 ```
 
-**Benefits:** Full localization support while maintaining dynamic, contextual dialogue.
+**Benefits:** Full localization support, real-time reaction to game state changes during a single conversation session, and decoupling of content from C# code.
 
 #### JSON for Content/Config
 - **Content:** `ModuleData/Enlisted/Events/*.json` (events, automatic decisions)
@@ -416,7 +415,7 @@ src/
   - Conversations/        # Dialog management
   - Combat/               # Battle participation and formation assignment
   - Conditions/           # Player medical status (injury/illness)
-  - Retinue/              # Service Records and Retinue/Companion management
+  - Retinue/              # Commander's Retinue (T7+), Service Records, trickle/requisition
   - Camp/                 # Camp activities and rest logic
 ```
 

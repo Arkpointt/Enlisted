@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-// Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
 using Enlisted.Features.Retinue.Core;
+using Enlisted.Features.Retinue.Systems;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -1018,12 +1018,13 @@ namespace Enlisted.Features.Camp
                 false,
                 2);
 
-            // Requisition Soldiers option - Trade icon (coins)
+            // Request Reinforcements option - Trade icon (coins)
+            // Uses relation-based pricing and cooldown
             starter.AddGameMenuOption(
                 RetinueMenuId,
-                "ct_retinue_requisition",
-                "{REQUISITION_OPTION_TEXT}",
-                IsRequisitionAvailable,
+                "ct_retinue_request_reinforcements",
+                "{REQUEST_REINFORCEMENTS_TEXT}",
+                IsRequestReinforcementsAvailable,
                 _ => SwitchToMenuPreserveTime(RetinueRequisitionMenuId),
                 false,
                 3);
@@ -1085,8 +1086,8 @@ namespace Enlisted.Features.Camp
                 var text = BuildRetinueStatusText();
                 MBTextManager.SetTextVariable("RETINUE_STATUS_TEXT", text);
 
-                // Set requisition option text with cost display
-                SetRequisitionOptionText();
+                // Set Request Reinforcements option text with lord name and cost
+                SetRequestReinforcementsOptionText();
 
                 ModLogger.Debug(LogCategory, "Retinue menu initialized");
             }
@@ -1099,45 +1100,57 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Sets the requisition menu option text with cost and cooldown info.
-        /// Uses inline gold icon for currency display.
+        /// Sets the Request Reinforcements menu option text with lord name and relation info.
+        /// Shows cost with relation-based discount if applicable.
         /// </summary>
-        private static void SetRequisitionOptionText()
+        private static void SetRequestReinforcementsOptionText()
         {
             var manager = RetinueManager.Instance;
-            if (manager == null)
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = enlistment?.EnlistedLord;
+
+            if (manager == null || lord == null)
             {
-                MBTextManager.SetTextVariable("REQUISITION_OPTION_TEXT",
-                    new TextObject("{=enl_retinue_option_requisition}Requisition Men").ToString());
+                MBTextManager.SetTextVariable("REQUEST_REINFORCEMENTS_TEXT",
+                    new TextObject("{=enl_retinue_option_request}Request Reinforcements").ToString());
                 return;
             }
 
-            var cost = manager.CalculateRequisitionCost();
+            var relation = RetinueManager.GetLordRelation();
+            var cost = manager.CalculateReinforcementRequestCost();
+            var cooldownDays = manager.GetReinforcementRequestCooldownDays();
             var missing = manager.GetMissingSoldierCount();
-            var cooldownDays = manager.GetRequisitionCooldownDays();
 
             string optionText;
-            if (cooldownDays > 0)
+            if (relation < RetinueManager.MinRelationForRequest)
             {
-                var t = new TextObject("{=enl_retinue_option_requisition_cooldown}Requisition Men ({DAYS}d cooldown)");
+                // Low relation - show blocked
+                var t = new TextObject("{=enl_retinue_option_request_blocked}Request Reinforcements (relation too low)");
+                optionText = t.ToString();
+            }
+            else if (cooldownDays > 0)
+            {
+                // On cooldown
+                var t = new TextObject("{=enl_retinue_option_request_cooldown}Request Reinforcements ({DAYS}d cooldown)");
                 t.SetTextVariable("DAYS", cooldownDays);
                 optionText = t.ToString();
             }
             else if (missing <= 0)
             {
-                optionText = new TextObject("{=enl_retinue_option_requisition_at_capacity}Requisition Men (at capacity)").ToString();
+                // At capacity
+                optionText = new TextObject("{=enl_retinue_option_request_capacity}Request Reinforcements (at capacity)").ToString();
             }
             else
             {
-                // Use inline gold icon for cost display
-                var t = new TextObject("{=enl_retinue_option_requisition_cost}Requisition Men ({COST}{GOLD_ICON})");
+                // Available - show cost with lord name
+                var t = new TextObject("{=enl_retinue_option_request_cost}Request from {LORD} ({COST}{GOLD_ICON})");
+                t.SetTextVariable("LORD", lord.Name);
                 t.SetTextVariable("COST", cost);
-                // GOLD_ICON is expected as an inline icon token in menu text.
                 t.SetTextVariable("GOLD_ICON", "{GOLD_ICON}");
                 optionText = t.ToString();
             }
 
-            MBTextManager.SetTextVariable("REQUISITION_OPTION_TEXT", optionText);
+            MBTextManager.SetTextVariable("REQUEST_REINFORCEMENTS_TEXT", optionText);
         }
 
         /// <summary>
@@ -1226,6 +1239,71 @@ namespace Enlisted.Features.Camp
             {
                 sb.AppendLine();
                 sb.AppendLine(new TextObject("{=enl_retinue_party_limits_retinue}Party size limits your retinue.").ToString());
+            }
+
+            // Add reinforcement status section
+            sb.AppendLine();
+            sb.AppendLine(new TextObject("{=enl_retinue_header_reinforcement}-- Reinforcement Status --").ToString());
+            sb.AppendLine();
+
+            var state = manager?.State;
+            if (state != null)
+            {
+                // Show last battle outcome
+                var daysSinceBattle = state.GetDaysSinceLastBattle();
+                if (daysSinceBattle >= 0)
+                {
+                    var outcomeText = state.LastBattleWon ? "Victory" : "Defeat";
+                    var battleLine = new TextObject("{=enl_retinue_last_battle}Last battle: {OUTCOME} ({DAYS} days ago)");
+                    battleLine.SetTextVariable("OUTCOME", outcomeText);
+                    battleLine.SetTextVariable("DAYS", (int)daysSinceBattle);
+                    sb.AppendLine(battleLine.ToString());
+                }
+                else
+                {
+                    sb.AppendLine(new TextObject("{=enl_retinue_no_battle}No recent battles").ToString());
+                }
+
+                // Show trickle status using the new helper method
+                var (contextDesc, daysUntilNext, isBlocked) = RetinueTrickleSystem.GetTrickleStatusInfo();
+
+                if (isBlocked && contextDesc == "Morale recovering")
+                {
+                    sb.AppendLine(new TextObject("{=enl_retinue_delayed}Replacements delayed (morale recovering)").ToString());
+                    if (daysUntilNext > 0)
+                    {
+                        var resumeLine = new TextObject("{=enl_retinue_resume}Resume in: {DAYS} days");
+                        resumeLine.SetTextVariable("DAYS", daysUntilNext);
+                        sb.AppendLine(resumeLine.ToString());
+                    }
+                }
+                else if (currentSoldiers < tierCapacity)
+                {
+                    var statusLine = new TextObject("{=enl_retinue_status}Status: {CONTEXT}");
+                    statusLine.SetTextVariable("CONTEXT", contextDesc);
+                    sb.AppendLine(statusLine.ToString());
+
+                    if (daysUntilNext > 0)
+                    {
+                        var nextLine = new TextObject("{=enl_retinue_next_recruit}Next recruit expected: {DAYS} days");
+                        nextLine.SetTextVariable("DAYS", daysUntilNext);
+                        sb.AppendLine(nextLine.ToString());
+                    }
+                    else
+                    {
+                        sb.AppendLine(new TextObject("{=enl_retinue_arriving}Recruit arriving soon").ToString());
+                    }
+                }
+                else
+                {
+                    sb.AppendLine(new TextObject("{=enl_retinue_at_capacity}Retinue at full capacity").ToString());
+                }
+
+                // Show territory status
+                var territory = RetinueTrickleSystem.IsInFriendlyTerritory() ? "Friendly" : "Hostile/Neutral";
+                var territoryLine = new TextObject("{=enl_retinue_territory}Territory: {TERRITORY}");
+                territoryLine.SetTextVariable("TERRITORY", territory);
+                sb.AppendLine(territoryLine.ToString());
             }
 
             return sb.ToString();
@@ -1417,8 +1495,8 @@ namespace Enlisted.Features.Camp
                 return true;
             }
 
-            // Recruitment defaults to infantry.
-            var playerFormation = "infantry";
+            // Detect player's actual formation from equipment
+            var playerFormation = QuartermasterManager.Instance?.GetPlayerFormationString() ?? "infantry";
             
             // Map player formation to retinue type for comparison
             var playerRetinueType = playerFormation switch
@@ -1771,28 +1849,41 @@ namespace Enlisted.Features.Camp
         #region Requisition Menu
 
         /// <summary>
-        /// Checks if the requisition menu option should be available.
-        /// Shows disabled state with tooltip when on cooldown or at capacity.
+        /// Checks if the Request Reinforcements option should be available.
+        /// Uses relation-based checks and shows appropriate tooltips.
         /// </summary>
-        private static bool IsRequisitionAvailable(MenuCallbackArgs args)
+        private static bool IsRequestReinforcementsAvailable(MenuCallbackArgs args)
         {
             var manager = RetinueManager.Instance;
+            var enlistment = EnlistmentBehavior.Instance;
 
             // Must have a retinue type selected
             if (manager?.State?.HasTypeSelected != true)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=ct_requisition_no_type}You must select a soldier type first.");
+                args.Tooltip = new TextObject("{=ct_request_no_type}You must select a soldier type first.");
+                args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                return true;
+            }
+
+            // Check relation with lord
+            var relation = RetinueManager.GetLordRelation();
+            if (relation < RetinueManager.MinRelationForRequest)
+            {
+                args.IsEnabled = false;
+                var tooltip = new TextObject("{=ct_request_relation_low}Your lord will not spare soldiers for you. Improve your standing first (requires {REQ}+ relation).");
+                tooltip.SetTextVariable("REQ", RetinueManager.MinRelationForRequest);
+                args.Tooltip = tooltip;
                 args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                 return true;
             }
 
             // Check cooldown
-            if (!manager.IsRequisitionAvailable())
+            if (!manager.IsReinforcementRequestAvailable())
             {
                 args.IsEnabled = false;
-                var days = manager.GetRequisitionCooldownDays();
-                var tooltip = new TextObject("{=ct_requisition_cooldown}Requisition on cooldown: {DAYS} days remaining.");
+                var days = manager.GetReinforcementRequestCooldownDays();
+                var tooltip = new TextObject("{=ct_request_cooldown}Request on cooldown: {DAYS} days remaining.");
                 tooltip.SetTextVariable("DAYS", days);
                 args.Tooltip = tooltip;
                 args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
@@ -1810,7 +1901,7 @@ namespace Enlisted.Features.Camp
             }
 
             // Check affordability
-            var cost = manager.CalculateRequisitionCost();
+            var cost = manager.CalculateReinforcementRequestCost();
             var playerGold = Hero.MainHero?.Gold ?? 0;
             if (playerGold < cost)
             {
@@ -1820,6 +1911,12 @@ namespace Enlisted.Features.Camp
                 args.Tooltip = tooltip;
                 args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                 return true;
+            }
+
+            // Show relation bonus info in tooltip
+            if (relation >= RetinueManager.HighRelationThreshold)
+            {
+                args.Tooltip = new TextObject("{=ct_request_relation_high}Your lord is pleased with your service. Reduced cost and shorter cooldown.");
             }
 
             args.optionLeaveType = GameMenuOption.LeaveType.Trade;
@@ -1877,8 +1974,8 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Initializes the requisition menu with cost breakdown.
-        /// Uses clean formatting with inline gold icons.
+        /// Initializes the reinforcement request menu with relation-based pricing.
+        /// Shows lord dialogue that varies based on relationship level.
         /// </summary>
         private static void OnRetinueRequisitionInit(MenuCallbackArgs args)
         {
@@ -1896,56 +1993,89 @@ namespace Enlisted.Features.Camp
                 Campaign.Current.TimeControlMode = normalized;
 
                 var manager = RetinueManager.Instance;
+                var enlistment = EnlistmentBehavior.Instance;
+                var lord = enlistment?.EnlistedLord;
                 var missing = manager?.GetMissingSoldierCount() ?? 0;
-                var cost = manager?.CalculateRequisitionCost() ?? 0;
-                var perSoldier = missing > 0 ? cost / missing : 0;
+                var baseCost = manager?.CalculateRequisitionCost() ?? 0;
+                var adjustedCost = manager?.CalculateReinforcementRequestCost() ?? 0;
                 var playerGold = Hero.MainHero?.Gold ?? 0;
-                var cooldownDays = manager?.GetRequisitionCooldownDays() ?? 0;
+                var relation = RetinueManager.GetLordRelation();
+                var cooldownDays = RetinueManager.GetRelationCooldownDays();
+                var cooldownRemaining = manager?.GetReinforcementRequestCooldownDays() ?? 0;
 
                 var sb = new StringBuilder();
                 sb.AppendLine();
-                sb.AppendLine("â€” Requisition Men â€”");
+                var lordName = lord?.Name?.ToString() ?? "your lord";
+                sb.AppendLine($"-- Request Reinforcements from {lordName} --");
                 sb.AppendLine();
-                sb.AppendLine("A word to the right quartermaster, a few coins changing hands, and fresh soldiers report for duty.");
+
+                // Relation-based dialogue
+                if (relation >= RetinueManager.HighRelationThreshold)
+                {
+                    sb.AppendLine($"\"{Hero.MainHero?.Name}, your men fought well. I can spare some from the reserves.\"");
+                    sb.AppendLine();
+                    sb.AppendLine("(Lord is pleased - reduced cost, 7-day cooldown)");
+                }
+                else if (relation >= RetinueManager.MinRelationForRequest)
+                {
+                    sb.AppendLine("\"Reinforcements? I'll see what I can do. It won't be free.\"");
+                    sb.AppendLine();
+                    sb.AppendLine("(Standard terms - full cost, 14-day cooldown)");
+                }
+                else
+                {
+                    sb.AppendLine("\"You want soldiers? Prove your worth first.\"");
+                    sb.AppendLine();
+                    sb.AppendLine("(Relation too low - request unavailable)");
+                }
+
                 sb.AppendLine();
                 sb.AppendLine($"Missing Soldiers: {missing}");
-                sb.AppendLine($"Cost per Soldier: {perSoldier}{{GOLD_ICON}}");
-                sb.AppendLine($"Total Cost: {cost}{{GOLD_ICON}}");
+                sb.AppendLine($"Cost: {adjustedCost}{{GOLD_ICON}}");
+
+                if (adjustedCost < baseCost)
+                {
+                    sb.AppendLine($"  (Reduced from {baseCost}{{GOLD_ICON}} due to lord's favor)");
+                }
+
                 sb.AppendLine();
                 sb.AppendLine($"Your Gold: {playerGold}{{GOLD_ICON}}");
                 sb.AppendLine();
 
-                var cooldownLine = cooldownDays > 0
-                    ? $"Cooldown: {cooldownDays} days remaining"
-                    : "Requisition available now";
-                sb.AppendLine(cooldownLine);
+                if (cooldownRemaining > 0)
+                {
+                    sb.AppendLine($"Cooldown: {cooldownRemaining} days remaining");
+                }
+                else
+                {
+                    sb.AppendLine("Request available now");
+                }
 
-                sb.AppendLine();
-                sb.AppendLine("After requisition: 14 day cooldown");
+                sb.AppendLine($"After request: {cooldownDays} day cooldown");
 
                 MBTextManager.SetTextVariable("REQUISITION_MENU_TEXT", sb.ToString());
 
                 // Set confirm button text with gold icon
-                var confirmText = new TextObject("{=enl_camp_retinue_requisition_confirm_full}Requisition {COUNT} soldiers ({COST}{GOLD_ICON})");
+                var confirmText = new TextObject("{=enl_camp_retinue_request_confirm}Request {COUNT} soldiers ({COST}{GOLD_ICON})");
                 confirmText.SetTextVariable("COUNT", missing);
-                confirmText.SetTextVariable("COST", cost);
+                confirmText.SetTextVariable("COST", adjustedCost);
                 confirmText.SetTextVariable("GOLD_ICON", "{GOLD_ICON}");
                 MBTextManager.SetTextVariable("REQUISITION_CONFIRM_TEXT", confirmText.ToString());
 
-                ModLogger.Debug(LogCategory, "Requisition menu initialized");
+                ModLogger.Debug(LogCategory, "Reinforcement request menu initialized");
             }
             catch (Exception ex)
             {
-                ModLogger.ErrorCode(LogCategory, "E-CAMP-011", "Error initializing requisition menu", ex);
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-011", "Error initializing reinforcement request menu", ex);
                 MBTextManager.SetTextVariable("REQUISITION_MENU_TEXT",
-                    new TextObject("{=enl_camp_error_retinue_requisition}Error loading requisition details.").ToString());
+                    new TextObject("{=enl_camp_error_retinue_request}Error loading request details.").ToString());
                 MBTextManager.SetTextVariable("REQUISITION_CONFIRM_TEXT",
-                    new TextObject("{=enl_camp_retinue_requisition_confirm}Requisition").ToString());
+                    new TextObject("{=enl_camp_retinue_request_confirm_short}Request Reinforcements").ToString());
             }
         }
 
         /// <summary>
-        /// Executes the instant requisition of soldiers.
+        /// Executes the reinforcement request from the lord.
         /// </summary>
         private void ExecuteRequisition()
         {
@@ -1957,18 +2087,18 @@ namespace Enlisted.Features.Camp
                 return;
             }
 
-            if (manager.TryRequisition(out var message))
+            if (manager.TryRequestReinforcements(out var message))
             {
-                var successMsg = new TextObject("{=ct_requisition_success}{MESSAGE}");
+                var successMsg = new TextObject("{=ct_request_success}{MESSAGE}");
                 successMsg.SetTextVariable("MESSAGE", message);
                 InformationManager.DisplayMessage(new InformationMessage(successMsg.ToString(), Colors.Green));
 
-                ModLogger.Info(LogCategory, $"Requisition complete: {message}");
+                ModLogger.Info(LogCategory, $"Reinforcement request complete: {message}");
             }
             else
             {
                 InformationManager.DisplayMessage(new InformationMessage(message, Colors.Red));
-                ModLogger.Warn(LogCategory, $"Requisition failed: {message}");
+                ModLogger.Warn(LogCategory, $"Reinforcement request failed: {message}");
             }
 
             SwitchToMenuPreserveTime(RetinueMenuId);

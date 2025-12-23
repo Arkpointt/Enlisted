@@ -24,23 +24,23 @@
     <string id="promo_title_6" text="Welcomed to the Household" />
 
     <!-- Tier-Specific Promotion Popup Messages (Roleplay - Field/Camp Context) -->
-    <string id="promo_msg_2" text="The serjeant-at-arms looks you up and down with grudging approval.\n\n'You've survived the mud, the marching, and the misery. No longer a green levy—you're one of the lads now, {PLAYER_NAME}. A proper Footman.'\n\nYou may now choose your military formation and specialize your training. Better equipment awaits at the quartermaster's wagon." />
+    <string id="promo_msg_2" text="The serjeant-at-arms looks you up and down with grudging approval.\n\n'You've survived the mud, the marching, and the misery. No longer a green levy—you're one of the lads now, {PLAYER_NAME}. A proper soldier.'\n\nYou have chosen your military formation. Better equipment awaits at the quartermaster's wagon." />
     
-    <string id="promo_msg_3" text="You're summoned to the camp headquarters as evening falls over the camp.\n\n'Word of your deeds has reached my ears, soldier. You've shown courage and cunning where others showed cowardice. From this day, you bear the rank of Serjeant.'\n\nAs Serjeant, you may now choose a military profession—Quarterhand, Field Medic, Drillmaster, or other specialized roles that grant unique abilities and bonuses." />
+    <string id="promo_msg_3" text="You're summoned to the camp headquarters as evening falls.\n\n'Word of your deeds has reached my ears, soldier. You've shown courage and cunning where others showed cowardice. From this day, you bear the rank of {RANK}.'\n\nYou've earned your place among the veterans. The quartermaster has better gear waiting for you." />
     
-    <string id="promo_msg_4" text="Before the assembled company at the morning muster, your lord speaks:\n\n'Step forward, Serjeant. You have proven yourself worthy of greater trust. I hereby swear you into my service as a Man-at-Arms. You shall command a squad of five soldiers in battle—their lives are now your responsibility.'\n\nVisit Camp to muster your personal retinue. Each soldier costs 2 denars per day in upkeep." />
+    <string id="promo_msg_4" text="Before the assembled company at the morning muster, your lord speaks:\n\n'Step forward, soldier. You have proven yourself worthy of greater trust. I hereby recognize you as {RANK}. Your experience and judgment are now relied upon by the men around you.'\n\nVisit the quartermaster for equipment befitting your new station." />
     
-    <string id="promo_msg_5" text="At dusk, as the camp settles, a runner summons you to your lord's tent.\n\n'For valor shown and battles won, I entrust you with the company banner. You are now Banner Serjeant—a veteran of the highest order. Your command extends to ten soldiers.'\n\nYour retinue capacity has increased. Visit Camp to expand your forces." />
+    <string id="promo_msg_5" text="At dusk, as the camp settles, a runner summons you to your lord's tent.\n\n'For valor shown and battles won, I recognize your worth. You are now {RANK}—a veteran of the highest order. The officers look to you for guidance in the field.'\n\nYou're approaching the pinnacle of enlisted service. The officer's provisions are now available." />
     
-    <string id="promo_msg_6" text="Around the officers' fire, with the camp spread beneath the stars, your lord addresses the gathered veterans.\n\n'Few soldiers ever stand where you stand today. By your blood and your blade, you have earned a place among my Household Guard—the finest warriors under my banner. Twenty men shall march beneath your command.'\n\nYou have reached the pinnacle of enlisted service. Your retinue capacity is now at maximum." />
+    <string id="promo_msg_6" text="Around the officers' fire, with the camp spread beneath the stars, your lord addresses the gathered veterans.\n\n'Few soldiers ever stand where you stand today. By your blood and your blade, you have earned a place among my {RANK}—the finest warriors under my banner.'\n\nYou have reached the pinnacle of enlisted service. At the next tier, you may be offered command of your own retinue." />
 
     <!-- Promotion Chat Messages (shorter, for notification bar) -->
-    <string id="promo_chat_2" text="Your service is recognized! You have been promoted to Footman. Visit the quartermaster for new equipment." />
-    <string id="promo_chat_3" text="By order of your captain, you have been promoted to Serjeant! Professions are now available." />
-    <string id="promo_chat_4" text="You have been sworn in as a Man-at-Arms! You may now command soldiers. Visit Camp." />
-    <string id="promo_chat_5" text="The banner is yours to bear! Promoted to Banner Serjeant. Your retinue capacity has increased." />
-    <string id="promo_chat_6" text="You have joined the Household Guard! Maximum retinue capacity unlocked." />
-    <string id="promo_chat_default" text="You have been promoted!" />
+    <string id="promo_chat_2" text="Your service is recognized! Promoted to {RANK}. Visit the quartermaster for new equipment." />
+    <string id="promo_chat_3" text="By order of your captain, you have been promoted to {RANK}!" />
+    <string id="promo_chat_4" text="You have been recognized as {RANK}! Better equipment is now available." />
+    <string id="promo_chat_5" text="Promoted to {RANK}! Officer provisions are now available from the quartermaster." />
+    <string id="promo_chat_6" text="You have joined the {RANK}! Command may soon be offered." />
+    <string id="promo_chat_default" text="You have been promoted to {RANK}!" />
 
     <!-- Promotion Button Text -->
     <string id="promo_btn_understood" text="Understood" />
@@ -377,10 +377,10 @@
     <string id="ct_warn_full_retinue" text="Your retinue is at full strength." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- CAMP - Leadership Notification (Tier 4) -->
+    <!-- CAMP - Leadership Notification (Tier 7) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <string id="ct_leadership_title" text="Promotion to Leadership" />
-    <string id="ct_leadership_message" text="Your service has not gone unnoticed. You've been granted the authority to command a small squad of soldiers in battle.\n\nVisit Camp to request men be assigned to your command. Know that you'll be responsible for their welfare—each soldier in your care will cost 2 denars per day in upkeep." />
+    <string id="ct_leadership_message" text="Your long service has been recognized. As a Commander, you've been granted authority over your own retinue of soldiers.\n\nTwenty raw recruits have been assigned to your command. Train them well—their lives are in your hands.\n\nVisit Camp to manage your forces." />
     <string id="ct_leadership_acknowledge" text="Understood" />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -436,6 +436,76 @@
     <string id="ct_requisition_cooldown" text="Cooldown: {DAYS} days remaining" />
     <string id="ct_requisition_no_type" text="You must select a soldier type first." />
     <string id="ct_requisition_cancel" text="Return without requisition" />
+
+    <!-- Context-Aware Trickle Notifications -->
+    <string id="ct_trickle_battle_survivor" text="A survivor from the battle has joined your retinue." />
+    <string id="ct_trickle_local_levy" text="A local levy has been assigned to your command." />
+    <string id="ct_trickle_transfer" text="A soldier from the rearguard has been transferred to your retinue." />
+    <string id="ct_trickle_training_complete" text="A recruit has completed training and joined your retinue." />
+
+    <!-- Request Reinforcements Menu -->
+    <string id="ct_request_no_type" text="You must select a soldier type first." />
+    <string id="ct_request_relation_low" text="Your lord will not spare soldiers for you. Improve your standing first (requires {REQ}+ relation)." />
+    <string id="ct_request_relation_high" text="Your lord is pleased with your service. Reduced cost and shorter cooldown." />
+    <string id="ct_request_cooldown" text="Request on cooldown: {DAYS} days remaining." />
+    <string id="ct_request_success" text="{MESSAGE}" />
+
+    <!-- Reinforcement Status Display -->
+    <string id="enl_retinue_header_reinforcement" text="-- Reinforcement Status --" />
+    <string id="enl_retinue_last_battle" text="Last battle: {OUTCOME} ({DAYS} days ago)" />
+    <string id="enl_retinue_no_battle" text="No recent battles" />
+    <string id="enl_retinue_delayed" text="Replacements delayed (morale recovering)" />
+    <string id="enl_retinue_resume" text="Resume in: {DAYS} days" />
+    <string id="enl_retinue_status" text="Status: {CONTEXT}" />
+    <string id="enl_retinue_next_recruit" text="Next recruit expected: {DAYS} days" />
+    <string id="enl_retinue_arriving" text="Recruit arriving soon" />
+    <string id="enl_retinue_at_capacity" text="Retinue at full capacity" />
+    <string id="enl_retinue_territory" text="Territory: {TERRITORY}" />
+
+    <!-- Request Reinforcements Option Text -->
+    <string id="enl_retinue_option_request" text="Request Reinforcements" />
+    <string id="enl_retinue_option_request_blocked" text="Request Reinforcements (relation too low)" />
+    <string id="enl_retinue_option_request_cooldown" text="Request Reinforcements ({DAYS}d cooldown)" />
+    <string id="enl_retinue_option_request_capacity" text="Request Reinforcements (at capacity)" />
+    <string id="enl_retinue_option_request_cost" text="Request from {LORD} ({COST}{GOLD_ICON})" />
+    <string id="enl_camp_retinue_request_confirm" text="Request {COUNT} soldiers ({COST}{GOLD_ICON})" />
+    <string id="enl_camp_retinue_request_confirm_short" text="Request Reinforcements" />
+    <string id="enl_camp_error_retinue_request" text="Error loading request details." />
+
+    <!-- Reinforcement Request Manager Messages -->
+    <string id="enl_retinue_reason_must_be_enlisted_request" text="You must be enlisted to request reinforcements." />
+    <string id="enl_retinue_reason_requires_commander_request" text="Requires Commander rank (Tier {REQ}) or higher." />
+    <string id="enl_retinue_reason_select_type_request" text="You must select a soldier type first." />
+    <string id="enl_retinue_reason_relation_low" text="Your lord will not spare soldiers for you. Improve your standing first (requires {REQ}+ relation, have {HAVE})." />
+    <string id="enl_retinue_reason_request_cooldown" text="Reinforcement request on cooldown: {DAYS} days remaining." />
+    <string id="enl_retinue_reason_not_enough_gold_request" text="Not enough gold. Need {NEED} denars, have {HAVE}." />
+    <string id="enl_retinue_msg_reinforcements_arrived" text="{COUNT} soldiers have been assigned to your command." />
+
+    <!-- Post-Battle Volunteer Event -->
+    <string id="evt_ret_volunteers_title" text="After the Battle" />
+    <string id="evt_ret_volunteers_setup" text="The battle is won. As your men regroup, you notice soldiers from other units looking your way. Your reputation precedes you, Commander.\n\nA corporal approaches. &quot;Sir, some of the lads want to join your retinue. What should I tell them?&quot;" />
+    <string id="evt_ret_volunteers_opt_accept" text="&quot;Volunteers step forward.&quot;" />
+    <string id="evt_ret_volunteers_opt_accept_result" text="Fresh faces join your ranks. They look to you with respect." />
+    <string id="evt_ret_volunteers_opt_request" text="&quot;Request formal transfers from the captain.&quot;" />
+    <string id="evt_ret_volunteers_opt_request_result" text="The captain scowls but complies. More soldiers report for duty, though your lord may not appreciate the request." />
+    <string id="evt_ret_volunteers_opt_decline" text="&quot;We have enough. Tell them to return to their units.&quot;" />
+    <string id="evt_ret_volunteers_opt_decline_result" text="Your men appreciate that you will not over-extend. They know you value quality over numbers." />
+
+    <!-- Victory Recognition Event -->
+    <string id="evt_ret_recognition_title" text="Recognition in the Ranks" />
+    <string id="evt_ret_recognition_setup" text="Word of your recent victory has spread through the camp. Your retinue's performance in battle has not gone unnoticed.\n\n{LORD_NAME} approaches you after the evening meal. &quot;Your men fought well, Commander. The army could use more leaders like you.&quot;" />
+    <string id="evt_ret_recognition_opt_humble" text="&quot;The credit belongs to the men, my lord.&quot;" />
+    <string id="evt_ret_recognition_opt_humble_result" text="Your lord nods approvingly. The soldiers nearby exchange pleased glances - their commander remembers who does the fighting." />
+    <string id="evt_ret_recognition_opt_confident" text="&quot;I trained them well, my lord.&quot;" />
+    <string id="evt_ret_recognition_opt_confident_result" text="&quot;Confidence is good in a commander,&quot; your lord replies. &quot;I shall remember this.&quot;" />
+    <string id="evt_ret_recognition_opt_request" text="&quot;With more men, I could do even better, my lord.&quot;" />
+    <string id="evt_ret_recognition_opt_request_result" text="Your lord's eyes narrow slightly, but he nods. &quot;Very well. I shall assign a few more to your command.&quot; You may have pushed too hard." />
+
+    <!-- Effect Notifications -->
+    <string id="evt_ret_gain_notification" text="{COUNT} soldiers have joined your retinue." />
+    <string id="evt_ret_loss_notification" text="{COUNT} soldiers have been lost from your retinue." />
+    <string id="evt_ret_wounded_notification" text="{COUNT} of your soldiers have been wounded." />
+    <string id="evt_ret_loyalty_notification" text="Retinue loyalty {CHANGE}. Current: {LEVEL}" />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- RETINUE - Upkeep & Desertion -->
@@ -512,6 +582,7 @@
     <string id="qm_intro_dialogue_sour" text="&quot;Need kit? Buy it here. Supply's tight and my patience is thinner. Pay what the ledger says.&quot;" />
     <string id="qm_intro_dialogue_predatory" text="&quot;Need kit? Buy it here. Wagons are dry and prices rise. If you don't like it, march naked.&quot;" />
     <string id="qm_cannot_afford" text="You can't afford this. Cost: {COST} denars." />
+    <string id="qm_supply_blocked" text="We can't issue equipment right now. Supplies are critically low." />
     <string id="qm_equipment_issued_buy" text="Purchased {ITEM_NAME} for {COST} denars." />
     <string id="qm_item_limit_reached" text="You already have {COUNT} of {ITEM_NAME}." />
     <string id="qm_equipment_issued" text="Purchased: {ITEM_NAME}." />
@@ -1124,7 +1195,7 @@
     <!-- Quartermaster Conversation Refactor - Category Selection -->
     <string id="qm_browse_weapons" text="I need a weapon." />
     <string id="qm_browse_armor" text="I need armor." />
-    <string id="qm_browse_accessories" text="I need gear�cape, shield, harness." />
+    <string id="qm_browse_accessories" text="I need gear�cape, shield, harness." />
     <string id="qm_browse_mounts" text="I need a horse." />
     <string id="qm_browse_response" text="Let me see what's in stock for you." />
     <string id="qm_browse_response_dynamic" text="{BROWSE_RESPONSE}" />
@@ -1135,6 +1206,18 @@
     <string id="qm_sell_request" text="I want to sell some equipment." />
     <string id="qm_sell_response" text="Show me what you've got. I'll give you a fair price." />
     <string id="qm_sell_response_dynamic" text="{SELL_RESPONSE}" />
+    
+    <!-- Quartermaster Conversation - Phase 6: Sell Reputation Gating -->
+    <string id="qm_player_sell" text="I've got some equipment to offload... quietly." />
+    <string id="qm_player_show_items" text="[Show items]" />
+    <string id="qm_player_understood" text="Understood." />
+    
+    <string id="qm_sell_blocked" text="Selling army property? That's your neck, not mine. I don't deal with soldiers I don't trust." />
+    <string id="qm_sell_wary" text="Keep your voice down. I can take some things off your hands, but prices won't be generous. Show me." />
+    <string id="qm_sell_neutral" text="Quietly, of course. What have you got? I'll give you fair value for kit from my stock." />
+    <string id="qm_sell_friendly" text="Between us, as always. Let's see what you're carrying." />
+    <string id="qm_sell_trusted" text="For you? No questions asked. Show me." />
+    <string id="qm_sell_default" text="Show me what you've got. I'll give you a fair price." />
 
     <!-- Quartermaster Conversation - Upgrade Request -->
     <string id="qm_upgrade_request" text="Can you improve my equipment?" />
@@ -1163,7 +1246,7 @@
     <string id="qm_supply_merchant_good" text="Inventory is adequate. We're solvent for now." />
     <string id="qm_supply_merchant_fair_friendly" text="Running lean. Margins are getting tight. We'll need to restock or raise prices." />
     <string id="qm_supply_merchant_fair" text="Stock is thin. We'll need to resupply soon." />
-    <string id="qm_supply_merchant_low_trusted" text="Low inventory. Very low. If we don't get supplies, I'll have to start rationing�bad for morale, worse for business." />
+    <string id="qm_supply_merchant_low_trusted" text="Low inventory. Very low. If we don't get supplies, I'll have to start rationing�bad for morale, worse for business." />
     <string id="qm_supply_merchant_low" text="Stock is low. Prices will go up if we don't resupply." />
     <string id="qm_supply_merchant_critical" text="Nearly empty. This is a disaster for business. The lord needs to find supplies immediately." />
 
@@ -1396,6 +1479,22 @@
 
     <!-- Quartermaster Conversation - Provisions Flow -->
     <string id="qm_provisions_response" text="Rations are what they are. Take it or leave it." />
+
+    <!-- Quartermaster Provisions UI (Phase 8) -->
+    <string id="qm_provisions_header_officer" text="Provisions" />
+    <string id="qm_provisions_header_enlisted" text="Rations" />
+    <string id="qm_provisions_restock" text="Restocks in {DAYS} days" />
+    <string id="qm_provisions_fresh_stock" text="Fresh stock available" />
+    <string id="qm_provisions_out_of_stock" text="Out of Stock" />
+    <string id="qm_provisions_out_of_stock_msg" text="This item is out of stock." />
+    <string id="qm_provisions_available" text="Available" />
+    <string id="qm_provisions_error" text="Error" />
+    <string id="qm_provisions_purchased" text="Purchased {QUANTITY}x {ITEM} for {COST} denars." />
+    <string id="qm_provisions_not_enlisted" text="You are not currently enlisted." />
+    <string id="qm_cannot_afford_provisions" text="You can't afford this." />
+    <string id="qm_ration_status" text="Current: {QUALITY} (+{MORALE} morale) - {DAYS} days remaining" />
+    <string id="qm_ration_standard" text="Current: Standard army rations (no bonus)" />
+    <string id="qm_ration_supplements_hint" text="You can purchase supplemental provisions below for morale bonuses." />
 
     <!-- Quartermaster Conversation - Supply Inquiry -->
     <string id="qm_supply_inquiry" text="How are our supplies?" />
@@ -1960,7 +2059,7 @@
     <string id="ll_evt_commander_onboard_03_first_blood_opt_all_talk_outcome" text="You find them after dark. &quot;How do you do it? How do you keep giving orders knowing what they cost?&quot;\n\n{OFFICER_NAME} is quiet for a long moment. &quot;You don&#x27;t get used to it. You shouldn&#x27;t. The day you stop feeling it is the day you start getting men killed for nothing.&quot;\n\n&quot;So you just... carry it?&quot;\n\n&quot;You carry it. And you make sure it&#x27;s worth what you&#x27;re carrying.&quot;\n\nNot comforting. But true." />
     <string id="ll_evt_commander_onboard_03_first_blood_setup_all" text="" />
 
-    <!-- Event: enlisted_onboard_01_meet_squad � Meeting Your Squad -->
+    <!-- Event: enlisted_onboard_01_meet_squad � Meeting Your Squad -->
     <string id="ll_evt_enlisted_onboard_01_meet_squad_title" text="Meeting Your Squad" />
     <string id="ll_evt_enlisted_onboard_01_meet_squad_setup" text="{NCO_RANK} {SERGEANT_NAME} looks you over like they&#x27;re inspecting a horse they&#x27;re not sure about buying.\n\n&quot;{PLAYER_NAME}, is it? You&#x27;re with {COMPANY_NAME} now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.&quot;\n\nThe rest of the company watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n&quot;Understood?&quot;" />
     <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_respectful_text" text="&quot;Understood, {NCO_RANK}.&quot;" />
@@ -2132,7 +2231,7 @@
 
     <!-- Event: scrutiny_warning — The Warning -->
 
-    <!-- Event: squad_bonded � Bonded -->
+    <!-- Event: squad_bonded � Bonded -->
     <string id="ll_evt_squad_bonded_title" text="Bonded" />
     <string id="ll_evt_squad_bonded_setup" text="{SERGEANT_NAME} pulls you aside after weapons inspection. Their voice is barely above a whisper.\n\n&quot;The sergeant&#x27;s planning a kit inspection tomorrow. The captain&#x27;s hound — looking for contraband, extra rations, anything they can nail someone for.&quot;\n\nThey meet your eyes.\n\n&quot;Thought you should know. In case you&#x27;ve got anything that needs... relocating.&quot;\n\nThis is a warning. The kind you don&#x27;t give to just anyone. The kind that could get {SERGEANT_NAME} in serious trouble if anyone found out.\n\nYou&#x27;re family now. {COMPANY_NAME} protects its own." />
     <string id="ll_evt_squad_bonded_opt_grateful_text" text="&quot;I appreciate this. More than you know.&quot;" />
@@ -2144,7 +2243,7 @@
     <string id="ll_evt_squad_bonded_opt_warn_others_text" text="&quot;Let me tell the others. Less risk for you.&quot;" />
     <string id="ll_evt_squad_bonded_opt_warn_others_outcome" text="&quot;You sure?&quot; You nod. Over the next hour, quiet words are exchanged. By morning, the company is clean. The inspection finds nothing. {SERGEANT_NAME} never gets connected to the warning." />
 
-    <!-- Event: squad_isolated � Isolated -->
+    <!-- Event: squad_isolated � Isolated -->
     <string id="ll_evt_squad_isolated_title" text="Isolated" />
     <string id="ll_evt_squad_isolated_setup" text="The fire circle again. But tonight, the gaps around you are wider. Conversations die when you approach. Laughter stops.\n\n{SOLDIER_NAME} doesn&#x27;t even look up when you sit down. {VETERAN_1_NAME} finds somewhere else to be. {RECRUIT_NAME} follows them.\n\n{SERGEANT_NAME} watches from across the fire. Measuring. Not intervening.\n\nYou&#x27;re still part of {COMPANY_NAME}. Technically. But the warmth is gone. You&#x27;re a stranger wearing a familiar uniform.\n\nThis is what isolation feels like." />
     <string id="ll_evt_squad_isolated_opt_approach_text" text="Try to join a conversation. Break through the ice." />
@@ -2158,7 +2257,7 @@
     <string id="ll_evt_squad_isolated_opt_leader_text" text="Find {SERGEANT_NAME}. Ask what happened." />
     <string id="ll_evt_squad_isolated_opt_leader_outcome" text="They don&#x27;t sugarcoat it. &quot;You&#x27;ve lost their trust. The way you handled—&quot; they list examples. Each one a small betrayal you barely remember. &quot;You want back in? Start making different choices.&quot; A path forward. Hard, but real." />
 
-    <!-- Event: squad_sabotage � Sabotage -->
+    <!-- Event: squad_sabotage � Sabotage -->
     <string id="ll_evt_squad_sabotage_title" text="Sabotage" />
     <string id="ll_evt_squad_sabotage_setup" text="Your kit is wrong.\n\nNothing obvious — nothing that would fail inspection. But your straps are loosened. Your blade is dull. Your waterskin has a slow leak you didn&#x27;t notice until half your water was gone.\n\nSomeone did this. Someone in {COMPANY_NAME}.\n\n{SERGEANT_NAME} isn&#x27;t going to help. They&#x27;re part of this, or they&#x27;re looking the other way. Same result.\n\nYou&#x27;re on your own. In a unit that wants you gone — or worse." />
     <string id="ll_evt_squad_sabotage_opt_endure_text" text="Fix it silently. Don&#x27;t give them the satisfaction of reacting." />
@@ -2171,7 +2270,7 @@
     <string id="ll_evt_squad_sabotage_opt_transfer_text" text="Request reassignment. this squad is done with you." />
     <string id="ll_evt_squad_sabotage_opt_transfer_outcome" text="{SERGEANT_NAME} doesn&#x27;t argue. The paperwork goes through. New company, new people, fresh start. You&#x27;re leaving enemies behind. Whether you&#x27;re also leaving the problem behind... time will tell." />
 
-    <!-- Event: squad_trusted � Trusted -->
+    <!-- Event: squad_trusted � Trusted -->
     <string id="ll_evt_squad_trusted_title" text="Trusted" />
     <string id="ll_evt_squad_trusted_setup" text="{VETERAN_1_NAME} corners you after the evening meal. They look around, making sure no one&#x27;s listening.\n\n&quot;Got a problem, {PLAYER_NAME}. Need help from someone I can trust.&quot; They pause. &quot;That&#x27;s you.&quot;\n\nThey explain: a debt from before the army. Collector&#x27;s coming. If {VETERAN_1_NAME} doesn&#x27;t have the coin, things get ugly — for them, maybe for their family back home.\n\n&quot;I&#x27;m not asking for money. Just... watch my back when the collector shows. Make sure things stay... civil.&quot;" />
     <string id="ll_evt_squad_trusted_opt_help_text" text="&quot;I&#x27;ve got your back. When and where?&quot;" />
@@ -2293,6 +2392,26 @@
     <string id="News_PlayerDefeat" text="We were driven from {PLACE}." />
     <string id="News_ArmyForming" text="{LORD} is gathering an army." />
     <string id="News_ArmyDisbanded" text="{LORD}'s army dispersed." />
+    
+    <!-- Promotion News (Personal Feed) - RP flavor for rank advancement -->
+    <string id="News_Promotion_T2" text="The sergeant's stripe is sewn to your sleeve. You are now {RANK}." />
+    <string id="News_Promotion_T3" text="Your service has been recognized. You stand among the {RANK}s now." />
+    <string id="News_Promotion_T4" text="The men call you {RANK}. Years of blood and iron have earned that name." />
+    <string id="News_Promotion_T5" text="Officers' council admits you to their ranks. You are {RANK}." />
+    <string id="News_Promotion_T6" text="Your lord has raised you to {RANK}. The camp speaks of nothing else." />
+    <string id="News_Promotion_T7" text="Twenty soldiers salute their new commander. You are {RANK}, with a retinue of your own." />
+    <string id="News_Promotion_T8" text="The banner grows. Thirty soldiers now march under your command as {RANK}." />
+    <string id="News_Promotion_T9" text="Forty hardened warriors answer to you. {RANK} is a title few ever earn." />
+    <string id="News_Promotion_Generic" text="You have been promoted to {RANK}." />
+    
+    <!-- Pay Muster News (Personal Feed) - RP flavor for payment outcomes -->
+    <string id="News_PayMuster_Full" text="The paymaster counts out your coin. {AMOUNT} denars received in full." />
+    <string id="News_PayMuster_Partial" text="The paymaster's purse is light. {AMOUNT} denars paid, {OWED} still owed." />
+    <string id="News_PayMuster_Delayed" text="The paymaster shakes his head. No coin today. {OWED} denars now owed." />
+    <string id="News_PayMuster_Promissory" text="A promissory note replaces coin. The lord's seal promises payment soon." />
+    <string id="News_PayMuster_Corruption" text="Coin changes hands in the shadows. {AMOUNT} denars, and no questions asked." />
+    <string id="News_PayMuster_SideDeal" text="A deal was struck aside the muster line. {AMOUNT} denars, quick and quiet." />
+    <string id="News_PayMuster_Generic" text="Muster complete. {AMOUNT} denars." />
     
     <!-- Category Headers -->
     
@@ -3097,11 +3216,11 @@
 
     <!-- Career (3) -->
     <string id="dec_request_audience_title" text="Request an Audience" />
-    <string id="dec_request_audience_setup" text="The lord's banner hangs above the command tent. Guards stand watch, and officers come and go on important business. A common soldier doesn't just walk in�but your rank has earned you the right to petition, if you've something worth saying." />
+    <string id="dec_request_audience_setup" text="The lord's banner hangs above the command tent. Guards stand watch, and officers come and go on important business. A common soldier doesn't just walk in�but your rank has earned you the right to petition, if you've something worth saying." />
     <string id="dec_request_audience_recognition" text="Remind the lord of your service. Speak of what you've done." />
-    <string id="dec_request_audience_recognition_result" text="{LORD_NAME} hears you out, eyes sharp. When you finish, there's a pause�then a single nod. 'I know your face now, soldier. Continue to serve well.' It's not much, but from a lord, it's everything." />
+    <string id="dec_request_audience_recognition_result" text="{LORD_NAME} hears you out, eyes sharp. When you finish, there's a pause�then a single nod. 'I know your face now, soldier. Continue to serve well.' It's not much, but from a lord, it's everything." />
     <string id="dec_request_audience_pay" text="Humbly request an advance on wages. Debts press hard." />
-    <string id="dec_request_audience_pay_result" text="You explain your circumstances as briefly as you can. The lord's expression is unreadable, but he gestures to his steward. A purse of coins lands in your palm. 'See that it's repaid in service.' You're in debt now�of a different kind." />
+    <string id="dec_request_audience_pay_result" text="You explain your circumstances as briefly as you can. The lord's expression is unreadable, but he gestures to his steward. A purse of coins lands in your palm. 'See that it's repaid in service.' You're in debt now�of a different kind." />
     <string id="dec_request_audience_opportunity" text="Ask for the chance to prove yourself in some special task." />
     <string id="dec_request_audience_opportunity_result" text="The lord's eyebrow rises. Ambition, or foolishness? 'I'll remember your eagerness, soldier. When something needs doing, perhaps I'll send for you.' You've put your name forward. Now you must prove worthy of it." />
     <string id="dec_request_audience_cancel" text="Lose your nerve. This isn't the time." />
@@ -3163,10 +3282,10 @@
     <string id="dec_dangerous_wager_title" text="Accept a Dangerous Wager" />
     <string id="dec_dangerous_wager_setup" text="The men are getting creative with boredom. {SOLDIER_NAME} grins at you across the fire. 'Heard you've got brass ones. Bet you twenty denars you can't...' What follows is either incredibly dangerous or incredibly stupid. Possibly both." />
     <string id="dec_dangerous_wager_accept" text="'You're on.' Stand up and prove it." />
-    <string id="dec_dangerous_wager_win_result" text="Your heart pounds, the men roar, and somehow�you pull it off. {SOLDIER_NAME}'s coins land in your palm while the camp erupts. They'll be telling this story for weeks. You'll be feeling it for just as long." />
+    <string id="dec_dangerous_wager_win_result" text="Your heart pounds, the men roar, and somehow�you pull it off. {SOLDIER_NAME}'s coins land in your palm while the camp erupts. They'll be telling this story for weeks. You'll be feeling it for just as long." />
     <string id="dec_dangerous_wager_lose_result" text="Pride goes before the fall. You hit the ground hard, or burn yourself, or whatever fool thing you were attempting goes wrong. The men wince. The coin goes to {SOLDIER_NAME}. Your pride goes to the mud." />
-    <string id="dec_dangerous_wager_careful" text="'Double or nothing�but on my terms.'" />
-    <string id="dec_dangerous_wager_careful_result" text="You turn the challenge around, stack the odds your way. It's still risky, but calculated. When you succeed, the winnings are sweeter�and you barely limp afterward." />
+    <string id="dec_dangerous_wager_careful" text="'Double or nothing�but on my terms.'" />
+    <string id="dec_dangerous_wager_careful_result" text="You turn the challenge around, stack the odds your way. It's still risky, but calculated. When you succeed, the winnings are sweeter�and you barely limp afterward." />
     <string id="dec_dangerous_wager_careful_lose" text="Even the clever approach goes wrong sometimes. You're out more coin and nursing new bruises. At least you tried to be smart about it." />
     <string id="dec_dangerous_wager_cancel" text="'I've nothing to prove to you.' Stay seated." />
     <string id="dec_dangerous_wager_cancel_result" text="You shake your head. {SOLDIER_NAME} shrugs, calls you sensible or coward depending on the drink in him. Tomorrow, nobody will remember you turned it down. Or maybe they will." />
@@ -3185,6 +3304,46 @@
     <string id="dec_challenge_cancel" text="Some insults aren't worth dying for." />
     <string id="dec_challenge_cancel_result" text="You let it pass. The smart choice, if not the satisfying one." />
 
+    <!-- Retinue Decisions (4) - T7+ Commander actions -->
+    <string id="dec_ret_inspect_title" text="Inspect Your Retinue" />
+    <string id="dec_ret_inspect_setup" text="Walk the line. Check gear, check morale, check readiness. Your men need to see you care about their condition." />
+    <string id="dec_ret_inspect_thorough" text="Conduct a thorough inspection. Check every soldier personally." />
+    <string id="dec_ret_inspect_thorough_result" text="You walk the line slowly, speaking to each man. You notice worn straps, dull blades, blisters that need tending. They see you noticing. That matters." />
+    <string id="dec_ret_inspect_quick" text="Quick pass. Show your face, keep it moving." />
+    <string id="dec_ret_inspect_quick_result" text="A brisk walk down the line. They straighten as you pass. It's not much, but it shows you haven't forgotten them." />
+    <string id="dec_ret_inspect_cancel" text="They're fine without my supervision." />
+    <string id="dec_ret_inspect_cancel_result" text="Your men can handle themselves. No need to hover." />
+
+    <string id="dec_ret_drill_title" text="Drill Your Soldiers" />
+    <string id="dec_ret_drill_setup" text="Run your men through combat drills. Hard work builds discipline and readiness, but push too hard and morale suffers." />
+    <string id="dec_ret_drill_hard" text="Push them hard. No mercy, no excuses." />
+    <string id="dec_ret_drill_hard_result" text="You drive them until they curse your name. Shield walls crash, formations wheel, weapons sing. They hate it now, but they'll thank you when steel crosses steel." />
+    <string id="dec_ret_drill_balanced" text="Firm but fair. Work them, but don't break them." />
+    <string id="dec_ret_drill_balanced_result" text="You push them through the forms with a firm hand and an occasional word of encouragement. They sweat, they learn, they respect the work." />
+    <string id="dec_ret_drill_light" text="Keep it light. Build confidence, not exhaustion." />
+    <string id="dec_ret_drill_light_result" text="You run them through basic drills without breaking a sweat. They appreciate the easy day. Whether that makes them better soldiers is another question." />
+    <string id="dec_ret_drill_cancel" text="They've drilled enough." />
+    <string id="dec_ret_drill_cancel_result" text="Training can wait. Rest is part of readiness too." />
+
+    <string id="dec_ret_share_rations_title" text="Share Your Rations" />
+    <string id="dec_ret_share_rations_setup" text="Your men are on standard field rations. You have better food in your personal stores. Sharing builds loyalty, but costs coin to replace." />
+    <string id="dec_ret_share_rations_feast" text="Break out the good stuff. Make it a proper meal. (50 gold)" />
+    <string id="dec_ret_share_rations_feast_result" text="You share meat, bread, and even a skin of wine. Your men feast like officers for one night. They won't forget this." />
+    <string id="dec_ret_share_rations_modest" text="Share what you can spare. Simple generosity. (20 gold)" />
+    <string id="dec_ret_share_rations_modest_result" text="You hand out dried meat and cheese from your personal stores. It's not a feast, but the gesture matters." />
+    <string id="dec_ret_share_rations_cancel" text="They're paid soldiers. They can buy their own food." />
+    <string id="dec_ret_share_rations_cancel_result" text="You keep your stores to yourself. They get what they're issued, like everyone else." />
+
+    <string id="dec_ret_address_men_title" text="Address Your Men" />
+    <string id="dec_ret_address_men_setup" text="Your soldiers are assembled. Time to speak to them as their commander. What you say now will set the tone of your leadership." />
+    <string id="dec_ret_address_men_inspire" text="Speak of honor, duty, and shared glory." />
+    <string id="dec_ret_address_men_inspire_result" text="You speak from the heart. Words about brotherhood, courage, and the battles to come. Some men stand straighter. A few even look inspired." />
+    <string id="dec_ret_address_men_discipline" text="Set clear expectations. Demand excellence." />
+    <string id="dec_ret_address_men_discipline_result" text="You lay out standards and consequences. No room for weakness, no tolerance for failure. They understand what's expected." />
+    <string id="dec_ret_address_men_casual" text="Keep it brief and practical. We have work to do." />
+    <string id="dec_ret_address_men_casual_result" text="You keep it short. No grand speeches, no theatrics. Just a commander talking to soldiers. They appreciate not wasting time." />
+    <string id="dec_ret_address_men_cancel" text="Actions speak louder than words." />
+    <string id="dec_ret_address_men_cancel_result" text="You decide to let your deeds speak for you. The men disperse without ceremony." />
 
 
     <!-- Dialog Strings - Enlistment Conversations -->
@@ -3246,6 +3405,283 @@
     <string id="qm_stock_mixed" text="Mixed lot. Some worn, some decent." />
     <string id="qm_stock_quality_pieces" text="Some quality pieces came in with the last wagon." />
     <string id="qm_stock_out" text="Out of stock. Check back after the next muster." />
+
+    <!-- Retinue Formation Selection (Phase 1) -->
+    <string id="ret_sel_title" text="Choose Your Retinue" />
+    <string id="ret_sel_prompt" text="What type of soldiers will you command?" />
+    <string id="ret_sel_confirm" text="Confirm" />
+    <string id="ret_sel_infantry" text="Infantry" />
+    <string id="ret_sel_infantry_desc" text="Foot soldiers with sword and shield" />
+    <string id="ret_sel_archers" text="Archers" />
+    <string id="ret_sel_archers_desc" text="Skilled bowmen for ranged support" />
+    <string id="ret_sel_cavalry" text="Cavalry" />
+    <string id="ret_sel_cavalry_desc" text="Mounted lancers, swift and deadly" />
+    <string id="ret_sel_horse_archers" text="Horse Archers" />
+    <string id="ret_sel_horse_archers_desc" text="Mounted bowmen of the steppe" />
+    <string id="ret_sel_confirmed" text="You have chosen to command {FORMATION}. Your recruits will reflect this choice." />
+
+    <!-- Retinue Loyalty Threshold Events (Phase 4) -->
+    
+    <!-- Low Loyalty (< 30) -->
+    <string id="evt_ret_loyalty_low_title" text="Discontent in the Ranks" />
+    <string id="evt_ret_loyalty_low_setup" text="Your men have grown restless. You hear grumbling during the evening meal, and discipline is slipping. Something needs to be done before morale deteriorates further." />
+    <string id="evt_ret_loyalty_low_address" text="Gather the men. We need to talk." />
+    <string id="evt_ret_loyalty_low_strict" text="They will obey or face consequences." />
+    <string id="evt_ret_loyalty_low_ignore" text="They will settle down on their own." />
+    <string id="evt_ret_loyalty_low_address_result" text="You gather your men and hear their grievances. With a few small gestures and promises, spirits lift. Your soldiers know you care about their wellbeing." />
+    <string id="evt_ret_loyalty_low_strict_result" text="You crack down hard. The grumbling stops, but your men obey out of fear rather than respect. Officers take notice of the harsh methods." />
+    <string id="evt_ret_loyalty_low_ignore_result" text="You do nothing. The discontent festers. Your soldiers notice your indifference, and morale sinks further." />
+    
+    <!-- Critical Loyalty (< 20) -->
+    <string id="evt_ret_loyalty_critical_title" text="Desertion Risk" />
+    <string id="evt_ret_loyalty_critical_setup" text="Your corporal approaches with grave news. 'Commander, the men are talking about deserting. They say you have failed them. If you do not act now, we will lose soldiers.'" />
+    <string id="evt_ret_loyalty_critical_pay" text="I will pay them from my own purse." />
+    <string id="evt_ret_loyalty_critical_inspire" text="I will remind them why they follow me." />
+    <string id="evt_ret_loyalty_critical_let_go" text="If they wish to leave, let them." />
+    <string id="evt_ret_loyalty_critical_pay_result" text="You distribute coin to your soldiers. They are surprised and grateful. Word spreads that you value their service enough to pay from your own pocket." />
+    <string id="evt_ret_loyalty_critical_inspire_result" text="You address your men with passion and conviction. Your words stir their hearts. They remember why they chose to follow you into battle." />
+    <string id="evt_ret_loyalty_critical_inspire_low_result" text="You try to rally your men, but your words ring hollow. You lack the presence to truly inspire them. Still, some appreciate the effort." />
+    <string id="evt_ret_loyalty_critical_let_go_result" text="Three of your soldiers desert in the night. The remaining men are shaken but realize you will not beg them to stay." />
+    
+    <!-- Near Mutiny (< 10) -->
+    <string id="evt_ret_loyalty_mutiny_title" text="On the Brink of Mutiny" />
+    <string id="evt_ret_loyalty_mutiny_setup" text="Your retinue is in crisis. Men refuse orders. Some have drawn weapons. Your corporal warns you: 'Commander, they are ready to mutiny. You must act NOW or we lose everything.'" />
+    <string id="evt_ret_loyalty_mutiny_pay" text="Pay them triple wages. Whatever it takes." />
+    <string id="evt_ret_loyalty_mutiny_appeal" text="I will appeal to our lord for assistance." />
+    <string id="evt_ret_loyalty_mutiny_dismiss" text="Dismiss the troublemakers and rebuild." />
+    <string id="evt_ret_loyalty_mutiny_nothing" text="I will not negotiate with mutineers." />
+    <string id="evt_ret_loyalty_mutiny_pay_result" text="You empty your purse. Your soldiers are stunned by the gesture. The crisis passes. They will follow you again, though trust must still be rebuilt." />
+    <string id="evt_ret_loyalty_mutiny_appeal_result" text="Your lord intervenes, addressing your men personally. The crisis is averted, but your lord now questions your ability to command." />
+    <string id="evt_ret_loyalty_mutiny_dismiss_result" text="You dismiss the ringleaders without mercy. Five men are sent away. The remaining soldiers see you will tolerate no insubordination." />
+    <string id="evt_ret_loyalty_mutiny_nothing_result" text="You stand your ground. Eight soldiers desert in the night. Those who remain are loyal, but your retinue is crippled." />
+    
+    <!-- High Loyalty (> 80) -->
+    <string id="evt_ret_loyalty_high_title" text="Devoted Soldiers" />
+    <string id="evt_ret_loyalty_high_setup" text="Your retinue gathers around the campfire after evening muster. One of your veterans stands. 'Commander, we wanted you to know: we would follow you to the gates of hell. You have our loyalty.'" />
+    <string id="evt_ret_loyalty_high_thank" text="I am honored to lead such men." />
+    <string id="evt_ret_loyalty_high_share" text="Then let us celebrate. Drinks are on me." />
+    <string id="evt_ret_loyalty_high_train" text="Good. Then you are ready for harder training." />
+    <string id="evt_ret_loyalty_high_thank_result" text="Your soldiers nod in respect. The bond between you and your men grows stronger. They would die for you without hesitation." />
+    <string id="evt_ret_loyalty_high_share_result" text="You buy a round for your soldiers. Laughter and song fill the camp. Your men are grateful to serve under a commander who values them." />
+    <string id="evt_ret_loyalty_high_train_result" text="Your soldiers grin at the challenge. They trust you to make them better warriors. Training begins at dawn." />
+
+    <!-- Phase 5: Retinue Narrative Events -->
+    
+    <!-- Soldier Dispute Event -->
+    <string id="evt_ret_dispute_title" text="Trouble in the Ranks" />
+    <string id="evt_ret_dispute_setup" text="Shouting draws you to the fire pit. Two of your soldiers are at each other's throats - one has the other by the collar.\n\n'He cheated at dice!' one shouts. 'I'll kill him!'\n\nYour men watch, waiting to see what their commander does." />
+    <string id="evt_ret_dispute_discipline" text="Both of you. Extra watch duty. Tonight. Now get out of my sight." />
+    <string id="evt_ret_dispute_discipline_result" text="Neither man is happy, but they separate. Order is maintained. Your officers approve of the swift discipline." />
+    <string id="evt_ret_dispute_investigate" text="What happened? You first. Then you." />
+    <string id="evt_ret_dispute_investigate_result" text="You listen. Turns out it was a misunderstanding. You make them shake hands. The men respect that you bothered to hear them out." />
+    <string id="evt_ret_dispute_fight" text="Settle it. Fists only. First blood ends it." />
+    <string id="evt_ret_dispute_fight_result" text="Fists fly. It's over quickly. Both men shake hands afterward, the matter settled the old way." />
+    <string id="evt_ret_dispute_fight_fail" text="The fight gets out of hand. One man takes a bad hit and is down. You call for the surgeon." />
+    <string id="evt_ret_dispute_dismiss" text="Handle it yourselves. I have better things to do." />
+    <string id="evt_ret_dispute_dismiss_result" text="You walk away. The men exchange looks. Their commander does not care. The tension will fester." />
+    
+    <!-- Leave Request Event -->
+    <string id="evt_ret_leave_title" text="A Soldier's Plea" />
+    <string id="evt_ret_leave_setup" text="One of your soldiers approaches, cap in hand. He's been reliable - never shirks, never complains.\n\n'Commander... my wife sent word. The baby's coming. I know the timing's poor, but... please. Let me go to her. Just for a week.'" />
+    <string id="evt_ret_leave_grant" text="Go. Family comes first. Be back in seven days." />
+    <string id="evt_ret_leave_grant_result" text="The man's face lights up. He grabs your hand, thanking you over and over. The other soldiers see this. They know you are not heartless." />
+    <string id="evt_ret_leave_deny" text="I am sorry. We may see battle any day. I cannot spare you." />
+    <string id="evt_ret_leave_deny_result" text="His face falls. He nods slowly, knowing your words are true but hating you for them. The men mutter among themselves. Some things matter more than war." />
+    <string id="evt_ret_leave_messenger" text="You cannot go. But take this gold and send a fast rider with gifts for your wife." />
+    <string id="evt_ret_leave_messenger_result" text="He hesitates, then accepts the coin. It's not what he wanted, but it's something. The men see you tried to help. That counts for something." />
+    
+    <!-- Theft Event -->
+    <string id="evt_ret_theft_title" text="Missing Rations" />
+    <string id="evt_ret_theft_setup" text="Your corporal reports a problem: rations have gone missing from the supply cart. Half a week's bread and salt meat, vanished in the night.\n\n'Could be one of ours, Commander. Could be camp followers. What do you want to do?'" />
+    <string id="evt_ret_theft_investigate" text="Question everyone. Search the tents. I want answers." />
+    <string id="evt_ret_theft_investigate_result" text="After hours of questioning, you find the culprit - a soldier feeding a starving family in the village. You recover what remains. The men see you are thorough but fair." />
+    <string id="evt_ret_theft_punish" text="Half rations for everyone until the thief confesses." />
+    <string id="evt_ret_theft_punish_result" text="Hunger breeds resentment. By nightfall, the men drag the thief before you. The rations are found. But now everyone is angry - at you as much as the thief." />
+    <string id="evt_ret_theft_replace" text="Buy replacement rations from my own coin. Let it go." />
+    <string id="evt_ret_theft_replace_result" text="You pay for new supplies without fuss. The men appreciate that you didn't make a scene. The thief, whoever they are, owes you." />
+    <string id="evt_ret_theft_ignore" text="We will manage. Forget about it." />
+    <string id="evt_ret_theft_ignore_result" text="You let it slide. A week later, more rations vanish. Then some coin. Weakness invites predators. Even your own men start taking liberties." />
+    
+    <!-- Veteran Questions Event -->
+    <string id="evt_ret_veteran_title" text="The Old Hand" />
+    <string id="evt_ret_veteran_setup" text="Your oldest soldier pulls you aside after the morning briefing. He's fought in more wars than you've seen winters.\n\n'Commander... that order you gave. About the patrol route. With respect, it's a bad call. I've seen men die going that way. The ravine bottlenecks. Perfect for ambush.'" />
+    <string id="evt_ret_veteran_listen" text="You know these lands better than I do. What do you suggest?" />
+    <string id="evt_ret_veteran_listen_result" text="The veteran lays out an alternative. It's better - you can see that immediately. You change the orders. The men notice their commander listens. That matters." />
+    <string id="evt_ret_veteran_override" text="I have my reasons. The order stands." />
+    <string id="evt_ret_veteran_override_result" text="The veteran's jaw tightens. 'As you say, Commander.' He walks off. The order stands. You hope you're right - because if you're wrong, men will die." />
+    <string id="evt_ret_veteran_compromise" text="Send scouts ahead. If the ravine is clear, we proceed as planned." />
+    <string id="evt_ret_veteran_compromise_result" text="The veteran nods. 'Fair enough, Commander. At least you're thinking.' The scouts report back - he was right. You adjust the plan. Everyone saves face." />
+    
+    <!-- New Recruits Event -->
+    <string id="evt_ret_recruits_title" text="Raw Meat" />
+    <string id="evt_ret_recruits_setup" text="Three new soldiers report for duty, fresh from the training grounds. They look around nervously, still soft, still scared. Your veterans eye them with a mixture of amusement and contempt.\n\nHow do you welcome them to your retinue?" />
+    <string id="evt_ret_recruits_harsh" text="War is not what the songs say. You will learn or you will die. Fall in." />
+    <string id="evt_ret_recruits_harsh_result" text="The recruits pale. Good. Fear keeps men alive. Your veterans nod approvingly - you don't coddle greenhorns. These three will learn fast or die trying." />
+    <string id="evt_ret_recruits_welcome" text="Welcome to the company. Stay close to the veterans - they will keep you alive." />
+    <string id="evt_ret_recruits_welcome_result" text="The recruits relax slightly. One of your veterans claps the nearest on the shoulder. 'Don't worry, lad. Commander's decent. Just do what you're told.' Integration begins." />
+    <string id="evt_ret_recruits_test" text="Show me what you can do. Draw your weapons. Now." />
+    <string id="evt_ret_recruits_test_result" text="You run them through drills. Two are clumsy but eager. One shows promise. You assign each to a veteran mentor. They'll learn the company's ways soon enough." />
+    
+    <!-- Loyalty Test Event -->
+    <string id="evt_ret_test_title" text="Expendable" />
+    <string id="evt_ret_test_setup" text="Your lord calls you to his tent. His expression is grim.\n\n'I need your retinue to hold the rear while the army withdraws. It's a dangerous position - there will be casualties. But someone must buy us time.'\n\nHe doesn't say it, but you know: your men are the expendable ones." />
+    <string id="evt_ret_test_obey" text="As you command, my lord. We will hold." />
+    <string id="evt_ret_test_obey_result" text="Your lord nods approvingly. Your men hold the line. Some fall, but the army escapes. Your lord remembers your sacrifice. Your soldiers remember being sacrificed." />
+    <string id="evt_ret_test_negotiate" text="We will hold, my lord - but I want reinforcements to cover our withdrawal." />
+    <string id="evt_ret_test_negotiate_result" text="Your lord hesitates, then agrees. You get a handful of archers for cover. Your men see you negotiated for their lives. They appreciate the effort." />
+    <string id="evt_ret_test_refuse" text="My men are not fodder, my lord. Find another way." />
+    <string id="evt_ret_test_refuse_result" text="Your lord's face hardens. 'Remember who commands here.' He finds another unit for the task. Your men love you for standing up for them. Your lord will not forget this defiance." />
+    
+    <!-- Morale Low Event -->
+    <string id="evt_ret_morale_title" text="Grumbling" />
+    <string id="evt_ret_morale_setup" text="Your men are tired, hungry, and fed up. They don't say it to your face, but you hear them muttering around the cookfires. Morale is dangerously low.\n\nSomething must be done before discontent turns to desertion." />
+    <string id="evt_ret_morale_share" text="Break out the good wine. Tonight, we feast." />
+    <string id="evt_ret_morale_share_result" text="You break open your personal stores. Wine flows, stories are told, laughter returns. Your men see you share their hardship. That means more than any speech." />
+    <string id="evt_ret_morale_speech" text="Gather round. We need to talk about why we fight." />
+    <string id="evt_ret_morale_speech_result" text="You speak of duty, of honor, of the bonds forged in battle. Some men are moved. Others remain skeptical. Words alone cannot fill empty bellies, but they help." />
+    <string id="evt_ret_morale_discipline" text="I will not tolerate grumbling. The next man who complains pulls double duty." />
+    <string id="evt_ret_morale_discipline_result" text="The muttering stops. The resentment doesn't. Your men obey, but their eyes are cold. Fear keeps order, but it makes enemies of friends." />
+    
+    <!-- Desertion Event -->
+    <string id="evt_ret_desertion_title" text="The Runner" />
+    <string id="evt_ret_desertion_setup" text="Your night watch caught a soldier trying to slip away with his gear. He stands before you now, shame-faced and trembling.\n\n'Commander, I... I couldn't take it anymore. My nerve broke. Please, I wasn't thinking. I just wanted to go home.'" />
+    <string id="evt_ret_desertion_punish" text="Desertion is punishable by death. Report to the provost." />
+    <string id="evt_ret_desertion_punish_result" text="The man is dragged away. In the morning, the army's justice is carried out. Your men stand silently. No one else will try to run. But they won't forget what you did." />
+    <string id="evt_ret_desertion_beat" text="Ten lashes. Then back to duty. This never happened." />
+    <string id="evt_ret_desertion_beat_result" text="The lashes are administered. The man takes his punishment without a word. He returns to his tent, bloodied but still one of yours. Some think you were merciful. Others think you were cruel." />
+    <string id="evt_ret_desertion_forgive" text="We've all felt fear. Return to your post. Do not make me regret this mercy." />
+    <string id="evt_ret_desertion_forgive_result" text="The man's eyes widen. He nods, returns to his tent. Your officers disapprove, but your soldiers see a commander with a heart. Whether that's wisdom or weakness remains to be seen." />
+    
+    <!-- Promotion Event -->
+    <string id="evt_ret_promotion_title" text="From the Ranks" />
+    <string id="evt_ret_promotion_setup" text="One of your soldiers has distinguished himself. In the last skirmish, he held a breach single-handed while others fell back. He's earned recognition.\n\nHow do you reward such bravery?" />
+    <string id="evt_ret_promotion_public" text="Form up! This man is now corporal. Learn from his example." />
+    <string id="evt_ret_promotion_public_result" text="The men cheer as you pin the rank on his shoulder. He stands taller. Some are inspired. Others are jealous. Such is the nature of advancement." />
+    <string id="evt_ret_promotion_private" text="Come to my tent. We should talk about your future." />
+    <string id="evt_ret_promotion_private_result" text="You promote him quietly, explaining your expectations. He accepts with dignity. Word spreads naturally. Those who deserved to know, know." />
+    <string id="evt_ret_promotion_gold" text="No rank, but take this purse. You've earned it." />
+    <string id="evt_ret_promotion_gold_result" text="You press coins into his hand. He grins. 'Thank you, Commander.' Sometimes gold speaks louder than titles. He'll remember this generosity." />
+    
+    <!-- Illness Event -->
+    <string id="evt_ret_illness_title" text="Fever in Camp" />
+    <string id="evt_ret_illness_setup" text="Three of your soldiers are down with fever. They cough and shiver in their tents. The camp surgeon looks grim.\n\n'Could spread, Commander. We should isolate them. But that means stopping to rest while the army marches on.'" />
+    <string id="evt_ret_illness_quarantine" text="Set up a quarantine tent. We'll catch up when they're better." />
+    <string id="evt_ret_illness_quarantine_result" text="You set up a sick tent and assign the surgeon to watch them. The army marches ahead. In a week, your men recover. They remember you didn't leave them to die." />
+    <string id="evt_ret_illness_march" text="They march or they get left behind. We cannot slow down." />
+    <string id="evt_ret_illness_march_result" text="You push them hard. Two recover on the road through sheer willpower. The third keeps up through grit and fear." />
+    <string id="evt_ret_illness_march_fail" text="One collapses on the road. Another infects two more. Soon you have five sick soldiers and a retinue that hates you for your callousness." />
+    <string id="evt_ret_illness_surgeon" text="Pay for a proper healer. Spare no expense." />
+    <string id="evt_ret_illness_surgeon_result" text="You pay for proper medicine and skilled care. Within days, your soldiers recover fully. Word spreads - your commander pays for healing. That means something to men who face death." />
+
+    <!-- Post-Battle Retinue Incidents (Phase 6) -->
+    
+    <!-- Wounded Soldier Incident -->
+    <string id="mi_ret_wounded_soldier_title" text="One of Your Own" />
+    <string id="mi_ret_wounded_soldier_setup" text="The battle is over. As you count heads, you find one of your men lying in the mud, gut wound, bleeding out. He recognizes you. Tries to speak. The surgeon is already overwhelmed with critical cases.\n\nYour men are watching. Waiting to see what you do." />
+    <string id="mi_ret_wounded_soldier_stay" text="Stay with him until the end" />
+    <string id="mi_ret_wounded_soldier_stay_result" text="You kneel beside him. Hold his hand. He dies quietly, knowing he wasn't alone. Your men see this. They remember." />
+    <string id="mi_ret_wounded_soldier_surgeon" text="Demand the surgeon treat him now" />
+    <string id="mi_ret_wounded_soldier_surgeon_result" text="The surgeon scowls but complies. Your man survives, barely. The surgeon won't forget this." />
+    <string id="mi_ret_wounded_soldier_surgeon_failure" text="The surgeon tries, but it's too late. Your man dies on the table. The surgeon blames you for wasting his time." />
+    <string id="mi_ret_wounded_soldier_move_on" text="There's nothing you can do. Move on." />
+    <string id="mi_ret_wounded_soldier_move_on_result" text="You stand and walk away. His eyes follow you until they don't. Your men exchange looks. They understand. They don't like it." />
+    
+    <!-- First Command Incident -->
+    <string id="mi_ret_first_command_title" text="First Command" />
+    <string id="mi_ret_first_command_setup" text="Your first battle as a commander is over. You led men into the fight. Some followed your orders perfectly. Some hesitated. Some didn't come back.\n\nYou're standing alone now, watching your soldiers tend their wounds. This is what command feels like." />
+    <string id="mi_ret_first_command_reflect" text="Take a moment. Process what just happened." />
+    <string id="mi_ret_first_command_reflect_result" text="You breathe. Think. Remember the mistakes and the successes. Command is weight. You'll carry it better next time." />
+    <string id="mi_ret_first_command_rally" text="Rally your men. Show strength." />
+    <string id="mi_ret_first_command_rally_result" text="You walk among them, checking wounds, offering words. They see you as their commander now. Not just a promoted soldier." />
+    <string id="mi_ret_first_command_mourn" text="Count the losses. Remember the names." />
+    <string id="mi_ret_first_command_mourn_result" text="You go through the list. Every man lost, every name. Your soldiers watch you do it. They know you'll remember them too." />
+    
+    <!-- Cowardice Incident -->
+    <string id="mi_ret_cowardice_title" text="The Coward" />
+    <string id="mi_ret_cowardice_setup" text="One of your men ran. You saw it during the fighting—turned and fled while the rest held the line. Now the battle is over and he's back, trying to blend in with the others.\n\nYour sergeant is waiting for your order. The men are watching." />
+    <string id="mi_ret_cowardice_discipline" text="Public flogging. Make an example." />
+    <string id="mi_ret_cowardice_discipline_result" text="He takes the lashes without a sound. The men watch in silence. They won't run. But they won't love you for this." />
+    <string id="mi_ret_cowardice_understand" text="Talk to him privately. Find out why." />
+    <string id="mi_ret_cowardice_understand_result" text="He breaks down. First battle. Saw his brother die in the last war. You assign him to the rear for now. The men respect that you listened." />
+    <string id="mi_ret_cowardice_understand_failure" text="He makes excuses. Lies. Your men see weakness in both of you. Should have been harsher." />
+    <string id="mi_ret_cowardice_dismiss" text="Remove him from your retinue. Send him back to the main force." />
+    <string id="mi_ret_cowardice_dismiss_result" text="He's reassigned. Your men nod approval. You don't tolerate cowardice, but you're not cruel about it." />
+    <string id="mi_ret_cowardice_ignore" text="Let it go. Everyone has a bad day." />
+    <string id="mi_ret_cowardice_ignore_result" text="You say nothing. The men exchange glances. If running is acceptable, what else is? Your authority weakens." />
+    
+    <!-- Looting Incident -->
+    <string id="mi_ret_looting_title" text="Early Looters" />
+    <string id="mi_ret_looting_setup" text="The fighting just ended. Bodies are still warm. You find some of your men already rifling through enemy packs, pocketing valuables.\n\nLooting rights haven't been called yet. Technically, this is theft from the army's share. But soldiers have always done this. The question is whether you stop it." />
+    <string id="mi_ret_looting_allow" text="Look the other way. Let them have it." />
+    <string id="mi_ret_looting_allow_result" text="You turn and walk away. Your men grin and keep working. They'll remember this. So might the officers, if they notice." />
+    <string id="mi_ret_looting_stop" text="Stop them. Order them back to formation." />
+    <string id="mi_ret_looting_stop_result" text="They grumble but comply. You're following regulations. Your men think you're a stickler. The officers think you're reliable." />
+    <string id="mi_ret_looting_join" text="Help them. Take a share for yourself." />
+    <string id="mi_ret_looting_join_result" text="You kneel down and start searching bodies with them. They laugh. You're one of them now. Command just got more complicated." />
+    
+    <!-- Prisoner Mercy Incident -->
+    <string id="mi_ret_prisoner_mercy_title" text="The Prisoner's Plea" />
+    <string id="mi_ret_prisoner_mercy_setup" text="Your men have captured an enemy officer. He's wounded, disarmed, and begging for his life. Says he has a family. Offers ransom.\n\nOne of your soldiers—a veteran—spits at him. &quot;His kind killed my brother. Let me finish him.&quot;\n\nYour decision. Your responsibility." />
+    <string id="mi_ret_prisoner_mercy_execute" text="Let your man have his revenge." />
+    <string id="mi_ret_prisoner_mercy_execute_result" text="Your soldier draws his blade. It's over quickly. The prisoner dies cursing you. Your men nod approval. You've chosen their side." />
+    <string id="mi_ret_prisoner_mercy_spare" text="Take him prisoner. He's worth more alive." />
+    <string id="mi_ret_prisoner_mercy_spare_result" text="You order him bound and sent to the rear. Your soldier glares at you. The prisoner thanks you. Gold is gold, but this cost you something." />
+    <string id="mi_ret_prisoner_mercy_let_men_decide" text="Ask your men to vote. Their call." />
+    <string id="mi_ret_prisoner_mercy_let_men_decide_result" text="You put it to them. They argue. Eventually they vote to spare him for the ransom. Your soldier accepts it, barely. You've shown you trust their judgment." />
+    <string id="mi_ret_prisoner_mercy_let_men_decide_failure" text="The vote is swift and brutal. Execute. You've given them power, and they've used it. The prisoner dies. You're complicit." />
+    
+    <!-- Recognition Incident -->
+    <string id="mi_ret_recognition_title" text="Recognition" />
+    <string id="mi_ret_recognition_setup" text="The battle is won. Your lord rides up, surveying the field. He sees you with your men and nods.\n\n&quot;Your retinue fought well, Commander. They held the flank when others wavered. I'm pleased.&quot;\n\nYour men straighten up, hearing this. How you respond matters." />
+    <string id="mi_ret_recognition_accept_humbly" text="&quot;Thank you, my lord. We did our duty.&quot;" />
+    <string id="mi_ret_recognition_accept_humbly_result" text="Your lord nods, satisfied. Your men appreciate the humility. You're a commander, but you're not arrogant about it." />
+    <string id="mi_ret_recognition_credit_men" text="&quot;The credit belongs to my men, my lord. They're the ones who bled.&quot;" />
+    <string id="mi_ret_recognition_credit_men_result" text="Your men exchange glances. You just gave them the glory. They'll remember this. Your lord smiles slightly—good leadership." />
+    <string id="mi_ret_recognition_boast" text="&quot;We held because I trained them well, my lord.&quot;" />
+    <string id="mi_ret_recognition_boast_result" text="Your lord's smile fades. Your men shift uncomfortably. You just took all the credit. That's not how you build loyalty." />
+
+    <!-- Retinue on Service End (EC2) -->
+    <string id="enl_ret_keep_soldiers" text="Your {COUNT} retinue soldiers remain under your command." />
+    <string id="enl_ret_lose_soldiers" text="Your {COUNT} retinue soldiers have been reassigned to your former lord's command." />
+    
+    <!-- Culture Mismatch on Re-enlistment (EC14) -->
+    <string id="enl_culture_mismatch" text="Your previous retinue type ({TYPE}) is not available in {CULTURE}. You will select a new formation type upon reaching commander rank." />
+
+    <!-- Named Veterans System -->
+    <string id="enl_vet_emergence_title" text="A Soldier Stands Out" />
+    <string id="enl_vet_emergence_msg" text="One of your soldiers has distinguished themselves in battle. {VETERAN_NAME} the {TRAIT} has earned a name among your retinue." />
+    <string id="enl_vet_fallen_msg" text="{VETERAN_NAME} the {TRAIT} has fallen in battle. They survived {BATTLES} battles and claimed {KILLS} enemy lives." />
+    
+    <!-- Veteran Memorial Event -->
+    <string id="evt_ret_memorial_title" text="A Soldier Remembered" />
+    <string id="evt_ret_memorial_setup" text="One of your named veterans has fallen in battle. Your men gather in somber silence as the body is prepared. This soldier was more than just another face in the ranks - they had earned a name, a reputation, a place in the company's memory.\n\nThe others watch you, waiting to see how you honor the fallen." />
+    <string id="evt_ret_memorial_honor" text="&quot;Gather the men. We will give them a proper farewell.&quot;" />
+    <string id="evt_ret_memorial_honor_result" text="You speak of the fallen soldier's deeds, their courage, the battles they survived. Wine is poured. Stories are shared. Your men see that you remember those who die under your command. That matters more than gold." />
+    <string id="evt_ret_memorial_pragmatic" text="&quot;We have no time for ceremony. Bury them and prepare to march.&quot;" />
+    <string id="evt_ret_memorial_pragmatic_result" text="War does not wait for grief. The body is buried without ceremony. Your men understand - but some wonder if they, too, will be forgotten when their time comes." />
+    <string id="evt_ret_memorial_harsh" text="&quot;They knew the risks. We all do. Death is part of the soldier's trade.&quot;" />
+    <string id="evt_ret_memorial_harsh_result" text="Your words are cold but true. Some men nod grimly. Others look away. You are not a sentimental commander. That may save lives in the long run - or cost you their hearts." />
+    <string id="evt_ret_memorial_personal" text="&quot;They died fighting at my side. I will carry their memory.&quot;" />
+    <string id="evt_ret_memorial_personal_result" text="You take a moment of silence. The soldiers see their commander's grief is genuine. It is a small thing, but it makes them feel that you fight alongside them, not just command them from behind." />
+
+    <!-- News System Integration: Retinue Context (Daily Brief) -->
+    <string id="brief_ret_empty" text="Your retinue stands empty. You must acquire soldiers to rebuild your personal command." />
+    <string id="brief_ret_critical" text="Your retinue's loyalty is dangerously low. The men eye you with barely-concealed resentment. Desertion seems imminent." />
+    <string id="brief_ret_low" text="Your {COUNT} retinue soldiers serve grudgingly. Morale is poor, and complaints circulate openly." />
+    <string id="brief_ret_high_vets" text="Your retinue of {COUNT} stands loyal and eager. Your {VET_COUNT} named veterans speak well of you around the campfire." />
+    <string id="brief_ret_high" text="Your retinue of {COUNT} soldiers stands ready and devoted. They trust your command." />
+    <string id="brief_ret_vets" text="Among your {COUNT} retinue soldiers, {VET_COUNT} named veterans stand out as battle-hardened warriors." />
+    <string id="brief_ret_full" text="Your retinue has reached its full complement of {COUNT} soldiers." />
+
+    <!-- News System Integration: Casualty Reports -->
+    <string id="news_ret_casualties_both" text="Your retinue suffered {KILLED} killed and {WOUNDED} wounded{CONTEXT}." />
+    <string id="news_ret_casualties_killed" text="Your retinue lost {KILLED} soldier{KILLED_PLURAL}{CONTEXT}." />
+    <string id="news_ret_casualties_wounded" text="Your retinue had {WOUNDED} soldier{WOUNDED_PLURAL} wounded{CONTEXT}." />
+
+    <!-- News System Integration: Veteran Events -->
+    <string id="news_vet_emergence" text="{NAME} the {TRAIT} has distinguished themselves in your retinue." />
+    <string id="news_vet_death" text="{NAME}, who served through {BATTLES} battles, has been slain." />
+    <string id="news_vet_death_legend" text="{NAME}, a legend of {BATTLES} battles and {KILLS} kills, has fallen." />
 
   </strings>
 </base>

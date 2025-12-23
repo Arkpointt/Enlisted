@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "packId": "decisions_catalog",
   "category": "decision",
-  "description": "All 34 player-initiated decisions from Camp Hub menu",
+  "description": "All 38 player-initiated decisions from Camp Hub menu (34 core + 4 retinue T7+)",
   "events": [
     {
       "id": "dec_rest",
@@ -1515,6 +1515,251 @@
           "text": "Some insults aren't worth dying for.",
           "resultTextId": "dec_challenge_cancel_result",
           "resultText": "You let it pass. The smart choice, if not the satisfying one."
+        }
+      ]
+    },
+    {
+      "id": "dec_ret_inspect",
+      "category": "decision",
+      "titleId": "dec_ret_inspect_title",
+      "title": "Inspect Your Retinue",
+      "setupId": "dec_ret_inspect_setup",
+      "setup": "Walk the line. Check gear, check morale, check readiness. Your men need to see you care about their condition.",
+      "requirements": {
+        "tier": { "min": 7, "max": 999 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "inspect_thorough",
+          "textId": "dec_ret_inspect_thorough",
+          "text": "Conduct a thorough inspection. Check every soldier personally.",
+          "costs": {
+            "fatigue": 2
+          },
+          "effects": {
+            "retinueLoyalty": 5,
+            "discipline": 2
+          },
+          "resultTextId": "dec_ret_inspect_thorough_result",
+          "resultText": "You walk the line slowly, speaking to each man. You notice worn straps, dull blades, blisters that need tending. They see you noticing. That matters."
+        },
+        {
+          "id": "inspect_quick",
+          "textId": "dec_ret_inspect_quick",
+          "text": "Quick pass. Show your face, keep it moving.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "retinueLoyalty": 2
+          },
+          "resultTextId": "dec_ret_inspect_quick_result",
+          "resultText": "A brisk walk down the line. They straighten as you pass. It's not much, but it shows you haven't forgotten them."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_ret_inspect_cancel",
+          "text": "They're fine without my supervision.",
+          "resultTextId": "dec_ret_inspect_cancel_result",
+          "resultText": "Your men can handle themselves. No need to hover."
+        }
+      ]
+    },
+    {
+      "id": "dec_ret_drill",
+      "category": "decision",
+      "titleId": "dec_ret_drill_title",
+      "title": "Drill Your Soldiers",
+      "setupId": "dec_ret_drill_setup",
+      "setup": "Run your men through combat drills. Hard work builds discipline and readiness, but push too hard and morale suffers.",
+      "requirements": {
+        "tier": { "min": 7, "max": 999 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 4,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "drill_hard",
+          "textId": "dec_ret_drill_hard",
+          "text": "Push them hard. No mercy, no excuses.",
+          "costs": {
+            "fatigue": 3
+          },
+          "effects": {
+            "retinueLoyalty": -3,
+            "troopXp": 25,
+            "discipline": 3
+          },
+          "resultTextId": "dec_ret_drill_hard_result",
+          "resultText": "You drive them until they curse your name. Shield walls crash, formations wheel, weapons sing. They hate it now, but they'll thank you when steel crosses steel."
+        },
+        {
+          "id": "drill_balanced",
+          "textId": "dec_ret_drill_balanced",
+          "text": "Firm but fair. Work them, but don't break them.",
+          "costs": {
+            "fatigue": 2
+          },
+          "effects": {
+            "retinueLoyalty": 2,
+            "troopXp": 15,
+            "discipline": 1
+          },
+          "resultTextId": "dec_ret_drill_balanced_result",
+          "resultText": "You push them through the forms with a firm hand and an occasional word of encouragement. They sweat, they learn, they respect the work."
+        },
+        {
+          "id": "drill_light",
+          "textId": "dec_ret_drill_light",
+          "text": "Keep it light. Build confidence, not exhaustion.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "retinueLoyalty": 4,
+            "troopXp": 8
+          },
+          "resultTextId": "dec_ret_drill_light_result",
+          "resultText": "You run them through basic drills without breaking a sweat. They appreciate the easy day. Whether that makes them better soldiers is another question."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_ret_drill_cancel",
+          "text": "They've drilled enough.",
+          "resultTextId": "dec_ret_drill_cancel_result",
+          "resultText": "Training can wait. Rest is part of readiness too."
+        }
+      ]
+    },
+    {
+      "id": "dec_ret_share_rations",
+      "category": "decision",
+      "titleId": "dec_ret_share_rations_title",
+      "title": "Share Your Rations",
+      "setupId": "dec_ret_share_rations_setup",
+      "setup": "Your men are on standard field rations. You have better food in your personal stores. Sharing builds loyalty, but costs coin to replace.",
+      "requirements": {
+        "tier": { "min": 7, "max": 999 },
+        "custom": ["has_retinue"],
+        "gold": 20
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "share_feast",
+          "textId": "dec_ret_share_rations_feast",
+          "text": "Break out the good stuff. Make it a proper meal. (50 gold)",
+          "costs": {
+            "gold": 50,
+            "fatigue": 1
+          },
+          "effects": {
+            "retinueLoyalty": 10,
+            "soldierRep": 5
+          },
+          "resultTextId": "dec_ret_share_rations_feast_result",
+          "resultText": "You share meat, bread, and even a skin of wine. Your men feast like officers for one night. They won't forget this."
+        },
+        {
+          "id": "share_modest",
+          "textId": "dec_ret_share_rations_modest",
+          "text": "Share what you can spare. Simple generosity. (20 gold)",
+          "costs": {
+            "gold": 20
+          },
+          "effects": {
+            "retinueLoyalty": 5,
+            "soldierRep": 2
+          },
+          "resultTextId": "dec_ret_share_rations_modest_result",
+          "resultText": "You hand out dried meat and cheese from your personal stores. It's not a feast, but the gesture matters."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_ret_share_rations_cancel",
+          "text": "They're paid soldiers. They can buy their own food.",
+          "resultTextId": "dec_ret_share_rations_cancel_result",
+          "resultText": "You keep your stores to yourself. They get what they're issued, like everyone else."
+        }
+      ]
+    },
+    {
+      "id": "dec_ret_address_men",
+      "category": "decision",
+      "titleId": "dec_ret_address_men_title",
+      "title": "Address Your Men",
+      "setupId": "dec_ret_address_men_setup",
+      "setup": "Your soldiers are assembled. Time to speak to them as their commander. What you say now will set the tone of your leadership.",
+      "requirements": {
+        "tier": { "min": 7, "max": 999 },
+        "custom": ["has_retinue"]
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal"
+      },
+      "skill_check": {
+        "skill": "Leadership",
+        "threshold": 80,
+        "effect": "bonus loyalty on inspire option"
+      },
+      "options": [
+        {
+          "id": "inspire",
+          "textId": "dec_ret_address_men_inspire",
+          "text": "Speak of honor, duty, and shared glory.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "retinueLoyalty": 8,
+            "soldierRep": 3,
+            "valor": 1
+          },
+          "resultTextId": "dec_ret_address_men_inspire_result",
+          "resultText": "You speak from the heart. Words about brotherhood, courage, and the battles to come. Some men stand straighter. A few even look inspired."
+        },
+        {
+          "id": "discipline",
+          "textId": "dec_ret_address_men_discipline",
+          "text": "Set clear expectations. Demand excellence.",
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "retinueLoyalty": 2,
+            "discipline": 4
+          },
+          "resultTextId": "dec_ret_address_men_discipline_result",
+          "resultText": "You lay out standards and consequences. No room for weakness, no tolerance for failure. They understand what's expected."
+        },
+        {
+          "id": "casual",
+          "textId": "dec_ret_address_men_casual",
+          "text": "Keep it brief and practical. We have work to do.",
+          "effects": {
+            "retinueLoyalty": 3
+          },
+          "resultTextId": "dec_ret_address_men_casual_result",
+          "resultText": "You keep it short. No grand speeches, no theatrics. Just a commander talking to soldiers. They appreciate not wasting time."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_ret_address_men_cancel",
+          "text": "Actions speak louder than words.",
+          "resultTextId": "dec_ret_address_men_cancel_result",
+          "resultText": "You decide to let your deeds speak for you. The men disperse without ceremony."
         }
       ]
     }

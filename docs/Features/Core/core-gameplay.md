@@ -177,8 +177,34 @@ Wages accrue into a **Muster Ledger** based on your rank and performance. They a
 
 ## Companions + Retinue
 
--   **Companions**: Stay with you during enlistment and fight alongside you in your formation.
--   **Retinue (T4+)**: You gain command over a small squad of soldiers. Their size and quality grow as you reach higher tiers (up to T9).
+### Companions (All Tiers)
+Stay with you during enlistment and fight alongside you in your formation. Available from T1. Companions are unaffected by most enlisted mechanics and serve as your permanent squad.
+
+### Retinue (T7+ Commander Track)
+At Commander rank (T7+), you gain command over your own soldiers, transforming from individual combatant to leader of men.
+
+**Key Features:**
+- **Formation Selection**: Choose infantry, archers, cavalry, or horse archers at T7
+- **Scaling Force**: T7 (20 soldiers), T8 (30), T9 (40)
+- **Context-Aware Reinforcements**: Faster after victories, slower after defeats
+- **Loyalty System**: Track your soldiers' morale (0-100) through choices
+- **Named Veterans**: Individual soldiers emerge with names and battle histories
+- **Command Content**: 11 narrative events, 6 post-battle incidents, 4 camp decisions
+- **Relation-Based Requests**: Request reinforcements from your lord with pricing based on relationship
+
+**Reinforcement System:**
+- **Automatic Trickle**: Soldiers arrive based on context (1 per 2-5 days)
+  - Victory (3 days): 1 per 2 days
+  - Defeat (5 days): Blocked
+  - Friendly Territory: 1 per 3 days
+  - Peace: 1 per 2 days
+  - Campaign: 1 per 4 days
+- **Manual Requests**: Ask your lord for reinforcements
+  - High relation (50+): 25% discount, 7-day cooldown
+  - Neutral (20-49): Full cost, 14-day cooldown
+  - Low (<20): Blocked
+
+**See:** [Retinue System](retinue-system.md) for complete mechanics.
 
 ---
 

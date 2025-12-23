@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -15,9 +16,9 @@ namespace Enlisted.Features.Retinue.Core
     /// Part of Retinue System V2.0.
     /// 
     /// Grant amounts:
-    /// - T6â†’T7: 15 soldiers (initial grant)
-    /// - T7â†’T8: 10 soldiers (expansion)
-    /// - T8â†’T9: 10 soldiers (final expansion)
+    /// - T6 to T7: 20 soldiers (initial grant)
+    /// - T7 to T8: 10 soldiers (expansion)
+    /// - T8 to T9: 10 soldiers (final expansion)
     /// 
     /// Recruits match player's formation type and enlisted lord's culture.
     /// </summary>
@@ -50,7 +51,15 @@ namespace Enlisted.Features.Retinue.Core
                     return;
                 }
 
-                // Get player's formation and lord's culture
+                // First time reaching T7: show formation selection dialog
+                if (newTier >= RetinueManager.CommanderTier1 && previousTier < RetinueManager.CommanderTier1)
+                {
+                    ModLogger.Info(LogCategory, "First T7 promotion - showing formation selection dialog");
+                    ShowFormationSelectionDialog(count);
+                    return;
+                }
+
+                // T8/T9 expansions: use existing formation type
                 var formation = GetPlayerFormationType();
                 var culture = GetEnlistedLordCulture();
 
@@ -68,9 +77,9 @@ namespace Enlisted.Features.Retinue.Core
 
         /// <summary>
         /// Calculates how many recruits to grant based on tier transition.
-        /// T6â†’T7: 15 (initial grant)
-        /// T7â†’T8: 10 (expansion)
-        /// T8â†’T9: 10 (final expansion)
+        /// T6 to T7: 20 (initial grant)
+        /// T7 to T8: 10 (expansion)
+        /// T8 to T9: 10 (final expansion)
         /// </summary>
         public static int CalculateGrantCount(int newTier, int previousTier)
         {
@@ -247,11 +256,19 @@ namespace Enlisted.Features.Retinue.Core
         }
 
         /// <summary>
-        /// Gets player's formation type from enlisted duties.
+        /// Gets player's formation type from retinue state.
+        /// Returns Infantry as fallback if no selection has been made.
         /// </summary>
         private static FormationClass GetPlayerFormationType()
         {
-            // The player's default formation is infantry while unit specializations are being updated.
+            var manager = RetinueManager.Instance;
+            if (manager?.State?.SelectedTypeId != null)
+            {
+                return RetinueManager.GetFormationClass(manager.State.SelectedTypeId);
+            }
+
+            // Fallback to Infantry if no selection stored
+            ModLogger.Debug(LogCategory, "No formation type selected, defaulting to Infantry");
             return FormationClass.Infantry;
         }
 
@@ -284,6 +301,132 @@ namespace Enlisted.Features.Retinue.Core
                 FormationClass.HorseArcher => "horse_archers",
                 _ => "infantry"
             };
+        }
+
+        /// <summary>
+        /// Shows the formation selection dialog when player first reaches T7.
+        /// Presents four formation options (Infantry, Archers, Cavalry, Horse Archers).
+        /// Horse Archers only available for cultures that support them.
+        /// </summary>
+        /// <param name="recruitCount">Number of recruits to grant after selection</param>
+        private static void ShowFormationSelectionDialog(int recruitCount)
+        {
+            var culture = GetEnlistedLordCulture();
+            if (culture == null)
+            {
+                ModLogger.Error(LogCategory, "Cannot show formation dialog: no culture");
+                // Fallback to infantry
+                GrantRawRecruits(recruitCount, FormationClass.Infantry, Hero.MainHero?.Culture);
+                return;
+            }
+
+            var title = new TextObject("{=ret_sel_title}Choose Your Retinue");
+            var prompt = new TextObject("{=ret_sel_prompt}What type of soldiers will you command?");
+
+            // Build formation options
+            var options = new List<InquiryElement>();
+
+            // Infantry - always available
+            options.Add(new InquiryElement(
+                "infantry",
+                new TextObject("{=ret_sel_infantry}Infantry").ToString(),
+                null,
+                true,
+                new TextObject("{=ret_sel_infantry_desc}Foot soldiers with sword and shield").ToString()
+            ));
+
+            // Archers - always available
+            options.Add(new InquiryElement(
+                "archers",
+                new TextObject("{=ret_sel_archers}Archers").ToString(),
+                null,
+                true,
+                new TextObject("{=ret_sel_archers_desc}Skilled bowmen for ranged support").ToString()
+            ));
+
+            // Cavalry - always available
+            options.Add(new InquiryElement(
+                "cavalry",
+                new TextObject("{=ret_sel_cavalry}Cavalry").ToString(),
+                null,
+                true,
+                new TextObject("{=ret_sel_cavalry_desc}Mounted lancers, swift and deadly").ToString()
+            ));
+
+            // Horse Archers - culture restricted
+            if (RetinueManager.IsSoldierTypeAvailable("horse_archers", culture))
+            {
+                options.Add(new InquiryElement(
+                    "horse_archers",
+                    new TextObject("{=ret_sel_horse_archers}Horse Archers").ToString(),
+                    null,
+                    true,
+                    new TextObject("{=ret_sel_horse_archers_desc}Mounted bowmen of the steppe").ToString()
+                ));
+            }
+
+            // Show multi-selection dialog (though we only allow one selection)
+            MBInformationManager.ShowMultiSelectionInquiry(
+                new MultiSelectionInquiryData(
+                    title.ToString(),
+                    prompt.ToString(),
+                    options,
+                    false, // isExitShown: false (player must choose)
+                    1, // maxSelectableOptionCount
+                    1, // minSelectableOptionCount
+                    new TextObject("{=ret_sel_confirm}Confirm").ToString(),
+                    string.Empty, // no cancel button
+                    selectedElements =>
+                    {
+                        // Player selected a formation type
+                        if (selectedElements == null || selectedElements.Count == 0)
+                        {
+                            ModLogger.Warn(LogCategory, "No formation selected, defaulting to Infantry");
+                            OnFormationSelected("infantry", recruitCount);
+                            return;
+                        }
+
+                        var selectedTypeId = selectedElements[0].Identifier as string;
+                        OnFormationSelected(selectedTypeId, recruitCount);
+                    },
+                    null // no cancel action since isExitShown is false
+                ));
+
+            ModLogger.Debug(LogCategory,
+                $"Formation selection dialog shown with {options.Count} options (culture: {culture.StringId})");
+        }
+
+        /// <summary>
+        /// Called when player selects a formation type from the dialog.
+        /// Stores selection and grants recruits of that type.
+        /// </summary>
+        /// <param name="typeId">Selected formation type ID</param>
+        /// <param name="recruitCount">Number of recruits to grant</param>
+        private static void OnFormationSelected(string typeId, int recruitCount)
+        {
+            var formation = RetinueManager.GetFormationClass(typeId);
+            var culture = GetEnlistedLordCulture();
+
+            ModLogger.Info(LogCategory,
+                $"Formation selected: {typeId} -> {formation}, granting {recruitCount} recruits");
+
+            // Grant recruits
+            GrantRawRecruits(recruitCount, formation, culture);
+
+            // Show confirmation message
+            var formationName = typeId switch
+            {
+                "infantry" => new TextObject("{=ret_sel_infantry}Infantry"),
+                "archers" => new TextObject("{=ret_sel_archers}Archers"),
+                "cavalry" => new TextObject("{=ret_sel_cavalry}Cavalry"),
+                "horse_archers" => new TextObject("{=ret_sel_horse_archers}Horse Archers"),
+                _ => new TextObject("{=ret_sel_infantry}Infantry")
+            };
+
+            var confirmMsg = new TextObject("{=ret_sel_confirmed}You have chosen to command {FORMATION}. Your recruits will reflect this choice.")
+                .SetTextVariable("FORMATION", formationName);
+
+            InformationManager.DisplayMessage(new InformationMessage(confirmMsg.ToString(), Colors.Green));
         }
 
         #region Notifications

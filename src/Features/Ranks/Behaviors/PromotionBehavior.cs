@@ -5,6 +5,7 @@ using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
+using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
@@ -30,10 +31,12 @@ namespace Enlisted.Features.Ranks.Behaviors
 
         /// <summary>
         ///     Get promotion requirements for a specific tier transition.
+        ///     Note: XP requirements come from progression_config.json, not this table.
+        ///     This table defines other requirements: days, battles, reputation, etc.
         /// </summary>
         public static PromotionRequirements GetForTier(int targetTier)
         {
-            // Promotion requirements table:
+            // Promotion requirements table (XP values shown for reference only - actual values from progression_config.json):
             // | Promotion | XP | Days | Battles | Soldier Rep | Leader Rel | Max Disc |
             // |-----------|-----|------|---------|-------------|------------|----------|
             // | T1â†’T2 | 700 | 14 | 2 | â‰¥0 | â‰¥0 | <8 |
@@ -126,6 +129,21 @@ namespace Enlisted.Features.Ranks.Behaviors
         public void ClearPendingPromotion()
         {
             _pendingPromotionTier = 0;
+        }
+
+        /// <summary>
+        /// Fallback direct promotion when proving events are unavailable.
+        /// Ensures promotion still works even if event system is disabled or events missing.
+        /// </summary>
+        private void FallbackDirectPromotion(int targetTier, EnlistmentBehavior enlistment)
+        {
+            ModLogger.Info("Promotion", $"Processing direct promotion to T{targetTier}");
+            _pendingPromotionTier = 0;
+
+            // SetTier handles retinue grant for T7/T8/T9 promotions
+            enlistment.SetTier(targetTier);
+            Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
+            TriggerPromotionNotification(targetTier);
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -300,10 +318,15 @@ namespace Enlisted.Features.Ranks.Behaviors
                     return;
                 }
 
-                // Player meets all requirements - trigger proving event instead of auto-promoting
-                // The event's `promotes: true` effect will handle the actual tier advancement
+                // Player meets all requirements
                 var targetTier = currentTier + 1;
-                var eventId = GetProvingEventId(currentTier, targetTier);
+
+                // Check if player has previously declined this promotion (must request via dialog)
+                if (EscalationManager.Instance?.HasDeclinedPromotion(targetTier) == true)
+                {
+                    ModLogger.Debug("Promotion", $"Promotion to T{targetTier} previously declined - must request via dialog");
+                    return;
+                }
 
                 // Check if we've already triggered this promotion event recently (prevent spam)
                 if (_pendingPromotionTier == targetTier)
@@ -313,14 +336,22 @@ namespace Enlisted.Features.Ranks.Behaviors
 
                 _pendingPromotionTier = targetTier;
 
-                // Standard tier advancement is currently processed directly through the promotion system.
-                ModLogger.Info("Promotion", $"Promotion to T{currentTier}â†’T{targetTier} (Processing direct advancement)");
-                _pendingPromotionTier = 0;
-                
-                // SetTier handles retinue grant for T7/T8/T9 promotions
-                enlistment.SetTier(targetTier);
-                Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
-                TriggerPromotionNotification(targetTier);
+                // Try to queue the proving event
+                var eventId = GetProvingEventId(currentTier, targetTier);
+                var provingEvent = Content.EventCatalog.GetEventById(eventId);
+
+                if (provingEvent != null && Content.EventDeliveryManager.Instance != null)
+                {
+                    // Queue the proving event popup
+                    ModLogger.Info("Promotion", $"Queuing proving event: {eventId} (T{currentTier} to T{targetTier})");
+                    Content.EventDeliveryManager.Instance.QueueEvent(provingEvent);
+                }
+                else
+                {
+                    // Fallback to direct promotion if event system unavailable
+                    ModLogger.Warn("Promotion", $"Proving event '{eventId}' not found or EventDeliveryManager unavailable - using direct promotion");
+                    FallbackDirectPromotion(targetTier, enlistment);
+                }
             }
             catch (Exception ex)
             {
@@ -352,6 +383,15 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
+        /// Public entry point for triggering promotion notifications from other systems.
+        /// Called by EventDeliveryManager after a proving event grants promotion.
+        /// </summary>
+        public void TriggerPromotionNotificationPublic(int newTier)
+        {
+            TriggerPromotionNotification(newTier);
+        }
+
+        /// <summary>
         ///     Trigger promotion notification with immersive roleplay text.
         ///     Each tier has unique narrative describing what the promotion means.
         /// </summary>
@@ -368,8 +408,9 @@ namespace Enlisted.Features.Ranks.Behaviors
                 popupMessage.SetTextVariable("PLAYER_NAME", playerName);
                 popupMessage.SetTextVariable("RANK", rankName);
 
-                // Show short notification in chat
+                // Show short notification in chat with rank variable
                 var chatMessage = GetPromotionChatMessage(newTier);
+                chatMessage.SetTextVariable("RANK", rankName);
                 InformationManager.DisplayMessage(new InformationMessage(chatMessage.ToString(), Colors.Green));
 
                 // Show quartermaster prompt after promotion.
@@ -394,6 +435,16 @@ namespace Enlisted.Features.Ranks.Behaviors
 
                 // pauseGameActiveState = false so notifications don't freeze game time
                 InformationManager.ShowInquiry(data, false);
+
+                // Record promotion in Personal Feed for historical review
+                var retinueSoldiers = newTier switch
+                {
+                    7 => 20,
+                    8 => 30,
+                    9 => 40,
+                    _ => 0
+                };
+                EnlistedNewsBehavior.Instance?.AddPromotionNews(newTier, rankName, retinueSoldiers);
 
                 ModLogger.Info("Promotion", $"Promotion notification triggered for {rankName} (Tier {newTier})");
             }

@@ -333,6 +333,99 @@
           }
         ]
       }
+    },
+    {
+      "id": "promotion_t7_t8_expanded_command",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["ai_safe"]
+      },
+      "requirements": {
+        "tier": { "min": 7, "max": 7 }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Expanded Command",
+        "setup": "{LORD_NAME} finds you after the morning drills. Your retinue has performed well.\n\n'Your soldiers fight like veterans, {PLAYER_NAME}. I'm impressed. The rank of {NEXT_RANK} comes with expanded command — ten more soldiers to add to your retinue. You've earned this.'",
+        "options": [
+          {
+            "id": "accept_expansion",
+            "text": "\"Thank you, my lord. I'll put them to good use.\"",
+            "tooltip": "Accept promotion and receive 10 additional soldiers for your retinue (total: 30).",
+            "effects": {
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} clasps your shoulder. 'Good. Ten more recruits have been assigned to your command. You've proven you can lead — now prove you can lead more.'"
+          },
+          {
+            "id": "defer_promotion",
+            "text": "\"I'd prefer to master what I have before taking on more.\"",
+            "tooltip": "Decline expansion for now. You can request promotion later.",
+            "effects": {
+            },
+            "outcome": "{LORD_NAME} nods slowly. 'Wisdom, perhaps. The offer stands when you're ready. Your current retinue is strong — keep it that way.'"
+          }
+        ]
+      }
+    },
+    {
+      "id": "promotion_t8_t9_elite_commander",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["ai_safe"]
+      },
+      "requirements": {
+        "tier": { "min": 8, "max": 8 }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Elite Commander",
+        "setup": "{LORD_NAME} calls you to the command tent. The other officers regard you with respect.\n\n'{PLAYER_NAME}, you've become one of my most capable commanders. The rank of {NEXT_RANK} is the highest a soldier can achieve in my service. Forty soldiers will answer to your command — an elite force within my army. Are you prepared for this responsibility?'",
+        "options": [
+          {
+            "id": "accept_elite",
+            "text": "\"I've trained for this moment. I'm ready.\"",
+            "tooltip": "Accept promotion to Elite Commander with maximum retinue capacity (40 soldiers).",
+            "effects": {
+              "character_tag": "elite_commander",
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} stands and extends their hand. 'Welcome to the highest ranks, Commander. Ten more soldiers join your retinue. Lead them well — your legend is just beginning.'"
+          },
+          {
+            "id": "humble_acceptance",
+            "text": "\"The honor is mine. I'll make you proud, my lord.\"",
+            "tooltip": "Accept with humility, gaining lord's favor.",
+            "effects": {
+              "lordRep": 5,
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} smiles approvingly. 'Humility in a commander is rare. The men will respect you for it. Ten more soldiers are yours — lead them as you've led the rest.'"
+          },
+          {
+            "id": "decline_elite",
+            "text": "\"I'm content with what I have. Perhaps another time.\"",
+            "tooltip": "Decline elite rank for now. You can request promotion later.",
+            "effects": {
+            },
+            "outcome": "{LORD_NAME} raises an eyebrow but accepts your decision. 'Very well. The offer remains when you change your mind. Few turn down such an honor, but I respect your judgment.'"
+          }
+        ]
+      }
     }
   ]
 }

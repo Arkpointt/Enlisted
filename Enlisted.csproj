@@ -155,6 +155,10 @@
     <Compile Include="src\Mod.Core\Util\UiTextSanitizer.cs"/>
     <Compile Include="src\Mod.Core\Util\UsedImplicitlyAttribute.cs"/>
     <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs"/>
+    <Compile Include="src\Features\Conversations\Data\QMDialogueContext.cs"/>
+    <Compile Include="src\Features\Conversations\Data\QMDialogueNode.cs"/>
+    <Compile Include="src\Features\Conversations\Data\QMDialogueOption.cs"/>
+    <Compile Include="src\Features\Conversations\Data\QMDialogueCatalog.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EncounterGuard.cs"/>
     <Compile Include="src\Features\Enlistment\Core\ProgressionConfig.cs"/>
@@ -177,12 +181,16 @@
     <Compile Include="src\Features\Equipment\Behaviors\EquipmentManager.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\TroopDiscoveryValidator.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\QuartermasterManager.cs"/>
+    <Compile Include="src\Features\Equipment\Managers\QMInventoryState.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorBehavior.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVm.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVm.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVm.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterUpgradeVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterUpgradeItemVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterProvisionsVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterProvisionItemVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterProvisionsBehavior.cs"/>
     <Compile Include="src\Features\Ranks\RankHelper.cs"/>
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs"/>
     <!-- Company state and strategic context -->
@@ -198,6 +206,7 @@
     <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs"/>
     <Compile Include="src\Features\Retinue\Data\FactionServiceRecord.cs"/>
     <Compile Include="src\Features\Retinue\Data\LifetimeServiceRecord.cs"/>
+    <Compile Include="src\Features\Retinue\Data\NamedVeteran.cs"/>
     <Compile Include="src\Features\Retinue\Data\RetinueState.cs"/>
     <Compile Include="src\Features\Retinue\Data\ReservistRecord.cs"/>
     <Compile Include="src\Features\Retinue\Core\ServiceRecordManager.cs"/>
@@ -286,6 +295,7 @@
          They are NOT duplicated here as Content to avoid ReSharper showing them twice. -->
     <Content Include="ModuleData\Languages\enlisted_strings.xml"/>
     <Content Include="ModuleData\Languages\language_data.xml"/>
+    <Content Include="ModuleData\Languages\enlisted_qm_dialogue.xml"/>
   </ItemGroup>
   <ItemGroup>
     <!-- Used by AfterBuild to copy player condition definition data into the Bannerlord module folder -->
@@ -299,6 +309,10 @@
     <!-- Used by AfterBuild to copy event data into the Bannerlord module folder -->
     <LanceLifeEventsData Include="ModuleData\Enlisted\Events\*.json"/>
     <LanceLifeEventsRoleData Include="ModuleData\Enlisted\Events\Role\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy dialogue data into the Bannerlord module folder -->
+    <DialogueData Include="ModuleData\Enlisted\Dialogue\*.json"/>
   </ItemGroup>
   <ItemGroup>
     <!-- Used by AfterBuild to copy Orders data into the Bannerlord module folder -->
@@ -337,8 +351,10 @@
     <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>
     <Copy SourceFiles="@(LanceLifeEventsRoleData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\Role\" Condition="'@(LanceLifeEventsRoleData)' != ''"/>
     <Copy SourceFiles="@(OrdersData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Orders\"/>
+    <Copy SourceFiles="@(DialogueData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Dialogue\"/>
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="ModuleData\Languages\language_data.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
+    <Copy SourceFiles="ModuleData\Languages\enlisted_qm_dialogue.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>

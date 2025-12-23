@@ -8,6 +8,7 @@ using Enlisted.Features.Identity;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Logistics;
 using Enlisted.Features.Ranks;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Mod.Core.Logging;
 using Helpers;
 using TaleWorlds.CampaignSystem;
@@ -331,6 +332,26 @@ namespace Enlisted.Features.Content
             }
 
             ModLogger.Info(LogCategory, $"Option selected: {option.Id}");
+
+            // Track declined promotions (player chose "not ready" or "decline" in proving event)
+            if (_currentEvent != null && _currentEvent.Id.StartsWith("promotion_", StringComparison.OrdinalIgnoreCase))
+            {
+                if (option.Id.IndexOf("not_ready", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    option.Id.IndexOf("decline", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    // Extract target tier from event ID (e.g., "promotion_t6_t7_commanders_commission" -> tier 7)
+                    var parts = _currentEvent.Id.Split('_');
+                    if (parts.Length >= 3 && parts[2].StartsWith("t", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var tierStr = parts[2].Substring(1);
+                        if (int.TryParse(tierStr, out var targetTier))
+                        {
+                            EscalationManager.Instance?.RecordDeclinedPromotion(targetTier);
+                            ModLogger.Info(LogCategory, $"Player declined promotion to tier {targetTier} - must request via dialog");
+                        }
+                    }
+                }
+            }
 
             // Determine if this is a risky option and resolve success/failure
             var isRisky = option.RiskChance.HasValue && option.RiskChance.Value > 0 && option.RiskChance.Value < 100;
@@ -783,11 +804,317 @@ namespace Enlisted.Features.Content
                 ModLogger.Debug(LogCategory, $"Applied renown change: {effects.Renown.Value}");
             }
 
+            // Apply retinue gain - adds soldiers to Commander's retinue
+            if (effects.RetinueGain.HasValue && effects.RetinueGain.Value > 0)
+            {
+                ApplyRetinueGain(effects.RetinueGain.Value);
+            }
+
+            // Apply retinue loss - removes soldiers from Commander's retinue
+            if (effects.RetinueLoss.HasValue && effects.RetinueLoss.Value > 0)
+            {
+                ApplyRetinueLoss(effects.RetinueLoss.Value);
+            }
+
+            // Apply retinue wounded - wounds soldiers in Commander's retinue
+            if (effects.RetinueWounded.HasValue && effects.RetinueWounded.Value > 0)
+            {
+                ApplyRetinueWounded(effects.RetinueWounded.Value);
+            }
+
+            // Apply retinue loyalty change
+            if (effects.RetinueLoyalty.HasValue && effects.RetinueLoyalty.Value != 0)
+            {
+                ApplyRetinueLoyalty(effects.RetinueLoyalty.Value);
+            }
+
             // Apply discharge if specified. Ends the player's enlistment with the given band.
             if (!string.IsNullOrEmpty(effects.TriggersDischarge))
             {
                 ApplyDischargeEffect(effects.TriggersDischarge);
             }
+
+            // Apply promotion if specified. Used by proving events to grant tier advancement.
+            if (effects.Promotes.HasValue && effects.Promotes.Value > 0)
+            {
+                ApplyPromotesEffect(effects.Promotes.Value);
+            }
+        }
+
+        /// <summary>
+        /// Adds soldiers to the player's retinue from event effects.
+        /// Only works if player has Commander rank (T7+) and has selected a retinue type.
+        /// </summary>
+        private void ApplyRetinueGain(int count)
+        {
+            var manager = RetinueManager.Instance;
+            if (manager?.State == null || !manager.State.HasTypeSelected)
+            {
+                ModLogger.Warn(LogCategory, $"ApplyRetinueGain: Cannot add {count} soldiers - no retinue type selected");
+                return;
+            }
+
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || enlistment.EnlistmentTier < RetinueManager.CommanderTier1)
+            {
+                ModLogger.Warn(LogCategory, $"ApplyRetinueGain: Cannot add {count} soldiers - not at Commander rank");
+                return;
+            }
+
+            if (manager.TryAddSoldiers(count, manager.State.SelectedTypeId, out var added, out var message))
+            {
+                ModLogger.Info(LogCategory, $"ApplyRetinueGain: Added {added} soldiers via event");
+
+                var notification = new TextObject("{=evt_ret_gain_notification}{COUNT} soldiers have joined your retinue.");
+                notification.SetTextVariable("COUNT", added);
+                InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), Colors.Green));
+            }
+            else
+            {
+                ModLogger.Warn(LogCategory, $"ApplyRetinueGain failed: {message}");
+            }
+        }
+
+        /// <summary>
+        /// Removes soldiers from the player's retinue specifically.
+        /// Only removes troops tracked in RetinueState (does not affect lord's main force).
+        /// Used for dramatic events like ambush, betrayal, or desertion.
+        /// </summary>
+        private void ApplyRetinueLoss(int count)
+        {
+            var manager = RetinueManager.Instance;
+            var state = manager?.State;
+            if (state == null || !state.HasRetinue)
+            {
+                ModLogger.Warn(LogCategory, $"ApplyRetinueLoss: Cannot remove {count} soldiers - no active retinue");
+                return;
+            }
+
+            var party = MobileParty.MainParty;
+            if (party?.MemberRoster == null)
+            {
+                ModLogger.Warn(LogCategory, "ApplyRetinueLoss: No party roster available");
+                return;
+            }
+
+            var removed = 0;
+            var roster = party.MemberRoster;
+
+            // Remove only troops tracked in RetinueState.TroopCounts
+            foreach (var kvp in state.TroopCounts.ToList())
+            {
+                if (removed >= count)
+                {
+                    break;
+                }
+
+                var characterId = kvp.Key;
+                var trackedCount = kvp.Value;
+
+                var character = CharacterObject.Find(characterId);
+                if (character == null)
+                {
+                    continue;
+                }
+
+                var rosterCount = roster.GetTroopCount(character);
+                var toRemove = Math.Min(Math.Min(trackedCount, rosterCount), count - removed);
+
+                if (toRemove > 0)
+                {
+                    roster.AddToCounts(character, -toRemove, removeDepleted: true);
+                    state.UpdateTroopCount(characterId, -toRemove);
+                    removed += toRemove;
+                }
+            }
+
+            if (removed > 0)
+            {
+                ModLogger.Info(LogCategory, $"ApplyRetinueLoss: Removed {removed} retinue soldiers");
+
+                var notification = new TextObject("{=evt_ret_loss_notification}{COUNT} soldiers have been lost from your retinue.");
+                notification.SetTextVariable("COUNT", removed);
+                InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), Colors.Red));
+            }
+            else
+            {
+                ModLogger.Warn(LogCategory, $"ApplyRetinueLoss: No soldiers could be removed (requested {count})");
+            }
+        }
+
+        /// <summary>
+        /// Wounds soldiers in the player's retinue specifically.
+        /// Only wounds troops tracked in RetinueState (moves healthy to wounded roster).
+        /// Used for events involving skirmishes, accidents, or hardship.
+        /// </summary>
+        private void ApplyRetinueWounded(int count)
+        {
+            var manager = RetinueManager.Instance;
+            var state = manager?.State;
+            if (state == null || !state.HasRetinue)
+            {
+                ModLogger.Warn(LogCategory, $"ApplyRetinueWounded: Cannot wound {count} soldiers - no active retinue");
+                return;
+            }
+
+            var party = MobileParty.MainParty;
+            if (party?.MemberRoster == null)
+            {
+                ModLogger.Warn(LogCategory, "ApplyRetinueWounded: No party roster available");
+                return;
+            }
+
+            var wounded = 0;
+            var roster = party.MemberRoster;
+
+            // Wound only troops tracked in RetinueState.TroopCounts
+            foreach (var kvp in state.TroopCounts.ToList())
+            {
+                if (wounded >= count)
+                {
+                    break;
+                }
+
+                var characterId = kvp.Key;
+                var character = CharacterObject.Find(characterId);
+                if (character == null)
+                {
+                    continue;
+                }
+
+                // Get current roster state for this troop
+                var rosterIndex = roster.FindIndexOfTroop(character);
+                if (rosterIndex < 0)
+                {
+                    continue;
+                }
+
+                var element = roster.GetElementCopyAtIndex(rosterIndex);
+                var healthyCount = element.Number - element.WoundedNumber;
+
+                if (healthyCount <= 0)
+                {
+                    continue; // All already wounded
+                }
+
+                var toWound = Math.Min(healthyCount, count - wounded);
+                if (toWound > 0)
+                {
+                    roster.AddToCounts(character, 0, woundedCount: toWound);
+                    wounded += toWound;
+                }
+            }
+
+            if (wounded > 0)
+            {
+                ModLogger.Info(LogCategory, $"ApplyRetinueWounded: Wounded {wounded} retinue soldiers");
+
+                var notification = new TextObject("{=evt_ret_wounded_notification}{COUNT} of your soldiers have been wounded.");
+                notification.SetTextVariable("COUNT", wounded);
+                InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), Colors.Yellow));
+            }
+            else
+            {
+                ModLogger.Warn(LogCategory, $"ApplyRetinueWounded: No soldiers could be wounded (requested {count})");
+            }
+        }
+
+        /// <summary>
+        /// Applies a loyalty change to the player's retinue.
+        /// Loyalty affects morale, desertion risk, and combat effectiveness.
+        /// Only applies if player has Commander rank (T7+) and has a retinue.
+        /// Automatically checks for threshold crossings after applying the change.
+        /// </summary>
+        private void ApplyRetinueLoyalty(int delta)
+        {
+            var manager = RetinueManager.Instance;
+            var state = manager?.State;
+            if (state == null || !state.HasRetinue)
+            {
+                ModLogger.Debug(LogCategory, $"ApplyRetinueLoyalty: Skipping {delta:+#;-#;0} - no active retinue");
+                return;
+            }
+
+            var oldLoyalty = state.RetinueLoyalty;
+            var newValue = state.RetinueLoyalty + delta;
+            state.RetinueLoyalty = newValue < 0 ? 0 : (newValue > 100 ? 100 : newValue);
+            var newLoyalty = state.RetinueLoyalty;
+
+            ModLogger.Info(LogCategory, $"ApplyRetinueLoyalty: {oldLoyalty} -> {newLoyalty} ({delta:+#;-#;0})");
+
+            // Record loyalty change for news feed
+            var dayNumber = (int)(CampaignTime.Now.ToDays);
+            var message = delta > 0 ? "Improved morale from event" : "Morale impact from event";
+            EnlistedNewsBehavior.Instance?.AddReputationChange("Retinue", delta, newLoyalty, message, dayNumber);
+
+            // Show notification if loyalty changed significantly
+            if (Math.Abs(delta) >= 5)
+            {
+                var loyaltyText = newLoyalty switch
+                {
+                    >= 80 => "high",
+                    >= 60 => "good",
+                    >= 40 => "fair",
+                    >= 20 => "low",
+                    _ => "critical"
+                };
+
+                var notification = new TextObject("{=evt_ret_loyalty_notification}Retinue loyalty {CHANGE}. Current: {LEVEL}");
+                notification.SetTextVariable("CHANGE", delta > 0 ? "increased" : "decreased");
+                notification.SetTextVariable("LEVEL", loyaltyText);
+
+                var color = delta > 0 ? Colors.Green : Colors.Red;
+                InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), color));
+            }
+
+            // Check for threshold crossings after applying loyalty change
+            manager.CheckLoyaltyThresholds();
+        }
+
+        /// <summary>
+        /// Applies a promotion effect, advancing the player to the specified tier.
+        /// This is called when an event option with promotes is selected (proving events).
+        /// Triggers retinue grant for T7/T8/T9 promotions via SetTier().
+        /// A targetTier of -1 means "promote to next tier" (resolved at runtime).
+        /// </summary>
+        private void ApplyPromotesEffect(int targetTier)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                ModLogger.Warn(LogCategory, $"Cannot apply promotion (tier {targetTier}) - not enlisted");
+                return;
+            }
+
+            var currentTier = enlistment.EnlistmentTier;
+            
+            // Handle sentinel value -1: promote to next tier
+            // This allows JSON to use "promotes": true without specifying explicit tier
+            if (targetTier == -1)
+            {
+                targetTier = currentTier + 1;
+                ModLogger.Debug(LogCategory, $"Resolved 'promotes: true' to target tier {targetTier}");
+            }
+            
+            if (targetTier <= currentTier)
+            {
+                ModLogger.Warn(LogCategory, $"Cannot promote to tier {targetTier} - already at tier {currentTier}");
+                return;
+            }
+
+            ModLogger.Info(LogCategory, $"Applying promotion from event: T{currentTier} to T{targetTier}");
+
+            // SetTier handles retinue grant for T7/T8/T9 promotions
+            enlistment.SetTier(targetTier);
+            Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
+
+            // Clear pending promotion flag in PromotionBehavior
+            Features.Ranks.Behaviors.PromotionBehavior.Instance?.ClearPendingPromotion();
+            
+            // Trigger promotion notification with culture-specific rank and immersive text
+            Features.Ranks.Behaviors.PromotionBehavior.Instance?.TriggerPromotionNotificationPublic(targetTier);
+
+            ModLogger.Info(LogCategory, $"Promotion complete: now tier {targetTier}");
         }
 
         /// <summary>
@@ -1111,7 +1438,7 @@ namespace Enlisted.Features.Content
                 }
                 else
                 {
-                    ModLogger.Info(LogCategory, $"Onboarding advanced: stage {oldStage} → {newStage}");
+                    ModLogger.Info(LogCategory, $"Onboarding advanced: stage {oldStage} to {newStage}");
                 }
             }
         }

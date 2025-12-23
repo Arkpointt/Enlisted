@@ -539,6 +539,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     parts.Add(skillProgress);
                 }
+
+                // Add retinue context for commanders (T7+)
+                var retinueContext = BuildRetinueContextLine();
+                if (!string.IsNullOrWhiteSpace(retinueContext))
+                {
+                    parts.Add(retinueContext);
+                }
                     
                 if (!string.IsNullOrWhiteSpace(_dailyBriefUnit))
                 {
@@ -697,6 +704,92 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Debug(LogCategory, $"Error building supply context: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a retinue status line for the Daily Brief.
+        /// Shows context about the player's personal retinue when they have commander rank.
+        /// </summary>
+        private static string BuildRetinueContextLine()
+        {
+            try
+            {
+                var state = Retinue.Core.RetinueManager.Instance?.State;
+                if (state == null || !state.HasTypeSelected)
+                {
+                    // Not a commander or no retinue type selected
+                    return string.Empty;
+                }
+
+                var loyalty = state.RetinueLoyalty;
+                var soldierCount = state.TotalSoldiers;
+                var veteranCount = state.NamedVeterans?.Count ?? 0;
+                
+                // Get capacity from tier
+                var enlistment = EnlistmentBehavior.Instance;
+                var capacity = enlistment != null 
+                    ? Retinue.Core.RetinueManager.GetTierCapacity(enlistment.EnlistmentTier)
+                    : 20;
+
+                // Build context based on loyalty and composition
+                if (soldierCount == 0)
+                {
+                    return new TextObject("{=brief_ret_empty}Your retinue stands empty. You must acquire soldiers to rebuild your personal command.").ToString();
+                }
+
+                if (loyalty < 20)
+                {
+                    return new TextObject("{=brief_ret_critical}Your retinue's loyalty is dangerously low. The men eye you with barely-concealed resentment. Desertion seems imminent.").ToString();
+                }
+
+                if (loyalty < 40)
+                {
+                    var line = new TextObject("{=brief_ret_low}Your {COUNT} retinue soldiers serve grudgingly. Morale is poor, and complaints circulate openly.");
+                    line.SetTextVariable("COUNT", soldierCount);
+                    return line.ToString();
+                }
+
+                if (loyalty >= 80)
+                {
+                    if (veteranCount > 0)
+                    {
+                        var line = new TextObject("{=brief_ret_high_vets}Your retinue of {COUNT} stands loyal and eager. Your {VET_COUNT} named veterans speak well of you around the campfire.");
+                        line.SetTextVariable("COUNT", soldierCount);
+                        line.SetTextVariable("VET_COUNT", veteranCount);
+                        return line.ToString();
+                    }
+                    else
+                    {
+                        var line = new TextObject("{=brief_ret_high}Your retinue of {COUNT} soldiers stands ready and devoted. They trust your command.");
+                        line.SetTextVariable("COUNT", soldierCount);
+                        return line.ToString();
+                    }
+                }
+
+                // Normal range - only show if at capacity or have veterans
+                if (veteranCount > 0)
+                {
+                    var line = new TextObject("{=brief_ret_vets}Among your {COUNT} retinue soldiers, {VET_COUNT} named veterans stand out as battle-hardened warriors.");
+                    line.SetTextVariable("COUNT", soldierCount);
+                    line.SetTextVariable("VET_COUNT", veteranCount);
+                    return line.ToString();
+                }
+
+                if (soldierCount >= capacity)
+                {
+                    var line = new TextObject("{=brief_ret_full}Your retinue has reached its full complement of {COUNT} soldiers.");
+                    line.SetTextVariable("COUNT", soldierCount);
+                    return line.ToString();
+                }
+
+                // Normal state with nothing notable
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building retinue context: {ex.Message}");
                 return string.Empty;
             }
         }
@@ -1647,6 +1740,202 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "Failed to add event outcome", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records retinue casualties after battle for display in Personal Feed.
+        /// Shows how many retinue soldiers were killed or wounded in the last engagement.
+        /// </summary>
+        public void AddRetinueCasualtyReport(int killed, int wounded, string battleContext)
+        {
+            try
+            {
+                if (killed <= 0 && wounded <= 0)
+                {
+                    return;
+                }
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                var headline = killed > 0 && wounded > 0
+                    ? new TextObject("{=news_ret_casualties_both}Your retinue suffered {KILLED} killed and {WOUNDED} wounded{CONTEXT}.")
+                    : killed > 0
+                        ? new TextObject("{=news_ret_casualties_killed}Your retinue lost {KILLED} soldier{KILLED_PLURAL}{CONTEXT}.")
+                        : new TextObject("{=news_ret_casualties_wounded}Your retinue had {WOUNDED} soldier{WOUNDED_PLURAL} wounded{CONTEXT}.");
+
+                headline.SetTextVariable("KILLED", killed);
+                headline.SetTextVariable("WOUNDED", wounded);
+                headline.SetTextVariable("KILLED_PLURAL", killed == 1 ? "" : "s");
+                headline.SetTextVariable("WOUNDED_PLURAL", wounded == 1 ? "" : "s");
+                headline.SetTextVariable("CONTEXT", string.IsNullOrEmpty(battleContext) ? "" : $" in {battleContext}");
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "KILLED", killed.ToString() },
+                    { "WOUNDED", wounded.ToString() }
+                };
+
+                AddPersonalNews("retinue", headline.ToString(), placeholders, $"retinue:casualties:{dayNumber}", 2);
+                ModLogger.Info(LogCategory, $"Retinue casualty report: {killed} killed, {wounded} wounded");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add retinue casualty report", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a named veteran emerging from the retinue for display in Personal Feed.
+        /// These events are memorable milestones in the player's command.
+        /// </summary>
+        public void AddVeteranEmergence(string veteranName, string trait)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(veteranName))
+                {
+                    return;
+                }
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                var headline = new TextObject("{=news_vet_emergence}{NAME} the {TRAIT} has distinguished themselves in your retinue.");
+                headline.SetTextVariable("NAME", veteranName);
+                headline.SetTextVariable("TRAIT", trait ?? "Steady");
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "NAME", veteranName },
+                    { "TRAIT", trait ?? "Steady" }
+                };
+
+                AddPersonalNews("retinue", headline.ToString(), placeholders, $"veteran:emergence:{veteranName}", 3);
+                ModLogger.Info(LogCategory, $"Veteran emergence reported: {veteranName} the {trait}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add veteran emergence news", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a named veteran's death for display in Personal Feed.
+        /// These deaths are impactful narrative moments.
+        /// </summary>
+        public void AddVeteranDeath(string veteranName, int battlesSurvived, int kills)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(veteranName))
+                {
+                    return;
+                }
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                var headline = battlesSurvived > 5
+                    ? new TextObject("{=news_vet_death_legend}{NAME}, a legend of {BATTLES} battles and {KILLS} kills, has fallen.")
+                    : new TextObject("{=news_vet_death}{NAME}, who served through {BATTLES} battles, has been slain.");
+                headline.SetTextVariable("NAME", veteranName);
+                headline.SetTextVariable("BATTLES", battlesSurvived);
+                headline.SetTextVariable("KILLS", kills);
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "NAME", veteranName },
+                    { "BATTLES", battlesSurvived.ToString() },
+                    { "KILLS", kills.ToString() }
+                };
+
+                AddPersonalNews("retinue", headline.ToString(), placeholders, $"veteran:death:{veteranName}", 3);
+                ModLogger.Info(LogCategory, $"Veteran death reported: {veteranName} ({battlesSurvived} battles, {kills} kills)");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add veteran death news", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a promotion to the personal feed with immersive military flavor.
+        /// Called after a player is promoted to a new tier.
+        /// </summary>
+        /// <param name="newTier">The tier the player was promoted to (2-9).</param>
+        /// <param name="rankName">The culture-specific rank title.</param>
+        /// <param name="retinueSoldiers">Number of retinue soldiers granted (0 for non-commander tiers).</param>
+        public void AddPromotionNews(int newTier, string rankName, int retinueSoldiers = 0)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(rankName))
+                {
+                    rankName = $"Tier {newTier}";
+                }
+
+                // Select tier-appropriate headline with RP flavor
+                var headlineKey = newTier switch
+                {
+                    2 => "News_Promotion_T2",      // First real rank
+                    3 => "News_Promotion_T3",      // Proven soldier
+                    4 => "News_Promotion_T4",      // Veteran status
+                    5 => "News_Promotion_T5",      // Officer track begins
+                    6 => "News_Promotion_T6",      // Senior NCO
+                    7 => "News_Promotion_T7",      // Commander with retinue
+                    8 => "News_Promotion_T8",      // Expanded command
+                    9 => "News_Promotion_T9",      // Senior commander
+                    _ => "News_Promotion_Generic"
+                };
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "RANK", rankName },
+                    { "TIER", newTier.ToString() },
+                    { "RETINUE_SIZE", retinueSoldiers.ToString() }
+                };
+
+                AddPersonalNews("promotion", headlineKey, placeholders, $"promotion:t{newTier}", 3);
+                ModLogger.Info(LogCategory, $"Promotion recorded: {rankName} (T{newTier})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add promotion news", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a pay muster outcome to the personal feed.
+        /// Provides historical record of payment for player review.
+        /// </summary>
+        /// <param name="outcome">Outcome type: "full", "partial", "delayed", "promissory", "corruption", "side_deal".</param>
+        /// <param name="amountPaid">Gold actually received (0 for delayed/promissory).</param>
+        /// <param name="amountOwed">Backpay still owed after this muster (0 if fully paid).</param>
+        public void AddPayMusterNews(string outcome, int amountPaid, int amountOwed = 0)
+        {
+            try
+            {
+                // Select outcome-appropriate headline with RP flavor
+                var headlineKey = outcome?.ToLowerInvariant() switch
+                {
+                    "full" or "standard" or "backpay" => "News_PayMuster_Full",
+                    "partial" or "partial_backpay" => "News_PayMuster_Partial",
+                    "delayed" => "News_PayMuster_Delayed",
+                    "promissory" or "iou" => "News_PayMuster_Promissory",
+                    "corruption" or "corruption_success" => "News_PayMuster_Corruption",
+                    "side_deal" => "News_PayMuster_SideDeal",
+                    _ => "News_PayMuster_Generic"
+                };
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "AMOUNT", amountPaid.ToString() },
+                    { "OWED", amountOwed.ToString() }
+                };
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                AddPersonalNews("pay", headlineKey, placeholders, $"pay:muster:{dayNumber}", 2);
+                ModLogger.Info(LogCategory, $"Pay muster recorded: {outcome} - {amountPaid} paid, {amountOwed} owed");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add pay muster news", ex);
             }
         }
 
@@ -4213,7 +4502,7 @@ namespace Enlisted.Features.Interface.Behaviors
     /// </summary>
     public sealed class ReputationChangeRecord
     {
-        public string Target { get; set; } // "Lord", "Officer", "Soldier"
+        public string Target { get; set; } // "Lord", "Officer", "Soldier", "Retinue"
         public int Delta { get; set; }
         public int NewValue { get; set; }
         public string Message { get; set; }

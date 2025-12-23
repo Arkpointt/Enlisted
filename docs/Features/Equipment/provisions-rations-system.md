@@ -1,6 +1,6 @@
 # Provisions & Rations System
 
-**Summary:** The provisions system manages player food requirements across two distinct phases of military service: T1-T4 enlisted soldiers receive issued rations every 12 days (ration exchange system), while T5+ officers must purchase provisions from the quartermaster at premium prices. The system creates meaningful food scarcity, integrates with company supply levels, and uses quartermaster reputation to determine ration quality and pricing.
+**Summary:** The provisions system manages player food requirements across two distinct phases of military service: T1-T6 enlisted soldiers and NCOs receive issued rations every 12 days (ration exchange system), while T7+ officers must purchase provisions from the quartermaster at premium prices. The system creates meaningful food scarcity, integrates with company supply levels, and uses quartermaster reputation to determine ration quality and pricing.
 
 **Status:** ✅ Current  
 **Last Updated:** 2025-12-22  
@@ -12,8 +12,8 @@
 
 1. [Overview](#overview)
 2. [Rank-Based Transition](#rank-based-transition)
-3. [T1-T4: Issued Rations](#t1-t4-issued-rations)
-4. [T5+: Officer Provisioning](#t5-officer-provisioning)
+3. [T1-T6: Issued Rations](#t1-t6-issued-rations)
+4. [T7+: Officer Provisioning](#t7-officer-provisioning)
 5. [Food Consumption Mechanics](#food-consumption-mechanics)
 6. [Personal Food Management](#personal-food-management)
 7. [Food Loss Events](#food-loss-events)
@@ -26,15 +26,20 @@
 
 The provisions system reflects the player's progression from enlisted soldier to officer by changing how food is acquired and managed:
 
-### T1-T4 (Enlisted/NCO): Issued Rations
+**Tier Structure:**
+- **T1-T4**: Enlisted (regular soldiers)
+- **T5-T6**: NCO (Non-Commissioned Officers)
+- **T7-T9**: Officers
+
+### T1-T6 (Enlisted/NCO): Issued Rations
 - **Ration exchange at muster** (every 12 days)
 - **Quality based on quartermaster reputation** (grain → butter → cheese → meat)
 - **Availability based on company supply** (100% → 0% as supply drops)
 - **Cannot accumulate** - old rations reclaimed when new ones issued
 - **Must supplement** with personal food during shortages
 
-### T5+ (Officer): Self-Provisioning
-- **No more issued rations** - transition at T5 promotion
+### T7+ (Officer): Self-Provisioning
+- **No more issued rations** - transition at T7 promotion (first officer rank)
 - **Quartermaster provisions shop** - premium pricing (150-200% of town markets)
 - **Supply-dependent inventory** - stock refreshes every muster
 - **Reputation affects pricing** - best discount: 150% (never cheaper than towns)
@@ -46,7 +51,7 @@ The provisions system reflects the player's progression from enlisted soldier to
 
 ## Rank-Based Transition
 
-### T1-T4: Enlisted Life
+### T1-T6: Enlisted/NCO Life
 ```
 Muster Day → Quartermaster Exchange
 ↓
@@ -56,7 +61,7 @@ Muster Day → Quartermaster Exchange
 4. Player keeps personal food (bought/foraged)
 ```
 
-### T5 Promotion: The Transition
+### T7 Promotion: The Transition
 ```
 Quartermaster: "Congratulations on your promotion, Lieutenant.
     
@@ -71,7 +76,7 @@ it's convenient when you're in the field. Stock refreshes every muster."
 Your ration days are over. Welcome to the officer corps.
 ```
 
-### T5+: Officer Life
+### T7+: Officer Life
 ```
 Muster Day → Provisions Shop Refresh
 ↓
@@ -84,7 +89,7 @@ Muster Day → Provisions Shop Refresh
 
 ---
 
-## T1-T4: Issued Rations
+## T1-T6: Issued Rations
 
 ### Ration Exchange System
 
@@ -205,11 +210,11 @@ Reality:
 
 ---
 
-## T5+ Officer Provisioning
+## T7+ Officer Provisioning
 
 ### Officer Transition
 
-**At T5 Promotion:**
+**At T7 Promotion (First Officer Rank):**
 ```csharp
 private void OnPromotedToOfficer()
 {
@@ -412,9 +417,9 @@ Day 36: Muster - Still NO RATION
 
 | Type | Source | Tracked? | Reclaimed? | Loss Events? |
 |------|--------|----------|------------|--------------|
-| **Issued Rations (T1-T4)** | Quartermaster at muster | Yes | Yes (at next muster) | No (immune) |
+| **Issued Rations (T1-T6)** | Quartermaster at muster | Yes | Yes (at next muster) | No (immune) |
 | **Personal Food** | Bought from towns, foraged, hunted | No | Never | Yes (rats, spoilage, theft) |
-| **Officer Provisions (T5+)** | Bought from QM shop | No | Never | Yes (treated as personal) |
+| **Officer Provisions (T7+)** | Bought from QM shop | No | Never | Yes (treated as personal) |
 
 ### Building Food Reserves
 
@@ -635,14 +640,14 @@ private void OnMusterDay()
 {
     int playerTier = GetPlayerTier();
     
-    if (playerTier < 5)
+    if (playerTier < 7)
     {
-        // T1-T4: Process ration exchange
+        // T1-T6: Process ration exchange (Enlisted and NCOs)
         ProcessMusterFoodRation();
     }
     else
     {
-        // T5+: Refresh QM provisions shop
+        // T7+: Refresh QM provisions shop (Officers)
         RefreshQuartermasterFoodInventory();
     }
     
@@ -688,7 +693,7 @@ private void OnBattleEnd()
 ```csharp
 private void OnServiceEnded()
 {
-    // Reclaim issued rations (T1-T4 only)
+    // Reclaim issued rations (T1-T6 only)
     ReclaimIssuedRations();
     
     // Personal food is retained
@@ -699,19 +704,19 @@ private void OnServiceEnded()
 
 ### Implementation Checklist
 
-**Phase 1: T1-T4 Ration System**
+**Phase 1: T1-T6 Ration System (Enlisted/NCO)**
 - [ ] Add `_issuedFoodRations` list to save/load
 - [ ] Implement `ProcessMusterFoodRation()` with exchange logic
 - [ ] Implement `ReclaimIssuedRations()` (scan inventory + stowage)
 - [ ] Integrate with company supply for availability checks
 - [ ] Test ration exchange cycle
 
-**Phase 2: T5+ Officer Provisions**
+**Phase 2: T7+ Officer Provisions**
 - [ ] Add `_qmFoodShop` inventory to save/load
 - [ ] Implement `RefreshQuartermasterFoodInventory()` with supply tiers
 - [ ] Implement `CalculateOfficerFoodPrice()` with rep multipliers
 - [ ] Create provisions shop UI
-- [ ] Implement T5 transition (reclaim rations, unlock shop)
+- [ ] Implement T7 transition (reclaim rations, unlock shop)
 
 **Phase 3: Personal Food Loss Events**
 - [ ] Implement `CheckPersonalFoodLossEvents()` daily check

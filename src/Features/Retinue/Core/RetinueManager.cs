@@ -407,7 +407,366 @@ namespace Enlisted.Features.Retinue.Core
 
         #endregion
 
-        #region Requisition System
+        #region Reinforcement Request System
+
+        // Relation thresholds for reinforcement requests
+        public const int MinRelationForRequest = 20;        // Minimum relation to request at all
+        public const int HighRelationThreshold = 50;        // High relation for discount
+
+        // Cooldown periods (in days)
+        public const int HighRelationCooldownDays = 7;      // Shorter cooldown for good relation
+        public const int StandardCooldownDays = 14;         // Standard cooldown
+
+        // Cost multipliers
+        public const float HighRelationCostMultiplier = 0.75f;  // 25% discount
+        public const float StandardCostMultiplier = 1.0f;       // Full price
+
+        /// <summary>
+        /// Gets the player's relation with their current lord.
+        /// Returns 0 if not enlisted or lord unavailable.
+        /// </summary>
+        public static int GetLordRelation()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = enlistment?.EnlistedLord;
+            if (lord == null || Hero.MainHero == null)
+            {
+                return 0;
+            }
+
+            return Hero.MainHero.GetRelation(lord);
+        }
+
+        /// <summary>
+        /// Gets the appropriate cost multiplier based on lord relation.
+        /// High relation (50+) gets 25% discount.
+        /// </summary>
+        public static float GetRelationCostMultiplier()
+        {
+            var relation = GetLordRelation();
+            return relation >= HighRelationThreshold ? HighRelationCostMultiplier : StandardCostMultiplier;
+        }
+
+        /// <summary>
+        /// Gets the appropriate cooldown period based on lord relation.
+        /// High relation (50+) gets shorter cooldown.
+        /// </summary>
+        public static int GetRelationCooldownDays()
+        {
+            var relation = GetLordRelation();
+            return relation >= HighRelationThreshold ? HighRelationCooldownDays : StandardCooldownDays;
+        }
+
+        /// <summary>
+        /// Checks if player can request reinforcements from their lord.
+        /// Validates: relation, cooldown, capacity, and gold.
+        /// </summary>
+        /// <param name="reason">Out: reason if cannot request</param>
+        /// <returns>True if request is allowed</returns>
+        public bool CanRequestReinforcements(out string reason)
+        {
+            reason = null;
+
+            // Must be enlisted at Commander tier (T7+)
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                reason = new TextObject("{=enl_retinue_reason_must_be_enlisted_request}You must be enlisted to request reinforcements.").ToString();
+                return false;
+            }
+
+            if (enlistment.EnlistmentTier < CommanderTier1)
+            {
+                var t = new TextObject("{=enl_retinue_reason_requires_commander_request}Requires Commander rank (Tier {REQ}) or higher.");
+                t.SetTextVariable("REQ", CommanderTier1);
+                reason = t.ToString();
+                return false;
+            }
+
+            // Must have a retinue type selected
+            if (!_state.HasTypeSelected)
+            {
+                reason = new TextObject("{=enl_retinue_reason_select_type_request}You must select a soldier type first.").ToString();
+                return false;
+            }
+
+            // Check lord relation minimum
+            var relation = GetLordRelation();
+            if (relation < MinRelationForRequest)
+            {
+                var t = new TextObject("{=enl_retinue_reason_relation_low}Your lord will not spare soldiers for you. Improve your standing first (requires {REQ}+ relation, have {HAVE}).");
+                t.SetTextVariable("REQ", MinRelationForRequest);
+                t.SetTextVariable("HAVE", relation);
+                reason = t.ToString();
+                return false;
+            }
+
+            // Check cooldown
+            if (!_state.IsReinforcementRequestAvailable())
+            {
+                var daysRemaining = _state.GetReinforcementRequestCooldownDays();
+                var t = new TextObject("{=enl_retinue_reason_request_cooldown}Reinforcement request on cooldown: {DAYS} days remaining.");
+                t.SetTextVariable("DAYS", daysRemaining);
+                reason = t.ToString();
+                return false;
+            }
+
+            // Must have room for more soldiers
+            var missing = GetMissingSoldierCount();
+            if (missing <= 0)
+            {
+                reason = new TextObject("{=enl_retinue_reason_full_strength}Your retinue is at full strength.").ToString();
+                return false;
+            }
+
+            // Must have enough gold
+            var cost = CalculateReinforcementRequestCost();
+            var playerGold = Hero.MainHero?.Gold ?? 0;
+            if (playerGold < cost)
+            {
+                var t = new TextObject("{=enl_retinue_reason_not_enough_gold_request}Not enough gold. Need {NEED} denars, have {HAVE}.");
+                t.SetTextVariable("NEED", cost);
+                t.SetTextVariable("HAVE", playerGold);
+                reason = t.ToString();
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Calculates the total gold cost for a reinforcement request.
+        /// Uses base recruitment cost with relation-based multiplier.
+        /// </summary>
+        /// <returns>Total gold cost for reinforcement request</returns>
+        public int CalculateReinforcementRequestCost()
+        {
+            var baseCost = CalculateRequisitionCost();
+            var multiplier = GetRelationCostMultiplier();
+            return (int)(baseCost * multiplier);
+        }
+
+        /// <summary>
+        /// Attempts to request reinforcements from the lord.
+        /// Applies relation-based cooldown on success.
+        /// </summary>
+        /// <param name="message">Out: result message for UI</param>
+        /// <returns>True if request succeeded</returns>
+        public bool TryRequestReinforcements(out string message)
+        {
+            const string reqCategory = "Reinforcements";
+
+            if (!CanRequestReinforcements(out message))
+            {
+                ModLogger.Warn(reqCategory, $"Reinforcement request blocked: {message}");
+                return false;
+            }
+
+            var cost = CalculateReinforcementRequestCost();
+            var toAdd = GetMissingSoldierCount();
+            var cooldownDays = GetRelationCooldownDays();
+
+            if (toAdd <= 0)
+            {
+                message = "No soldiers needed.";
+                ModLogger.Debug(reqCategory, message);
+                return false;
+            }
+
+            // Deduct gold using GiveGoldAction
+            if (cost > 0 && Hero.MainHero != null)
+            {
+                GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, cost);
+            }
+
+            // Add soldiers
+            if (TryAddSoldiers(toAdd, _state.SelectedTypeId, out var actuallyAdded, out var addMessage))
+            {
+                // Start cooldown based on relation
+                _state.ReinforcementRequestCooldownEnd = CampaignTime.Now + CampaignTime.Days(cooldownDays);
+
+                var t = new TextObject("{=enl_retinue_msg_reinforcements_arrived}{COUNT} soldiers have been assigned to your command.");
+                t.SetTextVariable("COUNT", actuallyAdded);
+                message = t.ToString();
+
+                ModLogger.ActionResult(reqCategory, "ReinforcementRequest", true,
+                    $"Added {actuallyAdded} soldiers for {cost} gold, cooldown={cooldownDays}d");
+
+                return true;
+            }
+
+            // Refund gold on failure
+            if (cost > 0 && Hero.MainHero != null)
+            {
+                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, cost);
+            }
+            message = addMessage;
+            ModLogger.ActionResult(reqCategory, "ReinforcementRequest", false, addMessage);
+            return false;
+        }
+
+        /// <summary>
+        /// Gets remaining cooldown days for reinforcement request.
+        /// </summary>
+        public int GetReinforcementRequestCooldownDays()
+        {
+            return _state.GetReinforcementRequestCooldownDays();
+        }
+
+        /// <summary>
+        /// Checks if reinforcement request is off cooldown.
+        /// </summary>
+        public bool IsReinforcementRequestAvailable()
+        {
+            return _state.IsReinforcementRequestAvailable();
+        }
+
+        #endregion
+
+        #region Loyalty Threshold Checking
+
+        // Loyalty thresholds that trigger automatic events
+        private const int ThresholdLow = 30;      // Warning event
+        private const int ThresholdCritical = 20; // Serious desertion risk
+        private const int ThresholdMutiny = 10;   // Crisis event
+        private const int ThresholdHigh = 80;     // Positive event
+
+        // Cooldown between threshold events (in days)
+        private const int ThresholdEventCooldownDays = 7;
+
+        // Hysteresis buffer to prevent oscillation (loyalty must move 5 points away before retriggering)
+        private const int ThresholdHysteresis = 5;
+
+        /// <summary>
+        /// Checks if loyalty has crossed any critical thresholds and queues appropriate warning events.
+        /// Called after loyalty changes from events or other sources.
+        /// Prevents spam with 7-day cooldown and tracks last threshold to avoid ping-pong.
+        /// </summary>
+        public void CheckLoyaltyThresholds()
+        {
+            const string thresholdCategory = "LoyaltyThreshold";
+
+            if (!_state.HasRetinue)
+            {
+                ModLogger.Debug(thresholdCategory, "Skipping threshold check: no active retinue");
+                return;
+            }
+
+            var currentLoyalty = _state.RetinueLoyalty;
+            var lastThreshold = _state.LastLoyaltyThresholdCrossed;
+            var lastEventTime = _state.LastThresholdEventTime;
+
+            // Check cooldown (7 days minimum between threshold events)
+            if (lastEventTime != CampaignTime.Zero && !lastEventTime.IsPast)
+            {
+                var cooldownEnd = lastEventTime + CampaignTime.Days(ThresholdEventCooldownDays);
+                if (CampaignTime.Now < cooldownEnd)
+                {
+                    var remaining = (cooldownEnd - CampaignTime.Now).ToDays;
+                    ModLogger.Debug(thresholdCategory, 
+                        $"Threshold event on cooldown: {remaining:F1} days remaining");
+                    return;
+                }
+            }
+
+            // Determine current threshold state
+            LoyaltyThreshold currentThreshold;
+            string eventId = null;
+
+            if (currentLoyalty < ThresholdMutiny)
+            {
+                currentThreshold = LoyaltyThreshold.Mutiny;
+                eventId = "evt_ret_loyalty_mutiny";
+            }
+            else if (currentLoyalty < ThresholdCritical)
+            {
+                currentThreshold = LoyaltyThreshold.Critical;
+                eventId = "evt_ret_loyalty_critical";
+            }
+            else if (currentLoyalty < ThresholdLow)
+            {
+                currentThreshold = LoyaltyThreshold.Low;
+                eventId = "evt_ret_loyalty_low";
+            }
+            else if (currentLoyalty >= ThresholdHigh)
+            {
+                currentThreshold = LoyaltyThreshold.High;
+                eventId = "evt_ret_loyalty_high";
+            }
+            else
+            {
+                // Loyalty in safe zone (30-79), no event needed
+                // Reset threshold tracking if loyalty recovered to safe zone
+                if (lastThreshold != LoyaltyThreshold.None && lastThreshold != LoyaltyThreshold.High)
+                {
+                    ModLogger.Info(thresholdCategory, 
+                        $"Loyalty recovered to safe zone ({currentLoyalty}), resetting threshold tracking");
+                    _state.LastLoyaltyThresholdCrossed = LoyaltyThreshold.None;
+                }
+                return;
+            }
+
+            // Check if we already triggered this threshold (prevent duplicate events)
+            if (lastThreshold == currentThreshold)
+            {
+                ModLogger.Debug(thresholdCategory, 
+                    $"Threshold {currentThreshold} already triggered, skipping duplicate event");
+                return;
+            }
+
+            // Apply hysteresis: if moving to a less severe threshold, require larger gap
+            // This prevents oscillation when loyalty hovers around a boundary
+            if (IsLessUrgentThreshold(currentThreshold, lastThreshold))
+            {
+                var thresholdValue = (int)currentThreshold;
+                var gap = Math.Abs(currentLoyalty - thresholdValue);
+                
+                if (gap < ThresholdHysteresis)
+                {
+                    ModLogger.Debug(thresholdCategory, 
+                        $"Hysteresis: loyalty {currentLoyalty} too close to threshold {thresholdValue} (gap={gap}, need={ThresholdHysteresis})");
+                    return;
+                }
+            }
+
+            // Queue the threshold event
+            var evt = Content.EventCatalog.GetEvent(eventId);
+            if (evt != null)
+            {
+                ModLogger.Info(thresholdCategory, 
+                    $"Loyalty threshold crossed: {lastThreshold} -> {currentThreshold} (loyalty={currentLoyalty}), queuing event {eventId}");
+
+                Content.EventDeliveryManager.Instance?.QueueEvent(evt);
+
+                // Update threshold tracking
+                _state.LastLoyaltyThresholdCrossed = currentThreshold;
+                _state.LastThresholdEventTime = CampaignTime.Now;
+            }
+            else
+            {
+                ModLogger.Error(thresholdCategory, $"Threshold event not found: {eventId}");
+            }
+        }
+
+        /// <summary>
+        /// Checks if a threshold represents a less urgent situation than another.
+        /// Used for hysteresis to prevent oscillation between thresholds.
+        /// </summary>
+        private static bool IsLessUrgentThreshold(LoyaltyThreshold current, LoyaltyThreshold previous)
+        {
+            // High is special: it's positive, not urgent
+            if (current == LoyaltyThreshold.High || previous == LoyaltyThreshold.High)
+            {
+                return false;
+            }
+
+            // Higher threshold values are LESS urgent (Mutiny=10 is worse than Low=30)
+            return (int)current > (int)previous;
+        }
+
+        #endregion
+
+        #region Requisition System (Legacy - kept for compatibility)
 
         // Requisition configuration constants
         public const int RequisitionCooldownDays = 14;
@@ -651,7 +1010,7 @@ namespace Enlisted.Features.Retinue.Core
             var title = new TextObject("{=ct_leadership_title}Commander's Commission");
             var message = new TextObject("{=ct_leadership_message}Your long service has been recognized. " +
                 "As a Commander, you've been granted authority over your own retinue of soldiers.\n\n" +
-                "Fifteen raw recruits have been assigned to your command. Train them wellâ€”their lives are in your hands.\n\n" +
+                "Twenty raw recruits have been assigned to your command. Train them well - their lives are in your hands.\n\n" +
                 "Visit Camp to manage your forces.");
 
             // pauseGameActiveState = false so notifications don't freeze game time

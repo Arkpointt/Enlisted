@@ -1,0 +1,1000 @@
+{
+  "schemaVersion": 1,
+  "dialogueType": "quartermaster",
+  "nodes": [
+    {
+      "_comment": "Hub greeting - excellent supply (80-100%)",
+      "id": "qm_hub",
+      "speaker": "quartermaster",
+      "textId": "qm_hub_excellent",
+      "text": "Stores are full. Speak your need, my lord.",
+      "context": {
+        "is_introduced": true,
+        "supply_level": "excellent"
+      },
+      "options": [
+        {
+          "id": "browse_equipment",
+          "textId": "qm_player_browse",
+          "text": "I'm looking for some new gear. What've you got?",
+          "tooltip": "Browse available equipment",
+          "next_node": "qm_browse_response"
+        },
+        {
+          "id": "upgrade_equipment",
+          "textId": "qm_player_upgrade",
+          "text": "I want to improve what I'm carrying.",
+          "tooltip": "Upgrade equipped gear quality",
+          "action": "open_upgrade"
+        },
+        {
+          "id": "officers_armory_nonofficer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": false
+          },
+          "gate": {
+            "condition": "tier_min_7",
+            "gate_node": "qm_gate_officers_armory_rank"
+          }
+        },
+        {
+          "id": "officers_armory_officer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": true
+          },
+          "gate": {
+            "condition": "reputation_min_60",
+            "gate_node": "qm_gate_officers_armory_trust"
+          }
+        },
+        {
+          "id": "sell_equipment",
+          "textId": "qm_player_sell",
+          "text": "I've got some equipment to offload... quietly.",
+          "tooltip": "Sell equipment back to quartermaster",
+          "next_node": "qm_sell_response",
+          "gate": {
+            "condition": "reputation_min_neg10",
+            "gate_node": "qm_sell_blocked"
+          }
+        },
+        {
+          "id": "request_provisions",
+          "textId": "qm_player_provisions",
+          "text": "I could use some provisions.",
+          "tooltip": "Browse and purchase food",
+          "action": "open_provisions"
+        },
+        {
+          "id": "ask_supply",
+          "textId": "qm_player_supply",
+          "text": "How are we looking? Supply-wise, I mean.",
+          "tooltip": "Get supply status report",
+          "action": "supply_report"
+        },
+        {
+          "id": "farewell",
+          "textId": "qm_player_farewell",
+          "text": "That's all for now.",
+          "action": "close"
+        }
+      ]
+    },
+    {
+      "_comment": "Hub greeting - good supply (60-79%)",
+      "id": "qm_hub",
+      "speaker": "quartermaster",
+      "textId": "qm_hub_good",
+      "text": "Supplies are holding well. What do you require?",
+      "context": {
+        "is_introduced": true,
+        "supply_level": "good"
+      },
+      "options": [
+        {
+          "id": "browse_equipment",
+          "textId": "qm_player_browse",
+          "text": "I'm looking for some new gear. What've you got?",
+          "tooltip": "Browse available equipment",
+          "next_node": "qm_browse_response"
+        },
+        {
+          "id": "upgrade_equipment",
+          "textId": "qm_player_upgrade",
+          "text": "I want to improve what I'm carrying.",
+          "tooltip": "Upgrade equipped gear quality",
+          "action": "open_upgrade"
+        },
+        {
+          "id": "officers_armory_nonofficer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": false
+          },
+          "gate": {
+            "condition": "tier_min_7",
+            "gate_node": "qm_gate_officers_armory_rank"
+          }
+        },
+        {
+          "id": "officers_armory_officer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": true
+          },
+          "gate": {
+            "condition": "reputation_min_60",
+            "gate_node": "qm_gate_officers_armory_trust"
+          }
+        },
+        {
+          "id": "sell_equipment",
+          "textId": "qm_player_sell",
+          "text": "I've got some equipment to offload... quietly.",
+          "tooltip": "Sell equipment back to quartermaster",
+          "next_node": "qm_sell_response",
+          "gate": {
+            "condition": "reputation_min_neg10",
+            "gate_node": "qm_sell_blocked"
+          }
+        },
+        {
+          "id": "request_provisions",
+          "textId": "qm_player_provisions",
+          "text": "I could use some provisions.",
+          "tooltip": "Browse and purchase food",
+          "action": "open_provisions"
+        },
+        {
+          "id": "ask_supply",
+          "textId": "qm_player_supply",
+          "text": "How are we looking? Supply-wise, I mean.",
+          "tooltip": "Get supply status report",
+          "action": "supply_report"
+        },
+        {
+          "id": "farewell",
+          "textId": "qm_player_farewell",
+          "text": "That's all for now.",
+          "action": "close"
+        }
+      ]
+    },
+    {
+      "_comment": "Hub greeting - fair supply (40-59%)",
+      "id": "qm_hub",
+      "speaker": "quartermaster",
+      "textId": "qm_hub_fair",
+      "text": "What can I do for you?",
+      "context": {
+        "is_introduced": true,
+        "supply_level": "fair"
+      },
+      "options": [
+        {
+          "id": "browse_equipment",
+          "textId": "qm_player_browse",
+          "text": "I'm looking for some new gear. What've you got?",
+          "tooltip": "Browse available equipment",
+          "next_node": "qm_browse_response"
+        },
+        {
+          "id": "upgrade_equipment",
+          "textId": "qm_player_upgrade",
+          "text": "I want to improve what I'm carrying.",
+          "tooltip": "Upgrade equipped gear quality",
+          "action": "open_upgrade"
+        },
+        {
+          "id": "officers_armory_nonofficer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": false
+          },
+          "gate": {
+            "condition": "tier_min_7",
+            "gate_node": "qm_gate_officers_armory_rank"
+          }
+        },
+        {
+          "id": "officers_armory_officer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": true
+          },
+          "gate": {
+            "condition": "reputation_min_60",
+            "gate_node": "qm_gate_officers_armory_trust"
+          }
+        },
+        {
+          "id": "sell_equipment",
+          "textId": "qm_player_sell",
+          "text": "I've got some equipment to offload... quietly.",
+          "tooltip": "Sell equipment back to quartermaster",
+          "next_node": "qm_sell_response",
+          "gate": {
+            "condition": "reputation_min_neg10",
+            "gate_node": "qm_sell_blocked"
+          }
+        },
+        {
+          "id": "request_provisions",
+          "textId": "qm_player_provisions",
+          "text": "I could use some provisions.",
+          "tooltip": "Browse and purchase food",
+          "action": "open_provisions"
+        },
+        {
+          "id": "ask_supply",
+          "textId": "qm_player_supply",
+          "text": "How are we looking? Supply-wise, I mean.",
+          "tooltip": "Get supply status report",
+          "action": "supply_report"
+        },
+        {
+          "id": "farewell",
+          "textId": "qm_player_farewell",
+          "text": "That's all for now.",
+          "action": "close"
+        }
+      ]
+    },
+    {
+      "_comment": "Hub greeting - low supply (20-39%)",
+      "id": "qm_hub",
+      "speaker": "quartermaster",
+      "textId": "qm_hub_low",
+      "text": "Stock's running thin, but I'll see what I can do. What do you need?",
+      "context": {
+        "is_introduced": true,
+        "supply_level": "low"
+      },
+      "options": [
+        {
+          "id": "browse_equipment",
+          "textId": "qm_player_browse",
+          "text": "I'm looking for some new gear. What've you got?",
+          "tooltip": "Browse available equipment",
+          "next_node": "qm_browse_response"
+        },
+        {
+          "id": "upgrade_equipment",
+          "textId": "qm_player_upgrade",
+          "text": "I want to improve what I'm carrying.",
+          "tooltip": "Upgrade equipped gear quality",
+          "action": "open_upgrade"
+        },
+        {
+          "id": "officers_armory_nonofficer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": false
+          },
+          "gate": {
+            "condition": "tier_min_7",
+            "gate_node": "qm_gate_officers_armory_rank"
+          }
+        },
+        {
+          "id": "officers_armory_officer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": true
+          },
+          "gate": {
+            "condition": "reputation_min_60",
+            "gate_node": "qm_gate_officers_armory_trust"
+          }
+        },
+        {
+          "id": "sell_equipment",
+          "textId": "qm_player_sell",
+          "text": "I've got some equipment to offload... quietly.",
+          "tooltip": "Sell equipment back to quartermaster",
+          "next_node": "qm_sell_response",
+          "gate": {
+            "condition": "reputation_min_neg10",
+            "gate_node": "qm_sell_blocked"
+          }
+        },
+        {
+          "id": "request_provisions",
+          "textId": "qm_player_provisions",
+          "text": "I could use some provisions.",
+          "tooltip": "Browse and purchase food",
+          "action": "open_provisions"
+        },
+        {
+          "id": "ask_supply",
+          "textId": "qm_player_supply",
+          "text": "How are we looking? Supply-wise, I mean.",
+          "tooltip": "Get supply status report",
+          "action": "supply_report"
+        },
+        {
+          "id": "farewell",
+          "textId": "qm_player_farewell",
+          "text": "That's all for now.",
+          "action": "close"
+        }
+      ]
+    },
+    {
+      "_comment": "Hub greeting - critical supply (0-19%)",
+      "id": "qm_hub",
+      "speaker": "quartermaster",
+      "textId": "qm_hub_critical",
+      "text": "We've next to nothing left. Make it quick.",
+      "context": {
+        "is_introduced": true,
+        "supply_level": "critical"
+      },
+      "options": [
+        {
+          "id": "browse_equipment",
+          "textId": "qm_player_browse",
+          "text": "I'm looking for some new gear. What've you got?",
+          "tooltip": "Browse available equipment",
+          "next_node": "qm_browse_response"
+        },
+        {
+          "id": "upgrade_equipment",
+          "textId": "qm_player_upgrade",
+          "text": "I want to improve what I'm carrying.",
+          "tooltip": "Upgrade equipped gear quality",
+          "action": "open_upgrade"
+        },
+        {
+          "id": "officers_armory_nonofficer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": false
+          },
+          "gate": {
+            "condition": "tier_min_7",
+            "gate_node": "qm_gate_officers_armory_rank"
+          }
+        },
+        {
+          "id": "officers_armory_officer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": true
+          },
+          "gate": {
+            "condition": "reputation_min_60",
+            "gate_node": "qm_gate_officers_armory_trust"
+          }
+        },
+        {
+          "id": "sell_equipment",
+          "textId": "qm_player_sell",
+          "text": "I've got some equipment to offload... quietly.",
+          "tooltip": "Sell equipment back to quartermaster",
+          "next_node": "qm_sell_response",
+          "gate": {
+            "condition": "reputation_min_neg10",
+            "gate_node": "qm_sell_blocked"
+          }
+        },
+        {
+          "id": "request_provisions",
+          "textId": "qm_player_provisions",
+          "text": "I could use some provisions.",
+          "tooltip": "Browse and purchase food",
+          "action": "open_provisions"
+        },
+        {
+          "id": "ask_supply",
+          "textId": "qm_player_supply",
+          "text": "How are we looking? Supply-wise, I mean.",
+          "tooltip": "Get supply status report",
+          "action": "supply_report"
+        },
+        {
+          "id": "farewell",
+          "textId": "qm_player_farewell",
+          "text": "That's all for now.",
+          "action": "close"
+        }
+      ]
+    },
+    {
+      "_comment": "Hub greeting - default fallback (no supply level context)",
+      "id": "qm_hub",
+      "speaker": "quartermaster",
+      "textId": "qm_hub_greeting",
+      "text": "What do you need?",
+      "context": {
+        "is_introduced": true
+      },
+      "options": [
+        {
+          "id": "browse_equipment",
+          "textId": "qm_player_browse",
+          "text": "I'm looking for some new gear. What've you got?",
+          "tooltip": "Browse available equipment",
+          "next_node": "qm_browse_response"
+        },
+        {
+          "id": "upgrade_equipment",
+          "textId": "qm_player_upgrade",
+          "text": "I want to improve what I'm carrying.",
+          "tooltip": "Upgrade equipped gear quality",
+          "action": "open_upgrade"
+        },
+        {
+          "id": "officers_armory_nonofficer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": false
+          },
+          "gate": {
+            "condition": "tier_min_7",
+            "gate_node": "qm_gate_officers_armory_rank"
+          }
+        },
+        {
+          "id": "officers_armory_officer",
+          "textId": "qm_player_officers_armory",
+          "text": "What about premium officer equipment?",
+          "tooltip": "Browse Officers' Armory (T7+ and trusted only)",
+          "action": "open_officers_armory",
+          "next_node": "qm_browse_response",
+          "requirements": {
+            "is_officer": true
+          },
+          "gate": {
+            "condition": "reputation_min_60",
+            "gate_node": "qm_gate_officers_armory_trust"
+          }
+        },
+        {
+          "id": "sell_equipment",
+          "textId": "qm_player_sell",
+          "text": "I've got some equipment to offload... quietly.",
+          "tooltip": "Sell equipment back to quartermaster",
+          "next_node": "qm_sell_response",
+          "gate": {
+            "condition": "reputation_min_neg10",
+            "gate_node": "qm_sell_blocked"
+          }
+        },
+        {
+          "id": "request_provisions",
+          "textId": "qm_player_provisions",
+          "text": "I could use some provisions.",
+          "tooltip": "Browse and purchase food",
+          "action": "open_provisions"
+        },
+        {
+          "id": "ask_supply",
+          "textId": "qm_player_supply",
+          "text": "How are we looking? Supply-wise, I mean.",
+          "tooltip": "Get supply status report",
+          "action": "supply_report"
+        },
+        {
+          "id": "farewell",
+          "textId": "qm_player_farewell",
+          "text": "That's all for now.",
+          "action": "close"
+        }
+      ]
+    },
+    {
+      "_comment": "Browse response - excellent supply (80-100%)",
+      "id": "qm_browse_response",
+      "speaker": "quartermaster",
+      "textId": "qm_browse_excellent",
+      "text": "Plenty in stock. Recent resupply came through. What are you after—weapons, armor, accessories?",
+      "context": {
+        "supply_level": "excellent"
+      },
+      "options": [
+        {
+          "id": "browse_weapons",
+          "textId": "qm_player_weapons",
+          "text": "Weapons.",
+          "tooltip": "Browse available weapons",
+          "action": "open_weapons"
+        },
+        {
+          "id": "browse_armor",
+          "textId": "qm_player_armor",
+          "text": "Armor.",
+          "tooltip": "Choose armor type",
+          "next_node": "qm_armor_slots"
+        },
+        {
+          "id": "browse_accessories",
+          "textId": "qm_player_accessories",
+          "text": "Accessories.",
+          "tooltip": "Capes, shields, horse tack",
+          "action": "open_accessories"
+        },
+        {
+          "id": "browse_horse",
+          "textId": "qm_player_horse",
+          "text": "A horse.",
+          "tooltip": "Browse available mounts",
+          "action": "open_mounts",
+          "gate": {
+            "condition": "cavalry_unlocked",
+            "gate_node": "qm_gate_horse"
+          }
+        },
+        {
+          "id": "browse_nevermind",
+          "textId": "qm_player_nevermind",
+          "text": "Never mind.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Browse response - good supply (60-79%)",
+      "id": "qm_browse_response",
+      "speaker": "quartermaster",
+      "textId": "qm_browse_good",
+      "text": "We've a fair bit in stock. Weapons, armor, or accessories?",
+      "context": {
+        "supply_level": "good"
+      },
+      "options": [
+        {
+          "id": "browse_weapons",
+          "textId": "qm_player_weapons",
+          "text": "Weapons.",
+          "tooltip": "Browse available weapons",
+          "action": "open_weapons"
+        },
+        {
+          "id": "browse_armor",
+          "textId": "qm_player_armor",
+          "text": "Armor.",
+          "tooltip": "Choose armor type",
+          "next_node": "qm_armor_slots"
+        },
+        {
+          "id": "browse_accessories",
+          "textId": "qm_player_accessories",
+          "text": "Accessories.",
+          "tooltip": "Capes, shields, horse tack",
+          "action": "open_accessories"
+        },
+        {
+          "id": "browse_horse",
+          "textId": "qm_player_horse",
+          "text": "A horse.",
+          "tooltip": "Browse available mounts",
+          "action": "open_mounts",
+          "gate": {
+            "condition": "cavalry_unlocked",
+            "gate_node": "qm_gate_horse"
+          }
+        },
+        {
+          "id": "browse_nevermind",
+          "textId": "qm_player_nevermind",
+          "text": "Never mind.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Browse response - fair supply (40-59%)",
+      "id": "qm_browse_response",
+      "speaker": "quartermaster",
+      "textId": "qm_browse_fair",
+      "text": "We've got what you'd expect. Weapons, armor, accessories?",
+      "context": {
+        "supply_level": "fair"
+      },
+      "options": [
+        {
+          "id": "browse_weapons",
+          "textId": "qm_player_weapons",
+          "text": "Weapons.",
+          "tooltip": "Browse available weapons",
+          "action": "open_weapons"
+        },
+        {
+          "id": "browse_armor",
+          "textId": "qm_player_armor",
+          "text": "Armor.",
+          "tooltip": "Choose armor type",
+          "next_node": "qm_armor_slots"
+        },
+        {
+          "id": "browse_accessories",
+          "textId": "qm_player_accessories",
+          "text": "Accessories.",
+          "tooltip": "Capes, shields, horse tack",
+          "action": "open_accessories"
+        },
+        {
+          "id": "browse_horse",
+          "textId": "qm_player_horse",
+          "text": "A horse.",
+          "tooltip": "Browse available mounts",
+          "action": "open_mounts",
+          "gate": {
+            "condition": "cavalry_unlocked",
+            "gate_node": "qm_gate_horse"
+          }
+        },
+        {
+          "id": "browse_nevermind",
+          "textId": "qm_player_nevermind",
+          "text": "Never mind.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Browse response - low supply (20-39%)",
+      "id": "qm_browse_response",
+      "speaker": "quartermaster",
+      "textId": "qm_browse_low",
+      "text": "Stock's thin right now. We're stretched. But I can show you what's left. What do you need?",
+      "context": {
+        "supply_level": "low"
+      },
+      "options": [
+        {
+          "id": "browse_weapons",
+          "textId": "qm_player_weapons",
+          "text": "Weapons.",
+          "tooltip": "Browse available weapons",
+          "action": "open_weapons"
+        },
+        {
+          "id": "browse_armor",
+          "textId": "qm_player_armor",
+          "text": "Armor.",
+          "tooltip": "Choose armor type",
+          "next_node": "qm_armor_slots"
+        },
+        {
+          "id": "browse_accessories",
+          "textId": "qm_player_accessories",
+          "text": "Accessories.",
+          "tooltip": "Capes, shields, horse tack",
+          "action": "open_accessories"
+        },
+        {
+          "id": "browse_horse",
+          "textId": "qm_player_horse",
+          "text": "A horse.",
+          "tooltip": "Browse available mounts",
+          "action": "open_mounts",
+          "gate": {
+            "condition": "cavalry_unlocked",
+            "gate_node": "qm_gate_horse"
+          }
+        },
+        {
+          "id": "browse_nevermind",
+          "textId": "qm_player_nevermind",
+          "text": "Never mind.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Browse response - critical supply (0-19%)",
+      "id": "qm_browse_response",
+      "speaker": "quartermaster",
+      "textId": "qm_browse_critical",
+      "text": "Pickings are slim. We're rationing everything. I can show you what we've got, but don't expect much.",
+      "context": {
+        "supply_level": "critical"
+      },
+      "options": [
+        {
+          "id": "browse_weapons",
+          "textId": "qm_player_weapons",
+          "text": "Weapons.",
+          "tooltip": "Browse available weapons",
+          "action": "open_weapons"
+        },
+        {
+          "id": "browse_armor",
+          "textId": "qm_player_armor",
+          "text": "Armor.",
+          "tooltip": "Choose armor type",
+          "next_node": "qm_armor_slots"
+        },
+        {
+          "id": "browse_accessories",
+          "textId": "qm_player_accessories",
+          "text": "Accessories.",
+          "tooltip": "Capes, shields, horse tack",
+          "action": "open_accessories"
+        },
+        {
+          "id": "browse_horse",
+          "textId": "qm_player_horse",
+          "text": "A horse.",
+          "tooltip": "Browse available mounts",
+          "action": "open_mounts",
+          "gate": {
+            "condition": "cavalry_unlocked",
+            "gate_node": "qm_gate_horse"
+          }
+        },
+        {
+          "id": "browse_nevermind",
+          "textId": "qm_player_nevermind",
+          "text": "Never mind.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Browse response - default fallback (no supply level available)",
+      "id": "qm_browse_response",
+      "speaker": "quartermaster",
+      "textId": "qm_browse_default",
+      "text": "Right, let's see what we've got. Weapons, armor, accessories?",
+      "context": {},
+      "options": [
+        {
+          "id": "browse_weapons",
+          "textId": "qm_player_weapons",
+          "text": "Weapons.",
+          "tooltip": "Browse available weapons",
+          "action": "open_weapons"
+        },
+        {
+          "id": "browse_armor",
+          "textId": "qm_player_armor",
+          "text": "Armor.",
+          "tooltip": "Choose armor type",
+          "next_node": "qm_armor_slots"
+        },
+        {
+          "id": "browse_accessories",
+          "textId": "qm_player_accessories",
+          "text": "Accessories.",
+          "tooltip": "Capes, shields, horse tack",
+          "action": "open_accessories"
+        },
+        {
+          "id": "browse_horse",
+          "textId": "qm_player_horse",
+          "text": "A horse.",
+          "tooltip": "Browse available mounts",
+          "action": "open_mounts",
+          "gate": {
+            "condition": "cavalry_unlocked",
+            "gate_node": "qm_gate_horse"
+          }
+        },
+        {
+          "id": "browse_nevermind",
+          "textId": "qm_player_nevermind",
+          "text": "Never mind.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Armor slot selection sub-menu",
+      "id": "qm_armor_slots",
+      "speaker": "quartermaster",
+      "textId": "qm_armor_which",
+      "text": "What piece are you looking for?",
+      "context": {},
+      "options": [
+        {
+          "id": "armor_body",
+          "textId": "qm_player_armor_body",
+          "text": "Body armor.",
+          "tooltip": "Browse chest armor",
+          "action": "open_armor_body"
+        },
+        {
+          "id": "armor_head",
+          "textId": "qm_player_armor_head",
+          "text": "A helmet.",
+          "tooltip": "Browse helmets",
+          "action": "open_armor_head"
+        },
+        {
+          "id": "armor_hands",
+          "textId": "qm_player_armor_hands",
+          "text": "Gloves.",
+          "tooltip": "Browse gloves",
+          "action": "open_armor_hands"
+        },
+        {
+          "id": "armor_legs",
+          "textId": "qm_player_armor_legs",
+          "text": "Boots.",
+          "tooltip": "Browse boots",
+          "action": "open_armor_legs"
+        },
+        {
+          "id": "armor_back",
+          "textId": "qm_player_something_else",
+          "text": "Something else.",
+          "next_node": "qm_browse_response"
+        }
+      ]
+    },
+    {
+      "_comment": "First meeting greeting - not yet introduced",
+      "id": "qm_greeting",
+      "speaker": "quartermaster",
+      "textId": "qm_intro_greeting_default",
+      "text": "Haven't seen you before. You new?",
+      "context": {
+        "is_introduced": false
+      },
+      "options": [
+        {
+          "id": "intro_continue",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub",
+          "action": "set_introduced"
+        }
+      ]
+    },
+    {
+      "_comment": "Sell response - hostile reputation (< -10) - BLOCKED",
+      "id": "qm_sell_blocked",
+      "speaker": "quartermaster",
+      "textId": "qm_sell_blocked",
+      "text": "Selling army property? That's your neck, not mine. I don't deal with soldiers I don't trust.",
+      "context": {
+        "reputation_tier": "hostile"
+      },
+      "options": [
+        {
+          "id": "sell_blocked_back",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Sell response - wary reputation (-10 to 9) - worst rates",
+      "id": "qm_sell_response",
+      "speaker": "quartermaster",
+      "textId": "qm_sell_wary",
+      "text": "Keep your voice down. I can take some things off your hands, but prices won't be generous. Show me.",
+      "context": {
+        "reputation_tier": "wary"
+      },
+      "options": [
+        {
+          "id": "open_sell_ui",
+          "textId": "qm_player_show_items",
+          "text": "[Show items]",
+          "action": "open_sell"
+        }
+      ]
+    },
+    {
+      "_comment": "Sell response - neutral reputation (10 to 34) - standard rates",
+      "id": "qm_sell_response",
+      "speaker": "quartermaster",
+      "textId": "qm_sell_neutral",
+      "text": "Quietly, of course. What have you got? I'll give you fair value for kit from my stock.",
+      "context": {
+        "reputation_tier": "neutral"
+      },
+      "options": [
+        {
+          "id": "open_sell_ui",
+          "textId": "qm_player_show_items",
+          "text": "[Show items]",
+          "action": "open_sell"
+        }
+      ]
+    },
+    {
+      "_comment": "Sell response - friendly reputation (35 to 64) - good rates",
+      "id": "qm_sell_response",
+      "speaker": "quartermaster",
+      "textId": "qm_sell_friendly",
+      "text": "Between us, as always. Let's see what you're carrying.",
+      "context": {
+        "reputation_tier": "friendly"
+      },
+      "options": [
+        {
+          "id": "open_sell_ui",
+          "textId": "qm_player_show_items",
+          "text": "[Show items]",
+          "action": "open_sell"
+        }
+      ]
+    },
+    {
+      "_comment": "Sell response - trusted reputation (65+) - best rates",
+      "id": "qm_sell_response",
+      "speaker": "quartermaster",
+      "textId": "qm_sell_trusted",
+      "text": "For you? No questions asked. Show me.",
+      "context": {
+        "reputation_tier": "trusted"
+      },
+      "options": [
+        {
+          "id": "open_sell_ui",
+          "textId": "qm_player_show_items",
+          "text": "[Show items]",
+          "action": "open_sell"
+        }
+      ]
+    },
+    {
+      "_comment": "Sell response - default fallback (no reputation tier context)",
+      "id": "qm_sell_response",
+      "speaker": "quartermaster",
+      "textId": "qm_sell_default",
+      "text": "Show me what you've got. I'll give you a fair price.",
+      "context": {},
+      "options": [
+        {
+          "id": "open_sell_ui",
+          "textId": "qm_player_show_items",
+          "text": "[Show items]",
+          "action": "open_sell"
+        }
+      ]
+    }
+  ]
+}

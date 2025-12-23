@@ -477,6 +477,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private bool _hasMetQuartermaster;
 
+        /// <summary>
+        ///     Player's communication style with the current quartermaster.
+        ///     Set during first meeting introduction. Values: "direct", "military", "friendly", "flattering".
+        ///     Used for future dialogue flavor and potential special interactions.
+        /// </summary>
+        private string _qmPlayerStyle;
+
         // ========================================================================
         // FOOD/RATIONS SYSTEM
         // Allows player to purchase better rations for morale and fatigue bonuses
@@ -863,6 +870,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Whether this is the first meeting with the quartermaster.
         /// </summary>
         public bool HasMetQuartermaster => _hasMetQuartermaster;
+
+        /// <summary>
+        ///     Player's communication style with the quartermaster (set during first meeting).
+        ///     Values: "direct", "military", "friendly", "flattering"
+        /// </summary>
+        public string QMPlayerStyle => _qmPlayerStyle ?? "military";
 
         /// <summary>
         ///     Returns true if a bag check is scheduled or in progress.
@@ -1626,6 +1639,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_quartermasterArchetype", ref _quartermasterArchetype);
             SyncKey(dataStore, "_quartermasterRelationship", ref _quartermasterRelationship);
             SyncKey(dataStore, "_hasMetQuartermaster", ref _hasMetQuartermaster);
+            SyncKey(dataStore, "_qmPlayerStyle", ref _qmPlayerStyle);
 
             // Baggage check tracking (contraband inspection system)
             SyncKey(dataStore, "_lastBaggageCheckDay", ref _lastBaggageCheckDay);
@@ -3911,6 +3925,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Clear retinue provisioning
                 ClearRetinueProvisioning();
+
+                // Handle retinue soldiers on service end (EC2)
+                HandleRetinueOnServiceEnd(isHonorableDischarge);
                 
                 // Shutdown supply simulation
                 CompanySupplyManager.Shutdown();
@@ -5582,6 +5599,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _lastPayOutcome = hadBackpay ? $"backpay:{grossAmount}" : $"standard:{grossAmount}";
             ModLogger.Info("Gold", $"Full payment: {grossAmount}");
             
+            // Record in Personal Feed for historical review
+            EnlistedNewsBehavior.Instance?.AddPayMusterNews(hadBackpay ? "backpay" : "full", grossAmount, 0);
+            
             if (hadBackpay)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
@@ -5611,6 +5631,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _lastPayOutcome = $"partial_backpay:{grossAmount}";
             ModLogger.Info("Gold", $"Partial payment: {grossAmount} (stillOwed={_owedBackpay})");
             
+            // Record in Personal Feed for historical review
+            EnlistedNewsBehavior.Instance?.AddPayMusterNews("partial", grossAmount, _owedBackpay);
+            
             InformationManager.DisplayMessage(new InformationMessage(
                 $"Partial pay received: {grossAmount} denars. Still owed: {_owedBackpay}.",
                 Colors.Yellow));
@@ -5630,6 +5653,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             
             _lastPayOutcome = $"delayed:{unpaidAmount}";
             ModLogger.Warn("Pay", $"Pay delayed: Owed={_owedBackpay}, Tension={_payTension}, Consecutive={_consecutiveDelays}");
+            
+            // Record in Personal Feed for historical review
+            EnlistedNewsBehavior.Instance?.AddPayMusterNews("delayed", 0, _owedBackpay);
             
             InformationManager.DisplayMessage(new InformationMessage(
                 $"Pay delayed! Lord {_enlistedLord?.Name} cannot afford wages. Owed: {_owedBackpay} denars.",
@@ -6335,102 +6361,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         internal enum LordWealthStatus { Wealthy, Comfortable, Struggling, Poor, Broke }
 
         /// <summary>
-        /// Get base daily pay by tier per pay_system.md spec.
-        /// T1 (Levy): 3, T2 (Recruit): 6, T3 (Soldier): 10, T4 (Veteran): 16,
-        /// T5 (Elite): 25, T6 (Household): 40, T7 (Lieutenant): 60, T8 (Captain): 85, T9 (Commander): 120
-        /// </summary>
-        private int GetBasePayByTier(int tier)
-        {
-            return tier switch
-            {
-                1 => 3,
-                2 => 6,
-                3 => 10,
-                4 => 16,
-                5 => 25,
-                6 => 40,
-                7 => 60,
-                8 => 85,
-                9 => 120,
-                _ => 3
-            };
-        }
-
-        /// <summary>
-        /// Get culture modifier for pay. Some cultures pay better than others.
-        /// Empire/Aserai: 1.1, Vlandia: 1.0, Sturgia: 0.9, Battania: 0.85, Khuzait: 0.8
-        /// </summary>
-        private float GetCulturePayModifier()
-        {
-            var cultureId = _enlistedLord?.Culture?.StringId?.ToLowerInvariant() ?? string.Empty;
-            return cultureId switch
-            {
-                "empire" => 1.1f,
-                "aserai" => 1.1f,
-                "vlandia" => 1.0f,
-                "sturgia" => 0.9f,
-                "battania" => 0.85f,
-                "khuzait" => 0.8f,
-                _ => 1.0f
-            };
-        }
-
-        /// <summary>
-        /// Get wartime modifier for pay. Active conflict = hazard pay.
-        /// Peacetime: 1.0, Active War: 1.15, Siege (defending): 1.25, Siege (attacking): 1.2
-        /// </summary>
-        private float GetWartimePayModifier()
-        {
-            var lordFaction = _enlistedLord?.MapFaction;
-            if (lordFaction == null)
-            {
-                return 1.0f;
-            }
-
-            // Check if we're in a siege
-            var settlement = Settlement.CurrentSettlement;
-            if (settlement?.IsUnderSiege == true)
-            {
-                // Check if we're defending or attacking
-                var siegeEvent = settlement.SiegeEvent;
-                if (siegeEvent != null)
-                {
-                    var isDefending = siegeEvent.BesiegerCamp?.LeaderParty?.MapFaction != lordFaction;
-                    return isDefending ? 1.25f : 1.2f;
-                }
-            }
-
-            // Check if faction is at war with anyone
-            foreach (var otherFaction in Campaign.Current.Factions)
-            {
-                if (otherFaction != lordFaction && FactionManager.IsAtWarAgainstFaction(lordFaction, otherFaction))
-                {
-                    return 1.15f; // Active war hazard pay
-                }
-            }
-
-            return 1.0f; // Peacetime
-        }
-
-        /// <summary>
-        /// Get lord wealth pay modifier. Wealthy lords pay more, poor lords pay less.
-        /// Wealthy (>50k): 1.1, Comfortable: 1.0, Struggling: 0.9, Poor: 0.75, Broke: 0.5
-        /// </summary>
-        private float GetLordWealthPayModifier()
-        {
-            var status = GetLordWealthStatus();
-            return status switch
-            {
-                LordWealthStatus.Wealthy => 1.1f,
-                LordWealthStatus.Comfortable => 1.0f,
-                LordWealthStatus.Struggling => 0.9f,
-                LordWealthStatus.Poor => 0.75f,
-                LordWealthStatus.Broke => 0.5f,
-                _ => 1.0f
-            };
-        }
-
-        /// <summary>
         /// Check if the lord has enough gold to pay the player.
         /// Lords keep a buffer so we don't drain them completely.
         /// </summary>
@@ -6464,7 +6394,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         /// Get lord's financial status based on gold thresholds.
-        /// Used for pay reliability and potential pay reduction.
+        /// Used for pay reliability checks.
         /// </summary>
         private LordWealthStatus GetLordWealthStatus()
         {
@@ -6489,21 +6419,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        /// Calculate fully-modified daily pay using tier base + all modifiers.
-        /// </summary>
-        internal int CalculateModifiedDailyPay()
-        {
-            var basePay = GetBasePayByTier(_enlistmentTier);
-            var dutyMod = GetDutiesWageMultiplier();
-            var cultureMod = GetCulturePayModifier();
-            var wealthMod = GetLordWealthPayModifier();
-            var wartimeMod = GetWartimePayModifier();
-
-            var totalPay = basePay * dutyMod * cultureMod * wealthMod * wartimeMod;
-            return Math.Max(1, (int)Math.Round(totalPay));
-        }
-
-        /// <summary>
         /// Clear pay tension state when service ends or transfers.
         /// </summary>
         private void ClearPayState(string reason)
@@ -6512,7 +6427,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _owedBackpay = 0;
             _lastPayDate = CampaignTime.Zero;
             _consecutiveDelays = 0;
-            // Note: Lance fund is NOT cleared - it belongs to the lance, not the player
             ModLogger.Debug("Pay", $"Pay state cleared: {reason}");
         }
 
@@ -7024,15 +6938,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _bagCheckInProgress = false;
 
             // Ensure XP progression is valid
-            // Fix: Update max tier from 7 to 6 to match progression_config.json and SetTier validation
             if (_enlistmentTier < 1)
             {
                 _enlistmentTier = 1;
             }
 
-            if (_enlistmentTier > 6)
+            var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
+            if (_enlistmentTier > maxTier)
             {
-                _enlistmentTier = 6;
+                _enlistmentTier = maxTier;
             }
 
             if (_enlistmentXP < 0)
@@ -10282,6 +10196,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
+        ///     Sets the player's communication style with the quartermaster.
+        ///     Called during first meeting introduction when player chooses their tone.
+        /// </summary>
+        /// <param name="style">Style value: "direct", "military", "friendly", "flattering"</param>
+        /// <param name="repChange">Reputation change from choosing this style</param>
+        public void SetQMPlayerStyle(string style, int repChange)
+        {
+            _qmPlayerStyle = style;
+            if (repChange != 0)
+            {
+                ModifyQuartermasterRelationship(repChange);
+            }
+            ModLogger.Info("Quartermaster", $"Player style set to '{style}' with rep change {repChange}");
+        }
+
+        /// <summary>
         ///     Gets the relationship level name for UI display.
         /// </summary>
         public string GetQuartermasterRelationshipLevel()
@@ -10833,6 +10763,107 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _retinueProvisioningTier = 0;
             _retinueProvisioningExpires = CampaignTime.Zero;
             _retinueProvisioningWarningShown = false;
+        }
+
+        /// <summary>
+        ///     Handles retinue soldiers when service ends (EC2).
+        ///     Honorable discharge: Player keeps retinue soldiers in their party.
+        ///     Dishonorable discharge: Retinue soldiers return to the lord's forces.
+        /// </summary>
+        /// <param name="isHonorableDischarge">Whether this is an honorable discharge.</param>
+        private void HandleRetinueOnServiceEnd(bool isHonorableDischarge)
+        {
+            var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
+            var state = retinueManager?.State;
+
+            if (state == null || !state.HasTypeSelected)
+            {
+                return; // No retinue to handle
+            }
+
+            var soldierCount = state.TotalSoldiers;
+            var veteranCount = state.NamedVeterans?.Count ?? 0;
+
+            if (isHonorableDischarge)
+            {
+                // Honorable: Player keeps their soldiers (they're already in MainParty roster)
+                // Just clear the retinue tracking state
+                ModLogger.Info("Retinue", 
+                    $"Honorable discharge: Player retains {soldierCount} retinue soldiers and {veteranCount} named veterans");
+
+                // Show notification
+                if (soldierCount > 0)
+                {
+                    var msg = new TextObject("{=enl_ret_keep_soldiers}Your {COUNT} retinue soldiers remain under your command.");
+                    msg.SetTextVariable("COUNT", soldierCount);
+                    InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Green));
+                }
+            }
+            else
+            {
+                // Dishonorable: Remove retinue soldiers from player's party
+                ModLogger.Info("Retinue", 
+                    $"Dishonorable discharge: Returning {soldierCount} retinue soldiers to lord's forces");
+
+                if (soldierCount > 0)
+                {
+                    ReturnRetinueSoldiersToLord(state);
+
+                    var msg = new TextObject("{=enl_ret_lose_soldiers}Your {COUNT} retinue soldiers have been reassigned to your former lord's command.");
+                    msg.SetTextVariable("COUNT", soldierCount);
+                    InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Red));
+                }
+            }
+
+            // Clear retinue state in both cases (soldiers are no longer "retinue" - just party members or gone)
+            state.Clear();
+        }
+
+        /// <summary>
+        ///     Removes retinue soldiers from player's party and adds them to lord's party.
+        /// </summary>
+        private void ReturnRetinueSoldiersToLord(Features.Retinue.Data.RetinueState state)
+        {
+            var playerRoster = MobileParty.MainParty?.MemberRoster;
+            var lordParty = _enlistedLord?.PartyBelongedTo;
+
+            if (playerRoster == null || state?.TroopCounts == null)
+            {
+                return;
+            }
+
+            foreach (var kvp in state.TroopCounts.ToList())
+            {
+                var characterId = kvp.Key;
+                var count = kvp.Value;
+
+                if (count <= 0)
+                {
+                    continue;
+                }
+
+                var character = CharacterObject.Find(characterId);
+                if (character == null)
+                {
+                    continue;
+                }
+
+                // Remove from player's party
+                var actualCount = playerRoster.GetTroopCount(character);
+                var toRemove = Math.Min(count, actualCount);
+
+                if (toRemove > 0)
+                {
+                    playerRoster.AddToCounts(character, -toRemove, removeDepleted: true);
+
+                    // Add to lord's party if available
+                    if (lordParty?.MemberRoster != null)
+                    {
+                        lordParty.MemberRoster.AddToCounts(character, toRemove);
+                        ModLogger.Debug("Retinue", $"Transferred {toRemove}x {character.Name} to {_enlistedLord.Name}'s party");
+                    }
+                }
+            }
         }
 
         /// <summary>

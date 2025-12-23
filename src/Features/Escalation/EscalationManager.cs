@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Config;
@@ -28,6 +29,7 @@ namespace Enlisted.Features.Escalation
 
         private readonly EscalationState _state = new EscalationState();
         private int _lastDailyTickDayNumber = -1;
+        private HashSet<int> _declinedPromotions = new HashSet<int>();
 
         public EscalationState State => _state;
 
@@ -324,6 +326,34 @@ namespace Enlisted.Features.Escalation
                         var time = _state.CategoryLastFired[key];
                         dataStore.SyncData($"esc_category_{i}_id", ref key);
                         dataStore.SyncData($"esc_category_{i}_time", ref time);
+                    }
+                }
+
+                // Declined promotion tracking
+                var declinedCount = _declinedPromotions.Count;
+                dataStore.SyncData("esc_declinedPromotionsCount", ref declinedCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _declinedPromotions = new HashSet<int>();
+                    for (var i = 0; i < declinedCount; i++)
+                    {
+                        var tier = 0;
+                        dataStore.SyncData($"esc_declinedPromo_{i}", ref tier);
+                        if (tier > 0)
+                        {
+                            _declinedPromotions.Add(tier);
+                        }
+                    }
+                }
+                else
+                {
+                    var tiers = _declinedPromotions.ToList();
+                    tiers.Sort();
+                    for (var i = 0; i < tiers.Count; i++)
+                    {
+                        var tier = tiers[i];
+                        dataStore.SyncData($"esc_declinedPromo_{i}", ref tier);
                     }
                 }
             });
@@ -1032,6 +1062,40 @@ namespace Enlisted.Features.Escalation
                 return "Serious";
             }
             return "Critical";
+        }
+
+        #endregion
+
+        #region Declined Promotion Tracking
+
+        /// <summary>
+        /// Records that the player declined a promotion to the specified tier.
+        /// The player must then request promotion via dialog.
+        /// </summary>
+        public void RecordDeclinedPromotion(int tier)
+        {
+            _declinedPromotions.Add(tier);
+            ModLogger.Info(LogCategory, $"Recorded declined promotion to tier {tier}");
+        }
+
+        /// <summary>
+        /// Checks if the player has previously declined promotion to the specified tier.
+        /// </summary>
+        public bool HasDeclinedPromotion(int tier)
+        {
+            return _declinedPromotions.Contains(tier);
+        }
+
+        /// <summary>
+        /// Clears the declined promotion flag for the specified tier.
+        /// Called when the player accepts the promotion via dialog.
+        /// </summary>
+        public void ClearDeclinedPromotion(int tier)
+        {
+            if (_declinedPromotions.Remove(tier))
+            {
+                ModLogger.Info(LogCategory, $"Cleared declined promotion flag for tier {tier}");
+            }
         }
 
         #endregion

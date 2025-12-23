@@ -4,10 +4,15 @@ using System.Linq;
 using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Retinue.Data;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Content;
+using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.Core;
+using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Retinue.Systems
 {
@@ -20,8 +25,25 @@ namespace Enlisted.Features.Retinue.Systems
     {
         private const string LogCategory = "CasualtyTracker";
 
+        // Veteran emergence configuration
+        private const float VeteranEmergenceChance = 0.15f; // 15% chance per eligible battle
+        private const int MinBattlesForEmergence = 3;       // Must survive 3+ battles to be eligible
+
+        // Available traits for emerging veterans. These define personality and flavor text.
+        private static readonly string[] VeteranTraits =
+        {
+            "Brave",      // Charges into danger without hesitation
+            "Lucky",      // Somehow always survives close calls
+            "Sharp-Eyed", // Notices threats before others
+            "Steady",     // Unshakeable under pressure
+            "Iron Will"   // Never breaks, never retreats
+        };
+
         // Pre-battle snapshot of retinue troop counts
         private Dictionary<string, int> _preBattleCounts;
+
+        // Pre-battle snapshot of named veterans (for death detection)
+        private List<string> _preBattleVeteranIds;
 
         // Track if we're currently in a battle
         private bool _isInBattle;
@@ -32,6 +54,7 @@ namespace Enlisted.Features.Retinue.Systems
         {
             Instance = this;
             _preBattleCounts = new Dictionary<string, int>();
+            _preBattleVeteranIds = new List<string>();
         }
 
         public override void RegisterEvents()
@@ -243,11 +266,12 @@ namespace Enlisted.Features.Retinue.Systems
         #region Snapshot and Reconciliation
 
         /// <summary>
-        /// Takes a snapshot of the current retinue troop counts before battle.
+        /// Takes a snapshot of the current retinue troop counts and named veterans before battle.
         /// </summary>
         private void TakePreBattleSnapshot(RetinueState state)
         {
             _preBattleCounts = new Dictionary<string, int>();
+            _preBattleVeteranIds = new List<string>();
 
             if (state?.TroopCounts == null)
             {
@@ -262,8 +286,18 @@ namespace Enlisted.Features.Retinue.Systems
                 }
             }
 
+            // Capture list of named veteran IDs for death detection after battle
+            if (state.NamedVeterans != null)
+            {
+                foreach (var veteran in state.NamedVeterans)
+                {
+                    _preBattleVeteranIds.Add(veteran.Id);
+                }
+            }
+
+            var veteranCount = _preBattleVeteranIds.Count;
             ModLogger.Debug(LogCategory,
-                $"Pre-battle snapshot: {_preBattleCounts.Count} troop types, {_preBattleCounts.Values.Sum()} total soldiers");
+                $"Pre-battle snapshot: {_preBattleCounts.Count} troop types, {_preBattleCounts.Values.Sum()} soldiers, {veteranCount} named veterans");
         }
 
         /// <summary>
@@ -331,16 +365,33 @@ namespace Enlisted.Features.Retinue.Systems
             // Clean up entries with zero troops
             CleanupZeroCountEntries(state);
 
-            // Log summary
+            // Log summary and report to news system
             if (totalCasualties > 0)
             {
                 ModLogger.Info(LogCategory,
                     $"Battle casualties: {totalCasualties} soldiers lost ({string.Join(", ", casualtyLog)}), " +
                     $"{state.TotalSoldiers} remaining");
+
+                // Report casualties to news feed (wounded count estimated as ~30% of remaining)
+                var woundedEstimate = Math.Min(state.TotalSoldiers / 3, totalCasualties / 2);
+                EnlistedNewsBehavior.Instance?.AddRetinueCasualtyReport(totalCasualties, woundedEstimate, "the battle");
             }
             else
             {
                 ModLogger.Debug(LogCategory, $"Battle ended with no retinue casualties, {state.TotalSoldiers} remaining");
+            }
+
+            // Increment battle counter for veteran emergence tracking
+            state.BattlesParticipated++;
+            ModLogger.Debug(LogCategory, $"Retinue battles participated: {state.BattlesParticipated}");
+
+            // Process named veteran survival and check for deaths
+            ProcessVeteranSurvivalAndDeaths(state, totalCasualties);
+
+            // Check for new veteran emergence after battle
+            if (state.TotalSoldiers > 0)
+            {
+                CheckForVeteranEmergence(state, totalCasualties);
             }
 
             ClearSnapshot();
@@ -378,6 +429,243 @@ namespace Enlisted.Features.Retinue.Systems
         private void ClearSnapshot()
         {
             _preBattleCounts?.Clear();
+            _preBattleVeteranIds?.Clear();
+        }
+
+        #endregion
+
+        #region Named Veteran Processing
+
+        /// <summary>
+        /// Processes veteran survival after battle. Marks surviving veterans as having survived,
+        /// and handles veteran deaths if casualties occurred.
+        /// </summary>
+        private void ProcessVeteranSurvivalAndDeaths(RetinueState state, int totalCasualties)
+        {
+            const string veteranCategory = "Veterans";
+
+            if (state.NamedVeterans == null || state.NamedVeterans.Count == 0)
+            {
+                return;
+            }
+
+            // If there were casualties, some veterans might have died
+            // We use a proportional chance based on casualties vs total soldiers
+            if (totalCasualties > 0)
+            {
+                var preBattleTotal = _preBattleCounts?.Values.Sum() ?? state.TotalSoldiers;
+                if (preBattleTotal <= 0) preBattleTotal = 1;
+
+                // Death chance for each veteran is proportional to casualty rate
+                var casualtyRate = (float)totalCasualties / preBattleTotal;
+
+                // Process veterans in reverse order so we can safely remove dead ones
+                for (var i = state.NamedVeterans.Count - 1; i >= 0; i--)
+                {
+                    var veteran = state.NamedVeterans[i];
+
+                    // Skip wounded veterans - they weren't in the battle
+                    if (veteran.IsWounded)
+                    {
+                        continue;
+                    }
+
+                    // Roll for death based on casualty rate (veterans are slightly luckier)
+                    var deathRoll = MBRandom.RandomFloat;
+                    var veteranDeathChance = casualtyRate * 0.7f; // 30% less likely to die than average soldier
+
+                    if (deathRoll < veteranDeathChance)
+                    {
+                        // Veteran has died
+                        ModLogger.Info(veteranCategory,
+                            $"Named veteran {veteran.Name} the {veteran.Trait} has fallen in battle! " +
+                            $"(Survived {veteran.BattlesSurvived} battles, {veteran.Kills} kills)");
+
+                        state.NamedVeterans.RemoveAt(i);
+
+                        // Trigger memorial event
+                        TriggerVeteranMemorialEvent(veteran);
+                    }
+                    else
+                    {
+                        // Veteran survived - record the battle
+                        veteran.RecordBattleSurvival();
+                        ModLogger.Debug(veteranCategory,
+                            $"Veteran {veteran.Name} survived battle #{veteran.BattlesSurvived}");
+                    }
+                }
+            }
+            else
+            {
+                // No casualties - all veterans survive
+                state.RecordBattleSurvivalForAllVeterans();
+                ModLogger.Debug(veteranCategory,
+                    $"All {state.NamedVeterans.Count} veterans survived the battle");
+            }
+        }
+
+        /// <summary>
+        /// Checks if a new named veteran should emerge from the anonymous ranks.
+        /// Requires: 3+ battles participated, retinue has soldiers, not at max veterans.
+        /// 15% chance per eligible battle.
+        /// </summary>
+        private void CheckForVeteranEmergence(RetinueState state, int totalCasualties)
+        {
+            const string veteranCategory = "Veterans";
+
+            // Must have participated in enough battles
+            if (state.BattlesParticipated < MinBattlesForEmergence)
+            {
+                ModLogger.Debug(veteranCategory,
+                    $"Not eligible for emergence: only {state.BattlesParticipated} battles (need {MinBattlesForEmergence})");
+                return;
+            }
+
+            // Must have room for another veteran
+            if (!state.CanAddNamedVeteran())
+            {
+                ModLogger.Debug(veteranCategory,
+                    $"Not eligible for emergence: already at max veterans ({RetinueState.MaxNamedVeterans})");
+                return;
+            }
+
+            // Must have soldiers in the retinue
+            if (state.TotalSoldiers <= 0)
+            {
+                return;
+            }
+
+            // Don't create veterans when everyone died
+            if (totalCasualties > 0 && state.TotalSoldiers <= 0)
+            {
+                return;
+            }
+
+            // Roll for emergence
+            var roll = MBRandom.RandomFloat;
+            if (roll >= VeteranEmergenceChance)
+            {
+                ModLogger.Debug(veteranCategory,
+                    $"Veteran emergence roll failed: {roll:F2} >= {VeteranEmergenceChance:F2}");
+                return;
+            }
+
+            // Create the new veteran
+            var newVeteran = CreateNamedVeteran();
+            if (newVeteran == null)
+            {
+                ModLogger.Warn(veteranCategory, "Failed to create named veteran - name generation failed");
+                return;
+            }
+
+            if (state.AddNamedVeteran(newVeteran))
+            {
+                ModLogger.Info(veteranCategory,
+                    $"New veteran emerged: {newVeteran.Name} the {newVeteran.Trait} " +
+                    $"(Total veterans: {state.NamedVeterans.Count})");
+
+                // Show notification to player
+                ShowVeteranEmergenceNotification(newVeteran);
+            }
+        }
+
+        /// <summary>
+        /// Creates a new named veteran with a culture-appropriate name and random trait.
+        /// </summary>
+        private NamedVeteran CreateNamedVeteran()
+        {
+            const string veteranCategory = "Veterans";
+
+            // Get the player's current lord's culture for name generation
+            var enlistment = EnlistmentBehavior.Instance;
+            var culture = enlistment?.CurrentLord?.Culture;
+
+            if (culture == null)
+            {
+                ModLogger.Warn(veteranCategory, "Cannot create veteran: no culture available");
+                return null;
+            }
+
+            // Generate a name from the culture's name list
+            string veteranName;
+            try
+            {
+                // Get name list for male soldiers (most common)
+                var nameList = NameGenerator.Current.GetNameListForCulture(culture, false);
+                if (nameList == null || nameList.IsEmpty())
+                {
+                    ModLogger.Warn(veteranCategory, $"No names available for culture {culture.StringId}");
+                    return null;
+                }
+
+                // Pick a random name
+                var nameText = nameList.GetRandomElement();
+                veteranName = nameText?.ToString() ?? "Soldier";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode(veteranCategory, "E-VET-001", "Error generating veteran name", ex);
+                return null;
+            }
+
+            // Pick a random trait
+            var trait = VeteranTraits.GetRandomElement();
+
+            // Get current campaign time for emergence timestamp
+            var currentTime = (float)CampaignTime.Now.ToDays;
+
+            var veteran = new NamedVeteran(veteranName, trait, currentTime);
+
+            ModLogger.Debug(veteranCategory, $"Created veteran: {veteran}");
+
+            return veteran;
+        }
+
+        /// <summary>
+        /// Shows a notification to the player when a new veteran emerges.
+        /// </summary>
+        private static void ShowVeteranEmergenceNotification(NamedVeteran veteran)
+        {
+            var message = new TextObject("{=enl_vet_emergence_msg}One of your soldiers has distinguished themselves in battle. {VETERAN_NAME} the {TRAIT} has earned a name among your retinue.");
+            message.SetTextVariable("VETERAN_NAME", veteran.Name);
+            message.SetTextVariable("TRAIT", veteran.Trait);
+
+            InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Cyan));
+
+            // Record veteran emergence in news feed for Personal Feed display
+            EnlistedNewsBehavior.Instance?.AddVeteranEmergence(veteran.Name, veteran.Trait);
+        }
+
+        /// <summary>
+        /// Triggers a memorial notification when a named veteran dies in battle.
+        /// Shows an immediate notification with the veteran's legacy.
+        /// </summary>
+        private static void TriggerVeteranMemorialEvent(NamedVeteran veteran)
+        {
+            const string veteranCategory = "Veterans";
+
+            // Show notification about the fallen veteran
+            var message = new TextObject("{=enl_vet_fallen_msg}{VETERAN_NAME} the {TRAIT} has fallen in battle. They survived {BATTLES} battles and claimed {KILLS} enemy lives.");
+            message.SetTextVariable("VETERAN_NAME", veteran.Name);
+            message.SetTextVariable("TRAIT", veteran.Trait);
+            message.SetTextVariable("BATTLES", veteran.BattlesSurvived);
+            message.SetTextVariable("KILLS", veteran.Kills);
+
+            InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Red));
+
+            ModLogger.Info(veteranCategory,
+                $"Displayed memorial notification for fallen veteran {veteran.Name} the {veteran.Trait}");
+
+            // Record veteran death in news feed for Personal Feed display
+            EnlistedNewsBehavior.Instance?.AddVeteranDeath(veteran.Name, veteran.BattlesSurvived, veteran.Kills);
+
+            // Try to queue memorial event for full player interaction
+            var evt = EventCatalog.GetEvent("evt_ret_veteran_memorial");
+            if (evt != null)
+            {
+                EventDeliveryManager.Instance?.QueueEvent(evt);
+                ModLogger.Info(veteranCategory, $"Queued memorial event for {veteran.Name}");
+            }
         }
 
         #endregion

@@ -8,7 +8,19 @@
 **Target Game:** Bannerlord v1.3.11
 
 **Recent Completions (2025-12-23):**
-- ✅ Quartermaster Conversation Refactor Phase 6: Contextual dialogue with XML localization and edge case hardening
+- ✅ Retinue System Complete (Phases 0-8): Formation selection, context-aware trickle, loyalty tracking, 11 events, 6 incidents, 4 decisions, named veterans
+- ✅ Retinue Phase 8: Named Veterans - Emergence after 3+ battles, death detection, memorial events
+- ✅ Retinue Phase 7: Camp Hub Decisions - 4 retinue decisions (Inspect, Drill, Share Rations, Address Men)
+- ✅ Retinue Phase 6: Post-Battle Incidents - 6 map incidents for T7+ commanders (wounded soldier, first command, cowardice, looting, prisoner mercy, recognition)
+- ✅ Phase 9: First Meeting Introduction - Player chooses relationship tone, 28 archetype×tone acknowledgments
+- ✅ Phase 8: Provisions Gauntlet UI - Visual grid for food item purchases with Buy 1/Buy All
+- ✅ Phase 7: Inventory & Pricing System - Stock tracking, supply/rep pricing, muster refresh
+- ✅ Phase 6: Sell Reputation Gating - Reputation-based sell access with under-the-table dialogue
+- ✅ Phase 5: Tier Gate RP Responses - 30+ archetype variants for tier/rep restrictions
+- ✅ Phase 4: Hub Greeting Variants - 5 distinct supply-aware greetings with real-time evaluation
+- ✅ Phase 3: Context-Aware Browse Responses - QM reacts to supply levels before store opens
+- ✅ Option B Architecture: Dynamic runtime context checking via delegates (fixes stale dialogue)
+- ✅ Quartermaster Conversation Refactor: Full JSON/XML data-driven infrastructure
 
 ---
 
@@ -25,6 +37,75 @@
 ---
 
 ## Recent Completions
+
+### Quartermaster First Meeting Introduction - Phase 9 (2025-12-23)
+
+**Status:** ✅ Complete  
+**Build:** 0 errors
+
+First-meeting introduction system where the QM asks the player's name and the player chooses a relationship tone.
+
+**Key Features:**
+- **Archetype Greetings:** 7 unique intro greetings per QM archetype (veteran, merchant, bookkeeper, scoundrel, believer, eccentric, default)
+- **Player Tone Selection:** 4 tone options with tooltips showing reputation impact
+  - Direct: "I'm {PLAYER_NAME}. Just tell me what you've got." (-2 rep)
+  - Military: "{PLAYER_NAME}, reporting for kit." (0 rep)
+  - Friendly: "Name's {PLAYER_NAME}. Looking forward to working with you." (+3 rep)
+  - Flattering: "They call me {PLAYER_NAME}. I've heard you're the one to know." (+5 rep)
+- **28 Acknowledgments:** Each tone × archetype combination has unique QM response
+- **Style Persistence:** Player's chosen style stored in `_qmPlayerStyle` for future dialogue flavor
+- **Flag Persistence:** `_hasMetQuartermaster` flag persists across saves via SyncData
+
+**New Files:**
+- `ModuleData/Enlisted/Dialogue/qm_intro.json` (35 dialogue nodes)
+
+**Modified Files:**
+- `ModuleData/Languages/enlisted_qm_dialogue.xml` (+34 localization strings)
+- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (player style storage)
+- `src/Features/Conversations/Behaviors/EnlistedDialogManager.cs` (intro flow + set_player_style action)
+
+---
+
+### Quartermaster Provisions UI - Phase 8 (2025-12-23)
+
+**Status:** ✅ Complete  
+**Build:** 0 errors
+
+Visual grid UI for food item purchases, matching the equipment interface style.
+
+**Key Features:**
+- **Gauntlet Grid UI:** Food items displayed in visual cards with icons, prices, quantities
+- **Tier-Based Behavior:** T1-T6 see ration status info, T7+ see full provisions shop
+- **Buy 1 / Buy All:** Quantity selection for bulk purchases
+- **Stock Tracking:** Integrated with Phase 7 QMInventoryState (12-day muster refresh)
+- **QM Rep Pricing:** 1.5× (Trusted) to 2.2× (Hostile) markup on base prices
+- **Supply Pricing:** +10% to +50% markup at low supply levels
+- **Out-of-Stock UI:** Greyed cards, disabled buttons, restock info
+
+**New Files:**
+- `src/Features/Equipment/UI/QuartermasterProvisionsVM.cs`
+- `src/Features/Equipment/UI/QuartermasterProvisionItemVM.cs`
+- `src/Features/Equipment/UI/QuartermasterProvisionsBehavior.cs`
+- `GUI/Prefabs/Equipment/QuartermasterProvisionsGrid.xml`
+- `GUI/Prefabs/Equipment/QuartermasterProvisionCard.xml`
+
+---
+
+### Quartermaster Inventory System - Phase 7 (2025-12-23)
+
+**Status:** ✅ Complete  
+**Build:** 0 errors
+
+Stock tracking and pricing system for quartermaster commerce.
+
+**Key Features:**
+- **Muster-Based Refresh:** Inventory regenerates every 12 days at muster
+- **Supply-Based Stock:** Variety (25%-100%) and quantity (1-5) scale with supply level
+- **Combined Pricing:** Supply scarcity (+10% to +50%) × QM rep (-15% to +25%)
+- **Stock Tracking:** `QMInventoryState` persists across saves
+- **Out-of-Stock UI:** Cards greyed out, buttons disabled, "Restocks at muster" hint
+
+---
 
 ### Quartermaster Conversation Refactor - Phase 6 (2025-12-23)
 
@@ -71,6 +152,37 @@ The Enlisted mod aims to create an **emergent, choice-driven military experience
 
 ## Near-Term (Next Release)
 
+### Retinue System
+
+**Status:** ✅ Complete (All Phases 0-8)  
+**Effort:** ~60 hours total (completed 2025-12-23)  
+**Docs:** [retinue-system.md](Features/Core/retinue-system.md)
+
+Complete retinue system for T7+ commanders with formation selection, context-aware reinforcements, loyalty tracking, narrative content, and named veterans.
+
+**✅ Completed Phases:**
+- Phase 0: Critical Bug Fixes (tier cap, notification text, comment corrections, proving events)
+- Phase 1: Formation Selection (dialog at T7, culture restrictions, persistence)
+- Phase 2: Replenishment System (context-aware trickle, relation-based requests, post-battle volunteer event)
+- Phase 3: Effect Infrastructure (retinueLoyalty, retinueLoss, retinueWounded, retinueGain effects)
+- Phase 4: Retinue Loyalty Track (0-100 scale, threshold events, modifiers)
+- Phase 5: Retinue Events (10 narrative events in events_retinue.json)
+- Phase 6: Post-Battle Incidents (6 map incidents in incidents_retinue.json)
+- Phase 7: Camp Hub Decisions (4 retinue decisions: Inspect, Drill, Share Rations, Address Men)
+- Phase 8: Named Veterans (emergence after 3+ battles, death detection, memorial events, 5 max)
+- News Integration: Personal Feed, Daily Brief, casualty reports, veteran activities
+
+**Content Added:**
+- 11 retinue events (10 narrative + 1 post-battle volunteer)
+- 6 post-battle map incidents
+- 4 camp hub decisions
+- Named veteran system with emergence/death mechanics
+- 100+ localization strings
+
+---
+
+---
+
 ### Strategic Context Enhancement
 
 **Status:** In Progress (Phase 5.6)  
@@ -109,6 +221,56 @@ After: "Scout approaches to Pravend - Lord planning offensive.
 ---
 
 ## Medium-Term (Future Releases)
+
+### Baggage Train Availability System
+
+**Status:** 📋 Specification Complete  
+**Effort:** ~50 hours (9 phases)  
+**Spec:** [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md)
+
+Transform the baggage stash from always-accessible storage into a realistic logistics element with conditional access based on march state, rank, and strategic context.
+
+**Phase 1-3: Core System** (18 hours)
+- Create `BaggageTrainManager` with priority-based access resolution
+- Define `BaggageAccessState` enum (FullAccess, TemporaryAccess, NoAccess, Locked)
+- Gate Camp Hub menu options with contextual tooltips
+- Add "Request Baggage Access" emergency option (T3+)
+- Periodic "baggage caught up" events (~25%/day on march)
+- Muster and night halt access windows
+
+**Phase 4: Baggage Events** (10 hours)
+- `evt_baggage_arrived` - positive access window
+- `evt_baggage_delayed` - weather/terrain delays
+- `evt_baggage_raided` - combat/loss in enemy territory
+- `evt_baggage_theft` - item loss when soldier rep low
+
+**Phase 5-6: Progression & News** (7 hours)
+- Rank-gated access privileges (T1-T2: limited, T7+: full control)
+- Daily Brief includes baggage status
+- Personal feed shows baggage events
+
+**Phase 7-8: Cross-System Integration** (11 hours)
+- Leave system: FullAccess when on leave
+- Grace period: FullAccess, preserve state on re-enlist
+- Combat/Reserve: NoAccess during battle or reserve mode
+- Capture: Freeze delay timer during captivity
+- Siege: Context-aware access (defender vs. attacker)
+- Discharge: Forfeit baggage on desertion, reclaim QM items on dishonorable
+- Retinue/Promotion: Queue formation selection if baggage delayed
+
+**Phase 9: Polish & QA** (4 hours)
+- QM conversation about baggage status
+- Performance optimization (cached state with dirty flag)
+- Comprehensive edge case testing
+
+**Gameplay Impact:**
+- Preparation pressure before campaigns
+- Strategic decisions about what to store vs. carry
+- Events add risk/reward to storage
+- Rank progression provides meaningful privileges
+- Consequences for desertion (baggage forfeiture)
+
+---
 
 ### Advanced Order System
 

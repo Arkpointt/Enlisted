@@ -16,6 +16,9 @@
 - [Personal Feed](#personal-feed)
 - [Daily Brief](#daily-brief)
 - [Company Status Report](#company-status-report)
+- [Retinue Integration](#retinue-integration-t7-commanders)
+- [Promotion Integration](#promotion-integration)
+- [Pay Muster Integration](#pay-muster-integration)
 - [Tracking Records](#tracking-records)
 - [Data Structures](#data-structures)
 - [Localization](#localization)
@@ -329,6 +332,155 @@ Each builder returns:
 
 ---
 
+## Retinue Integration (T7+ Commanders)
+
+The news system tracks retinue activities for commanders (T7+).
+
+### Personal Feed Entries
+
+**Retinue Events:**
+- All 10 retinue narrative events logged via `AddEventOutcome()`
+- Format: "[Event Title]: [Option Chosen] - [Outcome]"
+- Priority: 2-3 (normal)
+
+**Veteran Activities:**
+- Emergence: "[Veteran Name] has distinguished themselves in battle." (Priority 2)
+- Death: "[Veteran Name], who served N battles, has fallen." (Priority 4, high)
+
+**Casualties:**
+- "Your retinue suffered losses: N killed, M wounded."
+- Reported separately from lord's casualties
+- Added via `AddRetinueCasualtyReport()` after battles
+
+### Daily Brief Integration
+
+**Company Context Section:**
+
+`BuildRetinueContextLine()` adds retinue status when notable:
+- **Under-strength** (<70% capacity): "Your retinue is at X of Y. Z replacements needed."
+- **Low loyalty** (<30): "Your men are restless. Morale among your retinue is worryingly low."
+- **High loyalty** (>80): "Your soldiers are devoted. They would follow you into any fight."
+
+Called from `BuildDailyBriefSection()` after skill progress line.
+
+**Casualty Report Section:**
+
+Retinue casualties included in `BuildCasualtyReportLine()`:
+- Distinguished from lord's troop casualties
+- Shows retinue losses separately: "Your retinue lost N soldiers..."
+- Uses `_retinueLostSinceLastMuster` counter (separate from main force)
+
+### Reputation Changes
+
+Retinue loyalty changes recorded as reputation changes:
+
+```csharp
+ReputationChangeRecord {
+    Target: "Retinue",
+    Delta: loyalty_change,
+    NewValue: new_loyalty_value,
+    Message: source_description,
+    DayNumber: current_day
+}
+```
+
+**Handled in `RecordReputationChange()`:**
+- Target = "Retinue" alongside "Lord", "Officer", "Soldier"
+- Appears in service record ledger
+- Tracked for long-term analysis
+
+### Veteran News
+
+**Emergence:**
+```csharp
+AddVeteranEmergence(NamedVeteran veteran)
+{
+    var headline = "{NAME}, a soldier in your retinue, has distinguished themselves.";
+    AddPersonalNews("retinue", headline, priority: 2);
+}
+```
+
+**Death:**
+```csharp
+AddVeteranDeath(NamedVeteran veteran)
+{
+    var headline = "{NAME}, who served {BATTLES} battles, has fallen.";
+    AddPersonalNews("retinue", headline, priority: 4);
+}
+```
+
+### Implementation
+
+**Methods Added to EnlistedNewsBehavior:**
+- `BuildRetinueContextLine()` - Returns context string for Daily Brief
+- `AddRetinueCasualtyReport(int killed, int wounded)` - Logs retinue casualties
+- `AddVeteranEmergence(NamedVeteran veteran)` - Logs veteran emergence
+- `AddVeteranDeath(NamedVeteran veteran)` - Logs veteran death
+
+**Localization Strings:**
+```xml
+<string id="brief_retinue_understrength" text="Your retinue is at {CURRENT} of {CAPACITY}. {MISSING} replacements needed." />
+<string id="brief_retinue_loyalty_low" text="Your men are restless. Morale among your retinue is worryingly low." />
+<string id="brief_retinue_loyalty_high" text="Your soldiers are devoted. They would follow you into any fight." />
+<string id="news_retinue_casualties" text="Your retinue suffered losses: {KILLED} killed, {WOUNDED} wounded." />
+<string id="news_veteran_emerge" text="{NAME}, a soldier in your retinue, has distinguished themselves in battle." />
+<string id="news_veteran_death" text="{NAME}, who served {BATTLES} battles under your command, has fallen." />
+```
+
+---
+
+## Promotion Integration
+
+Promotions are recorded to the Personal Feed when players advance in rank.
+
+### Personal Feed Entries
+
+Called from `PromotionBehavior.TriggerPromotionNotification()`:
+
+```csharp
+EnlistedNewsBehavior.Instance?.AddPromotionNews(newTier, rankName, retinueSoldiers);
+```
+
+**Tier-Specific Headlines:**
+- T2-T6: Immersive rank recognition text
+- T7-T9: Commander promotion with retinue size mentioned
+
+**Localization Strings:**
+```xml
+<string id="News_Promotion_T2" text="The sergeant's stripe is sewn to your sleeve. You are now {RANK}." />
+<string id="News_Promotion_T7" text="Twenty soldiers salute their new commander. You are {RANK}, with a retinue of your own." />
+```
+
+---
+
+## Pay Muster Integration
+
+Pay muster outcomes are recorded to the Personal Feed for payment history tracking.
+
+### Personal Feed Entries
+
+Called from `EnlistmentBehavior` payment processing:
+
+```csharp
+// ProcessFullPayment, ProcessPartialPayment, ProcessPayDelay
+EnlistedNewsBehavior.Instance?.AddPayMusterNews(outcome, amountPaid, amountOwed);
+```
+
+**Outcome Types:**
+- `full` / `backpay`: Full payment received
+- `partial`: Partial payment with backpay still owed
+- `delayed`: No payment, backpay accumulating
+- `promissory`: IOU accepted
+- `corruption` / `side_deal`: Alternative payment methods
+
+**Localization Strings:**
+```xml
+<string id="News_PayMuster_Full" text="The paymaster counts out your coin. {AMOUNT} denars received in full." />
+<string id="News_PayMuster_Delayed" text="The paymaster shakes his head. No coin today. {OWED} denars now owed." />
+```
+
+---
+
 ## Tracking Records
 
 The system maintains several record lists for detailed report displays. These are NOT used in the Daily Brief but available for service record views.
@@ -598,7 +750,9 @@ The template includes fallback text for development:
 | **Events** | `EventDeliveryManager` calls `AddEventOutcome()`, `SchedulePendingChainEvent()` |
 | **Escalation** | `EscalationManager` calls `RecordReputationChange()` |
 | **Company Needs** | `CompanyNeedsManager` provides current values |
-| **Pay System** | `PaySystem` calls `AddMusterOutcome()` |
+| **Pay System** | `EnlistmentBehavior` calls `AddPayMusterNews()` after each muster resolution |
+| **Promotion** | `PromotionBehavior` calls `AddPromotionNews()` after tier advancement |
+| **Retinue** | `RetinueCasualtyTracker` calls `AddRetinueCasualtyReport()`, `AddVeteranEmergence()`, `AddVeteranDeath()` |
 
 ---
 

@@ -122,6 +122,14 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
+        /// Gets an event by its unique ID. Alias for GetEvent for clarity in proving event context.
+        /// </summary>
+        public static EventDefinition GetEventById(string eventId)
+        {
+            return GetEvent(eventId);
+        }
+
+        /// <summary>
         /// Gets all loaded events.
         /// </summary>
         public static IReadOnlyList<EventDefinition> GetAllEvents()
@@ -712,6 +720,15 @@ namespace Enlisted.Features.Content
                 effects.Renown = effectsJson["renown"]?.Value<int>();
                 effects.TriggersDischarge = effectsJson["triggers_discharge"]?.ToString() ??
                                             effectsJson["triggersDischarge"]?.ToString();
+                effects.Promotes = ParsePromotesEffect(effectsJson["promotes"]);
+                effects.RetinueGain = effectsJson["retinueGain"]?.Value<int>() ??
+                                      effectsJson["retinue_gain"]?.Value<int>();
+                effects.RetinueLoyalty = effectsJson["retinueLoyalty"]?.Value<int>() ??
+                                         effectsJson["retinue_loyalty"]?.Value<int>();
+                effects.RetinueLoss = effectsJson["retinueLoss"]?.Value<int>() ??
+                                      effectsJson["retinue_loss"]?.Value<int>();
+                effects.RetinueWounded = effectsJson["retinueWounded"]?.Value<int>() ??
+                                         effectsJson["retinue_wounded"]?.Value<int>();
 
                 // Parse company needs
                 ParseDictionaryField(effectsJson, "companyNeeds", effects.CompanyNeeds);
@@ -725,6 +742,35 @@ namespace Enlisted.Features.Content
 
             option.Effects = effects;
             return warnings;
+        }
+
+        /// <summary>
+        /// Parses the "promotes" effect from JSON.
+        /// Handles both boolean (true = promote to next tier) and integer (explicit target tier) values.
+        /// Returns null if not specified, or the target tier if promotion should occur.
+        /// </summary>
+        private static int? ParsePromotesEffect(JToken token)
+        {
+            if (token == null)
+            {
+                return null;
+            }
+
+            // Handle explicit integer (e.g., "promotes": 3 means promote to T3)
+            if (token.Type == JTokenType.Integer)
+            {
+                return token.Value<int>();
+            }
+
+            // Handle boolean true (e.g., "promotes": true means promote to next tier)
+            // We use -1 as a sentinel value meaning "promote to current tier + 1"
+            // The EventDeliveryManager will resolve this at runtime
+            if (token.Type == JTokenType.Boolean && token.Value<bool>())
+            {
+                return -1; // Sentinel: resolve to currentTier + 1 at runtime
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -969,6 +1015,11 @@ namespace Enlisted.Features.Content
             effects.ChainEventId = effectsJson["chainEventId"]?.ToString() ?? effectsJson["triggers_event"]?.ToString();
             effects.Renown = effectsJson["renown"]?.Value<int>();
             effects.TriggersDischarge = effectsJson["triggers_discharge"]?.ToString() ?? effectsJson["triggersDischarge"]?.ToString();
+            effects.Promotes = ParsePromotesEffect(effectsJson["promotes"]);
+            effects.RetinueGain = effectsJson["retinueGain"]?.Value<int>() ?? effectsJson["retinue_gain"]?.Value<int>();
+            effects.RetinueLoyalty = effectsJson["retinueLoyalty"]?.Value<int>() ?? effectsJson["retinue_loyalty"]?.Value<int>();
+            effects.RetinueLoss = effectsJson["retinueLoss"]?.Value<int>() ?? effectsJson["retinue_loss"]?.Value<int>();
+            effects.RetinueWounded = effectsJson["retinueWounded"]?.Value<int>() ?? effectsJson["retinue_wounded"]?.Value<int>();
 
             // Parse company needs
             ParseDictionaryField(effectsJson, "companyNeeds", effects.CompanyNeeds);

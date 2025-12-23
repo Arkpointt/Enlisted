@@ -39,6 +39,7 @@ Approval is generally granted unless the unit is in a high-tempo situation (e.g.
 
 Once on leave:
 -   **Visibility**: Your party becomes visible and active on the campaign map.
+-   **Lord Tracking**: Your enlisted lord is automatically marked on the map so you can locate them to return to duty.
 -   **Movement**: You can move freely, trade, and engage in encounters as a vanilla mercenary/lord.
 -   **Persistence**: Your rank, XP, reputation, and service record are frozen and preserved.
 -   **Restrictions**: You cannot join other factions or enlist with foreign lords while on leave from your current post.
@@ -49,6 +50,7 @@ Once on leave:
 
 To resume your duties, you must find and speak with your lord.
 -   Selecting "Reporting for duty" immediately restores your enlisted state.
+-   The tracking marker on your lord is removed.
 -   Your party is hidden, and you resume following the lord's army.
 
 ---

@@ -3,7 +3,7 @@
 **Summary:** Master list of all narrative content with IDs, titles, descriptions, requirements, effects, and skill checks. This index provides quick reference for all events, decisions, orders, and map incidents in the mod.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22  
+**Last Updated:** 2025-12-23  
 **Related Docs:** [Event Catalog](event-catalog-by-system.md), [Content System Architecture](../Features/Content/content-system-architecture.md)
 
 ---
@@ -24,15 +24,15 @@
 | **Decisions** | 34 | Player-initiated choices from Camp Hub with costs and risks |
 | **Events** | 68 | Context-triggered situations (14 escalation + 5 crisis + 49 role/universal) |
 | **Map Incidents** | 45 | Triggered by map actions (battle, siege, settlement entry/exit, waiting) |
-| **Phase 5 Samples** | 9 | NEW SCHEMA v2 sample events for testing (3 scout, 2 muster, 4 camp) |
-| **Phase 10 Training** | 3 | NEW weapon-aware training decisions (combat drill, weapon spec, lead drill) |
+| **Sample Content** | 9 | Schema v2 sample events for testing (3 scout, 2 muster, 4 camp) |
+| **Training Content**| 3 | Weapon-aware training decisions (combat drill, weapon spec, lead drill) |
 | **Total** | **176** | Full content catalog (includes training chain) |
 
-**Phase 10 Training Decisions**: 3 new training decisions using dynamic skill XP. Uses `reward_choices` and `dynamic_skill_xp` for weapon-aware training. See [Training System](../Features/Combat/training-system.md) for implementation details.
+**Training Decisions**: 3 new training decisions using dynamic skill XP. Uses `reward_choices` and `dynamic_skill_xp` for weapon-aware training. See [Training System](../Features/Combat/training-system.md) for implementation details.
 
-**Phase 5 Sample Events**: 9 events created in schema v2 format with full XML localization for testing the content loading and localization system. Located in `ModuleData/Enlisted/Events/Role/scout_events.json`, `muster_events.json`, and `camp_events.json`. These demonstrate proper event structure, skill checks, trait XP, and reputation effects. See below for details.
+**Sample Events**: 9 events created in schema v2 format with full XML localization for testing the content loading and localization system. Located in `ModuleData/Enlisted/Events/Role/scout_events.json`, `muster_events.json`, and `camp_events.json`. These demonstrate proper event structure, skill checks, trait XP, and reputation effects. See below for details.
 
-**Phase 6 Complete**: Intelligent selection algorithm implemented. Events fire automatically every 3-5 days based on player role (2× weight for matching), context (1.5× weight for matching), and priority. Global pacing limits prevent spam: max 2 events per day, 8 per week, minimum 6 hours between any automatic events. Limits are config-driven (see `enlisted_config.json` → `decision_events.pacing`). See `EventSelector.cs`, `EventPacingManager.cs`, `MapIncidentManager.cs`, and `GlobalEventPacer.cs`.
+**Selection Algorithm**: Intelligent selection algorithm implemented. Events fire automatically every 3-5 days based on player role (2× weight for matching), context (1.5× weight for matching), and priority. Global pacing limits prevent spam: max 2 events per day, 8 per week, minimum 6 hours between any automatic events. Limits are config-driven (see `enlisted_config.json` → `decision_events.pacing`). See `EventSelector.cs`, `EventPacingManager.cs`, `MapIncidentManager.cs`, and `GlobalEventPacer.cs`.
 
 ---
 
@@ -469,9 +469,9 @@ Events triggered by personal food inventory or company supply status. See `playe
 
 ---
 
-## Phase 5 Sample Events (9 total)
+## Sample Events (9 total)
 
-These events use the NEW schema v2 format with full XML localization. Created for testing the content loading and text resolution system.
+These events use the schema v2 format with full XML localization. Created for testing the content loading and text resolution system.
 
 ### Scout Role Sample Events (3)
 
@@ -556,8 +556,12 @@ These events use the NEW schema v2 format with full XML localization. Created fo
 
 ### Implementation Status
 
-**Phase 8 Complete**: Advanced content features (flags, chain events, reward choices) implemented.  
-**Phase 9B Complete**: Map incidents system implemented.
+**Current Content Systems:**
+- **Advanced Content Features**: Flags, chain events, and reward choices implemented.
+- **Map Incidents**: Dynamic delivery during map actions.
+- **Ration Exchange**: Automated muster-based logistics.
+- **Baggage Check**: Contraband inspection system.
+- **News Integration**: Event outcomes reflected in company reports.
 
 | Component | File | Status |
 |-----------|------|--------|
@@ -575,17 +579,9 @@ These events use the NEW schema v2 format with full XML localization. Created fo
 
 ### Next Steps
 
-1. ~~Convert this index to JSON files per category~~ ✅ 9 sample events created
-2. ~~Create XML strings in `enlisted_strings.xml`~~ ✅ 72 strings localized
-3. ~~Implement event/incident selection in code~~ ✅ Phase 6 complete
-4. Playtest frequency and balance (Phase 7)
-5. Add more content events to catalog
-6. ~~Implement map incidents~~ ✅ **Phase 9B Complete** - 7 sample incidents, context-based delivery
-7. ~~Implement ration exchange~~ ✅ **Phase 9C Complete**
-8. ~~Implement baggage check~~ ✅ **Phase 9D Complete** - Contraband inspection at muster
-9. ~~Implement event context in news~~ ✅ **Phase 9E Complete**
-10. Implement weapon-aware training → **Phase 10A** (see `phase10-combat-xp-training.md`)
-11. Implement robust troop training → **Phase 10B** (see `phase10-combat-xp-training.md`)
-12. Implement XP feedback in news → **Phase 10C** (see `phase10-combat-xp-training.md`)
-13. Implement experience track modifiers → **Phase 10D** (see `phase10-combat-xp-training.md`)
+1. Add more content events to catalog
+2. Implement weapon-aware training (see `phase10-combat-xp-training.md`)
+3. Implement robust troop training
+4. Implement XP feedback in news
+5. Implement experience track modifiers
 

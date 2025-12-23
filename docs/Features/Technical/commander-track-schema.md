@@ -1,12 +1,14 @@
 # Commander Track Schema (T7-T9)
 
-**Summary:** Design draft for future Commander Track (T7-T9) including commander state schema, retinue management, soldier tracking, and progression mechanics. This document is a reference schema idea; not currently implemented.
+**Summary:** Design schema for Commander Track (T7-T9) expansion including advanced retinue management, individual soldier tracking, and relationship mechanics. The basic retinue system (soldiers at T7+) is implemented; this schema defines future enhancements.
 
-**Status:** 📋 Specification (Future)  
-**Last Updated:** 2025-12-22  
+**Status:** 📋 Specification (Partial Implementation)  
+**Last Updated:** 2025-12-23  
 **Related Docs:** [Retinue System](../Core/retinue-system.md), [Training System](../Combat/training-system.md)
 
-> **Note**: This document is a **design draft** for a future Commander Track. Not implemented in shipping Enlisted. Shipping behavior is documented in `docs/Features/` specs and `ModuleData/Enlisted/`.
+> **Implementation Status:**
+> - ✅ **Implemented:** Basic retinue (T7: 20, T8: 30, T9: 40 soldiers), formation type selection, trickle replenishment, requisition, casualty tracking
+> - 📋 **Future:** Named soldiers, individual traits, morale/cohesion, soldier relationships, commander events, command style tags
 
 ---
 
@@ -40,11 +42,13 @@ The Commander Track (T7-T9) is fundamentally different from the Enlisted Track (
 
 ### Tier Summary
 
-| Tier | Rank | Retinue Cap | Time to Reach | Key Unlock |
-|------|------|-------------|---------------|------------|
-| T7 | Lieutenant | 15 soldiers | Day 378 (4.5 years) | Retinue system |
-| T8 | Captain | 25 soldiers | Day 504 (6 years) | Command style tag |
-| T9 | Commander | 35 soldiers | Day 630 (7.5 years) | Strategic style tag |
+| Tier | Rank | Retinue Cap | XP Required | Key Unlock |
+|------|------|-------------|-------------|------------|
+| T7 | Captain | 20 soldiers | 30,000 | Retinue system |
+| T8 | Commander | 30 soldiers | 45,000 | Command style tag |
+| T9 | Marshal | 40 soldiers | 65,000 | Strategic style tag |
+
+> **Note:** Capacities (20/30/40) are hardcoded in `RetinueManager.cs`. This spec document contains schema ideas for future expansion.
 
 ---
 
@@ -104,10 +108,10 @@ The player's personal soldiers at T7+.
     "unlocked_at_tier": 7,
     
     "capacity": {
-      "current_max": 15,
-      "tier_7_max": 15,
-      "tier_8_max": 25,
-      "tier_9_max": 35
+      "current_max": 20,
+      "tier_7_max": 20,
+      "tier_8_max": 30,
+      "tier_9_max": 40
     },
     
     "companions_count_toward_cap": false,
@@ -153,21 +157,23 @@ The player's personal soldiers at T7+.
 
 ### Retinue Capacity by Tier
 
+> **Implementation Note:** Current implementation uses single formation type (player selects one). Composition limits below are for future expansion.
+
 ```json
 {
   "retinue_capacity_config": {
     "tier_7": {
-      "soldiers": 15,
+      "soldiers": 20,
       "max_cavalry_percent": 30,
       "max_horse_archer_percent": 20
     },
     "tier_8": {
-      "soldiers": 25,
+      "soldiers": 30,
       "max_cavalry_percent": 40,
       "max_horse_archer_percent": 30
     },
     "tier_9": {
-      "soldiers": 35,
+      "soldiers": 40,
       "max_cavalry_percent": 50,
       "max_horse_archer_percent": 40
     }
@@ -573,7 +579,7 @@ Promotion requirements and state for T7-T9.
       
       "on_promote": {
         "unlocks": ["retinue_system", "commander_events"],
-        "retinue_cap": 15,
+        "retinue_cap": 20,
         "relation_changes": {
           "lord": 10
         },
@@ -608,7 +614,7 @@ Promotion requirements and state for T7-T9.
       
       "on_promote": {
         "unlocks": ["command_style_tag"],
-        "retinue_cap": 25,
+        "retinue_cap": 30,
         "relation_changes": {
           "lord": 10,
           "faction_leader": 5
@@ -642,7 +648,7 @@ Promotion requirements and state for T7-T9.
       
       "on_promote": {
         "unlocks": ["strategic_style_tag", "war_council_access"],
-        "retinue_cap": 35,
+        "retinue_cap": 40,
         "relation_changes": {
           "lord": 15,
           "faction_leader": 10
@@ -1160,7 +1166,7 @@ Safe persistence for commander state using primitives only.
     
     "soldier_persistence": {
       "method": "flattened_arrays",
-      "max_soldiers": 35,
+      "max_soldiers": 40,
       "fields_per_soldier": [
         "id", "name", "troop_id", "formation",
         "is_alive", "is_wounded", "wound_days",

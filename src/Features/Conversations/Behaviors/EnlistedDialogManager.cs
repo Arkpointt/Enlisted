@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Camp;
 using Enlisted.Features.Context;
+using Enlisted.Features.Conversations.Data;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Features.Logistics;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using TaleWorlds.CampaignSystem;
@@ -46,6 +49,17 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
+            // Load quartermaster dialogue catalog from JSON
+            try
+            {
+                QMDialogueCatalog.Instance.LoadFromJson();
+                ModLogger.Info("EnlistedDialogManager", $"QM Dialogue: Loaded {QMDialogueCatalog.Instance.NodeCount} nodes from JSON");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("EnlistedDialogManager", "Failed to load QM dialogue catalog", ex);
+            }
+
             AddEnlistedDialogs(starter);
             AddQuartermasterDialogs(starter);
             // The menu system is handled by EnlistedMenuBehavior.cs, which provides the main enlisted status menu
@@ -1078,18 +1092,71 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             try
             {
+                // Test JSON dialogue catalog loading
+                if (QMDialogueCatalog.Instance != null && QMDialogueCatalog.Instance.NodeCount > 0)
+                {
+                    var testContext = new QMDialogueContext { IsIntroduced = true };
+                    var hubNode = QMDialogueCatalog.Instance.GetNode("qm_hub", testContext);
+                    if (hubNode != null)
+                    {
+                        ModLogger.Info("EnlistedDialogManager", $"QM Dialogue: Successfully loaded test node 'qm_hub' with {hubNode.Options.Count} options");
+                        
+                        // Register JSON-based dialogue dynamically
+                        // First register QM lines (what quartermaster says)
+                        RegisterJsonQuartermasterLines(starter, "qm_greeting", "start", 201);
+                        RegisterJsonQuartermasterLines(starter, "qm_hub", "start", 200);
+                        RegisterJsonQuartermasterLines(starter, "qm_browse_response", "qm_hub", 150);
+                        RegisterJsonQuartermasterLines(starter, "qm_armor_slots", "qm_browse_response", 149);
+                        
+                        // Register introduction flow (first meeting)
+                        RegisterJsonQuartermasterLines(starter, "qm_intro_greeting", "start", 202);
+                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_direct", "qm_intro_greeting", 151);
+                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_military", "qm_intro_greeting", 151);
+                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_friendly", "qm_intro_greeting", 151);
+                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_flattering", "qm_intro_greeting", 151);
+                        
+                        // Register gate nodes (RP responses for blocked actions)
+                        RegisterJsonQuartermasterLines(starter, "qm_gate_horse", "qm_browse_response", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_gate_officers_armory_rank", "qm_hub", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_gate_officers_armory_trust", "qm_hub", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_gate_upgrade_masterwork", "qm_hub", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_gate_upgrade_legendary", "qm_hub", 148);
+                        
+                        // Then register player options for each node
+                        RegisterJsonDialogueNode(starter, "qm_intro_greeting", 152);
+                        RegisterJsonDialogueNode(starter, "qm_intro_ack_direct", 151);
+                        RegisterJsonDialogueNode(starter, "qm_intro_ack_military", 151);
+                        RegisterJsonDialogueNode(starter, "qm_intro_ack_friendly", 151);
+                        RegisterJsonDialogueNode(starter, "qm_intro_ack_flattering", 151);
+                        RegisterJsonDialogueNode(starter, "qm_greeting", 151);
+                        RegisterJsonDialogueNode(starter, "qm_hub", 150);
+                        RegisterJsonDialogueNode(starter, "qm_browse_response", 149);
+                        RegisterJsonDialogueNode(starter, "qm_armor_slots", 148);
+                        RegisterJsonDialogueNode(starter, "qm_gate_horse", 147);
+                        RegisterJsonDialogueNode(starter, "qm_gate_officers_armory_rank", 147);
+                        RegisterJsonDialogueNode(starter, "qm_gate_officers_armory_trust", 147);
+                        RegisterJsonDialogueNode(starter, "qm_gate_upgrade_masterwork", 147);
+                        RegisterJsonDialogueNode(starter, "qm_gate_upgrade_legendary", 147);
+                    }
+                    else
+                    {
+                        ModLogger.Warn("EnlistedDialogManager", "QM Dialogue: Test node 'qm_hub' not found in catalog");
+                    }
+                }
+
                 // ========================================
                 // QUARTERMASTER GREETING (Entry Point)
                 // ========================================
 
-                // First meeting greeting - introduction (uses dynamic text)
+                // First meeting greeting - introduction flow (uses dynamic text)
+                // Goes to qm_intro_greeting to let player choose relationship tone
                 starter.AddDialogLine(
                     "qm_greeting_first",
                     "start",
-                    "qm_hub",
+                    "qm_intro_greeting",
                     "{=qm_greeting_dynamic}{QM_GREETING}",
                     () => IsQuartermasterConversation() && !HasMetQuartermaster() && SetQuartermasterGreetingText(),
-                    OnQuartermasterFirstMeeting,
+                    null,
                     200); // High priority for first meeting
 
                 // Returning visit greeting - archetype + mood based (uses dynamic text)
@@ -1460,7 +1527,43 @@ namespace Enlisted.Features.Conversations.Behaviors
         private bool SetQuartermasterGreetingText()
         {
             MBTextManager.SetTextVariable("QM_GREETING", GetQuartermasterGreeting());
+            
+            // Set common dialogue variables for placeholders in gate text and other nodes
+            SetCommonDialogueVariables();
+            
             return true;
+        }
+
+        /// <summary>
+        ///     Sets common dialogue variables used across QM conversation nodes.
+        ///     These placeholders can be used in JSON/XML dialogue text.
+        /// </summary>
+        private void SetCommonDialogueVariables()
+        {
+            var hero = Hero.MainHero;
+            var enlistment = EnlistmentBehavior.Instance;
+            
+            // Player name
+            var playerName = hero?.Name?.ToString() ?? "Soldier";
+            MBTextManager.SetTextVariable("PLAYER_NAME", playerName);
+            
+            // Culture-specific rank title
+            var rankTitle = enlistment != null 
+                ? Ranks.RankHelper.GetCurrentRank(enlistment) 
+                : "Soldier";
+            MBTextManager.SetTextVariable("PLAYER_RANK", rankTitle);
+            
+            // QM name
+            var qmName = enlistment?.QuartermasterHero?.Name?.ToString() ?? "Quartermaster";
+            MBTextManager.SetTextVariable("QM_NAME", qmName);
+            
+            // Lord name
+            var lordName = enlistment?.EnlistedLord?.Name?.ToString() ?? "the Lord";
+            MBTextManager.SetTextVariable("LORD_NAME", lordName);
+            
+            // Current tier
+            var tier = enlistment?.EnlistmentTier ?? 1;
+            MBTextManager.SetTextVariable("PLAYER_TIER", tier.ToString());
         }
 
         /// <summary>
@@ -1484,6 +1587,453 @@ namespace Enlisted.Features.Conversations.Behaviors
         private bool HasMetQuartermaster()
         {
             return EnlistmentBehavior.Instance?.HasMetQuartermaster == true;
+        }
+
+        /// <summary>
+        ///     Dynamically registers dialogue from JSON catalog for a given node ID.
+        ///     Creates player lines for all options in the node and handles action routing.
+        /// </summary>
+        private void RegisterJsonDialogueNode(CampaignGameStarter starter, string nodeId, int basePriority)
+        {
+            try
+            {
+                // Get current game context to find matching nodes
+                var context = GetCurrentDialogueContext();
+                var node = QMDialogueCatalog.Instance.GetNode(nodeId, context);
+                
+                if (node == null || node.Options == null || node.Options.Count == 0)
+                {
+                    ModLogger.Debug("EnlistedDialogManager", $"No JSON node found for '{nodeId}' or node has no options");
+                    return;
+                }
+
+                var qmString = QMDialogueCatalog.Instance.ResolveText(node.TextId, node.Text);
+                ModLogger.Info("EnlistedDialogManager", $"Registering JSON node '{nodeId}' with {node.Options.Count} options");
+
+                // Register each player option as a dialogue line
+                var priority = basePriority;
+                foreach (var option in node.Options)
+                {
+                    var optionText = QMDialogueCatalog.Instance.ResolveText(option.TextId, option.Text);
+                    
+                    // Check if this option has a gate condition
+                    if (option.Gate != null && !string.IsNullOrEmpty(option.Gate.Condition) && !string.IsNullOrEmpty(option.Gate.GateNode))
+                    {
+                        // Register TWO versions of this option:
+                        // 1. Version that passes the gate (normal behavior)
+                        // 2. Version that fails the gate (redirects to gate node)
+
+                        // Version 1: Gate condition PASSES (higher priority)
+                        var outputState = string.IsNullOrEmpty(option.NextNode) ? "close_window" : option.NextNode;
+                        
+                        ConversationSentence.OnConditionDelegate passCondition = () =>
+                        {
+                            // Check both requirements and gate condition
+                            if (option.Requirements != null && !CheckOptionRequirements(option.Requirements))
+                            {
+                                return false;
+                            }
+                            return CheckGateCondition(option.Gate.Condition);
+                        };
+                        
+                        ConversationSentence.OnConsequenceDelegate passConsequence = null;
+                        if (!string.IsNullOrEmpty(option.Action) && option.Action != "none")
+                        {
+                            passConsequence = () => ExecuteDialogueAction(option.Action, option.ActionData);
+                        }
+
+                        starter.AddPlayerLine(
+                            $"json_{nodeId}_{option.Id}_pass",
+                            nodeId,
+                            outputState,
+                            optionText,
+                            passCondition,
+                            passConsequence,
+                            priority);
+
+                        // Version 2: Gate condition FAILS (redirects to gate node)
+                        ConversationSentence.OnConditionDelegate failCondition = () =>
+                        {
+                            // Check requirements first (if they fail, hide entirely)
+                            if (option.Requirements != null && !CheckOptionRequirements(option.Requirements))
+                            {
+                                return false;
+                            }
+                            // Show this version only if gate fails
+                            return !CheckGateCondition(option.Gate.Condition);
+                        };
+
+                        starter.AddPlayerLine(
+                            $"json_{nodeId}_{option.Id}_fail",
+                            nodeId,
+                            option.Gate.GateNode, // Redirect to gate node
+                            optionText,
+                            failCondition,
+                            null, // No action when gated
+                            priority - 1); // Lower priority than pass version
+
+                        priority -= 2; // Account for both versions
+                    }
+                    else
+                    {
+                        // Normal option without gate
+                        var outputState = string.IsNullOrEmpty(option.NextNode) ? "close_window" : option.NextNode;
+                        
+                        ConversationSentence.OnConditionDelegate conditionDelegate = null;
+                        if (option.Requirements != null)
+                        {
+                            conditionDelegate = () => CheckOptionRequirements(option.Requirements);
+                        }
+                        
+                        ConversationSentence.OnConsequenceDelegate consequenceDelegate = null;
+                        if (!string.IsNullOrEmpty(option.Action) && option.Action != "none")
+                        {
+                            consequenceDelegate = () => ExecuteDialogueAction(option.Action, option.ActionData);
+                        }
+
+                        starter.AddPlayerLine(
+                            $"json_{nodeId}_{option.Id}",
+                            nodeId,
+                            outputState,
+                            optionText,
+                            conditionDelegate,
+                            consequenceDelegate,
+                            priority--);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("EnlistedDialogManager", $"Failed to register JSON node '{nodeId}'", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Registers QM dialogue lines for all contextual variants of a node.
+        ///     Each variant gets its own AddDialogLine with a runtime condition that checks context matching.
+        ///     This enables dynamic context-aware dialogue (e.g., different hub greetings based on supply level).
+        /// </summary>
+        private void RegisterJsonQuartermasterLines(CampaignGameStarter starter, string nodeId, string inputToken, int basePriority)
+        {
+            try
+            {
+                // Get all node variants for this ID from the catalog
+                var allNodes = QMDialogueCatalog.Instance.GetAllNodesById(nodeId);
+                
+                if (allNodes == null || allNodes.Count == 0)
+                {
+                    ModLogger.Debug("EnlistedDialogManager", $"No QM nodes found for '{nodeId}'");
+                    return;
+                }
+
+                // Register a dialogue line for each contextual variant
+                // Sort by specificity (most specific first) to assign highest priority to most specific
+                var sortedNodes = allNodes.OrderByDescending(n => n.Context?.GetSpecificity() ?? 0).ToList();
+                
+                var priority = basePriority;
+                foreach (var node in sortedNodes)
+                {
+                    if (node.Speaker != "quartermaster")
+                    {
+                        continue; // Only register QM lines, not player lines
+                    }
+
+                    var specificity = node.Context?.GetSpecificity() ?? 0;
+                    var nodeContext = node.Context; // Capture for closure
+                    var qmText = QMDialogueCatalog.Instance.ResolveText(node.TextId, node.Text);
+                    
+                    // Create condition that checks if current game context matches this node's requirements
+                    ConversationSentence.OnConditionDelegate condition = () =>
+                    {
+                        var currentContext = GetCurrentDialogueContext();
+                        // If node has no context requirements, it's a universal fallback
+                        if (nodeContext == null || nodeContext.GetSpecificity() == 0)
+                        {
+                            return true;
+                        }
+                        return nodeContext.Matches(currentContext);
+                    };
+
+                    // Register the QM line with dynamic context checking
+                    starter.AddDialogLine(
+                        $"json_qm_{nodeId}_spec{specificity}_{priority}",
+                        inputToken,
+                        nodeId, // Output token is the node ID (where player options attach)
+                        qmText,
+                        condition,
+                        null, // No consequence needed
+                        priority--);
+                    
+                    ModLogger.Debug("EnlistedDialogManager", 
+                        $"Registered QM line: {nodeId} (specificity={specificity}, priority={priority + 1})");
+                }
+                
+                ModLogger.Info("EnlistedDialogManager", 
+                    $"Registered {sortedNodes.Count(n => n.Speaker == "quartermaster")} QM line variants for '{nodeId}'");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("EnlistedDialogManager", $"Failed to register QM lines for '{nodeId}'", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Gets the current dialogue context for node matching.
+        /// </summary>
+        private QMDialogueContext GetCurrentDialogueContext()
+        {
+            var playerTier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            var qmReputation = EnlistmentBehavior.Instance?.GetQMReputation() ?? 0;
+            
+            var context = new QMDialogueContext
+            {
+                IsIntroduced = HasMetQuartermaster(),
+                PlayerTier = playerTier,
+                TierCategory = GetTierCategory(playerTier),
+                IsCavalry = IsCavalryFormation(),
+                IsOfficer = playerTier >= 7,
+                SupplyLevel = GetSupplyLevelCategory(),
+                Archetype = EnlistmentBehavior.Instance?.QuartermasterArchetype ?? "veteran",
+                ReputationTier = GetReputationTierCategory(qmReputation)
+            };
+            return context;
+        }
+
+        /// <summary>
+        ///     Gets the supply level category for context-aware dialogue.
+        /// </summary>
+        private string GetSupplyLevelCategory()
+        {
+            var supplyPercent = CompanySupplyManager.Instance?.TotalSupply ?? 50;
+            
+            if (supplyPercent >= 80)
+            {
+                return "excellent";
+            }
+            if (supplyPercent >= 60)
+            {
+                return "good";
+            }
+            if (supplyPercent >= 40)
+            {
+                return "fair";
+            }
+            if (supplyPercent >= 20)
+            {
+                return "low";
+            }
+            return "critical";
+        }
+
+        /// <summary>
+        ///     Gets the tier category (enlisted/nco/officer) for a given player tier.
+        /// </summary>
+        private string GetTierCategory(int tier)
+        {
+            if (tier >= 7)
+            {
+                return "officer";
+            }
+            if (tier >= 5)
+            {
+                return "nco";
+            }
+            return "enlisted";
+        }
+
+        /// <summary>
+        ///     Gets the reputation tier category for context-aware dialogue.
+        /// </summary>
+        private string GetReputationTierCategory(int reputation)
+        {
+            if (reputation >= 65)
+            {
+                return "trusted";
+            }
+            if (reputation >= 35)
+            {
+                return "friendly";
+            }
+            if (reputation >= 10)
+            {
+                return "neutral";
+            }
+            if (reputation >= -10)
+            {
+                return "wary";
+            }
+            return "hostile";
+        }
+
+        /// <summary>
+        ///     Checks if player is in cavalry formation (can request horses).
+        /// </summary>
+        private bool IsCavalryFormation()
+        {
+            var equipment = Hero.MainHero?.BattleEquipment;
+            if (equipment == null)
+            {
+                return false;
+            }
+
+            // Has horse equipped = cavalry
+            return !equipment[TaleWorlds.Core.EquipmentIndex.Horse].IsEmpty;
+        }
+
+        /// <summary>
+        ///     Checks if dialogue option requirements are met.
+        /// </summary>
+        private bool CheckOptionRequirements(QMDialogueContext requirements)
+        {
+            if (requirements == null)
+            {
+                return true;
+            }
+
+            var actual = GetCurrentDialogueContext();
+            return requirements.Matches(actual);
+        }
+
+        /// <summary>
+        ///     Checks if a gate condition is met.
+        ///     Returns true if the condition passes (player meets requirements).
+        ///     Returns false if the condition fails (should redirect to gate node).
+        /// </summary>
+        private bool CheckGateCondition(string gateCondition)
+        {
+            if (string.IsNullOrEmpty(gateCondition))
+            {
+                return true;
+            }
+
+            var context = GetCurrentDialogueContext();
+
+            // Parse gate conditions (supports simple string checks)
+            switch (gateCondition.ToLowerInvariant())
+            {
+                case "cavalry_unlocked":
+                    // Check if cavalry is available at player's tier for their culture
+                    return QuartermasterManager.Instance?.IsCavalryUnlockedForPlayer() ?? false;
+
+                case "is_cavalry":
+                    // Legacy: Check if player currently has a horse equipped
+                    return context.IsCavalry.GetValueOrDefault(false);
+
+                case "is_officer":
+                    return context.IsOfficer.GetValueOrDefault(false);
+
+                case "tier_min_7":
+                    return context.PlayerTier.GetValueOrDefault(1) >= 7;
+
+                case "reputation_min_neg10":
+                    var repNeg10 = EnlistmentBehavior.Instance?.GetQMReputation() ?? 0;
+                    return repNeg10 >= -10;
+
+                case "reputation_min_30":
+                    var rep30 = EnlistmentBehavior.Instance?.GetQMReputation() ?? 0;
+                    return rep30 >= 30;
+
+                case "reputation_min_60":
+                    var rep60 = EnlistmentBehavior.Instance?.GetQMReputation() ?? 0;
+                    return rep60 >= 60;
+
+                case "reputation_min_61":
+                    var rep61 = EnlistmentBehavior.Instance?.GetQMReputation() ?? 0;
+                    return rep61 >= 61;
+
+                default:
+                    ModLogger.Warn("EnlistedDialogManager", $"Unknown gate condition: {gateCondition}");
+                    return true; // Unknown conditions pass to avoid blocking
+            }
+        }
+
+        /// <summary>
+        ///     Executes a dialogue action from JSON.
+        /// </summary>
+        private void ExecuteDialogueAction(string action, Dictionary<string, object> actionData)
+        {
+            try
+            {
+                ModLogger.Debug("EnlistedDialogManager", $"Executing dialogue action: {action}");
+
+                switch (action)
+                {
+                    case "open_weapons":
+                        _selectedEquipmentCategory = "weapons";
+                        OnQuartermasterBrowseCategory();
+                        break;
+
+                    case "open_armor_body":
+                        _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Body;
+                        OnQuartermasterArmorSlotSelected();
+                        break;
+
+                    case "open_armor_head":
+                        _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Head;
+                        OnQuartermasterArmorSlotSelected();
+                        break;
+
+                    case "open_armor_hands":
+                        _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Gloves;
+                        OnQuartermasterArmorSlotSelected();
+                        break;
+
+                    case "open_armor_legs":
+                        _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Leg;
+                        OnQuartermasterArmorSlotSelected();
+                        break;
+
+                    case "open_accessories":
+                        _selectedEquipmentCategory = "accessories";
+                        OnQuartermasterBrowseCategory();
+                        break;
+
+                    case "open_mounts":
+                        _selectedEquipmentCategory = "mounts";
+                        OnQuartermasterBrowseCategory();
+                        break;
+
+                    case "open_upgrade":
+                        OnQuartermasterUpgradeRequest();
+                        break;
+
+                    case "open_officers_armory":
+                        OnQuartermasterOfficersArmoryRequest();
+                        break;
+
+                    case "open_sell":
+                        OnQuartermasterSellRequest();
+                        break;
+
+                    case "open_provisions":
+                        OnQuartermasterProvisionsRequest();
+                        break;
+
+                    case "supply_report":
+                        // Show supply report (existing system)
+                        break;
+
+                    case "close":
+                        // Conversation closes naturally
+                        break;
+
+                    case "set_introduced":
+                        OnQuartermasterFirstMeeting();
+                        break;
+
+                    case "set_player_style":
+                        ExecuteSetPlayerStyleAction(actionData);
+                        break;
+
+                    default:
+                        ModLogger.Warn("EnlistedDialogManager", $"Unknown dialogue action: {action}");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("EnlistedDialogManager", $"Failed to execute dialogue action '{action}'", ex);
+            }
         }
 
         /// <summary>
@@ -2231,21 +2781,25 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         ///     Gets the first-meeting introduction based on archetype.
-        ///     Uses {QM_NAME} placeholder for quartermaster's actual name.
+        ///     Uses XML localized strings for proper translation support.
         /// </summary>
         private string GetFirstMeetingGreeting(string archetype, string qmName)
         {
-            var text = archetype switch
+            // Use the appropriate localized intro greeting based on archetype
+            var stringId = $"qm_intro_greeting_{archetype ?? "default"}";
+            var fallback = archetype switch
             {
-                "veteran" => new TextObject("So you're the new {PLAYER_RANK}. Name's {QM_NAME}. I run the baggage train. You need gear, you come to me. Clear?"),
-                "merchant" => new TextObject("Ah, fresh meat! I'm {QM_NAME}, quartermaster. Everything here has a price, soldier. Even loyalty."),
-                "bookkeeper" => new TextObject("New arrival. {QM_NAME}, quartermaster. Please familiarize yourself with Form 14-C for equipment requisitions."),
-                "scoundrel" => new TextObject("Well, well. Another mouth to feed. I'm {QM_NAME}. Need anything... special?"),
-                "believer" => new TextObject("Welcome, soldier. I am {QM_NAME}. The Lord provides for those who serve with honor. What do you seek?"),
-                "eccentric" => new TextObject("Your name has a lucky number of letters. I'm {QM_NAME}. The stars say you'll need good armor."),
-                _ => new TextObject("I'm {QM_NAME}, quartermaster. What do you need?")
+                "veteran" => "New face. You one of the fresh recruits? What do they call you?",
+                "merchant" => "Ah, a new customer. Haven't done business with you before. Name?",
+                "bookkeeper" => "I don't have you in my ledger. New arrival? State your name for the record.",
+                "scoundrel" => "Well, well. Fresh meat. What's your name, soldier?",
+                "believer" => "The Lord sends us new brothers in arms. What name were you given, friend?",
+                "eccentric" => "A new star in my constellation! What sign were you born under? ...No, wait. What's your name?",
+                _ => "Haven't seen you before. You new? What's your name?"
             };
             
+            // Use TextObject for XML localization lookup
+            var text = new TextObject($"{{={stringId}}}{fallback}");
             text.SetTextVariable("QM_NAME", qmName);
             return text.ToString();
         }
@@ -2624,6 +3178,47 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             EnlistmentBehavior.Instance?.MarkQuartermasterMet();
             ModLogger.Info("Conversations", "QM: First meeting with quartermaster completed");
+        }
+
+        /// <summary>
+        ///     Executes the set_player_style action from JSON dialogue.
+        ///     Sets the player's communication style with the QM and applies rep change.
+        /// </summary>
+        /// <param name="actionData">Action data containing "style" and "rep_change" fields</param>
+        private void ExecuteSetPlayerStyleAction(Dictionary<string, object> actionData)
+        {
+            if (actionData == null)
+            {
+                ModLogger.Warn("EnlistedDialogManager", "set_player_style action called without action_data");
+                return;
+            }
+
+            var style = "military"; // Default
+            var repChange = 0;
+
+            if (actionData.TryGetValue("style", out var styleObj) && styleObj != null)
+            {
+                style = styleObj.ToString();
+            }
+
+            if (actionData.TryGetValue("rep_change", out var repObj) && repObj != null)
+            {
+                if (repObj is long repLong)
+                {
+                    repChange = (int)repLong;
+                }
+                else if (repObj is int repInt)
+                {
+                    repChange = repInt;
+                }
+                else if (int.TryParse(repObj.ToString(), out var parsed))
+                {
+                    repChange = parsed;
+                }
+            }
+
+            EnlistmentBehavior.Instance?.SetQMPlayerStyle(style, repChange);
+            ModLogger.Info("EnlistedDialogManager", $"Player chose tone '{style}' with rep change {repChange}");
         }
 
         /// <summary>
@@ -3033,21 +3628,30 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         ///     Called when player requests provisions.
-        ///     Opens the rations purchase menu.
+        ///     Opens the new Gauntlet provisions UI (Phase 8).
+        ///     T1-T6 see ration info with supplement option; T7+ see full provisions shop.
         /// </summary>
         private void OnQuartermasterProvisionsRequest()
         {
             try
             {
-                // Open rations menu
-                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                GameMenu.ActivateGameMenu("quartermaster_rations");
-
-                ModLogger.Info("Quartermaster", "Opened rations menu from dialog");
+                // Defer to next frame so the conversation fully closes before the UI activates.
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    try
+                    {
+                        QuartermasterProvisionsBehavior.ShowProvisionsScreen();
+                        ModLogger.Info("Quartermaster", "Opened provisions UI from dialog (deferred)");
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.ErrorCode("Quartermaster", "E-QM-026", "Failed to open provisions UI from dialog (deferred)", ex);
+                    }
+                });
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", "Failed to open rations menu from dialog", ex);
+                ModLogger.Error("Quartermaster", "Failed to open provisions UI from dialog", ex);
             }
         }
         
@@ -3075,6 +3679,35 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("Quartermaster", "Error opening upgrade screen", ex);
             }
         }
+
+        /// <summary>
+        ///     Opens the Officers' Armory screen for T7+ players with high reputation.
+        ///     This provides access to premium officer-grade equipment.
+        /// </summary>
+        private void OnQuartermasterOfficersArmoryRequest()
+        {
+            try
+            {
+                // Increase relationship for interaction (extra bonus for officer access)
+                EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(2);
+
+                // Set filter to officer equipment - this will be applied when the next category is browsed
+                QuartermasterManager.Instance?.SetFilterToOfficerEquipment();
+                _isOfficersArmoryActive = true;
+
+                ModLogger.Info("Quartermaster", "Player accessed Officers' Armory - officer filter enabled");
+                
+                // Note: The dialogue should transition to qm_browse_response where player picks a category
+                // The officer filter will be applied to whatever category they select
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error enabling officers armory", ex);
+            }
+        }
+
+        // Track if Officers' Armory mode is active for next equipment browse
+        private bool _isOfficersArmoryActive;
         
         /// <summary>
         ///     Checks if the player has any equipped items that can be upgraded.
@@ -4256,7 +4889,7 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         ///     Handles the consequence of accepting T7 Commander promotion via dialog.
-        ///     Triggers the T6→T7 promotion event which grants retinue and promotes player.
+        ///     Triggers the T6 to T7 promotion event which grants retinue and promotes player.
         /// </summary>
         private void OnAcceptCommanderPromotion()
         {
@@ -4277,6 +4910,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
 
                 ModLogger.Info("DialogManager", "Player accepting T7 Commander promotion via dialog");
+
+                // Clear declined promotion flag (player previously said "not ready" but now requesting promotion)
+                Features.Escalation.EscalationManager.Instance?.ClearDeclinedPromotion(7);
 
                 // Defer to next frame to let conversation close first
                 NextFrameDispatcher.RunNextFrame(() =>
