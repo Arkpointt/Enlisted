@@ -57,7 +57,7 @@
                                        "titleId":  "ll_evt_inf_train_shield_wall_title",
                                        "setupId":  "ll_evt_inf_train_shield_wall_setup",
                                        "title":  "Shield Wall Drill",
-                                       "setup":  "{SERGEANT_NAME} forms up {LANCE_NAME}. \"Shield wall! Tight formation! I want to hear those shields lock!\"\n\nThe drill is brutal — hours holding the wall, taking practice blows, advancing as one.",
+                                       "setup":  "{SERGEANT_NAME} forms up the squad. \"Shield wall! Tight formation! I want to hear those shields lock!\"\n\nThe drill is brutal — hours holding the wall, taking practice blows, advancing as one.",
                                        "options":  [
                                                        {
                                                            "id":  "hold_the_line_no_breaks",
@@ -115,7 +115,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -159,7 +159,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -210,7 +210,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -257,7 +257,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -365,7 +365,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -411,7 +411,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -460,7 +460,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -510,7 +510,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -586,7 +586,7 @@
                                        "titleId":  "ll_evt_inf_train_march_title",
                                        "setupId":  "ll_evt_inf_train_march_setup",
                                        "title":  "March Conditioning",
-                                       "setup":  "Full kit march. {LANCE_LEADER_SHORT} sets a punishing pace.\n\n\"Any army can fight. Winners can fight after a hard march.\"",
+                                       "setup":  "Full kit march. {SERGEANT} sets a punishing pace.\n\n\"Any army can fight. Winners can fight after a hard march.\"",
                                        "options":  [
                                                        {
                                                            "id":  "match_the_pace_endure",
@@ -617,7 +617,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -663,7 +663,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -713,7 +713,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -758,7 +758,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -835,7 +835,7 @@
                                        "titleId":  "ll_evt_inf_train_twohanded_title",
                                        "setupId":  "ll_evt_inf_train_twohanded_setup",
                                        "title":  "Two-Handed Weapons Drill",
-                                       "setup":  "{LANCE_LEADER_SHORT} holds up a training greatsword. \"Who thinks they can handle this? Real fighters, not show-offs.\"\n\nTwo-handed work needs space, timing, and strength.",
+                                       "setup":  "{SERGEANT} holds up a training greatsword. \"Who thinks they can handle this? Real fighters, not show-offs.\"\n\nTwo-handed work needs space, timing, and strength.",
                                        "options":  [
                                                        {
                                                            "id":  "practice_basic_forms",
@@ -866,7 +866,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -912,7 +912,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -962,7 +962,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1008,7 +1008,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1119,7 +1119,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1164,7 +1164,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1214,7 +1214,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1259,7 +1259,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1336,10 +1336,10 @@
                                        "titleId":  "ll_evt_cav_train_mounted_combat_title",
                                        "setupId":  "ll_evt_cav_train_mounted_combat_setup",
                                        "title":  "Mounted Combat Drill",
-                                       "setup":  "Quintain practice. Rings on posts. Moving targets. {LANCE_LEADER_SHORT} watches from horseback.\n\n\"Hit the target, not your horse.\"",
+                                       "setup":  "Quintain practice. Rings on posts. Moving targets. {SERGEANT} watches from horseback.\n\n\"Hit the target, not your horse.\"",
                                        "options":  [
                                                        {
-                                                           "id":  "practice_lance_work",
+                                                           "id":  "practice_mounted_combat",
                                                            "textId":  "ll_evt_cav_train_mounted_combat_opt_practice_lance_work_text",
                                                            "text":  "Practice lance work",
                                                            "tooltip":  null,
@@ -1367,7 +1367,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1413,7 +1413,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1459,7 +1459,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1509,7 +1509,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1590,7 +1590,7 @@
                                        "titleId":  "ll_evt_cav_train_charge_title",
                                        "setupId":  "ll_evt_cav_train_charge_setup",
                                        "title":  "Charge Practice",
-                                       "setup":  "The infantry holds a line of dummies. Your job — hit it at full gallop without dying.\n\n{LANCE_LEADER_SHORT}: \"Control. Timing. Impact. In that order.\"",
+                                       "setup":  "The infantry holds a line of dummies. Your job — hit it at full gallop without dying.\n\n{SERGEANT}: \"Control. Timing. Impact. In that order.\"",
                                        "options":  [
                                                        {
                                                            "id":  "standard_charge_proper_form",
@@ -1621,7 +1621,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1667,7 +1667,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1717,7 +1717,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1763,7 +1763,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1844,7 +1844,7 @@
                                        "titleId":  "ll_evt_cav_train_skirmish_title",
                                        "setupId":  "ll_evt_cav_train_skirmish_setup",
                                        "title":  "Skirmish Tactics",
-                                       "setup":  "{LANCE_LEADER_SHORT} sets up a mock skirmish. Ride in, throw, ride out. Don\u0027t get caught.\n\n\"You\u0027re not knights. You\u0027re killers. Get in, get out.\"",
+                                       "setup":  "{SERGEANT} sets up a mock skirmish. Ride in, throw, ride out. Don\u0027t get caught.\n\n\"You\u0027re not knights. You\u0027re killers. Get in, get out.\"",
                                        "options":  [
                                                        {
                                                            "id":  "practice_javelin_throws",
@@ -1875,7 +1875,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1921,7 +1921,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -1968,7 +1968,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2018,7 +2018,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2095,7 +2095,7 @@
                                        "titleId":  "ll_evt_arch_train_target_title",
                                        "setupId":  "ll_evt_arch_train_target_setup",
                                        "title":  "Target Practice",
-                                       "setup":  "Straw targets at fifty paces. Then a hundred. Then whatever distance {LANCE_LEADER_SHORT} decides is funny.\n\n\"Hit the target. Not the sky. Not the dirt. The target.\"",
+                                       "setup":  "Straw targets at fifty paces. Then a hundred. Then whatever distance {SERGEANT} decides is funny.\n\n\"Hit the target. Not the sky. Not the dirt. The target.\"",
                                        "options":  [
                                                        {
                                                            "id":  "steady_practice_work_on_consiste",
@@ -2126,7 +2126,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2171,7 +2171,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2221,7 +2221,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2267,7 +2267,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2344,7 +2344,7 @@
                                        "titleId":  "ll_evt_arch_train_volley_title",
                                        "setupId":  "ll_evt_arch_train_volley_setup",
                                        "title":  "Volley Drill",
-                                       "setup":  "{LANCE_LEADER_SHORT} raises an arm. When it falls, you loose. Not before. Not after. Together.\n\n\"A volley breaks armies. Individuals break wind.\"",
+                                       "setup":  "{SERGEANT} raises an arm. When it falls, you loose. Not before. Not after. Together.\n\n\"A volley breaks armies. Individuals break wind.\"",
                                        "options":  [
                                                        {
                                                            "id":  "focus_on_timing_with_the_unit",
@@ -2375,7 +2375,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2421,7 +2421,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2467,7 +2467,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2513,7 +2513,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2621,7 +2621,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2667,7 +2667,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2712,7 +2712,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2758,7 +2758,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2835,7 +2835,7 @@
                                        "titleId":  "ll_evt_arch_train_hunting_title",
                                        "setupId":  "ll_evt_arch_train_hunting_setup",
                                        "title":  "Hunting Party",
-                                       "setup":  "{LANCE_LEADER_SHORT} got permission for a hunting party. Real targets, real meat, real skills.\n\n\"Don\u0027t come back empty-handed.\"",
+                                       "setup":  "{SERGEANT} got permission for a hunting party. Real targets, real meat, real skills.\n\n\"Don\u0027t come back empty-handed.\"",
                                        "options":  [
                                                        {
                                                            "id":  "hunt_carefully_stalk_properly",
@@ -2866,7 +2866,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2912,7 +2912,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -2963,7 +2963,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3009,7 +3009,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3116,7 +3116,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3162,7 +3162,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3212,7 +3212,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3258,7 +3258,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3369,7 +3369,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3415,7 +3415,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3465,7 +3465,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3511,7 +3511,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3619,7 +3619,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3665,7 +3665,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3711,7 +3711,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3756,7 +3756,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3863,7 +3863,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3909,7 +3909,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -3955,7 +3955,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },
@@ -4005,7 +4005,7 @@
                                                            "effects":  {
                                                                            "scrutiny":  0,
                                                                            "discipline":  0,
-                                                                           "lance_reputation":  0,
+                                                                           "soldierRep":  0,
                                                                            "medical_risk":  0,
                                                                            "fatigue_relief":  0
                                                                        },

@@ -1,10 +1,10 @@
 [
   {
-    "id": "t4_scout_ahead",
-    "title": "Scout the Road",
-    "description": "Ride ahead of the column. Mark any trouble before we march into it.",
+    "id": "order_scout_route",
+    "title": "Scout the Route",
+    "description": "Ride ahead of the column. Map the terrain and spot any threats before we march into them.",
     "issuer": "Lieutenant",
-    "tags": ["scout", "patrol", "war", "intel", "urgent"],
+    "tags": ["scout", "patrol", "war", "intel"],
     "strategic_tags": ["scout", "intel", "tactical"],
     "requirements": {
       "tier_min": 4,
@@ -13,18 +13,25 @@
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 12, "lord": 5 },
+        "reputation": { "officer": 12, "lord": 6 },
         "company_needs": { "Readiness": 10 },
         "trait_xp": { "ScoutSkills": 25, "Vigor": 12 },
-        "skill_xp": { "Scouting": 60, "Riding": 40 },
-        "denars": 75,
-        "renown": 3,
+        "skill_xp": { "Scouting": 60, "Athletics": 35, "Tactics": 25 },
+        "denars": 50,
         "text": "You spot a bandit ambush and warn the column. The captain himself thanks you."
       },
       "failure": {
-        "reputation": { "officer": -12 },
+        "reputation": { "officer": -12, "lord": -6 },
         "company_needs": { "Readiness": -10 },
+        "hp_loss": 15,
         "text": "You rode past the signs of an ambush. Men died. The blood's on your hands."
+      },
+      "critical_failure": {
+        "reputation": { "officer": -15, "lord": -10 },
+        "company_needs": { "Readiness": -15 },
+        "troop_loss": { "min": 1, "max": 2 },
+        "hp_loss": 25,
+        "text": "The ambush caught you and your escort. Two men don't come back. You barely escaped."
       },
       "decline": {
         "reputation": { "officer": -15 },
@@ -33,187 +40,136 @@
     }
   },
   {
-    "id": "t5_message_distant",
-    "title": "Long Distance Message",
-    "description": "Carry urgent orders to the allied force three days' ride north. Don't spare your horse.",
-    "issuer": "Captain",
-    "tags": ["operative", "urgent", "war", "intel"],
-    "strategic_tags": ["intel", "urgent", "preparation"],
+    "id": "order_treat_wounded",
+    "title": "Treat the Wounded",
+    "description": "The surgeon needs hands. Help with the injured after the skirmish.",
+    "issuer": "Surgeon",
+    "tags": ["medic", "camp", "support"],
+    "strategic_tags": ["medical", "camp_routine"],
     "requirements": {
-      "tier_min": 5,
-      "tier_max": 7
+      "tier_min": 4,
+      "tier_max": 6,
+      "min_skills": { "Medicine": 40 }
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 14, "lord": 8 },
-        "trait_xp": { "Vigor": 20, "Leadership": 10 },
-        "skill_xp": { "Riding": 70, "Athletics": 50 },
-        "denars": 120,
-        "renown": 5,
-        "text": "You ride hard through bandit country and arrive in time. The allied lord toasts your name."
+        "reputation": { "officer": 8, "soldier": 10 },
+        "company_needs": { "Morale": 8 },
+        "trait_xp": { "Mercy": 15, "Discipline": 10 },
+        "skill_xp": { "Medicine": 55, "Athletics": 20 },
+        "text": "Your steady hands save a man's arm. The soldiers remember who helped when they were hurt."
       },
       "failure": {
-        "reputation": { "officer": -14, "lord": -10 },
-        "text": "Bandits caught you on the road. You lost the message and nearly your life. The captain is furious."
+        "reputation": { "officer": -6, "soldier": -8 },
+        "company_needs": { "Morale": -6 },
+        "text": "You couldn't hold him still. The surgeon had to work around your fumbling."
       },
       "decline": {
-        "reputation": { "officer": -18, "lord": -8 },
-        "text": "The captain stares at you in disbelief. 'I thought you had spine,' he says coldly."
+        "reputation": { "officer": -10, "soldier": -8 },
+        "text": "The surgeon needed help. You walked away. The wounded won't forget."
       }
     }
   },
   {
-    "id": "t4_train_levy",
-    "title": "Train the Levies",
-    "description": "The lord conscripted peasants. Turn them into something resembling soldiers.",
+    "id": "order_repair_equipment",
+    "title": "Equipment Repair",
+    "description": "Fix what's broken before the next fight. The armorer needs skilled hands.",
     "issuer": "Lieutenant",
-    "tags": ["nco", "training", "camp", "preparation"],
-    "strategic_tags": ["training", "preparation"],
+    "tags": ["engineer", "camp", "maintenance"],
+    "strategic_tags": ["preparation", "camp_routine"],
     "requirements": {
       "tier_min": 4,
-      "tier_max": 6
+      "tier_max": 6,
+      "min_skills": { "Crafting": 50 }
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 10, "lord": 6 },
-        "company_needs": { "Readiness": 12, "Morale": 5 },
-        "trait_xp": { "Leadership": 28, "MartialSkills": 15 },
-        "skill_xp": { "OneHanded": 40, "Polearm": 40 },
-        "denars": 80,
-        "text": "By week's end they can hold a line. The lieutenant commends your patience and skill."
+        "reputation": { "officer": 10, "soldier": 6 },
+        "company_needs": { "Readiness": 12 },
+        "trait_xp": { "Discipline": 16 },
+        "skill_xp": { "Crafting": 50, "Engineering": 35 },
+        "denars": 40,
+        "text": "You mend armor, straighten blades, and fix a dozen buckles. By morning, we're battle-ready."
       },
       "failure": {
         "reputation": { "officer": -10 },
         "company_needs": { "Readiness": -10 },
-        "text": "You broke their spirit instead of building it. They're more scared of you than the enemy."
+        "text": "Your repairs don't hold. A man's strap breaks in battle. He nearly dies."
       },
       "decline": {
-        "reputation": { "officer": -13 },
-        "text": "'Find someone else to babysit farmers?' The lieutenant's voice is ice. You've made an enemy."
+        "reputation": { "officer": -12 },
+        "text": "'Too good for the forge?' The lieutenant's disappointment is clear."
       }
     }
   },
   {
-    "id": "t5_negotiate_supplies",
-    "title": "Bargain for Supplies",
-    "description": "The quartermaster wants grain and ale from the nearby village. Negotiate a fair price.",
-    "issuer": "Captain",
-    "tags": ["operative", "supply", "social", "camp"],
-    "strategic_tags": ["supply", "social", "preparation"],
-    "requirements": {
-      "tier_min": 5,
-      "tier_max": 7,
-      "min_skills": { "Charm": 30, "Trade": 30 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 13, "soldier": 8 },
-        "company_needs": { "Supply": 15, "Morale": 8 },
-        "trait_xp": { "Leadership": 22 },
-        "skill_xp": { "Charm": 65, "Trade": 55 },
-        "denars": 100,
-        "text": "You get a fair deal and leave the villagers satisfied. The company eats well tonight."
-      },
-      "failure": {
-        "reputation": { "officer": -11, "soldier": -6 },
-        "company_needs": { "Supply": -8, "Morale": -10 },
-        "text": "You paid too much for too little. The quartermaster calls you a fool. The men go hungry."
-      },
-      "decline": {
-        "reputation": { "officer": -14 },
-        "text": "The captain trusted you with this. His disappointment is worse than any curse."
-      }
-    }
-  },
-  {
-    "id": "t6_track_enemy",
-    "title": "Track the Enemy",
-    "description": "Enemy scouts were spotted yesterday. Find their camp and count their strength.",
-    "issuer": "Captain",
-    "tags": ["scout", "intel", "war", "critical"],
-    "strategic_tags": ["scout", "intel", "critical"],
-    "requirements": {
-      "tier_min": 6,
-      "tier_max": 8,
-      "min_skills": { "Scouting": 60 },
-      "min_traits": { "ScoutSkills": 15 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 15, "lord": 10 },
-        "company_needs": { "Readiness": 15 },
-        "trait_xp": { "ScoutSkills": 30, "Cunning": 20 },
-        "skill_xp": { "Scouting": 75, "Tactics": 45 },
-        "denars": 150,
-        "renown": 7,
-        "text": "You find their camp and mark every tent. The captain uses your intel to plan the assault."
-      },
-      "failure": {
-        "reputation": { "officer": -13, "lord": -8 },
-        "company_needs": { "Readiness": -12 },
-        "text": "They spotted you first. You barely escape. Now the enemy knows we're coming."
-      },
-      "decline": {
-        "reputation": { "officer": -18, "lord": -10 },
-        "text": "The captain's eyes turn cold. A man who won't scout the enemy won't stand in the line either."
-      }
-    }
-  },
-  {
-    "id": "t4_manage_supplies",
-    "title": "Oversee Distribution",
-    "description": "The quartermaster is sick. Manage today's food and equipment distribution.",
-    "issuer": "Lieutenant",
-    "tags": ["nco", "supply", "camp", "routine"],
-    "strategic_tags": ["supply", "camp_routine"],
+    "id": "order_forage",
+    "title": "Forage Supplies",
+    "description": "Find food and useful material in the countryside. Take two men and a cart.",
+    "issuer": "Quartermaster",
+    "tags": ["supply", "patrol", "camp"],
+    "strategic_tags": ["supply", "scout"],
     "requirements": {
       "tier_min": 4,
-      "tier_max": 6
+      "tier_max": 6,
+      "min_skills": { "Scouting": 30 }
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 11, "soldier": 10 },
-        "company_needs": { "Supply": 10, "Morale": 8 },
-        "trait_xp": { "Leadership": 24, "Discipline": 18 },
-        "denars": 60,
-        "text": "Every man gets his share. No fights, no complaints. The lieutenant is impressed."
+        "reputation": { "soldier": 8, "officer": 5 },
+        "company_needs": { "Supply": 12, "Morale": 5 },
+        "trait_xp": { "ScoutSkills": 15, "Cunning": 10 },
+        "skill_xp": { "Scouting": 45, "Athletics": 30 },
+        "text": "You find a forgotten orchard and an abandoned root cellar. The company eats well tonight."
       },
       "failure": {
-        "reputation": { "officer": -10, "soldier": -12 },
-        "company_needs": { "Morale": -15 },
-        "text": "Some got double rations while others went without. Fistfights erupt. You lost control."
+        "reputation": { "soldier": -6, "officer": -4 },
+        "company_needs": { "Supply": -5 },
+        "text": "Slim pickings. You return with barely enough to feed a dog."
+      },
+      "critical_failure": {
+        "reputation": { "soldier": -10, "officer": -8 },
+        "company_needs": { "Supply": -8, "Morale": -5 },
+        "medical_risk": 15,
+        "text": "The food you brought back was spoiled. Half the men who ate it are sick."
       },
       "decline": {
-        "reputation": { "officer": -13 },
-        "text": "'Not your problem?' The lieutenant's tone makes clear it is now."
+        "reputation": { "officer": -10 },
+        "text": "The quartermaster needed hands. He won't forget your refusal."
       }
     }
   },
   {
-    "id": "t5_lead_patrol",
-    "title": "Command the Patrol",
-    "description": "Take five men and sweep the forest south of camp. Clear out any bandits.",
+    "id": "order_lead_patrol",
+    "title": "Lead a Patrol",
+    "description": "Take three men and sweep the eastern woods. Clear out any trouble.",
     "issuer": "Captain",
     "tags": ["nco", "patrol", "war", "tactical"],
     "strategic_tags": ["patrol", "tactical", "combat"],
     "requirements": {
-      "tier_min": 5,
-      "tier_max": 7
+      "tier_min": 4,
+      "tier_max": 6,
+      "min_skills": { "Tactics": 50 }
     },
     "consequences": {
       "success": {
         "reputation": { "officer": 13, "soldier": 10, "lord": 5 },
-        "company_needs": { "Readiness": 12, "Morale": 6 },
+        "company_needs": { "Readiness": 10, "Morale": 6 },
         "trait_xp": { "Leadership": 26, "MartialSkills": 18 },
-        "skill_xp": { "Tactics": 50, "OneHanded": 45 },
-        "denars": 100,
-        "renown": 5,
+        "skill_xp": { "Tactics": 50, "Leadership": 40, "Scouting": 30 },
+        "denars": 75,
         "text": "You find and scatter a small bandit camp. No losses. Your men would follow you anywhere."
       },
       "failure": {
         "reputation": { "officer": -12, "soldier": -8 },
         "company_needs": { "Morale": -10 },
         "text": "You walked into an ambush. Two men wounded. They blame your poor leadership."
+      },
+      "critical_failure": {
+        "reputation": { "officer": -18, "soldier": -15, "lord": -8 },
+        "company_needs": { "Morale": -20 },
+        "troop_loss": { "min": 2, "max": 4 },
+        "text": "The patrol was massacred. Only you came back. The captain's silence is worse than any curse."
       },
       "decline": {
         "reputation": { "officer": -15, "soldier": -10 },
@@ -222,260 +178,35 @@
     }
   },
   {
-    "id": "t6_interrogate_prisoner",
-    "title": "Question the Captive",
-    "description": "We captured an enemy scout. Find out what he knows about their plans.",
+    "id": "order_inspect_defenses",
+    "title": "Inspect Defenses",
+    "description": "Check the walls and fortifications. Find weaknesses before the enemy does.",
     "issuer": "Captain",
-    "tags": ["operative", "intel", "war", "critical"],
-    "strategic_tags": ["intel", "critical"],
-    "requirements": {
-      "tier_min": 6,
-      "tier_max": 8,
-      "min_skills": { "Charm": 40, "Roguery": 40 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 14, "lord": 12 },
-        "company_needs": { "Readiness": 15 },
-        "trait_xp": { "Cunning": 28, "Leadership": 15 },
-        "skill_xp": { "Charm": 60, "Roguery": 50 },
-        "denars": 130,
-        "renown": 6,
-        "text": "He talks. You learn their troop numbers and march route. The lord himself hears your report."
-      },
-      "failure": {
-        "reputation": { "officer": -13 },
-        "text": "He tells you nothing but lies. The captain wastes men on false information. He's not pleased."
-      },
-      "decline": {
-        "reputation": { "officer": -16, "lord": -8 },
-        "text": "The captain's jaw tightens. 'No stomach for hard questions?' His respect for you dies."
-      }
-    }
-  },
-  {
-    "id": "t4_coordinate_allies",
-    "title": "Liaise with Allies",
-    "description": "Friendly troops camped nearby. Coordinate patrols so we don't get in each other's way.",
-    "issuer": "Lieutenant",
-    "tags": ["operative", "social", "camp", "preparation"],
-    "strategic_tags": ["social", "preparation", "intel"],
-    "requirements": {
-      "tier_min": 4,
-      "tier_max": 6
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 12, "lord": 6 },
-        "company_needs": { "Readiness": 10 },
-        "trait_xp": { "Leadership": 22, "Cunning": 12 },
-        "skill_xp": { "Charm": 55 },
-        "denars": 70,
-        "renown": 4,
-        "text": "You work out a good plan. Both forces cover more ground and avoid confusion."
-      },
-      "failure": {
-        "reputation": { "officer": -11 },
-        "company_needs": { "Readiness": -8 },
-        "text": "Mixed signals lead to gaps in the perimeter. The lieutenant has to fix your mess."
-      },
-      "decline": {
-        "reputation": { "officer": -14 },
-        "text": "The lieutenant goes himself. He notes your unwillingness to represent the company."
-      }
-    }
-  },
-  {
-    "id": "t5_inspect_defenses",
-    "title": "Survey the Position",
-    "description": "Walk the defensive line. Report weaknesses before the enemy finds them.",
-    "issuer": "Captain",
-    "tags": ["nco", "defense", "tactical", "preparation"],
+    "tags": ["engineer", "defense", "tactical"],
     "strategic_tags": ["defense", "tactical", "preparation"],
     "requirements": {
-      "tier_min": 5,
-      "tier_max": 7,
-      "min_skills": { "Engineering": 30 }
+      "tier_min": 4,
+      "tier_max": 6,
+      "min_skills": { "Engineering": 40 }
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 13, "lord": 7 },
+        "reputation": { "officer": 12, "lord": 7 },
         "company_needs": { "Readiness": 14 },
-        "trait_xp": { "Leadership": 24, "Cunning": 18 },
-        "skill_xp": { "Engineering": 65, "Tactics": 50 },
-        "denars": 90,
+        "trait_xp": { "Cunning": 18 },
+        "skill_xp": { "Engineering": 55, "Tactics": 40 },
+        "denars": 60,
         "text": "You mark three weak points and suggest fixes. The captain orders them strengthened immediately."
       },
       "failure": {
-        "reputation": { "officer": -12 },
-        "company_needs": { "Readiness": -12 },
+        "reputation": { "officer": -10, "lord": -5 },
+        "company_needs": { "Readiness": -10 },
         "text": "You miss an obvious gap in the stakes. The captain finds it himself and questions your judgment."
       },
       "decline": {
-        "reputation": { "officer": -15 },
+        "reputation": { "officer": -14, "lord": -6 },
         "text": "'Too busy to check our defenses?' The captain's tone is deadly quiet."
-      }
-    }
-  },
-  {
-    "id": "t6_acquire_intel",
-    "title": "Gather Information",
-    "description": "Go to the town. Listen in taverns and markets. Learn what you can about enemy movements.",
-    "issuer": "Captain",
-    "tags": ["operative", "scout", "intel", "social"],
-    "strategic_tags": ["scout", "intel", "social"],
-    "requirements": {
-      "tier_min": 6,
-      "tier_max": 8,
-      "min_skills": { "Roguery": 50, "Charm": 40 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 15, "lord": 10 },
-        "company_needs": { "Readiness": 12 },
-        "trait_xp": { "Cunning": 30, "ScoutSkills": 20 },
-        "skill_xp": { "Roguery": 70, "Charm": 60 },
-        "denars": 140,
-        "renown": 6,
-        "text": "Loose tongues and coin yield good information. The captain presents your findings to the war council."
-      },
-      "failure": {
-        "reputation": { "officer": -13, "lord": -7 },
-        "text": "You asked too many questions. Word reaches the enemy that we're watching. Plans must change."
-      },
-      "decline": {
-        "reputation": { "officer": -17, "lord": -9 },
-        "text": "The captain trusted you with this delicate task. Your refusal is a personal insult."
-      }
-    }
-  },
-  {
-    "id": "t4_drill_sergeanting",
-    "title": "Act as Sergeant",
-    "description": "The sergeant is away. Run today's drills and keep the men in line.",
-    "issuer": "Lieutenant",
-    "tags": ["nco", "training", "camp", "leadership"],
-    "strategic_tags": ["training", "camp_routine"],
-    "requirements": {
-      "tier_min": 4,
-      "tier_max": 6
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 11, "soldier": 9 },
-        "company_needs": { "Readiness": 10, "Morale": 5 },
-        "trait_xp": { "Leadership": 25, "Discipline": 20 },
-        "skill_xp": { "Polearm": 40, "OneHanded": 40 },
-        "denars": 75,
-        "text": "The men respect your authority. The drills go smoothly. The lieutenant nods approval."
-      },
-      "failure": {
-        "reputation": { "officer": -10, "soldier": -10 },
-        "company_needs": { "Readiness": -8, "Morale": -6 },
-        "text": "The men sense your uncertainty and slack off. The lieutenant must step in. You're embarrassed."
-      },
-      "decline": {
-        "reputation": { "officer": -14 },
-        "text": "The lieutenant's face hardens. 'Not ready for responsibility?' He won't forget."
-      }
-    }
-  },
-  {
-    "id": "t5_sabotage_mission",
-    "title": "Burn Their Supplies",
-    "description": "Slip into enemy camp tonight. Set their supply wagons ablaze and get out alive.",
-    "issuer": "Captain",
-    "tags": ["operative", "war", "critical", "tactical"],
-    "strategic_tags": ["raid", "tactical", "critical"],
-    "requirements": {
-      "tier_min": 5,
-      "tier_max": 7,
-      "min_skills": { "Roguery": 60 },
-      "min_traits": { "Cunning": 12 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 15, "lord": 12, "soldier": 8 },
-        "company_needs": { "Readiness": 15, "Morale": 12 },
-        "trait_xp": { "Cunning": 32, "Vigor": 18 },
-        "skill_xp": { "Roguery": 80, "Athletics": 60 },
-        "denars": 150,
-        "renown": 8,
-        "text": "The wagons burn. You vanish into the night. Men sing of your deed around the fire."
-      },
-      "failure": {
-        "reputation": { "officer": -14, "lord": -10 },
-        "company_needs": { "Morale": -10 },
-        "text": "They catch you in the act. You barely escape with your life. The company's plan is ruined."
-      },
-      "decline": {
-        "reputation": { "officer": -18, "lord": -12 },
-        "text": "The captain's face shows cold contempt. You were his first choice. Now you're nothing to him."
-      }
-    }
-  },
-  {
-    "id": "t6_diplomatic_mission",
-    "title": "Treat with the Enemy",
-    "description": "The lord wants terms explored. Ride to enemy camp under flag of truce and gauge their intent.",
-    "issuer": "Lord",
-    "tags": ["operative", "social", "war", "critical"],
-    "strategic_tags": ["social", "intel", "critical"],
-    "requirements": {
-      "tier_min": 6,
-      "tier_max": 8,
-      "min_skills": { "Charm": 60 },
-      "min_traits": { "Leadership": 15 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 15, "lord": 15 },
-        "trait_xp": { "Leadership": 28, "Cunning": 22 },
-        "skill_xp": { "Charm": 75 },
-        "denars": 150,
-        "renown": 8,
-        "text": "You read their position well. The lord values your insight into enemy thinking."
-      },
-      "failure": {
-        "reputation": { "officer": -13, "lord": -15 },
-        "text": "You misread their commander. Your report gives false hope. The lord is disappointed."
-      },
-      "decline": {
-        "reputation": { "officer": -16, "lord": -18 },
-        "text": "The lord chose you for this honor. Your refusal is seen as cowardice. Your career is over."
-      }
-    }
-  },
-  {
-    "id": "t4_oversee_repairs",
-    "title": "Manage Equipment Repair",
-    "description": "Half the company's gear needs mending. Organize the smiths and armorer. Get it done by tomorrow.",
-    "issuer": "Lieutenant",
-    "tags": ["nco", "camp", "maintenance", "preparation"],
-    "strategic_tags": ["preparation", "camp_routine"],
-    "requirements": {
-      "tier_min": 4,
-      "tier_max": 6
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 12, "soldier": 7 },
-        "company_needs": { "Readiness": 12 },
-        "trait_xp": { "Leadership": 22, "Discipline": 16 },
-        "skill_xp": { "Engineering": 50 },
-        "denars": 80,
-        "text": "You prioritize the worst damage and keep the smiths busy. By morning, we're battle-ready."
-      },
-      "failure": {
-        "reputation": { "officer": -11 },
-        "company_needs": { "Readiness": -12 },
-        "text": "You managed it poorly. Important repairs were missed. Men will fight with broken gear."
-      },
-      "decline": {
-        "reputation": { "officer": -14 },
-        "text": "The lieutenant does it himself, working through the night. He remembers you refused."
       }
     }
   }
 ]
-

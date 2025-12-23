@@ -1,405 +1,177 @@
 [
   {
-    "id": "t7_lead_assault",
-    "title": "Lead the Assault",
-    "description": "Take command of the first wave. Break their line or die trying.",
+    "id": "order_command_squad",
+    "title": "Command a Squad",
+    "description": "You're responsible for twenty men today. Lead them well.",
     "issuer": "Captain",
-    "tags": ["officer", "assault", "war", "critical", "tactical"],
-    "strategic_tags": ["assault", "combat", "critical", "tactical"],
+    "tags": ["officer", "leadership", "war", "tactical"],
+    "strategic_tags": ["tactical", "combat", "leadership"],
     "requirements": {
       "tier_min": 7,
       "tier_max": 9,
-      "min_skills": { "Leadership": 80, "OneHanded": 80 },
-      "min_traits": { "Leadership": 18, "MartialSkills": 20 }
+      "min_skills": { "Leadership": 80, "Tactics": 70 }
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 20, "lord": 18, "soldier": 15 },
-        "company_needs": { "Readiness": 20, "Morale": 18 },
-        "trait_xp": { "Leadership": 45, "MartialSkills": 35 },
-        "skill_xp": { "Leadership": 90, "OneHanded": 80, "Tactics": 70 },
-        "denars": 250,
-        "renown": 12,
-        "text": "Your men follow you into hell and back. The line breaks. The lord clasps your hand in victory."
+        "reputation": { "officer": 18, "soldier": 15, "lord": 12 },
+        "company_needs": { "Readiness": 15, "Morale": 12 },
+        "trait_xp": { "Leadership": 40, "MartialSkills": 25 },
+        "skill_xp": { "Leadership": 80, "Tactics": 60 },
+        "denars": 150,
+        "renown": 8,
+        "text": "Your men follow your commands without hesitation. The captain commends your leadership before the company."
       },
       "failure": {
-        "reputation": { "officer": -20, "lord": -18, "soldier": -15 },
-        "company_needs": { "Readiness": -20, "Morale": -25 },
-        "text": "The assault falters. Men die under your command. The survivors won't meet your eyes."
+        "reputation": { "officer": -15, "soldier": -12, "lord": -8 },
+        "company_needs": { "Readiness": -12, "Morale": -15 },
+        "text": "Your orders were confused. The men hesitated at the wrong moment. Mistakes were made."
       },
-      "decline": {
-        "reputation": { "officer": -25, "lord": -25, "soldier": -20 },
-        "text": "You refuse at the moment of truth. The captain leads instead. Your name becomes a curse word."
-      }
-    }
-  },
-  {
-    "id": "t8_coordinate_defense",
-    "title": "Organize the Defense",
-    "description": "The enemy comes at dawn. Position troops, place reserves, and hold the walls.",
-    "issuer": "Lord",
-    "tags": ["officer", "defense", "war", "critical", "tactical"],
-    "requirements": {
-      "tier_min": 8,
-      "tier_max": 9,
-      "min_skills": { "Leadership": 100, "Tactics": 90 },
-      "min_traits": { "Leadership": 22, "Cunning": 18 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 22, "lord": 22, "soldier": 18 },
-        "company_needs": { "Readiness": 25, "Morale": 20 },
-        "trait_xp": { "Leadership": 50, "Cunning": 40 },
-        "skill_xp": { "Leadership": 100, "Tactics": 90, "Engineering": 70 },
-        "denars": 300,
-        "renown": 15,
-        "text": "Your dispositions are perfect. The defense holds with minimal losses. The lord embraces you."
-      },
-      "failure": {
-        "reputation": { "officer": -22, "lord": -22 },
+      "critical_failure": {
+        "reputation": { "officer": -25, "soldier": -20, "lord": -18 },
         "company_needs": { "Readiness": -25, "Morale": -25 },
-        "text": "You misplaced reserves. A breach nearly costs us everything. The lord's trust is shattered."
+        "troop_loss": { "min": 3, "max": 6 },
+        "text": "The squad routed under your command. Men died because they followed you. The lord's disappointment is crushing."
       },
       "decline": {
-        "reputation": { "officer": -25, "lord": -28 },
-        "text": "You refuse command at the critical hour. The lord never speaks to you again."
+        "reputation": { "officer": -20, "lord": -15 },
+        "text": "You refuse command when it's offered. The captain's face shows he expected better."
       }
     }
   },
   {
-    "id": "t7_manage_retinue",
-    "title": "Command Your Retinue",
-    "description": "You have men sworn to you now. Train them, equip them, make them worthy of your banner.",
+    "id": "order_strategic_planning",
+    "title": "Strategic Planning",
+    "description": "The lord wants your assessment of the enemy position. Speak your mind with wisdom.",
     "issuer": "Lord",
-    "tags": ["officer", "training", "camp", "leadership"],
-    "requirements": {
-      "tier_min": 7,
-      "tier_max": 9,
-      "min_traits": { "Leadership": 16 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "lord": 16, "soldier": 12 },
-        "company_needs": { "Readiness": 18, "Morale": 15 },
-        "trait_xp": { "Leadership": 42, "Discipline": 30 },
-        "skill_xp": { "Leadership": 85, "Tactics": 60 },
-        "denars": 200,
-        "renown": 10,
-        "text": "Your men become the finest in the company. Other soldiers look at them with envy."
-      },
-      "failure": {
-        "reputation": { "lord": -15, "soldier": -10 },
-        "company_needs": { "Readiness": -15, "Morale": -12 },
-        "text": "Your retinue is ill-disciplined and poorly trained. They shame your name in every camp."
-      },
-      "decline": {
-        "reputation": { "lord": -20 },
-        "text": "The lord gave you men to lead. Your refusal is incomprehensible. The retinue is disbanded."
-      }
-    }
-  },
-  {
-    "id": "t8_advise_tactics",
-    "title": "Counsel the War Council",
-    "description": "The lord seeks your opinion on tomorrow's battle. Speak your mind with wisdom and courage.",
-    "issuer": "Lord",
-    "tags": ["officer", "tactical", "war", "critical"],
+    "tags": ["officer", "tactical", "war", "intel"],
     "strategic_tags": ["tactical", "intel", "critical"],
     "requirements": {
-      "tier_min": 8,
+      "tier_min": 7,
       "tier_max": 9,
-      "min_skills": { "Tactics": 100, "Leadership": 90 },
-      "min_traits": { "Cunning": 20, "Leadership": 20 }
+      "min_skills": { "Tactics": 100 }
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 20, "lord": 25 },
-        "company_needs": { "Readiness": 20 },
-        "trait_xp": { "Cunning": 45, "Leadership": 40 },
-        "skill_xp": { "Tactics": 100, "Leadership": 80 },
-        "denars": 250,
-        "renown": 13,
+        "reputation": { "officer": 15, "lord": 20 },
+        "company_needs": { "Readiness": 18 },
+        "trait_xp": { "Cunning": 35, "Leadership": 30 },
+        "skill_xp": { "Tactics": 90, "Leadership": 60 },
+        "denars": 200,
+        "renown": 10,
         "text": "Your strategy wins the day. The lord calls you his right hand before the assembled host."
       },
       "failure": {
-        "reputation": { "officer": -18, "lord": -25 },
-        "company_needs": { "Readiness": -20 },
-        "text": "Your advice leads to disaster. Men die because the lord trusted your judgment."
+        "reputation": { "officer": -15, "lord": -20 },
+        "company_needs": { "Readiness": -15 },
+        "text": "Your advice leads to setbacks. Men struggle because the lord trusted your judgment."
       },
       "decline": {
-        "reputation": { "lord": -30 },
-        "text": "The lord asked for your counsel. Your silence is seen as cowardice or treachery."
+        "reputation": { "lord": -25 },
+        "text": "The lord asked for your counsel. Your silence is seen as cowardice or incompetence."
       }
     }
   },
   {
-    "id": "t7_negotiate_surrender",
-    "title": "Demand Their Yield",
-    "description": "The enemy is cornered. Ride to their camp and offer terms. Save blood if you can.",
+    "id": "order_coordinate_supply",
+    "title": "Coordinate Supply",
+    "description": "Organize the baggage train. Keep us fed and equipped on the march.",
     "issuer": "Captain",
-    "tags": ["officer", "social", "war", "tactical"],
-    "strategic_tags": ["social", "tactical"],
+    "tags": ["officer", "supply", "camp", "leadership"],
+    "strategic_tags": ["supply", "preparation", "leadership"],
     "requirements": {
       "tier_min": 7,
       "tier_max": 9,
-      "min_skills": { "Charm": 70, "Leadership": 70 }
+      "min_skills": { "Steward": 80 }
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 18, "lord": 20 },
-        "trait_xp": { "Leadership": 40, "Cunning": 35 },
-        "skill_xp": { "Charm": 90, "Leadership": 70 },
-        "denars": 220,
-        "renown": 11,
-        "text": "They surrender without a fight. The lord praises your silver tongue and saves his men."
+        "reputation": { "officer": 14, "soldier": 10, "lord": 10 },
+        "company_needs": { "Supply": 20, "Morale": 10 },
+        "trait_xp": { "Leadership": 32, "Discipline": 20 },
+        "skill_xp": { "Steward": 75, "Leadership": 50 },
+        "denars": 120,
+        "text": "Every man gets his ration. No fights, no complaints. The march continues smoothly."
       },
       "failure": {
-        "reputation": { "officer": -16, "lord": -15 },
-        "text": "You botch the negotiation. They fight to the last. More men die than necessary."
+        "reputation": { "officer": -12, "soldier": -10, "lord": -8 },
+        "company_needs": { "Supply": -10, "Morale": -12 },
+        "text": "Supplies went missing. Some men ate well while others starved. You lost control."
+      },
+      "critical_failure": {
+        "reputation": { "officer": -18, "soldier": -15, "lord": -15 },
+        "company_needs": { "Supply": -20, "Morale": -18 },
+        "scrutiny": 3,
+        "text": "Half the stores disappeared. Theft or incompetence? Either way, the lord is asking questions about you."
       },
       "decline": {
-        "reputation": { "officer": -22, "lord": -18 },
-        "text": "The lord wanted to avoid bloodshed. Your refusal costs lives. He doesn't forgive."
+        "reputation": { "officer": -15, "lord": -12 },
+        "text": "The baggage train is vital. Your refusal to manage it shows poor judgment."
       }
     }
   },
   {
-    "id": "t9_plan_siege",
-    "title": "Plan the Siege",
-    "description": "The castle walls are high. Design the siege works, position the engines, plan the assault.",
-    "issuer": "Lord",
-    "tags": ["officer", "siege", "war", "critical", "tactical"],
-    "strategic_tags": ["siege", "tactical", "critical", "preparation"],
-    "requirements": {
-      "tier_min": 9,
-      "tier_max": 9,
-      "min_skills": { "Engineering": 100, "Tactics": 100, "Leadership": 100 },
-      "min_traits": { "Cunning": 22, "Leadership": 25 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 25, "lord": 25, "soldier": 20 },
-        "company_needs": { "Readiness": 25, "Morale": 20 },
-        "trait_xp": { "Cunning": 50, "Leadership": 45 },
-        "skill_xp": { "Engineering": 100, "Tactics": 100, "Leadership": 90 },
-        "denars": 300,
-        "renown": 15,
-        "text": "Your siege plan is masterful. The walls fall with minimal losses. Bards will sing of this."
-      },
-      "failure": {
-        "reputation": { "officer": -25, "lord": -25 },
-        "company_needs": { "Readiness": -25, "Morale": -25 },
-        "text": "Your plan fails catastrophically. The siege turns into a bloody nightmare. Your name is cursed."
-      },
-      "decline": {
-        "reputation": { "officer": -30, "lord": -30 },
-        "text": "The lord entrusted you with the siege. Your refusal is unthinkable. You are dismissed in disgrace."
-      }
-    }
-  },
-  {
-    "id": "t7_command_rearguard",
-    "title": "Hold the Rearguard",
-    "description": "The army retreats. Command the rearguard and keep the enemy from our backs.",
+    "id": "order_interrogate",
+    "title": "Interrogate Prisoner",
+    "description": "We captured an enemy scout. Find out what he knows about their plans.",
     "issuer": "Captain",
-    "tags": ["officer", "defense", "war", "critical", "tactical"],
-    "strategic_tags": ["defense", "critical", "tactical"],
+    "tags": ["operative", "intel", "war"],
+    "strategic_tags": ["intel", "critical"],
     "requirements": {
       "tier_min": 7,
       "tier_max": 9,
-      "min_skills": { "Leadership": 80, "Tactics": 70 },
-      "min_traits": { "Leadership": 18, "MartialSkills": 18 }
+      "min_skills": { "Charm": 60 }
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 22, "lord": 18, "soldier": 18 },
-        "company_needs": { "Readiness": 18, "Morale": 15 },
-        "trait_xp": { "Leadership": 44, "MartialSkills": 38 },
-        "skill_xp": { "Leadership": 85, "Tactics": 75, "OneHanded": 70 },
-        "denars": 240,
-        "renown": 12,
-        "text": "You bleed the enemy and save the army. The lord himself thanks you for your courage."
+        "reputation": { "officer": 14, "lord": 15 },
+        "company_needs": { "Readiness": 12 },
+        "trait_xp": { "Cunning": 28, "Leadership": 15 },
+        "skill_xp": { "Charm": 65, "Roguery": 45 },
+        "denars": 100,
+        "text": "He talks. You learn their troop numbers and march route. The lord himself hears your report."
       },
       "failure": {
-        "reputation": { "officer": -20, "lord": -18 },
-        "company_needs": { "Readiness": -22, "Morale": -20 },
-        "text": "The rearguard breaks. The enemy slaughters fleeing men. The defeat becomes a rout."
+        "reputation": { "officer": -12, "lord": -10 },
+        "company_needs": { "Readiness": -8 },
+        "text": "He tells you nothing but lies. The captain wastes men on false information."
       },
       "decline": {
-        "reputation": { "officer": -25, "lord": -22, "soldier": -20 },
-        "text": "You refuse the most dangerous post. No one will ever follow you again."
+        "reputation": { "officer": -15, "lord": -12 },
+        "text": "'No stomach for hard questions?' The captain's respect for you dies a little."
       }
     }
   },
   {
-    "id": "t8_organize_raid",
-    "title": "Plan the Raid",
-    "description": "The lord wants enemy supplies burned and their morale broken. Plan and lead the raid.",
+    "id": "order_inspect_readiness",
+    "title": "Inspect Company Readiness",
+    "description": "Walk the camp. Tell the lord if we're ready for battle.",
     "issuer": "Lord",
-    "tags": ["officer", "raid", "war", "tactical"],
-    "strategic_tags": ["raid", "tactical"],
+    "tags": ["officer", "leadership", "inspection"],
+    "strategic_tags": ["preparation", "leadership", "critical"],
     "requirements": {
-      "tier_min": 8,
+      "tier_min": 7,
       "tier_max": 9,
-      "min_skills": { "Tactics": 90, "Leadership": 80, "Roguery": 60 },
-      "min_traits": { "Cunning": 20, "Leadership": 18 }
+      "min_skills": { "Leadership": 100 }
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 20, "lord": 22, "soldier": 15 },
-        "company_needs": { "Readiness": 20, "Morale": 18 },
-        "trait_xp": { "Cunning": 46, "Leadership": 38 },
-        "skill_xp": { "Tactics": 95, "Leadership": 85, "Roguery": 80 },
-        "denars": 280,
-        "renown": 14,
-        "text": "The raid succeeds beyond expectation. Enemy supplies burn. Their troops go hungry. You're a hero."
-      },
-      "failure": {
-        "reputation": { "officer": -20, "lord": -20 },
-        "company_needs": { "Morale": -18 },
-        "text": "The raid is ambushed. Men die for nothing. The lord questions your competence."
-      },
-      "decline": {
-        "reputation": { "officer": -24, "lord": -25 },
-        "text": "The lord needed someone bold and clever. Your refusal shows you are neither."
-      }
-    }
-  },
-  {
-    "id": "t9_coordinate_allies",
-    "title": "Command Allied Forces",
-    "description": "Three lords join our host. The king appoints you to coordinate their movements in battle.",
-    "issuer": "Lord",
-    "tags": ["officer", "war", "critical", "tactical"],
-    "strategic_tags": ["assault", "tactical", "critical"],
-    "requirements": {
-      "tier_min": 9,
-      "tier_max": 9,
-      "min_skills": { "Leadership": 120, "Tactics": 100, "Charm": 80 },
-      "min_traits": { "Leadership": 25, "Cunning": 20 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 25, "lord": 25 },
-        "company_needs": { "Readiness": 25, "Morale": 22 },
-        "trait_xp": { "Leadership": 50, "Cunning": 42 },
-        "skill_xp": { "Leadership": 100, "Tactics": 100, "Charm": 90 },
-        "denars": 300,
-        "renown": 15,
-        "text": "You weld three armies into one fist. Victory is total. The king himself knows your name."
-      },
-      "failure": {
-        "reputation": { "officer": -25, "lord": -28 },
-        "company_needs": { "Readiness": -25 },
-        "text": "The lords won't follow your orders. The battle becomes chaos. Defeat is humiliating."
-      },
-      "decline": {
-        "reputation": { "lord": -30 },
-        "text": "This was the highest honor. Your refusal is inexplicable. Your career ends here."
-      }
-    }
-  },
-  {
-    "id": "t8_train_officers",
-    "title": "Train Junior Officers",
-    "description": "Young knights and squires need to learn command. Shape them into leaders.",
-    "issuer": "Lord",
-    "tags": ["officer", "training", "camp", "leadership"],
-    "strategic_tags": ["training", "preparation"],
-    "requirements": {
-      "tier_min": 8,
-      "tier_max": 9,
-      "min_skills": { "Leadership": 100 },
-      "min_traits": { "Leadership": 22 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 18, "lord": 20 },
+        "reputation": { "officer": 16, "soldier": 12, "lord": 18 },
         "company_needs": { "Readiness": 20, "Morale": 15 },
-        "trait_xp": { "Leadership": 48, "Discipline": 35 },
-        "skill_xp": { "Leadership": 95, "Tactics": 75 },
-        "denars": 260,
-        "renown": 10,
-        "text": "You forge raw nobles into capable officers. The lord is proud. Your students revere you."
+        "trait_xp": { "Leadership": 38, "Discipline": 25 },
+        "skill_xp": { "Leadership": 85, "Tactics": 55 },
+        "denars": 150,
+        "renown": 8,
+        "text": "Your thorough inspection finds problems before they become disasters. The lord trusts your assessment completely."
       },
       "failure": {
-        "reputation": { "officer": -18, "lord": -18 },
-        "company_needs": { "Readiness": -18 },
-        "text": "You're too harsh or too soft. The young officers learn nothing. The lord is disappointed."
+        "reputation": { "officer": -14, "soldier": -10, "lord": -16 },
+        "company_needs": { "Readiness": -15, "Morale": -10 },
+        "text": "You missed critical issues. The lord discovers them himself. Your judgment is questioned."
       },
       "decline": {
-        "reputation": { "officer": -22, "lord": -24 },
-        "text": "The lord trusted you to pass on your knowledge. Your refusal is selfish."
-      }
-    }
-  },
-  {
-    "id": "t9_campaign_logistics",
-    "title": "Organize the Campaign",
-    "description": "Plan supply lines, march routes, and camps for a month-long campaign into enemy lands.",
-    "issuer": "Lord",
-    "tags": ["officer", "supply", "war", "tactical"],
-    "strategic_tags": ["supply", "preparation", "tactical"],
-    "requirements": {
-      "tier_min": 9,
-      "tier_max": 9,
-      "min_skills": { "Steward": 100, "Leadership": 100, "Trade": 80 },
-      "min_traits": { "Leadership": 24, "Cunning": 22 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 24, "lord": 25, "soldier": 15 },
-        "company_needs": { "Readiness": 25, "Supply": 25, "Morale": 18 },
-        "trait_xp": { "Leadership": 48, "Cunning": 40 },
-        "skill_xp": { "Steward": 100, "Leadership": 90, "Trade": 85 },
-        "denars": 300,
-        "renown": 14,
-        "text": "Your planning is flawless. The army moves like clockwork. No man goes hungry or loses his way."
-      },
-      "failure": {
-        "reputation": { "officer": -24, "lord": -25 },
-        "company_needs": { "Supply": -25, "Morale": -25 },
-        "text": "Your planning fails. Men starve, supplies run out, the campaign collapses. It's your fault."
-      },
-      "decline": {
-        "reputation": { "officer": -28, "lord": -30 },
-        "text": "This was a test of your ability to lead armies. You failed before you even started."
-      }
-    }
-  },
-  {
-    "id": "t7_break_siege",
-    "title": "Lift the Siege",
-    "description": "Our castle is besieged. Lead a sortie to break their lines and scatter their camp.",
-    "issuer": "Captain",
-    "tags": ["officer", "assault", "siege", "war", "critical"],
-    "strategic_tags": ["assault", "siege", "critical", "combat"],
-    "requirements": {
-      "tier_min": 7,
-      "tier_max": 9,
-      "min_skills": { "Leadership": 80, "Tactics": 70 },
-      "min_traits": { "Leadership": 18, "MartialSkills": 20 }
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 22, "lord": 20, "soldier": 18 },
-        "company_needs": { "Readiness": 22, "Morale": 20 },
-        "trait_xp": { "Leadership": 44, "MartialSkills": 40 },
-        "skill_xp": { "Leadership": 90, "Tactics": 80, "OneHanded": 75 },
-        "denars": 260,
-        "renown": 13,
-        "text": "You lead a desperate charge and break the siege. The garrison roars your name from the walls."
-      },
-      "failure": {
-        "reputation": { "officer": -22, "lord": -20, "soldier": -18 },
-        "company_needs": { "Readiness": -22, "Morale": -25 },
-        "text": "The sortie fails. Men die in the mud outside the gates. The siege tightens. Hope dies."
-      },
-      "decline": {
-        "reputation": { "officer": -26, "lord": -24, "soldier": -22 },
-        "text": "You refuse to lead when the castle needs you most. The garrison's morale breaks."
+        "reputation": { "officer": -18, "lord": -22 },
+        "text": "The lord trusted you with this duty. Your refusal is incomprehensible. He won't ask again."
       }
     }
   }
 ]
-

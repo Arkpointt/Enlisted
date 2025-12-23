@@ -604,28 +604,28 @@ XML contains the actual text:
 
 ```json
 {
-  "id": "t2_guard_duty_night",
-  "titleId": "order_guard_night_title",
-  "descriptionId": "order_guard_night_desc",
+  "id": "order_guard_duty",
+  "title": "Guard Duty",
+  "description": "Stand watch through the night. Keep your eyes sharp and your blade ready.",
   "issuer": "Sergeant",
   "tags": ["soldier", "camp", "routine", "defense"],
-  "strategic_tags": ["defense", "patrol"],
+  "strategic_tags": ["defense", "camp_routine"],
   "requirements": {
-    "tier_min": 2,
-    "tier_max": 4
+    "tier_min": 1,
+    "tier_max": 3
   },
   "consequences": {
     "success": {
-      "reputation": { "officer": 7 },
-      "company_needs": { "Readiness": 5 },
-      "trait_xp": { "Valor": 12 },
-      "skill_xp": { "Athletics": 20 },
-      "textId": "order_guard_night_success"
+      "reputation": { "officer": 8 },
+      "company_needs": { "Readiness": 6 },
+      "trait_xp": { "Vigor": 12, "Discipline": 10 },
+      "skill_xp": { "Athletics": 25 },
+      "text": "A quiet night. The sergeant commends your vigilance as dawn breaks."
     },
     "failure": {
       "reputation": { "officer": -10 },
       "company_needs": { "Readiness": -8 },
-      "textId": "order_guard_night_failure"
+      "text": "You dozed off at your post. A kicked bucket woke the camp. The shame burns."
     },
     "decline": {
       "reputation": { "officer": -12 },
@@ -1027,7 +1027,9 @@ ModuleData/Enlisted/Events/
 │   ├── events_milestones.json      (Reputation thresholds)
 │   └── events_onboarding.json      (Static guaranteed events)
 ├── Orders/
-│   └── orders_catalog.json         (All orders by tier)
+│   ├── orders_t1_t3.json           (6 basic orders)
+│   ├── orders_t4_t6.json           (6 specialist orders)
+│   └── orders_t7_t9.json           (5 leadership orders)
 ├── Decisions/
 │   └── decisions_catalog.json      (Player-initiated choices)
 ├── MapIncidents/

@@ -7,6 +7,7 @@ using Enlisted.Features.Escalation;
 using Enlisted.Features.Identity;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Logistics;
+using Enlisted.Features.Ranks;
 using Enlisted.Mod.Core.Logging;
 using Helpers;
 using TaleWorlds.CampaignSystem;
@@ -1779,6 +1780,10 @@ namespace Enlisted.Features.Content
             // Use TextObject to look up the string from XML
             // Format: "{=stringId}Fallback" - if string not found, uses the fallback text
             var textObject = new TextObject($"{{={textId}}}{effectiveFallback}");
+            
+            // Set NCO and soldier name text variables for personalized event dialogue
+            SetEventTextVariables(textObject);
+            
             var resolved = textObject.ToString();
 
             // If resolution returned the raw {=...} pattern, the lookup failed - use fallback directly
@@ -1789,6 +1794,59 @@ namespace Enlisted.Features.Content
             }
 
             return resolved;
+        }
+
+        /// <summary>
+        /// Sets text variables for event personalization (NCO names, soldier names, etc.).
+        /// Called before resolving event text to populate placeholders like {SERGEANT}, {COMRADE_NAME}.
+        /// </summary>
+        private void SetEventTextVariables(TextObject textObject)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null) return;
+
+                // NCO name variables (replaces deprecated {LANCE_LEADER_SHORT})
+                // {SERGEANT} - Full NCO name with rank, e.g., "Sergeant Aldric"
+                // {NCO_NAME} - Same as {SERGEANT}
+                // {NCO_RANK} - Just the rank title, e.g., "Sergeant"
+                var ncoFullName = enlistment.NcoFullName ?? "the Sergeant";
+                var ncoRank = enlistment.NcoRank ?? "Sergeant";
+                textObject.SetTextVariable("SERGEANT", ncoFullName);
+                textObject.SetTextVariable("NCO_NAME", ncoFullName);
+                textObject.SetTextVariable("NCO_RANK", ncoRank);
+
+                // Soldier name variable (replaces deprecated {LANCE_MATE_NAME})
+                // {COMRADE_NAME} - Random soldier from the pool, e.g., "Bjorn"
+                // {SOLDIER_NAME} - Same as {COMRADE_NAME}
+                var soldierName = enlistment.GetRandomSoldierName();
+                textObject.SetTextVariable("COMRADE_NAME", soldierName);
+                textObject.SetTextVariable("SOLDIER_NAME", soldierName);
+
+                // Company name variable (replaces deprecated {LANCE_NAME})
+                // {COMPANY_NAME} - The lord's party name
+                var companyName = enlistment.EnlistedLord?.PartyBelongedTo?.Name?.ToString() ?? "the company";
+                textObject.SetTextVariable("COMPANY_NAME", companyName);
+
+                // Player info for personalized text
+                if (Hero.MainHero != null)
+                {
+                    textObject.SetTextVariable("PLAYER_NAME", Hero.MainHero.FirstName?.ToString() ?? "Soldier");
+                    textObject.SetTextVariable("PLAYER_RANK", RankHelper.GetCurrentRank(enlistment));
+                }
+
+                // Lord info
+                if (enlistment.EnlistedLord != null)
+                {
+                    textObject.SetTextVariable("LORD_NAME", enlistment.EnlistedLord.Name?.ToString() ?? "the Lord");
+                    textObject.SetTextVariable("LORD_TITLE", enlistment.EnlistedLord.IsFemale ? "Lady" : "Lord");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Failed to set event text variables: {ex.Message}");
+            }
         }
     }
 }

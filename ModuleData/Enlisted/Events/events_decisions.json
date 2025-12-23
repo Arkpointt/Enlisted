@@ -93,7 +93,7 @@
       ]
     },
     {
-      "id": "decision_lance_mate_dice",
+      "id": "decision_comrade_dice",
       "category": "decision",
       "narrative_source": "lance_mate",
       "delivery": {
@@ -124,7 +124,7 @@
       "titleId": "decision_dice_title",
       "title": "Evening Dice Game",
       "setupId": "decision_dice_body",
-      "setup": "{COMRADE_NAME} waves you over to a group gathered around a small fire. \"Come on, {PLAYER_RANK}! We need fresh gold in the pot.\" The dice game looks lively, and you could use some relaxation.",
+      "setup": "{COMRADE_NAME} waves you over to a group gathered around a small fire. \"Come on! We need fresh gold in the pot.\" The dice game looks lively, and you could use some relaxation.",
       "options": [
         {
           "id": "join_careful",
@@ -659,7 +659,7 @@
       ]
     },
     {
-      "id": "decision_lance_mate_favor",
+      "id": "decision_comrade_favor",
       "category": "decision",
       "narrative_source": "lance_mate",
       "delivery": {
@@ -747,7 +747,7 @@
       ]
     },
     {
-      "id": "decision_lance_mate_favor_repayment",
+      "id": "decision_comrade_repayment",
       "category": "decision",
       "narrative_source": "lance_mate",
       "delivery": {
@@ -811,7 +811,7 @@
       ]
     },
     {
-      "id": "decision_lance_mate_favor_gratitude",
+      "id": "decision_comrade_gratitude",
       "category": "decision",
       "narrative_source": "lance_mate",
       "delivery": {

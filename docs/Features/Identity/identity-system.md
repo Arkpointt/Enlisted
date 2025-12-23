@@ -6,133 +6,113 @@
 **Last Updated:** 2025-12-22  
 **Related Docs:** [Content System](../Content/content-system-architecture.md), [Event System Schemas](../Content/event-system-schemas.md)
 
-> **Note**: This document describes the implemented identity system. The `EnlistedStatusManager` and `TraitHelper` are live. Legacy Lance and Formation systems have been removed.
+> **Note**: This document describes the implemented identity system. The `EnlistedStatusManager` and `TraitHelper` are live.
 
 ---
 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Previous System Analysis](#previous-system-analysis)
-3. [Native Trait System Study](#native-trait-system-study)
+2. [NCO & Soldier Names](#nco--soldier-names)
+3. [Native Trait System](#native-trait-system)
 4. [System Architecture](#system-architecture)
 5. [Identity Formation Model](#identity-formation-model)
 6. [Event Integration](#event-integration)
 7. [Implementation Details](#implementation-details)
-8. [Migration Notes](#migration-notes)
-9. [Technical Reference](#technical-reference)
+8. [Technical Reference](#technical-reference)
 
 ---
 
 ## Overview
 
-### Problem Statement
+### Design Philosophy
 
-Current identity systems (Lances and Formations) add complexity without meaningful player value:
-- **Lance System**: ~3000 lines of code for sub-unit identity that players rarely notice
-- **Formation System**: ~1500 lines for manual role selection that creates early-game lock-in
-- **Result**: Complex systems, shallow identity, limited replayability
-
-### Solution Vision
-
-**Replace system-based identity with choice-based identity** using native Bannerlord traits:
+**Choice-based identity** using native Bannerlord traits:
 - Player identity emerges from event choices, not menu selections
 - Native personality traits (Mercy, Valor, Honor, etc.) track moral/behavioral patterns
 - Custom reputation tracks (Lord, Officers, Soldiers) handle social standing
 - Rank progression (T1-T9) remains as experience/access gating
 - High replayability through trait combinations affecting available content
 
-### Key Insight
+---
 
-Bannerlord already has a robust trait system that tracks personality and skills. We don't need to build our own - just integrate with what exists and let player choices drive trait changes.
+## NCO & Soldier Names
+
+Personalized NPC names for event dialogue without simulation overhead.
+
+### NCO (Non-Commissioned Officer)
+
+Each enlistment generates a single persistent NCO:
+- Name generated using Bannerlord's `NameGenerator` for lord's culture
+- Rank pulled from `progression_config.json` (T5 tier for lord's culture)
+- Persists in save data for duration of service
+- Cleared on discharge, regenerated on re-enlistment
+
+### Soldier Name Pool
+
+Pool of 3 soldier names for personalized event dialogue:
+- Generated using `NameGenerator` for lord's culture
+- ~20% female names based on culture settings
+- Used randomly when events reference comrades
+
+### Text Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{SERGEANT}` | NCO full name with rank | "Sergeant Aldric" |
+| `{NCO_NAME}` | Same as SERGEANT | "Sergeant Aldric" |
+| `{NCO_RANK}` | Just the rank title | "Sergeant" |
+| `{COMRADE_NAME}` | Random soldier name | "Bjorn" |
+| `{SOLDIER_NAME}` | Same as COMRADE_NAME | "Bjorn" |
+| `{COMPANY_NAME}` | Lord's party name | "Derthert's Army" |
+| `{PLAYER_NAME}` | Player's first name | "Aeldred" |
+| `{PLAYER_RANK}` | Player's current rank | "Corporal" |
+| `{LORD_NAME}` | Enlisted lord's name | "Derthert" |
+| `{LORD_TITLE}` | "Lord" or "Lady" | "Lord" |
+
+### Culture Rank Examples
+
+| Culture | NCO Rank (T5) | Example |
+|---------|---------------|---------|
+| Empire | Evocatus | "Evocatus Marcus" |
+| Vlandia | Sergeant | "Sergeant Aldric" |
+| Sturgia | Huskarl | "Huskarl Bjorn" |
+| Aserai | Muqaddam | "Muqaddam Farid" |
+| Khuzait | Torguud | "Torguud Temur" |
+| Battania | Fiann | "Fiann Brennan" |
+
+### Implementation
+
+```csharp
+// EnlistmentBehavior.cs
+private string _ncoFirstName;
+private string _ncoRank;
+private List<string> _soldierNames = new List<string>();
+
+public string NcoFullName => $"{_ncoRank} {_ncoFirstName}";
+public string NcoRank => _ncoRank;
+public string GetRandomSoldierName() => 
+    _soldierNames.Count > 0 
+        ? _soldierNames[MBRandom.RandomInt(_soldierNames.Count)] 
+        : "a soldier";
+```
 
 ---
 
-## Previous System Analysis
+## Core Systems
 
-### Systems to Delete
+### Rank Progression (T1-T9)
 
-#### 1. Lance System (~3000 lines)
-**Files to Remove:**
-```
-src/Features/Lances/
-├── Behaviors/
-│   ├── EnlistedLanceMenuBehavior.cs
-│   └── LanceStoryBehavior.cs
-├── Leaders/
-│   ├── PersistentLanceLeadersBehavior.cs
-│   └── PersistentLanceLeaderModels.cs
-├── Simulation/
-│   ├── LanceLifeSimulationBehavior.cs
-│   └── LanceMemberState.cs
-├── Core/
-│   └── LanceRegistry.cs
-└── Config/
-    └── lances_config.json
-
-docs/Features/Core/lance-assignments.md
-docs/Features/Gameplay/lance-life.md
-```
-
-**What This Removes:**
-- Lance selection at T2 (inquiry menu)
-- Lance roster generation (8-12 NPC members)
-- Lance reputation track (-50 to +50)
-- Lance member simulation (injuries, deaths)
-- Lance-based event filtering
-- Named NPC system for lances
-- Cultural lance styles (Legion, Feudal, Tribal, etc.)
-
-**Why Delete:**
-- Players don't care which lance they're in
-- Identity is just a label, not gameplay
-- Content filtering can use traits instead
-- NPC simulation adds complexity without payoff
-
-#### 2. Formation System (~1500 lines)
-**Files to Modify/Remove:**
-```
-src/Features/Assignments/
-├── Behaviors/EnlistedDutiesBehavior.cs (PlayerFormation property)
-└── Core/ConfigurationManager.cs (formation configs)
-
-ModuleData/Enlisted/Events/events_promotion.json
-└── promotion_t1_t2_finding_your_place (formation choice event)
-
-docs/Features/Core/duties-system.md (being replaced anyway)
-```
-
-**What This Removes:**
-- Formation choice at T2 proving event
-- Manual formation selection (Infantry/Cavalry/Archer/Horse Archer)
-- Formation-based activity weighting
-- Formation-based event filtering
-- Formation-locked progression
-
-**Why Delete:**
-- Creates early-game lock-in
-- Players may want to change role as they progress
-- Equipment access gates by rank anyway
-- Natural playstyle detection possible through equipment checks (optional)
-
-### Systems to Keep
-
-#### 1. Rank Progression (T1-T9) ✅
-**Keep As-Is:**
 ```
 src/Features/Ranks/Behaviors/PromotionBehavior.cs
-docs/Features/Core/lance-assignments.md (rank table section)
 ```
 
-**Why Keep:**
-- Clear progression milestone
-- Natural experience gating
-- Culture-specific rank names add flavor
+- Clear progression milestones
+- Culture-specific rank names
 - Equipment access tied to rank (quartermaster)
-- Already implemented and working
 
-#### 2. Escalation System ✅
-**Keep and Expand:**
+### Escalation System
+
 ```
 src/Features/Escalation/
 ├── EscalationManager.cs
@@ -140,64 +120,52 @@ src/Features/Escalation/
 └── EscalationThresholds.cs
 ```
 
-**Current Tracks:**
+**Tracks:**
 - Scrutiny (0-10): Camp crime, contraband
 - Discipline (0-10): Rule-breaking, insubordination
-- Lance Reputation (-50 to +50): Peer standing
+- Soldier Reputation (-50 to +50): Peer standing
+- Lord Reputation (-50 to +50): Trust, loyalty, competence in lord's eyes
+- Officer Reputation (-50 to +50): Potential, promise as seen by NCOs/officers
 - Medical Risk (0-5): Injury/illness severity
 
-**Rename/Repurpose:**
-- Lance Reputation → **Soldier Reputation** (peer respect)
+### Schedule Activities System
 
-**Add New Tracks:**
-- **Lord Reputation** (-50 to +50): Trust, loyalty, competence in lord's eyes
-- **Officer Reputation** (-50 to +50): Potential, promise as seen by NCOs/officers
-
-#### 3. Schedule Activities System ✅
-**Keep As-Is:**
 ```
 src/Features/Schedule/
-docs/Features/Core/schedule-activities-system.md
 ```
 
-**Why Keep:**
-- Creates daily variety (Patrol, Sentry, Work Detail, etc.)
+- Daily variety (Patrol, Sentry, Work Detail, etc.)
 - Context-aware assignment (siege increases Siege Work)
 - Skill-gated specialist activities
 - Triggers narrative events (20% chance)
-- Already designed to replace duties
 
-#### 4. Event System ✅
-**Keep and Enhance:**
+### Event System
+
 ```
-src/Features/Lances/Events/ (rename to src/Features/Events/)
-├── LanceLifeEventBehavior.cs
-├── LanceLifeEventCatalog.cs
-├── LanceLifeEventEffectsApplier.cs (ADD TRAIT SUPPORT HERE)
-└── LanceLifeEventTriggerEvaluator.cs (UPDATE FILTERS)
+src/Features/Content/
+├── EventCatalog.cs
+├── EventDeliveryManager.cs
+├── EventEffectsApplier.cs
+└── EventRequirementChecker.cs
 
 ModuleData/Enlisted/Events/*.json (80+ events)
 ```
 
-**Why Keep:**
 - Core narrative delivery system
-- Proven event execution pipeline
-- Good variety of content types
-- Just needs trait integration
+- Includes NCO/Soldier name text variable resolution
+- Trait-based content filtering
 
-#### 5. Player Conditions ✅
-**Keep As-Is:**
+### Player Conditions
+
 ```
 src/Features/Conditions/
 ├── PlayerConditionBehavior.cs
 └── PlayerConditionModels.cs
 ```
 
-**Why Keep:**
 - Injury/illness consequences
 - Treatment requirements
 - Training gating
-- Adds meaningful stakes to risky choices
 
 ---
 
@@ -1048,15 +1016,10 @@ This event only fires for:
 [Serializable]
 public sealed class EscalationState
 {
-    // EXISTING
     public int Scrutiny { get; set; }
     public int Discipline { get; set; }
     public int MedicalRisk { get; set; }
-    
-    // RENAMED (was LanceReputation)
     public int SoldierReputation { get; set; }
-    
-    // NEW
     public int LordReputation { get; set; }
     public int OfficerReputation { get; set; }
     
@@ -1141,8 +1104,7 @@ namespace Enlisted.Features.Traits
 
 **1.3: Update Event Effects Applier**
 ```csharp
-// File: src/Features/Lances/Events/LanceLifeEventEffectsApplier.cs
-// Add trait effect support
+// File: src/Features/Content/EventEffectsApplier.cs
 
 private void ApplyTraitEffects(Dictionary<string, int> traitEffects)
 {
@@ -1185,10 +1147,9 @@ private void ApplyReputationEffects(Dictionary<string, int> reputationEffects)
 
 ### Phase 2: Event System Updates (Week 1-2)
 
-**2.1: Update Event Models**
+**2.1: Event Models**
 ```csharp
-// File: src/Features/Lances/Events/Models/EventModels.cs
-// Add trait/reputation support to event schema
+// File: src/Features/Content/Models/EventModels.cs
 
 public class EventRequirements
 {
@@ -1213,10 +1174,9 @@ public class EventEffects
 }
 ```
 
-**2.2: Update Event Trigger Evaluator**
+**2.2: Event Trigger Evaluator**
 ```csharp
-// File: src/Features/Lances/Events/LanceLifeEventTriggerEvaluator.cs
-// Add trait requirement checking
+// File: src/Features/Content/EventRequirementChecker.cs
 
 private bool MeetsTraitRequirements(EventRequirements requirements)
 {
@@ -1268,28 +1228,9 @@ private bool MeetsReputationRequirements(EventRequirements requirements)
 - Start with 5-10 high-impact events as proof-of-concept
 - Document schema changes in story-blocks-master-reference.md
 
-### Phase 3: Lance/Formation Removal (Week 2)
+### Event System Files
 
-**3.1: Delete Lance System**
-```bash
-# Remove entire Lances feature directory
-rm -rf src/Features/Lances/Behaviors/
-rm -rf src/Features/Lances/Leaders/
-rm -rf src/Features/Lances/Simulation/
-rm -rf src/Features/Lances/Core/LanceRegistry.cs
-
-# Remove lance configs
-rm ModuleData/Enlisted/lances_config.json
-rm ModuleData/Enlisted/LancePersonas/
-
-# Remove docs
-rm docs/Features/Core/lance-assignments.md
-rm docs/Features/Gameplay/lance-life.md
-
-# Keep Events directory but rename
-mv src/Features/Lances/Events/ src/Features/Events/
-mv src/Features/Lances/UI/ src/Features/Events/UI/
-```
+Event system implementation is in `src/Features/Content/`.
 
 **3.2: Remove Formation System**
 ```csharp
@@ -1582,203 +1523,29 @@ Verify event gating works:
 - High-tier events require multiple criteria
 - No dead-end paths (always some content available)
 
-**6.4: Migration Testing**
-
-Test with existing saves:
-- Lance Reputation converts to Soldier Reputation
-- Formation setting ignored (removed)
-- Events continue to work
-- No crashes or data loss
-
----
-
-## Migration Notes
-
-### Save Compatibility
-
-**Save Data Changes:**
-```csharp
-// File: src/Features/Escalation/EscalationManager.cs
-// SyncData migration
-
-public override void SyncData(IDataStore dataStore)
-{
-    // ... existing sync ...
-    
-    // MIGRATION: Rename lance_rep to soldier_rep
-    if (dataStore.IsLoading)
-    {
-        // Try old key first
-        int oldLanceRep = 0;
-        dataStore.SyncData("esc_lance_rep", ref oldLanceRep);
-        
-        if (oldLanceRep != 0)
-        {
-            _state.SoldierReputation = oldLanceRep;
-            ModLogger.Info("Migration", 
-                $"Converted LanceReputation ({oldLanceRep}) to SoldierReputation");
-        }
-    }
-    
-    // New keys
-    var soldierRep = _state.SoldierReputation;
-    var lordRep = _state.LordReputation;
-    var officerRep = _state.OfficerReputation;
-    
-    dataStore.SyncData("esc_soldier_rep", ref soldierRep);
-    dataStore.SyncData("esc_lord_rep", ref lordRep);
-    dataStore.SyncData("esc_officer_rep", ref officerRep);
-    
-    _state.SoldierReputation = soldierRep;
-    _state.LordReputation = lordRep;
-    _state.OfficerReputation = officerRep;
-}
-```
-
-**Lance/Formation Removal:**
-```csharp
-// File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-// Remove lance/formation data on load
-
-public override void SyncData(IDataStore dataStore)
-{
-    // ... existing sync ...
-    
-    if (dataStore.IsLoading)
-    {
-        // Clear obsolete data (don't save it back)
-        string ignoredLanceId = "";
-        string ignoredFormation = "";
-        
-        dataStore.SyncData("lance_id", ref ignoredLanceId);
-        dataStore.SyncData("player_formation", ref ignoredFormation);
-        
-        if (!string.IsNullOrEmpty(ignoredLanceId))
-        {
-            ModLogger.Info("Migration", 
-                $"Removed obsolete lance assignment: {ignoredLanceId}");
-        }
-        
-        if (!string.IsNullOrEmpty(ignoredFormation))
-        {
-            ModLogger.Info("Migration", 
-                $"Removed obsolete formation setting: {ignoredFormation}");
-        }
-    }
-}
-```
-
-### Event Migration
-
-**Update Event IDs:**
-```
-OLD: duty_runner_ambush (requires duty: runner)
-NEW: activity_runner_ambush (no requirement or tier-based)
-
-OLD: lance_drinking_contest (requires lance_style: tribal)
-NEW: camp_drinking_contest (requires soldier_rep: 20+)
-
-OLD: formation_infantry_drill (requires formation: infantry)
-NEW: activity_drill (context-based, available to all)
-```
-
-**Event File Updates:**
-```bash
-# Backup existing events
-cp -r ModuleData/Enlisted/Events/ ModuleData/Enlisted/Events_backup/
-
-# Update event JSONs with new schema
-# Manual process - update 80+ events gradually
-# Priority: High-impact events first
-```
-
-### User Communication
-
-**Changelog Entry:**
-```
-## v0.9.0 - Identity System Overhaul
-
-### BREAKING CHANGES
-- **Removed Lance System**: Lance assignments and lance reputation removed
-- **Removed Formation System**: Manual formation selection removed
-- **Save Compatibility**: Old saves will load, but lance/formation data is discarded
-
-### NEW FEATURES
-- **Native Trait Integration**: Player choices now affect personality traits (Mercy, Valor, Honor, Generosity, Calculating)
-- **Specialist Paths**: Hidden skill traits unlock specialist content (Commander, Surgeon, Scout, Rogue, etc.)
-- **Reputation System Expanded**: Track reputation with Lord, Officers, and fellow Soldiers separately
-- **Emergent Identity**: Your character identity emerges naturally from choices, not menu selections
-- **Better Replayability**: Different trait combinations unlock different content paths
-
-### MIGRATION NOTES
-- Existing Lance Reputation converts to Soldier Reputation
-- Formation setting is ignored (activities assign dynamically)
-- All events remain functional
-- Some events now have trait/reputation requirements
-```
-
 ---
 
 ## Technical Reference
 
-### Class Hierarchy Changes
+### Key Classes
 
-**BEFORE:**
 ```
-EnlistedDutiesBehavior
-├── PlayerFormation (string)
-├── CurrentDuty (Duty object)
-└── SetFormation(string)
-
-LanceRegistry
-├── GetLances()
-├── AssignLance(Hero)
-└── GetLanceById(string)
-
 EscalationState
-├── Scrutiny
-├── Discipline
-├── LanceReputation
-└── MedicalRisk
-```
+├── Scrutiny (0-10)
+├── Discipline (0-10)
+├── SoldierReputation (-50 to +50)
+├── LordReputation (-50 to +50)
+├── OfficerReputation (-50 to +50)
+└── MedicalRisk (0-5)
 
-**AFTER:**
-```
-EscalationState (expanded)
-├── Scrutiny
-├── Discipline
-├── SoldierReputation (renamed from LanceReputation)
-├── LordReputation (new)
-├── OfficerReputation (new)
-└── MedicalRisk
-
-TraitIntegrationHelper (new)
-├── GetTrait(string)
+TraitIntegrationHelper
+├── GetTrait(string) → TraitObject
 ├── ApplyTraitXP(string, int)
-└── MeetsTraitRequirement(string, int?, int?)
-
-// LanceRegistry deleted
-// PlayerFormation property deleted
+└── MeetsTraitRequirement(string, int?, int?) → bool
 ```
 
-### Event Schema Comparison
+### Event Schema
 
-**OLD Schema (Lance/Formation):**
-```json
-{
-  "requirements": {
-    "duty": "runner",
-    "formation": "infantry",
-    "lance_style": "legion"
-  },
-  "effects": {
-    "lance_reputation": 10,
-    "xp": { "athletics": 20 }
-  }
-}
-```
-
-**NEW Schema (Trait/Reputation):**
 ```json
 {
   "requirements": {
@@ -1805,138 +1572,34 @@ TraitIntegrationHelper (new)
 }
 ```
 
-### File Structure Changes
+### File Structure
 
-**DELETED:**
 ```
-src/Features/Lances/
-├── Behaviors/EnlistedLanceMenuBehavior.cs
-├── Behaviors/LanceStoryBehavior.cs
-├── Leaders/PersistentLanceLeadersBehavior.cs
-├── Leaders/PersistentLanceLeaderModels.cs
-├── Simulation/LanceLifeSimulationBehavior.cs
-├── Simulation/LanceMemberState.cs
-└── Core/LanceRegistry.cs
+src/Features/Escalation/
+├── EscalationManager.cs
+├── EscalationState.cs
+└── EscalationThresholds.cs
 
-docs/Features/Core/lance-assignments.md
-docs/Features/Gameplay/lance-life.md
-```
-
-**RENAMED:**
-```
-src/Features/Lances/Events/ → src/Features/Events/
-src/Features/Lances/UI/ → src/Features/Events/UI/
-```
-
-**NEW:**
-```
 src/Features/Traits/
 └── TraitIntegrationHelper.cs
 
-docs/Features/Identity/
-└── identity-system.md (this document)
+src/Features/Content/
+├── EventCatalog.cs
+├── EventDeliveryManager.cs
+└── EventRequirementChecker.cs
 ```
 
-**MODIFIED:**
-```
-src/Features/Escalation/
-├── EscalationState.cs (add Lord/Officer reputation)
-└── EscalationManager.cs (migration logic)
+### API Reference
 
-src/Features/Events/
-├── LanceLifeEventEffectsApplier.cs (trait/reputation support)
-├── LanceLifeEventTriggerEvaluator.cs (trait requirement checking)
-└── Models/EventModels.cs (schema updates)
-
-src/Features/Assignments/
-└── Behaviors/EnlistedDutiesBehavior.cs (remove PlayerFormation)
-
-src/Features/Schedule/
-└── Core/ActivityAssignmentLogic.cs (remove formation weighting)
-```
-
-### API Surface Changes
-
-**REMOVED:**
-```csharp
-// EnlistedDutiesBehavior
-public string PlayerFormation { get; }
-public void SetFormation(string formation);
-
-// LanceRegistry
-public static LanceDefinition GetLanceById(string id);
-public static List<LanceDefinition> GetLances();
-
-// EscalationState
-public int LanceReputation { get; set; }
-```
-
-**ADDED:**
 ```csharp
 // EscalationState
-public int SoldierReputation { get; set; }
-public int LordReputation { get; set; }
-public int OfficerReputation { get; set; }
+public int SoldierReputation { get; set; }  // -50 to +50
+public int LordReputation { get; set; }      // -50 to +50
+public int OfficerReputation { get; set; }   // -50 to +50
 
 // TraitIntegrationHelper
 public static TraitObject GetTrait(string traitId);
 public static void ApplyTraitXP(string traitId, int xpAmount);
 public static bool MeetsTraitRequirement(string traitId, int? min, int? max);
 ```
-
----
-
-## Success Metrics
-
-### Development Metrics
-
-**Code Reduction:**
-- Lance system deletion: ~3000 lines
-- Formation system deletion: ~1500 lines
-- Trait integration: +500 lines
-- **Net reduction: ~4000 lines**
-
-**System Simplification:**
-- Removed: 2 major systems (Lance, Formation)
-- Added: 1 small integration layer (Trait wrapper)
-- Expanded: 1 existing system (Escalation)
-- **Net: 2 systems removed, 0 new systems**
-
-### Player Experience Metrics
-
-**Identity Formation:**
-- Target: 80% of players reach at least trait level ±1 by T3
-- Target: 50% of players reach trait level ±2 by T6
-- Target: Players see 2-3 different specialist paths unlock by T6
-
-**Content Access:**
-- Target: 100% of events remain accessible (no dead ends)
-- Target: High-tier events require 3+ criteria (meaningful gating)
-- Target: Replayability increases (5+ distinct builds possible)
-
-**Clarity:**
-- Target: 90% of players understand trait system (survey/feedback)
-- Target: Reputation tooltips used frequently (telemetry)
-- Target: Reduced confusion about "what formation am I?" (support tickets)
-
----
-
-## Conclusion
-
-This implementation study documents the complete replacement of Lance and Formation systems with native trait integration. The result is:
-
-1. **Simpler**: ~4000 fewer lines of code, 2 fewer systems
-2. **Deeper**: Emergent identity from choices, not menus
-3. **More Replayable**: Trait combinations create unique paths
-4. **Native Integration**: Uses proven Bannerlord systems
-5. **Authentic**: Identity emerges from play, not selection
-
-The transition preserves all existing content while enabling richer, choice-driven character development. Player identity becomes a living story, not a static label.
-
-**Next Steps:**
-1. Review this document with team
-2. Begin Phase 1 implementation (Foundation)
-3. Create proof-of-concept with 5 trait-aware events
-4. Test progression rates and balance
-5. Full rollout across all 80+ events
 

@@ -503,7 +503,7 @@ These events use the NEW schema v2 format with full XML localization. Created fo
 
 | Category | Count | JSON File | Status |
 |----------|-------|-----------|--------|
-| Orders | 17 | `orders_catalog.json` | Indexed |
+| Orders | 17 | `orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json` | ✅ Implemented |
 | Decisions | 34 | `decisions_catalog.json` + `events_training.json` | Indexed |
 | Events - Escalation | 14 | `events_escalation.json` | Indexed |
 | Events - Crisis | 5 | `events_crisis.json` | Indexed |

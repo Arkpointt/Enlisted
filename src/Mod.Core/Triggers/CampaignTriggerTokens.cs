@@ -83,7 +83,6 @@ namespace Enlisted.Mod.Core.Triggers
         public const string Discipline = "discipline";
         public const string SoldierReputation = "soldier_reputation";
         public const string CampReputation = "camp_reputation";
-        public const string LanceReputation = "lance_reputation"; // DEPRECATED: Use CampReputation instead
         public const string MedicalRisk = "medical_risk";
 
         // Prefix tokens (pattern-based)
@@ -125,11 +124,10 @@ namespace Enlisted.Mod.Core.Triggers
         public const string CampRepNeg20 = "camp_rep_-20";
         public const string CampRepNeg40 = "camp_rep_-40";
         
-        // DEPRECATED: Use CampRep variants instead
-        public const string LanceRep20 = "lance_rep_20";
-        public const string LanceRep40 = "lance_rep_40";
-        public const string LanceRepNeg20 = "lance_rep_-20";
-        public const string LanceRepNeg40 = "lance_rep_-40";
+        public const string SoldierRep20 = "soldier_rep_20";
+        public const string SoldierRep40 = "soldier_rep_40";
+        public const string SoldierRepNeg20 = "soldier_rep_-20";
+        public const string SoldierRepNeg40 = "soldier_rep_-40";
 
         public const string Medical3 = "medical_3";
         public const string Medical4 = "medical_4";
@@ -157,7 +155,8 @@ namespace Enlisted.Mod.Core.Triggers
             LogisticsHigh, MoraleLow, PayTensionHigh, ScrutinyHigh,
             Scrutiny3, Scrutiny5, Scrutiny7, Scrutiny10,
             Discipline3, Discipline5, Discipline7, Discipline10,
-            LanceRep20, LanceRep40, LanceRepNeg20, LanceRepNeg40,
+            CampRep20, CampRep40, CampRepNeg20, CampRepNeg40,
+            SoldierRep20, SoldierRep40, SoldierRepNeg20, SoldierRepNeg40,
             Medical3, Medical4, Medical5,
             HasInjury, HasIllness, HasCondition,
             FactionHasHorseArchers
@@ -180,7 +179,8 @@ namespace Enlisted.Mod.Core.Triggers
             LogisticsHigh, MoraleLow, PayTensionHigh, ScrutinyHigh,
             Scrutiny3, Scrutiny5, Scrutiny7, Scrutiny10,
             Discipline2, Discipline3, Discipline5, Discipline7, Discipline10,
-            LanceRep20, LanceRep40, LanceRepNeg20, LanceRepNeg40,
+            CampRep20, CampRep40, CampRepNeg20, CampRepNeg40,
+            SoldierRep20, SoldierRep40, SoldierRepNeg20, SoldierRepNeg40,
             Medical3, Medical4, Medical5,
             HasInjury, HasIllness, HasCondition,
             FactionHasHorseArchers
@@ -234,7 +234,8 @@ namespace Enlisted.Mod.Core.Triggers
                 trimmed.StartsWith(PayTension, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(Scrutiny, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(Discipline, StringComparison.OrdinalIgnoreCase) ||
-                trimmed.StartsWith(LanceReputation, StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith(CampReputation, StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith(SoldierReputation, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(MedicalRisk, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
@@ -290,7 +291,8 @@ namespace Enlisted.Mod.Core.Triggers
                 trimmed.StartsWith(PayTension, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(Scrutiny, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(Discipline, StringComparison.OrdinalIgnoreCase) ||
-                trimmed.StartsWith(LanceReputation, StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith(CampReputation, StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith(SoldierReputation, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(MedicalRisk, StringComparison.OrdinalIgnoreCase))
             {
                 return true;

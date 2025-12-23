@@ -278,8 +278,8 @@
       "blockOnSevereCondition": false
     },
     {
-      "id": "lance.talk_lance_leader",
-      "category": "lance",
+      "id": "camp.talk_sergeant",
+      "category": "camp",
       "location": "lords_tent",
       "textId": "act_lance_talk_leader",
       "text": "Talk to Lance Leader [+20 Leadership, +15 Tactics]",
@@ -294,8 +294,8 @@
       "blockOnSevereCondition": false
     },
     {
-      "id": "lance.check_lance_mates",
-      "category": "lance",
+      "id": "camp.check_comrades",
+      "category": "camp",
       "location": "camp_fire",
       "textId": "act_lance_check_mates",
       "text": "Check on Lance Mates [+15 Charm, +15 Leadership | -2 Fatigue]",
@@ -310,8 +310,8 @@
       "blockOnSevereCondition": false
     },
     {
-      "id": "lance.help_struggling_soldier",
-      "category": "lance",
+      "id": "camp.help_struggling_soldier",
+      "category": "camp",
       "location": "camp_fire",
       "textId": "act_lance_help_soldier",
       "text": "Help Struggling Soldier [+25 Leadership, +15 Charm | -2 Fatigue]",
@@ -326,8 +326,8 @@
       "blockOnSevereCondition": false
     },
     {
-      "id": "lance.share_rations",
-      "category": "lance",
+      "id": "camp.share_rations",
+      "category": "camp",
       "location": "camp_fire",
       "textId": "act_lance_share_rations",
       "text": "Share Rations [+30 Charm, +10 Leadership | -1 Fatigue]",
@@ -342,8 +342,8 @@
       "blockOnSevereCondition": false
     },
     {
-      "id": "lance.settle_dispute",
-      "category": "lance",
+      "id": "camp.settle_dispute",
+      "category": "camp",
       "location": "camp_fire",
       "textId": "act_lance_settle_dispute",
       "text": "Settle Dispute [+25 Charm, +20 Leadership | -1 Fatigue]",
@@ -358,8 +358,8 @@
       "blockOnSevereCondition": false
     },
     {
-      "id": "lance.train_recruits",
-      "category": "lance",
+      "id": "camp.train_recruits",
+      "category": "camp",
       "location": "training_grounds",
       "textId": "act_lance_train_recruits",
       "text": "Train Recruits [+35 Leadership, +20 Athletics | -3 Fatigue]",

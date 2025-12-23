@@ -4,7 +4,97 @@
 
 **Last Updated:** 2025-12-22  
 **Target Game:** Bannerlord v1.3.11  
-**Related Docs:** [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md), [Reference/campaignsystem-apis.md](Reference/campaignsystem-apis.md)
+**Related Docs:** [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md), [Reference/native-apis.md](Reference/native-apis.md)
+
+---
+
+## Quick Orientation
+
+**New to this project? Read this section first.**
+
+This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.11** that transforms the game into a soldier career simulator. Players enlist with lords, follow orders, manage reputation, and progress through military ranks.
+
+**Critical Project Constraints:**
+1. **Target:** Bannerlord v1.3.11 specifically (not latest version)
+2. **API Verification:** ALWAYS use local decompile at `C:\Dev\Enlisted\Decompile\` (not online docs)
+3. **Old-style .csproj:** Must manually add new files to `Enlisted.csproj` with `<Compile Include="..."/>`
+4. **Build:** Use `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
+5. **Logging:** Use `ModLogger` in `Modules\Enlisted\Debugging\` folder
+6. **ReSharper:** Follow ReSharper recommendations (never suppress without documented reason)
+
+### Understanding the Project
+
+**Scope:** The mod focuses on the **enlisted lord's party** (the Company). If the Company is part of a larger Army, acknowledge that as context only. Deep army-wide simulation is future work.
+
+**Key Nuances:**
+- Player uses an **invisible party** while enlisted (see `Features/Core/enlistment.md`)
+- **Native integration** preferred over custom UI (use game menus, trait system, etc.)
+- **Data-driven content** via JSON events/orders + XML localization
+- **Emergent identity** from player choices (not menu selections)
+- Comments describe **current behavior** (no changelog-style "Phase X added..." framing)
+
+### Finding Documentation
+
+1. **[INDEX.md](INDEX.md)** - Complete catalog of all docs organized by category
+2. **[Features/Core/core-gameplay.md](Features/Core/core-gameplay.md)** - Best overview of how everything works
+3. **[Content/event-catalog-by-system.md](Content/event-catalog-by-system.md)** - All events/decisions/orders
+4. **[Reference/native-apis.md](Reference/native-apis.md)** - Bannerlord API snippets
+
+### Creating New Documentation
+
+**Format Requirements:**
+```markdown
+# Title
+
+**Summary:** 2-3 sentences explaining what this covers and when to reference it
+
+**Status:** ✅ Current | ⚠️ In Progress | 📋 Specification | 📚 Reference  
+**Last Updated:** YYYY-MM-DD  
+**Related Docs:** [Link 1], [Link 2]
+
+---
+
+## Index
+1. [Section 1](#section-1)
+2. [Section 2](#section-2)
+
+---
+
+## Section 1
+[Content describing CURRENT behavior, not planning/changelog language]
+```
+
+**File Naming:** Use kebab-case (`my-new-feature.md`)
+
+**Documentation Location Guide:**
+- Core systems → `Features/Core/`
+- Equipment/logistics → `Features/Equipment/`
+- Combat mechanics → `Features/Combat/`
+- Events/content → `Features/Content/`
+- Campaign/world → `Features/Campaign/`
+- UI systems → `Features/UI/`
+- Technical specs → `Features/Technical/`
+- Content catalog → `Content/`
+- API/research → `Reference/`
+
+---
+
+## Common Tasks
+
+**Add a new C# file:**
+1. Create file in appropriate `src/Features/` subfolder
+2. Add `<Compile Include="path/to/file.cs"/>` to `Enlisted.csproj`
+3. Build to verify
+
+**Add new event/decision/order:**
+1. Add JSON definition to `ModuleData/Enlisted/Events/`
+2. Add XML localization to `ModuleData/Enlisted/Languages/`
+3. Update `Content/event-catalog-by-system.md`
+
+**Check if feature exists:**
+1. Search INDEX.md for topic
+2. Check `Features/Core/core-gameplay.md` for mentions
+3. Use grep to search `src/` for implementation
 
 ---
 
@@ -122,7 +212,8 @@ Find: GetPosition2D() → Vec2 (NOT Position2D property)
 #### JSON for Content/Config
 - **Content:** `ModuleData/Enlisted/Events/*.json`
 - **Config:** `ModuleData/Enlisted/*.json`
-- **Orders/Decisions:** `ModuleData/Enlisted/Orders/*.json`, `Decisions/*.json`
+- **Orders:** `ModuleData/Enlisted/Orders/orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json` (17 total)
+- **Decisions:** `ModuleData/Enlisted/Decisions/*.json`
 
 #### Critical JSON Rule
 In JSON, **fallback fields must immediately follow their ID fields** for proper parser association:

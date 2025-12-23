@@ -1,49 +1,21 @@
 [
   {
-    "id": "t1_clean_armor",
-    "title": "Clean Your Kit",
-    "description": "Your armor's caked with mud and blood. Scrub it down before the sergeant sees.",
+    "id": "order_guard_duty",
+    "title": "Guard Duty",
+    "description": "Stand watch through the night. Keep your eyes sharp and your blade ready.",
     "issuer": "Sergeant",
-    "tags": ["soldier", "camp", "routine", "maintenance"],
-    "strategic_tags": ["camp_routine", "preparation"],
+    "tags": ["soldier", "camp", "routine", "defense"],
+    "strategic_tags": ["defense", "camp_routine"],
     "requirements": {
       "tier_min": 1,
       "tier_max": 3
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 5 },
-        "company_needs": { "Readiness": 3 },
-        "trait_xp": { "Discipline": 15 },
-        "text": "Your gear gleams in the firelight. The sergeant gives you a satisfied nod."
-      },
-      "failure": {
-        "reputation": { "officer": -8 },
-        "company_needs": { "Readiness": -5 },
-        "text": "You half-arsed the job. The sergeant makes you do it again while the others eat."
-      },
-      "decline": {
-        "reputation": { "officer": -10 },
-        "text": "'Too good to clean your own armor?' The sergeant's glare promises latrine duty."
-      }
-    }
-  },
-  {
-    "id": "t2_guard_duty_night",
-    "title": "Night Watch",
-    "description": "Stand watch through the night. Keep your eyes sharp and your blade ready.",
-    "issuer": "Sergeant",
-    "tags": ["soldier", "camp", "routine", "defense"],
-    "strategic_tags": ["defense", "patrol", "camp_routine"],
-    "requirements": {
-      "tier_min": 2,
-      "tier_max": 4
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 7 },
-        "company_needs": { "Readiness": 5 },
-        "trait_xp": { "Vigor": 12 },
+        "reputation": { "officer": 8 },
+        "company_needs": { "Readiness": 6 },
+        "trait_xp": { "Vigor": 12, "Discipline": 10 },
+        "skill_xp": { "Athletics": 25 },
         "text": "A quiet night. The sergeant commends your vigilance as dawn breaks."
       },
       "failure": {
@@ -58,141 +30,52 @@
     }
   },
   {
-    "id": "t1_fetch_water",
-    "title": "Fetch Water",
-    "description": "The water barrels are running low. Haul buckets from the stream.",
-    "issuer": "Sergeant",
-    "tags": ["soldier", "camp", "routine", "supply"],
-    "strategic_tags": ["supply", "camp_routine"],
-    "requirements": {
-      "tier_min": 1,
-      "tier_max": 2
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "soldier": 5 },
-        "company_needs": { "Supply": 5 },
-        "trait_xp": { "Vigor": 10 },
-        "skill_xp": { "Athletics": 20 },
-        "text": "Your shoulders ache, but the barrels are full. The men nod their thanks."
-      },
-      "failure": {
-        "reputation": { "soldier": -5 },
-        "company_needs": { "Supply": -3 },
-        "text": "You spilled half the water on the way back. Now you'll make twice as many trips."
-      },
-      "decline": {
-        "reputation": { "officer": -8, "soldier": -5 },
-        "text": "The others mutter as they haul water in your stead. You've made enemies today."
-      }
-    }
-  },
-  {
-    "id": "t2_weapon_drill",
-    "title": "Blade Practice",
-    "description": "The lieutenant wants the men sharp. Practice cuts and thrusts until your arms burn.",
-    "issuer": "Lieutenant",
-    "tags": ["soldier", "camp", "training", "war"],
-    "strategic_tags": ["training", "preparation"],
-    "requirements": {
-      "tier_min": 2,
-      "tier_max": 4
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 6 },
-        "company_needs": { "Readiness": 4 },
-        "trait_xp": { "MartialSkills": 18 },
-        "skill_xp": { "OneHanded": 35, "TwoHanded": 35 },
-        "text": "Your blade sings through the air. The lieutenant calls you out as an example."
-      },
-      "failure": {
-        "reputation": { "officer": -6 },
-        "company_needs": { "Readiness": -4 },
-        "text": "You're sloppy and slow. The lieutenant makes you drill alone while the others rest."
-      },
-      "decline": {
-        "reputation": { "officer": -10 },
-        "text": "'Arms too tired?' The lieutenant's sneer cuts deeper than any blade."
-      }
-    }
-  },
-  {
-    "id": "t3_patrol_perimeter",
-    "title": "Walk the Perimeter",
-    "description": "Take two men and patrol the camp's edge. Watch for bandits or wolves.",
+    "id": "order_camp_patrol",
+    "title": "Camp Patrol",
+    "description": "Walk the perimeter with two men. Keep your eyes open for trouble.",
     "issuer": "Sergeant",
     "tags": ["soldier", "camp", "patrol", "defense"],
     "strategic_tags": ["patrol", "defense", "scout"],
-    "requirements": {
-      "tier_min": 3,
-      "tier_max": 5
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 8, "soldier": 4 },
-        "company_needs": { "Readiness": 6 },
-        "trait_xp": { "Leadership": 15, "Vigor": 10 },
-        "skill_xp": { "Scouting": 25, "Athletics": 20 },
-        "text": "You circle the camp twice. Nothing stirs but the wind. Your men trust you more."
-      },
-      "failure": {
-        "reputation": { "officer": -8 },
-        "company_needs": { "Readiness": -6 },
-        "text": "You missed a gap in the pickets. The sergeant finds it on his own rounds. He's not pleased."
-      },
-      "decline": {
-        "reputation": { "officer": -12, "soldier": -5 },
-        "text": "Someone else will walk the cold night in your place. They won't forget it."
-      }
-    }
-  },
-  {
-    "id": "t1_tend_horses",
-    "title": "Tend the Horses",
-    "description": "The mounts need brushing and feeding. The stablemaster is shouting for help.",
-    "issuer": "Sergeant",
-    "tags": ["soldier", "camp", "routine", "preparation"],
-    "strategic_tags": ["camp_routine", "preparation"],
     "requirements": {
       "tier_min": 1,
       "tier_max": 3
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 5, "soldier": 3 },
-        "company_needs": { "Morale": 3 },
-        "trait_xp": { "Discipline": 12 },
-        "skill_xp": { "Riding": 30 },
-        "text": "The horses are fed and brushed. A few of the men clap you on the shoulder."
+        "reputation": { "officer": 7, "soldier": 5 },
+        "company_needs": { "Readiness": 5 },
+        "trait_xp": { "Vigor": 10, "ScoutSkills": 8 },
+        "skill_xp": { "Athletics": 20, "Scouting": 15 },
+        "text": "You circle the camp twice. Nothing stirs but the wind. Your men trust you more."
       },
       "failure": {
-        "reputation": { "officer": -6 },
-        "text": "You spooked one of the warhorses. It kicked over a feed barrel. The stablemaster curses your name."
+        "reputation": { "officer": -8, "soldier": -4 },
+        "company_needs": { "Readiness": -6 },
+        "text": "You missed a gap in the pickets. The sergeant finds it on his own rounds."
       },
       "decline": {
-        "reputation": { "officer": -8 },
-        "text": "The sergeant marks you down as too proud for honest work. Bad sign."
+        "reputation": { "officer": -10, "soldier": -6 },
+        "text": "Someone else walks the cold night in your place. They won't forget it."
       }
     }
   },
   {
-    "id": "t2_firewood_detail",
-    "title": "Gather Firewood",
-    "description": "Take an axe and two men. We need wood for the night's fires.",
+    "id": "order_firewood",
+    "title": "Firewood Collection",
+    "description": "The camp needs fuel. Grab an axe and take two men to gather wood.",
     "issuer": "Sergeant",
     "tags": ["soldier", "camp", "routine", "supply"],
     "strategic_tags": ["supply", "camp_routine"],
     "requirements": {
-      "tier_min": 2,
+      "tier_min": 1,
       "tier_max": 3
     },
     "consequences": {
       "success": {
         "reputation": { "soldier": 6 },
-        "company_needs": { "Supply": 5, "Morale": 3 },
+        "company_needs": { "Morale": 5 },
         "trait_xp": { "Vigor": 14 },
-        "skill_xp": { "Athletics": 25 },
+        "skill_xp": { "Athletics": 30 },
         "text": "You haul back enough wood for three fires. The camp will be warm tonight."
       },
       "failure": {
@@ -207,70 +90,11 @@
     }
   },
   {
-    "id": "t3_messenger_run",
-    "title": "Carry the Message",
-    "description": "The captain needs a message carried to the allied camp, an hour's march east.",
-    "issuer": "Lieutenant",
-    "tags": ["soldier", "camp", "urgent", "preparation"],
-    "strategic_tags": ["intel", "urgent", "preparation"],
-    "requirements": {
-      "tier_min": 3,
-      "tier_max": 5
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 9 },
-        "trait_xp": { "Vigor": 15 },
-        "skill_xp": { "Athletics": 40, "Riding": 30 },
-        "denars": 20,
-        "text": "You deliver the message and return before sunset. The captain is satisfied."
-      },
-      "failure": {
-        "reputation": { "officer": -10 },
-        "text": "You got turned around in the woods. By the time you found the camp, the message was useless."
-      },
-      "decline": {
-        "reputation": { "officer": -12 },
-        "text": "'Find someone with courage,' the lieutenant snaps. Your name is mud."
-      }
-    }
-  },
-  {
-    "id": "t2_formation_drill",
-    "title": "Practice Formations",
-    "description": "The sergeant wants the shield wall tight. Drill with your squad until he's satisfied.",
+    "id": "order_equipment_check",
+    "title": "Equipment Inspection",
+    "description": "Help the quartermaster check gear. Report anything broken or missing.",
     "issuer": "Sergeant",
-    "tags": ["soldier", "camp", "training", "preparation"],
-    "strategic_tags": ["training", "preparation", "tactical"],
-    "requirements": {
-      "tier_min": 2,
-      "tier_max": 4
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 7, "soldier": 5 },
-        "company_needs": { "Readiness": 6 },
-        "trait_xp": { "Discipline": 16 },
-        "skill_xp": { "Polearm": 30 },
-        "text": "Your line holds like iron. The sergeant actually smiles. The lads buy you ale tonight."
-      },
-      "failure": {
-        "reputation": { "officer": -7, "soldier": -4 },
-        "company_needs": { "Readiness": -5 },
-        "text": "You broke the line. The sergeant makes the whole squad run laps. No one's happy with you."
-      },
-      "decline": {
-        "reputation": { "officer": -10, "soldier": -6 },
-        "text": "A man who won't drill won't fight. The squad doesn't want you in their line."
-      }
-    }
-  },
-  {
-    "id": "t1_break_camp",
-    "title": "Strike the Tents",
-    "description": "We march at dawn. Help break down the camp and load the wagons.",
-    "issuer": "Sergeant",
-    "tags": ["soldier", "camp", "routine", "preparation"],
+    "tags": ["soldier", "camp", "routine", "maintenance"],
     "strategic_tags": ["preparation", "camp_routine"],
     "requirements": {
       "tier_min": 1,
@@ -278,68 +102,10 @@
     },
     "consequences": {
       "success": {
-        "reputation": { "officer": 5, "soldier": 4 },
-        "company_needs": { "Readiness": 4 },
-        "trait_xp": { "Discipline": 12 },
-        "text": "The tents are down and packed before the horn sounds. The march begins on time."
-      },
-      "failure": {
-        "reputation": { "officer": -6, "soldier": -5 },
-        "company_needs": { "Readiness": -5 },
-        "text": "You tangled the tent ropes and dropped a pole on a wagon. We're late leaving."
-      },
-      "decline": {
-        "reputation": { "officer": -10, "soldier": -7 },
-        "text": "The others work while you stand idle. The sergeant puts you on latrine duty for a week."
-      }
-    }
-  },
-  {
-    "id": "t3_train_recruits",
-    "title": "Teach the Greenhorns",
-    "description": "New recruits joined the company. Show them how to hold a spear without killing themselves.",
-    "issuer": "Sergeant",
-    "tags": ["soldier", "camp", "training", "leadership"],
-    "strategic_tags": ["training", "preparation"],
-    "requirements": {
-      "tier_min": 3,
-      "tier_max": 5
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 8, "soldier": 6 },
-        "company_needs": { "Readiness": 5, "Morale": 4 },
-        "trait_xp": { "Leadership": 20, "MartialSkills": 10 },
-        "skill_xp": { "Polearm": 25 },
-        "text": "The lads pick it up quick. One calls you 'sir' before catching himself. You feel pride."
-      },
-      "failure": {
-        "reputation": { "officer": -8 },
-        "company_needs": { "Readiness": -6 },
-        "text": "You lost patience and barked at them like a dog. They're more confused than before."
-      },
-      "decline": {
-        "reputation": { "officer": -12 },
-        "text": "'Too important to train the new blood?' The sergeant's tone says you're not as good as you think."
-      }
-    }
-  },
-  {
-    "id": "t2_equipment_check",
-    "title": "Inspect the Gear",
-    "description": "Check your squad's weapons and armor. Report anything broken or missing.",
-    "issuer": "Sergeant",
-    "tags": ["soldier", "camp", "routine", "maintenance"],
-    "strategic_tags": ["preparation", "camp_routine"],
-    "requirements": {
-      "tier_min": 2,
-      "tier_max": 4
-    },
-    "consequences": {
-      "success": {
-        "reputation": { "officer": 7, "soldier": 4 },
+        "reputation": { "officer": 7 },
         "company_needs": { "Readiness": 5 },
         "trait_xp": { "Discipline": 14 },
+        "skill_xp": { "Crafting": 20 },
         "text": "You catch two cracked shields and a rusted buckle. The sergeant nods approval."
       },
       "failure": {
@@ -352,6 +118,62 @@
         "text": "The sergeant does the inspection himself. He remembers you refused."
       }
     }
+  },
+  {
+    "id": "order_muster",
+    "title": "Muster Inspection",
+    "description": "Stand for inspection before the lord. Clean your kit and stand straight.",
+    "issuer": "Lieutenant",
+    "tags": ["soldier", "camp", "routine", "inspection"],
+    "strategic_tags": ["preparation", "camp_routine"],
+    "requirements": {
+      "tier_min": 1,
+      "tier_max": 3
+    },
+    "consequences": {
+      "success": {
+        "reputation": { "officer": 6, "lord": 4 },
+        "trait_xp": { "Discipline": 15 },
+        "text": "Your gear gleams and your bearing is proper. The lord's eye passes over you with satisfaction."
+      },
+      "failure": {
+        "reputation": { "officer": -8, "lord": -5 },
+        "text": "Rust on your blade, mud on your boots. The lord's frown marks you out from the ranks."
+      },
+      "decline": {
+        "reputation": { "officer": -12, "lord": -8 },
+        "text": "Missing muster is unthinkable. The sergeant's punishment will be memorable."
+      }
+    }
+  },
+  {
+    "id": "order_sentry",
+    "title": "Sentry Post",
+    "description": "Watch the road from the hilltop. Report anything strange.",
+    "issuer": "Sergeant",
+    "tags": ["soldier", "camp", "defense", "scout"],
+    "strategic_tags": ["defense", "scout", "camp_routine"],
+    "requirements": {
+      "tier_min": 1,
+      "tier_max": 3
+    },
+    "consequences": {
+      "success": {
+        "reputation": { "officer": 7 },
+        "company_needs": { "Readiness": 6 },
+        "trait_xp": { "ScoutSkills": 12, "Vigor": 8 },
+        "skill_xp": { "Athletics": 20, "Scouting": 15 },
+        "text": "You spot dust on the horizon and report it properly. The captain thanks you personally."
+      },
+      "failure": {
+        "reputation": { "officer": -10 },
+        "company_needs": { "Readiness": -8 },
+        "text": "You were watching birds when the scout rode past. The sergeant heard about it."
+      },
+      "decline": {
+        "reputation": { "officer": -12 },
+        "text": "'Sentry duty too boring for you?' The sergeant's face promises trouble."
+      }
+    }
   }
 ]
-

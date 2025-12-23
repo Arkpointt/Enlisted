@@ -280,7 +280,6 @@
     <Content Include="ModuleData\Enlisted\settings.json"/>
     <Content Include="ModuleData\Enlisted\progression_config.json"/>
     <Content Include="ModuleData\Enlisted\enlisted_config.json"/>
-    <Content Include="ModuleData\Enlisted\equipment_kits.json"/>
     <Content Include="ModuleData\Enlisted\equipment_pricing.json"/>
     <Content Include="ModuleData\Enlisted\menu_config.json"/>
     <Content Include="ModuleData\Enlisted\retinue_config.json"/>
@@ -335,7 +334,6 @@
     <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\progression_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\enlisted_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
-    <Copy SourceFiles="ModuleData\Enlisted\equipment_kits.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\retinue_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>

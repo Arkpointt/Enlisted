@@ -27,7 +27,7 @@ Fatigue is currently used by:
 - Probation (caps max fatigue while probation is active)
 - Camp Activities (data-driven menu actions can cost or restore fatigue)
 - Strategic Operations (high-intensity contexts like "Grand Campaign" or "Siege Works" may increase fatigue costs for certain actions)
-- Lance Life Events (event options can cost or restore fatigue; menu availability considers fatigue)
+- Enlisted Events (event options can cost or restore fatigue; menu availability considers fatigue)
 
 ## Data & State
 - Stored on `EnlistmentBehavior`: `FatigueCurrent`, `FatigueMax` (default 24/24).

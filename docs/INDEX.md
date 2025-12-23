@@ -3,7 +3,35 @@
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
 **Last Updated:** 2025-12-22  
-**Total Documents:** 50+
+**Total Documents:** 40+
+
+---
+
+## Quick Start Guide
+
+**New to this project? Start here:**
+
+1. **Read [BLUEPRINT.md](BLUEPRINT.md)** - Architecture, coding standards, project constraints
+2. **Read this INDEX** - Navigate to relevant docs for your task
+3. **Read [Features/Core/core-gameplay.md](Features/Core/core-gameplay.md)** - Best overview of how systems work together
+
+**Finding What You Need:**
+
+| I need to... | Go to... |
+|--------------|----------|
+| Understand the project scope | [BLUEPRINT.md](BLUEPRINT.md) → "For AI Assistants" |
+| Learn core game mechanics | [Features/Core/core-gameplay.md](Features/Core/core-gameplay.md) |
+| Find how a feature works | Search this INDEX, check [Features/Core/](#core-systems) |
+| See all events/decisions/orders | [Content/event-catalog-by-system.md](Content/event-catalog-by-system.md) |
+| Verify Bannerlord APIs | [Reference/native-apis.md](Reference/native-apis.md) |
+| Build/deploy the mod | [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md) |
+| Check future plans | [ROADMAP.md](ROADMAP.md) |
+| Create new documentation | [BLUEPRINT.md](BLUEPRINT.md) → "Creating New Documentation" |
+
+**Documentation Structure:**
+- **Features/** - How systems work (organized by category: Core, Equipment, Combat, etc.)
+- **Content/** - Complete catalog of events, decisions, orders, map incidents
+- **Reference/** - Technical references: native APIs, AI analysis, skill mechanics
 
 ---
 
@@ -12,10 +40,7 @@
 1. [Root Documentation](#root-documentation)
 2. [Features](#features)
 3. [Content & Narrative](#content--narrative)
-4. [Implementation Plans](#implementation-plans)
-5. [Research & Reference](#research--reference)
-
----
+4. [Research & Reference](#research--reference)
 
 ## Root Documentation
 
@@ -26,8 +51,7 @@
 | [README.md](README.md) | Main entry point and mod overview | ✅ Current |
 | [BLUEPRINT.md](BLUEPRINT.md) | Project architecture and coding standards | ✅ Current |
 | [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md) | Build guide and development patterns | ✅ Current |
-| [DOCUMENTATION-REORGANIZATION-PLAN.md](DOCUMENTATION-REORGANIZATION-PLAN.md) | Documentation reorganization plan | ⚠️ In Progress |
-| [reorganization.log](reorganization.log) | Documentation changes log | ⚠️ In Progress |
+| [ROADMAP.md](ROADMAP.md) | Future development plans | ✅ Current |
 
 ---
 
@@ -47,38 +71,62 @@
 | [retinue-system.md](Features/Core/retinue-system.md) | Service records and retinue | ✅ Current |
 | [companion-management.md](Features/Core/companion-management.md) | Companion integration | ✅ Current |
 | [camp-fatigue.md](Features/Core/camp-fatigue.md) | Rest and fatigue system | ✅ Current |
+| [onboarding-discharge-system.md](Features/Core/onboarding-discharge-system.md) | Onboarding and discharge | ✅ Current |
 
 ### Equipment & Logistics
 **Location:** `Features/Equipment/`
 
 | Document | Topic | Status |
 |----------|-------|--------|
+| [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Complete quartermaster system | ✅ Current |
+| [provisions-rations-system.md](Features/Equipment/provisions-rations-system.md) | Food and rations | ✅ Current |
 | [company-supply-simulation.md](Features/Equipment/company-supply-simulation.md) | Company supply tracking | ✅ Current |
 | [quartermaster-equipment-quality.md](Features/Equipment/quartermaster-equipment-quality.md) | Equipment quality system | ✅ Current |
-| [quartermaster-dialogue-implementation.md](Features/Equipment/quartermaster-dialogue-implementation.md) | Quartermaster dialog system | ⚠️ Planning |
-| [Quartermaster_Master_Implementation.md](Features/Equipment/Quartermaster_Master_Implementation.md) | Quartermaster implementation | ⚠️ Planning |
-| [player-food-ration-system.md](Features/Equipment/player-food-ration-system.md) | Food and rations | ⚠️ Design |
 
-### Gameplay Systems
-**Location:** `Features/Gameplay/`
+### Identity & Traits
+**Location:** `Features/Identity/`
 
 | Document | Topic | Status |
 |----------|-------|--------|
-| [camp-life-simulation.md](Features/Gameplay/camp-life-simulation.md) | Camp activities | ✅ Current |
-| [event-reward-choices.md](Features/Gameplay/event-reward-choices.md) | Event reward system | ✅ Current |
-| [provisions-system.md](Features/Gameplay/provisions-system.md) | Provisions mechanics | ✅ Current |
-| [temporary-leave.md](Features/Gameplay/temporary-leave.md) | Leave system | ✅ Current |
-| [town-access-system.md](Features/Gameplay/town-access-system.md) | Town access rules | ✅ Current |
+| [README.md](Features/Identity/README.md) | Identity folder overview | ✅ Current |
+| [identity-system.md](Features/Identity/identity-system.md) | Trait and identity system | ✅ Current |
+
+### Combat & Training
+**Location:** `Features/Combat/`
+
+| Document | Topic | Status |
+|----------|-------|--------|
+| [README.md](Features/Combat/README.md) | Combat folder overview | ✅ Current |
+| [training-system.md](Features/Combat/training-system.md) | Training and XP system | ✅ Current |
+| [formation-assignment.md](Features/Combat/formation-assignment.md) | Battle formation logic | ✅ Current |
+
+### Campaign & World
+**Location:** `Features/Campaign/`
+
+| Document | Topic | Status |
+|----------|-------|--------|
+| [README.md](Features/Campaign/README.md) | Campaign folder overview | ✅ Current |
+| [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | Camp activities | ✅ Current |
+| [temporary-leave.md](Features/Campaign/temporary-leave.md) | Leave system | ✅ Current |
+| [town-access-system.md](Features/Campaign/town-access-system.md) | Town access rules | ✅ Current |
+
+### Content System
+**Location:** `Features/Content/`
+
+| Document | Topic | Status |
+|----------|-------|--------|
+| [README.md](Features/Content/README.md) | Content folder overview | ✅ Current |
+| [content-system-architecture.md](Features/Content/content-system-architecture.md) | Content system design | ✅ Current |
+| [event-system-schemas.md](Features/Content/event-system-schemas.md) | Event system JSON schemas | ✅ Current |
+| [event-reward-choices.md](Features/Content/event-reward-choices.md) | Event reward system | 📋 Specification |
 
 ### Technical Systems
 **Location:** `Features/Technical/`
 
 | Document | Topic | Status |
 |----------|-------|--------|
-| [commander_track_schema.md](Features/Technical/commander_track_schema.md) | Commander tracking schema | ✅ Current |
+| [commander-track-schema.md](Features/Technical/commander-track-schema.md) | Commander tracking schema | 📋 Specification |
 | [encounter-safety.md](Features/Technical/encounter-safety.md) | Encounter safety patterns | ✅ Current |
-| [event-system-schemas.md](Features/Technical/event-system-schemas.md) | Event system JSON schemas | ✅ Current |
-| [formation-assignment.md](Features/Technical/formation-assignment.md) | Battle formation logic | ✅ Current |
 
 ### UI Systems
 **Location:** `Features/UI/`
@@ -88,55 +136,32 @@
 | [README.md](Features/UI/README.md) | UI systems overview | ✅ Current |
 | [ui-systems-master.md](Features/UI/ui-systems-master.md) | Complete UI reference | ✅ Current |
 
-### Missions
-**Location:** `Features/Missions/`
-
-| Document | Topic | Status |
-|----------|-------|--------|
-| [recon-mission.md](Features/Missions/recon-mission.md) | Reconnaissance mission | ❓ Verify |
-
 ---
 
 ## Content & Narrative
 
-**Location:** `StoryBlocks/`
+**Location:** `Content/`
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| [content-index.md](StoryBlocks/content-index.md) | Complete content catalog | ✅ Current |
-| [event-catalog-by-system.md](StoryBlocks/event-catalog-by-system.md) | Events organized by system | ✅ Current |
-| [map-incidents-warsails.md](StoryBlocks/map-incidents-warsails.md) | Naval DLC incidents | ✅ Current |
-| [native-map-incidents-catalog.md](StoryBlocks/native-map-incidents-catalog.md) | Native game incidents | ✅ Current |
-| [native-skill-xp-and-leveling.md](StoryBlocks/native-skill-xp-and-leveling.md) | Skill progression reference | ✅ Current |
+| [README.md](Content/README.md) | Content catalog overview | ✅ Current |
+| [content-index.md](Content/content-index.md) | Complete content catalog | ✅ Current |
+| [event-catalog-by-system.md](Content/event-catalog-by-system.md) | Events organized by system | ✅ Current |
+| [map-incidents-warsails.md](Content/map-incidents-warsails.md) | Naval DLC incidents | ✅ Current |
 
 ---
 
-## Implementation Plans
+## Reference & Research
 
-**Location:** `ImplementationPlans/`
-
-**Note:** These documents describe features in various stages of implementation. Some contain outdated planning information that may not reflect current implementation.
-
-| Document | Topic | Status |
-|----------|-------|--------|
-| [enlisted-interface-master-plan.md](ImplementationPlans/enlisted-interface-master-plan.md) | Interface system plans | ⚠️ Mixed |
-| [onboarding-retirement-system.md](ImplementationPlans/onboarding-retirement-system.md) | Onboarding/discharge system | ✅ Complete |
-| [phase10-combat-xp-training.md](ImplementationPlans/phase10-combat-xp-training.md) | Combat and training | ⚠️ Mixed |
-| [traits-identity-system.md](ImplementationPlans/traits-identity-system.md) | Identity system | ✅ Complete |
-| [unified-content-system-implementation.md](ImplementationPlans/unified-content-system-implementation.md) | Content system | ✅ Complete |
-
----
-
-## Research & Reference
-
-**Location:** `research/`
+**Location:** `Reference/`
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| [campaignsystem-apis.md](research/campaignsystem-apis.md) | Bannerlord API notes and research | ✅ Current |
-| [ai-strategic-behavior-analysis-v2.md](research/ai-strategic-behavior-analysis-v2.md) | AI behavior analysis | ✅ Current |
-| [native-map-incidents.json](research/native-map-incidents.json) | Native incident data | ✅ Current |
-| [extract_native_map_incidents.py](research/extract_native_map_incidents.py) | Data extraction utility | ✅ Current |
+| [README.md](Reference/README.md) | Reference overview | ✅ Current |
+| [native-apis.md](Reference/native-apis.md) | Campaign System API reference | 📚 Reference |
+| [native-skill-xp.md](Reference/native-skill-xp.md) | Skill progression reference | 📚 Reference |
+| [native-map-incidents.md](Reference/native-map-incidents.md) | Native game incidents | 📚 Reference |
+| [ai-behavior-analysis.md](Reference/ai-behavior-analysis.md) | AI behavior analysis | 📚 Reference |
 
 ---
 
@@ -152,20 +177,6 @@
 
 ---
 
-## Quick Navigation
-
-**I want to...**
-
-- **Understand the mod** → [README.md](README.md) then [Core Gameplay](Features/Core/core-gameplay.md)
-- **Build the mod** → [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md)
-- **Learn architecture** → [BLUEPRINT.md](BLUEPRINT.md)
-- **Find a feature** → [Core Features Index](Features/Core/index.md)
-- **Browse content** → [Content Catalog](StoryBlocks/content-index.md)
-- **Check APIs** → [Campaign System APIs](research/campaignsystem-apis.md)
-- **See UI systems** → [UI Systems Master](Features/UI/ui-systems-master.md)
-
----
-
-**Last reorganization:** 2025-12-22 (Phase 3)
+**Last reorganization:** 2025-12-22 (Phases 1-10 complete)
 
 

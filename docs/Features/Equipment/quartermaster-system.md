@@ -45,7 +45,7 @@ The Quartermaster is the central logistics hub for enlisted soldiers, managing:
 | **Company Supply** | < 30%: Equipment blocked; affects ration availability |
 | **QM Reputation** | -50 to +100: Equipment discounts, buyback rates, food quality |
 | **Player Tier** | T1-T4: Issued rations; T5+: Buy provisions |
-| **Lance Reputation** | + QM Rep ≥ 110: Unlocks Officers Armory |
+| **Soldier Reputation** | + QM Rep ≥ 110: Unlocks Officers Armory |
 
 ---
 
@@ -99,7 +99,7 @@ private void OnPlayerEnlisted(Hero lord)
 ```
 === QUARTERMASTER ===
 
-[Player Rank: T3 - Lance Corporal]
+[Player Rank: T3 - Corporal]
 [Company Supply: 65% (Adequate)]
 [QM Reputation: +35 (Friendly)]
 
@@ -129,7 +129,7 @@ Options:
   [4] Sell Equipment Back
   [5] Buy Provisions ← NOW AVAILABLE
   [6] Inquire About Supply Situation
-  [7] Officers Armory (Rep 60+, Lance 50+) ← Special access
+  [7] Officers Armory (Rep 60+, Soldier 50+) ← Special access
   [8] Leave
 ```
 
@@ -395,7 +395,7 @@ QM: "Don't let me catch you again."
 **Eligibility Gate:**
 - Player Rank: **T5+**
 - QM Reputation: **60+**
-- Lance Reputation: **50+**
+- Soldier Reputation: **50+**
 
 ### First-Time Access
 
@@ -658,7 +658,7 @@ QM (<30%): "We're in crisis. I can't issue any equipment changes until
 **Phase 7: Officers Armory**
 - Create high-rep equipment menu
 - Apply quality modifiers (Fine/Masterwork)
-- Gate by tier + QM rep + lance rep
+- Gate by tier + QM rep + soldier rep
 - Test access granted/denied
 
 ### Related Documentation

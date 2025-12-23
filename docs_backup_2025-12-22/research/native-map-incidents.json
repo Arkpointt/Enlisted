@@ -1,0 +1,674 @@
+[
+  {
+    "id": "incident_abundance_of_troublemakers",
+    "title": "{=GFGuSmN9}Abundance of troublemakers",
+    "description": "{=mZir8Ogn}As you prepare to leave, the village elder approaches you. There's a gang of four lads who are constantly picking fights with the other villagers, he says. Even their own families don't want them around for fear they'll end up killing someone and cause a blood feud. He begs you to take them into your ranks, where they can learn a bit of discipline.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_an_affair_of_honor",
+    "title": "{=gUKUisS6}An Affair of Honor",
+    "description": "{=akvIjedh}Two of your cavalrymen request permission to fight a duel. Both had been wooing a merchant's daughter in {TOWN}, and one slighted the other in front of her. Some commanders encourage their men to duel as a boost to their fiery sense of pride, but others think that such fights erode their discipline as soldiers and, of course, carry the risk of injury.",
+    "trigger": "LeavingVillage",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_apples_from_heaven",
+    "title": "{=DCy85lqp}Apples from Heaven",
+    "description": "{=OBdQ2q3d}As you enter the village, some of your men tell you that they've found a group of what look like wild apple trees in full bloom by a stream. They'd fetch a fine price in the village market. It doesn't look like anyone owns the land, but you know that once they're discovered a half-dozen claimants will press title.",
+    "trigger": "EnteringVillage",
+    "type": "HuntingForaging"
+  },
+  {
+    "id": "incident_arrow_proofing",
+    "title": "{=JKO2Rmlr}Arrow-proofing",
+    "description": "{=ZCqZvb7K}As you leave the village, one of your soldiers proudly shows you a magic oil he bought from a peddlar, who told him that, if he annoints himself with it, it will prevent him from being wounded in battle. ",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_at_the_breach",
+    "title": "{=OaCU1zfR}At the Breach",
+    "description": "{=rpvUQUmq}You've been studying the walls of {FORTRESS_NAME} for days, and you see what appears to be a crack in one place - possibly the result of an old earthquake, or just negligence. It's hard to hit with your catapults and the ground is too rocky to mine, but you reckon troops with pickaxes by themselves could bring it down - assuming they were willing to brave the storm of arrows and rocks that would no doubt come pouring from the battlements above.",
+    "trigger": "DuringSiege",
+    "type": "Siege"
+  },
+  {
+    "id": "incident_back_taxes",
+    "title": "{=NFwuiSCw}Back taxes",
+    "description": "{=YAnTtrLs}Your reputation as a skilled trader generally does you good, but there is always a downside. When you arrive in {TOWN}, the market inspector descends from his tower to present you with a list of fees that you supposedly accumulated over the years, based on decrees that go back several centuries. The decrees may be genuine, but in all your talk with merchants, you never heard of anyone ever paying them.",
+    "trigger": "EnteringTown",
+    "type": "Profit"
+  },
+  {
+    "id": "incident_besiegers_blues",
+    "title": "{=uTsdJCSU}Besiegers' Blues",
+    "description": "{=IxgJotDk}At first this siege gave your men a welcome respite from the hardships of the march, but now inactivity and boredom has started to take a toll. Even dice and gossip have lost their charms, and you're starting to see quarrels and lapses in discipline.",
+    "trigger": "DuringSiege",
+    "type": "Siege"
+  },
+  {
+    "id": "incident_bloody_flux",
+    "title": "{=LEHxD9ik}Bloody Flux",
+    "description": "{=3FwbFdbw}As you inspect your siege camp, you come across disgusting evidence that one or more of your men has contracted the bloody flux. It will pass from man to man as they share food and water, and you know what it can do to a besieging army if left unchecked.",
+    "trigger": "DuringSiege",
+    "type": "Illness"
+  },
+  {
+    "id": "incident_boar_in_a_thicket",
+    "title": "{=Fa0J7a6M}Boar in a Thicket",
+    "description": "{=sQA7Z3Pp}As you set out from the village, a local hunter tells you that he can lead you to a nest made by a particularly large boar in a nearby thicket. The animal is a threat to the village and too fierce for him, he says. It already killed two of his dogs. Your men could probably get it and claim a meal of fresh pork, though not without risk.",
+    "trigger": "LeavingVillage",
+    "type": "HuntingForaging"
+  },
+  {
+    "id": "incident_broken_wagon",
+    "title": "{=8FobMTCH}Broken-down Wagon",
+    "description": "{=FJzoOKIU}You come across a trader whose wagon has gotten stuck in the road after his draught horse went lame. He is desperate to sell his wares before they spoil, and offers them at a bargain price.",
+    "trigger": "LeavingEncounter",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_camp_fever",
+    "title": "{=l2rWAm4N}Camp Fever",
+    "description": "{=Q5MXehRY}As you break camp, you find that two of your men are bathed in sweat and cannot rouse themselves. They are confused, and one is starting to show pock-marks on his chest. You recognize the symptoms as camp fever, and fear it will spread quickly. Their companions want to tend to them, but you know that if you don't quarantine the men the disease is likely to spread. ",
+    "trigger": "LeavingEncounter",
+    "type": "Illness"
+  },
+  {
+    "id": "incident_charitable_acts_recognition",
+    "title": "{=pjy9Z4bt}Charitable Acts Recognition",
+    "description": "{=vaez5WXH}As you leave town, you see a much larger number of beggars gathered than you would expect. Some of their limps look unconvincing. Your reputation for compassion and generosity may have gotten around.",
+    "trigger": "LeavingTown",
+    "type": "PlightOfCivilians"
+  },
+  {
+    "id": "incident_coin_clipping",
+    "title": "{=IFtXJbfK}Coin Clipping",
+    "description": "{=7fpGI4Jb}Shortly after the loot is distributed, you come across several of your men rubbing the edges of the coins that you paid them against a rock. You recognize what they're doing - clipping, or shaving off a bit of the silver to melt down in the hope that no one will notice.",
+    "trigger": "LeavingBattle",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_colicky_horses",
+    "title": "{=k4kbVxTL}Colicky Horses",
+    "description": "{=Bi8fKaGw}As you leave town, one of your cavalrymen finds his mount lying on the ground, whining in pain and refusing to get up. You're sure that he was careless and fed the animal too quickly after your arrival, as he was eager to get to the town's tavern.",
+    "trigger": "LeavingTown",
+    "type": "AnimalIllness"
+  },
+  {
+    "id": "incident_conflict_over_commons",
+    "title": "{=uqB1fKFY}Conflict Over Commons",
+    "description": "{=jGafCYMe}Villagers from your fief of {VILLAGE} have started going to a marsh on the road to {VILLAGE2} to gather reeds for baskets, supplementing their earnings. Hunters from {VILLAGE2}, owned by {LORD.NAME}, say they've been disturbing the local waterfowl. Neither of you has title to the marsh, but {VILLAGE2} says that its people started going there first. Your tenants say it's not their problem if they've figured out a better way to make use of the resources.",
+    "trigger": "LeavingTown | LeavingCastle",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_conflict_over_commons_both_yours",
+    "title": "{=uqB1fKFY}Conflict Over Commons",
+    "description": "{=raLLq10c}Grazing land has grown scarce near {TOWN_OR_CASTLE_NAME}, and a heath between {POORER_VILLAGE} and {RICHER_VILLAGE}, covered with thistle and formerly of little value, has become a point of contention. {POORER_VILLAGE} claims that they have been taking goats there for generations, but {RICHER_VILLAGE} has produced a document showing legal title.",
+    "trigger": "LeavingTown | LeavingCastle",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_cries_in_the_mist",
+    "title": "{=ELXomm1C}Cries in the Mist",
+    "description": "{=SAXnFQLq}The people of {VILLAGE_NAME} warned you to take care outside their village. When the mist gathers, The woods will be haunted by spirits whose shriek foretells death. Now the gloom is gathering, and you hear mutterings from your men. You are certain that they will soon be hearing wailing and seeing apparitions, real or imagined. The horses are becoming twitchy too, picking up on the mood of the men, and accidents are likely to happen.",
+    "trigger": "LeavingVillage",
+    "type": "DreamsSongsAndSigns"
+  },
+  {
+    "id": "incident_desperate_times",
+    "title": "{=GNdltUJj}Desperate Times",
+    "description": "{=CZamxmfc}As you pass through the town gates, you are thronged by a group of refugees from the countryside. They are gaunt, with sunken eyes. They say they were unable to sow their fields this year for fear of bandits, and were forced to eat their seed grain. They ask for any scraps you can offer.",
+    "trigger": "LeavingTown",
+    "type": "PlightOfCivilians"
+  },
+  {
+    "id": "incident_dodgy_spice",
+    "title": "{=5OzX71s3}Dodgy Spice",
+    "description": "{=QEP3ntdb}Merchants are savvy to most attempts to pass off most types of shoddy goods as top quality, but one of your {TROOP.NAME} knows a few tricks that aren't in the usual rogue's repetoire. He suggests buying a selection of spices from the market, then sprinkling a bit of pomegranate rind in with the saffron, some cassia bark with the cinnamon, and a lead compound known as litharge with the pepper.",
+    "trigger": "LeavingTown",
+    "type": "Profit"
+  },
+  {
+    "id": "incident_donative_demand",
+    "title": "{=p8ESONLB}Donative Demand",
+    "description": "{=qaGbN6wX}It has not escaped your men’s notice that you have accumulated a fair amount of money in your treasury. A delegation approaches you and suggests that this would be a good time for the traditional donative, as Calradian emperors of old were known to give their legions.",
+    "trigger": "LeavingSettlement",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_educational_advancements",
+    "title": "{=RZJ0f8qo}Educational Advancements",
+    "description": "{=2OQlwt7x}Villagers say that a wanderer has recently arrived and offered to teach their children to read. He is not only well-educated, but he has a gift for holding the attention of restless 10-year-olds. However, he seems to have spent time with one of the rebel bands that were common around here ten years back, and occasionally speaks of a coming reign of justice brought by Heaven, in a way that doesn't seem like one of his ironic jokes.",
+    "trigger": "LeavingVillage",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_endebted_farmers",
+    "title": "{=Vbs9aocS}Endebted Farmers",
+    "description": "{=cRMxKTa8}Several freeholding farmers in your fief have fallen into debt through what appears to be a combination of bad luck and risky investments - a plough horse that died, a crop ruined by frost. They are unable to pay their taxes, and ask for a reprieve for several years.",
+    "trigger": "LeavingTown | LeavingCastle",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_ennoble_a_fighter",
+    "title": "{=wLozeWS9}Ennoble a fighter",
+    "description": "{=FPnUWAj1}After the battle, one of your {TROOPS} from your party approaches you, dreamed of riding with your cavalry as a {NOBLE_TIER}. He has the money to buy his own horse, and he certainly distinguished himself in the fight. You know however that this will go down badly - with the high-born cavalry, who prefer to mingle with their own class, but probably even more so with his comrades, who will think he scorns them.",
+    "trigger": "LeavingBattle",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_failed_inspection",
+    "title": "{=KBh8fb89}Failed Inspection",
+    "description": "{=jUBTrdbE}You take a quick look over your men before you ride out, and you are shocked to notice the state of their equipment. In particular, several of the men have frayed bridles and shield straps that look like they might snap in battle. They are supposed to oil and replace their leather at their own expense, and clearly have not been doing so.",
+    "trigger": "LeavingSettlement",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_family_claims_bandit",
+    "title": "{=6IA1S2XU}Family Claims Bandit",
+    "description": "{=BG8Ph5La}As you leave {VILLAGE_NAME}, a woman approaches you and grasps your horse's halter. Among your prisoners is her son, she says. You captured him when he was part of a gang of bandits, but she tells you tearfully that he is a good boy who fell in with bad company. She swears she'll ensure that he doesn't stray again from the correct path.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_feeling_the_bite",
+    "title": "{=0yKJ0J0N}Feeling the Bite",
+    "description": "{=D9T64ejr}As you leave {VILLAGE_NAME}, several of the villagers approach you. They warn you that stagnant ponds from the last rain have yet to fully dry and have bred mosquitos. They offer to sell you a concoction of oils including rosemary, catmint and other herbs that they say will ward off all flying vermin.",
+    "trigger": "LeavingVillage",
+    "type": "HardTravel"
+  },
+  {
+    "id": "incident_fertility_festival",
+    "title": "{=o5LpNEIa}Fertility Festival",
+    "description": "{=lfJ6OHgX}The village has seen an unexpected rise in pregnancies. Some of your villagers ask your permission to hold a festival in honor of Agalea, protectress of motherhood. Agalea has never been recognized as a saint by the imperial Senate, and many consider her veneration to be a primitive Palaic holder. Her festivals tend to be rather raucous, befitting the theme of fertility, and also rather expensive. It would certainly set tongues wagging in the district. Do you grant permission?",
+    "trigger": "LeavingVillage",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_glanders_outbreak",
+    "title": "{=QjWhMbL1}Glanders Outbreak",
+    "description": "{=xH4KUzVS}As you leave town, you notice one of your horses has a swollen head and a bloody nose. You recognize this disease. It can spread to your men, and not only this animal is at risk but every other animal that drank from the same trough.",
+    "trigger": "LeavingVillage",
+    "type": "AnimalIllness"
+  },
+  {
+    "id": "incident_gnostic_boys",
+    "title": "{=hewpozXg}Gnostic Boys",
+    "description": "{=H7Co1wqC}Two of your {NOBLE_TIER} have lately been causing a stir in the camp with their irreverent religious preaching. They propound that this world is a illusion, created by a being called the Demiurge for its own amusement, and humans are but game-pieces. You think this may be the Marcorionist doctrine, declared heretical by the imperial Senate some years ago. It is clearly disturbing your more traditional-minded troops and is probably also not good for your party's reputation.",
+    "trigger": "LeavingVillage",
+    "type": "DreamsSongsAndSigns"
+  },
+  {
+    "id": "incident_gold_rush",
+    "title": "{=8jG2vlOu}Gold Rush",
+    "description": "{=eQz8b4TH}The village is buzzing with a poorly kept secret. Following a rare but fierce rainstorm in the dry hills, fishermen have begun to find small flakes of gold in a local stream. If word gets out, there will be a huge influx of fortune-seekers into the area. The gold will last a few months, and it's not clear how much of it will benefit the village or its owner.",
+    "trigger": "LeavingVillage",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_hammer_of_the_sun",
+    "title": "{=R80p9Ywt}Hammer of the Sun",
+    "description": "{=th5MgyAZ}As you enter {TOWN_NAME}, one of your {ASERAI_TROOPS} approaches you. Many of his comrades are not used to the heat of the desert, he says. They march after drinking wine through the evening but are not careful to properly take water throughout the day, as the sun beats down on them. He has seen men collapse and die from such carelessness and ignorance.",
+    "trigger": "EnteringTown",
+    "type": "HardTravel"
+  },
+  {
+    "id": "incident_hand_in_the_strongbox",
+    "title": "{=OFuTQ6t8}Hand in the Strongbox",
+    "description": "{=82Fno8Vr}Your clerk at your {WORKSHOP} in {TOWN} has caught one of your foremen skimming from the funds you use to purchase raw materials. Luckily, he did not take much, and he readily confessed. How do you prevent this from happening in the future?",
+    "trigger": "EnteringTown",
+    "type": "Workshop"
+  },
+  {
+    "id": "incident_haunted_dreams",
+    "title": "{=99w595qn}Haunted Dreams",
+    "description": "{=yXXbY1bb}You lie down for a well-deserved nap, but you slip into an uneasy dream. You are sailing on a wind-tossed sea. A wave crashes on your bow, sending spray across the decks. You look closely, and see that it is not water but blood sloshing around across your feet. You stare out into the sea, and the breakers take on the forms of men you have slain in battle.",
+    "trigger": "WaitingInSettlement",
+    "type": "DreamsSongsAndSigns"
+  },
+  {
+    "id": "incident_heat_and_dust",
+    "title": "{=HoNCyyfW}Heat and Dust",
+    "description": "{=42bGMh4X}Your men were not expecting to spend so much time in the desert. They complain that baggage that they might gladly carry themselves in normal times becomes a crushing burden when the blazing sun is high in the sky. They have located a number of pack animals in the markets and ask you to buy them to lighten their own loads.",
+    "trigger": "LeavingVillage",
+    "type": "HardTravel"
+  },
+  {
+    "id": "incident_honor_the_slain_foe",
+    "title": "{=bGxsp5Le}Honor the Slain Foe",
+    "description": "{=lFaBQPxk}Your {CULTURE_NAME} troops ask if they can take charge of the {CULTURE_BURIAL_STYLE} of the {CULTURE_NAME} in the enemy's ranks, declaring that they feel a duty to their kin even if they fought in a bad cause.",
+    "trigger": "LeavingBattle",
+    "type": "PostBattle"
+  },
+  {
+    "id": "incident_horsefly_plague",
+    "title": "{=S4YyXUPU}Horsefly Plague",
+    "description": "{=NJ0BBaaC}One of your cavalry commanders reported that some horses seem mysteriously weak. You see their listless eyes and swollen bellies and recognize it - swamp fever. This plague is spread by horseflies, and it will infect other animals if the horse is not killed",
+    "trigger": "LeavingVillage",
+    "type": "AnimalIllness"
+  },
+  {
+    "id": "incident_hunters_paradise",
+    "title": "{=zQ2rtAQE}Hunter's Paradise",
+    "description": "{=fjWw8D1x}Your men spot several deer on the outskirts of the village, a rare thing in a land where meat and hides are valuable. The villagers tell you that there was an unusual crop of acorns this year, while fear of bandits has prevented them from hunting as they normally would. They invite you to shoot a few deer, as there will be plenty to go around anyway and the beasts are trampling the crops.",
+    "trigger": "EnteringVillage",
+    "type": "HuntingForaging"
+  },
+  {
+    "id": "incident_ice_march",
+    "title": "{=5LOG5afj}Ice March",
+    "description": "{=rm4ApCIW}Now that the fighting has ended you notice that the weather has turned bitterly cold, and a wind is picking up. Soon after you return to the march, you notice that several of your men have fallen behind. Your men are shivering in the wind, however, and are in no mood to wait. You can march on and hope they catch up to you, or set a slower pace.",
+    "trigger": "LeavingEncounter",
+    "type": "HardTravel"
+  },
+  {
+    "id": "incident_ill_conceived_plans",
+    "title": "{=VSLbywBT}Ill-Conceived Plans",
+    "description": "{=K8DJmY4L}Several of your {TROOP_TYPE} have an idea for the next battle. They suggest that they be hidden in a supply wagon and left for the enemy to discover and drag into camp, whereupon they will leap out and wreak havoc. They are very proud of their scheme, even though you can think of half a dozen reasons it won't work.",
+    "trigger": "LeavingVillage",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_injury_accident",
+    "title": "{=m9MbuMlw}Injury Accident",
+    "description": "{=1jAyaivZ}As you pass through the village streets, a dog dashes out from among some spectators and bites at the heels of one of your {CAVALRYMAN}'s horses, panicking it. The mount rears and gallops down the street, trampling a vegetable vendor who was unable to get out of its way. She will probably walk with a limp hereafter, and her family demands compensation.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_job_offer",
+    "title": "{=xEktDm2z}Job Offer",
+    "description": "{=guEjfYhO}One of your {TROOP_NAME} had some drinks with the arena master in {TOWN} and left the tavern with a job offer - work as a trainer and occasional combatant. The signing bonus is generous. He is reluctant to leave you, and you'd be reluctant to lose a valuable soldier, but he'd be in a fine position to sing your praises.",
+    "trigger": "LeavingTown",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_jobs_for_the_lads",
+    "title": "{=0avcvATJ}Jobs for the Lads",
+    "description": "{=cJdoDJ4M}One prominent resident of {TOWN}, {ARTISAN_NAME}, approaches you. Your {WORKSHOP} has been hiring workers who have recently migrated in from the countryside. He requests that you fire them and take on some local boys from the back alleys. If you refuse, he won't be responsible if the carts carrying your shipments get swarmed by traffic going through tight gates, slowing down production.",
+    "trigger": "EnteringTown",
+    "type": "Workshop"
+  },
+  {
+    "id": "incident_just_rewards",
+    "title": "{=YwstWeDQ}Just Rewards",
+    "description": "{=Jo5OjwAU}Your men fought truly heroically in the last battle. As they help their wounded comrades back to camp and gather the slain, their weary faces sometimes look to you with expectation. If ever there was a time to give them some extra recognition of their valor and sacrifice, this would be it.",
+    "trigger": "LeavingBattle",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_kannic_splendors",
+    "title": "{=msK9baMp}Kannic Splendors",
+    "description": "{=a1cuuevH}One of your men comes up to you excitedly. A peddler in the marketplace sold him a map to a treasure buried by a long-dead Kannic sorceror in a wadi near here. He wants a bit of time to check it out and promises you a fifth share of anything he finds. You've heard tales of gold found in ancient tombs near here, but in this case you'd give a hundred to one odds that this leads to either a grave that was pillaged centuries ago or someone's underground irrigation cistern, and at any rate the locals won't appreciate your man smashing things up with pick and shovel.",
+    "trigger": "LeavingTown",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_letter_of_reference",
+    "title": "{=q0HIXEal}Letter of Reference",
+    "description": "{=D7ZcX8XR}As you pass through the market, {NOTABLE.NAME} requests a minute of your time. {?NOTABLE.GENDER}Her{?}His{\\\\?} cousin is planning on doing some business in {TOWN}, and {?NOTABLE.GENDER}she{?}he{\\\\?} would like a letter of reference from you. You know next to nothing about the lad, although {NOTABLE.NAME} swears that he is honest and conscientious. You find you are receiving a number of these types of requests as your fame spreads.",
+    "trigger": "LeavingTown",
+    "type": "Profit"
+  },
+  {
+    "id": "incident_lice_and_fleas",
+    "title": "{=CX8WdvvR}Lice and Fleas",
+    "description": "{=b4BaOUKn}Lice are part of military life but several of your men are absolutely teaming with the vermin. Perhaps they are especially virulent in these parts, or perhaps they thrive in this weather. You fear that they will spread camp fever or other diseases.",
+    "trigger": "LeavingEncounter",
+    "type": "Illness"
+  },
+  {
+    "id": "incident_local_hero",
+    "title": "{=lfYEujfb}Local Hero",
+    "description": "{=9ab6HwCS}As you prepare to leave the village, the elder approaches you. His nephew is to be married, and it would be a great honor if a warrior of your renown would bless the couple. Your men suppress grins and jostle each other, and you know they are looking forward to the chance to get royally drunk.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_love_marriage",
+    "title": "{=QpkXLmjE}Love Marriage",
+    "description": "{=Tq4O8vic}One of your {KNIGHT} asks you for a favor. His daughter plans to marry a man from the back alleys of this town with a reputation as a no-good layabout. He has refused permission but asks you to do what you can to insure the two do not elope.",
+    "trigger": "LeavingTown",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_mad_dog",
+    "title": "{=iuAMSSTY}Mad Dog",
+    "description": "{=nyZpbVbv}Your men are very proud of their leader - perhaps too proud. Every time they go into town, they spread exaggerated tales of your recklessness in battle. You imagine that this could win you a few admiring recruits, but more and more you've caught a look that suggests fear or distrust, as though you're a wild animal or a demon.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_market_manipulation",
+    "title": "{=tGwbM59L}Market Manipulation",
+    "description": "{=5OuDl2Po}As you come into town, the merchant {MERCHANT_NAME} makes you an offer. Local merchants are on edge awaiting an incoming caravan from {PLACE}. If you claim that you found its wreckage, looted by bandits, the prices of goods would rise considerably. He offers to pay you 1000 denars, in addition to whatever extra you can make by selling your own wares once the prices rise.",
+    "trigger": "EnteringTown",
+    "type": "Profit"
+  },
+  {
+    "id": "incident_migrant_influx",
+    "title": "{=OY5LLcxv}Migrant Influx",
+    "description": "{=2KaXj3Qa}The depredations of the {NEARBY_ENEMY_FACTION} has driven many farmers from their homes. Those who have land usually return to it, but many of the poorer are seeking a new place to live. You speak to a few encamped on the outskirts of your village. There is no land for them. They seem eager to work as tenants, but there is always a possibility of tensions with the more established village families.",
+    "trigger": "LeavingVillage",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_mining",
+    "title": "{=O4iUPSXs}Mining",
+    "description": "{=0DSopB7F}After observing the terrain around {FORTRESS_NAME}, you think conditions might be appropriate for mining - digging a tunnel under a wall, then collapsing it. This can open a breach but is time-consuming and risky. If you encounter rock underground, you may find all your efforts go to waste. If the ground is too soft, the tunnel may collapse and bury your men. Most troops are reluctant to spend time in dark, confined tunnels unless they are paid extra, or forced.",
+    "trigger": "DuringSiege",
+    "type": "Siege"
+  },
+  {
+    "id": "incident_misplaced_vengeance",
+    "title": "{=fiesVorG}Misplaced Vengeance",
+    "description": "{=i0SwEBdf}Throughout your visit to {VILLAGE}, the villagers were worried that the enemy who sacked {LOOTED_VILLAGE} might be sending patrols their way. As you leave, you find out that their fears were not misplaced. The first thing you see is a flight of ravens in the sky. Your men begin to mutter to themselves, but soon they stumble across a sight that silences them - a pile of burned corpses, stacked by a crossroad, left by the {ENEMY} as their calling card. You press on, but you soon notice that your men are casting an eye towards your prisoners. They may not have been directly involved in what happened in {LOOTED_VILLAGE}, but you doubt your men care much.",
+    "trigger": "LeavingVillage",
+    "type": "PostBattle"
+  },
+  {
+    "id": "incident_nearly_a_gift_horse",
+    "title": "{=N19m9qmd}Nearly a Gift Horse",
+    "description": "{=WR7NCetE}As you leave {VILLAGE_NAME}, a scraggly young man waves to attract your attention. He leads a magnificent {RARE_HORSE}, and says that he will sell it to you for a mere 500 denars. He claims he found it wandering on a heath, almost dead from exhaustion and neglect, and he nursed it back to health. He won't go into town because he says he would be unfairly accused of theft.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_no_country_for_the_afflicted",
+    "title": "{=rflKyqOT}No Country for the Afflicted",
+    "description": "{=NORgVfas}As you prepare to leave, a delegation of townspeople approach you. A group of lepers has encamped before the walls, and they beg passers-by for alms. The townspeople are worried that they might spread the disease and, at any rate, are frightening away potential customers.",
+    "trigger": "LeavingTown",
+    "type": "PlightOfCivilians"
+  },
+  {
+    "id": "incident_no_mood_for_mercy",
+    "title": "{=X8dgb937}No Mood for Mercy",
+    "description": "{=uXendo01}It was a hard-fought battle, and among your fallen is a young good-natured {TROOP_TYPE} who kept his comrades' spirits up during hard times. Your men’s faces are grim as they go out to collect the wounded of both sides. You can tell that, if they have their way, not many injured enemies will be brought back to your camp still alive as prisoners.",
+    "trigger": "LeavingBattle",
+    "type": "PostBattle"
+  },
+  {
+    "id": "incident_no_time_to_mourn",
+    "title": "{=GL0jmbbJ}No Time to Mourn",
+    "description": "{=Qrj5hN2k}It is time to bury your dead, but the ground is frozen solid and the wood from nearby trees is too wet to make a proper pyre. You can give the bodies a hasty burial in a nearby gully, even though wolves or other animals may find them, or take the bodies with you to bury them as soon as you can.",
+    "trigger": "LeavingBattle",
+    "type": "PostBattle"
+  },
+  {
+    "id": "incident_nomads_wish_to_settle",
+    "title": "{=5vN2NZ8R}Nomads Wish to Settle",
+    "description": "{=U4Ybz08z}A desperate band of nomads has arrived at your village, seeking a place to settle down. Their herds were ravaged by an epidemic, they say, and they are ready to take up farming or work as laborers. Otherwise, they must starve or give themselves to another tribe as servants. The villagers are skeptical. Nomads are too lazy to be farmers, they say, preferring horse theft and feuds.",
+    "trigger": "LeavingVillage",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_occupational_safety",
+    "title": "{=l8rpMldr}Occupational Safety",
+    "description": "{=Eih6lrcN}Business is good at your {WORKSHOP} in {TOWN}, but in the rush to keep up with demand the normal precautions are not being taken. {INJURY_TEXT} He will live, but is unlikely to be able to do skilled work, and the rest of the workers are worried about future accidents.",
+    "trigger": "EnteringTown",
+    "type": "Workshop"
+  },
+  {
+    "id": "incident_preemptive_work",
+    "title": "{=Zd3jBBun}Preemptive Work",
+    "description": "{=3IphvZTK}In your absence, several families in your district have been hard at work draining a marsh and turning it into a field. The survey records in your treasury however indicate clearly that the marsh is part of your domain. They almost certainly did not know this, but you are entitled to claim the field or charge them for working it.",
+    "trigger": "EnteringTown | EnteringCastle",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_purebred_horse",
+    "title": "{=eWh4BDkx}Purebred Horse",
+    "description": "{=J9HLJpk7}As you leave the village, one of your cavalry recruits proudly presents to you a new horse he purchased. Maybe it's not the fastest beast on four legs, he says, but it's strong and spirited - he saw it fighting another of the trader's horses. You run an eye over the beast and see that your man was sold a mule, its ears cleverly cropped to resemble a horse's. The creature is strong enough but far too stubborn to serve as a cavalry mount. You know that your man will be the laughingstock of your company for weeks.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_respect_for_the_slain",
+    "title": "{=EilA5dlq}Respect for the Slain",
+    "description": "{=pNVKWAKo}Throughout your visit to {VILLAGE}, one of your older {TROOP_TYPE} seems moody and downcast. As you march out, he suddenly stops, stares at a roadside stall, then breaks ranks from your party and starts shouting at the vendor. The story quickly comes tumbling out. He served in one of the Empire's old legions in a battle here against the {NEAREST_OTHER_CULTURE}, and the vendor is selling scraps of metal that were clearly looted from the graves of the dead.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_right_of_pillage",
+    "title": "{=p0bMRIum}Right of Pillage",
+    "description": "{=NWJ87xjB}As you prepare to march forth from newly captured {TOWN_NAME}, your men stop you. They shed their blood for your wars and you denied them their customary right to sack it. They say that it you will not let them enrich themselves from the enemy, then you should enrich them from your purse",
+    "trigger": "LeavingTown | LeavingCastle",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_rooster_theft",
+    "title": "{=0EG0iB9p}Rooster theft",
+    "description": "{=8zFwYZeQ}As you ride off, a villager runs after you accusing one of your men of stealing a rooster. A few squawks silence the culprit's attempt to deny the crime. Honor requires you to uphold the laws of the land, but your men expect a generous {RANK} to value those who shed blood for {PRONOUN} over those who do not.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_saint_of_the_woods",
+    "title": "{=SqpOlZhl}Saint of the Woods",
+    "description": "{=RrHS8JOx}As you depart the scene of your victory, a man dressed in white robes emerges from a nearby wood. He tells you that you owe your victory to the intervention of Hageos Tristamos, a holy man from a century ago who assists those who fight in a noble cause, and asks that you donate half the loot to the local shrine in gratitude, where it will be used to feed the poor.",
+    "trigger": "LeavingBattle",
+    "type": "Illness"
+  },
+  {
+    "id": "incident_sandstorm_warning",
+    "title": "{=cSa3IFw5}Sandstorm Warning",
+    "description": "{=yJMpjiP7}As you set out again after the battle, you feel a few scattered drops of rain. Then there is a rush of wind, and a wall of dust engulfs you. The blowing grains sting your face, and you can see but a few arms' lengths ahead. You know that it is a simple matter for men to get lost in the notorious sandstorms of the Nahhas, only to be found later dead of thirst or buried in a dune.",
+    "trigger": "LeavingEncounter",
+    "type": "HardTravel"
+  },
+  {
+    "id": "incident_secession_of_the_plebs",
+    "title": "{=VvwnbRx4}Secession of the Plebs",
+    "description": "{=GgYzaakh}Trade in {TOWN_NAME} has been booming, and prices and wages have been going up. The workers at your {WORKSHOP} have taken notice. Your superviser reports that they have all refused to come in to work until they receive a pay increase. He notes that there remain plenty of hungry mouths and willing hands in town, but that the current workers might cause trouble if they are replaced.",
+    "trigger": "EnteringTown",
+    "type": "Workshop"
+  },
+  {
+    "id": "incident_servants_of_mercy",
+    "title": "{=FYvrShj3}Servants of Mercy",
+    "description": "{=t0iKT1VJ}As the dust of battle settles, you see a group of women tending to the wounded. They explain that they are the Servants of Hope, mendicant sisters pledged to assist the afflicted in the hope of winning mercy from Heaven. They offer to accompany your party for a few days and tend to your men's wounds, asking nothing in return.",
+    "trigger": "LeavingBattle",
+    "type": "Illness"
+  },
+  {
+    "id": "incident_singing_for_supper",
+    "title": "{=9uaAUCas}Singing for Supper",
+    "description": "{=iV57q3Tm}A strolling minstrel offers to compose an epic ballad about your heroic deeds, potentially increasing your renown for a little amount of coin. Do you accept his offer, and if so, do you offer him any guidance on what to sing?",
+    "trigger": "LeavingTown",
+    "type": "DreamsSongsAndSigns"
+  },
+  {
+    "id": "incident_sleeping_sentry",
+    "title": "{=qFa4Oik0}Sleeping Sentry",
+    "description": "{=gQigaCkD}One of your {RECRUIT} fell asleep on guard. He was new to your company and not popular, and your men are angry. He put their lives at risk, and they demand he be turned over to them to face the ancient Calradic penalty - to run the gauntlet of men with sticks who will beat him, an ordeal that frequently ends in death.",
+    "trigger": "LeavingEncounter",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_soldier_in_debt",
+    "title": "{=GDHHAyQ5}Soldier in Debt",
+    "description": "{=brV8zgmJ}As you leave town, a merchant approaches you. He shows you a document indicating that one of your {TROOP_TYPE} took out a loan, to be repaid on departure with a quarter part as interest. Your man shrugs, calls the merchant a thief for loaning at such ruinous rates, and says he lost the money gambling anyway.",
+    "trigger": "LeavingTown",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_solider_is_wanted_criminal",
+    "title": "{=eN5vqUuF}Soldier is Wanted Criminal",
+    "description": "{=z4RgNBkq}On your way out of the village, a delegation led by the elder approaches you. They point to a {TROOP_TYPE} in your ranks - a good warrior, but none too outgoing. They say he used to farm in this village, but fled after he killed his neighbor in a quarrel over boundary stones. The accused snaps back with a sudden vehemence - his victim was a cheat, and deserved what he got. Under the law, murder requires the death penalty, though custom allows blood money to be paid instead.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_souvenirs",
+    "title": "{=LAMmAUvt}Souvenirs",
+    "description": "{=PqzLYt6i}Some time recently - you're not sure exactly when - your men started a new post-battle tradition - going about the field collecting grisly trophies from slain enemies. Now you can't help noticing these prizes dangling from their belts or the halters of their horses.",
+    "trigger": "LeavingBattle",
+    "type": "PostBattle"
+  },
+  {
+    "id": "incident_speculative_investment",
+    "title": "{=12bmA5qD}Speculative Investment",
+    "description": "{=vPNDzUAF}You strike up a conversation with a trader in town, who is desperate for news of the wars. When you tell him about the looting of {VILLAGE_NAME}, he makes a proposition. The price of grain will almost certainly rise, and he intends to buy up food now to sell it later when the hunger hits. He needs money, and he will sell you {OTHER_GOOD} at far below their market value - 1000 denars. He asks you also to keep this information to yourself.",
+    "trigger": "LeavingTown",
+    "type": "Profit"
+  },
+  {
+    "id": "incident_spoiled_food_supplies",
+    "title": "{=5aPGeeDf}Spoiled Food Supplies",
+    "description": "{=RsWbJJS7}A delegation of your troops approach you. They show you a heel of bread from your stores, crawling with maggots. A piece of dried meat is streaked with mold. Your quartermaster appears to have packed the goods carelessly, allowing moisture and pests to get inside.",
+    "trigger": "LeavingVillage",
+    "type": "FoodConsumption"
+  },
+  {
+    "id": "incident_successful_harvest",
+    "title": "{=MaaFv4Po}Successful Harvest",
+    "description": "{=evcKUaab}An early thaw and a warm spring has ensured a bumper crop, which the prayers of the villagers and the efforts of the local cats have protected from rats and birds. Such bounties occur rarely. What will you do?",
+    "trigger": "LeavingTown | LeavingCastle",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_suitable_boy",
+    "title": "{=7y4Fbx8K}A Suitable Boy",
+    "description": "{=jB4tmY9W}As you leave the village, a young woman approaches you carrying a months-old baby, surrounded by her relatives. She points at one of your men and says that he was the father, and that he should stay here and wed her. The lad, a strong fellow but not good with words, is too flustered to speak. You can't exactly recall if you passed through here a year ago or not.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_swaggering_shield_brothers",
+    "title": "{=KtJYTHVi}Swaggering Shield-Brothers",
+    "description": "{=YCPF4qyz}You are approached by a pair of Skolderbroda. They are anxious to fight for you and ask only that you pay them a token sum. They say you that a warlord like you deserves the services of men such as themselves - praise to you, but a slight to the rest of your party. One of your troops tells you that he's sure that these men must have broken their vows to their company, or why else would they be so eager to join you?",
+    "trigger": "LeavingVillage",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_tempting_berries",
+    "title": "{=o7kYGTjF}Tempting Berries",
+    "description": "{=OmYT9wnV}Your party stumbles upon some bushes with ripe berries near a village, allowing for a refreshing break during the journey. You haven't seen berries quite like these before, but they do look tasty.",
+    "trigger": "LeavingVillage",
+    "type": "HuntingForaging"
+  },
+  {
+    "id": "incident_the_deer_departed",
+    "title": "{=IG19KaLK}The Deer Departed",
+    "description": "{=oxBlBLWF}You noticed that the deer around this Khuzait village are unusually unafraid of humans. One of your men manages to shoot one. The villagers approach him afterwards and beg him not to eat the animal. Their former shaman transformed himself into a deer some years ago, they say, and while they don't know if the animal your man killed is him or not, they want to perform the burial rights properly, just to be sure.",
+    "trigger": "LeavingVillage",
+    "type": "HuntingForaging"
+  },
+  {
+    "id": "incident_the_pavillon",
+    "title": "{=rG4b9Tft}The Pavillon",
+    "description": "{=qBsa5KC5}As you leave town you come across an encampment of traveling entertainers. You see tattered but colorful tents, you hear wailing but enticing music, and smell the scent of cheap incense and meat that is probably slightly spoiled but spiced so that you would never notice. A group of women in some noble's thrown-away silks, their faces made up skillfully with charcoal and sheep's blood, beckon to your men. What do you do?",
+    "trigger": "LeavingTown",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_the_quiet_life",
+    "title": "{=3M54uDKZ}The Quiet Life",
+    "description": "{=IaOfWrNF}As you pass through your lands, you see several of your {TROOP_NAME} casting envious eyes over the farmers in the fields. They are tired of wandering from place to place, they say, and hope to put down roots somewhere and start a family. Their contract of enlistment is not yet up but it occurs to you that if they settled in your estates, it would be a boon to your local militia.",
+    "trigger": "EnteringTown | EnteringCastle",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_third_party_arbitration",
+    "title": "{=trfafbJW}Third-Party Arbitration",
+    "description": "{=XQU3Tobe}Knowing your reputation as a trader, two merchants in {TOWN_NAME} are asking you to arbitrate a dispute between them. The two had drawn up a contract wherein each partner had a half-share in an incoming shipment of wine. When it arrived, however, the sea captain demanded twice the price. The wealthier of the two partners was at the docks. He took the initiative and purchased the goods, deciding to take a loss for the sake of his reputation as a reliable supplier to the local taverns, but the second is poorer and wants out of the deal.",
+    "trigger": "EnteringTown",
+    "type": "Profit"
+  },
+  {
+    "id": "incident_through_proper_channels",
+    "title": "{=S12S4pmL}Through the proper channels",
+    "description": "{=3eOOT66E}One of your tenants has a proposal for you. He proposes to dig a channel known as a qanah into a hillside, where the water table is high, which will allow him to flood some low-lying ground and turn it into an oasis garden. The barren hillside is your property, though at present it yields no income of any kind.",
+    "trigger": "EnteringTown | EnteringCastle",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_tiller_and_wanderer",
+    "title": "{=OqlihYNW}The Tiller and the Wanderer",
+    "description": "{=nuqL3OAF}As you are leaving your fief you stumble across an altercation. A group of nomads, who pass by annually on their migration from summer to winter pastures, have allowed their herds to graze in your tenants' crops. Your troops far outnumber the nomads and your tenants are urging you to teach them a lesson, but of course their kin might retaliate at a later date.",
+    "trigger": "LeavingTown | LeavingCastle",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_tipping_the_scales",
+    "title": "{=OXzJbvd8}Tipping the scales",
+    "description": "{=fhjyEgld}Your troops are taking a bit longer than usual to get ready, and you've had time to relax a bit and watch goings-on at the market. One commodity vendor in particular has caught your attention. He always uses one set of weights for the sacks that he is buying from local farmers, and another for goods that he sells. You have little doubt that one or both of these sets is a false measure, allowing him to defraud his customers.",
+    "trigger": "LeavingTown",
+    "type": "Profit"
+  },
+  {
+    "id": "incident_trade_proposal",
+    "title": "{=IaUhqDw6}Trade Proposal",
+    "description": "{=sU4t3v9r}A passing trader offers to buy {GOOD} from your party at well over the price that it would fetch in the nearest town. No doubt some other merchant has fed him bad information on prices, either to put a rival out of business or as a joke.",
+    "trigger": "LeavingEncounter",
+    "type": "Profit"
+  },
+  {
+    "id": "incident_troops_fight_over_insult",
+    "title": "{=4mC7AIPk}Troops Fight over Insult",
+    "description": "{=HpkqVXQ3}A fight breaks out in your camp. A high-born {CAVALRYMAN} demanded a {FOOTMAN} water his horse, even though the {FOOTMAN} is a veteran nearly twice the {CAVALRYMAN}'s age. The two then exchanged insults, and now the {FOOTMAN} demands a duel while the {CAVALRYMAN}, who is only willing to duel his social equal, demands the {FOOTMAN} be told to watch his place.",
+    "trigger": "LeavingVillage",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_turn_pike",
+    "title": "{=kl13BJZB}Turnpike",
+    "description": "{=VauaVUNS}You notice a footpath leading through your estate which could be quickly improved to be used by wagons and be a shortcut between the main trade roads. You could charge tolls and turn it into a turnpike, though the locals would resent the increased traffic and fees on their customary route.",
+    "trigger": "LeavingTown | LeavingCastle",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_vedmaks_treasure",
+    "title": "{=6bF0LqJo}Vedmak's Treasure",
+    "description": "{=tfckGAIA}As you prepare to leave, one of your men says the he was approached by a villager. There is a particularly ill-tempered vedmak on the edge of town who makes his living not from healing or love-potions but from black magic, and who threatens to curse villagers unless they pay him. They asked your men to drive the vedmak away and burn his hut, and told them that they can have his ill-gotten gains.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_veteran_mentor",
+    "title": "{=1jmYaNxu}Veteran Mentor",
+    "description": "{=CObK3sDa}As you leave the village, a greybeard walks up to you carrying a cudgel. Although he's too old to fight, he says, he was a warrior once and claims to know a trick move, a way of suddenly closing with your opponent and tripping them with a spear, which he offers to teach to your troops for a price. He shows you his battle-scars, which are indeed impressive.",
+    "trigger": "LeavingVillage",
+    "type": "TroopSettlementRelation"
+  },
+  {
+    "id": "incident_veterans_demand_privileges",
+    "title": "{=j8Aq3lRW}Veterans demand privileges",
+    "description": "{=FbKc1AwE}Several of your newer recruits approach you. Your {HIGH_TIER_TROOPS} have been demanding the freshest cuts of meat and highest quality bread from your stores, letting them make do with gristle and stale crusts. The veterans say that this is the privilege of experience, and that it will motivate your recruits to improve themselves.",
+    "trigger": "LeavingSettlement",
+    "type": "PartyCampLife"
+  },
+  {
+    "id": "incident_vintage_of_victory",
+    "title": "{=1cgOQB5K}Vintage of Victory",
+    "description": "{=ZoIXaxj9}Among the loot from your last battle you discover a vat of fine wine from {WINE_SETTLEMENT_NAME}. You know that you could sell it for a considerable sum, but your men just risked their lives and don't seem inclined to pocket silver tomorrow for a drink today.",
+    "trigger": "LeavingBattle",
+    "type": "PostBattle"
+  },
+  {
+    "id": "incident_wages_of_war_and_diseases",
+    "title": "{=7q53TLg7}Wages of war and diseases",
+    "description": "{=FZXYHC7s}Between the wars and an epidemic, the villages near {FIEF_NAME} are experiencing a shortage of people, especially young men. Fields are going fallow for lack of hands to plough them, especially those cleared only in recent generations where the title is in dispute. As liege, you can redistribute this unused land, but you will need to find labor.",
+    "trigger": "LeavingTown | LeavingCastle",
+    "type": "FiefManagement"
+  },
+  {
+    "id": "incident_water_supplies",
+    "title": "{=xYjLaJxA}Water supplies",
+    "description": "{=EbNZg7jp}In hot climes, often the most vulnerable part of a fortress is its water supply. Most depend on wells but those can run dry. After days spent in front of {FORTRESS_NAME}, you've caught glimpses of the defenders slipping into the hills. You explore where they've gone, and eventually you come across a rudimentary cistern. You suspect that they must be refreshing their water here.",
+    "trigger": "DuringSiege",
+    "type": "Siege"
+  },
+  {
+    "id": "incident_wedding_celebration",
+    "title": "{=G16Nlaaq}Wedding Celebration",
+    "description": "{=dkwLMXDz}As you break camp, several of your veterans come forward, somewhat sheepishly. They push one of their number forward and say that he married a young lass at the last village that you visited. They ask if they can share one of the amphorae of wine that they've noticed you are carrying in celebration.",
+    "trigger": "LeavingEncounter",
+    "type": "TroopSettlementRelation"
+  }
+]

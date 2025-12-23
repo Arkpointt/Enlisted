@@ -2810,7 +2810,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var lordName = enlistment.CurrentLord?.Name?.ToString() ?? "your lord";
                 var confirmText = new TextObject(
-                    "Pay has been late for too long. You approach your lance-mates and explain that you can't continue like this.\n\n" +
+                    "Pay has been late for too long. You approach your comrades and explain that you can't continue like this.\n\n" +
                     "They nod slowly. \"Can't blame you. No one would. Go — find something better.\"\n\n" +
                     "You can leave now with minimal consequences:\n" +
                     "• -5 relation with {LORD_NAME} (they understand)\n" +

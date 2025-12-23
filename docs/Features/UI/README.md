@@ -55,7 +55,7 @@ This master document includes:
 
 **December 22, 2025:**
 - Updated README to reflect current UI systems
-- Removed references to deleted systems (Modern Event UI Gauntlet, Lance menu, News & Dispatches)
+- Cleaned up references to current UI systems
 - Updated quick links to match current master document structure
 - Added Localization System to technical reference links
 

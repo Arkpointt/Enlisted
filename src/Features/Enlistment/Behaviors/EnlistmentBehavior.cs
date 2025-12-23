@@ -421,6 +421,31 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private List<string> _minorFactionWarRelations = new List<string>();
 
         // ========================================================================
+        // NCO AND SOLDIER NAME SYSTEM
+        // Persistent names generated on enlistment for personalized event text.
+        // NCO = Non-commissioned officer (culture-specific T5 rank + generated name)
+        // Soldier names = pool of 3 comrade names used randomly in events
+        // ========================================================================
+
+        /// <summary>
+        ///     First name of the NCO (non-commissioned officer) assigned to the player.
+        ///     Generated on enlistment using Bannerlord's NameGenerator for the lord's culture.
+        /// </summary>
+        private string _ncoFirstName;
+
+        /// <summary>
+        ///     Culture-specific rank title for the NCO (e.g., "Sergeant" for Vlandia, "Huskarl" for Sturgia).
+        ///     Pulled from progression_config.json T5 rank for the lord's culture.
+        /// </summary>
+        private string _ncoRank;
+
+        /// <summary>
+        ///     Pool of 3 soldier first names for personalized event dialogue.
+        ///     Generated on enlistment, used randomly when {SOLDIER_NAME} placeholder appears.
+        /// </summary>
+        private List<string> _soldierNames = new List<string>();
+
+        // ========================================================================
         // QUARTERMASTER HERO SYSTEM
         // Persistent NPC quartermaster with personality archetype
         // ========================================================================
@@ -546,6 +571,113 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public bool IsInDesertionGracePeriod =>
             _pendingDesertionKingdom != null &&
             CampaignTime.Now < _desertionGracePeriodEnd;
+
+        /// <summary>
+        ///     Full name with rank of the NCO (e.g., "Sergeant Aldric" or "Huskarl Bjorn").
+        ///     Returns null if not enlisted or names not generated.
+        /// </summary>
+        public string NcoFullName => !string.IsNullOrEmpty(_ncoRank) && !string.IsNullOrEmpty(_ncoFirstName)
+            ? $"{_ncoRank} {_ncoFirstName}"
+            : null;
+
+        /// <summary>
+        ///     Just the NCO rank title (e.g., "Sergeant", "Huskarl").
+        /// </summary>
+        public string NcoRank => _ncoRank;
+
+        /// <summary>
+        ///     Just the NCO first name (e.g., "Aldric", "Bjorn").
+        /// </summary>
+        public string NcoFirstName => _ncoFirstName;
+
+        /// <summary>
+        ///     Returns a random soldier name from the pool for use in event text.
+        ///     Returns "a soldier" if pool is empty.
+        /// </summary>
+        public string GetRandomSoldierName()
+        {
+            if (_soldierNames == null || _soldierNames.Count == 0)
+                return "a soldier";
+            return _soldierNames[MBRandom.RandomInt(_soldierNames.Count)];
+        }
+
+        /// <summary>
+        ///     Generates NCO and soldier names based on the lord's culture.
+        ///     Called on enlistment; names persist until discharge.
+        /// </summary>
+        private void GenerateNcoAndSoldierNames()
+        {
+            if (_enlistedLord?.Culture == null)
+            {
+                ModLogger.Warn("Enlistment", "Cannot generate NCO names - lord or culture is null");
+                return;
+            }
+
+            var culture = _enlistedLord.Culture;
+
+            // Generate NCO rank from progression_config.json T5 rank for this culture
+            _ncoRank = GetCultureT5Rank(culture.StringId);
+
+            // Generate NCO first name using Bannerlord's NameGenerator
+            try
+            {
+                bool isFemale = MBRandom.RandomFloat < 0.2f; // 20% chance female NCO
+                var firstName = NameGenerator.Current.GenerateFirstNameForPlayer(culture, isFemale);
+                _ncoFirstName = firstName?.ToString() ?? "the Sergeant";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Enlistment", $"NameGenerator failed for NCO, using fallback: {ex.Message}");
+                _ncoFirstName = "the Sergeant";
+            }
+
+            // Generate 3 soldier names for the comrade pool
+            _soldierNames = new List<string>();
+            for (int i = 0; i < 3; i++)
+            {
+                try
+                {
+                    bool isFemale = MBRandom.RandomFloat < 0.2f;
+                    var firstName = NameGenerator.Current.GenerateFirstNameForPlayer(culture, isFemale);
+                    _soldierNames.Add(firstName?.ToString() ?? $"Soldier {i + 1}");
+                }
+                catch
+                {
+                    _soldierNames.Add($"Soldier {i + 1}");
+                }
+            }
+
+            ModLogger.Info("Enlistment", $"Generated NCO: {NcoFullName}, Soldiers: {string.Join(", ", _soldierNames)}");
+        }
+
+        /// <summary>
+        ///     Clears NCO and soldier names when enlistment ends.
+        /// </summary>
+        private void ClearNcoAndSoldierNames()
+        {
+            _ncoFirstName = null;
+            _ncoRank = null;
+            _soldierNames?.Clear();
+        }
+
+        /// <summary>
+        ///     Gets the T5 rank title for a given culture from progression_config.json.
+        ///     Used for NCO rank titles. Falls back to "Sergeant" if culture not found.
+        /// </summary>
+        private string GetCultureT5Rank(string cultureId)
+        {
+            // T5 is the NCO/Sergeant tier. Use ConfigurationManager's public method.
+            var normalizedId = cultureId?.ToLowerInvariant() ?? "mercenary";
+            var rankTitle = ConfigurationManager.GetCultureRankTitle(5, normalizedId);
+
+            // Strip localization prefix if present (e.g., "{=Enlisted_Rank_Vlandia_T5}Sergeant")
+            if (!string.IsNullOrEmpty(rankTitle) && rankTitle.Contains("}"))
+            {
+                rankTitle = rankTitle.Substring(rankTitle.IndexOf("}") + 1);
+            }
+
+            return !string.IsNullOrEmpty(rankTitle) ? rankTitle : "Sergeant";
+        }
 
         private bool ShouldActivationBeOn()
         {
@@ -1475,6 +1607,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_savedGraceEnlistmentDate", ref _savedGraceEnlistmentDate);
             SyncKey(dataStore, "_graceProtectionEnds", ref _graceProtectionEnds);
             SyncKey(dataStore, "_selectedDuty", ref _selectedDuty);
+            
+            // NCO and soldier names for personalized event text
+            SyncKey(dataStore, "_ncoFirstName", ref _ncoFirstName);
+            SyncKey(dataStore, "_ncoRank", ref _ncoRank);
+            SyncSoldierNames(dataStore);
+            
             SyncKey(dataStore, "_fatigueCurrent", ref _fatigueCurrent);
             SyncKey(dataStore, "_fatigueMax", ref _fatigueMax);
 
@@ -1707,6 +1845,50 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (_minorFactionDesertionCooldowns == null)
                 {
                     _minorFactionDesertionCooldowns = new Dictionary<string, CampaignTime>();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Serializes the list of soldier names for save/load persistence.
+        /// </summary>
+        private void SyncSoldierNames(IDataStore dataStore)
+        {
+            try
+            {
+                var nameCount = _soldierNames?.Count ?? 0;
+                SyncKey(dataStore, "_soldierNames_count", ref nameCount);
+
+                if (!dataStore.IsLoading)
+                {
+                    // Saving: serialize each name
+                    for (int i = 0; i < (_soldierNames?.Count ?? 0); i++)
+                    {
+                        var name = _soldierNames[i];
+                        SyncKey(dataStore, $"_soldierName_{i}", ref name);
+                    }
+                }
+                else
+                {
+                    // Loading: reconstruct list
+                    _soldierNames = new List<string>();
+                    for (int i = 0; i < nameCount; i++)
+                    {
+                        var name = "";
+                        SyncKey(dataStore, $"_soldierName_{i}", ref name);
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            _soldierNames.Add(name);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Save", $"Failed to sync soldier names: {ex.Message}");
+                if (dataStore.IsLoading)
+                {
+                    _soldierNames = new List<string>();
                 }
             }
         }
@@ -3063,6 +3245,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord);
                 }
                 
+                // Generate NCO and soldier names for personalized event text
+                GenerateNcoAndSoldierNames();
+                
                 // Initialize supply simulation for the company
                 // Preserve supply level during grace period re-enlistment (same as tier/XP preservation)
                 CompanySupplyManager.Initialize(lord, preserveSupply: resumingGraceService);
@@ -3746,6 +3931,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentDate = CampaignTime.Zero;
                 _disbandArmyAfterBattle = false; // Clear any pending army operations
                 ClearPayState("service_ended");
+                ClearNcoAndSoldierNames();
                 if (!playerInBattleState)
                 {
                     ForceFinishLingeringEncounter("StopEnlist");

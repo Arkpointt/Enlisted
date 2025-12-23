@@ -154,7 +154,7 @@ Content System
 
 4. Effect Resolution
    ├── Update escalation state (Scrutiny, Discipline, Medical)
-   ├── Update reputation (Officer, Soldier, QM, Lance)
+   ├── Update reputation (Officer, Soldier, QM, Lord)
    ├── Award XP and trait progress
    ├── Modify resources (gold, supplies, food)
    └── Set flags for follow-up events
@@ -341,7 +341,7 @@ public bool MeetsRequirements(EventRequirements req)
   "officer_rep": 10,
   "soldier_rep": -5,
   "qm_rep": 3,
-  "lance_rep": 5
+  "soldierRep": 5
 }
 ```
 

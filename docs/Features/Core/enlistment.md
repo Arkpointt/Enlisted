@@ -169,7 +169,7 @@ Success improves reputation and company needs; failure or declining orders carri
 - **CompanyNeedsManager.cs**: Tracking of company-wide needs (Readiness, Morale, etc.).
 
 ## Edge Cases
-(Unchanged from v1.x except for terminology updates: "Lance" -> "Unit/Company")
+(Standard edge cases for enlistment system)
 
 ## Acceptance Criteria
 - [x] Can enlist with any lord that accepts player.

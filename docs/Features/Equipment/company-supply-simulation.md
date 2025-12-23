@@ -535,12 +535,12 @@ public class CompanySupplyManager
 
 ## Integration with Existing Systems
 
-### **1. Lance Needs System**
+### **1. Company Needs System**
 
-Supply is already tracked in `LanceNeedsState.Supplies` (0-100):
+Supply is already tracked in `CompanyNeedsState.Supplies` (0-100):
 
 ```csharp
-public class LanceNeedsState
+public class CompanyNeedsState
 {
     public int Supplies 
     { 

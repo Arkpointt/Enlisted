@@ -29,7 +29,7 @@
 | **Pay Muster** | Periodic payout events (~12 days). |
 | **Pay Tension** | Escalation counter (0-100) when pay is late or disrupted. |
 | **Battle Loot Share** | Gold bonus from victories (T1-T3). |
-| **Unit Fund** | 5% deduction for shared unit supplies (replaces legacy Lance Fund). |
+| **Unit Fund** | 5% deduction for shared unit supplies. |
 | **Tier-Gated Loot** | T4+ access native loot screens. |
 
 ---

@@ -54,7 +54,7 @@
         "titleId": "ll_evt_commander_onboard_01_commission_title",
         "setupId": "ll_evt_commander_onboard_01_commission_setup",
         "title": "Your Commission",
-        "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
+        "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a squad anymore. This is real command. Real soldiers in your party. Real consequences.",
         "options": [
           {
             "id": "ready",
@@ -78,7 +78,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -113,7 +113,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -148,7 +148,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -183,7 +183,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -201,7 +201,7 @@
       "variants": {
         "first_time": {
           "setupId": "ll_evt_commander_onboard_01_commission_setup_first_time",
-          "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
+          "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a squad anymore. This is real command. Real soldiers in your party. Real consequences.",
           "options": [
             {
               "id": "ready",
@@ -225,7 +225,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -260,7 +260,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -295,7 +295,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -330,7 +330,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -371,7 +371,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -406,7 +406,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -441,7 +441,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -476,7 +476,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -517,7 +517,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -552,7 +552,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -587,7 +587,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -622,7 +622,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -716,7 +716,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 7,
+              "soldierRep": 7,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -751,7 +751,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -786,7 +786,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -821,7 +821,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -863,7 +863,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 7,
+                "soldierRep": 7,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -898,7 +898,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -933,7 +933,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -968,7 +968,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -1059,7 +1059,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 10,
+              "soldierRep": 10,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1094,7 +1094,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1129,7 +1129,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1164,7 +1164,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -1206,7 +1206,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 10,
+                "soldierRep": 10,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -1241,7 +1241,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -1276,7 +1276,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -1311,7 +1311,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -1329,7 +1329,7 @@
       }
     },
     {
-      "id": "enlisted_onboard_01_meet_lance",
+      "id": "enlisted_onboard_01_meet_squad",
       "category": "onboarding",
       "track": "enlisted",
       "metadata": {
@@ -1377,13 +1377,13 @@
       "content": {
         "titleId": "ll_evt_enlisted_onboard_01_meet_lance_title",
         "setupId": "ll_evt_enlisted_onboard_01_meet_lance_setup",
-        "title": "Meeting Your Lance",
-        "setup": "{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over like they're inspecting a horse they're not sure about buying.\n\n\"{PLAYER_NAME}, is it? You're with {LANCE_NAME} now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.\"\n\nThe rest of the lance watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n\"Understood?\"",
+        "title": "Meeting Your Squad",
+        "setup": "{SERGEANT} {SERGEANT} looks you over like they're inspecting a horse they're not sure about buying.\n\n\"{PLAYER_NAME}, is it? You're with the squad now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.\"\n\nThe rest of the squad watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n\"Understood?\"",
         "options": [
           {
             "id": "respectful",
             "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_text",
-            "text": "\"Understood, {LANCE_LEADER_RANK}.\"",
+            "text": "\"Understood, {SERGEANT}.\"",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -1402,14 +1402,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 3,
+              "soldierRep": 3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_outcome",
-            "outcome": "{LANCE_LEADER_SHORT} gives a curt nod. \"Good. We'll see if you last the week.\" They walk off. Not warm, but not hostile. You've made no enemies today.",
+            "outcome": "{SERGEANT} gives a curt nod. \"Good. We'll see if you last the week.\" They walk off. Not warm, but not hostile. You've made no enemies today.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -1418,7 +1418,7 @@
           {
             "id": "eager",
             "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_text",
-            "text": "\"Ready to prove myself, {LANCE_LEADER_RANK}.\"",
+            "text": "\"Ready to prove myself, {SERGEANT}.\"",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -1437,14 +1437,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_outcome",
-            "outcome": "A flicker of something — amusement? approval? — crosses {LANCE_LEADER_SHORT}'s face. \"Keen one, are you? We'll see how long that lasts.\" Someone in the lance chuckles. But it's not unfriendly.",
+            "outcome": "A flicker of something — amusement? approval? — crosses {SERGEANT}'s face. \"Keen one, are you? We'll see how long that lasts.\" Someone in the squad chuckles. But it's not unfriendly.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -1472,14 +1472,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_outcome",
-            "outcome": "{LANCE_LEADER_SHORT} stares at you a moment longer, then shrugs. \"Quiet type. Fine. Just don't be stupid.\" They leave. You've made no impression at all. That might be good. That might be bad.",
+            "outcome": "{SERGEANT} stares at you a moment longer, then shrugs. \"Quiet type. Fine. Just don't be stupid.\" They leave. You've made no impression at all. That might be good. That might be bad.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -1507,14 +1507,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": -3,
+              "soldierRep": -3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_outcome",
-            "outcome": "The lance goes quiet. {LANCE_LEADER_SHORT}'s eyes harden. \"Have you now.\" It's not a question. \"We'll see about that.\"\n\nAs they walk away, you hear snickering from the recruits. {RECRUIT_NAME} grins at you. The veterans just shake their heads.",
+            "outcome": "The squad goes quiet. {SERGEANT}'s eyes harden. \"Have you now.\" It's not a question. \"We'll see about that.\"\n\nAs they walk away, you hear snickering from the recruits. {RECRUIT_NAME} grins at you. The veterans just shake their heads.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -1525,12 +1525,12 @@
       "variants": {
         "first_time": {
           "setupId": "ll_evt_enlisted_onboard_01_meet_lance_setup_first_time",
-          "setup": "{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over like they're inspecting a horse they're not sure about buying.\n\n\"{PLAYER_NAME}, is it? You're with {LANCE_NAME} now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.\"\n\nThe rest of the lance watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n\"Understood?\"",
+          "setup": "{SERGEANT} {SERGEANT} looks you over like they're inspecting a horse they're not sure about buying.\n\n\"{PLAYER_NAME}, is it? You're with the squad now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.\"\n\nThe rest of the squad watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n\"Understood?\"",
           "options": [
             {
               "id": "respectful",
               "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_text",
-              "text": "\"Understood, {LANCE_LEADER_RANK}.\"",
+              "text": "\"Understood, {SERGEANT}.\"",
               "tooltip": null,
               "condition": null,
               "risk": "safe",
@@ -1549,14 +1549,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 3,
+                "soldierRep": 3,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_outcome",
-              "outcome": "{LANCE_LEADER_SHORT} gives a curt nod. \"Good. We'll see if you last the week.\" They walk off. Not warm, but not hostile. You've made no enemies today.",
+              "outcome": "{SERGEANT} gives a curt nod. \"Good. We'll see if you last the week.\" They walk off. Not warm, but not hostile. You've made no enemies today.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1565,7 +1565,7 @@
             {
               "id": "eager",
               "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_text",
-              "text": "\"Ready to prove myself, {LANCE_LEADER_RANK}.\"",
+              "text": "\"Ready to prove myself, {SERGEANT}.\"",
               "tooltip": null,
               "condition": null,
               "risk": "safe",
@@ -1584,14 +1584,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_outcome",
-              "outcome": "A flicker of something — amusement? approval? — crosses {LANCE_LEADER_SHORT}'s face. \"Keen one, are you? We'll see how long that lasts.\" Someone in the lance chuckles. But it's not unfriendly.",
+              "outcome": "A flicker of something — amusement? approval? — crosses {SERGEANT}'s face. \"Keen one, are you? We'll see how long that lasts.\" Someone in the squad chuckles. But it's not unfriendly.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1619,14 +1619,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_outcome",
-              "outcome": "{LANCE_LEADER_SHORT} stares at you a moment longer, then shrugs. \"Quiet type. Fine. Just don't be stupid.\" They leave. You've made no impression at all. That might be good. That might be bad.",
+              "outcome": "{SERGEANT} stares at you a moment longer, then shrugs. \"Quiet type. Fine. Just don't be stupid.\" They leave. You've made no impression at all. That might be good. That might be bad.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1654,14 +1654,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": -3,
+                "soldierRep": -3,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_outcome",
-              "outcome": "The lance goes quiet. {LANCE_LEADER_SHORT}'s eyes harden. \"Have you now.\" It's not a question. \"We'll see about that.\"\n\nAs they walk away, you hear snickering from the recruits. {RECRUIT_NAME} grins at you. The veterans just shake their heads.",
+              "outcome": "The squad goes quiet. {SERGEANT}'s eyes harden. \"Have you now.\" It's not a question. \"We'll see about that.\"\n\nAs they walk away, you hear snickering from the recruits. {RECRUIT_NAME} grins at you. The veterans just shake their heads.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1671,12 +1671,12 @@
         },
         "transfer": {
           "setupId": "ll_evt_enlisted_onboard_01_meet_lance_setup_transfer",
-          "setup": "Another lord, another lance. You know how this goes.\n\n{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over. They've seen transfers before too. \"You're with {LANCE_NAME} now. I don't care who you served before or what you did there. Here, you prove yourself fresh.\"\n\nThe lance watches. Sizing you up. Wondering if you're an asset or a liability.",
+          "setup": "Another lord, another squad. You know how this goes.\n\n{SERGEANT} {SERGEANT} looks you over. They've seen transfers before too. \"You're with the squad now. I don't care who you served before or what you did there. Here, you prove yourself fresh.\"\n\nThe squad watches. Sizing you up. Wondering if you're an asset or a liability.",
           "options": [
             {
               "id": "respectful",
               "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_respectful_text",
-              "text": "\"Understood, {LANCE_LEADER_RANK}. Fresh start.\"",
+              "text": "\"Understood, {SERGEANT}. Fresh start.\"",
               "tooltip": null,
               "condition": null,
               "risk": "safe",
@@ -1695,7 +1695,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -1730,14 +1730,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 3,
+                "soldierRep": 3,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_professional_outcome",
-              "outcome": "{LANCE_LEADER_SHORT} nods slowly. \"Experienced, are you? Good. Less hand-holding.\" They point toward the supply wagons. \"Gear check in an hour. Don't be late.\"",
+              "outcome": "{SERGEANT} nods slowly. \"Experienced, are you? Good. Less hand-holding.\" They point toward the supply wagons. \"Gear check in an hour. Don't be late.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1746,7 +1746,7 @@
             {
               "id": "mention_experience",
               "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_mention_experience_text",
-              "text": "\"Served three years under Lord {PREVIOUS_LORD}. I know how a lance works.\"",
+              "text": "\"Served three years under Lord {PREVIOUS_LORD}. I know how a squad works.\"",
               "tooltip": null,
               "condition": null,
               "risk": "risky",
@@ -1765,14 +1765,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": -2,
+                "soldierRep": -2,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_mention_experience_outcome",
-              "outcome": "\"Did you now.\" {LANCE_LEADER_SHORT}'s tone is flat. \"And yet here you are, starting over.\" The implication hangs in the air. Maybe that wasn't the right thing to say.",
+              "outcome": "\"Did you now.\" {SERGEANT}'s tone is flat. \"And yet here you are, starting over.\" The implication hangs in the air. Maybe that wasn't the right thing to say.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1800,14 +1800,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_quiet_outcome",
-              "outcome": "{LANCE_LEADER_SHORT} accepts your silence for what it is — a professional who doesn't need the speech. \"Tent line. Dawn. Don't make me come find you.\"",
+              "outcome": "{SERGEANT} accepts your silence for what it is — a professional who doesn't need the speech. \"Tent line. Dawn. Don't make me come find you.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1817,7 +1817,7 @@
         },
         "return": {
           "setupId": "ll_evt_enlisted_onboard_01_meet_lance_setup_return",
-          "setup": "Back in harness. The smell of camp, the sound of soldiers, the weight of a soldier's life settling back onto your shoulders.\n\n{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over — and pauses. They see it. The way you stand. The way you're already scanning the camp, reading the layout.\n\n\"Served before, have you?\"\n\nThe lance watches with new interest. A veteran returning to the ranks. That's either wisdom or desperation.",
+          "setup": "Back in harness. The smell of camp, the sound of soldiers, the weight of a soldier's life settling back onto your shoulders.\n\n{SERGEANT} {SERGEANT} looks you over — and pauses. They see it. The way you stand. The way you're already scanning the camp, reading the layout.\n\n\"Served before, have you?\"\n\nThe squad watches with new interest. A veteran returning to the ranks. That's either wisdom or desperation.",
           "options": [
             {
               "id": "honest",
@@ -1841,14 +1841,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_honest_outcome",
-              "outcome": "{LANCE_LEADER_SHORT} considers this. \"Time away.\" They don't ask why. Good sergeants don't. \"Well, you know what's expected then. Don't make me teach you twice.\"",
+              "outcome": "{SERGEANT} considers this. \"Time away.\" They don't ask why. Good sergeants don't. \"Well, you know what's expected then. Don't make me teach you twice.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1876,14 +1876,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 7,
+                "soldierRep": 7,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_humble_outcome",
-              "outcome": "Respect flickers in {LANCE_LEADER_SHORT}'s eyes. A veteran who doesn't assume they know everything. Rare. \"Fair enough. But I'll lean on you when I need experience. That's the deal.\"",
+              "outcome": "Respect flickers in {SERGEANT}'s eyes. A veteran who doesn't assume they know everything. Rare. \"Fair enough. But I'll lean on you when I need experience. That's the deal.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1892,7 +1892,7 @@
             {
               "id": "confident",
               "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_confident_text",
-              "text": "\"Three campaigns. I could run a lance in my sleep.\"",
+              "text": "\"Three campaigns. I could run a squad in my sleep.\"",
               "tooltip": null,
               "condition": null,
               "risk": "risky",
@@ -1911,14 +1911,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": -2,
+                "soldierRep": -2,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_confident_outcome",
-              "outcome": "{LANCE_LEADER_SHORT}'s expression cools. \"Could you now. Then you won't mind showing the recruits how it's done.\" They've just assigned you extra work. Well done.",
+              "outcome": "{SERGEANT}'s expression cools. \"Could you now. Then you won't mind showing the recruits how it's done.\" They've just assigned you extra work. Well done.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1946,14 +1946,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_private_outcome",
-              "outcome": "A long look. {LANCE_LEADER_SHORT} doesn't push. \"Fine. Your business. Just do your job.\" They walk off. You've got secrets. That's fine. Everyone does.",
+              "outcome": "A long look. {SERGEANT} doesn't push. \"Fine. Your business. Just do your job.\" They walk off. You've got secrets. That's fine. Everyone does.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2015,7 +2015,7 @@
         "titleId": "ll_evt_enlisted_onboard_02_fire_circle_title",
         "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup",
         "title": "The Fire Circle",
-        "setup": "Evening falls. Cook fires bloom across the camp like orange flowers.\n\n{LANCE_NAME} gathers at their spot — a fire ringed by logs worn smooth by use. Stories overlap. Someone laughs. The smell of food makes your stomach growl.\n\nYou're standing at the edge. {VETERAN_1_NAME} notices you hovering. \"Well? You eating or not?\"\n\nThere's space near the other recruits, {RECRUIT_NAME} among them. There's an open spot closer to the veterans. And there's always the darkness beyond the firelight.",
+        "setup": "Evening falls. Cook fires bloom across the camp like orange flowers.\n\nthe squad gathers at their spot — a fire ringed by logs worn smooth by use. Stories overlap. Someone laughs. The smell of food makes your stomach growl.\n\nYou're standing at the edge. {VETERAN_1_NAME} notices you hovering. \"Well? You eating or not?\"\n\nThere's space near the other recruits, {RECRUIT_NAME} among them. There's an open spot closer to the veterans. And there's always the darkness beyond the firelight.",
         "options": [
           {
             "id": "recruits",
@@ -2039,14 +2039,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 3,
+              "soldierRep": 3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_recruits_outcome",
-            "outcome": "You find a spot next to {RECRUIT_NAME}. They give you a nervous nod. The food is decent. The company is... green. But there's safety in shared inexperience.\n\n\"First day?\" {RECRUIT_NAME} asks. You nod. \"Same. Thought I was going to piss myself when the {LANCE_LEADER_RANK} yelled.\"\n\nYou eat. You listen. You're not alone in being new.",
+            "outcome": "You find a spot next to {RECRUIT_NAME}. They give you a nervous nod. The food is decent. The company is... green. But there's safety in shared inexperience.\n\n\"First day?\" {RECRUIT_NAME} asks. You nod. \"Same. Thought I was going to piss myself when the {SERGEANT} yelled.\"\n\nYou eat. You listen. You're not alone in being new.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2074,7 +2074,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2109,7 +2109,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2144,7 +2144,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": -3,
+              "soldierRep": -3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -2162,7 +2162,7 @@
       "variants": {
         "first_time": {
           "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup_first_time",
-          "setup": "Evening falls. Cook fires bloom across the camp like orange flowers.\n\n{LANCE_NAME} gathers at their spot — a fire ringed by logs worn smooth by use. Stories overlap. Someone laughs. The smell of food makes your stomach growl.\n\nYou're standing at the edge. {VETERAN_1_NAME} notices you hovering. \"Well? You eating or not?\"\n\nThere's space near the other recruits, {RECRUIT_NAME} among them. There's an open spot closer to the veterans. And there's always the darkness beyond the firelight.",
+          "setup": "Evening falls. Cook fires bloom across the camp like orange flowers.\n\nthe squad gathers at their spot — a fire ringed by logs worn smooth by use. Stories overlap. Someone laughs. The smell of food makes your stomach growl.\n\nYou're standing at the edge. {VETERAN_1_NAME} notices you hovering. \"Well? You eating or not?\"\n\nThere's space near the other recruits, {RECRUIT_NAME} among them. There's an open spot closer to the veterans. And there's always the darkness beyond the firelight.",
           "options": [
             {
               "id": "recruits",
@@ -2186,14 +2186,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 3,
+                "soldierRep": 3,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_recruits_outcome",
-              "outcome": "You find a spot next to {RECRUIT_NAME}. They give you a nervous nod. The food is decent. The company is... green. But there's safety in shared inexperience.\n\n\"First day?\" {RECRUIT_NAME} asks. You nod. \"Same. Thought I was going to piss myself when the {LANCE_LEADER_RANK} yelled.\"\n\nYou eat. You listen. You're not alone in being new.",
+              "outcome": "You find a spot next to {RECRUIT_NAME}. They give you a nervous nod. The food is decent. The company is... green. But there's safety in shared inexperience.\n\n\"First day?\" {RECRUIT_NAME} asks. You nod. \"Same. Thought I was going to piss myself when the {SERGEANT} yelled.\"\n\nYou eat. You listen. You're not alone in being new.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2221,7 +2221,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -2256,7 +2256,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -2291,7 +2291,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": -3,
+                "soldierRep": -3,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -2308,7 +2308,7 @@
         },
         "transfer": {
           "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup_transfer",
-          "setup": "Evening. The fire circle.\n\nYou know this ritual. Every lance has one — the spot where stories are told and bonds form. {LANCE_NAME}'s fire is no different. Just unfamiliar faces around familiar flames.\n\n{VETERAN_1_NAME} catches your eye. The look says: we know you're a transfer. Question is, what kind?\n\nThere's space available. Where you sit matters.",
+          "setup": "Evening. The fire circle.\n\nYou know this ritual. Every squad has one — the spot where stories are told and bonds form. the squad's fire is no different. Just unfamiliar faces around familiar flames.\n\n{VETERAN_1_NAME} catches your eye. The look says: we know you're a transfer. Question is, what kind?\n\nThere's space available. Where you sit matters.",
           "options": [
             {
               "id": "earn_spot",
@@ -2332,7 +2332,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -2367,7 +2367,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -2402,14 +2402,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 3,
+                "soldierRep": 3,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_listen_outcome",
-              "outcome": "You sit. You eat. You laugh when others laugh. You keep your mouth shut about how your old lance did things.\n\nSmart. By the end of the night, you know who matters, who to avoid, and where the real power in {LANCE_NAME} lies.\n\nInformation is worth more than friendship. For now.",
+              "outcome": "You sit. You eat. You laugh when others laugh. You keep your mouth shut about how your old squad did things.\n\nSmart. By the end of the night, you know who matters, who to avoid, and where the real power in the squad lies.\n\nInformation is worth more than friendship. For now.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2437,7 +2437,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -2454,7 +2454,7 @@
         },
         "return": {
           "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup_return",
-          "setup": "The fire circle. You've sat at a hundred of these. The warmth, the smoke, the lies soldiers tell each other.\n\nYou'd almost missed it. Almost.\n\n{LANCE_NAME} has gathered. They know you're a veteran — it shows in how you move, how you don't ask obvious questions. {VETERAN_1_NAME} gestures to a spot. \"Sit. Eat.\"\n\nNot a command. An offer. They're curious about you.",
+          "setup": "The fire circle. You've sat at a hundred of these. The warmth, the smoke, the lies soldiers tell each other.\n\nYou'd almost missed it. Almost.\n\nthe squad has gathered. They know you're a veteran — it shows in how you move, how you don't ask obvious questions. {VETERAN_1_NAME} gestures to a spot. \"Sit. Eat.\"\n\nNot a command. An offer. They're curious about you.",
           "options": [
             {
               "id": "modest",
@@ -2478,7 +2478,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -2513,7 +2513,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 7,
+                "soldierRep": 7,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -2548,14 +2548,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_mentor_outcome",
-              "outcome": "The recruit is holding their spoon wrong. Small thing. But you remember being that green.\n\n\"Like this,\" you say quietly, demonstrating. \"Keeps the heat off your fingers.\"\n\n{RECRUIT_NAME} blinks. Adjusts. \"Thanks.\"\n\n{LANCE_LEADER_SHORT} notices the exchange. Doesn't say anything. But they notice.",
+              "outcome": "The recruit is holding their spoon wrong. Small thing. But you remember being that green.\n\n\"Like this,\" you say quietly, demonstrating. \"Keeps the heat off your fingers.\"\n\n{RECRUIT_NAME} blinks. Adjusts. \"Thanks.\"\n\n{SERGEANT} notices the exchange. Doesn't say anything. But they notice.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2583,14 +2583,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 2,
+                "soldierRep": 2,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_ghosts_outcome",
-              "outcome": "The fire crackles. Voices fade to background noise.\n\nYou've seen men die at fires like this. Celebrated victories that cost too much. Mourned friends whose names you're starting to forget.\n\nYou eat. You don't talk.\n\nThe lance gives you space. Veterans understand silence.",
+              "outcome": "The fire crackles. Voices fade to background noise.\n\nYou've seen men die at fires like this. Celebrated victories that cost too much. Mourned friends whose names you're starting to forget.\n\nYou eat. You don't talk.\n\nThe squad gives you space. Veterans understand silence.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2652,7 +2652,7 @@
         "titleId": "ll_evt_enlisted_onboard_03_prove_yourself_title",
         "setupId": "ll_evt_enlisted_onboard_03_prove_yourself_setup",
         "title": "Prove Yourself",
-        "setup": "{LANCE_LEADER_SHORT} finds you before the morning meal. The look on their face says this isn't social.\n\n\"New blood gets the worst jobs. That's how it works. That's how it's always worked. That's how it'll work long after both of us are worm food.\"\n\nThey gesture at three unpleasant realities of camp life: a pile of gear that needs maintenance, a stack of wood that needs hauling, and a latrine trench that needs... attention.\n\n\"Pick one. Do it right. Don't make me come check on you.\"",
+        "setup": "{SERGEANT} finds you before the morning meal. The look on their face says this isn't social.\n\n\"New blood gets the worst jobs. That's how it works. That's how it's always worked. That's how it'll work long after both of us are worm food.\"\n\nThey gesture at three unpleasant realities of camp life: a pile of gear that needs maintenance, a stack of wood that needs hauling, and a latrine trench that needs... attention.\n\n\"Pick one. Do it right. Don't make me come check on you.\"",
         "options": [
           {
             "id": "gear",
@@ -2676,14 +2676,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 3,
+              "soldierRep": 3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_outcome",
-            "outcome": "You spend the morning with oil, leather, and rust. It's mindless work, but there's skill in it — knowing what needs replacing, what can be salvaged, what's good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}'s buckle won't fail in battle because of you. Small victories.\n\n{LANCE_LEADER_SHORT} inspects your work. Says nothing. That's approval.",
+            "outcome": "You spend the morning with oil, leather, and rust. It's mindless work, but there's skill in it — knowing what needs replacing, what can be salvaged, what's good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}'s buckle won't fail in battle because of you. Small victories.\n\n{SERGEANT} inspects your work. Says nothing. That's approval.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2711,14 +2711,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_outcome",
-            "outcome": "Hauling wood. Simple. Exhausting. Invisible.\n\nYou make trip after trip. Your shoulders burn. Your hands blister. By midday, the pile is tall enough.\n\nNobody thanks you. Nobody notices. But tonight, when the fires burn warm, that's your work.\n\n{LANCE_LEADER_SHORT} glances at the wood pile. Nods once. Moves on.",
+            "outcome": "Hauling wood. Simple. Exhausting. Invisible.\n\nYou make trip after trip. Your shoulders burn. Your hands blister. By midday, the pile is tall enough.\n\nNobody thanks you. Nobody notices. But tonight, when the fires burn warm, that's your work.\n\n{SERGEANT} glances at the wood pile. Nods once. Moves on.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2746,14 +2746,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 7,
+              "soldierRep": 7,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_outcome",
-            "outcome": "Latrine duty. The job nobody wants.\n\nThe smell is exactly as bad as you'd expect. Worse, maybe. But you dig. You don't complain. You do it right.\n\nWord gets around. The new blood took latrine duty without being forced. That means something.\n\n{LANCE_LEADER_SHORT} finds you at midday, covered in dirt and worse. \"Didn't expect you to pick that one.\" Almost respect in their voice. Almost.",
+            "outcome": "Latrine duty. The job nobody wants.\n\nThe smell is exactly as bad as you'd expect. Worse, maybe. But you dig. You don't complain. You do it right.\n\nWord gets around. The new blood took latrine duty without being forced. That means something.\n\n{SERGEANT} finds you at midday, covered in dirt and worse. \"Didn't expect you to pick that one.\" Almost respect in their voice. Almost.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2762,7 +2762,7 @@
           {
             "id": "ask",
             "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_text",
-            "text": "\"What does the lance need most?\"",
+            "text": "\"What does the squad need most?\"",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -2781,14 +2781,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_outcome",
-            "outcome": "{LANCE_LEADER_SHORT} pauses. Considers you. \"Huh. One that thinks.\"\n\nThey assign you the gear — it's most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n\"Maybe you'll last after all,\" they mutter, walking away.\n\nHigh praise.",
+            "outcome": "{SERGEANT} pauses. Considers you. \"Huh. One that thinks.\"\n\nThey assign you the gear — it's most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n\"Maybe you'll last after all,\" they mutter, walking away.\n\nHigh praise.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2799,7 +2799,7 @@
       "variants": {
         "first_time": {
           "setupId": "ll_evt_enlisted_onboard_03_prove_yourself_setup_first_time",
-          "setup": "{LANCE_LEADER_SHORT} finds you before the morning meal. The look on their face says this isn't social.\n\n\"New blood gets the worst jobs. That's how it works. That's how it's always worked. That's how it'll work long after both of us are worm food.\"\n\nThey gesture at three unpleasant realities of camp life: a pile of gear that needs maintenance, a stack of wood that needs hauling, and a latrine trench that needs... attention.\n\n\"Pick one. Do it right. Don't make me come check on you.\"",
+          "setup": "{SERGEANT} finds you before the morning meal. The look on their face says this isn't social.\n\n\"New blood gets the worst jobs. That's how it works. That's how it's always worked. That's how it'll work long after both of us are worm food.\"\n\nThey gesture at three unpleasant realities of camp life: a pile of gear that needs maintenance, a stack of wood that needs hauling, and a latrine trench that needs... attention.\n\n\"Pick one. Do it right. Don't make me come check on you.\"",
           "options": [
             {
               "id": "gear",
@@ -2823,14 +2823,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 3,
+                "soldierRep": 3,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_outcome",
-              "outcome": "You spend the morning with oil, leather, and rust. It's mindless work, but there's skill in it — knowing what needs replacing, what can be salvaged, what's good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}'s buckle won't fail in battle because of you. Small victories.\n\n{LANCE_LEADER_SHORT} inspects your work. Says nothing. That's approval.",
+              "outcome": "You spend the morning with oil, leather, and rust. It's mindless work, but there's skill in it — knowing what needs replacing, what can be salvaged, what's good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}'s buckle won't fail in battle because of you. Small victories.\n\n{SERGEANT} inspects your work. Says nothing. That's approval.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2858,14 +2858,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_outcome",
-              "outcome": "Hauling wood. Simple. Exhausting. Invisible.\n\nYou make trip after trip. Your shoulders burn. Your hands blister. By midday, the pile is tall enough.\n\nNobody thanks you. Nobody notices. But tonight, when the fires burn warm, that's your work.\n\n{LANCE_LEADER_SHORT} glances at the wood pile. Nods once. Moves on.",
+              "outcome": "Hauling wood. Simple. Exhausting. Invisible.\n\nYou make trip after trip. Your shoulders burn. Your hands blister. By midday, the pile is tall enough.\n\nNobody thanks you. Nobody notices. But tonight, when the fires burn warm, that's your work.\n\n{SERGEANT} glances at the wood pile. Nods once. Moves on.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2893,14 +2893,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 7,
+                "soldierRep": 7,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_outcome",
-              "outcome": "Latrine duty. The job nobody wants.\n\nThe smell is exactly as bad as you'd expect. Worse, maybe. But you dig. You don't complain. You do it right.\n\nWord gets around. The new blood took latrine duty without being forced. That means something.\n\n{LANCE_LEADER_SHORT} finds you at midday, covered in dirt and worse. \"Didn't expect you to pick that one.\" Almost respect in their voice. Almost.",
+              "outcome": "Latrine duty. The job nobody wants.\n\nThe smell is exactly as bad as you'd expect. Worse, maybe. But you dig. You don't complain. You do it right.\n\nWord gets around. The new blood took latrine duty without being forced. That means something.\n\n{SERGEANT} finds you at midday, covered in dirt and worse. \"Didn't expect you to pick that one.\" Almost respect in their voice. Almost.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2909,7 +2909,7 @@
             {
               "id": "ask",
               "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_text",
-              "text": "\"What does the lance need most?\"",
+              "text": "\"What does the squad need most?\"",
               "tooltip": null,
               "condition": null,
               "risk": "safe",
@@ -2928,14 +2928,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_outcome",
-              "outcome": "{LANCE_LEADER_SHORT} pauses. Considers you. \"Huh. One that thinks.\"\n\nThey assign you the gear — it's most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n\"Maybe you'll last after all,\" they mutter, walking away.\n\nHigh praise.",
+              "outcome": "{SERGEANT} pauses. Considers you. \"Huh. One that thinks.\"\n\nThey assign you the gear — it's most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n\"Maybe you'll last after all,\" they mutter, walking away.\n\nHigh praise.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2945,7 +2945,7 @@
         },
         "transfer": {
           "setupId": "ll_evt_enlisted_onboard_03_prove_yourself_setup_transfer",
-          "setup": "{LANCE_LEADER_SHORT} catches you at dawn. \"Transfer, you know how this works. New to the lance means bottom of the pile. Doesn't matter what rank you held before.\"\n\nThey're testing you. Seeing if you'll pull the \"but in my old unit\" card.\n\nGear maintenance. Wood hauling. Latrine duty. The eternal trinity of grunt work.\n\n\"Pick one. Show me you're not too good for the basics.\"",
+          "setup": "{SERGEANT} catches you at dawn. \"Transfer, you know how this works. New to the squad means bottom of the pile. Doesn't matter what rank you held before.\"\n\nThey're testing you. Seeing if you'll pull the \"but in my old unit\" card.\n\nGear maintenance. Wood hauling. Latrine duty. The eternal trinity of grunt work.\n\n\"Pick one. Show me you're not too good for the basics.\"",
           "options": [
             {
               "id": "gear",
@@ -2969,14 +2969,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_outcome",
-              "outcome": "You work efficiently. You've done this a hundred times. The difference shows — you're faster, more thorough, spot problems others would miss.\n\n{LANCE_LEADER_SHORT} inspects your work. Finds nothing to criticize. \"Your old unit taught you right, at least.\" Grudging respect.",
+              "outcome": "You work efficiently. You've done this a hundred times. The difference shows — you're faster, more thorough, spot problems others would miss.\n\n{SERGEANT} inspects your work. Finds nothing to criticize. \"Your old unit taught you right, at least.\" Grudging respect.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3004,14 +3004,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 10,
+                "soldierRep": 10,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_outcome",
-              "outcome": "\"Latrine it is.\" {LANCE_LEADER_SHORT} almost smiles.\n\nYou dig. You've dug before. The smell doesn't bother you anymore — or rather, you've learned to ignore it.\n\nWhen you're done, cleaner than necessary, the word spreads. Transfer took the shit job. Literally. Didn't complain.\n\nRespect is earned, not transferred. You know that.",
+              "outcome": "\"Latrine it is.\" {SERGEANT} almost smiles.\n\nYou dig. You've dug before. The smell doesn't bother you anymore — or rather, you've learned to ignore it.\n\nWhen you're done, cleaner than necessary, the word spreads. Transfer took the shit job. Literally. Didn't complain.\n\nRespect is earned, not transferred. You know that.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3039,7 +3039,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -3074,7 +3074,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -3091,7 +3091,7 @@
         },
         "return": {
           "setupId": "ll_evt_enlisted_onboard_03_prove_yourself_setup_return",
-          "setup": "{LANCE_LEADER_SHORT} approaches you at dawn. But there's no lecture about new blood and grunt work.\n\n\"I know you've done this before. Question is, are you still sharp, or did peace make you soft?\"\n\nThey gesture at the camp. \"Something needs doing. You pick. Show me what kind of soldier came back.\"",
+          "setup": "{SERGEANT} approaches you at dawn. But there's no lecture about new blood and grunt work.\n\n\"I know you've done this before. Question is, are you still sharp, or did peace make you soft?\"\n\nThey gesture at the camp. \"Something needs doing. You pick. Show me what kind of soldier came back.\"",
           "options": [
             {
               "id": "grunt_work",
@@ -3115,14 +3115,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 10,
+                "soldierRep": 10,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_outcome",
-              "outcome": "You take the latrine duty. The worst one. Deliberately.\n\n{LANCE_LEADER_SHORT} watches you work — not like a soldier proving a point, but like a man who knows that pride is a luxury.\n\n\"Alright,\" they say, when you're done. \"You're still one of us.\"",
+              "outcome": "You take the latrine duty. The worst one. Deliberately.\n\n{SERGEANT} watches you work — not like a soldier proving a point, but like a man who knows that pride is a luxury.\n\n\"Alright,\" they say, when you're done. \"You're still one of us.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3150,14 +3150,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 7,
+                "soldierRep": 7,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_outcome",
-              "outcome": "You work the gear pile. But you do more than maintain — you teach. {RECRUIT_NAME} watches you identify a stress crack invisible to untrained eyes.\n\n\"That would have broken in battle,\" you explain. \"Learn to see it.\"\n\n{LANCE_LEADER_SHORT} observes. \"Maybe we got lucky with this one,\" they mutter to {SECOND_SHORT}.",
+              "outcome": "You work the gear pile. But you do more than maintain — you teach. {RECRUIT_NAME} watches you identify a stress crack invisible to untrained eyes.\n\n\"That would have broken in battle,\" you explain. \"Learn to see it.\"\n\n{SERGEANT} observes. \"Maybe we got lucky with this one,\" they mutter to {SECOND_SHORT}.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3185,14 +3185,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 10,
+                "soldierRep": 10,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_outcome",
-              "outcome": "{LANCE_LEADER_SHORT} pauses. Studies you.\n\n\"Supply count's off. Someone's skimming or the quartermasters can't count. Either way, I need it fixed before the captain notices.\"\n\nA real problem. Not grunt work. They're trusting you.\n\nYou spend the morning in the supply tents. By noon, you've found the discrepancy — honest mistake, not theft. The quartermaster owes you a favor. {LANCE_LEADER_SHORT} owes you more.\n\n\"Good to have you back,\" they admit.",
+              "outcome": "{SERGEANT} pauses. Studies you.\n\n\"Supply count's off. Someone's skimming or the quartermasters can't count. Either way, I need it fixed before the captain notices.\"\n\nA real problem. Not grunt work. They're trusting you.\n\nYou spend the morning in the supply tents. By noon, you've found the discrepancy — honest mistake, not theft. The quartermaster owes you a favor. {SERGEANT} owes you more.\n\n\"Good to have you back,\" they admit.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3220,7 +3220,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -3289,7 +3289,7 @@
         "titleId": "ll_evt_officer_onboard_01_shoulder_tabs_title",
         "setupId": "ll_evt_officer_onboard_01_shoulder_tabs_setup",
         "title": "Shoulder Tabs",
-        "setup": "The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{LANCE_LEADER_SHORT} — no, they're {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n\"Orders, {PLAYER_RANK}?\"\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do.",
+        "setup": "The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{SERGEANT} — no, they're {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n\"Orders, {PLAYER_RANK}?\"\n\nThe squad watches. Your squad now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do.",
         "options": [
           {
             "id": "steady",
@@ -3313,7 +3313,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 7,
+              "soldierRep": 7,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -3348,14 +3348,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_outcome",
-            "outcome": "Crisp. Professional. By the book.\n\n{SECOND_SHORT}'s expression doesn't flicker. \"Aye, {PLAYER_RANK}.\"\n\nThe lance disperses. You've drawn a line. Clear boundaries. That's not a bad thing. But it's a thing.",
+            "outcome": "Crisp. Professional. By the book.\n\n{SECOND_SHORT}'s expression doesn't flicker. \"Aye, {PLAYER_RANK}.\"\n\nThe squad disperses. You've drawn a line. Clear boundaries. That's not a bad thing. But it's a thing.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -3383,14 +3383,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 10,
+              "soldierRep": 10,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_outcome",
-            "outcome": "{SECOND_SHORT} almost smiles. \"Strange is one word for it.\"\n\nThe lance relaxes. You've acknowledged the elephant. Some things will be awkward. That's fine. You're human.\n\n\"I'll have the duty roster for you within the hour, {PLAYER_RANK},\" {SECOND_SHORT} says. Back to business. But the air is clearer.",
+            "outcome": "{SECOND_SHORT} almost smiles. \"Strange is one word for it.\"\n\nThe squad relaxes. You've acknowledged the elephant. Some things will be awkward. That's fine. You're human.\n\n\"I'll have the duty roster for you within the hour, {PLAYER_RANK},\" {SECOND_SHORT} says. Back to business. But the air is clearer.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -3418,14 +3418,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": -3,
+              "soldierRep": -3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_outcome",
-            "outcome": "The silence stretches. {SECOND_SHORT} watches. Waits.\n\nFinally, they take pity. \"Perhaps we should discuss the roster, {PLAYER_RANK}. Privately.\"\n\nThey're covering for you. The lance pretends not to notice your hesitation.\n\nYou'll have to do better. But not everyone does better on the first day.",
+            "outcome": "The silence stretches. {SECOND_SHORT} watches. Waits.\n\nFinally, they take pity. \"Perhaps we should discuss the roster, {PLAYER_RANK}. Privately.\"\n\nThey're covering for you. The squad pretends not to notice your hesitation.\n\nYou'll have to do better. But not everyone does better on the first day.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -3436,7 +3436,7 @@
       "variants": {
         "first_time": {
           "setupId": "ll_evt_officer_onboard_01_shoulder_tabs_setup_first_time",
-          "setup": "The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{LANCE_LEADER_SHORT} — no, they're {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n\"Orders, {PLAYER_RANK}?\"\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do.",
+          "setup": "The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{SERGEANT} — no, they're {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n\"Orders, {PLAYER_RANK}?\"\n\nThe squad watches. Your squad now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do.",
           "options": [
             {
               "id": "steady",
@@ -3460,7 +3460,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 7,
+                "soldierRep": 7,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -3495,14 +3495,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_outcome",
-              "outcome": "Crisp. Professional. By the book.\n\n{SECOND_SHORT}'s expression doesn't flicker. \"Aye, {PLAYER_RANK}.\"\n\nThe lance disperses. You've drawn a line. Clear boundaries. That's not a bad thing. But it's a thing.",
+              "outcome": "Crisp. Professional. By the book.\n\n{SECOND_SHORT}'s expression doesn't flicker. \"Aye, {PLAYER_RANK}.\"\n\nThe squad disperses. You've drawn a line. Clear boundaries. That's not a bad thing. But it's a thing.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3530,14 +3530,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 10,
+                "soldierRep": 10,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_outcome",
-              "outcome": "{SECOND_SHORT} almost smiles. \"Strange is one word for it.\"\n\nThe lance relaxes. You've acknowledged the elephant. Some things will be awkward. That's fine. You're human.\n\n\"I'll have the duty roster for you within the hour, {PLAYER_RANK},\" {SECOND_SHORT} says. Back to business. But the air is clearer.",
+              "outcome": "{SECOND_SHORT} almost smiles. \"Strange is one word for it.\"\n\nThe squad relaxes. You've acknowledged the elephant. Some things will be awkward. That's fine. You're human.\n\n\"I'll have the duty roster for you within the hour, {PLAYER_RANK},\" {SECOND_SHORT} says. Back to business. But the air is clearer.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3565,14 +3565,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": -3,
+                "soldierRep": -3,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_outcome",
-              "outcome": "The silence stretches. {SECOND_SHORT} watches. Waits.\n\nFinally, they take pity. \"Perhaps we should discuss the roster, {PLAYER_RANK}. Privately.\"\n\nThey're covering for you. The lance pretends not to notice your hesitation.\n\nYou'll have to do better. But not everyone does better on the first day.",
+              "outcome": "The silence stretches. {SECOND_SHORT} watches. Waits.\n\nFinally, they take pity. \"Perhaps we should discuss the roster, {PLAYER_RANK}. Privately.\"\n\nThey're covering for you. The squad pretends not to notice your hesitation.\n\nYou'll have to do better. But not everyone does better on the first day.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3582,7 +3582,7 @@
         },
         "transfer": {
           "setupId": "ll_evt_officer_onboard_01_shoulder_tabs_setup_transfer",
-          "setup": "New lord. New lance. But the same shoulder tabs.\n\n{SECOND_SHORT} salutes you. A stranger. Their eyes measure you the way all sergeants measure new officers: will this one get us killed?\n\n\"Welcome to {LANCE_NAME}, {PLAYER_RANK}. I'm {SECOND_RANK} {SECOND_SHORT}. I've been running this lance for two years.\"\n\nSubtext: I know these men. You don't. Tread carefully.\n\nThe lance watches. Your lance now. Men who don't know you. Don't trust you. Not yet.",
+          "setup": "New lord. New squad. But the same shoulder tabs.\n\n{SECOND_SHORT} salutes you. A stranger. Their eyes measure you the way all sergeants measure new officers: will this one get us killed?\n\n\"Welcome to the squad, {PLAYER_RANK}. I'm {SECOND_RANK} {SECOND_SHORT}. I've been running this squad for two years.\"\n\nSubtext: I know these men. You don't. Tread carefully.\n\nThe squad watches. Your squad now. Men who don't know you. Don't trust you. Not yet.",
           "options": [
             {
               "id": "respect_experience",
@@ -3606,7 +3606,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -3641,14 +3641,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_assert_outcome",
-              "outcome": "Professional. Clear. You're not dismissing their experience, but you're not deferring either.\n\n{SECOND_SHORT} nods slowly. \"This way, {PLAYER_RANK}.\"\n\nThey spend the morning showing you how {LANCE_NAME} operates. By noon, you know who to trust and what needs fixing.",
+              "outcome": "Professional. Clear. You're not dismissing their experience, but you're not deferring either.\n\n{SECOND_SHORT} nods slowly. \"This way, {PLAYER_RANK}.\"\n\nThey spend the morning showing you how the squad operates. By noon, you know who to trust and what needs fixing.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3676,7 +3676,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -3692,7 +3692,7 @@
             {
               "id": "inspect",
               "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_inspect_text",
-              "text": "\"Form the lance for inspection, {SECOND_RANK}. Now.\"",
+              "text": "\"Form the squad for inspection, {SECOND_RANK}. Now.\"",
               "tooltip": null,
               "condition": null,
               "risk": "risky",
@@ -3711,7 +3711,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -3728,7 +3728,7 @@
         },
         "return": {
           "setupId": "ll_evt_officer_onboard_01_shoulder_tabs_setup_return",
-          "setup": "The shoulder tabs again. You'd thought you'd left them behind.\n\n{SECOND_SHORT} salutes. They don't know you, but they've been told: this one's commanded before. Came back for some reason.\n\n\"Welcome to {LANCE_NAME}, {PLAYER_RANK}. I'm {SECOND_RANK} {SECOND_SHORT}.\"\n\nNo subtext about experience. They're giving you the benefit of the doubt. For now.\n\nThe lance watches. Wondering why someone would come back to this life.",
+          "setup": "The shoulder tabs again. You'd thought you'd left them behind.\n\n{SECOND_SHORT} salutes. They don't know you, but they've been told: this one's commanded before. Came back for some reason.\n\n\"Welcome to the squad, {PLAYER_RANK}. I'm {SECOND_RANK} {SECOND_SHORT}.\"\n\nNo subtext about experience. They're giving you the benefit of the doubt. For now.\n\nThe squad watches. Wondering why someone would come back to this life.",
           "options": [
             {
               "id": "honest",
@@ -3752,14 +3752,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_return_honest_outcome",
-              "outcome": "{SECOND_SHORT} nods slowly. They don't ask why. Good sergeants never do.\n\n\"Then you know how it works, {PLAYER_RANK}. I'll bring you up to speed on {LANCE_NAME}'s particulars.\"\n\nProfessional. Clean. A good start.",
+              "outcome": "{SECOND_SHORT} nods slowly. They don't ask why. Good sergeants never do.\n\n\"Then you know how it works, {PLAYER_RANK}. I'll bring you up to speed on the squad's particulars.\"\n\nProfessional. Clean. A good start.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3787,7 +3787,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -3822,7 +3822,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -3857,7 +3857,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -3928,7 +3928,7 @@
         "titleId": "ll_evt_officer_onboard_02_first_command_title",
         "setupId": "ll_evt_officer_onboard_02_first_command_setup",
         "title": "Your First Command",
-        "setup": "First decision that's actually yours to make.\n\nThe army's moving. {SECOND_SHORT} approaches with a question: where does {LANCE_NAME} make camp tonight?\n\n\"There's a spot by the stream — good water, but exposed. Or there's the tree line — sheltered, but further from the main camp.\"\n\nThey have an opinion. You can see it in their eyes. But they're waiting for you to decide.\n\nThe lance watches. Your first real order.",
+        "setup": "First decision that's actually yours to make.\n\nThe army's moving. {SECOND_SHORT} approaches with a question: where does the squad make camp tonight?\n\n\"There's a spot by the stream — good water, but exposed. Or there's the tree line — sheltered, but further from the main camp.\"\n\nThey have an opinion. You can see it in their eyes. But they're waiting for you to decide.\n\nThe squad watches. Your first real order.",
         "options": [
           {
             "id": "stream",
@@ -3952,14 +3952,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 3,
+              "soldierRep": 3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_stream_outcome",
-            "outcome": "You give the order. {SECOND_SHORT} nods — they agree, you can tell.\n\nBy evening, {LANCE_NAME} has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n\"Good call, {PLAYER_RANK},\" {SECOND_SHORT} says. Quietly. Privately. But they said it.",
+            "outcome": "You give the order. {SECOND_SHORT} nods — they agree, you can tell.\n\nBy evening, the squad has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n\"Good call, {PLAYER_RANK},\" {SECOND_SHORT} says. Quietly. Privately. But they said it.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -3987,14 +3987,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 3,
+              "soldierRep": 3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_trees_outcome",
-            "outcome": "{SECOND_SHORT}'s expression flickers — they would've picked the stream. But they relay the order without comment.\n\nThat night, the lance hauls water from further away. Grumbling. But when a sudden rain blows through, {LANCE_NAME} stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call.",
+            "outcome": "{SECOND_SHORT}'s expression flickers — they would've picked the stream. But they relay the order without comment.\n\nThat night, the squad hauls water from further away. Grumbling. But when a sudden rain blows through, the squad stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -4022,14 +4022,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_outcome",
-            "outcome": "\"Stream, {PLAYER_RANK}. Water's worth the exposure.\"\n\nYou nod. \"Stream it is.\"\n\nYou've shown you value their experience. Some officers would see that as weakness. {SECOND_SHORT} sees it as wisdom.\n\n\"I'll get the lance moving,\" they say. Pleased.",
+            "outcome": "\"Stream, {PLAYER_RANK}. Water's worth the exposure.\"\n\nYou nod. \"Stream it is.\"\n\nYou've shown you value their experience. Some officers would see that as weakness. {SECOND_SHORT} sees it as wisdom.\n\n\"I'll get the squad moving,\" they say. Pleased.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -4057,14 +4057,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_outcome",
-            "outcome": "\"Stream,\" {SECOND_SHORT} says.\n\n\"Tree line,\" you decide.\n\n{SECOND_SHORT}'s jaw tightens slightly. You've made a point: you're in command. Maybe too obviously.\n\nThe lance notices. They always notice.",
+            "outcome": "\"Stream,\" {SECOND_SHORT} says.\n\n\"Tree line,\" you decide.\n\n{SECOND_SHORT}'s jaw tightens slightly. You've made a point: you're in command. Maybe too obviously.\n\nThe squad notices. They always notice.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -4075,7 +4075,7 @@
       "variants": {
         "all": {
           "setupId": "ll_evt_officer_onboard_02_first_command_setup_all",
-          "setup": "First decision that's actually yours to make.\n\nThe army's moving. {SECOND_SHORT} approaches with a question: where does {LANCE_NAME} make camp tonight?\n\n\"There's a spot by the stream — good water, but exposed. Or there's the tree line — sheltered, but further from the main camp.\"\n\nThey have an opinion. You can see it in their eyes. But they're waiting for you to decide.\n\nThe lance watches. Your first real order.",
+          "setup": "First decision that's actually yours to make.\n\nThe army's moving. {SECOND_SHORT} approaches with a question: where does the squad make camp tonight?\n\n\"There's a spot by the stream — good water, but exposed. Or there's the tree line — sheltered, but further from the main camp.\"\n\nThey have an opinion. You can see it in their eyes. But they're waiting for you to decide.\n\nThe squad watches. Your first real order.",
           "options": [
             {
               "id": "stream",
@@ -4099,14 +4099,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 3,
+                "soldierRep": 3,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_stream_outcome",
-              "outcome": "You give the order. {SECOND_SHORT} nods — they agree, you can tell.\n\nBy evening, {LANCE_NAME} has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n\"Good call, {PLAYER_RANK},\" {SECOND_SHORT} says. Quietly. Privately. But they said it.",
+              "outcome": "You give the order. {SECOND_SHORT} nods — they agree, you can tell.\n\nBy evening, the squad has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n\"Good call, {PLAYER_RANK},\" {SECOND_SHORT} says. Quietly. Privately. But they said it.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -4134,14 +4134,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 3,
+                "soldierRep": 3,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_trees_outcome",
-              "outcome": "{SECOND_SHORT}'s expression flickers — they would've picked the stream. But they relay the order without comment.\n\nThat night, the lance hauls water from further away. Grumbling. But when a sudden rain blows through, {LANCE_NAME} stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call.",
+              "outcome": "{SECOND_SHORT}'s expression flickers — they would've picked the stream. But they relay the order without comment.\n\nThat night, the squad hauls water from further away. Grumbling. But when a sudden rain blows through, the squad stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -4169,14 +4169,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_outcome",
-              "outcome": "\"Stream, {PLAYER_RANK}. Water's worth the exposure.\"\n\nYou nod. \"Stream it is.\"\n\nYou've shown you value their experience. Some officers would see that as weakness. {SECOND_SHORT} sees it as wisdom.\n\n\"I'll get the lance moving,\" they say. Pleased.",
+              "outcome": "\"Stream, {PLAYER_RANK}. Water's worth the exposure.\"\n\nYou nod. \"Stream it is.\"\n\nYou've shown you value their experience. Some officers would see that as weakness. {SECOND_SHORT} sees it as wisdom.\n\n\"I'll get the squad moving,\" they say. Pleased.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -4204,14 +4204,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_outcome",
-              "outcome": "\"Stream,\" {SECOND_SHORT} says.\n\n\"Tree line,\" you decide.\n\n{SECOND_SHORT}'s jaw tightens slightly. You've made a point: you're in command. Maybe too obviously.\n\nThe lance notices. They always notice.",
+              "outcome": "\"Stream,\" {SECOND_SHORT} says.\n\n\"Tree line,\" you decide.\n\n{SECOND_SHORT}'s jaw tightens slightly. You've made a point: you're in command. Maybe too obviously.\n\nThe squad notices. They always notice.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -4276,7 +4276,7 @@
         "titleId": "ll_evt_officer_onboard_03_tested_title",
         "setupId": "ll_evt_officer_onboard_03_tested_setup",
         "title": "Tested",
-        "setup": "It was bound to happen. Someone testing the new officer.\n\n{SOLDIER_NAME} didn't show for morning muster. When {SECOND_SHORT} found them, they were still asleep — or pretending to be.\n\nNow they're standing before you. Not quite at attention. Not quite disrespectful. Walking the line.\n\n\"Overslept, {PLAYER_RANK}.\" No apology. No excuse. Just the flat statement.\n\n{SECOND_SHORT} watches. The lance watches. Your move.",
+        "setup": "It was bound to happen. Someone testing the new officer.\n\n{SOLDIER_NAME} didn't show for morning muster. When {SECOND_SHORT} found them, they were still asleep — or pretending to be.\n\nNow they're standing before you. Not quite at attention. Not quite disrespectful. Walking the line.\n\n\"Overslept, {PLAYER_RANK}.\" No apology. No excuse. Just the flat statement.\n\n{SECOND_SHORT} watches. The squad watches. Your move.",
         "options": [
           {
             "id": "by_the_book",
@@ -4300,14 +4300,14 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 5,
+              "soldierRep": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_by_the_book_outcome",
-            "outcome": "By the book. Fair. {SOLDIER_NAME} knows the rules; they broke them.\n\n\"Aye, {PLAYER_RANK}.\" They salute — properly this time — and go.\n\n{SECOND_SHORT} nods slightly. \"That's how it's done.\"\n\nThe lance knows where the line is now. Good.",
+            "outcome": "By the book. Fair. {SOLDIER_NAME} knows the rules; they broke them.\n\n\"Aye, {PLAYER_RANK}.\" They salute — properly this time — and go.\n\n{SECOND_SHORT} nods slightly. \"That's how it's done.\"\n\nThe squad knows where the line is now. Good.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -4335,7 +4335,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -4370,7 +4370,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 7,
+              "soldierRep": 7,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -4405,7 +4405,7 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "soldierRep": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
@@ -4423,7 +4423,7 @@
       "variants": {
         "all": {
           "setupId": "ll_evt_officer_onboard_03_tested_setup_all",
-          "setup": "It was bound to happen. Someone testing the new officer.\n\n{SOLDIER_NAME} didn't show for morning muster. When {SECOND_SHORT} found them, they were still asleep — or pretending to be.\n\nNow they're standing before you. Not quite at attention. Not quite disrespectful. Walking the line.\n\n\"Overslept, {PLAYER_RANK}.\" No apology. No excuse. Just the flat statement.\n\n{SECOND_SHORT} watches. The lance watches. Your move.",
+          "setup": "It was bound to happen. Someone testing the new officer.\n\n{SOLDIER_NAME} didn't show for morning muster. When {SECOND_SHORT} found them, they were still asleep — or pretending to be.\n\nNow they're standing before you. Not quite at attention. Not quite disrespectful. Walking the line.\n\n\"Overslept, {PLAYER_RANK}.\" No apology. No excuse. Just the flat statement.\n\n{SECOND_SHORT} watches. The squad watches. Your move.",
           "options": [
             {
               "id": "by_the_book",
@@ -4447,14 +4447,14 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 5,
+                "soldierRep": 5,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_by_the_book_outcome",
-              "outcome": "By the book. Fair. {SOLDIER_NAME} knows the rules; they broke them.\n\n\"Aye, {PLAYER_RANK}.\" They salute — properly this time — and go.\n\n{SECOND_SHORT} nods slightly. \"That's how it's done.\"\n\nThe lance knows where the line is now. Good.",
+              "outcome": "By the book. Fair. {SOLDIER_NAME} knows the rules; they broke them.\n\n\"Aye, {PLAYER_RANK}.\" They salute — properly this time — and go.\n\n{SECOND_SHORT} nods slightly. \"That's how it's done.\"\n\nThe squad knows where the line is now. Good.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -4482,7 +4482,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -4517,7 +4517,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 7,
+                "soldierRep": 7,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },
@@ -4552,7 +4552,7 @@
               "effects": {
                 "scrutiny": 0,
                 "discipline": 0,
-                "lance_reputation": 0,
+                "soldierRep": 0,
                 "medical_risk": 0,
                 "fatigue_relief": 0
               },

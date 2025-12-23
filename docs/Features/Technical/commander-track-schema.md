@@ -33,8 +33,8 @@ The Commander Track (T7-T9) is fundamentally different from the Enlisted Track (
 | Aspect | Enlisted (T1-T6) | Commander (T7-T9) |
 |--------|------------------|-------------------|
 | Role | Follow orders | Give orders |
-| Unit | Part of a lance | Lead a retinue |
-| Relationships | Lance mates, lance leader | Soldiers, officers, lord |
+| Unit | Part of a squad | Lead a retinue |
+| Relationships | NCO, fellow soldiers | Soldiers, officers, lord |
 | Progression | Events, battles survived | Battles commanded, soldier survival |
 | Stakes | Personal survival | Soldiers' lives |
 
@@ -578,8 +578,8 @@ Promotion requirements and state for T7-T9.
           "lord": 10
         },
         "resets": {
-          "lance_reputation": true,
-          "lance_relationships": true
+          "soldier_reputation": true,
+          "soldier_relationships": true
         }
       }
     },
@@ -1209,4 +1209,4 @@ ModuleData/Enlisted/
 ---
 
 *Schema Version: 1.0*
-*For use with: Lance Life Commander Track, Tiers 7-9*
+*For use with: Enlisted Commander Track, Tiers 7-9*

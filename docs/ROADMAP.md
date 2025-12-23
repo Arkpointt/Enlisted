@@ -322,7 +322,7 @@ We welcome contributions! Priority areas:
 - Core enlistment system
 - Native game menu interface
 - Trait-based identity system
-- Orders system (39 orders)
+- Orders system (17 orders across 3 tiers)
 - Content system (events, decisions)
 - Company needs simulation
 - Quartermaster & provisions

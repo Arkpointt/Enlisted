@@ -10,7 +10,7 @@
 
 ## Overview
 
-Extends the Lance Life Events system to give players meaningful agency over how they're rewarded for event outcomes. Instead of receiving predetermined rewards, players can choose between different reward types (XP vs gold vs reputation) and customize which skills they develop.
+Extends the Enlisted Events system to give players meaningful agency over how they're rewarded for event outcomes. Instead of receiving predetermined rewards, players can choose between different reward types (XP vs gold vs reputation) and customize which skills they develop.
 
 ## Purpose
 
@@ -98,18 +98,18 @@ Apply selected reward
     },
     {
       "id": "build_reputation",
-      "text": "Decline payment to build goodwill (+3 Lance Rep, +2 Lord Relation)",
+      "text": "Decline payment to build goodwill (+3 Soldier Rep, +2 Lord Relation)",
       "rewards": { 
-        "effects": { "lance_reputation": 3 },
+        "effects": { "soldierRep": 3 },
         "relation": { "lord": 2 }
       }
     },
     {
       "id": "partial",
-      "text": "Take modest payment (+12 gold, +1 Lance Rep)",
+      "text": "Take modest payment (+12 gold, +1 Soldier Rep)",
       "rewards": { 
         "gold": 12,
-        "effects": { "lance_reputation": 1 }
+        "effects": { "soldierRep": 1 }
       }
     }
   ]
@@ -184,7 +184,7 @@ Apply selected reward
       "success_chance": 0.9,
       "rewards": { 
         "xp": { "enlisted": 15 },
-        "effects": { "lance_reputation": 1 }
+        "effects": { "soldierRep": 1 }
       }
     },
     {
@@ -193,7 +193,7 @@ Apply selected reward
       "success_chance": 0.7,
       "rewards": { 
         "xp": { "enlisted": 30 },
-        "effects": { "lance_reputation": 2 }
+        "effects": { "soldierRep": 2 }
       },
       "failure": {
         "effects": { "medical_risk": 1 }
@@ -206,7 +206,7 @@ Apply selected reward
       "rewards": { 
         "xp": { "enlisted": 60 },
         "gold": 30,
-        "effects": { "lance_reputation": 5 }
+        "effects": { "soldierRep": 5 }
       },
       "failure": {
         "effects": { 
@@ -240,10 +240,10 @@ Apply selected reward
     },
     {
       "id": "socialize",
-      "text": "Socialize with lance mates (-2 Fatigue, +2 Lance Rep)",
+      "text": "Socialize with your comrades (-2 Fatigue, +2 Soldier Rep)",
       "rewards": { 
         "fatigue_relief": 2,
-        "effects": { "lance_reputation": 2 }
+        "effects": { "soldierRep": 2 }
       }
     },
     {
@@ -418,9 +418,9 @@ For players who don't want to micromanage, add preference system:
 ## Implementation Notes
 
 ### Phase 1: Core Schema & Dialog (Week 1)
-1. Extend `LanceLifeEventOptionDefinition` with `RewardChoices` field
-2. Create `LanceLifeRewardChoiceDialog` inquiry class
-3. Update `LanceLifeEventEffectsApplier` to check for reward choices
+1. Extend `EventOptionDefinition` with `RewardChoices` field
+2. Create `RewardChoiceDialog` inquiry class
+3. Update `EventEffectsApplier` to check for reward choices
 4. Implement two-stage application: outcome → reward selection → apply
 
 ### Phase 2: Event Updates (Week 2)
@@ -450,8 +450,8 @@ For players who don't want to micromanage, add preference system:
 - New: Choice between Polearm focus (50), Shield focus (50 OneHanded), or Balanced (25/25)
 
 **2. Lord's Hunt** (`decision_lord_hunt_invitation`)
-- Current: Fixed Gold +15, Lance Rep +2
-- New: Take gold (25), Build reputation (Lance +4, Lord +2), or Balanced (12 gold, +2 rep)
+- Current: Fixed Gold +15, Soldier Rep +2
+- New: Take gold (25), Build reputation (Soldier +4, Lord +2), or Balanced (12 gold, +2 rep)
 
 **3. Weapon Training** (`player_request_training` in events_player_decisions.json)
 - Current: Separate options for each weapon (menu clutter)
@@ -461,13 +461,13 @@ For players who don't want to micromanage, add preference system:
 - Create new patrol event with risk-level choices
 - Demonstrates risk/reward tradeoff mechanic
 
-**5. Evening Dice Game** (`decision_lance_mate_dice`)
+**5. Evening Dice Game** (`decision_comrade_dice`)
 - Current: Fixed gold in/out
-- New: After winning, choose: "Keep winnings (gold)" vs "Buy rounds (+4 Lance Rep)"
+- New: After winning, choose: "Keep winnings (gold)" vs "Buy rounds (+4 Soldier Rep)"
 
 **6. Camp Socializing** (general event)
 - Current: Generic rep gain
-- New: Choose who to spend time with (Lance Leader +3 vs Lance Mates +2 each vs Lord +1)
+- New: Choose who to spend time with (NCO +3 vs Fellow Soldiers +2 each vs Lord +1)
 
 ### Event Distribution Target
 
@@ -504,16 +504,16 @@ For players who don't want to micromanage, add preference system:
 ### Multi-Step Chains
 Events that remember choices and reference them later:
 ```
-Day 1: Train with Lance Mate A or B?
-Day 7: Lance Mate [A/B] remembers training, offers special mission
+Day 1: Train with Comrade A or B?
+Day 7: Comrade [A/B] remembers training, offers special mission
 ```
 
 ### Reputation-Gated Rewards
 High reputation unlocks better reward options:
 ```
-Lance Rep < 10: Standard rewards
-Lance Rep 10-20: +1 bonus option (slightly better)
-Lance Rep 20+: +2 bonus options (best rewards)
+Soldier Rep < 10: Standard rewards
+Soldier Rep 10-20: +1 bonus option (slightly better)
+Soldier Rep 20+: +2 bonus options (best rewards)
 ```
 
 ### Lord Favor System
@@ -526,7 +526,7 @@ Unlocks: Special quest chain
 ### Companion Preferences
 NPCs react to your choices:
 ```
-Always taking gold → Lance mates see you as greedy
+Always taking gold → Fellow soldiers see you as greedy
 Always building reputation → Seen as ambitious/political
 Balanced → Seen as pragmatic
 ```

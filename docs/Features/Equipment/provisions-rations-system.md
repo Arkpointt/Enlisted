@@ -427,7 +427,7 @@ Players can supplement issued rations with personal food:
 | **Town Markets** | Visit marketplace | 20-50g per food | Most reliable |
 | **Foraging Duty** | Complete duty assignment | Free | +3-8% company supply, +1 grain |
 | **Hunting Wildlife** | Event (Cunning 30+) | Free | Random encounter, +1 meat |
-| **Ask Comrades** | Emergency dialogue | -5 Lance Rep | One-time option |
+| **Ask Comrades** | Emergency dialogue | -5 Soldier Rep | One-time option |
 
 **Strategic Reserve Management:**
 
@@ -530,15 +530,15 @@ Conditions: In camp, 5% daily chance
 Event: "Missing Provisions"
 
 You notice some of your personal food supplies have gone missing. 
-A lance mate eyes you guiltily.
+A fellow soldier eyes you guiltily.
 
 Options:
-  [Confront Him] → Lose 1 food, gain "Lance Mate Debt" event
+  [Confront Him] → Lose 1 food, gain "Comrade Debt" event
                    (He owes you; +10 rep when repaid later)
-  [Let It Slide] → Lose 1 food, +5 Lance Rep (generous)
-  [Report to Leader] → Lose 1 food, thief punished, -10 Lance Rep
+  [Let It Slide] → Lose 1 food, +5 Soldier Rep (generous)
+  [Report to NCO] → Lose 1 food, thief punished, -10 Soldier Rep
 
-Conditions: With lance, 3+ personal food, Lance Rep < 70, 3% daily chance
+Conditions: Enlisted, 3+ personal food, Soldier Rep < 70, 3% daily chance
 ```
 
 #### 4. Battle Damage
@@ -565,7 +565,7 @@ She has a small child with her.
 Options:
   [Give Food] → Lose 1 food, +5 Honor, +10 Charm XP
   [Refuse] → No loss, -3 Honor
-  [Sell Food] → Lose 1 food, +20 gold, -5 Honor, -5 Lance Rep
+  [Sell Food] → Lose 1 food, +20 gold, -5 Honor, -5 Soldier Rep
 
 Conditions: War zone, recently raided area, 3% daily chance
 ```
