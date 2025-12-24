@@ -408,6 +408,13 @@ namespace Enlisted.Features.Content
 
             // Apply flag changes
             ApplyFlagChanges(option);
+            
+            // Handle enlistment abort (used by bag check)
+            if (option.AbortsEnlistment)
+            {
+                ApplyEnlistmentAbort();
+                // Still show result text and continue normally
+            }
 
             // Notify news system of event outcome
             NotifyNewsOfEventOutcome(option);
@@ -904,6 +911,34 @@ namespace Enlisted.Features.Content
                 ApplyRetinueLoyalty(effects.RetinueLoyalty.Value);
                 feedbackMessages.Add($"{(effects.RetinueLoyalty.Value > 0 ? "+" : "")}{effects.RetinueLoyalty.Value} Retinue Loyalty");
             }
+            
+            // Apply baggage train effects
+            if (effects.GrantTemporaryBaggageAccess.HasValue && effects.GrantTemporaryBaggageAccess.Value > 0)
+            {
+                ApplyBaggageAccessGrant(effects.GrantTemporaryBaggageAccess.Value);
+            }
+            
+            if (effects.BaggageDelayDays.HasValue)
+            {
+                ApplyBaggageDelay(effects.BaggageDelayDays.Value);
+            }
+            
+            if (effects.RandomBaggageLoss.HasValue && effects.RandomBaggageLoss.Value > 0)
+            {
+                ApplyRandomBaggageLoss(effects.RandomBaggageLoss.Value);
+            }
+            
+            // Apply bag check choice (first-enlistment gear handling)
+            if (!string.IsNullOrEmpty(effects.BagCheckChoice))
+            {
+                ApplyBagCheckChoice(effects.BagCheckChoice);
+            }
+            
+            // Apply fatigue change
+            if (effects.Fatigue.HasValue && effects.Fatigue.Value != 0)
+            {
+                ApplyFatigueChange(effects.Fatigue.Value);
+            }
 
             // Apply discharge if specified. Ends the player's enlistment with the given band.
             if (!string.IsNullOrEmpty(effects.TriggersDischarge))
@@ -1156,6 +1191,153 @@ namespace Enlisted.Features.Content
 
             // Check for threshold crossings after applying loyalty change
             manager.CheckLoyaltyThresholds();
+        }
+        
+        /// <summary>
+        /// Grants temporary baggage access for the specified number of hours.
+        /// Used by "baggage caught up" events to give players a window to access their stash.
+        /// </summary>
+        private void ApplyBaggageAccessGrant(int hours)
+        {
+            var baggageManager = Features.Logistics.BaggageTrainManager.Instance;
+            if (baggageManager == null)
+            {
+                ModLogger.Warn(LogCategory, $"ApplyBaggageAccessGrant: BaggageTrainManager not available");
+                return;
+            }
+            
+            baggageManager.GrantTemporaryAccess(hours);
+            baggageManager.RecordBaggageArrival(); // Track arrival for Daily Brief display
+            
+            var notification = new TextObject("{=evt_baggage_access_granted}The baggage wagons have caught up. You have {HOURS} hours to access your belongings.");
+            notification.SetTextVariable("HOURS", hours);
+            InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), Colors.Green));
+        }
+        
+        /// <summary>
+        /// Applies a delay to baggage availability.
+        /// A value of 0 clears any existing delay, positive values add delay in days.
+        /// </summary>
+        private void ApplyBaggageDelay(int days)
+        {
+            var baggageManager = Features.Logistics.BaggageTrainManager.Instance;
+            if (baggageManager == null)
+            {
+                ModLogger.Warn(LogCategory, "ApplyBaggageDelay: BaggageTrainManager not available");
+                return;
+            }
+            
+            if (days <= 0)
+            {
+                baggageManager.ClearBaggageDelay();
+                ModLogger.Info(LogCategory, "Baggage delay cleared via event");
+            }
+            else
+            {
+                baggageManager.ApplyBaggageDelay(days);
+                
+                var notification = new TextObject("{=evt_baggage_delayed_msg}The baggage train is stuck. Access delayed by {DAYS} day(s).");
+                notification.SetTextVariable("DAYS", days);
+                InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), Colors.Yellow));
+            }
+        }
+        
+        /// <summary>
+        /// Removes a random number of items from the player's baggage stash.
+        /// Gracefully handles empty stash (no crash, no message).
+        /// Tracks raid events for Daily Brief display.
+        /// </summary>
+        private void ApplyRandomBaggageLoss(int count)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                ModLogger.Warn(LogCategory, "ApplyRandomBaggageLoss: EnlistmentBehavior not available");
+                return;
+            }
+            
+            var removedCount = enlistment.RemoveRandomBaggageItems(count);
+            
+            if (removedCount > 0)
+            {
+                var notification = new TextObject("{=evt_baggage_loss_msg}{COUNT} item(s) were lost from your baggage.");
+                notification.SetTextVariable("COUNT", removedCount);
+                InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), Colors.Red));
+                
+                // Track raid for Daily Brief display (if this is from a raid event)
+                var baggageManager = Features.Logistics.BaggageTrainManager.Instance;
+                if (baggageManager != null)
+                {
+                    baggageManager.RecordBaggageRaid();
+                }
+                
+                ModLogger.Info(LogCategory, $"ApplyRandomBaggageLoss: Removed {removedCount} items from baggage stash");
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, "ApplyRandomBaggageLoss: No items to remove (stash empty)");
+            }
+        }
+        
+        /// <summary>
+        /// Handles the first-enlistment bag check choice.
+        /// Delegates to EnlistmentBehavior.HandleBagCheckChoice() which processes stash/sell/smuggle actions.
+        /// </summary>
+        private void ApplyBagCheckChoice(string choice)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                ModLogger.Warn(LogCategory, "ApplyBagCheckChoice: EnlistmentBehavior not available");
+                return;
+            }
+            
+            ModLogger.Info(LogCategory, $"ApplyBagCheckChoice: Processing choice '{choice}'");
+            enlistment.HandleBagCheckChoice(choice);
+        }
+        
+        /// <summary>
+        /// Aborts the enlistment process during bag check.
+        /// Ends enlistment without normal discharge penalties and restores party to normal state.
+        /// Lord reputation penalty should be applied via option effects.
+        /// Records a 7-day cooldown with the lord so they won't accept the player immediately.
+        /// </summary>
+        private void ApplyEnlistmentAbort()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                ModLogger.Warn(LogCategory, "ApplyEnlistmentAbort: Not enlisted, nothing to abort");
+                return;
+            }
+            
+            var lord = enlistment.EnlistedLord;
+            ModLogger.Info(LogCategory, $"ApplyEnlistmentAbort: Player aborting enlistment with {lord?.Name} during bag check");
+            
+            // Record the abort before ending enlistment (so lord reference is still available)
+            if (lord != null)
+            {
+                enlistment.RecordBagCheckAbort(lord);
+            }
+            
+            enlistment.StopEnlist("Aborted enlistment during bag check", isHonorableDischarge: false);
+        }
+        
+        /// <summary>
+        /// Applies a fatigue change to the player.
+        /// Positive values add fatigue (more tired), negative values restore stamina.
+        /// </summary>
+        private void ApplyFatigueChange(int delta)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                ModLogger.Warn(LogCategory, "ApplyFatigueChange: EnlistmentBehavior not available");
+                return;
+            }
+            
+            enlistment.ModifyFatigue(delta);
+            ModLogger.Debug(LogCategory, $"ApplyFatigueChange: Modified fatigue by {delta}");
         }
 
         /// <summary>
@@ -1555,7 +1737,8 @@ namespace Enlisted.Features.Content
                     OptionChosen = ResolveText(option.TextId, option.TextFallback),
                     OutcomeSummary = BuildOutcomeSummary(option.Effects),
                     DayNumber = (int)CampaignTime.Now.ToDays,
-                    EffectsApplied = BuildEffectsDictionary(option.Effects)
+                    EffectsApplied = BuildEffectsDictionary(option.Effects),
+                    Severity = ParseSeverityFromEvent(_currentEvent)
                 };
 
                 EnlistedNewsBehavior.Instance.AddEventOutcome(outcome);
@@ -1565,6 +1748,29 @@ namespace Enlisted.Features.Content
             {
                 ModLogger.Error(LogCategory, "Failed to notify news of event outcome", ex);
             }
+        }
+
+        /// <summary>
+        /// Parses the severity level from an event definition's severity string.
+        /// Converts string values like "urgent" or "positive" to numeric severity codes.
+        /// </summary>
+        /// <param name="evt">The event definition.</param>
+        /// <returns>Severity level (0=Normal, 1=Positive, 2=Attention, 3=Urgent, 4=Critical).</returns>
+        private static int ParseSeverityFromEvent(EventDefinition evt)
+        {
+            if (evt == null || string.IsNullOrWhiteSpace(evt.Severity))
+            {
+                return 0; // Normal
+            }
+
+            return evt.Severity.ToLowerInvariant() switch
+            {
+                "positive" => 1,
+                "attention" => 2,
+                "urgent" => 3,
+                "critical" => 4,
+                _ => 0 // Default to Normal for unknown values
+            };
         }
 
         /// <summary>

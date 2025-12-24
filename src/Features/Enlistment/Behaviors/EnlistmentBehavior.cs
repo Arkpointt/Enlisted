@@ -520,6 +520,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Key: Minor faction StringId, Value: Cooldown end time
         /// </summary>
         private Dictionary<string, CampaignTime> _minorFactionDesertionCooldowns = new Dictionary<string, CampaignTime>();
+        
+        /// <summary>
+        ///     Tracks when the player aborted enlistment during bag check with each lord.
+        ///     Lords remember and require 7 days before accepting the player again.
+        ///     Key: Lord StringId, Value: Time when abort cooldown ends
+        /// </summary>
+        private Dictionary<string, CampaignTime> _bagCheckAbortCooldowns = new Dictionary<string, CampaignTime>();
 
         /// <summary>
         ///     Initializes the enlistment behavior and sets up singleton access.
@@ -1116,6 +1123,27 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Check if we've recovered enough to remove health penalties
             CheckFatigueHealthRecovery();
         }
+        
+        /// <summary>
+        /// Modifies fatigue by a delta value. Positive values add fatigue (reduce stamina),
+        /// negative values restore stamina. Used by events that apply fatigue costs.
+        /// </summary>
+        public void ModifyFatigue(int delta)
+        {
+            if (delta == 0)
+            {
+                return;
+            }
+            
+            if (delta > 0)
+            {
+                TryConsumeFatigue(delta, "event_cost");
+            }
+            else
+            {
+                RestoreFatigue(-delta, "event_bonus");
+            }
+        }
 
         /// <summary>
         ///     Gets the hourly fatigue recovery rate based on military rank/tier.
@@ -1648,6 +1676,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Serialize minor faction desertion cooldowns - manual serialization for Dictionary<string, CampaignTime>
             // Bannerlord's save system can serialize this dictionary directly since both types are primitives
             SerializeMinorFactionDesertionCooldowns(dataStore);
+            
+            // Serialize bag check abort cooldowns - tracks when player aborted enlistment during bag check
+            SerializeBagCheckAbortCooldowns(dataStore);
 
             // Company needs state - manual serialization since it's a custom class
             SerializeCompanyNeeds(dataStore);
@@ -1842,6 +1873,64 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (_minorFactionDesertionCooldowns == null)
                 {
                     _minorFactionDesertionCooldowns = new Dictionary<string, CampaignTime>();
+                }
+            }
+        }
+        
+        /// <summary>
+        ///     Manually serialize/deserialize bag check abort cooldowns.
+        ///     Tracks when the player aborted enlistment during bag check with each lord.
+        /// </summary>
+        private void SerializeBagCheckAbortCooldowns(IDataStore dataStore)
+        {
+            try
+            {
+                var cooldownCount = _bagCheckAbortCooldowns?.Count ?? 0;
+                SyncKey(dataStore, "_bagCheckAbort_count", ref cooldownCount);
+
+                if (!dataStore.IsLoading)
+                {
+                    // Saving: serialize each cooldown entry individually
+                    var index = 0;
+                    foreach (var kvp in _bagCheckAbortCooldowns)
+                    {
+                        var lordId = kvp.Key;
+                        var cooldownEnd = kvp.Value;
+
+                        SyncKey(dataStore, $"_bagCheckAbort_{index}_id", ref lordId);
+                        SyncKey(dataStore, $"_bagCheckAbort_{index}_end", ref cooldownEnd);
+                        index++;
+                    }
+                }
+                else
+                {
+                    // Loading: reconstruct dictionary from individual fields
+                    _bagCheckAbortCooldowns = new Dictionary<string, CampaignTime>();
+
+                    for (var i = 0; i < cooldownCount; i++)
+                    {
+                        var lordId = "";
+                        var cooldownEnd = CampaignTime.Zero;
+
+                        SyncKey(dataStore, $"_bagCheckAbort_{i}_id", ref lordId);
+                        SyncKey(dataStore, $"_bagCheckAbort_{i}_end", ref cooldownEnd);
+
+                        if (!string.IsNullOrEmpty(lordId))
+                        {
+                            _bagCheckAbortCooldowns[lordId] = cooldownEnd;
+                        }
+                    }
+
+                    ModLogger.Debug("SaveLoad", $"Loaded {_bagCheckAbortCooldowns.Count} bag check abort cooldowns");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("SaveLoad", $"Error serializing bag check abort cooldowns: {ex.Message}");
+                // Ensure dictionary exists even on error
+                if (_bagCheckAbortCooldowns == null)
+                {
+                    _bagCheckAbortCooldowns = new Dictionary<string, CampaignTime>();
                 }
             }
         }
@@ -2045,6 +2134,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 reason.SetTextVariable("DAYS", remainingDays);
                 return false;
             }
+            
+            // Block re-enlistment if player aborted the bag check with this lord recently
+            if (IsBlockedFromLordDueToAbort(lord, out var abortDaysRemaining))
+            {
+                reason = new TextObject(
+                    "{=Enlisted_Message_BagCheckAbortCooldown}{LORD} expects you to sort out your affairs before returning. Come back in {DAYS} days.");
+                reason.SetTextVariable("LORD", lord.Name ?? TextObject.GetEmpty());
+                reason.SetTextVariable("DAYS", abortDaysRemaining);
+                return false;
+            }
 
             var counterpartParty = MobileParty.ConversationParty ?? lord.PartyBelongedTo;
 
@@ -2148,73 +2247,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ContinueStartEnlistInternal(lord);
         }
 
-        private void ShowBagCheckInquiry(Hero lord)
-        {
-            try
-            {
-                _bagCheckInProgress = true;
-
-                var options = new List<InquiryElement>
-                {
-                    new InquiryElement("stash",
-                        new TextObject("{=qm_stow_all}\"Stow it all\" (50g)").ToString(),
-                        null,
-                        true,
-                        new TextObject("{=qm_stow_hint}Move every scrap into the baggage wagon and pay the clerk his fee.").ToString()),
-                    new InquiryElement("sell",
-                        new TextObject("{=qm_sell_all}\"Sell it all\" (60%)").ToString(),
-                        null,
-                        true,
-                        new TextObject("{=qm_sell_hint}Liquidate the lot at a battlefield rate and march off heavier in coin.").ToString()),
-                    new InquiryElement("smuggle",
-                        new TextObject("{=qm_smuggle_one}\"I'm keeping one thing\" (Roguery 30+)").ToString(),
-                        null,
-                        true,
-                        new TextObject("{=qm_smuggle_hint}Slip one prized piece past the ledger; if caught, itâ€™s gone.").ToString())
-                };
-
-                var inquiry = new MultiSelectionInquiryData(
-                    new TextObject("{=qm_bagcheck_title}Enlistment Bag Check").ToString(),
-                    new TextObject("{=qm_bagcheck_body}The quartermaster lifts his quill. \"You canâ€™t march in that finery. Regimental rules. Everything goes in the wagons or my ledger. If the wagons burn, so does your past life. How do you want this written, soldier?\"").ToString(),
-                    options,
-                    false,
-                    1,
-                    1,
-                    new TextObject("{=qm_continue}Continue").ToString(),
-                    new TextObject("{=str_cancel}Cancel").ToString(),
-                    selection =>
-                    {
-                        try
-                        {
-                            var choice = selection?.FirstOrDefault()?.Identifier as string;
-                            HandleBagCheckChoice(choice);
-                        }
-                        finally
-                        {
-                            _bagCheckInProgress = false;
-                        }
-                    },
-                    _ =>
-                    {
-                        _bagCheckInProgress = false;
-                        ModLogger.Warn("Enlistment", "Bag check cancelled; enlistment halted.");
-                    });
-
-                MBInformationManager.ShowMultiSelectionInquiry(inquiry);
-            }
-            catch (Exception ex)
-            {
-                _bagCheckInProgress = false;
-                ModLogger.ErrorCode("Enlistment", "E-ENLIST-003", "Bag check prompt failed", ex);
-            }
-        }
-
-        // Fallback inquiry used by incidents behavior when invoked manually
-        public void ShowBagCheckInquiryFallback()
-        {
-            ShowBagCheckInquiry(_pendingBagCheckLord);
-        }
-
         /// <summary>
         /// Bag-check processing when the player's personal belongings have already been backed up by <see cref="EquipmentManager"/>.
         /// This is the normal flow: equipment backup happens during enlistment, then the bag-check prompt
@@ -2291,8 +2323,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 case "stash":
                 {
+                    // Calculate total inventory value for stowage fee (200g + 5% of value)
+                    var totalValue = 0f;
+                    foreach (var element in backedUpInventory)
+                    {
+                        if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                        {
+                            continue;
+                        }
+                        totalValue += element.EquipmentElement.Item.Value * element.Amount;
+                    }
+                    
+                    var storageFee = 200 + (int)Math.Floor(totalValue * 0.05f);
+                    
                     AddRosterToBaggage(backedUpInventory);
-                    TryChargeWagonFee(50);
+                    TryChargeWagonFee(storageFee);
                     break;
                 }
                 case "sell":
@@ -2326,49 +2371,77 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
                 case "smuggle":
                 {
-                    var best = backedUpInventory
-                        .Where(e => e.EquipmentElement.Item != null && e.Amount > 0 && !e.EquipmentElement.IsQuestItem)
-                        .OrderByDescending(e => e.EquipmentElement.Item.Value)
-                        .FirstOrDefault();
-
-                    // Default: if nothing meaningful, just stash.
-                    if (best.EquipmentElement.Item == null)
-                    {
-                        AddRosterToBaggage(backedUpInventory);
-                        break;
-                    }
-
-                    // Stash everything first, then decide what happens to the one item the player tried to keep.
-                    AddRosterToBaggage(backedUpInventory);
-
+                    // Smuggle attempt: try to stow everything WITHOUT paying the storage fee
+                    // Hard Roguery check determines if you get away with it
                     var roguery = hero.GetSkillValue(DefaultSkills.Roguery);
-                    var success = roguery >= 30;
+                    var difficulty = 80; // High difficulty
+                    var roll = MBRandom.RandomInt(100);
+                    var successThreshold = Math.Max(0, roguery - (difficulty - 50));
+                    var success = roll < successThreshold;
+                    
+                    ModLogger.Info("BagCheck", $"Smuggle attempt: Roguery {roguery}, Roll {roll} vs threshold {successThreshold} = {(success ? "SUCCESS" : "FAIL")}");
+
+                    // Always stow everything in baggage
+                    AddRosterToBaggage(backedUpInventory);
 
                     if (success)
                     {
-                        // Move 1 copy back into the player's inventory.
-                        _baggageStash.AddToCounts(best.EquipmentElement, -1);
-                        MobileParty.MainParty?.ItemRoster.AddToCounts(best.EquipmentElement, 1);
+                        // Got away with it - no fee charged
                         InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=qm_smuggle_success}You tuck away your {ITEM} without being caught.")
-                                .SetTextVariable("ITEM", best.EquipmentElement.Item.Name).ToString()));
+                            new TextObject("{=qm_smuggle_success}You slip everything past the ledger without paying. The clerk never noticed.")
+                                .ToString(),
+                            Colors.Green));
                     }
                     else
                     {
-                        // Confiscated: remove 1 copy from the wagon stash.
-                        _baggageStash.AddToCounts(best.EquipmentElement, -1);
+                        // Caught - forced to pay the fee plus scrutiny penalty
+                        var totalValue = 0f;
+                        foreach (var element in backedUpInventory)
+                        {
+                            if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                            {
+                                continue;
+                            }
+                            totalValue += element.EquipmentElement.Item.Value * element.Amount;
+                        }
+                        
+                        var storageFee = 200 + (int)Math.Floor(totalValue * 0.05f);
+                        TryChargeWagonFee(storageFee);
+                        
+                        // Add scrutiny for attempted deception
+                        var escalation = EscalationManager.Instance?.State;
+                        if (escalation != null)
+                        {
+                            escalation.Scrutiny = Math.Min(10, escalation.Scrutiny + 1);
+                        }
+                        
                         InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=qm_smuggle_fail}Caught smuggling. Your {ITEM} is confiscated.")
-                                .SetTextVariable("ITEM", best.EquipmentElement.Item.Name).ToString(),
+                            new TextObject("{=qm_smuggle_fail}Caught trying to dodge the fee. You pay anyway, and the clerk makes a note in his ledger.")
+                                .ToString(),
                             Colors.Red));
                     }
 
                     break;
                 }
                 default:
+                {
+                    // Calculate storage fee for default case
+                    var totalValue = 0f;
+                    foreach (var element in backedUpInventory)
+                    {
+                        if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                        {
+                            continue;
+                        }
+                        totalValue += element.EquipmentElement.Item.Value * element.Amount;
+                    }
+                    
+                    var storageFee = 200 + (int)Math.Floor(totalValue * 0.05f);
+                    
                     AddRosterToBaggage(backedUpInventory);
-                    TryChargeWagonFee(50);
+                    TryChargeWagonFee(storageFee);
                     break;
+                }
             }
 
             // The backed up inventory has now been handled (moved to baggage/sold/confiscated).
@@ -2386,10 +2459,27 @@ namespace Enlisted.Features.Enlistment.Behaviors
             if (!handledViaBackup)
             {
                 EnsureBaggageStash();
+                
+                // Calculate storage fee: 200g + 5% of inventory value
+                var totalValue = 0f;
+                var partyRoster = MobileParty.MainParty?.ItemRoster;
+                if (partyRoster != null)
+                {
+                    foreach (var element in partyRoster)
+                    {
+                        if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                        {
+                            continue;
+                        }
+                        totalValue += element.EquipmentElement.Item.Value * element.Amount;
+                    }
+                }
+                var storageFee = 200 + (int)Math.Floor(totalValue * 0.05f);
+                
                 switch (choice)
                 {
                     case "stash":
-                        StashAllBelongings(Hero.MainHero, chargeFee: 50);
+                        StashAllBelongings(Hero.MainHero, chargeFee: storageFee);
                         break;
                     case "sell":
                         LiquidateAllBelongings(Hero.MainHero, 0.60f);
@@ -2399,7 +2489,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         break;
                     default:
                         // Default to stow to avoid enlistment without cleanup
-                        StashAllBelongings(Hero.MainHero, chargeFee: 50);
+                        StashAllBelongings(Hero.MainHero, chargeFee: storageFee);
                         break;
                 }
             }
@@ -2462,18 +2552,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            var incidents = EnlistedIncidentsBehavior.Instance;
-            if (incidents != null)
+            // Use the narrative event system for immersive bag check experience
+            var bagCheckEvent = EventCatalog.GetEvent("evt_bagcheck_first_enlistment");
+            var eventDelivery = EventDeliveryManager.Instance;
+            
+            if (bagCheckEvent != null && eventDelivery != null)
             {
                 _bagCheckInProgress = true;
-                ModLogger.Info("Enlistment", $"Triggering deferred bag check (scheduled at {_bagCheckDueTime})");
-                incidents.TriggerBagCheckIncident();
+                ModLogger.Info("Enlistment", $"Triggering bag check event (scheduled at {_bagCheckDueTime})");
+                eventDelivery.QueueEvent(bagCheckEvent);
                 return;
             }
 
-            // Fail open if incidents behavior is unavailable
+            // Fail open if event system unavailable
             ModLogger.Warn("Enlistment",
-                "Deferred bag check behavior unavailable; marking bag check complete to avoid blocking enlistment");
+                "Bag check event system unavailable; marking bag check complete to avoid blocking enlistment");
             _bagCheckCompleted = true;
             _bagCheckEverCompleted = true;
             _bagCheckScheduled = false;
@@ -2484,6 +2577,54 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void EnsureBaggageStash()
         {
             _baggageStash ??= new ItemRoster();
+        }
+        
+        /// <summary>
+        /// Returns true if the player has at least one item in their baggage stash.
+        /// Used by events that require items to exist (theft events).
+        /// </summary>
+        public bool HasBaggageItems()
+        {
+            return _baggageStash != null && _baggageStash.Count > 0;
+        }
+        
+        /// <summary>
+        /// Removes a random number of items from the baggage stash.
+        /// Returns the actual number of items removed (may be less than requested if stash is nearly empty).
+        /// Used by theft, raid, and loss events. Gracefully handles empty stash.
+        /// </summary>
+        public int RemoveRandomBaggageItems(int count)
+        {
+            if (_baggageStash == null || _baggageStash.Count == 0 || count <= 0)
+            {
+                return 0;
+            }
+            
+            var random = new Random();
+            var removed = 0;
+            
+            for (var i = 0; i < count && _baggageStash.Count > 0; i++)
+            {
+                // Get a random item from the stash
+                var itemList = _baggageStash.ToList();
+                if (itemList.Count == 0)
+                {
+                    break;
+                }
+                
+                var randomIndex = random.Next(itemList.Count);
+                var selectedItem = itemList[randomIndex];
+                
+                if (selectedItem.EquipmentElement.Item != null && selectedItem.Amount > 0)
+                {
+                    _baggageStash.AddToCounts(selectedItem.EquipmentElement, -1);
+                    removed++;
+                    
+                    ModLogger.Info("Baggage", $"Lost from stash: {selectedItem.EquipmentElement.Item.Name}");
+                }
+            }
+            
+            return removed;
         }
         
         /// <summary>
@@ -3077,42 +3218,53 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 allItems.AddRange(GetEquipmentElements(hero.BattleEquipment));
                 allItems.AddRange(GetEquipmentElements(hero.CivilianEquipment));
 
-                // CRITICAL: Filter out quest items - they cannot be smuggled
-                var best = allItems
-                    .Where(e => e.EquipmentElement.Item != null && e.Amount > 0 && !e.EquipmentElement.IsQuestItem)
-                    .OrderByDescending(e => e.EquipmentElement.Item.Value)
-                    .FirstOrDefault();
-
-                // If nothing to smuggle, just stash everything (quest items will be protected)
-                if (best.EquipmentElement.Item == null)
+                // Calculate total inventory value for fee calculation
+                var totalValue = 0f;
+                foreach (var element in allItems)
                 {
-                    StashAllBelongings(hero, 0);
-                    return;
+                    if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                    {
+                        continue;
+                    }
+                    totalValue += element.EquipmentElement.Item.Value * element.Amount;
                 }
 
-                // Clear current rosters/equipment
-                StashAllBelongings(hero, 0);
-
+                // Smuggle check: trying to stow everything without paying the storage fee
                 var roguery = hero.GetSkillValue(DefaultSkills.Roguery);
-                var success = roguery >= 30;
+                var difficulty = 80; // High difficulty
+                var roll = MBRandom.RandomInt(100);
+                var successThreshold = Math.Max(0, roguery - (difficulty - 50));
+                var success = roll < successThreshold;
+                
+                ModLogger.Info("BagCheck", $"Smuggle attempt (fallback): Roguery {roguery}, Roll {roll} vs threshold {successThreshold} = {(success ? "SUCCESS" : "FAIL")}");
+
+                // Always stash everything (fee only if caught)
+                var storageFee = success ? 0 : 200 + (int)Math.Floor(totalValue * 0.05f);
+                StashAllBelongings(hero, storageFee);
 
                 if (success)
                 {
-                    MobileParty.MainParty?.ItemRoster.AddToCounts(best.EquipmentElement.Item, 1);
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=qm_smuggle_success}You tuck away your {ITEM} without being caught.")
-                            .SetTextVariable("ITEM", best.EquipmentElement.Item.Name).ToString()));
+                        new TextObject("{=qm_smuggle_success}You slip everything past the ledger without paying. The clerk never noticed.")
+                            .ToString(),
+                        Colors.Green));
                 }
                 else
                 {
-                    // Failure: item confiscated
+                    // Caught - scrutiny penalty for attempted deception
+                    var escalation = EscalationManager.Instance?.State;
+                    if (escalation != null)
+                    {
+                        escalation.Scrutiny = Math.Min(10, escalation.Scrutiny + 1);
+                    }
+                    
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=qm_smuggle_fail}Caught smuggling. Your {ITEM} is confiscated.")
-                            .SetTextVariable("ITEM", best.EquipmentElement.Item.Name).ToString(), Colors.Red));
+                        new TextObject("{=qm_smuggle_fail}Caught trying to dodge the fee. You pay anyway, and the clerk makes a note in his ledger.")
+                            .ToString(),
+                        Colors.Red));
                 }
 
-                ModLogger.Info("Enlistment",
-                    $"Smuggle attempt {(success ? "succeeded" : "failed")} for {best.EquipmentElement.Item.StringId}");
+                ModLogger.Info("Enlistment", $"Smuggle attempt {(success ? "succeeded" : "failed")} - fee {(success ? "avoided" : "charged")}");
             }
             catch (Exception ex)
             {
@@ -4250,6 +4402,60 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
             }
 
+            return false;
+        }
+        
+        /// <summary>
+        ///     Records that the player aborted enlistment during bag check with this lord.
+        ///     Lord will not accept the player for 7 days.
+        /// </summary>
+        public void RecordBagCheckAbort(Hero lord)
+        {
+            if (lord == null)
+            {
+                return;
+            }
+            
+            if (_bagCheckAbortCooldowns == null)
+            {
+                _bagCheckAbortCooldowns = new Dictionary<string, CampaignTime>();
+            }
+            
+            var cooldownEnd = CampaignTime.Now + CampaignTime.Days(7);
+            _bagCheckAbortCooldowns[lord.StringId] = cooldownEnd;
+            
+            ModLogger.Info("Enlistment", $"Recorded bag check abort with {lord.Name}. Cooldown until {cooldownEnd}");
+        }
+        
+        /// <summary>
+        ///     Checks if the player is blocked from enlisting with a lord due to aborting the bag check recently.
+        /// </summary>
+        /// <param name="lord">The lord to check.</param>
+        /// <param name="remainingDays">Output: days remaining in cooldown (0 if not blocked).</param>
+        /// <returns>True if blocked, false if can enlist.</returns>
+        public bool IsBlockedFromLordDueToAbort(Hero lord, out int remainingDays)
+        {
+            remainingDays = 0;
+            
+            if (lord == null || _bagCheckAbortCooldowns == null)
+            {
+                return false;
+            }
+            
+            if (_bagCheckAbortCooldowns.TryGetValue(lord.StringId, out var cooldownEnd))
+            {
+                if (CampaignTime.Now < cooldownEnd)
+                {
+                    remainingDays = (int)Math.Ceiling((cooldownEnd - CampaignTime.Now).ToDays);
+                    return true;
+                }
+                else
+                {
+                    // Cooldown expired, remove it
+                    _bagCheckAbortCooldowns.Remove(lord.StringId);
+                }
+            }
+            
             return false;
         }
 
@@ -5976,6 +6182,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     _enlistedLord);
 
                 HandleGearOnDischarge(band);
+                HandleBaggageOnDischarge(band);
 
                 // Pension assignment handled inside StopEnlist via ApplyPensionOnDischarge
                 StopEnlist($"Final muster ({band})", isHonorable);
@@ -6187,6 +6394,104 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.ErrorCode("Equipment", "E-EQUIP-004", "Gear handling on discharge failed", ex);
+            }
+        }
+
+        /// <summary>
+        /// Handles baggage stash on discharge based on the discharge type.
+        /// Deserters forfeit all baggage, dishonorable discharges reclaim QM-issued items,
+        /// and honorable discharges keep all baggage.
+        /// </summary>
+        private void HandleBaggageOnDischarge(string band)
+        {
+            try
+            {
+                if (_baggageStash == null)
+                {
+                    return;
+                }
+
+                switch (band)
+                {
+                    case "deserter":
+                        // Deserters forfeit all baggage (abandoned post)
+                        if (_baggageStash.Count > 0)
+                        {
+                            var itemCount = _baggageStash.Count;
+                            _baggageStash.Clear();
+                            ModLogger.Info("Discharge", $"Baggage forfeited due to desertion ({itemCount} items lost)");
+                        }
+                        break;
+
+                    case "dishonorable":
+                        // Dishonorable discharge: QM reclaims issued items from baggage
+                        // Items with "qm_issued" tag are removed from stash
+                        ReclaimQmIssuedFromBaggage();
+                        ModLogger.Info("Discharge", "QM-issued items reclaimed from baggage (dishonorable discharge)");
+                        break;
+
+                    case "washout":
+                    case "honorable":
+                    case "veteran":
+                    case "heroic":
+                        // Keep all baggage for these discharge types
+                        ModLogger.Debug("Discharge", $"Baggage preserved ({band} discharge)");
+                        break;
+
+                    default:
+                        // Unknown discharge type - log and preserve baggage by default
+                        ModLogger.Warn("Discharge", $"Unknown discharge band '{band}' - preserving baggage");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Discharge", "Error handling baggage on discharge", ex);
+            }
+        }
+
+        /// <summary>
+        /// Reclaims QM-issued items from the baggage stash.
+        /// Items with "qm_issued" modifier are removed.
+        /// </summary>
+        private void ReclaimQmIssuedFromBaggage()
+        {
+            if (_baggageStash == null || _baggageStash.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var itemsToRemove = new System.Collections.Generic.List<(ItemObject item, int count)>();
+
+                // Identify QM-issued items in baggage
+                for (int i = 0; i < _baggageStash.Count; i++)
+                {
+                    var element = _baggageStash.GetElementCopyAtIndex(i);
+                    if (element.EquipmentElement.ItemModifier != null &&
+                        element.EquipmentElement.ItemModifier.Name?.ToString()?.Contains("qm_issued") == true)
+                    {
+                        itemsToRemove.Add((element.EquipmentElement.Item, element.Amount));
+                    }
+                }
+
+                // Remove QM-issued items from stash
+                int totalRemoved = 0;
+                foreach (var (item, count) in itemsToRemove)
+                {
+                    _baggageStash.AddToCounts(item, -count);
+                    totalRemoved += count;
+                }
+
+                if (totalRemoved > 0)
+                {
+                    ModLogger.Info("Discharge", $"Reclaimed {totalRemoved} QM-issued items from baggage");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Discharge", "Error reclaiming QM-issued items from baggage", ex);
             }
         }
 

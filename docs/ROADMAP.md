@@ -5,7 +5,11 @@
 **Status:** ⚠️ Planning  
 **Last Updated:** 2025-12-24  
 **Current Version:** v0.9.0  
-**Target Game:** Bannerlord v1.3.11
+**Target Game:** Bannerlord v1.3.13
+
+**Recent Updates:**
+- Completed Baggage Train Daily Brief integration with severity-based news system (2025-12-24)
+- Added Muster Menu System Revamp specification (2025-12-24)
 
 ---
 
@@ -80,32 +84,78 @@ After: "Scout approaches to Pravend - Lord planning offensive.
 
 ## Near-Term
 
-### Baggage Train Availability System
+### Muster Menu System Revamp
 
 **Status:** 📋 Specification Complete  
+**Effort:** ~30 hours (implementation + testing)  
+**Spec:** [muster-menu-revamp.md](Features/Core/muster-menu-revamp.md)
+
+Replace the single-popup pay muster with a multi-stage GameMenu sequence that creates a comprehensive muster experience with period reporting, rank progression display, and integrated events.
+
+**Core Implementation** (20 hours)
+- Create `MusterMenuHandler.cs` with 8-stage menu flow
+- Implement `MusterSessionState` for tracking outcomes
+- Convert baggage/inspection/recruit events to menu stages
+- Build promotion recap system (acknowledges promotions that occurred during period)
+- Integrate strategic context, orders summary, health/fatigue status
+- Add T7+ retinue muster stage with casualties report
+- Generate comprehensive muster reports for news feed
+
+**Key Features:**
+- **8-Stage Flow:** Intro → Pay → Baggage → Inspection → Recruit → Promotion Recap → Retinue (T7+) → Complete
+- **Period Summary:** Shows events, battles, XP sources, orders completed since last muster
+- **Rank Progression:** Current rank, XP progress, next rank requirements, promotion acknowledgment
+- **Event Integration:** Baggage checks, equipment inspections, recruit mentoring as menu stages (not popups)
+- **Post-Muster Actions:** Visit Quartermaster, Review Records, Request Temporary Leave
+- **News Recording:** Full muster outcomes saved to personal feed for historical review
+
+**Testing & Polish** (10 hours)
+- Edge case handling (multi-tier promotions, no contraband, skip conditions)
+- Save/load mid-muster state restoration
+- Localization (~50 new string entries)
+- Performance optimization (lazy-load data queries)
+- Comprehensive acceptance criteria verification
+
+**Gameplay Impact:**
+- Muster feels like a formal military event, not a quick popup
+- Player sees comprehensive service record at each muster
+- All muster-related events occur in one cohesive sequence
+- Rank progression clearly displayed with path forward
+- Strategic context connects muster to ongoing operations
+
+**Migration:** Feature flag allows parallel operation with old system during testing phase
+
+---
+
+### Baggage Train Availability System
+
+**Status:** ⏸️ Paused (Phases 1-6 Complete, 7-9 Deferred)  
 **Effort:** ~50 hours (9 phases)  
 **Spec:** [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md)
 
 Transform the baggage stash from always-accessible storage into a realistic logistics element with conditional access based on march state, rank, and strategic context.
 
-**Phase 1-3: Core System** (18 hours)
-- Create `BaggageTrainManager` with priority-based access resolution
-- Define `BaggageAccessState` enum (FullAccess, TemporaryAccess, NoAccess, Locked)
-- Gate Camp Hub menu options with contextual tooltips
-- Add "Request Baggage Access" emergency option (T3+)
-- Periodic "baggage caught up" events (~25%/day on march)
-- Muster and night halt access windows
+**✅ Phase 1-3: Core System** (COMPLETE - 18 hours)
+- ✅ Create `BaggageTrainManager` with priority-based access resolution
+- ✅ Define `BaggageAccessState` enum (FullAccess, TemporaryAccess, NoAccess, Locked)
+- ✅ Gate Camp Hub menu options with contextual tooltips
+- ✅ Add "Request Baggage Access" emergency option (T3+)
+- ✅ Periodic "baggage caught up" events (~25%/day on march)
+- ✅ Muster and night halt access windows
 
-**Phase 4: Baggage Events** (10 hours)
-- `evt_baggage_arrived` - positive access window
-- `evt_baggage_delayed` - weather/terrain delays
-- `evt_baggage_raided` - combat/loss in enemy territory
-- `evt_baggage_theft` - item loss when soldier rep low
+**✅ Phase 4: Baggage Events** (COMPLETE - 10 hours)
+- ✅ `evt_baggage_arrived` - positive access window
+- ✅ `evt_baggage_delayed` - weather/terrain delays
+- ✅ `evt_baggage_raided` - combat/loss in enemy territory
+- ✅ `evt_baggage_theft` - item loss when soldier rep low
 
-**Phase 5-6: Progression & News** (7 hours)
-- Rank-gated access privileges (T1-T2: limited, T7+: full control)
-- Daily Brief includes baggage status
-- Personal feed shows baggage events
+**✅ Phase 5-6: Progression & News** (COMPLETE - 7 hours)
+- ✅ Rank-gated access privileges (T1-T2: limited, T7+: full control)
+- ✅ Daily Brief includes baggage status with raid/arrival tracking
+- ✅ Personal feed shows baggage events with severity-based priorities
+- ✅ News system: Color-coded events (green/yellow/red/critical)
+- ✅ News system: Duration-based persistence (6h/12h/24h/48h by severity)
+- ✅ News system: Higher severity prevents replacement by lower priority items
 
 **Phase 7-8: Cross-System Integration** (11 hours)
 - Leave system: FullAccess when on leave

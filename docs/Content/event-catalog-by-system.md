@@ -3,7 +3,7 @@
 **Summary:** Single source of truth for all narrative content including Events (74), Map Incidents (51), Orders (17), and Decisions (34). This comprehensive catalog organizes content by system and role, providing IDs, descriptions, requirements, effects, and implementation status for all content in the mod.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23 (Added: Retinue system - 11 events, 6 incidents, 4 decisions for T7+ commanders)  
+**Last Updated:** 2025-12-24 (Enhanced: Bag check now uses narrative event system; Fixed: Onboarding event parsing)  
 **Related Docs:** [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md), [Retinue System](../Features/Core/retinue-system.md)
 
 ---
@@ -1129,6 +1129,7 @@ ModuleData/Enlisted/
 │   ├── events_general.json         (Universal soldier events)
 │   ├── events_escalation_thresholds.json  (Scrutiny/Discipline/Medical thresholds)
 │   ├── events_onboarding.json      (First-enlistment guaranteed events)
+│   ├── events_bagcheck.json        (First-enlistment bag check event)
 │   ├── events_promotion.json       (Promotion and proving events)
 │   ├── events_training.json        (Training-related events)
 │   ├── events_retinue.json         (Retinue events for T7+ commanders)

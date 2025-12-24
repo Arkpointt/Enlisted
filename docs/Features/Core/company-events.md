@@ -28,7 +28,7 @@ Enlisted v0.9.0 uses a unified event delivery pipeline that is **Role-Based** an
 |---------|-------------|
 | `menu` | Player-initiated via the **Camp** activities menu. |
 | `inquiry` | Automatic popup for narrative or consequence delivery. |
-| `incident` | Native moment events that occur on the map (e.g., Bag Check). |
+| `incident` | Native map incidents that occur on the campaign map (e.g., post-battle, settlement entry). |
 
 ---
 

@@ -446,6 +446,12 @@ namespace Enlisted.Features.Content
 
             // Parse HP requirement (for decisions like Seek Treatment that require being wounded)
             reqs.HpBelow = reqJson["hp_below"]?.Value<int>() ?? reqJson["hpBelow"]?.Value<int>();
+            
+            // Parse soldier reputation maximum (for theft events that target unpopular soldiers)
+            reqs.MaxSoldierRep = reqJson["maxSoldierRep"]?.Value<int>() ?? reqJson["max_soldier_rep"]?.Value<int>();
+            
+            // Parse baggage items requirement (for theft events that require items to exist)
+            reqs.BaggageHasItems = reqJson["baggageHasItems"]?.Value<bool>() ?? reqJson["baggage_has_items"]?.Value<bool>();
 
             // Parse escalation requirements (check both locations)
             var escalationJson = reqJson["minEscalation"] as JObject;
@@ -494,6 +500,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Parses trigger conditions from JSON.
+        /// Also extracts onboarding stage from trigger conditions (e.g., "onboarding_stage_1" → stage 1).
         /// </summary>
         private static void ParseTriggers(JObject eventJson, EventDefinition eventDef)
         {
@@ -511,6 +518,28 @@ namespace Enlisted.Features.Content
 
             // Parse "none" triggers (must all be false)
             eventDef.TriggersNone = ParseStringList(triggersJson["none"]);
+            
+            // Extract onboarding stage from triggers.all (e.g., "onboarding_stage_1" → 1)
+            // This bridges the schema's trigger-based format to the typed requirement system.
+            foreach (var trigger in eventDef.TriggersAll)
+            {
+                if (trigger.StartsWith("onboarding_stage_", StringComparison.OrdinalIgnoreCase))
+                {
+                    var stagePart = trigger.Substring("onboarding_stage_".Length);
+                    if (int.TryParse(stagePart, out var stage) && stage >= 1 && stage <= 3)
+                    {
+                        eventDef.Requirements.OnboardingStage = stage;
+                        break;
+                    }
+                }
+            }
+            
+            // Extract onboarding track from root-level "track" field (e.g., "commander", "soldier", "veteran")
+            var track = eventJson["track"]?.ToString();
+            if (!string.IsNullOrEmpty(track))
+            {
+                eventDef.Requirements.OnboardingTrack = track;
+            }
         }
 
         /// <summary>
@@ -604,6 +633,14 @@ namespace Enlisted.Features.Content
 
                 // Parse reward choices (sub-choice popup after main option)
                 option.RewardChoices = ParseRewardChoices(optJson["reward_choices"]);
+                
+                // Parse onboarding progression flag
+                option.AdvancesOnboarding = optJson["advances_onboarding"]?.Value<bool>() ?? 
+                                           optJson["advancesOnboarding"]?.Value<bool>() ?? false;
+                
+                // Parse enlistment abort flag
+                option.AbortsEnlistment = optJson["aborts_enlistment"]?.Value<bool>() ?? 
+                                         optJson["abortsEnlistment"]?.Value<bool>() ?? false;
 
                 eventDef.Options.Add(option);
             }
@@ -729,6 +766,21 @@ namespace Enlisted.Features.Content
                                       effectsJson["retinue_loss"]?.Value<int>();
                 effects.RetinueWounded = effectsJson["retinueWounded"]?.Value<int>() ??
                                          effectsJson["retinue_wounded"]?.Value<int>();
+                
+                // Parse baggage train effects
+                effects.GrantTemporaryBaggageAccess = effectsJson["grantTemporaryBaggageAccess"]?.Value<int>() ??
+                                                     effectsJson["grant_temporary_baggage_access"]?.Value<int>();
+                effects.BaggageDelayDays = effectsJson["baggageDelayDays"]?.Value<int>() ??
+                                          effectsJson["baggage_delay_days"]?.Value<int>();
+                effects.RandomBaggageLoss = effectsJson["randomBaggageLoss"]?.Value<int>() ??
+                                           effectsJson["random_baggage_loss"]?.Value<int>();
+                
+                // Parse bag check choice (first-enlistment gear handling)
+                effects.BagCheckChoice = effectsJson["bagCheckChoice"]?.ToString() ??
+                                        effectsJson["bag_check_choice"]?.ToString();
+                
+                // Parse fatigue effect
+                effects.Fatigue = effectsJson["fatigue"]?.Value<int>();
 
                 // Parse company needs
                 ParseDictionaryField(effectsJson, "companyNeeds", effects.CompanyNeeds);
@@ -1024,6 +1076,21 @@ namespace Enlisted.Features.Content
             effects.RetinueLoyalty = effectsJson["retinueLoyalty"]?.Value<int>() ?? effectsJson["retinue_loyalty"]?.Value<int>();
             effects.RetinueLoss = effectsJson["retinueLoss"]?.Value<int>() ?? effectsJson["retinue_loss"]?.Value<int>();
             effects.RetinueWounded = effectsJson["retinueWounded"]?.Value<int>() ?? effectsJson["retinue_wounded"]?.Value<int>();
+            
+            // Parse baggage train effects
+            effects.GrantTemporaryBaggageAccess = effectsJson["grantTemporaryBaggageAccess"]?.Value<int>() ??
+                                                 effectsJson["grant_temporary_baggage_access"]?.Value<int>();
+            effects.BaggageDelayDays = effectsJson["baggageDelayDays"]?.Value<int>() ??
+                                      effectsJson["baggage_delay_days"]?.Value<int>();
+            effects.RandomBaggageLoss = effectsJson["randomBaggageLoss"]?.Value<int>() ??
+                                       effectsJson["random_baggage_loss"]?.Value<int>();
+            
+            // Parse bag check choice (first-enlistment gear handling)
+            effects.BagCheckChoice = effectsJson["bagCheckChoice"]?.ToString() ??
+                                    effectsJson["bag_check_choice"]?.ToString();
+            
+            // Parse fatigue effect
+            effects.Fatigue = effectsJson["fatigue"]?.Value<int>();
 
             // Parse company needs
             ParseDictionaryField(effectsJson, "companyNeeds", effects.CompanyNeeds);

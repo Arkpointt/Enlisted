@@ -1,11 +1,11 @@
 # Enlisted Documentation Index
 
-**Summary:** Single entry point for all Enlisted mod documentation, providing organized access to core systems, gameplay features, UI documentation, and technical references. This index reflects the current state of the mod (v0.9.0) targeting Bannerlord v1.3.12.
+**Summary:** Single entry point for all Enlisted mod documentation, providing organized access to core systems, gameplay features, UI documentation, and technical references. This index reflects the current state of the mod (v0.9.0) targeting Bannerlord v1.3.13.
 
 **Status:** ✅ Current  
 **Last Updated:** 2025-12-23  
 **Mod Version:** v0.9.0  
-**Game Target:** v1.3.12
+**Game Target:** v1.3.13
 
 ---
 
@@ -37,7 +37,7 @@ Enlist with a lord to begin your career. Your party is hidden, and you follow th
 - Doc: **[Enlistment System](enlistment.md)**
 
 ### 2) Initial Inspection: Bag Check
-About one hour after enlisting, you must stash or liquidate your personal gear to adhere to military regulations.
+About one hour after enlisting, you must decide what to do with your personal gear: stash it (paid), sell it, smuggle it (skill check), or abort enlistment entirely.
 - Doc: **[Enlistment System](enlistment.md)** (Behavior section)
 
 ### 3) Receive Orders

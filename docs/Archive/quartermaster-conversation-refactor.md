@@ -1911,20 +1911,20 @@ Use this checklist to verify robustness:
 
 ---
 
-### API Compatibility Notes (Bannerlord v1.3.11)
+### API Compatibility Notes (Bannerlord v1.3.13)
 
 **ItemModifier.Quality Property Missing:**
-- v1.3.11 API doesn't expose `Quality` property on `ItemModifier`
+- v1.3.13 API doesn't expose `Quality` property on `ItemModifier`
 - Created helper: `GetModifierQuality(ItemObject, ItemModifier)` 
 - Checks which quality tier contains the modifier via `GetModifiersBasedOnQuality()`
 - Returns `ItemQuality.Common` if undetermined
 
 **GauntletLayer Constructor:**
-- v1.3.11 signature: `GauntletLayer(string name, int localOrder)`
+- v1.3.13 signature: `GauntletLayer(string name, int localOrder)`
 - NOT: `GauntletLayer(int localOrder, string name, bool shouldClear)` (wrong order)
 
 **LoadMovie() Return Type:**
-- v1.3.11 returns: `GauntletMovieIdentifier` (not `IGauntletMovie`)
+- v1.3.13 returns: `GauntletMovieIdentifier` (not `IGauntletMovie`)
 
 ---
 
@@ -2270,7 +2270,7 @@ Key files to reference:
    - Added comprehensive "Phase 3 Edge Cases & Robustness" section
    - Documented all 6 edge cases with solutions
    - Added testing checklist for edge case verification
-   - Added API compatibility notes for v1.3.11
+   - Added API compatibility notes for v1.3.13
 
 ### Protection Guarantees
 

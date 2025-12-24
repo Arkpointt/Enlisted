@@ -69,6 +69,7 @@
 | [orders-system.md](Features/Core/orders-system.md) | Orders from chain of command: 17 orders across 3 tiers, strategic filtering, success/failure resolution | ✅ Current |
 | [promotion-system.md](Features/Core/promotion-system.md) | Rank progression T1-T9: XP sources, multi-factor requirements (days/battles/reputation/discipline), proving events, culture-specific ranks, equipment unlocks | ✅ Current |
 | [pay-system.md](Features/Core/pay-system.md) | Wages and payment | ✅ Current |
+| [muster-menu-revamp.md](Features/Core/muster-menu-revamp.md) | Multi-stage muster menu: rank progression display, period summary, event integration, comprehensive reporting | 📋 Specification |
 | [company-events.md](Features/Core/company-events.md) | Company-wide events | ✅ Current |
 | [retinue-system.md](Features/Core/retinue-system.md) | Commander's retinue (T7+): formation selection, context-aware trickle, relation-based reinforcements, loyalty tracking, 11 narrative events, 6 post-battle incidents, 4 camp decisions, named veterans | ✅ Current |
 | [companion-management.md](Features/Core/companion-management.md) | Companion integration | ✅ Current |

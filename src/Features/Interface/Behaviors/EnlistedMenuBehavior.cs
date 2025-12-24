@@ -5,10 +5,12 @@ using System.Text;
 // Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
 using Enlisted.Features.Company;
 using Enlisted.Features.Conditions;
+using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Interface.News.Models;
+using Enlisted.Features.Logistics;
 using Enlisted.Features.Orders.Behaviors;
 using Enlisted.Features.Content;
 using Enlisted.Mod.Core;
@@ -1471,6 +1473,30 @@ namespace Enlisted.Features.Interface.Behaviors
                 },
                 false, 5);
 
+            // Access Baggage Train - always enabled, routes to direct access or QM request based on state
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_baggage_train",
+                "{=baggage_menu_option}Access Baggage Train",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    
+                    // Always enabled - routing happens in handler based on access state
+                    var baggageManager = BaggageTrainManager.Instance;
+                    if (baggageManager != null)
+                    {
+                        var accessState = baggageManager.GetCurrentAccess();
+                        args.Tooltip = GetBaggageAccessTooltip(accessState);
+                    }
+                    else
+                    {
+                        args.Tooltip = new TextObject("{=baggage_tooltip_full_access}Access your stored belongings");
+                    }
+                    
+                    return true;
+                },
+                OnBaggageTrainSelected,
+                false, 6);
+
             // My Lord... - conversation with the current lord (Conversation icon)
             starter.AddGameMenuOption(CampHubMenuId, "camp_hub_talk_to_lord",
                 "{=Enlisted_Menu_TalkToLord}My Lord...",
@@ -1488,7 +1514,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     return true;
                 },
                 OnTalkToSelected,
-                false, 6);
+                false, 7);
 
             // Leave / Discharge / Desert (always shown; eligibility varies)
             starter.AddGameMenuOption(CampHubMenuId, "enlisted_leave_service_entry",
@@ -2314,6 +2340,52 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
+        /// Opens quartermaster conversation with baggage request context set.
+        /// Used when player needs emergency baggage access during march or lockdown.
+        /// </summary>
+        private void OpenQuartermasterConversationForBaggageRequest(string requestType)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    ModLogger.Warn("Baggage", "Cannot open baggage request conversation: not enlisted");
+                    return;
+                }
+
+                var qm = enlistment.GetOrCreateQuartermaster();
+                if (qm != null && qm.IsAlive)
+                {
+                    // Set baggage request context before opening conversation
+                    var dialogManager = EnlistedDialogManager.Instance;
+                    if (dialogManager != null)
+                    {
+                        dialogManager.SetBaggageRequestContext(requestType);
+                    }
+
+                    ModLogger.Info("Baggage", $"Opening QM conversation for baggage request: {requestType}");
+
+                    // Open conversation with quartermaster
+                    CampaignMapConversation.OpenConversation(
+                        new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
+                        new ConversationCharacterData(qm.CharacterObject, qm.PartyBelongedTo?.Party)
+                    );
+                }
+                else
+                {
+                    ModLogger.Warn("Baggage", "Quartermaster Hero unavailable for baggage request conversation");
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Interface", "E-UI-041", "Error opening baggage request conversation", ex);
+            }
+        }
+
+        /// <summary>
         ///     Fallback handler when quartermaster conversation cannot be opened.
         ///     The GameMenu equipment system was removed in favor of conversation-driven Gauntlet UI.
         /// </summary>
@@ -2326,6 +2398,125 @@ namespace Enlisted.Features.Interface.Behaviors
                 "Cannot open QM: conversation failed and no fallback available");
             InformationManager.DisplayMessage(new InformationMessage(
                 new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
+        }
+
+        /// <summary>
+        /// Returns dynamic tooltip for baggage train access based on current state and player tier.
+        /// Shows tier-appropriate costs for emergency access requests.
+        /// </summary>
+        private static TextObject GetBaggageAccessTooltip(BaggageAccessState state)
+        {
+            switch (state)
+            {
+                case BaggageAccessState.FullAccess:
+                    return new TextObject("{=baggage_tooltip_full_access}Access your stored belongings");
+                
+                case BaggageAccessState.Locked:
+                    return new TextObject("{=baggage_tooltip_locked}Request baggage access (storage locked down)");
+                
+                case BaggageAccessState.TemporaryAccess:
+                    return new TextObject("{=baggage_tooltip_full_access}Access your stored belongings");
+                
+                case BaggageAccessState.NoAccess:
+                default:
+                    return GetNoAccessTooltipWithCost();
+            }
+        }
+        
+        /// <summary>
+        /// Returns tooltip for NoAccess state, showing tier-appropriate cost for emergency access.
+        /// </summary>
+        private static TextObject GetNoAccessTooltipWithCost()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                return new TextObject("{=baggage_tooltip_no_access}Request baggage access (wagons behind the column)");
+            }
+            
+            var tier = enlistment.EnlistmentTier;
+            var qmRep = enlistment.QuartermasterRelationship;
+            
+            // Check if high rep favor is available
+            if (qmRep >= 50 && tier >= 3)
+            {
+                return new TextObject("{=baggage_tooltip_favor}Request baggage access (favor, no cost)");
+            }
+            
+            // Tier-based cost display
+            if (tier < 3)
+            {
+                return new TextObject("{=baggage_tooltip_rank_too_low}Baggage unavailable (rank too low)");
+            }
+            
+            if (tier >= 7)
+            {
+                return new TextObject("{=baggage_tooltip_officer_free}Request baggage access (free)");
+            }
+            
+            if (tier >= 5)
+            {
+                return new TextObject("{=baggage_tooltip_nco_cost}Request baggage access (-2 QM Rep)");
+            }
+            
+            // T3-T4
+            return new TextObject("{=baggage_tooltip_enlisted_cost}Request baggage access (-5 QM Rep)");
+        }
+
+        /// <summary>
+        /// Handles baggage train access menu selection. Routes to direct stash access or QM conversation
+        /// based on current baggage access state.
+        /// </summary>
+        private void OnBaggageTrainSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    // Not enlisted - direct access to personal stash
+                    ModLogger.Debug("Baggage", "Baggage access: Not enlisted, opening stash directly");
+                    enlistment?.TryOpenBaggageTrain();
+                    return;
+                }
+
+                var baggageManager = BaggageTrainManager.Instance;
+                if (baggageManager == null)
+                {
+                    ModLogger.Warn("Baggage", "BaggageTrainManager not available, opening stash directly");
+                    enlistment.TryOpenBaggageTrain();
+                    return;
+                }
+
+                var accessState = baggageManager.GetCurrentAccess();
+                ModLogger.Info("Baggage", $"Baggage access requested, state: {accessState}");
+
+                switch (accessState)
+                {
+                    case BaggageAccessState.FullAccess:
+                    case BaggageAccessState.TemporaryAccess:
+                        // Direct access to baggage stash
+                        enlistment.TryOpenBaggageTrain();
+                        break;
+
+                    case BaggageAccessState.Locked:
+                        // Route to QM conversation for emergency access request
+                        ModLogger.Info("Baggage", "Baggage locked, routing to QM conversation");
+                        OpenQuartermasterConversationForBaggageRequest("locked");
+                        break;
+
+                    case BaggageAccessState.NoAccess:
+                    default:
+                        // Route to QM conversation for emergency access request
+                        ModLogger.Info("Baggage", "Baggage not accessible, routing to QM conversation");
+                        OpenQuartermasterConversationForBaggageRequest("emergency");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Interface", "E-UI-040", "Error handling baggage train access", ex);
+            }
         }
 
         private void OnTalkToSelected(MenuCallbackArgs args)

@@ -64,12 +64,14 @@ Related systems (shipping):
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
 7. **First-Enlistment Bag Check** (T1-T6 only, fires once per career):
-   - Deferred **1 hour** after enlistment; fires as native map incident (fallback: inquiry prompt).
-   - **Stow it all (50g)**: Stashes all inventory + equipped items into baggage train.
+   - Deferred **1 hour** after enlistment; fires as narrative event (`evt_bagcheck_first_enlistment`).
+   - **Stow it all (200g + 5% value)**: Stashes all inventory + equipped items into baggage train. Costs 200g base + 5% of total inventory value.
    - **Sell it all (60%)**: Liquidates inventory + equipped items at 60% value.
-   - **I'm keeping one thing (Roguery 30+)**: Smuggle check; if failed, item confiscated.
+   - **Smuggle (Roguery 30+)**: Hard skill check to stow everything without paying the fee. If caught: pay full fee + 1 Scrutiny.
+   - **Abort enlistment**: Changes mind and leaves service before it starts. -10 Lord reputation. Party restored to normal state. Lord will not accept the player for 7 days. No other penalties.
    - Baggage is tagged with current faction ID for cross-faction tracking.
    - Skipped at T7+ (commanders have baggage authority).
+   - **Abort cooldown**: If the player aborts during bag check, the lord remembers and requires 7 days before accepting them again. Lord gives personalized dialogue about needing to sort out affairs.
 8. **Cross-Faction Baggage Transfer**: If player has baggage stored with a different faction, prompted before enlistment:
    - **Send a courier (50g + 5% of value)**: Items arrive in 3 days, posted to personal news feed.
    - **Sell remotely (40%)**: Immediate gold at reduced rate (worse than in-person sale).

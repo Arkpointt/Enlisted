@@ -104,9 +104,9 @@ Some patches require game systems to initialize first. Patching too early causes
 Generated: 2025-12-23 14:30:15
 
 -- ENVIRONMENT --
-  Game Version:       1.3.11.xxxxx
+  Game Version:       1.3.13.xxxxx
   Enlisted Version:   v0.9.0
-  Target Game:        1.3.11
+  Target Game:        1.3.13
   CLR Version:        4.0.30319.42000
   OS:                 Microsoft Windows NT 10.0.26200.0
   64-bit Process:     True

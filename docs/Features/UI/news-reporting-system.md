@@ -569,6 +569,7 @@ Tracks muster outcomes for camp news.
 
 **Fields:**
 - `DayNumber`: Muster day
+- `StrategicContext`: Context tag for flavor text (e.g., "coordinated_offensive")
 - `PayOutcome`: "paid", "partial", "delayed", "promissory", "corruption"
 - `PayAmount`: Gold received
 - `RationOutcome`: "issued", "none_low_supply", "none_critical", "officer_exempt"
@@ -577,8 +578,17 @@ Tracks muster outcomes for camp news.
 - `SupplyLevel`: Company supply 0-100
 - `LostSinceLast`: Casualties since previous muster
 - `SickSinceLast`: Sick since previous muster
+- `OrdersCompleted`: Count of orders completed this period
+- `OrdersFailed`: Count of orders failed this period
+- `BaggageOutcome`: "passed", "confiscated", "bribed", "skipped"
+- `InspectionOutcome`: "perfect", "basic", "failed", "skipped"
+- `RecruitOutcome`: "mentored", "ignored", "hazed", "skipped"
+- `PromotionTier`: New tier if promoted (0 if no promotion)
+- `RetinueStrength`: Current retinue size (T7+ only, 0 otherwise)
+- `RetinueCasualties`: Retinue losses this period (T7+ only)
+- `FallenRetinueNames`: List of fallen retinue member names (T7+ only)
 
-**Added via:** `AddMusterOutcome()` (called by PaySystem)
+**Added via:** `AddMusterOutcome()` (called by `MusterMenuHandler.CompleteMusterSequence()`)
 
 **Retrieved via:** `GetLastMusterOutcome()`
 

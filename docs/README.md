@@ -3,7 +3,7 @@
 **Summary:** Transform Bannerlord into a soldier career simulator. Enlist with a lord, follow orders, manage reputation, and advance from recruit to commander.
 
 **Version:** v0.9.0  
-**Target Game:** Mount & Blade II: Bannerlord v1.3.11  
+**Target Game:** Mount & Blade II: Bannerlord v1.3.13  
 **Workshop:** [Steam Workshop Link - ID: 3621116083]
 
 ---

@@ -588,7 +588,7 @@ Add:
 
 ## Target Version
 
-This project targets **Bannerlord v1.3.11**. Verify all API calls against the local decompile.
+This project targets **Bannerlord v1.3.13**. Verify all API calls against the local decompile.
 
 ## Related Documents
 

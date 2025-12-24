@@ -152,6 +152,7 @@
     <string id="Enlisted_Message_LordFallenDischarged" text="Your lord has fallen in battle. You have been honorably discharged." />
     <string id="Enlisted_Message_MinorFactionDeserter" text="You have deserted {LORD}'s company. Your reputation with {FACTION} has suffered, and they will not accept you back for some time." />
     <string id="Enlisted_Message_MinorFactionCooldown" text="{FACTION} will not accept you back for another {DAYS} days due to your past desertion." />
+    <string id="Enlisted_Message_BagCheckAbortCooldown" text="{LORD} remembers your hesitation at the wagon line. Return in {DAYS} days, once your affairs are in order." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- MINOR FACTION DIALOGS - Mercenary/Company Themed Text -->
@@ -343,6 +344,8 @@
     <string id="enlisted_request_service_army_leader" text="My lord, I offer you my sword and my loyalty. Will you have me in your ranks?" />
     <string id="enlisted_army_leader_rejection" text="Hold, friend. I see you already command men of your own. A general cannot become a foot soldier while lords still march beneath his banner. Disband your army first, then we may speak of service." />
     <string id="enlisted_army_leader_acknowledge" text="I understand, my lord. I shall see to my army's affairs first." />
+    <string id="enlisted_bag_check_abort_rejection" text="Ah. You again. I remember you at the wagon line—had your gear ready, then walked off. Changed your mind. I don't begrudge a man his doubts, but I need soldiers who are certain. Sort out your affairs. Come back in a week, if you're serious." />
+    <string id="enlisted_bag_check_abort_acknowledge" text="As you say, my lord. I shall return when I am ready." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- CAMP - Main Menu -->
@@ -597,22 +600,129 @@
     <string id="qm_btn_understood" text="Understood" />
     
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- QUARTERMASTER - Bag Check (Enlistment Incident) -->
+    <!-- QUARTERMASTER - Bag Check (Legacy/Fallback strings) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <string id="qm_bagcheck_title" text="Enlistment Bag Check" />
     <string id="qm_bagcheck_body" text="The quartermaster lifts his quill. &quot;You can't march in that finery. Regimental rules. Everything goes in the wagons or my ledger. If the wagons burn, so does your past life. How do you want this written, soldier?&quot;" />
-    <string id="qm_stow_all" text="&quot;Stow it all&quot; (50g)" />
-    <string id="qm_stow_hint" text="Move every scrap into the baggage wagon and pay the clerk his fee." />
+    <string id="qm_stow_all" text="&quot;Stow it all&quot; (200g + 5%)" />
+    <string id="qm_stow_hint" text="Move everything into the baggage wagon. Costs 200g plus 5% of inventory value." />
     <string id="qm_sell_all" text="&quot;Sell it all&quot; (60%)" />
     <string id="qm_sell_hint" text="Liquidate the lot at a battlefield rate and march off heavier in coin." />
     <string id="qm_smuggle_one" text="&quot;I'm keeping one thing&quot; (Roguery 30+)" />
     <string id="qm_smuggle_hint" text="Slip one prized piece past the ledger; if caught, it's gone." />
     <string id="qm_continue" text="Continue" />
+    
+    <!-- Bag Check Event (Narrative Event Version) -->
+    <string id="evt_bagcheck_title" text="The Quartermaster's Ledger" />
+    <string id="evt_bagcheck_setup" text="A wagon catches up to the column. The quartermaster's wagon.&#xA;&#xA;A clerk hops down before the wheels stop turning, ledger already open, quill wet. Behind him, soldiers are unloading crates, stacking sacks. The organized chaos of army logistics.&#xA;&#xA;He finds you in the crowd. &quot;New blood. Saw your name on the roster.&quot; He looks you up and down, taking inventory. &quot;That's civilian kit. Can't march in that. Regimental rules.&quot;&#xA;&#xA;He gestures toward the wagon. Crates marked with chalk numbers. Rolled bundles. Someone's past life, stowed for safekeeping.&#xA;&#xA;&quot;Everything goes in the wagons or my ledger. Storage fee's two hundred denars, plus five percent of value for the trouble. Or I can liquidate the lot right here—sixty on the denar, take it or leave it.&quot;&#xA;&#xA;He waits, quill poised. Behind you, other soldiers are watching. Some remember standing where you're standing now." />
+    <string id="evt_bagcheck_opt_stash" text="&quot;Stow it all. I'll pay the fee.&quot;" />
+    <string id="evt_bagcheck_opt_stash_result" text="The fee changes hands. The clerk scratches your name in his ledger, then hands you a chalk marker—a number. Your number.&#xA;&#xA;&quot;Guard that marker. Lose it, and you'll spend half a day proving which crate is yours.&quot;&#xA;&#xA;Soldiers take your things. Your old clothes. Your civilian possessions. Your past. They disappear into the wagon's darkness, stacked with a hundred other lives put on hold.&#xA;&#xA;You're issued military kit. It fits well enough. It smells like the last person who wore it.&#xA;&#xA;When the wagon rolls away, you feel lighter. Not free—lighter. Like something's been decided for you." />
+    <string id="evt_bagcheck_opt_sell" text="&quot;Liquidate it. I'm traveling light.&quot;" />
+    <string id="evt_bagcheck_opt_sell_result" text="The clerk nods. Professional. He's done this before.&#xA;&#xA;Your things are assessed in minutes. Quick eyes. Quicker math. &quot;Sixty on the denar. Fair market rate for field conditions.&quot; It's not, but you both know you're not in a position to haggle.&#xA;&#xA;Coin changes hands. Your old life converted to gold, then tucked into a pouch at your belt. The clerk scratches a line in his ledger. Done.&#xA;&#xA;&quot;Clean break,&quot; he says. &quot;Easier that way.&quot;&#xA;&#xA;You're issued military kit. Standard gear. Nothing that was yours, but nothing that ties you to what came before, either.&#xA;&#xA;The wagon rolls on without your possessions. You march with the column." />
+    <string id="evt_bagcheck_opt_smuggle" text="&quot;I'll handle it myself.&quot;" />
+    <string id="evt_bagcheck_opt_smuggle_result" text="You wait until the clerk's attention shifts. Other soldiers stepping forward. The organized chaos of the wagon line.&#xA;&#xA;You move quickly. Quietly. Loading your things into an unmarked crate like you've done this a dozen times. Like you belong here. Like you're just another soldier handling routine business.&#xA;&#xA;The clerk glances your way. Pauses. His quill hovers over the ledger.&#xA;&#xA;Then someone calls his name. A problem with another crate. He turns away.&#xA;&#xA;Your gear disappears into the wagon without a marker. Without a fee. Without a record.&#xA;&#xA;Whether he noticed or chose not to see, you'll never know. But when the wagon rolls on, you're two hundred denars richer and no one's said a word." />
+    <string id="evt_bagcheck_opt_abort" text="&quot;I've changed my mind.&quot;" />
+    <string id="evt_bagcheck_opt_abort_result" text="The clerk's quill stops mid-scratch.&#xA;&#xA;&quot;Changed your mind.&quot;&#xA;&#xA;Not a question. A statement. He's seen it before. Men who thought they wanted this life, then felt the weight of it settling on their shoulders.&#xA;&#xA;He closes the ledger. Doesn't ask why. Doesn't need to.&#xA;&#xA;&quot;Your lord won't be pleased. Wasted his time. Wasted mine.&quot; He gestures back toward the road you came from. &quot;Go on, then. Before anyone notices.&quot;&#xA;&#xA;You gather your things. Still yours. Still civilian. The other soldiers don't meet your eyes as you pass.&#xA;&#xA;Some roads, once you step off them, you can't step back on easily.&#xA;&#xA;The column marches on without you." />
     <string id="qm_fee_paid" text="You pay {FEE} denars for the wagon fee." />
     <string id="qm_liquidate_gain" text="You receive {GOLD} denars from liquidating your possessions." />
-    <string id="qm_smuggle_success" text="You tuck away your {ITEM} without being caught." />
-    <string id="qm_smuggle_fail" text="Caught smuggling. Your {ITEM} is confiscated." />
+    <string id="qm_smuggle_success" text="You slip everything past the ledger without paying. The clerk never noticed." />
+    <string id="qm_smuggle_fail" text="Caught trying to dodge the fee. You pay anyway, and the clerk makes a note in his ledger." />
     <string id="qm_baggage_no_fatigue" text="You are too exhausted to rummage through the baggage train." />
+    <string id="baggage_menu_option" text="Access Baggage Train" />
+    <string id="baggage_tooltip_full_access" text="Access your stored belongings" />
+    <string id="baggage_tooltip_no_access" text="Request baggage access (wagons behind the column)" />
+    <string id="baggage_tooltip_locked" text="Request baggage access (storage locked down)" />
+    <string id="baggage_tooltip_delayed" text="Request baggage access (wagons stuck {DAYS} days)" />
+    <string id="baggage_blocked_march" text="The baggage train is marching behind the column. You cannot reach it now." />
+    <string id="baggage_blocked_locked" text="The baggage train is locked down due to supply shortages. Speak with the quartermaster." />
+    
+    <!-- Baggage Emergency Access Dialogue -->
+    <string id="qm_baggage_emergency_t7" text="The wagons are at the rear, but you're an officer. I'll get a runner to bring them forward. Give us a few hours." />
+    <string id="qm_baggage_emergency_t5" text="The baggage train's at the rear. I can arrange access, but it'll cost me favors to bring it forward." />
+    <string id="qm_baggage_emergency_t3" text="The wagons are miles back in the column. I can get them forward, but it'll take some doing." />
+    <string id="qm_baggage_emergency_blocked" text="You're a fresh recruit. Personal baggage access happens when we make camp, not whenever you feel like it. Wait until we halt." />
+    <string id="qm_baggage_locked" text="The baggage train is locked down. We're rationing everything right now. No one gets in until the crisis passes—not even officers." />
+    <string id="qm_baggage_explain" text="When we're on the march, the baggage train stays at the rear of the column for security. Bringing it forward takes time and manpower. When we make camp, you can access it freely." />
+    <string id="qm_baggage_explain_lockdown" text="We're critically short on supplies. The lord ordered a full inventory lockdown until we resupply. No one touches the wagons—not you, not me, not anyone—until we're back above twenty percent capacity." />
+    <string id="qm_baggage_cooldown" text="I already brought the wagons forward for you recently. Give it half a day before you ask again." />
+    <string id="qm_player_request_baggage" text="I need to access my baggage." />
+    <string id="qm_player_why_blocked" text="Why can't I reach the baggage train?" />
+    <string id="qm_player_why_locked" text="Why is it locked down?" />
+    <string id="qm_player_understood" text="Understood." />
+    <string id="baggage_granted" text="The quartermaster sends a runner. The baggage train will be brought forward shortly." />
+    <string id="baggage_denied_tier" text="Your rank is too low to request emergency baggage access. Wait until camp." />
+    <string id="baggage_denied_cooldown" text="You recently requested emergency access. Wait at least 12 hours before asking again." />
+    <string id="baggage_denied_generic" text="Emergency baggage access is not available right now." />
+    <string id="baggage_error" text="Unable to access baggage system." />
+    
+    <!-- Baggage Phase 5: Rank Progression Features -->
+    <string id="qm_player_halt_column" text="Have the wagons brought up. Halt the column." />
+    <string id="qm_player_request_favor" text="You know my word is good." />
+    <string id="qm_baggage_halt_gruff" text="Right. Halt the column. Pass the word down the line. The wagons will be up shortly." />
+    <string id="qm_baggage_halt_scoundrel" text="Halt the whole column? Risky. The lads won't thank you for the delay, but you're the officer. I'll see it done." />
+    <string id="qm_baggage_halt_believer" text="A halt, then. The men could use the rest, truth be told. I'll see the wagons brought up." />
+    <string id="qm_baggage_halt_veteran" text="Halt order. I'll pass it down. The wagons will be forward in short order. The men will grumble, but they'll live." />
+    <string id="qm_baggage_halt_merchant" text="Halt the column for the baggage? That's a costly delay, but you're the officer. I'll arrange it." />
+    <string id="qm_baggage_halt_noble" text="As you command. I shall relay the halt order and ensure the baggage train is brought forward with all due haste." />
+    <string id="baggage_column_halt" text="The column halts. Wagons are brought forward and the baggage train is made accessible." />
+    
+    <!-- Baggage Phase 7-9: Status Query Responses -->
+    <string id="qm_player_baggage_status" text="What about my belongings?" />
+    
+    <!-- Baggage Status: NoAccess (on march, not delayed) -->
+    <string id="qm_baggage_status_march_veteran" text="The wagons are at the rear of the column, where they belong. We're moving. When we halt, you'll have access." />
+    <string id="qm_baggage_status_march_merchant" text="Business as usual—the supply train marches behind the column. Make camp, and you'll have access to your belongings." />
+    <string id="qm_baggage_status_march_noble" text="The wagons proceed at the rear of the column, as is proper. Upon our next halt, your belongings shall be accessible." />
+    <string id="qm_baggage_status_march_scoundrel" text="The oxen move slower than soldiers. Your kit's back with the wagons. They'll catch up when we make camp." />
+    <string id="qm_baggage_status_march_believer" text="The Lord watches over your belongings. Have faith. The wagons march behind us, and they'll be accessible when we rest." />
+    <string id="qm_baggage_status_march_gruff" text="Wagons are at the rear. We're moving. You'll get access when we halt." />
+    
+    <!-- Baggage Status: Delayed -->
+    <string id="qm_baggage_status_delayed_veteran" text="The wagons are stuck. Bad terrain, bad weather—doesn't matter which. They're behind schedule. Give it a day or two." />
+    <string id="qm_baggage_status_delayed_merchant" text="The supply train's been delayed. Axle trouble, bad roads—one thing or another. Should catch up in a day or two." />
+    <string id="qm_baggage_status_delayed_noble" text="The baggage column has encountered difficulties en route. They should rejoin us within a day or two." />
+    <string id="qm_baggage_status_delayed_scoundrel" text="The wagons hit trouble. Mud, rocks, broken axle—who knows. They'll be along when they're along." />
+    <string id="qm_baggage_status_delayed_believer" text="The wagons are delayed, but the Lord will see them through. Have faith. They'll arrive in His time." />
+    <string id="qm_baggage_status_delayed_gruff" text="Wagons hit trouble. Mired. They're behind. Give it a day." />
+    
+    <!-- Baggage Status: Locked -->
+    <string id="qm_baggage_status_locked_veteran" text="Everything's locked down. Supply crisis. No one gets in, not even you. Orders." />
+    <string id="qm_baggage_status_locked_merchant" text="We're rationing everything. Inventory's locked until we resupply. Can't let anyone rummage through what's left." />
+    <string id="qm_baggage_status_locked_noble" text="By the lord's command, all storage has been secured until we resupply. I regret there are no exceptions." />
+    <string id="qm_baggage_status_locked_scoundrel" text="Can't help you. Everything's under lock and key until we resupply. Lord's orders, not mine." />
+    <string id="qm_baggage_status_locked_believer" text="The baggage is sealed. We must endure this shortage with faith and patience. The Lord will provide." />
+    <string id="qm_baggage_status_locked_gruff" text="Wagons locked. Supply crisis. No one gets in." />
+    
+    <!-- Baggage Status: Temporary Access -->
+    <string id="qm_baggage_status_temporary_veteran" text="The wagons are up. You've got a few hours before we move again. Don't waste time." />
+    <string id="qm_baggage_status_temporary_merchant" text="The baggage train's here now, but we're moving soon. Time is denars—act fast." />
+    <string id="qm_baggage_status_temporary_noble" text="The wagons are currently accessible. You have a limited window before we resume march. I suggest you hurry." />
+    <string id="qm_baggage_status_temporary_scoundrel" text="Wagons are here for now. We're moving again soon, so get what you need quick." />
+    <string id="qm_baggage_status_temporary_believer" text="The Lord has granted us a halt. The wagons are here for a few hours. Use this time wisely." />
+    <string id="qm_baggage_status_temporary_gruff" text="Wagons are up. Few hours. Make it quick." />
+    
+    <!-- Baggage Phase 7-9: Promotion + Delayed Baggage -->
+    <string id="ret_formation_deferred" text="You've been promoted to Commander, but the supply wagons are delayed. Formation selection will be available once they arrive." />
+    
+    <!-- Baggage Tooltip Dynamic Costs -->
+    <string id="baggage_tooltip_favor" text="Request baggage access (favor, no cost)" />
+    <string id="baggage_tooltip_rank_too_low" text="Baggage unavailable (rank too low)" />
+    <string id="baggage_tooltip_officer_free" text="Request baggage access (free)" />
+    <string id="baggage_tooltip_nco_cost" text="Request baggage access (-2 QM Rep)" />
+    <string id="baggage_tooltip_enlisted_cost" text="Request baggage access (-5 QM Rep)" />
+    
+    <!-- Baggage Daily Brief Status -->
+    <string id="brief_baggage_locked" text="The quartermaster has locked the baggage wagons. Supplies are too scarce for personal requisitions." />
+    <string id="brief_baggage_march" text="The baggage wagons rumble somewhere behind the column, out of reach for now." />
+    <string id="brief_baggage_temporary" text="The wagons have halted nearby. A few hours to rummage through your belongings before they move on." />
+    <string id="brief_baggage_temporary_plural" text="The wagons have halted nearby. {HOURS} hours to rummage through your belongings before they move on." />
+    <string id="brief_baggage_delayed" text="The wagons are stuck in the mud, {DAYS} days behind the column. The drivers curse and strain." />
+    <string id="brief_baggage_delayed_single" text="The wagons are stuck in the mud, a day behind the column. The drivers curse and strain." />
+    <string id="brief_baggage_raided_today" text="Raiders struck the baggage train this morning. The wagon guards are still counting what's missing." />
+    <string id="brief_baggage_raided_recent" text="The baggage raid weighs on everyone's mind. The guards double their watches at night." />
+    <string id="brief_baggage_arrived_today" text="The baggage wagons caught up with the column. Men crowd around, looking for their kit." />
+    <string id="brief_baggage_arrived_recent" text="The wagons are still close. A chance to check your belongings before they fall behind again." />
+    
     <string id="qm_retirement_gear" text="Your personal belongings have been returned. You may keep your military equipment as thanks for your service." />
     <string id="qm_return_intro" text="Sell equipment back to the quartermaster. Select an item to sell." />
     <string id="qm_return_line" text="{ITEM_NAME} x{COUNT}" />
@@ -4507,6 +4617,62 @@
     <string id="ll_evt_scrutiny_warning_opt_deny_text" text="&quot;I don&apos;t know what you&apos;re talking about, {SERGEANT}.&quot;" />
     <string id="ll_evt_scrutiny_warning_setup" text="{SERGEANT_NAME} pulls you aside after evening meal. Their voice is low, eyes checking that no one&apos;s close enough to hear.&#xA;&#xA;&quot;I&apos;m going to say this once, {PLAYER_NAME}. Whatever you&apos;re doing — the extra coins, the supply discrepancies, the &apos;gifts&apos; from merchants — people are starting to notice.&quot;&#xA;&#xA;They lean closer.&#xA;&#xA;&quot;I don&apos;t care what you do on your own time. But if it comes back on the company, we&apos;re going to have a problem. Understand?&quot;" />
     <string id="ll_evt_scrutiny_warning_title" text="The Warning" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- BAGGAGE TRAIN EVENTS - Logistics events during march -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- evt_baggage_arrived - Positive: Wagons catch up during a halt -->
+    <string id="evt_baggage_arrived_title" text="Wagons Caught Up" />
+    <string id="evt_baggage_arrived_setup" text="The column halts. Behind you, the creak of wheels and the curses of ox-drivers. The baggage train has finally caught up, the beasts lathered and blowing from the effort.&#xA;&#xA;The quartermaster&apos;s men are already sorting through the wagons. &apos;Quick about it if you need something,&apos; one calls out. &apos;We&apos;re not stopping long.&apos;" />
+    <string id="evt_baggage_arrived_opt_access" text="&quot;I need to get into my kit.&quot;" />
+    <string id="evt_baggage_arrived_opt_access_result" text="You push through the crowd of soldiers doing the same, find your bundle among the stacked equipment, and take what you need. The drivers watch impatiently, already checking the harness straps." />
+    <string id="evt_baggage_arrived_opt_skip" text="&quot;I&apos;m sorted. Let the lads rest.&quot;" />
+    <string id="evt_baggage_arrived_opt_skip_result" text="The lead driver catches your eye and gives a tired nod. Small mercies are remembered on campaign—especially by men who spend their days eating the column&apos;s dust." />
+
+    <!-- evt_baggage_delayed - Negative: Wagons fall behind due to weather/mud -->
+    <string id="evt_baggage_delayed_title" text="Wagons Stuck in the Mire" />
+    <string id="evt_baggage_delayed_setup" text="Word passes down the column in fragments. The baggage train is mired two leagues back—axle-deep in mud that swallowed a wheel whole. The drivers are screaming at the oxen, but the beasts won&apos;t budge.&#xA;&#xA;Whatever you left in those wagons, you won&apos;t see it today. Maybe not tomorrow either." />
+    <string id="evt_baggage_delayed_opt_wait" text="&quot;Nothing for it. Press on.&quot;" />
+    <string id="evt_baggage_delayed_opt_wait_result" text="You shrug and keep marching. The wagons will catch up when they catch up. At least you&apos;re not the poor bastard knee-deep in cold mud." />
+    <string id="evt_baggage_delayed_opt_help" text="&quot;I&apos;ll go back and put my shoulder to it.&quot;" />
+    <string id="evt_baggage_delayed_opt_help_result" text="You double back, wading into the muck. The work is brutal—cold mud sucking at your boots, straining muscles against deadweight. The drivers grunt acknowledgment. Every man helps." />
+
+    <!-- evt_baggage_stuck - Physical obstacle (river crossing, rough terrain) -->
+    <string id="evt_baggage_stuck_title" text="Crossing Gone Bad" />
+    <string id="evt_baggage_stuck_setup" text="The ford looked passable from the bank. It wasn&apos;t. The lead wagon lurched sideways halfway across and now blocks the whole crossing, water rising against its bed. One of the oxen is bellowing in panic, tangled in traces.&#xA;&#xA;Behind it, the rest of the train is stalled. Ahead, the column marches on without its supplies." />
+    <string id="evt_baggage_stuck_opt_wait" text="&quot;Let the pioneers sort it.&quot;" />
+    <string id="evt_baggage_stuck_opt_wait_result" text="You wait on the bank with the others, watching the pioneers work. They know their business, but the current is strong and the footing treacherous. It will take time." />
+    <string id="evt_baggage_stuck_opt_push" text="&quot;I&apos;m going in.&quot;" />
+    <string id="evt_baggage_stuck_opt_push_result" text="You wade into the freezing water, gasping at the cold. Your boots fill instantly. Someone shoves a rope into your hands and you haul, muscles burning, until something finally gives." />
+    <string id="evt_baggage_stuck_opt_organize" text="&quot;Listen up! Form a chain, pass the cargo!&quot;" />
+    <string id="evt_baggage_stuck_opt_organize_result" text="You take charge before anyone thinks to question it. Men fall into line, passing bundles hand to hand. The wagon rises inch by inch as it&apos;s lightened. By the time an officer notices, the work is nearly done." />
+
+    <!-- evt_baggage_raided - Combat event: Raiders hit the supply train -->
+    <string id="evt_baggage_raided_title" text="Riders on the Baggage" />
+    <string id="evt_baggage_raided_setup" text="Screams from the rear. Not the usual camp complaints—real screams. You turn to see riders among the wagons, torches in hand, blades rising and falling. One of the supply carts is already burning.&#xA;&#xA;Raiders. They hit the train while it was strung out on the road. Everything you stowed is back there." />
+    <string id="evt_baggage_raided_opt_defend" text="&quot;With me! Defend the wagons!&quot;" />
+    <string id="evt_baggage_raided_opt_defend_result" text="You sprint toward the chaos, weapon drawn. By the time you arrive, it&apos;s a tangle of panicked animals, cursing soldiers, and fleeing horsemen. You catch one raider trying to cut a harness and put him down. The rest scatter into the hills." />
+    <string id="evt_baggage_raided_opt_stay" text="&quot;Hold position. The rearguard will handle it.&quot;" />
+    <string id="evt_baggage_raided_opt_stay_result" text="You keep your place in the column. Discipline, even when your belongings are burning. The rearguard drives them off eventually, but by then the smoke is rising thick and you know some of it was yours." />
+    <string id="evt_baggage_raided_opt_order" text="&quot;Form up! We&apos;re taking them!&quot;" />
+    <string id="evt_baggage_raided_opt_order_result" text="Your voice carries. Men who were milling in confusion fall into formation. You lead them at the double toward the burning wagons. The raiders, seeing organized resistance, break off and flee. Not all of them make it." />
+
+    <!-- evt_baggage_theft - Social event: Someone stole from your stash -->
+    <string id="evt_baggage_theft_title" text="Fingers in Your Kit" />
+    <string id="evt_baggage_theft_setup" text="You know what you packed. You know where you put it. And it&apos;s not there anymore.&#xA;&#xA;Someone&apos;s been through your belongings. The bundle was retied—badly—and a few things are missing. The wagon drivers won&apos;t meet your eye. &apos;Lot of hands on those carts,&apos; one mutters. &apos;Could&apos;ve been anyone.&apos;" />
+    <string id="evt_baggage_theft_opt_ignore" text="&quot;Could&apos;ve been anyone.&quot; (swallow it)" />
+    <string id="evt_baggage_theft_opt_ignore_result" text="You let it go. No proof, no witnesses, and pointing fingers without evidence just makes enemies. You&apos;ve already got enough of those. The loss stings, but so does a knife in the dark." />
+    <string id="evt_baggage_theft_opt_investigate" text="&quot;Someone saw something. People always do.&quot;" />
+    <string id="evt_baggage_theft_opt_investigate_result" text="You start asking around. Quiet questions, careful words. Some men look away. Others look angry. You&apos;re making waves, and that brings attention—good and bad. Whether you find your thief or not, people will remember you were looking." />
+    <string id="evt_baggage_theft_opt_report" text="&quot;I want to make a formal complaint.&quot;" />
+    <string id="evt_baggage_theft_opt_report_result" text="The sergeant listens, nods, writes something down. &apos;I&apos;ll look into it,&apos; he says, which means he won&apos;t. But your complaint is on record. The officers know you&apos;re a man who goes through proper channels. The soldiers know you&apos;re a man who talks to officers." />
+
+    <!-- Effect notification strings for baggage events -->
+    <string id="evt_baggage_access_granted" text="The baggage train has caught up. You can access your belongings for the next {HOURS} hours." />
+    <string id="evt_baggage_delayed_msg" text="The baggage train is mired. Your belongings will be inaccessible for {DAYS} more day(s)." />
+    <string id="evt_baggage_loss_msg" text="{COUNT} item(s) have gone missing from your kit." />
+
   </strings>
 </base>
 

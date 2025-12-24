@@ -11,6 +11,7 @@ using Enlisted.Features.Interface.News.Generation;
 using Enlisted.Features.Interface.News.Generation.Producers;
 using Enlisted.Features.Interface.News.Models;
 using Enlisted.Features.Interface.News.State;
+using Enlisted.Features.Logistics;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem;
@@ -32,7 +33,7 @@ namespace Enlisted.Features.Interface.Behaviors
     {
         private const string LogCategory = "News";
         private const int MaxKingdomFeedItems = 60;
-        private const int MaxPersonalFeedItems = 20;
+        private const int MaxPersonalFeedItems = 35; // Increased from 20 to support priority system with 48h critical events
 
         /// <summary>
         /// Singleton instance for external access (menu integration, etc.).
@@ -546,6 +547,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     parts.Add(retinueContext);
                 }
+                
+                // Add baggage status when notable (locked, delayed, temporary access)
+                var baggageStatus = BuildBaggageStatusLine();
+                if (!string.IsNullOrWhiteSpace(baggageStatus))
+                {
+                    parts.Add(baggageStatus);
+                }
                     
                 if (!string.IsNullOrWhiteSpace(_dailyBriefUnit))
                 {
@@ -790,6 +798,97 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Debug(LogCategory, $"Error building retinue context: {ex.Message}");
+                return string.Empty;
+            }
+        }
+        
+        /// <summary>
+        /// Builds a baggage status line for the Daily Brief when the state is notable.
+        /// Shows status for: locked (supply crisis), delayed (days behind), temporary access (hours remaining),
+        /// recent raids, or recent arrivals. Does not show FullAccess in settlements (normal state).
+        /// </summary>
+        private static string BuildBaggageStatusLine()
+        {
+            try
+            {
+                var baggageManager = BaggageTrainManager.Instance;
+                if (baggageManager == null)
+                {
+                    return string.Empty;
+                }
+                
+                var currentAccess = baggageManager.GetCurrentAccess();
+                var party = MobileParty.MainParty;
+                
+                // Priority 1: Check for recent raid (within last 3 days) - most urgent
+                var daysSinceRaid = baggageManager.GetDaysSinceLastRaid();
+                if (daysSinceRaid >= 0 && daysSinceRaid <= 3)
+                {
+                    // Same-day raid gets specific wording, older raids get general atmosphere
+                    return daysSinceRaid == 0
+                        ? new TextObject("{=brief_baggage_raided_today}Raiders struck the baggage train this morning. The wagon guards are still counting what's missing.").ToString()
+                        : new TextObject("{=brief_baggage_raided_recent}The baggage raid weighs on everyone's mind. The guards double their watches at night.").ToString();
+                }
+                
+                // Priority 2: Locked state (supply crisis)
+                if (currentAccess == BaggageAccessState.Locked)
+                {
+                    return new TextObject("{=brief_baggage_locked}The quartermaster has locked the baggage wagons. Supplies are too scarce for personal requisitions.").ToString();
+                }
+                
+                // Priority 3: Active delay
+                var delayDays = baggageManager.GetBaggageDelayDaysRemaining();
+                if (delayDays > 0)
+                {
+                    // Use singular or plural phrasing based on day count
+                    if (delayDays == 1)
+                    {
+                        return new TextObject("{=brief_baggage_delayed_single}The wagons are stuck in the mud, a day behind the column. The drivers curse and strain.").ToString();
+                    }
+                    var line = new TextObject("{=brief_baggage_delayed}The wagons are stuck in the mud, {DAYS} days behind the column. The drivers curse and strain.");
+                    line.SetTextVariable("DAYS", delayDays);
+                    return line.ToString();
+                }
+                
+                // Priority 4: Recent arrival (within last 2 days) - good news
+                var daysSinceArrival = baggageManager.GetDaysSinceLastArrival();
+                if (daysSinceArrival >= 0 && daysSinceArrival <= 2)
+                {
+                    // Same-day arrival is more urgent/specific than lingering access
+                    return daysSinceArrival == 0
+                        ? new TextObject("{=brief_baggage_arrived_today}The baggage wagons caught up with the column. Men crowd around, looking for their kit.").ToString()
+                        : new TextObject("{=brief_baggage_arrived_recent}The wagons are still close. A chance to check your belongings before they fall behind again.").ToString();
+                }
+                
+                // Priority 5: Temporary access window
+                if (currentAccess == BaggageAccessState.TemporaryAccess)
+                {
+                    var hoursRemaining = baggageManager.GetTemporaryAccessHoursRemaining();
+                    if (hoursRemaining > 0)
+                    {
+                        // Use singular or plural phrasing
+                        if (hoursRemaining == 1)
+                        {
+                            return new TextObject("{=brief_baggage_temporary}The wagons have halted nearby. A few hours to rummage through your belongings before they move on.").ToString();
+                        }
+                        var line = new TextObject("{=brief_baggage_temporary_plural}The wagons have halted nearby. {HOURS} hours to rummage through your belongings before they move on.");
+                        line.SetTextVariable("HOURS", hoursRemaining);
+                        return line.ToString();
+                    }
+                }
+                
+                // Priority 6: On march with no access (informational)
+                if (currentAccess == BaggageAccessState.NoAccess && party?.IsMoving == true)
+                {
+                    return new TextObject("{=brief_baggage_march}The baggage wagons rumble somewhere behind the column, out of reach for now.").ToString();
+                }
+                
+                // Normal state (FullAccess in settlement or halted) - no need to mention
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building baggage status: {ex.Message}");
                 return string.Empty;
             }
         }
@@ -1192,9 +1291,38 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>
         /// Formats a dispatch item into display text using the same localization/template rules used by the menus.
         /// </summary>
-        public static string FormatDispatchForDisplay(DispatchItem item)
+        /// <param name="item">The dispatch item to format.</param>
+        /// <param name="includeColor">If true, wraps the text in color style spans based on severity.</param>
+        /// <returns>Formatted text, optionally with color styling.</returns>
+        public static string FormatDispatchForDisplay(DispatchItem item, bool includeColor = true)
         {
-            return FormatDispatchItem(item);
+            var text = FormatDispatchItem(item);
+
+            if (includeColor && item.Severity > 0 && !string.IsNullOrWhiteSpace(text))
+            {
+                var style = GetColorStyleForSeverity((NewsSeverity)item.Severity);
+                return $"<span style=\"{style}\">{text}</span>";
+            }
+
+            return text;
+        }
+
+        /// <summary>
+        /// Maps a NewsSeverity value to the corresponding color style name from EnlistedColors.xml.
+        /// </summary>
+        /// <param name="severity">The severity level.</param>
+        /// <returns>The style name for use in span tags.</returns>
+        private static string GetColorStyleForSeverity(NewsSeverity severity)
+        {
+            return severity switch
+            {
+                NewsSeverity.Critical => "Critical",  // Bright Red with outline (#FF0000FF)
+                NewsSeverity.Urgent => "Alert",       // Soft Red (#FF6B6BFF)
+                NewsSeverity.Attention => "Warning",  // Gold (#FFD700FF)
+                NewsSeverity.Positive => "Success",   // Light Green (#90EE90FF)
+                NewsSeverity.Normal => "Default",     // Warm Cream (#FAF4DEFF)
+                _ => "Default"
+            };
         }
 
         /// <summary>
@@ -1733,7 +1861,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     headline = headline.Replace($"{{{kvp.Key}}}", kvp.Value);
                 }
 
-                AddPersonalNews("event", headline, placeholders, $"event:{outcome.EventId}:{outcome.DayNumber}", 2);
+                // Use severity from outcome if provided, otherwise default to Normal
+                var severity = outcome.Severity;
+                AddPersonalNews("event", headline, placeholders, $"event:{outcome.EventId}:{outcome.DayNumber}", 2, severity);
 
                 ModLogger.Info(LogCategory, $"Event outcome recorded: {outcome.EventId} - {outcome.OptionChosen}");
             }
@@ -2210,18 +2340,49 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>
         /// Adds an item to the personal feed with the specified headline and day.
         /// Uses a direct headline key for muster-related messages.
+        /// Enforces severity-based replacement: higher or equal severity can replace existing items within 24h window.
         /// </summary>
-        private void AddToPersonalFeed(string headline, int dayNumber)
+        private void AddToPersonalFeed(string headline, int dayNumber, int severity = 0)
         {
             try
             {
                 _personalFeed ??= new List<DispatchItem>();
+                
+                // Check if there's a recent item (same day or last 24h) with lower severity that can be replaced
+                var currentTime = CampaignTime.Now.ToDays;
+                var recentItems = _personalFeed
+                    .Where(x => (currentTime - x.DayCreated) <= 1.0) // Within 24h
+                    .ToList();
+                
+                // Try to find an item with lower severity to replace
+                var replacementTarget = recentItems
+                    .Where(x => x.Severity < severity)
+                    .OrderBy(x => x.Severity) // Replace lowest severity first
+                    .ThenBy(x => x.DayCreated) // Then oldest
+                    .FirstOrDefault();
+                
+                if (replacementTarget.HeadlineKey != null) // Check if we found a valid target (struct has values)
+                {
+                    _personalFeed.Remove(replacementTarget);
+                    ModLogger.Debug(LogCategory, $"Replaced lower-severity news (sev {replacementTarget.Severity}) with new item (sev {severity})");
+                }
+                
+                // Check if attempting to add a lower-severity item when high-severity items exist
+                var hasHigherSeverity = recentItems.Any(x => x.Severity > severity);
+                if (hasHigherSeverity && recentItems.Count >= MaxPersonalFeedItems)
+                {
+                    ModLogger.Debug(LogCategory, $"Lower-severity item (sev {severity}) blocked from replacing higher-severity news");
+                    // Don't add - would be trimmed anyway
+                    return;
+                }
+                
                 _personalFeed.Add(new DispatchItem
                 {
                     HeadlineKey = headline, // Direct text for muster headlines
                     DayCreated = dayNumber,
                     Category = "muster",
                     Type = DispatchType.Report,
+                    Severity = severity,
                     Confidence = 100,
                     MinDisplayDays = 1,
                     FirstShownDay = -1
@@ -3622,12 +3783,14 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <param name="placeholders">Placeholder values for the headline.</param>
         /// <param name="storyKey">Optional key for deduplication.</param>
         /// <param name="minDisplayDays">Minimum number of whole days this item must remain visible once shown.</param>
+        /// <param name="severity">Severity level for color coding and persistence (0=Normal, 1=Positive, 2=Attention, 3=Urgent, 4=Critical).</param>
         private void AddKingdomNews(
             string category,
             string headlineKey,
             Dictionary<string, string> placeholders,
             string storyKey = null,
-            int minDisplayDays = 1)
+            int minDisplayDays = 1,
+            int severity = 0)
         {
             if (!IsEnlisted())
             {
@@ -3653,6 +3816,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     updated.Confidence = 100;
                     updated.MinDisplayDays = Math.Max(1, minDisplayDays);
                     updated.FirstShownDay = -1; // reset visibility window
+                    updated.Severity = severity;
 
                     _kingdomFeed[existingIndex] = updated;
                     ModLogger.Info(LogCategory, $"Kingdom news updated: {headlineKey} ({category})");
@@ -3670,7 +3834,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 Type = DispatchType.Report,
                 Confidence = 100,
                 MinDisplayDays = Math.Max(1, minDisplayDays),
-                FirstShownDay = -1
+                FirstShownDay = -1,
+                Severity = severity
             };
 
             _kingdomFeed.Add(item);
@@ -3801,12 +3966,14 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <param name="placeholders">Placeholder values for the headline.</param>
         /// <param name="storyKey">Optional key for deduplication.</param>
         /// <param name="minDisplayDays">Minimum number of whole days this item must remain visible once shown.</param>
+        /// <param name="severity">Severity level for color coding and persistence (0=Normal, 1=Positive, 2=Attention, 3=Urgent, 4=Critical).</param>
         private void AddPersonalNews(
             string category,
             string headlineKey,
             Dictionary<string, string> placeholders,
             string storyKey = null,
-            int minDisplayDays = 1)
+            int minDisplayDays = 1,
+            int severity = 0)
         {
             if (!IsEnlisted())
             {
@@ -3831,6 +3998,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     updated.Confidence = 100;
                     updated.MinDisplayDays = Math.Max(1, minDisplayDays);
                     updated.FirstShownDay = -1;
+                    updated.Severity = severity;
 
                     _personalFeed[existingIndex] = updated;
                     ModLogger.Info(LogCategory, $"Personal news updated: {headlineKey} ({category})");
@@ -3848,7 +4016,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 Type = DispatchType.Report,
                 Confidence = 100,
                 MinDisplayDays = Math.Max(1, minDisplayDays),
-                FirstShownDay = -1
+                FirstShownDay = -1,
+                Severity = severity
             };
 
             _personalFeed.Add(item);
@@ -3974,8 +4143,11 @@ namespace Enlisted.Features.Interface.Behaviors
 
             if (_personalFeed != null && _personalFeed.Count > MaxPersonalFeedItems)
             {
+                // Sort by severity first (keep important news), then by date (keep recent news).
+                // Critical/Urgent events survive trimming even if older than Normal events.
                 _personalFeed = _personalFeed
-                    .OrderByDescending(x => x.DayCreated)
+                    .OrderByDescending(x => x.Severity)
+                    .ThenByDescending(x => x.DayCreated)
                     .Take(MaxPersonalFeedItems)
                     .ToList();
             }
@@ -3998,6 +4170,7 @@ namespace Enlisted.Features.Interface.Behaviors
             var confidence = item.Confidence;
             var minDisplayDays = Math.Max(1, item.MinDisplayDays);
             var firstShownDay = item.FirstShownDay;
+            var severity = item.Severity;
 
             dataStore.SyncData($"{prefix}_day", ref dayCreated);
             dataStore.SyncData($"{prefix}_cat", ref category);
@@ -4007,6 +4180,7 @@ namespace Enlisted.Features.Interface.Behaviors
             dataStore.SyncData($"{prefix}_conf", ref confidence);
             dataStore.SyncData($"{prefix}_minDays", ref minDisplayDays);
             dataStore.SyncData($"{prefix}_shownDay", ref firstShownDay);
+            dataStore.SyncData($"{prefix}_severity", ref severity);
 
             // Save placeholder values as a count + individual key-value pairs
             var placeholderCount = item.PlaceholderValues?.Count ?? 0;
@@ -4038,6 +4212,7 @@ namespace Enlisted.Features.Interface.Behaviors
             var confidence = 100;
             var minDisplayDays = 1;
             var firstShownDay = -1;
+            var severity = 0;
 
             dataStore.SyncData($"{prefix}_day", ref dayCreated);
             dataStore.SyncData($"{prefix}_cat", ref category);
@@ -4047,6 +4222,7 @@ namespace Enlisted.Features.Interface.Behaviors
             dataStore.SyncData($"{prefix}_conf", ref confidence);
             dataStore.SyncData($"{prefix}_minDays", ref minDisplayDays);
             dataStore.SyncData($"{prefix}_shownDay", ref firstShownDay);
+            dataStore.SyncData($"{prefix}_severity", ref severity);
 
             // Load placeholder values
             var placeholderCount = 0;
@@ -4075,7 +4251,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 Type = (DispatchType)type,
                 Confidence = confidence,
                 MinDisplayDays = Math.Max(1, minDisplayDays),
-                FirstShownDay = firstShownDay
+                FirstShownDay = firstShownDay,
+                Severity = severity
             };
         }
 
@@ -4439,6 +4616,13 @@ namespace Enlisted.Features.Interface.Behaviors
         /// -1 means it has not been shown yet (backlogged).
         /// </summary>
         public int FirstShownDay { get; set; }
+
+        /// <summary>
+        /// Severity level for color coding and persistence duration.
+        /// 0=Normal, 1=Positive, 2=Attention, 3=Urgent, 4=Critical.
+        /// Higher severity items persist longer and cannot be replaced by lower severity items.
+        /// </summary>
+        public int Severity { get; set; }
     }
 
     /// <summary>
@@ -4460,6 +4644,37 @@ namespace Enlisted.Features.Interface.Behaviors
         /// Periodic summary bulletin (every 2 days).
         /// </summary>
         Bulletin = 2
+    }
+
+    /// <summary>
+    /// Severity level for news items, determining color coding and persistence duration.
+    /// </summary>
+    public enum NewsSeverity
+    {
+        /// <summary>
+        /// Normal/routine information. White text, 6h minimum display.
+        /// </summary>
+        Normal = 0,
+
+        /// <summary>
+        /// Good news, opportunities, rewards. Green text, 6h minimum display.
+        /// </summary>
+        Positive = 1,
+
+        /// <summary>
+        /// Requires attention, minor issues. Yellow text, 12h minimum display.
+        /// </summary>
+        Attention = 2,
+
+        /// <summary>
+        /// Problems, losses, dangers. Red text, 24h minimum display.
+        /// </summary>
+        Urgent = 3,
+
+        /// <summary>
+        /// Immediate threats, critical situations. Bright red text, 48h minimum display.
+        /// </summary>
+        Critical = 4
     }
 
     /// <summary>
@@ -4539,6 +4754,11 @@ namespace Enlisted.Features.Interface.Behaviors
         /// Keys: "Gold", "SoldierRep", "OfficerRep", "LordRep", "Scrutiny", skill names for XP.
         /// </summary>
         public Dictionary<string, int> EffectsApplied { get; set; }
+
+        /// <summary>
+        /// Severity level for color coding and persistence (0=Normal, 1=Positive, 2=Attention, 3=Urgent, 4=Critical).
+        /// </summary>
+        public int Severity { get; set; }
     }
 
     /// <summary>

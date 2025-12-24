@@ -541,9 +541,11 @@ Options with success/failure outcomes:
 - Integrate with camp menu decisions
 
 **Muster Events:**
-- Fire on 12-day cycle
+- Fire on 12-day cycle as part of multi-stage muster menu sequence
 - Integrate with pay, rations, baggage checks
-- Trigger promotions, reviews
+- Delivered as GameMenu stages (not popups) via `MusterMenuHandler`
+- Events include: inspection, recruit mentoring, baggage checks
+- See [Muster Menu System](../Core/muster-menu-revamp.md) for complete flow
 
 **Map Incidents:**
 - Fire based on map actions (battle end, settlement entry/exit, hourly while stationed)

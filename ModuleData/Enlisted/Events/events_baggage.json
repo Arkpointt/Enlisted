@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 2,
+  "packId": "events_baggage",
+  "category": "logistics",
+  "events": [
+    {
+      "id": "evt_baggage_arrived",
+      "category": "logistics",
+      "severity": "positive",
+      "titleId": "evt_baggage_arrived_title",
+      "setupId": "evt_baggage_arrived_setup",
+      "requirements": {
+        "minTier": 1,
+        "role": "Any",
+        "context": "March"
+      },
+      "timing": {
+        "cooldownDays": 1,
+        "priority": "normal",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "access_baggage",
+          "textId": "evt_baggage_arrived_opt_access",
+          "resultTextId": "evt_baggage_arrived_opt_access_result",
+          "tooltip": "Access your stored belongings. Grants 4 hours temporary access.",
+          "risk": "safe",
+          "effects": {
+            "grantTemporaryBaggageAccess": 4
+          }
+        },
+        {
+          "id": "no_need",
+          "textId": "evt_baggage_arrived_opt_skip",
+          "resultTextId": "evt_baggage_arrived_opt_skip_result",
+          "tooltip": "Let the wagon drivers rest. Minor soldier reputation bonus.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "evt_baggage_delayed",
+      "category": "logistics",
+      "severity": "attention",
+      "titleId": "evt_baggage_delayed_title",
+      "setupId": "evt_baggage_delayed_setup",
+      "requirements": {
+        "minTier": 1,
+        "role": "Any",
+        "context": "March"
+      },
+      "timing": {
+        "cooldownDays": 3,
+        "priority": "high",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "wait",
+          "textId": "evt_baggage_delayed_opt_wait",
+          "resultTextId": "evt_baggage_delayed_opt_wait_result",
+          "tooltip": "Nothing to be done. Baggage access delayed by 1 day.",
+          "risk": "safe",
+          "effects": {
+            "baggageDelayDays": 1
+          }
+        },
+        {
+          "id": "volunteer_help",
+          "textId": "evt_baggage_delayed_opt_help",
+          "resultTextId": "evt_baggage_delayed_opt_help_result",
+          "tooltip": "Help dig out the wagons. -15 Fatigue. Chance to reduce delay. +5 QM reputation.",
+          "risk": "moderate",
+          "requirements": {
+            "minSkills": { "Athletics": 20 }
+          },
+          "effects": {
+            "skillXp": { "Athletics": 20 },
+            "fatigue": 15,
+            "soldierRep": 3
+          },
+          "effectsSuccess": {
+            "baggageDelayDays": 0,
+            "soldierRep": 5
+          },
+          "effectsFailure": {
+            "baggageDelayDays": 1,
+            "hpChange": -5
+          }
+        }
+      ]
+    },
+    {
+      "id": "evt_baggage_stuck",
+      "category": "logistics",
+      "severity": "attention",
+      "titleId": "evt_baggage_stuck_title",
+      "setupId": "evt_baggage_stuck_setup",
+      "requirements": {
+        "minTier": 1,
+        "role": "Any",
+        "context": "March"
+      },
+      "timing": {
+        "cooldownDays": 5,
+        "priority": "high",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "wait_engineers",
+          "textId": "evt_baggage_stuck_opt_wait",
+          "resultTextId": "evt_baggage_stuck_opt_wait_result",
+          "tooltip": "Wait for the engineers to clear the crossing. Baggage delayed 2 days.",
+          "risk": "safe",
+          "effects": {
+            "baggageDelayDays": 2
+          }
+        },
+        {
+          "id": "help_push",
+          "textId": "evt_baggage_stuck_opt_push",
+          "resultTextId": "evt_baggage_stuck_opt_push_result",
+          "tooltip": "Help push the wagons through. Fatiguing but reduces delay. Train Athletics.",
+          "risk": "moderate",
+          "requirements": {
+            "minSkills": { "Athletics": 30 }
+          },
+          "effects": {
+            "skillXp": { "Athletics": 25 },
+            "fatigue": 20,
+            "soldierRep": 4
+          },
+          "effectsSuccess": {
+            "baggageDelayDays": 1
+          },
+          "effectsFailure": {
+            "baggageDelayDays": 2,
+            "hpChange": -10,
+            "applyWound": "Minor"
+          }
+        },
+        {
+          "id": "organize_detail",
+          "textId": "evt_baggage_stuck_opt_organize",
+          "resultTextId": "evt_baggage_stuck_opt_organize_result",
+          "tooltip": "Organize a working party. Requires Leadership 40. Faster resolution.",
+          "risk": "safe",
+          "requirements": {
+            "minTier": 4,
+            "minSkills": { "Leadership": 40 }
+          },
+          "effects": {
+            "skillXp": { "Leadership": 20 },
+            "officerRep": 5,
+            "soldierRep": 3,
+            "baggageDelayDays": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "evt_baggage_raided",
+      "category": "combat",
+      "severity": "urgent",
+      "titleId": "evt_baggage_raided_title",
+      "setupId": "evt_baggage_raided_setup",
+      "requirements": {
+        "minTier": 2,
+        "role": "Any",
+        "context": "March"
+      },
+      "timing": {
+        "cooldownDays": 10,
+        "priority": "urgent",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "rush_to_defend",
+          "textId": "evt_baggage_raided_opt_defend",
+          "resultTextId": "evt_baggage_raided_opt_defend_result",
+          "tooltip": "Rush to defend the wagons. Risk of injury. Chance to save belongings.",
+          "risk": "dangerous",
+          "effects": {
+            "skillXp": { "OneHanded": 15 },
+            "soldierRep": 8,
+            "fatigue": 20
+          },
+          "effectsSuccess": {
+            "soldierRep": 10,
+            "skillXp": { "Tactics": 10 }
+          },
+          "effectsFailure": {
+            "hpChange": -20,
+            "randomBaggageLoss": 2,
+            "applyWound": "Minor"
+          }
+        },
+        {
+          "id": "stay_formation",
+          "textId": "evt_baggage_raided_opt_stay",
+          "resultTextId": "evt_baggage_raided_opt_stay_result",
+          "tooltip": "Stay in formation. Some items may be lost, but you remain safe.",
+          "risk": "safe",
+          "effects": {
+            "randomBaggageLoss": 2,
+            "officerRep": 2
+          }
+        },
+        {
+          "id": "order_counterattack",
+          "textId": "evt_baggage_raided_opt_order",
+          "resultTextId": "evt_baggage_raided_opt_order_result",
+          "tooltip": "Use your authority to order a counterattack. Full defense. Risk to soldiers.",
+          "risk": "risky",
+          "requirements": {
+            "minTier": 7
+          },
+          "effects": {
+            "skillXp": { "Leadership": 30, "Tactics": 20 },
+            "officerRep": -3
+          },
+          "effectsSuccess": {
+            "soldierRep": 15,
+            "lordRep": 5
+          },
+          "effectsFailure": {
+            "troopLoss": 2,
+            "soldierRep": -5
+          }
+        }
+      ]
+    },
+    {
+      "id": "evt_baggage_theft",
+      "category": "social",
+      "severity": "urgent",
+      "titleId": "evt_baggage_theft_title",
+      "setupId": "evt_baggage_theft_setup",
+      "requirements": {
+        "minTier": 1,
+        "role": "Any",
+        "context": "Camp",
+        "maxSoldierRep": 40,
+        "baggageHasItems": true
+      },
+      "timing": {
+        "cooldownDays": 14,
+        "priority": "high",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "let_it_go",
+          "textId": "evt_baggage_theft_opt_ignore",
+          "resultTextId": "evt_baggage_theft_opt_ignore_result",
+          "tooltip": "Let it go. Accept the loss. No reputation impact.",
+          "risk": "safe",
+          "effects": {
+            "randomBaggageLoss": 1
+          }
+        },
+        {
+          "id": "investigate",
+          "textId": "evt_baggage_theft_opt_investigate",
+          "resultTextId": "evt_baggage_theft_opt_investigate_result",
+          "tooltip": "Ask around. Charm check to identify thief. Success recovers item but costs reputation.",
+          "risk": "moderate",
+          "requirements": {
+            "minSkills": { "Charm": 30 }
+          },
+          "effects": {
+            "skillXp": { "Charm": 15 }
+          },
+          "effectsSuccess": {
+            "soldierRep": -5
+          },
+          "effectsFailure": {
+            "randomBaggageLoss": 1,
+            "soldierRep": -3
+          }
+        },
+        {
+          "id": "report_nco",
+          "textId": "evt_baggage_theft_opt_report",
+          "resultTextId": "evt_baggage_theft_opt_report_result",
+          "tooltip": "Report to the sergeant. Official channels. Might make enemies.",
+          "risk": "safe",
+          "effects": {
+            "randomBaggageLoss": 1,
+            "officerRep": 3,
+            "soldierRep": -8
+          }
+        }
+      ]
+    }
+  ]
+}
+

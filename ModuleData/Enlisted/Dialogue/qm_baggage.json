@@ -1,0 +1,822 @@
+{
+  "schemaVersion": 1,
+  "dialogueType": "quartermaster",
+  "nodes": [
+    {
+      "_comment": "Emergency access request - T7+ (free access, plus column halt option)",
+      "id": "qm_baggage_request_emergency",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_emergency_t7",
+      "text": "The wagons are at the rear, but you're an officer. I'll get a runner to bring them forward. Give us a few hours.",
+      "context": {
+        "baggage_request_type": "emergency",
+        "tier_min": 7
+      },
+      "options": [
+        {
+          "id": "request_access",
+          "textId": "qm_player_request_baggage",
+          "text": "I need to access my baggage.",
+          "tooltip": "Request emergency baggage access (free for officers)",
+          "action": "grant_emergency_access",
+          "next_node": "qm_hub"
+        },
+        {
+          "id": "halt_column",
+          "textId": "qm_player_halt_column",
+          "text": "Have the wagons brought up. Halt the column.",
+          "tooltip": "Halt the column for immediate baggage access (-3 Officer Rep)",
+          "action": "halt_column_for_baggage",
+          "next_node": "qm_baggage_column_halt_response",
+          "visibility": {
+            "condition": "party_is_moving"
+          }
+        },
+        {
+          "id": "ask_why",
+          "textId": "qm_player_why_blocked",
+          "text": "Why can't I reach the baggage train?",
+          "tooltip": "Ask for explanation",
+          "next_node": "qm_baggage_explain"
+        },
+        {
+          "id": "nevermind",
+          "textId": "qm_player_nevermind",
+          "text": "Never mind.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Emergency access request - T5-T6 (low cost, with favor option)",
+      "id": "qm_baggage_request_emergency",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_emergency_t5",
+      "text": "The baggage train's at the rear. I can arrange access, but it'll cost me favors to bring it forward.",
+      "context": {
+        "baggage_request_type": "emergency",
+        "tier_min": 5,
+        "tier_max": 6
+      },
+      "options": [
+        {
+          "id": "request_access",
+          "textId": "qm_player_request_baggage",
+          "text": "I need to access my baggage.",
+          "tooltip": "Request emergency baggage access (costs 2 reputation)",
+          "action": "grant_emergency_access",
+          "next_node": "qm_hub",
+          "gate": {
+            "condition": "cooldown_not_active",
+            "gate_node": "qm_baggage_cooldown_active"
+          }
+        },
+        {
+          "id": "request_favor",
+          "textId": "qm_player_request_favor",
+          "text": "You know my word is good.",
+          "tooltip": "Request access as a favor (no cost, requires 50+ reputation)",
+          "action": "grant_emergency_access",
+          "next_node": "qm_hub",
+          "visibility": {
+            "condition": "qm_rep_high"
+          },
+          "gate": {
+            "condition": "cooldown_not_active",
+            "gate_node": "qm_baggage_cooldown_active"
+          }
+        },
+        {
+          "id": "ask_why",
+          "textId": "qm_player_why_blocked",
+          "text": "Why can't I reach the baggage train?",
+          "tooltip": "Ask for explanation",
+          "next_node": "qm_baggage_explain"
+        },
+        {
+          "id": "nevermind",
+          "textId": "qm_player_nevermind",
+          "text": "Never mind.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Emergency access request - T3-T4 (high cost, with favor option)",
+      "id": "qm_baggage_request_emergency",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_emergency_t3",
+      "text": "The wagons are miles back in the column. I can get them forward, but it'll take some doing.",
+      "context": {
+        "baggage_request_type": "emergency",
+        "tier_min": 3,
+        "tier_max": 4
+      },
+      "options": [
+        {
+          "id": "request_access",
+          "textId": "qm_player_request_baggage",
+          "text": "I need to access my baggage.",
+          "tooltip": "Request emergency baggage access (costs 5 reputation)",
+          "action": "grant_emergency_access",
+          "next_node": "qm_hub",
+          "gate": {
+            "condition": "cooldown_not_active",
+            "gate_node": "qm_baggage_cooldown_active"
+          }
+        },
+        {
+          "id": "request_favor",
+          "textId": "qm_player_request_favor",
+          "text": "You know my word is good.",
+          "tooltip": "Request access as a favor (no cost, requires 50+ reputation)",
+          "action": "grant_emergency_access",
+          "next_node": "qm_hub",
+          "visibility": {
+            "condition": "qm_rep_high"
+          },
+          "gate": {
+            "condition": "cooldown_not_active",
+            "gate_node": "qm_baggage_cooldown_active"
+          }
+        },
+        {
+          "id": "ask_why",
+          "textId": "qm_player_why_blocked",
+          "text": "Why can't I reach the baggage train?",
+          "tooltip": "Ask for explanation",
+          "next_node": "qm_baggage_explain"
+        },
+        {
+          "id": "nevermind",
+          "textId": "qm_player_nevermind",
+          "text": "Never mind.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Emergency access request - T1-T2 (blocked entirely)",
+      "id": "qm_baggage_request_emergency",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_emergency_blocked",
+      "text": "You're a fresh recruit. Personal baggage access happens when we make camp, not whenever you feel like it. Wait until we halt.",
+      "context": {
+        "baggage_request_type": "emergency",
+        "tier_max": 2
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Locked baggage request - supply shortage lockdown",
+      "id": "qm_baggage_request_locked",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_locked",
+      "text": "The baggage train is locked down. We're rationing everything right now. No one gets in until the crisis passes—not even officers.",
+      "context": {
+        "baggage_request_type": "locked"
+      },
+      "options": [
+        {
+          "id": "ask_why",
+          "textId": "qm_player_why_locked",
+          "text": "Why is it locked down?",
+          "tooltip": "Ask about the lockdown",
+          "next_node": "qm_baggage_explain_lockdown"
+        },
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Explanation for normal baggage blockage",
+      "id": "qm_baggage_explain",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_explain",
+      "text": "When we're on the march, the baggage train stays at the rear of the column for security. Bringing it forward takes time and manpower. When we make camp, you can access it freely.",
+      "context": {},
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Explanation for supply lockdown",
+      "id": "qm_baggage_explain_lockdown",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_explain_lockdown",
+      "text": "We're critically short on supplies. The lord ordered a full inventory lockdown until we resupply. No one touches the wagons—not you, not me, not anyone—until we're back above twenty percent capacity.",
+      "context": {},
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Cooldown active - recent request within 12 hours",
+      "id": "qm_baggage_cooldown_active",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_cooldown",
+      "text": "I already brought the wagons forward for you recently. Give it half a day before you ask again.",
+      "context": {},
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Column halt response - Gruff archetype",
+      "id": "qm_baggage_column_halt_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_halt_gruff",
+      "text": "Right. Halt the column. Pass the word down the line. The wagons will be up shortly.",
+      "context": {
+        "archetype": "gruff"
+      },
+      "options": [
+        {
+          "id": "continue",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Column halt response - Scoundrel archetype",
+      "id": "qm_baggage_column_halt_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_halt_scoundrel",
+      "text": "Halt the whole column? Risky. The lads won't thank you for the delay, but you're the officer. I'll see it done.",
+      "context": {
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "continue",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Column halt response - Believer archetype",
+      "id": "qm_baggage_column_halt_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_halt_believer",
+      "text": "A halt, then. The men could use the rest, truth be told. I'll see the wagons brought up.",
+      "context": {
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "continue",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Column halt response - Veteran archetype",
+      "id": "qm_baggage_column_halt_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_halt_veteran",
+      "text": "Halt order. I'll pass it down. The wagons will be forward in short order. The men will grumble, but they'll live.",
+      "context": {
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "continue",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Column halt response - Merchant archetype",
+      "id": "qm_baggage_column_halt_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_halt_merchant",
+      "text": "Halt the column for the baggage? That's a costly delay, but you're the officer. I'll arrange it.",
+      "context": {
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "continue",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Column halt response - Noble archetype",
+      "id": "qm_baggage_column_halt_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_halt_noble",
+      "text": "As you command. I shall relay the halt order and ensure the baggage train is brought forward with all due haste.",
+      "context": {
+        "archetype": "noble"
+      },
+      "options": [
+        {
+          "id": "continue",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - NoAccess + Not Delayed - Veteran",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_march_veteran",
+      "text": "The wagons are at the rear of the column, where they belong. We're moving. When we halt, you'll have access.",
+      "context": {
+        "baggage_access": "no_access",
+        "baggage_delayed": false,
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - NoAccess + Not Delayed - Merchant",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_march_merchant",
+      "text": "Business as usual—the supply train marches behind the column. Make camp, and you'll have access to your belongings.",
+      "context": {
+        "baggage_access": "no_access",
+        "baggage_delayed": false,
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - NoAccess + Not Delayed - Noble",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_march_noble",
+      "text": "The wagons proceed at the rear of the column, as is proper. Upon our next halt, your belongings shall be accessible.",
+      "context": {
+        "baggage_access": "no_access",
+        "baggage_delayed": false,
+        "archetype": "noble"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - NoAccess + Not Delayed - Scoundrel",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_march_scoundrel",
+      "text": "The oxen move slower than soldiers. Your kit's back with the wagons. They'll catch up when we make camp.",
+      "context": {
+        "baggage_access": "no_access",
+        "baggage_delayed": false,
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - NoAccess + Not Delayed - Believer",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_march_believer",
+      "text": "The Lord watches over your belongings. Have faith. The wagons march behind us, and they'll be accessible when we rest.",
+      "context": {
+        "baggage_access": "no_access",
+        "baggage_delayed": false,
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - NoAccess + Not Delayed - Gruff",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_march_gruff",
+      "text": "Wagons are at the rear. We're moving. You'll get access when we halt.",
+      "context": {
+        "baggage_access": "no_access",
+        "baggage_delayed": false,
+        "archetype": "gruff"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Delayed - Veteran",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_delayed_veteran",
+      "text": "The wagons are stuck. Bad terrain, bad weather—doesn't matter which. They're behind schedule. Give it a day or two.",
+      "context": {
+        "baggage_delayed": true,
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Delayed - Merchant",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_delayed_merchant",
+      "text": "The supply train's been delayed. Axle trouble, bad roads—one thing or another. Should catch up in a day or two.",
+      "context": {
+        "baggage_delayed": true,
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Delayed - Noble",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_delayed_noble",
+      "text": "The baggage column has encountered difficulties en route. They should rejoin us within a day or two.",
+      "context": {
+        "baggage_delayed": true,
+        "archetype": "noble"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Delayed - Scoundrel",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_delayed_scoundrel",
+      "text": "The wagons hit trouble. Mud, rocks, broken axle—who knows. They'll be along when they're along.",
+      "context": {
+        "baggage_delayed": true,
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Delayed - Believer",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_delayed_believer",
+      "text": "The wagons are delayed, but the Lord will see them through. Have faith. They'll arrive in His time.",
+      "context": {
+        "baggage_delayed": true,
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Delayed - Gruff",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_delayed_gruff",
+      "text": "Wagons hit trouble. Mired. They're behind. Give it a day.",
+      "context": {
+        "baggage_delayed": true,
+        "archetype": "gruff"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Locked - Veteran",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_locked_veteran",
+      "text": "Everything's locked down. Supply crisis. No one gets in, not even you. Orders.",
+      "context": {
+        "baggage_access": "locked",
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Locked - Merchant",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_locked_merchant",
+      "text": "We're rationing everything. Inventory's locked until we resupply. Can't let anyone rummage through what's left.",
+      "context": {
+        "baggage_access": "locked",
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Locked - Noble",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_locked_noble",
+      "text": "By the lord's command, all storage has been secured until we resupply. I regret there are no exceptions.",
+      "context": {
+        "baggage_access": "locked",
+        "archetype": "noble"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Locked - Scoundrel",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_locked_scoundrel",
+      "text": "Can't help you. Everything's under lock and key until we resupply. Lord's orders, not mine.",
+      "context": {
+        "baggage_access": "locked",
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Locked - Believer",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_locked_believer",
+      "text": "The baggage is sealed. We must endure this shortage with faith and patience. The Lord will provide.",
+      "context": {
+        "baggage_access": "locked",
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Locked - Gruff",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_locked_gruff",
+      "text": "Wagons locked. Supply crisis. No one gets in.",
+      "context": {
+        "baggage_access": "locked",
+        "archetype": "gruff"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - TemporaryAccess - Veteran",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_temporary_veteran",
+      "text": "The wagons are up. You've got a few hours before we move again. Don't waste time.",
+      "context": {
+        "baggage_access": "temporary_access",
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - TemporaryAccess - Merchant",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_temporary_merchant",
+      "text": "The baggage train's here now, but we're moving soon. Time is denars—act fast.",
+      "context": {
+        "baggage_access": "temporary_access",
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - TemporaryAccess - Noble",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_temporary_noble",
+      "text": "The wagons are currently accessible. You have a limited window before we resume march. I suggest you hurry.",
+      "context": {
+        "baggage_access": "temporary_access",
+        "archetype": "noble"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - TemporaryAccess - Scoundrel",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_temporary_scoundrel",
+      "text": "Wagons are here for now. We're moving again soon, so get what you need quick.",
+      "context": {
+        "baggage_access": "temporary_access",
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - TemporaryAccess - Believer",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_temporary_believer",
+      "text": "The Lord has granted us a halt. The wagons are here for a few hours. Use this time wisely.",
+      "context": {
+        "baggage_access": "temporary_access",
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - TemporaryAccess - Gruff",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_temporary_gruff",
+      "text": "Wagons are up. Few hours. Make it quick.",
+      "context": {
+        "baggage_access": "temporary_access",
+        "archetype": "gruff"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    }
+  ]
+}
+

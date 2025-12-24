@@ -14,11 +14,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 {
     /// <summary>
     /// Registers and triggers custom incidents used by Enlisted.
-    /// Handles enlistment bag-check incident and pay muster incident.
+    /// Handles pay muster incident. Bag check uses the narrative event system instead.
     /// </summary>
     public sealed class EnlistedIncidentsBehavior : CampaignBehaviorBase
     {
-        private Incident _bagCheckIncident;
         private Incident _payMusterIncident;
         
         public static EnlistedIncidentsBehavior Instance { get; private set; }
@@ -40,93 +39,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
-            RegisterBagCheckIncident();
             RegisterPayMusterIncident();
-        }
-
-        private void RegisterBagCheckIncident()
-        {
-            try
-            {
-                // Trigger flag is unused for manual invocation, but set a generic trigger
-                _bagCheckIncident = Game.Current.ObjectManager.RegisterPresumedObject(new Incident("incident_enlisted_bag_check"));
-                _bagCheckIncident.Initialize(
-                    "{=qm_bagcheck_title}Enlistment Bag Check",
-                    "{=qm_bagcheck_body}The quartermaster lifts his quill. \"You can’t march in that finery. Regimental rules. Everything goes in the wagons or my ledger. If the wagons burn, so does your past life. How do you want this written, soldier?\"",
-                    IncidentsCampaignBehaviour.IncidentTrigger.EnteringTown,
-                    IncidentsCampaignBehaviour.IncidentType.TroopSettlementRelation,
-                    CampaignTime.Days(365f),
-                    _ => true);
-
-                // NOTE: Incident options only "do something" if they have effects and/or a consequence delegate.
-                // Without either, the UI will show "Nothing happens" and no gameplay changes will occur.
-                _bagCheckIncident.AddOption(
-                    "{=qm_stow_all}\"Stow it all\" (50g)",
-                    new List<IncidentEffect>
-                    {
-                        IncidentEffect.Custom(
-                            condition: () => true,
-                            consequence: () =>
-                            {
-                                // Reuse the same logic as the inquiry fallback so this stays consistent.
-                                EnlistmentBehavior.Instance?.HandleBagCheckChoice("stash");
-                                return new List<TextObject>
-                                {
-                                    new TextObject("{=qm_stow_hint}Move every scrap into the baggage wagon and pay the clerk his fee.")
-                                };
-                            },
-                            hint: _ => new List<TextObject>
-                            {
-                                new TextObject("{=qm_stow_hint}Move every scrap into the baggage wagon and pay the clerk his fee.")
-                            })
-                    });
-
-                _bagCheckIncident.AddOption(
-                    "{=qm_sell_all}\"Sell it all\" (60%)",
-                    new List<IncidentEffect>
-                    {
-                        IncidentEffect.Custom(
-                            condition: () => true,
-                            consequence: () =>
-                            {
-                                EnlistmentBehavior.Instance?.HandleBagCheckChoice("sell");
-                                return new List<TextObject>
-                                {
-                                    new TextObject("{=qm_sell_hint}Liquidate the lot at a battlefield rate and march off heavier in coin.")
-                                };
-                            },
-                            hint: _ => new List<TextObject>
-                            {
-                                new TextObject("{=qm_sell_hint}Liquidate the lot at a battlefield rate and march off heavier in coin.")
-                            })
-                    });
-
-                _bagCheckIncident.AddOption(
-                    "{=qm_smuggle_one}\"I'm keeping one thing\" (Roguery 30+)",
-                    new List<IncidentEffect>
-                    {
-                        IncidentEffect.Custom(
-                            condition: () => true,
-                            consequence: () =>
-                            {
-                                EnlistmentBehavior.Instance?.HandleBagCheckChoice("smuggle");
-                                return new List<TextObject>
-                                {
-                                    new TextObject("{=qm_smuggle_hint}Slip one prized piece past the ledger; if caught, it’s gone.")
-                                };
-                            },
-                            hint: _ => new List<TextObject>
-                            {
-                                new TextObject("{=qm_smuggle_hint}Slip one prized piece past the ledger; if caught, it’s gone.")
-                            })
-                    });
-
-                ModLogger.Info("Incident", "Registered enlistment bag-check incident.");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Incident", "E-INCIDENT-001", "Failed to register bag-check incident", ex);
-            }
         }
 
         private void RegisterPayMusterIncident()
@@ -150,35 +63,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.ErrorCode("Incident", "E-INCIDENT-002", "Failed to register pay muster incident", ex);
-            }
-        }
-
-        public void TriggerBagCheckIncident()
-        {
-            try
-            {
-                if (_bagCheckIncident == null)
-                {
-                    RegisterBagCheckIncident();
-                }
-
-                if (_bagCheckIncident == null)
-                {
-                    ModLogger.Warn("Incident", "Bag-check incident unavailable; falling back to direct handling.");
-                    EnlistmentBehavior.Instance?.ShowBagCheckInquiryFallback();
-                    return;
-                }
-
-                // Prefer the native incident flow (map incident), fall back to inquiry if unavailable
-                if (!TryStartIncidentNative(_bagCheckIncident))
-                {
-                    EnlistmentBehavior.Instance?.ShowBagCheckInquiryFallback();
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Incident", "E-INCIDENT-003", "Error triggering bag-check incident", ex);
-                EnlistmentBehavior.Instance?.ShowBagCheckInquiryFallback();
             }
         }
 
@@ -326,7 +210,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 mapState.NextIncident = incident;
-                ModLogger.Info("Incident", "Started bag-check via native incident UI (NextIncident).");
+                ModLogger.Info("Incident", "Started incident via native map UI (NextIncident).");
                 return true;
             }
             catch (Exception ex)

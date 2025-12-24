@@ -208,6 +208,8 @@
     <Compile Include="src\Features\Company\CompanyNeedsManager.cs"/>
     <Compile Include="src\Features\Logistics\CompanySupplyManager.cs"/>
     <Compile Include="src\Features\Logistics\ContrabandChecker.cs"/>
+    <Compile Include="src\Features\Logistics\BaggageAccessState.cs"/>
+    <Compile Include="src\Features\Logistics\BaggageTrainManager.cs"/>
     <Compile Include="src\Features\Context\ArmyContextAnalyzer.cs"/>
     <Compile Include="src\Features\Context\LordObjective.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>

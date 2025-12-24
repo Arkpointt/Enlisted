@@ -171,7 +171,7 @@ src/Features/Conditions/
 
 ## Native Trait System Study
 
-### API Reference (v1.3.12)
+### API Reference (v1.3.13)
 
 #### Trait Categories
 

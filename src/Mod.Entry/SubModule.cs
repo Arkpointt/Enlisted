@@ -13,6 +13,7 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Identity;
+using Enlisted.Features.Logistics;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Orders.Behaviors;
@@ -395,6 +396,9 @@ namespace Enlisted.Mod.Entry
 
                     // Orders system: issues orders from chain of command, tracks acceptance/decline, applies consequences.
                     campaignStarter.AddBehavior(new OrderManager());
+
+                    // Baggage train: manages access to player's personal stowage based on march state and logistics.
+                    campaignStarter.AddBehavior(new BaggageTrainManager());
 
                     // News/Dispatches: generates kingdom-wide and personal news headlines.
                     // Read-only observer of campaign events; updates every 2 in-game days.

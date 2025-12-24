@@ -83,6 +83,13 @@
           "action": "supply_report"
         },
         {
+          "id": "ask_baggage",
+          "textId": "qm_player_baggage_status",
+          "text": "What about my belongings?",
+          "tooltip": "Ask about baggage train status",
+          "next_node": "qm_baggage_status_response"
+        },
+        {
           "id": "farewell",
           "textId": "qm_player_farewell",
           "text": "That's all for now.",
@@ -169,6 +176,13 @@
           "text": "How are we looking? Supply-wise, I mean.",
           "tooltip": "Get supply status report",
           "action": "supply_report"
+        },
+        {
+          "id": "ask_baggage",
+          "textId": "qm_player_baggage_status",
+          "text": "What about my belongings?",
+          "tooltip": "Ask about baggage train status",
+          "next_node": "qm_baggage_status_response"
         },
         {
           "id": "farewell",
@@ -259,6 +273,13 @@
           "action": "supply_report"
         },
         {
+          "id": "ask_baggage",
+          "textId": "qm_player_baggage_status",
+          "text": "What about my belongings?",
+          "tooltip": "Ask about baggage train status",
+          "next_node": "qm_baggage_status_response"
+        },
+        {
           "id": "farewell",
           "textId": "qm_player_farewell",
           "text": "That's all for now.",
@@ -347,6 +368,13 @@
           "action": "supply_report"
         },
         {
+          "id": "ask_baggage",
+          "textId": "qm_player_baggage_status",
+          "text": "What about my belongings?",
+          "tooltip": "Ask about baggage train status",
+          "next_node": "qm_baggage_status_response"
+        },
+        {
           "id": "farewell",
           "textId": "qm_player_farewell",
           "text": "That's all for now.",
@@ -433,6 +461,13 @@
           "text": "How are we looking? Supply-wise, I mean.",
           "tooltip": "Get supply status report",
           "action": "supply_report"
+        },
+        {
+          "id": "ask_baggage",
+          "textId": "qm_player_baggage_status",
+          "text": "What about my belongings?",
+          "tooltip": "Ask about baggage train status",
+          "next_node": "qm_baggage_status_response"
         },
         {
           "id": "farewell",

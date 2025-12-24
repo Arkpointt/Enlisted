@@ -39,6 +39,9 @@ namespace Enlisted.Features.Conversations.Data
         public int? DaysEnlisted { get; set; }
         public bool? RecentlyPromoted { get; set; }
         public string LastPurchaseCategory { get; set; } // weapons/armor/provisions
+        
+        // Baggage access context
+        public string BaggageRequestType { get; set; } // emergency/locked/none
 
         /// <summary>
         /// Checks if this context matches an actual game context.
@@ -150,6 +153,11 @@ namespace Enlisted.Features.Conversations.Data
                 return false;
             }
 
+            if (BaggageRequestType != null && !BaggageRequestType.Equals(actual.BaggageRequestType, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
             // All checks passed
             return true;
         }
@@ -181,6 +189,7 @@ namespace Enlisted.Features.Conversations.Data
             if (DaysEnlisted.HasValue) count++;
             if (RecentlyPromoted.HasValue) count++;
             if (LastPurchaseCategory != null) count++;
+            if (BaggageRequestType != null) count++;
 
             return count;
         }

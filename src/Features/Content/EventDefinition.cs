@@ -40,6 +40,13 @@ namespace Enlisted.Features.Content
         public string Category { get; set; } = string.Empty;
 
         /// <summary>
+        /// News severity for color coding and persistence when event is posted to news feed.
+        /// Valid values: "normal", "positive", "attention", "urgent", "critical".
+        /// Default is "normal" if not specified.
+        /// </summary>
+        public string Severity { get; set; } = "normal";
+
+        /// <summary>
         /// Requirements that determine when this event can fire.
         /// </summary>
         public EventRequirements Requirements { get; set; } = new();
@@ -132,6 +139,19 @@ namespace Enlisted.Features.Content
         /// Value is 0-100. Null means no HP check.
         /// </summary>
         public int? HpBelow { get; set; }
+        
+        /// <summary>
+        /// Maximum soldier reputation for this event to trigger.
+        /// Used for events like theft that only happen to unpopular soldiers.
+        /// Null means no soldier rep maximum check.
+        /// </summary>
+        public int? MaxSoldierRep { get; set; }
+        
+        /// <summary>
+        /// If true, requires the player's baggage stash to have at least one item.
+        /// Used by theft events to avoid firing when there's nothing to steal.
+        /// </summary>
+        public bool? BaggageHasItems { get; set; }
     }
 
     /// <summary>
@@ -273,6 +293,13 @@ namespace Enlisted.Features.Content
         /// Only relevant for onboarding events. Advances stage 1→2→3→complete.
         /// </summary>
         public bool AdvancesOnboarding { get; set; }
+        
+        /// <summary>
+        /// If true, aborts the enlistment process without normal discharge penalties.
+        /// Used by the bag check "abort" option. Player party restored to normal state.
+        /// Lord reputation penalty applied via effects.LordRep field.
+        /// </summary>
+        public bool AbortsEnlistment { get; set; }
     }
 
     /// <summary>
@@ -577,6 +604,38 @@ namespace Enlisted.Features.Content
         /// Only applies if player has Commander rank (T7+) and has a retinue.
         /// </summary>
         public int? RetinueWounded { get; set; }
+        
+        /// <summary>
+        /// Grants temporary baggage access for the specified number of hours.
+        /// Used by "baggage caught up" events to give players a window to access their stash.
+        /// </summary>
+        public int? GrantTemporaryBaggageAccess { get; set; }
+        
+        /// <summary>
+        /// Applies a delay to baggage availability in days.
+        /// Value of 0 clears any existing delay, positive values add delay.
+        /// Used by events where the baggage train gets stuck, delayed by weather, or raided.
+        /// </summary>
+        public int? BaggageDelayDays { get; set; }
+        
+        /// <summary>
+        /// Removes a random number of items from the player's baggage stash.
+        /// Used by theft, raid, and loss events. Gracefully handles empty stash (no crash, no message).
+        /// </summary>
+        public int? RandomBaggageLoss { get; set; }
+        
+        /// <summary>
+        /// Fatigue cost to apply (positive values add fatigue, negative values restore stamina).
+        /// Standard fatigue threshold is 100; actions become restricted at higher levels.
+        /// </summary>
+        public int? Fatigue { get; set; }
+        
+        /// <summary>
+        /// Bag check action to execute when this option is chosen.
+        /// Valid values: "stash" (stow in baggage), "sell" (liquidate at 60%), "smuggle" (Roguery check).
+        /// Used by the first-enlistment bag check event to handle the player's personal gear.
+        /// </summary>
+        public string BagCheckChoice { get; set; }
     }
 }
 

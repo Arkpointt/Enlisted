@@ -307,7 +307,8 @@ namespace Enlisted.Features.Conversations.Data
                 HasFlag = contextJson["has_flag"]?.ToString(),
                 DaysEnlisted = contextJson["days_enlisted"]?.Value<int?>(),
                 RecentlyPromoted = contextJson["recently_promoted"]?.Value<bool?>(),
-                LastPurchaseCategory = contextJson["last_purchase_category"]?.ToString()
+                LastPurchaseCategory = contextJson["last_purchase_category"]?.ToString(),
+                BaggageRequestType = contextJson["baggage_request_type"]?.ToString()
             };
 
             return context;

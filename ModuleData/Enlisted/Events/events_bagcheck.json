@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 2,
+  "packId": "events_bagcheck",
+  "category": "onboarding",
+  "events": [
+    {
+      "id": "evt_bagcheck_first_enlistment",
+      "category": "onboarding",
+      "severity": "normal",
+      "titleId": "evt_bagcheck_title",
+      "setupId": "evt_bagcheck_setup",
+      "requirements": {
+        "minTier": 1,
+        "maxTier": 6,
+        "context": "Any"
+      },
+      "timing": {
+        "cooldownDays": 0,
+        "priority": "critical",
+        "oneTime": true
+      },
+      "options": [
+        {
+          "id": "stash",
+          "textId": "evt_bagcheck_opt_stash",
+          "resultTextId": "evt_bagcheck_opt_stash_result",
+          "tooltip": "Stow everything in baggage. Costs 200g + 5% of inventory value. Items safely stored.",
+          "risk": "safe",
+          "effects": {
+            "bagCheckChoice": "stash"
+          }
+        },
+        {
+          "id": "sell",
+          "textId": "evt_bagcheck_opt_sell",
+          "resultTextId": "evt_bagcheck_opt_sell_result",
+          "tooltip": "Sell everything at 60% value. Quick coin, nothing to lose.",
+          "risk": "safe",
+          "effects": {
+            "bagCheckChoice": "sell"
+          }
+        },
+        {
+          "id": "smuggle",
+          "textId": "evt_bagcheck_opt_smuggle",
+          "resultTextId": "evt_bagcheck_opt_smuggle_result",
+          "tooltip": "Roguery 30+ required. Try to stow everything without paying. Hard skill check. +1 Scrutiny if caught.",
+          "risk": "safe",
+          "requirements": {
+            "minSkills": { "Roguery": 30 }
+          },
+          "effects": {
+            "bagCheckChoice": "smuggle"
+          }
+        },
+        {
+          "id": "abort",
+          "textId": "evt_bagcheck_opt_abort",
+          "resultTextId": "evt_bagcheck_opt_abort_result",
+          "tooltip": "Changed your mind. Leave service before it starts. -10 Lord reputation. No other penalties.",
+          "risk": "safe",
+          "abortsEnlistment": true,
+          "effects": {
+            "lordRep": -10
+          }
+        }
+      ]
+    }
+  ]
+}
+

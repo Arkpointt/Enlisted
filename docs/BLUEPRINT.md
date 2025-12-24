@@ -3,7 +3,7 @@
 **Summary:** Complete guide to the Enlisted mod's architecture, coding standards, and development practices. This is the single source of truth for understanding how this project works and how we write code.
 
 **Last Updated:** 2025-12-23  
-**Target Game:** Bannerlord v1.3.11  
+**Target Game:** Bannerlord v1.3.13  
 **Related Docs:** [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md), [Reference/native-apis.md](Reference/native-apis.md)
 
 ---
@@ -12,10 +12,10 @@
 
 **New to this project? Read this section first.**
 
-This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.11** that transforms the game into a soldier career simulator. Players enlist with lords, follow orders, manage reputation, and progress through military ranks.
+This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.13** that transforms the game into a soldier career simulator. Players enlist with lords, follow orders, manage reputation, and progress through military ranks.
 
 **Critical Project Constraints:**
-1. **Target:** Bannerlord v1.3.11 specifically (not latest version)
+1. **Target:** Bannerlord v1.3.13 specifically (not latest version)
 2. **API Verification:** ALWAYS use local decompile at `C:\Dev\Enlisted\Decompile\` (not online docs)
 3. **Old-style .csproj:** Must manually add new files to `Enlisted.csproj` with `<Compile Include="..."/>`
 4. **Build:** Use `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
@@ -186,7 +186,7 @@ private bool CanReenlistWithFaction(Kingdom faction)
 **ALWAYS verify against the local native decompile FIRST**
 
 - **Location:** `C:\Dev\Enlisted\Decompile\`
-- **Target Version:** v1.3.11
+- **Target Version:** v1.3.13
 - **Key Assemblies:**
   - `TaleWorlds.CampaignSystem` - Party, Settlement, Campaign behaviors
   - `TaleWorlds.Core` - CharacterObject, ItemObject
@@ -392,7 +392,7 @@ dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 -   **Workshop ID**: `3621116083`
 -   **Config**: `tools/workshop/WorkshopUpdate.xml` and `workshop_upload.vdf`
 -   **Process**: Build first, then upload via SteamCMD.
--   **Compatible Version**: 1.3.11
+-   **Compatible Version**: 1.3.13
 
 ---
 
@@ -409,7 +409,7 @@ dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 ## Native Reference (Decompile)
 
 Decompiled Bannerlord source for API reference:
-`C:\Dev\Enlisted\Decompile\` (Targeting v1.3.11)
+`C:\Dev\Enlisted\Decompile\` (Targeting v1.3.13)
 
 This is the authoritative source for verifying Bannerlord API usage. See [API Verification](#api-verification) section above.
 

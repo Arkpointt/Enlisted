@@ -7,6 +7,7 @@ using Enlisted.Features.Conversations.Data;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Equipment.UI;
+using Enlisted.Features.Escalation;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Logistics;
 using Enlisted.Features.Retinue.Core;
@@ -37,6 +38,24 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         public static EnlistedDialogManager Instance { get; private set; }
+
+        /// <summary>
+        /// Sets the baggage request context for the next QM conversation.
+        /// Call this before opening a QM conversation to route to baggage dialogue.
+        /// </summary>
+        public void SetBaggageRequestContext(string requestType)
+        {
+            _baggageRequestType = requestType ?? "none";
+            ModLogger.Debug("EnlistedDialogManager", $"Baggage request context set to: {_baggageRequestType}");
+        }
+
+        /// <summary>
+        /// Clears the baggage request context after conversation ends.
+        /// </summary>
+        public void ClearBaggageRequestContext()
+        {
+            _baggageRequestType = "none";
+        }
 
         public override void RegisterEvents()
         {
@@ -208,6 +227,30 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "lord_pretalk",
                 GetLocalizedText(
                         "{=enlisted_army_leader_acknowledge}I understand, my lord. I shall see to my army's affairs first.")
+                    .ToString(),
+                null,
+                null,
+                109);
+            
+            // Lord's response when player tries to re-enlist after aborting bag check
+            starter.AddDialogLine(
+                "enlisted_bag_check_abort_rejection",
+                "enlisted_enlistment_response",
+                "enlisted_bag_check_abort_acknowledge",
+                GetLocalizedText(
+                        "{=enlisted_bag_check_abort_rejection}Ah. You again. I remember you at the wagon line—had your gear ready, then walked off. Changed your mind. I don't begrudge a man his doubts, but I need soldiers who are certain. Sort out your affairs. Come back in a week, if you're serious.")
+                    .ToString(),
+                HasBagCheckAbortCooldown,
+                null,
+                111); // Higher priority than normal response
+            
+            // Player acknowledges they must return later after aborting
+            starter.AddPlayerLine(
+                "enlisted_bag_check_abort_acknowledge",
+                "enlisted_bag_check_abort_acknowledge",
+                "lord_pretalk",
+                GetLocalizedText(
+                        "{=enlisted_bag_check_abort_acknowledge}As you say, my lord. I shall return when I am ready.")
                     .ToString(),
                 null,
                 null,
@@ -1083,6 +1126,9 @@ namespace Enlisted.Features.Conversations.Behaviors
         
         // Track selected armor slot for armor drill-down
         private TaleWorlds.Core.EquipmentIndex _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.None;
+        
+        // Track baggage request context for emergency access dialogue
+        private string _baggageRequestType = "none";
 
         /// <summary>
         ///     Add quartermaster NPC dialog tree.
@@ -1123,6 +1169,13 @@ namespace Enlisted.Features.Conversations.Behaviors
                         RegisterJsonQuartermasterLines(starter, "qm_gate_upgrade_masterwork", "qm_hub", 148);
                         RegisterJsonQuartermasterLines(starter, "qm_gate_upgrade_legendary", "qm_hub", 148);
                         
+                        // Register baggage train emergency access dialogue
+                        RegisterJsonQuartermasterLines(starter, "qm_baggage_request_emergency", "start", 195);
+                        RegisterJsonQuartermasterLines(starter, "qm_baggage_request_locked", "start", 195);
+                        RegisterJsonQuartermasterLines(starter, "qm_baggage_explain", "qm_baggage_request_emergency", 145);
+                        RegisterJsonQuartermasterLines(starter, "qm_baggage_explain_lockdown", "qm_baggage_request_locked", 145);
+                        RegisterJsonQuartermasterLines(starter, "qm_baggage_cooldown_active", "qm_baggage_request_emergency", 145);
+                        
                         // Then register player options for each node
                         RegisterJsonDialogueNode(starter, "qm_intro_greeting", 152);
                         RegisterJsonDialogueNode(starter, "qm_intro_ack_direct", 151);
@@ -1138,6 +1191,13 @@ namespace Enlisted.Features.Conversations.Behaviors
                         RegisterJsonDialogueNode(starter, "qm_gate_officers_armory_trust", 147);
                         RegisterJsonDialogueNode(starter, "qm_gate_upgrade_masterwork", 147);
                         RegisterJsonDialogueNode(starter, "qm_gate_upgrade_legendary", 147);
+                        
+                        // Register player options for baggage dialogue
+                        RegisterJsonDialogueNode(starter, "qm_baggage_request_emergency", 146);
+                        RegisterJsonDialogueNode(starter, "qm_baggage_request_locked", 146);
+                        RegisterJsonDialogueNode(starter, "qm_baggage_explain", 144);
+                        RegisterJsonDialogueNode(starter, "qm_baggage_explain_lockdown", 144);
+                        RegisterJsonDialogueNode(starter, "qm_baggage_cooldown_active", 144);
                     }
                     else
                     {
@@ -1866,7 +1926,8 @@ namespace Enlisted.Features.Conversations.Behaviors
                 IsOfficer = playerTier >= 7,
                 SupplyLevel = GetSupplyLevelCategory(),
                 Archetype = EnlistmentBehavior.Instance?.QuartermasterArchetype ?? "veteran",
-                ReputationTier = GetReputationTierCategory(qmReputation)
+                ReputationTier = GetReputationTierCategory(qmReputation),
+                BaggageRequestType = _baggageRequestType
             };
             return context;
         }
@@ -2013,6 +2074,16 @@ namespace Enlisted.Features.Conversations.Behaviors
                     var rep61 = EnlistmentBehavior.Instance?.GetQMReputation() ?? 0;
                     return rep61 >= 61;
 
+                case "cooldown_not_active":
+                    // Check if emergency baggage access cooldown is not active
+                    var baggageManager = BaggageTrainManager.Instance;
+                    if (baggageManager == null)
+                    {
+                        return false;
+                    }
+                    // Cooldown check: returns true if NOT on cooldown
+                    return !baggageManager.IsEmergencyAccessOnCooldown();
+
                 default:
                     ModLogger.Warn("EnlistedDialogManager", $"Unknown gate condition: {gateCondition}");
                     return true; // Unknown conditions pass to avoid blocking
@@ -2095,6 +2166,14 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                     case "set_player_style":
                         ExecuteSetPlayerStyleAction(actionData);
+                        break;
+
+                    case "grant_emergency_access":
+                        OnGrantEmergencyBaggageAccess();
+                        break;
+                    
+                    case "halt_column_for_baggage":
+                        OnHaltColumnForBaggage();
                         break;
 
                     default:
@@ -3904,6 +3983,110 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("Quartermaster", "Error enabling officers armory", ex);
             }
         }
+
+        /// <summary>
+        /// Handles emergency baggage access request during march.
+        /// Attempts to grant temporary access via BaggageTrainManager, applying reputation costs.
+        /// </summary>
+        private void OnGrantEmergencyBaggageAccess()
+        {
+            try
+            {
+                var baggageManager = BaggageTrainManager.Instance;
+                if (baggageManager == null)
+                {
+                    ModLogger.Error("Baggage", "BaggageTrainManager not available for emergency access");
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=baggage_error}Unable to access baggage system.").ToString(),
+                        Colors.Red));
+                    return;
+                }
+
+                // Attempt to grant emergency access
+                if (baggageManager.TryRequestEmergencyAccess(out var failReason))
+                {
+                    // Success - access granted
+                    ModLogger.Info("Baggage", "Emergency baggage access granted");
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=baggage_granted}The quartermaster sends a runner. The baggage train will be brought forward shortly.").ToString(),
+                        Colors.Green));
+                    
+                    // Small relationship bonus for using proper channels
+                    EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
+                }
+                else
+                {
+                    // Request denied - show appropriate message
+                    ModLogger.Info("Baggage", $"Emergency baggage access denied: {failReason}");
+                    
+                    TextObject message;
+                    switch (failReason)
+                    {
+                        case "Rank too low":
+                            message = new TextObject("{=baggage_denied_tier}Your rank is too low to request emergency baggage access. Wait until camp.");
+                            break;
+                        case "Cooldown active":
+                            message = new TextObject("{=baggage_denied_cooldown}You recently requested emergency access. Wait at least 12 hours before asking again.");
+                            break;
+                        default:
+                            message = new TextObject("{=baggage_denied_generic}Emergency baggage access is not available right now.");
+                            break;
+                    }
+                    
+                    InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Red));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Baggage", "E-BAG-001", "Error processing emergency baggage access", ex);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=baggage_error}Unable to process baggage request.").ToString(),
+                    Colors.Red));
+            }
+        }
+        
+        /// <summary>
+        /// Handles column halt request for T7+ commanders to bring baggage train forward.
+        /// Stops the party and grants full access until movement resumes. Costs officer reputation.
+        /// </summary>
+        private void OnHaltColumnForBaggage()
+        {
+            try
+            {
+                var party = MobileParty.MainParty;
+                if (party == null)
+                {
+                    ModLogger.Error("Baggage", "MainParty not available for column halt");
+                    return;
+                }
+                
+                // Stop party movement (halt the column)
+                if (party.IsMoving)
+                {
+                    party.Ai.SetDoNotMakeNewDecisions(true);
+                    party.SetMoveModeHold();
+                    ModLogger.Info("Baggage", "Column halted for baggage access");
+                }
+                
+                // Apply officer reputation cost (inconvenience to the column)
+                var repCost = 3;
+                var escalation = EscalationManager.Instance;
+                if (escalation != null)
+                {
+                    escalation.ModifyOfficerReputation(-repCost, "Column halt for baggage access");
+                }
+                
+                ModLogger.Info("Baggage", $"Column halt granted: Full baggage access until movement resumes (cost: -{repCost} Officer Rep)");
+                
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=baggage_column_halt}The column halts. Wagons are brought forward and the baggage train is made accessible.").ToString(),
+                    Colors.Green));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Baggage", "E-BAG-002", "Error processing column halt request", ex);
+            }
+        }
         
         /// <summary>
         ///     Checks if the player has any equipped items that can be upgraded.
@@ -4258,6 +4441,27 @@ namespace Enlisted.Features.Conversations.Behaviors
             return lord?.Clan?.IsMinorFaction == true;
         }
 
+        /// <summary>
+        ///     Checks if the player has an active bag check abort cooldown with the current lord.
+        ///     Used to show lord's rejection dialogue when player tries to enlist too soon after aborting.
+        /// </summary>
+        private bool HasBagCheckAbortCooldown()
+        {
+            var lord = Hero.OneToOneConversationHero;
+            if (lord == null)
+            {
+                return false;
+            }
+            
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return false;
+            }
+            
+            return enlistment.IsBlockedFromLordDueToAbort(lord, out _);
+        }
+        
         /// <summary>
         ///     Checks if the player can request enlistment with a minor faction lord.
         ///     Same logic as standard enlistment but only for minor faction lords.

@@ -29,6 +29,7 @@ Players can instantly identify problems at a glance - critical supplies, low rep
 | **Reports Menu** | DAILY BRIEF, RECENT ACTIVITY, COMPANY STATUS, CAMPAIGN CONTEXT headers + all status lines |
 | **Status Detail** | REPUTATION, ROLE & SPECIALIZATIONS, PERSONALITY TRAITS headers + reputation values |
 | **Decisions Menu** | COMPANY REPORT header |
+| **Muster Menu** | All 8 stages use full color scheme: section headers, status labels, reputation values, XP progress, rank titles |
 
 ### Combat Log Messages
 

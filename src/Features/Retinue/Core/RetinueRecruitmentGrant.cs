@@ -54,6 +54,28 @@ namespace Enlisted.Features.Retinue.Core
                 // First time reaching T7: show formation selection dialog
                 if (newTier >= RetinueManager.CommanderTier1 && previousTier < RetinueManager.CommanderTier1)
                 {
+                    // Check if baggage is delayed - if so, defer formation selection
+                    var baggageManager = Logistics.BaggageTrainManager.Instance;
+                    if (baggageManager != null && baggageManager.IsDelayed())
+                    {
+                        var daysRemaining = baggageManager.GetBaggageDelayDaysRemaining();
+                        ModLogger.Info(LogCategory,
+                            $"First T7 promotion - baggage delayed ({daysRemaining} days), deferring formation selection");
+                        
+                        // Show notification that formation selection is deferred
+                        var message = new TextObject(
+                            "{=ret_formation_deferred}You've been promoted to Commander, but the supply wagons are delayed. Formation selection will be available once they arrive.")
+                            .ToString();
+                        InformationManager.DisplayMessage(new InformationMessage(message));
+                        
+                        // For now, default to Infantry temporarily
+                        // TODO: Add proper queueing system to re-prompt when baggage arrives
+                        var defaultFormation = FormationClass.Infantry;
+                        var lordCulture = GetEnlistedLordCulture();
+                        GrantRawRecruits(count, defaultFormation, lordCulture);
+                        return;
+                    }
+                    
                     ModLogger.Info(LogCategory, "First T7 promotion - showing formation selection dialog");
                     ShowFormationSelectionDialog(count);
                     return;

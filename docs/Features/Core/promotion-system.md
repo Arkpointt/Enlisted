@@ -263,6 +263,13 @@ This reminds players to visit the Quartermaster to:
 - At T7+, select your retinue formation type
 - Continue service at your new rank
 
+**8. Muster Recap**
+- At the next muster (12-day pay cycle), a **Promotion Recap** stage displays
+- This formal acknowledgment shows when the promotion occurred during the period
+- Recap includes: promotion date, wage increase, unlocked equipment, new abilities
+- Optional: Visit Quartermaster directly from the recap if not done yet
+- See [Muster Menu System](muster-menu-revamp.md#6-promotion-recap-menu) for details
+
 ### Fallback Mechanism
 
 If proving events are missing or the event system is disabled, the system falls back to direct promotion:

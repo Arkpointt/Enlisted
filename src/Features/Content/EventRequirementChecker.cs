@@ -80,6 +80,18 @@ namespace Enlisted.Features.Content
                 {
                     return false;
                 }
+                
+                // Check soldier reputation maximum (for theft events targeting unpopular soldiers)
+                if (!MeetsSoldierRepRequirement(requirements))
+                {
+                    return false;
+                }
+                
+                // Check baggage has items (for theft events)
+                if (!MeetsBaggageItemsRequirement(requirements))
+                {
+                    return false;
+                }
 
                 return true;
             }
@@ -331,6 +343,41 @@ namespace Enlisted.Features.Content
 
             var hpPercent = (hero.HitPoints * 100) / maxHp;
             return hpPercent < requirements.HpBelow.Value;
+        }
+        
+        /// <summary>
+        /// Checks if the player's soldier reputation is at or below the maximum required.
+        /// Used for events like theft that only target unpopular soldiers.
+        /// </summary>
+        private static bool MeetsSoldierRepRequirement(EventRequirements requirements)
+        {
+            if (!requirements.MaxSoldierRep.HasValue)
+            {
+                return true; // No soldier rep requirement
+            }
+            
+            var escalation = EscalationManager.Instance?.State;
+            if (escalation == null)
+            {
+                return false;
+            }
+            
+            return escalation.SoldierReputation <= requirements.MaxSoldierRep.Value;
+        }
+        
+        /// <summary>
+        /// Checks if the player has at least one item in their baggage stash.
+        /// Used for theft events that require items to exist.
+        /// </summary>
+        private static bool MeetsBaggageItemsRequirement(EventRequirements requirements)
+        {
+            if (requirements.BaggageHasItems != true)
+            {
+                return true; // No baggage requirement
+            }
+            
+            var enlistment = EnlistmentBehavior.Instance;
+            return enlistment != null && enlistment.HasBaggageItems();
         }
 
         /// <summary>

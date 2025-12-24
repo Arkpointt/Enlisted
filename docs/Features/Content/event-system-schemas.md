@@ -45,13 +45,16 @@
 
 ### File Locations
 
-| Content Type | Location | ID Prefix |
-|-------------|----------|-----------|
-| Camp Hub Decisions | `ModuleData/Enlisted/Decisions/decisions.json` | `dec_*` |
-| Player Popup Events | `ModuleData/Enlisted/Events/events_player_decisions.json` | `player_*` |
-| Game-Triggered Events | `ModuleData/Enlisted/Events/events_decisions.json` | `decision_*` |
-| Automatic Events | `ModuleData/Enlisted/Events/events_*.json` | `evt_*` |
-| Map Incidents | `ModuleData/Enlisted/Events/incidents_*.json` | `mi_*` |
+| Content Type | Location | ID Prefix | Delivery |
+|-------------|----------|-----------|----------|
+| Camp Hub Decisions | `ModuleData/Enlisted/Decisions/decisions.json` | `dec_*` | Inline menu |
+| Player Popup Events | `ModuleData/Enlisted/Events/events_player_decisions.json` | `player_*` | Popup inquiry |
+| Game-Triggered Events | `ModuleData/Enlisted/Events/events_decisions.json` | `decision_*` | Popup inquiry |
+| Automatic Events | `ModuleData/Enlisted/Events/events_*.json` | `evt_*` | Popup inquiry |
+| Map Incidents | `ModuleData/Enlisted/Events/incidents_*.json` | `mi_*` | Popup inquiry |
+| **Muster Menu Stages** | *See note below* | `evt_muster_*` | **GameMenu stage** |
+
+**Note on Muster Events:** Some events (`evt_muster_inspection`, `evt_muster_new_recruit`, `evt_baggage_*`) are delivered as GameMenu stages during the muster sequence rather than popup inquiries. The JSON definitions remain in `events_*.json` files, but `MusterMenuHandler` converts them to menu text instead of using `MultiSelectionInquiryData`. Effects still apply via `EventDeliveryManager.ApplyEffects()`. See [Muster Menu System](../Core/muster-menu-revamp.md).
 
 ---
 
@@ -63,6 +66,7 @@
 {
   "id": "dec_rest",
   "category": "decision",
+  "severity": "normal",
   "titleId": "dec_rest_title",
   "title": "Rest",
   "setupId": "dec_rest_setup", 
@@ -77,6 +81,7 @@
 |-------|-----------|------|----------|-------|
 | ID | `id` | string | ✅ | Must be unique. Prefix determines delivery. |
 | Category | `category` | string | ✅ | Must be `"decision"` for Camp Hub decisions |
+| Severity | `severity` | string | ❌ | News priority/color: `"normal"`, `"positive"`, `"attention"`, `"urgent"`, `"critical"` (defaults to `"normal"`) |
 | Title ID | `titleId` | string | ✅ | XML localization key |
 | Title Fallback | `title` | string | ❌ | Shown if localization missing |
 | Setup ID | `setupId` | string | ✅ | XML localization key for description |
@@ -751,6 +756,88 @@ The Quartermaster system uses a dedicated dialogue JSON schema for conversation 
 | Branching | `chainsTo` | `next_node` |
 | Conditions | `requirements` + `triggers` | `context` + `gate` |
 | Actions | `effects` | `action` + `action_data` |
+
+---
+
+## Severity Field (News Priority System)
+
+**Added:** December 2025 (Baggage Train feature)
+
+### Purpose
+
+The optional `severity` field controls how events appear in the news feed:
+1. **Color coding** - Visual importance in GameMenu displays
+2. **Display duration** - How long the event stays visible
+3. **Priority** - Whether it can be replaced by less important events
+
+### Values
+
+| Severity | Color | Duration | Use For |
+|----------|-------|----------|---------|
+| `"normal"` | Default (cream) | 6 hours | Routine updates, standard events |
+| `"positive"` | Success (green) | 6 hours | Good news, opportunities, achievements |
+| `"attention"` | Warning (gold) | 12 hours | Needs attention, warnings, delays |
+| `"urgent"` | Alert (red) | 24 hours | Problems, losses, dangers, raids |
+| `"critical"` | Alert (red) | 48 hours | Immediate threats, lockdowns, crises |
+
+### Behavior
+
+**Display Duration:**
+- Events persist in personal feed for their duration
+- Cannot be replaced by lower-severity events
+- Automatically expire after duration elapses
+
+**Color Rendering:**
+- Maps to existing `EnlistedColors.xml` styles
+- Displayed in Camp Hub RECENT ACTIONS section
+- Also affects Daily Brief mentions
+
+**Priority Replacement:**
+```
+Critical (48h) → Cannot be replaced by anything
+Urgent (24h)   → Can only be replaced by Critical or another Urgent
+Attention (12h)→ Can be replaced by Urgent or Critical
+Normal/Positive (6h) → Can be replaced by anything higher
+```
+
+### Examples
+
+**Baggage Train Events:**
+```json
+{
+  "id": "evt_baggage_raided",
+  "severity": "urgent",
+  "title": "Raiders Hit the Baggage Train",
+  ...
+}
+```
+
+**Training Events:**
+```json
+{
+  "id": "evt_training_success",
+  "severity": "positive",
+  "title": "Training Session Complete",
+  ...
+}
+```
+
+**Default (No Severity):**
+```json
+{
+  "id": "evt_routine_patrol",
+  "title": "Routine Patrol",
+  // No severity field = defaults to "normal"
+  ...
+}
+```
+
+### Implementation Notes
+
+- **Optional field** - Existing events without severity default to `"normal"`
+- **Backward compatible** - No changes needed to existing event files
+- **Case insensitive** - Parser accepts `"Normal"`, `"NORMAL"`, `"normal"`
+- **Invalid values** - Unknown severities default to `"normal"` with warning log
 
 ---
 

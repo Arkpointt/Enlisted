@@ -1,0 +1,38 @@
+{
+  "access_windows": {
+    "temporary_access_hours": 4,
+    "night_halt_grants_access": true,
+    "muster_grants_access": true,
+    "settlement_always_access": true
+  },
+  "timing": {
+    "caught_up_check_hours": 24,
+    "caught_up_chance_percent": 25,
+    "min_cooldown_hours": 18,
+    "max_cooldown_hours": 30
+  },
+  "emergency_access": {
+    "base_qm_rep_cost": 5,
+    "nco_qm_rep_cost": 2,
+    "officer_qm_rep_cost": 0,
+    "cooldown_hours": 12,
+    "high_rep_threshold": 50,
+    "spam_penalty_soldier_rep": 2
+  },
+  "rank_gates": {
+    "emergency_request_min_tier": 3,
+    "column_halt_min_tier": 7,
+    "daily_access_window_min_tier": 5
+  },
+  "lockdown": {
+    "supply_threshold_percent": 20,
+    "contraband_investigation_blocks": true
+  },
+  "events": {
+    "delay_event_chance_bad_weather": 15,
+    "delay_event_chance_mountains": 10,
+    "raid_event_chance_enemy_territory": 8,
+    "theft_event_chance_low_rep": 5
+  }
+}
+
