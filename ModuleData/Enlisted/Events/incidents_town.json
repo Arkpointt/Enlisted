@@ -13,7 +13,10 @@
       "requirements": {
         "context": "entering_town",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 7,
@@ -34,7 +37,8 @@
             "companyNeeds": {
               "Rest": 5
             }
-          }
+          },
+          "tooltip": "Moderate drinking. +5 Soldier rep. Boosts company rest."
         },
         {
           "id": "drink_heavy",
@@ -59,7 +63,8 @@
             "scrutiny": 4,
             "discipline": 2
           },
-          "failure_resultText": "The night goes too far. You wake in an alley, beaten and robbed, with no memory of how you got there. The sergeant finds you before muster, and his expression promises consequences."
+          "failure_resultText": "The night goes too far. You wake in an alley, beaten and robbed, with no memory of how you got there. The sergeant finds you before muster, and his expression promises consequences.",
+          "tooltip": "80% success chance. +12 Soldier rep, +8 Morale. Failure adds 4 scrutiny and 2 discipline issues, loses 50 gold and 10 HP."
         },
         {
           "id": "stay_sober",
@@ -72,7 +77,8 @@
             "gold": -5,
             "officerRep": 5,
             "soldierRep": -2
-          }
+          },
+          "tooltip": "Stay sober. +5 Officer rep, -2 Soldier rep."
         }
       ]
     },
@@ -86,7 +92,10 @@
       "requirements": {
         "context": "entering_town",
         "role": "Any",
-        "tier": { "min": 1, "max": 7 }
+        "tier": {
+          "min": 1,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -106,7 +115,8 @@
             "companyNeeds": {
               "Equipment": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. -40 gold. Boosts company equipment."
         },
         {
           "id": "haggle",
@@ -119,14 +129,14 @@
           },
           "resultTextId": "mi_town_merchant_haggle_result",
           "resultText": "'Half that,' you say flatly. The merchant grumbles but accepts. A soldier who knows his prices—rare enough to respect.",
-          "tooltip": "Requires Trade 35+",
+          "tooltip": "Requires Trade 35. Train Trade. -20 gold. Boosts company equipment.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Trade": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "gold": -20,
             "companyNeeds": {
               "Equipment": 5
@@ -144,7 +154,8 @@
             "traitXp": {
               "Honor": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Honor trait XP."
         }
       ]
     },
@@ -158,7 +169,10 @@
       "requirements": {
         "context": "entering_town",
         "role": "Any",
-        "tier": { "min": 1, "max": 8 }
+        "tier": {
+          "min": 1,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 21,
@@ -177,7 +191,8 @@
             "companyNeeds": {
               "Morale": 10
             }
-          }
+          },
+          "tooltip": "Safe choice. Boosts company morale."
         },
         {
           "id": "avoid",
@@ -190,7 +205,8 @@
             "traitXp": {
               "Calculating": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP."
         },
         {
           "id": "observe",
@@ -203,7 +219,8 @@
             "companyNeeds": {
               "Morale": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Boosts company morale."
         }
       ]
     },
@@ -217,7 +234,10 @@
       "requirements": {
         "context": "entering_town",
         "role": "Any",
-        "tier": { "min": 1, "max": 8 }
+        "tier": {
+          "min": 1,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 21,
@@ -236,7 +256,8 @@
             "companyNeeds": {
               "Morale": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. Boosts company morale."
         },
         {
           "id": "read_later",
@@ -249,7 +270,8 @@
             "companyNeeds": {
               "Rest": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Boosts company rest."
         },
         {
           "id": "burn",
@@ -265,7 +287,8 @@
             "companyNeeds": {
               "Morale": -5
             }
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP. Harms company morale."
         }
       ]
     },
@@ -279,7 +302,10 @@
       "requirements": {
         "context": "entering_town",
         "role": "Any",
-        "tier": { "min": 2, "max": 7 }
+        "tier": {
+          "min": 2,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 14,
@@ -294,15 +320,16 @@
           "resultTextId": "mi_town_criminal_listen_result",
           "resultText": "Smuggling, he says. Move a package, ask no questions, get paid well. Risky, but the money is real.",
           "risk": "moderate",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Roguery": 10
             }
-          },
-          "effects": {
+          ,,
+          
             "gold": 60,
             "scrutiny": 4
-          }
+          },
+          "tooltip": "Moderate risk. Train Roguery. +60 gold. Adds 4 scrutiny."
         },
         {
           "id": "refuse",
@@ -315,7 +342,8 @@
             "traitXp": {
               "Honor": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. Honor trait XP."
         },
         {
           "id": "report_criminal",
@@ -330,7 +358,8 @@
               "Honor": 8
             },
             "scrutiny": -1
-          }
+          },
+          "tooltip": "Report criminal. +3 Officer rep. Honor trait XP. -1 Scrutiny."
         }
       ]
     },
@@ -344,7 +373,10 @@
       "requirements": {
         "context": "entering_town",
         "role": "Any",
-        "tier": { "min": 3, "max": 8 }
+        "tier": {
+          "min": 3,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 21,
@@ -362,7 +394,8 @@
           "effects": {
             "lordRep": -5,
             "scrutiny": 2
-          }
+          },
+          "tooltip": "Risky choice. -5 Lord rep. Adds 2 scrutiny."
         },
         {
           "id": "refuse_firmly",
@@ -376,7 +409,8 @@
             "traitXp": {
               "Honor": 5
             }
-          }
+          },
+          "tooltip": "+5 Lord rep. Honor trait XP."
         },
         {
           "id": "hear_out",
@@ -385,16 +419,17 @@
           "resultTextId": "mi_town_recruitment_hear_result",
           "resultText": "You listen politely, ask questions, and make no promises. The recruiter shares details about his employer—troop strength, pay rates, current campaigns. Information is useful, even if you never act on it. And information has value to those who know how to use it.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 8
             }
-          },
-          "effects": {
+          ,,
+          
             "traitXp": {
               "Calculating": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. Train Scouting. Calculating trait XP."
         }
       ]
     },
@@ -408,7 +443,10 @@
       "requirements": {
         "context": "entering_town",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -436,7 +474,8 @@
             "scrutiny": 2,
             "gold": -15
           },
-          "failure_resultText": "The locals are tougher than they looked. You're beaten badly and robbed of your coin before the watch arrives."
+          "failure_resultText": "The locals are tougher than they looked. You're beaten badly and robbed of your coin before the watch arrives.",
+          "tooltip": "65% success chance. +8 Soldier rep. Valor trait XP. Failure causes 25 damage, adds 2 scrutiny, loses 15 gold."
         },
         {
           "id": "defuse",
@@ -451,12 +490,12 @@
           "resultText": "'Easy, friends. We're all just here for a drink.' Your calm voice cuts through the tension. The locals back off, and the evening continues peacefully.",
           "tooltip": "Requires Charm 40+",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Charm": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "officerRep": 5,
             "soldierRep": 3
           }
@@ -473,7 +512,8 @@
             "traitXp": {
               "Calculating": 3
             }
-          }
+          },
+          "tooltip": "-5 Soldier rep. Calculating trait XP."
         }
       ]
     },
@@ -487,7 +527,10 @@
       "requirements": {
         "context": "entering_town",
         "role": "Any",
-        "tier": { "min": 2, "max": 8 }
+        "tier": {
+          "min": 2,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -502,16 +545,17 @@
           "resultTextId": "mi_town_information_listen_result",
           "resultText": "You nurse your drink and let the talk wash over you. Most of it is nonsense, but a few details might be worth remembering.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 10
             }
-          },
-          "effects": {
+          ,,
+          
             "traitXp": {
               "Calculating": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Train Scouting. Calculating trait XP."
         },
         {
           "id": "join_conversation",
@@ -524,15 +568,15 @@
           },
           "resultTextId": "mi_town_information_join_result",
           "resultText": "You pull up a chair and share a few war stories. The locals warm to you, and the conversation flows more freely. Useful details emerge.",
-          "tooltip": "Requires Charm 30+",
+          "tooltip": "Requires Charm 30. Train Charm and Scouting. +3 Soldier rep.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Charm": 10,
               "Scouting": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "soldierRep": 3
           }
         },
@@ -547,14 +591,14 @@
           },
           "resultTextId": "mi_town_information_disinfo_result",
           "resultText": "You casually mention invented troop movements and supply routes. If these rumors spread to the enemy, they'll be chasing shadows.",
-          "tooltip": "Requires Roguery 45+",
+          "tooltip": "Requires Roguery 45. Risky choice. Train Roguery. +5 Lord rep. Adds 2 scrutiny.",
           "risk": "risky",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Roguery": 20
             }
-          },
-          "effects": {
+          ,,
+          
             "lordRep": 5,
             "scrutiny": 2
           }
@@ -563,4 +607,3 @@
     }
   ]
 }
-

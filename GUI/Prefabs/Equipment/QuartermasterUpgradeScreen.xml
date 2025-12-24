@@ -1,170 +1,150 @@
 <Prefab>
+	<Constants>
+		<Constant Name="Encyclopedia.Frame.Width" BrushLayer="Default" BrushName="Encyclopedia.Frame" BrushValueType="Width" />
+		<Constant Name="Encyclopedia.Frame.Height" BrushLayer="Default" BrushName="Encyclopedia.Frame" BrushValueType="Height" />
+	</Constants>
 	<Window>
-		<!-- Full screen overlay for upgrade interface -->
-		<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center">
+		<!-- Semi-transparent overlay background matching working equipment grid -->
+		<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000CC">
 			<Children>
-				<!-- Dark background overlay -->
-				<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Background.Medium" />
-				
-				<!-- Main upgrade container -->
-				<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="900" SuggestedHeight="700" HorizontalAlignment="Center" VerticalAlignment="Center">
+
+				<!-- Main popup frame using Encyclopedia.Frame like equipment grid -->
+				<BrushWidget Id="UpgradePopup" DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Encyclopedia.Frame.Width" SuggestedHeight="!Encyclopedia.Frame.Height" HorizontalAlignment="Center" VerticalAlignment="Center" MarginBottom="35" Brush="Encyclopedia.Frame">
 					<Children>
-						<!-- Background panel -->
-						<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Background" />
 						
-						<!-- Header section -->
-						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="80" VerticalAlignment="Top">
+						<!-- Header bar with title using proper Sprite -->
+						<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="720" SuggestedHeight="155" HorizontalAlignment="Center" VerticalAlignment="Top" PositionXOffset="6" PositionYOffset="-18" Sprite="StdAssets\tabbar_popup" IsDisabled="true">
 							<Children>
-								<!-- Title bar background -->
-								<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element" />
-								
-								<!-- Title text -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="22" Text="@HeaderText" />
-								
-								<!-- Player gold display (top right) -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Right" VerticalAlignment="Center" MarginRight="20" Brush="SPGeneral.MediumText" Brush.FontSize="16" Text="@PlayerGoldText" />
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" PositionYOffset="-25" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="38" IsDisabled="true" Text="@HeaderText" />
 							</Children>
 						</Widget>
-						
+
+						<!-- Player gold display (top right area) -->
+						<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Right" VerticalAlignment="Top" MarginTop="50" MarginRight="50" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="20" Text="@PlayerGoldText" />
+
 						<!-- Content section - scrollable list of upgradeable items -->
-						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="550" VerticalAlignment="Top" MarginTop="90" MarginLeft="20" MarginRight="20">
+						<ScrollablePanel WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="1100" SuggestedHeight="650" MarginTop="150" MarginLeft="50" HorizontalAlignment="Left" MouseScrollAxis="Vertical" ClipRect="UpgradeListClipRect" InnerPanel="UpgradeListClipRect\UpgradeList" VerticalScrollbar="..\UpgradeScrollbar" AutoHideScrollBars="false" IsVisible="@HasUpgradeableItems">
 							<Children>
-								<!-- Scroll panel for upgradeable items -->
-								<ScrollablePanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" InnerPanel="UpgradeItemsContainer" IsVisible="@HasUpgradeableItems">
+								<Widget Id="UpgradeListClipRect" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ClipContents="true">
 									<Children>
-										<Widget Id="UpgradeItemsContainer" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren">
-											<Children>
-												<!-- List of upgradeable items -->
-												<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" DataSource="{UpgradeableItems}" StackLayout.LayoutMethod="VerticalBottomToTop" MarginTop="10" MarginBottom="10">
-													<ItemTemplate>
-														<Widget>
+										<ListPanel Id="UpgradeList" DataSource="{UpgradeableItems}" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalBottomToTop">
+											<ItemTemplate>
+												<!-- Individual upgrade item card -->
+												<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginBottom="15">
+													<Children>
+														<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.List.Background" />
+														
+														<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginLeft="20" MarginRight="20" MarginTop="15" MarginBottom="15">
 															<Children>
-																<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginBottom="20">
+																<!-- Item info section (left side) -->
+																<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="300" SuggestedHeight="110" HorizontalAlignment="Left">
 																	<Children>
-																		<!-- Upgrade item card -->
-																		<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" Brush="Encyclopedia.SubPage.Element">
+																		<!-- Item image using same pattern as equipment grid -->
+																		<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="100" SuggestedHeight="70" HorizontalAlignment="Left" VerticalAlignment="Top">
 																			<Children>
-																				<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginLeft="15" MarginRight="15" MarginTop="15" MarginBottom="15">
-																					<Children>
-																						<!-- Item info section (left side) -->
-																						<Widget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="250" HorizontalAlignment="Left">
-																							<Children>
-																								<!-- Item image -->
-																								<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="100" SuggestedHeight="70" HorizontalAlignment="Left" VerticalAlignment="Top">
-																									<Children>
-																										<ImageIdentifierWidget DataSource="{Image}" DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ImageId="@Id" AdditionalArgs="@AdditionalArgs" TextureProviderName="@TextureProviderName" />
-																									</Children>
-																								</Widget>
-																								
-																								<!-- Item name and slot -->
-																								<Widget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="140" HorizontalAlignment="Left" MarginLeft="110" MarginTop="5">
-																									<Children>
-																										<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="16" Text="@ItemName" />
-																										<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginTop="25" Brush="SPGeneral.SmallText" Brush.FontSize="12" Text="@SlotTypeText" />
-																									</Children>
-																								</Widget>
-																								
-																								<!-- Current quality display -->
-																								<Widget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="220" HorizontalAlignment="Left" MarginTop="75">
-																									<Children>
-																										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="SPGeneral.SmallText" Brush.FontSize="12" Text="Current:" />
-																										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginLeft="65" Brush="SPGeneral.MediumText" Brush.FontSize="14" Brush.TextColor="@CurrentQualityColor" Text="@CurrentQualityText" />
-																									</Children>
-																								</Widget>
-																							</Children>
-																						</Widget>
-																						
-																						<!-- Upgrade options section (right side) -->
-																						<Widget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="550" HorizontalAlignment="Right">
-																							<Children>
-																								<!-- Upgrade options available -->
-																								<Widget IsVisible="@HasUpgrades" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren">
-																									<Children>
-																										<!-- Label -->
-																										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Left" Brush="SPGeneral.MediumText" Brush.FontSize="13" Text="Available Upgrades:" />
-																										
-																										<!-- List of upgrade tier options -->
-																										<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" DataSource="{UpgradeOptions}" StackLayout.LayoutMethod="HorizontalLeftToRight" MarginTop="30" MarginLeft="10">
-																											<ItemTemplate>
-																												<Widget>
-																													<Children>
-																														<!-- Individual upgrade option card -->
-																														<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="160" SuggestedHeight="110" MarginRight="15">
-																															<Children>
-																																<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element.Darker" />
-																																
-																																<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="10" MarginRight="10" MarginTop="10" MarginBottom="10">
-																																	<Children>
-																																		<!-- Quality tier name -->
-																																		<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="15" Brush.TextColor="@QualityColor" Text="@QualityText" />
-																																		
-																																		<!-- Cost -->
-																																		<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="30" Brush="SPGeneral.MediumText" Brush.FontSize="13" Text="@CostText" />
-																																		
-																																		<!-- Upgrade button -->
-																																		<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="35" SuggestedWidth="130" HorizontalAlignment="Center" VerticalAlignment="Bottom" Brush="ButtonBrush1" Command.Click="ExecuteUpgrade" IsEnabled="@IsEnabled">
-																																			<Children>
-																																				<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="13" Text="Improve" />
-																																			</Children>
-																																		</ButtonWidget>
-																																	</Children>
-																																</Widget>
-																															</Children>
-																														</Widget>
-																													</Children>
-																												</Widget>
-																											</ItemTemplate>
-																										</ListPanel>
-																									</Children>
-																								</Widget>
-																								
-																								<!-- No upgrades available message -->
-																								<Widget IsVisible="@HasUpgrades" IsVisible.Invert="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="50">
-																									<Children>
-																										<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.SmallText" Brush.FontSize="12" Text="@NoUpgradeReason" />
-																									</Children>
-																								</Widget>
-																							</Children>
-																						</Widget>
-																					</Children>
-																				</Widget>
+																				<ImageIdentifierWidget DataSource="{Image}" DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ImageId="@Id" AdditionalArgs="@AdditionalArgs" TextureProviderName="@TextureProviderName" />
 																			</Children>
-																		</BrushWidget>
+																		</Widget>
+																		
+																		<!-- Item name and slot -->
+																		<Widget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="180" HorizontalAlignment="Left" MarginLeft="115" MarginTop="5">
+																			<Children>
+																				<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="18" Text="@ItemName" />
+																				<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginTop="28" Brush="SPGeneral.SmallText" Brush.FontSize="14" Text="@SlotTypeText" />
+																			</Children>
+																		</Widget>
+																		
+																		<!-- Current quality display -->
+																		<Widget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="250" HorizontalAlignment="Left" MarginTop="80">
+																			<Children>
+																				<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="SPGeneral.SmallText" Brush.FontSize="14" Text="Current Quality:" />
+																				<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginLeft="120" Brush="SPGeneral.MediumText" Brush.FontSize="16" Brush.TextColor="@CurrentQualityColor" Text="@CurrentQualityText" />
+																			</Children>
+																		</Widget>
+																	</Children>
+																</Widget>
+																
+																<!-- Upgrade options section (right side) -->
+																<Widget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="720" HorizontalAlignment="Right">
+																	<Children>
+																		<!-- Upgrade options available -->
+																		<Widget IsVisible="@HasUpgrades" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren">
+																			<Children>
+																				<!-- Label -->
+																				<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Left" Brush="SPGeneral.MediumText" Brush.FontSize="15" Text="Available Upgrades:" />
+																				
+																				<!-- List of upgrade tier options -->
+																				<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" DataSource="{UpgradeOptions}" StackLayout.LayoutMethod="HorizontalLeftToRight" MarginTop="30">
+																					<ItemTemplate>
+																						<!-- Individual upgrade option card -->
+																						<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="175" SuggestedHeight="110" MarginRight="12">
+																							<Children>
+																								<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element" />
+																								
+																								<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="10" MarginRight="10" MarginTop="10" MarginBottom="10">
+																									<Children>
+																										<!-- Quality tier name -->
+																										<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="17" Brush.TextColor="@QualityColor" Text="@QualityText" />
+																										
+																										<!-- Cost -->
+																										<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="30" Brush="SPGeneral.MediumText" Brush.FontSize="14" Text="@CostText" />
+																										
+																										<!-- Upgrade button -->
+																										<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="35" SuggestedWidth="140" HorizontalAlignment="Center" VerticalAlignment="Bottom" Brush="ButtonBrush1" Command.Click="ExecuteUpgrade" IsEnabled="@IsEnabled">
+																											<Children>
+																												<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="14" Text="Improve" />
+																											</Children>
+																										</ButtonWidget>
+																									</Children>
+																								</Widget>
+																							</Children>
+																						</Widget>
+																					</ItemTemplate>
+																				</ListPanel>
+																			</Children>
+																		</Widget>
+																		
+																		<!-- No upgrades available message -->
+																		<Widget IsVisible="@HasUpgrades" IsVisible.Invert="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="60">
+																			<Children>
+																				<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Left" VerticalAlignment="Center" Brush="SPGeneral.SmallText" Brush.FontSize="14" Brush.TextColor="#808080FF" Text="@NoUpgradeReason" />
+																			</Children>
+																		</Widget>
 																	</Children>
 																</Widget>
 															</Children>
 														</Widget>
-													</ItemTemplate>
-												</ListPanel>
-											</Children>
-										</Widget>
-									</Children>
-								</ScrollablePanel>
-								
-								<!-- No upgradeable items message -->
-								<Widget IsVisible="@HasUpgradeableItems" IsVisible.Invert="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
-									<Children>
-										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="18" Text="@NoItemsMessage" />
+													</Children>
+												</Widget>
+											</ItemTemplate>
+										</ListPanel>
 									</Children>
 								</Widget>
 							</Children>
-						</Widget>
-						
-						<!-- Footer section with close button -->
-						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="60" VerticalAlignment="Bottom" MarginBottom="10">
+						</ScrollablePanel>
+
+						<!-- Scrollbar for upgrade list -->
+						<ScrollbarWidget HeightSizePolicy="Fixed" WidthSizePolicy="CoverChildren" Id="UpgradeScrollbar" MinValue="0" MaxValue="100" MarginRight="30" MarginTop="150" AlignmentAxis="Vertical" HorizontalAlignment="Right" SuggestedHeight="650" Handle="UpgradeScrollbarHandle" UpdateChildrenStates="true" IsVisible="@HasUpgradeableItems">
 							<Children>
-								<!-- Close button -->
-								<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="45" SuggestedWidth="150" HorizontalAlignment="Center" Brush="ButtonBrush1" Command.Click="ExecuteClose">
-									<Children>
-										<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="16" Text="Done" />
-									</Children>
-								</ButtonWidget>
+								<ImageWidget HeightSizePolicy="StretchToParent" WidthSizePolicy="Fixed" SuggestedWidth="2" VerticalAlignment="Center" Brush="Encyclopedia.Scrollbar.Flat.Bed"/>
+								<ImageWidget Id="UpgradeScrollbarHandle" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="8" SuggestedHeight="50" VerticalAlignment="Top" Brush="Encyclopedia.Scrollbar.Flat.Handle"/>
+							</Children>
+						</ScrollbarWidget>
+						
+						<!-- No upgradeable items message (centered in content area) -->
+						<Widget IsVisible="@HasUpgradeableItems" IsVisible.Invert="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="400" MarginTop="200">
+							<Children>
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="20" Text="@NoItemsMessage" />
 							</Children>
 						</Widget>
+						
 					</Children>
-				</Widget>
+				</BrushWidget>
+				
+				<!-- Close button (top right of popup, matching equipment grid position) -->
+				<ButtonWidget Command.Click="ExecuteClose" HeightSizePolicy="Fixed" WidthSizePolicy="Fixed" SuggestedHeight="60" SuggestedWidth="60" VerticalAlignment="Center" HorizontalAlignment="Center" PositionYOffset="-410" PositionXOffset="680" Brush="Popup.CloseButton"/>
+
 			</Children>
 		</Widget>
 	</Window>
 </Prefab>
-

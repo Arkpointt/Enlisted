@@ -1194,6 +1194,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         var currentMenuId = menuContext?.GameMenu?.StringId;
                         if (currentMenuId == "enlisted_status")
                         {
+                            QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                             GameMenu.SwitchToMenu("enlisted_status");
                         }
                     }
@@ -2069,15 +2070,22 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 var sb = new StringBuilder();
+                var news = EnlistedNewsBehavior.Instance;
 
-                // COMPANY REPORT section: Daily brief with company/player/kingdom context
-                var dailyBrief = EnlistedNewsBehavior.Instance?.BuildDailyBriefSection();
+                // COMPANY REPORT section: Daily brief with kingdom news
+                var dailyBrief = news?.BuildDailyBriefSection();
                 sb.AppendLine("_____ COMPANY REPORT _____");
                 sb.AppendLine(!string.IsNullOrWhiteSpace(dailyBrief) ? dailyBrief : "No report available.");
                 sb.AppendLine();
 
+                // Company Status summary (compact one-liners)
+                sb.AppendLine("_____ COMPANY STATUS _____");
+                var companyStatusSummary = BuildCompactCompanyStatusSummary(enlistment);
+                sb.AppendLine(companyStatusSummary);
+                sb.AppendLine();
+
                 // RECENT ACTIONS section: Personal feed items (battles, orders, reputation changes)
-                var personalFeed = EnlistedNewsBehavior.Instance?.GetVisiblePersonalFeedItems(3);
+                var personalFeed = news?.GetVisiblePersonalFeedItems(3);
                 sb.AppendLine("_____ RECENT ACTIONS _____");
                 if (personalFeed == null || personalFeed.Count == 0)
                 {
@@ -2100,15 +2108,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         sb.AppendLine("• Nothing notable to report.");
                     }
-                }
-                sb.AppendLine();
-
-                // Company status line: Only shown when actionable (high logistics, low morale, or pay tension)
-                var companyLine = TryBuildCompanyStatusLine(enlistment);
-                if (!string.IsNullOrWhiteSpace(companyLine))
-                {
-                    sb.AppendLine(companyLine);
-                    sb.AppendLine();
                 }
 
                 return sb.ToString().TrimEnd();
@@ -2136,9 +2135,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     return null;
                 }
 
-                // LogisticsStrain is a "pressure" meter (higher == worse). Display it explicitly to avoid implying
-                // we have the full equipment supply simulation shipped already.
-                var logisticsStrain = (int)Math.Round(campLife.LogisticsStrain);
+                // Convert strain meters to intuitive "supply %" display (higher = better).
+                // LogisticsStrain is a pressure meter (higher = worse), so invert it.
+                var supplyPct = (int)Math.Round(100f - campLife.LogisticsStrain);
+                supplyPct = Math.Max(0, Math.Min(100, supplyPct));
 
                 // MoraleShock is an inverse-morale meter; translate to an intuitive "morale %" for UI.
                 var moralePct = (int)Math.Round(100f - campLife.MoraleShock);
@@ -2149,7 +2149,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // Keep this short. The menu text area is narrower than it looks, and long status lines will wrap,
                 // pushing options off-screen and forcing scroll.
-                return $"Company: Log {logisticsStrain}% | Mor {moralePct}% | {payStatus}";
+                return $"Company: Log {supplyPct}% | Mor {moralePct}% | {payStatus}";
             }
             catch
             {
@@ -2564,6 +2564,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var activeId = Campaign.Current.CurrentMenuContext?.GameMenu?.StringId;
                 if (activeId == "town_outside" || activeId == "castle_outside")
                 {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                     NextFrameDispatcher.RunNextFrame(() => GameMenu.SwitchToMenu(activeId));
                     return;
                 }
@@ -2572,6 +2573,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (PlayerEncounter.Current != null &&
                     PlayerEncounter.EncounterSettlement == settlement)
                 {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                     NextFrameDispatcher.RunNextFrame(() =>
                         GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside"));
                     return;
@@ -2630,6 +2632,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 });
 
                 // The engine will have pushed the outside menu; show it explicitly for safety (deferred)
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                 NextFrameDispatcher.RunNextFrame(() =>
                 {
                     GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside");
@@ -3426,72 +3429,12 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 var sb = new StringBuilder();
-
-                // Player status (RP flavor)
                 var news = EnlistedNewsBehavior.Instance;
-                var playerStatus = news?.BuildPlayerStatusLine(enlistment) ?? "Ready for duty.";
-                sb.AppendLine($"Your Status: {playerStatus}");
 
-                // Injuries
-                var conditions = PlayerConditionBehavior.Instance;
-                var hasInjuries = conditions?.IsEnabled() == true && conditions.State?.HasInjury == true;
-                var hasIllness = conditions?.IsEnabled() == true && conditions.State?.HasIllness == true;
-                
-                if (hasInjuries && hasIllness)
-                {
-                    sb.AppendLine("Injuries: Wounded and ill");
-                }
-                else if (hasInjuries)
-                {
-                    sb.AppendLine("Injuries: Wounded");
-                }
-                else if (hasIllness)
-                {
-                    sb.AppendLine("Injuries: Ill");
-                }
-                else
-                {
-                    sb.AppendLine("Injuries: None");
-                }
-                
-                sb.AppendLine();
-
-                // Company Status section
-                sb.AppendLine("━━━ COMPANY STATUS ━━━");
-                
-                var companyNeeds = enlistment?.CompanyNeeds;
-                var readiness = companyNeeds?.Readiness ?? 0;
-                var morale = companyNeeds?.Morale ?? 0;
-                var supply = companyNeeds?.Supplies ?? 0;
-                sb.AppendLine($"Readiness: {readiness}% | Morale: {morale}% | Supply: {supply}%");
-
-                // Wounded and casualties
-                var lord = enlistment?.CurrentLord;
-                var lordParty = lord?.PartyBelongedTo;
-                var wounded = lordParty?.MemberRoster?.TotalWounded ?? 0;
-                var lostSinceMuster = news?.LostSinceLastMuster ?? 0;
-                sb.AppendLine($"Wounded: {wounded} soldiers | Lost since muster: {lostSinceMuster}");
-                
-                sb.AppendLine();
-
-                // Recent Actions section
-                sb.AppendLine("━━━ RECENT ACTIONS ━━━");
-                var personalFeed = news?.GetVisiblePersonalFeedItems();
-                if (personalFeed == null || personalFeed.Count == 0)
-                {
-                    sb.AppendLine("• Nothing notable to report.");
-                }
-                else
-                {
-                    foreach (var item in personalFeed)
-                    {
-                        var formatted = EnlistedNewsBehavior.FormatDispatchForDisplay(item);
-                        if (!string.IsNullOrWhiteSpace(formatted))
-                        {
-                            sb.AppendLine($"• {formatted}");
-                        }
-                    }
-                }
+                // COMPANY REPORT section: Daily brief narrative paragraph
+                var dailyBrief = news?.BuildDailyBriefSection();
+                sb.AppendLine("_____ COMPANY REPORT _____");
+                sb.AppendLine(!string.IsNullOrWhiteSpace(dailyBrief) ? dailyBrief : "No report available.");
 
                 return sb.ToString().TrimEnd();
             }
@@ -3711,24 +3654,34 @@ namespace Enlisted.Features.Interface.Behaviors
                 return "[null decision]";
             }
 
-            // Build fallback from ID first (always have something to show)
+            // Use inline title from JSON as first fallback
+            var inlineFallback = decision.TitleFallback;
+            
+            // Build formatted ID as ultimate fallback
             var id = decision.Id ?? "Unknown";
-            var fallbackName = id;
+            var formattedId = id;
             
             // Remove common prefixes for cleaner display
-            if (fallbackName.StartsWith("player_", StringComparison.OrdinalIgnoreCase))
+            if (formattedId.StartsWith("player_", StringComparison.OrdinalIgnoreCase))
             {
-                fallbackName = fallbackName.Substring(7);
+                formattedId = formattedId.Substring(7);
             }
-            else if (fallbackName.StartsWith("decision_", StringComparison.OrdinalIgnoreCase))
+            else if (formattedId.StartsWith("decision_", StringComparison.OrdinalIgnoreCase))
             {
-                fallbackName = fallbackName.Substring(9);
+                formattedId = formattedId.Substring(9);
+            }
+            else if (formattedId.StartsWith("dec_", StringComparison.OrdinalIgnoreCase))
+            {
+                formattedId = formattedId.Substring(4);
             }
 
             // Convert underscores to spaces and title case
-            var words = fallbackName.Split('_');
-            fallbackName = string.Join(" ", words.Select(w => 
+            var words = formattedId.Split('_');
+            formattedId = string.Join(" ", words.Select(w => 
                 string.IsNullOrEmpty(w) ? w : char.ToUpper(w[0]) + w.Substring(1).ToLower()));
+
+            // Use inline title as fallback if available, otherwise use formatted ID
+            var effectiveFallback = !string.IsNullOrEmpty(inlineFallback) ? inlineFallback : formattedId;
 
             // Try localized title from XML
             if (!string.IsNullOrEmpty(decision.TitleId))
@@ -3736,7 +3689,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 try
                 {
                     // Use the {=id}fallback format - if XML lookup fails, returns the fallback
-                    var textObj = new TextObject($"{{={decision.TitleId}}}{fallbackName}");
+                    var textObj = new TextObject($"{{={decision.TitleId}}}{effectiveFallback}");
                     var resolved = textObj.ToString();
                     
                     // Check if resolution worked (not empty and not just the raw {=...} tag)
@@ -3751,8 +3704,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
             }
 
-            // Return fallback - never empty
-            return string.IsNullOrWhiteSpace(fallbackName) ? $"[{id}]" : fallbackName;
+            // Return effective fallback (inline title or formatted ID)
+            return string.IsNullOrWhiteSpace(effectiveFallback) ? $"[{id}]" : effectiveFallback;
         }
 
         /// <summary>
@@ -3760,32 +3713,36 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private static string GetDecisionTooltip(DecisionDefinition decision, DecisionAvailability availability)
         {
-            var parts = new List<string>();
-
-            // If unavailable, show reason first
+            // If unavailable, just show the reason
             if (!availability.IsAvailable && !string.IsNullOrEmpty(availability.UnavailableReason))
             {
-                parts.Add(availability.UnavailableReason);
+                return availability.UnavailableReason;
             }
 
             // Try to get localized setup text for description
+            var description = "";
             if (!string.IsNullOrEmpty(decision.SetupId))
             {
-                // No fallback here: if missing, prefer showing nothing over raw IDs.
                 var setupText = new TextObject($"{{={decision.SetupId}}}").ToString();
-                if (!string.IsNullOrWhiteSpace(setupText) && !setupText.StartsWith("{=") && setupText.Length < 200)
+                if (!string.IsNullOrWhiteSpace(setupText) && !setupText.StartsWith("{="))
                 {
-                    parts.Add(setupText);
+                    description = setupText;
                 }
             }
-
-            // Show cooldown info if relevant
-            if (decision.Timing?.CooldownDays > 0 && availability.IsAvailable)
+            
+            // Fallback to inline setup from JSON if XML lookup failed
+            if (string.IsNullOrEmpty(description) && !string.IsNullOrEmpty(decision.SetupFallback))
             {
-                parts.Add($"Cooldown: {decision.Timing.CooldownDays} days");
+                description = decision.SetupFallback;
+            }
+            
+            // Truncate overly long descriptions
+            if (!string.IsNullOrEmpty(description) && description.Length > 180)
+            {
+                description = description.Substring(0, 177) + "...";
             }
 
-            return parts.Count > 0 ? string.Join("\n", parts) : "Select to begin.";
+            return !string.IsNullOrEmpty(description) ? description : "Select to begin.";
         }
 
         /// <summary>
@@ -3806,8 +3763,8 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Info("Interface", $"Decision selected: {decision.Id}");
 
-                // Record that this decision was selected (for cooldown tracking)
-                DecisionManager.Instance?.RecordDecisionSelected(decision.Id);
+                // NOTE: Cooldown is NOT recorded here. It will be recorded in EventDeliveryManager
+                // only when the player selects a non-cancel option to prevent cooldown abuse.
 
                 // Convert to EventDefinition and deliver via EventDeliveryManager
                 var eventDef = ConvertDecisionToEvent(decision);
@@ -3850,7 +3807,9 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 Id = decision.Id,
                 TitleId = decision.TitleId,
+                TitleFallback = decision.TitleFallback,
                 SetupId = decision.SetupId,
+                SetupFallback = decision.SetupFallback,
                 Category = decision.Category,
                 Requirements = decision.Requirements,
                 Timing = decision.Timing,
@@ -4228,6 +4187,77 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
+        private static string BuildCompactCompanyStatusSummary(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                if (enlistment?.CompanyNeeds == null)
+                {
+                    return "Company status unavailable.";
+                }
+
+                var needs = enlistment.CompanyNeeds;
+                var sb = new StringBuilder();
+
+                // One-line summaries for each need (no context, just status level)
+                // Uses localized strings with inline fallbacks
+                var readinessStatus = needs.Readiness switch
+                {
+                    >= 80 => new TextObject("{=status_compact_readiness_80}Battle-ready").ToString(),
+                    >= 60 => new TextObject("{=status_compact_readiness_60}Prepared").ToString(),
+                    >= 40 => new TextObject("{=status_compact_readiness_40}Fair").ToString(),
+                    >= 20 => new TextObject("{=status_compact_readiness_20}Disorganized").ToString(),
+                    _ => new TextObject("{=status_compact_readiness_0}Shambles").ToString()
+                };
+
+                var moraleStatus = needs.Morale switch
+                {
+                    >= 80 => new TextObject("{=status_compact_morale_80}High spirits").ToString(),
+                    >= 60 => new TextObject("{=status_compact_morale_60}Steady").ToString(),
+                    >= 40 => new TextObject("{=status_compact_morale_40}Restless").ToString(),
+                    >= 20 => new TextObject("{=status_compact_morale_20}Unhappy").ToString(),
+                    _ => new TextObject("{=status_compact_morale_0}On edge").ToString()
+                };
+
+                var supplyStatus = needs.Supplies switch
+                {
+                    >= 80 => new TextObject("{=status_compact_supplies_80}Well-stocked").ToString(),
+                    >= 60 => new TextObject("{=status_compact_supplies_60}Adequate").ToString(),
+                    >= 40 => new TextObject("{=status_compact_supplies_40}Tightening").ToString(),
+                    >= 20 => new TextObject("{=status_compact_supplies_20}Scarce").ToString(),
+                    _ => new TextObject("{=status_compact_supplies_0}Starving").ToString()
+                };
+
+                var equipmentStatus = needs.Equipment switch
+                {
+                    >= 80 => new TextObject("{=status_compact_equipment_80}Well-maintained").ToString(),
+                    >= 60 => new TextObject("{=status_compact_equipment_60}Serviceable").ToString(),
+                    >= 40 => new TextObject("{=status_compact_equipment_40}Worn").ToString(),
+                    >= 20 => new TextObject("{=status_compact_equipment_20}Poor condition").ToString(),
+                    _ => new TextObject("{=status_compact_equipment_0}Failing").ToString()
+                };
+
+                var restStatus = needs.Rest switch
+                {
+                    >= 80 => new TextObject("{=status_compact_rest_80}Well-rested").ToString(),
+                    >= 60 => new TextObject("{=status_compact_rest_60}Rested").ToString(),
+                    >= 40 => new TextObject("{=status_compact_rest_40}Tired").ToString(),
+                    >= 20 => new TextObject("{=status_compact_rest_20}Exhausted").ToString(),
+                    _ => new TextObject("{=status_compact_rest_0}Collapsing").ToString()
+                };
+
+                sb.AppendLine($"Readiness: {readinessStatus} | Morale: {moraleStatus}");
+                sb.AppendLine($"Supplies: {supplyStatus} | Equipment: {equipmentStatus}");
+                sb.Append($"Rest: {restStatus}");
+
+                return sb.ToString();
+            }
+            catch
+            {
+                return "Status unavailable.";
+            }
+        }
+
         private static string BuildCompanyStatusReport()
         {
             try
@@ -4252,15 +4282,19 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // READINESS: Combat effectiveness and preparation
                 sb.AppendLine(BuildReadinessLine(needs.Readiness, isMarching, isInCombat, needs.Morale < 40));
+                sb.AppendLine();
                 
                 // MORALE: The unit's will to fight
                 sb.AppendLine(BuildMoraleLine(needs.Morale, enlistment, isInCombat, isInSiege));
+                sb.AppendLine();
                 
                 // SUPPLIES: Food and consumables
                 sb.AppendLine(BuildSuppliesLine(needs.Supplies, isMarching, isInSiege));
+                sb.AppendLine();
                 
                 // EQUIPMENT: Maintenance and gear quality
                 sb.AppendLine(BuildEquipmentLine(needs.Equipment, isInCombat, isMarching, party));
+                sb.AppendLine();
                 
                 // REST: Fatigue and recovery
                 sb.AppendLine(BuildRestLine(needs.Rest, isMarching, isInSettlement, isInArmy));

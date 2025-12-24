@@ -90,11 +90,22 @@ Replaces the legacy passive duties system with explicit, mission-driven tasks.
 ## Emergent Identity (Traits + Reputation)
 
 ### Traits & Roles
-Your "role" in the company is detected dynamically from your native traits:
--   **Scout**: High Scouting/Rogue skills and traits.
--   **Medic**: High Surgeon trait and Medicine skill.
--   **Officer**: High Commander trait and Leadership skill.
--   **Soldier**: The default role for general combatants.
+
+Your role in the company emerges from your native Bannerlord traits, which develop through event choices and gameplay. The system checks traits in priority order:
+
+**Role Determination** (`EnlistedStatusManager.GetPrimaryRole()`):
+1. **Officer** - Commander trait 10+ (leadership, tactical command)
+2. **Scout** - ScoutSkills trait 10+ (reconnaissance, intelligence gathering)
+3. **Medic** - Surgery trait 10+ (medical treatment, triage)
+4. **Engineer** - Siegecraft trait 10+ (fortifications, siege operations)
+5. **Operative** - RogueSkills trait 10+ (covert operations, black market)
+6. **NCO** - SergeantCommandSkills trait 8+ (squad leadership, training)
+7. **Soldier** - Default role (general combat duties)
+
+**Role-Specific Events:**
+- Events in `events_duty_*.json` files require specific trait minimums (usually 5+)
+- Your choices in events grant trait XP, gradually developing your specialization
+- Multiple specializations can develop simultaneously (e.g., Scout + NCO)
 
 ### Expanded Reputation
 We track three distinct reputation values (-50 to +100):

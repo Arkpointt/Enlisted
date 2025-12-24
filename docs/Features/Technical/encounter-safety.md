@@ -1,5 +1,13 @@
 # Encounter Safety System
 
+**Summary:** Prevents enlisted players from triggering unwanted map encounters while hidden, ensures automatic battle participation when lord enters combat, and provides reliable cleanup on discharge.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-23  
+**Related Docs:** [enlistment.md](../Core/enlistment.md), [formation-assignment.md](../Combat/formation-assignment.md)
+
+---
+
 ## Quick Reference
 
 | State | Party Visibility | Encounter Behavior | Battle Participation |
@@ -54,6 +62,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs` - Controls party visibility, allows captivity system control
 - `src/Mod.GameAdapters/Patches/NavalBattleShipAssignmentPatch.cs` - Fixes naval battle crash (assigns ship from lord's fleet)
 - `src/Mod.GameAdapters/Patches/PlayerEncounterFinishSafetyPatch.cs` - Crash protection for siege battle cleanup race condition
+- `src/Mod.GameAdapters/Patches/RaftStateSuppressionPatch.cs` - Prevents "stranded at sea" menu when lord has ships
 
 ---
 
@@ -141,12 +150,14 @@ Keep enlisted players from accidentally entering encounters that would break mil
 **Component Structure:**
 ```
 EncounterGuard (Static Utility)
-    ├── DisableEncounters() - Sets IsActive = false
-    ├── EnableEncounters() - Sets IsActive = true
-    └── State validation
+    ├── Initialize() - Placeholder for system init
+    ├── TryLeaveEncounter() - Safely exits encounters and returns to enlisted menu
+    ├── TryAttachOrEscort(lord) - Attaches player party to lord using escort AI
+    ├── HidePlayerPartyVisual() - Sets IsVisible = false
+    └── ShowPlayerPartyVisual() - Sets IsVisible = true
 
 EnlistmentBehavior (Campaign Behavior)
-    ├── OnTick() - Continuous state enforcement
+    ├── OnTick() - Continuous state enforcement (sets IsActive directly)
     ├── Battle detection (MapEvent monitoring)
     └── Battle participation logic
 
@@ -159,23 +170,22 @@ JoinEncounterAutoSelectPatch (Harmony Patch)
 
 ### State Management
 
-**Core Methods:**
-```csharp
-// Disable encounters during enlistment
-public static void DisableEncounters()
-{
-    MobileParty.MainParty.IsActive = false;
-}
+**Direct State Manipulation:**
 
-// Enable encounters after retirement
-public static void EnableEncounters()
-{
-    MobileParty.MainParty.IsActive = true;
-}
+The encounter system controls party visibility and activity by setting `IsActive` and `IsVisible` directly throughout `EnlistmentBehavior`, rather than through abstraction methods. This inline approach provides fine-grained control during the many state transitions that occur during enlistment.
+
+```csharp
+// Throughout EnlistmentBehavior, state is set directly:
+MobileParty.MainParty.IsActive = false;  // Disable encounters during service
+MobileParty.MainParty.IsVisible = false; // Hide party on map
+
+// Visibility helpers are in EncounterGuard:
+EncounterGuard.HidePlayerPartyVisual();  // Sets IsVisible = false
+EncounterGuard.ShowPlayerPartyVisual();  // Sets IsVisible = true
 ```
 
 **Monitoring:**
-- Called from `EnlistmentBehavior.OnTick()` for continuous enforcement
+- `EnlistmentBehavior.OnTick()` continuously enforces party state
 - State checked every frame during military service
 - Immediate response to enlistment status changes
 - Prevents manual state changes by player or other systems
@@ -420,26 +430,36 @@ public static void EnableEncounters()
 
 ## API Reference
 
-### Encounter State Management
+### EncounterGuard Methods
 
 ```csharp
-// Disable encounters (during enlistment)
-public static void DisableEncounters()
-{
-    MobileParty.MainParty.IsActive = false;
-}
+// Initialize the encounter guard system (currently a placeholder)
+public static void Initialize()
 
-// Enable encounters (after retirement)
-public static void EnableEncounters()
-{
-    MobileParty.MainParty.IsActive = true;
-}
+// Safely leave current encounter and activate enlisted menu
+// Uses NextFrameDispatcher to defer operations and prevent timing conflicts
+internal static void TryLeaveEncounter()
 
-// Check if encounters are disabled
-public static bool AreEncountersDisabled()
-{
-    return !MobileParty.MainParty.IsActive;
-}
+// Attach player party to lord using escort AI for following
+// Uses SetMoveEscortParty instead of AttachedTo to avoid army requirement crashes
+public static void TryAttachOrEscort(Hero lord)
+
+// Hide/show player party 3D model on map (separate from nameplate)
+public static void HidePlayerPartyVisual()  // Sets IsVisible = false
+public static void ShowPlayerPartyVisual()  // Sets IsVisible = true
+```
+
+### Encounter State (Direct Property Access)
+
+```csharp
+// The system controls encounters by setting these properties directly:
+MobileParty.MainParty.IsActive = false;   // Disables encounters
+MobileParty.MainParty.IsActive = true;    // Enables encounters
+MobileParty.MainParty.IsVisible = false;  // Hides party on map
+
+// Check party state
+bool encountersDisabled = !MobileParty.MainParty.IsActive;
+bool partyHidden = !MobileParty.MainParty.IsVisible;
 ```
 
 ### Battle Detection
@@ -535,7 +555,7 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 
 **Encounters still happening:**
 - Check `IsActive` is actually false
-- Verify `DisableEncounters()` is being called
+- Verify `EnlistmentBehavior.OnTick()` is setting `IsActive = false`
 - Check for conflicting systems changing party state
 - Review logs for state validation warnings
 

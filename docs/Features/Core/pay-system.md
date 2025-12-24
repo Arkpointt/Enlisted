@@ -35,7 +35,7 @@
 
 ## Daily Wage Calculation
 
-Daily wages are calculated using a formula from `enlisted_config.json` that scales with your progression and current duty status.
+Daily wages are calculated using a formula from `enlisted_config.json` that scales with your progression.
 
 ### Wage Formula
 

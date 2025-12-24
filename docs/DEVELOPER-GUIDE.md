@@ -354,7 +354,6 @@ if (eb?.IsEnlisted == true)
     Hero lord = eb.CurrentLord;           // Serving lord
     int tier = eb.EnlistmentTier;         // 1-6
     int xp = eb.EnlistmentXP;             // Total XP
-    string duty = eb.SelectedDuty;        // Current duty
     bool onLeave = eb.IsOnLeave;          // On leave?
     bool inGrace = eb.IsInDesertionGracePeriod;
 }
@@ -425,7 +424,7 @@ if (eb?.IsEnlisted == true)
 3. Iterating equipment with `Enum.GetValues`
 4. Modifying reputation/needs directly instead of using managers
 5. Relying on external API docs instead of local decompile
-6. Forgetting tooltips in event options
+6. Tooltips set to null or missing (tooltips cannot be null, every option must have one)
 7. Not validating inputs for dynamic dialogue (null checks, archetype validation, value clamping)
 8. Using `GetLocalizedText()` without fallback handling (use `GetLocalizedTextSafe()` wrapper instead)
 9. Assuming localized strings exist (always provide fallbacks for missing XML strings)

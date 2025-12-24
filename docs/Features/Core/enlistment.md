@@ -98,14 +98,10 @@ Base = 10
 + (Tier × 5)
 + (Total XP ÷ 200)
 × Army Bonus (1.2 if lord is in an army)
-× Duty Multiplier (0.8-1.6 based on selected duty)
 × Probation Multiplier (0.5 if on probation)
 ```
 
 **Example**: T3 soldier (level 15, 4000 XP) in an army = (10 + 15 + 15 + 20) × 1.2 = 72 gold/day
-
-**Duty Multipliers** (from `progression_config.json`):
-- Grunt Work: 0.8 | Guard Duty: 0.9 | Scout: 1.1 | Surgeon: 1.3 | Engineer: 1.4 | Sergeant: 1.5 | Strategist: 1.6
 
 Wages accrue daily; paid at muster. If pay is late, Pay Tension rises and triggers corruption/desertion events.
 
@@ -323,7 +319,6 @@ Level 10 Player, Returning (Deserter):
 **Wages:**
 - [x] Wages accrue daily using correct formula (base + level + tier + XP/200 × modifiers)
 - [x] Payday occurs every ~12 days
-- [x] Duty multipliers apply correctly (0.8-1.6)
 - [x] Probation reduces wage by 50%
 
 **Discharge:**

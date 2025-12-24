@@ -13,7 +13,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 1, "max": 5 }
+        "tier": {
+          "min": 1,
+          "max": 5
+        }
       },
       "timing": {
         "cooldown_days": 5,
@@ -27,6 +30,7 @@
           "text": "Take the gold",
           "resultTextId": "mi_loot_take_result",
           "resultText": "You pocket the coins quickly, glancing around. No one saw. The weight feels heavier than it should.",
+          "tooltip": "Risky choice. Adds 2 scrutiny. 25 gold reward.",
           "risk": "moderate",
           "effects": {
             "gold": 25,
@@ -44,7 +48,8 @@
             "traitXp": {
               "Honor": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. Honor trait XP."
         },
         {
           "id": "report",
@@ -56,7 +61,8 @@
           "effects": {
             "officerRep": 5,
             "gold": 5
-          }
+          },
+          "tooltip": "+5 Officer rep. 5 gold reward."
         }
       ]
     },
@@ -70,7 +76,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 7,
@@ -90,7 +99,8 @@
               "Mercy": -5,
               "Valor": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Valor and Mercy trait XP."
         },
         {
           "id": "spare",
@@ -103,7 +113,8 @@
             "traitXp": {
               "Mercy": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Mercy trait XP."
         },
         {
           "id": "help",
@@ -116,7 +127,7 @@
           },
           "resultTextId": "mi_wounded_enemy_help_result",
           "resultText": "You signal for the surgeon's assistant. He looks at you oddly but comes over. 'Strange to waste bandages on them,' he says, but he does it anyway.",
-          "tooltip": "Requires Medicine 20+",
+          "tooltip": "Requires Medicine 20. +2 Officer rep, -3 Soldier rep. Mercy trait XP.",
           "risk": "safe",
           "effects": {
             "traitXp": {
@@ -138,7 +149,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 1, "max": 3 }
+        "tier": {
+          "min": 1,
+          "max": 3
+        }
       },
       "timing": {
         "cooldown_days": 30,
@@ -153,17 +167,18 @@
           "resultTextId": "mi_first_kill_process_result",
           "resultText": "You find a quiet spot and sit for a long moment, staring at nothing. Something has changed in you. The trembling stops. When you stand, you're different—harder, maybe, but steadier. This is what you came here to become.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "OneHanded": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "traitXp": {
               "Valor": 8,
               "Honor": 3
             }
-          }
+          },
+          "tooltip": "Reflect on kill. Train OneHanded. Valor and Honor trait XP."
         },
         {
           "id": "push_down",
@@ -177,7 +192,8 @@
               "Calculating": 5
             },
             "medicalRisk": 1
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP. Adds 1 medical risk."
         },
         {
           "id": "seek_company",
@@ -191,7 +207,8 @@
             "companyNeeds": {
               "Morale": 3
             }
-          }
+          },
+          "tooltip": "+5 Soldier rep. Boosts company morale."
         }
       ]
     },
@@ -205,7 +222,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 2, "max": 7 }
+        "tier": {
+          "min": 2,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 14,
@@ -223,7 +243,8 @@
           "effects": {
             "officerRep": 8,
             "soldierRep": 3
-          }
+          },
+          "tooltip": "+8 Officer rep, +3 Soldier rep."
         },
         {
           "id": "accept_proud",
@@ -235,7 +256,8 @@
           "effects": {
             "officerRep": 10,
             "soldierRep": -5
-          }
+          },
+          "tooltip": "+10 Officer rep, -5 Soldier rep."
         },
         {
           "id": "deflect",
@@ -248,7 +270,7 @@
           },
           "resultTextId": "mi_officer_notice_deflect_result",
           "resultText": "'We all did our part, sir. The men beside me earned this recognition as much as I did.' The soldiers grin. The captain looks thoughtful.",
-          "tooltip": "Requires Charm 30+",
+          "tooltip": "Requires Charm 30. +5 Officer rep, +10 Soldier rep. Generosity trait XP.",
           "risk": "safe",
           "effects": {
             "officerRep": 5,
@@ -270,7 +292,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -290,7 +315,8 @@
             "companyNeeds": {
               "Morale": 3
             }
-          }
+          },
+          "tooltip": "Help with burial. +8 Soldier rep. Boosts company morale."
         },
         {
           "id": "pay_respects",
@@ -304,7 +330,8 @@
             "traitXp": {
               "Honor": 3
             }
-          }
+          },
+          "tooltip": "Pay respects. +3 Soldier rep. Honor trait XP."
         },
         {
           "id": "move_on",
@@ -318,7 +345,8 @@
               "Calculating": 5
             },
             "soldierRep": -3
-          }
+          },
+          "tooltip": "-3 Soldier rep. Calculating trait XP."
         }
       ]
     },
@@ -332,7 +360,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 1, "max": 7 }
+        "tier": {
+          "min": 1,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -350,7 +381,8 @@
           "effects": {
             "gold": 80,
             "scrutiny": 3
-          }
+          },
+          "tooltip": "Risky choice. Adds 3 scrutiny. 80 gold reward."
         },
         {
           "id": "turn_in",
@@ -363,7 +395,8 @@
             "gold": 30,
             "officerRep": 8,
             "scrutiny": -2
-          }
+          },
+          "tooltip": "+8 Officer rep, -2 Scrutiny. 30 gold reward."
         },
         {
           "id": "sell_later",
@@ -376,7 +409,7 @@
           },
           "resultTextId": "mi_battlefield_find_sell_result",
           "resultText": "You know a merchant who won't ask questions. You tuck the item away, planning your next visit to town. This could be profitable.",
-          "tooltip": "Requires Roguery 30+",
+          "tooltip": "Requires Roguery 30. Dangerous choice. 120 gold reward. Adds 5 scrutiny.",
           "risk": "dangerous",
           "effects": {
             "gold": 120,
@@ -395,7 +428,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 1, "max": 7 },
+        "tier": {
+          "min": 1,
+          "max": 7
+        },
         "minSkills": {
           "Medicine": 40
         }
@@ -413,17 +449,18 @@
           "resultTextId": "mi_triage_call_help_result",
           "resultText": "You kneel in the blood and mud, doing what you can. Some you save. Some you can't. The surgeon nods at you when it's over—the highest praise he ever gives.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Medicine": 25
             }
-          },
-          "effects": {
+          ,,
+          
             "soldierRep": 10,
             "traitXp": {
               "Mercy": 8
             }
-          }
+          },
+          "tooltip": "Train Medicine. +10 Soldier rep. Mercy trait XP."
         },
         {
           "id": "carry_wounded",
@@ -432,17 +469,18 @@
           "resultTextId": "mi_triage_call_carry_result",
           "resultText": "You can't heal, but you can lift. You haul wounded men to the surgeon's tent until your arms burn. Lives are saved because you were strong enough.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Athletics": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "soldierRep": 8,
             "traitXp": {
               "Mercy": 5
             }
-          }
+          },
+          "tooltip": "Train Athletics. +8 Soldier rep. Mercy trait XP."
         },
         {
           "id": "move_on_triage",
@@ -456,7 +494,8 @@
             "traitXp": {
               "Mercy": -5
             }
-          }
+          },
+          "tooltip": "-5 Soldier rep. -5 Mercy trait XP."
         }
       ]
     },
@@ -470,7 +509,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 2, "max": 8 },
+        "tier": {
+          "min": 2,
+          "max": 8
+        },
         "minSkills": {
           "Scouting": 30
         }
@@ -488,15 +530,16 @@
           "resultTextId": "mi_enemy_intel_report_result",
           "resultText": "You gather the papers and bring them to the captain. His eyes widen as he reads. 'Good work, soldier. The lord will hear about this.'",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "lordRep": 10,
             "officerRep": 8
-          }
+          },
+          "tooltip": "Train Scouting. +10 Lord rep, +8 Officer rep."
         },
         {
           "id": "read_first",
@@ -509,14 +552,14 @@
           },
           "resultTextId": "mi_enemy_intel_read_result",
           "resultText": "You scan the documents quickly—troop movements, supply routes, a name that might matter. Knowledge is power. You bring them to the captain, keeping what you learned to yourself.",
-          "tooltip": "Requires Scouting 50+",
+          "tooltip": "Requires Scouting 50. Moderate risk. Train Scouting. +8 Lord rep.",
           "risk": "moderate",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 25
             }
-          },
-          "effects": {
+          ,,
+          
             "lordRep": 8,
             "scrutiny": 1
           }
@@ -530,7 +573,8 @@
           "risk": "dangerous",
           "effects": {
             "scrutiny": 4
-          }
+          },
+          "tooltip": "Dangerous choice. Adds 4 scrutiny. Intelligence has value."
         }
       ]
     },
@@ -544,7 +588,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 12,
@@ -564,7 +611,8 @@
             "traitXp": {
               "Valor": 5
             }
-          }
+          },
+          "tooltip": "Claim trophy. +5 Soldier rep. Valor trait XP."
         },
         {
           "id": "leave_trophy",
@@ -578,7 +626,8 @@
               "Honor": 5,
               "Mercy": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Honor and Mercy trait XP."
         },
         {
           "id": "give_comrade",
@@ -592,7 +641,8 @@
             "traitXp": {
               "Generosity": 8
             }
-          }
+          },
+          "tooltip": "Give to comrade. +10 Soldier rep. Generosity trait XP."
         }
       ]
     },
@@ -606,7 +656,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 3, "max": 8 }
+        "tier": {
+          "min": 3,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 14,
@@ -625,7 +678,7 @@
           },
           "resultTextId": "mi_survivors_choice_protect_result",
           "resultText": "'They surrendered. That means they're prisoners, not targets.' Your voice carries weight. The angry soldiers back off, and the prisoners are taken to the officers.",
-          "tooltip": "Requires Leadership 40+",
+          "tooltip": "Requires Leadership 40. Moderate risk. +8 Officer rep, -5 Soldier rep. Mercy and Honor trait XP.",
           "risk": "moderate",
           "effects": {
             "traitXp": {
@@ -648,7 +701,8 @@
               "Mercy": -10
             },
             "discipline": 1
-          }
+          },
+          "tooltip": "Safe choice. Adds 1 discipline issues. -10 Mercy trait XP."
         },
         {
           "id": "ensure_silence",
@@ -664,7 +718,8 @@
             },
             "soldierRep": 3,
             "discipline": 2
-          }
+          },
+          "tooltip": "Dangerous choice. Adds 2 discipline issues, +3 Soldier rep. -20 Mercy trait XP."
         }
       ]
     },
@@ -678,7 +733,10 @@
       "requirements": {
         "context": "leaving_battle",
         "role": "Any",
-        "tier": { "min": 3, "max": 9 }
+        "tier": {
+          "min": 3,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 21,
@@ -697,16 +755,14 @@
           },
           "resultTextId": "mi_ambush_losses_rally_result",
           "resultText": "'Form up! Shields together!' Your voice cuts through the chaos. Men respond, forming a defensive line. The ambush falters against organized resistance.",
-          "tooltip": "Requires Tactics 50+",
+          "tooltip": "Requires Tactics 50. 70% success chance. Train Tactics and Leadership. +15 Officer rep, +10 Soldier rep. Failure causes 25 damage and troop loss.",
           "risk": "risky",
-          "risk_chance": 70,
-          "rewards": {
+          "risk_chance": 70,,
+          "effects": {
             "skillXp": {
               "Tactics": 30,
               "Leadership": 20
-            }
-          },
-          "effects": {
+            },: {
             "officerRep": 15,
             "soldierRep": 10,
             "traitXp": {
@@ -735,7 +791,8 @@
             "hpChange": -30,
             "troopLoss": 3
           },
-          "failure_resultText": "The retreat turns into a rout. You're wounded badly, and too many men fall before reaching safety."
+          "failure_resultText": "The retreat turns into a rout. You're wounded badly, and too many men fall before reaching safety.",
+          "tooltip": "60% success chance. Causes 10 damage and 1 troop loss. Failure causes 30 damage and 3 troop loss."
         },
         {
           "id": "hold",
@@ -760,7 +817,8 @@
             "hpChange": -40,
             "troopLoss": 2
           },
-          "failure_resultText": "You're overwhelmed. A blade finds your side, and you go down. When you wake, the fighting is over, and the cost was high."
+          "failure_resultText": "You're overwhelmed. A blade finds your side, and you go down. When you wake, the fighting is over, and the cost was high.",
+          "tooltip": "50% success chance. Train OneHanded. +8 Soldier rep. Valor trait XP. Failure causes 40 damage and 2 troop loss."
         }
       ]
     }

@@ -1056,6 +1056,17 @@ QM (<30%): "We're in crisis. I can't issue any equipment changes until
 - T1-T6 see ration info + supplement option, T7+ see full shop
 - Food filtering uses `IsFood` property + keyword patterns
 
+**Gauntlet UI Technical Requirements:**
+All QM Gauntlet screens use these patterns for proper rendering:
+- **Dark overlay:** `Sprite="BlankWhiteSquare_9" Color="#000000CC"` (not BrushWidget)
+- **Popup frame:** `Brush="Encyclopedia.Frame"` with dimension constants
+- **Header bar:** `Sprite="StdAssets\tabbar_popup"` for title styling
+- **List backgrounds:** `Brush="Encyclopedia.List.Background"`
+- **Close button:** `Brush="Popup.CloseButton"`
+- **Item images:** `ImageIdentifierWidget` with DataSource binding to `ItemImageIdentifierVM`
+
+Using non-existent brush names (like `Popup.Background.Medium`) causes UI to render with only partial elements visible.
+
 ### Future Enhancements
 
 **Camp News Integration:**
@@ -1077,10 +1088,15 @@ QM (<30%): "We're in crisis. I can't issue any equipment changes until
 | `src/Features/Equipment/Behaviors/QuartermasterManager.cs` | Core quartermaster logic |
 | `src/Features/Equipment/Behaviors/TroopSelectionManager.cs` | Equipment selection integration |
 | `src/Features/Equipment/Managers/QMInventoryState.cs` | Inventory tracking and muster refresh |
+| `src/Features/Equipment/UI/QuartermasterEquipmentSelectorBehavior.cs` | Gauntlet layer management for QM screens |
 | `src/Features/Equipment/UI/QuartermasterEquipmentSelectorVM.cs` | Main equipment UI view model |
 | `src/Features/Equipment/UI/QuartermasterEquipmentItemVM.cs` | Individual item view model |
+| `src/Features/Equipment/UI/QuartermasterUpgradeVM.cs` | Upgrade screen view model |
+| `src/Features/Equipment/UI/QuartermasterUpgradeItemVM.cs` | Individual upgrade item view model |
 | `src/Features/Equipment/UI/QuartermasterProvisionsVM.cs` | Provisions shop UI view model |
 | `src/Features/Equipment/UI/QuartermasterProvisionItemVM.cs` | Provision item view model |
+| `GUI/Prefabs/Equipment/QuartermasterEquipmentGrid.xml` | Equipment grid Gauntlet layout |
+| `GUI/Prefabs/Equipment/QuartermasterUpgradeScreen.xml` | Upgrade screen Gauntlet layout |
 | `ModuleData/Enlisted/Dialogue/qm_dialogue.json` | Main hub, browse, armor slots |
 | `ModuleData/Enlisted/Dialogue/qm_gates.json` | Tier gate responses |
 | `ModuleData/Enlisted/Dialogue/qm_intro.json` | First meeting introduction flow |

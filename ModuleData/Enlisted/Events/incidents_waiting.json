@@ -13,7 +13,10 @@
       "requirements": {
         "context": "waiting_in_settlement",
         "role": "Any",
-        "tier": { "min": 2, "max": 7 }
+        "tier": {
+          "min": 2,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -27,6 +30,7 @@
           "text": "Take the opportunity",
           "resultTextId": "mi_wait_opportunity_take_result",
           "resultText": "You slip away for a few hours and earn some extra coin. The job is simple enough, and you're back before anyone notices you were gone.",
+          "tooltip": "Risky choice. +35 gold reward. Adds 2 scrutiny.",
           "risk": "moderate",
           "effects": {
             "gold": 35,
@@ -44,7 +48,8 @@
             "traitXp": {
               "Honor": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. Honor trait XP."
         },
         {
           "id": "investigate_first",
@@ -57,14 +62,12 @@
           },
           "resultTextId": "mi_wait_opportunity_investigate_result",
           "resultText": "You ask questions and check details. The job is legitimate—low risk, decent pay. You take it with confidence.",
-          "tooltip": "Requires Scouting 30+",
+          "tooltip": "Requires Scouting 30. Safe choice. Train Scouting. +40 gold. Adds 1 scrutiny.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 10
-            }
-          },
-          "effects": {
+            },
             "gold": 40,
             "scrutiny": 1
           }
@@ -81,7 +84,10 @@
       "requirements": {
         "context": "waiting_in_settlement",
         "role": "Any",
-        "tier": { "min": 1, "max": 8 }
+        "tier": {
+          "min": 1,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 14,
@@ -96,16 +102,15 @@
           "resultTextId": "mi_wait_encounter_engage_result",
           "resultText": "You share stories and learn something new. The world is larger than battlefields and barracks. A pleasant reminder.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Charm": 10
-            }
-          },
-          "effects": {
+            },
             "companyNeeds": {
               "Morale": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. Train Charm. Boosts company morale."
         },
         {
           "id": "observe",
@@ -114,16 +119,15 @@
           "resultTextId": "mi_wait_encounter_observe_result",
           "resultText": "You keep your distance but pay attention. Interesting bits of information, useful details—a soldier learns to gather intelligence everywhere.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 8
-            }
-          },
-          "effects": {
+            },
             "traitXp": {
               "Calculating": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Train Scouting. Calculating trait XP."
         },
         {
           "id": "avoid_encounter",
@@ -139,7 +143,8 @@
             "companyNeeds": {
               "Morale": -2
             }
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP. Harms company morale."
         }
       ]
     },
@@ -153,7 +158,10 @@
       "requirements": {
         "context": "waiting_in_settlement",
         "role": "Any",
-        "tier": { "min": 2, "max": 7 }
+        "tier": {
+          "min": 2,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 12,
@@ -172,14 +180,12 @@
           },
           "resultTextId": "mi_wait_trouble_prevent_result",
           "resultText": "You step in before fists fly. A firm voice, a steady presence—the situation defuses. Some will thank you; others will call you a busybody.",
-          "tooltip": "Requires Leadership 40+",
+          "tooltip": "Requires Leadership 40. Moderate risk. Train Leadership. +8 Officer rep, -3 Soldier rep. Reduces discipline issues.",
           "risk": "moderate",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Leadership": 15
-            }
-          },
-          "effects": {
+            },
             "officerRep": 8,
             "soldierRep": -3,
             "discipline": -2
@@ -196,7 +202,8 @@
             "traitXp": {
               "Calculating": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP."
         },
         {
           "id": "ignore_trouble",
@@ -207,7 +214,8 @@
           "risk": "safe",
           "effects": {
             "discipline": 1
-          }
+          },
+          "tooltip": "Safe choice. Adds 1 discipline issues."
         }
       ]
     },
@@ -221,7 +229,10 @@
       "requirements": {
         "context": "waiting_in_settlement",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 8,
@@ -242,7 +253,8 @@
               "Equipment": 3,
               "Morale": 3
             }
-          }
+          },
+          "tooltip": "Help with maintenance. +5 Officer rep. Boosts company equipment and morale."
         },
         {
           "id": "maintain_discipline",
@@ -255,24 +267,25 @@
             "officerRep": 8,
             "soldierRep": -8,
             "discipline": -3
-          }
+          },
+          "tooltip": "Crack down. +8 Officer rep, -8 Soldier rep. Reduces discipline issues."
         },
         {
           "id": "let_it_be",
           "textId": "mi_wait_boredom_let",
           "text": "Let the men sort themselves out",
           "resultTextId": "mi_wait_boredom_let_result",
-          "resultText": "You stay out of it. Soldiers will be soldiers. A few black eyes and bruised egos won't hurt the company. Probably.",
+          "resultText": "You stay out of it. Soldiers will be soldiers. A few black eyes and bureaucratic egos won't hurt the company. Probably.",
           "risk": "safe",
           "effects": {
             "discipline": 2,
             "companyNeeds": {
               "Morale": -5
             }
-          }
+          },
+          "tooltip": "Safe choice. Adds 2 discipline issues. Harms company morale."
         }
       ]
     }
   ]
 }
-

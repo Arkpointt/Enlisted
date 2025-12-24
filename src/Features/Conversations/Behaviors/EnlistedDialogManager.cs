@@ -1745,6 +1745,15 @@ namespace Enlisted.Features.Conversations.Behaviors
                     // Create condition that checks if current game context matches this node's requirements
                     ConversationSentence.OnConditionDelegate condition = () =>
                     {
+                        // Must be talking to the quartermaster for any QM dialogue
+                        if (!IsQuartermasterConversation())
+                        {
+                            return false;
+                        }
+                        
+                        // Set text variables (PLAYER_NAME, PLAYER_RANK, etc.) before dialogue displays
+                        SetCommonDialogueVariables();
+                        
                         var currentContext = GetCurrentDialogueContext();
                         // If node has no context requirements, it's a universal fallback
                         if (nodeContext == null || nodeContext.GetSpecificity() == 0)
@@ -3693,7 +3702,6 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                 // Set filter to officer equipment - this will be applied when the next category is browsed
                 QuartermasterManager.Instance?.SetFilterToOfficerEquipment();
-                _isOfficersArmoryActive = true;
 
                 ModLogger.Info("Quartermaster", "Player accessed Officers' Armory - officer filter enabled");
                 
@@ -3705,9 +3713,6 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("Quartermaster", "Error enabling officers armory", ex);
             }
         }
-
-        // Track if Officers' Armory mode is active for next equipment browse
-        private bool _isOfficersArmoryActive;
         
         /// <summary>
         ///     Checks if the player has any equipped items that can be upgraded.

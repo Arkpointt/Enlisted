@@ -58,14 +58,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>Bonus for serving in an active army campaign.</summary>
         public int ArmyBonus { get; set; }
 
-        /// <summary>Bonus from active duty assignment.</summary>
-        public int DutyBonus { get; set; }
-
         /// <summary>Whether currently in an army.</summary>
         public bool IsInArmy { get; set; }
-
-        /// <summary>Name of active duty for display (null if none).</summary>
-        public string ActiveDuty { get; set; }
 
         /// <summary>Final total wage after all bonuses and caps.</summary>
         public int Total { get; set; }
@@ -398,12 +392,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         // Tracks issued rations so they can be reclaimed at the next muster, preventing hoarding
         private List<IssuedRationRecord> _issuedRations = new List<IssuedRationRecord>();
         
-        /// <summary>
-        ///     Currently selected duty assignment ID (e.g., "runner", "scout", "field_medic").
-        ///     Duties provide daily skill XP bonuses and may include wage multipliers.
-        ///     Changed via the duty selection menu.
-        /// </summary>
-        private string _selectedDuty = "runner";
 
         /// <summary>
         ///     Whether the player's clan was independent (no kingdom) before enlistment.
@@ -761,10 +749,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         public int BattlesSurvived => _battlesSurvived;
 
-        /// <summary>
-        ///     Currently assigned duty (e.g., "runner", "scout", "field_medic").
-        /// </summary>
-        public string SelectedDuty => _selectedDuty;
 
         /// <summary>
         ///     Returns the player's current specialization role based on trait levels.
@@ -1619,7 +1603,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_probationEnds", ref _probationEnds);
             SyncKey(dataStore, "_savedGraceEnlistmentDate", ref _savedGraceEnlistmentDate);
             SyncKey(dataStore, "_graceProtectionEnds", ref _graceProtectionEnds);
-            SyncKey(dataStore, "_selectedDuty", ref _selectedDuty);
             
             // NCO and soldier names for personalized event text
             SyncKey(dataStore, "_ncoFirstName", ref _ncoFirstName);
@@ -3300,7 +3283,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentDate = resumedFromGrace && _savedGraceEnlistmentDate != CampaignTime.Zero
                     ? _savedGraceEnlistmentDate
                     : CampaignTime.Now; // Record when service started (or resume previous enlistment date)
-                _selectedDuty = "runner"; // Default to runner duty for new recruits
                 _fatigueMax = 24;
                 _fatigueCurrent = _fatigueMax;
                 _pendingMusterPay = 0;
@@ -3525,7 +3507,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentTier = 1;
                 _enlistmentXP = 0;
                 _enlistmentDate = CampaignTime.Zero;
-                _selectedDuty = "runner";
                 _isOnLeave = false;
                 
                 // Restore equipment if backup was created
@@ -6344,12 +6325,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var lordParty = _enlistedLord.PartyBelongedTo;
             var armyMultiplier = lordParty?.Army != null ? formula.ArmyBonusMultiplier : 1.0f;
 
-            // Duties system wage multiplier
-            var dutiesMultiplier = GetDutiesWageMultiplier();
-
             // Apply multipliers and cap
             var probationMult = _isOnProbation ? Math.Max(0.01f, EnlistedConfig.LoadRetirementConfig().ProbationWageMultiplier) : 1f;
-            var finalWage = Math.Min((int)(baseWage * armyMultiplier * dutiesMultiplier * probationMult), 150);
+            var finalWage = Math.Min((int)(baseWage * armyMultiplier * probationMult), 150);
             return Math.Max(finalWage, 24); // Minimum 24 gold/day
         }
 
@@ -6789,19 +6767,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     breakdown.IsInArmy = true;
                 }
 
-                // Duty assignment bonus
-                var dutiesMultiplier = GetDutiesWageMultiplier();
-                if (dutiesMultiplier > 1.0f)
-                {
-                    var afterArmy = subtotal + breakdown.ArmyBonus;
-                    breakdown.DutyBonus = (int)(afterArmy * (dutiesMultiplier - 1.0f));
-                    breakdown.ActiveDuty = GetActiveDutyName();
-                }
 
                 // Calculate total (with cap)
                 breakdown.Total = Math.Min(
                     breakdown.BasePay + breakdown.LevelBonus + breakdown.TierBonus +
-                    breakdown.ServiceBonus + breakdown.ArmyBonus + breakdown.DutyBonus,
+                    breakdown.ServiceBonus + breakdown.ArmyBonus,
                     150);
                 breakdown.Total = Math.Max(breakdown.Total, 24); // Minimum wage
             }
@@ -6819,47 +6789,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             return breakdown;
         }
 
-        /// <summary>
-        ///     Gets the display name of the current active duty for wage tooltip.
-        /// </summary>
-        private string GetActiveDutyName()
-        {
-            // Active duties are now represented by explicit orders from the chain of command.
-            return null;
-        }
-
-        /// <summary>
-        ///     Formats a duty ID into a display-friendly name.
-        /// </summary>
-        private string FormatDutyName(string dutyId)
-        {
-            if (string.IsNullOrEmpty(dutyId))
-            {
-                return null;
-            }
-
-            // Convert snake_case to Title Case
-            var words = dutyId.Split('_');
-            for (var i = 0; i < words.Length; i++)
-            {
-                if (words[i].Length > 0)
-                {
-                    words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1).ToLower();
-                }
-            }
-
-            return string.Join(" ", words);
-        }
-
-        /// <summary>
-        ///     Gets the wage multiplier from active duties and professions.
-        ///     Currently returns neutral multiplier; wage bonuses are integrated via Orders system.
-        /// </summary>
-        /// <returns>Wage multiplier (1.0 = no bonus, higher values = bonus).</returns>
-        private float GetDutiesWageMultiplier()
-        {
-            return 1.0f;
-        }
 
         /// <summary>
         ///     Check for promotion based on XP thresholds.
@@ -10880,20 +10809,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             return retinueManager?.State?.TotalSoldiers > 0;
         }
 
-        /// <summary>
-        ///     Change selected duty (called from duty selection menu).
-        ///     Currently stores the value for save compatibility but does not apply duty effects.
-        /// </summary>
-        public void SetSelectedDuty(string dutyId)
-        {
-            if (!IsEnlisted || string.IsNullOrEmpty(dutyId))
-            {
-                return;
-            }
-
-            _selectedDuty = dutyId;
-            ModLogger.Info("Duties", $"Selected duty stored (legacy): {dutyId}");
-        }
 
         /// <summary>
         ///     Check if promotion notification should be triggered after XP gain.

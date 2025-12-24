@@ -69,7 +69,7 @@ All files use JSON format and can be edited with any text editor. Changes take e
 - **[enlisted_config.json](#enlisted_configjson)** → `camp_life`:
   - QM pricing modifiers based on company morale/logistics
   - Purchase/buyback rates when conditions are fine/tense/sour/predatory
-- **[events_duty_quartermaster.json](#events-folder)** - Quartermaster duty events
+- **[events_duty_quartermaster.json](#events-folder)** - Supply management events (requires Trader trait 5+)
 
 ### Camp Life & Activities
 - **[enlisted_config.json](#enlisted_configjson)** → `camp_life`:
@@ -95,9 +95,8 @@ All files use JSON format and can be edited with any text editor. Changes take e
 
 ### Duties & Orders
 - **[Orders folder](#orders-folder)** - Military orders by tier (T1-T3, T4-T6, T7-T9)
-- **[events_duty_*.json](#events-folder)** - Duty-specific events for each role:
+- **[events_duty_*.json](#events-folder)** - Role-specific events based on native traits:
   - Armorer, Scout, Field Medic, Quartermaster
-  - Engineer, Lookout, Messenger, Runner
   - Boatswain, Navigator (War Sails DLC)
 
 ### Reputation & Discipline
@@ -266,7 +265,7 @@ Contains all narrative events triggered by context, role, or player action.
 | `events_duty_engineer.json` | Engineer duty events |
 | `events_duty_lookout.json` | Lookout duty events |
 | `events_duty_messenger.json` | Messenger duty events |
-| `events_duty_runner.json` | Runner duty events |
+| `events_duty_runner.json` | Basic soldier events (no trait requirements) |
 | `events_duty_boatswain.json` | Boatswain duty events (War Sails DLC) |
 | `events_duty_navigator.json` | Navigator duty events (War Sails DLC) |
 

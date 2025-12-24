@@ -3,7 +3,7 @@
 **Summary:** Authoritative JSON schema definitions for events, decisions, and orders. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23 (Added dialogue schema reference)  
+**Last Updated:** 2025-12-23 (Fixed skillXp placement: effects for main options, rewards for sub-choices only)  
 **Related Docs:** [Content System Architecture](content-system-architecture.md), [Event Catalog](../../Content/event-catalog-by-system.md), [Quartermaster System](../Equipment/quartermaster-system.md)
 
 ---
@@ -23,8 +23,9 @@
    - Other → Automatic events
 
 4. **Rewards vs Effects:** 
-   - `"rewards"` = Player gains (fatigueRelief, gold, skillXp)
-   - `"effects"` = State changes (reputation, escalation, hpChange)
+   - `"rewards"` = Player gains for **sub-choices only** (reward_choices options)
+   - `"effects"` = State changes and rewards for **main options** (reputation, escalation, hpChange, skillXp)
+   - **⚠️ CRITICAL:** For main event options, use `effects.skillXp`. Only use `rewards.skillXp` in sub-choice options!
 
 ---
 
@@ -368,7 +369,7 @@ Each option represents a player choice.
 | ID | `id` | string | ✅ | Unique within event |
 | Text ID | `textId` | string | ✅ | XML localization key |
 | Text Fallback | `text` | string | ❌ | Button text if loc missing |
-| Tooltip | `tooltip` | string | ❌ | Hover hint |
+| Tooltip | `tooltip` | string | ✅ | Cannot be null. Factual, brief description |
 | Costs | `costs` | object | ❌ | Resources deducted |
 | Rewards | `rewards` | object | ❌ | Resources gained |
 | Effects | `effects` | object | ❌ | State changes |
@@ -380,6 +381,34 @@ Each option represents a player choice.
 | Clear Flags | `clear_flags` or `clearFlags` | array | ❌ | Flags to clear |
 | Chains To | `chains_to` or `chainsTo` | string | ❌ | Follow-up event ID |
 | Chain Delay | `chain_delay_hours` or `chainDelayHours` | int | ❌ | Hours before chain fires |
+
+---
+
+## Tooltip Guidelines
+
+**Tooltips cannot be null.** Every option must have a factual, concise, brief description.
+
+**Format:** Action + consequences + restrictions (under 80 characters)
+
+**Examples:**
+
+```json
+// Simple actions
+{"tooltip": "Trains equipped weapon"}
+{"tooltip": "Build stamina and footwork"}
+
+// Stat/reputation changes
+{"tooltip": "Harsh welcome. +5 Officer rep. -3 Retinue Loyalty."}
+{"tooltip": "Risky move. +10 Courage. -5 Discipline. Injury chance."}
+
+// Consequences
+{"tooltip": "Accept discharge. 90-day re-enlistment block applies."}
+{"tooltip": "Desert immediately. Criminal record and faction hostility."}
+
+// Requirements
+{"tooltip": "Requires Leadership 50+ to attempt."}
+{"tooltip": "Greyed out: Company Morale must be below 50"}
+```
 
 ---
 
@@ -407,14 +436,24 @@ Deducted when option is selected.
 
 ## Rewards Object
 
-Gained when option is selected. **Used for positive gains.**
+**⚠️ ONLY USED IN SUB-CHOICE OPTIONS (reward_choices).** For main event options, use `effects` instead!
+
+Gained when sub-choice option is selected. Used for positive gains in reward_choices blocks.
 
 ```json
 {
-  "rewards": {
-    "gold": 50,
-    "fatigueRelief": 3,
-    "skillXp": { "OneHanded": 25, "Athletics": 10 }
+  "reward_choices": {
+    "type": "skill_focus",
+    "prompt": "What do you focus on?",
+    "options": [
+      {
+        "id": "focus_weapon",
+        "text": "Weapon training",
+        "rewards": {
+          "skillXp": { "OneHanded": 50 }
+        }
+      }
+    ]
   }
 }
 ```
@@ -423,10 +462,13 @@ Gained when option is selected. **Used for positive gains.**
 |-------|------------|------|-------|
 | Gold | `gold` | int | Added to player |
 | Fatigue Relief | `fatigueRelief` or `fatigue_relief` | int | Reduces fatigue |
-| Skill XP | `skillXp` | dict | Skill name → XP amount |
-| Dynamic Skill XP | `dynamicSkillXp` | dict | `"equipped_weapon"` or `"weakest_combat"` → XP |
+| Skill XP | `skillXp` | dict | Skill name → XP amount (SUB-CHOICES ONLY) |
+| Dynamic Skill XP | `dynamicSkillXp` | dict | `"equipped_weapon"` or `"weakest_combat"` → XP (SUB-CHOICES ONLY) |
 
-**⚠️ IMPORTANT:** `fatigueRelief` goes in `rewards`, NOT in `effects`!
+**⚠️ CRITICAL NOTES:** 
+- Use `rewards` ONLY in sub-choice options inside `reward_choices` blocks
+- For main event options, put `skillXp` in `effects` instead
+- `fatigueRelief` always goes in `rewards` (or nowhere if not a sub-choice)
 
 ---
 
@@ -464,7 +506,8 @@ State changes when option is selected. Can be positive or negative.
 | Troop Wounded | `troopWounded` or `troop_wounded` | int | count | Party troops wounded |
 | Food Loss | `foodLoss` or `food_loss` | int | count | Food items removed |
 | Troop XP | `troopXp` or `troop_xp` | int | amount | XP to lord's T1-T3 troops |
-| Skill XP | `skillXp` | dict | - | Skill name → XP |
+| Skill XP | `skillXp` | dict | - | Skill name → XP (USE THIS for main options!) |
+| Dynamic Skill XP | `dynamicSkillXp` or `dynamic_skill_xp` | dict | - | `"equipped_weapon"` or `"weakest_combat"` → XP |
 | Trait XP | `traitXp` | dict | - | Trait name → XP |
 | Company Needs | `companyNeeds` | dict | - | Need name → delta |
 | Apply Wound | `applyWound` or `apply_wound` | string | - | Minor/Serious/Permanent |
@@ -474,7 +517,8 @@ State changes when option is selected. Can be positive or negative.
 
 **⚠️ COMMON MISTAKES:**
 - Use `hpChange`, not `hp`
-- Use `fatigueRelief` in `rewards`, not `effects`
+- Use `skillXp` in `effects` for main options, NOT in `rewards`
+- Use `fatigueRelief` in `rewards` (sub-choices only)
 - Use `soldierRep` (camelCase), parser also accepts `soldier_rep`
 
 ---
@@ -623,10 +667,8 @@ All variables use fallback values if data is unavailable (e.g., "the Sergeant" i
           "costs": {
             "fatigue": 2
           },
-          "rewards": {
-            "skillXp": { "OneHanded": 25, "Athletics": 10 }
-          },
           "effects": {
+            "skillXp": { "OneHanded": 25, "Athletics": 10 },
             "soldierRep": 2
           },
           "resultTextId": "dec_spar_friendly_result",
@@ -639,10 +681,8 @@ All variables use fallback values if data is unavailable (e.g., "the Sergeant" i
           "costs": {
             "fatigue": 4
           },
-          "rewards": {
-            "skillXp": { "OneHanded": 40, "Athletics": 20 }
-          },
           "effects": {
+            "skillXp": { "OneHanded": 40, "Athletics": 20 },
             "soldierRep": 3,
             "hpChange": -8
           },
@@ -664,13 +704,16 @@ Before committing content:
 - [ ] Root array is `"events"` (not `"decisions"`)
 - [ ] All items have `"category": "decision"` for Camp Hub decisions
 - [ ] ID prefixes match delivery mechanism (`dec_*` for Camp Hub)
-- [ ] `fatigueRelief` is in `rewards`, not `effects`
+- [ ] **`skillXp` is in `effects` for main options** (NOT in `rewards`)
+- [ ] `rewards` only used in sub-choice options (reward_choices)
 - [ ] HP changes use `hpChange`, not `hp`
 - [ ] All string IDs have matching entries in `enlisted_strings.xml`
 - [ ] Skill/trait names match valid values exactly (case-sensitive)
 - [ ] Flag-gated events use `triggers.all` with `has_flag:` conditions
 - [ ] Pay tension events use `triggers.escalation_requirements.pay_tension_min`
 - [ ] Escalation track names match supported values (case variants accepted)
+
+**Localization Status:** All existing events have complete XML localization as of Dec 2025. For new content, run `python tools/events/sync_event_strings.py` to automatically extract and add missing strings.
 
 ---
 

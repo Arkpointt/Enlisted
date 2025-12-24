@@ -23,7 +23,7 @@
           "id": "play",
           "textId": "evt_camp_gambling_opt_play",
           "resultTextId": "evt_camp_gambling_opt_play_result",
-          "tooltip": "Join the game. Risk your coin.",
+          "tooltip": "Join the game. 50% success chance. Failure loses 50 gold. Train Roguery.",
           "risk": "moderate",
           "effects": {
             "gold": 50,
@@ -35,7 +35,7 @@
           "id": "watch",
           "textId": "evt_camp_gambling_opt_watch",
           "resultTextId": "evt_camp_gambling_opt_watch_result",
-          "tooltip": "Watch and learn without risking your coin.",
+          "tooltip": "Observe without betting. Safe choice. Minor Roguery training.",
           "risk": "safe",
           "effects": {
             "soldierRep": 2,
@@ -46,7 +46,7 @@
           "id": "report",
           "textId": "evt_camp_gambling_opt_report",
           "resultTextId": "evt_camp_gambling_opt_report_result",
-          "tooltip": "Report the gambling to the officers.",
+          "tooltip": "Report the gambling. Improves Officer reputation and Discipline. Harms Soldier reputation.",
           "risk": "risky",
           "effects": {
             "officerRep": 6,
@@ -136,7 +136,7 @@
           "id": "share",
           "textId": "evt_camp_supply_shortage_opt_share",
           "resultTextId": "evt_camp_supply_shortage_opt_share_result",
-          "tooltip": "Share your personal rations with hungry soldiers.",
+          "tooltip": "Share your rations. +10 Soldier rep, +4 Officer rep. Generous Commander trait XP.",
           "risk": "safe",
           "effects": {
             "foodLoss": 3,
@@ -195,7 +195,7 @@
           "id": "intervene",
           "textId": "evt_camp_brawl_opt_intervene",
           "resultTextId": "evt_camp_brawl_opt_intervene_result",
-          "tooltip": "Step between them and break it up.",
+          "tooltip": "Step between them. Train OneHanded and Leadership. Adds 8 Officer rep. -5 Discipline.",
           "risk": "moderate",
           "requirements": {
             "minSkills": { "OneHanded": 25 },
@@ -212,7 +212,7 @@
           "id": "back_soldier",
           "textId": "evt_camp_brawl_opt_back_soldier",
           "resultTextId": "evt_camp_brawl_opt_back_soldier_result",
-          "tooltip": "Back your fellow soldier in the fight.",
+          "tooltip": "Back your fellow soldier. +12 Soldier rep, -10 Officer rep. -5 HP.",
           "risk": "risky",
           "effects": {
             "skillXp": { "OneHanded": 8 },
@@ -226,7 +226,7 @@
           "id": "fetch_officer",
           "textId": "evt_camp_brawl_opt_fetch_officer",
           "resultTextId": "evt_camp_brawl_opt_fetch_officer_result",
-          "tooltip": "Run and fetch an officer immediately.",
+          "tooltip": "Report the brawl. +5 Officer rep, -6 Soldier rep. +12 Discipline.",
           "risk": "safe",
           "effects": {
             "officerRep": 5,

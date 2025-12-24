@@ -3683,6 +3683,830 @@
     <string id="news_vet_death" text="{NAME}, who served through {BATTLES} battles, has been slain." />
     <string id="news_vet_death_legend" text="{NAME}, a legend of {BATTLES} battles and {KILLS} kills, has fallen." />
 
+    <!-- arch_train_hunting -->
+    <string id="ll_evt_arch_train_hunting_opt_hunt_carefully_stalk_properly_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_hunting_opt_hunt_carefully_stalk_properly_text" text="Hunt carefully, stalk properly" />
+    <string id="ll_evt_arch_train_hunting_opt_let_others_hunt_watch_and_learn_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_hunting_opt_let_others_hunt_watch_and_learn_text" text="Let others hunt, watch and learn" />
+    <string id="ll_evt_arch_train_hunting_opt_range_far_find_good_game_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_arch_train_hunting_opt_range_far_find_good_game_text" text="Range far, find good game" />
+    <string id="ll_evt_arch_train_hunting_opt_set_snares_combine_methods_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_hunting_opt_set_snares_combine_methods_text" text="Set snares, combine methods" />
+    <string id="ll_evt_arch_train_hunting_setup" text="{SERGEANT} got permission for a hunting party. Real targets, real meat, real skills.&#xA;&#xA;&quot;Don&apos;t come back empty-handed.&quot;" />
+    <string id="ll_evt_arch_train_hunting_title" text="Hunting Party" />
+
+    <!-- arch_train_moving -->
+    <string id="ll_evt_arch_train_moving_opt_focus_on_tracking_and_lead_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_moving_opt_focus_on_tracking_and_lead_text" text="Focus on tracking and lead" />
+    <string id="ll_evt_arch_train_moving_opt_mixed_practice_various_targets_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_moving_opt_mixed_practice_various_targets_text" text="Mixed practice — various targets" />
+    <string id="ll_evt_arch_train_moving_opt_practice_against_cavalry_targets_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_moving_opt_practice_against_cavalry_targets_text" text="Practice against cavalry targets" />
+    <string id="ll_evt_arch_train_moving_opt_speed_over_accuracy_volume_fire_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_arch_train_moving_opt_speed_over_accuracy_volume_fire_text" text="Speed over accuracy — volume fire" />
+    <string id="ll_evt_arch_train_moving_setup" text="Runners drag targets on ropes. Cavalry makes passes. Nothing sits still in battle.&#xA;&#xA;&quot;Lead your target. Anticipate. Don&apos;t chase.&quot;" />
+    <string id="ll_evt_arch_train_moving_title" text="Moving Target Practice" />
+
+    <!-- arch_train_target -->
+    <string id="ll_evt_arch_train_target_opt_help_newer_archers_with_techniqu_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_target_opt_help_newer_archers_with_techniqu_text" text="Help newer archers with technique" />
+    <string id="ll_evt_arch_train_target_opt_long_range_shots_push_your_limit_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_arch_train_target_opt_long_range_shots_push_your_limit_text" text="Long range shots, push your limits" />
+    <string id="ll_evt_arch_train_target_opt_speed_shooting_loose_fast_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_target_opt_speed_shooting_loose_fast_text" text="Speed shooting — loose fast" />
+    <string id="ll_evt_arch_train_target_opt_steady_practice_work_on_consiste_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_target_opt_steady_practice_work_on_consiste_text" text="Steady practice, work on consistency" />
+    <string id="ll_evt_arch_train_target_setup" text="Straw targets at fifty paces. Then a hundred. Then whatever distance {SERGEANT} decides is funny.&#xA;&#xA;&quot;Hit the target. Not the sky. Not the dirt. The target.&quot;" />
+    <string id="ll_evt_arch_train_target_title" text="Target Practice" />
+
+    <!-- arch_train_volley -->
+    <string id="ll_evt_arch_train_volley_opt_call_the_volleys_leadership_prac_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_volley_opt_call_the_volleys_leadership_prac_text" text="Call the volleys (leadership practice)" />
+    <string id="ll_evt_arch_train_volley_opt_focus_on_timing_with_the_unit_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_volley_opt_focus_on_timing_with_the_unit_text" text="Focus on timing with the unit" />
+    <string id="ll_evt_arch_train_volley_opt_high_arc_shots_hit_behind_cover_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_arch_train_volley_opt_high_arc_shots_hit_behind_cover_text" text="High arc shots — hit behind cover" />
+    <string id="ll_evt_arch_train_volley_opt_work_on_rapid_reload_outcome" text="You carry it out." />
+    <string id="ll_evt_arch_train_volley_opt_work_on_rapid_reload_text" text="Work on rapid reload" />
+    <string id="ll_evt_arch_train_volley_setup" text="{SERGEANT} raises an arm. When it falls, you loose. Not before. Not after. Together.&#xA;&#xA;&quot;A volley breaks armies. Individuals break wind.&quot;" />
+    <string id="ll_evt_arch_train_volley_title" text="Volley Drill" />
+
+    <!-- cav_train_charge -->
+    <string id="ll_evt_cav_train_charge_opt_focus_on_approach_and_timing_outcome" text="You carry it out." />
+    <string id="ll_evt_cav_train_charge_opt_focus_on_approach_and_timing_text" text="Focus on approach and timing" />
+    <string id="ll_evt_cav_train_charge_opt_full_speed_maximum_impact_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_cav_train_charge_opt_full_speed_maximum_impact_text" text="Full speed, maximum impact" />
+    <string id="ll_evt_cav_train_charge_opt_lead_the_practice_charge_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_cav_train_charge_opt_lead_the_practice_charge_text" text="Lead the practice charge" />
+    <string id="ll_evt_cav_train_charge_opt_standard_charge_proper_form_outcome" text="You carry it out." />
+    <string id="ll_evt_cav_train_charge_opt_standard_charge_proper_form_text" text="Standard charge, proper form" />
+    <string id="ll_evt_cav_train_charge_setup" text="The infantry holds a line of dummies. Your job — hit it at full gallop without dying.&#xA;&#xA;{SERGEANT}: &quot;Control. Timing. Impact. In that order.&quot;" />
+    <string id="ll_evt_cav_train_charge_title" text="Charge Practice" />
+
+    <!-- cav_train_horse_rotation -->
+    <string id="ll_evt_cav_train_horse_rotation_opt_focus_on_the_difficult_horse_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_cav_train_horse_rotation_opt_focus_on_the_difficult_horse_text" text="Focus on the difficult horse" />
+    <string id="ll_evt_cav_train_horse_rotation_opt_help_others_with_their_mounts_outcome" text="You carry it out." />
+    <string id="ll_evt_cav_train_horse_rotation_opt_help_others_with_their_mounts_text" text="Help others with their mounts" />
+    <string id="ll_evt_cav_train_horse_rotation_opt_quick_assessment_basic_handling_outcome" text="You carry it out." />
+    <string id="ll_evt_cav_train_horse_rotation_opt_quick_assessment_basic_handling_text" text="Quick assessment, basic handling" />
+    <string id="ll_evt_cav_train_horse_rotation_opt_take_time_with_each_horse_outcome" text="You carry it out." />
+    <string id="ll_evt_cav_train_horse_rotation_opt_take_time_with_each_horse_text" text="Take time with each horse" />
+    <string id="ll_evt_cav_train_horse_rotation_setup" text="&quot;Rotate mounts! Every rider needs to know every horse!&quot;&#xA;&#xA;{LORD_NAME}&apos;s stables rotate warhorses regularly. You need to bond fast." />
+    <string id="ll_evt_cav_train_horse_rotation_title" text="Horse Rotation" />
+
+    <!-- cav_train_mounted_combat -->
+    <string id="ll_evt_cav_train_mounted_combat_opt_full_speed_passes_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_cav_train_mounted_combat_opt_full_speed_passes_text" text="Full speed passes" />
+    <string id="ll_evt_cav_train_mounted_combat_opt_practice_lance_work_outcome" text="You carry it out." />
+    <string id="ll_evt_cav_train_mounted_combat_opt_practice_lance_work_text" text="Practice lance work" />
+    <string id="ll_evt_cav_train_mounted_combat_opt_practice_sword_from_horseback_outcome" text="You carry it out." />
+    <string id="ll_evt_cav_train_mounted_combat_opt_practice_sword_from_horseback_text" text="Practice sword from horseback" />
+    <string id="ll_evt_cav_train_mounted_combat_opt_work_on_archery_from_horseback_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_cav_train_mounted_combat_opt_work_on_archery_from_horseback_text" text="Work on archery from horseback" />
+    <string id="ll_evt_cav_train_mounted_combat_setup" text="Quintain practice. Rings on posts. Moving targets. {SERGEANT} watches from horseback.&#xA;&#xA;&quot;Hit the target, not your horse.&quot;" />
+    <string id="ll_evt_cav_train_mounted_combat_title" text="Mounted Combat Drill" />
+
+    <!-- cav_train_skirmish -->
+    <string id="ll_evt_cav_train_skirmish_opt_focus_on_evasion_and_retreat_outcome" text="You carry it out." />
+    <string id="ll_evt_cav_train_skirmish_opt_focus_on_evasion_and_retreat_text" text="Focus on evasion and retreat" />
+    <string id="ll_evt_cav_train_skirmish_opt_full_mock_battle_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_cav_train_skirmish_opt_full_mock_battle_text" text="Full mock battle" />
+    <string id="ll_evt_cav_train_skirmish_opt_practice_javelin_throws_outcome" text="You carry it out." />
+    <string id="ll_evt_cav_train_skirmish_opt_practice_javelin_throws_text" text="Practice javelin throws" />
+    <string id="ll_evt_cav_train_skirmish_opt_work_on_bow_from_horseback_outcome" text="You carry it out." />
+    <string id="ll_evt_cav_train_skirmish_opt_work_on_bow_from_horseback_text" text="Work on bow from horseback" />
+    <string id="ll_evt_cav_train_skirmish_setup" text="{SERGEANT} sets up a mock skirmish. Ride in, throw, ride out. Don&apos;t get caught.&#xA;&#xA;&quot;You&apos;re not knights. You&apos;re killers. Get in, get out.&quot;" />
+    <string id="ll_evt_cav_train_skirmish_title" text="Skirmish Tactics" />
+
+    <!-- desertion_clean -->
+    <string id="ll_evt_desert_clean_opt_bandit" text="Turn to banditry" />
+    <string id="ll_evt_desert_clean_opt_bandit_outcome" text="Why work for coin when you can take it?&#xA;&#xA;The roads are full of merchants. You know how to fight. The math is simple.&#xA;&#xA;Your first robbery goes smoothly. The second, too. You&apos;re becoming someone new.&#xA;&#xA;Someone dangerous." />
+    <string id="ll_evt_desert_clean_opt_kingdom" text="Travel to a different kingdom" />
+    <string id="ll_evt_desert_clean_opt_kingdom_outcome" text="A new kingdom means a clean slate. No one knows your face. No one knows your past.&#xA;&#xA;The journey is long, but when you arrive, you&apos;re just another wanderer looking for work.&#xA;&#xA;Perfect." />
+    <string id="ll_evt_desert_clean_opt_town" text="Head to the nearest town" />
+    <string id="ll_evt_desert_clean_opt_town_outcome" text="Towns mean work. Work means money. Money means survival.&#xA;&#xA;You set off toward the nearest settlement. Time to start over." />
+    <string id="ll_evt_desert_clean_setup" text="The army is gone. The war is behind you.&#xA;&#xA;You stand at a crossroads — literally. One path leads to the nearest town. Another to the wilderness. A third toward a different kingdom entirely.&#xA;&#xA;For the first time in months, no one is giving you orders. No one is watching. No one cares where you go.&#xA;&#xA;You&apos;re free.&#xA;&#xA;What now?" />
+    <string id="ll_evt_desert_clean_title" text="Free at Last" />
+
+    <!-- desertion_planning_when -->
+    <string id="ll_evt_desert_plan_when_opt_battle" text="After the next battle." />
+    <string id="ll_evt_desert_plan_when_opt_battle_outcome" text="&quot;After the fight,&quot; you say. &quot;Everyone&apos;s tired, distracted. Perfect cover.&quot;&#xA;&#xA;The battle comes. When it&apos;s over, in the chaos of the aftermath, you simply walk away.&#xA;&#xA;No one notices one more body missing from the count." />
+    <string id="ll_evt_desert_plan_when_opt_stay" text="Actually... I&apos;ve changed my mind." />
+    <string id="ll_evt_desert_plan_when_opt_stay_outcome" text="{SOLDIER_NAME}&apos;s face hardens. &quot;Cold feet? Fine. But you didn&apos;t hear any of this. Understand?&quot;&#xA;&#xA;You nod. They slip away into the darkness without you.&#xA;&#xA;You&apos;re still here. For better or worse." />
+    <string id="ll_evt_desert_plan_when_opt_tonight" text="Tonight. Before they notice." />
+    <string id="ll_evt_desert_plan_when_opt_tonight_outcome" text="&quot;Tonight,&quot; you agree. &quot;Pack light. Move fast.&quot;&#xA;&#xA;You slip away in the darkness. The camp shrinks behind you. By dawn, you&apos;re miles away.&#xA;&#xA;Free." />
+    <string id="ll_evt_desert_plan_when_opt_town" text="Wait for the next town." />
+    <string id="ll_evt_desert_plan_when_opt_town_outcome" text="&quot;Town,&quot; you say. &quot;We wait, blend in, disappear.&quot;&#xA;&#xA;Three days later, the army enters {SETTLEMENT_NAME}. You simply... don&apos;t leave with them.&#xA;&#xA;By the time anyone notices, you&apos;re long gone." />
+    <string id="ll_evt_desert_plan_when_setup" text="Night. A quiet corner of camp. {SOLDIER_NAME} and two others huddle close.&#xA;&#xA;&quot;So you&apos;re with us,&quot; they whisper. &quot;Good. Now we need to plan.&quot;&#xA;&#xA;They look at the distant campfires. &quot;When do we go? Tonight? Wait for the next town? After the next battle when everyone&apos;s distracted?&quot;&#xA;&#xA;Every option has risks." />
+    <string id="ll_evt_desert_plan_when_title" text="When Do We Leave?" />
+
+    <!-- discipline_blocked -->
+    <string id="ll_evt_discipline_blocked_opt_accept_outcome" text="{SERGEANT_NAME} nods. &quot;That&apos;s the spirit. Keep your head down, do good work. They&apos;ll notice.&quot; A setback, not a defeat. The path forward is clear, if harder." />
+    <string id="ll_evt_discipline_blocked_opt_accept_text" text="&quot;I understand. I&apos;ll earn it properly.&quot;" />
+    <string id="ll_evt_discipline_blocked_opt_appeal_outcome" text="The captain hears you out. &quot;Convince me you&apos;ve changed.&quot; You do. Or try to. &quot;Probationary advancement. One incident, and you&apos;re back where you started.&quot; A chance." />
+    <string id="ll_evt_discipline_blocked_opt_appeal_outcome_failure" text="&quot;The decision stands. Prove yourself through action, not words.&quot; Appeal denied. You&apos;ve wasted political capital." />
+    <string id="ll_evt_discipline_blocked_opt_appeal_text" text="&quot;I want to speak to the captain. Make my case directly.&quot;" />
+    <string id="ll_evt_discipline_blocked_opt_bitter_outcome" text="&quot;Maybe.&quot; {SERGEANT_NAME} doesn&apos;t argue. &quot;But politics or not, you gave them ammunition. Stop doing that.&quot; Cold comfort. True, though." />
+    <string id="ll_evt_discipline_blocked_opt_bitter_text" text="&quot;Politics. It&apos;s always politics.&quot;" />
+    <string id="ll_evt_discipline_blocked_opt_despair_outcome" text="{SERGEANT_NAME} grabs your shoulder. &quot;None of that. You&apos;re a soldier, act like one.&quot; Harsh. But sometimes harsh is what you need." />
+    <string id="ll_evt_discipline_blocked_opt_despair_text" text="&quot;What&apos;s the point? They&apos;ll never promote someone like me.&quot;" />
+    <string id="ll_evt_discipline_blocked_setup" text="The promotion list goes up. Your name should be on it — the experience, the time served, the battles. But it&apos;s not there.&#xA;&#xA;{SERGEANT_NAME} finds you staring at the roster.&#xA;&#xA;&quot;Your record, {PLAYER_NAME}. Too many marks. The captain won&apos;t sign off on promoting someone with your... history.&quot; They actually look sympathetic. &quot;Clean it up. Prove them wrong. Maybe next time.&quot;&#xA;&#xA;Next time. If there is one." />
+    <string id="ll_evt_discipline_blocked_title" text="Promotion Blocked" />
+
+    <!-- discipline_discharge -->
+    <string id="ll_evt_discipline_discharge_opt_accept_outcome" text="The captain nods. &quot;Then it&apos;s done. Turn in your equipment. You&apos;re no longer part of this army.&quot; It&apos;s over. Not with a bang, but with paperwork." />
+    <string id="ll_evt_discipline_discharge_opt_accept_text" text="&quot;I have nothing to say. I accept the judgment.&quot;" />
+    <string id="ll_evt_discipline_discharge_opt_beg_outcome" text="A long silence. &quot;Against my better judgment... penal detail. Six months. Any incident and this offer disappears.&quot; A thread of hope. Thin as spider silk." />
+    <string id="ll_evt_discipline_discharge_opt_beg_outcome_failure" text="&quot;We&apos;ve given you chances. Too many.&quot; The captain shakes their head. &quot;Sentence stands.&quot;" />
+    <string id="ll_evt_discipline_discharge_opt_beg_text" text="&quot;Please — one more chance. I&apos;ll be different. I swear it.&quot;" />
+    <string id="ll_evt_discipline_discharge_opt_defiant_outcome" text="&quot;Noted.&quot; The captain&apos;s voice is ice. &quot;Your attitude explains much.&quot; The discharge proceeds. No pension. No reference. Nothing." />
+    <string id="ll_evt_discipline_discharge_opt_defiant_text" text="&quot;Discharge me then. This army never valued me anyway.&quot;" />
+    <string id="ll_evt_discipline_discharge_opt_service_outcome" text="The captain reviews documents. Consults with officers. &quot;Your combat record... is not nothing. Reduction in rank. Final warning. Don&apos;t make us regret this.&quot;" />
+    <string id="ll_evt_discipline_discharge_opt_service_outcome_failure" text="&quot;Service doesn&apos;t excuse conduct. Many have served without becoming a disciplinary nightmare.&quot; No mercy." />
+    <string id="ll_evt_discipline_discharge_opt_service_text" text="&quot;My service record — the battles, the duties, the blood I&apos;ve shed for {LORD_NAME}—&quot;" />
+    <string id="ll_evt_discipline_discharge_setup" text="&quot;Dishonorable discharge.&quot;&#xA;&#xA;The words hang in the air. The captain doesn&apos;t look pleased to say them — or maybe they do. Hard to tell.&#xA;&#xA;&quot;Your record speaks for itself. Consistent failure to meet standards. Repeated infractions despite correction. You&apos;ve left us no choice.&quot;&#xA;&#xA;the company watches from the edge of the assembly. {SERGEANT_NAME}&apos;s face is stone.&#xA;&#xA;&quot;You have one opportunity to speak before the sentence is carried out. Make it count.&quot;" />
+    <string id="ll_evt_discipline_discharge_title" text="Facing Discharge" />
+
+    <!-- discipline_extra_duty -->
+    <string id="ll_evt_discipline_extra_duty_opt_accept_outcome" text="It&apos;s brutal. Every muscle aches. But you don&apos;t complain, don&apos;t slack. By week&apos;s end, the sergeant gives you a curt nod. &quot;Maybe you&apos;re learning after all.&quot;" />
+    <string id="ll_evt_discipline_extra_duty_opt_accept_text" text="Accept the punishment. Do the work." />
+    <string id="ll_evt_discipline_extra_duty_opt_complain_outcome" text="&quot;Unfair?&quot; The sergeant&apos;s voice carries across the camp. &quot;You want to talk about UNFAIR?&quot; The lecture that follows is worse than the extra duty. And you&apos;ve still got to do the duty." />
+    <string id="ll_evt_discipline_extra_duty_opt_complain_text" text="Protest the unfairness of the punishment." />
+    <string id="ll_evt_discipline_extra_duty_opt_excel_outcome" text="You throw yourself into every task. Best-dug latrines in the camp. Not a drop of water spilled. The sergeant notices. Grudging respect, maybe. At least you&apos;re not a whiner." />
+    <string id="ll_evt_discipline_extra_duty_opt_excel_text" text="Not just do it — do it better than anyone. Make a point." />
+    <string id="ll_evt_discipline_extra_duty_opt_shirk_outcome" text="Turns out, yes. They can. Extended duty. Double shifts. Someone&apos;s always watching now. You&apos;ve made this worse." />
+    <string id="ll_evt_discipline_extra_duty_opt_shirk_text" text="Do the minimum. What are they going to do, punish you more?" />
+    <string id="ll_evt_discipline_extra_duty_setup" text="The duty roster goes up. Your name&apos;s on it. Again. And again. And twice more after that.&#xA;&#xA;Extra duty — the army&apos;s favorite corrective measure. Latrine digging, night watch, hauling water, whatever&apos;s worst. Your infractions have been noticed, and this is the price.&#xA;&#xA;{SERGEANT_NAME} shrugs when you look at them. &quot;Out of my hands. Sergeant&apos;s orders.&quot;&#xA;&#xA;A week of this, minimum." />
+    <string id="ll_evt_discipline_extra_duty_title" text="Extra Duty" />
+
+    <!-- discipline_hearing -->
+    <string id="ll_evt_discipline_hearing_opt_accountable_outcome" text="The captain studies you. &quot;Accountability. That&apos;s something, at least.&quot; The punishment is firm but fair. You&apos;ve shown character, if not competence." />
+    <string id="ll_evt_discipline_hearing_opt_accountable_text" text="&quot;No excuses, sir. I failed to meet standards. I accept whatever punishment you decide.&quot;" />
+    <string id="ll_evt_discipline_hearing_opt_blame_outcome" text="&quot;Interesting.&quot; The captain makes notes. &quot;We&apos;ll be speaking to these individuals.&quot; You&apos;ve deflected scrutiny. But someone&apos;s going to know you named names." />
+    <string id="ll_evt_discipline_hearing_opt_blame_text" text="Point fingers. Others share responsibility — maybe more than you." />
+    <string id="ll_evt_discipline_hearing_opt_challenge_outcome" text="The captain raises an eyebrow. &quot;Bold. Very well.&quot; The confrontation that follows is ugly, but you poke holes in the case. Charges reduced." />
+    <string id="ll_evt_discipline_hearing_opt_challenge_outcome_failure" text="&quot;You&apos;re in no position to demand anything.&quot; The captain&apos;s patience is gone. &quot;Charges stand. Punishment enhanced for attitude.&quot;" />
+    <string id="ll_evt_discipline_hearing_opt_challenge_text" text="&quot;Some of these charges are exaggerated. I demand to face my accusers.&quot;" />
+    <string id="ll_evt_discipline_hearing_opt_explain_outcome" text="The captain listens. Nods, occasionally. &quot;Context noted. Punishment will reflect... mitigating factors.&quot; You&apos;ve bought some leniency." />
+    <string id="ll_evt_discipline_hearing_opt_explain_outcome_failure" text="&quot;Excuses. I hear excuses.&quot; The captain&apos;s voice is cold. &quot;Next.&quot;" />
+    <string id="ll_evt_discipline_hearing_opt_explain_text" text="Lay out the context. The pressures, the circumstances, the reasons behind each incident." />
+    <string id="ll_evt_discipline_hearing_setup" text="A formal hearing. The captain presides, {LORD_NAME}&apos;s banner hanging behind them. You stand before a table of officers.&#xA;&#xA;&quot;Soldier {PLAYER_NAME}. The charges: repeated failure to maintain discipline standards, disregard for orders, and conduct prejudicial to good order.&quot;&#xA;&#xA;They read from a list. Every infraction, every slip-up, documented and damning.&#xA;&#xA;&quot;What do you have to say for yourself?&quot;" />
+    <string id="ll_evt_discipline_hearing_title" text="The Hearing" />
+
+    <!-- discipline_warning -->
+    <string id="ll_evt_discipline_warning_opt_apologize_outcome" text="{SERGEANT_NAME} nods slowly. &quot;See that it doesn&apos;t.&quot; The warning&apos;s been delivered. Ball&apos;s in your court now." />
+    <string id="ll_evt_discipline_warning_opt_apologize_text" text="&quot;You&apos;re right. I&apos;ve been slipping. It won&apos;t happen again.&quot;" />
+    <string id="ll_evt_discipline_warning_opt_excuse_outcome" text="{SERGEANT_NAME}&apos;s expression hardens. &quot;There are always circumstances. The question is whether you rise above them.&quot; They walk away. Not convinced." />
+    <string id="ll_evt_discipline_warning_opt_excuse_text" text="&quot;It&apos;s not my fault — there were circumstances—&quot;" />
+    <string id="ll_evt_discipline_warning_opt_grateful_outcome" text="A slight softening. &quot;Just... be better. That&apos;s all I&apos;m asking.&quot; They&apos;ve stuck their neck out for you. Don&apos;t make them regret it." />
+    <string id="ll_evt_discipline_warning_opt_grateful_text" text="&quot;Thanks for the heads up. I mean it.&quot;" />
+    <string id="ll_evt_discipline_warning_opt_resentful_outcome" text="&quot;I don&apos;t want to hear it.&quot; {SERGEANT_NAME} cuts you off. &quot;Everyone&apos;s got complaints. Not everyone makes them the camp&apos;s problem.&quot; The message is clear: shut up and soldier." />
+    <string id="ll_evt_discipline_warning_opt_resentful_text" text="&quot;Maybe if the duties weren&apos;t so—&quot;" />
+    <string id="ll_evt_discipline_warning_setup" text="{SERGEANT_NAME} doesn&apos;t look happy.&#xA;&#xA;&quot;You&apos;re on notice, {PLAYER_NAME}. The sergeant&apos;s been keeping track — late to muster, sloppy kit, that business with the—&quot; they wave a hand. &quot;Doesn&apos;t matter. Point is, you&apos;re building a reputation, and not the good kind.&quot;&#xA;&#xA;They lower their voice.&#xA;&#xA;&quot;I can only cover for you so many times. Get it together.&quot;" />
+    <string id="ll_evt_discipline_warning_title" text="On Notice" />
+
+    <!-- enlisted_onboard_01_meet_squad -->
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_outcome" text="The squad goes quiet. {SERGEANT}&apos;s eyes harden. &quot;Have you now.&quot; It&apos;s not a question. &quot;We&apos;ll see about that.&quot;&#xA;&#xA;As they walk away, you hear snickering from the recruits. {RECRUIT_NAME} grins at you. The veterans just shake their heads." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_text" text="&quot;I&apos;ve handled worse than this.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_outcome" text="A flicker of something — amusement? approval? — crosses {SERGEANT}&apos;s face. &quot;Keen one, are you? We&apos;ll see how long that lasts.&quot; Someone in the squad chuckles. But it&apos;s not unfriendly." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_text" text="&quot;Ready to prove myself, {SERGEANT}.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_outcome" text="{SERGEANT} stares at you a moment longer, then shrugs. &quot;Quiet type. Fine. Just don&apos;t be stupid.&quot; They leave. You&apos;ve made no impression at all. That might be good. That might be bad." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_text" text="Just nod." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_outcome" text="{SERGEANT} gives a curt nod. &quot;Good. We&apos;ll see if you last the week.&quot; They walk off. Not warm, but not hostile. You&apos;ve made no enemies today." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_text" text="&quot;Understood, {SERGEANT}.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_confident_outcome" text="{SERGEANT}&apos;s expression cools. &quot;Could you now. Then you won&apos;t mind showing the recruits how it&apos;s done.&quot; They&apos;ve just assigned you extra work. Well done." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_confident_text" text="&quot;Three campaigns. I could run a squad in my sleep.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_honest_outcome" text="{SERGEANT} considers this. &quot;Time away.&quot; They don&apos;t ask why. Good sergeants don&apos;t. &quot;Well, you know what&apos;s expected then. Don&apos;t make me teach you twice.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_honest_text" text="&quot;Aye. Took some time away. Ready to be back.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_humble_outcome" text="Respect flickers in {SERGEANT}&apos;s eyes. A veteran who doesn&apos;t assume they know everything. Rare. &quot;Fair enough. But I&apos;ll lean on you when I need experience. That&apos;s the deal.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_humble_text" text="&quot;Some time ago. I&apos;m rusty. Treat me like a recruit.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_private_outcome" text="A long look. {SERGEANT} doesn&apos;t push. &quot;Fine. Your business. Just do your job.&quot; They walk off. You&apos;ve got secrets. That&apos;s fine. Everyone does." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_private_text" text="&quot;Rather not talk about before. I&apos;m here now.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_mention_experience_outcome" text="&quot;Did you now.&quot; {SERGEANT}&apos;s tone is flat. &quot;And yet here you are, starting over.&quot; The implication hangs in the air. Maybe that wasn&apos;t the right thing to say." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_mention_experience_text" text="&quot;Served three years under Lord {PREVIOUS_LORD}. I know how a squad works.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_professional_outcome" text="{SERGEANT} nods slowly. &quot;Experienced, are you? Good. Less hand-holding.&quot; They point toward the supply wagons. &quot;Gear check in an hour. Don&apos;t be late.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_professional_text" text="&quot;I know the work. Point me at it.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_quiet_outcome" text="{SERGEANT} accepts your silence for what it is — a professional who doesn&apos;t need the speech. &quot;Tent line. Dawn. Don&apos;t make me come find you.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_quiet_text" text="Just nod. You know the drill." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_respectful_outcome" text="A hint of approval. They&apos;ve dealt with transfers who brought baggage. You&apos;re not going to be one of those. &quot;Good. Find a spot in the tent line. We march at dawn.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_respectful_text" text="&quot;Understood, {SERGEANT}. Fresh start.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup" text="{SERGEANT} {SERGEANT} looks you over like they&apos;re inspecting a horse they&apos;re not sure about buying.&#xA;&#xA;&quot;{PLAYER_NAME}, is it? You&apos;re with the squad now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.&quot;&#xA;&#xA;The rest of the squad watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.&#xA;&#xA;&quot;Understood?&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup_first_time" text="{SERGEANT} {SERGEANT} looks you over like they&apos;re inspecting a horse they&apos;re not sure about buying.&#xA;&#xA;&quot;{PLAYER_NAME}, is it? You&apos;re with the squad now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.&quot;&#xA;&#xA;The rest of the squad watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.&#xA;&#xA;&quot;Understood?&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup_return" text="Back in harness. The smell of camp, the sound of soldiers, the weight of a soldier&apos;s life settling back onto your shoulders.&#xA;&#xA;{SERGEANT} {SERGEANT} looks you over — and pauses. They see it. The way you stand. The way you&apos;re already scanning the camp, reading the layout.&#xA;&#xA;&quot;Served before, have you?&quot;&#xA;&#xA;The squad watches with new interest. A veteran returning to the ranks. That&apos;s either wisdom or desperation." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup_transfer" text="Another lord, another squad. You know how this goes.&#xA;&#xA;{SERGEANT} {SERGEANT} looks you over. They&apos;ve seen transfers before too. &quot;You&apos;re with the squad now. I don&apos;t care who you served before or what you did there. Here, you prove yourself fresh.&quot;&#xA;&#xA;The squad watches. Sizing you up. Wondering if you&apos;re an asset or a liability." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_title" text="Meeting Your Squad" />
+
+    <!-- inf_train_march -->
+    <string id="ll_evt_inf_train_march_opt_help_stragglers_keep_up_outcome" text="You carry it out." />
+    <string id="ll_evt_inf_train_march_opt_help_stragglers_keep_up_text" text="Help stragglers keep up" />
+    <string id="ll_evt_inf_train_march_opt_match_the_pace_endure_outcome" text="You carry it out." />
+    <string id="ll_evt_inf_train_march_opt_match_the_pace_endure_text" text="Match the pace, endure" />
+    <string id="ll_evt_inf_train_march_opt_pace_yourself_smart_conserve_ene_outcome" text="You carry it out." />
+    <string id="ll_evt_inf_train_march_opt_pace_yourself_smart_conserve_ene_text" text="Pace yourself smart, conserve energy" />
+    <string id="ll_evt_inf_train_march_opt_push_ahead_set_the_pace_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_inf_train_march_opt_push_ahead_set_the_pace_text" text="Push ahead, set the pace" />
+    <string id="ll_evt_inf_train_march_setup" text="Full kit march. {SERGEANT} sets a punishing pace.&#xA;&#xA;&quot;Any army can fight. Winners can fight after a hard march.&quot;" />
+    <string id="ll_evt_inf_train_march_title" text="March Conditioning" />
+
+    <!-- inf_train_shield_wall -->
+    <string id="ll_evt_inf_train_shield_wall_opt_focus_on_footwork_and_positionin_outcome" text="You carry it out." />
+    <string id="ll_evt_inf_train_shield_wall_opt_focus_on_footwork_and_positionin_text" text="Focus on footwork and positioning" />
+    <string id="ll_evt_inf_train_shield_wall_opt_help_the_weaker_soldiers_hold_outcome" text="You carry it out." />
+    <string id="ll_evt_inf_train_shield_wall_opt_help_the_weaker_soldiers_hold_text" text="Help the weaker soldiers hold" />
+    <string id="ll_evt_inf_train_shield_wall_opt_hold_the_line_no_breaks_text" text="Hold the line, no breaks" />
+    <string id="ll_evt_inf_train_shield_wall_opt_push_to_the_front_take_more_hits_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_inf_train_shield_wall_opt_push_to_the_front_take_more_hits_text" text="Push to the front, take more hits" />
+    <string id="ll_evt_inf_train_shield_wall_setup" text="{SERGEANT_NAME} forms up the squad. &quot;Shield wall! Tight formation! I want to hear those shields lock!&quot;&#xA;&#xA;The drill is brutal — hours holding the wall, taking practice blows, advancing as one." />
+    <string id="ll_evt_inf_train_shield_wall_title" text="Shield Wall Drill" />
+
+    <!-- inf_train_sparring -->
+    <string id="ll_evt_inf_train_sparring_opt_challenge_veteran_1_name_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_inf_train_sparring_opt_challenge_veteran_1_name_text" text="Challenge {VETERAN_1_NAME}" />
+    <string id="ll_evt_inf_train_sparring_opt_fight_hard_don_t_hold_back_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_inf_train_sparring_opt_fight_hard_don_t_hold_back_text" text="Fight hard, don&apos;t hold back" />
+    <string id="ll_evt_inf_train_sparring_opt_spar_carefully_focus_on_techniqu_outcome" text="You carry it out." />
+    <string id="ll_evt_inf_train_sparring_opt_spar_carefully_focus_on_techniqu_text" text="Spar carefully, focus on technique" />
+    <string id="ll_evt_inf_train_sparring_opt_watch_and_learn_spar_later_outcome" text="You carry it out." />
+    <string id="ll_evt_inf_train_sparring_opt_watch_and_learn_spar_later_text" text="Watch and learn, spar later" />
+    <string id="ll_evt_inf_train_sparring_setup" text="A circle forms near the cook fires. Wooden weapons, real bruises. &#xA;&#xA;{VETERAN_1_NAME} cracks their knuckles. &quot;Who&apos;s first?&quot;" />
+    <string id="ll_evt_inf_train_sparring_title" text="Sparring Circle" />
+
+    <!-- inf_train_twohanded -->
+    <string id="ll_evt_inf_train_twohanded_opt_focus_on_defensive_recovery_outcome" text="You carry it out." />
+    <string id="ll_evt_inf_train_twohanded_opt_focus_on_defensive_recovery_text" text="Focus on defensive recovery" />
+    <string id="ll_evt_inf_train_twohanded_opt_partner_drill_strike_and_counter_outcome" text="You carry it out." />
+    <string id="ll_evt_inf_train_twohanded_opt_partner_drill_strike_and_counter_text" text="Partner drill — strike and counter" />
+    <string id="ll_evt_inf_train_twohanded_opt_practice_basic_forms_outcome" text="You carry it out." />
+    <string id="ll_evt_inf_train_twohanded_opt_practice_basic_forms_text" text="Practice basic forms" />
+    <string id="ll_evt_inf_train_twohanded_opt_work_on_power_strikes_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_inf_train_twohanded_opt_work_on_power_strikes_text" text="Work on power strikes" />
+    <string id="ll_evt_inf_train_twohanded_setup" text="{SERGEANT} holds up a training greatsword. &quot;Who thinks they can handle this? Real fighters, not show-offs.&quot;&#xA;&#xA;Two-handed work needs space, timing, and strength." />
+    <string id="ll_evt_inf_train_twohanded_title" text="Two-Handed Weapons Drill" />
+
+    <!-- squad_bonded -->
+    <string id="ll_evt_lance_bonded_opt_clean_outcome" text="&quot;Good.&quot; {SERGEANT_NAME} looks relieved. &quot;Keep it that way.&quot; They didn&apos;t have to warn you. They did anyway. That means something." />
+    <string id="ll_evt_lance_bonded_opt_clean_text" text="&quot;I&apos;m clean. But thanks for the warning.&quot;" />
+    <string id="ll_evt_lance_bonded_opt_grateful_outcome" text="{SERGEANT_NAME} nods. &quot;Just don&apos;t make me regret it.&quot; You won&apos;t. This is what a squad is supposed to be — watching each other&apos;s backs. Even when the enemy wears the same uniform." />
+    <string id="ll_evt_lance_bonded_opt_grateful_text" text="&quot;I appreciate this. More than you know.&quot;" />
+    <string id="ll_evt_lance_bonded_opt_share_outcome" text="{SERGEANT_NAME} considers. &quot;I&apos;ll handle it. Quietly.&quot; They move off to warn the others. You&apos;re not the only one they&apos;re protecting. But you were first. That means something too." />
+    <string id="ll_evt_lance_bonded_opt_share_text" text="&quot;Anyone else in the squad need to know?&quot;" />
+    <string id="ll_evt_lance_bonded_opt_warn_others_outcome" text="&quot;You sure?&quot; You nod. Over the next hour, quiet words are exchanged. By morning, the squad is clean. The inspection finds nothing. {SERGEANT_NAME} never gets connected to the warning." />
+    <string id="ll_evt_lance_bonded_opt_warn_others_text" text="&quot;Let me tell the others. Less risk for you.&quot;" />
+    <string id="ll_evt_lance_bonded_setup" text="{SERGEANT_NAME} pulls you aside after weapons inspection. Their voice is barely above a whisper.&#xA;&#xA;&quot;The sergeant&apos;s planning a kit inspection tomorrow. The captain&apos;s hound — looking for contraband, extra rations, anything they can nail someone for.&quot;&#xA;&#xA;They meet your eyes.&#xA;&#xA;&quot;Thought you should know. In case you&apos;ve got anything that needs... relocating.&quot;&#xA;&#xA;This is a warning. The kind you don&apos;t give to just anyone. The kind that could get {SERGEANT_NAME} in serious trouble if anyone found out.&#xA;&#xA;You&apos;re family now. the company protects its own." />
+    <string id="ll_evt_lance_bonded_title" text="Bonded" />
+
+    <!-- squad_isolated -->
+    <string id="ll_evt_lance_isolated_opt_alone_outcome" text="The darkness beyond the firelight is cold. But at least it&apos;s honest. You know where you stand now. Sometimes that&apos;s worth more than false warmth." />
+    <string id="ll_evt_lance_isolated_opt_alone_text" text="Take your food and eat alone. They&apos;ve made their choice." />
+    <string id="ll_evt_lance_isolated_opt_approach_outcome" text="{SOLDIER_NAME} doesn&apos;t welcome you. But they don&apos;t reject you either. A few words. A shared complaint about the food. It&apos;s not much. It&apos;s something." />
+    <string id="ll_evt_lance_isolated_opt_approach_outcome_failure" text="Silence. They wait for you to leave. When you do, the talking resumes. You weren&apos;t part of it. You aren&apos;t now." />
+    <string id="ll_evt_lance_isolated_opt_approach_text" text="Try to join a conversation. Break through the ice." />
+    <string id="ll_evt_lance_isolated_opt_confront_outcome" text="{VETERAN_1_NAME} speaks up. &quot;You know what you did.&quot; An argument follows. Ugly. But at least it&apos;s honest. Grievances aired. Not forgiven, but acknowledged." />
+    <string id="ll_evt_lance_isolated_opt_confront_outcome_failure" text="&quot;Nothing&apos;s going on.&quot; Flat. Final. They&apos;re not even willing to fight with you. That&apos;s worse." />
+    <string id="ll_evt_lance_isolated_opt_confront_text" text="&quot;Someone want to tell me what&apos;s going on?&quot;" />
+    <string id="ll_evt_lance_isolated_opt_leader_outcome" text="They don&apos;t sugarcoat it. &quot;You&apos;ve lost their trust. The way you handled—&quot; they list examples. Each one a small betrayal you barely remember. &quot;You want back in? Start making different choices.&quot; A path forward. Hard, but real." />
+    <string id="ll_evt_lance_isolated_opt_leader_text" text="Find {SERGEANT_NAME}. Ask what happened." />
+    <string id="ll_evt_lance_isolated_setup" text="The fire circle again. But tonight, the gaps around you are wider. Conversations die when you approach. Laughter stops.&#xA;&#xA;{SOLDIER_NAME} doesn&apos;t even look up when you sit down. {VETERAN_1_NAME} finds somewhere else to be. {RECRUIT_NAME} follows them.&#xA;&#xA;{SERGEANT_NAME} watches from across the fire. Measuring. Not intervening.&#xA;&#xA;You&apos;re still part of the company. Technically. But the warmth is gone. You&apos;re a stranger wearing a familiar uniform.&#xA;&#xA;This is what isolation feels like." />
+    <string id="ll_evt_lance_isolated_title" text="Isolated" />
+
+    <!-- squad_sabotage -->
+    <string id="ll_evt_lance_sabotage_opt_confront_outcome" text="You catch {SOLDIER_NAME} smirking. You get in their face. Words are exchanged. Maybe fists. But the message is clear: you&apos;re not a victim." />
+    <string id="ll_evt_lance_sabotage_opt_confront_outcome_failure" text="No one admits anything. No one saw anything. You&apos;re shouting at walls. You look paranoid. Dangerous. They wanted that." />
+    <string id="ll_evt_lance_sabotage_opt_confront_text" text="Find out who did it. Make them answer." />
+    <string id="ll_evt_lance_sabotage_opt_endure_outcome" text="Hours of work restoring your kit. They wanted you angry. They wanted a confrontation they could win. You deny them both. Cold. Professional. They&apos;ll get bored eventually. Or they won&apos;t. Either way, you&apos;re still standing." />
+    <string id="ll_evt_lance_sabotage_opt_endure_text" text="Fix it silently. Don&apos;t give them the satisfaction of reacting." />
+    <string id="ll_evt_lance_sabotage_opt_report_outcome" text="The sergeant listens. Investigates, maybe. &quot;I&apos;ll handle it.&quot; They probably won&apos;t. But it&apos;s on record now. If something happens to you, there&apos;s a trail." />
+    <string id="ll_evt_lance_sabotage_opt_report_text" text="Take it to the sergeant. This is beyond squad politics." />
+    <string id="ll_evt_lance_sabotage_opt_transfer_outcome" text="{SERGEANT_NAME} doesn&apos;t argue. The paperwork goes through. New squad, new people, fresh start. You&apos;re leaving enemies behind. Whether you&apos;re also leaving the problem behind... time will tell." />
+    <string id="ll_evt_lance_sabotage_opt_transfer_text" text="Request reassignment. This squad is done with you." />
+    <string id="ll_evt_lance_sabotage_setup" text="Your kit is wrong.&#xA;&#xA;Nothing obvious — nothing that would fail inspection. But your straps are loosened. Your blade is dull. Your waterskin has a slow leak you didn&apos;t notice until half your water was gone.&#xA;&#xA;Someone did this. Someone in the company.&#xA;&#xA;{SERGEANT_NAME} isn&apos;t going to help. They&apos;re part of this, or they&apos;re looking the other way. Same result.&#xA;&#xA;You&apos;re on your own. In a unit that wants you gone — or worse." />
+    <string id="ll_evt_lance_sabotage_title" text="Sabotage" />
+
+    <!-- squad_trusted -->
+    <string id="ll_evt_lance_trusted_opt_decline_outcome" text="{VETERAN_1_NAME}&apos;s face falls, then hardens. &quot;Right. Forget I asked.&quot; They walk away. You had reasons. Good ones, probably. But something&apos;s broken now." />
+    <string id="ll_evt_lance_trusted_opt_decline_text" text="&quot;Sorry, can&apos;t get involved. Too risky.&quot;" />
+    <string id="ll_evt_lance_trusted_opt_help_outcome" text="Relief floods {VETERAN_1_NAME}&apos;s face. &quot;Tomorrow, by the supply wagons. Just... be there.&quot; You show up. The collector sees they&apos;re not alone. The conversation stays civil. A debt renegotiated, not collected by force." />
+    <string id="ll_evt_lance_trusted_opt_help_text" text="&quot;I&apos;ve got your back. When and where?&quot;" />
+    <string id="ll_evt_lance_trusted_opt_leverage_outcome" text="A long pause. &quot;What kind of favor?&quot; You don&apos;t specify. They agree anyway. Desperate people do desperate things. You&apos;ve got leverage now. Whether that&apos;s worth more than simple friendship... time will tell." />
+    <string id="ll_evt_lance_trusted_opt_leverage_text" text="&quot;I&apos;ll help. But you&apos;ll owe me a favor. A real one.&quot;" />
+    <string id="ll_evt_lance_trusted_opt_money_outcome" text="{VETERAN_1_NAME} hesitates. &quot;Twenty denars. I know it&apos;s a lot—&quot; You hand it over. They stare at the coins like they&apos;re made of gold. &quot;I&apos;ll pay you back. Every copper, I swear.&quot;" />
+    <string id="ll_evt_lance_trusted_opt_money_text" text="&quot;How much do you owe? Maybe I can help directly.&quot;" />
+    <string id="ll_evt_lance_trusted_setup" text="{VETERAN_1_NAME} corners you after the evening meal. They look around, making sure no one&apos;s listening.&#xA;&#xA;&quot;Got a problem, {PLAYER_NAME}. Need help from someone I can trust.&quot; They pause. &quot;That&apos;s you.&quot;&#xA;&#xA;They explain: a debt from before the army. Collector&apos;s coming. If {VETERAN_1_NAME} doesn&apos;t have the coin, things get ugly — for them, maybe for their family back home.&#xA;&#xA;&quot;I&apos;m not asking for money. Just... watch my back when the collector shows. Make sure things stay... civil.&quot;" />
+    <string id="ll_evt_lance_trusted_title" text="Trusted" />
+
+    <!-- medical_complication -->
+    <string id="ll_evt_medical_complication_opt_help_outcome" text="{COMRADE_NAME} half-carries you across camp. The surgeon takes one look and starts working. Treatment is aggressive — and necessary. You&apos;re going to be out for a while. But you&apos;re going to live." />
+    <string id="ll_evt_medical_complication_opt_help_text" text="&quot;Get me to the surgeon.&quot;" />
+    <string id="ll_evt_medical_complication_opt_lance_leader_outcome" text="{SERGEANT_NAME} arrives, assesses, takes charge. &quot;Surgeon. Now. No arguments.&quot; They organize a carry. The surgeon isn&apos;t gentle, but they&apos;re effective. {SERGEANT_NAME} checks on you twice. That means something." />
+    <string id="ll_evt_medical_complication_opt_lance_leader_text" text="&quot;Get {SERGEANT_NAME}. They&apos;ll know what to do.&quot;" />
+    <string id="ll_evt_medical_complication_opt_medicine_outcome" text="Whatever you had stashed works. The fever eases. Not cured, but stable. {COMRADE_NAME} watches through the night. By dawn, you&apos;re coherent again." />
+    <string id="ll_evt_medical_complication_opt_medicine_outcome_failure" text="Wrong medicine. Or not enough. The fever climbs. You don&apos;t remember {COMRADE_NAME} carrying you to the surgeon. You&apos;re told about it later." />
+    <string id="ll_evt_medical_complication_opt_medicine_text" text="&quot;There&apos;s medicine in my kit. Help me take it.&quot;" />
+    <string id="ll_evt_medical_complication_opt_refuse_outcome" text="Somehow, impossibly, you ride it out. The fever breaks by morning. You&apos;re weak as a kitten, but alive. The surgeon will call it a miracle." />
+    <string id="ll_evt_medical_complication_opt_refuse_outcome_failure" text="You&apos;re not fine. The fever spikes. You lose consciousness. When you wake, you&apos;re in the surgeon&apos;s tent anyway — in worse shape than before." />
+    <string id="ll_evt_medical_complication_opt_refuse_text" text="&quot;I&apos;m fine. Just need water.&quot;" />
+    <string id="ll_evt_medical_complication_setup" text="Fever hits in the night.&#xA;&#xA;The {CONDITION_TYPE} has become something else — something worse. {COMPLICATION_NAME}, the surgeon would probably call it. Infection, inflammation, your body turning against itself.&#xA;&#xA;You wake drenched in sweat, shaking. {COMRADE_NAME} is there, looking worried.&#xA;&#xA;&quot;You&apos;re burning up. Can you walk?&quot;&#xA;&#xA;Walking sounds impossible. The surgeon&apos;s tent sounds very far away." />
+    <string id="ll_evt_medical_complication_title" text="Complication" />
+
+    <!-- medical_emergency -->
+    <string id="ll_evt_medical_emergency_opt_fight_outcome" text="Sheer will keeps you present. You hear the surgeon&apos;s instructions. Feel them working. Pain means alive. You cling to the pain." />
+    <string id="ll_evt_medical_emergency_opt_fight_outcome_failure" text="Darkness takes you anyway. When you wake, it&apos;s over. You don&apos;t know how long you were out." />
+    <string id="ll_evt_medical_emergency_opt_fight_text" text="Fight to stay conscious. You need to... something." />
+    <string id="ll_evt_medical_emergency_opt_speak_outcome" text="Words come out. Maybe coherent. {SERGEANT_NAME} nods. &quot;We know. Rest now.&quot; You said what needed saying." />
+    <string id="ll_evt_medical_emergency_opt_speak_outcome_failure" text="Just sounds. No words. Then nothing." />
+    <string id="ll_evt_medical_emergency_opt_speak_text" text="Try to tell them something. Important." />
+    <string id="ll_evt_medical_emergency_opt_surrender_outcome" text="You stop fighting. The darkness is almost peaceful. When you wake, it&apos;s to the surgeon&apos;s tent, the smell of herbs, and {COMRADE_NAME} dozing in a chair beside you. Still here." />
+    <string id="ll_evt_medical_emergency_opt_surrender_text" text="Let go. Trust them to fix this." />
+    <string id="ll_evt_medical_emergency_setup" text="You collapse.&#xA;&#xA;One moment you&apos;re standing, the next you&apos;re on the ground. Voices around you, distant and echoey. Someone&apos;s shouting for the surgeon. Someone else is pressing something against the {CONDITION_LOCATION}.&#xA;&#xA;The sky is very bright. Or very dark. Hard to tell.&#xA;&#xA;{SERGEANT_NAME}&apos;s face swims into view. Their mouth moves. The words don&apos;t reach you.&#xA;&#xA;Everything goes sideways." />
+    <string id="ll_evt_medical_emergency_title" text="Emergency" />
+
+    <!-- medical_onset -->
+    <string id="ll_evt_medical_onset_opt_herbal_outcome" text="Tastes terrible. Works anyway. Functional by morning." />
+    <string id="ll_evt_medical_onset_opt_herbal_outcome_failure" text="Herbs don&apos;t help. Still aching. Needed a professional." />
+    <string id="ll_evt_medical_onset_opt_herbal_text" text="&quot;Got herbs in my kit.&quot;" />
+    <string id="ll_evt_medical_onset_opt_push_outcome" text="You push through. It fades. Body knows what it&apos;s doing." />
+    <string id="ll_evt_medical_onset_opt_push_outcome_failure" text="Doesn&apos;t fade. Worse by evening. Should&apos;ve listened." />
+    <string id="ll_evt_medical_onset_opt_push_text" text="&quot;I&apos;m fine. Back to it.&quot;" />
+    <string id="ll_evt_medical_onset_opt_rest_outcome" text="You sleep hard that night. By morning, it&apos;s fading. Maybe nothing after all." />
+    <string id="ll_evt_medical_onset_opt_rest_text" text="&quot;Just tired. Need sleep.&quot;" />
+    <string id="ll_evt_medical_onset_opt_surgeon_outcome" text="The surgeon looks you over. &quot;Caught it early. Smart.&quot; Day&apos;s treatment. Back to normal." />
+    <string id="ll_evt_medical_onset_opt_surgeon_text" text="&quot;Should see the surgeon.&quot;" />
+    <string id="ll_evt_medical_onset_setup" text="Something&apos;s wrong.&#xA;&#xA;Starts small. Fatigue that won&apos;t lift. An ache that wasn&apos;t there yesterday. You tell yourself it&apos;s nothing. The march. Bad sleep. The usual.&#xA;&#xA;But it&apos;s not lifting.&#xA;&#xA;{COMRADE_NAME} catches you wincing. &quot;You alright?&quot;" />
+    <string id="ll_evt_medical_onset_title" text="Feeling Unwell" />
+
+    <!-- medical_worsening -->
+    <string id="ll_evt_medical_worsening_opt_herbs_outcome" text="{REMEDY_NAME} does the trick. The symptoms ease. Not cured, but manageable. And you didn&apos;t have to explain anything to the surgeon." />
+    <string id="ll_evt_medical_worsening_opt_herbs_outcome_failure" text="The remedy does nothing. Or makes it worse. You&apos;ve wasted time you didn&apos;t have." />
+    <string id="ll_evt_medical_worsening_opt_herbs_text" text="Find some herbs, treat yourself." />
+    <string id="ll_evt_medical_worsening_opt_push_outcome" text="You power through. The symptoms peak, then start to fade. Natural recovery, or maybe just stubbornness. Either way, you&apos;re still standing." />
+    <string id="ll_evt_medical_worsening_opt_push_outcome_failure" text="Your body disagrees. The {SYMPTOM_1} spikes. You stagger. {COMRADE_NAME} catches you. &quot;Get the surgeon. Now.&quot;" />
+    <string id="ll_evt_medical_worsening_opt_push_text" text="Keep pushing. It&apos;s not that bad." />
+    <string id="ll_evt_medical_worsening_opt_rest_outcome" text="You scale back. Light duties only. Sleep when you can. It&apos;s not the surgeon&apos;s tent, but it&apos;s not reckless either. Slow recovery begins." />
+    <string id="ll_evt_medical_worsening_opt_rest_text" text="Take it easy. Rest without formal treatment." />
+    <string id="ll_evt_medical_worsening_opt_surgeon_outcome" text="The surgeon takes one look and scowls. &quot;Why didn&apos;t you come sooner?&quot; Treatment begins. It&apos;s not pleasant, but it&apos;s working. A few days rest and you&apos;ll be functional again. Should&apos;ve done this earlier." />
+    <string id="ll_evt_medical_worsening_opt_surgeon_text" text="Finally give in. See the surgeon." />
+    <string id="ll_evt_medical_worsening_setup" text="It&apos;s worse today.&#xA;&#xA;What started as a manageable {CONDITION_TYPE} has become something harder to ignore. The {SYMPTOM_1} is constant now. {SYMPTOM_2} makes sleep difficult.&#xA;&#xA;You&apos;ve been pushing through. The army doesn&apos;t stop for one soldier&apos;s discomfort. But your body is sending messages you can&apos;t keep ignoring.&#xA;&#xA;{COMRADE_NAME} notices you wincing. &quot;You should see the surgeon.&quot;&#xA;&#xA;Maybe they&apos;re right." />
+    <string id="ll_evt_medical_worsening_title" text="Worsening" />
+
+    <!-- mission_collect_debts -->
+    <string id="ll_evt_mission_debts_opt_aggressive" text="Collect aggressively" />
+    <string id="ll_evt_mission_debts_opt_aggressive_outcome" text="You don&apos;t ask twice. A firm grip, a hard stare, a mention of consequences. They pay. Quickly." />
+    <string id="ll_evt_mission_debts_opt_decline" text="Decline" />
+    <string id="ll_evt_mission_debts_opt_decline_outcome" text="You shake your head. Someone else will do it." />
+    <string id="ll_evt_mission_debts_opt_polite" text="Collect politely" />
+    <string id="ll_evt_mission_debts_opt_polite_outcome" text="You knock on doors. Remind them of obligations. Most pay — eventually. The lord gets their coin, and you get noticed." />
+    <string id="ll_evt_mission_debts_opt_skim" text="Skim some for yourself" />
+    <string id="ll_evt_mission_debts_opt_skim_outcome" text="You collect the debts. Most of it goes to the lord. A portion finds its way into your pocket. No one&apos;s counting that closely." />
+    <string id="ll_evt_mission_debts_setup" text="The lord is owed money. Merchants, minor nobles, old debts gathering dust. Someone needs to collect.&#xA;&#xA;{SERGEANT} mentions they&apos;re looking for volunteers. &quot;Delicate work. Requires... persuasion.&quot;&#xA;&#xA;Do this right, and the lord remembers. Maybe pay comes faster." />
+    <string id="ll_evt_mission_debts_title" text="Collect Debts" />
+
+    <!-- mission_escort_merchant -->
+    <string id="ll_evt_mission_escort_opt_decline" text="Decline" />
+    <string id="ll_evt_mission_escort_opt_decline_outcome" text="You have other duties. Someone else takes the job." />
+    <string id="ll_evt_mission_escort_opt_volunteer" text="Volunteer for the escort" />
+    <string id="ll_evt_mission_escort_opt_volunteer_outcome" text="The merchant arrives safely. Goods delivered. The lord nods when they hear your name.&#xA;&#xA;&quot;Good work. I won&apos;t forget.&quot;" />
+    <string id="ll_evt_mission_escort_setup" text="A merchant owes the lord goods, not gold. Cloth, iron, supplies. They&apos;re willing to deliver — but the roads are dangerous.&#xA;&#xA;&quot;Need an escort,&quot; {SERGEANT} says. &quot;Three days, maybe five. Volunteer, and the lord owes you a favor.&quot;" />
+    <string id="ll_evt_mission_escort_title" text="Escort Merchant" />
+
+    <!-- mission_negotiate_loan -->
+    <string id="ll_evt_mission_loan_opt_charm" text="Use charm and persuasion" />
+    <string id="ll_evt_mission_loan_opt_charm_outcome" text="Words flow. You paint pictures of future profits, of stability, of opportunity. The moneylender hesitates... then nods.&#xA;&#xA;&quot;Very well. Tell your lord they have their loan.&quot;" />
+    <string id="ll_evt_mission_loan_opt_decline" text="Decline" />
+    <string id="ll_evt_mission_loan_opt_decline_outcome" text="The lord&apos;s finances aren&apos;t your problem. You walk away." />
+    <string id="ll_evt_mission_loan_opt_intimidate" text="Use intimidation" />
+    <string id="ll_evt_mission_loan_opt_intimidate_outcome" text="You lean close. Mention certain... consequences. The moneylender&apos;s face goes pale.&#xA;&#xA;&quot;Fine. Fine! Take the money. Just... leave.&quot;" />
+    <string id="ll_evt_mission_loan_opt_savings" text="Offer your own savings" />
+    <string id="ll_evt_mission_loan_opt_savings_outcome" text="You hand over your coin. Every denar you&apos;ve saved. The lord stares.&#xA;&#xA;&quot;I... will not forget this. You have my word.&quot;" />
+    <string id="ll_evt_mission_loan_setup" text="The lord needs coin. Badly. A moneylender in town might help — but they need convincing.&#xA;&#xA;&quot;Your reputation precedes you,&quot; {SERGEANT} says. &quot;The lord thinks you could tip the scales. Interested?&quot;" />
+    <string id="ll_evt_mission_loan_title" text="Negotiate a Loan" />
+
+    <!-- mission_raid_enemy -->
+    <string id="ll_evt_mission_raid_opt_decline" text="Decline" />
+    <string id="ll_evt_mission_raid_opt_decline_outcome" text="You&apos;ve seen enough battles. This one isn&apos;t worth the risk. Let someone else play hero." />
+    <string id="ll_evt_mission_raid_opt_volunteer" text="Volunteer for the raid" />
+    <string id="ll_evt_mission_raid_opt_volunteer_outcome" text="The convoy never saw you coming. By the time they reacted, it was over.&#xA;&#xA;Wagons full of supplies. Coin. Weapons. Enough to pay the army for a month.&#xA;&#xA;The lord claps you on the shoulder. &quot;This changes things. Well done.&quot;" />
+    <string id="ll_evt_mission_raid_setup" text="The lord&apos;s broke. But the enemy isn&apos;t.&#xA;&#xA;&quot;Supply convoy,&quot; {SERGEANT} says quietly. &quot;Poorly guarded. We hit it fast, take what we can, disappear before their army responds.&quot;&#xA;&#xA;Dangerous. But profitable. And the lord would owe you." />
+    <string id="ll_evt_mission_raid_title" text="Volunteer for Raid" />
+
+    <!-- mutiny_aftermath_success -->
+    <string id="ll_evt_mutiny_after_opt_command" text="Take command of the army" />
+    <string id="ll_evt_mutiny_after_opt_command_outcome" text="&quot;The army needs a leader,&quot; you say. &quot;I&apos;m taking command.&quot;&#xA;&#xA;{VETERAN_1_NAME} stares. Then nods slowly. &quot;You&apos;ve got the stones for it. Let&apos;s see if you&apos;ve got the brains.&quot;&#xA;&#xA;The soldiers fall in. For now, they follow you.&#xA;&#xA;But keeping command is harder than taking it." />
+    <string id="ll_evt_mutiny_after_opt_execute" text="Execute the lord" />
+    <string id="ll_evt_mutiny_after_opt_execute_outcome" text="&quot;Dead men tell no tales,&quot; you say.&#xA;&#xA;The blade falls. {LORD_NAME} dies with a curse on their lips.&#xA;&#xA;You&apos;re a murderer now. A kingslayer. There&apos;s no going back.&#xA;&#xA;The faction will hunt you forever." />
+    <string id="ll_evt_mutiny_after_opt_ransom" text="Ransom the lord" />
+    <string id="ll_evt_mutiny_after_opt_ransom_outcome" text="&quot;They&apos;re worth more alive,&quot; you say. &quot;Send word to their family.&quot;&#xA;&#xA;A week later, a chest of gold arrives. {LORD_NAME} goes free — humiliated but breathing.&#xA;&#xA;The money gets split. You take your share and disappear." />
+    <string id="ll_evt_mutiny_after_opt_release" text="Release the lord" />
+    <string id="ll_evt_mutiny_after_opt_release_outcome" text="&quot;Let them go,&quot; you say. &quot;We&apos;re not murderers.&quot;&#xA;&#xA;{LORD_NAME} stares at you with undisguised hatred. &quot;I will not forget this.&quot;&#xA;&#xA;&quot;Neither will I,&quot; you reply.&#xA;&#xA;They ride away. The army scatters. You&apos;re free — but you&apos;ve made an enemy for life." />
+    <string id="ll_evt_mutiny_after_setup" text="Dawn breaks over a changed world.&#xA;&#xA;{LORD_NAME} is bound. Their loyalists are dead or scattered. The army — what&apos;s left of it — looks to {VETERAN_1_NAME}. And to you.&#xA;&#xA;&quot;We did it,&quot; {VETERAN_1_NAME} says quietly. &quot;Now what?&quot;&#xA;&#xA;The soldiers are already arguing. Some want to kill the lord. Others want to ransom them. Some just want to take what they can and scatter.&#xA;&#xA;What do you want?" />
+    <string id="ll_evt_mutiny_after_title" text="What Now?" />
+
+    <!-- mutiny_resolution -->
+    <string id="ll_evt_mutiny_res_opt_flee" text="Use the chaos to escape" />
+    <string id="ll_evt_mutiny_res_opt_flee_outcome" text="Everyone&apos;s focused on the fighting. No one&apos;s watching the perimeter.&#xA;&#xA;You grab your kit and vanish into the night. By morning, you&apos;re miles away. Free.&#xA;&#xA;Let them sort out their own mess." />
+    <string id="ll_evt_mutiny_res_opt_hold" text="Hold back, let others lead" />
+    <string id="ll_evt_mutiny_res_opt_hold_outcome" text="You hang back. Let the eager ones take the risks.&#xA;&#xA;The assault succeeds without you at the front. {VETERAN_1_NAME} gives you a look — they noticed. But you&apos;re alive, and that&apos;s what matters." />
+    <string id="ll_evt_mutiny_res_opt_storm" text="Storm the lord&apos;s tent" />
+    <string id="ll_evt_mutiny_res_opt_storm_outcome" text="You charge. The guards fall. The tent flap tears open.&#xA;&#xA;{LORD_NAME} stands there, sword in hand. &quot;Traitors!&quot; they snarl.&#xA;&#xA;The fight is brutal but brief. When it&apos;s over, the lord is bound. The army is yours.&#xA;&#xA;For now." />
+    <string id="ll_evt_mutiny_res_opt_switch" text="Switch sides — warn the lord" />
+    <string id="ll_evt_mutiny_res_opt_switch_outcome" text="You break from the mob. Sprint toward the lord&apos;s tent.&#xA;&#xA;&quot;AMBUSH!&quot; you scream. &quot;They&apos;re coming!&quot;&#xA;&#xA;The guards react instantly. When the mutineers arrive, they meet organized resistance. The fight is bloody, but the lord survives.&#xA;&#xA;You&apos;ve made enemies tonight. But powerful friends too." />
+    <string id="ll_evt_mutiny_resolution_setup" text="The night erupts.&#xA;&#xA;Torches. Shouting. Steel on steel. The mutineers surge toward the officer&apos;s tents. Guards fall back, outnumbered.&#xA;&#xA;You&apos;re in the thick of it now. {VETERAN_1_NAME} is beside you, blade drawn. &quot;No turning back,&quot; they say. &quot;We finish this.&quot;&#xA;&#xA;Ahead, you see {LORD_NAME}&apos;s tent. Guards are forming a last line of defense." />
+    <string id="ll_evt_mutiny_resolution_title" text="The Mutiny" />
+
+    <!-- mutiny_arrested -->
+    <string id="ll_evt_mutiny_trial_opt_beg" text="Beg for mercy" />
+    <string id="ll_evt_mutiny_trial_opt_beg_outcome" text="&quot;Please,&quot; you say. &quot;I was swept up in it. I never wanted... please.&quot;&#xA;&#xA;{LORD_NAME} stares at you for a long moment. &quot;Pathetic,&quot; they say. &quot;But I need soldiers more than corpses.&quot;&#xA;&#xA;They cut your bonds. &quot;You live. But you&apos;re on probation. One wrong step...&quot;&#xA;&#xA;You crawl away, alive. Barely." />
+    <string id="ll_evt_mutiny_trial_opt_blame" text="Blame the ringleaders" />
+    <string id="ll_evt_mutiny_trial_opt_blame_outcome" text="&quot;It was {VETERAN_1_NAME},&quot; you say quickly. &quot;They threatened me. Said they&apos;d kill me if I didn&apos;t join. I never wanted this.&quot;&#xA;&#xA;{LORD_NAME}&apos;s eyes narrow. They don&apos;t fully believe you. But the ringleaders are already dead, and your story can&apos;t be disproven.&#xA;&#xA;&quot;Flogging,&quot; they say finally. &quot;Fifty lashes. Then back to duty.&quot;" />
+    <string id="ll_evt_mutiny_trial_opt_defiant" text="Stand defiant" />
+    <string id="ll_evt_mutiny_trial_opt_defiant_outcome" text="&quot;We were owed,&quot; you say. &quot;Every man here was owed. You didn&apos;t pay. We took what was due.&quot;&#xA;&#xA;{LORD_NAME}&apos;s face darkens. &quot;Then you die for your principles.&quot;&#xA;&#xA;The rope. The drop. The end.&#xA;&#xA;But in the crowd, soldiers whisper your name. They remember." />
+    <string id="ll_evt_mutiny_trial_opt_service" text="Offer valuable service" />
+    <string id="ll_evt_mutiny_trial_opt_service_outcome" text="&quot;I know things,&quot; you say quickly. &quot;I know who else was planning to join. I know where they hid the stolen supplies. I can be useful.&quot;&#xA;&#xA;{LORD_NAME} pauses. &quot;An informant?&quot;&#xA;&#xA;&quot;A loyal servant,&quot; you correct. &quot;Who made one mistake.&quot;&#xA;&#xA;They cut your bonds. &quot;Prove your worth. Names. Now.&quot;&#xA;&#xA;You talk. Others hang. You live." />
+    <string id="ll_evt_mutiny_trial_setup" text="You wake in chains.&#xA;&#xA;The mutiny failed. {VETERAN_1_NAME} is dead. The ringleaders are hanging from the nearest tree. And you&apos;re next.&#xA;&#xA;{LORD_NAME} stands before you, flanked by guards. Their face is cold.&#xA;&#xA;&quot;Mutineer,&quot; they say. &quot;You have one chance to speak. Make it count.&quot;&#xA;&#xA;Your life hangs by a thread." />
+    <string id="ll_evt_mutiny_trial_title" text="The Trial" />
+
+    <!-- nav_train_boarding -->
+    <string id="ll_evt_nav_train_boarding_opt_focus_on_defending_our_deck_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_boarding_opt_focus_on_defending_our_deck_text" text="Focus on defending our deck" />
+    <string id="ll_evt_nav_train_boarding_opt_full_mock_boarding_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_nav_train_boarding_opt_full_mock_boarding_text" text="Full mock boarding" />
+    <string id="ll_evt_nav_train_boarding_opt_lead_a_boarding_team_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_nav_train_boarding_opt_lead_a_boarding_team_text" text="Lead a boarding team" />
+    <string id="ll_evt_nav_train_boarding_opt_practice_rope_work_and_swings_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_boarding_opt_practice_rope_work_and_swings_text" text="Practice rope work and swings" />
+    <string id="ll_evt_nav_train_boarding_setup" text="{CAPTAIN_NAME} wants the crew sharp for boarding action. Ropes, hooks, blades, chaos.&#xA;&#xA;&quot;When we hit their deck, you have seconds. Make them count.&quot;" />
+    <string id="ll_evt_nav_train_boarding_title" text="Boarding Drill" />
+
+    <!-- nav_train_navigation -->
+    <string id="ll_evt_nav_train_navigation_opt_ask_about_unusual_situations_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_navigation_opt_ask_about_unusual_situations_text" text="Ask about unusual situations" />
+    <string id="ll_evt_nav_train_navigation_opt_calculate_our_current_position_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_nav_train_navigation_opt_calculate_our_current_position_text" text="Calculate our current position" />
+    <string id="ll_evt_nav_train_navigation_opt_practice_dead_reckoning_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_navigation_opt_practice_dead_reckoning_text" text="Practice dead reckoning" />
+    <string id="ll_evt_nav_train_navigation_opt_study_star_positions_and_charts_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_navigation_opt_study_star_positions_and_charts_text" text="Study star positions and charts" />
+    <string id="ll_evt_nav_train_navigation_setup" text="Clear night. {NAVIGATOR_NAME} spreads the charts on deck, points at stars.&#xA;&#xA;&quot;A sailor who can&apos;t navigate is cargo.&quot;" />
+    <string id="ll_evt_nav_train_navigation_title" text="Navigation Lesson" />
+
+    <!-- nav_train_rigging -->
+    <string id="ll_evt_nav_train_rigging_opt_climb_and_work_steadily_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_rigging_opt_climb_and_work_steadily_text" text="Climb and work steadily" />
+    <string id="ll_evt_nav_train_rigging_opt_help_newer_sailors_learn_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_rigging_opt_help_newer_sailors_learn_text" text="Help newer sailors learn" />
+    <string id="ll_evt_nav_train_rigging_opt_practice_knots_and_line_work_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_rigging_opt_practice_knots_and_line_work_text" text="Practice knots and line work" />
+    <string id="ll_evt_nav_train_rigging_opt_race_to_the_top_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_nav_train_rigging_opt_race_to_the_top_text" text="Race to the top" />
+    <string id="ll_evt_nav_train_rigging_setup" text="{BOATSWAIN_NAME} points at the mast. &quot;Up. Now. Don&apos;t fall.&quot;&#xA;&#xA;Working the rigging is half the job. The other half is surviving it." />
+    <string id="ll_evt_nav_train_rigging_title" text="Rigging Practice" />
+
+    <!-- nav_train_storm_drill -->
+    <string id="ll_evt_nav_train_storm_drill_opt_coordinate_crew_positions_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_storm_drill_opt_coordinate_crew_positions_text" text="Coordinate crew positions" />
+    <string id="ll_evt_nav_train_storm_drill_opt_handle_emergency_rigging_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_nav_train_storm_drill_opt_handle_emergency_rigging_text" text="Handle emergency rigging" />
+    <string id="ll_evt_nav_train_storm_drill_opt_man_the_pumps_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_storm_drill_opt_man_the_pumps_text" text="Man the pumps" />
+    <string id="ll_evt_nav_train_storm_drill_opt_secure_cargo_below_outcome" text="You carry it out." />
+    <string id="ll_evt_nav_train_storm_drill_opt_secure_cargo_below_text" text="Secure cargo below" />
+    <string id="ll_evt_nav_train_storm_drill_setup" text="{CAPTAIN_NAME} calls storm drill. Everyone has a job when the sea gets angry.&#xA;&#xA;&quot;When the real storm hits, you won&apos;t have time to think.&quot;" />
+    <string id="ll_evt_nav_train_storm_drill_title" text="Storm Drill" />
+
+    <!-- pay_tension_confrontation -->
+    <string id="ll_evt_pay_confrontation_opt_calm" text="Talk them down" />
+    <string id="ll_evt_pay_confrontation_opt_calm_outcome" text="&quot;This won&apos;t help,&quot; you say. &quot;They&apos;ll call it mutiny. We&apos;ll hang.&quot;&#xA;&#xA;The anger deflates. They know you&apos;re right. But they won&apos;t forget you sided with the lords." />
+    <string id="ll_evt_pay_confrontation_opt_join" text="Join the delegation" />
+    <string id="ll_evt_pay_confrontation_opt_join_outcome" text="The paymaster sees you coming. Forty soldiers, armed, angry. He goes pale.&#xA;&#xA;&quot;The coin&apos;s coming,&quot; he stammers. &quot;Three days. I swear it.&quot;&#xA;&#xA;Three days. You&apos;ll hold him to that." />
+    <string id="ll_evt_pay_confrontation_opt_lead" text="Lead the delegation" />
+    <string id="ll_evt_pay_confrontation_opt_lead_outcome" text="You step to the front. Your voice carries: &quot;We&apos;ve bled for this lord. We&apos;ve earned our pay. Where is it?&quot;&#xA;&#xA;The paymaster trembles. &quot;Three days! I promise!&quot;&#xA;&#xA;You&apos;ve made yourself a leader. For better or worse." />
+    <string id="ll_evt_pay_confrontation_opt_out" text="Stay out of it" />
+    <string id="ll_evt_pay_confrontation_opt_out_outcome" text="You find somewhere else to be. Whatever happens, you weren&apos;t part of it." />
+    <string id="ll_evt_pay_confrontation_opt_warn" text="Warn the officers" />
+    <string id="ll_evt_pay_confrontation_opt_warn_outcome" text="You slip away to the officer&apos;s tent. By morning, the ringleaders are in chains.&#xA;&#xA;{VETERAN_1_NAME} looks at you with murder in their eyes as they&apos;re dragged past. You&apos;ve chosen your side." />
+    <string id="ll_evt_pay_confrontation_setup" text="{VETERAN_1_NAME} is gathering soldiers. Quietly, but with purpose.&#xA;&#xA;&quot;We&apos;re going to the paymaster. All of us. Demand what we&apos;re owed.&quot; They look at you. &quot;You coming?&quot;&#xA;&#xA;It&apos;s not mutiny. Not yet. Just soldiers asking for what they earned. But it&apos;s close to the line." />
+    <string id="ll_evt_pay_confrontation_title" text="Pay Delegation" />
+
+    <!-- pay_tension_grumbling -->
+    <string id="ll_evt_pay_grumbling_opt_defend" text="Defend the lord" />
+    <string id="ll_evt_pay_grumbling_opt_defend_outcome" text="&quot;Times are hard for everyone,&quot; you say. The others look at you with cold eyes. {SERGEANT} nods approvingly." />
+    <string id="ll_evt_pay_grumbling_opt_join" text="Join the grumbling" />
+    <string id="ll_evt_pay_grumbling_opt_join_outcome" text="You add your voice to the chorus of complaints. The others nod — you&apos;re one of them." />
+    <string id="ll_evt_pay_grumbling_opt_quiet" text="Stay quiet" />
+    <string id="ll_evt_pay_grumbling_opt_quiet_outcome" text="You say nothing. The conversation moves on without you." />
+    <string id="ll_evt_pay_grumbling_opt_rabble" text="&quot;Maybe we should do something about it&quot;" />
+    <string id="ll_evt_pay_grumbling_opt_rabble_outcome" text="The words hang in the air. {VETERAN_1_NAME} meets your eyes. &quot;Maybe we should.&quot;" />
+    <string id="ll_evt_pay_grumbling_setup" text="Complaints about pay have become the main topic around the fire. Every conversation circles back to it.&#xA;&#xA;&quot;Two weeks now,&quot; {VETERAN_1_NAME} mutters. &quot;Two bloody weeks.&quot;&#xA;&#xA;Eyes turn to you. Where do you stand?" />
+    <string id="ll_evt_pay_grumbling_title" text="Pay Complaints" />
+
+    <!-- pay_tension_loot_the_dead -->
+    <string id="ll_evt_pay_loot_dead_opt_enemy" text="Search enemy dead only" />
+    <string id="ll_evt_pay_loot_dead_opt_enemy_outcome" text="You move among the fallen, quick and quiet. A few coins here. A ring there. Nobody notices. Nobody cares." />
+    <string id="ll_evt_pay_loot_dead_opt_everyone" text="Search everyone" />
+    <string id="ll_evt_pay_loot_dead_opt_everyone_outcome" text="Even our own dead have coin. Had coin. You try not to look at faces you recognize.&#xA;&#xA;{COMRADE_NAME}&apos;s purse is heavy. Was heavy. Now it&apos;s yours." />
+    <string id="ll_evt_pay_loot_dead_opt_leave" text="Leave the dead in peace" />
+    <string id="ll_evt_pay_loot_dead_opt_leave_outcome" text="You walk away. Some lines you won&apos;t cross. Not yet." />
+    <string id="ll_evt_pay_loot_dead_opt_stop" text="Stop others from looting" />
+    <string id="ll_evt_pay_loot_dead_opt_stop_outcome" text="&quot;Leave them,&quot; you say, loud enough to be heard. The scavengers scatter. You&apos;ve made enemies tonight." />
+    <string id="ll_evt_pay_loot_dead_opt_weapon" text="Take a dead man&apos;s weapon" />
+    <string id="ll_evt_pay_loot_dead_opt_weapon_outcome" text="A decent blade. The previous owner won&apos;t need it anymore." />
+    <string id="ll_evt_pay_loot_dead_setup" text="The battle&apos;s done. Bodies everywhere — enemy and our own. The burial detail hasn&apos;t started yet.&#xA;&#xA;Nobody&apos;s watching the dead too closely. Not yet.&#xA;&#xA;You could check their pockets. Coin, rings, anything valuable. Pay&apos;s late anyway — consider it compensation." />
+    <string id="ll_evt_pay_loot_dead_title" text="Spoils of War" />
+
+    <!-- pay_tension_mutiny_brewing -->
+    <string id="ll_evt_pay_mutiny_opt_join" text="Join the mutiny" />
+    <string id="ll_evt_pay_mutiny_opt_join_outcome" text="You draw your weapon. Around you, others do the same.&#xA;&#xA;Whatever comes next, you&apos;re in it now." />
+    <string id="ll_evt_pay_mutiny_opt_officers" text="Stand with the officers" />
+    <string id="ll_evt_pay_mutiny_opt_officers_outcome" text="You run to the officer&apos;s tents. Blade drawn. Ready to fight your own.&#xA;&#xA;The night is long and bloody. But by dawn, the mutiny is crushed — and you&apos;ve proven your loyalty." />
+    <string id="ll_evt_pay_mutiny_opt_slip" text="Slip away in the chaos" />
+    <string id="ll_evt_pay_mutiny_opt_slip_outcome" text="In the confusion, you grab your kit and vanish into the darkness.&#xA;&#xA;By morning, you&apos;re miles away. Free. Alone." />
+    <string id="ll_evt_pay_mutiny_opt_stop" text="Try to stop it" />
+    <string id="ll_evt_pay_mutiny_opt_stop_outcome" text="&quot;ENOUGH!&quot; Your voice cuts through the chaos. &quot;This ends with all of us dead or worse!&quot;&#xA;&#xA;The mob hesitates. Some lower their weapons. Others don&apos;t." />
+    <string id="ll_evt_pay_mutiny_setup" text="It&apos;s gone beyond talk. Beyond delegation. Beyond asking.&#xA;&#xA;Soldiers are gathering. Weapons drawn. Not pointed at the enemy — pointed at the officer&apos;s tents.&#xA;&#xA;{VETERAN_1_NAME} finds you. &quot;It&apos;s happening. Tonight. Either you&apos;re with us, or you&apos;re with them.&quot;&#xA;&#xA;There&apos;s no middle ground now." />
+    <string id="ll_evt_pay_mutiny_title" text="Mutiny" />
+
+    <!-- pay_tension_theft_invitation -->
+    <string id="ll_evt_pay_theft_invite_opt_decline" text="&quot;Too risky. Count me out.&quot;" />
+    <string id="ll_evt_pay_theft_invite_opt_decline_outcome" text="{SOLDIER_NAME} shrugs. &quot;Suit yourself. More for me.&quot;&#xA;&#xA;They walk away. You hope they don&apos;t get caught." />
+    <string id="ll_evt_pay_theft_invite_opt_join" text="&quot;I&apos;m in. Let&apos;s do it.&quot;" />
+    <string id="ll_evt_pay_theft_invite_opt_join_outcome" text="Midnight. The gap&apos;s there, just like they said. You move fast, quiet. A sack of goods into the shadows.&#xA;&#xA;By morning, it&apos;s coin in your pocket. {SOLDIER_NAME} grins. &quot;Not bad, eh? Same time next week?&quot;" />
+    <string id="ll_evt_pay_theft_invite_opt_report" text="Report them" />
+    <string id="ll_evt_pay_theft_invite_opt_report_outcome" text="You go straight to {SERGEANT}. By morning, {SOLDIER_NAME} is in chains.&#xA;&#xA;They don&apos;t know who informed. But the squad is quieter around you now." />
+    <string id="ll_evt_pay_theft_invite_opt_watch" text="&quot;I&apos;ll keep watch. You do the work.&quot;" />
+    <string id="ll_evt_pay_theft_invite_opt_watch_outcome" text="You stand in the shadows, watching for guards. {SOLDIER_NAME} does the dirty work.&#xA;&#xA;Half the coin. But you didn&apos;t have to touch anything." />
+    <string id="ll_evt_pay_theft_invite_setup" text="{SOLDIER_NAME} pulls you aside after evening meal. Checks that no one&apos;s watching.&#xA;&#xA;&quot;Supply wagon. Third one from the end. Guard changes at midnight — there&apos;s a gap. Five minutes, maybe more.&quot;&#xA;&#xA;They look at you. &quot;We grab some, sell it in town, split the coin. You in?&quot;&#xA;&#xA;Pay&apos;s late. Lords don&apos;t care about us. Why should we care about their supplies?" />
+    <string id="ll_evt_pay_theft_invite_title" text="Midnight Opportunity" />
+
+    <!-- scrutiny_audit -->
+    <string id="ll_evt_scrutiny_audit_opt_excuse_outcome" text="The captain frowns, reviews the ledger. &quot;This is a shambles. Someone needs to sort this properly.&quot; You&apos;ve dodged — for now." />
+    <string id="ll_evt_scrutiny_audit_opt_excuse_outcome_failure" text="&quot;Funny how the errors all favor you,&quot; the captain observes. &quot;I wasn&apos;t born yesterday, soldier.&quot;" />
+    <string id="ll_evt_scrutiny_audit_opt_excuse_text" text="Blame clerical errors. The records were a mess before you touched them." />
+    <string id="ll_evt_scrutiny_audit_opt_honest_outcome" text="The captain listens in cold silence. When you finish: &quot;At least you&apos;re not a liar on top of everything else.&quot; Punishment is coming, but it won&apos;t be the worst. They respect honesty, barely." />
+    <string id="ll_evt_scrutiny_audit_opt_honest_text" text="Come clean. Admit what you did, throw yourself on mercy." />
+    <string id="ll_evt_scrutiny_audit_opt_implicate_outcome" text="The captain&apos;s eyes narrow. &quot;Names.&quot; You give them — true or not, it doesn&apos;t matter. The investigation widens. You&apos;re a witness now, not a suspect. But you&apos;ve made powerful enemies." />
+    <string id="ll_evt_scrutiny_audit_opt_implicate_text" text="There&apos;s a larger scheme. You were just following orders from above." />
+    <string id="ll_evt_scrutiny_audit_opt_records_outcome" text="The captain compares ledgers. Your version is cleaner, more plausible. &quot;This contradicts the official count.&quot; They choose to believe yours." />
+    <string id="ll_evt_scrutiny_audit_opt_records_outcome_failure" text="&quot;These don&apos;t match anything.&quot; The captain&apos;s voice is flat. &quot;You&apos;ve made this worse, soldier. Much worse.&quot;" />
+    <string id="ll_evt_scrutiny_audit_opt_records_text" text="You&apos;ve been keeping your own records. Produce them — doctored to tell a better story." />
+    <string id="ll_evt_scrutiny_audit_setup" text="The captain&apos;s clerk finds you after morning muster. His smile doesn&apos;t reach his eyes.&#xA;&#xA;&quot;The captain&apos;s ordered a review of supply records. Your name came up several times — requisitions, distributions, inventory counts.&quot; He produces a ledger. &quot;Some discrepancies need explaining.&quot;&#xA;&#xA;This is it. The numbers don&apos;t add up because you made sure they wouldn&apos;t. The question is whether you can talk your way out, or if the noose is already tightening.&#xA;&#xA;&quot;The captain will see you at midday. I suggest you have answers ready.&quot;" />
+    <string id="ll_evt_scrutiny_audit_title" text="The Audit" />
+
+    <!-- scrutiny_exposed -->
+    <string id="ll_evt_scrutiny_exposed_opt_beg_outcome" text="One guard exchanges glances with another. &quot;Double shifts. Three months. Every coin returned, with interest. One more incident and we won&apos;t be talking.&quot; A lifeline, barely." />
+    <string id="ll_evt_scrutiny_exposed_opt_beg_outcome_failure" text="&quot;Should&apos;ve thought of that before.&quot; They&apos;re not interested in deals. The stockade awaits." />
+    <string id="ll_evt_scrutiny_exposed_opt_beg_text" text="&quot;Please — I&apos;ll return everything, I&apos;ll work it off, anything—&quot;" />
+    <string id="ll_evt_scrutiny_exposed_opt_fight_outcome" text="You burst through — luck, desperation, they weren&apos;t expecting it. You&apos;re running now. A deserter and a thief. But you&apos;re free." />
+    <string id="ll_evt_scrutiny_exposed_opt_fight_outcome_failure" text="They&apos;re ready for it. A club to the back of the head. You wake in chains, charges now including resisting arrest." />
+    <string id="ll_evt_scrutiny_exposed_opt_fight_text" text="Not like this. Make a break for it." />
+    <string id="ll_evt_scrutiny_exposed_opt_leverage_outcome" text="A pause. Whispered consultation. &quot;The captain will hear you. But this better be good.&quot; You&apos;ve bought an audience, maybe your freedom — at the cost of becoming an informant." />
+    <string id="ll_evt_scrutiny_exposed_opt_leverage_outcome_failure" text="&quot;Save it for the hearing.&quot; They don&apos;t care what you know. Into the stockade you go." />
+    <string id="ll_evt_scrutiny_exposed_opt_leverage_text" text="&quot;I know things. About supply chains. About officers. Things the captain might want to know.&quot;" />
+    <string id="ll_evt_scrutiny_exposed_opt_surrender_outcome" text="You&apos;re escorted to the stockade. A hearing will follow. The evidence is damning, but you&apos;ll have a chance to speak. The army has procedures. Cold comfort, but it&apos;s something." />
+    <string id="ll_evt_scrutiny_exposed_opt_surrender_text" text="Go quietly. Face the charges." />
+    <string id="ll_evt_scrutiny_exposed_setup" text="Guards. Four of them, armed, surrounding your tent at dawn.&#xA;&#xA;&quot;On your feet, soldier. Captain&apos;s orders. You&apos;re under arrest for theft of army supplies, falsification of records, and conduct unbecoming.&quot;&#xA;&#xA;No warnings this time. No audits. They&apos;ve built their case and now they&apos;re collecting.&#xA;&#xA;{SERGEANT_NAME} watches from a distance. Their expression is unreadable. They can&apos;t help you. Maybe they wouldn&apos;t if they could.&#xA;&#xA;&quot;Come quietly, or don&apos;t. Makes no difference to us.&quot;" />
+    <string id="ll_evt_scrutiny_exposed_title" text="Exposed" />
+
+    <!-- scrutiny_shakedown -->
+    <string id="ll_evt_scrutiny_shakedown_opt_bribe_outcome" text="A slight nod. The inspection of your kit is perfunctory at best. {SERGEANT_NAME} moves on. You&apos;ve bought time — and a new problem." />
+    <string id="ll_evt_scrutiny_shakedown_opt_bribe_outcome_failure" text="&quot;Are you trying to BRIBE me, soldier?&quot; {SERGEANT_NAME}&apos;s voice carries. Everyone&apos;s looking now. This just got much worse." />
+    <string id="ll_evt_scrutiny_shakedown_opt_bribe_text" text="Quietly offer {SERGEANT_NAME} a cut to look the other way." />
+    <string id="ll_evt_scrutiny_shakedown_opt_comply_outcome" text="They search. Find nothing incriminating — you got lucky, or they weren&apos;t looking hard enough. {SERGEANT_NAME} grunts, moves on." />
+    <string id="ll_evt_scrutiny_shakedown_opt_comply_outcome_failure" text="{SERGEANT_NAME}&apos;s hand closes on the coin pouch. &quot;What&apos;s this then?&quot; The extra weight gives you away. &quot;Skimming, are we?&quot;" />
+    <string id="ll_evt_scrutiny_shakedown_opt_comply_text" text="Stand at attention, let them search. Nothing to hide." />
+    <string id="ll_evt_scrutiny_shakedown_opt_distraction_outcome" text="{SERGEANT_NAME}&apos;s attention shifts. They descend on {SOLDIER_NAME}&apos;s kit like wolves. You&apos;ve bought yourself time by throwing someone else to the dogs. {SOLDIER_NAME} will figure out who talked. Eventually." />
+    <string id="ll_evt_scrutiny_shakedown_opt_distraction_text" text="&quot;Sergeant! {SOLDIER_NAME}&apos;s kit — I saw them hiding something earlier!&quot;" />
+    <string id="ll_evt_scrutiny_shakedown_opt_dump_outcome" text="The incriminating items vanish into the latrine trench. When they search your kit, there&apos;s nothing to find. Clean — for now." />
+    <string id="ll_evt_scrutiny_shakedown_opt_dump_outcome_failure" text="{VETERAN_1_NAME} sees you. Their eyes meet yours. They don&apos;t say anything. But they saw." />
+    <string id="ll_evt_scrutiny_shakedown_opt_dump_text" text="While attention&apos;s elsewhere, quietly dump the evidence." />
+    <string id="ll_evt_scrutiny_shakedown_setup" text="&quot;Kit inspection! Everyone out, gear on the ground, NOW!&quot;&#xA;&#xA;{SERGEANT_NAME} — not your squad&apos;s sergeant, one of the captain&apos;s dogs — is tearing through the camp with two soldiers. Random inspection, they&apos;re calling it. But the way they looked at you when they announced it... this isn&apos;t random.&#xA;&#xA;Your kit is laid out. There&apos;s nothing obviously wrong with it. But if they look closely at the coin pouch, or check the false bottom in your pack..." />
+    <string id="ll_evt_scrutiny_shakedown_title" text="The Shakedown" />
+    <!-- gen_dawn_cold_start -->
+    <string id="ll_evt_gen_dawn_cold_start_opt_check_for_frostbite_in_the_lance_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dawn_cold_start_opt_check_for_frostbite_in_the_lance_text" text="Check for frostbite in the squad" />
+    <string id="ll_evt_gen_dawn_cold_start_opt_exercises_to_warm_up_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dawn_cold_start_opt_exercises_to_warm_up_text" text="Exercises to warm up" />
+    <string id="ll_evt_gen_dawn_cold_start_opt_get_up_first_restart_the_fire_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dawn_cold_start_opt_get_up_first_restart_the_fire_text" text="Get up first, restart the fire" />
+    <string id="ll_evt_gen_dawn_cold_start_opt_wait_for_someone_else_to_fix_it_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dawn_cold_start_opt_wait_for_someone_else_to_fix_it_text" text="Wait for someone else to fix it" />
+    <string id="ll_evt_gen_dawn_cold_start_setup" text="Frost on the blankets. Your breath clouds. The fire died sometime in the night and nobody noticed.&#xA;&#xA;Getting moving will hurt. Staying still will hurt worse." />
+    <string id="ll_evt_gen_dawn_cold_start_title" text="Cold Start" />
+
+    <!-- gen_dawn_early_duty -->
+    <string id="ll_evt_gen_dawn_early_duty_opt_ask_lance_mate_name_to_cover_for_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dawn_early_duty_opt_ask_lance_mate_name_to_cover_for_text" text="Ask {COMRADE_NAME} to cover for you" />
+    <string id="ll_evt_gen_dawn_early_duty_opt_go_but_say_it_s_fine_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dawn_early_duty_opt_go_but_say_it_s_fine_text" text="Go but say it&apos;s fine" />
+    <string id="ll_evt_gen_dawn_early_duty_opt_go_get_checked_out_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dawn_early_duty_opt_go_get_checked_out_text" text="Go, get checked out" />
+    <string id="ll_evt_gen_dawn_early_duty_opt_tough_it_out_another_day_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_dawn_early_duty_opt_tough_it_out_another_day_text" text="Tough it out another day" />
+    <string id="ll_evt_gen_dawn_early_duty_setup" text="The surgeon&apos;s tent is open at dawn. A line forms — the coughers, the limpers, the quietly desperate.&#xA;&#xA;{COMRADE_NAME} nudges you. &quot;You should go.&quot;" />
+    <string id="ll_evt_gen_dawn_early_duty_title" text="Sick Call" />
+
+    <!-- gen_dawn_muster -->
+    <string id="ll_evt_gen_dawn_muster_opt_fall_in_first_look_sharp_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dawn_muster_opt_fall_in_first_look_sharp_text" text="Fall in first, look sharp" />
+    <string id="ll_evt_gen_dawn_muster_opt_fall_in_with_the_rest_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dawn_muster_opt_fall_in_with_the_rest_text" text="Fall in with the rest" />
+    <string id="ll_evt_gen_dawn_muster_opt_kick_lance_mate_name_awake_fall__outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dawn_muster_opt_kick_lance_mate_name_awake_fall__text" text="Kick {COMRADE_NAME} awake, fall in together" />
+    <string id="ll_evt_gen_dawn_muster_opt_sleep_through_it_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_dawn_muster_opt_sleep_through_it_text" text="Sleep through it" />
+    <string id="ll_evt_gen_dawn_muster_setup" text="{SERGEANT}&apos;s voice shatters the dawn quiet. &quot;On your feet, the squad! Muster in five!&quot;&#xA;&#xA;Around you, soldiers groan and fumble for boots. {COMRADE_NAME} is still snoring." />
+    <string id="ll_evt_gen_dawn_muster_title" text="Morning Muster" />
+
+    <!-- gen_day_drill_summons -->
+    <string id="ll_evt_gen_day_drill_summons_opt_deal_outcome" text="You do it, knowing it will have consequences." />
+    <string id="ll_evt_gen_day_drill_summons_opt_deal_text" text="&quot;Deal.&quot;" />
+    <string id="ll_evt_gen_day_drill_summons_opt_i_should_report_this_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_day_drill_summons_opt_i_should_report_this_text" text="&quot;I should report this.&quot;" />
+    <string id="ll_evt_gen_day_drill_summons_opt_not_interested_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_day_drill_summons_opt_not_interested_text" text="&quot;Not interested.&quot;" />
+    <string id="ll_evt_gen_day_drill_summons_opt_show_me_negotiate_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_day_drill_summons_opt_show_me_negotiate_text" text="&quot;Show me.&quot; (negotiate)" />
+    <string id="ll_evt_gen_day_drill_summons_setup" text="The quartermaster corners you near the supply wagons. He&apos;s got a proposition.&#xA;&#xA;&quot;Nice piece of kit came through. Not on the manifest, if you understand. Could be yours. Fifty denars.&quot;" />
+    <string id="ll_evt_gen_day_drill_summons_title" text="Quartermaster&apos;s Offer" />
+
+    <!-- gen_day_comrade_request -->
+    <string id="ll_evt_gen_day_lance_mate_request_opt_get_lance_leader_short_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_day_lance_mate_request_opt_get_lance_leader_short_text" text="Get {SERGEANT}" />
+    <string id="ll_evt_gen_day_lance_mate_request_opt_let_them_fight_keep_watch_for_of_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_day_lance_mate_request_opt_let_them_fight_keep_watch_for_of_text" text="Let them fight, keep watch for officers" />
+    <string id="ll_evt_gen_day_lance_mate_request_opt_step_between_them_break_it_up_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_day_lance_mate_request_opt_step_between_them_break_it_up_text" text="Step between them, break it up" />
+    <string id="ll_evt_gen_day_lance_mate_request_opt_take_sides_with_lance_mate_name_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_day_lance_mate_request_opt_take_sides_with_lance_mate_name_text" text="Take sides (with {COMRADE_NAME})" />
+    <string id="ll_evt_gen_day_lance_mate_request_setup" text="{COMRADE_NAME} and {SOLDIER_NAME} are at each other&apos;s throats. Something about borrowed equipment, insults, old grudges.&#xA;&#xA;It&apos;s about to turn physical." />
+    <string id="ll_evt_gen_day_lance_mate_request_title" text="Petty Conflict" />
+
+    <!-- gen_day_officer_inspection -->
+    <string id="ll_evt_gen_day_officer_inspection_opt_i_ve_got_training_second_rank_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_day_officer_inspection_opt_i_ve_got_training_second_rank_text" text="&quot;I&apos;ve got training, {SECOND_RANK}.&quot;" />
+    <string id="ll_evt_gen_day_officer_inspection_opt_latrine_duty_worst_fastest_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_day_officer_inspection_opt_latrine_duty_worst_fastest_text" text="Latrine duty (worst, fastest)" />
+    <string id="ll_evt_gen_day_officer_inspection_opt_water_hauling_heavy_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_day_officer_inspection_opt_water_hauling_heavy_text" text="Water hauling (heavy)" />
+    <string id="ll_evt_gen_day_officer_inspection_opt_wood_gathering_moderate_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_day_officer_inspection_opt_wood_gathering_moderate_text" text="Wood gathering (moderate)" />
+    <string id="ll_evt_gen_day_officer_inspection_setup" text="{SECOND_SHORT} is assigning work details. Latrine duty, wood gathering, water hauling.&#xA;&#xA;&quot;You, {PLAYER_NAME}. Pick one or I pick for you.&quot;" />
+    <string id="ll_evt_gen_day_officer_inspection_title" text="Work Detail" />
+
+    <!-- gen_dusk_sunset_watch -->
+    <string id="ll_evt_gen_dusk_sunset_watch_opt_accept_a_drink_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_dusk_sunset_watch_opt_accept_a_drink_text" text="Accept a drink" />
+    <string id="ll_evt_gen_dusk_sunset_watch_opt_listen_and_learn_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dusk_sunset_watch_opt_listen_and_learn_text" text="Listen and learn" />
+    <string id="ll_evt_gen_dusk_sunset_watch_opt_share_your_own_story_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_dusk_sunset_watch_opt_share_your_own_story_text" text="Share your own story" />
+    <string id="ll_evt_gen_dusk_sunset_watch_opt_turn_in_early_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dusk_sunset_watch_opt_turn_in_early_text" text="Turn in early" />
+    <string id="ll_evt_gen_dusk_sunset_watch_setup" text="The fire crackles. the squad gathers, passing a skin of something. {VETERAN_1_NAME} starts a story about a battle years past.&#xA;&#xA;The war feels far away for a moment." />
+    <string id="ll_evt_gen_dusk_sunset_watch_title" text="Fire Circle" />
+
+    <!-- gen_dusk_supply_arrival -->
+    <string id="ll_evt_gen_dusk_supply_arrival_opt_i_ll_take_a_cut_to_stay_quiet_outcome" text="You do it, knowing it will have consequences." />
+    <string id="ll_evt_gen_dusk_supply_arrival_opt_i_ll_take_a_cut_to_stay_quiet_text" text="&quot;I&apos;ll take a cut to stay quiet.&quot;" />
+    <string id="ll_evt_gen_dusk_supply_arrival_opt_i_m_not_interested_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dusk_supply_arrival_opt_i_m_not_interested_text" text="&quot;I&apos;m not interested.&quot;" />
+    <string id="ll_evt_gen_dusk_supply_arrival_opt_i_should_report_you_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dusk_supply_arrival_opt_i_should_report_you_text" text="&quot;I should report you.&quot;" />
+    <string id="ll_evt_gen_dusk_supply_arrival_opt_what_s_the_split_negotiate_outcome" text="You do it, knowing it will have consequences." />
+    <string id="ll_evt_gen_dusk_supply_arrival_opt_what_s_the_split_negotiate_text" text="&quot;What&apos;s the split?&quot; (negotiate)" />
+    <string id="ll_evt_gen_dusk_supply_arrival_setup" text="A soldier you don&apos;t recognize approaches. &quot;Heard you know how to keep quiet. I&apos;ve got goods to move. Split the profit?&quot;&#xA;&#xA;It&apos;s obviously stolen. Probably from the army&apos;s own supplies." />
+    <string id="ll_evt_gen_dusk_supply_arrival_title" text="Contraband Run" />
+
+    <!-- gen_dusk_veteran_story -->
+    <string id="ll_evt_gen_dusk_veteran_story_opt_gambling_s_trouble_leave_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dusk_veteran_story_opt_gambling_s_trouble_leave_text" text="&quot;Gambling&apos;s trouble.&quot; (leave)" />
+    <string id="ll_evt_gen_dusk_veteran_story_opt_just_watch_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_dusk_veteran_story_opt_just_watch_text" text="Just watch" />
+    <string id="ll_evt_gen_dusk_veteran_story_opt_play_a_few_rounds_small_stakes_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_dusk_veteran_story_opt_play_a_few_rounds_small_stakes_text" text="Play a few rounds (small stakes)" />
+    <string id="ll_evt_gen_dusk_veteran_story_opt_play_big_high_stakes_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_dusk_veteran_story_opt_play_big_high_stakes_text" text="Play big (high stakes)" />
+    <string id="ll_evt_gen_dusk_veteran_story_setup" text="Dice rattle. Coins change hands. {SOLDIER_NAME} is running a game behind the supply wagons.&#xA;&#xA;&quot;Room for one more, {PLAYER_NAME}?&quot;" />
+    <string id="ll_evt_gen_dusk_veteran_story_title" text="Gambling Circle" />
+
+    <!-- gen_evening_fire_circle -->
+    <string id="ll_evt_gen_evening_fire_circle_opt_get_in_line_early_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_evening_fire_circle_opt_get_in_line_early_text" text="Get in line early" />
+    <string id="ll_evt_gen_evening_fire_circle_opt_help_serve_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_evening_fire_circle_opt_help_serve_text" text="Help serve" />
+    <string id="ll_evt_gen_evening_fire_circle_opt_skip_the_line_intimidate_outcome" text="You do it, knowing it will have consequences." />
+    <string id="ll_evt_gen_evening_fire_circle_opt_skip_the_line_intimidate_text" text="Skip the line (intimidate)" />
+    <string id="ll_evt_gen_evening_fire_circle_opt_trade_for_better_food_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_evening_fire_circle_opt_trade_for_better_food_text" text="Trade for better food" />
+    <string id="ll_evt_gen_evening_fire_circle_setup" text="The cook bangs the pot. Evening meal. The line forms quickly — those at the back get the dregs.&#xA;&#xA;{VETERAN_1_NAME} is already near the front." />
+    <string id="ll_evt_gen_evening_fire_circle_title" text="Evening Mess" />
+
+    <!-- gen_evening_gambling -->
+    <string id="ll_evt_gen_evening_gambling_opt_ask_if_they_re_alright_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_evening_gambling_opt_ask_if_they_re_alright_text" text="Ask if they&apos;re alright" />
+    <string id="ll_evt_gen_evening_gambling_opt_give_them_space_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_evening_gambling_opt_give_them_space_text" text="Give them space" />
+    <string id="ll_evt_gen_evening_gambling_opt_mind_your_own_business_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_evening_gambling_opt_mind_your_own_business_text" text="Mind your own business" />
+    <string id="ll_evt_gen_evening_gambling_opt_offer_to_help_write_a_reply_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_evening_gambling_opt_offer_to_help_write_a_reply_text" text="Offer to help write a reply" />
+    <string id="ll_evt_gen_evening_gambling_setup" text="The supply wagons brought mail. Rare enough that everyone crowds around.&#xA;&#xA;{RECRUIT_NAME} gets a letter. Their face falls as they read." />
+    <string id="ll_evt_gen_evening_gambling_title" text="Letter from Home" />
+
+    <!-- gen_evening_letter_home -->
+    <string id="ll_evt_gen_evening_letter_home_opt_ask_for_more_time_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_evening_letter_home_opt_ask_for_more_time_text" text="Ask for more time" />
+    <string id="ll_evt_gen_evening_letter_home_opt_double_or_nothing_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_evening_letter_home_opt_double_or_nothing_text" text="&quot;Double or nothing?&quot;" />
+    <string id="ll_evt_gen_evening_letter_home_opt_pay_up_honest_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_evening_letter_home_opt_pay_up_honest_text" text="Pay up (honest)" />
+    <string id="ll_evt_gen_evening_letter_home_opt_what_debt_deny_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_evening_letter_home_opt_what_debt_deny_text" text="&quot;What debt?&quot; (deny)" />
+    <string id="ll_evt_gen_evening_letter_home_setup" text="{COMRADE_NAME} finds you after dinner. &quot;You owe me from that dice game. Three days ago. Remember?&quot;&#xA;&#xA;You remember. You were hoping they forgot." />
+    <string id="ll_evt_gen_evening_letter_home_title" text="Pay Your Debts" />
+
+    <!-- gen_late_night_emergency -->
+    <string id="ll_evt_gen_late_night_emergency_opt_alert_the_nearest_soldier_quietl_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_late_night_emergency_opt_alert_the_nearest_soldier_quietl_text" text="Alert the nearest soldier quietly" />
+    <string id="ll_evt_gen_late_night_emergency_opt_investigate_quietly_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_late_night_emergency_opt_investigate_quietly_text" text="Investigate quietly" />
+    <string id="ll_evt_gen_late_night_emergency_opt_it_s_nothing_continue_watch_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_late_night_emergency_opt_it_s_nothing_continue_watch_text" text="It&apos;s nothing, continue watch" />
+    <string id="ll_evt_gen_late_night_emergency_opt_sound_the_alarm_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_late_night_emergency_opt_sound_the_alarm_text" text="Sound the alarm" />
+    <string id="ll_evt_gen_late_night_emergency_setup" text="You heard something. Or didn&apos;t hear something that should be there. The night feels wrong.&#xA;&#xA;Could be your imagination. Could be death coming." />
+    <string id="ll_evt_gen_late_night_emergency_title" text="Something&apos;s Wrong" />
+
+    <!-- gen_late_night_nightmare -->
+    <string id="ll_evt_gen_late_night_nightmare_opt_help_ease_the_pain_if_supplies_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_late_night_nightmare_opt_help_ease_the_pain_if_supplies_text" text="Help ease the pain (if supplies)" />
+    <string id="ll_evt_gen_late_night_nightmare_opt_pray_with_them_if_religious_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_late_night_nightmare_opt_pray_with_them_if_religious_text" text="Pray with them (if religious)" />
+    <string id="ll_evt_gen_late_night_nightmare_opt_sit_with_them_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_late_night_nightmare_opt_sit_with_them_text" text="Sit with them" />
+    <string id="ll_evt_gen_late_night_nightmare_opt_you_can_t_face_it_leave_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_late_night_nightmare_opt_you_can_t_face_it_leave_text" text="You can&apos;t face it (leave)" />
+    <string id="ll_evt_gen_late_night_nightmare_setup" text="Moaning from the surgeon&apos;s tent. Someone who won&apos;t make it to dawn. &#xA;&#xA;{FIELD_MEDIC_NAME} catches your eye. &quot;Nothing more to do. Except be there.&quot;" />
+    <string id="ll_evt_gen_late_night_nightmare_title" text="Dying Man" />
+
+    <!-- gen_late_night_watch_end -->
+    <string id="ll_evt_gen_late_night_watch_end_opt_let_them_go_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_late_night_watch_end_opt_let_them_go_text" text="Let them go" />
+    <string id="ll_evt_gen_late_night_watch_end_opt_sound_the_alarm_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_late_night_watch_end_opt_sound_the_alarm_text" text="Sound the alarm" />
+    <string id="ll_evt_gen_late_night_watch_end_opt_stop_them_yourself_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_late_night_watch_end_opt_stop_them_yourself_text" text="Stop them yourself" />
+    <string id="ll_evt_gen_late_night_watch_end_opt_talk_to_them_first_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_late_night_watch_end_opt_talk_to_them_first_text" text="Talk to them first" />
+    <string id="ll_evt_gen_late_night_watch_end_setup" text="Movement at the edge of camp. Someone&apos;s leaving — pack on their back, moving quiet.&#xA;&#xA;You recognize them. {SOLDIER_NAME}. Running." />
+    <string id="ll_evt_gen_late_night_watch_end_title" text="Deserter Spotted" />
+
+    <!-- gen_night_cant_sleep -->
+    <string id="ll_evt_gen_night_cant_sleep_opt_form_up_with_lance_name_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_night_cant_sleep_opt_form_up_with_lance_name_text" text="Form up with the squad" />
+    <string id="ll_evt_gen_night_cant_sleep_opt_help_others_get_ready_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_night_cant_sleep_opt_help_others_get_ready_text" text="Help others get ready" />
+    <string id="ll_evt_gen_night_cant_sleep_opt_rush_toward_the_alarm_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_night_cant_sleep_opt_rush_toward_the_alarm_text" text="Rush toward the alarm" />
+    <string id="ll_evt_gen_night_cant_sleep_opt_stay_alert_watch_for_secondary_t_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_night_cant_sleep_opt_stay_alert_watch_for_secondary_t_text" text="Stay alert, watch for secondary threats" />
+    <string id="ll_evt_gen_night_cant_sleep_setup" text="&quot;To arms! To arms!&quot;&#xA;&#xA;The cry goes up. Torches flare. You&apos;re on your feet before you&apos;re awake, grabbing for weapons.&#xA;&#xA;It might be nothing. It might be everything." />
+    <string id="ll_evt_gen_night_cant_sleep_title" text="Night Alarm" />
+
+    <!-- gen_night_confession -->
+    <string id="ll_evt_gen_night_confession_opt_drink_until_you_sleep_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_night_confession_opt_drink_until_you_sleep_text" text="Drink until you sleep" />
+    <string id="ll_evt_gen_night_confession_opt_talk_to_them_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_night_confession_opt_talk_to_them_text" text="Talk to them" />
+    <string id="ll_evt_gen_night_confession_opt_walk_the_camp_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_night_confession_opt_walk_the_camp_text" text="Walk the camp" />
+    <string id="ll_evt_gen_night_confession_opt_write_in_a_journal_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_night_confession_opt_write_in_a_journal_text" text="Write in a journal" />
+    <string id="ll_evt_gen_night_confession_setup" text="Sleep won&apos;t come. Too many faces. Too many sounds. The battle keeps replaying behind your eyes.&#xA;&#xA;{COMRADE_NAME} is awake too, staring at the stars." />
+    <string id="ll_evt_gen_night_confession_title" text="Can&apos;t Sleep" />
+
+    <!-- gen_night_disturbance -->
+    <string id="ll_evt_gen_night_disturbance_opt_find_a_good_spot_stay_still_and__outcome" text="You carry it out." />
+    <string id="ll_evt_gen_night_disturbance_opt_find_a_good_spot_stay_still_and__text" text="Find a good spot, stay still and watch" />
+    <string id="ll_evt_gen_night_disturbance_opt_practice_with_your_weapon_quiet_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_night_disturbance_opt_practice_with_your_weapon_quiet_text" text="Practice with your weapon (quiet)" />
+    <string id="ll_evt_gen_night_disturbance_opt_rest_your_eyes_trust_your_ears_outcome" text="You take the risk and see it through." />
+    <string id="ll_evt_gen_night_disturbance_opt_rest_your_eyes_trust_your_ears_text" text="Rest your eyes, trust your ears" />
+    <string id="ll_evt_gen_night_disturbance_opt_stay_sharp_walk_the_line_outcome" text="You carry it out." />
+    <string id="ll_evt_gen_night_disturbance_opt_stay_sharp_walk_the_line_text" text="Stay sharp, walk the line" />
+    <string id="ll_evt_gen_night_disturbance_setup" text="Your watch. The camp sleeps around you, fires burning low. The darkness beyond the perimeter is absolute.&#xA;&#xA;Four hours of staring into nothing." />
+    <string id="ll_evt_gen_night_disturbance_title" text="Night Watch" />
+
+    <!-- scrutiny_warning -->
+    <string id="ll_evt_scrutiny_warning_opt_acknowledge_outcome" text="A curt nod. &quot;See that you are.&quot; {SERGEANT_NAME} leaves. You&apos;ve been warned — by someone who could&apos;ve reported you instead. That&apos;s worth something." />
+    <string id="ll_evt_scrutiny_warning_opt_acknowledge_text" text="&quot;I hear you. I&apos;ll be more careful.&quot;" />
+    <string id="ll_evt_scrutiny_warning_opt_ask_help_outcome" text="{SERGEANT_NAME} sighs. &quot;Keep your head down for a while. Volunteer for the shit jobs. Be visible doing honest work.&quot; They pause. &quot;And stop. Whatever it is, just stop.&quot;" />
+    <string id="ll_evt_scrutiny_warning_opt_ask_help_text" text="&quot;I&apos;m in deeper than I meant to be. Any advice?&quot;" />
+    <string id="ll_evt_scrutiny_warning_opt_deflect_outcome" text="&quot;Everyone&apos;s NOT doing it,&quot; {SERGEANT_NAME} snaps. &quot;And the ones who are? They&apos;re better at it than you.&quot; The words sting because they&apos;re true." />
+    <string id="ll_evt_scrutiny_warning_opt_deflect_text" text="&quot;Everyone&apos;s doing it. I&apos;m just not as subtle.&quot;" />
+    <string id="ll_evt_scrutiny_warning_opt_deny_outcome" text="{SERGEANT_NAME} stares at you for a long moment. &quot;Right. You don&apos;t.&quot; They walk away. The warning&apos;s been given. What you do with it is your business." />
+    <string id="ll_evt_scrutiny_warning_opt_deny_text" text="&quot;I don&apos;t know what you&apos;re talking about, {SERGEANT}.&quot;" />
+    <string id="ll_evt_scrutiny_warning_setup" text="{SERGEANT_NAME} pulls you aside after evening meal. Their voice is low, eyes checking that no one&apos;s close enough to hear.&#xA;&#xA;&quot;I&apos;m going to say this once, {PLAYER_NAME}. Whatever you&apos;re doing — the extra coins, the supply discrepancies, the &apos;gifts&apos; from merchants — people are starting to notice.&quot;&#xA;&#xA;They lean closer.&#xA;&#xA;&quot;I don&apos;t care what you do on your own time. But if it comes back on the company, we&apos;re going to have a problem. Understand?&quot;" />
+    <string id="ll_evt_scrutiny_warning_title" text="The Warning" />
   </strings>
 </base>
 

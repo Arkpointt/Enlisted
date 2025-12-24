@@ -154,6 +154,7 @@
     <Compile Include="src\Mod.Core\Util\PlayerContext.cs"/>
     <Compile Include="src\Mod.Core\Util\UiTextSanitizer.cs"/>
     <Compile Include="src\Mod.Core\Util\UsedImplicitlyAttribute.cs"/>
+    <Compile Include="src\Mod.Core\SaveSystem\EnlistedSaveDefiner.cs"/>
     <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs"/>
     <Compile Include="src\Features\Conversations\Data\QMDialogueContext.cs"/>
     <Compile Include="src\Features\Conversations\Data\QMDialogueNode.cs"/>
@@ -315,6 +316,10 @@
     <DialogueData Include="ModuleData\Enlisted\Dialogue\*.json"/>
   </ItemGroup>
   <ItemGroup>
+    <!-- Used by AfterBuild to copy decisions data into the Bannerlord module folder -->
+    <DecisionsData Include="ModuleData\Enlisted\Decisions\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
     <!-- Used by AfterBuild to copy Orders data into the Bannerlord module folder -->
     <OrdersData Include="ModuleData\Enlisted\Orders\*.json"/>
   </ItemGroup>
@@ -337,6 +342,7 @@
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Activities"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events\Role"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Decisions"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Orders"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
     <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\"/>
@@ -350,6 +356,7 @@
     <Copy SourceFiles="@(CampActivitiesData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Activities\"/>
     <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>
     <Copy SourceFiles="@(LanceLifeEventsRoleData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\Role\" Condition="'@(LanceLifeEventsRoleData)' != ''"/>
+    <Copy SourceFiles="@(DecisionsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Decisions\"/>
     <Copy SourceFiles="@(OrdersData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Orders\"/>
     <Copy SourceFiles="@(DialogueData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Dialogue\"/>
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>

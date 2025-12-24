@@ -13,7 +13,10 @@
       "requirements": {
         "context": "during_siege",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 7,
@@ -37,7 +40,8 @@
               "Mercy": 8,
               "Generosity": 5
             }
-          }
+          },
+          "tooltip": "Share water. +10 Soldier rep. -2 Company supplies. Mercy and Generosity trait XP."
         },
         {
           "id": "hoard",
@@ -53,7 +57,8 @@
             "traitXp": {
               "Calculating": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. +3 Company rest. Calculating trait XP."
         },
         {
           "id": "find_source",
@@ -66,14 +71,14 @@
           },
           "resultTextId": "mi_siege_water_find_result",
           "resultText": "You slip away and search the siege works. A spring, missed by others, trickles from the rocks. You mark the spot and report it to the sergeant.",
-          "tooltip": "Requires Scouting 40+",
+          "tooltip": "Requires Scouting 40. Moderate risk. Train Scouting. +8 Officer rep. Boosts company supplies.",
           "risk": "moderate",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 20
             }
-          },
-          "effects": {
+          ,,
+          
             "officerRep": 8,
             "companyNeeds": {
               "Supplies": 5
@@ -92,7 +97,10 @@
       "requirements": {
         "context": "during_siege",
         "role": "Any",
-        "tier": { "min": 2, "max": 7 }
+        "tier": {
+          "min": 2,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -111,14 +119,14 @@
           },
           "resultTextId": "mi_siege_boredom_games_result",
           "resultText": "Wrestling, races, archery contests—you give the men something to do besides brood. Morale lifts, if only for a while.",
-          "tooltip": "Requires Leadership 35+",
+          "tooltip": "Requires Leadership 35. Train Leadership. +8 Soldier rep. Boosts company morale.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Leadership": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "soldierRep": 8,
             "companyNeeds": {
               "Morale": 8
@@ -139,21 +147,23 @@
               "Morale": -3
             },
             "discipline": -2
-          }
+          },
+          "tooltip": "Enforce order. +5 Officer rep, -3 Soldier rep. Reduces discipline issues."
         },
         {
           "id": "let_be",
           "textId": "mi_siege_boredom_let",
           "text": "Let the men sort it out themselves",
           "resultTextId": "mi_siege_boredom_let_result",
-          "resultText": "You stay out of it. Men will be men. A few black eyes and bruised egos won't change the course of the siege.",
+          "resultText": "You stay out of it. Men will be men. A few black eyes and bureaucratic egos won't change the course of the siege.",
           "risk": "safe",
           "effects": {
             "discipline": 2,
             "companyNeeds": {
               "Morale": -5
             }
-          }
+          },
+          "tooltip": "Safe choice. Adds 2 discipline issues. Harms company morale."
         }
       ]
     },
@@ -167,7 +177,10 @@
       "requirements": {
         "context": "during_siege",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 14,
@@ -188,7 +201,8 @@
               "Honor": 5
             },
             "discipline": -2
-          }
+          },
+          "tooltip": "Report deserter. +10 Officer rep. Honor trait XP. Reduces discipline issues."
         },
         {
           "id": "confront",
@@ -201,14 +215,14 @@
           },
           "resultTextId": "mi_siege_deserter_confront_result",
           "resultText": "'Where do you think you're going?' He freezes, terrified. You talk him down, and he creeps back to his tent. No one else needs to know.",
-          "tooltip": "Requires Charm 40+",
+          "tooltip": "Requires Charm 40. Moderate risk. Train Charm. +5 Soldier rep. Mercy trait XP.",
           "risk": "moderate",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Charm": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "soldierRep": 5,
             "traitXp": {
               "Mercy": 5
@@ -227,7 +241,8 @@
               "Mercy": 8
             },
             "scrutiny": 2
-          }
+          },
+          "tooltip": "Risky choice. Adds 2 scrutiny. Mercy trait XP."
         }
       ]
     },
@@ -241,7 +256,10 @@
       "requirements": {
         "context": "during_siege",
         "role": "Any",
-        "tier": { "min": 2, "max": 8 }
+        "tier": {
+          "min": 2,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 14,
@@ -260,14 +278,14 @@
           },
           "resultTextId": "mi_siege_sickness_investigate_result",
           "resultText": "You trace the sickness to a contaminated water source. With the surgeon's help, you identify the problem and warn the officers. The outbreak slows.",
-          "tooltip": "Requires Medicine 50+",
+          "tooltip": "Requires Medicine 50. Moderate risk. Train Medicine. +12 Officer rep. Reduces medical risk.",
           "risk": "moderate",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Medicine": 25
             }
-          },
-          "effects": {
+          ,,
+          
             "officerRep": 12,
             "medicalRisk": -3,
             "companyNeeds": {
@@ -288,7 +306,8 @@
             "traitXp": {
               "Mercy": 5
             }
-          }
+          },
+          "tooltip": "Enforce quarantine. Risky choice. +5 Soldier rep. Adds 2 medical risk. Mercy trait XP."
         },
         {
           "id": "ignore",
@@ -302,7 +321,8 @@
               "Calculating": 5,
               "Mercy": -5
             }
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP. -5 Mercy trait XP."
         }
       ]
     },
@@ -316,7 +336,10 @@
       "requirements": {
         "context": "during_siege",
         "role": "Any",
-        "tier": { "min": 1, "max": 8 }
+        "tier": {
+          "min": 1,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 21,
@@ -339,7 +362,8 @@
             "traitXp": {
               "Calculating": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP. Boosts company equipment and readiness."
         },
         {
           "id": "rally",
@@ -352,14 +376,14 @@
           },
           "resultTextId": "mi_siege_assault_prep_rally_result",
           "resultText": "You speak of honor, of home, of the dawn to come. The men listen. Some nod, some weep, but all of them seem steadier when you finish.",
-          "tooltip": "Requires Leadership 45+",
+          "tooltip": "Requires Leadership 45. Train Leadership. +12 Soldier rep. Boosts company morale. Valor trait XP.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Leadership": 20
             }
-          },
-          "effects": {
+          ,,
+          
             "soldierRep": 10,
             "companyNeeds": {
               "Morale": 10
@@ -386,7 +410,8 @@
             "traitXp": {
               "Valor": -3
             }
-          }
+          },
+          "tooltip": "Moderate risk. +8 Soldier rep. -10 gold. Harms company rest. -3 Valor trait XP."
         }
       ]
     },
@@ -400,7 +425,10 @@
       "requirements": {
         "context": "during_siege",
         "role": "Any",
-        "tier": { "min": 2, "max": 7 },
+        "tier": {
+          "min": 2,
+          "max": 7
+        },
         "minSkills": {
           "Engineering": 40
         }
@@ -418,15 +446,16 @@
           "resultTextId": "mi_siege_opportunity_report_result",
           "resultText": "You bring your observation to the siege master. He squints at the wall, nods slowly, and orders sappers to concentrate there. 'Good eye, soldier.'",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Engineering": 25
             }
-          },
-          "effects": {
+          ,,
+          
             "lordRep": 8,
             "officerRep": 10
-          }
+          },
+          "tooltip": "Train Engineering. +10 Officer rep, +8 Lord rep."
         },
         {
           "id": "exploit",
@@ -439,15 +468,15 @@
           },
           "resultTextId": "mi_siege_opportunity_exploit_result",
           "resultText": "You gather a handful of volunteers and slip forward in the night. The weak point crumbles under your assault, and you're the first through the gap.",
-          "tooltip": "Requires Tactics 50+",
+          "tooltip": "Requires Tactics 50. 60% success chance. Train Tactics. +15 Lord rep, +12 Officer rep, +10 Soldier rep. Failure causes 35 damage and troop loss.",
           "risk": "dangerous",
           "risk_chance": 60,
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Tactics": 30
             }
-          },
-          "effects": {
+          ,,
+          
             "lordRep": 15,
             "officerRep": 12,
             "soldierRep": 10,
@@ -474,7 +503,8 @@
               "Honor": -3
             },
             "scrutiny": 1
-          }
+          },
+          "tooltip": "Safe choice. Adds 1 scrutiny. Calculating trait XP."
         }
       ]
     },
@@ -488,7 +518,10 @@
       "requirements": {
         "context": "during_siege",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -512,7 +545,8 @@
             "gold": -30,
             "soldierRep": -3
           },
-          "failure_resultText": "The dice aren't kind. You lose more than you can afford and walk away poorer, watching your coin disappear into other pockets."
+          "failure_resultText": "The dice aren't kind. You lose more than you can afford and walk away poorer, watching your coin disappear into other pockets.",
+          "tooltip": "55% success chance. +40 gold, +3 Soldier rep. Failure loses 30 gold and 3 Soldier rep."
         },
         {
           "id": "break_up",
@@ -525,7 +559,7 @@
           },
           "resultTextId": "mi_siege_gambling_break_result",
           "resultText": "'That's enough for tonight.' Your authority ends the game before blood is shed. Some men thank you later; others don't.",
-          "tooltip": "Requires Leadership 40+",
+          "tooltip": "Requires Leadership 40. Moderate risk. +8 Officer rep, -5 Soldier rep. Reduces discipline issues.",
           "risk": "moderate",
           "effects": {
             "officerRep": 8,
@@ -544,7 +578,8 @@
             "officerRep": 5,
             "soldierRep": -10,
             "scrutiny": 1
-          }
+          },
+          "tooltip": "Report gambling. +5 Officer rep, -10 Soldier rep. Adds 1 scrutiny."
         }
       ]
     },
@@ -558,7 +593,10 @@
       "requirements": {
         "context": "during_siege",
         "role": "Any",
-        "tier": { "min": 2, "max": 7 }
+        "tier": {
+          "min": 2,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 12,
@@ -577,14 +615,14 @@
           },
           "resultTextId": "mi_siege_supply_theft_investigate_result",
           "resultText": "You watch and wait. When the thief makes his move, you catch him red-handed. The quartermaster is grateful for your vigilance.",
-          "tooltip": "Requires Scouting 35+",
+          "tooltip": "Requires Scouting 35. Moderate risk. Train Scouting. +10 Officer rep. Boosts company supplies. Reduces discipline issues.",
           "risk": "moderate",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "officerRep": 10,
             "companyNeeds": {
               "Supplies": 5
@@ -604,7 +642,8 @@
             "companyNeeds": {
               "Supplies": 2
             }
-          }
+          },
+          "tooltip": "Report theft. +5 Officer rep. Boosts company supplies."
         },
         {
           "id": "get_cut",
@@ -617,7 +656,7 @@
           },
           "resultTextId": "mi_siege_supply_theft_cut_result",
           "resultText": "You confront the thief privately. 'Share or I talk.' He agrees, and now you're eating better than most—and just as guilty.",
-          "tooltip": "Requires Roguery 40+",
+          "tooltip": "Requires Roguery 40. Dangerous choice. Train Roguery. Adds 3 scrutiny. Harms company supplies.",
           "risk": "dangerous",
           "effects": {
             "companyNeeds": {
@@ -625,11 +664,9 @@
             },
             "scrutiny": 3
           },
-          "rewards": {
             "skillXp": {
               "Roguery": 15
             }
-          }
         }
       ]
     },
@@ -643,7 +680,10 @@
       "requirements": {
         "context": "during_siege",
         "role": "Any",
-        "tier": { "min": 3, "max": 9 }
+        "tier": {
+          "min": 3,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 21,
@@ -662,15 +702,15 @@
           },
           "resultTextId": "mi_siege_disease_quarantine_result",
           "resultText": "Working with the surgeon, you isolate the sick and burn the infected bedding. It's brutal, but the spread slows. Lives are saved.",
-          "tooltip": "Requires Medicine 60+",
+          "tooltip": "Requires Medicine 60. 70% success chance. Train Medicine. +15 Officer rep. Failure adds 3 medical risk and higher troop loss.",
           "risk": "risky",
           "risk_chance": 70,
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Medicine": 30
             }
-          },
-          "effects": {
+          ,,
+          
             "officerRep": 15,
             "medicalRisk": -5,
             "troopLoss": 2
@@ -693,7 +733,8 @@
               "Morale": 5
             },
             "troopLoss": 3
-          }
+          },
+          "tooltip": "Safe choice. Boosts company morale."
         },
         {
           "id": "flee_plague",
@@ -723,7 +764,10 @@
       "requirements": {
         "context": "during_siege",
         "role": "Any",
-        "tier": { "min": 2, "max": 8 }
+        "tier": {
+          "min": 2,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 14,
@@ -742,14 +786,14 @@
           },
           "resultTextId": "mi_siege_spoiled_ration_result",
           "resultText": "You help the quartermaster sort through the stores, separating the edible from the rotten. Portions are small, but at least they're safe.",
-          "tooltip": "Requires Steward 40+",
+          "tooltip": "Requires Steward 40. Train Steward. +8 Officer rep.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Steward": 20
             }
-          },
-          "effects": {
+          ,,
+          
             "officerRep": 8,
             "foodLoss": 3
           }
@@ -765,15 +809,15 @@
           },
           "resultTextId": "mi_siege_spoiled_forage_result",
           "resultText": "You slip out of camp and scour the countryside. A village, overlooked by other foragers, provides enough food to supplement the rotting stores.",
-          "tooltip": "Requires Scouting 45+",
+          "tooltip": "Requires Scouting 45. 65% success chance. Train Scouting. +10 Officer rep. Boosts company supplies. Failure causes 20 damage.",
           "risk": "risky",
           "risk_chance": 65,
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 25
             }
-          },
-          "effects": {
+          ,,
+          
             "officerRep": 10,
             "companyNeeds": {
               "Supplies": 10
@@ -800,10 +844,10 @@
             "companyNeeds": {
               "Morale": -5
             }
-          }
+          },
+          "tooltip": "Safe choice. -5 Company morale. Adds 2 medical risk."
         }
       ]
     }
   ]
 }
-

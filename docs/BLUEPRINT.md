@@ -2,7 +2,7 @@
 
 **Summary:** Complete guide to the Enlisted mod's architecture, coding standards, and development practices. This is the single source of truth for understanding how this project works and how we write code.
 
-**Last Updated:** 2025-12-22  
+**Last Updated:** 2025-12-23  
 **Target Game:** Bannerlord v1.3.11  
 **Related Docs:** [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md), [Reference/native-apis.md](Reference/native-apis.md)
 
@@ -38,7 +38,8 @@ This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.11** that transf
 1. **[INDEX.md](INDEX.md)** - Complete catalog of all docs organized by category
 2. **[Features/Core/core-gameplay.md](Features/Core/core-gameplay.md)** - Best overview of how everything works
 3. **[Content/event-catalog-by-system.md](Content/event-catalog-by-system.md)** - All events/decisions/orders
-4. **[Reference/native-apis.md](Reference/native-apis.md)** - Bannerlord API snippets
+4. **[Features/Technical/conflict-detection-system.md](Features/Technical/conflict-detection-system.md)** - System interactions and validation rules
+5. **[Reference/native-apis.md](Reference/native-apis.md)** - Bannerlord API snippets
 
 ### Creating New Documentation
 
@@ -87,10 +88,14 @@ This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.11** that transf
 3. Build to verify
 
 **Add new event/decision/order:**
-1. Add JSON definition to `ModuleData/Enlisted/Events/`
-2. Add XML localization to `ModuleData/Enlisted/Languages/`
+1. Add JSON definition to `ModuleData/Enlisted/Events/` or `Decisions/`
+2. Add XML localization entries to `ModuleData/Languages/enlisted_strings.xml`
+   - Place in appropriate section (Events, Decisions, Orders)
+   - Use `&#xA;` for newlines in XML attributes
+   - Escape special characters: `&` → `&amp;`, `'` → `&apos;`, `"` → `&quot;`
 3. Use placeholder variables in text (e.g., `{PLAYER_NAME}`, `{SERGEANT}`, `{LORD_NAME}`)
-4. Update `Content/event-catalog-by-system.md`
+4. Run `python tools/events/sync_event_strings.py --check` to verify all strings present
+5. Update `Content/event-catalog-by-system.md`
 
 **Placeholder variables:** See [Event Catalog - Placeholder Variables](Content/event-catalog-by-system.md#placeholder-variables) for complete list
 
@@ -240,8 +245,9 @@ starter.AddDialogLine(id, inputToken, outputToken, text, condition, consequence,
 - **Orders:** `ModuleData/Enlisted/Orders/orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json` (17 total)
 - **Decisions:** `ModuleData/Enlisted/Decisions/*.json` (34 player-initiated Camp Hub decisions)
 
-#### Critical JSON Rule
-In JSON, **fallback fields must immediately follow their ID fields** for proper parser association:
+#### Critical JSON Rules
+
+**1. Fallback fields must immediately follow their ID fields:**
 
 ✅ **Correct:**
 ```json
@@ -263,19 +269,41 @@ In JSON, **fallback fields must immediately follow their ID fields** for proper 
 }
 ```
 
+**2. Always include fallback text, even with XML localization:**
+
+The fallback text in JSON serves two purposes:
+- Displays if XML localization is missing (dev safety net)
+- Source of truth for what the string should say
+
+Never use empty fallback text (`"title": ""`). Always provide the actual text.
+
 ---
 
 ### Tooltip Best Practices
 
-**Every event option and decision must have a tooltip** explaining consequences.
+**Tooltips cannot be null.** Every event option, decision, order, and UI element that can have a tooltip must include one.
 
 #### Guidelines:
-- Tooltips appear on hover in `MultiSelectionInquiryData` popups
+- Factual, concise, brief description of what it does
 - One sentence, under 80 characters
-- Explain what happens, requirements, or trade-offs
-- Be concise and clear
+- Format: action + side effects + cooldown/restrictions
+- Example: "Trains equipped weapon. Causes fatigue. Chance of injury. 3 day cooldown."
 
 #### Examples:
+
+**Training/Actions:**
+```json
+{"tooltip": "Trains equipped weapon"}
+{"tooltip": "Build stamina and footwork"}
+{"tooltip": "Maintain gear to prevent degradation"}
+```
+
+**Stat/Reputation Changes:**
+```json
+{"tooltip": "Harsh welcome. +5 Officer rep. -3 Retinue Loyalty."}
+{"tooltip": "Risky move. +10 Courage. -5 Discipline. Injury chance."}
+{"tooltip": "Show respect. +3 Lord rep. +2 Morale."}
+```
 
 **Consequences:**
 ```json
@@ -289,17 +317,10 @@ In JSON, **fallback fields must immediately follow their ID fields** for proper 
 {"tooltip": "Requires Leadership 50+ to attempt."}
 ```
 
-**Training:**
-```json
-{"tooltip": "Train with the weapon you carry into battle"}
-{"tooltip": "Work on the skill that needs most improvement"}
-{"tooltip": "Build stamina and footwork"}
-```
-
-**Requirements:**
+**Requirements/Restrictions:**
 ```json
 {"tooltip": "Requires Tier 7+ to unlock"}
-{"tooltip": "Only available when Company Morale is below 50"}
+{"tooltip": "Greyed out: Company Morale must be below 50"}
 ```
 
 ---
@@ -399,7 +420,7 @@ This is the authoritative source for verifying Bannerlord API usage. See [API Ve
 ```
 src/
 |- Mod.Entry/              # SubModule + Harmony init
-|- Mod.Core/               # Logging, config, helpers
+|- Mod.Core/               # Logging, config, save system, helpers
 |- Mod.GameAdapters/       # Harmony patches
 |- Features/
   - Enlistment/           # Core service state, retirement
@@ -490,6 +511,31 @@ for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
 }
 ```
 
+### Save System & Serialization
+Bannerlord's save system requires explicit registration of custom types. All mod-specific serializable types are registered in `EnlistedSaveDefiner` (`src/Mod.Core/SaveSystem/`).
+
+**Adding new serializable types:**
+1. Add the class/enum to `EnlistedSaveDefiner.DefineClassTypes()` or `DefineEnumTypes()` with a unique save ID
+2. If using `Dictionary<T1,T2>` or `List<T>` with custom types, add container definition in `DefineContainerDefinitions()`
+3. Implement `SyncData()` in the behavior that owns the state, using `SaveLoadDiagnostics.SafeSyncData()` wrapper
+
+```csharp
+// In behavior's SyncData:
+public override void SyncData(IDataStore dataStore)
+{
+    SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+    {
+        dataStore.SyncData("myKey", ref _myField);
+    });
+}
+```
+
+**Key rules:**
+- Custom classes need `AddClassDefinition(typeof(MyClass), saveId)` in the definer
+- Container types like `Dictionary<string, int>` need `ConstructContainerDefinition(typeof(...))`
+- Use primitive types in SyncData when possible (serialize dictionaries element-by-element)
+- Enums can be cast to/from int for serialization
+
 ---
 
 ## Configuration
@@ -563,9 +609,20 @@ for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
 **Solution:** Fix warnings, don't suppress unless absolutely necessary
 
 ### 7. Forgetting Tooltips in Events
-**Problem:** Players don't understand consequences  
-**Solution:** Every option needs a clear, concise tooltip
+**Problem:** Tooltips set to null or missing, players don't understand consequences  
+**Solution:** Tooltips cannot be null. Every option must have a factual, concise tooltip
 
 ### 8. Mixing JSON Field Order
 **Problem:** Localization breaks when ID/fallback fields are separated  
 **Solution:** Always put fallback field immediately after ID field
+
+### 9. Missing XML Localization Strings
+**Problem:** Events show raw string IDs (e.g., `ll_evt_example_opt_text`) instead of actual text  
+**Solution:** 
+1. Run `python tools/events/sync_event_strings.py` to automatically extract missing strings from JSON event files and append them to `enlisted_strings.xml`
+2. The script extracts all string IDs (`titleId`, `setupId`, `textId`, `resultTextId`, `resultFailureTextId`) and their fallback texts from JSON, properly escaping special characters (`&#xA;` for newlines, `&apos;` for apostrophes, `&quot;` for quotes)
+3. All existing events now have complete localization (504 strings added Dec 2025 covering escalation thresholds, training events, and general content)
+
+### 10. Missing SaveableTypeDefiner Registration
+**Problem:** "Cannot Create Save" error when serializing custom types  
+**Solution:** Register new classes/enums in `EnlistedSaveDefiner`, add container definitions for `Dictionary<T1,T2>` or `List<T>` with custom types

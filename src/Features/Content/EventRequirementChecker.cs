@@ -455,10 +455,19 @@ namespace Enlisted.Features.Content
         /// <summary>
         /// Checks custom requirement conditions for events.
         /// Supports retinue-related conditions for post-battle events and loyalty-based events.
+        /// Also supports escalation threshold conditions like scrutiny_3, discipline_5, etc.
         /// </summary>
         private static bool CheckCustomCondition(string condition)
         {
-            return condition.ToLowerInvariant() switch
+            var lowerCondition = condition.ToLowerInvariant();
+            
+            // Check escalation threshold conditions (scrutiny_3, discipline_5, soldier_rep_20, etc.)
+            if (TryCheckEscalationThresholdCondition(lowerCondition, out var result))
+            {
+                return result;
+            }
+            
+            return lowerCondition switch
             {
                 "retinue_below_capacity" => CheckRetinueBelowCapacity(),
                 "last_battle_won" => CheckLastBattleWon(),
@@ -468,6 +477,74 @@ namespace Enlisted.Features.Content
                 "retinue_wounded" => CheckRetinueWounded(),
                 _ => true // Unknown conditions pass by default
             };
+        }
+        
+        /// <summary>
+        /// Checks if a condition is an escalation threshold condition and evaluates it.
+        /// Returns true if it's a valid threshold condition, with the result in the out parameter.
+        /// Handles patterns like: scrutiny_3, discipline_5, soldier_rep_20, soldier_rep_-20, medical_4
+        /// </summary>
+        private static bool TryCheckEscalationThresholdCondition(string condition, out bool result)
+        {
+            result = false;
+            
+            var escalation = EscalationManager.Instance?.State;
+            if (escalation == null)
+            {
+                return false;
+            }
+            
+            // Check scrutiny thresholds (scrutiny_3, scrutiny_5, scrutiny_7, scrutiny_10)
+            if (condition.StartsWith("scrutiny_"))
+            {
+                if (int.TryParse(condition.Substring(9), out var threshold))
+                {
+                    result = escalation.Scrutiny >= threshold;
+                    return true;
+                }
+            }
+            
+            // Check discipline thresholds (discipline_2, discipline_3, discipline_5, discipline_7, discipline_10)
+            if (condition.StartsWith("discipline_"))
+            {
+                if (int.TryParse(condition.Substring(11), out var threshold))
+                {
+                    result = escalation.Discipline >= threshold;
+                    return true;
+                }
+            }
+            
+            // Check medical risk thresholds (medical_3, medical_4, medical_5)
+            if (condition.StartsWith("medical_"))
+            {
+                if (int.TryParse(condition.Substring(8), out var threshold))
+                {
+                    result = escalation.MedicalRisk >= threshold;
+                    return true;
+                }
+            }
+            
+            // Check soldier reputation thresholds (soldier_rep_20, soldier_rep_40, soldier_rep_-20, soldier_rep_-40)
+            // Also support camp_rep_ for legacy compatibility
+            if (condition.StartsWith("soldier_rep_") || condition.StartsWith("camp_rep_"))
+            {
+                var prefix = condition.StartsWith("soldier_rep_") ? "soldier_rep_" : "camp_rep_";
+                var thresholdStr = condition.Substring(prefix.Length);
+                if (int.TryParse(thresholdStr, out var threshold))
+                {
+                    if (threshold >= 0)
+                    {
+                        result = escalation.SoldierReputation >= threshold;
+                    }
+                    else
+                    {
+                        result = escalation.SoldierReputation <= threshold;
+                    }
+                    return true;
+                }
+            }
+            
+            return false;
         }
 
         /// <summary>

@@ -194,14 +194,23 @@ namespace Enlisted.Features.Camp
 
                 // Compute the snapshot in a stable, low-cost way.
                 var tracker = CampaignTriggerTrackerBehavior.Instance;
-                var daysSinceTown = 5f;
-                if (tracker != null && tracker.LastTownEnteredTime != CampaignTime.Zero)
+                var daysSinceResupply = 5f;
+                if (tracker != null)
                 {
-                    daysSinceTown = (float)Math.Max(0d, CampaignTime.Now.ToDays - tracker.LastTownEnteredTime.ToDays);
+                    // Resupply can happen at towns or castles (both have markets/stores)
+                    // Use the most recent of either settlement type
+                    var lastTown = tracker.LastTownEnteredTime;
+                    var lastCastle = tracker.LastCastleEnteredTime;
+                    var lastResupply = lastTown > lastCastle ? lastTown : lastCastle;
+                    
+                    if (lastResupply != CampaignTime.Zero)
+                    {
+                        daysSinceResupply = (float)Math.Max(0d, CampaignTime.Now.ToDays - lastResupply.ToDays);
+                    }
                 }
 
-                // Logistics strain: long stretches away from towns, plus recent disruption (raids, heavy battle cadence).
-                var logistics = (daysSinceTown * 12f) + (_villagesLootedThisWeek * 10f) + (_battlesThisWeek * 4f);
+                // Logistics strain: long stretches away from resupply points, plus recent disruption.
+                var logistics = (daysSinceResupply * 12f) + (_villagesLootedThisWeek * 10f) + (_battlesThisWeek * 4f);
                 _logisticsStrain = Clamp01Hundred(logistics);
 
                 // Morale shock: spikes after recent battles, then decays slowly each day.

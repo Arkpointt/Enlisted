@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 1,
   "packId": "escalation_thresholds",
   "category": "threshold",
@@ -58,7 +58,7 @@
           {
             "id": "accept",
             "text": "\"I understand. I'll earn it properly.\"",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -95,7 +95,7 @@
           {
             "id": "bitter",
             "text": "\"Politics. It's always politics.\"",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -132,7 +132,7 @@
           {
             "id": "appeal",
             "text": "\"I want to speak to the captain. Make my case directly.\"",
-            "tooltip": null,
+            "tooltip": "30% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 30,
@@ -182,7 +182,7 @@
           {
             "id": "despair",
             "text": "\"What's the point? They'll never promote someone like me.\"",
-            "tooltip": null,
+            "tooltip": "Disciplinary risk.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -509,7 +509,7 @@
           {
             "id": "accept",
             "text": "Accept the punishment. Do the work.",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -546,7 +546,7 @@
           {
             "id": "complain",
             "text": "Protest the unfairness of the punishment.",
-            "tooltip": null,
+            "tooltip": "50% success chance. Failure adds discipline penalty.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 50,
@@ -583,7 +583,7 @@
           {
             "id": "excel",
             "text": "Not just do it — do it better than anyone. Make a point.",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -620,7 +620,7 @@
           {
             "id": "shirk",
             "text": "Do the minimum. What are they going to do, punish you more?",
-            "tooltip": null,
+            "tooltip": "Shirk duty. May worsen discipline record.",
             "condition": null,
             "risk": "corrupt",
             "risk_chance": null,
@@ -713,7 +713,7 @@
           {
             "id": "accountable",
             "text": "\"No excuses, sir. I failed to meet standards. I accept whatever punishment you decide.\"",
-            "tooltip": null,
+            "tooltip": "Improves soldier reputation.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -750,7 +750,7 @@
           {
             "id": "explain",
             "text": "Lay out the context. The pressures, the circumstances, the reasons behind each incident.",
-            "tooltip": null,
+            "tooltip": "50% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 50,
@@ -800,7 +800,7 @@
           {
             "id": "blame",
             "text": "Point fingers. Others share responsibility — maybe more than you.",
-            "tooltip": null,
+            "tooltip": "Shift blame to others. Harms soldier reputation.",
             "condition": null,
             "risk": "corrupt",
             "risk_chance": null,
@@ -837,7 +837,7 @@
           {
             "id": "challenge",
             "text": "\"Some of these charges are exaggerated. I demand to face my accusers.\"",
-            "tooltip": null,
+            "tooltip": "40% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 40,
@@ -943,7 +943,7 @@
           {
             "id": "apologize",
             "text": "\"You're right. I've been slipping. It won't happen again.\"",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -980,7 +980,7 @@
           {
             "id": "excuse",
             "text": "\"It's not my fault — there were circumstances—\"",
-            "tooltip": null,
+            "tooltip": "50% success chance. Failure adds discipline penalty.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 50,
@@ -1017,7 +1017,7 @@
           {
             "id": "resentful",
             "text": "\"Maybe if the duties weren't so—\"",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -1054,7 +1054,7 @@
           {
             "id": "grateful",
             "text": "\"Thanks for the heads up. I mean it.\"",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -1147,7 +1147,7 @@
           {
             "id": "honest",
             "text": "Come clean. Admit what you did, throw yourself on mercy.",
-            "tooltip": null,
+            "tooltip": "Disciplinary risk.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -1184,7 +1184,7 @@
           {
             "id": "excuse",
             "text": "Blame clerical errors. The records were a mess before you touched them.",
-            "tooltip": null,
+            "tooltip": "40% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 40,
@@ -1234,7 +1234,7 @@
           {
             "id": "implicate",
             "text": "There's a larger scheme. You were just following orders from above.",
-            "tooltip": null,
+            "tooltip": "Implicate superiors. Risky political move.",
             "condition": null,
             "risk": "corrupt",
             "risk_chance": null,
@@ -1271,7 +1271,7 @@
           {
             "id": "records",
             "text": "You've been keeping your own records. Produce them — doctored to tell a better story.",
-            "tooltip": null,
+            "tooltip": "50% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 50,
@@ -1377,7 +1377,7 @@
           {
             "id": "surrender",
             "text": "Go quietly. Face the charges.",
-            "tooltip": null,
+            "tooltip": "Disciplinary risk.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -1414,7 +1414,7 @@
           {
             "id": "beg",
             "text": "\"Please — I'll return everything, I'll work it off, anything—\"",
-            "tooltip": null,
+            "tooltip": "30% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 30,
@@ -1464,7 +1464,7 @@
           {
             "id": "fight",
             "text": "Not like this. Make a break for it.",
-            "tooltip": null,
+            "tooltip": "20% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 20,
@@ -1514,7 +1514,7 @@
           {
             "id": "leverage",
             "text": "\"I know things. About supply chains. About officers. Things the captain might want to know.\"",
-            "tooltip": null,
+            "tooltip": "40% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 40,
@@ -1620,7 +1620,7 @@
           {
             "id": "comply",
             "text": "Stand at attention, let them search. Nothing to hide.",
-            "tooltip": null,
+            "tooltip": "50% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 50,
@@ -1670,7 +1670,7 @@
           {
             "id": "bribe",
             "text": "Quietly offer {SERGEANT_NAME} a cut to look the other way.",
-            "tooltip": null,
+            "tooltip": "40% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 40,
@@ -1720,7 +1720,7 @@
           {
             "id": "distraction",
             "text": "\"Sergeant! {SOLDIER_NAME}'s kit — I saw them hiding something earlier!\"",
-            "tooltip": null,
+            "tooltip": "Frame another soldier. Deflects scrutiny but harms reputation.",
             "condition": null,
             "risk": "corrupt",
             "risk_chance": null,
@@ -1757,7 +1757,7 @@
           {
             "id": "dump",
             "text": "While attention's elsewhere, quietly dump the evidence.",
-            "tooltip": null,
+            "tooltip": "60% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 60,
@@ -1863,7 +1863,7 @@
           {
             "id": "deny",
             "text": "\"I don't know what you're talking about, {SERGEANT}.\"",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -1900,7 +1900,7 @@
           {
             "id": "acknowledge",
             "text": "\"I hear you. I'll be more careful.\"",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -1937,7 +1937,7 @@
           {
             "id": "deflect",
             "text": "\"Everyone's doing it. I'm just not as subtle.\"",
-            "tooltip": null,
+            "tooltip": "50% success chance. Failure adds scrutiny.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 50,
@@ -1974,7 +1974,7 @@
           {
             "id": "ask_help",
             "text": "\"I'm in deeper than I meant to be. Any advice?\"",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2067,7 +2067,7 @@
           {
             "id": "grateful",
             "text": "\"I appreciate this. More than you know.\"",
-            "tooltip": null,
+            "tooltip": "Improves soldier reputation.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2104,7 +2104,7 @@
           {
             "id": "clean",
             "text": "\"I'm clean. But thanks for the warning.\"",
-            "tooltip": null,
+            "tooltip": "Improves soldier reputation.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2141,7 +2141,7 @@
           {
             "id": "share",
             "text": "\"Anyone else in the squad need to know?\"",
-            "tooltip": null,
+            "tooltip": "Improves soldier reputation.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2178,7 +2178,7 @@
           {
             "id": "warn_others",
             "text": "\"Let me tell the others. Less risk for you.\"",
-            "tooltip": null,
+            "tooltip": "Improves soldier reputation.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2271,7 +2271,7 @@
           {
             "id": "approach",
             "text": "Try to join a conversation. Break through the ice.",
-            "tooltip": null,
+            "tooltip": "40% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 40,
@@ -2321,7 +2321,7 @@
           {
             "id": "alone",
             "text": "Take your food and eat alone. They've made their choice.",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2358,7 +2358,7 @@
           {
             "id": "confront",
             "text": "\"Someone want to tell me what's going on?\"",
-            "tooltip": null,
+            "tooltip": "30% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 30,
@@ -2408,7 +2408,7 @@
           {
             "id": "leader",
             "text": "Find {SERGEANT_NAME}. Ask what happened.",
-            "tooltip": null,
+            "tooltip": "Improves soldier reputation.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2501,7 +2501,7 @@
           {
             "id": "endure",
             "text": "Fix it silently. Don't give them the satisfaction of reacting.",
-            "tooltip": null,
+            "tooltip": "Disciplinary risk.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2538,7 +2538,7 @@
           {
             "id": "confront",
             "text": "Find out who did it. Make them answer.",
-            "tooltip": null,
+            "tooltip": "40% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 40,
@@ -2588,7 +2588,7 @@
           {
             "id": "report",
             "text": "Take it to the sergeant. This is beyond squad politics.",
-            "tooltip": null,
+            "tooltip": "Disciplinary risk.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2625,7 +2625,7 @@
           {
             "id": "transfer",
             "text": "Request reassignment. This squad is done with you.",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2718,7 +2718,7 @@
           {
             "id": "help",
             "text": "\"I've got your back. When and where?\"",
-            "tooltip": null,
+            "tooltip": "Improves soldier reputation.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2755,7 +2755,7 @@
           {
             "id": "money",
             "text": "\"How much do you owe? Maybe I can help directly.\"",
-            "tooltip": null,
+            "tooltip": "Improves soldier reputation.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2792,7 +2792,7 @@
           {
             "id": "decline",
             "text": "\"Sorry, can't get involved. Too risky.\"",
-            "tooltip": null,
+            "tooltip": "Harms soldier reputation.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -2829,7 +2829,7 @@
           {
             "id": "leverage",
             "text": "\"I'll help. But you'll owe me a favor. A real one.\"",
-            "tooltip": null,
+            "tooltip": "50% success chance. Improves soldier reputation.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 50,
@@ -3154,7 +3154,7 @@
           {
             "id": "help",
             "text": "\"Get me to the surgeon.\"",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -3191,7 +3191,7 @@
           {
             "id": "refuse",
             "text": "\"I'm fine. Just need water.\"",
-            "tooltip": null,
+            "tooltip": "30% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 30,
@@ -3241,7 +3241,7 @@
           {
             "id": "medicine",
             "text": "\"There's medicine in my kit. Help me take it.\"",
-            "tooltip": null,
+            "tooltip": "50% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 50,
@@ -3291,7 +3291,7 @@
           {
             "id": "get_sergeant",
             "text": "\"Get {SERGEANT_NAME}. They'll know what to do.\"",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -3384,7 +3384,7 @@
           {
             "id": "fight",
             "text": "Fight to stay conscious. You need to... something.",
-            "tooltip": null,
+            "tooltip": "40% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 40,
@@ -3434,7 +3434,7 @@
           {
             "id": "surrender",
             "text": "Let go. Trust them to fix this.",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -3471,7 +3471,7 @@
           {
             "id": "speak",
             "text": "Try to tell them something. Important.",
-            "tooltip": null,
+            "tooltip": "30% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 30,
@@ -3577,7 +3577,7 @@
           {
             "id": "surgeon",
             "text": "Finally give in. See the surgeon.",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -3614,7 +3614,7 @@
           {
             "id": "push",
             "text": "Keep pushing. It's not that bad.",
-            "tooltip": null,
+            "tooltip": "60% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 60,
@@ -3664,7 +3664,7 @@
           {
             "id": "rest",
             "text": "Take it easy. Rest without formal treatment.",
-            "tooltip": null,
+            "tooltip": "Safe choice",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -3701,7 +3701,7 @@
           {
             "id": "herbs",
             "text": "Find some herbs, treat yourself.",
-            "tooltip": null,
+            "tooltip": "50% success chance.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 50,
@@ -3754,5 +3754,3 @@
     }
   ]
 }
-
-

@@ -45,7 +45,7 @@ Events are organized into packs by context and role:
 | `events_promotion.json` | Rank Progression | Promotion opportunities, proving events, leadership tests. |
 | `events_training.json` | Training Activities | Training-related events and progression. |
 | `events_retinue.json` | Commander (T7+) | Retinue management events for high-rank commanders. |
-| `events_duty_*.json` | Role-Specific | Duty events for scouts, medics, engineers, etc. (10 files). |
+| `events_duty_*.json` | Role-Specific | Events gated by native traits: Scout (ScoutSkills 5+), Medic (Surgery 5+), Engineer (Siegecraft 5+), Armorer (Blacksmith 5+), Quartermaster (Trader 5+), Naval (NavalSoldier 1+), and basic soldier events (10 files). |
 | `events_pay_*.json` | Payment Context | Pay tension, loyalty, and mutiny events (3 files). |
 | `Role/scout_events.json` | Scout Role | Reconnaissance, tracking, intelligence gathering. |
 | `incidents_*.json` | Map Incidents | Battle, siege, town, village, leaving, waiting contexts (7 files). |
@@ -54,8 +54,18 @@ Events are organized into packs by context and role:
 
 ## Role-Based Routing
 
-The system detects your **Primary Role** based on your native Bannerlord traits (Commander, Surgeon, ScoutSkills, etc.) and routes events accordingly.
+The system detects your **Primary Role** based on your native Bannerlord traits and routes events accordingly.
 
+**Role Determination (priority order):**
+- **Commander 10+** → Officer role (leadership events)
+- **ScoutSkills 10+** → Scout role (reconnaissance events)
+- **Surgery 10+** → Medic role (medical events)
+- **Siegecraft 10+** → Engineer role (engineering events)
+- **RogueSkills 10+** → Operative role (covert events)
+- **SergeantCommandSkills 8+** → NCO role (squad leadership events)
+- **Default** → Soldier role (general events)
+
+**Event Priority:**
 -   **Priority 1**: Escalation/Crisis events (triggered by high Scrutiny or low Discipline).
 -   **Priority 2**: Role-specific events matching your current specialization.
 -   **Priority 3**: General Soldier events (fallback).
@@ -69,10 +79,10 @@ Each event is defined in JSON and supports complex requirements and outcomes.
 ### Requirements
 Events can be gated by:
 -   **Rank**: Minimum and maximum enlistment tiers (T1-T9).
--   **Role**: Specific tags like `scout`, `medic`, `officer`.
+-   **Native Traits**: Minimum levels in Bannerlord traits (ScoutSkills, Surgery, Siegecraft, etc.).
+-   **Skills**: Minimum levels in native skills (Scouting, Medicine, Engineering, etc.).
 -   **Context**: Campaign state tags like `war`, `siege`, `peace`, `camp`, `town`.
 -   **Reputation**: Minimum thresholds for Lord, Officer, or Soldier reputation.
--   **Traits/Skills**: Minimum levels in native Bannerlord traits and skills.
 
 ### Outcomes
 Choices within events impact:

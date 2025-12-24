@@ -85,8 +85,6 @@ namespace Enlisted.Mod.Core.Triggers
         public const string CampReputation = "camp_reputation";
         public const string MedicalRisk = "medical_risk";
 
-        // Prefix tokens (pattern-based)
-        public const string HasDutyPrefix = "has_duty:";
 
         // Story flags (Decision Events): allow authored content to require/negate a named story flag.
         // Flags are free-form (set/cleared by events), so we use explicit prefixes rather than enumerating them.
@@ -196,11 +194,6 @@ namespace Enlisted.Mod.Core.Triggers
             var trimmed = token.Trim();
 
             // Support prefix tokens without forcing every possible value into the static set.
-            if (trimmed.StartsWith(HasDutyPrefix, StringComparison.OrdinalIgnoreCase))
-            {
-                return trimmed.Length > HasDutyPrefix.Length;
-            }
-
             if (trimmed.StartsWith(FlagPrefix, StringComparison.OrdinalIgnoreCase))
             {
                 return trimmed.Length > FlagPrefix.Length;
@@ -254,11 +247,6 @@ namespace Enlisted.Mod.Core.Triggers
             var trimmed = token.Trim();
 
             // Prefix tokens: implemented when we have an evaluator/provider.
-            if (trimmed.StartsWith(HasDutyPrefix, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
             if (trimmed.StartsWith(FlagPrefix, StringComparison.OrdinalIgnoreCase))
             {
                 return true;

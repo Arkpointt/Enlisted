@@ -23,7 +23,7 @@
           "id": "perfect",
           "textId": "evt_muster_inspection_opt_perfect",
           "resultTextId": "evt_muster_inspection_opt_perfect_result",
-          "tooltip": "Present yourself in perfect order.",
+          "tooltip": "Requires OneHanded 30. Gain Officer and Soldier reputation.",
           "risk": "safe",
           "requirements": {
             "minSkills": { "OneHanded": 30 }
@@ -38,7 +38,7 @@
           "id": "standard",
           "textId": "evt_muster_inspection_opt_standard",
           "resultTextId": "evt_muster_inspection_opt_standard_result",
-          "tooltip": "Meet the basic standards.",
+          "tooltip": "Safe option. Minor Officer reputation gain.",
           "risk": "safe",
           "effects": {
             "skillXp": { "OneHanded": 5 },
@@ -49,7 +49,7 @@
           "id": "unprepared",
           "textId": "evt_muster_inspection_opt_unprepared",
           "resultTextId": "evt_muster_inspection_opt_unprepared_result",
-          "tooltip": "You're not ready. Hope for mercy.",
+          "tooltip": "Reputation loss. Increased scrutiny and discipline penalty.",
           "risk": "risky",
           "effects": {
             "officerRep": -8,
@@ -80,7 +80,7 @@
           "id": "mentor",
           "textId": "evt_muster_new_recruit_opt_mentor",
           "resultTextId": "evt_muster_new_recruit_opt_mentor_result",
-          "tooltip": "Take the new recruit under your wing.",
+          "tooltip": "Requires Leadership 25. Gain Leadership XP and reputation.",
           "risk": "safe",
           "requirements": {
             "minSkills": { "Leadership": 25 }
@@ -97,7 +97,7 @@
           "id": "ignore",
           "textId": "evt_muster_new_recruit_opt_ignore",
           "resultTextId": "evt_muster_new_recruit_opt_ignore_result",
-          "tooltip": "Let them figure it out themselves.",
+          "tooltip": "No effort required. Slight Soldier reputation loss.",
           "risk": "safe",
           "effects": {
             "soldierRep": -2
@@ -107,7 +107,7 @@
           "id": "haze",
           "textId": "evt_muster_new_recruit_opt_haze",
           "resultTextId": "evt_muster_new_recruit_opt_haze_result",
-          "tooltip": "Put them through the traditional 'welcome'.",
+          "tooltip": "Gain Soldier reputation. Lose Officer reputation. Discipline risk.",
           "risk": "moderate",
           "effects": {
             "soldierRep": 4,
@@ -137,7 +137,7 @@
         {
           "id": "acknowledge",
           "text": "Nod back. Say nothing.",
-          "tooltip": "The quartermaster is doing you a favor. Best not to make it awkward.",
+          "tooltip": "Accept the favor silently. No consequences.",
           "risk": "safe",
           "outcome": "Some things are better left unspoken. You owe him one, and you both know it.",
           "effects": {}
@@ -164,7 +164,7 @@
         {
           "id": "bribe",
           "text": "Pay him off.",
-          "tooltip": "Use Charm to negotiate. 60+ auto-success, 30-59 roll, <30 auto-fail.",
+          "tooltip": "Charm skill check. 50% success chance. Failure increases scrutiny.",
           "risk": "moderate",
           "risk_chance": 50,
           "outcome": "The quartermaster pockets your coin and slides the item back into your pack. \"Next time, be more careful.\" The price of discretion.",
@@ -178,7 +178,7 @@
         {
           "id": "smuggle",
           "text": "[Roguery 40+] Smuggle it past while he's distracted.",
-          "tooltip": "Risky. 30% chance of discovery. Failure means double penalties.",
+          "tooltip": "Requires Roguery 40. 70% success. Failure doubles scrutiny penalty.",
           "risk": "risky",
           "risk_chance": 70,
           "requirements": {
@@ -197,7 +197,7 @@
         {
           "id": "surrender",
           "text": "Hand it over. Accept the consequences.",
-          "tooltip": "Item confiscated. Fine applied. +2 Scrutiny. Honest, at least.",
+          "tooltip": "Item confiscated. Fine applied. +2 Scrutiny.",
           "risk": "safe",
           "outcome": "You hand over the item without protest. The quartermaster notes it in his ledger. A fine will be deducted from your next pay. At least you kept your dignity.",
           "effects": {
@@ -226,7 +226,7 @@
         {
           "id": "accept",
           "text": "Accept the confiscation.",
-          "tooltip": "Item taken. Fine applied. +2 Scrutiny. The price of getting caught.",
+          "tooltip": "Item confiscated. Fine applied. +2 Scrutiny.",
           "risk": "safe",
           "outcome": "The item disappears into the quartermaster's custody. The fine will hurt, but there's nothing to be done. Next time, you'll be more careful.",
           "effects": {
@@ -236,7 +236,7 @@
         {
           "id": "protest",
           "text": "Protest the seizure.",
-          "tooltip": "Won't change anything. Makes things worse.",
+          "tooltip": "20% success chance. Failure adds scrutiny and discipline penalty.",
           "risk": "risky",
           "risk_chance": 20,
           "outcome": "Surprisingly, the quartermaster pauses. \"Fine. Keep it. But you owe me.\" A small victory, but you've put yourself on his list.",

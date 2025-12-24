@@ -187,7 +187,9 @@ namespace Enlisted.Features.Content
             {
                 Id = eventDef.Id,
                 TitleId = eventDef.TitleId,
+                TitleFallback = eventDef.TitleFallback,
                 SetupId = eventDef.SetupId,
+                SetupFallback = eventDef.SetupFallback,
                 Category = eventDef.Category,
                 Requirements = eventDef.Requirements,
                 Timing = eventDef.Timing,
@@ -353,7 +355,9 @@ namespace Enlisted.Features.Content
     {
         public string Id { get; set; } = string.Empty;
         public string TitleId { get; set; } = string.Empty;
+        public string TitleFallback { get; set; } = string.Empty;
         public string SetupId { get; set; } = string.Empty;
+        public string SetupFallback { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
         public EventRequirements Requirements { get; set; } = new();
         public EventTiming Timing { get; set; } = new();

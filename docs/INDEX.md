@@ -128,6 +128,7 @@
 
 | Document | Topic | Status |
 |----------|-------|--------|
+| [conflict-detection-system.md](Features/Technical/conflict-detection-system.md) | Conflict detection and prevention across mod systems | ✅ Current |
 | [commander-track-schema.md](Features/Technical/commander-track-schema.md) | Commander tracking schema | 📋 Specification |
 | [encounter-safety.md](Features/Technical/encounter-safety.md) | Encounter safety patterns | ✅ Current |
 

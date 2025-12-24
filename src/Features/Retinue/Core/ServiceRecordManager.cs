@@ -190,15 +190,51 @@ namespace Enlisted.Features.Retinue.Core
             var cooldownEnd = _retinueState.RequisitionCooldownEnd;
             dataStore.SyncData("ret_reqCooldown", ref cooldownEnd);
 
+            // Battle tracking
+            var lastBattleTime = _retinueState.LastBattleTime;
+            var lastBattleWon = _retinueState.LastBattleWon;
+            var lastBattleOutcome = (int)_retinueState.LastBattleOutcome;
+            dataStore.SyncData("ret_lastBattleTime", ref lastBattleTime);
+            dataStore.SyncData("ret_lastBattleWon", ref lastBattleWon);
+            dataStore.SyncData("ret_lastBattleOutcome", ref lastBattleOutcome);
+
+            // Reinforcement request cooldown
+            var reinforcementCooldown = _retinueState.ReinforcementRequestCooldownEnd;
+            dataStore.SyncData("ret_reinforceCooldown", ref reinforcementCooldown);
+
+            // Loyalty system
+            var retinueLoyalty = _retinueState.RetinueLoyalty;
+            var lastThreshold = (int)_retinueState.LastLoyaltyThresholdCrossed;
+            var thresholdEventTime = _retinueState.LastThresholdEventTime;
+            dataStore.SyncData("ret_loyalty", ref retinueLoyalty);
+            dataStore.SyncData("ret_lastThreshold", ref lastThreshold);
+            dataStore.SyncData("ret_thresholdEventTime", ref thresholdEventTime);
+
+            // Battles participated counter
+            var battlesParticipated = _retinueState.BattlesParticipated;
+            dataStore.SyncData("ret_battlesParticipated", ref battlesParticipated);
+
             // Troop counts dictionary
             var troopCount = _retinueState.TroopCounts?.Count ?? 0;
             dataStore.SyncData("ret_troopCount", ref troopCount);
+
+            // Named veterans list
+            var veteranCount = _retinueState.NamedVeterans?.Count ?? 0;
+            dataStore.SyncData("ret_veteranCount", ref veteranCount);
 
             if (dataStore.IsLoading)
             {
                 _retinueState.SelectedTypeId = string.IsNullOrEmpty(typeId) ? null : typeId;
                 _retinueState.DaysSinceLastTrickle = daysSinceTrickle;
                 _retinueState.RequisitionCooldownEnd = cooldownEnd;
+                _retinueState.LastBattleTime = lastBattleTime;
+                _retinueState.LastBattleWon = lastBattleWon;
+                _retinueState.LastBattleOutcome = (BattleOutcome)lastBattleOutcome;
+                _retinueState.ReinforcementRequestCooldownEnd = reinforcementCooldown;
+                _retinueState.RetinueLoyalty = retinueLoyalty;
+                _retinueState.LastLoyaltyThresholdCrossed = (LoyaltyThreshold)lastThreshold;
+                _retinueState.LastThresholdEventTime = thresholdEventTime;
+                _retinueState.BattlesParticipated = battlesParticipated;
                 _retinueState.TroopCounts = new Dictionary<string, int>();
 
                 for (var i = 0; i < troopCount; i++)
@@ -213,17 +249,80 @@ namespace Enlisted.Features.Retinue.Core
                         _retinueState.TroopCounts[troopId] = count;
                     }
                 }
-            }
-            else if (_retinueState.TroopCounts != null)
-            {
-                var idx = 0;
-                foreach (var kvp in _retinueState.TroopCounts)
+
+                // Load named veterans
+                _retinueState.NamedVeterans = new List<NamedVeteran>();
+                for (var i = 0; i < veteranCount; i++)
                 {
-                    var troopId = kvp.Key;
-                    var count = kvp.Value;
-                    dataStore.SyncData($"ret_troop_{idx}_id", ref troopId);
-                    dataStore.SyncData($"ret_troop_{idx}_count", ref count);
-                    idx++;
+                    var vetId = string.Empty;
+                    var vetName = string.Empty;
+                    var vetTrait = string.Empty;
+                    var vetBattles = 0;
+                    var vetKills = 0;
+                    var vetWounded = false;
+                    var vetEmergenceTime = 0f;
+
+                    dataStore.SyncData($"ret_vet_{i}_id", ref vetId);
+                    dataStore.SyncData($"ret_vet_{i}_name", ref vetName);
+                    dataStore.SyncData($"ret_vet_{i}_trait", ref vetTrait);
+                    dataStore.SyncData($"ret_vet_{i}_battles", ref vetBattles);
+                    dataStore.SyncData($"ret_vet_{i}_kills", ref vetKills);
+                    dataStore.SyncData($"ret_vet_{i}_wounded", ref vetWounded);
+                    dataStore.SyncData($"ret_vet_{i}_emergence", ref vetEmergenceTime);
+
+                    if (!string.IsNullOrEmpty(vetId))
+                    {
+                        _retinueState.NamedVeterans.Add(new NamedVeteran
+                        {
+                            Id = vetId,
+                            Name = vetName,
+                            Trait = vetTrait,
+                            BattlesSurvived = vetBattles,
+                            Kills = vetKills,
+                            IsWounded = vetWounded,
+                            EmergenceTimeInDays = vetEmergenceTime
+                        });
+                    }
+                }
+            }
+            else
+            {
+                // Save troop counts
+                if (_retinueState.TroopCounts != null)
+                {
+                    var idx = 0;
+                    foreach (var kvp in _retinueState.TroopCounts)
+                    {
+                        var troopId = kvp.Key;
+                        var count = kvp.Value;
+                        dataStore.SyncData($"ret_troop_{idx}_id", ref troopId);
+                        dataStore.SyncData($"ret_troop_{idx}_count", ref count);
+                        idx++;
+                    }
+                }
+
+                // Save named veterans
+                if (_retinueState.NamedVeterans != null)
+                {
+                    for (var i = 0; i < _retinueState.NamedVeterans.Count; i++)
+                    {
+                        var vet = _retinueState.NamedVeterans[i];
+                        var vetId = vet.Id ?? string.Empty;
+                        var vetName = vet.Name ?? string.Empty;
+                        var vetTrait = vet.Trait ?? string.Empty;
+                        var vetBattles = vet.BattlesSurvived;
+                        var vetKills = vet.Kills;
+                        var vetWounded = vet.IsWounded;
+                        var vetEmergenceTime = vet.EmergenceTimeInDays;
+
+                        dataStore.SyncData($"ret_vet_{i}_id", ref vetId);
+                        dataStore.SyncData($"ret_vet_{i}_name", ref vetName);
+                        dataStore.SyncData($"ret_vet_{i}_trait", ref vetTrait);
+                        dataStore.SyncData($"ret_vet_{i}_battles", ref vetBattles);
+                        dataStore.SyncData($"ret_vet_{i}_kills", ref vetKills);
+                        dataStore.SyncData($"ret_vet_{i}_wounded", ref vetWounded);
+                        dataStore.SyncData($"ret_vet_{i}_emergence", ref vetEmergenceTime);
+                    }
                 }
             }
         }

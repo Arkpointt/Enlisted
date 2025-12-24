@@ -163,21 +163,25 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Capture the current time control mode BEFORE activating a wait menu.
         /// Must be called from the calling code before ActivateGameMenu/SwitchToMenu,
         /// not from init handlers (which run after vanilla already sets Stop).
-        /// Only captures if not already captured, so submenu navigation doesn't overwrite
-        /// the player's original time state (e.g., paused).
+        /// Always captures the current state to respect player's time control changes
+        /// while navigating between menus (e.g., if they pause in one menu and switch to another).
         /// </summary>
         public static void CaptureTimeStateBeforeMenuActivation()
         {
-            // Only capture if not already set. This preserves the player's original time state
-            // when navigating between submenus (e.g., Status -> Decisions -> Camp).
-            if (CapturedTimeMode.HasValue)
-            {
-                ModLogger.Debug("Quartermaster", $"Time state already captured: {CapturedTimeMode}, skipping recapture");
-                return;
-            }
-            
+            // Always capture current time state to respect player changes during menu navigation.
+            // If player changes speed in Camp menu then clicks Decisions, we want to preserve
+            // their CURRENT speed, not the original speed from when they first opened Camp.
+            var previousCaptured = CapturedTimeMode;
             CapturedTimeMode = Campaign.Current?.TimeControlMode;
-            ModLogger.Debug("Quartermaster", $"Captured time state: {CapturedTimeMode}");
+            
+            if (previousCaptured.HasValue && previousCaptured != CapturedTimeMode)
+            {
+                ModLogger.Debug("Quartermaster", $"Time state changed: {previousCaptured} -> {CapturedTimeMode}");
+            }
+            else
+            {
+                ModLogger.Debug("Quartermaster", $"Captured time state: {CapturedTimeMode}");
+            }
         }
 
         /// <summary>

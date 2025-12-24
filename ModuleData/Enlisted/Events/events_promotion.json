@@ -26,10 +26,9 @@
           {
             "id": "choose_infantry",
             "text": "\"The shield wall. I'll hold the line.\"",
-            "tooltip": "Join the infantry formation. You'll train with sword, shield, and polearm.",
+            "tooltip": "Join Infantry. Promotes to Tier 2. Train Sword, Shield, and Polearm.",
             "effects": {
               "formation": "infantry",
-              "starter_duty": "runner",
               "promotes": true
             },
             "outcome": "The sergeant nods. 'Good. Infantry is the backbone of any army. Report to the Quartermaster for your kit.'"
@@ -37,10 +36,9 @@
           {
             "id": "choose_archer",
             "text": "\"Give me a bow. I'll strike from distance.\"",
-            "tooltip": "Join the archer formation. You'll train with bow, crossbow, and skirmish tactics.",
+            "tooltip": "Join Archer. Promotes to Tier 2. Train Bow, Crossbow, and Skirmish.",
             "effects": {
               "formation": "archer",
-              "starter_duty": "lookout",
               "promotes": true
             },
             "outcome": "The sergeant studies your hands. 'Steady grip. Good. Archers win battles before they start. Report to the Quartermaster for your kit.'"
@@ -48,10 +46,9 @@
           {
             "id": "choose_cavalry",
             "text": "\"Put me on a horse. I'll ride with the lancers.\"",
-            "tooltip": "Join the cavalry formation. You'll train with lance, sword, and mounted tactics.",
+            "tooltip": "Join Cavalry. Promotes to Tier 2. Train Lance, Sword, and Riding.",
             "effects": {
               "formation": "cavalry",
-              "starter_duty": "messenger",
               "promotes": true
             },
             "outcome": "The sergeant grins. 'A horseman, eh? The cavalry always needs more riders. Report to the Quartermaster for your kit.'"
@@ -59,11 +56,10 @@
           {
             "id": "choose_horse_archer",
             "text": "\"I can shoot from the saddle.\"",
-            "tooltip": "Join the horse archer formation. You'll train in mounted archery and skirmish.",
+            "tooltip": "Join Horse Archer. Promotes to Tier 2. Train Mounted Archery.",
             "condition": "faction_has_horse_archers",
             "effects": {
               "formation": "horsearcher",
-              "starter_duty": "scout",
               "promotes": true
             },
             "outcome": "The sergeant raises an eyebrow. 'A rare skill. We need riders who can fight without stopping. Report to the Quartermaster for your kit.'"
@@ -95,7 +91,7 @@
           {
             "id": "discipline_hard",
             "text": "\"Discipline him publicly. The men need to see consequences.\"",
-            "tooltip": "Take a hardline approach to discipline.",
+            "tooltip": "Hardline approach. Adds 1 discipline. Disciplinarian tag.",
             "effects": {
               "discipline": 1,
               "character_tag": "disciplinarian",
@@ -106,7 +102,7 @@
           {
             "id": "mercy",
             "text": "\"Give him a chance to earn it back. One mistake shouldn't define a man.\"",
-            "tooltip": "Show mercy and give a second chance.",
+            "tooltip": "Merciful approach. +5 Soldier rep. Merciful tag.",
             "effects": {
               "soldierRep": 5,
               "character_tag": "merciful",
@@ -150,7 +146,7 @@
           {
             "id": "aggressive",
             "text": "\"I led the charge. We couldn't let them regroup.\"",
-            "tooltip": "You took the fight to the enemy.",
+            "tooltip": "Aggressive leadership. Aggressive tag. Promotes to Tier 4.",
             "effects": {
               "character_tag": "aggressive",
               "promotes": true
@@ -160,7 +156,7 @@
           {
             "id": "defensive",
             "text": "\"I held the line and protected the wounded. We couldn't abandon our own.\"",
-            "tooltip": "You prioritized defense and protecting allies.",
+            "tooltip": "Protective leadership. +5 Soldier rep. Defender tag. Promotes to Tier 4.",
             "effects": {
               "character_tag": "defender",
               "soldierRep": 5,
@@ -171,7 +167,7 @@
           {
             "id": "tactical",
             "text": "\"I read the battlefield and ordered a tactical withdrawal to better ground.\"",
-            "tooltip": "You made a calculated tactical decision.",
+            "tooltip": "Calculating leadership. Tactician tag. Promotes to Tier 4.",
             "effects": {
               "character_tag": "tactician",
               "promotes": true
@@ -205,7 +201,7 @@
           {
             "id": "humble",
             "text": "\"I'm nothing without this squad. Whatever you decide, I'll accept.\"",
-            "tooltip": "Show humility and defer to the group.",
+            "tooltip": "Defer to the squad. +10 Soldier rep. Promotes to Tier 5.",
             "effects": {
               "soldierRep": 10,
               "promotes": true
@@ -225,7 +221,7 @@
           {
             "id": "promise",
             "text": "\"Give me the chance, and I swear no one in this squad goes hungry or forgotten.\"",
-            "tooltip": "Make a promise to look after your men.",
+            "tooltip": "Promise care. +5 Soldier rep. Protector tag. Promotes to Tier 5.",
             "effects": {
               "character_tag": "protector",
               "soldierRep": 5,
@@ -260,7 +256,7 @@
           {
             "id": "loyal_to_lord",
             "text": "\"My sword belongs to you, my lord. Command, and I obey.\"",
-            "tooltip": "Pledge personal loyalty to your lord.",
+            "tooltip": "Personal loyalty. Lord Sworn tag. Promotes to Tier 6.",
             "effects": {
               "loyalty_tag": "lord_sworn",
               "promotes": true
@@ -270,7 +266,7 @@
           {
             "id": "loyal_to_kingdom",
             "text": "\"My loyalty is to {KINGDOM_NAME} and its people. I serve the realm.\"",
-            "tooltip": "Pledge loyalty to the kingdom rather than the individual.",
+            "tooltip": "Kingdom loyalty. Realm Loyal tag. Promotes to Tier 6.",
             "effects": {
               "loyalty_tag": "realm_loyal",
               "promotes": true
@@ -280,7 +276,7 @@
           {
             "id": "loyal_to_soldiers",
             "text": "\"My loyalty is to the soldiers beside me. They're why I fight.\"",
-            "tooltip": "Declare loyalty to your comrades above politics.",
+            "tooltip": "Camaraderie. +10 Soldier rep. Lance Bound tag. Promotes to Tier 6.",
             "effects": {
               "loyalty_tag": "lance_bound",
               "soldierRep": 10,
@@ -315,7 +311,7 @@
           {
             "id": "accept_command",
             "text": "\"I'm ready, my lord. Give me the command.\"",
-            "tooltip": "Accept promotion to Commander and receive your first retinue of 20 soldiers.",
+            "tooltip": "Accept command of 20 soldiers. Promotes to Tier 7.",
             "effects": {
               "character_tag": "leader",
               "promotes": true
@@ -325,7 +321,7 @@
           {
             "id": "not_ready",
             "text": "\"I'm honored, but I'm not ready to lead men yet.\"",
-            "tooltip": "Decline the promotion and remain at your current rank. No penalties. You can be promoted later when ready.",
+            "tooltip": "Decline promotion. Cautious tag. Re-apply later via dialogue.",
             "effects": {
               "character_tag": "cautious"
             },
@@ -358,7 +354,7 @@
           {
             "id": "accept_expansion",
             "text": "\"Thank you, my lord. I'll put them to good use.\"",
-            "tooltip": "Accept promotion and receive 10 additional soldiers for your retinue (total: 30).",
+            "tooltip": "Add 10 soldiers to retinue (30 total). Promotes to Tier 8.",
             "effects": {
               "promotes": true
             },
@@ -399,7 +395,7 @@
           {
             "id": "accept_elite",
             "text": "\"I've trained for this moment. I'm ready.\"",
-            "tooltip": "Accept promotion to Elite Commander with maximum retinue capacity (40 soldiers).",
+            "tooltip": "Add 10 soldiers to retinue (40 total). Promotes to Tier 9.",
             "effects": {
               "character_tag": "elite_commander",
               "promotes": true
@@ -409,7 +405,7 @@
           {
             "id": "humble_acceptance",
             "text": "\"The honor is mine. I'll make you proud, my lord.\"",
-            "tooltip": "Accept with humility, gaining lord's favor.",
+            "tooltip": "+5 Lord rep. Add 10 soldiers to retinue (40 total). Promotes to Tier 9.",
             "effects": {
               "lordRep": 5,
               "promotes": true

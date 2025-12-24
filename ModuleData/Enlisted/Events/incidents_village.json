@@ -13,7 +13,10 @@
       "requirements": {
         "context": "entering_village",
         "role": "Any",
-        "tier": { "min": 1, "max": 7 }
+        "tier": {
+          "min": 1,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -37,7 +40,8 @@
               "Morale": 5,
               "Supplies": 3
             }
-          }
+          },
+          "tooltip": "Accept hospitality. +5 Soldier rep. Boosts company morale and supplies. Restores 2 fatigue."
         },
         {
           "id": "decline",
@@ -52,7 +56,8 @@
               "Generosity": 5
             },
             "soldierRep": 3
-          }
+          },
+          "tooltip": "+3 Soldier rep. Mercy and Generosity trait XP."
         },
         {
           "id": "take_advantage",
@@ -73,7 +78,8 @@
             "companyNeeds": {
               "Supplies": 8
             }
-          }
+          },
+          "tooltip": "Dangerous choice. -12 Soldier rep, -5 Officer rep. Adds 4 scrutiny. +35 gold. Mercy and Honor trait XP loss."
         }
       ]
     },
@@ -87,7 +93,10 @@
       "requirements": {
         "context": "entering_village",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 12,
@@ -107,7 +116,8 @@
             "traitXp": {
               "Mercy": 5
             }
-          }
+          },
+          "tooltip": "Stay polite. +3 Soldier rep. Mercy trait XP."
         },
         {
           "id": "demand_respect",
@@ -125,7 +135,8 @@
             "traitXp": {
               "Mercy": -8
             }
-          }
+          },
+          "tooltip": "Risky choice. -5 Soldier rep. Adds 2 scrutiny. Boosts company supplies."
         },
         {
           "id": "leave_quickly",
@@ -138,7 +149,8 @@
             "traitXp": {
               "Calculating": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP."
         }
       ]
     },
@@ -152,7 +164,10 @@
       "requirements": {
         "context": "entering_village",
         "role": "Any",
-        "tier": { "min": 1, "max": 7 }
+        "tier": {
+          "min": 1,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 14,
@@ -171,14 +186,14 @@
           },
           "resultTextId": "mi_village_sick_help_result",
           "resultText": "You examine the child and recognize the fever. Willow bark tea and cool cloths—simple remedies, but they work. The mother weeps with relief.",
-          "tooltip": "Requires Medicine 35+",
+          "tooltip": "Requires Medicine 35. Train Medicine. +5 Soldier rep. Mercy trait XP.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Medicine": 20
             }
-          },
-          "effects": {
+          ,,
+          
             "traitXp": {
               "Mercy": 10
             },
@@ -200,7 +215,8 @@
               "Mercy": 8,
               "Generosity": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. -5 Company supplies. Mercy and Generosity trait XP."
         },
         {
           "id": "cant_help",
@@ -213,7 +229,8 @@
             "traitXp": {
               "Mercy": -3
             }
-          }
+          },
+          "tooltip": "Safe choice. -3 Mercy trait XP."
         }
       ]
     },
@@ -227,7 +244,10 @@
       "requirements": {
         "context": "entering_village",
         "role": "Any",
-        "tier": { "min": 2, "max": 8 }
+        "tier": {
+          "min": 2,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -242,14 +262,15 @@
           "resultTextId": "mi_village_rumor_listen_result",
           "resultText": "You ask careful questions. Numbers, banners, direction of travel—the old women know more than they realize. This could be valuable intelligence.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "officerRep": 5
-          }
+          },
+          "tooltip": "Gather intel. Train Scouting. +5 Officer rep."
         },
         {
           "id": "dismiss_rumor",
@@ -262,7 +283,8 @@
             "traitXp": {
               "Calculating": -2
             }
-          }
+          },
+          "tooltip": "Safe choice. -2 Calculating trait XP."
         },
         {
           "id": "investigate_rumor",
@@ -275,15 +297,15 @@
           },
           "resultTextId": "mi_village_rumor_investigate_result",
           "resultText": "You slip away and scout the eastern road. Fresh tracks, many horses, heading north. The rumors were true. You report back with valuable information.",
-          "tooltip": "Requires Scouting 40+",
+          "tooltip": "Requires Scouting 40. 75% success chance. Train Scouting. +10 Officer rep, +8 Lord rep. Failure causes 15 damage, adds 1 scrutiny.",
           "risk": "risky",
           "risk_chance": 75,
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 25
             }
-          },
-          "effects": {
+          ,,
+          
             "lordRep": 8,
             "officerRep": 10
           },
@@ -305,7 +327,10 @@
       "requirements": {
         "context": "entering_village",
         "role": "Any",
-        "tier": { "min": 2, "max": 7 }
+        "tier": {
+          "min": 2,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 14,
@@ -319,6 +344,7 @@
           "text": "Intervene and make him return it",
           "resultTextId": "mi_village_theft_intervene_result",
           "resultText": "'Put it back.' Your voice is quiet but firm. He hesitates, then complies. The villager never knows how close she came to losing her meal.",
+          "tooltip": "Intervene. -3 Soldier rep. Reduces discipline issues. Honor trait XP.",
           "risk": "moderate",
           "effects": {
             "soldierRep": -3,
@@ -342,7 +368,8 @@
             "traitXp": {
               "Honor": 5
             }
-          }
+          },
+          "tooltip": "Report thief. +8 Officer rep, -8 Soldier rep. Adds 2 discipline issues. Honor trait XP."
         },
         {
           "id": "ignore_theft",
@@ -356,7 +383,8 @@
             "traitXp": {
               "Honor": -5
             }
-          }
+          },
+          "tooltip": "Look away. +3 Soldier rep. -5 Honor trait XP."
         }
       ]
     },
@@ -370,7 +398,10 @@
       "requirements": {
         "context": "entering_village",
         "role": "Any",
-        "tier": { "min": 3, "max": 8 }
+        "tier": {
+          "min": 3,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 21,
@@ -390,7 +421,8 @@
             "traitXp": {
               "Calculating": 3
             }
-          }
+          },
+          "tooltip": "+5 Soldier rep. Calculating trait XP."
         },
         {
           "id": "discourage",
@@ -404,7 +436,8 @@
               "Mercy": 8,
               "Honor": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Mercy and Honor trait XP."
         },
         {
           "id": "let_decide",
@@ -417,10 +450,10 @@
             "traitXp": {
               "Honor": 2
             }
-          }
+          },
+          "tooltip": "Safe choice. Honor trait XP."
         }
       ]
     }
   ]
 }
-

@@ -441,6 +441,13 @@ namespace Enlisted.Features.Content
         public Dictionary<string, int> SkillXp { get; set; } = [];
 
         /// <summary>
+        /// Dynamic skill XP keys that are resolved at runtime:
+        /// - "equipped_weapon" - XP goes to the skill matching equipped weapon
+        /// - "weakest_combat" - XP goes to hero's lowest combat skill
+        /// </summary>
+        public Dictionary<string, int> DynamicSkillXp { get; set; } = [];
+
+        /// <summary>
         /// Trait XP awards. Key: trait name, Value: XP amount (can be negative).
         /// </summary>
         public Dictionary<string, int> TraitXp { get; set; } = [];

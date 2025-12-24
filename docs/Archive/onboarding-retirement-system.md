@@ -38,9 +38,9 @@ Key files for this system:
 - **CRITICAL:** In JSON, fallback fields (`title`, `setup`, `text`, `resultText`) must immediately follow their ID fields (`titleId`, `setupId`, `textId`, `resultTextId`) for proper parser association.
 
 ### Tooltip Best Practices
-- **Every event option should have a tooltip** explaining consequences
+- **Tooltips cannot be null.** Every event option must have a tooltip
 - Tooltips appear on hover in `MultiSelectionInquiryData` popups via `hint` parameter
-- Keep tooltips concise (one sentence, under 80 characters)
+- Keep tooltips concise, factual, brief (one sentence, under 80 characters)
 - For discharge events, explain:
   - Discharge band consequences (cooldown, reputation)
   - What happens to equipment/baggage

@@ -333,6 +333,30 @@ namespace Enlisted.Features.Content
 
             ModLogger.Info(LogCategory, $"Option selected: {option.Id}");
 
+            // Record cooldown for player-initiated decisions ONLY if they commit to an action
+            // (not if they select a cancel/decline option)
+            if (_currentEvent != null && _currentEvent.Category != null && 
+                _currentEvent.Category.Equals("decision", StringComparison.OrdinalIgnoreCase))
+            {
+                // Check if this is a cancel option (common patterns: cancel, nevermind, not_now, decline, skip, back)
+                var isCancelOption = option.Id.IndexOf("cancel", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     option.Id.IndexOf("nevermind", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     option.Id.IndexOf("not_now", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     option.Id.IndexOf("skip", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     option.Id.IndexOf("back", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (!isCancelOption)
+                {
+                    // Player committed to an action - record cooldown
+                    DecisionManager.Instance?.RecordDecisionSelected(_currentEvent.Id);
+                    ModLogger.Info(LogCategory, $"Decision cooldown recorded for: {_currentEvent.Id}");
+                }
+                else
+                {
+                    ModLogger.Debug(LogCategory, $"Cancel option selected - no cooldown recorded");
+                }
+            }
+
             // Track declined promotions (player chose "not ready" or "decline" in proving event)
             if (_currentEvent != null && _currentEvent.Id.StartsWith("promotion_", StringComparison.OrdinalIgnoreCase))
             {
@@ -656,6 +680,45 @@ namespace Enlisted.Features.Content
                     {
                         hero.AddSkillXp(skill, skillXp.Value);
                         ModLogger.Debug(LogCategory, $"Applied {skillXp.Value} XP to {skillXp.Key}");
+                    }
+                }
+            }
+
+            // Apply dynamic skill XP from effects
+            if (effects.DynamicSkillXp != null && effects.DynamicSkillXp.Count > 0)
+            {
+                foreach (var dynamicXp in effects.DynamicSkillXp)
+                {
+                    if (dynamicXp.Value <= 0)
+                    {
+                        ModLogger.Warn(LogCategory, $"Invalid dynamic XP value for {dynamicXp.Key}: {dynamicXp.Value}");
+                        continue;
+                    }
+                    
+                    SkillObject targetSkill = null;
+                    
+                    switch (dynamicXp.Key.ToLowerInvariant())
+                    {
+                        case "equipped_weapon":
+                            targetSkill = WeaponSkillHelper.GetEquippedWeaponSkill(hero);
+                            break;
+                        case "weakest_combat":
+                            targetSkill = WeaponSkillHelper.GetWeakestCombatSkill(hero);
+                            break;
+                        default:
+                            ModLogger.Warn(LogCategory, $"Unknown dynamic XP key in effects: {dynamicXp.Key}");
+                            continue;
+                    }
+                    
+                    if (targetSkill != null)
+                    {
+                        hero.AddSkillXp(targetSkill, dynamicXp.Value);
+                        ModLogger.Debug(LogCategory, 
+                            $"Applied dynamic {dynamicXp.Key} XP from effects: +{dynamicXp.Value} {targetSkill.Name}");
+                    }
+                    else
+                    {
+                        ModLogger.Warn(LogCategory, $"Could not resolve dynamic skill for {dynamicXp.Key}");
                     }
                 }
             }
@@ -1525,6 +1588,34 @@ namespace Enlisted.Features.Content
                 }
             }
 
+            // Dynamic skill XP - resolve to actual skill names for display
+            if (effects.DynamicSkillXp != null && effects.DynamicSkillXp.Count > 0)
+            {
+                foreach (var dynamicXp in effects.DynamicSkillXp.Where(kv => kv.Value > 0))
+                {
+                    SkillObject targetSkill = null;
+                    switch (dynamicXp.Key.ToLowerInvariant())
+                    {
+                        case "equipped_weapon":
+                            targetSkill = WeaponSkillHelper.GetEquippedWeaponSkill(Hero.MainHero);
+                            break;
+                        case "weakest_combat":
+                            targetSkill = WeaponSkillHelper.GetWeakestCombatSkill(Hero.MainHero);
+                            break;
+                    }
+                    
+                    if (targetSkill != null)
+                    {
+                        var skillName = targetSkill.Name.ToString();
+                        if (skillName.Length > 12)
+                        {
+                            skillName = skillName.Substring(0, 10) + "..";
+                        }
+                        parts.Add($"+{dynamicXp.Value} {skillName} XP");
+                    }
+                }
+            }
+
             // Reputations
             if (effects.LordRep.HasValue && effects.LordRep.Value != 0)
             {
@@ -1616,6 +1707,29 @@ namespace Enlisted.Features.Content
                 foreach (var skillXp in effects.SkillXp)
                 {
                     dict[$"{skillXp.Key}XP"] = skillXp.Value;
+                }
+            }
+
+            if (effects.DynamicSkillXp != null)
+            {
+                foreach (var dynamicXp in effects.DynamicSkillXp)
+                {
+                    // Resolve dynamic skill to actual skill name for display
+                    SkillObject targetSkill = null;
+                    switch (dynamicXp.Key.ToLowerInvariant())
+                    {
+                        case "equipped_weapon":
+                            targetSkill = WeaponSkillHelper.GetEquippedWeaponSkill(Hero.MainHero);
+                            break;
+                        case "weakest_combat":
+                            targetSkill = WeaponSkillHelper.GetWeakestCombatSkill(Hero.MainHero);
+                            break;
+                    }
+                    
+                    if (targetSkill != null)
+                    {
+                        dict[$"{targetSkill.Name}XP"] = dynamicXp.Value;
+                    }
                 }
             }
 

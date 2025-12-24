@@ -13,7 +13,10 @@
       "requirements": {
         "context": "leaving_settlement",
         "role": "Any",
-        "tier": { "min": 1, "max": 5 }
+        "tier": {
+          "min": 1,
+          "max": 5
+        }
       },
       "timing": {
         "cooldown_days": 5,
@@ -33,7 +36,8 @@
               "Rest": -5
             },
             "officerRep": 3
-          }
+          },
+          "tooltip": "Moderate risk. +3 Officer rep. Harms company rest."
         },
         {
           "id": "seek_remedy",
@@ -46,7 +50,7 @@
           },
           "resultTextId": "mi_leave_hangover_remedy_result",
           "resultText": "The surgeon gives you a bitter tonic and a knowing look. 'This will help,' he says, 'but next time, drink less.' The relief is immediate.",
-          "tooltip": "Requires Medicine 25+",
+          "tooltip": "Requires Medicine 25. Safe choice. -5 gold. Boosts company rest.",
           "risk": "safe",
           "effects": {
             "gold": -5,
@@ -66,7 +70,8 @@
             "officerRep": -8,
             "soldierRep": 3,
             "discipline": 1
-          }
+          },
+          "tooltip": "Risky choice. +3 Soldier rep, -8 Officer rep. Adds 1 discipline issues."
         }
       ]
     },
@@ -80,7 +85,10 @@
       "requirements": {
         "context": "leaving_settlement",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 10,
@@ -100,7 +108,8 @@
             "traitXp": {
               "Calculating": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. -25 gold. Calculating trait XP."
         },
         {
           "id": "investigate_theft",
@@ -113,14 +122,14 @@
           },
           "resultTextId": "mi_leave_stolen_investigate_result",
           "resultText": "You retrace your steps and find the thief—a local cutpurse, still counting your coin. He drops everything and runs. Most of your money is recovered.",
-          "tooltip": "Requires Scouting 35+",
+          "tooltip": "Requires Scouting 35. Moderate risk. Train Scouting. -5 gold.",
           "risk": "moderate",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 15
             }
-          },
-          "effects": {
+          ,,
+          
             "gold": -5
           }
         },
@@ -135,7 +144,8 @@
             "gold": -25,
             "soldierRep": -10,
             "discipline": 2
-          }
+          },
+          "tooltip": "Risky choice. -10 Soldier rep. Adds 2 discipline issues. -25 gold."
         }
       ]
     },
@@ -149,7 +159,10 @@
       "requirements": {
         "context": "leaving_settlement",
         "role": "Any",
-        "tier": { "min": 1, "max": 7 }
+        "tier": {
+          "min": 1,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 14,
@@ -169,7 +182,8 @@
               "Morale": 5
             },
             "officerRep": -3
-          }
+          },
+          "tooltip": "Proper goodbye. +5 Morale. -3 Officer rep."
         },
         {
           "id": "quick_goodbye",
@@ -182,7 +196,8 @@
             "companyNeeds": {
               "Morale": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Boosts company morale."
         },
         {
           "id": "silent_departure",
@@ -195,7 +210,8 @@
             "traitXp": {
               "Calculating": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP."
         }
       ]
     },
@@ -209,7 +225,10 @@
       "requirements": {
         "context": "leaving_settlement",
         "role": "Any",
-        "tier": { "min": 2, "max": 8 }
+        "tier": {
+          "min": 2,
+          "max": 8
+        }
       },
       "timing": {
         "cooldown_days": 12,
@@ -227,7 +246,8 @@
           "effects": {
             "gold": -15,
             "officerRep": 5
-          }
+          },
+          "tooltip": "Pay for intel. +5 Officer rep. -15 gold."
         },
         {
           "id": "scout_yourself",
@@ -240,15 +260,15 @@
           },
           "resultTextId": "mi_leave_intel_scout_result",
           "resultText": "You ride ahead of the column and see what you need to see. It takes time, but you don't have to trust a stranger's word—or pay for it.",
-          "tooltip": "Requires Scouting 45+",
+          "tooltip": "Requires Scouting 45. 75% success chance. Train Scouting. +8 Officer rep. Failure causes 15 damage, adds 1 scrutiny.",
           "risk": "risky",
           "risk_chance": 75,
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Scouting": 20
             }
-          },
-          "effects": {
+          ,,
+          
             "officerRep": 8
           },
           "effects_failure": {
@@ -269,7 +289,8 @@
             "traitXp": {
               "Calculating": 2
             }
-          }
+          },
+          "tooltip": "Safe choice. -2 Officer rep. Calculating trait XP."
         }
       ]
     },
@@ -283,7 +304,10 @@
       "requirements": {
         "context": "leaving_settlement",
         "role": "Any",
-        "tier": { "min": 2, "max": 7 }
+        "tier": {
+          "min": 2,
+          "max": 7
+        }
       },
       "timing": {
         "cooldown_days": 21,
@@ -303,7 +327,8 @@
             "traitXp": {
               "Honor": 3
             }
-          }
+          },
+          "tooltip": "Report stowaway. +8 Officer rep. Honor trait XP."
         },
         {
           "id": "help_hide",
@@ -317,7 +342,8 @@
             "traitXp": {
               "Mercy": 8
             }
-          }
+          },
+          "tooltip": "Risky choice. Adds 3 scrutiny. Mercy trait XP."
         },
         {
           "id": "ignore_stowaway",
@@ -330,7 +356,8 @@
             "traitXp": {
               "Calculating": 3
             }
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP."
         }
       ]
     },
@@ -344,7 +371,10 @@
       "requirements": {
         "context": "leaving_settlement",
         "role": "Any",
-        "tier": { "min": 1, "max": 6 }
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
       },
       "timing": {
         "cooldown_days": 8,
@@ -364,7 +394,8 @@
             "companyNeeds": {
               "Supplies": 5
             }
-          }
+          },
+          "tooltip": "Safe choice. -20 gold. Boosts company supplies."
         },
         {
           "id": "haggle_quick",
@@ -377,14 +408,14 @@
           },
           "resultTextId": "mi_leave_purchase_haggle_result",
           "resultText": "'Half that,' you say, already turning away. 'Fine, fine!' the merchant yelps. A soldier who knows his prices is a rare thing.",
-          "tooltip": "Requires Trade 30+",
+          "tooltip": "Requires Trade 30. Train Trade. -10 gold. Boosts company supplies.",
           "risk": "safe",
-          "rewards": {
+          "effects": {
             "skillXp": {
               "Trade": 10
             }
-          },
-          "effects": {
+          ,,
+          
             "gold": -10,
             "companyNeeds": {
               "Supplies": 5
@@ -402,10 +433,10 @@
             "traitXp": {
               "Calculating": 2
             }
-          }
+          },
+          "tooltip": "Safe choice. Calculating trait XP."
         }
       ]
     }
   ]
 }
-

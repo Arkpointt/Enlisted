@@ -2442,18 +2442,18 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
-                    var duty = enlistment?.SelectedDuty ?? "";
+                    var role = enlistment?.CurrentSpecialization ?? "Soldier";
                     
                     if (tension < 40)
                     {
                         return false;
                     }
                     
-                    var isSupplyDuty = duty == "quartermaster" || duty == "armorer";
-                    if (!isSupplyDuty)
+                    var isSupplyRole = role == "Quartermaster" || role == "Armorer";
+                    if (!isSupplyRole)
                     {
                         args.IsEnabled = false;
-                        args.Tooltip = new TextObject("{=dm_wrong_duty}Only available for Quartermaster or Armorer duties.");
+                        args.Tooltip = new TextObject("{=dm_wrong_duty}Only available for Quartermaster or Armorer role.");
                         return true;
                     }
                     

@@ -585,7 +585,7 @@ namespace Enlisted.Features.Content
                 }
 
                 // Parse risk chance for risky options
-                option.RiskChance = optJson["risk_chance"]?.Value<int>() ?? optJson["riskChance"]?.Value<int>();
+                option.RiskChance = optJson["risk_chance"]?.Value<int?>() ?? optJson["riskChance"]?.Value<int?>();
 
                 // Parse failure result text
                 option.ResultTextFailureId = optJson["resultFailureTextId"]?.ToString() ?? 
@@ -986,6 +986,10 @@ namespace Enlisted.Features.Content
             // Parse skill XP
             ParseDictionaryField(effectsJson, "skillXp", effects.SkillXp);
             ParseDictionaryField(effectsJson, "skill_xp", effects.SkillXp);
+
+            // Parse dynamic skill XP
+            ParseDictionaryField(effectsJson, "dynamicSkillXp", effects.DynamicSkillXp);
+            ParseDictionaryField(effectsJson, "dynamic_skill_xp", effects.DynamicSkillXp);
 
             // Parse trait XP
             ParseDictionaryField(effectsJson, "traitXp", effects.TraitXp);
