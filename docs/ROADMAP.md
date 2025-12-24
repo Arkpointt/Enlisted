@@ -1,143 +1,32 @@
-# Enlisted Mod - Roadmap
+# Enlisted Mod - Development Roadmap
 
-**Summary:** Future development plans for the Enlisted mod, organized by priority and estimated effort. This roadmap represents planned enhancements beyond the current feature set.
+**Summary:** Future development priorities and planned enhancements.
 
 **Status:** ⚠️ Planning  
-**Last Updated:** 2025-12-23  
+**Last Updated:** 2025-12-24  
 **Current Version:** v0.9.0  
 **Target Game:** Bannerlord v1.3.11
-
-**Recent Completions (2025-12-23):**
-- ✅ Retinue System Complete (Phases 0-8): Formation selection, context-aware trickle, loyalty tracking, 11 events, 6 incidents, 4 decisions, named veterans
-- ✅ Retinue Phase 8: Named Veterans - Emergence after 3+ battles, death detection, memorial events
-- ✅ Retinue Phase 7: Camp Hub Decisions - 4 retinue decisions (Inspect, Drill, Share Rations, Address Men)
-- ✅ Retinue Phase 6: Post-Battle Incidents - 6 map incidents for T7+ commanders (wounded soldier, first command, cowardice, looting, prisoner mercy, recognition)
-- ✅ Phase 9: First Meeting Introduction - Player chooses relationship tone, 28 archetype×tone acknowledgments
-- ✅ Phase 8: Provisions Gauntlet UI - Visual grid for food item purchases with Buy 1/Buy All
-- ✅ Phase 7: Inventory & Pricing System - Stock tracking, supply/rep pricing, muster refresh
-- ✅ Phase 6: Sell Reputation Gating - Reputation-based sell access with under-the-table dialogue
-- ✅ Phase 5: Tier Gate RP Responses - 30+ archetype variants for tier/rep restrictions
-- ✅ Phase 4: Hub Greeting Variants - 5 distinct supply-aware greetings with real-time evaluation
-- ✅ Phase 3: Context-Aware Browse Responses - QM reacts to supply levels before store opens
-- ✅ Option B Architecture: Dynamic runtime context checking via delegates (fixes stale dialogue)
-- ✅ Quartermaster Conversation Refactor: Full JSON/XML data-driven infrastructure
 
 ---
 
 ## Index
 
 1. [Vision](#vision)
-2. [Recent Completions](#recent-completions)
-3. [Near-Term (Next Release)](#near-term-next-release)
-4. [Medium-Term (Future Releases)](#medium-term-future-releases)
-5. [Long-Term (Major Enhancements)](#long-term-major-enhancements)
-6. [Modding Support](#modding-support)
-7. [Technical Debt](#technical-debt)
-
----
-
-## Recent Completions
-
-### Quartermaster First Meeting Introduction - Phase 9 (2025-12-23)
-
-**Status:** ✅ Complete  
-**Build:** 0 errors
-
-First-meeting introduction system where the QM asks the player's name and the player chooses a relationship tone.
-
-**Key Features:**
-- **Archetype Greetings:** 7 unique intro greetings per QM archetype (veteran, merchant, bookkeeper, scoundrel, believer, eccentric, default)
-- **Player Tone Selection:** 4 tone options with tooltips showing reputation impact
-  - Direct: "I'm {PLAYER_NAME}. Just tell me what you've got." (-2 rep)
-  - Military: "{PLAYER_NAME}, reporting for kit." (0 rep)
-  - Friendly: "Name's {PLAYER_NAME}. Looking forward to working with you." (+3 rep)
-  - Flattering: "They call me {PLAYER_NAME}. I've heard you're the one to know." (+5 rep)
-- **28 Acknowledgments:** Each tone × archetype combination has unique QM response
-- **Style Persistence:** Player's chosen style stored in `_qmPlayerStyle` for future dialogue flavor
-- **Flag Persistence:** `_hasMetQuartermaster` flag persists across saves via SyncData
-
-**New Files:**
-- `ModuleData/Enlisted/Dialogue/qm_intro.json` (35 dialogue nodes)
-
-**Modified Files:**
-- `ModuleData/Languages/enlisted_qm_dialogue.xml` (+34 localization strings)
-- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (player style storage)
-- `src/Features/Conversations/Behaviors/EnlistedDialogManager.cs` (intro flow + set_player_style action)
-
----
-
-### Quartermaster Provisions UI - Phase 8 (2025-12-23)
-
-**Status:** ✅ Complete  
-**Build:** 0 errors
-
-Visual grid UI for food item purchases, matching the equipment interface style.
-
-**Key Features:**
-- **Gauntlet Grid UI:** Food items displayed in visual cards with icons, prices, quantities
-- **Tier-Based Behavior:** T1-T6 see ration status info, T7+ see full provisions shop
-- **Buy 1 / Buy All:** Quantity selection for bulk purchases
-- **Stock Tracking:** Integrated with Phase 7 QMInventoryState (12-day muster refresh)
-- **QM Rep Pricing:** 1.5× (Trusted) to 2.2× (Hostile) markup on base prices
-- **Supply Pricing:** +10% to +50% markup at low supply levels
-- **Out-of-Stock UI:** Greyed cards, disabled buttons, restock info
-
-**New Files:**
-- `src/Features/Equipment/UI/QuartermasterProvisionsVM.cs`
-- `src/Features/Equipment/UI/QuartermasterProvisionItemVM.cs`
-- `src/Features/Equipment/UI/QuartermasterProvisionsBehavior.cs`
-- `GUI/Prefabs/Equipment/QuartermasterProvisionsGrid.xml`
-- `GUI/Prefabs/Equipment/QuartermasterProvisionCard.xml`
-
----
-
-### Quartermaster Inventory System - Phase 7 (2025-12-23)
-
-**Status:** ✅ Complete  
-**Build:** 0 errors
-
-Stock tracking and pricing system for quartermaster commerce.
-
-**Key Features:**
-- **Muster-Based Refresh:** Inventory regenerates every 12 days at muster
-- **Supply-Based Stock:** Variety (25%-100%) and quantity (1-5) scale with supply level
-- **Combined Pricing:** Supply scarcity (+10% to +50%) × QM rep (-15% to +25%)
-- **Stock Tracking:** `QMInventoryState` persists across saves
-- **Out-of-Stock UI:** Cards greyed out, buttons disabled, "Restocks at muster" hint
-
----
-
-### Quartermaster Conversation Refactor - Phase 6 (2025-12-23)
-
-**Status:** ✅ Complete  
-**Build:** 0 warnings, 0 errors
-
-Dynamic contextual dialogue system for the Quartermaster with full localization support:
-
-**Key Features:**
-- **Contextual Responses:** Dialogue varies based on supply levels, reputation, mood, archetype, and strategic context
-- **6 Archetype Personalities:** Veteran, Merchant, Bookkeeper, Scoundrel, Believer, Eccentric (each with unique voice)
-- **Dynamic Supply Reports:** Real-time awareness of company needs integrated into dialogue
-- **XML Localization:** ~150 dialogue strings moved to XML for full translation support
-- **Edge Case Hardening:** Comprehensive validation, error handling, and fallback strings ensure bulletproof operation
-
-**Technical Achievements:**
-- Safe string loading with automatic fallbacks
-- Input validation (null checks, archetype validation, value clamping)
-- Exception handling that logs errors without breaking conversations
-- Compatible with .NET Framework 4.x (Bannerlord runtime)
-
-**Documentation:** See [Quartermaster System](Features/Equipment/quartermaster-system.md) for complete system documentation.
+2. [In Progress](#in-progress)
+3. [Near-Term](#near-term)
+4. [Medium-Term](#medium-term)
+5. [Long-Term](#long-term)
+6. [Technical Debt](#technical-debt)
 
 ---
 
 ## Vision
 
-The Enlisted mod aims to create an **emergent, choice-driven military experience** where:
+The Enlisted mod creates an **emergent, choice-driven military experience** where:
 
 - **Identity emerges** from choices, traits, and reputation
 - **Orders from chain of command** provide structure and meaningful missions
-- **Strategic context** makes missions feel connected to actual campaign plans
+- **Strategic context** makes missions feel connected to campaign plans
 - **Rank progression** (T1-T9) gates authority and responsibility
 - **Reputation matters** with lord, officers, and soldiers
 - **Company-wide consequences** make actions impact the entire unit
@@ -150,38 +39,7 @@ The Enlisted mod aims to create an **emergent, choice-driven military experience
 
 ---
 
-## Near-Term (Next Release)
-
-### Retinue System
-
-**Status:** ✅ Complete (All Phases 0-8)  
-**Effort:** ~60 hours total (completed 2025-12-23)  
-**Docs:** [retinue-system.md](Features/Core/retinue-system.md)
-
-Complete retinue system for T7+ commanders with formation selection, context-aware reinforcements, loyalty tracking, narrative content, and named veterans.
-
-**✅ Completed Phases:**
-- Phase 0: Critical Bug Fixes (tier cap, notification text, comment corrections, proving events)
-- Phase 1: Formation Selection (dialog at T7, culture restrictions, persistence)
-- Phase 2: Replenishment System (context-aware trickle, relation-based requests, post-battle volunteer event)
-- Phase 3: Effect Infrastructure (retinueLoyalty, retinueLoss, retinueWounded, retinueGain effects)
-- Phase 4: Retinue Loyalty Track (0-100 scale, threshold events, modifiers)
-- Phase 5: Retinue Events (10 narrative events in events_retinue.json)
-- Phase 6: Post-Battle Incidents (6 map incidents in incidents_retinue.json)
-- Phase 7: Camp Hub Decisions (4 retinue decisions: Inspect, Drill, Share Rations, Address Men)
-- Phase 8: Named Veterans (emergence after 3+ battles, death detection, memorial events, 5 max)
-- News Integration: Personal Feed, Daily Brief, casualty reports, veteran activities
-
-**Content Added:**
-- 11 retinue events (10 narrative + 1 post-battle volunteer)
-- 6 post-battle map incidents
-- 4 camp hub decisions
-- Named veteran system with emergence/death mechanics
-- 100+ localization strings
-
----
-
----
+## In Progress
 
 ### Strategic Context Enhancement
 
@@ -220,7 +78,7 @@ After: "Scout approaches to Pravend - Lord planning offensive.
 
 ---
 
-## Medium-Term (Future Releases)
+## Near-Term
 
 ### Baggage Train Availability System
 
@@ -271,6 +129,8 @@ Transform the baggage stash from always-accessible storage into a realistic logi
 - Consequences for desertion (baggage forfeiture)
 
 ---
+
+## Medium-Term
 
 ### Advanced Order System
 
@@ -336,7 +196,7 @@ Transform the baggage stash from always-accessible storage into a realistic logi
 
 ---
 
-## Long-Term (Major Enhancements)
+## Long-Term
 
 ### Advanced Strategic AI
 
@@ -402,40 +262,6 @@ Transform the baggage stash from always-accessible storage into a realistic logi
 - Custom traits and progression
 - Role definitions
 - XP award patterns
-
----
-
-## Modding Support
-
-### Order Modding API
-
-**Priority:** Medium  
-**Effort:** ~10 hours
-
-- Document JSON schema for orders
-- Create order validation tool
-- Example order templates
-- Modder's guide documentation
-
-### Event Modding API
-
-**Priority:** Medium  
-**Effort:** ~10 hours
-
-- Document JSON schema for events/decisions
-- Content validation tool
-- Example event/decision templates
-- Localization guide
-
-### Trait Modding API
-
-**Priority:** Low  
-**Effort:** ~5 hours
-
-- Document trait system
-- Custom role definitions
-- XP award patterns
-- Integration examples
 
 ---
 
@@ -508,40 +334,9 @@ We welcome contributions! Priority areas:
 
 ---
 
-## Version History
+## Development Philosophy
 
-**v0.9.0 (Current)**
-- Core enlistment system
-- Native game menu interface
-- Trait-based identity system
-- Orders system (17 orders across 3 tiers)
-- Content system (events, decisions)
-- Company needs simulation
-- Quartermaster & provisions
-- Training & XP system
-
-**Planned v1.0.0**
-- Strategic context enhancement
-- UI polish
-- Content expansion
-- Documentation completion
-- Modding API basics
-
-**Planned v1.1.0**
-- Advanced order system
-- Culture-specific content
-- Dynamic difficulty
-
-**Planned v2.0.0**
-- Advanced strategic AI (optional)
-- Full modding support
-- Performance optimization
-
----
-
-## Notes
-
-**Development Philosophy:**
+**Core Principles:**
 - Features must enhance core gameplay loop
 - Avoid feature creep - depth over breadth
 - Integration with native systems preferred
@@ -557,4 +352,3 @@ We welcome contributions! Priority areas:
 ---
 
 **End of Document**
-
