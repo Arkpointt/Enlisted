@@ -93,11 +93,12 @@ All files use JSON format and can be edited with any text editor. Changes take e
 - **[events_decisions.json](#events-folder)** - All player-initiated decisions
 - **[events_player_decisions.json](#events-folder)** - Additional player decisions
 
-### Duties & Orders
-- **[Orders folder](#orders-folder)** - Military orders by tier (T1-T3, T4-T6, T7-T9)
-- **[events_duty_*.json](#events-folder)** - Role-specific events based on native traits:
-  - Armorer, Scout, Field Medic, Quartermaster
-  - Boatswain, Navigator (War Sails DLC)
+### Orders (Chain of Command)
+- **[Orders folder](#orders-folder)** - 17 military orders from your chain of command (T1-T3: 6, T4-T6: 6, T7-T9: 5)
+- Orders are issued every 3-5 days by Sergeants, Captains, or your Lord
+- Accept or decline - success builds reputation, failure damages it
+- Strategic context filtering ensures orders match current campaign situation
+- **See:** `docs/Features/Core/orders-system.md` for complete documentation
 
 ### Reputation & Discipline
 - **[enlisted_config.json](#enlisted_configjson)** → `escalation`:
@@ -241,56 +242,55 @@ Contains all narrative events triggered by context, role, or player action.
 
 | File | Content | Count |
 |------|---------|-------|
-| `events_general.json` | Universal camp/march events | ~50+ |
-| `events_training.json` | Training decisions and outcomes | ~40+ |
-| `events_onboarding.json` | New recruit introduction chain | ~20+ |
-| `events_promotion.json` | Promotion events | ~8 |
+| `events_general.json` | Universal camp/march events | ~25 |
+| `events_training.json` | Training events and progression | ~12 |
+| `events_onboarding.json` | New recruit introduction chain | ~8 |
+| `events_promotion.json` | Promotion and proving events | ~8 |
+| `events_retinue.json` | Commander retinue events (T7+) | ~11 |
 | `events_escalation_thresholds.json` | Scrutiny/Discipline/Medical threshold events | 14 |
 | `events_pay_tension.json` | Pay tension events | ~10 |
-| `events_pay_mutiny.json` | Mutiny events | ~10 |
-| `events_pay_loyal.json` | Loyalty events | ~8 |
-| `events_decisions.json` | Player-initiated decisions | ~30+ |
-| `events_player_decisions.json` | Additional player decisions | ~10+ |
+| `events_pay_mutiny.json` | Mutiny events | ~8 |
+| `events_pay_loyal.json` | Loyalty events | ~6 |
 | `camp_events.json` | Camp context events | ~8 |
-| `muster_events.json` | Muster cycle events | ~6 |
+| `muster_events.json` | Muster and recruitment events | ~6 |
+| `Role/scout_events.json` | Scout role-specific events | ~12 |
 
-**Duty Events (10 files):**
+**Role-Specific Content:**
 
-| File | Role |
-|------|------|
-| `events_duty_armorer.json` | Armorer duty events |
-| `events_duty_scout.json` | Scout duty events |
-| `events_duty_field_medic.json` | Field Medic duty events |
-| `events_duty_quartermaster.json` | Quartermaster duty events |
-| `events_duty_engineer.json` | Engineer duty events |
-| `events_duty_lookout.json` | Lookout duty events |
-| `events_duty_messenger.json` | Messenger duty events |
-| `events_duty_runner.json` | Basic soldier events (no trait requirements) |
-| `events_duty_boatswain.json` | Boatswain duty events (War Sails DLC) |
-| `events_duty_navigator.json` | Navigator duty events (War Sails DLC) |
+Role-based events are integrated into the general event system. The Orders system (see Orders folder) delivers role-specific content through chain-of-command directives that are filtered by your skills and traits.
 
 **Map Incidents:**
 
 | File | Trigger |
 |------|---------|
-| `incidents_battle.json` | After battle ends |
-| `incidents_town.json` | Entering/leaving towns |
-| `incidents_village.json` | Entering/leaving villages |
-| `incidents_siege.json` | During sieges |
-| `incidents_leaving.json` | Leaving settlements |
-| `incidents_waiting.json` | While waiting/idle |
+| `incidents_battle.json` | After battle ends | ~11 |
+| `incidents_town.json` | Entering/leaving towns | ~8 |
+| `incidents_village.json` | Entering/leaving villages | ~6 |
+| `incidents_siege.json` | During sieges | ~10 |
+| `incidents_leaving.json` | Leaving settlements | ~6 |
+| `incidents_waiting.json` | While waiting/idle | ~4 |
+| `incidents_retinue.json` | Post-battle retinue incidents (T7+) | ~6 |
 
 ### Orders Folder
 
-Contains military orders from your chain of command.
+Contains military orders from your chain of command - the primary gameplay driver replacing passive duties.
 
 **Order Files:**
 
-| File | Tier Range | Count |
-|------|------------|-------|
-| `orders_t1_t3.json` | Basic Soldier (T1-T3) | 6 |
-| `orders_t4_t6.json` | Specialist (T4-T6) | 6 |
-| `orders_t7_t9.json` | Leadership (T7-T9) | 5 |
+| File | Tier Range | Issuer | Count |
+|------|------------|--------|-------|
+| `orders_t1_t3.json` | Basic Soldier (T1-T3) | Sergeant | 6 |
+| `orders_t4_t6.json` | Specialist (T4-T6) | Lieutenant/Captain | 6 |
+| `orders_t7_t9.json` | Leadership (T7-T9) | Lord | 5 |
+
+**How Orders Work:**
+- Issued every 3-5 days based on strategic context
+- Success determined by relevant skills (e.g., Scouting for scout orders)
+- Accept or decline - repeated declines lead to discharge
+- Success rewards reputation, XP, gold (T4+), and renown (T7+)
+- Failure penalties range from reputation loss to troop casualties
+
+**Complete Documentation:** `docs/Features/Core/orders-system.md`
 
 ### Decisions Folder
 
@@ -437,9 +437,9 @@ To add translations, see the [Translation Guide](../Languages/README.md).
 | Category | Count |
 |----------|-------|
 | Orders | 17 |
-| Decisions | 34+ |
-| Events | 100+ |
-| Map Incidents | 45+ |
+| Decisions | 34 |
+| Events | 80+ |
+| Map Incidents | 51 |
 
 ---
 

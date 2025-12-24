@@ -134,11 +134,13 @@ Identity is tracked via three reputation scales (-50 to +100):
 - **Soldier Reputation**: Impacted by camp activities and shared hardship.
 
 **Orders System:**
-Instead of passive assignments, players receive explicit orders:
-- **T1-T3**: Group tasks and basic duties (Scouting, Guarding).
-- **T4-T6**: Tactical missions and advanced responsibilities.
-- **T7-T9**: Strategic directives and command authority.
+Instead of passive assignments, players receive explicit orders from the chain of command:
+- **T1-T3**: Basic tasks (guard watch, patrol, firewood collection)
+- **T4-T6**: Specialist missions (scouting, medical aid, leading patrols)
+- **T7-T9**: Strategic directives (command squads, strategic planning)
 Success improves reputation and company needs; failure or declining orders carries heavy penalties.
+
+**See:** [Orders System](orders-system.md) for complete documentation.
 
 **Promotion Requirements:**
 

@@ -456,6 +456,7 @@ namespace Enlisted.Features.Content
         /// Checks custom requirement conditions for events.
         /// Supports retinue-related conditions for post-battle events and loyalty-based events.
         /// Also supports escalation threshold conditions like scrutiny_3, discipline_5, etc.
+        /// Also supports campaign state conditions like at_sea, ai_safe, etc.
         /// </summary>
         private static bool CheckCustomCondition(string condition)
         {
@@ -469,14 +470,92 @@ namespace Enlisted.Features.Content
             
             return lowerCondition switch
             {
+                // Campaign state conditions
+                "at_sea" => CheckAtSea(),
+                "ai_safe" => CheckAiSafe(),
+                "camp_established" => CheckCampEstablished(),
+                
+                // Retinue conditions
                 "retinue_below_capacity" => CheckRetinueBelowCapacity(),
                 "last_battle_won" => CheckLastBattleWon(),
                 "has_retinue" => CheckHasRetinue(),
                 "retinue_loyalty_low" => CheckRetinueLoyaltyLow(),
                 "retinue_loyalty_high" => CheckRetinueLoyaltyHigh(),
                 "retinue_wounded" => CheckRetinueWounded(),
-                _ => true // Unknown conditions pass by default
+                
+                // Unknown conditions fail by default to prevent unimplemented triggers from incorrectly firing
+                _ => false
             };
+        }
+        
+        /// <summary>
+        /// Checks if the player's party is currently at sea.
+        /// Used by naval events (Warsails DLC) to ensure they only trigger during sea travel.
+        /// </summary>
+        private static bool CheckAtSea()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.CurrentLord?.PartyBelongedTo == null)
+            {
+                return false;
+            }
+            
+            var lordParty = enlistment.CurrentLord.PartyBelongedTo;
+            return lordParty.IsCurrentlyAtSea;
+        }
+        
+        /// <summary>
+        /// Checks if the AI is in a safe state for event delivery.
+        /// Prevents events from firing during AI decision-making, transitions, or unstable states.
+        /// </summary>
+        private static bool CheckAiSafe()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.CurrentLord?.PartyBelongedTo == null)
+            {
+                return false;
+            }
+            
+            var lordParty = enlistment.CurrentLord.PartyBelongedTo;
+            
+            // Not safe if lord is in battle
+            if (lordParty.MapEvent != null)
+            {
+                return false;
+            }
+            
+            // Not safe if lord is in a settlement (menu transitions)
+            if (lordParty.CurrentSettlement != null)
+            {
+                return false;
+            }
+            
+            // Not safe if lord's AI is currently making decisions (DefaultBehavior in transition)
+            if (lordParty.Ai.IsDisabled)
+            {
+                return false;
+            }
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Checks if the party is currently in a camp (waiting/resting on the campaign map).
+        /// </summary>
+        private static bool CheckCampEstablished()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.CurrentLord?.PartyBelongedTo == null)
+            {
+                return false;
+            }
+            
+            var lordParty = enlistment.CurrentLord.PartyBelongedTo;
+            
+            // Camp is established when party is waiting on the map (not moving, not in settlement, not in battle)
+            return !lordParty.IsMoving && 
+                   lordParty.CurrentSettlement == null && 
+                   lordParty.MapEvent == null;
         }
         
         /// <summary>

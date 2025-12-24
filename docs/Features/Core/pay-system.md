@@ -65,7 +65,6 @@ DailyWage = (BaseWage + Level×LevelMult + Tier×TierMult + XP/XPDivisor) × Mod
 
 - **Army Bonus**: ×1.2 when your lord's party is in an active army (config: `army_bonus_multiplier`)
 - **Probation Penalty**: ×0.5 when on probation after desertion or washout (config: `probation_wage_multiplier`)
-- **Duties Multiplier**: Future orders system integration (currently returns 1.0)
 
 ---
 

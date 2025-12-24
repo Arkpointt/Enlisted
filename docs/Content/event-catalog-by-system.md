@@ -14,7 +14,7 @@
 |----------|-------|-----------|
 | **Orders** | 17 | 6 T1-T3, 6 T4-T6, 5 T7-T9 |
 | **Decisions** | 38 | Player-initiated Camp Hub menu actions (dec_* prefix) |
-| **Events** | 80+ | Narrative events across multiple files (camp, general, duty roles, pay, promotion, training, retinue, etc.) |
+| **Events** | 80+ | Narrative events across multiple files (camp, general, pay, promotion, training, retinue, etc.) |
 | **Map Incidents** | 51 | 11 Battle, 10 Siege, 8 Town, 6 Village, 6 Leaving, 4 Waiting, 6 Retinue (T7+) |
 
 **Total**: 186+ content pieces across all systems.
@@ -625,7 +625,8 @@ XML contains the actual text:
   "strategic_tags": ["defense", "camp_routine"],
   "requirements": {
     "tier_min": 1,
-    "tier_max": 3
+    "tier_max": 3,
+    "min_skills": { "Athletics": 30 }
   },
   "consequences": {
     "success": {
@@ -633,20 +634,40 @@ XML contains the actual text:
       "company_needs": { "Readiness": 6 },
       "trait_xp": { "Vigor": 12, "Discipline": 10 },
       "skill_xp": { "Athletics": 25 },
+      "denars": 50,
+      "renown": 5,
       "text": "A quiet night. The sergeant commends your vigilance as dawn breaks."
     },
     "failure": {
       "reputation": { "officer": -10 },
       "company_needs": { "Readiness": -8 },
+      "hp_loss": 15,
       "text": "You dozed off at your post. A kicked bucket woke the camp. The shame burns."
+    },
+    "critical_failure": {
+      "reputation": { "officer": -15, "lord": -10 },
+      "company_needs": { "Readiness": -15 },
+      "troop_loss": { "min": 1, "max": 2 },
+      "hp_loss": 25,
+      "text": "Critical failure text."
     },
     "decline": {
       "reputation": { "officer": -12 },
-      "textId": "order_guard_night_decline"
+      "text": "'Too tired for watch duty?' Contempt drips from his voice."
     }
   }
 }
 ```
+
+**Schema Notes:**
+- `min_skills` (optional): Skill requirements for T4+ specialist orders
+- `denars` (optional): Gold rewards for T4+ orders
+- `renown` (optional): Renown gain for T7+ orders
+- `hp_loss` (optional): Player HP loss on failure
+- `critical_failure` (optional): T4+ orders can have catastrophic failure states
+- `troop_loss`: Causes actual troop casualties from retinue or company
+
+**See:** [Orders System](../Features/Core/orders-system.md) for complete documentation.
 
 ### Order Strings (XML)
 
@@ -1111,10 +1132,6 @@ ModuleData/Enlisted/
 │   ├── events_promotion.json       (Promotion and proving events)
 │   ├── events_training.json        (Training-related events)
 │   ├── events_retinue.json         (Retinue events for T7+ commanders)
-│   ├── events_duty_scout.json      (Scout duty events)
-│   ├── events_duty_medic.json      (Medic duty events)
-│   ├── events_duty_engineer.json   (Engineer duty events)
-│   ├── events_duty_*.json          (7 more duty role files)
 │   ├── events_pay_tension.json     (Pay tension events)
 │   ├── events_pay_loyal.json       (Pay loyalty events)
 │   ├── events_pay_mutiny.json      (Pay mutiny events)

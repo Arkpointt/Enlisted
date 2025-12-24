@@ -45,7 +45,6 @@ Events are organized into packs by context and role:
 | `events_promotion.json` | Rank Progression | Promotion opportunities, proving events, leadership tests. |
 | `events_training.json` | Training Activities | Training-related events and progression. |
 | `events_retinue.json` | Commander (T7+) | Retinue management events for high-rank commanders. |
-| `events_duty_*.json` | Role-Specific | Events gated by native traits: Scout (ScoutSkills 5+), Medic (Surgery 5+), Engineer (Siegecraft 5+), Armorer (Blacksmith 5+), Quartermaster (Trader 5+), Naval (NavalSoldier 1+), and basic soldier events (10 files). |
 | `events_pay_*.json` | Payment Context | Pay tension, loyalty, and mutiny events (3 files). |
 | `Role/scout_events.json` | Scout Role | Reconnaissance, tracking, intelligence gathering. |
 | `incidents_*.json` | Map Incidents | Battle, siege, town, village, leaving, waiting contexts (7 files). |
@@ -144,9 +143,7 @@ When an option is selected, effects are applied through centralized managers:
 - `events_promotion.json` - Promotion and proving events
 - `events_training.json` - Training-related events
 - `events_retinue.json` - Retinue events (T7+ commanders)
-- `events_duty_*.json` - Role-specific duty events (scout, medic, engineer, etc.)
 - `events_pay_*.json` - Pay-related events (tension, loyalty, mutiny)
-- `events_player_decisions.json` - Player-initiated events (legacy)
 - `incidents_*.json` - Map incident events (battle, siege, town, village, leaving, waiting, retinue)
 - `muster_events.json` - Muster and recruitment events
 - `Role/scout_events.json` - Scout role-specific events

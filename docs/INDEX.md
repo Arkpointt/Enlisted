@@ -68,6 +68,7 @@
 | [index.md](Features/Core/index.md) | Core features index | ✅ Current |
 | [core-gameplay.md](Features/Core/core-gameplay.md) | Complete gameplay overview | ✅ Current |
 | [enlistment.md](Features/Core/enlistment.md) | Enlistment system mechanics | ✅ Current |
+| [orders-system.md](Features/Core/orders-system.md) | Orders from chain of command: 17 orders across 3 tiers, strategic filtering, success/failure resolution | ✅ Current |
 | [promotion-system.md](Features/Core/promotion-system.md) | Rank progression T1-T9: XP sources, multi-factor requirements (days/battles/reputation/discipline), proving events, culture-specific ranks, equipment unlocks | ✅ Current |
 | [pay-system.md](Features/Core/pay-system.md) | Wages and payment | ✅ Current |
 | [company-events.md](Features/Core/company-events.md) | Company-wide events | ✅ Current |

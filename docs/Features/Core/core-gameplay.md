@@ -4,7 +4,7 @@
 
 **Status:** ✅ Current  
 **Last Updated:** 2025-12-23  
-**Related Docs:** [Enlistment](enlistment.md), [Orders System](../Content/content-system-architecture.md), [Identity System](../Identity/identity-system.md)
+**Related Docs:** [Enlistment](enlistment.md), [Orders System](orders-system.md), [Identity System](../Identity/identity-system.md)
 
 ---
 
@@ -102,9 +102,9 @@ Your role in the company emerges from your native Bannerlord traits, which devel
 6. **NCO** - SergeantCommandSkills trait 8+ (squad leadership, training)
 7. **Soldier** - Default role (general combat duties)
 
-**Role-Specific Events:**
-- Events in `events_duty_*.json` files require specific trait minimums (usually 5+)
-- Your choices in events grant trait XP, gradually developing your specialization
+**Role-Specific Content:**
+- Orders from the chain of command are filtered by your skills and traits
+- Your choices in orders and events grant trait XP, gradually developing your specialization
 - Multiple specializations can develop simultaneously (e.g., Scout + NCO)
 
 ### Expanded Reputation

@@ -2074,19 +2074,19 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // COMPANY REPORT section: Daily brief with kingdom news
                 var dailyBrief = news?.BuildDailyBriefSection();
-                sb.AppendLine("_____ COMPANY REPORT _____");
+                sb.AppendLine("<span style=\"Header\">_____ COMPANY REPORT _____</span>");
                 sb.AppendLine(!string.IsNullOrWhiteSpace(dailyBrief) ? dailyBrief : "No report available.");
                 sb.AppendLine();
 
                 // Company Status summary (compact one-liners)
-                sb.AppendLine("_____ COMPANY STATUS _____");
+                sb.AppendLine("<span style=\"Header\">_____ COMPANY STATUS _____</span>");
                 var companyStatusSummary = BuildCompactCompanyStatusSummary(enlistment);
                 sb.AppendLine(companyStatusSummary);
                 sb.AppendLine();
 
                 // RECENT ACTIONS section: Personal feed items (battles, orders, reputation changes)
                 var personalFeed = news?.GetVisiblePersonalFeedItems(3);
-                sb.AppendLine("_____ RECENT ACTIONS _____");
+                sb.AppendLine("<span style=\"Header\">_____ RECENT ACTIONS _____</span>");
                 if (personalFeed == null || personalFeed.Count == 0)
                 {
                     sb.AppendLine("• Nothing notable to report.");
@@ -3433,7 +3433,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // COMPANY REPORT section: Daily brief narrative paragraph
                 var dailyBrief = news?.BuildDailyBriefSection();
-                sb.AppendLine("_____ COMPANY REPORT _____");
+                sb.AppendLine("<span style=\"Header\">_____ COMPANY REPORT _____</span>");
                 sb.AppendLine(!string.IsNullOrWhiteSpace(dailyBrief) ? dailyBrief : "No report available.");
 
                 return sb.ToString().TrimEnd();
@@ -3953,7 +3953,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var sb = new StringBuilder();
 
-                sb.AppendLine("=== DAILY BRIEF ===");
+                sb.AppendLine("<span style=\"Header\">_____ DAILY BRIEF _____</span>");
                 var dailyBrief = EnlistedNewsBehavior.Instance?.BuildDailyBriefSection();
                 if (!string.IsNullOrWhiteSpace(dailyBrief))
                 {
@@ -3965,7 +3965,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
                 sb.AppendLine();
 
-                sb.AppendLine("=== RECENT ACTIVITY ===");
+                sb.AppendLine("<span style=\"Header\">_____ RECENT ACTIVITY _____</span>");
                 var recentActivity = BuildRecentActivityReport();
                 if (!string.IsNullOrWhiteSpace(recentActivity))
                 {
@@ -3977,15 +3977,15 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
                 sb.AppendLine();
 
-                sb.AppendLine("=== COMPANY STATUS ===");
+                sb.AppendLine("<span style=\"Header\">_____ COMPANY STATUS _____</span>");
                 var companyStatus = BuildCompanyStatusReport();
                 sb.AppendLine(companyStatus);
                 sb.AppendLine();
 
-                sb.AppendLine("=== CAMPAIGN CONTEXT ===");
+                sb.AppendLine("<span style=\"Header\">_____ CAMPAIGN CONTEXT _____</span>");
                 var lord = enlistment.CurrentLord;
                 var context = Instance?.GetCurrentObjectiveDisplay(lord) ?? "Unknown";
-                sb.AppendLine($"Lord's Objective: {context}");
+                sb.AppendLine($"<span style=\"Label\">Lord's Objective:</span> {context}");
 
                 return sb.ToString().TrimEnd();
             }
@@ -4024,12 +4024,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 sb.AppendLine($"Campaign: {Instance?.GetCurrentObjectiveDisplay(lord) ?? "Unknown"}");
                 sb.AppendLine();
 
-                sb.AppendLine("=== REPUTATION ===");
+                sb.AppendLine("<span style=\"Header\">=== REPUTATION ===</span>");
                 if (escalation?.State != null)
                 {
-                    sb.AppendLine($"Lord:     {escalation.State.LordReputation}/100 ({GetReputationLevel(escalation.State.LordReputation)})");
-                    sb.AppendLine($"Officers: {escalation.State.OfficerReputation}/100 ({GetReputationLevel(escalation.State.OfficerReputation)})");
-                    sb.AppendLine($"Soldiers: {escalation.State.SoldierReputation}/100 ({GetSoldierReputationLevel(escalation.State.SoldierReputation)})");
+                    var lordColor = escalation.State.LordReputation >= 60 ? "Success" : escalation.State.LordReputation >= 40 ? "Warning" : "Alert";
+                    var officerColor = escalation.State.OfficerReputation >= 60 ? "Success" : escalation.State.OfficerReputation >= 40 ? "Warning" : "Alert";
+                    var soldierColor = escalation.State.SoldierReputation >= 60 ? "Success" : escalation.State.SoldierReputation >= 40 ? "Warning" : "Alert";
+                    
+                    sb.AppendLine($"<span style=\"Label\">Lord:</span>     <span style=\"{lordColor}\">{escalation.State.LordReputation}/100 ({GetReputationLevel(escalation.State.LordReputation)})</span>");
+                    sb.AppendLine($"<span style=\"Label\">Officers:</span> <span style=\"{officerColor}\">{escalation.State.OfficerReputation}/100 ({GetReputationLevel(escalation.State.OfficerReputation)})</span>");
+                    sb.AppendLine($"<span style=\"Label\">Soldiers:</span> <span style=\"{soldierColor}\">{escalation.State.SoldierReputation}/100 ({GetSoldierReputationLevel(escalation.State.SoldierReputation)})</span>");
                 }
                 else
                 {
@@ -4037,16 +4041,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
                 sb.AppendLine();
 
-                sb.AppendLine("=== ROLE & SPECIALIZATIONS ===");
+                sb.AppendLine("<span style=\"Header\">=== ROLE & SPECIALIZATIONS ===</span>");
                 var statusManager = Identity.EnlistedStatusManager.Instance;
                 if (statusManager != null)
                 {
                     var role = statusManager.GetPrimaryRole();
                     var roleDesc = statusManager.GetRoleDescription();
-                    sb.AppendLine($"Primary Role: {role}");
+                    sb.AppendLine($"<span style=\"Label\">Primary Role:</span> {role}");
                     sb.AppendLine(roleDesc);
                     sb.AppendLine();
-                    sb.AppendLine("Specializations:");
+                    sb.AppendLine("<span style=\"Label\">Specializations:</span>");
                     sb.AppendLine(statusManager.GetAllSpecializations());
                 }
                 else
@@ -4055,7 +4059,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
                 sb.AppendLine();
 
-                sb.AppendLine("=== PERSONALITY TRAITS ===");
+                sb.AppendLine("<span style=\"Header\">=== PERSONALITY TRAITS ===</span>");
                 sb.AppendLine(GetPersonalityTraits());
 
                 return sb.ToString().TrimEnd();
@@ -4246,9 +4250,16 @@ namespace Enlisted.Features.Interface.Behaviors
                     _ => new TextObject("{=status_compact_rest_0}Collapsing").ToString()
                 };
 
-                sb.AppendLine($"Readiness: {readinessStatus} | Morale: {moraleStatus}");
-                sb.AppendLine($"Supplies: {supplyStatus} | Equipment: {equipmentStatus}");
-                sb.Append($"Rest: {restStatus}");
+                // Color-code labels and values based on severity
+                var readinessColor = needs.Readiness >= 60 ? "Default" : needs.Readiness >= 40 ? "Warning" : "Alert";
+                var moraleColor = needs.Morale >= 60 ? "Default" : needs.Morale >= 40 ? "Warning" : "Alert";
+                var suppliesColor = needs.Supplies >= 60 ? "Success" : needs.Supplies >= 40 ? "Warning" : "Alert";
+                var equipmentColor = needs.Equipment >= 60 ? "Default" : needs.Equipment >= 40 ? "Warning" : "Alert";
+                var restColor = needs.Rest >= 60 ? "Default" : needs.Rest >= 40 ? "Warning" : "Alert";
+
+                sb.AppendLine($"<span style=\"Label\">Readiness:</span> <span style=\"{readinessColor}\">{readinessStatus}</span> | <span style=\"Label\">Morale:</span> <span style=\"{moraleColor}\">{moraleStatus}</span>");
+                sb.AppendLine($"<span style=\"Label\">Supplies:</span> <span style=\"{suppliesColor}\">{supplyStatus}</span> | <span style=\"Label\">Equipment:</span> <span style=\"{equipmentColor}\">{equipmentStatus}</span>");
+                sb.Append($"<span style=\"Label\">Rest:</span> <span style=\"{restColor}\">{restStatus}</span>");
 
                 return sb.ToString();
             }
@@ -4330,16 +4341,21 @@ namespace Enlisted.Features.Interface.Behaviors
             }
 
             // Status description by level
-            var status = value switch
+            var description = value switch
             {
-                >= 80 => new TextObject("{=status_readiness_excellent}READINESS: The company stands battle-ready, formations tight and weapons sharp.").ToString(),
-                >= 60 => new TextObject("{=status_readiness_good}READINESS: The company is prepared for action, though some drills have been skipped.").ToString(),
-                >= 40 => new TextObject("{=status_readiness_fair}READINESS: The company can fight, but coordination has slipped.").ToString(),
-                >= 20 => new TextObject("{=status_readiness_poor}READINESS: The company is disorganized. Officers bark orders to restore discipline.").ToString(),
-                _ => new TextObject("{=status_readiness_critical}READINESS: The company is a shambles. Men mill about confused, barely fit for battle.").ToString()
+                >= 80 => new TextObject("{=status_readiness_excellent}The company stands battle-ready, formations tight and weapons sharp.").ToString(),
+                >= 60 => new TextObject("{=status_readiness_good}The company is prepared for action, though some drills have been skipped.").ToString(),
+                >= 40 => new TextObject("{=status_readiness_fair}The company can fight, but coordination has slipped.").ToString(),
+                >= 20 => new TextObject("{=status_readiness_poor}The company is disorganized. Officers bark orders to restore discipline.").ToString(),
+                _ => new TextObject("{=status_readiness_critical}The company is a shambles. Men mill about confused, barely fit for battle.").ToString()
             };
 
-            return string.IsNullOrEmpty(context) ? status : $"{status}{context}";
+            // Apply color based on severity
+            var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
+            var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
+            var fullText = $"<span style=\"Label\">READINESS:</span> {coloredDescription}";
+            
+            return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
         
         private static string BuildMoraleLine(int value, EnlistmentBehavior enlistment, bool isInCombat, bool isInSiege)
@@ -4365,16 +4381,21 @@ namespace Enlisted.Features.Interface.Behaviors
                 context = new TextObject("{=status_morale_combat} Battle tests every man's courage.").ToString();
             }
 
-            var status = value switch
+            var description = value switch
             {
-                >= 80 => new TextObject("{=status_morale_excellent}MORALE: Spirits are high. The men sing as they march and talk of glory.").ToString(),
-                >= 60 => new TextObject("{=status_morale_good}MORALE: The company's mood is steady. Complaints are few.").ToString(),
-                >= 40 => new TextObject("{=status_morale_fair}MORALE: The men are restless. Grumbling spreads around the cookfires.").ToString(),
-                >= 20 => new TextObject("{=status_morale_poor}MORALE: The company is unhappy. Fights break out and discipline slips.").ToString(),
-                _ => new TextObject("{=status_morale_critical}MORALE: The company is on the edge. Desertion whispers spread through camp.").ToString()
+                >= 80 => new TextObject("{=status_morale_excellent}Spirits are high. The men sing as they march and talk of glory.").ToString(),
+                >= 60 => new TextObject("{=status_morale_good}The company's mood is steady. Complaints are few.").ToString(),
+                >= 40 => new TextObject("{=status_morale_fair}The men are restless. Grumbling spreads around the cookfires.").ToString(),
+                >= 20 => new TextObject("{=status_morale_poor}The company is unhappy. Fights break out and discipline slips.").ToString(),
+                _ => new TextObject("{=status_morale_critical}The company is on the edge. Desertion whispers spread through camp.").ToString()
             };
 
-            return string.IsNullOrEmpty(context) ? status : $"{status}{context}";
+            // Apply color based on severity
+            var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
+            var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
+            var fullText = $"<span style=\"Label\">MORALE:</span> {coloredDescription}";
+            
+            return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
         
         private static string BuildSuppliesLine(int value, bool isMarching, bool isInSiege)
@@ -4390,16 +4411,21 @@ namespace Enlisted.Features.Interface.Behaviors
                 context = new TextObject("{=status_supplies_march} The march consumes provisions quickly.").ToString();
             }
 
-            var status = value switch
+            var description = value switch
             {
-                >= 80 => new TextObject("{=status_supplies_excellent}SUPPLIES: The wagons are well-stocked. Food is plentiful and gear is available.").ToString(),
-                >= 60 => new TextObject("{=status_supplies_good}SUPPLIES: Adequate provisions remain. The quartermaster is not worried.").ToString(),
-                >= 40 => new TextObject("{=status_supplies_fair}SUPPLIES: Rations are tightening. The quartermaster counts every sack of grain.").ToString(),
-                >= 20 => new TextObject("{=status_supplies_poor}SUPPLIES: Food is scarce. Men go hungry and equipment cannot be replaced.").ToString(),
-                _ => new TextObject("{=status_supplies_critical}SUPPLIES: The company is starving. Men eye the pack horses with desperation.").ToString()
+                >= 80 => new TextObject("{=status_supplies_excellent}The wagons are well-stocked. Food is plentiful and gear is available.").ToString(),
+                >= 60 => new TextObject("{=status_supplies_good}Adequate provisions remain. The quartermaster is not worried.").ToString(),
+                >= 40 => new TextObject("{=status_supplies_fair}Rations are tightening. The quartermaster counts every sack of grain.").ToString(),
+                >= 20 => new TextObject("{=status_supplies_poor}Food is scarce. Men go hungry and equipment cannot be replaced.").ToString(),
+                _ => new TextObject("{=status_supplies_critical}The company is starving. Men eye the pack horses with desperation.").ToString()
             };
 
-            return string.IsNullOrEmpty(context) ? status : $"{status}{context}";
+            // Apply color based on severity (supplies are critical resource)
+            var colorStyle = value >= 60 ? "Success" : value >= 40 ? "Warning" : "Alert";
+            var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
+            var fullText = $"<span style=\"Label\">SUPPLIES:</span> {coloredDescription}";
+            
+            return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
         
         private static string BuildEquipmentLine(int value, bool isInCombat, bool isMarching, MobileParty party)
@@ -4420,16 +4446,21 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
             }
 
-            var status = value switch
+            var description = value switch
             {
-                >= 80 => new TextObject("{=status_equipment_excellent}EQUIPMENT: Weapons are sharp, armor polished. The armorer has little to do.").ToString(),
-                >= 60 => new TextObject("{=status_equipment_good}EQUIPMENT: Gear is serviceable. Minor repairs needed here and there.").ToString(),
-                >= 40 => new TextObject("{=status_equipment_fair}EQUIPMENT: The armorer works constantly. Notched blades and dented helms are common.").ToString(),
-                >= 20 => new TextObject("{=status_equipment_poor}EQUIPMENT: Gear is failing. Men fight with bent swords and cracked shields.").ToString(),
-                _ => new TextObject("{=status_equipment_critical}EQUIPMENT: The company is barely armed. Some men wrap rags around their hands for lack of gloves.").ToString()
+                >= 80 => new TextObject("{=status_equipment_excellent}Weapons are sharp, armor polished. The armorer has little to do.").ToString(),
+                >= 60 => new TextObject("{=status_equipment_good}Gear is serviceable. Minor repairs needed here and there.").ToString(),
+                >= 40 => new TextObject("{=status_equipment_fair}The armorer works constantly. Notched blades and dented helms are common.").ToString(),
+                >= 20 => new TextObject("{=status_equipment_poor}Gear is failing. Men fight with bent swords and cracked shields.").ToString(),
+                _ => new TextObject("{=status_equipment_critical}The company is barely armed. Some men wrap rags around their hands for lack of gloves.").ToString()
             };
 
-            return string.IsNullOrEmpty(context) ? status : $"{status}{context}";
+            // Apply color based on severity
+            var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
+            var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
+            var fullText = $"<span style=\"Label\">EQUIPMENT:</span> {coloredDescription}";
+            
+            return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
         
         private static string BuildRestLine(int value, bool isMarching, bool isInSettlement, bool isInArmy)
@@ -4449,16 +4480,21 @@ namespace Enlisted.Features.Interface.Behaviors
                 context = new TextObject("{=status_rest_settlement} The settlement offers a chance to recover.").ToString();
             }
 
-            var status = value switch
+            var description = value switch
             {
-                >= 80 => new TextObject("{=status_rest_excellent}REST: The company is well-rested. Men wake refreshed and ready.").ToString(),
-                >= 60 => new TextObject("{=status_rest_good}REST: The company has had adequate rest. Some yawning, but nothing serious.").ToString(),
-                >= 40 => new TextObject("{=status_rest_fair}REST: Fatigue is setting in. Men doze on their feet during long halts.").ToString(),
-                >= 20 => new TextObject("{=status_rest_poor}REST: The company is exhausted. Tempers flare and mistakes multiply.").ToString(),
-                _ => new TextObject("{=status_rest_critical}REST: The company is dead on their feet. Men collapse during marches.").ToString()
+                >= 80 => new TextObject("{=status_rest_excellent}The company is well-rested. Men wake refreshed and ready.").ToString(),
+                >= 60 => new TextObject("{=status_rest_good}The company has had adequate rest. Some yawning, but nothing serious.").ToString(),
+                >= 40 => new TextObject("{=status_rest_fair}Fatigue is setting in. Men doze on their feet during long halts.").ToString(),
+                >= 20 => new TextObject("{=status_rest_poor}The company is exhausted. Tempers flare and mistakes multiply.").ToString(),
+                _ => new TextObject("{=status_rest_critical}The company is dead on their feet. Men collapse during marches.").ToString()
             };
 
-            return string.IsNullOrEmpty(context) ? status : $"{status}{context}";
+            // Apply color based on severity
+            var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
+            var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
+            var fullText = $"<span style=\"Label\">REST:</span> {coloredDescription}";
+            
+            return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
 
         private static string GetPersonalityTraits()

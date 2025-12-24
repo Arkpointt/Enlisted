@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Enlisted Mod - Custom Color Palette
+  Extends GameMenu.InfoText with semantic color styles for military intelligence brief theme
+-->
+<Brushes>
+  <!-- Override GameMenu.InfoText to add custom color styles -->
+  <Brush Name="GameMenu.InfoText" BaseBrush="Info.Text" Font="Galahad" TextHorizontalAlignment="Center">
+    <Layers>
+    </Layers>
+    <Styles>
+      <!-- Default style (keep native) -->
+      <Style Name="Default" FontColor="#FAF4DEFF" FontSize="22" TextBlur="0" TextGlowColor="#000000FF" TextGlowRadius="0" TextOutlineAmount="0" TextOutlineColor="#FFFFFF00" />
+      
+      <!-- Custom Enlisted styles -->
+      <Style Name="Header" FontColor="#00CCFFFF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0" />
+      <Style Name="Label" FontColor="#8CDBC4FF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0" />
+      <Style Name="Success" FontColor="#90EE90FF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0" />
+      <Style Name="Warning" FontColor="#FFD700FF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0" />
+      <Style Name="Alert" FontColor="#FF6B6BFF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0" />
+    </Styles>
+  </Brush>
+</Brushes>
