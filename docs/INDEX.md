@@ -3,7 +3,7 @@
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
 **Last Updated:** 2025-12-23  
-**Total Documents:** 40+
+**Total Documents:** 41
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
 
@@ -140,6 +140,7 @@
 |----------|-------|--------|
 | [README.md](Features/UI/README.md) | UI systems overview | ✅ Current |
 | [ui-systems-master.md](Features/UI/ui-systems-master.md) | Complete UI reference | ✅ Current |
+| [color-scheme.md](Features/UI/color-scheme.md) | Professional color palette for menus | ✅ Current |
 | [news-reporting-system.md](Features/UI/news-reporting-system.md) | News feeds and Daily Brief | ✅ Current |
 
 ---
