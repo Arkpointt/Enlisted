@@ -10,10 +10,12 @@ using Enlisted.Features.Logistics;
 using Enlisted.Features.Ranks;
 using Enlisted.Features.Retinue.Core;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Entry;
 using Helpers;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
+using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -669,6 +671,9 @@ namespace Enlisted.Features.Content
             var hero = Hero.MainHero;
             var enlistment = EnlistmentBehavior.Instance;
             var escalation = EscalationManager.Instance;
+            
+            // Track applied effects for player feedback
+            var feedbackMessages = new List<string>();
 
             // Apply skill XP
             if (effects.SkillXp != null)
@@ -679,6 +684,7 @@ namespace Enlisted.Features.Content
                     if (skill != null)
                     {
                         hero.AddSkillXp(skill, skillXp.Value);
+                        feedbackMessages.Add($"+{skillXp.Value} {skillXp.Key} XP");
                         ModLogger.Debug(LogCategory, $"Applied {skillXp.Value} XP to {skillXp.Key}");
                     }
                 }
@@ -741,18 +747,21 @@ namespace Enlisted.Features.Content
             if (effects.LordRep.HasValue && escalation != null)
             {
                 escalation.ModifyLordReputation(effects.LordRep.Value, "event");
+                feedbackMessages.Add($"{(effects.LordRep.Value > 0 ? "+" : "")}{effects.LordRep.Value} Lord Reputation");
                 ModLogger.Debug(LogCategory, $"Modified lord reputation by {effects.LordRep.Value}");
             }
 
             if (effects.OfficerRep.HasValue && escalation != null)
             {
                 escalation.ModifyOfficerReputation(effects.OfficerRep.Value, "event");
+                feedbackMessages.Add($"{(effects.OfficerRep.Value > 0 ? "+" : "")}{effects.OfficerRep.Value} Officer Reputation");
                 ModLogger.Debug(LogCategory, $"Modified officer reputation by {effects.OfficerRep.Value}");
             }
 
             if (effects.SoldierRep.HasValue && escalation != null)
             {
                 escalation.ModifySoldierReputation(effects.SoldierRep.Value, "event");
+                feedbackMessages.Add($"{(effects.SoldierRep.Value > 0 ? "+" : "")}{effects.SoldierRep.Value} Soldier Reputation");
                 ModLogger.Debug(LogCategory, $"Modified soldier reputation by {effects.SoldierRep.Value}");
             }
 
@@ -781,10 +790,12 @@ namespace Enlisted.Features.Content
                 if (effects.Gold.Value > 0)
                 {
                     GiveGoldAction.ApplyBetweenCharacters(null, hero, effects.Gold.Value);
+                    feedbackMessages.Add($"+{effects.Gold.Value} gold");
                 }
                 else
                 {
                     GiveGoldAction.ApplyBetweenCharacters(hero, null, -effects.Gold.Value);
+                    feedbackMessages.Add($"{effects.Gold.Value} gold");
                 }
                 ModLogger.Debug(LogCategory, $"Applied gold change: {effects.Gold.Value}");
             }
@@ -802,6 +813,7 @@ namespace Enlisted.Features.Content
                 {
                     hero.HitPoints = 1; // Prevent death
                 }
+                feedbackMessages.Add($"{(effects.HpChange.Value > 0 ? "+" : "")}{effects.HpChange.Value} HP");
                 ModLogger.Debug(LogCategory, $"Applied HP change: {effects.HpChange.Value}");
             }
 
@@ -842,6 +854,7 @@ namespace Enlisted.Features.Content
             if (effects.TroopXp.HasValue && effects.TroopXp.Value > 0)
             {
                 ApplyTroopXp(effects.TroopXp.Value);
+                feedbackMessages.Add($"+{effects.TroopXp.Value} Troop XP");
                 ModLogger.Debug(LogCategory, $"Applied troop XP: {effects.TroopXp.Value}");
             }
 
@@ -889,18 +902,29 @@ namespace Enlisted.Features.Content
             if (effects.RetinueLoyalty.HasValue && effects.RetinueLoyalty.Value != 0)
             {
                 ApplyRetinueLoyalty(effects.RetinueLoyalty.Value);
+                feedbackMessages.Add($"{(effects.RetinueLoyalty.Value > 0 ? "+" : "")}{effects.RetinueLoyalty.Value} Retinue Loyalty");
             }
 
             // Apply discharge if specified. Ends the player's enlistment with the given band.
             if (!string.IsNullOrEmpty(effects.TriggersDischarge))
             {
                 ApplyDischargeEffect(effects.TriggersDischarge);
+                feedbackMessages.Add($"Discharged: {effects.TriggersDischarge}");
             }
 
             // Apply promotion if specified. Used by proving events to grant tier advancement.
             if (effects.Promotes.HasValue && effects.Promotes.Value > 0)
             {
                 ApplyPromotesEffect(effects.Promotes.Value);
+                feedbackMessages.Add($"Promoted to Tier {effects.Promotes.Value}");
+            }
+            
+            // Display feedback to player if any effects were applied
+            if (feedbackMessages.Count > 0)
+            {
+                var message = string.Join(", ", feedbackMessages);
+                InformationManager.DisplayMessage(new InformationMessage(message, Colors.Green));
+                ModLogger.Info(LogCategory, $"Effects applied: {message}");
             }
         }
 
@@ -2078,11 +2102,13 @@ namespace Enlisted.Features.Content
             }
 
             var hero = Hero.MainHero;
+            var rewardMessages = new List<string>();
 
             // Apply gold reward
             if (rewards.Gold.HasValue && rewards.Gold.Value > 0)
             {
                 GiveGoldAction.ApplyBetweenCharacters(null, hero, rewards.Gold.Value);
+                rewardMessages.Add($"+{rewards.Gold.Value} gold");
                 ModLogger.Debug(LogCategory, $"Applied gold reward: +{rewards.Gold.Value}");
             }
 
@@ -2094,6 +2120,7 @@ namespace Enlisted.Features.Content
                 {
                     var currentRest = enlistment.CompanyNeeds.GetNeed(CompanyNeed.Rest);
                     enlistment.CompanyNeeds.SetNeed(CompanyNeed.Rest, currentRest + rewards.FatigueRelief.Value);
+                    rewardMessages.Add($"-{rewards.FatigueRelief.Value} fatigue");
                     ModLogger.Debug(LogCategory, $"Applied fatigue relief: +{rewards.FatigueRelief.Value} Rest");
                 }
             }
@@ -2121,6 +2148,7 @@ namespace Enlisted.Features.Content
                         }
                         
                         hero.AddSkillXp(skill, modifiedXp);
+                        rewardMessages.Add($"+{modifiedXp} {skillXp.Key} XP");
                         
                         // Log with modifier details when modifier is not neutral
                         if (Math.Abs(xpModifier - 1.0f) > 0.001f)
@@ -2169,6 +2197,7 @@ namespace Enlisted.Features.Content
                     if (targetSkill != null)
                     {
                         hero.AddSkillXp(targetSkill, dynamicXp.Value);
+                        rewardMessages.Add($"+{dynamicXp.Value} {targetSkill.Name} XP");
                         ModLogger.Debug(LogCategory, 
                             $"Applied dynamic {dynamicXp.Key} XP: +{dynamicXp.Value} {targetSkill.Name}");
                     }
@@ -2180,8 +2209,16 @@ namespace Enlisted.Features.Content
             {
                 foreach (var xp in rewards.Xp)
                 {
+                    rewardMessages.Add($"+{xp.Value} {xp.Key} XP");
                     ModLogger.Debug(LogCategory, $"General XP reward logged: +{xp.Value} {xp.Key} (tracking not yet implemented)");
                 }
+            }
+            
+            // Display rewards to player if any were applied
+            if (rewardMessages.Count > 0)
+            {
+                var message = string.Join(", ", rewardMessages);
+                InformationManager.DisplayMessage(new InformationMessage(message, Colors.Cyan));
             }
         }
 
@@ -2190,13 +2227,57 @@ namespace Enlisted.Features.Content
         /// </summary>
         private void OnEventClosed()
         {
+            // Check if this was a decision event before clearing the current event
+            var wasDecision = _currentEvent != null && 
+                             _currentEvent.Category != null &&
+                             _currentEvent.Category.Equals("decision", StringComparison.OrdinalIgnoreCase);
+            
             _isShowingEvent = false;
             _currentEvent = null;
+
+            // If this was a decision, force the Camp Hub menu to refresh so cooldowns are reflected
+            if (wasDecision)
+            {
+                RequestDecisionsMenuRefresh();
+            }
 
             // Try to deliver next event in queue
             if (_pendingEvents.Count > 0)
             {
                 TryDeliverNextEvent();
+            }
+        }
+
+        /// <summary>
+        /// Requests that the decisions menu be refreshed to show updated cooldowns.
+        /// This is called after a decision event completes.
+        /// </summary>
+        private void RequestDecisionsMenuRefresh()
+        {
+            try
+            {
+                // Switch back to the decisions menu to trigger a refresh
+                // This forces OnDecisionsMenuInit to run again, rebuilding the cached entries
+                var currentMenuId = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId;
+                if (currentMenuId != null && currentMenuId == "enlisted_decisions")
+                {
+                    // We're already on the decisions menu, so force a refresh by switching away and back
+                    NextFrameDispatcher.RunNextFrame(() =>
+                    {
+                        try
+                        {
+                            GameMenu.SwitchToMenu("enlisted_decisions");
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error(LogCategory, "Error refreshing decisions menu after decision", ex);
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error requesting decisions menu refresh", ex);
             }
         }
 

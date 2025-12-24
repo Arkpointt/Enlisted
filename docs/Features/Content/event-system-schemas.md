@@ -414,7 +414,7 @@ Each option represents a player choice.
 
 ## Costs Object
 
-Deducted when option is selected.
+Deducted when option is selected. Automatically displayed to player in yellow.
 
 ```json
 {
@@ -424,6 +424,7 @@ Deducted when option is selected.
     "time_hours": 4
   }
 }
+// Player sees: "Cost: -30 gold, +2 fatigue, 4 hours"
 ```
 
 | Field | JSON Names | Type | Notes |
@@ -438,7 +439,7 @@ Deducted when option is selected.
 
 **⚠️ ONLY USED IN SUB-CHOICE OPTIONS (reward_choices).** For main event options, use `effects` instead!
 
-Gained when sub-choice option is selected. Used for positive gains in reward_choices blocks.
+Gained when sub-choice option is selected. Used for positive gains in reward_choices blocks. Automatically displayed to player in cyan.
 
 ```json
 {
@@ -456,6 +457,7 @@ Gained when sub-choice option is selected. Used for positive gains in reward_cho
     ]
   }
 }
+// Player sees: "+50 OneHanded XP"
 ```
 
 | Field | JSON Names | Type | Notes |
@@ -476,6 +478,8 @@ Gained when sub-choice option is selected. Used for positive gains in reward_cho
 
 State changes when option is selected. Can be positive or negative.
 
+**⚠️ AUTOMATIC FEEDBACK:** All effects are automatically displayed to the player in the combat log with color coding. You don't need to add any special fields - just define the effects and the player will see them.
+
 ```json
 {
   "effects": {
@@ -490,6 +494,7 @@ State changes when option is selected. Can be positive or negative.
     "troopXp": 20
   }
 }
+// Player sees: "+5 Soldier Reputation, -3 Officer Reputation, +2 Lord Reputation, -10 HP, -50 gold, +20 Troop XP"
 ```
 
 | Field | JSON Names | Type | Range | Notes |
@@ -520,6 +525,13 @@ State changes when option is selected. Can be positive or negative.
 - Use `skillXp` in `effects` for main options, NOT in `rewards`
 - Use `fatigueRelief` in `rewards` (sub-choices only)
 - Use `soldierRep` (camelCase), parser also accepts `soldier_rep`
+
+**✅ PLAYER FEEDBACK:**
+- All effects, costs, and rewards are automatically shown to the player in combat log
+- Effects = Green messages (e.g., `+5 Soldier Reputation, +25 XP`)
+- Costs = Yellow messages (e.g., `Cost: -30 gold, +2 fatigue`)
+- Rewards = Cyan messages (e.g., `+50 gold, -3 fatigue`)
+- No special fields needed - just define the effects and they'll be displayed
 
 ---
 

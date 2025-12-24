@@ -26,9 +26,7 @@
 | What You Need | Where To Go |
 |---------------|-------------|
 | **Understand the core gameplay** | [Core Gameplay (Consolidated)](core-gameplay.md) |
-| **Understand the roadmap** | [ROADMAP](../../ROADMAP.md) |
 | **Browse content** | [Content Catalog](../../Content/event-catalog-by-system.md) |
-| **Check implementation status** | [ROADMAP](../../ROADMAP.md) |
 
 ---
 

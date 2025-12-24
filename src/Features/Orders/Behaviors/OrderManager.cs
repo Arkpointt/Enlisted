@@ -391,6 +391,9 @@ namespace Enlisted.Features.Orders.Behaviors
                 return;
             }
 
+            // Track applied effects for player feedback
+            var feedbackMessages = new List<string>();
+
             // Apply skill XP
             if (outcome.SkillXp != null)
             {
@@ -400,6 +403,7 @@ namespace Enlisted.Features.Orders.Behaviors
                     if (skill != null)
                     {
                         Hero.MainHero.AddSkillXp(skill, xp.Value);
+                        feedbackMessages.Add($"+{xp.Value} {skill.Name} XP");
                         ModLogger.Debug(LogCategory, $"Awarded {xp.Value} XP to {skill.Name}");
                     }
                 }
@@ -414,6 +418,7 @@ namespace Enlisted.Features.Orders.Behaviors
                     if (trait != null)
                     {
                         TraitHelper.AwardTraitXp(Hero.MainHero, trait, xp.Value);
+                        feedbackMessages.Add($"+{xp.Value} {trait.Name} trait XP");
                         ModLogger.Debug(LogCategory, $"Awarded {xp.Value} trait XP to {trait.Name}");
                     }
                 }
@@ -427,14 +432,17 @@ namespace Enlisted.Features.Orders.Behaviors
                 if (outcome.Reputation.TryGetValue("lord", out var lordRep))
                 {
                     escalation.ModifyLordReputation(lordRep);
+                    feedbackMessages.Add($"{(lordRep > 0 ? "+" : "")}{lordRep} Lord Reputation");
                 }
                 if (outcome.Reputation.TryGetValue("officer", out var officerRep))
                 {
                     escalation.ModifyOfficerReputation(officerRep);
+                    feedbackMessages.Add($"{(officerRep > 0 ? "+" : "")}{officerRep} Officer Reputation");
                 }
                 if (outcome.Reputation.TryGetValue("soldier", out var soldierRep))
                 {
                     escalation.ModifySoldierReputation(soldierRep);
+                    feedbackMessages.Add($"{(soldierRep > 0 ? "+" : "")}{soldierRep} Soldier Reputation");
                 }
             }
 
@@ -502,10 +510,12 @@ namespace Enlisted.Features.Orders.Behaviors
                 if (outcome.Escalation.TryGetValue("scrutiny", out var scrutinyEsc))
                 {
                     escalation.ModifyScrutiny(scrutinyEsc);
+                    feedbackMessages.Add($"{(scrutinyEsc > 0 ? "+" : "")}{scrutinyEsc} Scrutiny");
                 }
                 if (outcome.Escalation.TryGetValue("discipline", out var disciplineEsc))
                 {
                     escalation.ModifyDiscipline(disciplineEsc);
+                    feedbackMessages.Add($"{(disciplineEsc > 0 ? "+" : "")}{disciplineEsc} Discipline");
                 }
             }
 
@@ -513,16 +523,19 @@ namespace Enlisted.Features.Orders.Behaviors
             if (outcome.MedicalRisk.HasValue && outcome.MedicalRisk.Value != 0)
             {
                 EscalationManager.Instance.ModifyMedicalRisk(outcome.MedicalRisk.Value, "order outcome");
+                feedbackMessages.Add($"{(outcome.MedicalRisk.Value > 0 ? "+" : "")}{outcome.MedicalRisk.Value} Medical Risk");
             }
 
             // Apply denars/renown
             if (outcome.Denars.HasValue && outcome.Denars.Value != 0)
             {
                 Hero.MainHero.ChangeHeroGold(outcome.Denars.Value);
+                feedbackMessages.Add($"{(outcome.Denars.Value > 0 ? "+" : "")}{outcome.Denars.Value} gold");
             }
             if (outcome.Renown.HasValue && outcome.Renown.Value != 0)
             {
                 Hero.MainHero.Clan.AddRenown(outcome.Renown.Value);
+                feedbackMessages.Add($"{(outcome.Renown.Value > 0 ? "+" : "")}{outcome.Renown.Value} Renown");
             }
 
             // Apply player HP loss (wounds from dangerous orders)
@@ -532,6 +545,8 @@ namespace Enlisted.Features.Orders.Behaviors
                 var oldHp = hero.HitPoints;
                 var newHp = Math.Max(1, oldHp - outcome.HpLoss.Value);
                 hero.HitPoints = newHp;
+                
+                feedbackMessages.Add($"-{outcome.HpLoss.Value} HP");
 
                 ModLogger.Info(LogCategory, $"Player took {outcome.HpLoss.Value} HP damage from order outcome ({oldHp} -> {newHp})");
 
@@ -553,7 +568,16 @@ namespace Enlisted.Features.Orders.Behaviors
                 {
                     var actualLoss = minLoss == maxLoss ? minLoss : MBRandom.RandomInt(minLoss, maxLoss + 1);
                     ApplyTroopCasualties(actualLoss);
+                    // Troop casualties already show their own message, don't duplicate
                 }
+            }
+            
+            // Display feedback to player if any effects were applied
+            if (feedbackMessages.Count > 0)
+            {
+                var message = "Order: " + string.Join(", ", feedbackMessages);
+                InformationManager.DisplayMessage(new InformationMessage(message, Colors.Green));
+                ModLogger.Info(LogCategory, $"Order effects applied: {message}");
             }
         }
 

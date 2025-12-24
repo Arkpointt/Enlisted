@@ -7,7 +7,7 @@
 | **Implemented** | December 23, 2025 |
 | **Status** | Active |
 | **Brush File** | `GUI/Brushes/EnlistedColors.xml` |
-| **Primary Usage** | All GameMenu text displays |
+| **Primary Usage** | GameMenu text displays + Combat log messages |
 
 ---
 
@@ -19,7 +19,9 @@ Players can instantly identify problems at a glance - critical supplies, low rep
 
 ---
 
-## Menus Using Color Scheme
+## Systems Using Color Scheme
+
+### GameMenu Displays
 
 | Menu | Colored Elements |
 |------|------------------|
@@ -27,6 +29,16 @@ Players can instantly identify problems at a glance - critical supplies, low rep
 | **Reports Menu** | DAILY BRIEF, RECENT ACTIVITY, COMPANY STATUS, CAMPAIGN CONTEXT headers + all status lines |
 | **Status Detail** | REPUTATION, ROLE & SPECIALIZATIONS, PERSONALITY TRAITS headers + reputation values |
 | **Decisions Menu** | COMPANY REPORT header |
+
+### Combat Log Messages
+
+| System | Message Color | Example |
+|--------|---------------|---------|
+| **Decision Effects** | Green | `+25 OneHanded XP, +5 Soldier Reputation, -30 gold` |
+| **Decision Costs** | Yellow | `Cost: -30 gold, +2 fatigue` |
+| **Decision Rewards** | Cyan | `+50 gold, -3 fatigue` |
+| **Order Effects** | Green | `Order: +30 Leadership XP, +3 Officer Reputation` |
+| **Warnings** | Red | `You are badly wounded!` |
 
 ---
 
@@ -192,14 +204,16 @@ Modify the `FontColor` hex value in `EnlistedColors.xml`. Changes take effect on
 
 ### Where Colors Work
 
-Colors work in any GameMenu text that uses `RichTextWidget`, which includes:
-- Menu description text (the `{REPORTS_TEXT}` variable, etc.)
-- Menu option text (the button labels)
+Colors work in:
+- GameMenu text that uses `RichTextWidget` (menu descriptions, option text)
+- Combat log messages via `InformationManager.DisplayMessage()` with `Colors.*` constants
+- Any UI element that supports Bannerlord's native color system
 
 ### Where Colors Don't Work
 
 - Console output / debug logging
 - Standard `TextObject` without RichText rendering
+- Plain string messages without color parameters
 - Some native Bannerlord UI elements
 
 ### Brush Loading

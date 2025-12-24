@@ -134,9 +134,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <!-- GUI Brushes -->
+    <Content Include="GUI\Brushes\EnlistedColors.xml"/>
+    <!-- GUI Equipment Prefabs -->
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml"/>
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterProvisionCard.xml"/>
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterProvisionCardRow.xml"/>
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterProvisionsGrid.xml"/>
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterUpgradeScreen.xml"/>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs"/>
@@ -184,9 +191,10 @@
     <Compile Include="src\Features\Equipment\Behaviors\QuartermasterManager.cs"/>
     <Compile Include="src\Features\Equipment\Managers\QMInventoryState.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorBehavior.cs"/>
-    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVm.cs"/>
-    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVm.cs"/>
-    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVm.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterUpgradeVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterUpgradeItemVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterProvisionsVM.cs"/>
@@ -292,6 +300,7 @@
     <Content Include="ModuleData\Enlisted\equipment_pricing.json"/>
     <Content Include="ModuleData\Enlisted\menu_config.json"/>
     <Content Include="ModuleData\Enlisted\retinue_config.json"/>
+    <Content Include="ModuleData\Enlisted\strategic_context_config.json"/>
     <!-- JSON data files are referenced via custom ItemGroups below (for AfterBuild copy).
          They are NOT duplicated here as Content to avoid ReSharper showing them twice. -->
     <Content Include="ModuleData\Languages\enlisted_strings.xml"/>
@@ -336,10 +345,12 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
   <Target Name="AfterBuild">
     <MakeDir Directories="$(OutputPath)..\..\Debugging"/>
+    <MakeDir Directories="$(OutputPath)..\..\GUI\Brushes"/>
     <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Equipment"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Conditions"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Activities"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Dialogue"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events\Role"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Decisions"/>
@@ -352,6 +363,7 @@
     <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\retinue_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\strategic_context_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="@(PlayerConditionData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Conditions\"/>
     <Copy SourceFiles="@(CampActivitiesData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Activities\"/>
     <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>
@@ -362,10 +374,17 @@
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="ModuleData\Languages\language_data.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="ModuleData\Languages\enlisted_qm_dialogue.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
+    <!-- GUI Brushes -->
+    <Copy SourceFiles="GUI\Brushes\EnlistedColors.xml" DestinationFolder="$(OutputPath)..\..\GUI\Brushes\"/>
+    <!-- GUI Equipment Prefabs -->
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterProvisionCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterProvisionCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterProvisionsGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterUpgradeScreen.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <!-- Workshop files -->
     <Copy SourceFiles="tools\workshop\WorkshopUpdate.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <Copy SourceFiles="tools\workshop\preview.png" DestinationFolder="$(OutputPath)..\..\" Condition="Exists('tools\workshop\preview.png')"/>
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false"/>

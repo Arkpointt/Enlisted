@@ -70,7 +70,6 @@ This master document includes:
 ## Related Documentation
 
 - **[Features Index](../index.md)** - All feature documentation
-- **[Roadmap](../../ROADMAP.md)** - Future UI work
 
 ---
 

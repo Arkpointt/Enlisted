@@ -9,6 +9,7 @@ using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Logistics;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using TaleWorlds.CampaignSystem;
@@ -1173,45 +1174,117 @@ namespace Enlisted.Features.Conversations.Behaviors
                 // QUARTERMASTER HUB (Main Category Options)
                 // ========================================
 
-                // Option: Browse Weapons → Opens Gauntlet grid for weapons
+                // ========================================
+                // MAIN HUB → EQUIPMENT BROWSE (Two-Level Flow)
+                // Player asks for gear → QM responds with context → Category selection
+                // ========================================
+
+                // Option: Browse Equipment → Goes to QM browse response with context
                 starter.AddPlayerLine(
-                    "qm_browse_weapons",
+                    "qm_browse_equipment",
                     "qm_hub",
                     "qm_browse_response",
-                    "{=qm_browse_weapons}I need a weapon.",
+                    "{=qm_browse_equipment}I'm looking for some new gear. What've you got?",
+                    HasAnyEquipmentAvailable,
+                    null,
+                    100);
+
+                // ========================================
+                // QM BROWSE RESPONSE (Dynamic with rank/supply/reputation context)
+                // This is where QM gives hints about prices, stock, player standing
+                // ========================================
+
+                // QM Browse Response → Goes to equipment category hub
+                starter.AddDialogLine(
+                    "qm_browse_response_dynamic",
+                    "qm_browse_response",
+                    "qm_equipment_category",
+                    "{=qm_browse_response_dynamic}{BROWSE_RESPONSE}",
+                    SetBrowseResponseText,
+                    null);
+
+                // ========================================
+                // EQUIPMENT CATEGORY HUB (Second Level)
+                // Player picks: Weapons, Armor, Accessories, Horse, or back
+                // ========================================
+
+                // Option: Weapons
+                starter.AddPlayerLine(
+                    "qm_category_weapons",
+                    "qm_equipment_category",
+                    "qm_category_response",
+                    "{=qm_category_weapons}Weapons.",
                     HasWeaponVariantsAvailable,
                     () => { _selectedEquipmentCategory = "weapons"; },
                     100);
 
-                // Option: Browse Armor → Leads to armor slot selection
+                // Option: Armor
                 starter.AddPlayerLine(
-                    "qm_browse_armor",
-                    "qm_hub",
-                    "qm_armor_slot_hub",
-                    "{=qm_browse_armor}I need armor.",
+                    "qm_category_armor",
+                    "qm_equipment_category",
+                    "qm_category_response",
+                    "{=qm_category_armor}Armor.",
                     HasArmorVariantsAvailable,
-                    null,
+                    () => { _selectedEquipmentCategory = "armor"; },
                     99);
 
-                // Option: Browse Accessories → Opens Gauntlet grid for accessories
+                // Option: Accessories
                 starter.AddPlayerLine(
-                    "qm_browse_accessories",
-                    "qm_hub",
-                    "qm_browse_response",
-                    "{=qm_browse_accessories}I need gear—cape, shield, harness.",
+                    "qm_category_accessories",
+                    "qm_equipment_category",
+                    "qm_category_response",
+                    "{=qm_category_accessories}Accessories.",
                     HasAccessoryVariantsAvailable,
                     () => { _selectedEquipmentCategory = "accessories"; },
                     98);
 
-                // Option: Browse Mounts → Opens Gauntlet grid for mounts
+                // Option: Horse (gated by cavalry unlock)
                 starter.AddPlayerLine(
-                    "qm_browse_mounts",
-                    "qm_hub",
-                    "qm_browse_response",
-                    "{=qm_browse_mounts}I need a horse.",
-                    HasMountVariantsAvailable,
+                    "qm_category_horse",
+                    "qm_equipment_category",
+                    "qm_category_response",
+                    "{=qm_category_horse}A horse.",
+                    () => HasMountVariantsAvailable() && IsCavalryUnlocked(),
                     () => { _selectedEquipmentCategory = "mounts"; },
                     97);
+
+                // Option: Horse (blocked - cavalry not unlocked)
+                starter.AddPlayerLine(
+                    "qm_category_horse_blocked",
+                    "qm_equipment_category",
+                    "qm_horse_gate_response",
+                    "{=qm_category_horse}A horse.",
+                    () => !IsCavalryUnlocked(),
+                    null,
+                    96);
+
+                // Option: Never mind → Back to main hub
+                starter.AddPlayerLine(
+                    "qm_category_nevermind",
+                    "qm_equipment_category",
+                    "qm_hub",
+                    "{=qm_category_nevermind}Never mind.",
+                    null,
+                    null,
+                    50);
+
+                // QM Category Response → Opens Gauntlet UI for selected category
+                starter.AddDialogLine(
+                    "qm_category_response",
+                    "qm_category_response",
+                    "close_window",
+                    "{=qm_category_confirm}Right. Let's see what we've got.",
+                    null,
+                    OnQuartermasterBrowseCategory);
+
+                // QM Horse Gate Response → Cavalry not unlocked
+                starter.AddDialogLine(
+                    "qm_horse_gate_response",
+                    "qm_horse_gate_response",
+                    "qm_equipment_category",
+                    "{=qm_horse_gate}Horses are for cavalry, not foot soldiers. Earn your spurs first.",
+                    null,
+                    null);
 
                 // Option: Sell Equipment → Opens sell interface
                 starter.AddPlayerLine(
@@ -1318,18 +1391,8 @@ namespace Enlisted.Features.Conversations.Behaviors
                     50);
 
                 // ========================================
-                // QM RESPONSES - Equipment Categories
+                // QM RESPONSES - Other Actions
                 // ========================================
-
-                // Generic browse response that opens Gauntlet (for weapons/accessories/mounts)
-                // Now uses dynamic text based on supply levels, reputation, and archetype
-                starter.AddDialogLine(
-                    "qm_browse_response",
-                    "qm_browse_response",
-                    "close_window",
-                    "{=qm_browse_response_dynamic}{BROWSE_RESPONSE}",
-                    SetBrowseResponseText,
-                    OnQuartermasterBrowseCategory);
 
                 // Sell response → Opens sell interface
                 // Now uses dynamic text based on mood and reputation
@@ -2255,6 +2318,33 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
+        ///     Checks if any equipment is available for purchase (weapons, armor, or accessories).
+        ///     Used for the main "I'm looking for gear" option.
+        /// </summary>
+        private bool HasAnyEquipmentAvailable()
+        {
+            try
+            {
+                return EnlistmentBehavior.Instance?.IsEnlisted == true &&
+                       (HasWeaponVariantsAvailable() || HasArmorVariantsAvailable() || HasAccessoryVariantsAvailable());
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
+        ///     Checks if player has unlocked cavalry (can purchase horses).
+        ///     Horses are available if the player's troop tree includes mounts at their current tier.
+        /// </summary>
+        private bool IsCavalryUnlocked()
+        {
+            // Cavalry unlocked if mounts are available in the player's troop tree
+            return HasMountVariantsAvailable();
+        }
+
+        /// <summary>
         ///     Checks if a specific armor slot has variants available.
         /// </summary>
         private bool HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex slot)
@@ -2544,9 +2634,14 @@ namespace Enlisted.Features.Conversations.Behaviors
                 var equipment = companyNeeds?.Equipment ?? 60;
                 var archetype = enlistment.QuartermasterArchetype;
                 var reputation = enlistment.QuartermasterRelationship;
+                var tier = enlistment.EnlistmentTier;
+                var rankTitle = Ranks.RankHelper.GetCurrentRank(enlistment);
                 
-                // Generate contextual browse response
-                string response = GetBrowseResponse(supplies, equipment, archetype, reputation);
+                // Calculate discount percentage based on reputation
+                var discountPct = GetReputationDiscount(reputation);
+                
+                // Generate contextual browse response with rank, supply, rep, and price hints
+                string response = GetBrowseResponse(supplies, equipment, archetype, reputation, tier, rankTitle, discountPct);
                 
                 MBTextManager.SetTextVariable("BROWSE_RESPONSE", response);
                 return true;
@@ -2557,6 +2652,18 @@ namespace Enlisted.Features.Conversations.Behaviors
                 MBTextManager.SetTextVariable("BROWSE_RESPONSE", "Let me see what's in stock.");
                 return true;
             }
+        }
+        
+        /// <summary>
+        ///     Gets the discount percentage based on QM reputation.
+        /// </summary>
+        private int GetReputationDiscount(int reputation)
+        {
+            if (reputation >= 80) return 30;      // Trusted - best prices
+            if (reputation >= 50) return 20;      // Friendly - good prices
+            if (reputation >= 20) return 10;      // Neutral - fair prices
+            if (reputation >= 0) return 5;        // Wary - slight discount
+            return 0;                              // Hostile - no discount
         }
         
         /// <summary>
@@ -2632,50 +2739,78 @@ namespace Enlisted.Features.Conversations.Behaviors
         ///     Generates a contextual browse response based on supply/equipment levels, archetype, and reputation.
         ///     Uses XML localization strings with full validation and fallback handling.
         /// </summary>
-        private string GetBrowseResponse(int supplies, int equipment, string archetype, int reputation)
+        private string GetBrowseResponse(int supplies, int equipment, string archetype, int reputation, int tier = 1, string rankTitle = "Soldier", int discountPct = 0)
         {
             // Validate and normalize inputs
             archetype = ValidateArchetype(archetype);
             supplies = Clamp(supplies, 0, 100);
             equipment = Clamp(equipment, 0, 100);
             
-            // Determine supply situation
-            bool lowEquipment = equipment < 40;
-            bool criticalSupplies = supplies < 20;
+            // Build a contextual response with multiple parts:
+            // 1. Stock/supply context
+            // 2. Rank acknowledgment (for higher tiers)
+            // 3. Price/discount hint based on reputation
             
-            // Determine reputation tone
-            bool hostile = reputation < 0;
-            bool trusted = reputation >= 61;
+            var parts = new System.Collections.Generic.List<string>();
             
-            // Build string ID based on context priority: critical supplies > low equipment > reputation
-            string stringId;
-            
-            if (criticalSupplies)
+            // Part 1: Stock situation
+            if (supplies >= 80)
             {
-                stringId = $"qm_browse_critical_{archetype}";
+                parts.Add("Plenty in stock. Recent resupply came through.");
             }
-            else if (lowEquipment && trusted)
+            else if (supplies >= 60)
             {
-                stringId = $"qm_browse_lowequip_trusted_{archetype}";
+                parts.Add("We've a fair bit in stock.");
             }
-            else if (lowEquipment)
+            else if (supplies >= 40)
             {
-                stringId = $"qm_browse_lowequip_{archetype}";
+                parts.Add("We've got what you'd expect.");
             }
-            else if (hostile)
+            else if (supplies >= 20)
             {
-                stringId = $"qm_browse_hostile_{archetype}";
-            }
-            else if (trusted)
-            {
-                stringId = $"qm_browse_trusted_{archetype}";
+                parts.Add("Stock's thin right now. We're stretched.");
             }
             else
             {
-                stringId = $"qm_browse_default_{archetype}";
+                parts.Add("Pickings are slim. We're rationing everything.");
             }
             
-            return GetLocalizedTextSafe(stringId, "Let me see what's in stock for you.");
+            // Part 2: Rank acknowledgment (tier 5+ gets acknowledged)
+            if (tier >= 7)
+            {
+                parts.Add($"For an officer of your standing, {rankTitle}, I can show you the better pieces.");
+            }
+            else if (tier >= 5)
+            {
+                parts.Add($"You've earned some pull around here, {rankTitle}.");
+            }
+            
+            // Part 3: Price/discount hint based on reputation
+            if (reputation >= 80)
+            {
+                parts.Add($"Prices are good for you—{discountPct}% off. You've earned it.");
+            }
+            else if (reputation >= 50)
+            {
+                parts.Add($"I'll cut you a fair deal—{discountPct}% off standard.");
+            }
+            else if (reputation >= 20)
+            {
+                parts.Add("Prices are standard. Nothing fancy.");
+            }
+            else if (reputation >= 0)
+            {
+                parts.Add("Prices are what they are. Don't expect favors.");
+            }
+            else
+            {
+                parts.Add("Full price. No discounts for troublemakers.");
+            }
+            
+            // Part 4: Category prompt
+            parts.Add("What are you after—weapons, armor, accessories?");
+            
+            return string.Join(" ", parts);
         }
         
         /// <summary>
@@ -3332,6 +3467,11 @@ namespace Enlisted.Features.Conversations.Behaviors
                     targetSlot = TaleWorlds.Core.EquipmentIndex.Weapon0;
                     break;
                     
+                case "armor":
+                    variants = GetAllArmorVariants(qm);
+                    targetSlot = TaleWorlds.Core.EquipmentIndex.Body;
+                    break;
+                    
                 case "accessories":
                     variants = GetAccessoryVariants(qm);
                     targetSlot = TaleWorlds.Core.EquipmentIndex.Cape;
@@ -3423,8 +3563,11 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
                 
-                // Flatten all weapon variants into one list
-                return options.SelectMany(kvp => kvp.Value).ToList();
+                // Flatten all weapon variants into one list, excluding shields (shields go to accessories)
+                return options
+                    .SelectMany(kvp => kvp.Value)
+                    .Where(opt => opt.Item?.WeaponComponent?.PrimaryWeapon?.IsShield != true)
+                    .ToList();
             }
             catch (Exception ex)
             {
@@ -3550,6 +3693,54 @@ namespace Enlisted.Features.Conversations.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Conversations", $"QM: Failed to get armor variants for slot {slot}", ex);
+                return new System.Collections.Generic.List<EquipmentVariantOption>();
+            }
+        }
+
+        /// <summary>
+        ///     Gets all armor variants across all armor slots (head, body, gloves, legs, cape).
+        ///     Used when player selects "I need armor" to show everything in one grid.
+        /// </summary>
+        private System.Collections.Generic.List<EquipmentVariantOption> GetAllArmorVariants(QuartermasterManager qm)
+        {
+            try
+            {
+                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (method == null)
+                {
+                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                }
+                
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                if (options == null)
+                {
+                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                }
+                
+                // Combine all armor slots into a single list (cape goes to accessories)
+                var combined = new System.Collections.Generic.List<EquipmentVariantOption>();
+                var armorSlots = new[]
+                {
+                    TaleWorlds.Core.EquipmentIndex.Head,
+                    TaleWorlds.Core.EquipmentIndex.Body,
+                    TaleWorlds.Core.EquipmentIndex.Gloves,
+                    TaleWorlds.Core.EquipmentIndex.Leg
+                };
+                
+                foreach (var slot in armorSlots)
+                {
+                    if (options.TryGetValue(slot, out var slotVariants))
+                    {
+                        combined.AddRange(slotVariants);
+                    }
+                }
+                
+                return combined;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", "QM: Failed to get all armor variants", ex);
                 return new System.Collections.Generic.List<EquipmentVariantOption>();
             }
         }

@@ -201,14 +201,15 @@ See [Event System Schemas - Global Event Pacing](event-system-schemas.md#global-
    ├── Player selects option
    ├── Apply immediate effects (gold, rep, XP, etc.)
    ├── Apply delayed effects (orders, flags, timers)
-   └── Display feedback (news, tooltips, notifications)
+   └── Display feedback (combat log messages with color coding)
 
 4. Effect Resolution
    ├── Update escalation state (Scrutiny, Discipline, Medical)
    ├── Update reputation (Officer, Soldier, QM, Lord)
    ├── Award XP and trait progress
    ├── Modify resources (gold, supplies, food)
-   └── Set flags for follow-up events
+   ├── Set flags for follow-up events
+   └── Display consolidated effect summary in combat log
 ```
 
 ---
@@ -240,8 +241,9 @@ var chosenOption = await GetPlayerChoice(selectedEvent.Options);
 // 7. Apply effects
 EventDeliveryManager.ApplyEffects(chosenOption.Effects);
 
-// 8. Display feedback
-PersonalDispatchManager.PostDispatch("Event Result", resultText);
+// 8. Display feedback (combat log message with all effects)
+// Example: "+25 OneHanded XP, +5 Soldier Reputation, -30 gold"
+// Automatically shown in green/yellow/cyan based on effect type
 ```
 
 ### Decision Delivery Flow
@@ -777,6 +779,64 @@ JSON files include fallback text for development:
 | File | Purpose |
 |------|---------|
 | `ModuleData/Languages/enlisted_strings.xml` | All player-facing text |
+
+---
+
+## Player Feedback System
+
+All content systems provide immediate visual feedback when effects are applied.
+
+### Combat Log Messages
+
+**Decisions and Events:**
+- Effects displayed as consolidated message: `+25 OneHanded XP, +5 Soldier Reputation, -30 gold`
+- Costs shown separately: `Cost: -30 gold, +2 fatigue`
+- Rewards shown separately: `+50 gold, -3 fatigue`
+
+**Orders:**
+- Effects displayed with "Order:" prefix: `Order: +30 Leadership XP, +3 Officer Reputation, +100 gold`
+
+### Color Coding
+
+| Message Type | Color | Example |
+|--------------|-------|---------|
+| Effects Applied | Green | `+25 OneHanded XP, +5 Soldier Reputation` |
+| Costs Paid | Yellow | `Cost: -30 gold, +2 fatigue` |
+| Rewards Received | Cyan | `+50 gold, -3 fatigue` |
+| Warnings/Failures | Red | `You are badly wounded!` |
+
+### Implementation
+
+**Effect Aggregation:**
+- All effects from a single action are collected into a list
+- Messages are formatted with proper +/- signs
+- Multiple effects are comma-separated in a single message
+- Empty effect lists are not displayed (no message spam)
+
+**Technical Details:**
+- Uses `InformationManager.DisplayMessage()` with `Colors.*` constants
+- Messages appear in the combat log (bottom-left of screen)
+- All effects are still logged to debug file for troubleshooting
+- Message format: `<effect type>: <comma-separated effects>`
+
+**Example Flow:**
+```csharp
+// Player selects "Spar Hard" decision
+var feedbackMessages = new List<string>();
+
+// Collect effects
+feedbackMessages.Add("+40 OneHanded XP");
+feedbackMessages.Add("+20 Athletics XP");
+feedbackMessages.Add("+3 Soldier Reputation");
+feedbackMessages.Add("-8 HP");
+
+// Display to player
+var message = string.Join(", ", feedbackMessages);
+InformationManager.DisplayMessage(new InformationMessage(message, Colors.Green));
+// Output: "+40 OneHanded XP, +20 Athletics XP, +3 Soldier Reputation, -8 HP"
+```
+
+This ensures players always know exactly what happened when they make a choice.
 
 ---
 

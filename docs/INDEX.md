@@ -2,8 +2,8 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2025-12-23  
-**Total Documents:** 41
+**Last Updated:** 2025-12-24  
+**Total Documents:** 42
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
 
@@ -28,7 +28,6 @@
 | See all events/decisions/orders | [Content/event-catalog-by-system.md](Content/event-catalog-by-system.md) |
 | Verify Bannerlord APIs | [Reference/native-apis.md](Reference/native-apis.md) |
 | Build/deploy the mod | [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md) |
-| Check future plans | [ROADMAP.md](ROADMAP.md) |
 | Create new documentation | [BLUEPRINT.md](BLUEPRINT.md) → "Creating New Documentation" |
 
 **Documentation Structure:**
@@ -54,7 +53,6 @@
 | [README.md](README.md) | Main entry point and mod overview | ✅ Current |
 | [BLUEPRINT.md](BLUEPRINT.md) | Project architecture and coding standards | ✅ Current |
 | [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md) | Build guide and development patterns | ✅ Current |
-| [ROADMAP.md](ROADMAP.md) | Future development plans | ✅ Current |
 
 ---
 
@@ -123,6 +121,7 @@
 | [content-system-architecture.md](Features/Content/content-system-architecture.md) | Content system design | ✅ Current |
 | [event-system-schemas.md](Features/Content/event-system-schemas.md) | Event system JSON schemas | ✅ Current |
 | [event-reward-choices.md](Features/Content/event-reward-choices.md) | Event reward system | 📋 Specification |
+| [medical-progression-system.md](Features/Content/medical-progression-system.md) | CK3-style medical progression | 📋 Specification |
 
 ### Technical Systems
 **Location:** `Features/Technical/`
@@ -154,7 +153,6 @@
 | [README.md](Content/README.md) | Content catalog overview | ✅ Current |
 | [content-index.md](Content/content-index.md) | Complete content catalog | ✅ Current |
 | [event-catalog-by-system.md](Content/event-catalog-by-system.md) | Events organized by system | ✅ Current |
-| [map-incidents-warsails.md](Content/map-incidents-warsails.md) | Naval DLC incidents | ✅ Current |
 
 ---
 
@@ -168,7 +166,9 @@
 | [native-apis.md](Reference/native-apis.md) | Campaign System API reference | 📚 Reference |
 | [native-skill-xp.md](Reference/native-skill-xp.md) | Skill progression reference | 📚 Reference |
 | [native-map-incidents.md](Reference/native-map-incidents.md) | Native game incidents | 📚 Reference |
+| [map-incidents-warsails.md](Reference/map-incidents-warsails.md) | Naval DLC map incidents | 📚 Reference |
 | [ai-behavior-analysis.md](Reference/ai-behavior-analysis.md) | AI behavior analysis | 📚 Reference |
+| [opportunities-system-spec.md](Reference/opportunities-system-spec.md) | Automatic opportunities system | 📋 Specification |
 
 ---
 

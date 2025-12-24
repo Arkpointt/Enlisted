@@ -3,11 +3,11 @@
 **Summary:** The Quartermaster manages all military logistics for the player's company including equipment purchases with quality modifiers, provisions/rations, buyback services, baggage inspections, and the Officers Armory. The system uses a data-driven dialogue engine with dynamic runtime context evaluation, allowing the Quartermaster to react to supply levels, reputation, and company events in real-time.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23  
+**Last Updated:** 2025-12-23 (Dialogue flow restructured: two-level hub with dynamic contextual responses)  
 **Related Docs:** [Company Supply Simulation](company-supply-simulation.md), [Provisions & Rations System](provisions-rations-system.md)
 
 **System Overview:**
-The Quartermaster system uses a conversation-driven interface where face-to-face dialogue opens visual equipment browsers. Equipment has quality modifiers affecting stats and prices. Players can purchase gear, upgrade equipped items, sell equipment back, and buy provisions. The system integrates deeply with company supply levels and reputation mechanics through a context-aware dialogue catalog.
+The Quartermaster system uses a conversation-driven interface where face-to-face dialogue opens visual equipment browsers. The QM provides dynamic contextual responses that inform the player about supply status, their rank, reputation standing, and discount percentages before showing equipment categories. Equipment has quality modifiers affecting stats and prices. Players can purchase gear, upgrade equipped items, sell equipment back, and buy provisions. The system integrates deeply with company supply levels and reputation mechanics through a context-aware dialogue catalog.
 
 ---
 
@@ -128,11 +128,12 @@ The system evaluates the game state (supply, events, reputation) at **runtime** 
 | **Critical** | 0-19% | Alarmed | "We've next to nothing left. Make it quick." |
 
 **Browse Responses:**
-Equipment browsing dialogue also reflects current conditions:
-- **Critical Supplies:** QM warns about slim pickings ("Pickings are slim. We're rationing everything.")
-- **Low Equipment:** Mentions worn/rough gear condition
-- **Hostile Reputation:** Terse, unwelcoming responses
-- **Trusted Reputation:** Friendly, offers "the good stuff"
+Equipment browsing dialogue reflects multiple contextual factors:
+- **Supply Status:** "Plenty in stock" (80-100%) / "Fair bit" (60-79%) / "Stock's thin" (20-39%) / "Pickings are slim" (0-19%)
+- **Rank Acknowledgment:** For T5+ soldiers, QM mentions their rank and earned standing
+- **Discount Information:** Explicitly states discount percentage based on reputation (0-30%)
+- **Price Attitude:** "Good prices for you" (trusted) / "Fair deal" (friendly) / "Standard prices" (neutral) / "Full price, no discounts" (hostile)
+- **Standing Hints:** "You've earned it" / "You've earned some pull" / "Don't expect favors" / "No discounts for troublemakers"
 
 **Technical Implementation:**
 - **JSON Data:** Dialogue structure defined in `ModuleData/Enlisted/Dialogue/qm_dialogue.json`
@@ -167,40 +168,72 @@ Player Options:
 When player selects "I'm looking for some new gear":
 
 ```
-QM: [Browse response based on supply level]
+QM: [Dynamic browse response with context - see examples below]
 
 Player Options:
   → "Weapons."
   → "Armor."
   → "Accessories."
-  → "A horse."
+  → "A horse." (only if mounts available in troop tree)
   → "Never mind."
 ```
 
-### Armor Slot Drill-Down
+**QM Browse Response Format:**
 
-Armor requires slot selection:
+The QM provides contextual information before showing categories:
 
+1. **Supply Status**: Current stock situation ("Plenty in stock" / "Stock's thin" / "Pickings are slim")
+2. **Rank Acknowledgment**: For T5+ soldiers, mentions rank and standing
+3. **Price Information**: Discount percentage based on reputation (0-30%)
+4. **Category Prompt**: Lists available categories
+
+**Browse Response Examples:**
+
+*Tier 3, Good Supply, Neutral Reputation (10% discount):*
 ```
-QM: "What piece are you looking for?"
-
-Player Options:
-  → "Body armor."
-  → "A helmet."
-  → "Gloves."
-  → "Boots."
-  → "Something else."
+"We've a fair bit in stock. Prices are standard. Nothing fancy. 
+What are you after—weapons, armor, accessories?"
 ```
+
+*Tier 6 Sergeant, Excellent Supply, Friendly Reputation (20% discount):*
+```
+"Plenty in stock. Recent resupply came through. You've earned 
+some pull around here, Sergeant. I'll cut you a fair deal—20% 
+off standard. What are you after—weapons, armor, accessories?"
+```
+
+*Tier 2, Low Supply, Hostile Reputation (0% discount):*
+```
+"Stock's thin right now. We're stretched. Full price. No discounts 
+for troublemakers. What are you after—weapons, armor, accessories?"
+```
+
+*Tier 8 Captain, Critical Supply, Trusted Reputation (30% discount):*
+```
+"Pickings are slim. We're rationing everything. For an officer of 
+your standing, Captain, I can show you the better pieces. Prices 
+are good for you—30% off. You've earned it. What are you after—
+weapons, armor, accessories?"
+```
+
+**Equipment Categories:**
+
+| Category | Contains | Notes |
+|----------|----------|-------|
+| **Weapons** | Swords, spears, bows, arrows, throwing weapons | Shields excluded (moved to Accessories) |
+| **Armor** | Helmets, body armor, gloves, boots | All armor pieces shown together; capes excluded (moved to Accessories) |
+| **Accessories** | Capes, shields, horse harness | Non-armor wearables and mount equipment |
+| **Mounts** | Horses | Only shown if mounts available in player's troop tree at current tier |
 
 ### Gauntlet UI Opens
 
-After category/slot selection, the conversation closes and the **visual Gauntlet equipment grid** opens:
+After category selection, the QM confirms and the conversation closes. The **visual Gauntlet equipment grid** opens:
 
 - Shows available equipment with quality modifiers
 - Displays prices (modified by quality and reputation)
 - Shows stats and tooltips
 - Player browses, purchases, or exits
-- On exit, conversation resumes at hub for continued shopping
+- On exit, conversation resumes at equipment category hub for continued shopping
 
 ### Supply Inquiry (Pure Dialogue)
 
@@ -215,31 +248,39 @@ QM: [Detailed contextual report - see Contextual Dialogue System section]
 ### Example Full Interaction
 
 ```
-Player: [Visits Quartermaster]
+Player: [Visits Quartermaster in camp]
 
-QM (Veteran, Friendly, Good Supply): 
-    "Good to see you. Supplies are holding steady, and I've 
-     got decent kit in stock."
+QM (Veteran, Friendly, Good Supply, T6 Sergeant, 20% discount): 
+    "Supplies are holding well. What do you require?"
 
-Player: "I need equipment."
+Player: "I'm looking for some new gear. What've you got?"
 
-QM: "Let me see what's in stock for you."
+QM: "We've a fair bit in stock. You've earned some pull around here, 
+     Sergeant. I'll cut you a fair deal—20% off standard. What are you 
+     after—weapons, armor, accessories?"
 
 Player: "Armor."
 
-QM: "What piece are you looking for?"
-
-Player: "Body armor."
-
 QM: "Right. Let's see what we've got."
 
-[Gauntlet UI opens showing body armor options]
-[Player browses, selects Worn Vlandian Sergeant Armor - 416g (20% discount)]
+[Gauntlet UI opens showing ALL armor options: helmets, body armor, gloves, boots]
+[Player browses across all armor types]
+[Player selects Fine Vlandian Hauberk (Body) - 416g after 20% discount]
 [Player purchases, UI closes]
 
-QM: "Anything else?"
+[Returns to equipment category hub]
 
-Player: "How are our supplies?"
+QM: "We've a fair bit in stock. You've earned some pull around here, 
+     Sergeant. I'll cut you a fair deal—20% off standard. What are you 
+     after—weapons, armor, accessories?"
+
+Player: "Never mind."
+
+[Returns to main hub]
+
+QM: "Supplies are holding well. What do you require?"
+
+Player: "How are we looking? Supply-wise, I mean."
 
 QM: "Supplies are at 65%. Adequate for now, but we're watching it. 
      Equipment condition is a bit rough - lot of worn pieces - but 

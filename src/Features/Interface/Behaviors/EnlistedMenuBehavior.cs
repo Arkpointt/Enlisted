@@ -3765,6 +3765,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // NOTE: Cooldown is NOT recorded here. It will be recorded in EventDeliveryManager
                 // only when the player selects a non-cancel option to prevent cooldown abuse.
+                // The menu will be automatically refreshed when the event closes to show updated cooldowns.
 
                 // Convert to EventDefinition and deliver via EventDeliveryManager
                 var eventDef = ConvertDecisionToEvent(decision);
