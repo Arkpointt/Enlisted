@@ -37,7 +37,6 @@ namespace Enlisted.Features.Content
         private readonly Queue<EventDefinition> _pendingEvents = new();
         private bool _isShowingEvent;
         private EventDefinition _currentEvent;
-        private RewardChoices _pendingSubChoice;
 
         public EventDeliveryManager()
         {
@@ -416,14 +415,21 @@ namespace Enlisted.Features.Content
                 // Still show result text and continue normally
             }
 
-            // Notify news system of event outcome
-            NotifyNewsOfEventOutcome(option);
+            // Notify news system of event outcome (includes narrative for Recent Activities display)
+            NotifyNewsOfEventOutcome(option, isRisky && !success);
 
             // Notify news of pending chain event if applicable
             NotifyNewsOfPendingChainEvent(option);
 
-            // Show result text (use failure text if risky and failed)
-            ShowResultText(option, isRisky && !success);
+            // Handle reward_choices if present (sub-choice popups for training focus, etc.)
+            // We skip the outcome narrative popup but still need to show reward choices
+            if (option.RewardChoices != null && option.RewardChoices.Options.Count > 0)
+            {
+                ShowSubChoicePopup(option.RewardChoices);
+            }
+            
+            // Result narrative is now shown in Recent Activities feed instead of popup to reduce UI interruption
+            // ShowResultText(option, isRisky && !success);
 
             // Handle immediate chain events (backwards compatibility)
             if (!string.IsNullOrEmpty(option.Effects?.ChainEventId))
@@ -1714,9 +1720,12 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Notifies the news system of an event outcome after an option is selected.
-        /// Adds the outcome to Personal Feed with a formatted headline.
+        /// Adds the outcome to Personal Feed with the narrative result text for display in Recent Activities.
+        /// This replaces the popup system to reduce UI interruption.
         /// </summary>
-        private void NotifyNewsOfEventOutcome(EventOption option)
+        /// <param name="option">The selected option.</param>
+        /// <param name="showFailure">True if this was a risky option that failed.</param>
+        private void NotifyNewsOfEventOutcome(EventOption option, bool showFailure = false)
         {
             if (EnlistedNewsBehavior.Instance == null)
             {
@@ -1730,12 +1739,18 @@ namespace Enlisted.Features.Content
 
             try
             {
+                // Get the appropriate result narrative (failure text if risky and failed, otherwise normal result)
+                var resultNarrative = showFailure
+                    ? ResolveText(option.ResultTextFailureId, option.ResultTextFailureFallback)
+                    : ResolveText(option.ResultTextId, option.ResultTextFallback);
+
                 var outcome = new EventOutcomeRecord
                 {
                     EventId = _currentEvent.Id,
                     EventTitle = ResolveText(_currentEvent.TitleId, _currentEvent.TitleFallback),
                     OptionChosen = ResolveText(option.TextId, option.TextFallback),
                     OutcomeSummary = BuildOutcomeSummary(option.Effects),
+                    ResultNarrative = resultNarrative ?? string.Empty,
                     DayNumber = (int)CampaignTime.Now.ToDays,
                     EffectsApplied = BuildEffectsDictionary(option.Effects),
                     Severity = ParseSeverityFromEvent(_currentEvent)
@@ -2048,65 +2063,6 @@ namespace Enlisted.Features.Content
             return "Something is brewing.";
         }
 
-        /// <summary>
-        /// Shows the result text after an option is selected.
-        /// If the option has reward_choices, stores them for showing after result popup closes.
-        /// </summary>
-        /// <param name="option">The selected option.</param>
-        /// <param name="showFailure">True to show failure text for risky options that failed.</param>
-        private void ShowResultText(EventOption option, bool showFailure = false)
-        {
-            // Store pending sub-choice if option has reward_choices (only on success)
-            if (!showFailure && option.RewardChoices != null && option.RewardChoices.Options.Count > 0)
-            {
-                _pendingSubChoice = option.RewardChoices;
-                ModLogger.Debug(LogCategory, $"Stored pending sub-choice: {option.RewardChoices.Type} with {option.RewardChoices.Options.Count} options");
-            }
-            else
-            {
-                _pendingSubChoice = null;
-            }
-
-            // Use failure text if showing failure outcome
-            var resultText = showFailure
-                ? ResolveText(option.ResultTextFailureId, option.ResultTextFailureFallback)
-                : ResolveText(option.ResultTextId, option.ResultTextFallback);
-
-            if (string.IsNullOrEmpty(resultText))
-            {
-                // No result text - show sub-choice directly if pending
-                if (_pendingSubChoice != null)
-                {
-                    ShowSubChoicePopup(_pendingSubChoice);
-                }
-                return;
-            }
-
-            var inquiry = new InquiryData(
-                titleText: ResolveText(_currentEvent.TitleId, _currentEvent.TitleFallback),
-                text: resultText,
-                isAffirmativeOptionShown: true,
-                isNegativeOptionShown: false,
-                affirmativeText: new TextObject("{=str_ok}Continue").ToString(),
-                negativeText: null,
-                affirmativeAction: OnResultTextClosed,
-                negativeAction: null
-            );
-
-            InformationManager.ShowInquiry(inquiry, true);
-        }
-
-        /// <summary>
-        /// Called when the result text popup is closed.
-        /// If there's a pending sub-choice, shows the sub-choice popup.
-        /// </summary>
-        private void OnResultTextClosed()
-        {
-            if (_pendingSubChoice != null)
-            {
-                ShowSubChoicePopup(_pendingSubChoice);
-            }
-        }
 
         /// <summary>
         /// Shows the sub-choice popup for branching rewards.
@@ -2137,7 +2093,6 @@ namespace Enlisted.Features.Content
             if (options.Count == 0)
             {
                 ModLogger.Warn(LogCategory, $"Sub-choice popup '{choices.Type}' has no valid options after condition filtering");
-                _pendingSubChoice = null;
                 return;
             }
 
@@ -2168,8 +2123,6 @@ namespace Enlisted.Features.Content
         /// </summary>
         private void OnSubChoiceSelected(List<InquiryElement> selected)
         {
-            _pendingSubChoice = null;
-
             if (selected == null || selected.Count == 0)
             {
                 ModLogger.Warn(LogCategory, "No sub-choice selected");

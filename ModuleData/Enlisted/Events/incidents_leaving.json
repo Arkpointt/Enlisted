@@ -127,9 +127,7 @@
           "effects": {
             "skillXp": {
               "Scouting": 15
-            }
-          ,,
-          
+            },
             "gold": -5
           }
         },
@@ -266,9 +264,7 @@
           "effects": {
             "skillXp": {
               "Scouting": 20
-            }
-          ,,
-          
+            },
             "officerRep": 8
           },
           "effects_failure": {
@@ -413,9 +409,7 @@
           "effects": {
             "skillXp": {
               "Trade": 10
-            }
-          ,,
-          
+            },
             "gold": -10,
             "companyNeeds": {
               "Supplies": 5

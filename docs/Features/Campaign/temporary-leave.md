@@ -27,11 +27,18 @@ Temporary Leave is a suspension of duty, not a discharge. It is **time-limited**
 
 ## Requesting Leave
 
-You can request leave through two primary channels:
-1.  **Enlisted Status Menu**: A "Request Leave" option is available in the main menu hub.
-2.  **Lord Dialogue**: You can speak directly with your lord to request time away from the unit.
+You can request leave through three primary channels:
+1.  **Muster Complete Menu**: After completing the muster sequence, a "Request Temporary Leave" option allows you to begin leave immediately after dismissal.
+2.  **Enlisted Status Menu**: A "Request Leave" option is available in the main menu hub.
+3.  **Lord Dialogue**: You can speak directly with your lord to request time away from the unit.
 
 Approval is generally granted unless the unit is in a high-tempo situation (e.g., active siege or imminent battle).
+
+**Muster Complete Option:**
+- Available at the final muster stage after all outcomes are displayed
+- Disabled during active siege or combat operations
+- Provides a natural transition point to begin leave after receiving pay and resolving muster business
+- If selected, leave begins immediately upon muster dismissal
 
 ---
 

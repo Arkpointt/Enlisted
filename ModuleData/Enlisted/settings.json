@@ -1,6 +1,9 @@
 {
   "schemaVersion": 1,
   "enabled": true,
+  "use_new_muster_menu": true,
+  "PauseGameDuringMuster": true,
+  "EnableDebugTools": true,
   "LogMenus": true,
   "LogCampaignEvents": true,
   "RunTroopDiscoveryValidation": false,

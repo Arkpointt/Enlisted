@@ -40,7 +40,7 @@
             "text": "\"Volunteers step forward.\"",
             "tooltip": "Add 2-4 soldiers to retinue. Leadership skill check for bonus.",
             "risk": "safe",
-            "costs": {},,
+            "costs": {},
             "effects": {
               "skillXp": { "Leadership": 10 }
             ,
@@ -560,7 +560,7 @@
             "text": "\"What happened? You first. Then you.\"",
             "tooltip": "Hear both sides. Train Leadership. +8 Retinue Loyalty. +5 Soldier rep.",
             "risk": "safe",
-            "costs": {},,
+            "costs": {},
             "effects": {
               "skillXp": { "Leadership": 15 }
             ,
@@ -725,7 +725,7 @@
             "text": "\"Question everyone. Search the tents. I want answers.\"",
             "tooltip": "Thorough search. Train Roguery. +2 Retinue Loyalty.",
             "risk": "safe",
-            "costs": {},,
+            "costs": {},
             "effects": {
               "skillXp": { "Roguery": 10 }
             ,
@@ -819,7 +819,7 @@
             "text": "\"You know these lands better than I do. What do you suggest?\"",
             "tooltip": "Listen to veteran. Train Leadership. +8 Loyalty. +5 Soldier rep.",
             "risk": "safe",
-            "costs": {},,
+            "costs": {},
             "effects": {
               "skillXp": { "Leadership": 20 }
             ,
@@ -850,7 +850,7 @@
             "text": "\"Send scouts ahead. If the ravine is clear, we proceed as planned.\"",
             "tooltip": "Partial reconnaissance. Train Tactics. +3 Loyalty and Officer rep.",
             "risk": "safe",
-            "costs": {},,
+            "costs": {},
             "effects": {
               "skillXp": { "Tactics": 10 }
             ,
@@ -933,7 +933,7 @@
             "text": "\"Show me what you can do. Draw your weapons. Now.\"",
             "tooltip": "Combat drill. Train Leadership. +3 Officer rep. +2 Loyalty.",
             "risk": "safe",
-            "costs": {},,
+            "costs": {},
             "effects": {
               "skillXp": { "Leadership": 10 }
             ,
@@ -1082,7 +1082,7 @@
             "text": "\"Gather round. We need to talk about why we fight.\"",
             "tooltip": "Inspirational speech. Free but requires Leadership skill.",
             "risk": "safe",
-            "costs": {},,
+            "costs": {},
             "effects": {
               "skillXp": { "Leadership": 20 }
             ,
@@ -1393,7 +1393,7 @@
             "text": "\"Gather the men. We will give them a proper farewell.\"",
             "tooltip": "Hold a memorial ceremony. +10 retinue loyalty, costs 50 gold for wine and offerings.",
             "risk": "safe",
-            "costs": {},,
+            "costs": {},
             "effects": {
               "skillXp": { "Leadership": 15 }
             ,

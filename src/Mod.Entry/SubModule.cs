@@ -315,6 +315,9 @@ namespace Enlisted.Mod.Entry
                     // Incidents: registers enlistment-specific incidents (e.g., deferred bag check)
                     campaignStarter.AddBehavior(new EnlistedIncidentsBehavior());
 
+                    // Muster menu system: multi-stage GameMenu sequence for pay muster, replaces inquiry popup
+                    campaignStarter.AddBehavior(new MusterMenuHandler());
+
                     // Conversation system: adds dialog options to talk with lords about enlistment,
                     // service status, promotions, and requesting leave.
                     campaignStarter.AddBehavior(new EnlistedDialogManager());
@@ -436,6 +439,7 @@ namespace Enlisted.Mod.Entry
                         nameof(SaveLoadDiagnosticsMarkerBehavior),
                         nameof(EnlistmentBehavior),
                         nameof(EnlistedIncidentsBehavior),
+                        nameof(MusterMenuHandler),
                         nameof(EnlistedDialogManager),
                         nameof(EnlistedMenuBehavior),
                         "EnlistedStatusManager",

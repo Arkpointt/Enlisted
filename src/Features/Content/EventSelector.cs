@@ -99,6 +99,14 @@ namespace Enlisted.Features.Content
                     continue;
                 }
 
+                // Skip muster-specific events (inspection, recruit) - these fire as muster menu stages, not random camp events
+                if (!string.IsNullOrEmpty(evt.Id) &&
+                    (evt.Id.Equals("evt_muster_inspection", StringComparison.OrdinalIgnoreCase) ||
+                     evt.Id.Equals("evt_muster_new_recruit", StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
                 // Skip one-time events that have already fired
                 if (evt.Timing.OneTime && escalationState.HasOneTimeEventFired(evt.Id))
                 {

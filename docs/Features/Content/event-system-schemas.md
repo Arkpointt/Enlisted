@@ -3,7 +3,7 @@
 **Summary:** Authoritative JSON schema definitions for events, decisions, and orders. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23 (Fixed skillXp placement: effects for main options, rewards for sub-choices only)  
+**Last Updated:** 2025-12-24 (Removed outcome popup system; resultText now displays in Recent Activities; reward_choices still use popups)  
 **Related Docs:** [Content System Architecture](content-system-architecture.md), [Event Catalog](../../Content/event-catalog-by-system.md), [Quartermaster System](../Equipment/quartermaster-system.md)
 
 ---
@@ -237,7 +237,7 @@ All fields are optional. If omitted, no restriction applies.
 | Field | JSON Names | Type | Range | Notes |
 |-------|------------|------|-------|-------|
 | Tier Range | `tier.min`, `tier.max` or `minTier`, `maxTier` | int | 1-9 | Enlistment tier |
-| Context | `context` | string | See list | Campaign context |
+| Context | `context` | string or array | See list | Campaign context(s) |
 | Role | `role` | string | See list | Player's primary role |
 | HP Below | `hp_below` or `hpBelow` | int | 0-100 | % HP threshold |
 | Min Skills | `minSkills` | dict | - | Skill name → level |
@@ -256,8 +256,286 @@ All fields are optional. If omitted, no restriction applies.
 
 Map incident contexts are used by `MapIncidentManager` to filter incidents based on player actions (battle end, settlement entry/exit, hourly checks during garrison/siege).
 
+**Context as Array:**
+```json
+{
+  "requirements": {
+    "context": ["Camp", "Town"]  // Eligible in EITHER camp or town
+  }
+}
+```
+
 ### Valid Role Values  
 `"Any"`, `"Soldier"`, `"Scout"`, `"Medic"`, `"Engineer"`, `"Officer"`, `"Operative"`, `"NCO"`
+
+---
+
+## Content Variants Pattern
+
+**Purpose:** Provide contextual variety by creating multiple versions of the same decision/event that fire in different situations.
+
+### How Variants Work
+
+The system automatically selects the best-fitting variant based on `requirements.context`:
+
+1. Player enters situation (e.g., garrison, siege, campaign)
+2. Orchestrator queries eligible content
+3. EventRequirementChecker filters by context
+4. Only matching variants pass filter
+5. Orchestrator scores and selects best fit
+
+**No code changes needed** - variants filter themselves via requirements.
+
+### Variant Naming Convention
+
+```
+<base_id>                → Base version (any context)
+<base_id>_<context>      → Context-specific variant
+<base_id>_<intensity>    → Intensity variant (light/intense)
+```
+
+**Examples:**
+- `dec_rest` → Base
+- `dec_rest_garrison` → Garrison-specific
+- `dec_rest_exhausted` → Siege-specific
+- `dec_weapon_drill` → Base
+- `dec_weapon_drill_light` → Low-intensity
+- `dec_weapon_drill_intense` → High-intensity
+
+### Basic Variant Example
+
+```json
+{
+  "schemaVersion": 2,
+  "category": "decision",
+  "events": [
+    {
+      "id": "dec_rest",
+      "category": "decision",
+      "title": "Rest",
+      "setup": "You need to rest.",
+      "requirements": {
+        "tier": { "min": 1 }
+      },
+      "options": [
+        {
+          "id": "rest",
+          "text": "Find a spot and rest.",
+          "costs": { "fatigue": 2 },
+          "rewards": { "fatigueRelief": 5 }
+        }
+      ]
+    },
+    {
+      "id": "dec_rest_garrison",
+      "category": "decision",
+      "title": "Rest (Garrison)",
+      "setup": "You have time for proper rest.",
+      "requirements": {
+        "tier": { "min": 1 },
+        "context": ["Camp"]  // ← Only in garrison
+      },
+      "options": [
+        {
+          "id": "rest_proper",
+          "text": "Get proper rest in camp.",
+          "costs": { "fatigue": 1 },  // ← Cheaper
+          "rewards": { "fatigueRelief": 8 }  // ← More effective
+        }
+      ]
+    },
+    {
+      "id": "dec_rest_exhausted",
+      "category": "decision",
+      "title": "Rest (Exhausted)",
+      "setup": "You try to rest amid chaos.",
+      "requirements": {
+        "tier": { "min": 1 },
+        "context": ["Siege", "Battle"]  // ← Only during crisis
+      },
+      "options": [
+        {
+          "id": "rest_crisis",
+          "text": "Catch what rest you can.",
+          "costs": { "fatigue": 2 },
+          "rewards": { "fatigueRelief": 2 }  // ← Less effective
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Multi-Intensity Variant Example
+
+```json
+{
+  "schemaVersion": 2,
+  "category": "decision",
+  "events": [
+    {
+      "id": "dec_weapon_drill",
+      "category": "decision",
+      "title": "Weapon Training",
+      "requirements": { "tier": { "min": 1 } },
+      "costs": { "fatigue": 2 },
+      "effects": { "skillXp": { "OneHanded": 25 } }
+    },
+    {
+      "id": "dec_weapon_drill_light",
+      "category": "decision",
+      "title": "Light Weapon Drill",
+      "requirements": { 
+        "tier": { "min": 1 },
+        "context": ["Camp", "Town"]  // ← Garrison contexts
+      },
+      "costs": { "fatigue": 1 },  // ← Cheaper
+      "effects": { "skillXp": { "OneHanded": 15 } }  // ← Less XP
+    },
+    {
+      "id": "dec_weapon_drill_intense",
+      "category": "decision",
+      "title": "Intense Weapon Drill",
+      "requirements": { 
+        "tier": { "min": 3 },  // ← Higher tier required
+        "context": ["War"]  // ← Campaign context
+      },
+      "costs": { "fatigue": 5 },  // ← More expensive
+      "effects": { 
+        "skillXp": { "OneHanded": 60 },  // ← Much more XP
+        "hpChange": -5  // ← Risk of injury
+      }
+    }
+  ]
+}
+```
+
+### Tier + Context Variant Example
+
+```json
+{
+  "schemaVersion": 2,
+  "events": [
+    {
+      "id": "evt_patrol",
+      "title": "Patrol Duty",
+      "requirements": { "tier": { "min": 1, "max": 3 } },
+      "setup": "Standard patrol assignment."
+    },
+    {
+      "id": "evt_patrol_veteran",
+      "title": "Veteran Patrol",
+      "requirements": { 
+        "tier": { "min": 4 },
+        "context": ["War"]
+      },
+      "setup": "You lead a patrol in enemy territory."
+    },
+    {
+      "id": "evt_patrol_garrison",
+      "title": "Garrison Patrol",
+      "requirements": { 
+        "tier": { "min": 1, "max": 3 },
+        "context": ["Camp", "Town"]
+      },
+      "setup": "Routine patrol around camp."
+    }
+  ]
+}
+```
+
+### Role + Context Variant Example
+
+```json
+{
+  "schemaVersion": 2,
+  "events": [
+    {
+      "id": "evt_scout_mission",
+      "title": "Scout Mission",
+      "requirements": { 
+        "role": "Scout",
+        "tier": { "min": 2 }
+      }
+    },
+    {
+      "id": "evt_scout_mission_dangerous",
+      "title": "Deep Reconnaissance",
+      "requirements": { 
+        "role": "Scout",
+        "tier": { "min": 4 },
+        "context": ["War"]  // ← Only during war
+      }
+    }
+  ]
+}
+```
+
+### Variant Selection Behavior
+
+**Scenario 1: Garrison (Camp context)**
+```
+Eligible content:
+  dec_rest           ✓ (context: Any)
+  dec_rest_garrison  ✓ (context: ["Camp"])
+  dec_rest_exhausted ✗ (context: ["Siege", "Battle"])
+
+Orchestrator scores both eligible variants
+Selects: dec_rest_garrison (better fit for garrison)
+Player sees: Garrison-specific rest option
+```
+
+**Scenario 2: Siege Defense (Siege context)**
+```
+Eligible content:
+  dec_rest           ✓ (context: Any)
+  dec_rest_garrison  ✗ (context: ["Camp"])
+  dec_rest_exhausted ✓ (context: ["Siege", "Battle"])
+
+Orchestrator scores both eligible variants
+Selects: dec_rest_exhausted (crisis-appropriate)
+Player sees: Exhausted rest option
+```
+
+**Scenario 3: Campaign March (War context)**
+```
+Eligible content:
+  dec_rest           ✓ (context: Any)
+  dec_rest_garrison  ✗ (context: ["Camp"])
+  dec_rest_exhausted ✗ (context: ["Siege", "Battle"])
+
+Only base version eligible
+Selects: dec_rest (fallback to base)
+Player sees: Normal rest option
+```
+
+### Variant Best Practices
+
+**DO:**
+- Create base version with `"context": "Any"` as fallback
+- Use specific contexts for variants (`["Camp"]`, `["Siege"]`)
+- Vary costs/rewards to reflect context appropriately
+- Keep variant count reasonable (2-3 per base event)
+- Name variants descriptively (`_garrison`, `_exhausted`, `_intense`)
+
+**DON'T:**
+- Create variants without a base version (always have fallback)
+- Overlap contexts too much (causes selection confusion)
+- Make all events have variants (add incrementally)
+- Change event logic between variants (keep structure similar)
+
+### Implementation Timeline
+
+**Phase 1-5 (Weeks 1-5):** Orchestrator built with current content (no variants)  
+**Phase 6+ (Week 6+):** Add variants incrementally as JSON additions
+
+**Priority for Variants:**
+1. High-traffic decisions (training, rest, social)
+2. Repetitive events (seen too often in playtesting)
+3. Role-specific content (add depth)
+4. Tier-specific content (progression feel)
+
+**See:** [Content Orchestrator Plan - Phase 6](content-orchestrator-plan.md#phase-6-content-variants-post-launch-incremental) for variant strategy.
 
 ---
 
@@ -287,6 +565,8 @@ Map incident contexts are used by `MapIncidentManager` to filter incidents based
 
 All automatic event timing is config-driven. These limits apply across ALL automatic event sources (EventPacingManager + MapIncidentManager) to ensure players aren't overwhelmed with events.
 
+### Current Config Structure
+
 ```json
 {
   "decision_events": {
@@ -306,7 +586,7 @@ All automatic event timing is config-driven. These limits apply across ALL autom
 }
 ```
 
-### Pacing Fields
+### Pacing Fields (Current)
 
 | Field | Type | Default | Purpose |
 |-------|------|---------|---------|
@@ -321,7 +601,7 @@ All automatic event timing is config-driven. These limits apply across ALL autom
 | `allow_quiet_days` | bool | true | Whether random quiet days can occur |
 | `quiet_day_chance` | float | 0.15 | Chance of no automatic events on a given day (rolled once daily) |
 
-### How Pacing Works
+### How Pacing Works (Current)
 
 1. **EventPacingManager** checks if current time is within event window (every 3-5 days, config-driven)
 2. **MapIncidentManager** fires context incidents on battles, settlements, sieges
@@ -345,6 +625,92 @@ Map incidents skip `evaluation_hours` check because they're context-triggered (b
 Per-category cooldown ensures you don't get a narrative event and a map incident back-to-back.
 
 **Player-selected decisions** (from Camp Hub menu) bypass all pacing since the player explicitly chose them.
+
+---
+
+## Future: Orchestrator Config Structure
+
+**Status:** 📋 Specification - See [Content Orchestrator Plan](../../Features/Content/content-orchestrator-plan.md)
+
+The orchestrator will replace schedule-driven config with world-state driven frequency tables:
+
+### Future Config Structure
+
+```json
+{
+  "decision_events": {
+    "pacing": {
+      "max_per_day": 2,
+      "max_per_week": 8,
+      "min_hours_between": 4,
+      "per_event_cooldown_days": 7,
+      "per_category_cooldown_days": 1
+    },
+    "orchestrator": {
+      "enabled": true,
+      "fitness_threshold": 40,
+      "log_decisions": true,
+      
+      "frequency": {
+        "peacetime_garrison": 0.14,      // 1 event per week
+        "peacetime_recruiting": 0.35,    // 2.5 per week
+        "war_marching": 0.5,             // 3.5 per week
+        "war_active_campaign": 0.7,      // 5 per week
+        "siege_attacking": 0.57,         // 4 per week
+        "siege_defending": 1.0,          // 7 per week
+        "lord_captured": 0.07            // 0.5 per week
+      },
+      
+      "dampening": {
+        "after_busy_week_multiplier": 0.7,
+        "after_quiet_week_multiplier": 1.2,
+        "after_battle_cooldown_days": 1.5
+      },
+      
+      "pressure_modifiers": {
+        "low_supplies": 0.1,
+        "wounded_company": 0.1,
+        "high_discipline": 0.15,
+        "recent_victory": -0.2,
+        "just_paid": -0.15
+      }
+    }
+  }
+}
+```
+
+### Changes from Current
+
+**Removed Fields:**
+- `event_window_min_days`, `event_window_max_days` - Schedule-driven pacing
+- `evaluation_hours` - Artificial "event times"
+- `allow_quiet_days`, `quiet_day_chance` - Random rolls replaced by world-state determination
+
+**Kept Fields (Safety Limits):**
+- `max_per_day`, `max_per_week` - Prevent spam
+- `min_hours_between` - Minimum spacing
+- `per_event_cooldown_days` - Prevent repetition
+- `per_category_cooldown_days` - Prevent category spam
+
+**Added Fields:**
+- `orchestrator.frequency` - World situation → realistic event frequency mappings
+- `orchestrator.dampening` - Activity-based frequency adjustments
+- `orchestrator.pressure_modifiers` - Simulation pressure effects on frequency
+
+### Frequency Table Rationale
+
+| Situation | Events/Week | Daily Chance | Why |
+|-----------|-------------|--------------|-----|
+| Peacetime Garrison | 1.0 | 14% | Boring is realistic. Garrison duty is routine. |
+| War Marching | 3.5 | 50% | Normal campaign tempo. |
+| Active Campaign | 5.0 | 70% | High activity during active operations. |
+| Siege Defense | 7.0 | 100% | Crisis situation. Something every day. |
+
+**Philosophy:** The world determines realism. Garrison should feel quiet. Sieges should feel chaotic. The simulation doesn't manufacture pacing—it reflects reality.
+
+**Grace Period:** 3-day grace period after enlistment (unchanged)
+
+**See:** [Content Orchestrator Plan](content-orchestrator-plan.md) for complete specification and implementation timeline.
 
 ---
 
@@ -378,8 +744,8 @@ Each option represents a player choice.
 | Costs | `costs` | object | ❌ | Resources deducted |
 | Rewards | `rewards` | object | ❌ | Resources gained |
 | Effects | `effects` | object | ❌ | State changes |
-| Result Text ID | `resultTextId` | string | ❌ | XML key for outcome |
-| Result Text | `resultText` | string | ❌ | Outcome fallback text |
+| Result Text ID | `resultTextId` | string | ❌ | XML key for outcome narrative |
+| Result Text | `resultText` | string | ❌ | Outcome narrative (displayed in Recent Activities) |
 | Risk | `risk` | string | ❌ | safe/moderate/risky/dangerous |
 | Risk Chance | `risk_chance` or `riskChance` | int | ❌ | 0-100, success % |
 | Set Flags | `set_flags` or `setFlags` | array | ❌ | Flags to set |
@@ -414,6 +780,67 @@ Each option represents a player choice.
 {"tooltip": "Requires Leadership 50+ to attempt."}
 {"tooltip": "Greyed out: Company Morale must be below 50"}
 ```
+
+---
+
+## Result Text & Event Outcomes
+
+**Purpose:** The `resultText` field provides narrative feedback after an event option is chosen.
+
+**Display System:** Event outcomes are **NOT shown as popups** (the outcome popup system was removed as dead code). Instead, they appear in the **Recent Activities** section of the status menu using a queue system.
+
+**What Still Uses Popups:**
+- Initial event setup and option selection (unchanged)
+- Multi-phase/chain events (each phase shows normally)
+- `reward_choices` sub-popups (training focus, etc.) - These still work!
+- Only the outcome narrative after choosing goes to Recent Activities
+
+**Queue Behavior:**
+- Only ONE event outcome displays at a time
+- Each outcome shows for 1 day in Recent Activities
+- Multiple events on the same day queue automatically (FIFO)
+- Players check their status menu to see what happened
+
+**Writing Guidelines:**
+- Write immersive, present-tense narrative
+- Show immediate consequences and atmosphere
+- Keep it 1-3 sentences (under 200 characters)
+- Use sensory details and character reactions
+- Supports placeholder variables (e.g., `{PLAYER_NAME}`, `{SERGEANT}`)
+
+**Examples:**
+
+```json
+{
+  "resultText": "You wait on the bank with the others, watching the pioneers work. They know their business, but the current is strong and the footing treacherous. It will take time."
+}
+
+{
+  "resultText": "You wade into the freezing water, gasping at the cold. Your boots fill instantly. Someone shoves a rope into your hands and you haul, muscles burning, until something finally gives."
+}
+
+{
+  "resultText": "The dice tumble. You win the pot. {COMRADE_NAME} curses under his breath and walks away."
+}
+```
+
+**Risky Options:** Use `failure_resultText` for the failure narrative when `risk` is set:
+
+```json
+{
+  "resultText": "Your training pays off. The blow glances off harmlessly.",
+  "failure_resultText": "You're too slow. Blood runs down your arm. {SERGEANT} calls for the medic."
+}
+```
+
+**Display Format in Recent Activities:**
+```
+• Event Title: Result narrative text here
+```
+
+**Important:** The `resultText` field is still required even though outcomes don't show as popups. It's displayed in Recent Activities and provides crucial narrative feedback.
+
+**See Also:** [News & Reporting System - Event Outcome Queue](../UI/news-reporting-system.md#event-outcome-queue-system)
 
 ---
 

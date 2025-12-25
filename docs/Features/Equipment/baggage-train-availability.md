@@ -52,11 +52,27 @@
 The mod already has a baggage stash system (`_baggageStash` in `EnlistmentBehavior`):
 - Dedicated `ItemRoster` for player's stored items
 - Cross-faction transfer mechanics (courier system)
-- Bag checks at muster for contraband
 - Fatigue gating (can't access when exhausted)
 - Accessed via `InventoryScreenHelper.OpenScreenAsStash()`
 
 **Problem:** The baggage stash is always accessible via the Camp Hub menu whenever the player isn't fatigued. This doesn't reflect realistic military logistics and misses gameplay opportunities.
+
+### Important Distinction: Access System vs. Muster Inspection
+
+This baggage access system is **separate from** the contraband inspection that occurs during pay muster (see [Muster Menu System](../Core/muster-menu-revamp.md)):
+
+**Baggage Access System (this document):**
+- Controls **when** the player can access their stored belongings
+- Based on logistics: Is the baggage train caught up? Are we in settlement?
+- All soldiers get FullAccess during muster regardless of inspection outcome
+
+**Muster Contraband Inspection (Muster Menu):**
+- Security check for prohibited items in player inventory (not stash)
+- 30% chance during muster to trigger
+- Can result in confiscation, fines, or scrutiny penalties
+- Does not affect baggage access state
+
+Both systems grant access during muster, but serve different purposes: one is logistics-based (availability), the other is security-based (compliance).
 
 ### Proposed State (After This Feature)
 
@@ -1731,10 +1747,43 @@ When multiple conditions apply, use this priority order:
 3. **Locked (QM)** - Supply crisis or investigation overrides other states
 4. **Leave** - Full access (player is active)
 5. **Grace Period** - Full access (player is active)
-6. **Settlement** - Full access
-7. **Muster** - Full access window
-8. **March State** - No access / temporary access windows
-9. **Default** (lowest) - Normal access
+6. **Delay** - Baggage train stuck/delayed, blocks access
+7. **Siege** - Attacker = no access, Defender = full access (inside settlement)
+7.5. **Muster** - Full access during muster and 6 hours after (see Muster Integration)
+8. **Settlement** - Full access
+9. **Temporary Access** - Brief window when wagons catch up
+10. **March State** - No access (baggage behind column)
+11. **Default** (lowest) - Army halted/resting = full access
+
+### Muster Integration
+
+Pay muster grants full baggage access to allow soldiers to manage equipment during the muster process. Access continues for 6 hours after muster completes to accommodate post-muster activities.
+
+**Detection Logic:**
+```csharp
+// In BaggageTrainManager.GetCurrentAccess():
+
+// Priority 7.5: Muster Window - grants full access during muster and for 6 hours after
+// Active muster takes precedence over march state to allow baggage access during pay muster
+if (enlistment.PayMusterPending)
+{
+    return BaggageAccessState.FullAccess;
+}
+
+// Check post-muster window (6 hours after muster completes)
+if (enlistment.LastMusterCompletionTime > CampaignTime.Zero)
+{
+    var hoursSinceMuster = CampaignTime.Now.ToHours - enlistment.LastMusterCompletionTime.ToHours;
+    if (hoursSinceMuster >= 0 && hoursSinceMuster < 6.0f)
+    {
+        return BaggageAccessState.FullAccess;
+    }
+}
+```
+
+**EnlistmentBehavior Properties Required:**
+- `PayMusterPending` (bool) - True when muster is active, before player completes muster menu
+- `LastMusterCompletionTime` (CampaignTime) - Set when muster completes, used for 6h window
 
 **Implementation:**
 ```csharp
@@ -1758,19 +1807,39 @@ public BaggageAccessState GetCurrentAccess()
         EnlistmentBehavior.Instance?.IsInDesertionGracePeriod == true)
         return BaggageAccessState.FullAccess;
     
-    // Priority 6: Settlement
+    // Priority 6: Active Delay
+    if (_baggageDelayedUntil > CampaignTime.Now)
+        return BaggageAccessState.NoAccess;
+    
+    // Priority 7: Siege context
+    if (party?.SiegeEvent != null)
+    {
+        if (party.BesiegerCamp != null)
+            return BaggageAccessState.NoAccess; // Attacker
+        return BaggageAccessState.FullAccess;   // Defender
+    }
+    
+    // Priority 7.5: Muster window (active or within 6h of completion)
+    var enlistment = EnlistmentBehavior.Instance;
+    if (enlistment?.PayMusterPending == true)
+        return BaggageAccessState.FullAccess;
+    
+    if (enlistment?.LastMusterCompletionTime > CampaignTime.Zero)
+    {
+        var hoursSinceMuster = CampaignTime.Now.ToHours - enlistment.LastMusterCompletionTime.ToHours;
+        if (hoursSinceMuster >= 0 && hoursSinceMuster < 6.0f)
+            return BaggageAccessState.FullAccess;
+    }
+    
+    // Priority 8: Settlement
     if (party?.CurrentSettlement != null)
         return BaggageAccessState.FullAccess;
     
-    // Priority 7: Muster window
-    if (_musterAccessActive)
-        return BaggageAccessState.FullAccess;
-    
-    // Priority 8: Temporary access
+    // Priority 9: Temporary access
     if (_temporaryAccessExpires > CampaignTime.Now)
         return BaggageAccessState.TemporaryAccess;
     
-    // Priority 9: Check march state
+    // Priority 10: Check march state
     if (party?.IsMoving == true && party.CurrentSettlement == null)
         return BaggageAccessState.NoAccess;
     

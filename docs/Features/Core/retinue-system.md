@@ -86,6 +86,14 @@ Horse archers are only available for cultures that historically used them:
 - **Available**: Aserai, Khuzait, Empire
 - **Not Available**: Vlandia, Battania, Sturgia
 
+**Muster Acknowledgment:**
+
+At the next pay muster after T7 promotion, a **Retinue Muster** stage appears showing:
+- Initial retinue capacity (20/20 soldiers)
+- Morale and equipment status
+- Recruitment options if openings exist
+- See [Muster Menu System](muster-menu-revamp.md#7-retinue-muster-menu-t7-only) for details
+
 **Selection Dialog:**
 
 ```

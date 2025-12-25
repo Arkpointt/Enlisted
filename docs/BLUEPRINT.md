@@ -94,8 +94,9 @@ This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.13** that transf
    - Use `&#xA;` for newlines in XML attributes
    - Escape special characters: `&` → `&amp;`, `'` → `&apos;`, `"` → `&quot;`
 3. Use placeholder variables in text (e.g., `{PLAYER_NAME}`, `{SERGEANT}`, `{LORD_NAME}`)
-4. Run `python tools/events/sync_event_strings.py --check` to verify all strings present
-5. Update `Content/event-catalog-by-system.md`
+4. **Run validation:** `python tools/events/validate_events.py` to check for missing fallback fields
+5. Run `python tools/events/sync_event_strings.py --check` to verify all strings present
+6. Update `Content/event-catalog-by-system.md`
 
 **Placeholder variables:** See [Event Catalog - Placeholder Variables](Content/event-catalog-by-system.md#placeholder-variables) for complete list
 
@@ -103,6 +104,16 @@ This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.13** that transf
 1. Search INDEX.md for topic
 2. Check `Features/Core/core-gameplay.md` for mentions
 3. Use grep to search `src/` for implementation
+
+**Before committing:**
+```powershell
+# Validate all events have proper fallback text
+python tools/events/validate_events.py
+
+# Build and check for errors
+cd C:\Dev\Enlisted\Enlisted
+dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+```
 
 ---
 
@@ -558,6 +569,7 @@ public override void SyncData(IDataStore dataStore)
 |---------|---------|
 | `enlisted_camp_hub` | Central navigation hub with accordion-style decision sections. |
 | `enlisted_medical` | Medical care and treatment (when player has active condition). |
+| `enlisted_muster_*` | Multi-stage muster system sequence (8 stages, every 12 days). See [Muster System](Features/Core/muster-system.md). |
 
 **Decision Sections (within Camp Hub):**
 - TRAINING - Training-related player decisions (dec_weapon_drill, dec_spar, etc.)
@@ -570,9 +582,18 @@ public override void SyncData(IDataStore dataStore)
 - CAMP_LIFE - Self-care and rest (dec_rest, dec_seek_treatment)
 - LOGISTICS - Quartermaster-related (from events_player_decisions.json)
 
+**Muster System (Pay Day Ceremony):**
+- Multi-stage GameMenu sequence (8 stages) occurring every 12 days
+- Replaces simple pay inquiry popup with comprehensive muster experience
+- Stages: Intro → Pay Line → Baggage Check → Inspection → Recruit → Promotion Recap → Retinue → Complete
+- Integrates pay, rations, baggage checks, equipment inspections, rank progression
+- Configurable time pause behavior (default: paused during muster)
+- See [Muster System](Features/Core/muster-system.md) for complete flow
+
 **Event Delivery:**
 - Uses `MultiSelectionInquiryData` popups for narrative events
 - Triggered by: EventPacingManager, EscalationManager, DecisionManager
+- Muster-specific events (inspection, recruit, baggage) integrated as menu stages
 - See [Event Delivery System](Features/UI/ui-systems-master.md#event-delivery-system)
 
 **Localization:**
@@ -622,6 +643,7 @@ public override void SyncData(IDataStore dataStore)
 1. Run `python tools/events/sync_event_strings.py` to automatically extract missing strings from JSON event files and append them to `enlisted_strings.xml`
 2. The script extracts all string IDs (`titleId`, `setupId`, `textId`, `resultTextId`, `resultFailureTextId`) and their fallback texts from JSON, properly escaping special characters (`&#xA;` for newlines, `&apos;` for apostrophes, `&quot;` for quotes)
 3. All existing events now have complete localization (504 strings added Dec 2025 covering escalation thresholds, training events, and general content)
+4. **Validation:** Run `python tools/events/validate_events.py` before committing to catch missing fallback fields. This enforces the Critical JSON Rules above.
 
 ### 10. Missing SaveableTypeDefiner Registration
 **Problem:** "Cannot Create Save" error when serializing custom types  

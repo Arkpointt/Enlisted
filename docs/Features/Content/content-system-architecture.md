@@ -2,9 +2,26 @@
 
 **Summary:** The unified content system manages all narrative content (events, decisions, orders, map incidents) through a centralized delivery pipeline. The system uses JSON content definitions, XML localization, requirement checking, and effect application to create dynamic player experiences that integrate with enlistment, reputation, and progression systems.
 
-**Status:** ✅ Current  
-**Last Updated:** 2025-12-23  
-**Related Docs:** [Event Catalog](../../Content/event-catalog-by-system.md), [Training System](../Combat/training-system.md)
+**Status:** ⚠️ Mixed (Current system documented; orchestrator replacement planned)  
+**Last Updated:** 2025-12-24  
+**Related Docs:** [Event Catalog](../../Content/event-catalog-by-system.md), [Content Orchestrator Plan](content-orchestrator-plan.md), [Training System](../Combat/training-system.md)
+
+---
+
+## ⚠️ Architectural Change in Progress
+
+**Current State:** This document describes the **current** schedule-driven pacing system.
+
+**Future State:** The [Content Orchestrator](content-orchestrator-plan.md) will replace schedule-driven pacing (event windows, evaluation hours, random quiet days) with a **world-state driven simulation** that matches event frequency to your lord's actual situation (garrison = quiet, campaign = busy, siege = intense).
+
+**Key Changes:**
+- **EventPacingManager** - Will be replaced by orchestrator's world-state analysis
+- **GlobalEventPacer** - Will remain as safety limits, but evaluation hours and quiet day rolls will be removed
+- **Config** - `event_window_*`, `evaluation_hours`, `quiet_day_chance` will be replaced with frequency tables
+- **MapIncidentManager** - No changes (already context-driven)
+- **EventSelector, EventDeliveryManager, EventRequirementChecker** - No changes (reused by orchestrator)
+
+**Implementation Status:** Specification phase (see orchestrator plan for 5-week timeline)
 
 ---
 
@@ -33,6 +50,7 @@ The content system provides a unified pipeline for delivering narrative content:
 - **Player Events** - Player-initiated popup events (player_* prefix, inquiry popup)
 - **Events** - Context-triggered narrative moments (automatic)
 - **Map Incidents** - Native Bannerlord incident integration
+- **Content Variants** - Context-specific versions of events/decisions (future enhancement)
 
 **Core Responsibilities:**
 - Load content from JSON files at startup
@@ -40,12 +58,14 @@ The content system provides a unified pipeline for delivering narrative content:
 - Apply effects after player choices
 - Integrate with escalation, reputation, and progression
 - Provide news feed and UI feedback
+- Select best-fitting content variant for current situation (orchestrator)
 
 **Design Philosophy:**
 - Data-driven (JSON + XML)
 - Extensible (new content without code changes)
 - Integrated (shares state with enlistment/QM systems)
 - Validated (requirement checks prevent invalid delivery)
+- Context-aware (variants selected automatically via requirements)
 
 ---
 
@@ -137,7 +157,7 @@ Content System
 └── OrderCatalog         (Order-specific loading)
 ```
 
-### Global Event Pacing
+### Global Event Pacing (Current System)
 
 All automatic events are coordinated through `GlobalEventPacer` to prevent spam. **All timing is config-driven** from `enlisted_config.json` → `decision_events.pacing`.
 
@@ -180,6 +200,79 @@ All automatic events are coordinated through `GlobalEventPacer` to prevent spam.
 - Hardcoded in EventPacingManager and MapIncidentManager
 
 See [Event System Schemas - Global Event Pacing](event-system-schemas.md#global-event-pacing-enlisted_configjson) for full config reference.
+
+---
+
+## Future: Content Orchestrator Architecture
+
+**Status:** 📋 Specification - See [Content Orchestrator Plan](content-orchestrator-plan.md)
+
+The orchestrator will replace schedule-driven pacing with **world-state driven simulation:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│          Content Orchestrator (Sandbox Life Simulator)       │
+│     Matches frequency to lord's situation, not timers        │
+└─────────────────────────────────────────────────────────────┘
+                              │
+            ┌─────────────────┼─────────────────────────┐
+            ▼                 ▼                         ▼
+    ┌──────────────┐  ┌──────────────────┐  ┌──────────────────┐
+    │   World      │  │   Simulation     │  │   Player         │
+    │   State      │  │   Pressure       │  │   Behavior       │
+    │   Analyzer   │  │   Calculator     │  │   Tracker        │
+    └──────────────┘  └──────────────────┘  └──────────────────┘
+            │                 │                         │
+            └─────────────────┼─────────────────────────┘
+                              ▼
+                    ┌──────────────────────┐
+                    │ Realistic Frequency  │
+                    │ & Content Selection  │
+                    └──────────────────────┘
+                              ▼
+                    ┌────────────────────────┐
+                    │   GlobalEventPacer     │
+                    │   (Safety Limits Only) │
+                    └────────────────────────┘
+                              ▼
+                    ┌──────────────────┐
+                    │ EventDelivery    │
+                    │ Manager (queue)  │
+                    └──────────────────┘
+```
+
+### Key Changes
+
+**Replaces:**
+- `EventPacingManager` schedule logic (event windows, evaluation hours)
+- Random quiet day rolls (15% chance)
+- Fixed 3-5 day event cycles
+
+**Adds:**
+- **WorldStateAnalyzer** - Determines lord's situation (garrison, campaign, siege)
+- **SimulationPressureCalculator** - Tracks realistic pressure sources
+- **PlayerBehaviorTracker** - Learns player preferences
+
+**Keeps:**
+- `EventSelector` (content selection logic)
+- `EventDeliveryManager` (queue and display)
+- `EventRequirementChecker` (validation)
+- `MapIncidentManager` (already context-driven)
+- `GlobalEventPacer` (safety limits only - max/day, min hours between)
+
+### World-State Driven Frequency
+
+| Lord Situation | Realistic Frequency | Why |
+|----------------|---------------------|-----|
+| Peacetime Garrison | 1 event/week | Boring is realistic |
+| War Marching | 3.5 events/week | Normal tempo |
+| Active Campaign | 5 events/week | High tempo |
+| Siege Defense | 7 events/week | Crisis situation |
+| Lord Captured | 0.5 events/week | Special state |
+
+**Philosophy:** Garrison duty IS boring. Campaigns ARE busy. The simulation doesn't manufacture drama—it reflects reality.
+
+**See:** [Content Orchestrator Plan](content-orchestrator-plan.md) for complete architecture and 5-week implementation timeline.
 
 ### Data Flow
 
@@ -225,12 +318,14 @@ string context = "camp"; // or "march", "muster", "battle", etc.
 // 2. Get candidate events for context
 var candidates = EventCatalog.GetEventsForContext(context);
 
-// 3. Filter by requirements
+// 3. Filter by requirements (includes context filtering for variants)
 var validEvents = candidates.Where(e => 
     EventRequirementChecker.MeetsRequirements(e.Requirements));
+// Note: If event has variants, only context-matching variants pass this filter
 
 // 4. Select event (weighted random or priority)
 var selectedEvent = SelectEvent(validEvents);
+// If multiple variants eligible, best-fit is selected
 
 // 5. Present to player
 EventDeliveryManager.DeliverEvent(selectedEvent);
@@ -245,6 +340,40 @@ EventDeliveryManager.ApplyEffects(chosenOption.Effects);
 // Example: "+25 OneHanded XP, +5 Soldier Reputation, -30 gold"
 // Automatically shown in green/yellow/cyan based on effect type
 ```
+
+### Content Variant Selection (Future Enhancement)
+
+When multiple variants exist for the same base event/decision:
+
+```csharp
+// Example: Player in garrison, checking for rest decision
+var context = GetCurrentContext(); // "Camp"
+
+// Step 1: Query all rest-related content
+var candidates = EventCatalog.GetAllEvents().Where(e => e.Id.StartsWith("dec_rest"));
+// Returns: dec_rest, dec_rest_garrison, dec_rest_exhausted
+
+// Step 2: Filter by requirements (including context)
+var eligible = candidates.Where(e => 
+    EventRequirementChecker.MeetsRequirements(e.Requirements));
+// dec_rest:           ✓ (context: Any)
+// dec_rest_garrison:  ✓ (context: ["Camp"]) ← Matches!
+// dec_rest_exhausted: ✗ (context: ["Siege", "Battle"])
+
+// Step 3: Orchestrator scores eligible variants
+// dec_rest: score 40 (base match)
+// dec_rest_garrison: score 65 (context match bonus)
+
+// Step 4: Select best-fit variant
+var selected = SelectBestContent(eligible);
+// Returns: dec_rest_garrison (better fit for garrison context)
+
+// Player sees: Garrison-specific rest option with better fatigue relief
+```
+
+**Key Point:** Variant selection happens automatically via existing requirement system. No new code needed - just add JSON variants with appropriate `requirements.context` values.
+
+**See:** [Event System Schemas - Content Variants Pattern](event-system-schemas.md#content-variants-pattern) for complete variant documentation.
 
 ### Decision Delivery Flow
 

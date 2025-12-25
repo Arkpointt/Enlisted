@@ -48,5 +48,8 @@ coverage/
 *.sav
 *.dmp
 
+# Temporary prompt files (not for repo)
+docs/Content/content-orchestrator-prompts.md
+
 # Keep module manifest tracked (needed for deployment)
 # SubModule.xml is intentionally NOT ignored

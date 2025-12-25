@@ -10,6 +10,7 @@ using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Logistics;
+using Enlisted.Features.Ranks;
 using Enlisted.Features.Retinue.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
@@ -3003,14 +3004,66 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
-        ///     Gets the first-meeting introduction based on archetype.
+        ///     Gets the first-meeting introduction based on archetype and tier.
         ///     Uses XML localized strings for proper translation support.
+        ///     Rank-aware: Officers get deferential intro, NCOs get respected intro, Enlisted get casual intro.
         /// </summary>
         private string GetFirstMeetingGreeting(string archetype, string qmName)
         {
-            // Use the appropriate localized intro greeting based on archetype
-            var stringId = $"qm_intro_greeting_{archetype ?? "default"}";
-            var fallback = archetype switch
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            
+            // Get rank category suffix for localization lookup
+            var rankSuffix = tier >= 7 ? "_officer" : tier >= 5 ? "_nco" : "_enlisted";
+            
+            // Use the appropriate localized intro greeting based on archetype and rank
+            var stringId = $"qm_intro_greeting_{archetype ?? "default"}{rankSuffix}";
+            var fallback = GetFirstMeetingFallback(archetype, tier);
+            
+            // Use TextObject for XML localization lookup
+            var text = new TextObject($"{{={stringId}}}{fallback}");
+            text.SetTextVariable("QM_NAME", qmName);
+            return text.ToString();
+        }
+        
+        /// <summary>
+        ///     Gets the fallback text for first-meeting greetings based on archetype and tier.
+        /// </summary>
+        private string GetFirstMeetingFallback(string archetype, int tier)
+        {
+            // T7+ Officers get deferential treatment
+            if (tier >= 7)
+            {
+                return archetype switch
+                {
+                    "veteran" => "My lord. I wasn't told we had a new officer. I'm at your service.",
+                    "merchant" => "My lord! An officer I haven't had the pleasure of serving. How may I assist you?",
+                    "bookkeeper" => "My lord. I don't have your requisitions on file. A new assignment? I'll update the ledger.",
+                    "scoundrel" => "My lord! Always a pleasure to serve the officer corps. What can I do for you?",
+                    "believer" => "The Lord has blessed our command with new leadership. How may I serve, my lord?",
+                    "eccentric" => "A new star in the heavens! The omens foretold of your arrival, my lord. Welcome.",
+                    _ => "My lord. I wasn't told to expect you. How may I serve?"
+                };
+            }
+            
+            // T5-T6 NCOs get respected treatment, addressed by rank
+            if (tier >= 5)
+            {
+                var cultureId = EnlistmentBehavior.Instance?.EnlistedLord?.Culture?.StringId ?? "mercenary";
+                var rankTitle = RankHelper.GetRankTitle(tier, cultureId);
+                return archetype switch
+                {
+                    "veteran" => $"New face with stripes. You must be the new {rankTitle}. What do you need?",
+                    "merchant" => $"A {rankTitle} I haven't done business with. Good to meet you. What can I sell?",
+                    "bookkeeper" => $"{rankTitle}. I don't have you in my records yet. New transfer? I'll update the files.",
+                    "scoundrel" => $"A {rankTitle}, eh? Good to have some experienced hands. What can I do for you?",
+                    "believer" => $"The Lord sends us another soul with authority. Welcome, {rankTitle}.",
+                    "eccentric" => $"The cards spoke of a new {rankTitle}. The stars align in your favor. Welcome.",
+                    _ => $"Haven't seen you before, {rankTitle}. What do you need?"
+                };
+            }
+            
+            // T1-T4 Enlisted get casual treatment
+            return archetype switch
             {
                 "veteran" => "New face. You one of the fresh recruits? What do they call you?",
                 "merchant" => "Ah, a new customer. Haven't done business with you before. Name?",
@@ -3020,16 +3073,12 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "eccentric" => "A new star in my constellation! What sign were you born under? ...No, wait. What's your name?",
                 _ => "Haven't seen you before. You new? What's your name?"
             };
-            
-            // Use TextObject for XML localization lookup
-            var text = new TextObject($"{{={stringId}}}{fallback}");
-            text.SetTextVariable("QM_NAME", qmName);
-            return text.ToString();
         }
 
         /// <summary>
-        ///     Gets the returning visit greeting based on archetype, mood, and PayTension level.
+        ///     Gets the returning visit greeting based on archetype, mood, tier, and PayTension level.
         ///     Now includes tension-aware greetings at 40+, 60+, and 80+ thresholds.
+        ///     Rank-aware: Officers get "my lord", NCOs get rank title, Enlisted get "soldier".
         /// </summary>
         private string GetReturningGreeting(string archetype, string mood)
         {
@@ -3054,22 +3103,107 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return GetModerateTensionGreeting(archetype);
             }
 
-            // Normal greetings based on mood
+            // Get player tier for rank-aware greetings
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            
+            // T7+ Officers get deferential "my lord" treatment
+            if (tier >= 7)
+            {
+                return GetOfficerGreeting(archetype, mood);
+            }
+            
+            // T5-T6 NCOs get addressed by rank
+            if (tier >= 5)
+            {
+                return GetNCOGreeting(archetype, mood);
+            }
+            
+            // T1-T4 Enlisted get informal/soldier treatment
+            return GetEnlistedGreeting(archetype, mood);
+        }
+        
+        /// <summary>
+        ///     Gets greeting for T7+ officers. Deferential "my lord" treatment.
+        /// </summary>
+        private string GetOfficerGreeting(string archetype, string mood)
+        {
             return (archetype, mood) switch
             {
-                ("veteran", "content") => "Back again? What do you need?",
+                ("veteran", "content") => "My lord. Good to see you. What do you require?",
+                ("veteran", "stressed") => "My lord. Busy day, but I'm at your service.",
+                ("veteran", "grim") => "Supply's tight, my lord. What do you need?",
+                ("merchant", "content") => "My lord! A pleasure. What can I provide for you today?",
+                ("merchant", "stressed") => "My lord, prices are up, but I'll find you something. What do you need?",
+                ("merchant", "grim") => "Difficult times, my lord. But I'll do what I can.",
+                ("bookkeeper", "content") => "My lord. Your requisition forms are in order. What do you require?",
+                ("bookkeeper", "stressed") => "My lord. The inventory is a mess, but I'll find what you need.",
+                ("bookkeeper", "grim") => "Everything is behind schedule, my lord. What is it?",
+                ("scoundrel", "content") => "My lord! Always a pleasure serving the brass. What can I do for you?",
+                ("scoundrel", "stressed") => "My lord. Things are getting tight, but not for someone of your standing.",
+                ("scoundrel", "grim") => "Bad times, my lord. Very bad times. But I'll see you right.",
+                ("believer", "content") => "The Lord blesses your command, my lord. How may I serve?",
+                ("believer", "stressed") => "Trying times test us all, my lord. What do you require?",
+                ("believer", "grim") => "Dark days, my lord, but the faithful endure. What do you need?",
+                ("eccentric", "content") => "My lord! The stars foretold your coming. What do you seek?",
+                ("eccentric", "stressed") => "The celestial alignments are troubling, my lord. What brings you?",
+                ("eccentric", "grim") => "Dark omens, my lord. Dark omens everywhere. What?",
+                _ => "My lord. What do you require?"
+            };
+        }
+        
+        /// <summary>
+        ///     Gets greeting for T5-T6 NCOs. Addressed by rank with respect.
+        /// </summary>
+        private string GetNCOGreeting(string archetype, string mood)
+        {
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 5;
+            var cultureId = EnlistmentBehavior.Instance?.EnlistedLord?.Culture?.StringId ?? "mercenary";
+            var rankTitle = RankHelper.GetRankTitle(tier, cultureId);
+            
+            return (archetype, mood) switch
+            {
+                ("veteran", "content") => $"{rankTitle}. Good to see you. What do you need?",
+                ("veteran", "stressed") => $"Busy day, {rankTitle}. Make it quick.",
+                ("veteran", "grim") => $"Supply's tight, {rankTitle}. What?",
+                ("merchant", "content") => $"Ah, {rankTitle}! A valued customer. What can I sell you?",
+                ("merchant", "stressed") => $"Prices are up, {rankTitle}. Supply issues. What do you need?",
+                ("merchant", "grim") => $"Difficult times, {rankTitle}. But I'll do what I can.",
+                ("bookkeeper", "content") => $"{rankTitle}. Equipment requisition? Let me find the form.",
+                ("bookkeeper", "stressed") => $"The inventory is a mess, {rankTitle}. What is it?",
+                ("bookkeeper", "grim") => $"Everything is behind schedule, {rankTitle}. What?",
+                ("scoundrel", "content") => $"{rankTitle}! One of my favorite regulars. What are you looking for?",
+                ("scoundrel", "stressed") => $"Things are getting tight, {rankTitle}. Need something?",
+                ("scoundrel", "grim") => $"Bad times, {rankTitle}. Very bad times. What do you need?",
+                ("believer", "content") => $"The Lord's blessings upon you, {rankTitle}. How may I serve?",
+                ("believer", "stressed") => $"Trying times test our faith, {rankTitle}. What do you need?",
+                ("believer", "grim") => $"Pray for us all, {rankTitle}. What can I do for you?",
+                ("eccentric", "content") => $"Ah, {rankTitle}! The stars spoke of your coming. What do you seek?",
+                ("eccentric", "stressed") => $"The alignments are troubled, {rankTitle}. What brings you?",
+                ("eccentric", "grim") => $"Dark omens everywhere, {rankTitle}. What?",
+                _ => $"What do you need, {rankTitle}?"
+            };
+        }
+        
+        /// <summary>
+        ///     Gets greeting for T1-T4 enlisted. Informal "soldier" treatment.
+        /// </summary>
+        private string GetEnlistedGreeting(string archetype, string mood)
+        {
+            return (archetype, mood) switch
+            {
+                ("veteran", "content") => "Back again? What do you need, soldier?",
                 ("veteran", "stressed") => "Busy day. Make it quick.",
                 ("veteran", "grim") => "Supply's tight. What?",
                 ("merchant", "content") => "Good to see you. What can I sell you today?",
                 ("merchant", "stressed") => "Prices are up. Supply issues. What do you need?",
                 ("merchant", "grim") => "Not a good time for shopping. Make it fast.",
-                ("bookkeeper", "content") => "Ah, soldier. Equipment requisition? Let me find the form.",
+                ("bookkeeper", "content") => "Soldier. Equipment requisition? Let me find the form.",
                 ("bookkeeper", "stressed") => "The inventory is a mess. What is it?",
                 ("bookkeeper", "grim") => "Everything is behind schedule. What?",
-                ("scoundrel", "content") => "My favorite customer. What are you looking for today?",
+                ("scoundrel", "content") => "Ah, one of the lads. What are you looking for today?",
                 ("scoundrel", "stressed") => "Things are getting tight around here. Need something?",
                 ("scoundrel", "grim") => "Bad times, friend. Very bad times. What do you need?",
-                ("believer", "content") => "The Lord's blessings upon you. How may I serve?",
+                ("believer", "content") => "The Lord's blessings upon you, brother. How may I serve?",
                 ("believer", "stressed") => "Trying times test our faith. What do you need?",
                 ("believer", "grim") => "Pray for us all, soldier. What can I do for you?",
                 ("eccentric", "content") => "The ravens spoke of your coming. What do you seek?",
@@ -4522,6 +4656,13 @@ namespace Enlisted.Features.Conversations.Behaviors
             if (lord == null || !lord.IsLord)
             {
                 return false;
+            }
+
+            // Allow showing the enlistment option even if there's an abort cooldown,
+            // so the conversation can flow to the lord's rejection dialogue
+            if (enlistment != null && enlistment.IsBlockedFromLordDueToAbort(lord, out _))
+            {
+                return true; // Show option so lord can reject with roleplay text
             }
 
             return enlistment?.CanEnlistWithParty(lord, out _) == true;

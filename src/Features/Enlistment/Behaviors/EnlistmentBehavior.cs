@@ -388,6 +388,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private CampaignTime _lastPayDate = CampaignTime.Zero;
         private int _consecutiveDelays;
         
+        // Muster tracking fields for the multi-stage muster menu system
+        // These cache state from the previous muster to detect changes and build period summaries
+        private int _tierAtLastMuster;
+        private int _xpAtLastMuster;
+        private Dictionary<string, int> _xpSourcesThisPeriod = new Dictionary<string, int>();
+        private int _lastMusterDay;
+        private CampaignTime _lastMusterCompletionTime = CampaignTime.Zero;
+        private int _dayOfLastPromotion;
+        private int _lastInspectionDay;
+        private int _lastRecruitDay;
+        
         // Ration tracking for reclamation at next muster
         // Tracks issued rations so they can be reclaimed at the next muster, preventing hoarding
         private List<IssuedRationRecord> _issuedRations = new List<IssuedRationRecord>();
@@ -784,6 +795,31 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public bool IsPendingDischarge => _isPendingDischarge;
         public string LastDischargeBand => _lastDischargeBand ?? "none";
         public bool IsOnProbation => _isOnProbation;
+        
+        // Muster tracking properties for the multi-stage muster menu system
+        /// <summary>True when a pay muster is pending (player should proceed to muster menu).</summary>
+        public bool PayMusterPending => _payMusterPending;
+        
+        /// <summary>Campaign time when the last muster completed. Used by BaggageTrainManager for 6-hour access window.</summary>
+        public CampaignTime LastMusterCompletionTime => _lastMusterCompletionTime;
+        
+        /// <summary>Campaign day when the last promotion occurred. Used for muster recap display.</summary>
+        public int DayOfLastPromotion => _dayOfLastPromotion;
+        
+        /// <summary>Tier at the end of the previous muster. Used to detect promotions during the muster period.</summary>
+        public int TierAtLastMuster => _tierAtLastMuster;
+        
+        /// <summary>XP at the end of the previous muster. Used to calculate XP gained this period.</summary>
+        public int XPAtLastMuster => _xpAtLastMuster;
+        
+        /// <summary>Campaign day of the last muster. Used to query events since last muster.</summary>
+        public int LastMusterDay => _lastMusterDay;
+        
+        /// <summary>Campaign day of the last equipment inspection. Used for 12-day cooldown tracking.</summary>
+        public int LastInspectionDay => _lastInspectionDay;
+        
+        /// <summary>Campaign day of the last recruit event. Used for 10-day cooldown tracking.</summary>
+        public int LastRecruitDay => _lastRecruitDay;
 
         /// <summary>
         ///     Current remaining fatigue points for camp actions.
@@ -1619,6 +1655,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_lastPayDate", ref _lastPayDate);
             SyncKey(dataStore, "_consecutiveDelays", ref _consecutiveDelays);
             
+            // Muster tracking state for multi-stage muster menu system
+            SyncKey(dataStore, "_tierAtLastMuster", ref _tierAtLastMuster);
+            SyncKey(dataStore, "_xpAtLastMuster", ref _xpAtLastMuster);
+            SyncKey(dataStore, "_lastMusterDay", ref _lastMusterDay);
+            SyncKey(dataStore, "_lastMusterCompletionTime", ref _lastMusterCompletionTime);
+            SyncKey(dataStore, "_dayOfLastPromotion", ref _dayOfLastPromotion);
+            SyncKey(dataStore, "_lastInspectionDay", ref _lastInspectionDay);
+            SyncKey(dataStore, "_lastRecruitDay", ref _lastRecruitDay);
+            SerializeXPSourcesDictionary(dataStore);
+            
             // Ration tracking - manual serialization for List<IssuedRationRecord>
             SerializeIssuedRations(dataStore);
             
@@ -1975,6 +2021,62 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (dataStore.IsLoading)
                 {
                     _soldierNames = new List<string>();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Serializes the XP sources dictionary for save/load persistence.
+        /// Tracks XP earned by source during the current muster period for the period summary.
+        /// </summary>
+        private void SerializeXPSourcesDictionary(IDataStore dataStore)
+        {
+            try
+            {
+                var sourceCount = _xpSourcesThisPeriod?.Count ?? 0;
+                SyncKey(dataStore, "_xpSources_count", ref sourceCount);
+
+                if (!dataStore.IsLoading)
+                {
+                    // Saving: serialize each source and amount
+                    var index = 0;
+                    if (_xpSourcesThisPeriod != null)
+                    {
+                        foreach (var kvp in _xpSourcesThisPeriod)
+                        {
+                            var source = kvp.Key;
+                            var amount = kvp.Value;
+                            SyncKey(dataStore, $"_xpSource_{index}_name", ref source);
+                            SyncKey(dataStore, $"_xpSource_{index}_amount", ref amount);
+                            index++;
+                        }
+                    }
+                }
+                else
+                {
+                    // Loading: reconstruct dictionary from individual fields
+                    _xpSourcesThisPeriod = new Dictionary<string, int>();
+
+                    for (var i = 0; i < sourceCount; i++)
+                    {
+                        var source = "";
+                        var amount = 0;
+                        SyncKey(dataStore, $"_xpSource_{i}_name", ref source);
+                        SyncKey(dataStore, $"_xpSource_{i}_amount", ref amount);
+
+                        if (!string.IsNullOrEmpty(source))
+                        {
+                            _xpSourcesThisPeriod[source] = amount;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Save", $"Failed to sync XP sources dictionary: {ex.Message}");
+                if (dataStore.IsLoading)
+                {
+                    _xpSourcesThisPeriod = new Dictionary<string, int>();
                 }
             }
         }
@@ -5013,7 +5115,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     _payMusterPending = true;
                     ModLogger.Info("Gold", $"Pay muster queued. Pending={_pendingMusterPay}, NextPayday={_nextPayday}");
-                    EnlistedIncidentsBehavior.Instance?.TriggerPayMusterIncident();
+                    
+                    // Use feature flag to switch between new menu system and legacy popup
+                    if (ModConfig.Settings?.UseNewMusterMenu == true)
+                    {
+                        MusterMenuHandler.Instance?.BeginMusterSequence();
+                    }
+                    else
+                    {
+                        EnlistedIncidentsBehavior.Instance?.TriggerPayMusterIncident();
+                    }
                 }
 
                 // Award daily XP for military tier progression (config-driven)
@@ -9973,6 +10084,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             var previousXP = _enlistmentXP;
             _enlistmentXP += xp;
+            
+            // Track XP by source for muster period summary display
+            if (_xpSourcesThisPeriod == null)
+            {
+                _xpSourcesThisPeriod = new Dictionary<string, int>();
+            }
+            
+            if (_xpSourcesThisPeriod.ContainsKey(source))
+            {
+                _xpSourcesThisPeriod[source] += xp;
+            }
+            else
+            {
+                _xpSourcesThisPeriod[source] = xp;
+            }
 
             // Get tier requirements to show progress
             var tierXP = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
@@ -9990,6 +10116,41 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Check if we crossed a promotion threshold
             CheckPromotionNotification(previousXP, _enlistmentXP);
+        }
+        
+        /// <summary>
+        /// Returns XP earned this muster period, grouped by source.
+        /// Used by the muster menu to display an XP breakdown showing where XP came from.
+        /// </summary>
+        public Dictionary<string, int> GetXPSourcesThisPeriod()
+        {
+            return _xpSourcesThisPeriod ?? new Dictionary<string, int>();
+        }
+        
+        /// <summary>
+        /// Clears the XP source tracking dictionary after muster completes.
+        /// Called when transitioning to the next muster period.
+        /// </summary>
+        public void ResetXPSources()
+        {
+            _xpSourcesThisPeriod?.Clear();
+            ModLogger.Debug("Muster", "XP sources reset for new muster period");
+        }
+        
+        /// <summary>
+        /// Updates muster tracking state when a muster cycle completes.
+        /// Caches current tier and XP for detecting promotions and calculating period gains.
+        /// </summary>
+        public void OnMusterComplete()
+        {
+            _tierAtLastMuster = _enlistmentTier;
+            _xpAtLastMuster = _enlistmentXP;
+            _lastMusterDay = Campaign.Current != null ? (int)CampaignTime.Now.ToDays : 0;
+            _lastMusterCompletionTime = CampaignTime.Now;
+            ResetXPSources();
+            
+            ModLogger.Info("Muster", 
+                $"Muster complete: cached tier {_tierAtLastMuster}, XP {_xpAtLastMuster}, day {_lastMusterDay}");
         }
 
         /// <summary>
@@ -10080,13 +10241,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var previousTier = _enlistmentTier;
             _enlistmentTier = tier;
 
-            // Track promotion date for the days-in-rank requirement.
+            // Track promotion date for the days-in-rank requirement and muster recap display.
             if (tier > previousTier)
             {
                 _lastPromotionDate = CampaignTime.Now;
+                _dayOfLastPromotion = Campaign.Current != null 
+                    ? (int)CampaignTime.Now.ToDays 
+                    : 0;
             }
 
-            ModLogger.Info("Enlistment", $"Tier changed: {previousTier} â†’ {tier} (XP: {_enlistmentXP})");
+            ModLogger.Info("Enlistment", $"Tier changed: {previousTier} → {tier} (XP: {_enlistmentXP}, day: {_dayOfLastPromotion})");
 
             // V2.0: Companions are now managed from T1 (enlistment start), not T4
             // Legacy reclaim kept for backward compatibility with older saves

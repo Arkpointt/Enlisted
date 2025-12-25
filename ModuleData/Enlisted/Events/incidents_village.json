@@ -191,9 +191,7 @@
           "effects": {
             "skillXp": {
               "Medicine": 20
-            }
-          ,,
-          
+            },
             "traitXp": {
               "Mercy": 10
             },
@@ -265,9 +263,7 @@
           "effects": {
             "skillXp": {
               "Scouting": 15
-            }
-          ,,
-          
+            },
             "officerRep": 5
           },
           "tooltip": "Gather intel. Train Scouting. +5 Officer rep."
@@ -303,9 +299,7 @@
           "effects": {
             "skillXp": {
               "Scouting": 25
-            }
-          ,,
-          
+            },
             "lordRep": 8,
             "officerRep": 10
           },

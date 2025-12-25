@@ -1,6 +1,6 @@
 # Enlisted Content System
 
-**Summary:** Single source of truth for all narrative content including Events (74), Map Incidents (51), Orders (17), and Decisions (34). This comprehensive catalog organizes content by system and role, providing IDs, descriptions, requirements, effects, and implementation status for all content in the mod.
+**Summary:** Single source of truth for all narrative content including Orders (17), Decisions (38), Events (80+), and Map Incidents (51). This comprehensive catalog organizes content by system and role, providing IDs, descriptions, requirements, effects, and implementation status for all content in the mod.
 
 **Status:** ✅ Current  
 **Last Updated:** 2025-12-24 (Enhanced: Bag check now uses narrative event system; Fixed: Onboarding event parsing)  
@@ -13,11 +13,11 @@
 | Category | Count | Breakdown |
 |----------|-------|-----------|
 | **Orders** | 17 | 6 T1-T3, 6 T4-T6, 5 T7-T9 |
-| **Decisions** | 38 | Player-initiated Camp Hub menu actions (dec_* prefix) |
-| **Events** | 80+ | Narrative events across multiple files (camp, general, pay, promotion, training, retinue, etc.) |
-| **Map Incidents** | 51 | 11 Battle, 10 Siege, 8 Town, 6 Village, 6 Leaving, 4 Waiting, 6 Retinue (T7+) |
+| **Decisions** | 38 | 34 core decisions + 4 retinue decisions (T7+) |
+| **Events** | 80+ | Narrative events (escalation, pay, promotion, training, retinue, general, etc.) |
+| **Map Incidents** | 51 | 45 general (11 Battle, 10 Siege, 8 Town, 6 Village, 6 Leaving, 4 Waiting) + 6 Retinue (T7+) |
 
-**Total**: 186+ content pieces across all systems.
+**Total**: 186+ content pieces across all systems (207 confirmed core content pieces).
 
 **Note:** Event count includes all event definitions from Events/ directory. Many events have multiple options, and the system loads content recursively from all JSON files. The actual number of player-facing choices is significantly higher when counting all event options.
 
@@ -506,6 +506,15 @@ Situations that arise based on context and state. Player responds.
 
 **Universal Events** (8 events, anyone can see)
 Camp life, moral dilemmas, social situations. Not skill-gated but may have skill-gated options within them.
+
+**Muster Events** (2 events, fire as muster menu stages, not random camp events)
+
+| Event | Cooldown | Trigger | Options |
+|-------|----------|---------|---------|
+| Equipment Inspection (`evt_muster_inspection`) | 12 days | Muster day (automatic) | Perfect Attention (OneHanded 30+), Basic Requirements, Not Ready |
+| Green Recruit (`evt_muster_new_recruit`) | 10 days | Muster day if T3+ | Train Him (Leadership 25+), Ignore, Haze |
+
+**Note:** These events fire as menu stages during the muster sequence (see [Muster Menu System](../Core/muster-menu-revamp.md)). They are filtered out of random camp event selection to prevent duplication.
 
 ---
 

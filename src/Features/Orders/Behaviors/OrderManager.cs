@@ -42,10 +42,18 @@ namespace Enlisted.Features.Orders.Behaviors
 
         public override void SyncData(IDataStore dataStore)
         {
-            // Persist order state across save/load
-            dataStore.SyncData("_currentOrder", ref _currentOrder);
+            // Orders are transient (3-day expiry) so we don't persist _currentOrder.
+            // On load, _currentOrder will be null and a new order will be issued
+            // on the next eligible daily tick. This avoids save system issues with
+            // complex Order objects that lack SaveableProperty attributes.
             dataStore.SyncData("_lastOrderTime", ref _lastOrderTime);
             dataStore.SyncData("_declineCount", ref _declineCount);
+            
+            // Clear any stale order reference on load to ensure clean state
+            if (dataStore.IsLoading)
+            {
+                _currentOrder = null;
+            }
         }
 
         /// <summary>
@@ -184,8 +192,8 @@ namespace Enlisted.Features.Orders.Behaviors
                 );
             }
 
-            // Show decline result
-            ShowOrderResult(_currentOrder, false, _currentOrder.Consequences.Decline, isDecline: true);
+            // Decline results now shown in Recent Activities instead of popup to reduce UI interruption
+            // ShowOrderResult(_currentOrder, false, _currentOrder.Consequences.Decline, isDecline: true);
 
             // Check for discharge after multiple declines
             if (_declineCount >= 5)
@@ -225,7 +233,8 @@ namespace Enlisted.Features.Orders.Behaviors
             var success = result == OrderResult.Success;
             ReportOrderOutcome(order, success, outcome);
 
-            ShowOrderResult(order, success, outcome);
+            // Order results now shown in Recent Activities instead of popup to reduce UI interruption
+            // ShowOrderResult(order, success, outcome);
         }
 
         /// <summary>
@@ -660,34 +669,6 @@ namespace Enlisted.Features.Orders.Behaviors
                 Color.FromUint(4282569842u))); // Gold color
         }
 
-        /// <summary>
-        /// Shows the result of an order execution.
-        /// </summary>
-        private void ShowOrderResult(Order order, bool success, OrderOutcome outcome, bool isDecline = false)
-        {
-            var title = isDecline ? "Order Declined" : (success ? "Order Succeeded" : "Order Failed");
-            var text = outcome.Text;
-
-            if (string.IsNullOrEmpty(text))
-            {
-                text = isDecline
-                    ? $"You declined the order from {order.Issuer}. Your reputation has suffered."
-                    : success
-                        ? $"You successfully completed the order: {order.Title}"
-                        : $"You failed to complete the order: {order.Title}";
-            }
-
-            InformationManager.ShowInquiry(new InquiryData(
-                titleText: title,
-                text: text,
-                isAffirmativeOptionShown: true,
-                isNegativeOptionShown: false,
-                affirmativeText: "Continue",
-                negativeText: null,
-                affirmativeAction: null,
-                negativeAction: null
-            ), true);
-        }
 
         /// <summary>
         /// Warns the player after multiple order declines about potential discharge.

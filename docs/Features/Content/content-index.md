@@ -21,16 +21,14 @@
 | Category | Count | Description |
 |----------|-------|-------------|
 | **Orders** | 17 | Military directives from chain of command (6 T1-T3, 6 T4-T6, 5 T7-T9) |
-| **Decisions** | 34 | Player-initiated choices from Camp Hub with costs and risks |
+| **Decisions** | 38 | Player-initiated choices from Camp Hub (34 core + 4 retinue T7+) |
 | **Events** | 68 | Context-triggered situations (14 escalation + 5 crisis + 49 role/universal) |
 | **Map Incidents** | 45 | Triggered by map actions (battle, siege, settlement entry/exit, waiting) |
-| **Sample Content** | 9 | Schema v2 sample events for testing (3 scout, 2 muster, 4 camp) |
-| **Training Content**| 3 | Weapon-aware training decisions (combat drill, weapon spec, lead drill) |
-| **Total** | **176** | Full content catalog (includes training chain) |
+| **Retinue Map Incidents** | 6 | Post-battle incidents for T7+ commanders with retinue |
+| **Retinue Events** | 17 | Narrative events for retinue management (T7+) |
+| **Total** | **191** | Full content catalog |
 
-**Training Decisions**: 3 new training decisions using dynamic skill XP. Uses `reward_choices` and `dynamic_skill_xp` for weapon-aware training. See [Training System](../Features/Combat/training-system.md) for implementation details.
-
-**Sample Events**: 9 events created in schema v2 format with full XML localization for testing the content loading and localization system. Located in `ModuleData/Enlisted/Events/Role/scout_events.json`, `muster_events.json`, and `camp_events.json`. These demonstrate proper event structure, skill checks, trait XP, and reputation effects. See below for details.
+**Training Decisions**: 3 weapon-aware training decisions using dynamic skill XP. Uses `reward_choices` and `dynamic_skill_xp` for equipped weapon training. See [Training System](../Features/Combat/training-system.md) for implementation details.
 
 **Selection Algorithm**: Intelligent selection algorithm implemented. Events fire automatically every 3-5 days based on player role (2× weight for matching), context (1.5× weight for matching), and priority. Global pacing limits prevent spam: max 2 events per day, 8 per week, minimum 6 hours between any automatic events. Limits are config-driven (see `enlisted_config.json` → `decision_events.pacing`). See `EventSelector.cs`, `EventPacingManager.cs`, `MapIncidentManager.cs`, and `GlobalEventPacer.cs`.
 
@@ -41,9 +39,10 @@
 | Section | Contents |
 |---------|----------|
 | [Orders](#orders-17-total) | T1-T3 Basic, T4-T6 Specialist, T7-T9 Leadership |
-| [Decisions](#decisions-30-total) | Self-Care, Training, Social, Economic, Career, Info, Equipment, Risk |
-| [Events](#events-63-total) | Escalation (Scrutiny, Discipline, Medical), Role (Scout, Medic, Engineer, Officer, Operative, NCO), Universal |
-| [Map Incidents](#map-incidents-42-total) | LeavingBattle, DuringSiege, EnteringTown, EnteringVillage, LeavingSettlement, WaitingInSettlement |
+| [Decisions](#decisions-38-total) | Self-Care, Training, Social, Economic, Career, Info, Equipment, Risk, Retinue (T7+) |
+| [Events](#events-69-total) | Escalation (Scrutiny, Discipline, Medical), Role (Scout, Medic, Engineer, Officer, Operative, NCO), Universal |
+| [Map Incidents](#map-incidents-45-total) | LeavingBattle, DuringSiege, EnteringTown, EnteringVillage, LeavingSettlement, WaitingInSettlement |
+| [Retinue Content](#retinue-content-t7-only-23-total) | Retinue Events (17), Map Incidents (6) for T7+ commanders |
 | [Coverage Summary](#content-coverage-summary) | Counts and next steps |
 
 ---
@@ -96,12 +95,13 @@ Some orders have severe failure penalties beyond reputation loss:
 
 ---
 
-## Decisions (34 total)
+## Decisions (38 total)
 
 **File:** `ModuleData/Enlisted/Decisions/decisions.json`  
 **Delivery:** Player-initiated from Camp Hub menu (inline selection, not popup)  
 **ID Prefix:** `dec_*` (e.g., `dec_rest`, `dec_spar`, `dec_gamble_low`)  
-**System:** Loaded by EventCatalog → filtered by DecisionCatalog → displayed in Camp Hub
+**System:** Loaded by EventCatalog → filtered by DecisionCatalog → displayed in Camp Hub  
+**Breakdown:** 34 core decisions (T1-T6) + 4 retinue decisions (T7+ only, requires retinue)
 
 ### Self-Care (3)
 
@@ -176,6 +176,15 @@ Some orders have severe failure penalties beyond reputation loss:
 | `dec_dangerous_wager` | Accept a Dangerous Wager | {SOLDIER_NAME} bets you can't do something stupid. Bold or clever approach. | 50% | Gold, HP, Soldier Rep, Valor |
 | `dec_prove_courage` | Prove Your Courage | Do something reckless to earn respect. | 35% | Valor, Rep, HP |
 | `dec_challenge` | Challenge Someone | Call them out. Settle it properly. | 60% | Rep, Valor, HP |
+
+### Retinue Management (4, T7+ only)
+
+| ID | Name | Premise | Systems |
+|----|------|---------|---------|
+| `dec_ret_inspect` | Inspect Your Retinue | Walk the line, check gear and morale. | Retinue Loyalty, Discipline |
+| `dec_ret_drill` | Drill Your Soldiers | Run combat drills - hard, balanced, or light. | Troop XP, Retinue Loyalty, Discipline |
+| `dec_ret_share_rations` | Share Your Rations | Share personal food stores with your men. | Retinue Loyalty, Soldier Rep, Gold |
+| `dec_ret_address_men` | Address Your Men | Speak to your retinue - inspire, discipline, or keep it brief. | Retinue Loyalty, Soldier Rep, Discipline, Valor |
 
 ---
 
@@ -469,40 +478,30 @@ Events triggered by personal food inventory or company supply status. See `playe
 
 ---
 
-## Sample Events (9 total)
+## Retinue Content (T7+ only, 23 total)
 
-These events use the schema v2 format with full XML localization. Created for testing the content loading and text resolution system.
+### Retinue Narrative Events (17)
 
-### Scout Role Sample Events (3)
+**File:** `ModuleData/Enlisted/Events/events_retinue.json`  
+**Requirements:** Tier 7+, must have active retinue  
+**Topics:** Loyalty tests, veteran stories, discipline challenges, morale management, named veteran development
 
-| ID | Name | Premise | Skill Check | Options | Effects |
-|----|------|---------|-------------|---------|---------|
-| `evt_scout_enemy_patrol` | Enemy Patrol Spotted | Patrol moving through valley below. | **Scouting** 50-70 | Observe / Intercept / Follow | Scouting XP 12-45, ScoutSkills trait XP, rep gains, gold/renown |
-| `evt_scout_night_watch` | Night Watch | Movement in the brush during watch. | **Scouting** 35 | Stay alert / Investigate / Doze | Scouting XP 8-18, rep effects, scrutiny penalty if dozing |
-| `evt_scout_terrain_mastery` | Terrain Knowledge | Know a faster route through terrain. | **Scouting** 60-75 | Suggest shortcut / Teach juniors | Scouting XP 20-30, Leadership XP, trait XP, rep gains |
+Retinue events focus on managing your personal command at T7+. Events cover loyalty challenges, veteran interactions, discipline issues, and opportunities to build your retinue's effectiveness. Several events feature named veterans who gain personality and history through repeated interactions.
 
-### Muster Sample Events (2)
+### Retinue Map Incidents (6)
 
-| ID | Name | Premise | Skill Check | Options | Effects |
-|----|------|---------|-------------|---------|---------|
-| `evt_muster_inspection` | Morning Inspection | Captain inspects equipment and bearing. | **OneHanded** 30 | Perfect attention / Basic / Unprepared | OneHanded XP, rep effects, scrutiny/discipline penalties |
-| `evt_muster_new_recruit` | Green Recruit | Terrified recruit needs guidance. | **Leadership** 25 | Mentor / Ignore / Haze | Leadership XP, SergeantCommandSkills trait XP, rep trade-offs |
+**File:** `ModuleData/Enlisted/Events/incidents_retinue.json`  
+**Trigger:** Post-battle (leaving_battle context)  
+**Requirements:** Tier 7+, must have active retinue
 
-### Camp Sample Events (4)
-
-| ID | Name | Premise | Skill Check | Options | Effects |
-|----|------|---------|-------------|---------|---------|
-| `evt_camp_gambling` | Dice Game | Illegal gambling game in progress. | — | Play / Watch / Report | Gold +50, Roguery XP, rep trade-offs (report = officer +6, soldier -12) |
-| `evt_camp_storytelling` | Tales by the Fire | Soldiers sharing stories around fire. | **Charm** 20-35 | Share battles / Tell legends / Listen | Charm XP, Leadership XP, soldier rep, troop XP |
-| `evt_camp_supply_shortage` | Hungry Soldiers | Rations low, soldiers hungry. | **Scouting** 40, Athletics 30 | Share rations / Forage / Hoard | Food effects ±3-5, GenerousCommander trait XP, rep impacts |
-| `evt_camp_brawl` | Camp Brawl | Two soldiers fighting near wagons. | **OneHanded** 25, T2+ | Break up / Back soldier / Fetch officer | OneHanded XP, Leadership XP, hp loss, rep/discipline trade-offs |
-
-**Files**: 
-- `ModuleData/Enlisted/Events/Role/scout_events.json`
-- `ModuleData/Enlisted/Events/muster_events.json`
-- `ModuleData/Enlisted/Events/camp_events.json`
-
-**Localization**: All 72 strings (titles, setup, options, results) in `ModuleData/Languages/enlisted_strings.xml` (lines 3673-3762)
+| ID | Name | Premise | Systems |
+|----|------|---------|---------|
+| `mi_ret_casualty` | Retinue Casualty | One of your men went down in the fight. | Retinue Loyalty, Morale |
+| `mi_ret_hero` | Battlefield Hero | One of your soldiers distinguished themselves. | Retinue Loyalty, Morale |
+| `mi_ret_discipline` | Discipline Issue | Retinue soldier broke formation or disobeyed. | Retinue Loyalty, Discipline |
+| `mi_ret_loot` | Retinue Loot | Your men found valuable items on the field. | Gold, Retinue Loyalty |
+| `mi_ret_rivalry` | Retinue Rivalry | Two of your soldiers have a grudge forming. | Retinue Loyalty |
+| `mi_ret_veteran_moment` | Veteran's Wisdom | A named veteran shares battlefield experience. | Retinue Loyalty, Skill XP |
 
 ---
 
@@ -513,26 +512,28 @@ These events use the schema v2 format with full XML localization. Created for te
 | Category | Count | JSON File | Status |
 |----------|-------|-----------|--------|
 | Orders | 17 | `orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json` | ✅ Implemented |
-| Decisions | 34 | `Decisions/decisions.json` | ✅ Implemented |
+| Decisions | 38 | `Decisions/decisions.json` (34 core + 4 retinue) | ✅ Implemented |
 | Events - Escalation | 14 | `events_escalation.json` | Indexed |
 | Events - Crisis | 5 | `events_crisis.json` | Indexed |
 | Events - Role | 41 | `events_role_*.json` | Indexed |
 | Events - Universal | 8 | `events_camp_life.json` | Indexed |
 | Events - Food/Supply | 10 | `events_food_supply.json` | Indexed |
 | Events - Muster | 6 | `events_muster.json` | Indexed |
-| Map Incidents | 45 | `incidents_*.json` | Indexed |
-| **Total** | **180** | — | — |
+| Map Incidents | 45 | `incidents_battle/siege/town/village/leaving/waiting.json` | ✅ Implemented |
+| Retinue Events | 17 | `events_retinue.json` | ✅ Implemented |
+| Retinue Map Incidents | 6 | `incidents_retinue.json` | ✅ Implemented |
+| **Total** | **207** | — | — |
 
 ### By Trigger
 
 | Trigger | Count | When |
 |---------|-------|------|
-| System-assigned | 17 | Every 3-5 days |
-| Player-initiated | 30 | Camp Hub menu |
+| System-assigned | 17 | Orders from chain of command |
+| Player-initiated | 38 | Camp Hub menu (34 core + 4 retinue) |
 | State threshold | 14 | Escalation crossed |
 | Context/role match | 49 | Daily check |
-| LeavingBattle | 10 | After field battle |
-| DuringSiege | 8 | Hourly while besieging |
+| LeavingBattle | 11 + 6 retinue | After field battle (17 total) |
+| DuringSiege | 10 | Hourly while besieging |
 | EnteringTown | 8 | Opening town menu |
 | EnteringVillage | 6 | Opening village menu |
 | LeavingSettlement | 6 | Selecting leave |
@@ -545,12 +546,14 @@ These events use the schema v2 format with full XML localization. Created for te
 | Soldier Rep | 70 |
 | Officer Rep | 47 |
 | Lord Rep | 34 |
+| **Retinue Loyalty** | 27 (T7+ content) |
 | Gold | 32 |
 | Scrutiny | 28 |
 | Discipline | 20 |
 | HP/Injury | 24 |
 | Skills (various) | 95 |
 | **Troop Loss** | 10 |
+| **Troop XP** | 15 |
 | **Food Loss** | 12 |
 | **QM Rep** | 8 |
 

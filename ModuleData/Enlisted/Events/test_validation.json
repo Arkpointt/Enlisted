@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "packId": "test_validation",
+  "category": "test",
+  "events": [
+    {
+      "id": "test_missing_fallback",
+      "category": "test",
+      "severity": "positive",
+      "titleId": "test_title_id",
+      "setupId": "test_setup_id",
+      "requirements": {
+        "minTier": 1
+      },
+      "timing": {
+        "cooldownDays": 1
+      },
+      "options": [
+        {
+          "id": "test_option",
+          "textId": "test_option_text_id",
+          "resultTextId": "test_result_text_id",
+          "tooltip": "Test tooltip",
+          "risk": "safe"
+        }
+      ]
+    }
+  ]
+}
+

@@ -88,14 +88,10 @@
           "tooltip": "Help dig out the wagons. -15 Fatigue. Chance to reduce delay. +5 QM reputation.",
           "risk": "moderate",
           "requirements": {
-            "minSkills": {
-              "Athletics": 20
-            }
+            "minSkills": { "Athletics": 20 }
           },
           "effects": {
-            "skillXp": {
-              "Athletics": 20
-            },
+            "skillXp": { "Athletics": 20 },
             "fatigue": 15,
             "soldierRep": 3
           },
@@ -115,9 +111,7 @@
       "category": "logistics",
       "severity": "attention",
       "titleId": "evt_baggage_stuck_title",
-      "title": "Crossing Gone Bad",
       "setupId": "evt_baggage_stuck_setup",
-      "setup": "The ford looked passable from the bank. It wasn't. The lead wagon lurched sideways halfway across and now blocks the whole crossing, water rising against its bed. One of the oxen is bellowing in panic, tangled in traces.\n\nBehind it, the rest of the train is stalled. Ahead, the column marches on without its supplies.",
       "requirements": {
         "minTier": 1,
         "role": "Any",
@@ -132,9 +126,7 @@
         {
           "id": "wait_engineers",
           "textId": "evt_baggage_stuck_opt_wait",
-          "text": "\"Let the pioneers sort it.\"",
           "resultTextId": "evt_baggage_stuck_opt_wait_result",
-          "resultText": "You wait on the bank with the others, watching the pioneers work. They know their business, but the current is strong and the footing treacherous. It will take time.",
           "tooltip": "Wait for the engineers to clear the crossing. Baggage delayed 2 days.",
           "risk": "safe",
           "effects": {
@@ -144,20 +136,14 @@
         {
           "id": "help_push",
           "textId": "evt_baggage_stuck_opt_push",
-          "text": "\"I'm going in.\"",
           "resultTextId": "evt_baggage_stuck_opt_push_result",
-          "resultText": "You wade into the freezing water, gasping at the cold. Your boots fill instantly. Someone shoves a rope into your hands and you haul, muscles burning, until something finally gives.",
           "tooltip": "Help push the wagons through. Fatiguing but reduces delay. Train Athletics.",
           "risk": "moderate",
           "requirements": {
-            "minSkills": {
-              "Athletics": 30
-            }
+            "minSkills": { "Athletics": 30 }
           },
           "effects": {
-            "skillXp": {
-              "Athletics": 25
-            },
+            "skillXp": { "Athletics": 25 },
             "fatigue": 20,
             "soldierRep": 4
           },
@@ -173,21 +159,15 @@
         {
           "id": "organize_detail",
           "textId": "evt_baggage_stuck_opt_organize",
-          "text": "\"Listen up! Form a chain, pass the cargo!\"",
           "resultTextId": "evt_baggage_stuck_opt_organize_result",
-          "resultText": "You take charge before anyone thinks to question it. Men fall into line, passing bundles hand to hand. The wagon rises inch by inch as it's lightened. By the time an officer notices, the work is nearly done.",
           "tooltip": "Organize a working party. Requires Leadership 40. Faster resolution.",
           "risk": "safe",
           "requirements": {
             "minTier": 4,
-            "minSkills": {
-              "Leadership": 40
-            }
+            "minSkills": { "Leadership": 40 }
           },
           "effects": {
-            "skillXp": {
-              "Leadership": 20
-            },
+            "skillXp": { "Leadership": 20 },
             "officerRep": 5,
             "soldierRep": 3,
             "baggageDelayDays": 1
@@ -200,9 +180,7 @@
       "category": "combat",
       "severity": "urgent",
       "titleId": "evt_baggage_raided_title",
-      "title": "Riders on the Baggage",
       "setupId": "evt_baggage_raided_setup",
-      "setup": "Screams from the rear. Not the usual camp complaints—real screams. You turn to see riders among the wagons, torches in hand, blades rising and falling. One of the supply carts is already burning.\n\nRaiders. They hit the train while it was strung out on the road. Everything you stowed is back there.",
       "requirements": {
         "minTier": 2,
         "role": "Any",
@@ -217,23 +195,17 @@
         {
           "id": "rush_to_defend",
           "textId": "evt_baggage_raided_opt_defend",
-          "text": "\"With me! Defend the wagons!\"",
           "resultTextId": "evt_baggage_raided_opt_defend_result",
-          "resultText": "You sprint toward the chaos, weapon drawn. By the time you arrive, it's a tangle of panicked animals, cursing soldiers, and fleeing horsemen. You catch one raider trying to cut a harness and put him down. The rest scatter into the hills.",
           "tooltip": "Rush to defend the wagons. Risk of injury. Chance to save belongings.",
           "risk": "dangerous",
           "effects": {
-            "skillXp": {
-              "OneHanded": 15
-            },
+            "skillXp": { "OneHanded": 15 },
             "soldierRep": 8,
             "fatigue": 20
           },
           "effectsSuccess": {
             "soldierRep": 10,
-            "skillXp": {
-              "Tactics": 10
-            }
+            "skillXp": { "Tactics": 10 }
           },
           "effectsFailure": {
             "hpChange": -20,
@@ -244,9 +216,7 @@
         {
           "id": "stay_formation",
           "textId": "evt_baggage_raided_opt_stay",
-          "text": "\"Hold position. The rearguard will handle it.\"",
           "resultTextId": "evt_baggage_raided_opt_stay_result",
-          "resultText": "You keep your place in the column. Discipline, even when your belongings are burning. The rearguard drives them off eventually, but by then the smoke is rising thick and you know some of it was yours.",
           "tooltip": "Stay in formation. Some items may be lost, but you remain safe.",
           "risk": "safe",
           "effects": {
@@ -257,19 +227,14 @@
         {
           "id": "order_counterattack",
           "textId": "evt_baggage_raided_opt_order",
-          "text": "\"Form up! We're taking them!\"",
           "resultTextId": "evt_baggage_raided_opt_order_result",
-          "resultText": "Your voice carries. Men who were milling in confusion fall into formation. You lead them at the double toward the burning wagons. The raiders, seeing organized resistance, break off and flee. Not all of them make it.",
           "tooltip": "Use your authority to order a counterattack. Full defense. Risk to soldiers.",
           "risk": "risky",
           "requirements": {
             "minTier": 7
           },
           "effects": {
-            "skillXp": {
-              "Leadership": 30,
-              "Tactics": 20
-            },
+            "skillXp": { "Leadership": 30, "Tactics": 20 },
             "officerRep": -3
           },
           "effectsSuccess": {
@@ -288,9 +253,7 @@
       "category": "social",
       "severity": "urgent",
       "titleId": "evt_baggage_theft_title",
-      "title": "Fingers in Your Kit",
       "setupId": "evt_baggage_theft_setup",
-      "setup": "You know what you packed. You know where you put it. And it's not there anymore.\n\nSomeone's been through your belongings. The bundle was retied—badly—and a few things are missing. The wagon drivers won't meet your eye. 'Lot of hands on those carts,' one mutters. 'Could've been anyone.'",
       "requirements": {
         "minTier": 1,
         "role": "Any",
@@ -307,9 +270,7 @@
         {
           "id": "let_it_go",
           "textId": "evt_baggage_theft_opt_ignore",
-          "text": "\"Could've been anyone.\" (swallow it)",
           "resultTextId": "evt_baggage_theft_opt_ignore_result",
-          "resultText": "You let it go. No proof, no witnesses, and pointing fingers without evidence just makes enemies. You've already got enough of those. The loss stings, but so does a knife in the dark.",
           "tooltip": "Let it go. Accept the loss. No reputation impact.",
           "risk": "safe",
           "effects": {
@@ -319,20 +280,14 @@
         {
           "id": "investigate",
           "textId": "evt_baggage_theft_opt_investigate",
-          "text": "\"Someone saw something. People always do.\"",
           "resultTextId": "evt_baggage_theft_opt_investigate_result",
-          "resultText": "You start asking around. Quiet questions, careful words. Some men look away. Others look angry. You're making waves, and that brings attention—good and bad. Whether you find your thief or not, people will remember you were looking.",
           "tooltip": "Ask around. Charm check to identify thief. Success recovers item but costs reputation.",
           "risk": "moderate",
           "requirements": {
-            "minSkills": {
-              "Charm": 30
-            }
+            "minSkills": { "Charm": 30 }
           },
           "effects": {
-            "skillXp": {
-              "Charm": 15
-            }
+            "skillXp": { "Charm": 15 }
           },
           "effectsSuccess": {
             "soldierRep": -5
@@ -345,9 +300,7 @@
         {
           "id": "report_nco",
           "textId": "evt_baggage_theft_opt_report",
-          "text": "\"I want to make a formal complaint.\"",
           "resultTextId": "evt_baggage_theft_opt_report_result",
-          "resultText": "The sergeant listens, nods, writes something down. 'I'll look into it,' he says, which means he won't. But your complaint is on record. The officers know you're a man who goes through proper channels. The soldiers know you're a man who talks to officers.",
           "tooltip": "Report to the sergeant. Official channels. Might make enemies.",
           "risk": "safe",
           "effects": {
@@ -360,3 +313,4 @@
     }
   ]
 }
+

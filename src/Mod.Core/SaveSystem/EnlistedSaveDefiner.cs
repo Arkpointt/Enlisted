@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Enlisted.Features.Equipment.Managers;
+using Enlisted.Features.Logistics;
 using Enlisted.Features.Orders.Models;
 using Enlisted.Features.Retinue.Data;
 using Enlisted.Mod.Core.Util;
@@ -59,6 +60,9 @@ namespace Enlisted.Mod.Core.SaveSystem
             // Retinue enums
             AddEnumDefinition(typeof(LoyaltyThreshold), 50);
             AddEnumDefinition(typeof(BattleOutcome), 51);
+            
+            // Logistics enums
+            AddEnumDefinition(typeof(BaggageAccessState), 52);
         }
 
         /// <summary>

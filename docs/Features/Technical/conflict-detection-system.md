@@ -1215,6 +1215,40 @@ if (!BaggageTrainAvailability.CanAccessBaggage(out string reason))
 
 ---
 
+## Error Codes Reference
+
+Error codes are used throughout the mod for structured logging and debugging. Each system has a unique prefix.
+
+### Muster System (E-MUSTER-xxx)
+
+| Code | Description | Recovery |
+|------|-------------|----------|
+| `E-MUSTER-001` | Menu registration failed | Falls back to legacy inquiry popup |
+| `E-MUSTER-002` | Stage transition or init failed | Jumps to muster complete or aborts |
+| `E-MUSTER-003` | State restoration failed (save/load) | Aborts muster, defers to next cycle |
+| `E-MUSTER-004` | Effect application failed | Continues muster, shows warning |
+| `E-MUSTER-005` | Unhandled exception | Aborts muster, falls back to legacy or defers |
+
+### Incident System (E-INCIDENT-xxx)
+
+| Code | Description | Recovery |
+|------|-------------|----------|
+| `E-INCIDENT-005` | Pay muster inquiry failed | Defers muster to next cycle |
+
+### General Patterns
+
+All error codes follow the format `E-SYSTEM-NNN` where:
+- `E` = Error (vs `W` for Warning)
+- `SYSTEM` = System identifier (MUSTER, INCIDENT, CONTENT, etc.)
+- `NNN` = Numeric code within that system
+
+Errors are logged via `ModLogger.ErrorCode()` which includes:
+- Error code for searchability
+- Human-readable message
+- Full exception stack trace (when applicable)
+
+---
+
 ## Related Documentation
 
 - [Event System Schemas](../Content/event-system-schemas.md) - JSON field definitions

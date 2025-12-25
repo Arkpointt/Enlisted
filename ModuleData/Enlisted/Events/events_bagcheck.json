@@ -8,7 +8,9 @@
       "category": "onboarding",
       "severity": "normal",
       "titleId": "evt_bagcheck_title",
+      "title": "The Quartermaster's Ledger",
       "setupId": "evt_bagcheck_setup",
+      "setup": "The quartermaster's clerk stops you, ledger in hand. 'That's civilian kit. Can't march in that. Regimental rules.'\n\nHe gestures to the wagon. 'Everything goes in storage for two hundred denars plus five percent, or I liquidate it at sixty on the denar. Your choice.'",
       "requirements": {
         "minTier": 1,
         "maxTier": 6,
@@ -23,7 +25,9 @@
         {
           "id": "stash",
           "textId": "evt_bagcheck_opt_stash",
+          "text": "\"Stow it all. I'll pay the fee.\"",
           "resultTextId": "evt_bagcheck_opt_stash_result",
+          "resultText": "You pay the fee. The clerk hands you a chalk marker. 'Guard that number. Lose it, you'll regret it.'\n\nYour things disappear into the wagon. You're issued military kit. When the wagon rolls away, you feel lighter—like something's been decided for you.",
           "tooltip": "Stow everything in baggage. Costs 200g + 5% of inventory value. Items safely stored.",
           "risk": "safe",
           "effects": {
@@ -33,7 +37,9 @@
         {
           "id": "sell",
           "textId": "evt_bagcheck_opt_sell",
+          "text": "\"Liquidate it. I'm traveling light.\"",
           "resultTextId": "evt_bagcheck_opt_sell_result",
+          "resultText": "Your things are assessed quickly. 'Sixty on the denar.' It's not fair, but you're not in a position to haggle.\n\nCoin changes hands. The clerk scratches a line in his ledger. 'Clean break. Easier that way.' You're issued military kit and march with the column.",
           "tooltip": "Sell everything at 60% value. Quick coin, nothing to lose.",
           "risk": "safe",
           "effects": {
@@ -43,7 +49,9 @@
         {
           "id": "smuggle",
           "textId": "evt_bagcheck_opt_smuggle",
+          "text": "\"I'll handle it myself.\"",
           "resultTextId": "evt_bagcheck_opt_smuggle_result",
+          "resultText": "You wait for the right moment. When the clerk's attention shifts, you slip your things into an unmarked crate.\n\nHe glances your way. Pauses. Then someone calls his name and he turns away. Your gear disappears without a marker, without a fee. Two hundred denars saved.",
           "tooltip": "Roguery 30+ required. Try to stow everything without paying. Hard skill check. +1 Scrutiny if caught.",
           "risk": "safe",
           "requirements": {
@@ -56,7 +64,9 @@
         {
           "id": "abort",
           "textId": "evt_bagcheck_opt_abort",
+          "text": "\"I've changed my mind.\"",
           "resultTextId": "evt_bagcheck_opt_abort_result",
+          "resultText": "The clerk's quill stops. 'Changed your mind.' He's seen it before.\n\nHe closes the ledger. 'Your lord won't be pleased. Go on, before anyone notices.'\n\nYou gather your things. The other soldiers don't meet your eyes. The column marches on without you.",
           "tooltip": "Changed your mind. Leave service before it starts. -10 Lord reputation. No other penalties.",
           "risk": "safe",
           "abortsEnlistment": true,

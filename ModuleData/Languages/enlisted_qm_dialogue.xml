@@ -10,7 +10,7 @@
     <string id="qm_hub_greeting" 
             text="What do you need?" />
     <string id="qm_hub_excellent" 
-            text="Stores are full. Speak your need, my lord." />
+            text="Stores are full. What do you need?" />
     <string id="qm_hub_good" 
             text="Supplies are holding well. What do you require?" />
     <string id="qm_hub_fair" 

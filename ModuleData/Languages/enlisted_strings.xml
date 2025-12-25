@@ -1074,6 +1074,120 @@
     <string id="enlisted_final_muster_smuggle_hint" text="Keep all gear but take deserter penalties." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MUSTER MENU SYSTEM (New multi-stage muster flow) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Muster Intro Menu -->
+    <string id="muster_intro_title" text="⚔  PAY MUSTER - DAY {MUSTER_DAY}  ⚔" />
+    <string id="muster_continue" text="Proceed to Pay Line" />
+    <string id="muster_continue_tt" text="Step forward to receive wages." />
+    <string id="muster_qm_after" text="Visit Quartermaster After Muster" />
+    <string id="muster_qm_after_tt" text="Browse newly refreshed stock after pay." />
+    <string id="muster_skip" text="Step Aside (Return Later)" />
+    <string id="muster_skip_tt" text="Defer muster. Resumes tomorrow." />
+    
+    <!-- Muster Flavor Text (Strategic Context) -->
+    <string id="muster_flavor_offensive" text="The host prepares for the Grand Campaign. Spirits are high as the sergeants call the muster." />
+    <string id="muster_flavor_defense" text="The realm bleeds. Muster is brief—every sword is needed on the line." />
+    <string id="muster_flavor_siege" text="The walls loom above. Muster proceeds in the muddy siege lines." />
+    <string id="muster_flavor_raid" text="Smoke rises in the distance. The company assembles between raids." />
+    <string id="muster_flavor_patrol" text="A quiet day on the march. The sergeants call muster at the usual hour." />
+    <string id="muster_flavor_garrison" text="Within the castle walls, the garrison assembles for pay day." />
+    <string id="muster_flavor_winter" text="Snow blankets the camp. Men huddle close as the sergeants call muster." />
+    <string id="muster_flavor_recruit" text="Fresh faces join the ranks. The company swells as muster is called." />
+    <string id="muster_flavor_default" text="The sergeants call the muster. Your company assembles in formation." />
+    
+    <!-- Muster Section Headers -->
+    <string id="muster_section_service" text="_____ YOUR SERVICE RECORD _____" />
+    <string id="muster_section_orders" text="_____ ORDERS THIS PERIOD _____" />
+    <string id="muster_section_events" text="_____ EVENTS SINCE LAST MUSTER _____" />
+    <string id="muster_section_pay" text="_____ PAY STATUS _____" />
+    <string id="muster_pay_intro" text="You step forward to the paymaster's table. He opens his ledger." />
+
+    <!-- Pay Line Menu -->
+    <string id="muster_pay_title" text="💰  PAYMASTER'S LINE  💰" />
+    <string id="muster_pay_accept" text="Accept Your Pay ({PAY_AMOUNT} denars)" />
+    <string id="muster_pay_accept_tt" text="Standard payment. Full wages owed." />
+    <string id="muster_pay_recount" text="Demand a Recount" />
+    <string id="muster_pay_recount_tt" text="Roguery/Charm check to extract more coin through creative accounting." />
+    <string id="muster_pay_side_deal" text="Trade Pay for Select Gear" />
+    <string id="muster_pay_side_deal_tt" text="Take {REDUCED_PAY} denars + premium equipment." />
+    <string id="muster_pay_iou" text="Accept a Promise of Payment" />
+    <string id="muster_pay_iou_tt" text="Defer payment 3 days. No pay tension increase." />
+    <string id="muster_pay_discharge" text="Take Your Final Pay" />
+    <string id="muster_pay_discharge_tt" text="Receive final pay. Service ends. Pension activated." />
+    <string id="muster_pay_smuggle" text="Slip Away in the Night" />
+    <string id="muster_pay_smuggle_tt" text="Desert with your gear. Forfeit pension. Hunted as a deserter." />
+
+    <!-- Baggage Check Menu -->
+    <string id="muster_baggage_title" text="⚠️  BAGGAGE CHECK  ⚠️" />
+    <string id="muster_baggage_continue" text="Continue" />
+    <string id="muster_baggage_continue_tt" text="Proceed to next stage." />
+    <string id="muster_baggage_bribe" text="Pay Him Off" />
+    <string id="muster_bribe_tt" text="Charm check. 50% success. Failure increases scrutiny." />
+    <string id="muster_bribe_blocked" text="Requires {AMOUNT} denars." />
+    <string id="muster_baggage_smuggle" text="[Roguery 40+] Smuggle It Past" />
+    <string id="muster_smuggle_tt" text="Sleight of hand while distracted. 70% success. Risky." />
+    <string id="muster_smuggle_blocked" text="Requires Roguery 40." />
+    <string id="muster_baggage_handover" text="Hand It Over" />
+    <string id="muster_handover_tt" text="Accept confiscation. Fine + 2 Scrutiny. Keep dignity." />
+    <string id="muster_baggage_accept" text="Accept Confiscation" />
+    <string id="muster_accept_tt" text="Item confiscated. Fine + 2 Scrutiny." />
+    <string id="muster_baggage_protest" text="Protest the Seizure" />
+    <string id="muster_protest_tt" text="20% success. Failure adds scrutiny and discipline." />
+
+    <!-- Equipment Inspection Menu -->
+    <string id="muster_inspection_title" text="⚔️  EQUIPMENT INSPECTION  ⚔️" />
+    <string id="muster_inspection_perfect" text="[OneHanded 30+] Stand at Perfect Attention" />
+    <string id="muster_inspection_perfect_tt" text="Flawless presentation. +10 OneHanded XP, +6 Officer Rep, +3 Soldier Rep." />
+    <string id="muster_inspection_perfect_blocked" text="Requires {SKILL} 30." />
+    <string id="muster_inspection_basic" text="Meet the Basic Requirements" />
+    <string id="muster_inspection_basic_tt" text="Presentable enough. +5 OneHanded XP, +2 Officer Rep." />
+    <string id="muster_inspection_unprepared" text="Appear Slovenly" />
+    <string id="muster_inspection_unprepared_tt" text="Poor showing. -8 Officer Rep, -4 Soldier Rep, +8 Scrutiny." />
+    <string id="muster_inspection_continue" text="Continue" />
+    <string id="muster_inspection_continue_tt" text="Proceed to next stage." />
+
+    <!-- Green Recruit Menu -->
+    <string id="muster_recruit_title" text="👥  GREEN RECRUIT  👥" />
+    <string id="muster_recruit_train" text="[Leadership 25+] Take Him Aside and Train Him" />
+    <string id="muster_recruit_train_tt" text="Train the recruit. +15 Leadership XP, +5 Officer Rep, +6 Soldier Rep." />
+    <string id="muster_recruit_train_blocked" text="Requires Leadership 25." />
+    <string id="muster_recruit_ignore" text="Let Him Figure It Out" />
+    <string id="muster_recruit_ignore_tt" text="Ignore the recruit. -2 Soldier Rep." />
+    <string id="muster_recruit_haze" text="Give Him the Traditional Welcome" />
+    <string id="muster_recruit_haze_tt" text="Haze the recruit. +4 Soldier Rep, -5 Officer Rep, +8 Discipline." />
+    <string id="muster_recruit_continue" text="Continue" />
+    <string id="muster_recruit_continue_tt" text="Proceed to next stage." />
+
+    <!-- Promotion Recap Menu -->
+    <string id="muster_promotion_title" text="⭐  PROMOTION ACKNOWLEDGED  ⭐" />
+    <string id="muster_promotion_continue" text="Acknowledge Promotion" />
+    <string id="muster_promotion_continue_tt" text="Proceed with muster." />
+    <string id="muster_promotion_visit_qm" text="Visit Quartermaster Now" />
+    <string id="muster_promotion_visit_qm_tt" text="Review newly unlocked equipment. Will return to muster after." />
+
+    <!-- Retinue Muster Menu -->
+    <string id="muster_retinue_title" text="🏴  RETINUE MUSTER  🏴" />
+    <string id="muster_retinue_continue" text="Dismiss Retinue" />
+    <string id="muster_retinue_continue_tt" text="Proceed to muster summary." />
+    <string id="muster_retinue_recruit" text="Seek New Soldiers" />
+    <string id="muster_retinue_recruit_tt" text="Open recruitment after muster. Fill retinue openings." />
+
+    <!-- Muster Complete Menu -->
+    <string id="muster_complete_title" text="⚔  MUSTER COMPLETE - DAY {MUSTER_DAY}  ⚔" />
+    <string id="muster_complete_dismiss" text="Dismiss" />
+    <string id="muster_complete_dismiss_tt" text="Return to map. Muster complete." />
+    <string id="muster_complete_qm" text="Visit Quartermaster" />
+    <string id="muster_complete_qm_tt" text="Browse newly refreshed equipment stock and access your baggage." />
+    <string id="muster_complete_qm_blocked_tt" text="Quartermaster unavailable. Supplies critically low. Equipment requisitions suspended." />
+    <string id="muster_complete_records" text="Review Service Record" />
+    <string id="muster_complete_records_tt" text="Examine your military record and campaign history." />
+    <string id="muster_complete_leave" text="Request Leave of Absence" />
+    <string id="muster_complete_leave_tt" text="Request leave of absence. 14-day limit." />
+    <string id="muster_complete_leave_blocked_tt" text="Cannot request leave during active siege or combat." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- PHASE 4: ESCALATION UI (Standing) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <string id="enlisted_standing_header" text="— YOUR STANDING —" />

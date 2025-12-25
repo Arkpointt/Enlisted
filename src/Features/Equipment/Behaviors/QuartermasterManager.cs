@@ -287,15 +287,58 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         public override void SyncData(IDataStore dataStore)
         {
-            // Sync inventory state for Phase 7: Inventory & Pricing System
-            // Persists stock quantities and refresh timing across save/load
-            dataStore.SyncData("_qmInventoryState", ref _inventoryState);
+            // Ensure inventory state exists
+            _inventoryState ??= new QMInventoryState();
             
-            // Ensure inventory state is initialized after load
-            if (dataStore.IsLoading && _inventoryState == null)
+            // Manual serialization for QMInventoryState to avoid complex object serialization issues.
+            // The Bannerlord save system can have issues with complex objects that have nested containers.
+            
+            // Sync primitive fields
+            var lastRefreshDay = _inventoryState.LastRefreshDay;
+            var lastRefreshSupply = _inventoryState.LastRefreshSupplyLevel;
+            dataStore.SyncData("qm_lastRefreshDay", ref lastRefreshDay);
+            dataStore.SyncData("qm_lastRefreshSupply", ref lastRefreshSupply);
+            
+            // Sync stock dictionary
+            var stockCount = _inventoryState.CurrentStock?.Count ?? 0;
+            dataStore.SyncData("qm_stockCount", ref stockCount);
+            
+            if (dataStore.IsLoading)
             {
-                _inventoryState = new QMInventoryState();
-                ModLogger.Info("Quartermaster", "Initialized new inventory state after load");
+                _inventoryState.LastRefreshDay = lastRefreshDay;
+                _inventoryState.LastRefreshSupplyLevel = lastRefreshSupply;
+                _inventoryState.CurrentStock.Clear();
+                
+                for (var i = 0; i < stockCount; i++)
+                {
+                    var itemId = string.Empty;
+                    var qty = 0;
+                    dataStore.SyncData($"qm_stock_{i}_id", ref itemId);
+                    dataStore.SyncData($"qm_stock_{i}_qty", ref qty);
+                    
+                    if (!string.IsNullOrEmpty(itemId) && qty > 0)
+                    {
+                        _inventoryState.CurrentStock[itemId] = qty;
+                    }
+                }
+                
+                ModLogger.Debug("Quartermaster", $"Loaded inventory state: {stockCount} items, last refresh day {lastRefreshDay}");
+            }
+            else
+            {
+                // Saving - write each stock entry
+                if (_inventoryState.CurrentStock != null)
+                {
+                    var idx = 0;
+                    foreach (var kvp in _inventoryState.CurrentStock)
+                    {
+                        var itemId = kvp.Key;
+                        var qty = kvp.Value;
+                        dataStore.SyncData($"qm_stock_{idx}_id", ref itemId);
+                        dataStore.SyncData($"qm_stock_{idx}_qty", ref qty);
+                        idx++;
+                    }
+                }
             }
         }
         

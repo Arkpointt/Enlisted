@@ -232,6 +232,40 @@ namespace Enlisted.Debugging.Behaviors
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
             SessionDiagnostics.LogEvent("Debug", "FireSpecificEvent", $"eventId={eventId}");
         }
+
+        /// <summary>
+        /// Triggers an immediate pay muster, bypassing the 12-day cycle.
+        /// Useful for testing the muster system flow, pay options, inspections, and promotions.
+        /// </summary>
+        public static void TriggerMuster()
+        {
+            var enlist = EnlistmentBehavior.Instance;
+            if (enlist?.IsEnlisted != true)
+            {
+                var warn = new TextObject("{=dbg_muster_not_enlisted}Cannot trigger muster while not enlisted.");
+                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
+                ModLogger.Warn("Debug", "TriggerMuster: Player not enlisted");
+                return;
+            }
+
+            // Find the MusterMenuHandler (registered as a campaign behavior)
+            var musterHandler = Campaign.Current?.CampaignBehaviorManager?.GetBehavior<MusterMenuHandler>();
+            if (musterHandler == null)
+            {
+                var error = new TextObject("{=dbg_muster_handler_missing}Cannot trigger muster - MusterMenuHandler not found.");
+                InformationManager.DisplayMessage(new InformationMessage(error.ToString()));
+                ModLogger.Error("Debug", "TriggerMuster: MusterMenuHandler not registered as campaign behavior");
+                return;
+            }
+
+            // Call the muster handler directly to open the 8-stage muster sequence
+            musterHandler.BeginMusterSequence();
+            
+            var msg = new TextObject("{=dbg_muster_started}Muster sequence started (debug). Opening intro stage...");
+            InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+            SessionDiagnostics.LogEvent("Debug", "TriggerMuster", 
+                $"tier={enlist.EnlistmentTier}, xp={enlist.EnlistmentXP}, pay_owed={enlist.PendingMusterPay}");
+        }
     }
 }
 

@@ -100,7 +100,13 @@ The Quartermaster is accessed through **face-to-face conversation** (not text me
 
 The QM's greeting varies dynamically based on multiple factors:
 
+- **Player Rank (Primary Factor):**
+  - **T7+ Officers:** Deferential "my lord" treatment, respectful tone
+  - **T5-T6 NCOs:** Addressed by rank title (Sergeant, Decanus, etc.), professional respect
+  - **T1-T4 Enlisted:** Informal "soldier" address, casual peer-level tone
 - **Archetype Personality:** Each QM has a distinct voice (Veteran: military direct, Merchant: business-focused, Bookkeeper: precise logistics, Scoundrel: informal deals, Believer: faith-based, Eccentric: superstitious)
+- **First Meeting vs Returning:** New recruits get an introduction ("New face. What do they call you?"), while returning visits are more familiar
+- **PayTension Level:** High tension (60+) or critical tension (80+) overrides normal greetings with warnings about pay issues and potential mutiny
 - **Reputation Tone:** 
   - Hostile (< 0): Terse, unwelcoming
   - Neutral (0-30): Professional but distant
@@ -119,18 +125,18 @@ The system evaluates the game state (supply, events, reputation) at **runtime** 
 
 **Supply Categories & Responses:**
 
-| Level | Range | Tone | Example Greeting |
-|-------|-------|------|------------------|
-| **Excellent** | 80-100% | Positive | "Stores are full. Speak your need, my lord." |
-| **Good** | 60-79% | Adequate | "Supplies are holding well. What do you require?" |
-| **Fair** | 40-59% | Concerned | "What can I do for you?" |
-| **Low** | 20-39% | Urgent | "Stock's running thin, but I'll see what I can do." |
-| **Critical** | 0-19% | Alarmed | "We've next to nothing left. Make it quick." |
+| Level | Range | Tone | Example Greeting (by Rank) |
+|-------|-------|------|---------------------------|
+| **Excellent** | 80-100% | Positive | Officer: "My lord. Good to see you. What do you require?"<br>NCO: "Sergeant. Good to see you. What do you need?"<br>Enlisted: "Back again? What do you need, soldier?" |
+| **Good** | 60-79% | Adequate | Officer: "My lord. Your requisition forms are in order."<br>NCO: "Sergeant. Equipment requisition? Let me find the form."<br>Enlisted: "Soldier. Equipment requisition? Let me find the form." |
+| **Fair** | 40-59% | Concerned | "What can I do for you?" (rank-neutral when stressed) |
+| **Low** | 20-39% | Urgent | "Stock's running thin. What do you need?" (rank-neutral when stressed) |
+| **Critical** | 0-19% | Alarmed | "We've next to nothing left. Make it quick." (rank-neutral in crisis) |
 
 **Browse Responses:**
 Equipment browsing dialogue reflects multiple contextual factors:
 - **Supply Status:** "Plenty in stock" (80-100%) / "Fair bit" (60-79%) / "Stock's thin" (20-39%) / "Pickings are slim" (0-19%)
-- **Rank Acknowledgment:** For T5+ soldiers, QM mentions their rank and earned standing
+- **Rank Acknowledgment:** Officers (T7+) are always addressed as "my lord", NCOs (T5-T6) by rank title, Enlisted (T1-T4) as "soldier"
 - **Discount Information:** Explicitly states discount percentage based on reputation (0-30%)
 - **Price Attitude:** "Good prices for you" (trusted) / "Fair deal" (friendly) / "Standard prices" (neutral) / "Full price, no discounts" (hostile)
 - **Standing Hints:** "You've earned it" / "You've earned some pull" / "Don't expect favors" / "No discounts for troublemakers"
@@ -730,14 +736,22 @@ Provision bundles are ideal for quick morale/fatigue boosts before battles or du
 
 ### Muster Inspections
 
-Every pay muster has a **30% chance** of triggering a baggage inspection:
+Every pay muster has a **30% chance** of triggering a baggage inspection. This occurs during the [Baggage Check stage](../Core/muster-system.md#3-baggage-check) of the muster system sequence (stage 3, after the Pay Line).
+
+**Important:** This is a **security inspection** for contraband items, separate from the logistics-based baggage access system (see [Baggage Train Availability](baggage-train-availability.md)). All soldiers have full baggage access during muster regardless of inspection outcome. The inspection only determines if contraband is discovered and confiscated.
 
 ```
-Quartermaster: "Routine inspection."
+⚠️  CONTRABAND DISCOVERED  ⚠️
 
-[Searches bags]
+The quartermaster's hand stops in your pack. He pulls out an item
+and raises an eyebrow.
 
-[Outcome depends on contraband found and QM reputation]
+Found: Noble Armor (value 1200 denars)
+
+"This doesn't belong to a soldier of your rank," he says quietly.
+"I can overlook it... for a price. Or we can do this by the book."
+
+[QM Reputation: 45 - Neutral]
 ```
 
 ### Contraband Detection
@@ -746,17 +760,24 @@ The quartermaster scans for:
 - Illegal goods (smuggled items)
 - Stolen gear (high-value civilian goods)
 - Flagged contraband items
-- (Optional) Missing QM-issued items
+- Items inappropriate for player's rank
 
 ### Outcomes by Reputation
 
 | Scenario | QM Rep | Event ID | Outcome |
 |----------|--------|----------|---------|
-| No contraband | Any | `evt_baggage_clear` | Pass inspection |
-| Contraband + Trusted | 65+ | `evt_baggage_lookaway` | QM looks away, no penalty |
-| Contraband + Friendly | 35-65 | `evt_baggage_bribe` | Bribe option (50-75% of value) |
-| Contraband + Neutral | < 35 | `evt_baggage_confiscate` | Confiscation + fine + scrutiny |
-| Contraband + Hostile | < -25 | `evt_baggage_report` | Severe penalties |
+| No contraband | Any | — | Skip to next stage |
+| Contraband + Trusted | 65+ | `evt_baggage_lookaway` | QM looks away, auto-pass, no penalty |
+| Contraband + Friendly | 35-64 | `evt_baggage_bribe` | Bribe option (Charm check, 50% success) or smuggle (Roguery 40+) |
+| Contraband + Neutral | < 35 | `evt_baggage_confiscate` | Confiscation only, fine + 2 Scrutiny |
+| Contraband + Hostile | < -25 | `evt_baggage_report` | Severe penalties, discipline increase |
+
+**Integration with Muster Menu:**
+- Baggage check appears as stage 3 in the muster flow
+- Player sees contraband details and QM reputation before choosing
+- Options presented based on current reputation tier
+- Skip conditions apply (no contraband, high rep, 70% no-trigger chance)
+- See [Muster System - Baggage Check](../Core/muster-system.md#3-baggage-check) for complete flow
 
 **Example: High Rep Outcome**
 ```
@@ -1084,11 +1105,13 @@ QM (<30%): "We're in crisis. I can't issue any equipment changes until
 - Only QM-purchased items from player's person can be sold (baggage train exploit fixed)
 
 **Inventory & Pricing System:**
-- Stock refreshes every muster (12-day cycle), static between musters
+- Stock refreshes at muster completion (12-day cycle) via `QuartermasterManager.RollStockAvailability()`
+- Refresh happens in `MusterMenuHandler.CompleteMusterSequence()` after all muster stages complete
 - Stock quantity varies by supply level (excellent: 3-5, low: 1-2, critical: 1)
 - Supply scarcity adds pricing markup (+10% to +50%)
 - QM rep modifies prices (-15% trusted to +25% hostile)
 - Out-of-stock items show greyed cards with "Restocks at muster" hint
+- Newly unlocked items (from promotions) are marked in the shop after stock refresh
 
 **Provisions Gauntlet UI:**
 - Visual grid UI for T7+ officers (same style as equipment browser)

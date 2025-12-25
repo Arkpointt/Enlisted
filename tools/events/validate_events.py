@@ -4,6 +4,33 @@ import sys
 from collections import Counter
 
 
+def check_fallback_fields(obj: dict, context: str, bad: list) -> None:
+    """
+    Validates that every localization ID field has a corresponding fallback field.
+    Required pairs:
+    - titleId -> title
+    - setupId -> setup
+    - textId -> text
+    - resultTextId -> resultText
+    - resultFailureTextId -> resultFailureText
+    """
+    fallback_pairs = [
+        ("titleId", "title"),
+        ("setupId", "setup"),
+        ("textId", "text"),
+        ("resultTextId", "resultText"),
+        ("resultFailureTextId", "resultFailureText"),
+    ]
+    
+    for id_field, fallback_field in fallback_pairs:
+        if id_field in obj:
+            # ID field exists, check for fallback
+            if fallback_field not in obj:
+                bad.append(("MISSING_FALLBACK", context, f"'{fallback_field}' missing for '{id_field}'"))
+            elif not obj[fallback_field] or not str(obj[fallback_field]).strip():
+                bad.append(("EMPTY_FALLBACK", context, f"'{fallback_field}' is empty for '{id_field}'"))
+
+
 def main() -> int:
     files = sorted(glob.glob("ModuleData/Enlisted/Events/events_*.json"))
     if not files:
@@ -15,7 +42,7 @@ def main() -> int:
     total = 0
 
     for f in files:
-        with open(f, encoding="utf-8") as fp:
+        with open(f, encoding="utf-8-sig") as fp:
             obj = json.load(fp)
 
         events = obj.get("events") or []
@@ -29,9 +56,18 @@ def main() -> int:
                 bad.append(("DUP_ID", eid, f))
             seen.add(eid)
 
-            opts = ((e.get("content") or {}).get("options") or [])
-            if not (2 <= len(opts) <= 4):
+            # Check event-level fallback fields
+            check_fallback_fields(e, f"event:{eid}", bad)
+
+            # Check option-level fallback fields
+            opts = e.get("options") or []
+            # Allow 0 options for threshold/info events, but warn if it's not 0, 2, 3, or 4
+            if len(opts) == 1 or len(opts) > 4:
                 bad.append(("BAD_OPT_COUNT", eid, len(opts), f))
+
+            for opt in opts:
+                opt_id = opt.get("id", "unknown")
+                check_fallback_fields(opt, f"event:{eid} option:{opt_id}", bad)
 
             total += 1
 

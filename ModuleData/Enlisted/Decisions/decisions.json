@@ -651,7 +651,7 @@
           },
           "resultTextId": "dec_join_men_result",
           "resultText": "You share warmth and stories with your comrades. They appreciate an equal. The officers might not approve, but camaraderie is earned, not assigned.",
-          "tooltip": "Share stories. Improves Soldier reputation. Adds 1 scrutiny. Costs 1 fatigue."
+          "tooltip": "+4 Soldier rep. +1 Scrutiny. Costs 1 fatigue. 2 day CD."
         },
         {
           "id": "cancel",
@@ -696,7 +696,7 @@
           },
           "resultTextId": "dec_join_drinking_moderate_result",
           "resultText": "You share drink and laughter. The night blurs pleasantly. Tomorrow's headache will be worth tonight's camaraderie.",
-          "tooltip": "Moderate drink. +5 Soldier rep. +2 Scrutiny. Costs 2 fatigue. 3 day CD."
+          "tooltip": "+5 Soldier rep. +2 Scrutiny. Costs 2 fatigue. 15% injury risk. 3 day CD."
         },
         {
           "id": "drink_heavy",
@@ -713,7 +713,7 @@
           },
           "resultTextId": "dec_join_drinking_heavy_result",
           "resultText": "You drink until the stars spin. They'll talk about this night. Whether that's good or bad remains to be seen.",
-          "tooltip": "Heavy drink. +7 Soldier rep. +4 Scrutiny. Costs 4 fatigue. 3 day CD."
+          "tooltip": "+7 Soldier rep. +4 Scrutiny. -2 Discipline. Costs 4 fatigue. 15% injury risk. 3 day CD."
         },
         {
           "id": "cancel",
@@ -756,7 +756,7 @@
           },
           "resultTextId": "dec_seek_officers_result",
           "resultText": "You find reasons to be near the command tent. The officers notice. The men notice too - and they don't always approve of climbers.",
-          "tooltip": "Improves Officer reputation. Harms Soldier reputation. Costs 1 fatigue."
+          "tooltip": "+3 Officer rep. -2 Soldier rep. Costs 1 fatigue. 4 day CD."
         },
         {
           "id": "cancel",
@@ -798,7 +798,7 @@
           },
           "resultTextId": "dec_keep_to_self_result",
           "resultText": "You find a quiet corner of camp and let your thoughts settle. The silence is a relief after the constant noise of military life.",
-          "tooltip": "Find solitude. Reduces fatigue. -1 Soldier rep. 1 day cooldown."
+          "tooltip": "Restores 3 fatigue. -1 Soldier rep. 1 day CD."
         },
         {
           "id": "cancel",
@@ -833,28 +833,28 @@
           "textId": "dec_write_letter_reassuring",
           "text": "Write a reassuring letter, downplaying the dangers.",
           "costs": {
-            "gold": 5
+            "gold": 20
           },
           "rewards": {
             "fatigueRelief": 2
           },
           "resultTextId": "dec_write_letter_reassuring_result",
           "resultText": "You craft careful words of safety and good fortune. No need to worry those waiting for you. The courier takes your letter with the next dispatch.",
-          "tooltip": "Write home. Reduces fatigue. Costs 5 gold. 10 day cooldown."
+          "tooltip": "Restores 2 fatigue. Costs 20 gold. 10 day CD."
         },
         {
           "id": "write_honest",
           "textId": "dec_write_letter_honest",
           "text": "Write honestly about your experiences.",
           "costs": {
-            "gold": 5
+            "gold": 50
           },
           "rewards": {
-            "fatigueRelief": 1
+            "fatigueRelief": 4
           },
           "resultTextId": "dec_write_letter_honest_result",
           "resultText": "The truth flows onto the page - the fear, the boredom, the moments of strange pride. It feels good to be honest, even if the words might worry them.",
-          "tooltip": "Write honestly. Reduces fatigue. Costs 5 gold. 10 day cooldown."
+          "tooltip": "Restores 4 fatigue. Costs 50 gold. 10 day CD."
         },
         {
           "id": "cancel",
@@ -896,7 +896,7 @@
           },
           "resultTextId": "dec_confront_rival_words_result",
           "resultText": "You find your rival and say what needs saying. The tension breaks - for better or worse, the air is cleared.",
-          "tooltip": "Confront rival. +3 Soldier rep. +1 Discipline. +2 Valor. 14 day CD."
+          "tooltip": "+3 Soldier rep. +1 Discipline. 40% injury risk. 14 day CD."
         },
         {
           "id": "confront_fists",
@@ -912,7 +912,7 @@
           },
           "resultTextId": "dec_confront_rival_fists_result",
           "resultText": "You trade blows behind the supply wagons. Win or lose, it's done. The men respect those who handle their problems directly.",
-          "tooltip": "Fistfight. +5 Soldier rep. +3 Discipline. Costs 2 fatigue. 15 damage. 14 day CD."
+          "tooltip": "+5 Soldier rep. +3 Discipline. 15 damage. Costs 2 fatigue. 40% injury risk. 14 day CD."
         },
         {
           "id": "cancel",

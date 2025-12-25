@@ -171,6 +171,7 @@
     <Compile Include="src\Features\Enlistment\Behaviors\EncounterGuard.cs"/>
     <Compile Include="src\Features\Enlistment\Core\ProgressionConfig.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs"/>
+    <Compile Include="src\Features\Enlistment\Behaviors\MusterMenuHandler.cs"/>
     <Compile Include="src\Debugging\Behaviors\DebugToolsBehavior.cs"/>
     <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs"/>
     <Compile Include="src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs"/>

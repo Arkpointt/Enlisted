@@ -170,9 +170,7 @@
           "effects": {
             "skillXp": {
               "OneHanded": 15
-            }
-          ,,
-          
+            },
             "traitXp": {
               "Valor": 8,
               "Honor": 3
@@ -452,9 +450,7 @@
           "effects": {
             "skillXp": {
               "Medicine": 25
-            }
-          ,,
-          
+            },
             "soldierRep": 10,
             "traitXp": {
               "Mercy": 8
@@ -472,9 +468,7 @@
           "effects": {
             "skillXp": {
               "Athletics": 15
-            }
-          ,,
-          
+            },
             "soldierRep": 8,
             "traitXp": {
               "Mercy": 5
@@ -533,9 +527,7 @@
           "effects": {
             "skillXp": {
               "Scouting": 15
-            }
-          ,,
-          
+            },
             "lordRep": 10,
             "officerRep": 8
           },
@@ -557,9 +549,7 @@
           "effects": {
             "skillXp": {
               "Scouting": 25
-            }
-          ,,
-          
+            },
             "lordRep": 8,
             "scrutiny": 1
           }
@@ -757,12 +747,12 @@
           "resultText": "'Form up! Shields together!' Your voice cuts through the chaos. Men respond, forming a defensive line. The ambush falters against organized resistance.",
           "tooltip": "Requires Tactics 50. 70% success chance. Train Tactics and Leadership. +15 Officer rep, +10 Soldier rep. Failure causes 25 damage and troop loss.",
           "risk": "risky",
-          "risk_chance": 70,,
+          "risk_chance": 70,
           "effects": {
             "skillXp": {
               "Tactics": 30,
               "Leadership": 20
-            },: {
+            },
             "officerRep": 15,
             "soldierRep": 10,
             "traitXp": {

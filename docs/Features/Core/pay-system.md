@@ -70,34 +70,60 @@ DailyWage = (BaseWage + Level×LevelMult + Tier×TierMult + XP/XPDivisor) × Mod
 
 ## Pay Muster
 
-Every 12 days (±1 day jitter from config), a pay muster event triggers, delivered as a map incident popup.
+Every 12 days (±1 day jitter from config), a pay muster event triggers. Payment is delivered via the multi-stage muster system, which provides comprehensive context including service record, period summary, and rank progression. See [Muster System](muster-system.md) for complete muster flow.
 
-### Payment Outcomes
+### Payment Options
 
-The lord's financial status determines what happens at muster:
+When muster arrives, players proceed to the Pay Line stage where they choose from several payment options:
 
-**Full Payment**
-- Lord pays all pending wages plus any backpay
-- Pay Tension reduced by 30
-- Clears consecutive delay counter
-- Player receives full amount immediately
+**1. Accept Your Pay (Standard Payment)**
+- Lord's financial status determines actual outcome:
+  - **Full Payment**: Lord pays all pending wages plus any backpay. Pay Tension reduced by 30. Clears consecutive delay counter.
+  - **Partial Payment**: Lord pays current period + 50% of backpay. Pay Tension reduced by 10. Remaining backpay carries forward.
+  - **Payment Delayed**: Lord cannot afford wages. Backpay accumulates. Pay Tension increases (10 base + 5 per week overdue).
 
-**Partial Payment**
-- Lord pays current period + 50% of backpay
-- Pay Tension reduced by 10
-- Remaining backpay carries forward
-- Message indicates still-owed amount
+**2. Demand a Recount (Corruption)**
+- Roguery/Charm skill check to extract more coin (95% payout) through creative accounting
+- Costs 10 fatigue on attempt
+- Risk of lord relation penalty if failed
 
-**Payment Delayed**
-- Lord cannot afford wages
-- Backpay accumulates
-- Pay Tension increases (10 base + 5 per week overdue)
-- Consecutive delays counter increments
+**3. Trade Pay for Select Gear (Side Deal)**
+- Take reduced pay (60% of owed) plus access to premium equipment
+- Costs 6 fatigue
+- Opens Quartermaster after muster with expanded selection
 
-**Alternative Options** (available in pay muster popup):
-- **Promissory Note (IOU)**: Accept delay, retry in 3 days
-- **Side Deal**: Take 40% payout immediately, costs 6 fatigue
-- **Corruption**: Skill check to get 95% payout through illicit channels
+**4. Accept Promissory Note (IOU)**
+- **Only available if Pay Tension >= 60**
+- Defer payment 3 days to ease lord's finances
+- No immediate gold, but avoids tension increase
+- Next payday set to 3 days from now
+
+### Discharge Options
+
+If the player has a pending discharge, additional options appear:
+
+**5. Process Final Discharge**
+- Receive final pay settlement
+- Service ends, pension activated
+- Equipment reclaimed (see [Discharge System](onboarding-discharge-system.md))
+
+**6. Smuggle Out (Deserter)**
+- Keep all gear, lose pension
+- Deserter penalties applied
+- Criminal record and faction hostility
+
+**5. Process Final Discharge**
+- **Only available if pending discharge requested**
+- Ends service honorably
+- Pays final wages + severance based on service band
+- Activates pension system
+
+**6. Smuggle Out (Deserter)**
+- **Only available if pending discharge requested**
+- Ends service as deserter
+- Keep all current equipment
+- Lose pension eligibility
+- Face desertion penalties (lord relation hit, crime rating)
 
 ### Lord Wealth Checks
 
@@ -205,6 +231,29 @@ GoldEarned = LootPool × SharePercent + VictoryBonus
 | T7-T9 | **Allowed** | Native loot screens + commander share |
 
 T4+ soldiers can use the standard Bannerlord post-battle loot interface and still receive their automatic gold share on top of any loot they take.
+
+---
+
+## Automatic Ration Exchange
+
+After pay resolution, the system automatically processes ration exchange for T1-T6 enlisted personnel:
+
+**Ration Exchange Process:**
+1. **Reclamation**: Previously issued rations removed from inventory (prevents hoarding)
+2. **Issue Check**: Supply level determines availability
+   - Supply >= 30%: Ration issued
+   - Supply < 30%: No ration, warning displayed
+3. **New Ration**: Tier-appropriate food item issued based on QM reputation:
+   - QM Rep 80+: Meat (high value)
+   - QM Rep 50-79: Cheese (good value)
+   - QM Rep 20-49: Butter (moderate value)
+   - QM Rep <20: Grain (low value)
+
+**T7+ Commanders:**
+- Exempt from ration exchange (provision their own retinue)
+- Any outstanding enlisted rations reclaimed on promotion
+
+See [Muster Menu System](muster-menu-revamp.md) for full muster flow details.
 
 ---
 

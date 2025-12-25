@@ -602,7 +602,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (lostCount >= 10)
                 {
                     var text = new TextObject("{=brief_casualties_heavy}The company has paid dearly — {COUNT} souls lost since last muster. The men speak in hushed tones and sleep comes hard.");
-                    text.SetTextVariable("COUNT", lostCount);
+                    text.SetTextVariable("COUNT", $"<span style=\"Alert\">{lostCount}</span>");
                     return text.ToString();
                 }
                 
@@ -612,12 +612,12 @@ namespace Enlisted.Features.Interface.Behaviors
                     if (woundedCount >= 10)
                     {
                         var text = new TextObject("{=brief_casualties_moderate_wounded}Hard fighting has cost us {DEAD} dead and left {WOUNDED} nursing wounds. The surgeons work through the night.");
-                        text.SetTextVariable("DEAD", lostCount);
-                        text.SetTextVariable("WOUNDED", woundedCount);
+                        text.SetTextVariable("DEAD", $"<span style=\"Alert\">{lostCount}</span>");
+                        text.SetTextVariable("WOUNDED", $"<span style=\"Warning\">{woundedCount}</span>");
                         return text.ToString();
                     }
                     var text2 = new TextObject("{=brief_casualties_moderate}We've lost {COUNT} good soldiers since the last muster. Their names are spoken at the evening fire.");
-                    text2.SetTextVariable("COUNT", lostCount);
+                    text2.SetTextVariable("COUNT", $"<span style=\"Alert\">{lostCount}</span>");
                     return text2.ToString();
                 }
 
@@ -627,18 +627,18 @@ namespace Enlisted.Features.Interface.Behaviors
                     if (woundedCount >= 15)
                     {
                         var text = new TextObject("{=brief_casualties_few_manywounded}The wounded fill the medical tents, groaning through the night. {COUNT} didn't make it.");
-                        text.SetTextVariable("COUNT", lostCount);
+                        text.SetTextVariable("COUNT", $"<span style=\"Alert\">{lostCount}</span>");
                         return text.ToString();
                     }
                     if (woundedCount >= 5)
                     {
                         var text = new TextObject("{=brief_casualties_few_somewounded}{DEAD} fallen, {WOUNDED} wounded — the cost of the march weighs on every man.");
-                        text.SetTextVariable("DEAD", lostCount);
-                        text.SetTextVariable("WOUNDED", woundedCount);
+                        text.SetTextVariable("DEAD", $"<span style=\"Alert\">{lostCount}</span>");
+                        text.SetTextVariable("WOUNDED", $"<span style=\"Warning\">{woundedCount}</span>");
                         return text.ToString();
                     }
                     var text2 = new TextObject("{=brief_casualties_few}{COUNT} soldiers have fallen since last muster.");
-                    text2.SetTextVariable("COUNT", lostCount);
+                    text2.SetTextVariable("COUNT", $"<span style=\"Alert\">{lostCount}</span>");
                     return text2.ToString();
                 }
 
@@ -648,7 +648,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     if (woundedCount >= 10)
                     {
                         var text = new TextObject("{=brief_casualties_one_manywounded}One of ours didn't make it. {WOUNDED} others nurse their wounds and pray they're luckier.");
-                        text.SetTextVariable("WOUNDED", woundedCount);
+                        text.SetTextVariable("WOUNDED", $"<span style=\"Warning\">{woundedCount}</span>");
                         return text.ToString();
                     }
                     return new TextObject("{=brief_casualties_one}One of ours didn't make it through. The lads are quiet today.").ToString();
@@ -658,19 +658,19 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (woundedCount >= 20)
                 {
                     var text = new TextObject("{=brief_wounded_many}The surgeons are overwhelmed — {COUNT} wounded fill the medical tents, and the air reeks of blood and poultices.");
-                    text.SetTextVariable("COUNT", woundedCount);
+                    text.SetTextVariable("COUNT", $"<span style=\"Warning\">{woundedCount}</span>");
                     return text.ToString();
                 }
                 if (woundedCount >= 10)
                 {
                     var text = new TextObject("{=brief_wounded_moderate}{COUNT} soldiers recovering from their wounds. The company marches slower for it.");
-                    text.SetTextVariable("COUNT", woundedCount);
+                    text.SetTextVariable("COUNT", $"<span style=\"Warning\">{woundedCount}</span>");
                     return text.ToString();
                 }
                 if (woundedCount >= 5)
                 {
                     var text = new TextObject("{=brief_wounded_few}A handful of wounded among us — {COUNT} in all, patched up and carrying on.");
-                    text.SetTextVariable("COUNT", woundedCount);
+                    text.SetTextVariable("COUNT", $"<span style=\"Warning\">{woundedCount}</span>");
                     return text.ToString();
                 }
 
@@ -695,11 +695,13 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 if (supply < 30)
                 {
-                    return new TextObject("{=brief_supply_critical}The supply wagons are nearly empty. Men eye what remains with worry, and the quartermaster has locked the stores. Equipment requisitions are on hold until the next resupply.").ToString();
+                    var text = new TextObject("{=brief_supply_critical}The supply wagons are nearly empty. Men eye what remains with worry, and the quartermaster has locked the stores. Equipment requisitions are on hold until the next resupply.").ToString();
+                    return $"<span style=\"Alert\">{text}</span>";
                 }
                 if (supply < 50)
                 {
-                    return new TextObject("{=brief_supply_low}Supplies are running thin. Rations have been cut and the quartermaster counts every bolt and bandage with a furrowed brow.").ToString();
+                    var text = new TextObject("{=brief_supply_low}Supplies are running thin. Rations have been cut and the quartermaster counts every bolt and bandage with a furrowed brow.").ToString();
+                    return $"<span style=\"Warning\">{text}</span>";
                 }
                 if (supply < 70)
                 {
@@ -825,15 +827,17 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (daysSinceRaid >= 0 && daysSinceRaid <= 3)
                 {
                     // Same-day raid gets specific wording, older raids get general atmosphere
-                    return daysSinceRaid == 0
+                    var raidText = daysSinceRaid == 0
                         ? new TextObject("{=brief_baggage_raided_today}Raiders struck the baggage train this morning. The wagon guards are still counting what's missing.").ToString()
                         : new TextObject("{=brief_baggage_raided_recent}The baggage raid weighs on everyone's mind. The guards double their watches at night.").ToString();
+                    return $"<span style=\"Alert\">{raidText}</span>";
                 }
                 
                 // Priority 2: Locked state (supply crisis)
                 if (currentAccess == BaggageAccessState.Locked)
                 {
-                    return new TextObject("{=brief_baggage_locked}The quartermaster has locked the baggage wagons. Supplies are too scarce for personal requisitions.").ToString();
+                    var text = new TextObject("{=brief_baggage_locked}The quartermaster has locked the baggage wagons. Supplies are too scarce for personal requisitions.").ToString();
+                    return $"<span style=\"Alert\">{text}</span>";
                 }
                 
                 // Priority 3: Active delay
@@ -841,13 +845,18 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (delayDays > 0)
                 {
                     // Use singular or plural phrasing based on day count
+                    string delayText;
                     if (delayDays == 1)
                     {
-                        return new TextObject("{=brief_baggage_delayed_single}The wagons are stuck in the mud, a day behind the column. The drivers curse and strain.").ToString();
+                        delayText = new TextObject("{=brief_baggage_delayed_single}The wagons are stuck in the mud, a day behind the column. The drivers curse and strain.").ToString();
                     }
-                    var line = new TextObject("{=brief_baggage_delayed}The wagons are stuck in the mud, {DAYS} days behind the column. The drivers curse and strain.");
-                    line.SetTextVariable("DAYS", delayDays);
-                    return line.ToString();
+                    else
+                    {
+                        var line = new TextObject("{=brief_baggage_delayed}The wagons are stuck in the mud, {DAYS} days behind the column. The drivers curse and strain.");
+                        line.SetTextVariable("DAYS", delayDays);
+                        delayText = line.ToString();
+                    }
+                    return $"<span style=\"Warning\">{delayText}</span>";
                 }
                 
                 // Priority 4: Recent arrival (within last 2 days) - good news
@@ -855,9 +864,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (daysSinceArrival >= 0 && daysSinceArrival <= 2)
                 {
                     // Same-day arrival is more urgent/specific than lingering access
-                    return daysSinceArrival == 0
+                    var arrivalText = daysSinceArrival == 0
                         ? new TextObject("{=brief_baggage_arrived_today}The baggage wagons caught up with the column. Men crowd around, looking for their kit.").ToString()
                         : new TextObject("{=brief_baggage_arrived_recent}The wagons are still close. A chance to check your belongings before they fall behind again.").ToString();
+                    return $"<span style=\"Success\">{arrivalText}</span>";
                 }
                 
                 // Priority 5: Temporary access window
@@ -1166,7 +1176,8 @@ namespace Enlisted.Features.Interface.Behaviors
                         if (xpProgress > xpNeeded * 0.8f)
                         {
                             _lastSkillProgressCheck = CampaignTime.Now;
-                            _cachedSkillProgressLine = $"Your {skill.Name.ToString()} skill is nearly ready to advance.";
+                            var skillName = skill.Name.ToString();
+                            _cachedSkillProgressLine = $"Your <span style=\"Success\">{skillName}</span> skill is nearly ready to advance.";
                             return _cachedSkillProgressLine;
                         }
                     }
@@ -1494,6 +1505,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Clean up stale pending events that never fired
                 CleanupStalePendingEvents();
 
+                // Process event outcome queue (promote next queued outcome if current one expired)
+                ProcessEventOutcomeQueue();
+
                 CheckForArmyFormation();
             }
             catch (Exception ex)
@@ -1531,6 +1545,118 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Debug(LogCategory, $"Error cleaning up stale pending events: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Processes the event outcome queue system.
+        /// Checks if the currently shown outcome has been visible for 1 day, and if so,
+        /// removes it from display and promotes the next queued outcome.
+        /// This ensures only one event outcome is shown in Recent Activities at a time.
+        /// </summary>
+        private void ProcessEventOutcomeQueue()
+        {
+            try
+            {
+                _eventOutcomes ??= new List<EventOutcomeRecord>();
+
+                if (_eventOutcomes.Count == 0)
+                {
+                    return;
+                }
+
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var currentOutcome = _eventOutcomes.FirstOrDefault(e => e.IsCurrentlyShown);
+
+                if (currentOutcome != null)
+                {
+                    // Check if the current outcome has been shown for 1 full day
+                    var daysShown = currentDay - currentOutcome.DayShown;
+                    if (daysShown >= 1)
+                    {
+                        // Current outcome expired, clear it from display
+                        currentOutcome.IsCurrentlyShown = false;
+                        ModLogger.Debug(LogCategory, $"Event outcome expired: {currentOutcome.EventId}");
+
+                        // Remove the expired outcome's feed entry
+                        var storyKey = $"event:{currentOutcome.EventId}:{currentOutcome.DayNumber}";
+                        _personalFeed?.RemoveAll(item => item.StoryKey == storyKey);
+
+                        // Promote next queued outcome if any
+                        var nextQueuedOutcome = _eventOutcomes.FirstOrDefault(e => !e.IsCurrentlyShown && e.DayShown < 0);
+                        if (nextQueuedOutcome != null)
+                        {
+                            nextQueuedOutcome.IsCurrentlyShown = true;
+                            nextQueuedOutcome.DayShown = currentDay;
+                            ModLogger.Info(LogCategory, $"Promoted queued event outcome: {nextQueuedOutcome.EventId}");
+
+                            // Add it to the personal feed
+                            string displayText;
+                            if (!string.IsNullOrWhiteSpace(nextQueuedOutcome.ResultNarrative))
+                            {
+                                displayText = $"{nextQueuedOutcome.EventTitle}: {nextQueuedOutcome.ResultNarrative}";
+                            }
+                            else
+                            {
+                                var headline = BuildEventHeadline(nextQueuedOutcome);
+                                var placeholders = new Dictionary<string, string>
+                                {
+                                    { "EVENT_TITLE", nextQueuedOutcome.EventTitle ?? nextQueuedOutcome.EventId },
+                                    { "OPTION", nextQueuedOutcome.OptionChosen ?? string.Empty },
+                                    { "EFFECTS", nextQueuedOutcome.OutcomeSummary ?? string.Empty }
+                                };
+
+                                foreach (var kvp in placeholders)
+                                {
+                                    headline = headline.Replace($"{{{kvp.Key}}}", kvp.Value);
+                                }
+                                displayText = headline;
+                            }
+
+                            AddPersonalNews("event", displayText, null, $"event:{nextQueuedOutcome.EventId}:{nextQueuedOutcome.DayNumber}", 1, nextQueuedOutcome.Severity);
+                        }
+                    }
+                }
+                else
+                {
+                    // No outcome currently shown, check if we have queued outcomes to promote
+                    var nextQueuedOutcome = _eventOutcomes.FirstOrDefault(e => !e.IsCurrentlyShown && e.DayShown < 0);
+                    if (nextQueuedOutcome != null)
+                    {
+                        nextQueuedOutcome.IsCurrentlyShown = true;
+                        nextQueuedOutcome.DayShown = currentDay;
+                        ModLogger.Info(LogCategory, $"Promoted queued event outcome (no current): {nextQueuedOutcome.EventId}");
+
+                        // Add it to the personal feed
+                        string displayText;
+                        if (!string.IsNullOrWhiteSpace(nextQueuedOutcome.ResultNarrative))
+                        {
+                            displayText = $"{nextQueuedOutcome.EventTitle}: {nextQueuedOutcome.ResultNarrative}";
+                        }
+                        else
+                        {
+                            var headline = BuildEventHeadline(nextQueuedOutcome);
+                            var placeholders = new Dictionary<string, string>
+                            {
+                                { "EVENT_TITLE", nextQueuedOutcome.EventTitle ?? nextQueuedOutcome.EventId },
+                                { "OPTION", nextQueuedOutcome.OptionChosen ?? string.Empty },
+                                { "EFFECTS", nextQueuedOutcome.OutcomeSummary ?? string.Empty }
+                            };
+
+                            foreach (var kvp in placeholders)
+                            {
+                                headline = headline.Replace($"{{{kvp.Key}}}", kvp.Value);
+                            }
+                            displayText = headline;
+                        }
+
+                        AddPersonalNews("event", displayText, null, $"event:{nextQueuedOutcome.EventId}:{nextQueuedOutcome.DayNumber}", 1, nextQueuedOutcome.Severity);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error processing event outcome queue", ex);
             }
         }
 
@@ -1647,7 +1773,8 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Records an order outcome for display in daily brief and detailed reports.
+        /// Records an order outcome for display in daily brief, detailed reports, and Recent Activities.
+        /// Uses the same queue system as event outcomes to show one item at a time.
         /// </summary>
         public void AddOrderOutcome(string orderTitle, bool success, string briefSummary,
             string detailedSummary, string issuer, int dayNumber)
@@ -1671,6 +1798,15 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     _orderOutcomes.RemoveAt(0);
                 }
+
+                // Add order outcome to personal feed for Recent Activities display
+                // Use brief title with success/failure indicator and detailed summary as body
+                var resultPrefix = success ? "✓" : "✗";
+                var displayText = $"{resultPrefix} {orderTitle}: {detailedSummary}";
+                var severity = success ? 1 : 2; // Positive for success, Attention for failure
+                
+                // Add to personal feed with 1-day display duration
+                AddPersonalNews("order", displayText, null, $"order:{orderTitle}:{dayNumber}", 1, severity);
 
                 ModLogger.Debug(LogCategory, $"Order outcome recorded: {orderTitle} (success={success}, day={dayNumber})");
             }
@@ -1838,6 +1974,25 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
+                // Queue-based display: only one event outcome visible at a time
+                // Check if there's already an outcome being shown
+                var currentlyShownOutcome = _eventOutcomes.FirstOrDefault(e => e.IsCurrentlyShown);
+                
+                if (currentlyShownOutcome == null)
+                {
+                    // No outcome currently shown, so show this one immediately
+                    outcome.IsCurrentlyShown = true;
+                    outcome.DayShown = (int)CampaignTime.Now.ToDays;
+                    ModLogger.Debug(LogCategory, $"Event outcome shown immediately: {outcome.EventId}");
+                }
+                else
+                {
+                    // Another outcome is already showing, queue this one for later
+                    outcome.IsCurrentlyShown = false;
+                    outcome.DayShown = -1; // Not shown yet
+                    ModLogger.Debug(LogCategory, $"Event outcome queued: {outcome.EventId}");
+                }
+
                 _eventOutcomes.Add(outcome);
 
                 // Keep only last 20 event outcomes
@@ -1846,24 +2001,37 @@ namespace Enlisted.Features.Interface.Behaviors
                     _eventOutcomes.RemoveAt(0);
                 }
 
-                // Add to personal feed with formatted headline
-                var headline = BuildEventHeadline(outcome);
-                var placeholders = new Dictionary<string, string>
+                // Add to personal feed only if this outcome is currently shown
+                if (outcome.IsCurrentlyShown)
                 {
-                    { "EVENT_TITLE", outcome.EventTitle ?? outcome.EventId },
-                    { "OPTION", outcome.OptionChosen ?? string.Empty },
-                    { "EFFECTS", outcome.OutcomeSummary ?? string.Empty }
-                };
+                    // Build display text with narrative for immersive RP
+                    string displayText;
+                    if (!string.IsNullOrWhiteSpace(outcome.ResultNarrative))
+                    {
+                        displayText = $"{outcome.EventTitle}: {outcome.ResultNarrative}";
+                    }
+                    else
+                    {
+                        // Fallback to headline system for backwards compatibility
+                        var headline = BuildEventHeadline(outcome);
+                        var placeholders = new Dictionary<string, string>
+                        {
+                            { "EVENT_TITLE", outcome.EventTitle ?? outcome.EventId },
+                            { "OPTION", outcome.OptionChosen ?? string.Empty },
+                            { "EFFECTS", outcome.OutcomeSummary ?? string.Empty }
+                        };
 
-                // Replace placeholders in headline
-                foreach (var kvp in placeholders)
-                {
-                    headline = headline.Replace($"{{{kvp.Key}}}", kvp.Value);
+                        foreach (var kvp in placeholders)
+                        {
+                            headline = headline.Replace($"{{{kvp.Key}}}", kvp.Value);
+                        }
+                        displayText = headline;
+                    }
+
+                    var severity = outcome.Severity;
+                    // Display for 1 day, then the queue system will promote the next outcome
+                    AddPersonalNews("event", displayText, null, $"event:{outcome.EventId}:{outcome.DayNumber}", 1, severity);
                 }
-
-                // Use severity from outcome if provided, otherwise default to Normal
-                var severity = outcome.Severity;
-                AddPersonalNews("event", headline, placeholders, $"event:{outcome.EventId}:{outcome.DayNumber}", 2, severity);
 
                 ModLogger.Info(LogCategory, $"Event outcome recorded: {outcome.EventId} - {outcome.OptionChosen}");
             }
@@ -2419,6 +2587,50 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Error(LogCategory, "Failed to get recent event outcomes", ex);
                 return new List<EventOutcomeRecord>();
+            }
+        }
+
+        /// <summary>
+        /// Returns personal feed items since the specified campaign day.
+        /// Used by muster menu to display events that occurred during the muster period.
+        /// </summary>
+        public List<DispatchItem> GetPersonalFeedSince(int dayNumber)
+        {
+            try
+            {
+                _personalFeed ??= new List<DispatchItem>();
+                
+                return _personalFeed
+                    .Where(item => item.DayCreated >= dayNumber)
+                    .OrderBy(item => item.DayCreated)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get personal feed since day", ex);
+                return new List<DispatchItem>();
+            }
+        }
+
+        /// <summary>
+        /// Returns order outcomes since the specified campaign day.
+        /// Used by muster menu to display orders completed/failed during the muster period.
+        /// </summary>
+        public List<OrderOutcomeRecord> GetOrderOutcomesSince(int dayNumber)
+        {
+            try
+            {
+                _orderOutcomes ??= new List<OrderOutcomeRecord>();
+                
+                return _orderOutcomes
+                    .Where(outcome => outcome.DayNumber >= dayNumber)
+                    .OrderBy(outcome => outcome.DayNumber)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get order outcomes since day", ex);
+                return new List<OrderOutcomeRecord>();
             }
         }
 
@@ -4445,13 +4657,19 @@ namespace Enlisted.Features.Interface.Behaviors
             var eventTitle = record.EventTitle ?? string.Empty;
             var optionChosen = record.OptionChosen ?? string.Empty;
             var outcomeSummary = record.OutcomeSummary ?? string.Empty;
+            var resultNarrative = record.ResultNarrative ?? string.Empty;
             var dayNumber = record.DayNumber;
+            var isCurrentlyShown = record.IsCurrentlyShown;
+            var dayShown = record.DayShown;
 
             dataStore.SyncData($"{prefix}_eventId", ref eventId);
             dataStore.SyncData($"{prefix}_title", ref eventTitle);
             dataStore.SyncData($"{prefix}_option", ref optionChosen);
             dataStore.SyncData($"{prefix}_summary", ref outcomeSummary);
+            dataStore.SyncData($"{prefix}_narrative", ref resultNarrative);
             dataStore.SyncData($"{prefix}_day", ref dayNumber);
+            dataStore.SyncData($"{prefix}_isShown", ref isCurrentlyShown);
+            dataStore.SyncData($"{prefix}_dayShown", ref dayShown);
 
             // Save effects dictionary as key-value pairs
             var effectsCount = record.EffectsApplied?.Count ?? 0;
@@ -4480,13 +4698,19 @@ namespace Enlisted.Features.Interface.Behaviors
             var eventTitle = string.Empty;
             var optionChosen = string.Empty;
             var outcomeSummary = string.Empty;
+            var resultNarrative = string.Empty;
             var dayNumber = 0;
+            var isCurrentlyShown = false;
+            var dayShown = -1;
 
             dataStore.SyncData($"{prefix}_eventId", ref eventId);
             dataStore.SyncData($"{prefix}_title", ref eventTitle);
             dataStore.SyncData($"{prefix}_option", ref optionChosen);
             dataStore.SyncData($"{prefix}_summary", ref outcomeSummary);
+            dataStore.SyncData($"{prefix}_narrative", ref resultNarrative);
             dataStore.SyncData($"{prefix}_day", ref dayNumber);
+            dataStore.SyncData($"{prefix}_isShown", ref isCurrentlyShown);
+            dataStore.SyncData($"{prefix}_dayShown", ref dayShown);
 
             // Load effects dictionary
             var effectsCount = 0;
@@ -4511,8 +4735,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 EventTitle = eventTitle,
                 OptionChosen = optionChosen,
                 OutcomeSummary = outcomeSummary,
+                ResultNarrative = resultNarrative,
                 DayNumber = dayNumber,
-                EffectsApplied = effects
+                EffectsApplied = effects,
+                IsCurrentlyShown = isCurrentlyShown,
+                DayShown = dayShown
             };
         }
 
@@ -4740,6 +4967,7 @@ namespace Enlisted.Features.Interface.Behaviors
     /// <summary>
     /// Records an event outcome for display in Personal Feed and reports.
     /// Tracks what event fired, which option was chosen, and effects applied.
+    /// Uses a queue system to show one outcome at a time in Recent Activities.
     /// </summary>
     public sealed class EventOutcomeRecord
     {
@@ -4748,6 +4976,12 @@ namespace Enlisted.Features.Interface.Behaviors
         public string OptionChosen { get; set; }
         public string OutcomeSummary { get; set; }
         public int DayNumber { get; set; }
+
+        /// <summary>
+        /// The narrative result text shown to the player describing what happened.
+        /// This is the RP/story outcome, not just the mechanical effects.
+        /// </summary>
+        public string ResultNarrative { get; set; }
 
         /// <summary>
         /// Individual effect values applied (for headline formatting).
@@ -4759,6 +4993,19 @@ namespace Enlisted.Features.Interface.Behaviors
         /// Severity level for color coding and persistence (0=Normal, 1=Positive, 2=Attention, 3=Urgent, 4=Critical).
         /// </summary>
         public int Severity { get; set; }
+
+        /// <summary>
+        /// Tracks whether this outcome is currently shown in Recent Activities (true) or queued (false).
+        /// Only one outcome is shown at a time; others wait in queue.
+        /// </summary>
+        public bool IsCurrentlyShown { get; set; }
+
+        /// <summary>
+        /// The day this outcome was first displayed in Recent Activities.
+        /// Used to track the 1-day visibility window before promoting the next queued outcome.
+        /// -1 means it hasn't been shown yet (still in queue).
+        /// </summary>
+        public int DayShown { get; set; }
     }
 
     /// <summary>
@@ -4783,6 +5030,9 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>Day number when this muster occurred.</summary>
         public int DayNumber { get; set; }
 
+        /// <summary>Strategic context tag for flavor text (e.g., "coordinated_offensive").</summary>
+        public string StrategicContext { get; set; } = string.Empty;
+
         /// <summary>Pay outcome: "paid", "partial", "delayed", "promissory", "corruption", etc.</summary>
         public string PayOutcome { get; set; } = string.Empty;
 
@@ -4806,6 +5056,33 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>Number of soldiers sick since previous muster.</summary>
         public int SickSinceLast { get; set; }
+
+        /// <summary>Count of orders completed this period.</summary>
+        public int OrdersCompleted { get; set; }
+
+        /// <summary>Count of orders failed this period.</summary>
+        public int OrdersFailed { get; set; }
+
+        /// <summary>Baggage check outcome: "passed", "confiscated", "bribed", "skipped".</summary>
+        public string BaggageOutcome { get; set; } = string.Empty;
+
+        /// <summary>Inspection outcome: "perfect", "basic", "failed", "skipped".</summary>
+        public string InspectionOutcome { get; set; } = string.Empty;
+
+        /// <summary>Recruit outcome: "mentored", "ignored", "hazed", "skipped".</summary>
+        public string RecruitOutcome { get; set; } = string.Empty;
+
+        /// <summary>New tier if promoted this period (0 if no promotion).</summary>
+        public int PromotionTier { get; set; }
+
+        /// <summary>Current retinue size (T7+ only, 0 otherwise).</summary>
+        public int RetinueStrength { get; set; }
+
+        /// <summary>Retinue losses this period (T7+ only).</summary>
+        public int RetinueCasualties { get; set; }
+
+        /// <summary>List of fallen retinue member names (T7+ only).</summary>
+        public List<string> FallenRetinueNames { get; set; } = new List<string>();
 
         /// <summary>Flavor text shown to player about the ration.</summary>
         public string RationFlavorText { get; set; } = string.Empty;

@@ -199,6 +199,25 @@ namespace Enlisted.Features.Logistics
                 return BaggageAccessState.FullAccess;
             }
             
+            // Priority 7.5: Muster Window - grants full access during muster and for 6 hours after
+            // Active muster takes precedence over march state to allow baggage access during pay muster
+            if (enlistment.PayMusterPending)
+            {
+                ModLogger.Debug(LogCategory, "GetCurrentAccess: Muster active, returning FullAccess");
+                return BaggageAccessState.FullAccess;
+            }
+            
+            // Check post-muster window (6 hours after muster completes)
+            if (enlistment.LastMusterCompletionTime > CampaignTime.Zero)
+            {
+                var hoursSinceMuster = CampaignTime.Now.ToHours - enlistment.LastMusterCompletionTime.ToHours;
+                if (hoursSinceMuster >= 0 && hoursSinceMuster < 6.0f)
+                {
+                    ModLogger.Debug(LogCategory, $"GetCurrentAccess: Post-muster window active ({6.0f - hoursSinceMuster:F1}h remaining)");
+                    return BaggageAccessState.FullAccess;
+                }
+            }
+            
             // Priority 8: Settlement - always has access in settlements
             if (party.CurrentSettlement != null)
             {

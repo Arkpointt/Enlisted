@@ -1,10 +1,10 @@
 # News & Reporting System
 
-**Summary:** The news and reporting system tracks game events and generates narrative feedback for the player. It manages two feed types (kingdom-wide and personal), a daily brief with company/player/kingdom context, and a company needs status report. All text uses immersive Bannerlord military flavor instead of raw statistics.
+**Summary:** The news and reporting system tracks game events and generates narrative feedback for the player. It manages two feed types (kingdom-wide and personal), a daily brief with company/player/kingdom context, and a company needs status report. Event and order outcomes are displayed in Recent Activities using a queue system instead of popups to reduce UI interruption. All text uses immersive Bannerlord military flavor instead of raw statistics.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23  
-**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md)
+**Last Updated:** 2025-12-24 (Removed outcome popup system; events and orders now display in Recent Activities queue)  
+**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md)
 
 ---
 
@@ -12,6 +12,7 @@
 
 - [Overview](#overview)
 - [System Architecture](#system-architecture)
+- [Event & Order Outcome Queue System](#event--order-outcome-queue-system)
 - [Kingdom Feed](#kingdom-feed)
 - [Personal Feed](#personal-feed)
 - [Daily Brief](#daily-brief)
@@ -100,6 +101,70 @@ The behavior subscribes to these Bannerlord campaign events:
 
 ---
 
+## Event & Order Outcome Queue System
+
+**Purpose:** Display event and order outcome narratives in Recent Activities instead of popup interruptions, using a queue to show one outcome at a time for better UX.
+
+### Design Goals
+
+1. **Reduce UI Interruption:** Event and order outcomes no longer show as popups after making choices
+2. **Maintain Immersion:** Full narrative result text preserved and displayed in Recent Activities
+3. **Prevent Clutter:** Only one outcome visible at a time (events and orders share the feed)
+4. **Natural Discovery:** Players check their status menu to see what happened
+
+### What Still Uses Popups
+
+- **Initial event choices** - Event setup and option selection still show as popups (for progression)
+- **Multi-phase events** - Each phase shows a new event popup (chains work normally)
+- **Reward choices** - Training focus selection and other sub-choices still use popups
+- Only the **outcome narrative** after making a choice goes to Recent Activities
+
+### Queue Behavior
+
+**Display Rules:**
+- ONE event outcome shows in Recent Activities at any given time
+- Each outcome displays for exactly 1 day
+- Multiple events on the same day queue automatically (FIFO)
+- Daily tick removes expired outcomes and promotes next in queue
+
+**Example Flow:**
+```
+Day 1, Morning:
+  - Event A fires → Shows immediately in Recent Activities
+  - Event B fires later → Queued (hidden)
+
+Day 2, Morning:
+  - Event A expires (shown for 1 day) → Removed from display
+  - Event B promoted → Now visible in Recent Activities
+  - Event C fires → Queued
+
+Day 3, Morning:
+  - Event B expires → Removed
+  - Event C promoted → Now visible
+```
+
+**Implementation:**
+- `EventOutcomeRecord` tracks `IsCurrentlyShown` and `DayShown` for each outcome
+- `AddEventOutcome()` checks if an outcome is already showing; if yes, queues new one
+- `ProcessEventOutcomeQueue()` runs on daily tick to expire and promote outcomes
+- Personal feed entries are added/removed dynamically as queue processes
+
+**Display Format:**
+```
+Recent Activities:
+• Crossing Gone Bad: You wait on the bank with the others, 
+  watching the pioneers work. They know their business, but 
+  the current is strong and the footing treacherous. It will 
+  take time.
+
+• ✗ Inspect the Picket Line: You missed a gap in the 
+  pickets. The sergeant finds it on his own rounds.
+```
+
+**Technical Note:** The outcome popup system has been removed (dead code: `ShowResultText()` and `ShowOrderResult()` deleted). Event outcomes are recorded with their full `ResultNarrative` text, and order outcomes use their detailed summary text. Both are added to the personal feed only when actively shown. This reduces cognitive load and allows players to review outcomes at their own pace.
+
+---
+
 ## Kingdom Feed
 
 Kingdom-wide events visible to all enlisted lords in your kingdom.
@@ -146,6 +211,80 @@ Events specific to your enlisted lord and your direct participation.
 
 A once-per-day narrative paragraph that combines multiple systems. Generated at daily tick and cached for 24 hours.
 
+**Color Coding:** Uses semantic color spans from the enlisted color scheme to emphasize important elements:
+- **Alert (Red):** Casualties, critical supply warnings, raids
+- **Warning (Gold):** Low supplies, delays, wounded counts
+- **Success (Green):** Arrivals, skill progress, positive outcomes
+
+**Display Location:** Main enlisted menu
+
+**Current Structure (Pre-Orchestrator):**
+- Single "COMPANY REPORT" section with combined content
+
+**Future Structure (With Orchestrator - Phase 5):**
+- **"COMPANY REPORT"** section: Orchestrator rhythm flavor (see below)
+- **"DAILY NEWS"** section: Kingdom context, casualties, events (existing Daily Brief content)
+
+---
+
+### Company Report Section (Future - Orchestrator Phase 5)
+
+**Purpose:** Player-facing transparency showing what the orchestrator is thinking.
+
+**Generated by:** `BuildCompanyReportSection()` (new method)
+
+**Content:**
+- Current military life rhythm icon and name (Garrison, Campaign, Siege, etc.)
+- Activity level (Quiet, Active, Intense, Crisis)
+- Observable world facts explaining the situation
+- Implicit signal about expected event frequency
+
+**NOT included:**
+- ❌ Soldier counts (Daily News already reports casualties)
+- ❌ Supply/Morale/Rest bars (those are in Reports submenu)
+- ❌ Redundant information
+
+**Example Output:**
+```
+⚙️ CAMP STATUS: Garrison - Quiet
+
+Your lord holds at Pravend with no threats on the horizon. 
+The camp has settled into routine. Little disturbs the 
+daily rhythm.
+```
+
+**Technical Implementation:**
+```csharp
+public string BuildCompanyReportSection()
+{
+    if (ContentOrchestrator.Instance == null) 
+        return string.Empty;
+    
+    var rhythmIcon = GetRhythmIcon();
+    var rhythmName = GetRhythmName();
+    var activityLevel = GetActivityLevelName();
+    var flavorText = ContentOrchestrator.Instance.GetOrchestratorRhythmFlavor();
+    
+    return $"<span style=\"Header\">{rhythmIcon} CAMP STATUS: {rhythmName} - {activityLevel}</span>\n\n{flavorText}";
+}
+```
+
+**Alignment with Daily News:**
+Both sections pull from the same world state sources, ensuring no contradictions:
+- Same party state checks (battle, siege, settlement, army)
+- Same kingdom state checks (wars, peace, threats)
+- Orchestrator context explains "why," Daily News provides "what happened"
+
+See **[Content Orchestrator Plan](../../Features/Content/content-orchestrator-plan.md#phase-5-refinement--ui-integration-week-5)** for full implementation details.
+
+---
+
+### Daily News Section (Current: "Daily Brief")
+
+**Current name:** "COMPANY REPORT" section (will be renamed to "DAILY NEWS" in Phase 5)
+
+**Generated by:** `BuildDailyBriefSection()` (existing method, will be refactored)
+
 ### Generation Flow
 
 ```
@@ -160,15 +299,16 @@ OnDailyTick() called
     │
     └→ BuildDailyBriefSection() (when UI requests)
         ├→ Start with _dailyBriefCompany
-        ├→ Add BuildSupplyContextLine() if supplies < 70%
-        ├→ Add BuildCasualtyReportLine() if losses/wounded
+        ├→ Add BuildSupplyContextLine() if supplies < 70% (color-coded by severity)
+        ├→ Add BuildCasualtyReportLine() if losses/wounded (color-coded)
         ├→ Add BuildRecentEventLine() if events in last 24h
         ├→ Add BuildPendingEventsLine() if chain events pending
         ├→ Add BuildFlagContextLine() (random reputation flavor)
-        ├→ Add BuildSkillProgressLine() if skill near levelup
+        ├→ Add BuildSkillProgressLine() if skill near levelup (color-coded)
+        ├→ Add BuildBaggageStatusLine() if baggage events (color-coded by status)
         ├→ Add _dailyBriefUnit
         └→ Add _dailyBriefKingdom
-            └→ Return as single flowing paragraph
+            └→ Return as single flowing paragraph with embedded color spans
 ```
 
 ### Section Builders
@@ -217,19 +357,19 @@ Implemented via `PickRandomLocalizedString(prefix, count, fallbackId)` with `Fla
 Only shown when `CompanyNeeds.Supplies < 70`.
 
 **Thresholds:**
-- `< 30`: Critical (stores locked)
-- `< 50`: Low (rations cut)
-- `< 70`: Moderate (dwindling)
+- `< 30`: Critical (stores locked) - **Color: Alert (Red)**
+- `< 50`: Low (rations cut) - **Color: Warning (Gold)**
+- `< 70`: Moderate (dwindling) - **Color: Warning (Gold)**
 
 #### BuildCasualtyReportLine()
 Uses `_lostSinceLastMuster` (reset at muster) and current wounded count.
 
 **Variations:**
-- Heavy losses (10+): Somber tone
-- Moderate losses (5-9): Names spoken at fire
-- Few losses (2-4): Cost of march
-- Single loss: Lads are quiet
-- Wounded only: Scaled by count
+- Heavy losses (10+): Somber tone - **Lost count in Alert (Red)**
+- Moderate losses (5-9): Names spoken at fire - **Lost count in Alert (Red)**
+- Few losses (2-4): Cost of march - **Lost count in Alert (Red)**
+- Single loss: Lads are quiet - **Lost count in Alert (Red)**
+- Wounded only: Scaled by count - **Wounded count in Warning (Gold)**
 
 #### BuildRecentEventLine()
 Checks `_eventOutcomes` for entries with `dayNumber` within 1 day of current.
@@ -271,6 +411,16 @@ Cached for 6 hours. Checks main combat skills (`OneHanded`, `TwoHanded`, `Polear
 
 Uses `CharacterDevelopmentModel.GetXpRequiredForLevel()` to calculate percentage to next level. Shows hint if any skill >= 80% to levelup.
 
+**Color:** Skill name wrapped in **Success (Green)** to emphasize progress.
+
+#### BuildBaggageStatusLine()
+Reports on the baggage train status based on `BaggageTrainManager` state.
+
+**Status Types:**
+- **Raids/Locked:** "Baggage was raided" - **Color: Alert (Red)**
+- **Delays:** "Baggage delayed X days" - **Color: Warning (Gold), days count also in Warning**
+- **Arrivals:** "Baggage caught up" - **Color: Success (Green)**
+
 ### Player Battle Tracking
 
 The system tracks player battle participation for aftermath flavor:
@@ -285,6 +435,10 @@ Updated in `CheckPlayerBattleParticipation()` called from `OnMapEventEnded()`.
 ## Company Status Report
 
 Generated on-demand when Reports menu opens. Does NOT cache.
+
+**Display Location:** Reports menu only (accessed via "Service Records" → "Company Reports")
+
+**NOT shown on main menu** - The main enlisted menu only shows the Daily Brief and Recent Actions.
 
 ### BuildCompanyStatusReport()
 
@@ -503,15 +657,34 @@ Tracks order completions for service record.
 
 ### EventOutcomeRecord
 
-Tracks event choices for personal feed.
+Tracks event choices for personal feed using a queue system to display one outcome at a time.
+
+**Note:** Orders also feed into the Recent Activities display via `AddOrderOutcome()`, but use a simpler system without queuing.
 
 **Fields:**
 - `EventId`: Event identifier
 - `EventTitle`: Localized title
 - `OptionChosen`: Which option selected
-- `OutcomeSummary`: Result text
-- `DayNumber`: When occurred
+- `OutcomeSummary`: Mechanical effects summary (legacy)
+- `ResultNarrative`: Full RP narrative outcome text from option's `resultText` field
+- `DayNumber`: When event occurred
 - `EffectsApplied`: Dictionary<string, int> of effects
+- `Severity`: Color coding level (0=Normal, 1=Positive, 2=Attention, 3=Urgent, 4=Critical)
+- `IsCurrentlyShown`: True if outcome is displayed in Recent Activities, false if queued
+- `DayShown`: Day this outcome was first displayed (-1 if still in queue)
+
+**Queue System Behavior:**
+- Only ONE event outcome is shown in Recent Activities at any given time
+- When multiple events fire, subsequent outcomes queue automatically
+- Each outcome displays for exactly 1 day
+- Daily tick automatically removes expired outcomes and promotes next queued outcome
+- Queue processes first-in-first-out (FIFO)
+
+**Display:**
+- Outcome narrative replaces popup interruption to reduce UI overhead
+- Players check Recent Activities section in status menu to see what happened
+- Format: `"{EventTitle}: {ResultNarrative}"`
+- Example: *"Crossing Gone Bad: You wait on the bank with the others, watching the pioneers work. They know their business, but the current is strong and the footing treacherous. It will take time."*
 
 **Added via:** `AddEventOutcome()` (called by EventDeliveryManager)
 

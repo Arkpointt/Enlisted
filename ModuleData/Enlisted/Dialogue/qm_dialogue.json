@@ -3,14 +3,15 @@
   "dialogueType": "quartermaster",
   "nodes": [
     {
-      "_comment": "Hub greeting - excellent supply (80-100%)",
+      "_comment": "Hub greeting - excellent supply (80-100%) - OFFICERS ONLY",
       "id": "qm_hub",
       "speaker": "quartermaster",
       "textId": "qm_hub_excellent",
-      "text": "Stores are full. Speak your need, my lord.",
+      "text": "Stores are full. What do you need?",
       "context": {
         "is_introduced": true,
-        "supply_level": "excellent"
+        "supply_level": "excellent",
+        "tier_min": 7
       },
       "options": [
         {

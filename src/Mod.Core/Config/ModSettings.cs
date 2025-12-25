@@ -57,20 +57,46 @@ namespace Enlisted.Mod.Core.Config
 		[DataMember(Name = "LogLevels")]
 		public LogLevelSettings LogLevels { get; set; } = new LogLevelSettings();
 
-		/// <summary>
-		/// Settings for encounter suppression and party attachment behavior.
-		/// Controls when encounters are prevented and how party following works.
-		/// </summary>
-		[DataMember(Name = "Encounter")]
-		public EncounterSettings Encounter { get; set; } = new EncounterSettings();
+	/// <summary>
+	/// Settings for encounter suppression and party attachment behavior.
+	/// Controls when encounters are prevented and how party following works.
+	/// </summary>
+	[DataMember(Name = "Encounter")]
+	public EncounterSettings Encounter { get; set; } = new EncounterSettings();
 
-		/// <summary>
-		/// Per-category log level configuration.
-		/// Each property maps to a logging category and controls its verbosity.
-		/// Valid values: "Off", "Error", "Warn", "Info", "Debug", "Trace"
-		/// </summary>
-		[DataContract]
-		public sealed class LogLevelSettings
+	/// <summary>
+	/// Feature flag to enable the new multi-stage muster menu system.
+	/// If true, uses MusterMenuHandler for comprehensive muster experience.
+	/// If false, falls back to legacy inquiry popup.
+	/// Default is true (new system is production-ready).
+	/// </summary>
+	[DataMember(Name = "use_new_muster_menu")]
+	public bool UseNewMusterMenu { get; set; } = true;
+
+	/// <summary>
+	/// Whether to pause game time during muster sequence.
+	/// If true, game stops and time controls are locked during muster menus.
+	/// If false, respects player's current time speed and allows time advancement.
+	/// Default is true to create a focused administrative checkpoint experience.
+	/// </summary>
+	[DataMember(Name = "PauseGameDuringMuster")]
+	public bool PauseGameDuringMuster { get; set; } = true;
+
+	/// <summary>
+	/// Whether to enable debug tools in-game (debug menu options, test commands).
+	/// When true, adds debug options to Camp Hub menu for testing features.
+	/// Default is true for development/testing, set to false for production.
+	/// </summary>
+	[DataMember(Name = "EnableDebugTools")]
+	public bool EnableDebugTools { get; set; } = true;
+
+	/// <summary>
+	/// Per-category log level configuration.
+	/// Each property maps to a logging category and controls its verbosity.
+	/// Valid values: "Off", "Error", "Warn", "Info", "Debug", "Trace"
+	/// </summary>
+	[DataContract]
+	public sealed class LogLevelSettings
 		{
 			/// <summary>Default log level for categories not explicitly configured.</summary>
 			[DataMember(Name = "Default")]

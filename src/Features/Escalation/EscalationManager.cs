@@ -1152,6 +1152,7 @@ namespace Enlisted.Features.Escalation
         /// <summary>
         /// Attempts to trigger a threshold event when a track crosses a threshold upward.
         /// Maps track name and threshold to event ID and queues the event if it exists.
+        /// Respects global event pacing limits to prevent event spam.
         /// </summary>
         private void TryTriggerThresholdEvent(string track, int threshold)
         {
@@ -1169,10 +1170,22 @@ namespace Enlisted.Features.Escalation
                 return;
             }
 
+            // Check global pacing limits before firing threshold event
+            // Use "escalation" category for per-category cooldown tracking
+            if (!Content.GlobalEventPacer.CanFireAutoEvent(eventId, "escalation", out var blockReason))
+            {
+                ModLogger.Debug(LogCategory, $"Threshold event {eventId} blocked by pacing: {blockReason}");
+                return;
+            }
+
             var evt = Content.EventCatalog.GetEvent(eventId);
             if (evt != null && Content.EventDeliveryManager.Instance != null)
             {
                 Content.EventDeliveryManager.Instance.QueueEvent(evt);
+                
+                // Record in global pacer to track daily/weekly limits
+                Content.GlobalEventPacer.RecordAutoEvent(eventId, "escalation");
+                
                 ModLogger.Info(LogCategory, $"Queued threshold event: {eventId}");
             }
             else
