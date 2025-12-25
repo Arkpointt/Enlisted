@@ -266,9 +266,24 @@ This reminds players to visit the Quartermaster to:
 **8. Muster Recap**
 - At the next muster (12-day pay cycle), a **Promotion Recap** stage displays
 - This formal acknowledgment shows when the promotion occurred during the period
-- Recap includes: promotion date, wage increase, unlocked equipment, new abilities
-- Optional: Visit Quartermaster directly from the recap if not done yet
-- See [Muster Menu System](muster-menu-revamp.md#6-promotion-recap-menu) for details
+- Recap appears as stage 6 in the muster sequence (after inspections/recruit, before retinue/complete)
+- **Formal acknowledgment before assembled company:** Captain addresses formation with official recognition
+- **Promotion details displayed:**
+  - Previous rank → Current rank
+  - Date of promotion (e.g., "Day 20 (8 days ago)")
+  - Wage increase (old rate → new rate)
+  - Equipment tier unlocked (e.g., "Tier 4 equipment available from Quartermaster")
+  - New authorities granted (e.g., "Lead small patrols")
+  - New camp decisions/orders unlocked
+  - Current XP progress toward next tier
+- **Options:**
+  - Continue with muster
+  - Visit Quartermaster immediately (flag for after muster completion)
+- **Special notes:**
+  - For T7 promotions: Acknowledges retinue grant
+  - For T9 promotions: Shows "pinnacle of service" message
+  - If multiple tiers skipped (rare): Shows all aggregate benefits
+- **See:** [Muster System - Promotion Recap](muster-system.md#6-promotion-recap) for complete stage details
 
 ### Fallback Mechanism
 
@@ -297,10 +312,11 @@ Each tier transition includes a unique narrative event that tests your character
 - **Cavalry** → Mounted warfare, lance and sword, ride with lancers
 - **Horse Archer** → Mounted archery, mobile skirmisher (if faction supports)
 
-**Effect:** Determines your **battle formation assignment** (which formation you fight in during battles). This is separate from the T7 retinue formation selection which determines what troops your personal command consists of. Your battle formation affects:
-- Equipment the Quartermaster offers
-- Training events available
-- Which unit you deploy with in combat
+**Effect:** This choice provides narrative flavor and affects:
+- Equipment the Quartermaster offers (category filtering)
+- Training events available (skill-based content)
+
+**Note:** Your actual **battle formation assignment** (T1-T6 only) is detected dynamically from your equipped weapons at battle start: bow → Ranged, horse → Cavalry, both → Horse Archer, melee → Infantry. This T2 choice represents your "stated specialty" for equipment and training purposes, but doesn't lock you into a formation. At T7+ you control your own party and formation assignment is skipped entirely.
 
 **Location:** `ModuleData/Enlisted/Events/events_promotion.json` → `promotion_t1_t2_finding_your_place`
 

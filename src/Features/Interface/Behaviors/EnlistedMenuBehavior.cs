@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 // Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
+using Enlisted.Debugging.Behaviors;
 using Enlisted.Features.Company;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Conversations.Behaviors;
@@ -14,6 +15,7 @@ using Enlisted.Features.Logistics;
 using Enlisted.Features.Orders.Behaviors;
 using Enlisted.Features.Content;
 using Enlisted.Mod.Core;
+using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using TaleWorlds.CampaignSystem;
@@ -1532,6 +1534,21 @@ namespace Enlisted.Features.Interface.Behaviors
                 },
                 false, 99);
 
+            // DEBUG: Trigger Muster (only shows when EnableDebugTools is true)
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_debug_muster",
+                "{=enlisted_debug_muster}🔧 DEBUG: Trigger Muster",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    args.Tooltip = new TextObject("{=enlisted_debug_muster_tooltip}[DEBUG] Immediately trigger the muster system for testing.");
+                    return ModConfig.Settings?.EnableDebugTools == true;
+                },
+                _ =>
+                {
+                    DebugToolsBehavior.TriggerMuster();
+                },
+                false, 99);
+
             // Back
             starter.AddGameMenuOption(CampHubMenuId, "camp_hub_back",
                 "{=enlisted_camp_back}Back",
@@ -2102,12 +2119,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 var dailyBrief = news?.BuildDailyBriefSection();
                 sb.AppendLine("<span style=\"Header\">_____ COMPANY REPORT _____</span>");
                 sb.AppendLine(!string.IsNullOrWhiteSpace(dailyBrief) ? dailyBrief : "No report available.");
-                sb.AppendLine();
-
-                // Company Status summary (compact one-liners)
-                sb.AppendLine("<span style=\"Header\">_____ COMPANY STATUS _____</span>");
-                var companyStatusSummary = BuildCompactCompanyStatusSummary(enlistment);
-                sb.AppendLine(companyStatusSummary);
                 sb.AppendLine();
 
                 // RECENT ACTIONS section: Personal feed items (battles, orders, reputation changes)
@@ -4443,11 +4454,12 @@ namespace Enlisted.Features.Interface.Behaviors
                 };
 
                 // Color-code labels and values based on severity
-                var readinessColor = needs.Readiness >= 60 ? "Default" : needs.Readiness >= 40 ? "Warning" : "Alert";
-                var moraleColor = needs.Morale >= 60 ? "Default" : needs.Morale >= 40 ? "Warning" : "Alert";
+                // Good values (60+) use Success (green) to make them visually distinct and positive
+                var readinessColor = needs.Readiness >= 60 ? "Success" : needs.Readiness >= 40 ? "Warning" : "Alert";
+                var moraleColor = needs.Morale >= 60 ? "Success" : needs.Morale >= 40 ? "Warning" : "Alert";
                 var suppliesColor = needs.Supplies >= 60 ? "Success" : needs.Supplies >= 40 ? "Warning" : "Alert";
-                var equipmentColor = needs.Equipment >= 60 ? "Default" : needs.Equipment >= 40 ? "Warning" : "Alert";
-                var restColor = needs.Rest >= 60 ? "Default" : needs.Rest >= 40 ? "Warning" : "Alert";
+                var equipmentColor = needs.Equipment >= 60 ? "Success" : needs.Equipment >= 40 ? "Warning" : "Alert";
+                var restColor = needs.Rest >= 60 ? "Success" : needs.Rest >= 40 ? "Warning" : "Alert";
 
                 sb.AppendLine($"<span style=\"Label\">Readiness:</span> <span style=\"{readinessColor}\">{readinessStatus}</span> | <span style=\"Label\">Morale:</span> <span style=\"{moraleColor}\">{moraleStatus}</span>");
                 sb.AppendLine($"<span style=\"Label\">Supplies:</span> <span style=\"{suppliesColor}\">{supplyStatus}</span> | <span style=\"Label\">Equipment:</span> <span style=\"{equipmentColor}\">{equipmentStatus}</span>");

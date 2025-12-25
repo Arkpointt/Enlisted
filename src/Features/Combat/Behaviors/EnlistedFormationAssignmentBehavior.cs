@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -450,14 +451,24 @@ namespace Enlisted.Features.Combat.Behaviors
                 return;
             }
 
-            // All tiers use the duty-based formation (Infantry/Ranged/Cavalry/HorseArcher)
-            // At Commander tier (T7+), the formation will be made player-controllable for squad commands
             var enlistmentTier = enlistment.EnlistmentTier;
-            var isTier4Plus = enlistmentTier >= RetinueManager.CommanderTier1;
+            var isCommanderTier = enlistmentTier >= RetinueManager.CommanderTier1;
             
-            // The player's formation defaults to infantry while active duty assignments are being updated.
-            var formationString = "infantry";
-            var formationClass = GetFormationClassFromString(formationString);
+            // T7+ (Commander tier): Player has their own party and controls their own formation.
+            // Skip auto-assignment and let the native game handle it - they're commanders now.
+            if (isCommanderTier)
+            {
+                ModLogger.Info("FormationAssignment",
+                    $"[{caller}] Commander tier (T{enlistmentTier}) - skipping formation assignment, player controls their own party");
+                _assignedAgent = playerAgent;
+                return;
+            }
+            
+            // T1-T6: Soldiers are assigned to formation based on equipped weapons
+            // They fight where the chain of command puts them based on their loadout
+            // No squad command - they're regular soldiers in the ranks
+            const bool isTier4Plus = false;
+            var formationClass = DetectFormationFromEquipment();
 
             // Get the formation from the team
             var targetFormation = playerTeam.GetFormation(formationClass);
@@ -524,28 +535,14 @@ namespace Enlisted.Features.Combat.Behaviors
                 // Store the player's formation for party assignment
                 _playerSquadFormation = targetFormation;
 
-                // FIX: Mark that we need to teleport the player to their formation position
+                // Mark that we need to teleport the player to their formation position
                 // This handles cases where the player spawned late or in wrong location
                 // because their map party was slightly behind the lord when battle started
                 _needsPositionFix = true;
                 _positionFixAttempts = 0;
                 
-                // At Commander tier (T7+), player has companions and retinue soldiers
-                // Mark that we need to assign all player party members to the same formation
-                if (isTier4Plus)
-                {
-                    _needsPartyAssignment = true;
-                    _partyAssignmentAttempts = 0;
-                    _partyAssignmentComplete = false;
-                    
-                    ModLogger.Info("FormationAssignment",
-                        $"[{caller}] Tier {enlistmentTier} player assigned to {formationClass} - party will join, squad commands enabled");
-                }
-                else
-                {
-                    ModLogger.Info("FormationAssignment",
-                        $"[{caller}] Assigned enlisted player to {formationClass} formation (index: {targetFormation.Index})");
-                }
+                ModLogger.Info("FormationAssignment",
+                    $"[{caller}] Assigned enlisted soldier to {formationClass} formation (index: {targetFormation.Index})");
             }
             catch (Exception ex)
             {
@@ -705,10 +702,11 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        ///     Attempts to teleport the player (and their squad at Commander tier (T7+)) to the correct position 
-        ///     within their assigned formation. This fixes the issue where the player's party spawns 
-        ///     behind the formation when their map party was slightly behind the lord when battle started.
-        ///     At Commander tier (T7+), the entire squad (player + retinue + companions) is teleported together.
+        ///     Attempts to teleport the player to the correct position within their assigned formation. 
+        ///     This fixes the issue where the player spawns behind the formation when their map party 
+        ///     was slightly behind the lord when battle started.
+        ///     
+        ///     Only applies to T1-T6 soldiers. T7+ commanders control their own party and spawn position.
         ///     
         ///     CRITICAL: We find an ARMY agent (not from player's party) to use as reference position,
         ///     because CachedMedianPosition includes our own party members who spawned at the wrong spot.
@@ -729,6 +727,13 @@ namespace Enlisted.Features.Combat.Behaviors
                     _needsPositionFix = false;
                     return;
                 }
+                
+                // T7+ commanders control their own party - don't teleport them
+                if (enlistment.EnlistmentTier >= RetinueManager.CommanderTier1)
+                {
+                    _needsPositionFix = false;
+                    return;
+                }
 
                 var formation = playerAgent.Formation;
                 if (formation == null)
@@ -742,13 +747,11 @@ namespace Enlisted.Features.Combat.Behaviors
                     return;
                 }
 
-                var isTier4Plus = enlistment.EnlistmentTier >= RetinueManager.CommanderTier1;
                 var playerPosition = playerAgent.Position;
                 var mainParty = PartyBase.MainParty;
 
-                // The player is typically assigned to the infantry formation unless specified by an order.
-                var formationString = "infantry";
-                var formationClass = GetFormationClassFromString(formationString);
+                // Detect formation from player's equipped weapons and mount
+                var formationClass = DetectFormationFromEquipment();
                 var currentLord = enlistment.CurrentLord;
                 Vec3 targetPosition = Vec3.Invalid;
                 Vec2 formationDirection = Vec2.Forward;
@@ -868,18 +871,9 @@ namespace Enlisted.Features.Combat.Behaviors
                     
                     var postPos = playerAgent.Position;
                     var actualMovement = prePos.Distance(postPos);
-
-                    // At Commander tier (T7+), also teleport the squad
-                    var squadTeleported = 0;
-                    if (isTier4Plus)
-                    {
-                        squadTeleported = TeleportSquadToFormation(playerAgent, formation, targetPosition);
-                    }
-
-                    var squadInfo = squadTeleported > 0 ? $" + {squadTeleported} squad members" : "";
                     
                     ModLogger.Info("FormationAssignment",
-                        $"Teleported player{squadInfo} to {teleportSource}: " +
+                        $"Teleported soldier to {teleportSource}: " +
                         $"was {distanceToTarget:F1}m away, moved {actualMovement:F1}m, " +
                         $"from ({prePos.x:F1},{prePos.y:F1}) to ({postPos.x:F1},{postPos.y:F1})");
                     
@@ -1365,6 +1359,54 @@ namespace Enlisted.Features.Combat.Behaviors
                 "horse_archer" => FormationClass.HorseArcher,
                 _ => FormationClass.Infantry // Default fallback
             };
+        }
+
+        /// <summary>
+        /// Detects the appropriate formation for the player based on their equipped weapons and mount.
+        /// Uses the CharacterObject's IsRanged and IsMounted properties which check battle equipment.
+        /// </summary>
+        private FormationClass DetectFormationFromEquipment()
+        {
+            try
+            {
+                var hero = Hero.MainHero;
+                if (hero?.CharacterObject == null)
+                {
+                    return FormationClass.Infantry;
+                }
+
+                var character = hero.CharacterObject;
+
+                // Horse + ranged weapon = Horse Archer formation
+                if (character.IsRanged && character.IsMounted)
+                {
+                    ModLogger.Debug("FormationAssignment", "Equipment detection: Horse Archer (mounted + ranged)");
+                    return FormationClass.HorseArcher;
+                }
+
+                // Horse equipped = Cavalry formation
+                if (character.IsMounted)
+                {
+                    ModLogger.Debug("FormationAssignment", "Equipment detection: Cavalry (mounted)");
+                    return FormationClass.Cavalry;
+                }
+
+                // Ranged weapon (bow, crossbow, throwing) = Ranged formation
+                if (character.IsRanged)
+                {
+                    ModLogger.Debug("FormationAssignment", "Equipment detection: Ranged (bow/crossbow/throwing)");
+                    return FormationClass.Ranged;
+                }
+
+                // Default to infantry (melee weapons or no weapons)
+                ModLogger.Debug("FormationAssignment", "Equipment detection: Infantry (default)");
+                return FormationClass.Infantry;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("FormationAssignment", "Error detecting formation from equipment", ex);
+                return FormationClass.Infantry;
+            }
         }
 
         /// <summary>
