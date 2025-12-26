@@ -232,7 +232,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 109);
-            
+
             // Lord's response when player tries to re-enlist after aborting bag check
             starter.AddDialogLine(
                 "enlisted_bag_check_abort_rejection",
@@ -244,7 +244,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 HasBagCheckAbortCooldown,
                 null,
                 111); // Higher priority than normal response
-            
+
             // Player acknowledges they must return later after aborting
             starter.AddPlayerLine(
                 "enlisted_bag_check_abort_acknowledge",
@@ -1124,10 +1124,10 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         // Track selected equipment category for browse response
         private string _selectedEquipmentCategory = "";
-        
+
         // Track selected armor slot for armor drill-down
         private TaleWorlds.Core.EquipmentIndex _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.None;
-        
+
         // Track baggage request context for emergency access dialogue
         private string _baggageRequestType = "none";
 
@@ -1148,35 +1148,35 @@ namespace Enlisted.Features.Conversations.Behaviors
                     if (hubNode != null)
                     {
                         ModLogger.Info("EnlistedDialogManager", $"QM Dialogue: Successfully loaded test node 'qm_hub' with {hubNode.Options.Count} options");
-                        
+
                         // Register JSON-based dialogue dynamically
                         // First register QM lines (what quartermaster says)
                         RegisterJsonQuartermasterLines(starter, "qm_greeting", "start", 201);
                         RegisterJsonQuartermasterLines(starter, "qm_hub", "start", 200);
                         RegisterJsonQuartermasterLines(starter, "qm_browse_response", "qm_hub", 150);
                         RegisterJsonQuartermasterLines(starter, "qm_armor_slots", "qm_browse_response", 149);
-                        
+
                         // Register introduction flow (first meeting)
                         RegisterJsonQuartermasterLines(starter, "qm_intro_greeting", "start", 202);
                         RegisterJsonQuartermasterLines(starter, "qm_intro_ack_direct", "qm_intro_greeting", 151);
                         RegisterJsonQuartermasterLines(starter, "qm_intro_ack_military", "qm_intro_greeting", 151);
                         RegisterJsonQuartermasterLines(starter, "qm_intro_ack_friendly", "qm_intro_greeting", 151);
                         RegisterJsonQuartermasterLines(starter, "qm_intro_ack_flattering", "qm_intro_greeting", 151);
-                        
+
                         // Register gate nodes (RP responses for blocked actions)
                         RegisterJsonQuartermasterLines(starter, "qm_gate_horse", "qm_browse_response", 148);
                         RegisterJsonQuartermasterLines(starter, "qm_gate_officers_armory_rank", "qm_hub", 148);
                         RegisterJsonQuartermasterLines(starter, "qm_gate_officers_armory_trust", "qm_hub", 148);
                         RegisterJsonQuartermasterLines(starter, "qm_gate_upgrade_masterwork", "qm_hub", 148);
                         RegisterJsonQuartermasterLines(starter, "qm_gate_upgrade_legendary", "qm_hub", 148);
-                        
+
                         // Register baggage train emergency access dialogue
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_request_emergency", "start", 195);
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_request_locked", "start", 195);
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_explain", "qm_baggage_request_emergency", 145);
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_explain_lockdown", "qm_baggage_request_locked", 145);
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_cooldown_active", "qm_baggage_request_emergency", 145);
-                        
+
                         // Then register player options for each node
                         RegisterJsonDialogueNode(starter, "qm_intro_greeting", 152);
                         RegisterJsonDialogueNode(starter, "qm_intro_ack_direct", 151);
@@ -1192,7 +1192,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         RegisterJsonDialogueNode(starter, "qm_gate_officers_armory_trust", 147);
                         RegisterJsonDialogueNode(starter, "qm_gate_upgrade_masterwork", 147);
                         RegisterJsonDialogueNode(starter, "qm_gate_upgrade_legendary", 147);
-                        
+
                         // Register player options for baggage dialogue
                         RegisterJsonDialogueNode(starter, "qm_baggage_request_emergency", 146);
                         RegisterJsonDialogueNode(starter, "qm_baggage_request_locked", 146);
@@ -1483,7 +1483,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "{=qm_upgrade_response_dynamic}{UPGRADE_RESPONSE}",
                     SetUpgradeResponseText,
                     OnQuartermasterUpgradeRequest);
-                
+
                 // Upgrade response (no upgradeable items)
                 starter.AddDialogLine(
                     "qm_upgrade_response_no",
@@ -1651,10 +1651,10 @@ namespace Enlisted.Features.Conversations.Behaviors
         private bool SetQuartermasterGreetingText()
         {
             MBTextManager.SetTextVariable("QM_GREETING", GetQuartermasterGreeting());
-            
+
             // Set common dialogue variables for placeholders in gate text and other nodes
             SetCommonDialogueVariables();
-            
+
             return true;
         }
 
@@ -1666,25 +1666,25 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             var hero = Hero.MainHero;
             var enlistment = EnlistmentBehavior.Instance;
-            
+
             // Player name
             var playerName = hero?.Name?.ToString() ?? "Soldier";
             MBTextManager.SetTextVariable("PLAYER_NAME", playerName);
-            
+
             // Culture-specific rank title
-            var rankTitle = enlistment != null 
-                ? Ranks.RankHelper.GetCurrentRank(enlistment) 
+            var rankTitle = enlistment != null
+                ? Ranks.RankHelper.GetCurrentRank(enlistment)
                 : "Soldier";
             MBTextManager.SetTextVariable("PLAYER_RANK", rankTitle);
-            
+
             // QM name
             var qmName = enlistment?.QuartermasterHero?.Name?.ToString() ?? "Quartermaster";
             MBTextManager.SetTextVariable("QM_NAME", qmName);
-            
+
             // Lord name
             var lordName = enlistment?.EnlistedLord?.Name?.ToString() ?? "the Lord";
             MBTextManager.SetTextVariable("LORD_NAME", lordName);
-            
+
             // Current tier
             var tier = enlistment?.EnlistmentTier ?? 1;
             MBTextManager.SetTextVariable("PLAYER_TIER", tier.ToString());
@@ -1724,7 +1724,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 // Get current game context to find matching nodes
                 var context = GetCurrentDialogueContext();
                 var node = QMDialogueCatalog.Instance.GetNode(nodeId, context);
-                
+
                 if (node == null || node.Options == null || node.Options.Count == 0)
                 {
                     ModLogger.Debug("EnlistedDialogManager", $"No JSON node found for '{nodeId}' or node has no options");
@@ -1739,7 +1739,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 foreach (var option in node.Options)
                 {
                     var optionText = QMDialogueCatalog.Instance.ResolveText(option.TextId, option.Text);
-                    
+
                     // Check if this option has a gate condition
                     if (option.Gate != null && !string.IsNullOrEmpty(option.Gate.Condition) && !string.IsNullOrEmpty(option.Gate.GateNode))
                     {
@@ -1749,7 +1749,7 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                         // Version 1: Gate condition PASSES (higher priority)
                         var outputState = string.IsNullOrEmpty(option.NextNode) ? "close_window" : option.NextNode;
-                        
+
                         ConversationSentence.OnConditionDelegate passCondition = () =>
                         {
                             // Check both requirements and gate condition
@@ -1759,7 +1759,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                             }
                             return CheckGateCondition(option.Gate.Condition);
                         };
-                        
+
                         ConversationSentence.OnConsequenceDelegate passConsequence = null;
                         if (!string.IsNullOrEmpty(option.Action) && option.Action != "none")
                         {
@@ -1802,13 +1802,13 @@ namespace Enlisted.Features.Conversations.Behaviors
                     {
                         // Normal option without gate
                         var outputState = string.IsNullOrEmpty(option.NextNode) ? "close_window" : option.NextNode;
-                        
+
                         ConversationSentence.OnConditionDelegate conditionDelegate = null;
                         if (option.Requirements != null)
                         {
                             conditionDelegate = () => CheckOptionRequirements(option.Requirements);
                         }
-                        
+
                         ConversationSentence.OnConsequenceDelegate consequenceDelegate = null;
                         if (!string.IsNullOrEmpty(option.Action) && option.Action != "none")
                         {
@@ -1843,7 +1843,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 // Get all node variants for this ID from the catalog
                 var allNodes = QMDialogueCatalog.Instance.GetAllNodesById(nodeId);
-                
+
                 if (allNodes == null || allNodes.Count == 0)
                 {
                     ModLogger.Debug("EnlistedDialogManager", $"No QM nodes found for '{nodeId}'");
@@ -1853,7 +1853,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 // Register a dialogue line for each contextual variant
                 // Sort by specificity (most specific first) to assign highest priority to most specific
                 var sortedNodes = allNodes.OrderByDescending(n => n.Context?.GetSpecificity() ?? 0).ToList();
-                
+
                 var priority = basePriority;
                 foreach (var node in sortedNodes)
                 {
@@ -1865,7 +1865,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     var specificity = node.Context?.GetSpecificity() ?? 0;
                     var nodeContext = node.Context; // Capture for closure
                     var qmText = QMDialogueCatalog.Instance.ResolveText(node.TextId, node.Text);
-                    
+
                     // Create condition that checks if current game context matches this node's requirements
                     ConversationSentence.OnConditionDelegate condition = () =>
                     {
@@ -1874,10 +1874,10 @@ namespace Enlisted.Features.Conversations.Behaviors
                         {
                             return false;
                         }
-                        
+
                         // Set text variables (PLAYER_NAME, PLAYER_RANK, etc.) before dialogue displays
                         SetCommonDialogueVariables();
-                        
+
                         var currentContext = GetCurrentDialogueContext();
                         // If node has no context requirements, it's a universal fallback
                         if (nodeContext == null || nodeContext.GetSpecificity() == 0)
@@ -1896,12 +1896,12 @@ namespace Enlisted.Features.Conversations.Behaviors
                         condition,
                         null, // No consequence needed
                         priority--);
-                    
-                    ModLogger.Debug("EnlistedDialogManager", 
+
+                    ModLogger.Debug("EnlistedDialogManager",
                         $"Registered QM line: {nodeId} (specificity={specificity}, priority={priority + 1})");
                 }
-                
-                ModLogger.Info("EnlistedDialogManager", 
+
+                ModLogger.Info("EnlistedDialogManager",
                     $"Registered {sortedNodes.Count(n => n.Speaker == "quartermaster")} QM line variants for '{nodeId}'");
             }
             catch (Exception ex)
@@ -1917,7 +1917,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             var playerTier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
             var qmReputation = EnlistmentBehavior.Instance?.GetQMReputation() ?? 0;
-            
+
             var context = new QMDialogueContext
             {
                 IsIntroduced = HasMetQuartermaster(),
@@ -1939,7 +1939,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         private string GetSupplyLevelCategory()
         {
             var supplyPercent = CompanySupplyManager.Instance?.TotalSupply ?? 50;
-            
+
             if (supplyPercent >= 80)
             {
                 return "excellent";
@@ -2172,7 +2172,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     case "grant_emergency_access":
                         OnGrantEmergencyBaggageAccess();
                         break;
-                    
+
                     case "halt_column_for_baggage":
                         OnHaltColumnForBaggage();
                         break;
@@ -2297,15 +2297,15 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     return false;
                 }
-                
+
                 // Use reflection to call the private BuildWeaponOptionsFromCurrentTroop method
-                var method = typeof(QuartermasterManager).GetMethod("BuildWeaponOptionsFromCurrentTroop", 
+                var method = typeof(QuartermasterManager).GetMethod("BuildWeaponOptionsFromCurrentTroop",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (method == null)
                 {
                     return true; // Default to available if can't check
                 }
-                
+
                 var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 return options != null && options.Any(kvp => kvp.Value?.Any(opt => !opt.IsAtLimit) == true);
             }
@@ -2327,22 +2327,22 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     return false;
                 }
-                
-                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop", 
+
+                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (method == null)
                 {
                     return true;
                 }
-                
+
                 var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 if (options == null)
                 {
                     return false;
                 }
-                
+
                 // Check armor slots (body, head, leg, gloves, cape)
-                var armorSlots = new[] { TaleWorlds.Core.EquipmentIndex.Body, TaleWorlds.Core.EquipmentIndex.Head, 
+                var armorSlots = new[] { TaleWorlds.Core.EquipmentIndex.Body, TaleWorlds.Core.EquipmentIndex.Head,
                     TaleWorlds.Core.EquipmentIndex.Leg, TaleWorlds.Core.EquipmentIndex.Gloves, TaleWorlds.Core.EquipmentIndex.Cape };
                 return armorSlots.Any(slot => options.ContainsKey(slot) && options[slot].Any(opt => !opt.IsAtLimit));
             }
@@ -2364,7 +2364,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     return false;
                 }
-                
+
                 // Accessories include capes from armor, shields from weapons, and harness
                 // For now, always show if QM is available since accessories are common
                 return EnlistmentBehavior.Instance?.IsEnlisted == true;
@@ -2387,7 +2387,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     return false;
                 }
-                
+
                 // Mounts are available if player's formation supports cavalry or player wants a horse
                 return EnlistmentBehavior.Instance?.IsEnlisted == true;
             }
@@ -2436,14 +2436,14 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     return false;
                 }
-                
-                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop", 
+
+                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (method == null)
                 {
                     return true;
                 }
-                
+
                 var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 return options != null && options.ContainsKey(slot) && options[slot].Any(opt => !opt.IsAtLimit);
             }
@@ -2468,21 +2468,21 @@ namespace Enlisted.Features.Conversations.Behaviors
                     MBTextManager.SetTextVariable("SUPPLY_STATUS", "Can't say much about supplies right now.");
                     return true;
                 }
-                
+
                 var companyNeeds = enlistment.CompanyNeeds;
                 if (companyNeeds == null)
                 {
                     MBTextManager.SetTextVariable("SUPPLY_STATUS", "Hard to say. Things are... complicated.");
                     return true;
                 }
-                
+
                 var supplies = companyNeeds.Supplies;
                 var equipment = companyNeeds.Equipment;
                 var morale = companyNeeds.Morale;
                 var readiness = companyNeeds.Readiness;
                 var archetype = enlistment.QuartermasterArchetype;
                 var reputation = enlistment.QuartermasterRelationship;
-                
+
                 // Get strategic context if available
                 var strategicContext = "";
                 try
@@ -2497,11 +2497,11 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     // Strategic context is optional
                 }
-                
+
                 // Build contextual supply report with archetype flavor
-                string statusText = GetSupplyReportWithArchetypeFlavor(supplies, equipment, morale, readiness, 
+                string statusText = GetSupplyReportWithArchetypeFlavor(supplies, equipment, morale, readiness,
                     archetype, reputation, strategicContext);
-                
+
                 MBTextManager.SetTextVariable("SUPPLY_STATUS", statusText);
                 return true;
             }
@@ -2512,7 +2512,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return true;
             }
         }
-        
+
         /// <summary>
         ///     Generates a supply report with archetype personality and reputation tone.
         ///     Includes strategic context awareness (winter, battle prep, etc.).
@@ -2524,12 +2524,12 @@ namespace Enlisted.Features.Conversations.Behaviors
             // Validate and normalize inputs
             archetype = ValidateArchetype(archetype);
             strategicContext = strategicContext ?? string.Empty;
-            
+
             // Clamp values to safe ranges
             supplies = Clamp(supplies, 0, 100);
             equipment = Clamp(equipment, 0, 100);
             morale = Clamp(morale, 0, 100);
-            
+
             // Determine supply level category
             string supplyLevel;
             if (supplies >= 80) supplyLevel = "excellent";
@@ -2537,19 +2537,19 @@ namespace Enlisted.Features.Conversations.Behaviors
             else if (supplies >= 40) supplyLevel = "fair";
             else if (supplies >= 20) supplyLevel = "low";
             else supplyLevel = "critical";
-            
+
             // Determine reputation tone (hostile, neutral, friendly, trusted)
             string repTone;
             if (reputation < 0) repTone = "hostile";
             else if (reputation < 31) repTone = "neutral";
             else if (reputation < 61) repTone = "friendly";
             else repTone = "trusted";
-            
+
             // Build string ID and load from XML with fallback
             string stringId = BuildSupplyStringId(archetype, supplyLevel, repTone);
-            string baseReport = GetLocalizedTextSafe(stringId, 
+            string baseReport = GetLocalizedTextSafe(stringId,
                 $"Supplies are at {supplies}%. Equipment at {equipment}%.");
-            
+
             // Add equipment context if significantly different from supplies
             if (equipment < supplies - 20)
             {
@@ -2557,7 +2557,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 string equipNote = GetLocalizedTextSafe(equipStringId, " Equipment needs attention.");
                 baseReport += equipNote;
             }
-            
+
             // Add morale context if critically low or exceptionally high
             if (morale < 30)
             {
@@ -2571,7 +2571,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 string moraleNote = GetLocalizedTextSafe(moraleStringId, " Morale is high.");
                 baseReport += moraleNote;
             }
-            
+
             // Add strategic context if relevant
             if (!string.IsNullOrEmpty(strategicContext))
             {
@@ -2598,10 +2598,10 @@ namespace Enlisted.Features.Conversations.Behaviors
                     }
                 }
             }
-            
+
             return baseReport;
         }
-        
+
         /// <summary>
         ///     Clamps a value between min and max (Math.Clamp not available in older .NET versions).
         /// </summary>
@@ -2611,7 +2611,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             if (value > max) return max;
             return value;
         }
-        
+
         /// <summary>
         ///     Safely retrieves a localized string with fallback handling.
         ///     Ensures the conversation never breaks due to missing strings or errors.
@@ -2632,12 +2632,12 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 // Log the error for debugging but don't break the conversation
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"[Enlisted] Failed to load string '{stringId}': {ex.Message}", 
+                    $"[Enlisted] Failed to load string '{stringId}': {ex.Message}",
                     Colors.Yellow));
                 return fallback;
             }
         }
-        
+
         /// <summary>
         ///     Validates and normalizes archetype names.
         ///     Returns "default" for invalid/unknown archetypes.
@@ -2648,11 +2648,11 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 return "default";
             }
-            
+
             var validArchetypes = new[] { "veteran", "merchant", "bookkeeper", "scoundrel", "believer", "eccentric" };
             return validArchetypes.Contains(archetype.ToLower()) ? archetype.ToLower() : "default";
         }
-        
+
         /// <summary>
         ///     Builds the XML string ID for supply reports based on archetype, level, and reputation.
         /// </summary>
@@ -2660,13 +2660,13 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             // Normalize archetype
             archetype = ValidateArchetype(archetype);
-            
+
             // Use default fallback if archetype is invalid
             if (archetype == "default")
             {
                 return $"qm_supply_default_{supplyLevel}";
             }
-            
+
             // Try specific archetype + level + reputation combo first
             if ((archetype == "merchant" && supplyLevel == "good" && repTone == "friendly") ||
                 (archetype == "merchant" && supplyLevel == "fair" && repTone == "friendly") ||
@@ -2688,7 +2688,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 return $"qm_supply_{archetype}_{supplyLevel}_{repTone}";
             }
-            
+
             // Try archetype + level (most common case)
             return $"qm_supply_{archetype}_{supplyLevel}";
         }
@@ -2708,7 +2708,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     MBTextManager.SetTextVariable("BROWSE_RESPONSE", "Let me see what's in stock.");
                     return true;
                 }
-                
+
                 var companyNeeds = enlistment.CompanyNeeds;
                 var supplies = companyNeeds?.Supplies ?? 60;
                 var equipment = companyNeeds?.Equipment ?? 60;
@@ -2716,13 +2716,13 @@ namespace Enlisted.Features.Conversations.Behaviors
                 var reputation = enlistment.QuartermasterRelationship;
                 var tier = enlistment.EnlistmentTier;
                 var rankTitle = Ranks.RankHelper.GetCurrentRank(enlistment);
-                
+
                 // Calculate discount percentage based on reputation
                 var discountPct = GetReputationDiscount(reputation);
-                
+
                 // Generate contextual browse response with rank, supply, rep, and price hints
                 string response = GetBrowseResponse(supplies, equipment, archetype, reputation, tier, rankTitle, discountPct);
-                
+
                 MBTextManager.SetTextVariable("BROWSE_RESPONSE", response);
                 return true;
             }
@@ -2733,7 +2733,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return true;
             }
         }
-        
+
         /// <summary>
         ///     Gets the discount percentage based on QM reputation.
         /// </summary>
@@ -2745,7 +2745,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             if (reputation >= 0) return 5;        // Wary - slight discount
             return 0;                              // Hostile - no discount
         }
-        
+
         /// <summary>
         ///     Sets the SELL_RESPONSE text variable for contextual selling dialogue.
         ///     Varies by mood, reputation, and archetype.
@@ -2761,16 +2761,16 @@ namespace Enlisted.Features.Conversations.Behaviors
                     MBTextManager.SetTextVariable("SELL_RESPONSE", "Show me what you've got.");
                     return true;
                 }
-                
+
                 var archetype = enlistment.QuartermasterArchetype;
                 var reputation = enlistment.QuartermasterRelationship;
                 var mood = GetQuartermasterMood();
                 var companyNeeds = enlistment.CompanyNeeds;
                 var supplies = companyNeeds?.Supplies ?? 60;
-                
+
                 // Generate contextual sell response
                 string response = GetSellResponse(archetype, reputation, mood, supplies);
-                
+
                 MBTextManager.SetTextVariable("SELL_RESPONSE", response);
                 return true;
             }
@@ -2781,7 +2781,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return true;
             }
         }
-        
+
         /// <summary>
         ///     Sets the UPGRADE_RESPONSE text variable for contextual upgrade dialogue.
         ///     Varies by archetype and reputation.
@@ -2797,13 +2797,13 @@ namespace Enlisted.Features.Conversations.Behaviors
                     MBTextManager.SetTextVariable("UPGRADE_RESPONSE", "Aye, bring me what you've got. Good work costs good coin.");
                     return true;
                 }
-                
+
                 var archetype = enlistment.QuartermasterArchetype;
                 var reputation = enlistment.QuartermasterRelationship;
-                
+
                 // Generate contextual upgrade response
                 string response = GetUpgradeResponse(archetype, reputation);
-                
+
                 MBTextManager.SetTextVariable("UPGRADE_RESPONSE", response);
                 return true;
             }
@@ -2814,7 +2814,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return true;
             }
         }
-        
+
         /// <summary>
         ///     Generates a contextual browse response based on supply/equipment levels, archetype, and reputation.
         ///     Uses XML localization strings with full validation and fallback handling.
@@ -2825,14 +2825,14 @@ namespace Enlisted.Features.Conversations.Behaviors
             archetype = ValidateArchetype(archetype);
             supplies = Clamp(supplies, 0, 100);
             equipment = Clamp(equipment, 0, 100);
-            
+
             // Build a contextual response with multiple parts:
             // 1. Stock/supply context
             // 2. Rank acknowledgment (for higher tiers)
             // 3. Price/discount hint based on reputation
-            
+
             var parts = new System.Collections.Generic.List<string>();
-            
+
             // Part 1: Stock situation
             if (supplies >= 80)
             {
@@ -2854,7 +2854,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 parts.Add("Pickings are slim. We're rationing everything.");
             }
-            
+
             // Part 2: Rank acknowledgment (tier 5+ gets acknowledged)
             if (tier >= 7)
             {
@@ -2864,7 +2864,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 parts.Add($"You've earned some pull around here, {rankTitle}.");
             }
-            
+
             // Part 3: Price/discount hint based on reputation
             if (reputation >= 80)
             {
@@ -2886,13 +2886,13 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 parts.Add("Full price. No discounts for troublemakers.");
             }
-            
+
             // Part 4: Category prompt
             parts.Add("What are you after—weapons, armor, accessories?");
-            
+
             return string.Join(" ", parts);
         }
-        
+
         /// <summary>
         ///     Generates a contextual sell response based on archetype, reputation, mood, and supply levels.
         ///     Uses XML localization strings with full validation and fallback handling.
@@ -2903,16 +2903,16 @@ namespace Enlisted.Features.Conversations.Behaviors
             archetype = ValidateArchetype(archetype);
             mood = (mood ?? "content").ToLower();
             supplies = Clamp(supplies, 0, 100);
-            
+
             // Determine reputation tone
             bool trusted = reputation >= 61;
-            
+
             // Determine if supplies are low (might affect buyback willingness)
             bool lowSupplies = supplies < 40;
-            
+
             // Build string ID based on context priority: mood > reputation > supplies
             string stringId;
-            
+
             if (mood == "content" && trusted)
             {
                 stringId = $"qm_sell_content_trusted_{archetype}";
@@ -2938,10 +2938,10 @@ namespace Enlisted.Features.Conversations.Behaviors
                 // Unknown mood - use content as default
                 stringId = $"qm_sell_content_{archetype}";
             }
-            
+
             return GetLocalizedTextSafe(stringId, "Show me what you've got. I'll give you a fair price.");
         }
-        
+
         /// <summary>
         ///     Generates a contextual upgrade response based on archetype and reputation.
         ///     Uses XML localization strings with full validation and fallback handling.
@@ -2950,14 +2950,14 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             // Validate and normalize inputs
             archetype = ValidateArchetype(archetype);
-            
+
             // Determine reputation tone
             bool hostile = reputation < 0;
             bool trusted = reputation >= 61;
-            
+
             // Build string ID based on reputation
             string stringId;
-            
+
             if (trusted)
             {
                 stringId = $"qm_upgrade_trusted_{archetype}";
@@ -2970,7 +2970,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 stringId = $"qm_upgrade_default_{archetype}";
             }
-            
+
             return GetLocalizedTextSafe(stringId, "Aye, bring me what you've got. Good work costs good coin.");
         }
 
@@ -3011,20 +3011,20 @@ namespace Enlisted.Features.Conversations.Behaviors
         private string GetFirstMeetingGreeting(string archetype, string qmName)
         {
             var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
-            
+
             // Get rank category suffix for localization lookup
             var rankSuffix = tier >= 7 ? "_officer" : tier >= 5 ? "_nco" : "_enlisted";
-            
+
             // Use the appropriate localized intro greeting based on archetype and rank
             var stringId = $"qm_intro_greeting_{archetype ?? "default"}{rankSuffix}";
             var fallback = GetFirstMeetingFallback(archetype, tier);
-            
+
             // Use TextObject for XML localization lookup
             var text = new TextObject($"{{={stringId}}}{fallback}");
             text.SetTextVariable("QM_NAME", qmName);
             return text.ToString();
         }
-        
+
         /// <summary>
         ///     Gets the fallback text for first-meeting greetings based on archetype and tier.
         /// </summary>
@@ -3044,7 +3044,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     _ => "My lord. I wasn't told to expect you. How may I serve?"
                 };
             }
-            
+
             // T5-T6 NCOs get respected treatment, addressed by rank
             if (tier >= 5)
             {
@@ -3061,7 +3061,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     _ => $"Haven't seen you before, {rankTitle}. What do you need?"
                 };
             }
-            
+
             // T1-T4 Enlisted get casual treatment
             return archetype switch
             {
@@ -3105,23 +3105,23 @@ namespace Enlisted.Features.Conversations.Behaviors
 
             // Get player tier for rank-aware greetings
             var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
-            
+
             // T7+ Officers get deferential "my lord" treatment
             if (tier >= 7)
             {
                 return GetOfficerGreeting(archetype, mood);
             }
-            
+
             // T5-T6 NCOs get addressed by rank
             if (tier >= 5)
             {
                 return GetNCOGreeting(archetype, mood);
             }
-            
+
             // T1-T4 Enlisted get informal/soldier treatment
             return GetEnlistedGreeting(archetype, mood);
         }
-        
+
         /// <summary>
         ///     Gets greeting for T7+ officers. Deferential "my lord" treatment.
         /// </summary>
@@ -3150,7 +3150,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 _ => "My lord. What do you require?"
             };
         }
-        
+
         /// <summary>
         ///     Gets greeting for T5-T6 NCOs. Addressed by rank with respect.
         /// </summary>
@@ -3159,7 +3159,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 5;
             var cultureId = EnlistmentBehavior.Instance?.EnlistedLord?.Culture?.StringId ?? "mercenary";
             var rankTitle = RankHelper.GetRankTitle(tier, cultureId);
-            
+
             return (archetype, mood) switch
             {
                 ("veteran", "content") => $"{rankTitle}. Good to see you. What do you need?",
@@ -3183,7 +3183,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 _ => $"What do you need, {rankTitle}?"
             };
         }
-        
+
         /// <summary>
         ///     Gets greeting for T1-T4 enlisted. Informal "soldier" treatment.
         /// </summary>
@@ -3267,30 +3267,6 @@ namespace Enlisted.Features.Conversations.Behaviors
             };
         }
 
-        /// <summary>
-        ///     Gets the quartermaster's response to equipment request based on archetype.
-        ///     Note: Reserved for future dynamic dialog enhancement.
-        /// </summary>
-        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
-        public string GetEquipmentResponseLine()
-        {
-            var archetype = EnlistmentBehavior.Instance?.QuartermasterArchetype ?? "veteran";
-
-            return archetype switch
-            {
-                "veteran" => "Equipment requisition. Let me see what I've got.",
-                "merchant" => "Looking to upgrade? Smart. Follow me to the armory.",
-                "bookkeeper" => "Equipment requisition approved. Please review the inventory.",
-                "scoundrel" => "Official channels or... off the books?",
-                "believer" => "The armory is open. May you choose wisely.",
-                "eccentric" => "The stars favor shields today. Or swords. Maybe both.",
-                _ => "This way."
-            };
-        }
-
-        /// <summary>
-        ///     Gets the quartermaster's response to sell request based on mood.
-        /// </summary>
         public string GetSellResponseLine()
         {
             var mood = GetQuartermasterMood();
@@ -3304,191 +3280,11 @@ namespace Enlisted.Features.Conversations.Behaviors
             };
         }
 
-        /// <summary>
-        ///     Gets the quartermaster's response to provisions request based on archetype.
-        ///     Note: Reserved for future dynamic dialog enhancement.
-        /// </summary>
-        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
-        public string GetProvisionsResponseLine()
-        {
-            var archetype = EnlistmentBehavior.Instance?.QuartermasterArchetype ?? "veteran";
-
-            return archetype switch
-            {
-                "veteran" => "Hungry? Smart soldier keeps his belly full. Let me show you what I've got.",
-                "merchant" => "Looking to upgrade from hardtack? I've got options. Quality costs, mind you.",
-                "bookkeeper" => "Provisions requisition. I'll need to check the allocation limits for your rank.",
-                "scoundrel" => "Want something better than the slop they serve the regulars? I might know a source.",
-                "believer" => "The body is a temple. You're wise to nourish it properly. What do you need?",
-                "eccentric" => "The ravens say the meat is fresh today. The bread too. Maybe. Let me show you.",
-                _ => "Looking for better rations? Follow me."
-            };
-        }
-
-        /// <summary>
-        ///     Gets the quartermaster's backstory based on archetype.
-        ///     Uses {LORD_NAME} placeholder for dynamic lord reference.
-        ///     Note: Reserved for future dynamic dialog enhancement.
-        /// </summary>
-        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
-        public string GetQuartermasterBackstory()
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            var archetype = enlistment?.QuartermasterArchetype ?? "veteran";
-
-            var text = archetype switch
-            {
-                "veteran" => new TextObject("Lost my sword arm at Pendraic. {LORD_NAME} gave me this posting. Beats starving. Now I make sure other soldiers don't go hungry."),
-                "merchant" => new TextObject("I ran caravans for twenty years. Profitable, but dangerous. This is safer and steadier. Plus, I know every trader from here to Zeonica."),
-                "bookkeeper" => new TextObject("I clerked for the imperial bureaucracy for fifteen years. When the war came, they needed someone who could count. Here I am."),
-                "scoundrel" => new TextObject("Let's just say I had some... disagreements... with the city guard. {LORD_NAME} offered me a choice: noose or supply wagon. Easy choice."),
-                "believer" => new TextObject("I served as a priest before the war. But faith without works is dead. Now I serve by ensuring the faithful are fed and armed."),
-                "eccentric" => new TextObject("The stars told me I'd manage supplies for a great army. Twelve years ago. On a Tuesday. In the rain. And here I am, just as foretold."),
-                _ => new TextObject("I've been doing this for years. It's honest work.")
-            };
-            
-            // Direct unit name variables are being updated.
-            if (enlistment != null)
-            {
-                // Dynamic name replacement will be updated to support the new unit structure.
-            }
-            
-            return text.ToString();
-        }
-
         // ========================================
         // PAYTENSION DIALOG TEXT GENERATION
         // Reserved for future dynamic dialog enhancement.
         // Currently using static localized strings in dialog registration.
         // ========================================
-
-        /// <summary>
-        ///     Gets the Scoundrel's black market response.
-        ///     Note: Reserved for future dynamic dialog enhancement.
-        /// </summary>
-        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
-        public string GetBlackMarketResponseLine()
-        {
-            var tension = EnlistmentBehavior.Instance?.PayTension ?? 0;
-
-            if (tension >= 80)
-            {
-                return "Alternative supplies? Ha! Half the camp is already selling what they can carry. " +
-                       "I know some merchants who don't ask questions... for a cut, of course. " +
-                       "Smuggled goods, looted gear, you name it. Times like these, everyone's a little flexible with the rules.";
-            }
-            else if (tension >= 60)
-            {
-                return "Looking to make some coin on the side? I might know some people. " +
-                       "There's always a market for... surplus equipment. Weapons that fell off wagons, rations that weren't counted right. " +
-                       "Just don't get caught. The lord's too broke to pay bribes right now.";
-            }
-            else
-            {
-                return "Interested in opportunities, eh? Smart. " +
-                       "I can point you toward some traders who pay premium for certain... acquisitions. " +
-                       "Nothing too serious yet, but if things get worse, we might need to be more creative.";
-            }
-        }
-
-        /// <summary>
-        ///     Gets the Believer's moral guidance response.
-        ///     Note: Reserved for future dynamic dialog enhancement.
-        /// </summary>
-        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
-        public string GetMoralGuidanceResponseLine()
-        {
-            var tension = EnlistmentBehavior.Instance?.PayTension ?? 0;
-
-            if (tension >= 80)
-            {
-                return "These are the darkest of times, my child. The men's faith is being tested beyond measure. " +
-                       "Some have already abandoned their posts - and their honor. But you are still here. That means something. " +
-                       "The heavens see our suffering. They see the lord's broken promises. Justice will come - one way or another. " +
-                       "Until then, hold to your principles. That is all any of us can do.";
-            }
-            else
-            {
-                return "I see the doubt in your eyes. You are not alone. Many question why we suffer when we have served faithfully. " +
-                       "Remember: material wealth fades, but honor endures. If the lord cannot pay, perhaps there are other ways to serve - " +
-                       "helping him recover his fortune. The faithful are rewarded, in this life or the next.";
-            }
-        }
-
-        /// <summary>
-        ///     Gets the Veteran's survival advice response.
-        ///     Note: Reserved for future dynamic dialog enhancement.
-        /// </summary>
-        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
-        public string GetSurvivalAdviceResponseLine()
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            var freeDesertion = enlistment?.IsFreeDesertionAvailable == true;
-
-            if (freeDesertion)
-            {
-                return "Listen to me carefully. I've seen this before. The lord's broke, the men are starving, and the whole thing's falling apart. " +
-                       "At this point? No one would blame you for walking away. The lord broke his end of the deal first. " +
-                       "If you do decide to leave... do it at night. Head for the nearest village. Don't look back. " +
-                       "But if you stay... stay for the right reasons. Not because you can't leave.";
-            }
-            else
-            {
-                return "Things are bad, I won't lie to you. But we've been in tough spots before. " +
-                       "Keep your head down, don't volunteer for anything stupid, and watch your purse. " +
-                       "Some men are getting desperate - and desperate men do foolish things. " +
-                       "If it gets worse... well, we'll talk then.";
-            }
-        }
-
-        /// <summary>
-        ///     Gets the Help the Lord suggestion response based on archetype.
-        ///     Uses {LORD_NAME} placeholder for dynamic lord reference.
-        ///     Note: Reserved for future dynamic dialog enhancement.
-        /// </summary>
-        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
-        public string GetHelpLordResponseLine()
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            var archetype = enlistment?.QuartermasterArchetype ?? "veteran";
-
-            var text = archetype switch
-            {
-                "veteran" => new TextObject("You want to help? Good soldier. {LORD_NAME} needs gold, and fast. " +
-                             "There's always bounty work, escort jobs, that sort of thing. Traders sometimes pay for protection. " +
-                             "If we're at war, enemy supply wagons are fair game. Every denar helps."),
-
-                "merchant" => new TextObject("Ah, thinking like a businessman! There are merchants who owe {LORD_NAME} money. " +
-                              "Perhaps you could... encourage timely payment. Also, I hear there's profit in captured goods - " +
-                              "just bring them to me and I'll handle the sale. Discretely."),
-
-                "bookkeeper" => new TextObject("According to my records, there are several outstanding debts owed to {LORD_NAME}. " +
-                                "If someone were to... collect these debts... the accounts would balance better. " +
-                                "I can provide you with a list of debtors, if you're interested."),
-
-                "scoundrel" => new TextObject("Help {LORD_NAME}? Ha! Plenty of ways, if you're not too squeamish. " +
-                               "Enemy caravans, shakedowns, a little light robbery... all perfectly acceptable in wartime. " +
-                               "Bring me the goods and I'll fence them. We split the profit - and the lord gets his cut."),
-
-                "believer" => new TextObject("Your loyalty is commendable. Perhaps you could collect donations from the faithful? " +
-                              "Or help {LORD_NAME} recover what is rightfully owed. " +
-                              "There's also the matter of enemy supplies - liberating them serves a higher purpose."),
-
-                "eccentric" => new TextObject("The stars aligned last night to show me a vision. A merchant caravan, heavy with gold, " +
-                               "passing through dangerous territory. Perhaps they need protection? Perhaps they don't survive the journey? " +
-                               "Either way, there's opportunity for the bold."),
-
-                _ => new TextObject("The lord needs gold. Find work that pays and bring back what you can.")
-            };
-            
-            // Direct unit name variables are being updated.
-            if (enlistment != null)
-            {
-                // Dynamic name replacement will be updated to support the new unit structure.
-            }
-            
-            return text.ToString();
-        }
 
         /// <summary>
         ///     Gets the current quartermaster mood based on camp conditions.
@@ -3588,14 +3384,14 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
                 var category = _selectedEquipmentCategory;
-                
+
                 // Guard against empty category (shouldn't happen, but defensive)
                 if (string.IsNullOrEmpty(category))
                 {
                     ModLogger.Warn("Conversations", "QM: Browse category called with empty category, defaulting to weapons");
                     category = "weapons";
                 }
-                
+
                 ModLogger.Info("Conversations", $"QM: Player selected {category} category");
 
                 // Use NextFrameDispatcher so the conversation fully closes before Gauntlet opens
@@ -3629,14 +3425,14 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
                 var slot = _selectedArmorSlot;
-                
+
                 // Guard against unset slot (shouldn't happen, but defensive)
                 if (slot == TaleWorlds.Core.EquipmentIndex.None)
                 {
                     ModLogger.Warn("Conversations", "QM: Armor slot selection called with None, defaulting to Body");
                     slot = TaleWorlds.Core.EquipmentIndex.Body;
                 }
-                
+
                 ModLogger.Info("Conversations", $"QM: Player selected armor slot {slot}");
 
                 NextFrameDispatcher.RunNextFrame(() =>
@@ -3679,22 +3475,22 @@ namespace Enlisted.Features.Conversations.Behaviors
                     variants = GetWeaponVariants(qm);
                     targetSlot = TaleWorlds.Core.EquipmentIndex.Weapon0;
                     break;
-                    
+
                 case "armor":
                     variants = GetAllArmorVariants(qm);
                     targetSlot = TaleWorlds.Core.EquipmentIndex.Body;
                     break;
-                    
+
                 case "accessories":
                     variants = GetAccessoryVariants(qm);
                     targetSlot = TaleWorlds.Core.EquipmentIndex.Cape;
                     break;
-                    
+
                 case "mounts":
                     variants = GetMountVariants(qm);
                     targetSlot = TaleWorlds.Core.EquipmentIndex.Horse;
                     break;
-                    
+
                 default:
                     ModLogger.Warn("Conversations", $"QM: Unknown equipment category: {category}");
                     return;
@@ -3763,19 +3559,19 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             try
             {
-                var method = typeof(QuartermasterManager).GetMethod("BuildWeaponOptionsFromCurrentTroop", 
+                var method = typeof(QuartermasterManager).GetMethod("BuildWeaponOptionsFromCurrentTroop",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (method == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
-                
+
                 var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 if (options == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
-                
+
                 // Flatten all weapon variants into one list, excluding shields (shields go to accessories)
                 return options
                     .SelectMany(kvp => kvp.Value)
@@ -3797,9 +3593,9 @@ namespace Enlisted.Features.Conversations.Behaviors
             try
             {
                 var combined = new System.Collections.Generic.List<EquipmentVariantOption>();
-                
+
                 // Get capes from armor options
-                var armorMethod = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop", 
+                var armorMethod = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (armorMethod != null)
                 {
@@ -3809,9 +3605,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                         combined.AddRange(capeOptions);
                     }
                 }
-                
+
                 // Get shields from weapon slots
-                var shieldMethod = typeof(QuartermasterManager).GetMethod("BuildShieldOptionsFromWeapons", 
+                var shieldMethod = typeof(QuartermasterManager).GetMethod("BuildShieldOptionsFromWeapons",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (shieldMethod != null)
                 {
@@ -3821,7 +3617,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         combined.AddRange(shieldOptions);
                     }
                 }
-                
+
                 return combined;
             }
             catch (Exception ex)
@@ -3839,39 +3635,39 @@ namespace Enlisted.Features.Conversations.Behaviors
             try
             {
                 // Get troop equipment variants to find mounts
-                var troopMethod = typeof(QuartermasterManager).GetMethod("GetPlayerSelectedTroop", 
+                var troopMethod = typeof(QuartermasterManager).GetMethod("GetPlayerSelectedTroop",
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                var buildMethod = typeof(QuartermasterManager).GetMethod("BuildVariantOptions", 
+                var buildMethod = typeof(QuartermasterManager).GetMethod("BuildVariantOptions",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var equipMethod = typeof(QuartermasterManager).GetMethod("GetTroopEquipmentVariants", 
+                var equipMethod = typeof(QuartermasterManager).GetMethod("GetTroopEquipmentVariants",
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                
+
                 if (troopMethod == null || buildMethod == null || equipMethod == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
-                
+
                 var troop = troopMethod.Invoke(qm, null) as TaleWorlds.CampaignSystem.CharacterObject;
                 if (troop == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
-                
-                var equipVariants = equipMethod.Invoke(qm, new object[] { troop }) 
+
+                var equipVariants = equipMethod.Invoke(qm, new object[] { troop })
                     as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<TaleWorlds.Core.ItemObject>>;
                 if (equipVariants == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
-                
-                var allVariants = buildMethod.Invoke(qm, new object[] { equipVariants }) 
+
+                var allVariants = buildMethod.Invoke(qm, new object[] { equipVariants })
                     as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
-                
+
                 if (allVariants?.TryGetValue(TaleWorlds.Core.EquipmentIndex.Horse, out var mounts) == true)
                 {
                     return mounts;
                 }
-                
+
                 return new System.Collections.Generic.List<EquipmentVariantOption>();
             }
             catch (Exception ex)
@@ -3888,19 +3684,19 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             try
             {
-                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop", 
+                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (method == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
-                
+
                 var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 if (options?.TryGetValue(slot, out var slotVariants) == true)
                 {
                     return slotVariants;
                 }
-                
+
                 return new System.Collections.Generic.List<EquipmentVariantOption>();
             }
             catch (Exception ex)
@@ -3918,19 +3714,19 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             try
             {
-                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop", 
+                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (method == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
-                
+
                 var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 if (options == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
-                
+
                 // Combine all armor slots into a single list (cape goes to accessories)
                 var combined = new System.Collections.Generic.List<EquipmentVariantOption>();
                 var armorSlots = new[]
@@ -3940,7 +3736,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     TaleWorlds.Core.EquipmentIndex.Gloves,
                     TaleWorlds.Core.EquipmentIndex.Leg
                 };
-                
+
                 foreach (var slot in armorSlots)
                 {
                     if (options.TryGetValue(slot, out var slotVariants))
@@ -3948,7 +3744,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         combined.AddRange(slotVariants);
                     }
                 }
-                
+
                 return combined;
             }
             catch (Exception ex)
@@ -3968,7 +3764,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 var enlistment = EnlistmentBehavior.Instance;
                 var qmHero = enlistment?.QuartermasterHero;
-                
+
                 if (qmHero == null || !qmHero.IsAlive)
                 {
                     ModLogger.Warn("Conversations", "QM: Cannot restart conversation - QM hero not available");
@@ -3982,7 +3778,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         CampaignMapConversation.OpenConversation(
                             new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
                             new ConversationCharacterData(qmHero.CharacterObject, qmHero.PartyBelongedTo?.Party));
-                        
+
                         ModLogger.Debug("Conversations", "QM: Restarted conversation with quartermaster");
                     }
                     catch (Exception ex)
@@ -4067,7 +3863,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("Quartermaster", "Failed to open provisions UI from dialog", ex);
             }
         }
-        
+
         /// <summary>
         ///     Called when player requests equipment upgrades.
         ///     Opens the upgrade interface using NextFrameDispatcher.
@@ -4078,13 +3874,13 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 // Increase relationship for interaction
                 EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
-                
+
                 // Open upgrade screen after dialogue closes
                 NextFrameDispatcher.RunNextFrame(() =>
                 {
                     QuartermasterEquipmentSelectorBehavior.ShowUpgradeScreen();
                 });
-                
+
                 ModLogger.Info("Quartermaster", "Player requested equipment upgrades");
             }
             catch (Exception ex)
@@ -4108,7 +3904,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 QuartermasterManager.Instance?.SetFilterToOfficerEquipment();
 
                 ModLogger.Info("Quartermaster", "Player accessed Officers' Armory - officer filter enabled");
-                
+
                 // Note: The dialogue should transition to qm_browse_response where player picks a category
                 // The officer filter will be applied to whatever category they select
             }
@@ -4144,7 +3940,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=baggage_granted}The quartermaster sends a runner. The baggage train will be brought forward shortly.").ToString(),
                         Colors.Green));
-                    
+
                     // Small relationship bonus for using proper channels
                     EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
                 }
@@ -4152,7 +3948,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     // Request denied - show appropriate message
                     ModLogger.Info("Baggage", $"Emergency baggage access denied: {failReason}");
-                    
+
                     TextObject message;
                     switch (failReason)
                     {
@@ -4166,7 +3962,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                             message = new TextObject("{=baggage_denied_generic}Emergency baggage access is not available right now.");
                             break;
                     }
-                    
+
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Red));
                 }
             }
@@ -4178,7 +3974,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     Colors.Red));
             }
         }
-        
+
         /// <summary>
         /// Handles column halt request for T7+ commanders to bring baggage train forward.
         /// Stops the party and grants full access until movement resumes. Costs officer reputation.
@@ -4193,7 +3989,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     ModLogger.Error("Baggage", "MainParty not available for column halt");
                     return;
                 }
-                
+
                 // Stop party movement (halt the column)
                 if (party.IsMoving)
                 {
@@ -4201,7 +3997,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     party.SetMoveModeHold();
                     ModLogger.Info("Baggage", "Column halted for baggage access");
                 }
-                
+
                 // Apply officer reputation cost (inconvenience to the column)
                 var repCost = 3;
                 var escalation = EscalationManager.Instance;
@@ -4209,9 +4005,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     escalation.ModifyOfficerReputation(-repCost, "Column halt for baggage access");
                 }
-                
+
                 ModLogger.Info("Baggage", $"Column halt granted: Full baggage access until movement resumes (cost: -{repCost} Officer Rep)");
-                
+
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=baggage_column_halt}The column halts. Wagons are brought forward and the baggage train is made accessible.").ToString(),
                     Colors.Green));
@@ -4221,7 +4017,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.ErrorCode("Baggage", "E-BAG-002", "Error processing column halt request", ex);
             }
         }
-        
+
         /// <summary>
         ///     Checks if the player has any equipped items that can be upgraded.
         /// </summary>
@@ -4234,45 +4030,45 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     return false;
                 }
-                
+
                 var qm = QuartermasterManager.Instance;
                 if (qm == null)
                 {
                     return false;
                 }
-                
+
                 var availableTiers = qm.GetAvailableUpgradeTiers();
                 if (availableTiers == null || availableTiers.Count == 0)
                 {
                     return false;
                 }
-                
+
                 // Check all equipment slots for upgradeable items
                 for (int i = 0; i < (int)TaleWorlds.Core.EquipmentIndex.NumEquipmentSetSlots; i++)
                 {
                     var slot = (TaleWorlds.Core.EquipmentIndex)i;
                     var element = hero.BattleEquipment[slot];
-                    
+
                     // Skip empty slots
                     if (element.IsEmpty || element.Item == null)
                     {
                         continue;
                     }
-                    
+
                     // Skip items without modifier groups
                     var modGroup = element.Item.ItemComponent?.ItemModifierGroup;
                     if (modGroup == null)
                     {
                         continue;
                     }
-                    
+
                     // Skip items already at Legendary quality
                     var currentQuality = QuartermasterManager.GetModifierQuality(element.Item, element.ItemModifier);
                     if (currentQuality == TaleWorlds.Core.ItemQuality.Legendary)
                     {
                         continue;
                     }
-                    
+
                     // Check if any upgrade tier is available for this item
                     foreach (var tier in availableTiers)
                     {
@@ -4287,7 +4083,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         }
                     }
                 }
-                
+
                 // No upgradeable items found
                 return false;
             }
@@ -4586,16 +4382,16 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 return false;
             }
-            
+
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
             {
                 return false;
             }
-            
+
             return enlistment.IsBlockedFromLordDueToAbort(lord, out _);
         }
-        
+
         /// <summary>
         ///     Checks if the player can request enlistment with a minor faction lord.
         ///     Same logic as standard enlistment but only for minor faction lords.
@@ -5090,7 +4886,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 EnlistmentBehavior.Instance?.ProcessFirstTermRetirement();
                 ModLogger.Info("DialogManager", "First-term retirement processed");
-                
+
                 // Defer menu cleanup until after dialog closes - prevents stuck menu with no options
                 NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
             }
@@ -5120,12 +4916,12 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 // Process the retirement with troop retention flag set
                 EnlistmentBehavior.Instance?.ProcessFirstTermRetirement();
-                
+
                 // Add starter supplies so they don't starve immediately
                 AddRetirementSupplies();
-                
+
                 ModLogger.Info("DialogManager", "First-term retirement with troops processed");
-                
+
                 // Defer menu cleanup until after dialog closes
                 NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
             }
@@ -5250,7 +5046,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 EnlistmentBehavior.Instance?.ProcessRenewalRetirement();
                 ModLogger.Info("DialogManager", "Renewal discharge processed");
-                
+
                 // Defer menu cleanup until after dialog closes - prevents stuck menu with no options
                 NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
             }
@@ -5270,12 +5066,12 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 // Process the renewal discharge with troop retention flag set
                 EnlistmentBehavior.Instance?.ProcessRenewalRetirement();
-                
+
                 // Add starter supplies so they don't starve immediately
                 AddRetirementSupplies();
-                
+
                 ModLogger.Info("DialogManager", "Renewal discharge with troops processed");
-                
+
                 // Defer menu cleanup until after dialog closes
                 NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
             }
@@ -5348,7 +5144,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         GetLocalizedText(
                             "{=enlisted_early_discharge_notification}You have been discharged from service without full benefits.");
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-                    
+
                     // Defer menu cleanup until after dialog closes - prevents stuck menu with no options
                     NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
                 }
@@ -5462,13 +5258,13 @@ namespace Enlisted.Features.Conversations.Behaviors
                     {
                         // High-ranking commissions are processed directly through the promotion system.
                         ModLogger.Info("DialogManager", "Processing commander promotion");
-                        
+
                         var enlistmentCheck = EnlistmentBehavior.Instance;
                         if (enlistmentCheck != null && enlistmentCheck.EnlistmentTier == 6)
                         {
                             enlistmentCheck.SetTier(7);
                             QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
-                            
+
                             var message = new TextObject("{=promotion_t7_notification}You have been promoted to Commander. Twenty recruits await your command.");
                             InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
                         }

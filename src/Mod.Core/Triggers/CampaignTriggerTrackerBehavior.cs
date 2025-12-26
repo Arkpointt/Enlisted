@@ -10,9 +10,9 @@ namespace Enlisted.Mod.Core.Triggers
     /// <summary>
     /// Shared, lightweight campaign signal tracker.
     ///
-    /// This tracker provides a consistent vocabulary across systems without heavy 
-    /// scanning loops. It records a small amount of recent history as timestamps 
-    /// and IDs, allowing features to check for events such as entering a town or 
+    /// This tracker provides a consistent vocabulary across systems without heavy
+    /// scanning loops. It records a small amount of recent history as timestamps
+    /// and IDs, allowing features to check for events such as entering a town or
     /// leaving a battle.
     ///
     /// This data is intentionally minimal to avoid save bloat.
@@ -137,45 +137,6 @@ namespace Enlisted.Mod.Core.Triggers
             return TimeBlock.Night;
         }
 
-        /// <summary>
-        /// Compatibility method for older callers. Use GetTimeBlock() instead.
-        /// Maps the 4-block TimeBlock system to the 6-block DayPart enum.
-        /// </summary>
-        [Obsolete("Use GetTimeBlock() instead. DayPart enum is deprecated.")]
-        public DayPart GetDayPart()
-        {
-            var hourOfDay = (int)Math.Floor((CampaignTime.Now.ToDays * 24f) % 24f);
-            if (hourOfDay < 0)
-            {
-                hourOfDay = 0;
-            }
-
-            // 6-period schedule by hour: Dawn is 5–7 (muster, wake-up). Morning is 7–12 (active duty, training).
-            // Afternoon is 12–17 (continued duty, maintenance). Evening is 17–20 (wind-down, meals). Dusk is 20–22
-            // (campfire, prep for night). Night is 22–5 (watch duty, sleep).
-            if (hourOfDay >= 5 && hourOfDay < 7)
-            {
-                return DayPart.Dawn;
-            }
-            if (hourOfDay >= 7 && hourOfDay < 12)
-            {
-                return DayPart.Morning;
-            }
-            if (hourOfDay >= 12 && hourOfDay < 17)
-            {
-                return DayPart.Afternoon;
-            }
-            if (hourOfDay >= 17 && hourOfDay < 20)
-            {
-                return DayPart.Evening;
-            }
-            if (hourOfDay >= 20 && hourOfDay < 22)
-            {
-                return DayPart.Dusk;
-            }
-            return DayPart.Night;
-        }
-
         private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
         {
             try
@@ -297,21 +258,6 @@ namespace Enlisted.Mod.Core.Triggers
         Afternoon,
         Dusk,
         Night
-    }
-
-    /// <summary>
-    /// Legacy 6-block day period enum. Use TimeBlock (4-block system) instead.
-    /// </summary>
-    [Obsolete("Use TimeBlock enum instead. This 6-block system is deprecated in favor of the 4-block schedule.")]
-    public enum DayPart
-    {
-        Unknown = 0,
-        Dawn = 1,
-        Morning = 2,
-        Afternoon = 3,
-        Evening = 4,
-        Dusk = 5,
-        Night = 6
     }
 }
 
