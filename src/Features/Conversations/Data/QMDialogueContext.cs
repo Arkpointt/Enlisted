@@ -39,7 +39,7 @@ namespace Enlisted.Features.Conversations.Data
         public int? DaysEnlisted { get; set; }
         public bool? RecentlyPromoted { get; set; }
         public string LastPurchaseCategory { get; set; } // weapons/armor/provisions
-        
+
         // Baggage access context
         public string BaggageRequestType { get; set; } // emergency/locked/none
 
@@ -83,7 +83,7 @@ namespace Enlisted.Features.Conversations.Data
 
             // Tier range check - node context defines a range, actual context has player's current tier
             var actualTier = actual.PlayerTier ?? 1; // Default to tier 1 if not set
-            
+
             if (TierMin.HasValue && actualTier < TierMin.Value)
             {
                 return false;
@@ -170,26 +170,86 @@ namespace Enlisted.Features.Conversations.Data
         {
             var count = 0;
 
-            if (SupplyLevel != null) count++;
-            if (Archetype != null) count++;
-            if (ReputationTier != null) count++;
-            if (PlayerStyle != null) count++;
-            if (IsIntroduced.HasValue) count++;
-            if (PlayerTier.HasValue) count++;
-            if (TierMin.HasValue) count++;
-            if (TierMax.HasValue) count++;
-            if (TierCategory != null) count++;
-            if (Formation != null) count++;
-            if (IsCavalry.HasValue) count++;
-            if (IsOfficer.HasValue) count++;
-            if (RecentEvent != null) count++;
-            if (HasRecentBattle.HasValue) count++;
-            if (HighCasualties.HasValue) count++;
-            if (HasFlag != null) count++;
-            if (DaysEnlisted.HasValue) count++;
-            if (RecentlyPromoted.HasValue) count++;
-            if (LastPurchaseCategory != null) count++;
-            if (BaggageRequestType != null) count++;
+            if (SupplyLevel != null)
+            {
+                count++;
+            }
+            if (Archetype != null)
+            {
+                count++;
+            }
+            if (ReputationTier != null)
+            {
+                count++;
+            }
+            if (PlayerStyle != null)
+            {
+                count++;
+            }
+            if (IsIntroduced.HasValue)
+            {
+                count++;
+            }
+            if (PlayerTier.HasValue)
+            {
+                count++;
+            }
+            if (TierMin.HasValue)
+            {
+                count++;
+            }
+            if (TierMax.HasValue)
+            {
+                count++;
+            }
+            if (TierCategory != null)
+            {
+                count++;
+            }
+            if (Formation != null)
+            {
+                count++;
+            }
+            if (IsCavalry.HasValue)
+            {
+                count++;
+            }
+            if (IsOfficer.HasValue)
+            {
+                count++;
+            }
+            if (RecentEvent != null)
+            {
+                count++;
+            }
+            if (HasRecentBattle.HasValue)
+            {
+                count++;
+            }
+            if (HighCasualties.HasValue)
+            {
+                count++;
+            }
+            if (HasFlag != null)
+            {
+                count++;
+            }
+            if (DaysEnlisted.HasValue)
+            {
+                count++;
+            }
+            if (RecentlyPromoted.HasValue)
+            {
+                count++;
+            }
+            if (LastPurchaseCategory != null)
+            {
+                count++;
+            }
+            if (BaggageRequestType != null)
+            {
+                count++;
+            }
 
             return count;
         }

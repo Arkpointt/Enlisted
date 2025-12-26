@@ -79,10 +79,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Flow tracking (essential for save/load)
             /// <summary>Current menu stage ID for resume.</summary>
             public string CurrentStage { get; set; }
-            
+
             /// <summary>Day muster started.</summary>
             public int MusterDay { get; set; }
-            
+
             /// <summary>Previous muster for period calculation.</summary>
             public int LastMusterDay { get; set; }
 
@@ -93,10 +93,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Orders summary
             /// <summary>Count of orders completed this period.</summary>
             public int OrdersCompleted { get; set; }
-            
+
             /// <summary>Count of orders failed this period.</summary>
             public int OrdersFailed { get; set; }
-            
+
             /// <summary>Brief descriptions of order outcomes.</summary>
             public List<string> OrderOutcomes { get; set; } = new List<string>();
 
@@ -107,80 +107,80 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Pay stage outcomes
             /// <summary>Amount of pay received.</summary>
             public int PayReceived { get; set; }
-            
+
             /// <summary>Pay outcome type: "full", "partial", "iou", "corruption".</summary>
             public string PayOutcome { get; set; }
-            
+
             /// <summary>Ration outcome: "issued", "none", "officer_exempt".</summary>
             public string RationOutcome { get; set; }
 
             // Event stage outcomes
             /// <summary>Baggage check outcome: "passed", "confiscated", "bribed", "skipped".</summary>
             public string BaggageOutcome { get; set; }
-            
+
             /// <summary>Inspection outcome: "perfect", "basic", "failed", "skipped".</summary>
             public string InspectionOutcome { get; set; }
-            
+
             /// <summary>Recruit outcome: "mentored", "ignored", "hazed", "skipped".</summary>
             public string RecruitOutcome { get; set; }
 
             // Promotion tracking (promotion occurs via PromotionBehavior, recap shows at muster)
             /// <summary>True if tier changed since last muster.</summary>
             public bool PromotionOccurredThisPeriod { get; set; }
-            
+
             /// <summary>Tier at last muster.</summary>
             public int PreviousTier { get; set; }
-            
+
             /// <summary>Tier at this muster.</summary>
             public int CurrentTier { get; set; }
-            
+
             /// <summary>Campaign day when promotion occurred.</summary>
             public int PromotionDay { get; set; }
 
             // Contraband (needed for baggage stage display)
             /// <summary>Contraband found during baggage check.</summary>
             public bool ContrabandFound { get; set; }
-            
+
             /// <summary>Current quartermaster reputation.</summary>
             public int QMRep { get; set; }
 
             // Retinue (T7+ only)
             /// <summary>Current retinue soldier count.</summary>
             public int RetinueStrength { get; set; }
-            
+
             /// <summary>Maximum retinue capacity.</summary>
             public int RetinueCapacity { get; set; }
-            
+
             /// <summary>Retinue casualties this period.</summary>
             public int RetinueCasualties { get; set; }
-            
+
             /// <summary>Names of fallen soldiers this period.</summary>
             public List<string> FallenRetinueNames { get; set; } = new List<string>();
 
             // Post-muster flags
             /// <summary>If true, open QM conversation after muster.</summary>
             public bool VisitQMAfter { get; set; }
-            
+
             /// <summary>If true, open retinue recruitment after muster.</summary>
             public bool RecruitRetinueAfter { get; set; }
-            
+
             /// <summary>If true, request temporary leave after muster.</summary>
             public bool RequestLeaveAfter { get; set; }
 
             // Escalation tracking (for edge case handling)
             /// <summary>Whether high scrutiny warning should display.</summary>
             public bool HighScrutinyWarning { get; set; }
-            
+
             /// <summary>Whether discharge threshold was reached during muster.</summary>
             public bool DischargeThresholdReached { get; set; }
-            
+
             /// <summary>Events queued to fire after muster completes.</summary>
             public List<string> PendingEscalationEvents { get; set; } = new List<string>();
 
             // Error tracking
             /// <summary>Errors encountered during muster that couldn't halt the flow.</summary>
             public List<string> EncounteredErrors { get; set; } = new List<string>();
-            
+
             /// <summary>Whether any effects failed to apply.</summary>
             public bool EffectsPartiallyFailed { get; set; }
         }
@@ -236,7 +236,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     dataStore.SyncData("_muster_currentTier", ref currentTier);
                     dataStore.SyncData("_muster_highScrutiny", ref highScrutiny);
                     dataStore.SyncData("_muster_visitQM", ref visitQM);
-                    
+
                     ModLogger.Info(LogCategory, $"Saved muster state at stage {currentStage}");
                 }
             }
@@ -280,8 +280,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         // Validate restored state
                         if (string.IsNullOrEmpty(currentStage) || !IsValidMusterStage(currentStage))
                         {
-                            ModLogger.ErrorCode(LogCategory, "E-MUSTER-003", 
-                                $"Corrupted muster state on load (stage={currentStage}), aborting muster", null);
+                            ModLogger.ErrorCode(LogCategory, "E-MUSTER-003",
+                                $"Corrupted muster state on load (stage={currentStage}), aborting muster");
                             _currentMuster = null;
                             EnlistmentBehavior.Instance?.DeferPayMuster();
                         }
@@ -307,7 +307,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             };
 
                             ModLogger.Info(LogCategory, $"Restored muster state, will resume at stage {currentStage}");
-                            
+
                             // Queue resume for after load completes
                             _musterPendingAfterMenu = true;
                         }
@@ -539,20 +539,32 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-                    
-                    if (_currentMuster == null || !_currentMuster.ContrabandFound) return false;
-                    
+
+                    if (_currentMuster == null || !_currentMuster.ContrabandFound)
+                    {
+                        return false;
+                    }
+
                     var qmRep = _currentMuster.QMRep;
-                    if (qmRep < 35 || qmRep >= 65) return false;
+                    if (qmRep < 35 || qmRep >= 65)
+                    {
+                        return false;
+                    }
 
                     var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment == null) return false;
+                    if (enlistment == null)
+                    {
+                        return false;
+                    }
 
                     var playerTier = enlistment.EnlistmentTier;
                     var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
                     var contrabandResult = ContrabandChecker.ScanInventory(playerTier, playerRole);
-                    
-                    if (!contrabandResult.HasContraband) return false;
+
+                    if (!contrabandResult.HasContraband)
+                    {
+                        return false;
+                    }
 
                     var bribeAmount = ContrabandChecker.CalculateBribeAmount(contrabandResult.MostValuable.Value);
                     var playerGold = Hero.MainHero?.Gold ?? 0;
@@ -578,11 +590,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
-                    
-                    if (_currentMuster == null || !_currentMuster.ContrabandFound) return false;
-                    
+
+                    if (_currentMuster == null || !_currentMuster.ContrabandFound)
+                    {
+                        return false;
+                    }
+
                     var qmRep = _currentMuster.QMRep;
-                    if (qmRep < 35 || qmRep >= 65) return false;
+                    if (qmRep < 35 || qmRep >= 65)
+                    {
+                        return false;
+                    }
 
                     var roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
                     if (roguery < 40)
@@ -606,11 +624,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    
-                    if (_currentMuster == null || !_currentMuster.ContrabandFound) return false;
-                    
+
+                    if (_currentMuster == null || !_currentMuster.ContrabandFound)
+                    {
+                        return false;
+                    }
+
                     var qmRep = _currentMuster.QMRep;
-                    if (qmRep < 35 || qmRep >= 65) return false;
+                    if (qmRep < 35 || qmRep >= 65)
+                    {
+                        return false;
+                    }
 
                     args.Tooltip = new TextObject("{=muster_handover_tt}Accept confiscation. Fine + 2 Scrutiny. Keep dignity.");
                     return true;
@@ -624,11 +648,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    
-                    if (_currentMuster == null || !_currentMuster.ContrabandFound) return false;
-                    
+
+                    if (_currentMuster == null || !_currentMuster.ContrabandFound)
+                    {
+                        return false;
+                    }
+
                     var qmRep = _currentMuster.QMRep;
-                    if (qmRep >= 35) return false;
+                    if (qmRep >= 35)
+                    {
+                        return false;
+                    }
 
                     args.Tooltip = new TextObject("{=muster_accept_tt}Item confiscated. Fine + 2 Scrutiny.");
                     return true;
@@ -642,11 +672,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
-                    
-                    if (_currentMuster == null || !_currentMuster.ContrabandFound) return false;
-                    
+
+                    if (_currentMuster == null || !_currentMuster.ContrabandFound)
+                    {
+                        return false;
+                    }
+
                     var qmRep = _currentMuster.QMRep;
-                    if (qmRep >= 35) return false;
+                    if (qmRep >= 35)
+                    {
+                        return false;
+                    }
 
                     args.Tooltip = new TextObject("{=muster_protest_tt}20% success. Failure adds scrutiny and discipline.");
                     return true;
@@ -669,14 +705,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.OrderTroopsToAttack;
-                    
+
                     // Only show if inspection is active (not skipped)
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.InspectionOutcome)) 
+                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.InspectionOutcome))
+                    {
                         return false;
-                    
+                    }
+
                     var skill = GetRelevantMeleeSkill();
                     var skillValue = Hero.MainHero?.GetSkillValue(skill) ?? 0;
-                    
+
                     if (skillValue < 30)
                     {
                         args.IsEnabled = false;
@@ -686,7 +724,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         args.Tooltip = new TextObject("{=muster_inspection_perfect_tt}Flawless presentation. +10 OneHanded XP, +6 Officer Rep, +3 Soldier Rep.");
                     }
-                    
+
                     return true;
                 },
                 _ => ResolveInspectionPerfect(),
@@ -698,11 +736,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    
+
                     // Only show if inspection is active
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.InspectionOutcome)) 
+                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.InspectionOutcome))
+                    {
                         return false;
-                    
+                    }
+
                     args.Tooltip = new TextObject("{=muster_inspection_basic_tt}Presentable enough. +5 OneHanded XP, +2 Officer Rep.");
                     return true;
                 },
@@ -715,11 +755,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    
+
                     // Only show if inspection is active
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.InspectionOutcome)) 
+                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.InspectionOutcome))
+                    {
                         return false;
-                    
+                    }
+
                     args.Tooltip = new TextObject("{=muster_inspection_unprepared_tt}Poor showing. -8 Officer Rep, -4 Soldier Rep, +8 Scrutiny.");
                     return true;
                 },
@@ -754,13 +796,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
-                    
+
                     // Only show if recruit event is active (not skipped)
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.RecruitOutcome)) 
+                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.RecruitOutcome))
+                    {
                         return false;
-                    
+                    }
+
                     var leadership = Hero.MainHero?.GetSkillValue(DefaultSkills.Leadership) ?? 0;
-                    
+
                     if (leadership < 25)
                     {
                         args.IsEnabled = false;
@@ -770,7 +814,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         args.Tooltip = new TextObject("{=muster_recruit_train_tt}Train the recruit. +15 Leadership XP, +5 Officer Rep, +6 Soldier Rep.");
                     }
-                    
+
                     return true;
                 },
                 _ => ResolveRecruitTrain(),
@@ -782,11 +826,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    
+
                     // Only show if recruit event is active
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.RecruitOutcome)) 
+                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.RecruitOutcome))
+                    {
                         return false;
-                    
+                    }
+
                     args.Tooltip = new TextObject("{=muster_recruit_ignore_tt}Ignore the recruit. -2 Soldier Rep.");
                     return true;
                 },
@@ -799,11 +845,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
-                    
+
                     // Only show if recruit event is active
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.RecruitOutcome)) 
+                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.RecruitOutcome))
+                    {
                         return false;
-                    
+                    }
+
                     args.Tooltip = new TextObject("{=muster_recruit_haze_tt}Haze the recruit. +4 Soldier Rep, -5 Officer Rep, +8 Discipline.");
                     return true;
                 },
@@ -1044,14 +1092,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     return (true, null);
                 }
-                
+
                 // Allow from town/settlement menus (muster closes them)
                 if (nextMenu.StringId.Contains("town") || nextMenu.StringId.Contains("village") ||
                     nextMenu.StringId.Contains("castle") || nextMenu.StringId.Contains("settlement"))
                 {
                     return (true, null);
                 }
-                
+
                 // Defer from other menus
                 return (false, "Player in menu: " + nextMenu.StringId);
             }
@@ -1065,7 +1113,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         public void CheckPendingMusterTrigger()
         {
-            if (!_musterPendingAfterCombat && !_musterPendingAfterMenu) return;
+            if (!_musterPendingAfterCombat && !_musterPendingAfterMenu)
+            {
+                return;
+            }
 
             var (canTrigger, reason) = CanTriggerMuster();
             if (canTrigger)
@@ -1113,7 +1164,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Check if we can trigger muster in current state
             var (canTrigger, deferReason) = CanTriggerMuster();
-            
+
             if (!canTrigger)
             {
                 // Handle specific defer scenarios
@@ -1123,7 +1174,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Info(LogCategory, "Muster deferred: player in combat. Will trigger when combat ends.");
                     return;
                 }
-                
+
                 if (deferReason == "Player captured")
                 {
                     // Skip muster entirely while captured, wages accumulate as backpay
@@ -1131,20 +1182,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     enlistment.DeferPayMuster();
                     return;
                 }
-                
+
                 if (deferReason == "Player in conversation" || deferReason?.StartsWith("Player in menu:") == true)
                 {
                     _musterPendingAfterMenu = true;
                     ModLogger.Info(LogCategory, $"Muster deferred: {deferReason}. Will trigger after.");
                     return;
                 }
-                
+
                 if (deferReason == "Muster already in progress")
                 {
                     ModLogger.Debug(LogCategory, "Muster trigger ignored: already in progress");
                     return;
                 }
-                
+
                 // Unknown defer reason, log and defer
                 ModLogger.Warn(LogCategory, $"Muster deferred: {deferReason}");
                 _musterPendingAfterMenu = true;
@@ -1163,7 +1214,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
-                ModLogger.ErrorCode(LogCategory, "E-MUSTER-005", "BeginMusterSequenceInternal called but player not enlisted", null);
+                ModLogger.ErrorCode(LogCategory, "E-MUSTER-005", "BeginMusterSequenceInternal called but player not enlisted");
                 return;
             }
 
@@ -1182,8 +1233,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Capture strategic context for flavor text
                 var lordParty = enlistment.EnlistedLord?.PartyBelongedTo;
-                _currentMuster.StrategicContext = lordParty != null 
-                    ? ArmyContextAnalyzer.GetLordStrategicContext(lordParty) 
+                _currentMuster.StrategicContext = lordParty != null
+                    ? ArmyContextAnalyzer.GetLordStrategicContext(lordParty)
                     : "patrol_peacetime";
 
                 // Capture fatigue state before reset
@@ -1265,8 +1316,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void AbortMusterWithFallback(string reason)
         {
-            ModLogger.ErrorCode(LogCategory, "E-MUSTER-005", $"Aborting muster: {reason}", null);
-            
+            ModLogger.ErrorCode(LogCategory, "E-MUSTER-005", $"Aborting muster: {reason}");
+
             // Clear state
             _currentMuster = null;
             _musterPendingAfterCombat = false;
@@ -1316,7 +1367,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.ErrorCode(LogCategory, "E-MUSTER-002", $"Stage transition failed to {menuId}", ex);
                 _currentMuster?.EncounteredErrors.Add($"Stage transition failed: {menuId}");
-                
+
                 // Try to jump to complete stage if not already there
                 if (menuId != MusterCompleteMenuId)
                 {
@@ -1402,7 +1453,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             try
             {
-                if (_currentMuster == null) return;
+                if (_currentMuster == null)
+                {
+                    return;
+                }
                 _currentMuster.CurrentStage = MusterPayMenuId;
 
                 var enlistment = EnlistmentBehavior.Instance;
@@ -1439,13 +1493,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Error(LogCategory, "BuildIntroText failed, using fallback", ex);
                 _currentMuster?.EncounteredErrors.Add("Intro text generation failed");
-                
+
                 var sb = new StringBuilder();
                 sb.AppendLine("The sergeants call the muster. Your company assembles in formation.");
                 sb.AppendLine();
                 sb.AppendLine("_____ YOUR SERVICE RECORD _____");
                 sb.AppendLine();
-                
+
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment != null)
                 {
@@ -1456,7 +1510,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     sb.AppendLine("Service record unavailable.");
                 }
-                
+
                 return sb.ToString();
             }
         }
@@ -1474,13 +1528,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Error(LogCategory, "BuildPayText failed, using fallback", ex);
                 _currentMuster?.EncounteredErrors.Add("Pay text generation failed");
-                
+
                 var sb = new StringBuilder();
                 sb.AppendLine("You step forward to the paymaster's table. He opens his ledger.");
                 sb.AppendLine();
                 sb.AppendLine("_____ PAY STATUS _____");
                 sb.AppendLine();
-                
+
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment != null)
                 {
@@ -1490,14 +1544,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     sb.AppendLine("Pay records unavailable.");
                 }
-                
+
                 return sb.ToString();
             }
         }
 
         private void OnBaggageCheckInit(MenuCallbackArgs args)
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
             _currentMuster.CurrentStage = MusterBaggageMenuId;
 
             // Perform the baggage check (30% chance, only if contraband found)
@@ -1514,7 +1571,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private void OnInspectionInit(MenuCallbackArgs args)
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
             _currentMuster.CurrentStage = MusterInspectionMenuId;
 
             var enlistment = EnlistmentBehavior.Instance;
@@ -1527,7 +1587,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Check 12-day cooldown
             var currentDay = (int)CampaignTime.Now.ToDays;
             var daysSinceInspection = currentDay - enlistment.LastInspectionDay;
-            
+
             if (daysSinceInspection < 12)
             {
                 // On cooldown, skip inspection
@@ -1558,7 +1618,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private void OnRecruitInit(MenuCallbackArgs args)
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
             _currentMuster.CurrentStage = MusterRecruitMenuId;
 
             var enlistment = EnlistmentBehavior.Instance;
@@ -1581,7 +1644,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Check 10-day cooldown
             var currentDay = (int)CampaignTime.Now.ToDays;
             var daysSinceRecruit = currentDay - enlistment.LastRecruitDay;
-            
+
             if (daysSinceRecruit < 10)
             {
                 // On cooldown, skip recruit stage
@@ -1597,7 +1660,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private void OnPromotionInit(MenuCallbackArgs args)
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
             _currentMuster.CurrentStage = MusterPromotionRecapMenuId;
 
             MBTextManager.SetTextVariable("MUSTER_PROMOTION_TEXT", BuildPromotionText());
@@ -1605,7 +1671,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private void OnRetinueInit(MenuCallbackArgs args)
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
             _currentMuster.CurrentStage = MusterRetinueMenuId;
 
             MBTextManager.SetTextVariable("MUSTER_RETINUE_TEXT", BuildRetinueText());
@@ -1615,7 +1684,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             try
             {
-                if (_currentMuster == null) return;
+                if (_currentMuster == null)
+                {
+                    return;
+                }
                 _currentMuster.CurrentStage = MusterCompleteMenuId;
 
                 MBTextManager.SetTextVariable("MUSTER_DAY", _currentMuster.MusterDay.ToString());
@@ -1637,31 +1709,31 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 var text = BuildMusterCompleteText();
-                
+
                 // Append warnings for edge cases
                 var sb = new StringBuilder(text);
-                
+
                 // High scrutiny warning
                 if (_currentMuster?.HighScrutinyWarning == true)
                 {
                     sb.AppendLine();
                     sb.AppendLine("⚠️ WARNING: You are under heightened scrutiny. Your actions are being watched closely.");
                 }
-                
+
                 // Effects partially failed warning
                 if (_currentMuster?.EffectsPartiallyFailed == true)
                 {
                     sb.AppendLine();
                     sb.AppendLine("⚠️ Some effects may not have applied correctly.");
                 }
-                
+
                 // Discharge threshold warning
                 if (_currentMuster?.DischargeThresholdReached == true)
                 {
                     sb.AppendLine();
                     sb.AppendLine("⚠️ DISCIPLINARY NOTICE: Your conduct will be reviewed by command.");
                 }
-                
+
                 // Supply crisis warning
                 var supply = CompanySupplyManager.Instance?.TotalSupply ?? 100;
                 if (supply < 20)
@@ -1669,20 +1741,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     sb.AppendLine();
                     sb.AppendLine("⚠️ CRITICAL SUPPLY: Quartermaster has locked all baggage access.");
                 }
-                
+
                 return sb.ToString();
             }
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "BuildMusterCompleteText failed, using fallback", ex);
                 _currentMuster?.EncounteredErrors.Add("Complete text generation failed");
-                
+
                 var sb = new StringBuilder();
                 sb.AppendLine("Muster is dismissed. The sergeants release the company.");
                 sb.AppendLine();
                 sb.AppendLine("_____ MUSTER OUTCOMES _____");
                 sb.AppendLine();
-                
+
                 if (_currentMuster != null)
                 {
                     sb.AppendLine($"Pay: {_currentMuster.PayOutcome ?? "unknown"}");
@@ -1693,7 +1765,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     sb.AppendLine("Details unavailable.");
                 }
-                
+
                 return sb.ToString();
             }
         }
@@ -1723,7 +1795,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
             {
-                ModLogger.ErrorCode(LogCategory, "E-MUSTER-004", "Cannot resolve standard pay: EnlistmentBehavior null", null);
+                ModLogger.ErrorCode(LogCategory, "E-MUSTER-004", "Cannot resolve standard pay: EnlistmentBehavior null");
                 if (_currentMuster != null)
                 {
                     _currentMuster.EffectsPartiallyFailed = true;
@@ -1736,7 +1808,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var success = SafeApplyEffect("StandardPay", () =>
             {
                 ModLogger.Info(LogCategory, "Resolving standard pay from muster menu");
-                
+
                 // Capture pay details before resolution for muster state tracking
                 if (_currentMuster != null)
                 {
@@ -1748,7 +1820,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Call EnlistmentBehavior's standard pay resolution
                 enlistment.ResolvePayMusterStandard();
-                
+
                 // Update muster state with actual outcome
                 if (_currentMuster != null)
                 {
@@ -1783,14 +1855,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 ModLogger.Info(LogCategory, "Resolving corruption pay from muster menu");
-                
+
                 if (_currentMuster != null)
                 {
                     _currentMuster.PayOutcome = "corruption";
                 }
 
                 enlistment.ResolveCorruptionMuster();
-                
+
                 if (_currentMuster != null)
                 {
                     _currentMuster.PayOutcome = enlistment.LastPayOutcome;
@@ -1823,7 +1895,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 ModLogger.Info(LogCategory, "Resolving side deal pay from muster menu");
-                
+
                 if (_currentMuster != null)
                 {
                     _currentMuster.PayOutcome = "side_deal";
@@ -1832,7 +1904,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 enlistment.ResolveSideDealMuster();
-                
+
                 if (_currentMuster != null)
                 {
                     _currentMuster.PayOutcome = enlistment.LastPayOutcome;
@@ -1865,7 +1937,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 ModLogger.Info(LogCategory, "Resolving promissory note from muster menu");
-                
+
                 if (_currentMuster != null)
                 {
                     _currentMuster.PayOutcome = "promissory";
@@ -1873,7 +1945,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 enlistment.ResolvePromissoryMuster();
-                
+
                 ModLogger.Debug(LogCategory, "Promissory note accepted, payment deferred 3 days");
             }
             catch (Exception ex)
@@ -1887,7 +1959,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         /// Processes final discharge (honorable discharge).
         /// Ends service, pays final wages + severance, activates pension.
-        /// ResolvePayMusterStandard() detects IsPendingDischarge internally and calls 
+        /// ResolvePayMusterStandard() detects IsPendingDischarge internally and calls
         /// the private FinalizePendingDischarge() method which handles the full flow.
         /// </summary>
         private void FinalizePendingDischarge()
@@ -1903,7 +1975,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 ModLogger.Info(LogCategory, "Processing final discharge from muster menu");
-                
+
                 if (_currentMuster != null)
                 {
                     _currentMuster.PayOutcome = "final_discharge";
@@ -1912,9 +1984,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // ResolvePayMusterStandard detects IsPendingDischarge and handles final muster internally
                 // This pays final wages + severance, applies relations, and calls StopEnlist
                 enlistment.ResolvePayMusterStandard();
-                
+
                 ModLogger.Info(LogCategory, "Final discharge complete, service ended");
-                
+
                 // Service has ended, clear muster state and exit
                 RestoreTimeControlOnExit();
                 _currentMuster = null;
@@ -1947,7 +2019,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 ModLogger.Info(LogCategory, "Processing smuggle discharge (deserter) from muster menu");
-                
+
                 if (_currentMuster != null)
                 {
                     _currentMuster.PayOutcome = "smuggle_desertion";
@@ -1956,9 +2028,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // DesertArmy keeps equipped gear and applies desertion penalties
                 // Player forfeits pension but keeps all current equipment
                 enlistment.DesertArmy();
-                
+
                 ModLogger.Info(LogCategory, "Smuggle discharge complete, service ended as deserter");
-                
+
                 // Service has ended, clear muster state and exit
                 RestoreTimeControlOnExit();
                 _currentMuster = null;
@@ -1982,7 +2054,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             // Ration exchange happens automatically in OnMusterCycleComplete (called by payment resolution)
             // No menu stage for ration exchange - it's automatic
-            
+
             // Move to baggage check stage
             // The baggage check stage will handle 30% trigger and contraband detection in OnBaggageCheckInit
             GameMenu.SwitchToMenu(MusterBaggageMenuId);
@@ -2011,7 +2083,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             var enlistment = EnlistmentBehavior.Instance;
             var retinueMgr = RetinueManager.Instance;
-            
+
             // If T7+ with retinue (or just granted retinue), show retinue muster
             if (enlistment?.EnlistmentTier >= 7 && retinueMgr != null)
             {
@@ -2019,7 +2091,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // or if retinue exists
                 var hasRetinue = retinueMgr.State?.HasRetinue ?? false;
                 var justPromotedToT7 = _currentMuster?.CurrentTier == 7 && _currentMuster?.PromotionOccurredThisPeriod == true;
-                
+
                 if (hasRetinue || justPromotedToT7)
                 {
                     GameMenu.SwitchToMenu(MusterRetinueMenuId);
@@ -2038,7 +2110,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void DeferPayMuster()
         {
             ModLogger.Info(LogCategory, "Muster deferred by player");
-            
+
             try
             {
                 // Call EnlistmentBehavior.DeferPayMuster() to reschedule (retry tomorrow)
@@ -2048,10 +2120,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Error(LogCategory, "Failed to defer pay muster", ex);
             }
-            
+
             _currentMuster = null;
             RestoreTimeControlOnExit();
-            
+
             try
             {
                 GameMenu.ExitToLast();
@@ -2085,17 +2157,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         SafeApplyEffect("CreateMusterRecord", () => CreateMusterOutcomeRecord(enlistment));
                     }
-                    
+
                     // Mark muster complete (updates tier/XP tracking, resets XP sources)
                     SafeApplyEffect("MusterComplete", () => enlistment.OnMusterComplete());
-                    
+
                     // Refresh quartermaster stock (with null safety)
                     SafeApplyEffect("QMStockRefresh", () =>
                     {
                         QuartermasterManager.Instance?.RollStockAvailability();
                         ModLogger.Debug(LogCategory, "QM stock availability refreshed");
                     });
-                    
+
                     // Mark newly unlocked items in case promotion occurred this period
                     SafeApplyEffect("QMUnlockedItems", () =>
                     {
@@ -2104,10 +2176,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 RestoreTimeControlOnExit();
-                
+
                 // Clear muster state before exiting
                 _currentMuster = null;
-                
+
                 GameMenu.ExitToLast();
 
                 // Show warning if some effects failed to apply
@@ -2122,7 +2194,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     ModLogger.Warn(LogCategory, $"Muster completed with {encounteredErrors.Count} errors: {string.Join(", ", encounteredErrors)}");
                 }
-                
+
                 // Handle post-muster transitions after menu exits
                 if (visitQM)
                 {
@@ -2212,7 +2284,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         public void MarkDischargeThresholdReached()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
             _currentMuster.DischargeThresholdReached = true;
             ModLogger.Info(LogCategory, "Discharge threshold marked during muster");
         }
@@ -2272,7 +2347,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void InitializeMusterTimeControl(MenuCallbackArgs args)
         {
             var settings = ModConfig.Settings;
-            
+
             if (settings?.PauseGameDuringMuster == true)
             {
                 // Pause mode: force stop and lock controls
@@ -2290,11 +2365,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Player can advance time during muster using speed controls
                 QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                 args.MenuContext?.GameMenu?.StartWait();
-                
+
                 if (Campaign.Current != null)
                 {
                     Campaign.Current.SetTimeControlModeLock(false);
-                    
+
                     var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
                     var normalized = QuartermasterManager.NormalizeToStoppable(captured);
                     Campaign.Current.TimeControlMode = normalized;
@@ -2310,7 +2385,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void RestoreTimeControlOnExit()
         {
             var settings = ModConfig.Settings;
-            
+
             if (settings?.PauseGameDuringMuster != true && Campaign.Current != null)
             {
                 // Time-preserving mode: restore captured time state
@@ -2320,7 +2395,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     Campaign.Current.TimeControlMode = normalized;
                     ModLogger.Debug(LogCategory, $"Time control restored: {normalized}");
                 }
-                
+
                 // Clear captured state from QuartermasterManager
                 QuartermasterManager.CapturedTimeMode = null;
             }
@@ -2391,7 +2466,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             var context = _currentMuster?.StrategicContext ?? "patrol_peacetime";
             var flavorText = GetStrategicContextFlavor(context);
-            
+
             // Add army name if available
             var enlistment = EnlistmentBehavior.Instance;
             var lordParty = enlistment?.EnlistedLord?.PartyBelongedTo;
@@ -2476,10 +2551,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private string BuildHealthStatus()
         {
             var hero = Hero.MainHero;
-            if (hero == null) return string.Empty;
+            if (hero == null)
+            {
+                return string.Empty;
+            }
 
             var healthPercent = (int)((hero.HitPoints / (float)hero.MaxHitPoints) * 100);
-            
+
             if (healthPercent >= 100)
             {
                 return "Health Status: Fit for duty";
@@ -2560,7 +2638,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             var lastMusterDay = _currentMuster?.LastMusterDay ?? 0;
             var label = lastMusterDay > 0 ? "Since Last Muster" : "Since Enlistment";
-            
+
             var feedItems = newsBehavior.GetPersonalFeedSince(lastMusterDay);
             if (feedItems == null || feedItems.Count == 0)
             {
@@ -2573,7 +2651,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             foreach (var item in feedItems)
             {
-                if (count >= maxEvents) break;
+                if (count >= maxEvents)
+                {
+                    break;
+                }
 
                 var headline = FormatFeedItemForMuster(item);
                 if (!string.IsNullOrEmpty(headline))
@@ -2583,7 +2664,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         headline = headline.Substring(0, 77) + "...";
                     }
-                    
+
                     sb.AppendLine($"• Day {item.DayCreated}: {headline}");
                     count++;
                 }
@@ -2600,14 +2681,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private string BuildStatusLine()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return string.Empty;
+            if (enlistment == null)
+            {
+                return string.Empty;
+            }
 
             var pay = enlistment.PendingMusterPay;
             var supply = CompanySupplyManager.Instance?.TotalSupply ?? 100;
-            
+
             // Unit status (simplified for now - could be enhanced with actual casualty tracking)
             var battles = CountBattlesThisPeriod();
-            
+
             return $"[Pay: {pay:N0} denars | Supply: {supply}% | Battles: {battles}]";
         }
 
@@ -2674,15 +2758,27 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         /// Gets human-readable wealth status text for the lord's treasury.
-        /// Thresholds match pay-system.md spec: Wealthy >50k, Comfortable >20k, 
+        /// Thresholds match pay-system.md spec: Wealthy >50k, Comfortable >20k,
         /// Struggling >5k, Poor >1k, Broke ≤1k.
         /// </summary>
         private string GetLordWealthStatus(int lordGold)
         {
-            if (lordGold > 50000) return "Wealthy";
-            if (lordGold > 20000) return "Comfortable";
-            if (lordGold > 5000) return "Struggling";
-            if (lordGold > 1000) return "Poor";
+            if (lordGold > 50000)
+            {
+                return "Wealthy";
+            }
+            if (lordGold > 20000)
+            {
+                return "Comfortable";
+            }
+            if (lordGold > 5000)
+            {
+                return "Struggling";
+            }
+            if (lordGold > 1000)
+            {
+                return "Poor";
+            }
             return "Broke";
         }
 
@@ -2693,7 +2789,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void ProcessBaggageCheck()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
@@ -2713,9 +2812,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Scan inventory for contraband
             var playerTier = enlistment.EnlistmentTier;
             var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
-            
+
             var contrabandResult = ContrabandChecker.ScanInventory(playerTier, playerRole);
-            
+
             if (!contrabandResult.HasContraband)
             {
                 _currentMuster.BaggageOutcome = "clean";
@@ -2799,13 +2898,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (contrabandResult.HasContraband)
                 {
                     var contraband = contrabandResult.MostValuable;
-                    
+
                     sb.AppendLine("The quartermaster's hand stops in your pack. He pulls out an item");
                     sb.AppendLine("and raises an eyebrow.");
                     sb.AppendLine();
                     sb.AppendLine($"Found: {contraband.Item.Name} (value {contraband.Value} denars)");
                     sb.AppendLine();
-                    
+
                     if (_currentMuster.QMRep >= 35)
                     {
                         sb.AppendLine("\"This doesn't belong to a soldier of your rank,\" he says quietly.");
@@ -2816,7 +2915,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         sb.AppendLine("\"Contraband,\" he says flatly. \"You know the rules.\"");
                         sb.AppendLine("\"Hand it over. Now.\"");
                     }
-                    
+
                     sb.AppendLine();
                     sb.AppendLine($"[QM Reputation: {_currentMuster.QMRep} - {GetReputationLabel(_currentMuster.QMRep)}]");
 
@@ -2835,9 +2934,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private string GetReputationLabel(int rep)
         {
-            if (rep >= 65) return "Trusted";
-            if (rep >= 35) return "Neutral";
-            if (rep >= 0) return "Wary";
+            if (rep >= 65)
+            {
+                return "Trusted";
+            }
+            if (rep >= 35)
+            {
+                return "Neutral";
+            }
+            if (rep >= 0)
+            {
+                return "Wary";
+            }
             return "Hostile";
         }
 
@@ -2857,7 +2965,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private string BuildInspectionText()
         {
-            if (_currentMuster == null) return "[No inspection data]";
+            if (_currentMuster == null)
+            {
+                return "[No inspection data]";
+            }
 
             // Check for skip conditions
             if (_currentMuster.InspectionOutcome == "skipped_cooldown")
@@ -2877,7 +2988,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             sb.AppendLine();
             sb.AppendLine("He stops in front of you, looking you up and down with a critical eye.");
             sb.AppendLine();
-            
+
             // Show skill status
             var skill = GetRelevantMeleeSkill();
             var skillValue = Hero.MainHero?.GetSkillValue(skill) ?? 0;
@@ -2888,7 +2999,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private string BuildRecruitText()
         {
-            if (_currentMuster == null) return "[No recruit data]";
+            if (_currentMuster == null)
+            {
+                return "[No recruit data]";
+            }
 
             // Check for skip conditions
             if (_currentMuster.RecruitOutcome == "skipped_tier")
@@ -2910,7 +3024,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             sb.AppendLine("The veterans are already snickering. As a seasoned soldier, you could");
             sb.AppendLine("step in—or let him learn the hard way.");
             sb.AppendLine();
-            
+
             // Show Leadership status
             var leadership = Hero.MainHero?.GetSkillValue(DefaultSkills.Leadership) ?? 0;
             sb.AppendLine($"Your Leadership skill: {leadership}");
@@ -2942,22 +3056,28 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private string BuildPromotionText()
         {
-            if (_currentMuster == null) return "[No promotion data]";
-            
+            if (_currentMuster == null)
+            {
+                return "[No promotion data]";
+            }
+
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return "[Enlistment data unavailable]";
+            if (enlistment == null)
+            {
+                return "[Enlistment data unavailable]";
+            }
 
             var sb = new StringBuilder();
-            
+
             // Formal announcement
             var prevRank = GetRankName(_currentMuster.PreviousTier);
             var currentRank = GetRankName(_currentMuster.CurrentTier);
             var daysSincePromotion = _currentMuster.MusterDay - _currentMuster.PromotionDay;
-            
+
             sb.AppendLine("The captain addresses the formation. Your promotion is formally");
             sb.AppendLine("recognized before the assembled company.");
             sb.AppendLine();
-            
+
             // Promotion announcement text
             if (daysSincePromotion == 0)
             {
@@ -2974,17 +3094,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 sb.AppendLine($"\"On Day {_currentMuster.PromotionDay} of this campaign, this soldier was promoted to {currentRank}");
                 sb.AppendLine("for distinguished service. The rank has been earned and noted.\"");
             }
-            
+
             sb.AppendLine();
             sb.AppendLine("The men salute. Your promotion is now part of the official record.");
             sb.AppendLine();
             sb.AppendLine("_____ PROMOTION DETAILS _____");
             sb.AppendLine();
-            
+
             // Promotion details
             sb.AppendLine($"Promoted From:       {prevRank} (Tier {_currentMuster.PreviousTier})");
             sb.AppendLine($"Current Rank:        {currentRank} (Tier {_currentMuster.CurrentTier})");
-            
+
             if (daysSincePromotion == 0)
             {
                 sb.AppendLine($"Date of Promotion:   Day {_currentMuster.PromotionDay} (earlier today)");
@@ -2993,40 +3113,40 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 sb.AppendLine($"Date of Promotion:   Day {_currentMuster.PromotionDay} ({daysSincePromotion} days ago)");
             }
-            
+
             sb.AppendLine();
-            
+
             // Benefits unlocked at promotion
             sb.AppendLine("Benefits Unlocked at Promotion:");
-            
+
             // Wage increase
             var prevWage = CalculateTierWage(_currentMuster.PreviousTier);
             var currentWage = CalculateTierWage(_currentMuster.CurrentTier);
             sb.AppendLine($"• Wages increased: {prevWage} → {currentWage} denars/day");
-            
+
             // Equipment tier access
             sb.AppendLine($"• Tier {_currentMuster.CurrentTier} equipment available from Quartermaster");
-            
+
             // Authority changes
             var authority = GetTierAuthority(_currentMuster.CurrentTier);
             if (!string.IsNullOrEmpty(authority))
             {
                 sb.AppendLine($"• New authority: {authority}");
             }
-            
+
             // Enhanced reputation gains (T4+)
             if (_currentMuster.CurrentTier >= 4 && _currentMuster.PreviousTier < 4)
             {
                 sb.AppendLine("• Enhanced reputation gains from successful orders");
             }
-            
+
             // Special benefits for specific tiers
             if (_currentMuster.CurrentTier >= 7)
             {
                 sb.AppendLine("• Officer rations (exempt from standard ration exchange)");
                 sb.AppendLine("• Daily baggage access during campaign");
             }
-            
+
             if (_currentMuster.CurrentTier == 7)
             {
                 sb.AppendLine($"• Commander's retinue granted: {RetinueManager.CommanderCapacity1} soldiers");
@@ -3039,9 +3159,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 sb.AppendLine($"• Retinue capacity expanded to {RetinueManager.CommanderCapacity3} soldiers");
             }
-            
+
             sb.AppendLine();
-            
+
             // New abilities unlocked (camp decisions, etc.)
             // For multi-tier promotions (e.g., T5→T7), show abilities from all gained tiers
             var abilities = new List<string>();
@@ -3049,7 +3169,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 abilities.AddRange(GetTierAbilities(tier));
             }
-            
+
             if (abilities.Count > 0)
             {
                 sb.AppendLine("New Abilities Unlocked:");
@@ -3059,13 +3179,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
                 sb.AppendLine();
             }
-            
+
             // Current XP progress to next rank
             // XP thresholds are cumulative totals, so we need to calculate progress within current tier
             var currentXP = enlistment.EnlistmentXP;
             var currentTierThreshold = GetXPThresholdForTier(_currentMuster.CurrentTier);
             var nextTierThreshold = GetXPThresholdForTier(_currentMuster.CurrentTier + 1);
-            
+
             if (nextTierThreshold > 0)
             {
                 // XP progress = total XP minus current tier threshold
@@ -3084,21 +3204,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 sb.AppendLine("You have reached the pinnacle of military service. No further");
                 sb.AppendLine("promotion is possible—your place in history is secured.");
             }
-            
+
             sb.AppendLine();
             sb.AppendLine("The promotion proving event occurred when you earned it. This is a");
             sb.AppendLine("formal acknowledgment for your service record.");
-            
+
             // Reminder about visiting QM if new equipment available
             if (_currentMuster.CurrentTier < 9) // Not at max tier
             {
                 sb.AppendLine();
                 sb.AppendLine("Visit the Quartermaster to review newly unlocked equipment.");
             }
-            
+
             return sb.ToString();
         }
-        
+
         /// <summary>
         /// Calculates approximate daily wage for a given tier (simplified for display).
         /// </summary>
@@ -3108,7 +3228,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // This matches the formula in wage_system config
             return 10 + (tier * 5);
         }
-        
+
         /// <summary>
         /// Gets the authority description for a given tier.
         /// </summary>
@@ -3127,14 +3247,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _ => null
             };
         }
-        
+
         /// <summary>
         /// Gets the list of abilities unlocked at a given tier.
         /// </summary>
         private List<string> GetTierAbilities(int tier)
         {
             var abilities = new List<string>();
-            
+
             switch (tier)
             {
                 case 2:
@@ -3170,24 +3290,24 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     abilities.Add("Influence strategic decisions");
                     break;
             }
-            
+
             return abilities;
         }
 
         private string BuildRetinueText()
         {
             var sb = new StringBuilder();
-            
+
             var retinueMgr = RetinueManager.Instance;
             var enlistment = EnlistmentBehavior.Instance;
-            
+
             if (retinueMgr == null || enlistment == null)
             {
                 sb.AppendLine("[Retinue system unavailable]");
                 ModLogger.Warn(LogCategory, "BuildRetinueText: RetinueManager or EnlistmentBehavior unavailable");
                 return sb.ToString();
             }
-            
+
             var state = retinueMgr.State;
             if (state == null || !state.HasRetinue)
             {
@@ -3206,64 +3326,67 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     sb.AppendLine();
                     sb.AppendLine("Visit your lord to rebuild your retinue when ready.");
                 }
-                
+
                 return sb.ToString();
             }
-            
+
             // Standard retinue muster display
             sb.AppendLine("Your soldiers form up for inspection. You walk the line, checking");
             sb.AppendLine("each man's gear and bearing. They salute as you pass.");
             sb.AppendLine();
             sb.AppendLine("_____ RETINUE STRENGTH _____");
             sb.AppendLine();
-            
+
             // Current strength vs capacity
             var capacity = RetinueManager.GetTierCapacity(enlistment.EnlistmentTier);
             var current = state.TotalSoldiers;
-            
+
             if (_currentMuster != null)
             {
                 _currentMuster.RetinueStrength = current;
                 _currentMuster.RetinueCapacity = capacity;
             }
-            
+
             sb.AppendLine($"Current Strength:    {current} / {capacity} soldiers");
-            
+
             // Morale (based on RetinueLoyalty)
             var loyalty = state.RetinueLoyalty;
             var moraleDesc = GetMoraleDescription(loyalty);
             var moraleColor = loyalty < 50 ? "⚠️" : "";
             sb.AppendLine($"Morale:              {moraleColor}{moraleDesc} ({loyalty})");
-            
+
             // Equipment status (simplified for now)
             var equipmentStatus = GetEquipmentStatus(state);
             sb.AppendLine($"Equipment:           {equipmentStatus}");
-            
+
             // Experience (based on battles participated)
             var expDesc = GetExperienceDescription(state.BattlesParticipated);
             sb.AppendLine($"Experience:          {expDesc} ({state.BattlesParticipated} battles)");
-            
+
             sb.AppendLine();
             sb.AppendLine("_____ THIS PERIOD _____");
             sb.AppendLine();
-            
+
             // Query casualties from news feed
             var newsBehavior = EnlistedNewsBehavior.Instance;
             int killed = 0;
             int wounded = 0;
             List<string> fallenNames = new List<string>();
-            
+
             if (newsBehavior != null && _currentMuster != null)
             {
                 // Check personal feed for retinue casualty reports since last muster
                 var periodFeed = newsBehavior.GetPersonalFeedSince(_currentMuster.LastMusterDay);
-                
+
                 foreach (var item in periodFeed)
                 {
                     // Get the formatted text for pattern matching
                     var headline = FormatFeedItemForMuster(item);
-                    if (string.IsNullOrEmpty(headline)) continue;
-                    
+                    if (string.IsNullOrEmpty(headline))
+                    {
+                        continue;
+                    }
+
                     // Look for retinue casualty entries
                     // Format: "Your retinue suffered X killed and Y wounded" or "Your retinue lost X soldier(s)"
                     if (headline.IndexOf("retinue", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -3283,7 +3406,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 killed += lCount;
                             }
                         }
-                        
+
                         // Extract wounded count
                         var woundedMatch = System.Text.RegularExpressions.Regex.Match(headline, @"(\d+)\s+wounded");
                         if (woundedMatch.Success && int.TryParse(woundedMatch.Groups[1].Value, out int wCount))
@@ -3291,7 +3414,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             wounded += wCount;
                         }
                     }
-                    
+
                     // Look for named veteran deaths
                     // Format: "X the Y has fallen in battle"
                     if (headline.IndexOf("has fallen in battle", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -3305,20 +3428,26 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
             }
-            
+
             // Store in muster state for retinue recruitment option
             if (_currentMuster != null)
             {
                 _currentMuster.RetinueCasualties = killed;
                 _currentMuster.FallenRetinueNames = fallenNames;
             }
-            
+
             // Display casualties in spec format: "X killed, Y wounded"
             if (killed > 0 || wounded > 0)
             {
                 var casualtyParts = new List<string>();
-                if (killed > 0) casualtyParts.Add($"{killed} killed");
-                if (wounded > 0) casualtyParts.Add($"{wounded} wounded");
+                if (killed > 0)
+                {
+                    casualtyParts.Add($"{killed} killed");
+                }
+                if (wounded > 0)
+                {
+                    casualtyParts.Add($"{wounded} wounded");
+                }
                 sb.AppendLine($"Casualties:          {string.Join(", ", casualtyParts)}");
                 sb.AppendLine($"Recruits Added:      0");
                 sb.AppendLine($"Desertions:          0");
@@ -3331,20 +3460,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 sb.AppendLine();
                 sb.AppendLine("Your retinue stands ready. No losses this period.");
             }
-            
+
             // Show fallen soldiers with names
             if (fallenNames.Count > 0)
             {
                 sb.AppendLine();
                 sb.AppendLine("_____ FALLEN THIS PERIOD _____");
                 sb.AppendLine();
-                
+
                 foreach (var name in fallenNames)
                 {
                     sb.AppendLine($"• {name} - Killed in battle");
                 }
             }
-            
+
             // Show recruitment availability
             var openings = capacity - current;
             if (openings > 0)
@@ -3352,10 +3481,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 sb.AppendLine();
                 sb.AppendLine($"[{openings} recruitment slot{(openings == 1 ? "" : "s")} available]");
             }
-            
+
             return sb.ToString();
         }
-        
+
         /// <summary>
         /// Gets morale description from loyalty value.
         /// </summary>
@@ -3371,7 +3500,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _ => "Critical"
             };
         }
-        
+
         /// <summary>
         /// Gets equipment status description (simplified).
         /// </summary>
@@ -3383,11 +3512,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 return "N/A";
             }
-            
+
             // Basic heuristic: if we have troops, they're equipped
             return "Serviceable";
         }
-        
+
         /// <summary>
         /// Gets experience description from battles participated.
         /// </summary>
@@ -3419,24 +3548,24 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Section 1: Muster Outcomes
             sb.AppendLine("_____ MUSTER OUTCOMES _____");
             sb.AppendLine();
-            
+
             BuildMusterOutcomesSection(sb, enlistment);
-            
+
             sb.AppendLine();
 
             // Section 2: Rank & Progression
             sb.AppendLine("_____ RANK & PROGRESSION _____");
             sb.AppendLine();
-            
+
             BuildRankProgressionSection(sb, enlistment);
-            
+
             sb.AppendLine();
 
             // Section 3: Period Summary
             var periodDays = _currentMuster.MusterDay - _currentMuster.LastMusterDay;
             sb.AppendLine($"_____ PERIOD SUMMARY ({periodDays} Days) _____");
             sb.AppendLine();
-            
+
             BuildPeriodSummarySection(sb, enlistment);
 
             return sb.ToString();
@@ -3490,14 +3619,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 "skipped" => "Not scheduled",
                 _ => "Not conducted"
             };
-            
+
             if (_currentMuster.InspectionOutcome == "perfect" || _currentMuster.InspectionOutcome == "failed")
             {
                 // Add reputation change if applicable
                 var repChange = _currentMuster.InspectionOutcome == "perfect" ? "+6 Officer Rep" : "-4 Officer Rep";
                 inspectionText += $" ({repChange})";
             }
-            
+
             sb.AppendLine($"Equipment Inspection: {inspectionText}");
 
             // Supply Status
@@ -3510,18 +3639,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             var currentTier = enlistment.EnlistmentTier;
             var rankName = enlistment.GetRankName(currentTier) ?? $"Tier {currentTier}";
-            
+
             sb.AppendLine($"Current Rank:         {rankName} (Tier {currentTier})");
 
             // XP this period - calculate from current XP minus XP at last muster
             var currentXP = enlistment.EnlistmentXP;
             var xpAtLastMuster = enlistment.XPAtLastMuster;
             var xpThisPeriod = Math.Max(0, currentXP - xpAtLastMuster);
-            
+
             // Get XP requirements from config
             var tierXpRequirements = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
             var xpForNextRank = currentTier < tierXpRequirements.Length ? tierXpRequirements[currentTier] : 0;
-            
+
             if (currentTier >= 9)
             {
                 sb.AppendLine($"XP This Period:       +{xpThisPeriod} XP");
@@ -3532,13 +3661,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 var xpPercent = xpForNextRank > 0 ? (int)((float)xpThisPeriod / (xpForNextRank - xpAtLastMuster) * 100) : 0;
                 sb.AppendLine($"XP This Period:       +{xpThisPeriod} XP ({xpPercent}%)");
-                
+
                 var nextRankName = enlistment.GetRankName(currentTier + 1) ?? $"Tier {currentTier + 1}";
                 var progressPercent = xpForNextRank > 0 ? (int)((float)currentXP / xpForNextRank * 100) : 0;
                 var xpNeeded = Math.Max(0, xpForNextRank - currentXP);
-                
+
                 sb.AppendLine($"Total Experience:     {currentXP} / {xpForNextRank} XP to {nextRankName} ({progressPercent}%)");
-                
+
                 // Estimate days to promotion
                 var periodDays = Math.Max(1, _currentMuster.MusterDay - _currentMuster.LastMusterDay);
                 var dailyRate = xpThisPeriod / (float)periodDays;
@@ -3549,7 +3678,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // XP Sources breakdown
             sb.AppendLine();
             sb.AppendLine("XP Sources This Period:");
-            
+
             var xpSources = enlistment.GetXPSourcesThisPeriod();
             if (xpSources != null && xpSources.Count > 0)
             {
@@ -3589,7 +3718,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var retinueCount = RetinueManager.Instance?.State?.TroopCounts?.Values.Sum() ?? 0;
             var casualties = _currentMuster.RetinueCasualties;
             var moraleText = GetMoraleText();
-            
+
             if (currentTier >= 7 && retinueCount > 0)
             {
                 sb.AppendLine($"Unit Status:         {casualties} casualties, morale {moraleText}");
@@ -3669,12 +3798,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private bool IsContrabandConfrontationActive()
         {
-            if (_currentMuster == null || !_currentMuster.ContrabandFound) return false;
-            
+            if (_currentMuster == null || !_currentMuster.ContrabandFound)
+            {
+                return false;
+            }
+
             // If outcome is already set, confrontation is resolved
-            if (!string.IsNullOrEmpty(_currentMuster.BaggageOutcome) && 
-                _currentMuster.BaggageOutcome != "not_conducted" && 
-                _currentMuster.BaggageOutcome != "clean" && 
+            if (!string.IsNullOrEmpty(_currentMuster.BaggageOutcome) &&
+                _currentMuster.BaggageOutcome != "not_conducted" &&
+                _currentMuster.BaggageOutcome != "clean" &&
                 _currentMuster.BaggageOutcome != "qm_favor")
             {
                 return false;
@@ -3691,10 +3823,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void HandleBribe()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             var playerTier = enlistment.EnlistmentTier;
             var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
@@ -3722,22 +3860,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 _currentMuster.BaggageOutcome = "bribed";
                 ModLogger.Info(LogCategory, $"Bribe successful: {bribeAmount} denars paid, item kept");
-                
+
                 // Give Charm XP
                 Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 10);
             }
             else
             {
                 _currentMuster.BaggageOutcome = "bribe_failed";
-                
+
                 // Confiscate item
                 ContrabandChecker.ConfiscateItem(contraband.Item);
-                
+
                 // Apply scrutiny and fine
                 Escalation.EscalationManager.Instance?.ModifyScrutiny(3, "Failed bribe attempt");
                 var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
                 Hero.MainHero.ChangeHeroGold(-fine);
-                
+
                 ModLogger.Warn(LogCategory, $"Bribe failed: lost {bribeAmount} denars + {contraband.Item.Name} + {fine} denars fine");
             }
 
@@ -3753,10 +3891,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void HandleSmuggle()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             var playerTier = enlistment.EnlistmentTier;
             var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
@@ -3780,24 +3924,24 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 _currentMuster.BaggageOutcome = "smuggled";
                 ModLogger.Info(LogCategory, $"Smuggle successful: kept {contraband.Item.Name}");
-                
+
                 // Give Roguery XP
                 Hero.MainHero.AddSkillXp(DefaultSkills.Roguery, 15);
             }
             else
             {
                 _currentMuster.BaggageOutcome = "smuggle_failed";
-                
+
                 // Confiscate item
                 ContrabandChecker.ConfiscateItem(contraband.Item);
-                
+
                 // Heavy penalties for getting caught
                 Escalation.EscalationManager.Instance?.ModifyScrutiny(5, "Caught smuggling contraband");
                 Escalation.EscalationManager.Instance?.ModifyDiscipline(3, "Attempted smuggling at muster");
-                
+
                 var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
                 Hero.MainHero.ChangeHeroGold(-fine);
-                
+
                 ModLogger.Warn(LogCategory, $"Smuggle failed: lost {contraband.Item.Name}, +5 scrutiny, +3 discipline");
             }
 
@@ -3812,10 +3956,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void HandleConfiscation()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             var playerTier = enlistment.EnlistmentTier;
             var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
@@ -3829,7 +3979,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             var contraband = contrabandResult.MostValuable;
-            
+
             // Check if item is equipped and unequip if needed
             var isEquipped = IsItemEquipped(contraband.Item);
             if (isEquipped)
@@ -3840,14 +3990,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Confiscate item
             ContrabandChecker.ConfiscateItem(contraband.Item);
-            
+
             // Apply scrutiny and fine
             Escalation.EscalationManager.Instance?.ModifyScrutiny(2, "Contraband confiscated at muster");
             var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
             Hero.MainHero.ChangeHeroGold(-fine);
-            
+
             _currentMuster.BaggageOutcome = "confiscated";
-            
+
             ModLogger.Info(LogCategory, $"Confiscation: lost {contraband.Item.Name}, {fine} denars fine, +2 scrutiny");
 
             // Refresh display with outcome
@@ -3862,10 +4012,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void HandleProtest()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             var playerTier = enlistment.EnlistmentTier;
             var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
@@ -3889,14 +4045,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 _currentMuster.BaggageOutcome = "protested";
                 ModLogger.Info(LogCategory, $"Protest successful: kept {contraband.Item.Name}");
-                
+
                 // Give Charm XP
                 Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 20);
             }
             else
             {
                 _currentMuster.BaggageOutcome = "protested";
-                
+
                 // Check if equipped and unequip if needed
                 var isEquipped = IsItemEquipped(contraband.Item);
                 if (isEquipped)
@@ -3906,14 +4062,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Confiscate item
                 ContrabandChecker.ConfiscateItem(contraband.Item);
-                
+
                 // Heavy penalties for failed protest
                 Escalation.EscalationManager.Instance?.ModifyScrutiny(4, "Failed protest at muster");
                 Escalation.EscalationManager.Instance?.ModifyDiscipline(2, "Insubordination at muster");
-                
+
                 var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
                 Hero.MainHero.ChangeHeroGold(-fine);
-                
+
                 ModLogger.Warn(LogCategory, $"Protest failed: lost {contraband.Item.Name}, +4 scrutiny, +2 discipline");
             }
 
@@ -3928,7 +4084,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool IsItemEquipped(ItemObject item)
         {
             var hero = Hero.MainHero;
-            if (hero == null) return false;
+            if (hero == null)
+            {
+                return false;
+            }
 
             var equipment = hero.BattleEquipment;
             for (int i = 0; i < 12; i++) // 12 equipment slots
@@ -3950,7 +4109,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void UnequipItem(ItemObject item)
         {
             var hero = Hero.MainHero;
-            if (hero == null) return;
+            if (hero == null)
+            {
+                return;
+            }
 
             var equipment = hero.BattleEquipment.Clone();
             for (int i = 0; i < 12; i++)
@@ -3977,32 +4139,38 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void ResolveInspectionPerfect()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             var skill = GetRelevantMeleeSkill();
             var hero = Hero.MainHero;
-            
+
             // Award XP
             hero?.AddSkillXp(skill, 10);
-            
+
             // Award reputation
             EscalationManager.Instance?.ModifyOfficerReputation(6, "Perfect inspection");
             EscalationManager.Instance?.ModifySoldierReputation(3, "Perfect inspection");
-            
+
             // Record outcome
             _currentMuster.InspectionOutcome = "perfect";
-            
+
             // Update cooldown
             var currentDay = (int)CampaignTime.Now.ToDays;
             typeof(EnlistmentBehavior)
                 .GetField("_lastInspectionDay", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(enlistment, currentDay);
-            
+
             ModLogger.Info(LogCategory, $"Inspection passed perfectly: +10 {skill.Name} XP, +6 Officer, +3 Soldier");
-            
+
             // Refresh display
             MBTextManager.SetTextVariable("MUSTER_INSPECTION_TEXT", BuildInspectionResultText("perfect"));
             GameMenu.SwitchToMenu(MusterRecruitMenuId);
@@ -4014,31 +4182,37 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void ResolveInspectionBasic()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             var skill = GetRelevantMeleeSkill();
             var hero = Hero.MainHero;
-            
+
             // Award XP
             hero?.AddSkillXp(skill, 5);
-            
+
             // Award reputation
             EscalationManager.Instance?.ModifyOfficerReputation(2, "Basic inspection");
-            
+
             // Record outcome
             _currentMuster.InspectionOutcome = "basic";
-            
+
             // Update cooldown
             var currentDay = (int)CampaignTime.Now.ToDays;
             typeof(EnlistmentBehavior)
                 .GetField("_lastInspectionDay", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(enlistment, currentDay);
-            
+
             ModLogger.Info(LogCategory, $"Inspection passed: +5 {skill.Name} XP, +2 Officer");
-            
+
             // Refresh display
             MBTextManager.SetTextVariable("MUSTER_INSPECTION_TEXT", BuildInspectionResultText("basic"));
             GameMenu.SwitchToMenu(MusterRecruitMenuId);
@@ -4050,28 +4224,34 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void ResolveInspectionUnprepared()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             // Apply penalties
             EscalationManager.Instance?.ModifyOfficerReputation(-8, "Failed inspection");
             EscalationManager.Instance?.ModifySoldierReputation(-4, "Failed inspection");
             EscalationManager.Instance?.ModifyScrutiny(8, "Failed equipment inspection");
             EscalationManager.Instance?.ModifyDiscipline(5, "Slovenly appearance at inspection");
-            
+
             // Record outcome
             _currentMuster.InspectionOutcome = "failed";
-            
+
             // Update cooldown
             var currentDay = (int)CampaignTime.Now.ToDays;
             typeof(EnlistmentBehavior)
                 .GetField("_lastInspectionDay", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(enlistment, currentDay);
-            
+
             ModLogger.Warn(LogCategory, "Inspection failed: -8 Officer, -4 Soldier, +8 Scrutiny, +5 Discipline");
-            
+
             // Refresh display
             MBTextManager.SetTextVariable("MUSTER_INSPECTION_TEXT", BuildInspectionResultText("failed"));
             GameMenu.SwitchToMenu(MusterRecruitMenuId);
@@ -4084,7 +4264,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private SkillObject GetRelevantMeleeSkill()
         {
             var hero = Hero.MainHero;
-            if (hero == null) return DefaultSkills.Athletics;
+            if (hero == null)
+            {
+                return DefaultSkills.Athletics;
+            }
 
             var skills = new[]
             {
@@ -4094,7 +4277,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             };
 
             var best = skills.OrderByDescending(s => s.value).FirstOrDefault();
-            
+
             // If no melee skills, use Athletics
             return best.value > 0 ? best.skill : DefaultSkills.Athletics;
         }
@@ -4109,37 +4292,43 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void ResolveRecruitTrain()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             var hero = Hero.MainHero;
-            
+
             // Award Leadership XP
             hero?.AddSkillXp(DefaultSkills.Leadership, 15);
-            
+
             // Award Sergeant trait XP (if implemented)
             // TODO: Add trait XP when trait system is implemented
-            
+
             // Award reputation
             EscalationManager.Instance?.ModifyOfficerReputation(5, "Mentored recruit");
             EscalationManager.Instance?.ModifySoldierReputation(6, "Mentored recruit");
-            
+
             // Award enlistment XP (representing troop improvement)
             enlistment.AddEnlistmentXP(30, "Recruit training");
-            
+
             // Record outcome
             _currentMuster.RecruitOutcome = "mentored";
-            
+
             // Update cooldown
             var currentDay = (int)CampaignTime.Now.ToDays;
             typeof(EnlistmentBehavior)
                 .GetField("_lastRecruitDay", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(enlistment, currentDay);
-            
+
             ModLogger.Info(LogCategory, "Recruit mentored: +15 Leadership XP, +5 Officer, +6 Soldier, +30 XP");
-            
+
             // Refresh display
             MBTextManager.SetTextVariable("MUSTER_RECRUIT_TEXT", BuildRecruitResultText("mentored"));
             ProceedToNextStageFromRecruit();
@@ -4151,25 +4340,31 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void ResolveRecruitIgnore()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             // Apply penalty
             EscalationManager.Instance?.ModifySoldierReputation(-2, "Ignored recruit");
-            
+
             // Record outcome
             _currentMuster.RecruitOutcome = "ignored";
-            
+
             // Update cooldown
             var currentDay = (int)CampaignTime.Now.ToDays;
             typeof(EnlistmentBehavior)
                 .GetField("_lastRecruitDay", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(enlistment, currentDay);
-            
+
             ModLogger.Info(LogCategory, "Recruit ignored: -2 Soldier");
-            
+
             // Refresh display
             MBTextManager.SetTextVariable("MUSTER_RECRUIT_TEXT", BuildRecruitResultText("ignored"));
             ProceedToNextStageFromRecruit();
@@ -4181,27 +4376,33 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void ResolveRecruitHaze()
         {
-            if (_currentMuster == null) return;
+            if (_currentMuster == null)
+            {
+                return;
+            }
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null) return;
+            if (enlistment == null)
+            {
+                return;
+            }
 
             // Apply effects
             EscalationManager.Instance?.ModifySoldierReputation(4, "Hazed recruit");
             EscalationManager.Instance?.ModifyOfficerReputation(-5, "Hazed recruit");
             EscalationManager.Instance?.ModifyDiscipline(8, "Hazing recruit at muster");
-            
+
             // Record outcome
             _currentMuster.RecruitOutcome = "hazed";
-            
+
             // Update cooldown
             var currentDay = (int)CampaignTime.Now.ToDays;
             typeof(EnlistmentBehavior)
                 .GetField("_lastRecruitDay", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(enlistment, currentDay);
-            
+
             ModLogger.Info(LogCategory, "Recruit hazed: +4 Soldier, -5 Officer, +8 Discipline");
-            
+
             // Refresh display
             MBTextManager.SetTextVariable("MUSTER_RECRUIT_TEXT", BuildRecruitResultText("hazed"));
             ProceedToNextStageFromRecruit();
@@ -4231,7 +4432,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 9 => "Commander",
                 _ => $"Tier {tier}"
             };
-            
+
             // TODO: Query progression_config.json for culture-specific rank names
         }
 
@@ -4260,7 +4461,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _ => 0
             };
         }
-        
+
         /// <summary>
         /// Gets the XP needed to advance from current tier to next tier.
         /// Returns 0 if at max tier.
@@ -4292,8 +4493,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private string ExtractXPFromSummary(string summary)
         {
-            if (string.IsNullOrEmpty(summary)) return "";
-            
+            if (string.IsNullOrEmpty(summary))
+            {
+                return "";
+            }
+
             // Look for pattern like "+20 XP" or "+20XP"
             var match = System.Text.RegularExpressions.Regex.Match(summary, @"\+\d+\s*XP");
             return match.Success ? $"({match.Value})" : "";
@@ -4306,15 +4510,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private string FormatFeedItemForMuster(DispatchItem item)
         {
             // DispatchItem is a struct, so check for default values instead
-            if (item.DayCreated == 0 && string.IsNullOrEmpty(item.HeadlineKey)) return string.Empty;
+            if (item.DayCreated == 0 && string.IsNullOrEmpty(item.HeadlineKey))
+            {
+                return string.Empty;
+            }
 
             // Use HeadlineKey directly as it contains the formatted text
             var headline = item.HeadlineKey ?? string.Empty;
-            
+
             // Remove common prefixes to make it more concise
             headline = headline.Replace("The company ", "");
             headline = headline.Replace("Your lord's army ", "Army ");
-            
+
             return headline.Trim();
         }
 
@@ -4324,16 +4531,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private int CountBattlesThisPeriod()
         {
             var newsBehavior = Interface.Behaviors.EnlistedNewsBehavior.Instance;
-            if (newsBehavior == null) return 0;
+            if (newsBehavior == null)
+            {
+                return 0;
+            }
 
             var lastMusterDay = _currentMuster?.LastMusterDay ?? 0;
             var feedItems = newsBehavior.GetPersonalFeedSince(lastMusterDay);
-            
-            if (feedItems == null) return 0;
+
+            if (feedItems == null)
+            {
+                return 0;
+            }
 
             // Count battle-related feed items
-            return feedItems.Count(item => 
-                item.Category?.Contains("battle") == true || 
+            return feedItems.Count(item =>
+                item.Category?.Contains("battle") == true ||
                 item.HeadlineKey?.ToLowerInvariant().Contains("battle") == true ||
                 item.HeadlineKey?.ToLowerInvariant().Contains("victory") == true ||
                 item.HeadlineKey?.ToLowerInvariant().Contains("defeat") == true);

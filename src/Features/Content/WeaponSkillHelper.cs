@@ -17,8 +17,10 @@ namespace Enlisted.Features.Content
         public static SkillObject GetEquippedWeaponSkill(Hero hero)
         {
             if (hero?.BattleEquipment == null)
+            {
                 return DefaultSkills.Athletics;
-            
+            }
+
             // Check weapon slots (0-3) for combat weapons
             for (int i = 0; i < 4; i++)
             {
@@ -27,13 +29,15 @@ namespace Enlisted.Features.Content
                 {
                     var skill = element.Item.RelevantSkill;
                     if (skill != null)
+                    {
                         return skill;
+                    }
                 }
             }
-            
+
             return DefaultSkills.Athletics;
         }
-        
+
         /// <summary>
         /// Gets the display name of the hero's primary equipped weapon.
         /// Returns "fists" if no weapon is equipped.
@@ -41,8 +45,10 @@ namespace Enlisted.Features.Content
         public static string GetEquippedWeaponName(Hero hero)
         {
             if (hero?.BattleEquipment == null)
+            {
                 return "fists";
-            
+            }
+
             for (int i = 0; i < 4; i++)
             {
                 var element = hero.BattleEquipment[i];
@@ -51,10 +57,10 @@ namespace Enlisted.Features.Content
                     return element.Item.Name?.ToString() ?? "weapon";
                 }
             }
-            
+
             return "fists";
         }
-        
+
         /// <summary>
         /// Gets the hero's weakest combat skill for focused training.
         /// Only considers main combat skills (OneHanded, TwoHanded, Polearm, Bow, Crossbow, Throwing).
@@ -62,8 +68,10 @@ namespace Enlisted.Features.Content
         public static SkillObject GetWeakestCombatSkill(Hero hero)
         {
             if (hero == null)
+            {
                 return DefaultSkills.OneHanded;
-            
+            }
+
             var combatSkills = new[]
             {
                 DefaultSkills.OneHanded,
@@ -73,10 +81,10 @@ namespace Enlisted.Features.Content
                 DefaultSkills.Crossbow,
                 DefaultSkills.Throwing
             };
-            
+
             SkillObject weakest = combatSkills[0];
             int lowestValue = hero.GetSkillValue(weakest);
-            
+
             foreach (var skill in combatSkills)
             {
                 int value = hero.GetSkillValue(skill);
@@ -86,25 +94,29 @@ namespace Enlisted.Features.Content
                     weakest = skill;
                 }
             }
-            
+
             return weakest;
         }
-        
+
         /// <summary>
         /// Checks if the hero has any combat weapon equipped.
         /// </summary>
         public static bool HasWeaponEquipped(Hero hero)
         {
             if (hero?.BattleEquipment == null)
+            {
                 return false;
-            
+            }
+
             for (int i = 0; i < 4; i++)
             {
                 var element = hero.BattleEquipment[i];
                 if (element.Item != null && IsWeaponType(element.Item.Type))
+                {
                     return true;
+                }
             }
-            
+
             return false;
         }
 

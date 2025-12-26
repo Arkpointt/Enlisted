@@ -12,128 +12,128 @@ namespace Enlisted.Features.Equipment.UI
 {
     /// <summary>
     /// Individual equipment item ViewModel for clickable selection.
-    /// 
+    ///
     /// Represents a single equipment variant option with proper data binding.
     /// Uses TaleWorlds ViewModel APIs for data binding and property change notifications.
     /// </summary>
     public class QuartermasterEquipmentItemVm : ViewModel
     {
         // DataSourceProperty attributes enable data binding with the UI layer
-        
+
         [DataSourceProperty]
         public string StatusText { get; private set; }
-        
+
         [DataSourceProperty]
         public bool IsCurrentEquipment { get; private set; }
-        
+
         [DataSourceProperty]
         public bool CanAfford { get; private set; }
-        
+
         [DataSourceProperty]
         public bool IsEnabled { get; private set; }
-        
+
         /// <summary>
         /// Quantity available for purchase (Phase 7: Inventory & Pricing System).
         /// </summary>
         [DataSourceProperty]
         public int QuantityAvailable { get; private set; }
-        
+
         /// <summary>
         /// Whether this item is available for purchase (has stock).
         /// </summary>
         [DataSourceProperty]
         public bool IsAvailable { get; private set; }
-        
+
         /// <summary>
         /// Display text for quantity available (e.g., "Available: 3").
         /// </summary>
         [DataSourceProperty]
         public string QuantityText { get; private set; }
-        
+
         /// <summary>
         /// Whether to show the quantity display (only show when quantity is limited).
         /// </summary>
         [DataSourceProperty]
         public bool ShowQuantity { get; private set; }
-        
+
         /// <summary>
         /// Alpha factor for card (0.5 when unavailable, 1.0 when available).
         /// </summary>
         [DataSourceProperty]
         public float CardAlpha { get; private set; }
-        
+
         [DataSourceProperty]
         public ItemImageIdentifierVM Image { get; private set; }
-        
+
         [DataSourceProperty]
         public string ItemName { get; private set; }
         [DataSourceProperty] public string CostText { get; private set; }
-        
+
         /// <summary>
         /// Primary stats line showing key stats for weapons/armor (displayed below image).
         /// </summary>
         [DataSourceProperty]
         public string PrimaryStats { get; private set; }
-        
+
         /// <summary>
         /// Secondary stats line for additional details (tier, material type, etc).
         /// </summary>
         [DataSourceProperty]
         public string SecondaryStats { get; private set; }
-        
+
         /// <summary>
         /// Slot type indicator (Head, Body, Weapon, etc).
         /// </summary>
         [DataSourceProperty]
         public string SlotTypeText { get; private set; }
-        
+
         /// <summary>
         /// Quality tier display text (Poor, Worn, Standard, Fine, Masterwork, Legendary).
         /// Empty string if Common quality (no modifier).
         /// </summary>
         [DataSourceProperty]
         public string QualityText { get; private set; }
-        
+
         /// <summary>
         /// Quality tier color code for UI styling.
         /// Empty string if Common quality (no modifier).
         /// </summary>
         [DataSourceProperty]
         public string QualityColor { get; private set; }
-        
+
         /// <summary>
         /// Tooltip text showing base stats vs modified stats.
         /// Displays stat differences when quality modifier is applied.
         /// </summary>
         [DataSourceProperty]
         public string TooltipText { get; private set; }
-        
+
         /// <summary>
         /// Whether this item can be upgraded (has modifier group and not at max quality).
         /// </summary>
         [DataSourceProperty]
         public bool IsUpgradeable { get; private set; }
-        
+
         /// <summary>
         /// Display text for upgrade indicator (e.g., "UPGRADE AVAILABLE").
         /// Empty string if not upgradeable.
         /// </summary>
         [DataSourceProperty]
         public string UpgradeIndicatorText { get; private set; }
-        
+
         // Legacy property for backwards compatibility
         [DataSourceProperty]
         public string WeaponDetails { get; private set; }
-        
+
         // Internal data (readonly as set only in constructor)
         private readonly EquipmentVariantOption _variant;
         private readonly QuartermasterEquipmentSelectorVm _parentSelector;
-        
+
         /// <summary>
         /// Get the underlying variant option for state updates.
         /// </summary>
         public EquipmentVariantOption GetVariant() => _variant;
-        
+
         /// <summary>
         /// Initialize equipment item with variant data.
         /// Sets up the ViewModel with equipment variant information for display and selection.
@@ -142,18 +142,18 @@ namespace Enlisted.Features.Equipment.UI
         {
             _variant = variant; // Allow null for empty slot display
             _parentSelector = parent ?? throw new ArgumentNullException(nameof(parent));
-            
+
             // Note: RefreshValues() should be called by the parent after construction
             // to avoid virtual member call in constructor (ReSharper warning)
         }
-        
+
         /// <summary>
         /// Refresh display values when equipment variant data changes.
         /// </summary>
         public override void RefreshValues()
         {
             base.RefreshValues();
-            
+
             try
             {
                 if (_variant?.Item == null)
@@ -161,72 +161,72 @@ namespace Enlisted.Features.Equipment.UI
                     SetEmptyValues();
                     return;
                 }
-                
+
                 // Build item details for display, include price
                 var item = _variant.Item;
                 CostText = $"Price: {_variant.Cost} denars";
-                
+
                 // Phase 7: Set availability properties
                 QuantityAvailable = _variant.QuantityAvailable;
                 IsAvailable = _variant.QuantityAvailable > 0;
-                
+
                 // Show quantity if limited (< 999 means actual tracked quantity)
                 ShowQuantity = QuantityAvailable < 999;
                 if (ShowQuantity)
                 {
-                    QuantityText = QuantityAvailable > 0 
-                        ? $"Available: {QuantityAvailable}" 
+                    QuantityText = QuantityAvailable > 0
+                        ? $"Available: {QuantityAvailable}"
                         : "Out of Stock";
                 }
                 else
                 {
                     QuantityText = "";
                 }
-                
+
                 // Grey out unavailable items (Alpha = 0.5)
                 CardAlpha = IsAvailable ? 1.0f : 0.5f;
-                
+
                 // Set item name with quality modifier if present
                 var baseName = item.Name?.ToString() ?? "Unknown Item";
-                
+
                 // Apply quality modifier name if present
                 if (!string.IsNullOrEmpty(_variant.ModifiedName))
                 {
                     baseName = _variant.ModifiedName;
                 }
-                
+
                 // Truncate very long names to prevent overlap (max 45 characters)
                 if (baseName.Length > 45)
                 {
                     baseName = baseName.Substring(0, 42) + "...";
                 }
-                
+
                 // Add "NEW" indicator for recently unlocked items
                 ItemName = _variant.IsNewlyUnlocked ? $"[NEW] {baseName}" : baseName;
                 IsCurrentEquipment = _variant.IsCurrent;
                 CanAfford = _variant.CanAfford;
-                
+
                 // Determine slot type for enable/disable behavior (weapons can be bought repeatedly).
                 var isWeaponSlot = _variant.Slot is >= EquipmentIndex.Weapon0 and <= EquipmentIndex.Weapon3;
-                
+
                 // Set item image using ItemImageIdentifierVM for proper image display (1.3.4 API)
                 Image = new ItemImageIdentifierVM(item);
-                
+
                 // Build equipment stats based on item type (weapon, armor, or accessory)
                 BuildEquipmentStats(item);
-                
+
                 // Set quality display based on modifier
                 SetQualityDisplay(_variant.Modifier);
-                
+
                 // Build tooltip with base vs modified stats comparison
                 BuildTooltipText(item, _variant.Modifier);
-                
+
                 // Check if item is upgradeable
                 SetUpgradeIndicator(item, _variant.Quality);
-                
+
                 // Legacy support - combine stats into WeaponDetails for backwards compatibility
                 WeaponDetails = $"{PrimaryStats}\n{SecondaryStats}";
-                
+
                 // Purchase-based status (no issue limits / no accountability).
                 // Phase 7: Show out of stock status
                 if (QuantityAvailable <= 0)
@@ -250,7 +250,7 @@ namespace Enlisted.Features.Equipment.UI
                 // Weapons can be purchased repeatedly (another copy goes to an empty weapon slot or inventory).
                 // Phase 7: Also disable if out of stock
                 IsEnabled = _variant.CanAfford && (isWeaponSlot || !_variant.IsCurrent) && IsAvailable;
-                
+
                 // Notify UI of property changes for data binding updates
                 OnPropertyChanged(nameof(ItemName));
                 OnPropertyChanged(nameof(CostText));
@@ -280,7 +280,7 @@ namespace Enlisted.Features.Equipment.UI
                 SetEmptyValues();
             }
         }
-        
+
         /// <summary>
         /// Set safe fallback values for error cases or empty slots.
         /// </summary>
@@ -321,7 +321,7 @@ namespace Enlisted.Features.Equipment.UI
             CanAfford = false;
             IsEnabled = false;
         }
-        
+
         /// <summary>
         /// Handle clicking on this equipment item (main functionality).
         /// Executes when the player clicks on an equipment item in the UI.
@@ -338,13 +338,13 @@ namespace Enlisted.Features.Equipment.UI
                         new TextObject("{=qm_ui_unequip_not_supported}Equipment unequipping not yet supported.").ToString()));
                     return;
                 }
-                
+
                 if (_variant.Item == null)
                 {
                     ModLogger.ErrorCode("QuartermasterUI", "E-QMUI-004", "Cannot select item - variant item is null");
                     return;
                 }
-                
+
                 // Block purchase when the player can't afford it.
                 if (!_variant.CanAfford)
                 {
@@ -353,10 +353,10 @@ namespace Enlisted.Features.Equipment.UI
                     InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Red));
                     return;
                 }
-                
+
                 // Apply selection through parent
                 _parentSelector?.OnEquipmentItemSelected(_variant);
-                
+
                 ModLogger.Info("QuartermasterUI", $"Equipment purchased: {_variant.Item.Name} ({_variant.Cost} denars)");
             }
             catch (Exception ex)
@@ -366,7 +366,7 @@ namespace Enlisted.Features.Equipment.UI
                     new TextObject("{=qm_error_selecting}Error selecting equipment. Please try again.").ToString()));
             }
         }
-        
+
         /// <summary>
         /// Handle previewing this equipment item.
         /// </summary>
@@ -394,7 +394,7 @@ namespace Enlisted.Features.Equipment.UI
                 ModLogger.Error("QuartermasterUI", "Error previewing equipment item", ex);
             }
         }
-        
+
         /// <summary>
         /// Build equipment stats based on item type (weapon, armor, shield, etc).
         /// Sets PrimaryStats, SecondaryStats, and SlotTypeText properties.
@@ -410,10 +410,10 @@ namespace Enlisted.Features.Equipment.UI
                     SlotTypeText = "";
                     return;
                 }
-                
+
                 // Determine slot type display name
                 SlotTypeText = GetSlotTypeName(_variant.Slot);
-                
+
                 // Build stats based on item component type
                 if (item.ArmorComponent != null)
                 {
@@ -438,7 +438,7 @@ namespace Enlisted.Features.Equipment.UI
                 SecondaryStats = "Stats unavailable";
             }
         }
-        
+
         /// <summary>
         /// Build armor-specific stats for display.
         /// Shows armor values and material type.
@@ -447,7 +447,7 @@ namespace Enlisted.Features.Equipment.UI
         {
             var armor = item.ArmorComponent;
             var statParts = new List<string>();
-            
+
             // Show relevant armor values based on slot type
             switch (_variant.Slot)
             {
@@ -457,7 +457,7 @@ namespace Enlisted.Features.Equipment.UI
                         statParts.Add($"Head: {armor.HeadArmor}");
                     }
                     break;
-                    
+
                 case EquipmentIndex.Body:
                     if (armor.BodyArmor > 0)
                     {
@@ -472,21 +472,21 @@ namespace Enlisted.Features.Equipment.UI
                         statParts.Add($"Leg: {armor.LegArmor}");
                     }
                     break;
-                    
+
                 case EquipmentIndex.Leg:
                     if (armor.LegArmor > 0)
                     {
                         statParts.Add($"Leg: {armor.LegArmor}");
                     }
                     break;
-                    
+
                 case EquipmentIndex.Gloves:
                     if (armor.ArmArmor > 0)
                     {
                         statParts.Add($"Arm: {armor.ArmArmor}");
                     }
                     break;
-                    
+
                 case EquipmentIndex.Cape:
                     // Capes typically have body armor bonus
                     if (armor.BodyArmor > 0)
@@ -494,7 +494,7 @@ namespace Enlisted.Features.Equipment.UI
                         statParts.Add($"Body: {armor.BodyArmor}");
                     }
                     break;
-                    
+
                 default:
                     // Show all non-zero armor values
                     if (armor.HeadArmor > 0)
@@ -515,17 +515,17 @@ namespace Enlisted.Features.Equipment.UI
                     }
                     break;
             }
-            
+
             // Set primary stats (armor values)
             PrimaryStats = statParts.Count > 0 ? string.Join(" | ", statParts) : "No armor bonus";
-            
+
             // Set secondary stats (material and tier)
             // Note: item.Tier is an enum (Tier1, Tier2, etc.) - extract just the number
             var tierNumber = ((int)item.Tier) + 1; // Tier enum is 0-based
             var materialName = armor.MaterialType.ToString();
             SecondaryStats = $"Tier {tierNumber} • {materialName}";
         }
-        
+
         /// <summary>
         /// Build weapon-specific stats for display.
         /// Shows damage, speed, and handling.
@@ -534,7 +534,7 @@ namespace Enlisted.Features.Equipment.UI
         {
             var weapon = item.WeaponComponent.PrimaryWeapon;
             var statParts = new List<string>();
-            
+
             // Damage stats - show most relevant based on weapon type
             if (weapon.IsShield)
             {
@@ -578,22 +578,22 @@ namespace Enlisted.Features.Equipment.UI
                     statParts.Add($"Thrust: {weapon.ThrustDamage}");
                 }
             }
-            
+
             // Add length for melee weapons
             if (weapon.WeaponLength > 0 && !weapon.IsRangedWeapon)
             {
                 statParts.Add($"Reach: {weapon.WeaponLength}");
             }
-            
+
             PrimaryStats = statParts.Count > 0 ? string.Join(" | ", statParts) : "No stats";
-            
+
             // Secondary stats: handling and tier
             // Note: item.Tier is an enum (Tier1, Tier2, etc.) - extract just the number
             var tierNumber = ((int)item.Tier) + 1; // Tier enum is 0-based
             var handlingText = weapon.Handling > 0 ? $"Handling: {weapon.Handling}" : "";
             SecondaryStats = $"Tier {tierNumber}" + (handlingText.Length > 0 ? $" • {handlingText}" : "");
         }
-        
+
         /// <summary>
         /// Sets quality display properties based on the item quality tier.
         /// </summary>
@@ -606,9 +606,9 @@ namespace Enlisted.Features.Equipment.UI
                 QualityColor = "";
                 return;
             }
-            
+
             var quality = _variant.Quality;
-            
+
             // Set quality text using localized strings
             QualityText = quality switch
             {
@@ -620,7 +620,7 @@ namespace Enlisted.Features.Equipment.UI
                 ItemQuality.Legendary => new TextObject("{=qm_quality_legendary}Legendary").ToString(),
                 _ => ""
             };
-            
+
             // Set quality color (ARGB hex codes for Gauntlet UI - 8 digits with alpha channel)
             // Using softer colors for better readability and reduced eye strain
             QualityColor = quality switch
@@ -634,7 +634,7 @@ namespace Enlisted.Features.Equipment.UI
                 _ => "#E8E8E8FF"
             };
         }
-        
+
         /// <summary>
         /// Get human-readable slot type name for display.
         /// </summary>
@@ -656,7 +656,7 @@ namespace Enlisted.Features.Equipment.UI
                 _ => "Equipment"
             };
         }
-        
+
         /// <summary>
         /// Build tooltip text showing base stats vs modified stats.
         /// Displays stat differences when quality modifier is applied.
@@ -670,26 +670,26 @@ namespace Enlisted.Features.Equipment.UI
                     TooltipText = "";
                     return;
                 }
-                
+
                 // If no modifier, just show basic item info
                 if (modifier == null || _variant.Quality == ItemQuality.Common)
                 {
                     TooltipText = $"{item.Name?.ToString() ?? "Unknown"}\n{item.ItemType}";
                     return;
                 }
-                
+
                 var tooltipParts = new List<string>();
-                
+
                 // Add item name (with fallback if both ModifiedName and item.Name are null)
                 var displayName = _variant.ModifiedName ?? item.Name?.ToString() ?? "Unknown Item";
                 tooltipParts.Add(displayName);
-                
+
                 // Add quality tier (with fallback)
                 if (!string.IsNullOrEmpty(QualityText))
                 {
                     tooltipParts.Add($"Quality: {QualityText}");
                 }
-                
+
                 // Add modifier effects based on item type
                 if (item.WeaponComponent != null)
                 {
@@ -699,13 +699,13 @@ namespace Enlisted.Features.Equipment.UI
                 {
                     BuildArmorTooltip(item, modifier, tooltipParts);
                 }
-                
+
                 // Add price multiplier info with clearer text for large reductions
                 var priceMultiplier = modifier.PriceMultiplier;
                 if (Math.Abs(priceMultiplier - 1.0f) > 0.01f)
                 {
                     var percentChange = (int)((priceMultiplier - 1.0f) * 100);
-                    
+
                     // Use clearer wording for very low quality items
                     if (percentChange <= -75)
                     {
@@ -716,7 +716,7 @@ namespace Enlisted.Features.Equipment.UI
                         tooltipParts.Add($"Value: {(percentChange > 0 ? "+" : "")}{percentChange}%");
                     }
                 }
-                
+
                 TooltipText = string.Join("\n", tooltipParts);
             }
             catch (Exception ex)
@@ -725,49 +725,58 @@ namespace Enlisted.Features.Equipment.UI
                 TooltipText = item?.Name?.ToString() ?? "";
             }
         }
-        
+
         /// <summary>
         /// Build weapon-specific tooltip showing damage/speed modifiers.
         /// </summary>
         private void BuildWeaponTooltip(ItemObject item, ItemModifier modifier, List<string> tooltipParts)
         {
-            if (item?.WeaponComponent == null || modifier == null || tooltipParts == null) return;
-            
+            if (item?.WeaponComponent == null || modifier == null || tooltipParts == null)
+            {
+                return;
+            }
+
             var weapon = item.WeaponComponent.PrimaryWeapon;
-            if (weapon == null) return;
-            
+            if (weapon == null)
+            {
+                return;
+            }
+
             // Show damage modifier
             if (modifier.Damage != 0)
             {
                 tooltipParts.Add($"Damage: {(modifier.Damage > 0 ? "+" : "")}{modifier.Damage}");
             }
-            
+
             // Show speed modifier
             if (modifier.Speed != 0)
             {
                 tooltipParts.Add($"Speed: {(modifier.Speed > 0 ? "+" : "")}{modifier.Speed}");
             }
-            
+
             // Show missile speed modifier for ranged weapons
             if (weapon.IsRangedWeapon && modifier.MissileSpeed != 0)
             {
                 tooltipParts.Add($"Missile Speed: {(modifier.MissileSpeed > 0 ? "+" : "")}{modifier.MissileSpeed}");
             }
         }
-        
+
         /// <summary>
         /// Build armor-specific tooltip showing armor value modifiers.
         /// </summary>
         private void BuildArmorTooltip(ItemObject item, ItemModifier modifier, List<string> tooltipParts)
         {
-            if (item?.ArmorComponent == null || modifier == null || tooltipParts == null) return;
-            
+            if (item?.ArmorComponent == null || modifier == null || tooltipParts == null)
+            {
+                return;
+            }
+
             if (modifier.Armor != 0)
             {
                 tooltipParts.Add($"Armor: {(modifier.Armor > 0 ? "+" : "")}{modifier.Armor}");
             }
         }
-        
+
         /// <summary>
         /// Set upgrade indicator based on whether item can be upgraded.
         /// Items with modifier groups and not at max quality show upgrade indicator.
@@ -782,7 +791,7 @@ namespace Enlisted.Features.Equipment.UI
                     UpgradeIndicatorText = "";
                     return;
                 }
-                
+
                 // Check if item has modifier group (required for upgrades)
                 var modGroup = item.ItemComponent?.ItemModifierGroup;
                 if (modGroup == null)
@@ -791,7 +800,7 @@ namespace Enlisted.Features.Equipment.UI
                     UpgradeIndicatorText = "";
                     return;
                 }
-                
+
                 // Check if already at max quality
                 if (currentQuality == ItemQuality.Legendary)
                 {
@@ -799,11 +808,11 @@ namespace Enlisted.Features.Equipment.UI
                     UpgradeIndicatorText = "";
                     return;
                 }
-                
+
                 // Check if any higher quality tiers exist
                 var hasUpgrades = false;
                 var qualityTiers = new[] { ItemQuality.Fine, ItemQuality.Masterwork, ItemQuality.Legendary };
-                
+
                 foreach (var tier in qualityTiers)
                 {
                     if (tier > currentQuality)
@@ -816,7 +825,7 @@ namespace Enlisted.Features.Equipment.UI
                         }
                     }
                 }
-                
+
                 IsUpgradeable = hasUpgrades;
                 UpgradeIndicatorText = hasUpgrades ? new TextObject("{=qm_ui_upgrade_available}UPGRADE").ToString() : "";
             }

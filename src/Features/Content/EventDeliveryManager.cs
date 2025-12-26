@@ -336,7 +336,7 @@ namespace Enlisted.Features.Content
 
             // Record cooldown for player-initiated decisions ONLY if they commit to an action
             // (not if they select a cancel/decline option)
-            if (_currentEvent != null && _currentEvent.Category != null && 
+            if (_currentEvent != null && _currentEvent.Category != null &&
                 _currentEvent.Category.Equals("decision", StringComparison.OrdinalIgnoreCase))
             {
                 // Check if this is a cancel option (common patterns: cancel, nevermind, not_now, decline, skip, back)
@@ -407,7 +407,7 @@ namespace Enlisted.Features.Content
 
             // Apply flag changes
             ApplyFlagChanges(option);
-            
+
             // Handle enlistment abort (used by bag check)
             if (option.AbortsEnlistment)
             {
@@ -427,7 +427,7 @@ namespace Enlisted.Features.Content
             {
                 ShowSubChoicePopup(option.RewardChoices);
             }
-            
+
             // Result narrative is now shown in Recent Activities feed instead of popup to reduce UI interruption
             // ShowResultText(option, isRisky && !success);
 
@@ -453,7 +453,7 @@ namespace Enlisted.Features.Content
                 if (escalationState != null)
                 {
                     escalationState.ScheduleChainEvent(option.ChainsTo, option.ChainDelayHours);
-                    ModLogger.Info(LogCategory, 
+                    ModLogger.Info(LogCategory,
                         $"Scheduled chain event: {option.ChainsTo} in {option.ChainDelayHours} hours ({option.ChainDelayHours / 24f:F1} days)");
                 }
                 else
@@ -476,12 +476,12 @@ namespace Enlisted.Features.Content
         {
             // isRisky passed from caller but not used here; success determines risky outcome
             _ = isRisky;
-            
+
             if (evt == null)
             {
                 return;
             }
-            
+
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
             {
@@ -493,11 +493,11 @@ namespace Enlisted.Features.Content
                 case "evt_baggage_lookaway":
                     enlistment.HandleBaggageLookAway();
                     break;
-                    
+
                 case "evt_baggage_bribe":
                     HandleBribeBaggageEvent(option, success, enlistment);
                     break;
-                    
+
                 case "evt_baggage_confiscate":
                     HandleConfiscateBaggageEvent(option, success, enlistment);
                     break;
@@ -521,28 +521,28 @@ namespace Enlisted.Features.Content
                 case "bribe":
                     // Calculate bribe amount first
                     int bribeAmount = ContrabandChecker.CalculateBribeAmount(contraband.TotalValue);
-                    
+
                     // Check if player can afford the bribe
                     if (Hero.MainHero.Gold < bribeAmount)
                     {
                         // Can't afford bribe - confiscation instead
                         enlistment.HandleBaggageConfiscation();
-                        
+
                         InformationManager.DisplayMessage(new InformationMessage(
                             $"You can't afford the {bribeAmount} gold bribe. Contraband confiscated.",
                             Colors.Red));
                         break;
                     }
-                    
+
                     // Apply Charm skill check (60+ auto-success, <30 auto-fail, 30-59 roll)
                     int charmSkill = Hero.MainHero.GetSkillValue(DefaultSkills.Charm);
                     bool bribeSuccess = EvaluateCharmCheck(charmSkill);
-                    
+
                     if (bribeSuccess)
                     {
                         // Successful bribe - pay and keep item
                         enlistment.HandleBaggageBribeSuccess(bribeAmount);
-                        
+
                         InformationManager.DisplayMessage(new InformationMessage(
                             $"Paid {bribeAmount} gold to the quartermaster. Contraband overlooked.",
                             Colors.Yellow));
@@ -551,18 +551,18 @@ namespace Enlisted.Features.Content
                     {
                         // Failed bribe negotiation - confiscation
                         enlistment.HandleBaggageConfiscation();
-                        
+
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Bribe rejected. Contraband confiscated.",
                             Colors.Red));
                     }
                     break;
-                    
+
                 case "smuggle":
                     if (success)
                     {
                         enlistment.HandleBaggageSmuggleSuccess();
-                        
+
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Contraband hidden successfully. +15 Roguery XP.",
                             Colors.Green));
@@ -570,24 +570,24 @@ namespace Enlisted.Features.Content
                     else
                     {
                         enlistment.HandleBaggageSmuggleFailure();
-                        
+
                         var mostValuable = contraband.MostValuable;
                         string itemName = mostValuable?.Item?.Name?.ToString() ?? "item";
-                        
+
                         InformationManager.DisplayMessage(new InformationMessage(
                             $"Caught smuggling! {itemName} confiscated. +4 Scrutiny, -10 QM reputation.",
                             Colors.Red));
                     }
                     break;
-                    
+
                 case "surrender":
                     // Voluntary surrender - confiscation with less penalty
                     enlistment.HandleBaggageConfiscation();
-                    
+
                     var surrenderedItem = contraband.MostValuable;
                     string surrenderedItemName = surrenderedItem?.Item?.Name?.ToString() ?? "item";
                     int fine = ContrabandChecker.CalculateFineAmount(surrenderedItem?.Value ?? 0);
-                    
+
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"{surrenderedItemName} surrendered. Fine: {fine} gold.",
                         Colors.Yellow));
@@ -606,18 +606,18 @@ namespace Enlisted.Features.Content
                 ModLogger.Debug(LogCategory, $"Charm {charmSkill} >= 60: auto-success");
                 return true;
             }
-            
+
             if (charmSkill < 30)
             {
                 ModLogger.Debug(LogCategory, $"Charm {charmSkill} < 30: auto-fail");
                 return false;
             }
-            
+
             // Charm 30-59: roll based on skill
             // Scale from 20% at Charm 30 to 80% at Charm 59
             float successChance = 0.20f + ((charmSkill - 30) / 29f) * 0.60f;
             bool success = MBRandom.RandomFloat < successChance;
-            
+
             ModLogger.Debug(LogCategory, $"Charm {charmSkill}: roll {successChance:P0} -> {(success ? "success" : "fail")}");
             return success;
         }
@@ -637,22 +637,22 @@ namespace Enlisted.Features.Content
             {
                 case "accept":
                     enlistment.HandleBaggageConfiscation();
-                    
+
                     var confiscatedItem = contraband.MostValuable;
                     string itemName = confiscatedItem?.Item?.Name?.ToString() ?? "item";
                     int fine = ContrabandChecker.CalculateFineAmount(confiscatedItem?.Value ?? 0);
-                    
+
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"{itemName} confiscated. Fine: {fine} gold. +2 Scrutiny.",
                         Colors.Red));
                     break;
-                    
+
                 case "protest":
                     if (success)
                     {
                         // Rare success - keep item but owe a favor
                         enlistment.ClearPendingContrabandCheck();
-                        
+
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Protest accepted. You keep your item, but you owe the quartermaster.",
                             Colors.Yellow));
@@ -661,7 +661,7 @@ namespace Enlisted.Features.Content
                     {
                         // Made things worse
                         enlistment.HandleBaggageConfiscation();
-                        
+
                         // Extra discipline penalty already in JSON effects_failure
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Protest backfired. Item confiscated with extra penalties.",
@@ -684,7 +684,7 @@ namespace Enlisted.Features.Content
             var hero = Hero.MainHero;
             var enlistment = EnlistmentBehavior.Instance;
             var escalation = EscalationManager.Instance;
-            
+
             // Track applied effects for player feedback
             var feedbackMessages = new List<string>();
 
@@ -713,9 +713,9 @@ namespace Enlisted.Features.Content
                         ModLogger.Warn(LogCategory, $"Invalid dynamic XP value for {dynamicXp.Key}: {dynamicXp.Value}");
                         continue;
                     }
-                    
+
                     SkillObject targetSkill = null;
-                    
+
                     switch (dynamicXp.Key.ToLowerInvariant())
                     {
                         case "equipped_weapon":
@@ -728,11 +728,11 @@ namespace Enlisted.Features.Content
                             ModLogger.Warn(LogCategory, $"Unknown dynamic XP key in effects: {dynamicXp.Key}");
                             continue;
                     }
-                    
+
                     if (targetSkill != null)
                     {
                         hero.AddSkillXp(targetSkill, dynamicXp.Value);
-                        ModLogger.Debug(LogCategory, 
+                        ModLogger.Debug(LogCategory,
                             $"Applied dynamic {dynamicXp.Key} XP from effects: +{dynamicXp.Value} {targetSkill.Name}");
                     }
                     else
@@ -917,29 +917,29 @@ namespace Enlisted.Features.Content
                 ApplyRetinueLoyalty(effects.RetinueLoyalty.Value);
                 feedbackMessages.Add($"{(effects.RetinueLoyalty.Value > 0 ? "+" : "")}{effects.RetinueLoyalty.Value} Retinue Loyalty");
             }
-            
+
             // Apply baggage train effects
             if (effects.GrantTemporaryBaggageAccess.HasValue && effects.GrantTemporaryBaggageAccess.Value > 0)
             {
                 ApplyBaggageAccessGrant(effects.GrantTemporaryBaggageAccess.Value);
             }
-            
+
             if (effects.BaggageDelayDays.HasValue)
             {
                 ApplyBaggageDelay(effects.BaggageDelayDays.Value);
             }
-            
+
             if (effects.RandomBaggageLoss.HasValue && effects.RandomBaggageLoss.Value > 0)
             {
                 ApplyRandomBaggageLoss(effects.RandomBaggageLoss.Value);
             }
-            
+
             // Apply bag check choice (first-enlistment gear handling)
             if (!string.IsNullOrEmpty(effects.BagCheckChoice))
             {
                 ApplyBagCheckChoice(effects.BagCheckChoice);
             }
-            
+
             // Apply fatigue change
             if (effects.Fatigue.HasValue && effects.Fatigue.Value != 0)
             {
@@ -959,7 +959,7 @@ namespace Enlisted.Features.Content
                 ApplyPromotesEffect(effects.Promotes.Value);
                 feedbackMessages.Add($"Promoted to Tier {effects.Promotes.Value}");
             }
-            
+
             // Display feedback to player if any effects were applied
             if (feedbackMessages.Count > 0)
             {
@@ -1198,7 +1198,7 @@ namespace Enlisted.Features.Content
             // Check for threshold crossings after applying loyalty change
             manager.CheckLoyaltyThresholds();
         }
-        
+
         /// <summary>
         /// Grants temporary baggage access for the specified number of hours.
         /// Used by "baggage caught up" events to give players a window to access their stash.
@@ -1211,15 +1211,15 @@ namespace Enlisted.Features.Content
                 ModLogger.Warn(LogCategory, $"ApplyBaggageAccessGrant: BaggageTrainManager not available");
                 return;
             }
-            
+
             baggageManager.GrantTemporaryAccess(hours);
             baggageManager.RecordBaggageArrival(); // Track arrival for Daily Brief display
-            
+
             var notification = new TextObject("{=evt_baggage_access_granted}The baggage wagons have caught up. You have {HOURS} hours to access your belongings.");
             notification.SetTextVariable("HOURS", hours);
             InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), Colors.Green));
         }
-        
+
         /// <summary>
         /// Applies a delay to baggage availability.
         /// A value of 0 clears any existing delay, positive values add delay in days.
@@ -1232,7 +1232,7 @@ namespace Enlisted.Features.Content
                 ModLogger.Warn(LogCategory, "ApplyBaggageDelay: BaggageTrainManager not available");
                 return;
             }
-            
+
             if (days <= 0)
             {
                 baggageManager.ClearBaggageDelay();
@@ -1241,13 +1241,13 @@ namespace Enlisted.Features.Content
             else
             {
                 baggageManager.ApplyBaggageDelay(days);
-                
+
                 var notification = new TextObject("{=evt_baggage_delayed_msg}The baggage train is stuck. Access delayed by {DAYS} day(s).");
                 notification.SetTextVariable("DAYS", days);
                 InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), Colors.Yellow));
             }
         }
-        
+
         /// <summary>
         /// Removes a random number of items from the player's baggage stash.
         /// Gracefully handles empty stash (no crash, no message).
@@ -1261,22 +1261,22 @@ namespace Enlisted.Features.Content
                 ModLogger.Warn(LogCategory, "ApplyRandomBaggageLoss: EnlistmentBehavior not available");
                 return;
             }
-            
+
             var removedCount = enlistment.RemoveRandomBaggageItems(count);
-            
+
             if (removedCount > 0)
             {
                 var notification = new TextObject("{=evt_baggage_loss_msg}{COUNT} item(s) were lost from your baggage.");
                 notification.SetTextVariable("COUNT", removedCount);
                 InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), Colors.Red));
-                
+
                 // Track raid for Daily Brief display (if this is from a raid event)
                 var baggageManager = Features.Logistics.BaggageTrainManager.Instance;
                 if (baggageManager != null)
                 {
                     baggageManager.RecordBaggageRaid();
                 }
-                
+
                 ModLogger.Info(LogCategory, $"ApplyRandomBaggageLoss: Removed {removedCount} items from baggage stash");
             }
             else
@@ -1284,7 +1284,7 @@ namespace Enlisted.Features.Content
                 ModLogger.Debug(LogCategory, "ApplyRandomBaggageLoss: No items to remove (stash empty)");
             }
         }
-        
+
         /// <summary>
         /// Handles the first-enlistment bag check choice.
         /// Delegates to EnlistmentBehavior.HandleBagCheckChoice() which processes stash/sell/smuggle actions.
@@ -1297,11 +1297,11 @@ namespace Enlisted.Features.Content
                 ModLogger.Warn(LogCategory, "ApplyBagCheckChoice: EnlistmentBehavior not available");
                 return;
             }
-            
+
             ModLogger.Info(LogCategory, $"ApplyBagCheckChoice: Processing choice '{choice}'");
             enlistment.HandleBagCheckChoice(choice);
         }
-        
+
         /// <summary>
         /// Aborts the enlistment process during bag check.
         /// Ends enlistment without normal discharge penalties and restores party to normal state.
@@ -1316,19 +1316,19 @@ namespace Enlisted.Features.Content
                 ModLogger.Warn(LogCategory, "ApplyEnlistmentAbort: Not enlisted, nothing to abort");
                 return;
             }
-            
+
             var lord = enlistment.EnlistedLord;
             ModLogger.Info(LogCategory, $"ApplyEnlistmentAbort: Player aborting enlistment with {lord?.Name} during bag check");
-            
+
             // Record the abort before ending enlistment (so lord reference is still available)
             if (lord != null)
             {
                 enlistment.RecordBagCheckAbort(lord);
             }
-            
+
             enlistment.StopEnlist("Aborted enlistment during bag check", isHonorableDischarge: false);
         }
-        
+
         /// <summary>
         /// Applies a fatigue change to the player.
         /// Positive values add fatigue (more tired), negative values restore stamina.
@@ -1341,7 +1341,7 @@ namespace Enlisted.Features.Content
                 ModLogger.Warn(LogCategory, "ApplyFatigueChange: EnlistmentBehavior not available");
                 return;
             }
-            
+
             enlistment.ModifyFatigue(delta);
             ModLogger.Debug(LogCategory, $"ApplyFatigueChange: Modified fatigue by {delta}");
         }
@@ -1362,7 +1362,7 @@ namespace Enlisted.Features.Content
             }
 
             var currentTier = enlistment.EnlistmentTier;
-            
+
             // Handle sentinel value -1: promote to next tier
             // This allows JSON to use "promotes": true without specifying explicit tier
             if (targetTier == -1)
@@ -1370,7 +1370,7 @@ namespace Enlisted.Features.Content
                 targetTier = currentTier + 1;
                 ModLogger.Debug(LogCategory, $"Resolved 'promotes: true' to target tier {targetTier}");
             }
-            
+
             if (targetTier <= currentTier)
             {
                 ModLogger.Warn(LogCategory, $"Cannot promote to tier {targetTier} - already at tier {currentTier}");
@@ -1385,7 +1385,7 @@ namespace Enlisted.Features.Content
 
             // Clear pending promotion flag in PromotionBehavior
             Features.Ranks.Behaviors.PromotionBehavior.Instance?.ClearPendingPromotion();
-            
+
             // Trigger promotion notification with culture-specific rank and immersive text
             Features.Ranks.Behaviors.PromotionBehavior.Instance?.TriggerPromotionNotificationPublic(targetTier);
 
@@ -1502,35 +1502,35 @@ namespace Enlisted.Features.Content
                 ModLogger.Warn(LogCategory, "Invalid XP amount for troop training");
                 return;
             }
-            
+
             // Get lord's party (player is enlisted, not leading their own party)
             var enlistment = EnlistmentBehavior.Instance;
             var lord = enlistment?.EnlistedLord;
             var lordParty = lord?.PartyBelongedTo;
-            
+
             if (lordParty == null || !lordParty.IsActive)
             {
                 ModLogger.Warn(LogCategory, "Cannot train troops: lord party not available");
                 return;
             }
-            
+
             // Don't train if lord is captured
             if (lord.IsPrisoner)
             {
                 ModLogger.Info(LogCategory, "Skipping training: lord is prisoner");
                 return;
             }
-            
+
             var roster = lordParty.MemberRoster;
             if (roster == null || roster.TotalManCount == 0)
             {
                 ModLogger.Info(LogCategory, "No troops to train");
                 return;
             }
-            
+
             // Snapshot roster to avoid concurrent modification
             var troopsToTrain = new List<(CharacterObject Character, int Count)>();
-            
+
             for (int i = 0; i < roster.Count; i++)
             {
                 var element = roster.GetElementCopyAtIndex(i);
@@ -1538,34 +1538,34 @@ namespace Enlisted.Features.Content
                 {
                     continue;
                 }
-                
+
                 // Only train T1-T3 troops
                 if (element.Character.Tier < 1 || element.Character.Tier > 3)
                 {
                     continue;
                 }
-                
+
                 if (element.Number <= 0)
                 {
                     continue;
                 }
-                
+
                 troopsToTrain.Add((element.Character, element.Number));
             }
-            
+
             if (troopsToTrain.Count == 0)
             {
                 ModLogger.Info(LogCategory, "No eligible troops for training (all max tier or heroes)");
                 return;
             }
-            
+
             // Limit to 10 troop types per training session
             troopsToTrain = troopsToTrain.Take(10).ToList();
-            
+
             int trainedTypes = 0;
             int totalTrained = 0;
             int promotionReady = 0;
-            
+
             foreach (var (character, count) in troopsToTrain)
             {
                 try
@@ -1576,21 +1576,21 @@ namespace Enlisted.Features.Content
                         // Troop at max tier, can't gain XP
                         continue;
                     }
-                    
+
                     // Cap total XP to prevent over-leveling (integer division could round to 0, so ensure minimum of 1 XP per troop)
                     int totalXpForTroop = Math.Min(xpAmount * count, maxGainableXp);
-                    
+
                     // Skip if no XP can be awarded (very close to max level)
                     if (totalXpForTroop <= 0)
                     {
                         continue;
                     }
-                    
+
                     roster.AddXpToTroop(character, totalXpForTroop);
-                    
+
                     trainedTypes++;
                     totalTrained += count;
-                    
+
                     // Check if troops might be ready for promotion after training (approximate)
                     var upgradeTarget = character.UpgradeTargets?.FirstOrDefault();
                     if (upgradeTarget != null)
@@ -1603,7 +1603,7 @@ namespace Enlisted.Features.Content
                             int xpNeeded = Campaign.Current.Models.PartyTroopUpgradeModel
                                 .GetXpCostForUpgrade(lordParty.Party, character, upgradeTarget);
                             int totalXpNeeded = xpNeeded * count;
-                            
+
                             // Consider ready if within 90% of promotion after this training
                             if (xpNeeded > 0 && currentXp >= totalXpNeeded * 0.9f)
                             {
@@ -1617,12 +1617,12 @@ namespace Enlisted.Features.Content
                     ModLogger.Error(LogCategory, $"Failed to train {character.Name}: {ex.Message}");
                 }
             }
-            
+
             if (trainedTypes > 0)
             {
-                ModLogger.Info(LogCategory, 
+                ModLogger.Info(LogCategory,
                     $"Trained {trainedTypes} troop types ({totalTrained} soldiers, +{xpAmount} XP each)");
-                
+
                 // Report to news system
                 ReportTrainingToNews(totalTrained, promotionReady, xpAmount);
             }
@@ -1637,7 +1637,7 @@ namespace Enlisted.Features.Content
             {
                 return;
             }
-            
+
             string summary;
             if (promotionReady > 0)
             {
@@ -1647,7 +1647,7 @@ namespace Enlisted.Features.Content
             {
                 summary = $"{soldiersTrained} soldiers trained (+{xpGiven} XP)";
             }
-            
+
             // Use generic EventOutcome for training results
             var outcome = new EventOutcomeRecord
             {
@@ -1663,7 +1663,7 @@ namespace Enlisted.Features.Content
                     { "Ready for Promotion", promotionReady }
                 }
             };
-            
+
             EnlistedNewsBehavior.Instance.AddEventOutcome(outcome);
             ModLogger.Debug(LogCategory, $"Reported training to news: {summary}");
         }
@@ -1699,14 +1699,14 @@ namespace Enlisted.Features.Content
                     ModLogger.Info(LogCategory, $"Cleared flag: {flag}");
                 }
             }
-            
+
             // Advance onboarding if option triggers it
             if (option.AdvancesOnboarding && state.IsOnboardingActive)
             {
                 var oldStage = state.OnboardingStage;
                 state.AdvanceOnboardingStage();
                 var newStage = state.OnboardingStage;
-                
+
                 if (newStage == 0)
                 {
                     ModLogger.Info(LogCategory, $"Onboarding complete (was stage {oldStage})");
@@ -1815,16 +1815,16 @@ namespace Enlisted.Features.Content
                     .Where(kv => kv.Value > 0)
                     .OrderByDescending(kv => kv.Value)
                     .ToList();
-                
+
                 var topThree = positiveSkillXp.Take(3);
                 foreach (var skillXp in topThree)
                 {
-                    var skillName = skillXp.Key.Length > 12 
-                        ? skillXp.Key.Substring(0, 10) + ".." 
+                    var skillName = skillXp.Key.Length > 12
+                        ? skillXp.Key.Substring(0, 10) + ".."
                         : skillXp.Key;
                     parts.Add($"+{skillXp.Value} {skillName} XP");
                 }
-                
+
                 // Show remaining count if more than 3 skills gained
                 var remaining = positiveSkillXp.Count - 3;
                 if (remaining > 0)
@@ -1848,7 +1848,7 @@ namespace Enlisted.Features.Content
                             targetSkill = WeaponSkillHelper.GetWeakestCombatSkill(Hero.MainHero);
                             break;
                     }
-                    
+
                     if (targetSkill != null)
                     {
                         var skillName = targetSkill.Name.ToString();
@@ -1970,7 +1970,7 @@ namespace Enlisted.Features.Content
                             targetSkill = WeaponSkillHelper.GetWeakestCombatSkill(Hero.MainHero);
                             break;
                     }
-                    
+
                     if (targetSkill != null)
                     {
                         dict[$"{targetSkill.Name}XP"] = dynamicXp.Value;
@@ -2290,7 +2290,7 @@ namespace Enlisted.Features.Content
                 // Get training XP modifier based on hero's experience level
                 // Green recruits get +20%, seasoned soldiers get normal XP, veterans get -10%
                 float xpModifier = ExperienceTrackHelper.GetTrainingXpModifier(hero);
-                
+
                 foreach (var skillXp in rewards.SkillXp)
                 {
                     var skill = SkillCheckHelper.GetSkillByName(skillXp.Key);
@@ -2299,16 +2299,16 @@ namespace Enlisted.Features.Content
                         // Apply experience track modifier to training XP
                         int baseXp = skillXp.Value;
                         int modifiedXp = (int)Math.Round(baseXp * xpModifier);
-                        
+
                         // Ensure minimum 1 XP if base XP was positive to prevent rounding to zero
                         if (baseXp > 0 && modifiedXp < 1)
                         {
                             modifiedXp = 1;
                         }
-                        
+
                         hero.AddSkillXp(skill, modifiedXp);
                         rewardMessages.Add($"+{modifiedXp} {skillXp.Key} XP");
-                        
+
                         // Log with modifier details when modifier is not neutral
                         if (Math.Abs(xpModifier - 1.0f) > 0.001f)
                         {
@@ -2337,9 +2337,9 @@ namespace Enlisted.Features.Content
                         ModLogger.Warn(LogCategory, $"Invalid dynamic XP value for {dynamicXp.Key}: {dynamicXp.Value}");
                         continue;
                     }
-                    
+
                     SkillObject targetSkill;
-                    
+
                     switch (dynamicXp.Key.ToLowerInvariant())
                     {
                         case "equipped_weapon":
@@ -2352,12 +2352,12 @@ namespace Enlisted.Features.Content
                             ModLogger.Warn(LogCategory, $"Unknown dynamic XP key: {dynamicXp.Key}");
                             continue;
                     }
-                    
+
                     if (targetSkill != null)
                     {
                         hero.AddSkillXp(targetSkill, dynamicXp.Value);
                         rewardMessages.Add($"+{dynamicXp.Value} {targetSkill.Name} XP");
-                        ModLogger.Debug(LogCategory, 
+                        ModLogger.Debug(LogCategory,
                             $"Applied dynamic {dynamicXp.Key} XP: +{dynamicXp.Value} {targetSkill.Name}");
                     }
                 }
@@ -2372,7 +2372,7 @@ namespace Enlisted.Features.Content
                     ModLogger.Debug(LogCategory, $"General XP reward logged: +{xp.Value} {xp.Key} (tracking not yet implemented)");
                 }
             }
-            
+
             // Display rewards to player if any were applied
             if (rewardMessages.Count > 0)
             {
@@ -2387,10 +2387,10 @@ namespace Enlisted.Features.Content
         private void OnEventClosed()
         {
             // Check if this was a decision event before clearing the current event
-            var wasDecision = _currentEvent != null && 
+            var wasDecision = _currentEvent != null &&
                              _currentEvent.Category != null &&
                              _currentEvent.Category.Equals("decision", StringComparison.OrdinalIgnoreCase);
-            
+
             _isShowingEvent = false;
             _currentEvent = null;
 
@@ -2461,10 +2461,10 @@ namespace Enlisted.Features.Content
             // Use TextObject to look up the string from XML
             // Format: "{=stringId}Fallback" - if string not found, uses the fallback text
             var textObject = new TextObject($"{{={textId}}}{effectiveFallback}");
-            
+
             // Set NCO and soldier name text variables for personalized event dialogue
             SetEventTextVariables(textObject);
-            
+
             var resolved = textObject.ToString();
 
             // If resolution returned the raw {=...} pattern, the lookup failed - use fallback directly
@@ -2486,7 +2486,10 @@ namespace Enlisted.Features.Content
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment == null) return;
+                if (enlistment == null)
+                {
+                    return;
+                }
 
                 // NCO/Sergeant names
                 var ncoFullName = enlistment.NcoFullName ?? "the Sergeant";
@@ -2511,7 +2514,7 @@ namespace Enlisted.Features.Content
                 // Officer names
                 textObject.SetTextVariable("OFFICER_NAME", ncoFullName);
                 textObject.SetTextVariable("CAPTAIN_NAME", "the Captain");
-                
+
                 // Naval crew names (for War Sails DLC events)
                 textObject.SetTextVariable("BOATSWAIN_NAME", "the Boatswain");
                 textObject.SetTextVariable("NAVIGATOR_NAME", "the Navigator");
@@ -2534,12 +2537,12 @@ namespace Enlisted.Features.Content
                     var lord = enlistment.EnlistedLord;
                     textObject.SetTextVariable("LORD_NAME", lord.Name?.ToString() ?? "the Lord");
                     textObject.SetTextVariable("LORD_TITLE", lord.IsFemale ? "Lady" : "Lord");
-                    
+
                     // Faction and kingdom names
                     if (lord.MapFaction != null)
                     {
                         textObject.SetTextVariable("FACTION_NAME", lord.MapFaction.Name?.ToString() ?? "the faction");
-                        
+
                         if (lord.MapFaction.IsKingdomFaction && lord.MapFaction is Kingdom kingdom)
                         {
                             textObject.SetTextVariable("KINGDOM_NAME", kingdom.Name?.ToString() ?? "the kingdom");

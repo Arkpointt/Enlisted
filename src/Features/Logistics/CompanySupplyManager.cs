@@ -68,14 +68,14 @@ namespace Enlisted.Features.Logistics
         public static void Initialize(Hero enlistedLord, bool preserveSupply = false)
         {
             float existingSupply = Instance?._nonFoodSupply ?? 60.0f;
-            
+
             Instance = new CompanySupplyManager
             {
                 _enlistedLord = enlistedLord,
                 _nonFoodSupply = preserveSupply ? MathF.Clamp(existingSupply, 0f, 60f) : 60.0f
             };
-            
-            ModLogger.Info(LogCategory, preserveSupply 
+
+            ModLogger.Info(LogCategory, preserveSupply
                 ? $"CompanySupplyManager transferred to lord: {enlistedLord?.Name}, preserved supply: {Instance._nonFoodSupply:F1}%"
                 : $"CompanySupplyManager initialized for lord: {enlistedLord?.Name}");
         }
@@ -133,9 +133,9 @@ namespace Enlisted.Features.Logistics
                     // Party is gaining or stable on food - treat as well-supplied
                     return 40.0f;
                 }
-                
+
                 int daysOfFood = lordParty.GetNumDaysForFoodToLast();
-                
+
                 // Guard against negative or extreme values from edge cases
                 if (daysOfFood < 0 || daysOfFood > 1000)
                 {
@@ -144,11 +144,26 @@ namespace Enlisted.Features.Logistics
 
                 // Map food days to supply contribution (0-40%)
                 // 10+ days = excellent supply, diminishing returns below that
-                if (daysOfFood >= 10) return 40.0f;
-                if (daysOfFood >= 7) return 35.0f;
-                if (daysOfFood >= 5) return 30.0f;
-                if (daysOfFood >= 3) return 20.0f;
-                if (daysOfFood >= 1) return 10.0f;
+                if (daysOfFood >= 10)
+                {
+                    return 40.0f;
+                }
+                if (daysOfFood >= 7)
+                {
+                    return 35.0f;
+                }
+                if (daysOfFood >= 5)
+                {
+                    return 30.0f;
+                }
+                if (daysOfFood >= 3)
+                {
+                    return 20.0f;
+                }
+                if (daysOfFood >= 1)
+                {
+                    return 10.0f;
+                }
                 return 5.0f; // Less than 1 day but not starving yet
             }
             catch (Exception ex)
@@ -243,7 +258,10 @@ namespace Enlisted.Features.Logistics
         /// </summary>
         private float GetActivityMultiplier(MobileParty party)
         {
-            if (party == null) return 1.0f;
+            if (party == null)
+            {
+                return 1.0f;
+            }
 
             // Check siege states first (before general settlement check)
             // Active siege = high consumption (siege equipment, repairs)
@@ -260,7 +278,7 @@ namespace Enlisted.Features.Logistics
                 {
                     return 1.8f;
                 }
-                
+
                 // Normal settlement rest = minimal consumption
                 return 0.3f;
             }
@@ -292,7 +310,10 @@ namespace Enlisted.Features.Logistics
         /// </summary>
         private float GetTerrainMultiplier(MobileParty party)
         {
-            if (party == null || !party.IsActive) return 1.0f;
+            if (party == null || !party.IsActive)
+            {
+                return 1.0f;
+            }
 
             try
             {
@@ -301,7 +322,7 @@ namespace Enlisted.Features.Logistics
                 {
                     return 1.0f;
                 }
-                
+
                 var navFace = party.CurrentNavigationFace;
                 if (!navFace.IsValid())
                 {
@@ -425,7 +446,10 @@ namespace Enlisted.Features.Logistics
         /// </summary>
         private float CalculateBattleLoot(int enemiesKilled)
         {
-            if (enemiesKilled <= 0) return 0f;
+            if (enemiesKilled <= 0)
+            {
+                return 0f;
+            }
 
             // Base loot: 1% per 25 enemies killed
             float baseLoot = enemiesKilled / 25f;
@@ -444,7 +468,10 @@ namespace Enlisted.Features.Logistics
         /// <param name="source">Description of the source for logging.</param>
         public void AddNonFoodSupplies(float amount, string source)
         {
-            if (amount <= 0) return;
+            if (amount <= 0)
+            {
+                return;
+            }
 
             float oldSupply = _nonFoodSupply;
             _nonFoodSupply = MathF.Clamp(_nonFoodSupply + amount, 0f, 60f);
@@ -470,26 +497,26 @@ namespace Enlisted.Features.Logistics
                 // returns false during leave but we still want to observe the lord's party
                 var behavior = EnlistmentBehavior.Instance;
                 var lord = behavior?.EnlistedLord ?? _enlistedLord;
-                
+
                 if (lord == null)
                 {
                     return null;
                 }
-                
+
                 // Verify lord is still alive and has a party
                 if (!lord.IsAlive)
                 {
                     return null;
                 }
-                
+
                 var party = lord.PartyBelongedTo;
-                
+
                 // Verify party is valid
                 if (party == null || !party.IsActive)
                 {
                     return null;
                 }
-                
+
                 return party;
             }
             catch (Exception ex)

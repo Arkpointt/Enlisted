@@ -159,7 +159,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         {
             var reasons = new List<string>();
             var enlistment = EnlistmentBehavior.Instance;
-            
+
             if (enlistment?.IsEnlisted != true)
             {
                 reasons.Add("Not enlisted");
@@ -168,7 +168,7 @@ namespace Enlisted.Features.Ranks.Behaviors
 
             var currentTier = enlistment.EnlistmentTier;
             var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
-            
+
             if (currentTier >= maxTier)
             {
                 reasons.Add("Already at maximum tier");
@@ -178,7 +178,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             var targetTier = currentTier + 1;
             var req = PromotionRequirements.GetForTier(targetTier);
             var escalation = EscalationManager.Instance;
-            
+
             // XP thresholds are owned by progression_config.json (single source of truth).
             var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
             var requiredXp = currentTier < tierXp.Length ? tierXp[currentTier] : tierXp[tierXp.Length - 1];
@@ -228,7 +228,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             }
 
             var canPromote = reasons.Count == 0;
-            
+
             if (!canPromote)
             {
                 ModLogger.Debug("Promotion", $"Cannot promote to T{targetTier}: {string.Join(", ", reasons)}");
@@ -245,7 +245,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         {
             var enlistment = EnlistmentBehavior.Instance;
             var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
-            
+
             if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier >= maxTier)
             {
                 return 100;
@@ -305,7 +305,7 @@ namespace Enlisted.Features.Ranks.Behaviors
 
                 // Check all promotion requirements
                 var (canPromote, failureReasons) = CanPromote();
-                
+
                 if (!canPromote)
                 {
                     // Log once per session when close to promotion but blocked
@@ -401,7 +401,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             {
                 var rankName = GetRankName(newTier);
                 var playerName = Hero.MainHero?.Name?.ToString() ?? "Soldier";
-                
+
                 // Get tier-specific localized title and message
                 var titleText = GetPromotionTitle(newTier);
                 var popupMessage = GetPromotionMessage(newTier);
@@ -418,7 +418,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 InformationManager.DisplayMessage(new InformationMessage(qmPrompt.ToString(), Colors.Cyan));
 
                 // Get appropriate button text based on tier
-                var buttonText = newTier >= 4 
+                var buttonText = newTier >= 4
                     ? new TextObject("{=promo_btn_command}To Camp").ToString()
                     : new TextObject("{=promo_btn_understood}Understood").ToString();
 
@@ -434,7 +434,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 );
 
                 // pauseGameActiveState = false so notifications don't freeze game time
-                InformationManager.ShowInquiry(data, false);
+                InformationManager.ShowInquiry(data);
 
                 // Record promotion in Personal Feed for historical review
                 var retinueSoldiers = newTier switch
@@ -453,7 +453,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 ModLogger.Error("Promotion", "Error showing promotion notification", ex);
             }
         }
-        
+
         /// <summary>
         ///     Get tier-specific promotion popup title with culture-specific rank.
         /// </summary>
@@ -478,7 +478,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             title.SetTextVariable("RANK", rankName);
             return title;
         }
-        
+
         /// <summary>
         ///     Get tier-specific immersive promotion message from localization.
         /// </summary>
@@ -494,7 +494,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 _ => new TextObject("{=promo_msg_default}You have been promoted to {RANK}.")
             };
         }
-        
+
         /// <summary>
         ///     Get tier-specific short chat notification from localization.
         /// </summary>

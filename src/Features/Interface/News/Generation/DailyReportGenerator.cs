@@ -43,7 +43,7 @@ namespace Enlisted.Features.Interface.News.Generation
             {
                 string narrationId = $"context_narration_{snapshot.StrategicContextTag}";
                 TextObject narrationText = GameTexts.FindText(narrationId);
-                
+
                 // If targeting a settlement, add that context if possible
                 string narration = narrationText.ToString();
                 if (!string.IsNullOrWhiteSpace(context.TargetSettlementName))
@@ -378,8 +378,14 @@ namespace Enlisted.Features.Interface.News.Generation
 
             private static float Clamp01(float v)
             {
-                if (v < 0f) return 0f;
-                if (v > 1f) return 1f;
+                if (v < 0f)
+                {
+                    return 0f;
+                }
+                if (v > 1f)
+                {
+                    return 1f;
+                }
                 return v;
             }
         }

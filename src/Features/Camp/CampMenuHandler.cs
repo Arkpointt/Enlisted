@@ -44,17 +44,13 @@ namespace Enlisted.Features.Camp
         private const string RetinueDismissMenuId = "enlisted_retinue_dismiss";
         private const string RetinueRequisitionMenuId = "enlisted_retinue_requisition";
 
-
-        // Ensure Camp dialogs never pause the campaign clock.
-        private static bool ShouldPauseDuringRetinueInquiry() => false;
-
         #region Wait Menu Handlers (enables spacebar time control like Quartermaster menus)
-        
+
         /// <summary>
         /// Wait condition - always returns true since we control exit via menu options.
         /// </summary>
         private static bool CampWaitCondition(MenuCallbackArgs args) => true;
-        
+
         /// <summary>
         /// Wait consequence - empty since we handle exit via menu options.
         /// </summary>
@@ -62,7 +58,7 @@ namespace Enlisted.Features.Camp
         {
             // No consequence needed - we never let progress reach 100%
         }
-        
+
         /// <summary>
         /// Wait tick handler for Camp menus.
         /// NOTE: Time mode restoration is handled ONCE during menu init, not here.
@@ -75,7 +71,7 @@ namespace Enlisted.Features.Camp
             // Intentionally empty - time mode is handled in menu init, not per-tick
             // The old code here fought with user speed input and caused pausing issues
         }
-        
+
         /// <summary>
         /// Switch to a menu while preserving the current time control mode.
         /// Uses the shared CapturedTimeMode from QuartermasterManager.
@@ -88,10 +84,7 @@ namespace Enlisted.Features.Camp
                                ?? Campaign.Current?.TimeControlMode
                                ?? CampaignTimeControlMode.Stop;
 
-            if (!QuartermasterManager.CapturedTimeMode.HasValue)
-            {
-                QuartermasterManager.CapturedTimeMode = capturedMode;
-            }
+            QuartermasterManager.CapturedTimeMode ??= capturedMode;
 
             GameMenu.SwitchToMenu(menuId);
 
@@ -100,7 +93,7 @@ namespace Enlisted.Features.Camp
                 Campaign.Current.TimeControlMode = capturedMode;
             }
         }
-        
+
         #endregion
 
         // Companion Assignment Menu IDs
@@ -112,13 +105,6 @@ namespace Enlisted.Features.Camp
 
         // Track selected faction for detail view
         private string _selectedFactionKey;
-
-        public static CampMenuHandler Instance { get; private set; }
-
-        public CampMenuHandler()
-        {
-            Instance = this;
-        }
 
         public override void RegisterEvents()
         {
@@ -136,7 +122,7 @@ namespace Enlisted.Features.Camp
             {
                 // Set up inline icons for use in menu text (Bannerlord's rich text system)
                 SetupInlineIcons();
-                
+
                 AddCampMenus(starter);
                 ModLogger.Info(LogCategory, "Camp menus registered successfully");
             }
@@ -145,7 +131,7 @@ namespace Enlisted.Features.Camp
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-001", "Failed to register camp menus", ex);
             }
         }
-        
+
         /// <summary>
         /// Sets up inline icon variables for use in menu text.
         /// Uses Bannerlord's native img tag system for inline sprites.
@@ -154,7 +140,7 @@ namespace Enlisted.Features.Camp
         {
             // Gold/denar icon - displays coin sprite inline with text
             MBTextManager.SetTextVariable("GOLD_ICON", "{=!}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">");
-            
+
             // Influence icon - displays influence sprite inline
             MBTextManager.SetTextVariable("INFLUENCE_ICON", "{=!}<img src=\"General\\Icons\\Influence@2x\" extend=\"7\">");
         }
@@ -196,7 +182,7 @@ namespace Enlisted.Features.Camp
             AddHelpTheLordMenu(starter);
         }
         #region Menu Background and Audio
-        
+
         /// <summary>
         /// Menu background and audio initialization for Camp menus.
         /// Sets military-themed background and ambient audio for immersion.
@@ -217,10 +203,10 @@ namespace Enlisted.Features.Camp
         {
             // Use a military meeting/camp background
             args.MenuContext.SetBackgroundMeshName("encounter_meeting");
-            
+
             // Add ambient audio for the camp atmosphere
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/keep");
-            
+
             // NOTE: We intentionally do NOT call StartWait() here. Camp menus rely on
             // the wait-menu type for layout/options, but we keep time control unchanged and
             // preserve the player's captured time mode when hopping between submenus.
@@ -514,11 +500,9 @@ namespace Enlisted.Features.Camp
         {
             try
             {
-                int remainingDays;
-
                 var retirementConfig = EnlistedConfig.LoadRetirementConfig();
                 var termEnd = enlistment.EnlistmentDate + CampaignTime.Days(retirementConfig.FirstTermDays);
-                remainingDays = (int)(termEnd - CampaignTime.Now).ToDays;
+                var remainingDays = (int)(termEnd - CampaignTime.Now).ToDays;
 
                 if (remainingDays <= 0)
                 {
@@ -912,7 +896,7 @@ namespace Enlisted.Features.Camp
                 }
 
                 // List factions served
-                if (lifetime.FactionsServed != null && lifetime.FactionsServed.Count > 0)
+                if (lifetime.FactionsServed is { Count: > 0 })
                 {
                     sb.AppendLine("â€” Factions Served â€”");
                     sb.AppendLine();
@@ -993,7 +977,7 @@ namespace Enlisted.Features.Camp
                     var manager = RetinueManager.Instance;
                     var enlistment = EnlistmentBehavior.Instance;
 
-                    if (manager != null && enlistment != null)
+                    if (manager is not null && enlistment is not null)
                     {
                         var tierCapacity = RetinueManager.GetTierCapacity(enlistment.EnlistmentTier);
                         var currentSoldiers = manager.State?.TotalSoldiers ?? 0;
@@ -1480,7 +1464,7 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Validates soldier type availability. Checks player formation match, faction restrictions, affordability, 
+        /// Validates soldier type availability. Checks player formation match, faction restrictions, affordability,
         /// and shows naval tooltip for mounted types.
         /// Players can only recruit soldiers matching their own troop type (infantry can only lead infantry, etc.)
         /// </summary>
@@ -1497,7 +1481,7 @@ namespace Enlisted.Features.Camp
 
             // Detect player's actual formation from equipment
             var playerFormation = QuartermasterManager.Instance?.GetPlayerFormationString() ?? "infantry";
-            
+
             // Map player formation to retinue type for comparison
             var playerRetinueType = playerFormation switch
             {
@@ -1557,7 +1541,7 @@ namespace Enlisted.Features.Camp
             // Naval dismount info tooltip for mounted types
             if (IsMountedType(typeId))
             {
-                var tooltipId = typeId == "cavalry" 
+                var tooltipId = typeId == "cavalry"
                     ? "{=ct_naval_cavalry_tooltip}Cavalry will dismount and fight as infantry during naval engagements. Their horses cannot be brought aboard ships."
                     : "{=ct_naval_horse_archer_tooltip}Horse archers will dismount and fight as foot archers during naval engagements. Their horses cannot be brought aboard ships.";
                 args.Tooltip = new TextObject(tooltipId);
@@ -1855,7 +1839,6 @@ namespace Enlisted.Features.Camp
         private static bool IsRequestReinforcementsAvailable(MenuCallbackArgs args)
         {
             var manager = RetinueManager.Instance;
-            var enlistment = EnlistmentBehavior.Instance;
 
             // Must have a retinue type selected
             if (manager?.State?.HasTypeSelected != true)
@@ -2042,14 +2025,7 @@ namespace Enlisted.Features.Camp
                 sb.AppendLine($"Your Gold: {playerGold}{{GOLD_ICON}}");
                 sb.AppendLine();
 
-                if (cooldownRemaining > 0)
-                {
-                    sb.AppendLine($"Cooldown: {cooldownRemaining} days remaining");
-                }
-                else
-                {
-                    sb.AppendLine("Request available now");
-                }
+                sb.AppendLine(cooldownRemaining > 0 ? $"Cooldown: {cooldownRemaining} days remaining" : "Request available now");
 
                 sb.AppendLine($"After request: {cooldownDays} day cooldown");
 
@@ -2122,7 +2098,7 @@ namespace Enlisted.Features.Camp
                 CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
-            // Dynamic companion options are added via menu init text since GameMenu doesn't support 
+            // Dynamic companion options are added via menu init text since GameMenu doesn't support
             // truly dynamic options. Instead we show the list in the description and use toggle buttons.
             // Add 8 companion slots (should cover most parties)
             for (var i = 0; i < 8; i++)
@@ -2260,7 +2236,7 @@ namespace Enlisted.Features.Camp
 
             manager.ToggleCompanionParticipation(companion);
             var newStatus = manager.ShouldCompanionFight(companion) ? "Fight" : "Stay Back";
-            
+
             var message = new TextObject("{=ct_companion_toggled}{COMPANION_NAME} set to: {STATUS}");
             message.SetTextVariable("COMPANION_NAME", companion.Name);
             message.SetTextVariable("STATUS", newStatus);
@@ -2412,12 +2388,12 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
-                    
+
                     if (tension < 40)
                     {
                         return false;
                     }
-                    
+
                     if (Hero.MainHero.Gold < 50)
                     {
                         args.IsEnabled = false;
@@ -2443,12 +2419,12 @@ namespace Enlisted.Features.Camp
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
                     var role = enlistment?.CurrentSpecialization ?? "Soldier";
-                    
+
                     if (tension < 40)
                     {
                         return false;
                     }
-                    
+
                     var isSupplyRole = role == "Quartermaster" || role == "Armorer";
                     if (!isSupplyRole)
                     {
@@ -2456,7 +2432,7 @@ namespace Enlisted.Features.Camp
                         args.Tooltip = new TextObject("{=dm_wrong_duty}Only available for Quartermaster or Armorer role.");
                         return true;
                     }
-                    
+
                     args.Tooltip = new TextObject("{=dm_skim_tooltip}Divert some supplies for personal gain. Gain 30 gold worth of goods.");
                     return true;
                 },
@@ -2473,12 +2449,12 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
-                    
+
                     if (tension < 50)
                     {
                         return false;
                     }
-                    
+
                     args.Tooltip = new TextObject("{=dm_black_market_tooltip}Seek out illicit traders. Buy or sell contraband for profit.");
                     return true;
                 },
@@ -2495,12 +2471,12 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
-                    
+
                     if (tension < 60)
                     {
                         return false;
                     }
-                    
+
                     args.Tooltip = new TextObject("{=dm_sell_gear_tooltip}Sell equipment you were issued. Risky - you'll need to replace it or face punishment.");
                     return true;
                 },
@@ -2517,12 +2493,12 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Escape;
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
-                    
+
                     if (tension < 70)
                     {
                         return false;
                     }
-                    
+
                     args.Tooltip = new TextObject("{=dm_desertion_tooltip}Some soldiers are planning to slip away. Hear what they have to say.");
                     return true;
                 },
@@ -2603,12 +2579,12 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Mission;
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
-                    
+
                     if (tension < 40)
                     {
                         return false;
                     }
-                    
+
                     args.Tooltip = new TextObject("{=hlm_debts_tooltip}Visit merchants who owe the lord money. Persuade them to pay. (-10 PayTension on success)");
                     return true;
                 },
@@ -2625,12 +2601,12 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Mission;
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
-                    
+
                     if (tension < 50)
                     {
                         return false;
                     }
-                    
+
                     args.Tooltip = new TextObject("{=hlm_escort_tooltip}Guard a friendly merchant through dangerous territory. The lord takes a cut. (-15 PayTension)");
                     return true;
                 },
@@ -2647,12 +2623,12 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
-                    
+
                     if (tension < 60)
                     {
                         return false;
                     }
-                    
+
                     var tradeSkill = Hero.MainHero?.GetSkillValue(DefaultSkills.Trade) ?? 0;
                     if (tradeSkill < 50)
                     {
@@ -2660,7 +2636,7 @@ namespace Enlisted.Features.Camp
                         args.Tooltip = new TextObject("{=hlm_loan_no_skill}Requires Trade skill 50+. Your skill: {SKILL}").SetTextVariable("SKILL", tradeSkill);
                         return true;
                     }
-                    
+
                     args.Tooltip = new TextObject("{=hlm_loan_tooltip}Use your trade connections to secure a loan. (-20 PayTension, requires Trade 50+)");
                     return true;
                 },
@@ -2677,24 +2653,24 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
                     var enlistment = EnlistmentBehavior.Instance;
                     var tension = enlistment?.PayTension ?? 0;
-                    
+
                     if (tension < 70)
                     {
                         return false;
                     }
-                    
+
                     // Check if lord is at war with anyone - simplified check
                     var lordKingdom = enlistment?.CurrentLord?.MapFaction;
                     var atWar = lordKingdom != null && Campaign.Current?.Factions?
                         .Any(f => f != lordKingdom && lordKingdom.IsAtWarWith(f)) == true;
-                    
+
                     if (!atWar)
                     {
                         args.IsEnabled = false;
                         args.Tooltip = new TextObject("{=hlm_no_war}Only available when the lord is at war.");
                         return true;
                     }
-                    
+
                     args.Tooltip = new TextObject("{=hlm_raid_tooltip}Lead a raid on enemy territory. Dangerous but lucrative. (-25 PayTension, risk of injury)");
                     return true;
                 },
@@ -2811,7 +2787,7 @@ namespace Enlisted.Features.Camp
 
             // Gain supplies (as gold equivalent)
             hero.ChangeHeroGold(30);
-            
+
             InformationManager.DisplayMessage(new InformationMessage(
                 new TextObject("{=dm_skim_success}You quietly divert some supplies for yourself. +30 gold worth of goods.").ToString(),
                 Colors.Yellow));

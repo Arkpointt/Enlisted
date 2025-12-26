@@ -14,10 +14,10 @@ namespace Enlisted.Features.Camp
     /// <summary>
     /// Manages the daily camp-conditions snapshot and related integrations.
     ///
-    /// This internal simulation layer runs only while the player is enlisted. It 
-    /// stores small numeric meters that are updated once per day to feed other 
-    /// systems such as Quartermaster pricing and mood, Pay Muster text and options, 
-    /// and Lance Life triggers. It avoids heavy world scanning by using campaign 
+    /// This internal simulation layer runs only while the player is enlisted. It
+    /// stores small numeric meters that are updated once per day to feed other
+    /// systems such as Quartermaster pricing and mood, Pay Muster text and options,
+    /// and Lance Life triggers. It avoids heavy world scanning by using campaign
     /// events and a few small rolling counters.
     /// </summary>
     public sealed class CampLifeBehavior : CampaignBehaviorBase
@@ -83,7 +83,7 @@ namespace Enlisted.Features.Camp
             });
         }
 
-        public bool IsEnabled()
+        private bool IsEnabled()
         {
             return ConfigurationManager.LoadCampLifeConfig()?.Enabled == true;
         }
@@ -202,7 +202,7 @@ namespace Enlisted.Features.Camp
                     var lastTown = tracker.LastTownEnteredTime;
                     var lastCastle = tracker.LastCastleEnteredTime;
                     var lastResupply = lastTown > lastCastle ? lastTown : lastCastle;
-                    
+
                     if (lastResupply != CampaignTime.Zero)
                     {
                         daysSinceResupply = (float)Math.Max(0d, CampaignTime.Now.ToDays - lastResupply.ToDays);
@@ -215,14 +215,7 @@ namespace Enlisted.Features.Camp
 
                 // Morale shock: spikes after recent battles, then decays slowly each day.
                 var battleEndedRecently = tracker != null && tracker.IsWithinDays(tracker.LastMapEventEndedTime, 1f);
-                if (battleEndedRecently)
-                {
-                    _moraleShock = Math.Max(_moraleShock, 70f);
-                }
-                else
-                {
-                    _moraleShock = Math.Max(0f, _moraleShock - 8f);
-                }
+                _moraleShock = battleEndedRecently ? Math.Max(_moraleShock, 70f) : Math.Max(0f, _moraleShock - 8f);
                 _moraleShock = Clamp01Hundred(_moraleShock + (_battlesThisWeek > 2 ? 5f : 0f));
 
                 // Territory pressure: light placeholder for now.

@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Enlisted.Features.Content;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -69,14 +67,13 @@ namespace Enlisted.Debugging.Behaviors
 
             // Event screen testing is currently inactive.
             ModLogger.Info("Debug", "TestOnboardingScreen: This feature is currently disabled.");
-            return;
 
-            /* Original test code has been removed. */
+            /* Original test code has been removed */
         }
 
         /// <summary>
-        /// Forces an immediate event selection attempt, bypassing the pacing window.
-        /// Useful for testing event selection and delivery without waiting 3-5 days.
+        /// Forces an immediate event selection attempt bypassing the pacing window.
+        /// Useful for testing event selection and delivery without waiting 3-5 days
         /// </summary>
         public static void ForceEventSelection()
         {
@@ -98,13 +95,13 @@ namespace Enlisted.Debugging.Behaviors
             }
 
             pacingManager.ForceEventAttempt();
-            var msg = new TextObject("Event selection forced (debug). Check if popup appears.");
+            var msg = new TextObject("Event selection forced (debug). Check if a popup appears.");
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
             SessionDiagnostics.LogEvent("Debug", "ForceEventSelection", "Forced immediate event attempt");
         }
 
         /// <summary>
-        /// Resets the event pacing window to now, allowing the next daily tick to fire an event.
+        /// Resets the event pacing window, allowing the next daily tick to fire an event.
         /// </summary>
         public static void ResetEventWindow()
         {
@@ -179,7 +176,6 @@ namespace Enlisted.Debugging.Behaviors
 
             var daysUntilNext = pacingManager.GetDaysUntilNextWindow();
             var lastEventTime = escalationState.LastNarrativeEventTime;
-            var nextWindow = escalationState.NextNarrativeEventWindow;
 
             var msg = daysUntilNext >= 0
                 ? new TextObject("Next event in {D} days. Last event: {L} days ago.")
@@ -234,8 +230,8 @@ namespace Enlisted.Debugging.Behaviors
         }
 
         /// <summary>
-        /// Triggers an immediate pay muster, bypassing the 12-day cycle.
-        /// Useful for testing the muster system flow, pay options, inspections, and promotions.
+        /// Triggers an immediate pay muster bypassing the 12-day cycle.
+        /// Useful for testing the muster system flow, pay options, inspections, and promotions
         /// </summary>
         public static void TriggerMuster()
         {
@@ -260,10 +256,10 @@ namespace Enlisted.Debugging.Behaviors
 
             // Call the muster handler directly to open the 8-stage muster sequence
             musterHandler.BeginMusterSequence();
-            
+
             var msg = new TextObject("{=dbg_muster_started}Muster sequence started (debug). Opening intro stage...");
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
-            SessionDiagnostics.LogEvent("Debug", "TriggerMuster", 
+            SessionDiagnostics.LogEvent("Debug", "TriggerMuster",
                 $"tier={enlist.EnlistmentTier}, xp={enlist.EnlistmentXP}, pay_owed={enlist.PendingMusterPay}");
         }
     }

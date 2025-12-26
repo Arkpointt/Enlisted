@@ -1,0 +1,273 @@
+﻿Results count: 771
+[
+    {
+        "ruleId":  "AssignNullToNotNullAttribute",
+        "kind":  "fail",
+        "level":  "warning",
+        "message":  {
+                        "text":  "Possible \u0027null\u0027 assignment to non-nullable entity",
+                        "markdown":  "Possible \u0027null\u0027 assignment to non-nullable entity"
+                    },
+        "locations":  [
+                          {
+                              "physicalLocation":  {
+                                                       "artifactLocation":  {
+                                                                                "uri":  "src/Mod.Core/Logging/ModLogger.cs",
+                                                                                "uriBaseId":  "SRCROOT"
+                                                                            },
+                                                       "region":  {
+                                                                      "startLine":  758,
+                                                                      "startColumn":  43,
+                                                                      "charOffset":  23723,
+                                                                      "charLength":  6,
+                                                                      "snippet":  "@{text=logDir}",
+                                                                      "sourceLanguage":  "C#"
+                                                                  },
+                                                       "contextRegion":  {
+                                                                             "startLine":  756,
+                                                                             "startColumn":  1,
+                                                                             "charOffset":  23617,
+                                                                             "charLength":  261,
+                                                                             "snippet":  "@{text=\r\n\t\t\t\t// Collect existing session logs and legacy enlisted.log\r\n\t\t\t\tvar sessionFiles = Directory.GetFiles(logDir, $\"{SessionPrefix}*.log\", SearchOption.TopDirectoryOnly)\r\n\t\t\t\t\t.Select(path =\u003e new FileInfo(path))\r\n\t\t\t\t\t.OrderByDescending(f =\u003e f.CreationTimeUtc)\r}",
+                                                                             "sourceLanguage":  "C#"
+                                                                         }
+                                                   },
+                              "logicalLocations":  [
+                                                       {
+                                                           "fullyQualifiedName":  "Enlisted",
+                                                           "kind":  "module"
+                                                       }
+                                                   ]
+                          }
+                      ],
+        "partialFingerprints":  {
+                                    "equalIndicator/v2":  "82d7237e72eadf1e",
+                                    "equalIndicator/v1":  "0ed3071888d666023ef857a6cd7c47b7585153ed2297e676e2d215eccf2c00a9"
+                                },
+        "properties":  {
+                           "ideaSeverity":  "WARNING",
+                           "qodanaSeverity":  "High",
+                           "problemType":  "REGULAR",
+                           "tags":  [
+                                        "C#",
+                                        ".NETFramework 4.7.2"
+                                    ]
+                       }
+    },
+    {
+        "ruleId":  "AssignNullToNotNullAttribute",
+        "kind":  "fail",
+        "level":  "warning",
+        "message":  {
+                        "text":  "Possible \u0027null\u0027 assignment to non-nullable entity",
+                        "markdown":  "Possible \u0027null\u0027 assignment to non-nullable entity"
+                    },
+        "locations":  [
+                          {
+                              "physicalLocation":  {
+                                                       "artifactLocation":  {
+                                                                                "uri":  "src/Features/Interface/News/State/CampNewsState.cs",
+                                                                                "uriBaseId":  "SRCROOT"
+                                                                            },
+                                                       "region":  {
+                                                                      "startLine":  43,
+                                                                      "startColumn":  32,
+                                                                      "charOffset":  1701,
+                                                                      "charLength":  8,
+                                                                      "snippet":  "@{text=_archive}",
+                                                                      "sourceLanguage":  "C#"
+                                                                  },
+                                                       "contextRegion":  {
+                                                                             "startLine":  41,
+                                                                             "startColumn":  1,
+                                                                             "charOffset":  1615,
+                                                                             "charLength":  141,
+                                                                             "snippet":  "@{text=                if (copyCount \u003e 0)\r\n                {\r\n                    Array.Copy(_archive, 0, next, 0, copyCount);\r\n                }\r\n\r}",
+                                                                             "sourceLanguage":  "C#"
+                                                                         }
+                                                   },
+                              "logicalLocations":  [
+                                                       {
+                                                           "fullyQualifiedName":  "Enlisted",
+                                                           "kind":  "module"
+                                                       }
+                                                   ]
+                          }
+                      ],
+        "partialFingerprints":  {
+                                    "equalIndicator/v2":  "f55f80b7f03e58ae",
+                                    "equalIndicator/v1":  "1c7f22669fc35c5bcb93ec5d623b16507bde9e5d579c3f18cc16e4ae8a403186"
+                                },
+        "properties":  {
+                           "ideaSeverity":  "WARNING",
+                           "qodanaSeverity":  "High",
+                           "problemType":  "REGULAR",
+                           "tags":  [
+                                        "C#",
+                                        ".NETFramework 4.7.2"
+                                    ]
+                       }
+    },
+    {
+        "ruleId":  "AssignNullToNotNullAttribute",
+        "kind":  "fail",
+        "level":  "warning",
+        "message":  {
+                        "text":  "Possible \u0027null\u0027 assignment to non-nullable entity",
+                        "markdown":  "Possible \u0027null\u0027 assignment to non-nullable entity"
+                    },
+        "locations":  [
+                          {
+                              "physicalLocation":  {
+                                                       "artifactLocation":  {
+                                                                                "uri":  "src/Mod.Core/Logging/ModConflictDiagnostics.cs",
+                                                                                "uriBaseId":  "SRCROOT"
+                                                                            },
+                                                       "region":  {
+                                                                      "startLine":  269,
+                                                                      "startColumn":  25,
+                                                                      "charOffset":  10580,
+                                                                      "charLength":  6,
+                                                                      "snippet":  "@{text=logDir}",
+                                                                      "sourceLanguage":  "C#"
+                                                                  },
+                                                       "contextRegion":  {
+                                                                             "startLine":  267,
+                                                                             "startColumn":  1,
+                                                                             "charOffset":  10463,
+                                                                             "charLength":  146,
+                                                                             "snippet":  "@{text=\t\t\t{\r\n\t\t\t\t// Fallback: use a placeholder filename - no longer create legacy \"conflicts.log\"\r\n\t\t\t\treturn Path.Combine(logDir, \"_.log\");\r\n\t\t\t}\r\n\t\t}\r}",
+                                                                             "sourceLanguage":  "C#"
+                                                                         }
+                                                   },
+                              "logicalLocations":  [
+                                                       {
+                                                           "fullyQualifiedName":  "Enlisted",
+                                                           "kind":  "module"
+                                                       }
+                                                   ]
+                          }
+                      ],
+        "partialFingerprints":  {
+                                    "equalIndicator/v2":  "77ec90b1bb945d20",
+                                    "equalIndicator/v1":  "4d63cc8702fa42a27042cf65ecdfde63c3925ea3a5bffd6e42362b1fc1ff4dac"
+                                },
+        "properties":  {
+                           "ideaSeverity":  "WARNING",
+                           "qodanaSeverity":  "High",
+                           "problemType":  "REGULAR",
+                           "tags":  [
+                                        "C#",
+                                        ".NETFramework 4.7.2"
+                                    ]
+                       }
+    },
+    {
+        "ruleId":  "AssignNullToNotNullAttribute",
+        "kind":  "fail",
+        "level":  "warning",
+        "message":  {
+                        "text":  "Possible \u0027null\u0027 assignment to non-nullable entity",
+                        "markdown":  "Possible \u0027null\u0027 assignment to non-nullable entity"
+                    },
+        "locations":  [
+                          {
+                              "physicalLocation":  {
+                                                       "artifactLocation":  {
+                                                                                "uri":  "src/Features/Interface/News/Models/CampLifeLedger.cs",
+                                                                                "uriBaseId":  "SRCROOT"
+                                                                            },
+                                                       "region":  {
+                                                                      "startLine":  85,
+                                                                      "startColumn":  32,
+                                                                      "charOffset":  2740,
+                                                                      "charLength":  4,
+                                                                      "snippet":  "@{text=Days}",
+                                                                      "sourceLanguage":  "C#"
+                                                                  },
+                                                       "contextRegion":  {
+                                                                             "startLine":  83,
+                                                                             "startColumn":  1,
+                                                                             "charOffset":  2654,
+                                                                             "charLength":  140,
+                                                                             "snippet":  "@{text=                if (copyCount \u003e 0)\r\n                {\r\n                    Array.Copy(Days, 0, newDays, 0, copyCount);\r\n                }\r\n\r}",
+                                                                             "sourceLanguage":  "C#"
+                                                                         }
+                                                   },
+                              "logicalLocations":  [
+                                                       {
+                                                           "fullyQualifiedName":  "Enlisted",
+                                                           "kind":  "module"
+                                                       }
+                                                   ]
+                          }
+                      ],
+        "partialFingerprints":  {
+                                    "equalIndicator/v2":  "8048885f180f32f8",
+                                    "equalIndicator/v1":  "a8a8dcb7fd3c740a671e6f04034b6145c2b7b9ad21bc5dc76473bf6de0c730fc"
+                                },
+        "properties":  {
+                           "ideaSeverity":  "WARNING",
+                           "qodanaSeverity":  "High",
+                           "problemType":  "REGULAR",
+                           "tags":  [
+                                        "C#",
+                                        ".NETFramework 4.7.2"
+                                    ]
+                       }
+    },
+    {
+        "ruleId":  "CSharpWarnings__CS0162",
+        "kind":  "fail",
+        "level":  "warning",
+        "message":  {
+                        "text":  "Code is unreachable",
+                        "markdown":  "Code is unreachable"
+                    },
+        "locations":  [
+                          {
+                              "physicalLocation":  {
+                                                       "artifactLocation":  {
+                                                                                "uri":  "src/Features/Combat/Behaviors/EnlistedFormationAssignmentBehavior.cs",
+                                                                                "uriBaseId":  "SRCROOT"
+                                                                            },
+                                                       "region":  {
+                                                                      "startLine":  508,
+                                                                      "startColumn":  36,
+                                                                      "charOffset":  23576,
+                                                                      "charLength":  25,
+                                                                      "snippet":  "@{text=!_partyAssignmentComplete}",
+                                                                      "sourceLanguage":  "C#"
+                                                                  },
+                                                       "contextRegion":  {
+                                                                             "startLine":  506,
+                                                                             "startColumn":  1,
+                                                                             "charOffset":  23421,
+                                                                             "charLength":  252,
+                                                                             "snippet":  "@{text=                \r\n                // At Commander tier (T7+), still need to assign party members to the same formation\r\n                if (isTier4Plus \u0026\u0026 !_partyAssignmentComplete)\r\n                {\r\n                    _needsPartyAssignment = true;\r}",
+                                                                             "sourceLanguage":  "C#"
+                                                                         }
+                                                   },
+                              "logicalLocations":  [
+                                                       {
+                                                           "fullyQualifiedName":  "Enlisted",
+                                                           "kind":  "module"
+                                                       }
+                                                   ]
+                          }
+                      ],
+        "partialFingerprints":  {
+                                    "equalIndicator/v2":  "e4b1b100c042b6d3",
+                                    "equalIndicator/v1":  "cf4b794a0684b784ea25b12fb22175e5e7a9e68cd0802bbfd9d57eaf12a34fb9"
+                                },
+        "properties":  {
+                           "ideaSeverity":  "WARNING",
+                           "qodanaSeverity":  "High",
+                           "problemType":  "REGULAR",
+                           "tags":  [
+                                        "C#",
+                                        ".NETFramework 4.7.2"
+                                    ]
+                       }
+    }
+]

@@ -105,7 +105,7 @@ namespace Enlisted.Features.Retinue.Systems
                 var retinueCount = manager.State.TotalSoldiers;
                 var retinueType = manager.State.SelectedTypeId ?? "unknown";
                 var isNaval = mapEvent.IsNavalMapEvent;
-                
+
                 if (isNaval)
                 {
                     var isMounted = retinueType is "cavalry" or "horse_archers";
@@ -454,7 +454,10 @@ namespace Enlisted.Features.Retinue.Systems
             if (totalCasualties > 0)
             {
                 var preBattleTotal = _preBattleCounts?.Values.Sum() ?? state.TotalSoldiers;
-                if (preBattleTotal <= 0) preBattleTotal = 1;
+                if (preBattleTotal <= 0)
+                {
+                    preBattleTotal = 1;
+                }
 
                 // Death chance for each veteran is proportional to casualty rate
                 var casualtyRate = (float)totalCasualties / preBattleTotal;

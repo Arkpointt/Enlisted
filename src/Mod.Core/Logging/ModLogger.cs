@@ -25,7 +25,7 @@ namespace Enlisted.Mod.Core.Logging
 	/// File logger for the mod with category-based log levels, throttling, anti-spam features,
 	/// and a three-session rotation that keeps the latest sessions easy to identify.
 	/// Writes session logs to Modules/Enlisted/Debugging/ as Session-A/B/C with timestamps.
-	/// 
+	///
 	/// Features:
 	/// - Per-category log levels (configure in settings.json)
 	/// - Message throttling to prevent spam from repeated messages
@@ -95,12 +95,12 @@ namespace Enlisted.Mod.Core.Logging
 					_logFilePath = string.IsNullOrWhiteSpace(customPath) ? ResolveDefaultLogPath() : customPath;
 					_logFilePath = PrepareSessionLogFile(_logFilePath);
 					_sessionId = Path.GetFileNameWithoutExtension(_logFilePath) ?? "Session-A";
-					
+
 					// Clear session-specific tracking
 					LoggedOnceKeys.Clear();
 					ThrottleCache.Clear();
 					SummaryData.Clear();
-					
+
 					// Write initialization message - this will test if logging works
 					WriteInternal("INFO", "Init", $"Logger initialized (session: {_sessionId}, path: {_logFilePath})");
 				}
@@ -135,7 +135,7 @@ namespace Enlisted.Mod.Core.Logging
 				_categoryLevels = categoryLevels ?? new Dictionary<string, LogLevel>(StringComparer.OrdinalIgnoreCase);
 				_defaultLevel = defaultLevel;
 				_throttleSeconds = Math.Max(0, throttleSeconds);
-				
+
 				WriteInternal("INFO", "Init", $"Log levels configured: default={defaultLevel}, throttle={_throttleSeconds}s, categories={_categoryLevels.Count}");
 			}
 		}
@@ -149,7 +149,7 @@ namespace Enlisted.Mod.Core.Logging
 			{
 				return _defaultLevel;
 			}
-				
+
 			lock (Sync)
 			{
 				if (_categoryLevels.TryGetValue(category, out var level))
@@ -290,7 +290,7 @@ namespace Enlisted.Mod.Core.Logging
 					return;
 				}
 			}
-			
+
 			var levelStr = level.ToString().ToUpper();
 			WriteInternal(levelStr, category, message);
 		}
@@ -388,7 +388,7 @@ namespace Enlisted.Mod.Core.Logging
 				{
 					return;
 				}
-					
+
 				SummaryData.Remove(key);
 			}
 
@@ -412,7 +412,7 @@ namespace Enlisted.Mod.Core.Logging
 			{
 				message += $" | {details}";
 			}
-				
+
 			LogWithThrottle("INFO", category, message);
 		}
 
@@ -433,7 +433,7 @@ namespace Enlisted.Mod.Core.Logging
 			{
 				message += $" | {details}";
 			}
-				
+
 			var levelStr = level.ToString().ToUpper();
 			LogWithThrottle(levelStr, category, message);
 		}
@@ -444,11 +444,26 @@ namespace Enlisted.Mod.Core.Logging
 		/// </summary>
 		public static void LogKeyedThrottled(string level, string category, string key, string message)
 		{
-			if (string.Equals(level, "TRACE", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Trace)) return;
-			if (string.Equals(level, "DEBUG", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Debug)) return;
-			if (string.Equals(level, "INFO", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Info)) return;
-			if (string.Equals(level, "WARN", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Warn)) return;
-			if (string.Equals(level, "ERROR", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Error)) return;
+			if (string.Equals(level, "TRACE", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Trace))
+			{
+				return;
+			}
+			if (string.Equals(level, "DEBUG", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Debug))
+			{
+				return;
+			}
+			if (string.Equals(level, "INFO", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Info))
+			{
+				return;
+			}
+			if (string.Equals(level, "WARN", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Warn))
+			{
+				return;
+			}
+			if (string.Equals(level, "ERROR", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Error))
+			{
+				return;
+			}
 
 			LogWithKeyedThrottle(level, category, key, message);
 		}
@@ -490,7 +505,7 @@ namespace Enlisted.Mod.Core.Logging
 						entry.SuppressedCount++;
 						return;
 					}
-					
+
 					// Throttle window expired - log with suppression count if any
 					if (entry.SuppressedCount > 0)
 					{
@@ -500,7 +515,7 @@ namespace Enlisted.Mod.Core.Logging
 					{
 						WriteInternal(level, category, message);
 					}
-					
+
 					entry.LastLogTime = now;
 					entry.SuppressedCount = 0;
 				}
@@ -517,7 +532,7 @@ namespace Enlisted.Mod.Core.Logging
 					WriteInternal(level, category, message);
 				}
 			}
-			
+
 			// Periodically clean old entries to prevent memory growth
 			CleanThrottleCache();
 		}
@@ -619,7 +634,7 @@ namespace Enlisted.Mod.Core.Logging
 					_logFilePath = ResolveDocumentsPath();
 				}
 			}
-			
+
 			try
 			{
 				lock (Sync)
@@ -640,7 +655,7 @@ namespace Enlisted.Mod.Core.Logging
 					EnsureDirectoryExists(logDir);
 					var line = FormatLine(level, category, message);
 					File.AppendAllText(fallback, line, Encoding.UTF8);
-					
+
 					// If we had to use fallback, update the main path for future writes
 					if (_logFilePath != fallback)
 					{
@@ -675,7 +690,7 @@ namespace Enlisted.Mod.Core.Logging
 			{
 				var assembly = typeof(ModLogger).Assembly;
 				var assemblyLocation = assembly.Location;
-				
+
 				// Assembly.Location can be null or empty in some scenarios (e.g., dynamic loading, single-file apps)
 				if (string.IsNullOrWhiteSpace(assemblyLocation))
 				{
@@ -683,14 +698,14 @@ namespace Enlisted.Mod.Core.Logging
 					System.Diagnostics.Debug.WriteLine("[Enlisted] Assembly.Location is null/empty, using Documents fallback");
 					return ResolveDocumentsPath();
 				}
-				
+
 				var dllDir = Path.GetDirectoryName(assemblyLocation);
 				if (string.IsNullOrWhiteSpace(dllDir))
 				{
 					System.Diagnostics.Debug.WriteLine("[Enlisted] Could not get directory from assembly location, using Documents fallback");
 					return ResolveDocumentsPath();
 				}
-				
+
 				// Navigate from bin/Win64_Shipping_Client/Enlisted.dll up to Modules/Enlisted/Debugging/
 				var binDir = Directory.GetParent(dllDir);
 				if (binDir == null)
@@ -698,16 +713,16 @@ namespace Enlisted.Mod.Core.Logging
 					System.Diagnostics.Debug.WriteLine("[Enlisted] Could not get parent directory, using Documents fallback");
 					return ResolveDocumentsPath();
 				}
-				
+
 				var enlistedRoot = binDir.Parent;
 				if (enlistedRoot == null)
 				{
 					System.Diagnostics.Debug.WriteLine("[Enlisted] Could not get module root directory, using Documents fallback");
 					return ResolveDocumentsPath();
 				}
-				
+
 				var dir = Path.Combine(enlistedRoot.FullName, "Debugging");
-				
+
 				// Return a path template - PrepareSessionLogFile will extract the directory
 				// and create the actual timestamped Session-A file. The "_.log" is just a placeholder.
 				return Path.Combine(dir, "_.log");

@@ -26,7 +26,7 @@ namespace Enlisted.Features.Logistics
             public List<ContrabandItem> Items { get; } = new();
             public int TotalValue => CalculateTotalValue();
             public bool HasContraband => Items.Count > 0;
-            
+
             /// <summary>
             /// Returns the most valuable contraband item for confiscation.
             /// </summary>
@@ -34,8 +34,11 @@ namespace Enlisted.Features.Logistics
             {
                 get
                 {
-                    if (Items.Count == 0) return null;
-                    
+                    if (Items.Count == 0)
+                    {
+                        return null;
+                    }
+
                     ContrabandItem best = Items[0];
                     foreach (var item in Items)
                     {
@@ -91,15 +94,18 @@ namespace Enlisted.Features.Logistics
                 }
 
                 var itemRoster = party.ItemRoster;
-                
+
                 for (int i = 0; i < itemRoster.Count; i++)
                 {
                     var element = itemRoster.GetElementCopyAtIndex(i);
-                    if (element.EquipmentElement.Item == null) continue;
+                    if (element.EquipmentElement.Item == null)
+                    {
+                        continue;
+                    }
 
                     var item = element.EquipmentElement.Item;
                     var amount = element.Amount;
-                    
+
                     var violation = CheckItem(item, playerTier, playerRole);
                     if (violation != null)
                     {
@@ -116,7 +122,7 @@ namespace Enlisted.Features.Logistics
 
                 if (result.HasContraband)
                 {
-                    ModLogger.Debug(LogCategory, 
+                    ModLogger.Debug(LogCategory,
                         $"Found {result.Items.Count} contraband item(s) worth {result.TotalValue} gold");
                 }
             }
@@ -134,25 +140,43 @@ namespace Enlisted.Features.Logistics
         /// </summary>
         private static Tuple<string, string> CheckItem(ItemObject item, int playerTier, string playerRole)
         {
-            if (item == null) return null;
+            if (item == null)
+            {
+                return null;
+            }
 
             // Skip food items - never contraband
-            if (item.IsFood) return null;
+            if (item.IsFood)
+            {
+                return null;
+            }
 
             // Skip quest items - cannot be confiscated due to quest requirements
-            if (IsQuestItem(item)) return null;
+            if (IsQuestItem(item))
+            {
+                return null;
+            }
 
             // Tier violation: Item tier exceeds player tier + 1
             var tierViolation = CheckTierViolation(item, playerTier);
-            if (tierViolation != null) return tierViolation;
+            if (tierViolation != null)
+            {
+                return tierViolation;
+            }
 
             // Role violation: Weapon doesn't match player's assigned role
             var roleViolation = CheckRoleViolation(item, playerRole);
-            if (roleViolation != null) return roleViolation;
+            if (roleViolation != null)
+            {
+                return roleViolation;
+            }
 
             // Luxury violation: Non-essential luxury items
             var luxuryViolation = CheckLuxuryViolation(item);
-            if (luxuryViolation != null) return luxuryViolation;
+            if (luxuryViolation != null)
+            {
+                return luxuryViolation;
+            }
 
             return null;
         }
@@ -165,7 +189,7 @@ namespace Enlisted.Features.Logistics
         {
             // Get item tier (Tier1 = 0, Tier2 = 1, etc. in the enum, but we use 1-based)
             int itemTierValue = GetItemTierNumeric(item);
-            
+
             // Player is allowed items up to their tier + 1
             // e.g., T2 player can have T1, T2, T3 items
             int maxAllowedTier = playerTier + 1;
@@ -187,13 +211,19 @@ namespace Enlisted.Features.Logistics
         private static Tuple<string, string> CheckRoleViolation(ItemObject item, string playerRole)
         {
             // Only check weapon items
-            if (!item.HasWeaponComponent) return null;
+            if (!item.HasWeaponComponent)
+            {
+                return null;
+            }
 
             var primaryWeapon = item.PrimaryWeapon;
-            if (primaryWeapon == null) return null;
+            if (primaryWeapon == null)
+            {
+                return null;
+            }
 
             var weaponClass = primaryWeapon.WeaponClass;
-            
+
             // Crossbows are ranged specialist equipment
             if (weaponClass == WeaponClass.Crossbow)
             {
@@ -217,7 +247,7 @@ namespace Enlisted.Features.Logistics
             }
 
             // Two-handed polearms for cavalry/mounted roles
-            if (weaponClass == WeaponClass.TwoHandedPolearm || 
+            if (weaponClass == WeaponClass.TwoHandedPolearm ||
                 weaponClass == WeaponClass.LowGripPolearm)
             {
                 // Lance-type weapons for cavalry
@@ -243,7 +273,7 @@ namespace Enlisted.Features.Logistics
             // Trade goods marked as luxury
             // Note: Bannerlord doesn't have a direct ItemTypeEnum.Jewelry
             // Instead, we check for high-value goods that aren't food/weapons/armor
-            
+
             if (item.Type == ItemObject.ItemTypeEnum.Goods && !item.IsFood)
             {
                 // High-value trade goods (jewelry, velvet, etc.) are contraband
@@ -252,9 +282,9 @@ namespace Enlisted.Features.Logistics
                 {
                     // Check if it's clearly a luxury good by name/id pattern
                     var itemId = item.StringId?.ToLowerInvariant() ?? "";
-                    
-                    if (itemId.Contains("jewelry") || 
-                        itemId.Contains("silver") || 
+
+                    if (itemId.Contains("jewelry") ||
+                        itemId.Contains("silver") ||
                         itemId.Contains("gold") ||
                         itemId.Contains("velvet") ||
                         itemId.Contains("fur") ||
@@ -278,9 +308,9 @@ namespace Enlisted.Features.Logistics
             // ItemObject.Tier returns ItemTiers enum: Tier1=0, Tier2=1, ..., Tier6=5
             // Convert to 1-based: Tier1=1, Tier2=2, ..., Tier6=6
             // Items without tiers or with Tier1 default to 1
-            
+
             int enumValue = (int)item.Tier;
-            
+
             // Tier1=0 in enum, but we want 1-based
             return enumValue + 1;
         }
@@ -291,10 +321,10 @@ namespace Enlisted.Features.Logistics
         private static bool IsRangedRole(string role)
         {
             if (string.IsNullOrEmpty(role)) return false;
-            
+
             var lowerRole = role.ToLowerInvariant();
-            return lowerRole == "scout" || 
-                   lowerRole == "ranged" || 
+            return lowerRole == "scout" ||
+                   lowerRole == "ranged" ||
                    lowerRole == "archer" ||
                    lowerRole == "marksman";
         }
@@ -305,9 +335,9 @@ namespace Enlisted.Features.Logistics
         private static bool IsCavalryRole(string role)
         {
             if (string.IsNullOrEmpty(role)) return false;
-            
+
             var lowerRole = role.ToLowerInvariant();
-            return lowerRole == "cavalry" || 
+            return lowerRole == "cavalry" ||
                    lowerRole == "mounted" ||
                    lowerRole == "lancer" ||
                    lowerRole == "rider";
@@ -319,9 +349,9 @@ namespace Enlisted.Features.Logistics
         private static bool IsOfficerRole(string role)
         {
             if (string.IsNullOrEmpty(role)) return false;
-            
+
             var lowerRole = role.ToLowerInvariant();
-            return lowerRole == "officer" || 
+            return lowerRole == "officer" ||
                    lowerRole == "commander" ||
                    lowerRole == "nco" ||
                    lowerRole == "sergeant";
@@ -333,18 +363,27 @@ namespace Enlisted.Features.Logistics
         /// </summary>
         private static bool IsQuestItem(ItemObject item)
         {
-            if (item == null) return false;
+            if (item == null)
+            {
+                return false;
+            }
 
             // Items with NotMerchandise flag are typically quest-related or special
             // However, this can also include some regular items, so we add additional checks
             if (item.NotMerchandise)
             {
                 // Banner items are special - always protected
-                if (item.Type == ItemObject.ItemTypeEnum.Banner) return true;
-                
+                if (item.Type == ItemObject.ItemTypeEnum.Banner)
+                {
+                    return true;
+                }
+
                 // Books can be quest items
-                if (item.Type == ItemObject.ItemTypeEnum.Book) return true;
-                
+                if (item.Type == ItemObject.ItemTypeEnum.Book)
+                {
+                    return true;
+                }
+
                 // Log for debugging but don't auto-exclude all NotMerchandise
                 ModLogger.Debug(LogCategory, $"Item {item.StringId} has NotMerchandise flag - checking further");
             }
@@ -393,14 +432,20 @@ namespace Enlisted.Features.Logistics
             try
             {
                 var party = MobileParty.MainParty;
-                if (party?.ItemRoster == null) return false;
+                if (party?.ItemRoster == null)
+                {
+                    return false;
+                }
 
                 int currentCount = party.ItemRoster.GetItemNumber(item);
-                if (currentCount <= 0) return false;
+                if (currentCount <= 0)
+                {
+                    return false;
+                }
 
                 // Remove one copy of the item
                 party.ItemRoster.AddToCounts(item, -1);
-                
+
                 ModLogger.Info(LogCategory, $"Confiscated item: {item.Name}");
                 return true;
             }
