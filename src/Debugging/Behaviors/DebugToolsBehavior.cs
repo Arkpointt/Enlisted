@@ -31,7 +31,7 @@ namespace Enlisted.Debugging.Behaviors
             var msg = new TextObject("{=dbg_gold_added}+{G} gold granted (debug).");
             msg.SetTextVariable("G", GoldPerClick);
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
-            SessionDiagnostics.LogEvent("Debug", "GiveGold", $"gold={GoldPerClick}, total={hero.Gold}");
+            SessionDiagnostics.LogEvent("Debug", "GiveGold", $"gold={GoldPerClick.ToString()}, total={hero.Gold.ToString()}");
         }
 
         public static void GiveEnlistmentXp()
@@ -49,7 +49,7 @@ namespace Enlisted.Debugging.Behaviors
             msg.SetTextVariable("XP", XpPerClick);
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
             SessionDiagnostics.LogEvent("Debug", "GiveXP",
-                $"xp={XpPerClick}, total={enlist.EnlistmentXP}, tier={enlist.EnlistmentTier}");
+                $"xp={XpPerClick.ToString()}, total={enlist.EnlistmentXP.ToString()}, tier={enlist.EnlistmentTier.ToString()}");
         }
 
         /// <summary>
@@ -135,8 +135,8 @@ namespace Enlisted.Debugging.Behaviors
             msg.SetTextVariable("T", totalCount);
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
 
-            ModLogger.Info("Debug", $"Eligible events: {eligibleCount}/{totalCount}");
-            SessionDiagnostics.LogEvent("Debug", "ListEligibleEvents", $"eligible={eligibleCount}, total={totalCount}");
+            ModLogger.Info("Debug", $"Eligible events: {eligibleCount.ToString()}/{totalCount.ToString()}");
+            SessionDiagnostics.LogEvent("Debug", "ListEligibleEvents", $"eligible={eligibleCount.ToString()}, total={totalCount.ToString()}");
         }
 
         /// <summary>
@@ -159,7 +159,7 @@ namespace Enlisted.Debugging.Behaviors
             var msg = new TextObject("Cleared {C} event cooldowns. All events can fire again.");
             msg.SetTextVariable("C", clearedCount);
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
-            SessionDiagnostics.LogEvent("Debug", "ClearEventCooldowns", $"cleared={clearedCount}");
+            SessionDiagnostics.LogEvent("Debug", "ClearEventCooldowns", $"cleared={clearedCount.ToString()}");
         }
 
         /// <summary>
@@ -187,13 +187,13 @@ namespace Enlisted.Debugging.Behaviors
 
             if (daysUntilNext >= 0)
             {
-                msg.SetTextVariable("D", $"{daysUntilNext:F1}");
+                msg.SetTextVariable("D", daysUntilNext.ToString("F1"));
                 var daysSinceLast = (CampaignTime.Now - lastEventTime).ToDays;
-                msg.SetTextVariable("L", $"{daysSinceLast:F1}");
+                msg.SetTextVariable("L", daysSinceLast.ToString("F1"));
             }
 
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
-            ModLogger.Info("Debug", $"Next event window: {daysUntilNext:F1} days, Last: {(CampaignTime.Now - lastEventTime).ToDays:F1} days ago");
+            ModLogger.Info("Debug", $"Next event window: {daysUntilNext.ToString("F1")} days, Last: {(CampaignTime.Now - lastEventTime).ToDays.ToString("F1")} days ago");
         }
 
         /// <summary>
@@ -260,11 +260,11 @@ namespace Enlisted.Debugging.Behaviors
 
             // Call the muster handler directly to open the 8-stage muster sequence
             musterHandler.BeginMusterSequence();
-            
+
             var msg = new TextObject("{=dbg_muster_started}Muster sequence started (debug). Opening intro stage...");
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
-            SessionDiagnostics.LogEvent("Debug", "TriggerMuster", 
-                $"tier={enlist.EnlistmentTier}, xp={enlist.EnlistmentXP}, pay_owed={enlist.PendingMusterPay}");
+            SessionDiagnostics.LogEvent("Debug", "TriggerMuster",
+                $"tier={enlist.EnlistmentTier.ToString()}, xp={enlist.EnlistmentXP.ToString()}, pay_owed={enlist.PendingMusterPay.ToString()}");
         }
     }
 }
