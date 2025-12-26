@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Enlisted.Features.Content;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -69,13 +67,12 @@ namespace Enlisted.Debugging.Behaviors
 
             // Event screen testing is currently inactive.
             ModLogger.Info("Debug", "TestOnboardingScreen: This feature is currently disabled.");
-            return;
 
-            /* Original test code has been removed. */
+            /* The original test code has been removed. */
         }
 
         /// <summary>
-        /// Forces an immediate event selection attempt, bypassing the pacing window.
+        /// Forces an immediate event selection attempt bypassing the pacing window.
         /// Useful for testing event selection and delivery without waiting 3-5 days.
         /// </summary>
         public static void ForceEventSelection()
@@ -104,7 +101,7 @@ namespace Enlisted.Debugging.Behaviors
         }
 
         /// <summary>
-        /// Resets the event pacing window to now, allowing the next daily tick to fire an event.
+        /// Resets the event pacing window to now, allowing an event during the next daily tick.
         /// </summary>
         public static void ResetEventWindow()
         {
@@ -179,7 +176,6 @@ namespace Enlisted.Debugging.Behaviors
 
             var daysUntilNext = pacingManager.GetDaysUntilNextWindow();
             var lastEventTime = escalationState.LastNarrativeEventTime;
-            var nextWindow = escalationState.NextNarrativeEventWindow;
 
             var msg = daysUntilNext >= 0
                 ? new TextObject("Next event in {D} days. Last event: {L} days ago.")
@@ -193,7 +189,7 @@ namespace Enlisted.Debugging.Behaviors
             }
 
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
-            ModLogger.Info("Debug", $"Next event window: {daysUntilNext.ToString("F1")} days, Last: {(CampaignTime.Now - lastEventTime).ToDays.ToString("F1")} days ago");
+            ModLogger.Info("Debug", $"Next event window: {daysUntilNext:F1} days, Last: {(CampaignTime.Now - lastEventTime).ToDays:F1} days ago");
         }
 
         /// <summary>
@@ -234,7 +230,7 @@ namespace Enlisted.Debugging.Behaviors
         }
 
         /// <summary>
-        /// Triggers an immediate pay muster, bypassing the 12-day cycle.
+        /// Triggers an immediate pay muster bypassing the 12-day cycle.
         /// Useful for testing the muster system flow, pay options, inspections, and promotions.
         /// </summary>
         public static void TriggerMuster()
