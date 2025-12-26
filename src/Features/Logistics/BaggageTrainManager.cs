@@ -19,9 +19,9 @@ namespace Enlisted.Features.Logistics
     public class BaggageTrainManager : CampaignBehaviorBase
     {
         private const string LogCategory = "Baggage";
-        
+
         public static BaggageTrainManager Instance { get; private set; }
-        
+
         // Core state - persisted in save
         private BaggageAccessState _currentState;
         private CampaignTime _temporaryAccessExpires;
@@ -31,22 +31,22 @@ namespace Enlisted.Features.Logistics
         private CampaignTime _lastNcoDailyAccess;
         private int _lastRaidDay;
         private int _lastArrivalDay;
-        
+
         // Configuration cache
         private BaggageConfig _config;
-        
+
         public BaggageTrainManager()
         {
             Instance = this;
             LoadConfiguration();
         }
-        
+
         public override void RegisterEvents()
         {
             CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
         }
-        
+
         public override void SyncData(IDataStore dataStore)
         {
             // Persist all state fields for save/load
@@ -59,7 +59,7 @@ namespace Enlisted.Features.Logistics
             dataStore.SyncData("_baggageLastRaidDay", ref _lastRaidDay);
             dataStore.SyncData("_baggageLastArrivalDay", ref _lastArrivalDay);
         }
-        
+
         /// <summary>
         /// Loads configuration from baggage_config.json.
         /// </summary>
@@ -69,16 +69,16 @@ namespace Enlisted.Features.Logistics
             {
                 var moduleDataPath = ConfigurationManager.GetModuleDataPathForConsumers();
                 var configPath = System.IO.Path.Combine(moduleDataPath, "baggage_config.json");
-                
+
                 if (!System.IO.File.Exists(configPath))
                 {
                     ModLogger.Warn(LogCategory, $"baggage_config.json not found at {configPath}, using defaults");
                     _config = new BaggageConfig();
                     return;
                 }
-                
+
                 var json = System.IO.File.ReadAllText(configPath);
-                _config = Newtonsoft.Json.JsonConvert.DeserializeObject<BaggageConfig>(json, 
+                _config = Newtonsoft.Json.JsonConvert.DeserializeObject<BaggageConfig>(json,
                     new Newtonsoft.Json.JsonSerializerSettings
                     {
                         ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
@@ -86,7 +86,7 @@ namespace Enlisted.Features.Logistics
                             NamingStrategy = new Newtonsoft.Json.Serialization.SnakeCaseNamingStrategy()
                         }
                     });
-                
+
                 if (_config == null)
                 {
                     ModLogger.Warn(LogCategory, "Failed to deserialize baggage_config.json, using defaults");
@@ -103,7 +103,7 @@ namespace Enlisted.Features.Logistics
                 _config = new BaggageConfig();
             }
         }
-        
+
         /// <summary>
         /// Returns the current baggage access state, evaluating all conditions
         /// (location, activity, supply level, delays, temporary windows).
@@ -117,63 +117,63 @@ namespace Enlisted.Features.Logistics
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: Hero null, returning NoAccess");
                 return BaggageAccessState.NoAccess;
             }
-            
+
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: Not enlisted, returning FullAccess");
                 return BaggageAccessState.FullAccess; // Not enlisted = full access to own baggage
             }
-            
+
             var party = MobileParty.MainParty;
             if (party == null)
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: MainParty null, returning NoAccess");
                 return BaggageAccessState.NoAccess;
             }
-            
+
             // Priority 1: Captivity - prisoner state blocks all access
             if (hero.IsPrisoner)
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: Prisoner, returning NoAccess");
                 return BaggageAccessState.NoAccess;
             }
-            
+
             // Priority 2: Combat/Battle Reserve - no access during active encounters or reserve mode
             if (party.MapEvent != null)
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: In battle, returning NoAccess");
                 return BaggageAccessState.NoAccess;
             }
-            
+
             // Check if waiting in reserve during battle
             if (Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve)
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: Waiting in battle reserve, returning NoAccess");
                 return BaggageAccessState.NoAccess;
             }
-            
+
             // Priority 3: Locked - supply crisis or contraband investigation overrides other states
             if (ShouldLockBaggage())
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: Locked due to supply crisis or investigation");
                 return BaggageAccessState.Locked;
             }
-            
+
             // Priority 4: Leave System - players on leave have full access to baggage
             if (enlistment.IsOnLeave)
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: On leave, returning FullAccess");
                 return BaggageAccessState.FullAccess;
             }
-            
+
             // Priority 5: Grace Period - players in desertion grace period have full access
             if (enlistment.IsInDesertionGracePeriod)
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: In grace period, returning FullAccess");
                 return BaggageAccessState.FullAccess;
             }
-            
+
             // Priority 6: Active Delay - baggage train is stuck/delayed, blocks access
             // Note: Delay countdown is frozen during captivity (handled in OnHourlyTick)
             if (_baggageDelayedUntil > CampaignTime.Now)
@@ -182,7 +182,7 @@ namespace Enlisted.Features.Logistics
                 ModLogger.Debug(LogCategory, $"GetCurrentAccess: Delayed for {daysRemaining:F1} more days");
                 return BaggageAccessState.NoAccess;
             }
-            
+
             // Priority 7: Siege Context - check if in siege as attacker or defender
             if (party.SiegeEvent != null)
             {
@@ -192,13 +192,13 @@ namespace Enlisted.Features.Logistics
                     ModLogger.Debug(LogCategory, "GetCurrentAccess: Besieging (attacker), returning NoAccess");
                     return BaggageAccessState.NoAccess;
                 }
-                
+
                 // If besieged (defender), full access (inside settlement)
                 // This is already handled by settlement check below, but explicit for clarity
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: Besieged (defender), returning FullAccess");
                 return BaggageAccessState.FullAccess;
             }
-            
+
             // Priority 7.5: Muster Window - grants full access during muster and for 6 hours after
             // Active muster takes precedence over march state to allow baggage access during pay muster
             if (enlistment.PayMusterPending)
@@ -206,7 +206,7 @@ namespace Enlisted.Features.Logistics
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: Muster active, returning FullAccess");
                 return BaggageAccessState.FullAccess;
             }
-            
+
             // Check post-muster window (6 hours after muster completes)
             if (enlistment.LastMusterCompletionTime > CampaignTime.Zero)
             {
@@ -217,33 +217,33 @@ namespace Enlisted.Features.Logistics
                     return BaggageAccessState.FullAccess;
                 }
             }
-            
+
             // Priority 8: Settlement - always has access in settlements
             if (party.CurrentSettlement != null)
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: In settlement, returning FullAccess");
                 return BaggageAccessState.FullAccess;
             }
-            
+
             // Priority 9: Temporary Access Window - brief window when wagons catch up
             if (_temporaryAccessExpires > CampaignTime.Now)
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: Temporary access window active");
                 return BaggageAccessState.TemporaryAccess;
             }
-            
+
             // Priority 10: March State - on the march, baggage is behind the column
             if (party.IsMoving)
             {
                 ModLogger.Debug(LogCategory, "GetCurrentAccess: On march, returning NoAccess");
                 return BaggageAccessState.NoAccess;
             }
-            
+
             // Default: Army halted or resting - full access
             ModLogger.Debug(LogCategory, "GetCurrentAccess: Halted/resting, returning FullAccess");
             return BaggageAccessState.FullAccess;
         }
-        
+
         /// <summary>
         /// Checks if baggage should be locked due to supply crisis or contraband investigation.
         /// </summary>
@@ -259,13 +259,13 @@ namespace Enlisted.Features.Logistics
                     return true;
                 }
             }
-            
+
             // Check for contraband investigation (future: add _bagCheckInProgress flag)
             // For now, this is a placeholder for future implementation
-            
+
             return false;
         }
-        
+
         /// <summary>
         /// Checks if emergency access is currently on cooldown.
         /// Returns true if cooldown is active (request would fail).
@@ -276,7 +276,7 @@ namespace Enlisted.Features.Logistics
             {
                 return false;
             }
-            
+
             var cooldownHours = _config?.EmergencyAccess?.CooldownHours ?? 12;
             var hoursSinceLastRequest = (CampaignTime.Now.ToHours - _lastEmergencyRequest.ToHours);
             return hoursSinceLastRequest < cooldownHours;
@@ -296,7 +296,7 @@ namespace Enlisted.Features.Logistics
                 ModLogger.Error(LogCategory, "TryRequestEmergencyAccess: Hero null");
                 return false;
             }
-            
+
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
@@ -304,10 +304,10 @@ namespace Enlisted.Features.Logistics
                 ModLogger.Debug(LogCategory, "TryRequestEmergencyAccess: Not enlisted");
                 return false;
             }
-            
+
             var tier = enlistment.EnlistmentTier;
             var minTier = _config?.RankGates?.EmergencyRequestMinTier ?? 3;
-            
+
             // Check tier requirement (T1-T2 cannot request)
             if (tier < minTier)
             {
@@ -315,7 +315,7 @@ namespace Enlisted.Features.Logistics
                 ModLogger.Info(LogCategory, $"Emergency access denied: Tier {tier} < required {minTier}");
                 return false;
             }
-            
+
             // Check cooldown
             var cooldownHours = _config?.EmergencyAccess?.CooldownHours ?? 12;
             if (_lastEmergencyRequest != CampaignTime.Zero)
@@ -328,24 +328,24 @@ namespace Enlisted.Features.Logistics
                     return false;
                 }
             }
-            
+
             // Determine reputation cost based on tier
             int repCost = GetEmergencyAccessRepCost(tier);
-            
+
             // Grant temporary access
             var accessHours = _config?.AccessWindows?.TemporaryAccessHours ?? 4;
             GrantTemporaryAccess(accessHours);
-            
+
             // Apply reputation cost (handled by dialogue system via action handler)
             // This method just grants the access and tracks cooldowns
             _lastEmergencyRequest = CampaignTime.Now;
             _emergencyRequestsToday++;
-            
+
             failReason = null;
             ModLogger.Info(LogCategory, $"Emergency access granted: {accessHours}h window (cost: {repCost} QM rep, tier: {tier})");
             return true;
         }
-        
+
         /// <summary>
         /// Calculates reputation cost for emergency access based on player tier.
         /// </summary>
@@ -356,20 +356,20 @@ namespace Enlisted.Features.Logistics
                 // Default costs
                 return tier >= 7 ? 0 : tier >= 5 ? 2 : 5;
             }
-            
+
             if (tier >= 7)
             {
                 return _config.EmergencyAccess.OfficerQmRepCost;
             }
-            
+
             if (tier >= 5)
             {
                 return _config.EmergencyAccess.NcoQmRepCost;
             }
-            
+
             return _config.EmergencyAccess.BaseQmRepCost;
         }
-        
+
         /// <summary>
         /// Grants temporary baggage access for specified hours.
         /// Typically triggered by events (baggage caught up, night halt, emergency request).
@@ -381,12 +381,12 @@ namespace Enlisted.Features.Logistics
                 ModLogger.Warn(LogCategory, $"Invalid hours for temporary access: {hours}");
                 return;
             }
-            
+
             _temporaryAccessExpires = CampaignTime.HoursFromNow(hours);
             _currentState = BaggageAccessState.TemporaryAccess;
             ModLogger.Info(LogCategory, $"Temporary access granted: {hours}h (expires at {_temporaryAccessExpires})");
         }
-        
+
         /// <summary>
         /// Applies a baggage delay, preventing access until the delay clears.
         /// Used by events (bad weather, rough terrain, raids).
@@ -398,11 +398,11 @@ namespace Enlisted.Features.Logistics
                 ModLogger.Warn(LogCategory, $"Invalid days for baggage delay: {days}");
                 return;
             }
-            
+
             _baggageDelayedUntil = CampaignTime.DaysFromNow(days);
             ModLogger.Info(LogCategory, $"Baggage delayed: {days} days (until {_baggageDelayedUntil})");
         }
-        
+
         /// <summary>
         /// Clears any active baggage delay, restoring normal access state.
         /// Used when events or actions resolve delays early.
@@ -415,7 +415,7 @@ namespace Enlisted.Features.Logistics
                 _baggageDelayedUntil = CampaignTime.Zero;
             }
         }
-        
+
         /// <summary>
         /// Returns the number of days remaining on the current baggage delay, or 0 if no delay is active.
         /// Used for UI display and event condition checks.
@@ -426,10 +426,10 @@ namespace Enlisted.Features.Logistics
             {
                 return 0;
             }
-            
+
             return (int)Math.Ceiling(_baggageDelayedUntil.ToDays - CampaignTime.Now.ToDays);
         }
-        
+
         /// <summary>
         /// Returns the number of hours remaining on the current temporary access window, or 0 if no window is active.
         /// Used for UI display in Daily Brief.
@@ -440,10 +440,10 @@ namespace Enlisted.Features.Logistics
             {
                 return 0;
             }
-            
+
             return (int)Math.Ceiling(_temporaryAccessExpires.ToHours - CampaignTime.Now.ToHours);
         }
-        
+
         /// <summary>
         /// Returns the number of days since the baggage train was last raided.
         /// Returns -1 if baggage has never been raided.
@@ -454,11 +454,11 @@ namespace Enlisted.Features.Logistics
             {
                 return -1;
             }
-            
+
             var currentDay = (int)CampaignTime.Now.ToDays;
             return currentDay - _lastRaidDay;
         }
-        
+
         /// <summary>
         /// Returns the number of days since the baggage train last caught up to the column.
         /// Returns -1 if baggage has never caught up (or arrival tracking not initialized).
@@ -469,11 +469,11 @@ namespace Enlisted.Features.Logistics
             {
                 return -1;
             }
-            
+
             var currentDay = (int)CampaignTime.Now.ToDays;
             return currentDay - _lastArrivalDay;
         }
-        
+
         /// <summary>
         /// Returns true if baggage is currently delayed (behind schedule).
         /// </summary>
@@ -481,7 +481,7 @@ namespace Enlisted.Features.Logistics
         {
             return _baggageDelayedUntil > CampaignTime.Now;
         }
-        
+
         /// <summary>
         /// Records that a baggage raid occurred, updating internal tracking for Daily Brief display.
         /// Called by baggage raid events or external systems.
@@ -491,7 +491,7 @@ namespace Enlisted.Features.Logistics
             _lastRaidDay = (int)CampaignTime.Now.ToDays;
             ModLogger.Info(LogCategory, $"Baggage raid recorded on day {_lastRaidDay}");
         }
-        
+
         /// <summary>
         /// Records that baggage caught up to the column, updating internal tracking for Daily Brief display.
         /// Called by baggage arrival events.
@@ -501,7 +501,7 @@ namespace Enlisted.Features.Logistics
             _lastArrivalDay = (int)CampaignTime.Now.ToDays;
             ModLogger.Info(LogCategory, $"Baggage arrival recorded on day {_lastArrivalDay}");
         }
-        
+
         /// <summary>
         /// Hourly tick checks for state transitions (temporary access expiring, delays clearing).
         /// Delay countdown is frozen while player is captured (delay resumes on release).
@@ -512,19 +512,19 @@ namespace Enlisted.Features.Logistics
             {
                 return;
             }
-            
+
             var hero = CampaignSafetyGuard.SafeMainHero;
             if (hero == null)
             {
                 return;
             }
-            
+
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
                 return;
             }
-            
+
             // Freeze delay countdown if player is captured
             // Baggage delay timer doesn't progress during captivity
             if (hero.IsPrisoner)
@@ -532,16 +532,16 @@ namespace Enlisted.Features.Logistics
                 ModLogger.Debug(LogCategory, "OnHourlyTick: Player captured, freezing baggage delay countdown");
                 return;
             }
-            
+
             // Check if temporary access expired
-            if (_currentState == BaggageAccessState.TemporaryAccess && 
+            if (_currentState == BaggageAccessState.TemporaryAccess &&
                 _temporaryAccessExpires <= CampaignTime.Now)
             {
                 ModLogger.Info(LogCategory, "Temporary access window expired");
                 _temporaryAccessExpires = CampaignTime.Zero;
                 _currentState = BaggageAccessState.NoAccess;
             }
-            
+
             // Check if delay cleared (only progresses when not captured)
             if (_baggageDelayedUntil > CampaignTime.Zero && _baggageDelayedUntil <= CampaignTime.Now)
             {
@@ -549,7 +549,7 @@ namespace Enlisted.Features.Logistics
                 _baggageDelayedUntil = CampaignTime.Zero;
             }
         }
-        
+
         /// <summary>
         /// Daily tick resets cooldowns and triggers baggage-related events when conditions are met.
         /// Events include: baggage caught up (positive), baggage delayed (weather/terrain), theft (low rep).
@@ -561,30 +561,30 @@ namespace Enlisted.Features.Logistics
             {
                 return;
             }
-            
+
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
                 return;
             }
-            
+
             // Reset daily counters
             _emergencyRequestsToday = 0;
-            
+
             // Only trigger march-related events when on the march (NoAccess state)
             var currentAccess = GetCurrentAccess();
             if (currentAccess == BaggageAccessState.NoAccess)
             {
                 // T5+ NCOs get automatic daily access window while on march
                 TryGrantNcoDailyAccess(enlistment);
-                
+
                 // Separate from NCO access, random events can still trigger
                 TryTriggerBaggageEvent();
             }
-            
+
             ModLogger.Debug(LogCategory, $"Daily tick: Counters reset, access state: {currentAccess}");
         }
-        
+
         /// <summary>
         /// Grants automatic daily access window for T5+ NCOs while on march.
         /// Separate from emergency requests and random events. Grants 2-4 hour window once per day.
@@ -595,43 +595,43 @@ namespace Enlisted.Features.Logistics
             {
                 return;
             }
-            
+
             var tier = enlistment.EnlistmentTier;
             var minTier = _config?.RankGates?.DailyAccessWindowMinTier ?? 5;
-            
+
             // Check tier requirement (T5+)
             if (tier < minTier)
             {
                 return;
             }
-            
+
             // Check if already granted today (use day boundary to prevent multiple grants)
             var currentDay = (int)CampaignTime.Now.ToDays;
             var lastGrantDay = (int)_lastNcoDailyAccess.ToDays;
-            
+
             if (currentDay == lastGrantDay)
             {
                 ModLogger.Debug(LogCategory, $"NCO daily access already granted today (day {currentDay})");
                 return;
             }
-            
+
             // Check if player is actually on march (party moving and no access)
             var party = MobileParty.MainParty;
             if (party == null || !party.IsMoving)
             {
                 return;
             }
-            
+
             // Grant 2-4 hour window (slightly less than temporary event access to differentiate)
             var random = new Random();
             var accessHours = random.Next(2, 5); // 2-4 hours inclusive
             GrantTemporaryAccess(accessHours);
-            
+
             _lastNcoDailyAccess = CampaignTime.Now;
-            
+
             ModLogger.Info(LogCategory, $"NCO daily access granted: {accessHours}h window (tier {tier}, automatic privilege)");
         }
-        
+
         /// <summary>
         /// Attempts to trigger a baggage-related event during march.
         /// Uses configured probability weights for different event types.
@@ -640,7 +640,7 @@ namespace Enlisted.Features.Logistics
         {
             var random = new Random();
             var roll = random.Next(100);
-            
+
             // Check for positive "baggage caught up" event (most common)
             var caughtUpChance = _config?.Timing?.CaughtUpChancePercent ?? 25;
             if (roll < caughtUpChance)
@@ -648,7 +648,7 @@ namespace Enlisted.Features.Logistics
                 QueueBaggageEvent("evt_baggage_arrived");
                 return;
             }
-            
+
             // Check for delay event (weather/terrain based - simplified for now)
             var delayChance = _config?.Events?.DelayEventChanceBadWeather ?? 15;
             if (roll < caughtUpChance + delayChance)
@@ -658,22 +658,22 @@ namespace Enlisted.Features.Logistics
                 QueueBaggageEvent(delayEventId);
                 return;
             }
-            
+
             // Check for raid event (enemy territory - simplified check)
             var raidChance = _config?.Events?.RaidEventChanceEnemyTerritory ?? 8;
             var enlistment = EnlistmentBehavior.Instance;
             var isEnemyTerritory = enlistment?.CurrentLord?.MapFaction?.IsAtWarWith(
                 MobileParty.MainParty?.CurrentSettlement?.MapFaction) ?? false;
-            
+
             if (isEnemyTerritory && roll < caughtUpChance + delayChance + raidChance)
             {
                 QueueBaggageEvent("evt_baggage_raided");
             }
-            
+
             // Theft events are triggered by the event system based on requirements (soldier rep check)
             // so we don't need explicit logic here
         }
-        
+
         /// <summary>
         /// Queues a baggage event for delivery through the event system.
         /// </summary>
@@ -685,19 +685,19 @@ namespace Enlisted.Features.Logistics
                 ModLogger.Warn(LogCategory, $"Baggage event not found: {eventId}");
                 return;
             }
-            
+
             var deliveryManager = EventDeliveryManager.Instance;
             if (deliveryManager == null)
             {
                 ModLogger.Warn(LogCategory, "EventDeliveryManager not available");
                 return;
             }
-            
+
             deliveryManager.QueueEvent(eventDef);
             ModLogger.Info(LogCategory, $"Queued baggage event: {eventId}");
         }
     }
-    
+
     /// <summary>
     /// Configuration structure for baggage train system, loaded from baggage_config.json.
     /// </summary>
@@ -710,7 +710,7 @@ namespace Enlisted.Features.Logistics
         public LockdownConfig Lockdown { get; set; } = new LockdownConfig();
         public EventsConfig Events { get; set; } = new EventsConfig();
     }
-    
+
     public class AccessWindowsConfig
     {
         public int TemporaryAccessHours { get; set; } = 4;
@@ -718,7 +718,7 @@ namespace Enlisted.Features.Logistics
         public bool MusterGrantsAccess { get; set; } = true;
         public bool SettlementAlwaysAccess { get; set; } = true;
     }
-    
+
     public class TimingConfig
     {
         public int CaughtUpCheckHours { get; set; } = 24;
@@ -726,30 +726,30 @@ namespace Enlisted.Features.Logistics
         public int MinCooldownHours { get; set; } = 18;
         public int MaxCooldownHours { get; set; } = 30;
     }
-    
+
     public class EmergencyAccessConfig
     {
         public int BaseQmRepCost { get; set; } = 5;
         public int NcoQmRepCost { get; set; } = 2;
-        public int OfficerQmRepCost { get; set; } = 0;
+        public int OfficerQmRepCost { get; set; }
         public int CooldownHours { get; set; } = 12;
         public int HighRepThreshold { get; set; } = 50;
         public int SpamPenaltySoldierRep { get; set; } = 2;
     }
-    
+
     public class RankGatesConfig
     {
         public int EmergencyRequestMinTier { get; set; } = 3;
         public int ColumnHaltMinTier { get; set; } = 7;
         public int DailyAccessWindowMinTier { get; set; } = 5;
     }
-    
+
     public class LockdownConfig
     {
         public int SupplyThresholdPercent { get; set; } = 20;
         public bool ContrabandInvestigationBlocks { get; set; } = true;
     }
-    
+
     public class EventsConfig
     {
         public int DelayEventChanceBadWeather { get; set; } = 15;

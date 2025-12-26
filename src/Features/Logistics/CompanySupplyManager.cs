@@ -68,14 +68,14 @@ namespace Enlisted.Features.Logistics
         public static void Initialize(Hero enlistedLord, bool preserveSupply = false)
         {
             float existingSupply = Instance?._nonFoodSupply ?? 60.0f;
-            
+
             Instance = new CompanySupplyManager
             {
                 _enlistedLord = enlistedLord,
                 _nonFoodSupply = preserveSupply ? MathF.Clamp(existingSupply, 0f, 60f) : 60.0f
             };
-            
-            ModLogger.Info(LogCategory, preserveSupply 
+
+            ModLogger.Info(LogCategory, preserveSupply
                 ? $"CompanySupplyManager transferred to lord: {enlistedLord?.Name}, preserved supply: {Instance._nonFoodSupply:F1}%"
                 : $"CompanySupplyManager initialized for lord: {enlistedLord?.Name}");
         }
@@ -133,9 +133,9 @@ namespace Enlisted.Features.Logistics
                     // Party is gaining or stable on food - treat as well-supplied
                     return 40.0f;
                 }
-                
+
                 int daysOfFood = lordParty.GetNumDaysForFoodToLast();
-                
+
                 // Guard against negative or extreme values from edge cases
                 if (daysOfFood < 0 || daysOfFood > 1000)
                 {
@@ -176,9 +176,9 @@ namespace Enlisted.Features.Logistics
                 _lastFoodComponent = CalculateFoodComponent();
 
                 // Log significant changes
-                float nonFoodChange = _nonFoodSupply - oldNonFood;
-                float foodChange = _lastFoodComponent - oldFood;
-                int totalSupply = TotalSupply;
+                var nonFoodChange = _nonFoodSupply - oldNonFood;
+                var foodChange = _lastFoodComponent - oldFood;
+                var totalSupply = TotalSupply;
 
                 if (MathF.Abs(nonFoodChange) > 0.5f || MathF.Abs(foodChange) > 2f)
                 {
@@ -260,7 +260,7 @@ namespace Enlisted.Features.Logistics
                 {
                     return 1.8f;
                 }
-                
+
                 // Normal settlement rest = minimal consumption
                 return 0.3f;
             }
@@ -301,7 +301,7 @@ namespace Enlisted.Features.Logistics
                 {
                     return 1.0f;
                 }
-                
+
                 var navFace = party.CurrentNavigationFace;
                 if (!navFace.IsValid())
                 {
@@ -470,26 +470,26 @@ namespace Enlisted.Features.Logistics
                 // returns false during leave but we still want to observe the lord's party
                 var behavior = EnlistmentBehavior.Instance;
                 var lord = behavior?.EnlistedLord ?? _enlistedLord;
-                
+
                 if (lord == null)
                 {
                     return null;
                 }
-                
+
                 // Verify lord is still alive and has a party
                 if (!lord.IsAlive)
                 {
                     return null;
                 }
-                
+
                 var party = lord.PartyBelongedTo;
-                
+
                 // Verify party is valid
                 if (party == null || !party.IsActive)
                 {
                     return null;
                 }
-                
+
                 return party;
             }
             catch (Exception ex)

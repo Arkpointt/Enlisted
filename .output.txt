@@ -1,0 +1,500 @@
+﻿                    "fullyQualifiedName": "Enlisted",
+                    "kind": "module"
+                  }
+                ]
+              }
+            ],
+            "partialFingerprints": {
+              "equalIndicator/v2": "01f813ef3e4c9d5f",
+              "equalIndicator/v1": "5c3788a6d02773f3616ea319755cef506e37e8f6c2db80a92ea4f6d2e2215f85"
+            },
+            "properties": {
+              "ideaSeverity": "TYPO",
+              "qodanaSeverity": "Low",
+              "problemType": "REGULAR",
+              "tags": [
+                "C#",
+                ".NETFramework 4.7.2"
+              ]
+            }
+          },
+          {
+            "ruleId": "UseSymbolAlias",
+            "kind": "fail",
+            "level": "note",
+            "message": {
+              "text": "Use type alias 'ConfigurationManager'",
+              "markdown": "Use type alias 'ConfigurationManager'"
+            },
+            "locations": [
+              {
+                "physicalLocation": {
+                  "artifactLocation": {
+                    "uri": "src/Features/Ranks/Behaviors/PromotionBehavior.cs",
+                    "uriBaseId": "SRCROOT"
+                  },
+                  "region": {
+                    "startLine": 256,
+                    "startColumn": 26,
+                    "charOffset": 11631,
+                    "charLength": 36,
+                    "snippet": {
+                      "text": "Mod.Core.Config.ConfigurationManager"
+                    },
+                    "sourceLanguage": "C#"
+                  },
+                  "contextRegion": {
+                    "startLine": 254,
+                    "startColumn": 1,
+                    "charOffset": 11460,
+                    "charLength": 372,
+                    "snippet": {
+                      "text": "            var req = PromotionRequirements.GetForTier(enlistment.EnlistmentTier + 1);\r\n            var escalation = EscalationManager.Instance;\r\n            var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();\r\n            var requiredXp = enlistment.EnlistmentTier < tierXp.Length ? tierXp[enlistment.EnlistmentTier] : tierXp[tierXp.Length - 1];\r\n\r"
+                    },
+                    "sourceLanguage": "C#"
+                  }
+                },
+                "logicalLocations": [
+                  {
+                    "fullyQualifiedName": "Enlisted",
+                    "kind": "module"
+                  }
+                ]
+              }
+            ],
+            "partialFingerprints": {
+              "equalIndicator/v2": "41531500dddfc83c",
+              "equalIndicator/v1": "88243794bbae785f42d19eacd50639672fe5cd5de7194c63a9224c08b59f6481"
+            },
+            "properties": {
+              "ideaSeverity": "TYPO",
+              "qodanaSeverity": "Low",
+              "problemType": "REGULAR",
+              "tags": [
+                "C#",
+                ".NETFramework 4.7.2"
+              ]
+            }
+          },
+          {
+            "ruleId": "UseSymbolAlias",
+            "kind": "fail",
+            "level": "note",
+            "message": {
+              "text": "Use type alias 'ConfigurationManager'",
+              "markdown": "Use type alias 'ConfigurationManager'"
+            },
+            "locations": [
+              {
+                "physicalLocation": {
+                  "artifactLocation": {
+                    "uri": "src/Features/Ranks/Behaviors/PromotionBehavior.cs",
+                    "uriBaseId": "SRCROOT"
+                  },
+                  "region": {
+                    "startLine": 183,
+                    "startColumn": 26,
+                    "charOffset": 8783,
+                    "charLength": 36,
+                    "snippet": {
+                      "text": "Mod.Core.Config.ConfigurationManager"
+                    },
+                    "sourceLanguage": "C#"
+                  },
+                  "contextRegion": {
+                    "startLine": 181,
+                    "startColumn": 1,
+                    "charOffset": 8651,
+                    "charLength": 305,
+                    "snippet": {
+                      "text": "            \r\n            // XP thresholds are owned by progression_config.json (single source of truth).\r\n            var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();\r\n            var requiredXp = currentTier < tierXp.Length ? tierXp[currentTier] : tierXp[tierXp.Length - 1];\r\n\r"
+                    },
+                    "sourceLanguage": "C#"
+                  }
+                },
+                "logicalLocations": [
+                  {
+                    "fullyQualifiedName": "Enlisted",
+                    "kind": "module"
+                  }
+                ]
+              }
+            ],
+            "partialFingerprints": {
+              "equalIndicator/v2": "9f0083725180cdc0",
+              "equalIndicator/v1": "b0730b456a84f9f4bcbaebe744f85e5b9c401dc8facbd32d778246f2e089fa0e"
+            },
+            "properties": {
+              "ideaSeverity": "TYPO",
+              "qodanaSeverity": "Low",
+              "problemType": "REGULAR",
+              "tags": [
+                "C#",
+                ".NETFramework 4.7.2"
+              ]
+            }
+          },
+          {
+            "ruleId": "UseSymbolAlias",
+            "kind": "fail",
+            "level": "note",
+            "message": {
+              "text": "Use type alias 'ConfigurationManager'",
+              "markdown": "Use type alias 'ConfigurationManager'"
+            },
+            "locations": [
+              {
+                "physicalLocation": {
+                  "artifactLocation": {
+                    "uri": "src/Features/Ranks/Behaviors/PromotionBehavior.cs",
+                    "uriBaseId": "SRCROOT"
+                  },
+                  "region": {
+                    "startLine": 170,
+                    "startColumn": 27,
+                    "charOffset": 8239,
+                    "charLength": 36,
+                    "snippet": {
+                      "text": "Mod.Core.Config.ConfigurationManager"
+                    },
+                    "sourceLanguage": "C#"
+                  },
+                  "contextRegion": {
+                    "startLine": 168,
+                    "startColumn": 1,
+                    "charOffset": 8153,
+                    "charLength": 192,
+                    "snippet": {
+                      "text": "\r\n            var currentTier = enlistment.EnlistmentTier;\r\n            var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();\r\n            \r\n            if (currentTier >= maxTier)\r"
+                    },
+                    "sourceLanguage": "C#"
+                  }
+                },
+                "logicalLocations": [
+                  {
+                    "fullyQualifiedName": "Enlisted",
+                    "kind": "module"
+                  }
+                ]
+              }
+            ],
+            "partialFingerprints": {
+              "equalIndicator/v2": "78e47202ca183592",
+              "equalIndicator/v1": "d05f74c974237d4b8a423d1dd9b87bf3261ba8889f7002e6f391f0b2b55d153c"
+            },
+            "properties": {
+              "ideaSeverity": "TYPO",
+              "qodanaSeverity": "Low",
+              "problemType": "REGULAR",
+              "tags": [
+                "C#",
+                ".NETFramework 4.7.2"
+              ]
+            }
+          },
+          {
+            "ruleId": "UseVerbatimString",
+            "kind": "fail",
+            "level": "note",
+            "message": {
+              "text": "Use verbatim string",
+              "markdown": "Use verbatim string"
+            },
+            "locations": [
+              {
+                "physicalLocation": {
+                  "artifactLocation": {
+                    "uri": "src/Mod.Core/Logging/SessionDiagnostics.cs",
+                    "uriBaseId": "SRCROOT"
+                  },
+                  "region": {
+                    "startLine": 255,
+                    "startColumn": 21,
+                    "charOffset": 8907,
+                    "charLength": 261,
+                    "snippet": {
+                      "text": "$\"Save/load failed in {behaviorName} during {phase}. This can break saves. Try: load an older save, disable recently-added mods, then share logs from <BannerlordInstall>\\\\Modules\\\\Enlisted\\\\Debugging\\\\ (Session-A and Conflicts-A) and the save file if possible.\""
+                    },
+                    "sourceLanguage": "C#"
+                  },
+                  "contextRegion": {
+                    "startLine": 253,
+                    "startColumn": 1,
+                    "charOffset": 8815,
+                    "charLength": 383,
+                    "snippet": {
+                      "text": "                    \"SaveLoad\",\r\n                    \"E-SAVELOAD-001\",\r\n                    $\"Save/load failed in {behaviorName} during {phase}. This can break saves. Try: load an older save, disable recently-added mods, then share logs from <BannerlordInstall>\\\\Modules\\\\Enlisted\\\\Debugging\\\\ (Session-A and Conflicts-A) and the save file if possible.\",\r\n                    ex);\r\n\r"
+                    },
+                    "sourceLanguage": "C#"
+                  }
+                },
+                "logicalLocations": [
+                  {
+                    "fullyQualifiedName": "Enlisted",
+                    "kind": "module"
+                  }
+                ]
+              }
+            ],
+            "partialFingerprints": {
+              "equalIndicator/v2": "f8a66b541c234b02",
+              "equalIndicator/v1": "8c95880e46cf6668997c1b490cfe67b5291ffc8ff9722c7f0284d53ba386bb4a"
+            },
+            "properties": {
+              "ideaSeverity": "TYPO",
+              "qodanaSeverity": "Low",
+              "problemType": "REGULAR",
+              "tags": [
+                "C#",
+                ".NETFramework 4.7.2"
+              ]
+            }
+          },
+          {
+            "ruleId": "XMLErrors",
+            "kind": "fail",
+            "level": "error",
+            "message": {
+              "text": "Comment is not well-formed. Sequential '-' characters are not allowed.",
+              "markdown": "Comment is not well-formed. Sequential '-' characters are not allowed."
+            },
+            "locations": [
+              {
+                "physicalLocation": {
+                  "artifactLocation": {
+                    "uri": "ModuleData/Languages/enlisted_strings.xml",
+                    "uriBaseId": "SRCROOT"
+                  },
+                  "region": {
+                    "startLine": 3252,
+                    "startColumn": 9,
+                    "charOffset": 303961,
+                    "charLength": 69,
+                    "snippet": {
+                      "text": " ------------------------------------------------------------------- "
+                    },
+                    "sourceLanguage": "XML"
+                  },
+                  "contextRegion": {
+                    "startLine": 3250,
+                    "startColumn": 1,
+                    "charOffset": 303743,
+                    "charLength": 455,
+                    "snippet": {
+                      "text": "    <string id=\"decision_gratitude_refuse_outcome\" text=\"{COMRADE_NAME} insists once, then nods, embarrassed but grateful. &quot;Still... thank you.&quot; The gesture seems to matter more than the coin.\" />\r\n\r\n    <!-- ------------------------------------------------------------------- -->\r\n    <!-- PLAYER DECISIONS (34 total) - Camp Hub menu choices                 -->\r\n    <!-- Organized by category per content-index.md specification            -->\r"
+                    },
+                    "sourceLanguage": "XML"
+                  }
+                },
+                "logicalLocations": [
+                  {
+                    "fullyQualifiedName": "Enlisted",
+                    "kind": "module"
+                  }
+                ]
+              }
+            ],
+            "partialFingerprints": {
+              "equalIndicator/v2": "20bb6164fd93df31",
+              "equalIndicator/v1": "0b130e98aaaaef28dce44fdd40360e748574478b1e9e0337372e4102e54bcdc3"
+            },
+            "properties": {
+              "ideaSeverity": "ERROR",
+              "qodanaSeverity": "Critical",
+              "problemType": "REGULAR",
+              "tags": [
+                "XML",
+                ".NETFramework 4.7.2"
+              ]
+            }
+          },
+          {
+            "ruleId": "XMLErrors",
+            "kind": "fail",
+            "level": "error",
+            "message": {
+              "text": "Comment is not well-formed. Sequential '-' characters are not allowed.",
+              "markdown": "Comment is not well-formed. Sequential '-' characters are not allowed."
+            },
+            "locations": [
+              {
+                "physicalLocation": {
+                  "artifactLocation": {
+                    "uri": "ModuleData/Languages/enlisted_strings.xml",
+                    "uriBaseId": "SRCROOT"
+                  },
+                  "region": {
+                    "startLine": 1456,
+                    "startColumn": 9,
+                    "charOffset": 117000,
+                    "charLength": 69,
+                    "snippet": {
+                      "text": " ------------------------------------------------------------------- "
+                    },
+                    "sourceLanguage": "XML"
+                  },
+                  "contextRegion": {
+                    "startLine": 1454,
+                    "startColumn": 1,
+                    "charOffset": 116851,
+                    "charLength": 273,
+                    "snippet": {
+                      "text": "    <!-- Supply reports, browse responses, sell responses, upgrade responses -->\r\n    <!-- Organized by: archetype, context, reputation -->\r\n    <!-- ------------------------------------------------------------------- -->\r\n\r\n    <!-- Supply Reports - Veteran Archetype -->\r"
+                    },
+                    "sourceLanguage": "XML"
+                  }
+                },
+                "logicalLocations": [
+                  {
+                    "fullyQualifiedName": "Enlisted",
+                    "kind": "module"
+                  }
+                ]
+              }
+            ],
+            "partialFingerprints": {
+              "equalIndicator/v2": "3977a3584f1289bf",
+              "equalIndicator/v1": "12f179249c3806407abff1cd531833e35a16d4280da6241a137680b9c0a25ac3"
+            },
+            "properties": {
+              "ideaSeverity": "ERROR",
+              "qodanaSeverity": "Critical",
+              "problemType": "REGULAR",
+              "tags": [
+                "XML",
+                ".NETFramework 4.7.2"
+              ]
+            }
+          },
+          {
+            "ruleId": "XMLErrors",
+            "kind": "fail",
+            "level": "error",
+            "message": {
+              "text": "Comment is not well-formed. Sequential '-' characters are not allowed.",
+              "markdown": "Comment is not well-formed. Sequential '-' characters are not allowed."
+            },
+            "locations": [
+              {
+                "physicalLocation": {
+                  "artifactLocation": {
+                    "uri": "ModuleData/Languages/enlisted_strings.xml",
+                    "uriBaseId": "SRCROOT"
+                  },
+                  "region": {
+                    "startLine": 1452,
+                    "startColumn": 9,
+                    "charOffset": 116726,
+                    "charLength": 69,
+                    "snippet": {
+                      "text": " ------------------------------------------------------------------- "
+                    },
+                    "sourceLanguage": "XML"
+                  },
+                  "contextRegion": {
+                    "startLine": 1450,
+                    "startColumn": 1,
+                    "charOffset": 116641,
+                    "charLength": 291,
+                    "snippet": {
+                      "text": "    <string id=\"qm_upgrade_response_dynamic\" text=\"{UPGRADE_RESPONSE}\" />\r\n\r\n    <!-- ------------------------------------------------------------------- -->\r\n    <!-- PHASE 6: CONTEXTUAL DIALOGUE STRINGS -->\r\n    <!-- Supply reports, browse responses, sell responses, upgrade responses -->\r"
+                    },
+                    "sourceLanguage": "XML"
+                  }
+                },
+                "logicalLocations": [
+                  {
+                    "fullyQualifiedName": "Enlisted",
+                    "kind": "module"
+                  }
+                ]
+              }
+            ],
+            "partialFingerprints": {
+              "equalIndicator/v2": "e9eaf7142035c7eb",
+              "equalIndicator/v1": "3b09aed42c29b3126a5eb0ba28ac5262e80c04589438056ed1974cc91bd3457b"
+            },
+            "properties": {
+              "ideaSeverity": "ERROR",
+              "qodanaSeverity": "Critical",
+              "problemType": "REGULAR",
+              "tags": [
+                "XML",
+                ".NETFramework 4.7.2"
+              ]
+            }
+          },
+          {
+            "ruleId": "XMLErrors",
+            "kind": "fail",
+            "level": "error",
+            "message": {
+              "text": "Comment is not well-formed. Sequential '-' characters are not allowed.",
+              "markdown": "Comment is not well-formed. Sequential '-' characters are not allowed."
+            },
+            "locations": [
+              {
+                "physicalLocation": {
+                  "artifactLocation": {
+                    "uri": "ModuleData/Languages/enlisted_strings.xml",
+                    "uriBaseId": "SRCROOT"
+                  },
+                  "region": {
+                    "startLine": 3255,
+                    "startColumn": 9,
+                    "charOffset": 304207,
+                    "charLength": 69,
+                    "snippet": {
+                      "text": " ------------------------------------------------------------------- "
+                    },
+                    "sourceLanguage": "XML"
+                  },
+                  "contextRegion": {
+                    "startLine": 3253,
+                    "startColumn": 1,
+                    "charOffset": 304035,
+                    "charLength": 275,
+                    "snippet": {
+                      "text": "    <!-- PLAYER DECISIONS (34 total) - Camp Hub menu choices                 -->\r\n    <!-- Organized by category per content-index.md specification            -->\r\n    <!-- ------------------------------------------------------------------- -->\r\n\r\n    <!-- Self-Care (3) -->\r"
+                    },
+                    "sourceLanguage": "XML"
+                  }
+                },
+                "logicalLocations": [
+                  {
+                    "fullyQualifiedName": "Enlisted",
+                    "kind": "module"
+                  }
+                ]
+              }
+            ],
+            "partialFingerprints": {
+              "equalIndicator/v2": "f5898a30721e4a87",
+              "equalIndicator/v1": "87080d38a750b84ae0564b99a9771016899b6dd169f09e9ca0624331b9f9f6c8"
+            },
+            "properties": {
+              "ideaSeverity": "ERROR",
+              "qodanaSeverity": "Critical",
+              "problemType": "REGULAR",
+              "tags": [
+                "XML",
+                ".NETFramework 4.7.2"
+              ]
+            }
+          }
+        ],
+        "qodana.coverage.files.provided": false,
+        "configProfile": "starter",
+        "deviceId": "30112514be442ae-fa8b-442e-ac83-4d67ea337e31",
+        "qodanaNewResultSummary": {
+          "high": 770,
+          "low": 1,
+          "total": 771
+        }
+      }
+    }
+  ],
+  "properties": {
+    "runTimestamp": "1766777538291"
+  }
+}

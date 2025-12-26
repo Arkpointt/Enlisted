@@ -135,6 +135,8 @@
   </ItemGroup>
   <ItemGroup>
     <!-- GUI Brushes -->
+    <Content Include="analyze_qodana.py" />
+    <Content Include="find_results.py" />
     <Content Include="GUI\Brushes\EnlistedColors.xml"/>
     <!-- GUI Equipment Prefabs -->
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml"/>

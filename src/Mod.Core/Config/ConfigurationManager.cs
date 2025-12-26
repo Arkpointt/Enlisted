@@ -15,7 +15,7 @@ namespace Enlisted.Mod.Core.Config
     {
         private const string LogCategory = "Config";
         private static readonly string ModuleDataPath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory, 
+            AppDomain.CurrentDomain.BaseDirectory,
             "..", "..", "ModuleData", "Enlisted");
 
         private static readonly JsonSerializerSettings SnakeCaseSettings = new JsonSerializerSettings
@@ -470,22 +470,22 @@ namespace Enlisted.Mod.Core.Config
         // Severance payouts used by camp menu flows.
         public int SeveranceVeteran { get; set; } = 500;
         public int SeveranceHonorable { get; set; } = 1000;
-        
+
         // Pension system
         public int PensionHonorableDaily { get; set; } = 50;
         public int PensionVeteranDaily { get; set; } = 100;
-        public int PensionRelationStopThreshold { get; set; } = 0;
-        
+        public int PensionRelationStopThreshold { get; set; }
+
         // Debug flags
-        public bool DebugSkipGearStripping { get; set; } = false;
-        
+        public bool DebugSkipGearStripping { get; set; }
+
         // Dialog-related retirement properties
         public int CooldownDays { get; set; } = 7;
         public int FirstTermGold { get; set; } = 1000;
         public int RenewalDischargeGold { get; set; } = 500;
         public int LordRelationBonus { get; set; } = 10;
         public int FactionReputationBonus { get; set; } = 5;
-        public int OtherLordsMinRelation { get; set; } = 0;
+        public int OtherLordsMinRelation { get; set; }
         public int OtherLordsRelationBonus { get; set; } = 2;
     }
 
@@ -501,7 +501,7 @@ namespace Enlisted.Mod.Core.Config
         public int MedicalRiskDecayIntervalDays { get; set; } = 1;
         public int ThresholdEventCooldownDays { get; set; } = 3;
     }
-    
+
     /// <summary>
     /// Player conditions configuration.
     /// </summary>

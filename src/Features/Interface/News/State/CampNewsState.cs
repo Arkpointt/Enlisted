@@ -146,7 +146,7 @@ namespace Enlisted.Features.Interface.News.State
             SyncLedger(dataStore);
 
             // Safe initialization for nulls after load.
-            _archive ??= Array.Empty<DailyReportRecord>();
+            _archive ??= [];
             _ledger ??= new CampLifeLedger();
 
             EnsureInitialized();
