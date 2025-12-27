@@ -188,9 +188,33 @@ Enlisted transforms Bannerlord into a soldier career simulator. Players enlist w
 
 #### ReSharper Linter
 - **Always follow ReSharper recommendations** (available in Rider or Visual Studio)
-- **Fix all warnings before committing** - don't suppress with pragmas
+- **Fix all warnings before committing** - don't suppress with pragmas unless truly necessary
 - **Run Qodana analysis** before major commits to catch code quality issues
 - Exception: Only suppress if there's a specific compatibility reason with a comment explaining why
+
+**Handling False Positives:**
+
+When Qodana/ReSharper reports a warning that cannot be fixed without breaking compilation, use `[SuppressMessage]` attributes with clear justification:
+
+```csharp
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "RedundantNameQualifier",
+    Justification = "ConfigurationManager conflicts with TaleWorlds.Library.ConfigurationManager")]
+private void MyMethod()
+{
+    var config = Enlisted.Mod.Core.Config.ConfigurationManager.LoadConfig();
+}
+```
+
+**Common False Positive Scenarios:**
+- **Namespace conflicts:** When two types share the same name (e.g., `ConfigurationManager` in both `Enlisted.Mod.Core.Config` and `TaleWorlds.Library`), the fully qualified name is required
+- **Harmony patches:** Parameters marked as unused but required by Harmony's signature matching
+- **Reflection-called members:** Properties/methods called via Bannerlord's reflection system (save/load, UI binding)
+
+**Verification Process:**
+1. Try to fix the warning normally (add `using`, remove qualifier, etc.)
+2. Build the project - if compilation fails, it's a false positive
+3. Add `[SuppressMessage]` with clear `Justification` explaining why
+4. Document the pattern in BLUEPRINT.md if it's a recurring issue
 
 **Pre-commit checklist:**
 ```powershell
