@@ -335,28 +335,6 @@ namespace Enlisted.Features.Equipment.Behaviors
             ModLogger.Info("Quartermaster", "Quartermaster system initialized with modern UI styling");
         }
 
-        /// <summary>
-        /// Menu background initialization for quartermaster_supplies menu.
-        /// </summary>
-        [GameMenuInitializationHandler("quartermaster_supplies")]
-        private static void OnQuartermasterSuppliesBackgroundInit(MenuCallbackArgs args)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            var backgroundMesh = "encounter_looter";
-
-            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
-            }
-            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
-            }
-
-            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
-            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
-            args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
-        }
 
         /// <summary>
         /// Initialize equipment variant caching system for performance.
