@@ -5924,7 +5924,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ModLogger.Info("Gold", $"Full payment: {grossAmount}");
 
             // Record in Personal Feed for historical review
-            EnlistedNewsBehavior.Instance?.AddPayMusterNews(hadBackpay ? "backpay" : "full", grossAmount, 0);
+            EnlistedNewsBehavior.Instance?.AddPayMusterNews(hadBackpay ? "backpay" : "full", grossAmount);
 
             if (hadBackpay)
             {
@@ -6379,7 +6379,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     _enlistmentXP,
                     _enlistedLord);
 
-                StopEnlist("Smuggle discharge (deserter)", false);
+                StopEnlist("Smuggle discharge (deserter)");
             }
             catch (Exception ex)
             {
@@ -12328,9 +12328,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 foreach (var troop in troopsToTransfer)
                 {
                     // Add to lord's party
-                    lordParty.MemberRoster.AddToCounts(troop.Character, troop.Number, false, 0, 0, true, -1);
+                    lordParty.MemberRoster.AddToCounts(troop.Character, troop.Number);
                     // Remove from player party
-                    main.MemberRoster.AddToCounts(troop.Character, -1 * troop.Number, false, 0, 0, true, -1);
+                    main.MemberRoster.AddToCounts(troop.Character, -1 * troop.Number);
                 }
 
                 if (transferCount > 0 || companionsKept > 0)
@@ -12424,15 +12424,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Remove stale references from lord's party (companion already with player)
                 foreach (var stale in staleRefsToRemove)
                 {
-                    lordRoster.AddToCounts(stale.Character, -stale.Number, false, 0, 0, true, -1);
+                    lordRoster.AddToCounts(stale.Character, -stale.Number);
                     ModLogger.Info("Enlistment", $"Cleaned stale ref for {stale.Character.Name} from lord's party");
                 }
 
                 // Transfer companions that need restoration
                 foreach (var companion in companionsToRestore)
                 {
-                    lordRoster.AddToCounts(companion.Character, -companion.Number, false, 0, 0, true, -1);
-                    mainRoster.AddToCounts(companion.Character, companion.Number, false, 0, 0, true, -1);
+                    lordRoster.AddToCounts(companion.Character, -companion.Number);
+                    mainRoster.AddToCounts(companion.Character, companion.Number);
                 }
 
                 if (companionsToRestore.Count > 0)
@@ -12502,9 +12502,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 foreach (var companion in companionsToReclaim)
                 {
                     // Remove from lord's party
-                    lordParty.MemberRoster.AddToCounts(companion.Character, -1 * companion.Number, false, 0, 0, true, -1);
+                    lordParty.MemberRoster.AddToCounts(companion.Character, -1 * companion.Number);
                     // Add to player's party
-                    main.MemberRoster.AddToCounts(companion.Character, companion.Number, false, 0, 0, true, -1);
+                    main.MemberRoster.AddToCounts(companion.Character, companion.Number);
                 }
 
                 if (companionsReclaimed > 0)
