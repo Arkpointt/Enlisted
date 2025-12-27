@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -610,7 +610,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public string GetRandomSoldierName()
         {
             if (_soldierNames == null || _soldierNames.Count == 0)
+            {
                 return "a soldier";
+            }
             return _soldierNames[MBRandom.RandomInt(_soldierNames.Count)];
         }
 
@@ -1044,13 +1046,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         if (_enlistedLord != null)
                         {
-                            ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, relationBonus, true, true);
+                            ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, relationBonus);
                         }
 
                         var factionLeader = faction.Leader;
                         if (factionLeader != null && factionLeader != _enlistedLord)
                         {
-                            ChangeRelationAction.ApplyPlayerRelation(factionLeader, relationBonus, true, true);
+                            ChangeRelationAction.ApplyPlayerRelation(factionLeader, relationBonus);
                         }
                     }
 
@@ -2613,7 +2615,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _pendingBagCheckLord = null;
 
             // NOTE: Do NOT call ContinueStartEnlistInternal here!
-            // The player is already enlisted from StartEnlist() â†’ ContinueStartEnlistInternal() (first call).
+            // The player is already enlisted from StartEnlist() → ContinueStartEnlistInternal() (first call).
             // Calling it again here causes:
             // 1. OnEnlisted event to fire twice
             // 2. Onboarding state to be re-initialized
@@ -3037,8 +3039,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     Interface.Behaviors.EnlistedNewsBehavior.Instance?.PostPersonalDispatchText(
                         "logistics",
                         newsText,
-                        $"courier:{(int)CampaignTime.Now.ToDays}",
-                        2);
+                        $"courier:{(int)CampaignTime.Now.ToDays}");
                 }
                 catch (Exception newsEx)
                 {
@@ -3679,7 +3680,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             PlayerEncounter.LeaveSettlement();
                         }
 
-                        PlayerEncounter.Finish(true);
+                        PlayerEncounter.Finish();
                         ModLogger.Debug("Enlistment", "Finished active PlayerEncounter before starting enlistment");
                     }
                     catch (Exception ex)
@@ -4033,7 +4034,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Determine target kingdom based on discharge type
                 // Default: Return to independent status
-                // Exception: Honorably discharged after full service â†’ restore original kingdom
+                // Exception: Honorably discharged after full service → restore original kingdom
                 var playerClan = Clan.PlayerClan;
                 if (playerClan != null)
                 {
@@ -4341,18 +4342,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     if (clan.Leader != null && clan.Leader != Hero.MainHero && clan.Leader.IsAlive)
                     {
-                        ChangeRelationAction.ApplyPlayerRelation(clan.Leader, -50, true, true);
+                        ChangeRelationAction.ApplyPlayerRelation(clan.Leader, -50);
                         lordsPenalized++;
                     }
                 }
 
                 // Apply moderate crime rating (50 points = moderate)
-                ChangeCrimeRatingAction.Apply(_pendingDesertionKingdom, 50f, true);
+                ChangeCrimeRatingAction.Apply(_pendingDesertionKingdom, 50f);
 
                 // Remove from kingdom (become independent)
                 if (playerClan.Kingdom == _pendingDesertionKingdom)
                 {
-                    ChangeKingdomAction.ApplyByLeaveKingdom(playerClan, true);
+                    ChangeKingdomAction.ApplyByLeaveKingdom(playerClan);
                 }
 
                 // Display notification
@@ -4432,7 +4433,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 if (lord.IsAlive && lord != Hero.MainHero)
                 {
-                    ChangeRelationAction.ApplyPlayerRelation(lord, relationPenalty, true, true);
+                    ChangeRelationAction.ApplyPlayerRelation(lord, relationPenalty);
                     herosPenalized++;
                     ModLogger.Debug("Desertion", $"Applied {relationPenalty} relation with lord {lord.Name}");
                 }
@@ -4449,7 +4450,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             continue;
                         }
 
-                        ChangeRelationAction.ApplyPlayerRelation(clanMember, relationPenalty, true, true);
+                        ChangeRelationAction.ApplyPlayerRelation(clanMember, relationPenalty);
                         herosPenalized++;
                     }
                 }
@@ -4650,13 +4651,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         if (clan.Leader != null && clan.Leader != Hero.MainHero && clan.Leader.IsAlive)
                         {
-                            ChangeRelationAction.ApplyPlayerRelation(clan.Leader, -50, true, true);
+                            ChangeRelationAction.ApplyPlayerRelation(clan.Leader, -50);
                             lordsPenalized++;
                         }
                     }
 
                     // Apply crime rating (+50)
-                    ChangeCrimeRatingAction.Apply(targetKingdom, 50f, true);
+                    ChangeCrimeRatingAction.Apply(targetKingdom, 50f);
 
                     ModLogger.Info("Desertion",
                         $"Applied desertion penalties: -50 relation with {lordsPenalized} lords, +50 crime rating");
@@ -4673,7 +4674,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     try
                     {
-                        ChangeKingdomAction.ApplyByLeaveKingdomAsMercenary(playerClan, true);
+                        ChangeKingdomAction.ApplyByLeaveKingdomAsMercenary(playerClan);
                         ModLogger.Info("Desertion", "Left kingdom as deserter");
                     }
                     catch (Exception ex)
@@ -4720,7 +4721,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             if (manager == null)
             {
                 ModLogger.ErrorCode("Enlistment", "E-ENLIST-009",
-                    "TroopSelectionManager unavailable - cannot restore saved equipment", null);
+                    "TroopSelectionManager unavailable - cannot restore saved equipment");
                 return false;
             }
 
@@ -4903,7 +4904,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         {
                             PlayerEncounter.Current.IsPlayerWaiting = false;
                             PlayerEncounter.LeaveEncounter = true;
-                            PlayerEncounter.Finish(true);
+                            PlayerEncounter.Finish();
                         }
 
                         // Apply protection and teleport
@@ -5037,12 +5038,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                     if (prop != null)
                     {
-                        prop.SetValue(party, value, null);
+                        prop.SetValue(party, value);
                     }
                     else
                     {
                         ModLogger.ErrorCode("Battle", "E-BATTLE-001",
-                            "ShouldJoinPlayerBattles property not found via reflection", null);
+                            "ShouldJoinPlayerBattles property not found via reflection");
                     }
                 }
                 catch (Exception ex2)
@@ -5731,8 +5732,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void DisplayNoRationsMessage(int supply)
         {
             string message = supply < 30
-                ? "No rations were issued — supplies are critically low."
-                : "No rations were issued — supplies are too low.";
+                ? "No rations were issued � supplies are critically low."
+                : "No rations were issued � supplies are too low.";
 
             InformationManager.DisplayMessage(new InformationMessage(message, Colors.Yellow));
         }
@@ -5893,7 +5894,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             if (qmRep >= 50)
             {
-                return "The quartermaster is being generous — a wheel of cheese for the week.";
+                return "The quartermaster is being generous � a wheel of cheese for the week.";
             }
             if (qmRep >= 20)
             {
@@ -6006,7 +6007,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Damage relation with lord for stiffing us
             if (_enlistedLord != null)
             {
-                ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -10, false, true);
+                ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -10, false);
             }
 
             _lastPayOutcome = $"written_off:{writtenOff}";
@@ -6069,7 +6070,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         ModLogger.Info("Pay", $"Corruption muster success (Payout={payout}, Chance={chance:0.00}, Roll={roll:0.00})");
                         if (_enlistedLord != null)
                         {
-                            ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, 1, true, true);
+                            ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, 1);
                         }
                     }
                     else
@@ -6105,7 +6106,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             if (_enlistedLord != null)
             {
-                ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -5, true, true);
+                ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -5);
             }
 
             _lastPayOutcome = $"corruption_fail:{payout}";
@@ -6285,13 +6286,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Apply relations
                 if (_enlistedLord != null)
                 {
-                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, lordRelation, true, true);
+                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, lordRelation);
                 }
 
                 var faction = _enlistedLord?.MapFaction;
                 if (faction is Kingdom kingdom && kingdom.Leader != null && kingdom.Leader != _enlistedLord)
                 {
-                    ChangeRelationAction.ApplyPlayerRelation(kingdom.Leader, factionRelation, true, true);
+                    ChangeRelationAction.ApplyPlayerRelation(kingdom.Leader, factionRelation);
                 }
 
                 // Payout: pending muster + severance
@@ -6349,16 +6350,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var faction = _enlistedLord?.MapFaction as Kingdom;
                 if (faction != null)
                 {
-                    ChangeCrimeRatingAction.Apply(faction, 30f, true);
+                    ChangeCrimeRatingAction.Apply(faction, 30f);
                     if (faction.Leader != null)
                     {
-                        ChangeRelationAction.ApplyPlayerRelation(faction.Leader, -50, true, true);
+                        ChangeRelationAction.ApplyPlayerRelation(faction.Leader, -50);
                     }
                 }
 
                 if (_enlistedLord != null)
                 {
-                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -50, true, true);
+                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -50);
                 }
 
                 // Deserter outcome: keep all gear, clear pension
@@ -6524,7 +6525,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     case "honorable":
                     case "veteran":
                     case "heroic":
-                        // Keep armor (slots 6â€“9), clear weapons (0â€“3) and mounts (10â€“11) to inventory
+                        // Keep armor (slots 6–9), clear weapons (0–3) and mounts (10–11) to inventory
                         MoveSlotsToInventory(hero, new[] { 0, 1, 2, 3, 10, 11 });
                         break;
                 }
@@ -7059,7 +7060,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Minimal relation penalty - lord understands
                 if (_enlistedLord != null)
                 {
-                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -5, false, true);
+                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -5, false);
                 }
 
                 // No bounty, no faction penalty
@@ -7069,7 +7070,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 StopEnlist("free_desertion_pay_crisis", isHonorableDischarge: false);
 
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "You leave quietly. No one blames you â€” you weren't paid.",
+                    "You leave quietly. No one blames you — you weren't paid.",
                     Colors.Yellow));
             }
             catch (Exception ex)
@@ -7462,7 +7463,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Remove duplicate hero entries
                 foreach (var (character, excess) in heroesToRemove)
                 {
-                    mainRoster.AddToCounts(character, -excess, false, 0, 0, true, -1);
+                    mainRoster.AddToCounts(character, -excess);
                     duplicatesRemoved += excess;
                     ModLogger.Warn("SaveLoad", $"Removed {excess} duplicate entry for hero {character.Name}");
                 }
@@ -7493,7 +7494,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                     foreach (var stale in staleCompanions)
                     {
-                        lordRoster.AddToCounts(stale.Character, -stale.Number, false, 0, 0, true, -1);
+                        lordRoster.AddToCounts(stale.Character, -stale.Number);
                         staleRefsRemoved++;
                         ModLogger.Warn("SaveLoad", $"Removed stale companion ref {stale.Character.Name} from lord's party");
                     }
@@ -7668,7 +7669,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         {
                             // Fallback if method not found (unlikely)
                             ModLogger.ErrorCode("EventSafety", "E-EVENTSAFE-001",
-                                "Could not find EndCaptivityAction.ApplyByEscape", null);
+                                "Could not find EndCaptivityAction.ApplyByEscape");
                         }
                     }
                     catch (Exception ex)
@@ -8309,7 +8310,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 {
                                     ModLogger.Info("Siege",
                                         "Player entered settlement with active PlayerEncounter - finishing to prevent assertion");
-                                    PlayerEncounter.Finish(true);
+                                    PlayerEncounter.Finish();
                                 }
                                 catch (Exception ex)
                                 {
@@ -9452,7 +9453,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // +30 with current lord
                 if (_enlistedLord != null)
                 {
-                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, config.LordRelationBonus, true, true);
+                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, config.LordRelationBonus);
                     ModLogger.Info("Retirement", $"+{config.LordRelationBonus} relation with {_enlistedLord.Name}");
                 }
 
@@ -9460,7 +9461,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Use leader as proxy for faction reputation
                 if (faction.Leader != null && faction.Leader != _enlistedLord)
                 {
-                    ChangeRelationAction.ApplyPlayerRelation(faction.Leader, config.FactionReputationBonus, true, true);
+                    ChangeRelationAction.ApplyPlayerRelation(faction.Leader, config.FactionReputationBonus);
                     ModLogger.Info("Retirement",
                         $"+{config.FactionReputationBonus} relation with {faction.Name} (via leader)");
                 }
@@ -9543,14 +9544,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // +10 with current lord
                 if (_enlistedLord != null)
                 {
-                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, subsequentBonus, true, true);
+                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, subsequentBonus);
                     ModLogger.Info("Retirement", $"+{subsequentBonus} relation with {_enlistedLord.Name} (subsequent re-enlistment)");
                 }
 
                 // +10 with faction leader
                 if (faction.Leader != null && faction.Leader != _enlistedLord)
                 {
-                    ChangeRelationAction.ApplyPlayerRelation(faction.Leader, subsequentBonus, true, true);
+                    ChangeRelationAction.ApplyPlayerRelation(faction.Leader, subsequentBonus);
                     ModLogger.Info("Retirement", $"+{subsequentBonus} relation with {faction.Name} leader (subsequent re-enlistment)");
                 }
 
@@ -10277,7 +10278,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     : 0;
             }
 
-            ModLogger.Info("Enlistment", $"Tier changed: {previousTier} → {tier} (XP: {_enlistmentXP}, day: {_dayOfLastPromotion})");
+            ModLogger.Info("Enlistment", $"Tier changed: {previousTier} ? {tier} (XP: {_enlistmentXP}, day: {_dayOfLastPromotion})");
 
             // V2.0: Companions are now managed from T1 (enlistment start), not T4
             // Legacy reclaim kept for backward compatibility with older saves
@@ -10428,7 +10429,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                // Candidate civilian templates: â€œwealthyâ€ town/camp types.
+                // Candidate civilian templates: “wealthy” town/camp types.
                 // Note: We do not rely on string ids (mod compatibility); we rely on Occupation + culture.
                 var candidates = CharacterObject.All
                     .Where(t => t != null
@@ -10476,7 +10477,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Apply the outfit.
                 qm.CivilianEquipment.FillFrom(best.FirstCivilianEquipment, false);
 
-                // Keep the look â€œofficialâ€ (no visible civilian weapons unless the template insists).
+                // Keep the look “official” (no visible civilian weapons unless the template insists).
                 qm.CivilianEquipment[EquipmentIndex.Weapon0] = default;
                 qm.CivilianEquipment[EquipmentIndex.Weapon1] = default;
                 qm.CivilianEquipment[EquipmentIndex.Weapon2] = default;
@@ -10500,7 +10501,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return 0;
                 }
 
-                // Focus on attire slots; treat item value as a decent â€œwealthâ€ proxy.
+                // Focus on attire slots; treat item value as a decent “wealth” proxy.
                 var slots = new[]
                 {
                     EquipmentIndex.Head,
@@ -11713,8 +11714,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 else
                 {
                     // Fallback: Basic backup if equipment manager not available
-                    _personalBattleEquipment = Hero.MainHero.BattleEquipment.Clone(false);
-                    _personalCivilianEquipment = Hero.MainHero.CivilianEquipment.Clone(false);
+                    _personalBattleEquipment = Hero.MainHero.BattleEquipment.Clone();
+                    _personalCivilianEquipment = Hero.MainHero.CivilianEquipment.Clone();
                 }
 
                 ModLogger.Info("Equipment", "Personal equipment backed up");
@@ -12004,7 +12005,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         PlayerEncounter.LeaveSettlement();
                     }
 
-                    PlayerEncounter.Finish(true);
+                    PlayerEncounter.Finish();
                 }
 
                 // Restore vanilla player state
@@ -12088,7 +12089,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         PlayerEncounter.LeaveSettlement();
                     }
 
-                    PlayerEncounter.Finish(true);
+                    PlayerEncounter.Finish();
                 }
 
                 // Resume enlistment behavior (will be handled by next real-time tick)
@@ -12228,7 +12229,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         PlayerEncounter.LeaveSettlement();
                     }
 
-                    PlayerEncounter.Finish(true);
+                    PlayerEncounter.Finish();
                 }
 
                 // Re-attach to new lord's party
@@ -12700,7 +12701,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         {
                             ModLogger.Info("Settlement",
                                 "Finishing PlayerEncounter before entering settlement to prevent InsideSettlement assertion");
-                            PlayerEncounter.Finish(true);
+                            PlayerEncounter.Finish();
                         }
                         catch (Exception ex)
                         {
@@ -12746,7 +12747,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         {
                             ModLogger.Info("Settlement",
                                 "Finishing PlayerEncounter before entering settlement to prevent InsideSettlement assertion");
-                            PlayerEncounter.Finish(true);
+                            PlayerEncounter.Finish();
                         }
                         catch (Exception ex)
                         {
@@ -12876,7 +12877,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                         PlayerEncounter.LeaveSettlement();
                                     }
 
-                                    PlayerEncounter.Finish(true);
+                                    PlayerEncounter.Finish();
                                 }
 
                                 // CRITICAL: Set up escort FIRST so IsEmbeddedWithLord() returns true
@@ -13178,7 +13179,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 PlayerEncounter.LeaveSettlement();
                             }
 
-                            PlayerEncounter.Finish(true);
+                            PlayerEncounter.Finish();
                             ModLogger.Info("Battle", "Finished PlayerEncounter after enlistment ended");
                         }
                         catch (Exception ex)
@@ -13307,7 +13308,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 {
                                     TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.LeaveSettlement();
                                 }
-                                TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Finish(true);
+                                TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Finish();
                                 ModLogger.Info("Battle", "Finished PlayerEncounter after siege battle (immediate)");
                             }
                             catch (Exception ex)
@@ -13343,7 +13344,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                             TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.LeaveSettlement();
                                         }
 
-                                        TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Finish(true);
+                                        TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Finish();
                                         ModLogger.Info("Battle",
                                             "Finished PlayerEncounter after battle ended (deferred)");
                                     }
@@ -13722,7 +13723,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         encounter.IsPlayerWaiting = false;
                         PlayerEncounter.LeaveEncounter = true;
                         // Force immediate cleanup - this clears PlayerEncounter.Current
-                        PlayerEncounter.Finish(true);
+                        PlayerEncounter.Finish();
                         ModLogger.Info("Battle", "Force-finished PlayerEncounter to prevent stuck state");
                     }
                     catch (System.Exception ex)

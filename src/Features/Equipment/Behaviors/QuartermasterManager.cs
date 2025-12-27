@@ -5088,7 +5088,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         public bool IsItemInStock(string itemStringId)
         {
-            if (string.IsNullOrEmpty(itemStringId)) return false;
+            if (string.IsNullOrEmpty(itemStringId))
+            {
+                return false;
+            }
             return !_outOfStockItems.Contains(itemStringId);
         }
 

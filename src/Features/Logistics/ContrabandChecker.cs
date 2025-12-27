@@ -320,7 +320,10 @@ namespace Enlisted.Features.Logistics
         /// </summary>
         private static bool IsRangedRole(string role)
         {
-            if (string.IsNullOrEmpty(role)) return false;
+            if (string.IsNullOrEmpty(role))
+            {
+                return false;
+            }
 
             var lowerRole = role.ToLowerInvariant();
             return lowerRole == "scout" ||
@@ -334,7 +337,10 @@ namespace Enlisted.Features.Logistics
         /// </summary>
         private static bool IsCavalryRole(string role)
         {
-            if (string.IsNullOrEmpty(role)) return false;
+            if (string.IsNullOrEmpty(role))
+            {
+                return false;
+            }
 
             var lowerRole = role.ToLowerInvariant();
             return lowerRole == "cavalry" ||
@@ -348,7 +354,10 @@ namespace Enlisted.Features.Logistics
         /// </summary>
         private static bool IsOfficerRole(string role)
         {
-            if (string.IsNullOrEmpty(role)) return false;
+            if (string.IsNullOrEmpty(role))
+            {
+                return false;
+            }
 
             var lowerRole = role.ToLowerInvariant();
             return lowerRole == "officer" ||
