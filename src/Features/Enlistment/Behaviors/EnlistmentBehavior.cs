@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -17,7 +17,6 @@ using Enlisted.Mod.Entry;
 using Enlisted.Mod.GameAdapters.Patches;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.MapEvents;
@@ -33,7 +32,6 @@ using TaleWorlds.ObjectSystem;
 using Enlisted.Mod.Core.Config;
 using ConfigurationManager = Enlisted.Mod.Core.Config.ConfigurationManager;
 using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
-using EnlistedIncidentsBehavior = Enlisted.Features.Enlistment.Behaviors.EnlistedIncidentsBehavior;
 
 namespace Enlisted.Features.Enlistment.Behaviors
 {
@@ -5732,8 +5730,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void DisplayNoRationsMessage(int supply)
         {
             string message = supply < 30
-                ? "No rations were issued — supplies are critically low."
-                : "No rations were issued — supplies are too low.";
+                ? "No rations were issued ï¿½ supplies are critically low."
+                : "No rations were issued ï¿½ supplies are too low.";
 
             InformationManager.DisplayMessage(new InformationMessage(message, Colors.Yellow));
         }
@@ -5894,7 +5892,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             if (qmRep >= 50)
             {
-                return "The quartermaster is being generous — a wheel of cheese for the week.";
+                return "The quartermaster is being generous ï¿½ a wheel of cheese for the week.";
             }
             if (qmRep >= 20)
             {
