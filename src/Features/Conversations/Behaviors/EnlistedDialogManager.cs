@@ -16,6 +16,7 @@ using Enlisted.Mod.Entry;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Conversation;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 
@@ -1124,7 +1125,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         private string _selectedEquipmentCategory = "";
 
         // Track selected armor slot for armor drill-down
-        private TaleWorlds.Core.EquipmentIndex _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.None;
+        private EquipmentIndex _selectedArmorSlot = EquipmentIndex.None;
 
         // Track baggage request context for emergency access dialogue
         private string _baggageRequestType = "none";
@@ -1527,16 +1528,16 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "qm_armor_slot_options",
                     "qm_armor_slot_response",
                     "{=qm_armor_helmet}A helmet.",
-                    () => HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex.Head),
-                    () => { _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Head; });
+                    () => HasArmorSlotVariants(EquipmentIndex.Head),
+                    () => { _selectedArmorSlot = EquipmentIndex.Head; });
 
                 starter.AddPlayerLine(
                     "qm_armor_body",
                     "qm_armor_slot_options",
                     "qm_armor_slot_response",
                     "{=qm_armor_body}Body armor.",
-                    () => HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex.Body),
-                    () => { _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Body; },
+                    () => HasArmorSlotVariants(EquipmentIndex.Body),
+                    () => { _selectedArmorSlot = EquipmentIndex.Body; },
                     99);
 
                 starter.AddPlayerLine(
@@ -1544,8 +1545,8 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "qm_armor_slot_options",
                     "qm_armor_slot_response",
                     "{=qm_armor_gloves}Gloves.",
-                    () => HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex.Gloves),
-                    () => { _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Gloves; },
+                    () => HasArmorSlotVariants(EquipmentIndex.Gloves),
+                    () => { _selectedArmorSlot = EquipmentIndex.Gloves; },
                     98);
 
                 starter.AddPlayerLine(
@@ -1553,8 +1554,8 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "qm_armor_slot_options",
                     "qm_armor_slot_response",
                     "{=qm_armor_boots}Boots.",
-                    () => HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex.Leg),
-                    () => { _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Leg; },
+                    () => HasArmorSlotVariants(EquipmentIndex.Leg),
+                    () => { _selectedArmorSlot = EquipmentIndex.Leg; },
                     97);
 
                 starter.AddPlayerLine(
@@ -1562,8 +1563,8 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "qm_armor_slot_options",
                     "qm_armor_slot_response",
                     "{=qm_armor_cape}A cape or cloak.",
-                    () => HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex.Cape),
-                    () => { _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Cape; },
+                    () => HasArmorSlotVariants(EquipmentIndex.Cape),
+                    () => { _selectedArmorSlot = EquipmentIndex.Cape; },
                     96);
 
                 // Back to hub option
@@ -2006,7 +2007,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
 
             // Has horse equipped = cavalry
-            return !equipment[TaleWorlds.Core.EquipmentIndex.Horse].IsEmpty;
+            return !equipment[EquipmentIndex.Horse].IsEmpty;
         }
 
         /// <summary>
@@ -2103,22 +2104,22 @@ namespace Enlisted.Features.Conversations.Behaviors
                         break;
 
                     case "open_armor_body":
-                        _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Body;
+                        _selectedArmorSlot = EquipmentIndex.Body;
                         OnQuartermasterArmorSlotSelected();
                         break;
 
                     case "open_armor_head":
-                        _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Head;
+                        _selectedArmorSlot = EquipmentIndex.Head;
                         OnQuartermasterArmorSlotSelected();
                         break;
 
                     case "open_armor_hands":
-                        _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Gloves;
+                        _selectedArmorSlot = EquipmentIndex.Gloves;
                         OnQuartermasterArmorSlotSelected();
                         break;
 
                     case "open_armor_legs":
-                        _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Leg;
+                        _selectedArmorSlot = EquipmentIndex.Leg;
                         OnQuartermasterArmorSlotSelected();
                         break;
 
@@ -2301,7 +2302,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return true; // Default to available if can't check
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 return options != null && options.Any(kvp => kvp.Value?.Any(opt => !opt.IsAtLimit) == true);
             }
             catch
@@ -2330,15 +2331,15 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return true;
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 if (options == null)
                 {
                     return false;
                 }
 
                 // Check armor slots (body, head, leg, gloves, cape)
-                var armorSlots = new[] { TaleWorlds.Core.EquipmentIndex.Body, TaleWorlds.Core.EquipmentIndex.Head,
-                    TaleWorlds.Core.EquipmentIndex.Leg, TaleWorlds.Core.EquipmentIndex.Gloves, TaleWorlds.Core.EquipmentIndex.Cape };
+                var armorSlots = new[] { EquipmentIndex.Body, EquipmentIndex.Head,
+                    EquipmentIndex.Leg, EquipmentIndex.Gloves, EquipmentIndex.Cape };
                 return armorSlots.Any(slot => options.ContainsKey(slot) && options[slot].Any(opt => !opt.IsAtLimit));
             }
             catch
@@ -2422,7 +2423,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// <summary>
         ///     Checks if a specific armor slot has variants available.
         /// </summary>
-        private bool HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex slot)
+        private bool HasArmorSlotVariants(EquipmentIndex slot)
         {
             try
             {
@@ -2439,7 +2440,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return true;
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 return options != null && options.ContainsKey(slot) && options[slot].Any(opt => !opt.IsAtLimit);
             }
             catch
@@ -3671,10 +3672,10 @@ namespace Enlisted.Features.Conversations.Behaviors
                 var slot = _selectedArmorSlot;
 
                 // Guard against unset slot (shouldn't happen, but defensive)
-                if (slot == TaleWorlds.Core.EquipmentIndex.None)
+                if (slot == EquipmentIndex.None)
                 {
                     ModLogger.Warn("Conversations", "QM: Armor slot selection called with None, defaulting to Body");
-                    slot = TaleWorlds.Core.EquipmentIndex.Body;
+                    slot = EquipmentIndex.Body;
                 }
 
                 ModLogger.Info("Conversations", $"QM: Player selected armor slot {slot}");
@@ -3711,28 +3712,28 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
 
             System.Collections.Generic.List<EquipmentVariantOption> variants = null;
-            TaleWorlds.Core.EquipmentIndex targetSlot = TaleWorlds.Core.EquipmentIndex.Weapon0;
+            EquipmentIndex targetSlot = EquipmentIndex.Weapon0;
 
             switch (category)
             {
                 case "weapons":
                     variants = GetWeaponVariants(qm);
-                    targetSlot = TaleWorlds.Core.EquipmentIndex.Weapon0;
+                    targetSlot = EquipmentIndex.Weapon0;
                     break;
 
                 case "armor":
                     variants = GetAllArmorVariants(qm);
-                    targetSlot = TaleWorlds.Core.EquipmentIndex.Body;
+                    targetSlot = EquipmentIndex.Body;
                     break;
 
                 case "accessories":
                     variants = GetAccessoryVariants(qm);
-                    targetSlot = TaleWorlds.Core.EquipmentIndex.Cape;
+                    targetSlot = EquipmentIndex.Cape;
                     break;
 
                 case "mounts":
                     variants = GetMountVariants(qm);
-                    targetSlot = TaleWorlds.Core.EquipmentIndex.Horse;
+                    targetSlot = EquipmentIndex.Horse;
                     break;
 
                 default:
@@ -3756,7 +3757,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// <summary>
         ///     Opens Gauntlet equipment selector for a specific armor slot.
         /// </summary>
-        private void OpenGauntletForArmorSlot(TaleWorlds.Core.EquipmentIndex slot)
+        private void OpenGauntletForArmorSlot(EquipmentIndex slot)
         {
             var qm = QuartermasterManager.Instance;
             if (qm == null)
@@ -3783,15 +3784,15 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// <summary>
         ///     Gets a display name for an armor slot.
         /// </summary>
-        private static string GetArmorSlotDisplayName(TaleWorlds.Core.EquipmentIndex slot)
+        private static string GetArmorSlotDisplayName(EquipmentIndex slot)
         {
             return slot switch
             {
-                TaleWorlds.Core.EquipmentIndex.Head => "helmets",
-                TaleWorlds.Core.EquipmentIndex.Body => "body armor",
-                TaleWorlds.Core.EquipmentIndex.Gloves => "gloves",
-                TaleWorlds.Core.EquipmentIndex.Leg => "boots",
-                TaleWorlds.Core.EquipmentIndex.Cape => "capes",
+                EquipmentIndex.Head => "helmets",
+                EquipmentIndex.Body => "body armor",
+                EquipmentIndex.Gloves => "gloves",
+                EquipmentIndex.Leg => "boots",
+                EquipmentIndex.Cape => "capes",
                 _ => "armor"
             };
         }
@@ -3810,7 +3811,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 if (options == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
@@ -3843,8 +3844,8 @@ namespace Enlisted.Features.Conversations.Behaviors
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (armorMethod != null)
                 {
-                    var armorOptions = armorMethod.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
-                    if (armorOptions?.TryGetValue(TaleWorlds.Core.EquipmentIndex.Cape, out var capeOptions) == true)
+                    var armorOptions = armorMethod.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                    if (armorOptions?.TryGetValue(EquipmentIndex.Cape, out var capeOptions) == true)
                     {
                         combined.AddRange(capeOptions);
                     }
@@ -3898,16 +3899,16 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
 
                 var equipVariants = equipMethod.Invoke(qm, new object[] { troop })
-                    as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<TaleWorlds.Core.ItemObject>>;
+                    as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<ItemObject>>;
                 if (equipVariants == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
 
                 var allVariants = buildMethod.Invoke(qm, new object[] { equipVariants })
-                    as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                    as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
 
-                if (allVariants?.TryGetValue(TaleWorlds.Core.EquipmentIndex.Horse, out var mounts) == true)
+                if (allVariants?.TryGetValue(EquipmentIndex.Horse, out var mounts) == true)
                 {
                     return mounts;
                 }
@@ -3924,7 +3925,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// <summary>
         ///     Gets armor variants for a specific slot.
         /// </summary>
-        private System.Collections.Generic.List<EquipmentVariantOption> GetArmorSlotVariants(QuartermasterManager qm, TaleWorlds.Core.EquipmentIndex slot)
+        private System.Collections.Generic.List<EquipmentVariantOption> GetArmorSlotVariants(QuartermasterManager qm, EquipmentIndex slot)
         {
             try
             {
@@ -3935,7 +3936,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 if (options?.TryGetValue(slot, out var slotVariants) == true)
                 {
                     return slotVariants;
@@ -3965,7 +3966,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
                 if (options == null)
                 {
                     return new System.Collections.Generic.List<EquipmentVariantOption>();
@@ -3975,10 +3976,10 @@ namespace Enlisted.Features.Conversations.Behaviors
                 var combined = new System.Collections.Generic.List<EquipmentVariantOption>();
                 var armorSlots = new[]
                 {
-                    TaleWorlds.Core.EquipmentIndex.Head,
-                    TaleWorlds.Core.EquipmentIndex.Body,
-                    TaleWorlds.Core.EquipmentIndex.Gloves,
-                    TaleWorlds.Core.EquipmentIndex.Leg
+                    EquipmentIndex.Head,
+                    EquipmentIndex.Body,
+                    EquipmentIndex.Gloves,
+                    EquipmentIndex.Leg
                 };
 
                 foreach (var slot in armorSlots)
@@ -4288,9 +4289,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
 
                 // Check all equipment slots for upgradeable items
-                for (int i = 0; i < (int)TaleWorlds.Core.EquipmentIndex.NumEquipmentSetSlots; i++)
+                for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
                 {
-                    var slot = (TaleWorlds.Core.EquipmentIndex)i;
+                    var slot = (EquipmentIndex)i;
                     var element = hero.BattleEquipment[slot];
 
                     // Skip empty slots
@@ -4308,7 +4309,7 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                     // Skip items already at Legendary quality
                     var currentQuality = QuartermasterManager.GetModifierQuality(element.Item, element.ItemModifier);
-                    if (currentQuality == TaleWorlds.Core.ItemQuality.Legendary)
+                    if (currentQuality == ItemQuality.Legendary)
                     {
                         continue;
                     }
