@@ -1,7 +1,5 @@
-using System;
 using Enlisted.Features.Context;
 using Enlisted.Features.Interface.News.Models;
-using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem.Settlements;
 
 namespace Enlisted.Features.Interface.News.Generation.Producers
