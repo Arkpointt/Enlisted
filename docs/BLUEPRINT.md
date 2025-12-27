@@ -2,8 +2,8 @@
 
 **Summary:** Complete guide to the Enlisted mod's architecture, coding standards, and development practices. This is the single source of truth for understanding how this project works and how we write code.
 
-**Last Updated:** 2025-12-23  
-**Target Game:** Bannerlord v1.3.13  
+**Last Updated:** 2025-12-23
+**Target Game:** Bannerlord v1.3.13
 **Related Docs:** [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md), [Reference/native-apis.md](Reference/native-apis.md)
 
 ---
@@ -49,8 +49,8 @@ This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.13** that transf
 
 **Summary:** 2-3 sentences explaining what this covers and when to reference it
 
-**Status:** ✅ Current | ⚠️ In Progress | 📋 Specification | 📚 Reference  
-**Last Updated:** YYYY-MM-DD  
+**Status:** ✅ Current | ⚠️ In Progress | 📋 Specification | 📚 Reference
+**Last Updated:** YYYY-MM-DD
 **Related Docs:** [Link 1], [Link 2]
 
 ---
@@ -117,6 +117,36 @@ dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 
 ---
 
+## Code Review Checklist
+
+Before committing code, verify:
+
+**Code Quality:**
+- [ ] All ReSharper/Rider warnings addressed
+- [ ] No unused `using` directives
+- [ ] Braces used for all single-line control statements
+- [ ] No redundant namespace qualifiers
+- [ ] No unused variables, parameters, or methods
+- [ ] No redundant default parameter values in method calls
+
+**Functionality:**
+- [ ] Code builds without errors
+- [ ] Relevant tests pass (if applicable)
+- [ ] Logging added for significant actions/errors
+- [ ] Null checks added where needed
+
+**Documentation:**
+- [ ] Comments describe current behavior (not changelog)
+- [ ] XML localization strings added for new events
+- [ ] Tooltips provided for all event options
+- [ ] New files added to `Enlisted.csproj`
+
+**Data Files:**
+- [ ] JSON fallback fields immediately follow ID fields
+- [ ] Event validation passes: `python tools/events/validate_events.py`
+
+---
+
 ## Index
 
 1. [Overview & Philosophy](#overview--philosophy)
@@ -158,8 +188,21 @@ Enlisted transforms Bannerlord into a soldier career simulator. Players enlist w
 
 #### ReSharper Linter
 - **Always follow ReSharper recommendations** (available in Rider or Visual Studio)
-- Fix warnings, don't suppress with pragmas
+- **Fix all warnings before committing** - don't suppress with pragmas
+- **Run Qodana analysis** before major commits to catch code quality issues
 - Exception: Only suppress if there's a specific compatibility reason with a comment explaining why
+
+**Pre-commit checklist:**
+```powershell
+# Run Qodana analysis (if available)
+qodana scan --show-report
+
+# Build and check for errors
+dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+
+# Validate events
+python tools/events/validate_events.py
+```
 
 #### Comment Style
 Comments should be factual descriptions of current behavior, written as a human developer would—professional and natural.
@@ -189,6 +232,41 @@ private bool CanReenlistWithFaction(Kingdom faction)
 - Keep related functionality together
 - Use clear, descriptive names
 - Group related fields/properties/methods
+
+#### Code Quality Standards
+
+**Braces:**
+- Always use braces for single-line `if`, `for`, `while`, and `foreach` statements
+- Exception: Single-line property getters/setters
+
+✅ **Good:**
+```csharp
+if (condition)
+{
+    return value;
+}
+```
+
+❌ **Bad:**
+```csharp
+if (condition)
+    return value;
+```
+
+**Redundant Code:**
+- Remove unused `using` directives
+- Remove redundant namespace qualifiers (use `using` statements instead)
+- Remove redundant default parameter values in method calls
+- Remove unused local variables, parameters, and private methods
+- Remove unused property accessors (getters/setters that are never called)
+
+**Null Safety:**
+- Address `PossibleNullReferenceException` warnings with null checks or null-conditional operators
+- Use `?.` and `??` operators where appropriate
+
+**Variable Initialization:**
+- Remove redundant default member initializers (e.g., `= null`, `= 0`, `= false` for fields)
+- Combine declaration and assignment when possible
 
 ---
 
@@ -606,45 +684,61 @@ public override void SyncData(IDataStore dataStore)
 ## Common Pitfalls
 
 ### 1. Using `ChangeHeroGold` Instead of `GiveGoldAction`
-**Problem:** `ChangeHeroGold` modifies internal gold not visible in party UI  
+**Problem:** `ChangeHeroGold` modifies internal gold not visible in party UI
 **Solution:** Use `GiveGoldAction.ApplyBetweenCharacters()`
 
 ### 2. Iterating Equipment with `Enum.GetValues`
-**Problem:** Includes invalid count enum values, causes crashes  
+**Problem:** Includes invalid count enum values, causes crashes
 **Solution:** Use numeric loop to `NumEquipmentSetSlots`
 
 ### 3. Modifying Reputation/Needs Directly
-**Problem:** Bypasses clamping and logging  
+**Problem:** Bypasses clamping and logging
 **Solution:** Always use managers (EscalationManager, CompanyNeedsManager)
 
 ### 4. Not Adding New Files to .csproj
-**Problem:** New .cs files exist but aren't compiled  
+**Problem:** New .cs files exist but aren't compiled
 **Solution:** Manually add `<Compile Include="..."/>` entries
 
 ### 5. Relying on External API Documentation
-**Problem:** Outdated or incorrect API references  
+**Problem:** Outdated or incorrect API references
 **Solution:** Always verify against local decompile first
 
 ### 6. Ignoring ReSharper Warnings
-**Problem:** Code quality degrades over time  
+**Problem:** Code quality degrades over time
 **Solution:** Fix warnings, don't suppress unless absolutely necessary
 
 ### 7. Forgetting Tooltips in Events
-**Problem:** Tooltips set to null or missing, players don't understand consequences  
+**Problem:** Tooltips set to null or missing, players don't understand consequences
 **Solution:** Tooltips cannot be null. Every option must have a factual, concise tooltip
 
 ### 8. Mixing JSON Field Order
-**Problem:** Localization breaks when ID/fallback fields are separated  
+**Problem:** Localization breaks when ID/fallback fields are separated
 **Solution:** Always put fallback field immediately after ID field
 
 ### 9. Missing XML Localization Strings
-**Problem:** Events show raw string IDs (e.g., `ll_evt_example_opt_text`) instead of actual text  
-**Solution:** 
+**Problem:** Events show raw string IDs (e.g., `ll_evt_example_opt_text`) instead of actual text
+**Solution:**
 1. Run `python tools/events/sync_event_strings.py` to automatically extract missing strings from JSON event files and append them to `enlisted_strings.xml`
 2. The script extracts all string IDs (`titleId`, `setupId`, `textId`, `resultTextId`, `resultFailureTextId`) and their fallback texts from JSON, properly escaping special characters (`&#xA;` for newlines, `&apos;` for apostrophes, `&quot;` for quotes)
 3. All existing events now have complete localization (504 strings added Dec 2025 covering escalation thresholds, training events, and general content)
 4. **Validation:** Run `python tools/events/validate_events.py` before committing to catch missing fallback fields. This enforces the Critical JSON Rules above.
 
 ### 10. Missing SaveableTypeDefiner Registration
-**Problem:** "Cannot Create Save" error when serializing custom types  
+**Problem:** "Cannot Create Save" error when serializing custom types
 **Solution:** Register new classes/enums in `EnlistedSaveDefiner`, add container definitions for `Dictionary<T1,T2>` or `List<T>` with custom types
+
+### 11. Single-Line Statements Without Braces
+**Problem:** Reduces readability and increases risk of logic errors when modifying code
+**Solution:** Always use braces for `if`, `for`, `while`, `foreach` statements, even for single lines
+
+### 12. Redundant Namespace Qualifiers
+**Problem:** Makes code verbose and harder to read (e.g., `TaleWorlds.CampaignSystem.Hero` when `using TaleWorlds.CampaignSystem;` exists)
+**Solution:** Add proper `using` statements and remove full namespace paths in code
+
+### 13. Unused Code
+**Problem:** Clutters codebase, confuses developers, increases maintenance burden
+**Solution:** Remove unused using directives, variables, parameters, methods, and property accessors
+
+### 14. Redundant Default Parameters
+**Problem:** Passing default parameter values explicitly is redundant and verbose
+**Solution:** Omit parameters that match the method's default value (e.g., `Finish()` instead of `Finish(true)` if `true` is the default)
