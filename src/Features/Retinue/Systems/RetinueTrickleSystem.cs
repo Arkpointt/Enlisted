@@ -46,9 +46,6 @@ namespace Enlisted.Features.Retinue.Systems
 
         public static RetinueTrickleSystem Instance { get; private set; }
 
-        // Tracks the last trickle context for notification flavor
-        private TrickleContext _lastTrickleContext = TrickleContext.Default;
-
         public RetinueTrickleSystem()
         {
             Instance = this;
@@ -187,7 +184,6 @@ namespace Enlisted.Features.Retinue.Systems
 
                 // Reset counter
                 state.DaysSinceLastTrickle = 0;
-                _lastTrickleContext = context;
 
                 // Calculate safe add count with overfill protection
                 var safeCount = CalculateSafeAddCount(SoldiersPerTrickle);

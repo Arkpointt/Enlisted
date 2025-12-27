@@ -36,10 +36,13 @@ namespace Enlisted.Features.Interface.News.State
             if (_archive == null || _archive.Length != _archiveCapacity)
             {
                 var next = new DailyReportRecord[_archiveCapacity];
-                var copyCount = _archive == null ? 0 : Math.Min(_archive.Length, next.Length);
-                if (copyCount > 0)
+                if (_archive != null)
                 {
-                    Array.Copy(_archive, 0, next, 0, copyCount);
+                    var copyCount = Math.Min(_archive.Length, next.Length);
+                    if (copyCount > 0)
+                    {
+                        Array.Copy(_archive, 0, next, 0, copyCount);
+                    }
                 }
 
                 _archive = next;

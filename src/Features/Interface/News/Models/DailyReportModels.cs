@@ -71,6 +71,7 @@ namespace Enlisted.Features.Interface.News.Models
         public int SickDelta { get; set; }
         public int DeadDelta { get; set; }
         public int ReplacementsDelta { get; set; }
+        public HealthDeltaBand HealthDeltaBand { get; set; } = HealthDeltaBand.Unknown;
 
         // Company bands (best-effort; populated by producers in Phase 4)
         public ThreatBand Threat { get; set; } = ThreatBand.Unknown;
@@ -88,7 +89,6 @@ namespace Enlisted.Features.Interface.News.Models
         public string StrategicContextTag { get; set; } = string.Empty; // e.g. "coordinated_offensive", "winter_camp"
 
         // Optional: stabilization helpers used by template selection.
-        public HealthDeltaBand HealthDeltaBand { get; set; } = HealthDeltaBand.Unknown;
         public TrainingTag TrainingTag { get; set; } = TrainingTag.Unknown;
 
         public void Normalize()

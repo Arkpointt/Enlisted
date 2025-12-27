@@ -1335,23 +1335,6 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        ///     Converts our formation string (from duties system) to a FormationClass enum.
-        /// </summary>
-        private FormationClass GetFormationClassFromString(string formation)
-        {
-            return formation?.ToLower() switch
-            {
-                "infantry" => FormationClass.Infantry,
-                "archer" => FormationClass.Ranged,
-                "ranged" => FormationClass.Ranged,
-                "cavalry" => FormationClass.Cavalry,
-                "horsearcher" => FormationClass.HorseArcher,
-                "horse_archer" => FormationClass.HorseArcher,
-                _ => FormationClass.Infantry // Default fallback
-            };
-        }
-
-        /// <summary>
         /// Detects the appropriate formation for the player based on their equipped weapons and mount.
         /// Uses the CharacterObject's IsRanged and IsMounted properties which check battle equipment.
         /// </summary>

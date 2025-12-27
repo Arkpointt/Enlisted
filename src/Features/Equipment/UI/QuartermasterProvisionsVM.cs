@@ -55,7 +55,6 @@ namespace Enlisted.Features.Equipment.UI
         public string RestockInfoText { get; private set; }
 
         // Player tier determines UI mode
-        private readonly int _playerTier;
         private readonly bool _isOfficer;
 
         // Items per row in grid
@@ -71,8 +70,8 @@ namespace Enlisted.Features.Equipment.UI
             ProvisionRows = new MBBindingList<QuartermasterProvisionRowVm>();
 
             // Determine player tier for UI mode selection
-            _playerTier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
-            _isOfficer = _playerTier >= 7;
+            var playerTier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            _isOfficer = playerTier >= 7;
 
             ShowRationInfo = !_isOfficer;
             ShowProvisionsShop = _isOfficer;
@@ -80,7 +79,7 @@ namespace Enlisted.Features.Equipment.UI
             // Build provisions grid
             BuildProvisionsGrid();
 
-            ModLogger.Info("QuartermasterUI", $"Provisions UI initialized - Tier {_playerTier}, Officer: {_isOfficer}");
+            ModLogger.Info("QuartermasterUI", $"Provisions UI initialized - Tier {playerTier}, Officer: {_isOfficer}");
         }
 
         /// <summary>

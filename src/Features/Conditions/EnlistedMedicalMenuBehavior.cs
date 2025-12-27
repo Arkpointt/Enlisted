@@ -373,7 +373,7 @@ namespace Enlisted.Features.Conditions
         {
             var cond = PlayerConditionBehavior.Instance;
             // Illness without treatment may worsen
-            return cond?.State?.HasIllness == true && cond.State.UnderMedicalCare == false;
+            return cond?.State?.HasIllness == true && !cond.State.UnderMedicalCare;
         }
 
         private static string GetRecoveryEstimate()

@@ -94,25 +94,25 @@ namespace Enlisted.Features.Retinue.Data
     /// Starts at 50 (neutral). Low loyalty can trigger desertion events.
     /// High loyalty provides combat bonuses and morale stability.
     /// </summary>
-    public int RetinueLoyalty { get; set; } = 50;
+    public int RetinueLoyalty { get; set; }
 
     /// <summary>
     /// The last loyalty threshold that was crossed and triggered an event.
     /// Prevents duplicate events when loyalty oscillates around a threshold.
     /// </summary>
-    public LoyaltyThreshold LastLoyaltyThresholdCrossed { get; set; } = LoyaltyThreshold.None;
+    public LoyaltyThreshold LastLoyaltyThresholdCrossed { get; set; }
 
     /// <summary>
     /// Campaign time when the last threshold event was triggered.
     /// Used to enforce cooldown between threshold events (7 days minimum).
     /// </summary>
-    public CampaignTime LastThresholdEventTime { get; set; } = CampaignTime.Zero;
+    public CampaignTime LastThresholdEventTime { get; set; }
 
     /// <summary>
     /// Named veterans who have emerged from the ranks. These soldiers have names, traits,
     /// and tracked history. Their deaths trigger memorial events. Maximum 5 veterans at a time.
     /// </summary>
-    public List<NamedVeteran> NamedVeterans { get; set; } = new List<NamedVeteran>();
+    public List<NamedVeteran> NamedVeterans { get; set; }
 
     /// <summary>
     /// Maximum number of named veterans that can exist at once.

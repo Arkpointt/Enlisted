@@ -65,10 +65,7 @@ namespace Enlisted.Features.Logistics
         public class ContrabandItem
         {
             public ItemObject Item { get; set; }
-            public int Amount { get; set; }
             public int Value { get; set; }
-            public string ViolationType { get; set; }
-            public string Description { get; set; }
         }
 
         /// <summary>
@@ -109,10 +106,7 @@ namespace Enlisted.Features.Logistics
                         result.Items.Add(new ContrabandItem
                         {
                             Item = item,
-                            Amount = amount,
-                            Value = item.Value * amount,
-                            ViolationType = violation.Item1,
-                            Description = violation.Item2
+                            Value = item.Value * amount
                         });
                     }
                 }

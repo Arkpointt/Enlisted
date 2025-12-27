@@ -1,7 +1,7 @@
 ﻿import json
 import sys
 
-sarif_path = r"C:\Dev\Qodana\20yE6_6PNNM_d7a3021c-abd5-4243-a95f-1868b9dcd655_qodana.sarif.json"
+sarif_path = r"C:\Dev\Qodana\20yE6_6PNNM_d4fc4d4b-3ae4-4e56-984f-236cdac73577_qodana.sarif.json"
 
 with open(sarif_path, 'r', encoding='utf-8') as f:
     data = json.load(f)

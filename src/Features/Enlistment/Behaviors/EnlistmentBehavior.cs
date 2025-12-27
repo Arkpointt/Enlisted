@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Enlisted.Features.Retinue.Core;
+using Enlisted.Features.Retinue.Data;
 using Enlisted.Features.Content;
 using Enlisted.Features.Combat.Behaviors;
 using Enlisted.Features.Company;
@@ -298,7 +299,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Set when army is defeated or lord is captured. Player can rejoin any lord in this kingdom
         ///     during the grace period to avoid penalties.
         /// </summary>
-        private Kingdom _pendingDesertionKingdom = null;
+        private Kingdom _pendingDesertionKingdom;
 
         /// <summary>
         ///     Tracks pending capture cleanup when the player is taken prisoner during an encounter.
@@ -350,8 +351,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         // _fatigueCurrent represents REMAINING fatigue points (24 = fresh, 0 = exhausted)
         // Health penalties trigger at LOW fatigue (8 or less remaining)
         private CampaignTime _lastFatigueRecoveryTime = CampaignTime.Zero;
-        private float _healthBeforeExhaustion = -1f;
-        private float _accumulatedFatigueRecovery = 0f; // Fractional recovery accumulator
+        private float _healthBeforeExhaustion;
+        private float _accumulatedFatigueRecovery; // Fractional recovery accumulator
 
         private bool _playerCaptureCleanupScheduled;
         private CampaignTime _savedGraceEnlistmentDate = CampaignTime.Zero;
@@ -686,7 +687,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Strip localization prefix if present (e.g., "{=Enlisted_Rank_Vlandia_T5}Sergeant")
             if (!string.IsNullOrEmpty(rankTitle) && rankTitle.Contains("}"))
             {
-                rankTitle = rankTitle.Substring(rankTitle.IndexOf("}") + 1);
+                var closeBraceIndex = rankTitle.IndexOf("}", StringComparison.Ordinal);
+                if (closeBraceIndex >= 0)
+                {
+                    rankTitle = rankTitle.Substring(closeBraceIndex + 1);
+                }
             }
 
             return !string.IsNullOrEmpty(rankTitle) ? rankTitle : "Sergeant";
@@ -1591,9 +1596,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Edge case handlers for grace period:
             // Clear grace period if player changes kingdoms or if kingdom is destroyed
-            CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener(this,
-                new Action<Clan, Kingdom, Kingdom, ChangeKingdomAction.ChangeKingdomActionDetail, bool>(
-                    OnClanChangedKingdom));
+            CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener(this, OnClanChangedKingdom);
             CampaignEvents.KingdomDestroyedEvent.AddNonSerializedListener(this, OnKingdomDestroyed);
 
             // Mission started event - used to add our formation assignment behavior
@@ -3802,17 +3805,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         // Obsolete stub methods kept for save compatibility with older event handlers
 
-        private string FormatStyleDisplayName(string styleId)
-        {
-            if (string.IsNullOrWhiteSpace(styleId))
-            {
-                return "Mercenary";
-            }
-
-            var trimmed = styleId.Replace("style_", "").Replace("_", " ");
-            return char.ToUpper(trimmed[0]) + trimmed.Substring(1);
-        }
-
         /// <summary>
         ///     Discharge the player from enlistment. By default, returns the player to independent status.
         ///     Exception: If honorably discharged after completing the configured full service period,
@@ -3820,6 +3812,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         /// <param name="reason">Reason for discharge (for logging).</param>
         /// <param name="isHonorableDischarge">Whether this is an honorable discharge (e.g., lord died). Defaults to false.</param>
+        /// <param name="retainKingdomDuringGrace">If true, keeps player in kingdom during grace period. Defaults to false.</param>
         public void StopEnlist(string reason, bool isHonorableDischarge = false, bool retainKingdomDuringGrace = false)
         {
             try
@@ -7246,61 +7239,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 
         /// <summary>
-        ///     Check for promotion based on XP thresholds.
-        /// </summary>
-        private void CheckForPromotion()
-        {
-            // Load tier XP requirements from progression_config.json
-            var tierXPRequirements = EnlistedConfig.GetTierXpRequirements();
-
-            // Get actual max tier from config (e.g., 6 for tiers 1-6)
-            var maxTier = EnlistedConfig.GetMaxTier();
-
-            var promoted = false;
-
-            // Check if player has enough XP for next tier (up to max tier)
-            while (_enlistmentTier < maxTier && _enlistmentXP >= tierXPRequirements[_enlistmentTier])
-            {
-                // Temporary promotion block at very high discipline risk.
-                // This is a relief-valve-friendly block: XP keeps accumulating and promotion will resume
-                // once discipline improves below the threshold.
-                var escalation = EscalationManager.Instance;
-                if (escalation?.IsEnabled() == true &&
-                    escalation.State != null &&
-                    escalation.State.Discipline >= EscalationThresholds.DisciplineBlocked)
-                {
-                    var show = _lastPromotionBlockedMessageTime == CampaignTime.Zero ||
-                               (CampaignTime.Now - _lastPromotionBlockedMessageTime).ToDays >= 1f;
-                    if (show)
-                    {
-                        _lastPromotionBlockedMessageTime = CampaignTime.Now;
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=enlist_promotion_blocked_discipline}Promotion blocked: your discipline is under review. Reduce discipline risk before advancing.").ToString(),
-                            Colors.Yellow));
-                    }
-                    break;
-                }
-
-                _enlistmentTier++;
-                promoted = true;
-                ModLogger.Info("Progression", $"Promoted to Tier {_enlistmentTier}");
-            }
-
-            // Show promotion notification
-            if (promoted)
-            {
-                var rankNameStr = GetRankName(_enlistmentTier);
-                var rankName = new TextObject(rankNameStr);
-
-                var message =
-                    new TextObject(
-                        "{=Enlisted_Message_PromotionAchieved}Promotion achieved! Your service and dedication have been recognized. You are now a {RANK}.");
-                message.SetTextVariable("RANK", rankName);
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-            }
-        }
-
-        /// <summary>
         ///     Validate loaded state and handle any corruption.
         /// </summary>
         private void ValidateLoadedState()
@@ -9194,32 +9132,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Checks if the current renewal term has completed.
-        ///     Shows notification when term expires.
-        /// </summary>
-        private void CheckRenewalTermCompletion()
-        {
-            if (!IsEnlisted || !IsInRenewalTerm)
-            {
-                return;
-            }
-
-            var faction = _enlistedLord.MapFaction;
-            var record = GetFactionVeteranRecord(faction);
-
-            if (record != null && record.CurrentTermEnd != CampaignTime.Zero && CampaignTime.Now >= record.CurrentTermEnd)
-            {
-                var message =
-                    new TextObject(
-                        "{=Enlisted_Message_TermEndedDischarge}Your service term has ended. Speak with {LORD} to receive your discharge bonus or continue service.");
-                message.SetTextVariable("LORD", _enlistedLord.Name);
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
-
-                ModLogger.Info("Retirement", "Renewal term complete - player should speak with lord");
-            }
-        }
-
-        /// <summary>
         ///     Process first-term retirement: apply full benefits and start cooldown.
         ///     Called when player chooses to retire after first term.
         /// </summary>
@@ -10304,7 +10216,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 try
                 {
-                    Features.Retinue.Core.RetinueRecruitmentGrant.GrantCommanderRetinue(tier, previousTier);
+                    RetinueRecruitmentGrant.GrantCommanderRetinue(tier, previousTier);
                 }
                 catch (Exception ex)
                 {
@@ -11202,7 +11114,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
+            var retinueManager = RetinueManager.Instance;
             if (retinueManager?.State == null || retinueManager.State.TotalSoldiers <= 0)
             {
                 return;
@@ -11249,7 +11161,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <param name="isHonorableDischarge">Whether this is an honorable discharge.</param>
         private void HandleRetinueOnServiceEnd(bool isHonorableDischarge)
         {
-            var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
+            var retinueManager = RetinueManager.Instance;
             var state = retinueManager?.State;
 
             if (state == null || !state.HasTypeSelected)
@@ -11298,7 +11210,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Removes retinue soldiers from player's party and adds them to lord's party.
         /// </summary>
-        private void ReturnRetinueSoldiersToLord(Features.Retinue.Data.RetinueState state)
+        private void ReturnRetinueSoldiersToLord(RetinueState state)
         {
             var playerRoster = MobileParty.MainParty?.MemberRoster;
             var lordParty = _enlistedLord?.PartyBelongedTo;
@@ -11352,7 +11264,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return false;
             }
 
-            var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
+            var retinueManager = RetinueManager.Instance;
             return retinueManager?.State?.TotalSoldiers > 0;
         }
 
@@ -11429,31 +11341,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Promotion", "Error applying basic promotion", ex);
-            }
-        }
-
-        /// <summary>
-        ///     Show promotion notification directly to player.
-        /// </summary>
-        private void ShowPromotionNotification(int availableTier)
-        {
-            try
-            {
-                var rankNameStr = GetRankName(availableTier);
-                var rankName = new TextObject(rankNameStr);
-
-                var message =
-                    new TextObject(
-                        "{=Enlisted_Promotion_Available}Promotion available! You can advance to {RANK} (Tier {TIER}). Press 'P' to choose your advancement!");
-                message.SetTextVariable("RANK", rankName);
-                message.SetTextVariable("TIER", availableTier);
-
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-                ModLogger.Info("Progression", $"Promotion notification shown for Tier {availableTier}");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Progression", "E-PROG-002", "Error showing promotion notification", ex);
             }
         }
 
@@ -11757,7 +11644,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Fallback: Basic restoration if equipment manager not available
                     if (_personalBattleEquipment != null)
                     {
-                        Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, _personalBattleEquipment);
+                        EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, _personalBattleEquipment);
                     }
 
                     if (_personalCivilianEquipment != null)
@@ -11911,7 +11798,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Use lord's culture basic troop equipment
                 var basicTroopEquipment = _enlistedLord.Culture.BasicTroop.Equipment;
-                Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, basicTroopEquipment);
+                EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, basicTroopEquipment);
 
                 // CRITICAL: Restore quest items after equipment assignment
                 equipmentManager?.RestoreEquippedQuestItems(questItems);
@@ -11932,54 +11819,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Formation preferences are now tracked via native traits
         }
 
-
-        /// <summary>
-        ///     Handle battle participation detection and automatic joining.
-        ///     Detects when lord enters combat and enables player battle participation.
-        /// </summary>
-        private void HandleBattleParticipation(MobileParty main, MobileParty lordParty)
-        {
-            try
-            {
-                // Check if lord is currently in battle
-                // CORRECT API: Use Party.MapEvent (not direct on MobileParty)
-                bool lordInBattle = lordParty.Party.MapEvent != null;
-                bool playerInBattle = main.Party.MapEvent != null;
-
-                if (lordInBattle && !playerInBattle)
-                {
-                    ModLogger.Info("Battle", "Lord entering combat - enabling battle participation");
-
-                    // CRITICAL: Enable player for battle participation
-                    main.IsActive = true; // This should trigger encounter menu
-
-                    // Try to force battle participation through positioning
-                    // Position is handled by Escort AI (SetMoveEscortParty)
-
-                    var message = new TextObject("{=enlist_following_battle}Following your lord into battle!");
-                    InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-                }
-                else if (!lordInBattle && playerInBattle)
-                {
-                    ModLogger.Info("Battle", "Battle ended - restoring normal service");
-
-                    // Restore normal enlisted state
-                    main.IsActive = false; // Return to normal encounter prevention
-                    main.IsVisible = false; // Return to invisible state
-                }
-                else if (!lordInBattle)
-                {
-                    // Normal state - not in battle
-                    main.IsActive = false; // Disable party activity to prevent random encounters
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Battle", "Error in battle participation handling", ex);
-                // Fallback: maintain normal enlisted state
-                main.IsActive = false;
-            }
-        }
 
         #endregion
 
@@ -12534,135 +12373,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Enlistment", "Error reclaiming companions from lord", ex);
-            }
-        }
-
-        /// <summary>
-        ///     Army-aware battle participation logic.
-        ///     Handles both individual lord battles and army battles with proper state management.
-        /// </summary>
-        private void HandleArmyBattleParticipation(MobileParty main, MobileParty lordParty)
-        {
-            try
-            {
-                // Check if lord is part of an army
-                var lordArmy = lordParty.Army;
-                var armyLeader = lordArmy?.LeaderParty;
-
-                // Determine the effective battle party (army leader or individual lord)
-                var battleParty = armyLeader ?? lordParty;
-                // CORRECT API: Use Party.MapEvent (not direct on MobileParty)
-                var isBattlePartyInCombat = battleParty.Party.MapEvent != null;
-                var isPlayerInBattle = main.Party.MapEvent != null;
-
-                if (isBattlePartyInCombat && !isPlayerInBattle)
-                {
-                    // Battle detected, activate player party for participation
-                    if (lordArmy != null)
-                    {
-                        ModLogger.Info("Battle",
-                            $"ARMY BATTLE DETECTED - Army Leader: {armyLeader?.LeaderHero?.Name}, Lord: {_enlistedLord.Name}");
-                        ModLogger.Debug("Battle",
-                            $"Army details - Army size: {lordArmy.Parties.Count}, Battle party: {battleParty.LeaderHero?.Name}");
-                        HandleArmyBattle();
-                    }
-                    else
-                    {
-                        ModLogger.Info("Battle", $"Individual lord battle detected - Lord: {_enlistedLord.Name}");
-                        HandleIndividualBattle(lordParty);
-                    }
-                }
-                else if (!isBattlePartyInCombat && isPlayerInBattle)
-                {
-                    // Battle ended, clean up
-                    ModLogger.Info("Battle", "Battle ended, returning to enlisted state");
-                    HandlePostBattleCleanup(main, lordParty);
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Battle", "E-BATTLE-008", "Error in army battle participation", ex);
-            }
-        }
-
-        /// <summary>
-        ///     Handle army battle participation.
-        ///     Uses army membership for battle participation, keeps player party inactive to avoid conflicts.
-        /// </summary>
-        private void HandleArmyBattle()
-        {
-            try
-            {
-                // Don't activate player party - use army membership for battle participation
-                // The player participates through being part of the lord's army, not as independent party
-                ModLogger.Info("Battle", "Army battle detected, player participates through army membership");
-
-                // Ensure player is positioned with army for battle camera/interface
-                // Position is handled by Escort AI (SetMoveEscortParty)
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Battle", "E-BATTLE-009", "Error handling army battle", ex);
-            }
-        }
-
-        /// <summary>
-        ///     Handle individual lord battle participation.
-        ///     Creates temporary army for individual battles when needed.
-        /// </summary>
-        private void HandleIndividualBattle(MobileParty lordParty)
-        {
-            try
-            {
-                // For individual lord battles, create temporary army if needed
-                if (lordParty.Army == null)
-                {
-                    ModLogger.Info("Battle", "Creating temporary army for individual lord battle");
-                    // Create temporary army so player can participate through army mechanics
-                    var kingdom = lordParty.ActualClan?.Kingdom;
-                    if (kingdom != null)
-                    {
-                        kingdom.CreateArmy(lordParty.LeaderHero, lordParty.HomeSettlement, Army.ArmyTypes.Patrolling);
-                        _disbandArmyAfterBattle = true; // Track that we created this army
-                        ModLogger.Debug("Battle", "Temporary army created for battle participation");
-                    }
-                }
-
-                // Keep player positioned with lord
-                // Position is handled by Escort AI (SetMoveEscortParty)
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Battle", "E-BATTLE-010", "Error handling individual battle", ex);
-            }
-        }
-
-        /// <summary>
-        ///     Clean up after battle ends.
-        ///     Disbands temporary armies if we created them.
-        /// </summary>
-        private void HandlePostBattleCleanup(MobileParty main, MobileParty lordParty)
-        {
-            try
-            {
-                // Disband temporary army if we created it
-                if (_disbandArmyAfterBattle && lordParty.Army != null)
-                {
-                    ModLogger.Info("Battle", "Disbanding temporary army after battle");
-                    var army = lordParty.Army;
-                    DisbandArmyAction.ApplyByUnknownReason(army);
-                    _disbandArmyAfterBattle = false;
-                    ModLogger.Debug("Battle", "Temporary army disbanded");
-                }
-
-                // Return to standard hidden enlisted state (always inactive/invisible)
-                main.IsActive = false;
-                main.IsVisible = false;
-                ModLogger.Info("Battle", "Player returned to hidden enlisted state after battle");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Battle", "E-BATTLE-011", "Error in post-battle cleanup", ex);
             }
         }
 
@@ -13710,7 +13420,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Check if player was waiting in reserve - if so, clean up the reserve state
             // so the player can appear on the map after the battle ends
-            var wasInReserve = Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve;
+            var wasInReserve = EnlistedEncounterBehavior.IsWaitingInReserve;
 
             if (wasInReserve)
             {
@@ -13720,7 +13430,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // 2. GameMenu.ExitToLast() can interrupt normal tick processing
                 // 3. If game time is paused (menus), the encounter stays stuck forever
                 // 4. This caused players to be stuck invisible with no way to recover
-                Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
+                EnlistedEncounterBehavior.ClearReserveState();
 
                 // CRITICAL: Immediately finish the encounter - don't rely on LeaveEncounter flag
                 var encounter = PlayerEncounter.Current;
@@ -14116,7 +13826,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Diagnostics",
-                    $"Error evaluating siege state for {party?.LeaderHero.Name.ToString() ?? "unknown"}: {ex.Message}");
+                    $"Error evaluating siege state for {party.LeaderHero?.Name.ToString() ?? "unknown"}: {ex.Message}");
             }
 
             return false;

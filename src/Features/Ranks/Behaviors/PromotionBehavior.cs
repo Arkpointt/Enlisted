@@ -17,7 +17,6 @@ namespace Enlisted.Features.Ranks.Behaviors
     /// </summary>
     public sealed class PromotionRequirements
     {
-        public int XP { get; set; }
         public int DaysInRank { get; set; }
         public int BattlesRequired { get; set; }
         public int MinSoldierReputation { get; set; }
@@ -45,15 +44,15 @@ namespace Enlisted.Features.Ranks.Behaviors
 
             return targetTier switch
             {
-                2 => new PromotionRequirements { XP = 700, DaysInRank = 14, BattlesRequired = 2, MinSoldierReputation = 0, MinLeaderRelation = 0, MaxDiscipline = 8 },
-                3 => new PromotionRequirements { XP = 2200, DaysInRank = 35, BattlesRequired = 6, MinSoldierReputation = 10, MinLeaderRelation = 10, MaxDiscipline = 7 },
-                4 => new PromotionRequirements { XP = 4400, DaysInRank = 56, BattlesRequired = 12, MinSoldierReputation = 20, MinLeaderRelation = 20, MaxDiscipline = 6 },
-                5 => new PromotionRequirements { XP = 6600, DaysInRank = 56, BattlesRequired = 20, MinSoldierReputation = 30, MinLeaderRelation = 30, MaxDiscipline = 5 },
-                6 => new PromotionRequirements { XP = 8800, DaysInRank = 56, BattlesRequired = 30, MinSoldierReputation = 40, MinLeaderRelation = 15, MaxDiscipline = 4 },
-                7 => new PromotionRequirements { XP = 11000, DaysInRank = 70, BattlesRequired = 40, MinSoldierReputation = 50, MinLeaderRelation = 20, MaxDiscipline = 3 },
-                8 => new PromotionRequirements { XP = 14000, DaysInRank = 84, BattlesRequired = 50, MinSoldierReputation = 60, MinLeaderRelation = 25, MaxDiscipline = 2 },
-                9 => new PromotionRequirements { XP = 18000, DaysInRank = 112, BattlesRequired = 60, MinSoldierReputation = 70, MinLeaderRelation = 30, MaxDiscipline = 1 },
-                _ => new PromotionRequirements { XP = int.MaxValue, DaysInRank = 999, BattlesRequired = 999, MinSoldierReputation = 999, MinLeaderRelation = 999, MaxDiscipline = 0 }
+                2 => new PromotionRequirements { DaysInRank = 14, BattlesRequired = 2, MinSoldierReputation = 0, MinLeaderRelation = 0, MaxDiscipline = 8 },
+                3 => new PromotionRequirements { DaysInRank = 35, BattlesRequired = 6, MinSoldierReputation = 10, MinLeaderRelation = 10, MaxDiscipline = 7 },
+                4 => new PromotionRequirements { DaysInRank = 56, BattlesRequired = 12, MinSoldierReputation = 20, MinLeaderRelation = 20, MaxDiscipline = 6 },
+                5 => new PromotionRequirements { DaysInRank = 56, BattlesRequired = 20, MinSoldierReputation = 30, MinLeaderRelation = 30, MaxDiscipline = 5 },
+                6 => new PromotionRequirements { DaysInRank = 56, BattlesRequired = 30, MinSoldierReputation = 40, MinLeaderRelation = 15, MaxDiscipline = 4 },
+                7 => new PromotionRequirements { DaysInRank = 70, BattlesRequired = 40, MinSoldierReputation = 50, MinLeaderRelation = 20, MaxDiscipline = 3 },
+                8 => new PromotionRequirements { DaysInRank = 84, BattlesRequired = 50, MinSoldierReputation = 60, MinLeaderRelation = 25, MaxDiscipline = 2 },
+                9 => new PromotionRequirements { DaysInRank = 112, BattlesRequired = 60, MinSoldierReputation = 70, MinLeaderRelation = 30, MaxDiscipline = 1 },
+                _ => new PromotionRequirements { DaysInRank = 999, BattlesRequired = 999, MinSoldierReputation = 999, MinLeaderRelation = 999, MaxDiscipline = 0 }
             };
         }
     }
@@ -349,29 +348,6 @@ namespace Enlisted.Features.Ranks.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Promotion", "Error checking for promotion", ex);
-            }
-        }
-
-        /// <summary>
-        ///     Trigger formation selection at Tier 2 (specialization choice).
-        /// </summary>
-        private void TriggerFormationSelection(int newTier)
-        {
-            try
-            {
-                _formationSelectionPending = true;
-
-                var message = new TextObject("{=formation_select_msg}The serjeant surveys the recruits. 'Time to find your place in the line, soldier. What are you trained for?'");
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Cyan));
-
-                // Open formation selection (can be enhanced with custom menu later)
-                ShowFormationSelectionOptions();
-
-                ModLogger.Info("Promotion", $"Formation selection triggered for Tier {newTier}");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Promotion", "Error triggering formation selection", ex);
             }
         }
 

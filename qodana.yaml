@@ -21,10 +21,39 @@ profile:
 #  - name: <SomeEnabledInspectionId>
 
 #Disable inspections
-#exclude:
-#  - name: <SomeDisabledInspectionId>
-#    paths:
-#      - <path/where/not/run/inspection>
+exclude:
+  - name: UnusedMember.Local
+    paths:
+      - src/Mod.GameAdapters/Patches/**/*.cs  # Harmony patches - methods called dynamically by Harmony runtime
+  - name: UnusedAutoPropertyAccessor.Global
+    paths:
+      - src/Features/Interface/News/Models/CampLifeLedger.cs  # Properties used by GetRollingTotals() return type
+      - src/Features/Equipment/UI/QuartermasterProvisionsVM.cs  # Properties used by Gauntlet UI binding
+      - src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs  # Instance singleton pattern
+      - src/Features/Combat/Behaviors/EnlistedKillTrackerBehavior.cs  # Instance singleton pattern
+      - src/Features/Conditions/EnlistedMedicalMenuBehavior.cs  # Instance singleton pattern
+      - src/Features/Content/MapIncidentManager.cs  # Instance singleton pattern
+      - src/Features/Enlistment/Behaviors/MusterMenuHandler.cs  # Instance singleton pattern
+      - src/Features/Equipment/UI/QuartermasterEquipmentSelectorBehavior.cs  # Instance singleton pattern
+      - src/Features/Equipment/UI/QuartermasterProvisionsBehavior.cs  # Instance singleton pattern
+      - src/Features/Retinue/Core/RetinueLifecycleHandler.cs  # Instance singleton pattern
+      - src/Features/Retinue/Systems/RetinueCasualtyTracker.cs  # Instance singleton pattern
+      - src/Features/Enlistment/Behaviors/MusterMenuHandler.cs  # RationOutcome.set needed for object initialization
+  - name: AssignNullToNotNullAttribute
+    paths:
+      - src/Features/Interface/News/State/CampNewsState.cs  # False positive - null check exists before Array.Copy
+  - name: ConditionIsAlwaysTrueOrFalse
+    paths:
+      - src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs  # False positive - condition is not always true
+  - name: ConstantNullCoalescingCondition
+    paths:
+      - src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs  # False positives - null coalescing operators are valid
+  - name: DefaultStructEqualityIsUsed.Global
+    paths:
+      - src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs  # DispatchItem implements IEquatable properly
+  - name: UsageOfDefaultStructEquality
+    paths:
+      - src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs  # DispatchItem implements IEquatable properly
 
 #Execute shell command before Qodana execution (Applied in CI/CD pipeline)
 #bootstrap: sh ./prepare-qodana.sh

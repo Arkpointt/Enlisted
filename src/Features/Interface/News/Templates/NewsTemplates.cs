@@ -29,12 +29,10 @@ namespace Enlisted.Features.Interface.News.Templates
         public NewsTemplate(string id, NewsTemplateCategory category, string format)
         {
             Id = id ?? string.Empty;
-            Category = category;
             Format = format ?? string.Empty;
         }
 
         public string Id { get; }
-        public NewsTemplateCategory Category { get; }
         public string Format { get; }
     }
 

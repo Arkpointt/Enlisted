@@ -23,7 +23,7 @@ namespace Enlisted.Features.Conversations.Data
         public string Text { get; set; }
 
         /// <summary>
-        /// Tooltip explaining what this option does.
+        /// Optional tooltip text for additional context.
         /// </summary>
         public string Tooltip { get; set; }
 

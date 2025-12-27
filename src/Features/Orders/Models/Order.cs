@@ -36,7 +36,7 @@ namespace Enlisted.Features.Orders.Models
         public CampaignTime IssuedTime { get; set; }
 
         /// <summary>
-        /// Campaign time when this order expires if not accepted or completed.
+        /// Campaign time when this order expires (if not completed).
         /// </summary>
         public CampaignTime ExpirationTime { get; set; }
 

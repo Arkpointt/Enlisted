@@ -227,30 +227,6 @@ namespace Enlisted.Features.Equipment.Behaviors
             try { return troop.GetBattleTier(); } catch { return 1; }
         }
 
-        private List<InquiryElement> BuildInquiryElements(List<CharacterObject> troops)
-        {
-            var elements = new List<InquiryElement>();
-            foreach (var troop in troops)
-            {
-                try
-                {
-                    var title = troop?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
-                    var element = new InquiryElement(
-                        troop,
-                        title,
-                        null,
-                        true,
-                        null);
-                    elements.Add(element);
-                }
-                catch
-                {
-                    // Best effort; skip this troop if element creation fails
-                }
-            }
-            return elements;
-        }
-
         private string BuildTroopLoadoutHint(CharacterObject troop)
         {
             try

@@ -2474,7 +2474,6 @@ namespace Enlisted.Features.Conversations.Behaviors
                 var supplies = companyNeeds.Supplies;
                 var equipment = companyNeeds.Equipment;
                 var morale = companyNeeds.Morale;
-                var readiness = companyNeeds.Readiness;
                 var archetype = enlistment.QuartermasterArchetype;
                 var reputation = enlistment.QuartermasterRelationship;
 
@@ -2749,7 +2748,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 var discountPct = GetReputationDiscount(reputation);
 
                 // Generate contextual browse response with rank, supply, rep, and price hints
-                string response = GetBrowseResponse(supplies, equipment, archetype, reputation, tier, rankTitle, discountPct);
+                string response = GetBrowseResponse(supplies, equipment, reputation, tier, rankTitle, discountPct);
 
                 MBTextManager.SetTextVariable("BROWSE_RESPONSE", response);
                 return true;
@@ -2859,12 +2858,10 @@ namespace Enlisted.Features.Conversations.Behaviors
         ///     Generates a contextual browse response based on supply/equipment levels, archetype, and reputation.
         ///     Uses XML localization strings with full validation and fallback handling.
         /// </summary>
-        private string GetBrowseResponse(int suppliesParam, int equipmentParam, string archetype, int reputation, int tier = 1, string rankTitle = "Soldier", int discountPct = 0)
+        private string GetBrowseResponse(int suppliesParam, int equipmentParam, int reputation, int tier = 1, string rankTitle = "Soldier", int discountPct = 0)
         {
             // Validate and normalize inputs
-            archetype = ValidateArchetype(archetype);
             int supplies = Clamp(suppliesParam, 0, 100);
-            int equipment = Clamp(equipmentParam, 0, 100);
 
             // Build a contextual response with multiple parts:
             // 1. Stock/supply context
@@ -5493,7 +5490,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Info("DialogManager", "Player accepting T7 Commander promotion via dialog");
 
                 // Clear declined promotion flag (player previously said "not ready" but now requesting promotion)
-                Features.Escalation.EscalationManager.Instance?.ClearDeclinedPromotion(7);
+                EscalationManager.Instance?.ClearDeclinedPromotion(7);
 
                 // Defer to next frame to let conversation close first
                 NextFrameDispatcher.RunNextFrame(() =>

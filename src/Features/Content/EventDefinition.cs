@@ -120,33 +120,33 @@ namespace Enlisted.Features.Content
         /// Key: trait name (e.g., "ScoutSkills"), Value: minimum level.
         /// </summary>
         public Dictionary<string, int> MinTraits { get; set; } = [];
-        
+
         /// <summary>
         /// Onboarding stage required for this event (1, 2, or 3).
         /// Null means event is not an onboarding event.
         /// </summary>
         public int? OnboardingStage { get; set; }
-        
+
         /// <summary>
         /// Experience track required for this onboarding event ("green", "seasoned", "veteran").
         /// Only checked if OnboardingStage is set.
         /// </summary>
         public string OnboardingTrack { get; set; }
-        
+
         /// <summary>
         /// Maximum HP percentage for this event to be available.
         /// Used for decisions like "Seek Treatment" which only appear when wounded.
         /// Value is 0-100. Null means no HP check.
         /// </summary>
         public int? HpBelow { get; set; }
-        
+
         /// <summary>
         /// Maximum soldier reputation for this event to trigger.
         /// Used for events like theft that only happen to unpopular soldiers.
         /// Null means no soldier rep maximum check.
         /// </summary>
         public int? MaxSoldierRep { get; set; }
-        
+
         /// <summary>
         /// If true, requires the player's baggage stash to have at least one item.
         /// Used by theft events to avoid firing when there's nothing to steal.
@@ -234,14 +234,14 @@ namespace Enlisted.Features.Content
         public EventEffects EffectsFailure { get; set; }
 
         /// <summary>
-        /// Risk level for UI hints: "safe", "moderate", "risky", "dangerous".
-        /// </summary>
-        public string Risk { get; set; } = "safe";
-
-        /// <summary>
         /// Percentage chance of success for risky options (0-100). Null for safe options.
         /// </summary>
         public int? RiskChance { get; set; }
+
+        /// <summary>
+        /// Risk level for this option: "low", "medium", "high". Used for UI hints.
+        /// </summary>
+        public string Risk { get; set; }
 
         /// <summary>
         /// Inline fallback result text for failure outcome. Used for risky options.
@@ -287,13 +287,13 @@ namespace Enlisted.Features.Content
         /// Used for branching rewards (training type, compensation method, etc.).
         /// </summary>
         public RewardChoices RewardChoices { get; set; }
-        
+
         /// <summary>
         /// If true, selecting this option advances the player's onboarding stage.
         /// Only relevant for onboarding events. Advances stage 1→2→3→complete.
         /// </summary>
         public bool AdvancesOnboarding { get; set; }
-        
+
         /// <summary>
         /// If true, aborts the enlistment process without normal discharge penalties.
         /// Used by the bag check "abort" option. Player party restored to normal state.
@@ -520,6 +520,12 @@ namespace Enlisted.Features.Content
         public int? HpChange { get; set; }
 
         /// <summary>
+        /// Applies a wound to the player (reduces HP and may trigger medical care).
+        /// Valid values: "minor", "moderate", "severe".
+        /// </summary>
+        public string ApplyWound { get; set; }
+
+        /// <summary>
         /// Number of troops lost from the party (rare, dramatic events).
         /// </summary>
         public int? TroopLoss { get; set; }
@@ -538,11 +544,6 @@ namespace Enlisted.Features.Content
         /// XP awarded to lord's T1-T3 troops (NCO training).
         /// </summary>
         public int? TroopXp { get; set; }
-
-        /// <summary>
-        /// Type of wound to apply: "Minor", "Serious", "Permanent", or null.
-        /// </summary>
-        public string ApplyWound { get; set; }
 
         /// <summary>
         /// ID of a follow-up event to trigger after this one completes.
@@ -604,32 +605,32 @@ namespace Enlisted.Features.Content
         /// Only applies if player has Commander rank (T7+) and has a retinue.
         /// </summary>
         public int? RetinueWounded { get; set; }
-        
+
         /// <summary>
         /// Grants temporary baggage access for the specified number of hours.
         /// Used by "baggage caught up" events to give players a window to access their stash.
         /// </summary>
         public int? GrantTemporaryBaggageAccess { get; set; }
-        
+
         /// <summary>
         /// Applies a delay to baggage availability in days.
         /// Value of 0 clears any existing delay, positive values add delay.
         /// Used by events where the baggage train gets stuck, delayed by weather, or raided.
         /// </summary>
         public int? BaggageDelayDays { get; set; }
-        
+
         /// <summary>
         /// Removes a random number of items from the player's baggage stash.
         /// Used by theft, raid, and loss events. Gracefully handles empty stash (no crash, no message).
         /// </summary>
         public int? RandomBaggageLoss { get; set; }
-        
+
         /// <summary>
         /// Fatigue cost to apply (positive values add fatigue, negative values restore stamina).
         /// Standard fatigue threshold is 100; actions become restricted at higher levels.
         /// </summary>
         public int? Fatigue { get; set; }
-        
+
         /// <summary>
         /// Bag check action to execute when this option is chosen.
         /// Valid values: "stash" (stow in baggage), "sell" (liquidate at 60%), "smuggle" (Roguery check).

@@ -19,7 +19,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
     public sealed class EnlistedIncidentsBehavior : CampaignBehaviorBase
     {
         private Incident _payMusterIncident;
-        
+
         public static EnlistedIncidentsBehavior Instance { get; private set; }
 
         public EnlistedIncidentsBehavior()
@@ -193,32 +193,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
         }
 
-        /// <summary>
-        ///     Attempts to trigger the incident through the native map incident flow (MapState.NextIncident),
-        ///     mirroring how IncidentsCampaignBehaviour.InvokeIncident assigns incidents.
-        ///     Falls back to false if unavailable.
-        /// </summary>
-        private bool TryStartIncidentNative(Incident incident)
-        {
-            try
-            {
-                var mapState = GameStateManager.Current?.LastOrDefault<MapState>();
-                if (mapState == null)
-                {
-                    ModLogger.Warn("Incident", "MapState not available; falling back to inquiry.");
-                    return false;
-                }
-
-                mapState.NextIncident = incident;
-                ModLogger.Info("Incident", "Started incident via native map UI (NextIncident).");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Warn("Incident", $"Failed to start native incident: {ex.Message}");
-                return false;
-            }
-        }
     }
 }
 

@@ -35,12 +35,11 @@ namespace Enlisted.Mod.Core.Logging
 	/// </summary>
 	public static class ModLogger
 	{
-		private static readonly object Sync = new object();
-		private static string _logFilePath; // Will be set in Initialize()
-		private static string _sessionId = "Session-A";
-		private const int MaxSessionLogs = 3;
-		private const string SessionPrefix = "Session-";
-		private static readonly string[] SessionSlots = { "Session-A", "Session-B", "Session-C" };
+ 	private static readonly object Sync = new object();
+ 	private static string _logFilePath; // Will be set in Initialize()
+ 	private static string _sessionId = "Session-A";
+ 	private const string SessionPrefix = "Session-";
+ 	private static readonly string[] SessionSlots = { "Session-A", "Session-B", "Session-C" };
 		private const string CombinedPointerFile = "Current_Session_README.txt";
 
 		// Per-category log levels (default to Info)

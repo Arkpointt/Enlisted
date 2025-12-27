@@ -2155,45 +2155,6 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        private static string TryBuildCompanyStatusLine(EnlistmentBehavior enlistment)
-        {
-            try
-            {
-                var campLife = Camp.CampLifeBehavior.Instance;
-                if (campLife == null || !campLife.IsActiveWhileEnlisted())
-                {
-                    return null;
-                }
-
-                // Keep the main menu focused. Only show a Company status line when it provides actionable signal.
-                // (This prevents the menu from growing vertically on higher UI-scale setups.)
-                if (!campLife.IsLogisticsHigh() && !campLife.IsMoraleLow() && !campLife.IsPayTensionHigh())
-                {
-                    return null;
-                }
-
-                // Convert strain meters to intuitive "supply %" display (higher = better).
-                // LogisticsStrain is a pressure meter (higher = worse), so invert it.
-                var supplyPct = (int)Math.Round(100f - campLife.LogisticsStrain);
-                supplyPct = Math.Max(0, Math.Min(100, supplyPct));
-
-                // MoraleShock is an inverse-morale meter; translate to an intuitive "morale %" for UI.
-                var moralePct = (int)Math.Round(100f - campLife.MoraleShock);
-                moralePct = Math.Max(0, Math.Min(100, moralePct));
-
-                var payTension = enlistment?.PayTension ?? (int)Math.Round(campLife.PayTension);
-                var payStatus = payTension >= 60 ? "Pay DUE" : payTension >= 30 ? "Pay Late" : "Pay OK";
-
-                // Keep this short. The menu text area is narrower than it looks, and long status lines will wrap,
-                // pushing options off-screen and forcing scroll.
-                return $"Company: Log {supplyPct}% | Mor {moralePct}% | {payStatus}";
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
         // Note: Removed unused utility methods: CalculateServiceDays, GetRankName, GetFormationDisplayInfo,
         // GetServiceDays, GetRetirementCountdown - kept for reference in git history
 
@@ -3285,7 +3246,6 @@ namespace Enlisted.Features.Interface.Behaviors
         private HashSet<string> _decisionsPrevTrainingIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private HashSet<string> _decisionsPrevSocialIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private HashSet<string> _decisionsPrevCampLifeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private bool _decisionsPrevCampLifeEnabled;
 
         private bool _decisionsNewQueued;
         private bool _decisionsNewOpportunities;
@@ -3511,7 +3471,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     QuartermasterManager.CapturedTimeMode = normalized;
                 }
 
-                var enlistment = EnlistmentBehavior.Instance;
                 var decisionManager = DecisionManager.Instance;
 
                 var currentQueuedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -3588,7 +3547,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 _decisionsPrevTrainingIds = currentTrainingIds;
                 _decisionsPrevSocialIds = currentSocialIds;
                 _decisionsPrevCampLifeIds = currentCampLifeIds;
-                _decisionsPrevCampLifeEnabled = campLifeEnabledNow;
 
                 // Auto-clear markers after a while so they don't stick forever if the player ignores them.
                 MaybeClearExpiredDecisionsNewFlags();
@@ -4397,85 +4355,6 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Error("Interface", "Failed to build recent activity report", ex);
                 return "Recent activity unavailable.";
-            }
-        }
-
-        private static string BuildCompactCompanyStatusSummary(EnlistmentBehavior enlistment)
-        {
-            try
-            {
-                if (enlistment?.CompanyNeeds == null)
-                {
-                    return "Company status unavailable.";
-                }
-
-                var needs = enlistment.CompanyNeeds;
-                var sb = new StringBuilder();
-
-                // One-line summaries for each need (no context, just status level)
-                // Uses localized strings with inline fallbacks
-                var readinessStatus = needs.Readiness switch
-                {
-                    >= 80 => new TextObject("{=status_compact_readiness_80}Battle-ready").ToString(),
-                    >= 60 => new TextObject("{=status_compact_readiness_60}Prepared").ToString(),
-                    >= 40 => new TextObject("{=status_compact_readiness_40}Fair").ToString(),
-                    >= 20 => new TextObject("{=status_compact_readiness_20}Disorganized").ToString(),
-                    _ => new TextObject("{=status_compact_readiness_0}Shambles").ToString()
-                };
-
-                var moraleStatus = needs.Morale switch
-                {
-                    >= 80 => new TextObject("{=status_compact_morale_80}High spirits").ToString(),
-                    >= 60 => new TextObject("{=status_compact_morale_60}Steady").ToString(),
-                    >= 40 => new TextObject("{=status_compact_morale_40}Restless").ToString(),
-                    >= 20 => new TextObject("{=status_compact_morale_20}Unhappy").ToString(),
-                    _ => new TextObject("{=status_compact_morale_0}On edge").ToString()
-                };
-
-                var supplyStatus = needs.Supplies switch
-                {
-                    >= 80 => new TextObject("{=status_compact_supplies_80}Well-stocked").ToString(),
-                    >= 60 => new TextObject("{=status_compact_supplies_60}Adequate").ToString(),
-                    >= 40 => new TextObject("{=status_compact_supplies_40}Tightening").ToString(),
-                    >= 20 => new TextObject("{=status_compact_supplies_20}Scarce").ToString(),
-                    _ => new TextObject("{=status_compact_supplies_0}Starving").ToString()
-                };
-
-                var equipmentStatus = needs.Equipment switch
-                {
-                    >= 80 => new TextObject("{=status_compact_equipment_80}Well-maintained").ToString(),
-                    >= 60 => new TextObject("{=status_compact_equipment_60}Serviceable").ToString(),
-                    >= 40 => new TextObject("{=status_compact_equipment_40}Worn").ToString(),
-                    >= 20 => new TextObject("{=status_compact_equipment_20}Poor condition").ToString(),
-                    _ => new TextObject("{=status_compact_equipment_0}Failing").ToString()
-                };
-
-                var restStatus = needs.Rest switch
-                {
-                    >= 80 => new TextObject("{=status_compact_rest_80}Well-rested").ToString(),
-                    >= 60 => new TextObject("{=status_compact_rest_60}Rested").ToString(),
-                    >= 40 => new TextObject("{=status_compact_rest_40}Tired").ToString(),
-                    >= 20 => new TextObject("{=status_compact_rest_20}Exhausted").ToString(),
-                    _ => new TextObject("{=status_compact_rest_0}Collapsing").ToString()
-                };
-
-                // Color-code labels and values based on severity
-                // Good values (60+) use Success (green) to make them visually distinct and positive
-                var readinessColor = needs.Readiness >= 60 ? "Success" : needs.Readiness >= 40 ? "Warning" : "Alert";
-                var moraleColor = needs.Morale >= 60 ? "Success" : needs.Morale >= 40 ? "Warning" : "Alert";
-                var suppliesColor = needs.Supplies >= 60 ? "Success" : needs.Supplies >= 40 ? "Warning" : "Alert";
-                var equipmentColor = needs.Equipment >= 60 ? "Success" : needs.Equipment >= 40 ? "Warning" : "Alert";
-                var restColor = needs.Rest >= 60 ? "Success" : needs.Rest >= 40 ? "Warning" : "Alert";
-
-                sb.AppendLine($"<span style=\"Label\">Readiness:</span> <span style=\"{readinessColor}\">{readinessStatus}</span> | <span style=\"Label\">Morale:</span> <span style=\"{moraleColor}\">{moraleStatus}</span>");
-                sb.AppendLine($"<span style=\"Label\">Supplies:</span> <span style=\"{suppliesColor}\">{supplyStatus}</span> | <span style=\"Label\">Equipment:</span> <span style=\"{equipmentColor}\">{equipmentStatus}</span>");
-                sb.Append($"<span style=\"Label\">Rest:</span> <span style=\"{restColor}\">{restStatus}</span>");
-
-                return sb.ToString();
-            }
-            catch
-            {
-                return "Status unavailable.";
             }
         }
 

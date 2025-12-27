@@ -283,14 +283,14 @@ namespace Enlisted.Features.Content
             decision.IsPlayerInitiated = id.StartsWith("player_") || id.StartsWith("dec_");
 
             // Infer menu section from ID pattern
-            if (id.Contains("train") || id.Contains("drill") || id.Contains("spar") || 
+            if (id.Contains("train") || id.Contains("drill") || id.Contains("spar") ||
                 id.Contains("endurance") || id.Contains("tactics") || id.Contains("medicine") ||
                 id.Contains("weapon") || id.Contains("combat") || id.Contains("lead"))
             {
                 decision.MenuSection = "training";
             }
             else if (id.Contains("rest") || id.Contains("treatment") || id.Contains("wound") ||
-                     id.Contains("gear") || id.Contains("maintain") || id.Contains("medic") || 
+                     id.Contains("gear") || id.Contains("maintain") || id.Contains("medic") ||
                      id.Contains("medical") || id.Contains("camp"))
             {
                 decision.MenuSection = "camp_life";
@@ -300,7 +300,7 @@ namespace Enlisted.Features.Content
             {
                 decision.MenuSection = "logistics";
             }
-            else if (id.Contains("join") || id.Contains("drink") || id.Contains("seek") || 
+            else if (id.Contains("join") || id.Contains("drink") || id.Contains("seek") ||
                      id.Contains("letter") || id.Contains("confront") || id.Contains("keep_to") ||
                      id.Contains("dice") || id.Contains("petition") || id.Contains("social") ||
                      id.Contains("favor") || id.Contains("hunt"))
@@ -375,11 +375,6 @@ namespace Enlisted.Features.Content
         public string MenuSection { get; set; } = "other";
 
         /// <summary>
-        /// Required time of day for this decision (null = any time).
-        /// </summary>
-        public List<string> TimeOfDay { get; set; }
-
-        /// <summary>
         /// Required flags for this decision to appear (null = no flag requirements).
         /// </summary>
         public List<string> RequiredFlags { get; set; }
@@ -388,6 +383,12 @@ namespace Enlisted.Features.Content
         /// Flags that block this decision from appearing.
         /// </summary>
         public List<string> BlockingFlags { get; set; }
+
+        /// <summary>
+        /// Time of day restrictions (e.g., "morning", "afternoon", "evening", "night").
+        /// Empty/null = available at all times.
+        /// </summary>
+        public List<string> TimeOfDay { get; set; }
     }
 }
 

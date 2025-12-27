@@ -14,6 +14,7 @@ namespace Enlisted.Features.Interface.News.Generation.Producers
     /// </summary>
     public sealed class CampNewsContext
     {
+        // Day number for this report generation.
         public int DayNumber { get; set; }
 
         // Live engine objects / behaviors (NOT persisted).

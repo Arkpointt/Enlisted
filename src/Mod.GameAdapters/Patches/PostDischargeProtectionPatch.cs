@@ -64,7 +64,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     var settlement = Hero.MainHero.CurrentSettlement?.Name?.ToString() ?? "none";
                     ModLogger.Info("Captivity",
-                        $"Party activation allowed while prisoner (activating: {value}, settlement: {settlement})");
+                        $"Party activation allowed while prisoner (settlement: {settlement})");
                     return true;
                 }
 

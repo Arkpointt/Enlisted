@@ -1183,7 +1183,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     catch (Exception ex)
                     {
                         ModLogger.Debug(LogCategory, $"Error checking skill progress for {(skill != null ? skill.Name.ToString() : "unknown")}: {ex.Message}");
-                        continue;
                     }
                 }
 
@@ -4792,7 +4791,7 @@ namespace Enlisted.Features.Interface.Behaviors
     /// Represents a single news dispatch item.
     /// Uses primitive-friendly structure for save/load compatibility.
     /// </summary>
-    public struct DispatchItem
+    public struct DispatchItem : IEquatable<DispatchItem>
     {
         /// <summary>
         /// Campaign day when this item was created.
@@ -4847,6 +4846,42 @@ namespace Enlisted.Features.Interface.Behaviors
         /// Higher severity items persist longer and cannot be replaced by lower severity items.
         /// </summary>
         public int Severity { get; set; }
+
+        public bool Equals(DispatchItem other)
+        {
+            return DayCreated == other.DayCreated &&
+                   Category == other.Category &&
+                   HeadlineKey == other.HeadlineKey &&
+                   StoryKey == other.StoryKey &&
+                   Type == other.Type &&
+                   Confidence == other.Confidence &&
+                   MinDisplayDays == other.MinDisplayDays &&
+                   FirstShownDay == other.FirstShownDay &&
+                   Severity == other.Severity;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is DispatchItem other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hash = 17;
+                hash = hash * 31 + DayCreated;
+                hash = hash * 31 + (Category?.GetHashCode() ?? 0);
+                hash = hash * 31 + (HeadlineKey?.GetHashCode() ?? 0);
+                hash = hash * 31 + (StoryKey?.GetHashCode() ?? 0);
+                hash = hash * 31 + (int)Type;
+                hash = hash * 31 + Confidence;
+                hash = hash * 31 + MinDisplayDays;
+                hash = hash * 31 + FirstShownDay;
+                hash = hash * 31 + Severity;
+                return hash;
+            }
+        }
     }
 
     /// <summary>
@@ -5027,9 +5062,6 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>Day number when this muster occurred.</summary>
         public int DayNumber { get; set; }
 
-        /// <summary>Strategic context tag for flavor text (e.g., "coordinated_offensive").</summary>
-        public string StrategicContext { get; set; } = string.Empty;
-
         /// <summary>Pay outcome: "paid", "partial", "delayed", "promissory", "corruption", etc.</summary>
         public string PayOutcome { get; set; } = string.Empty;
 
@@ -5042,9 +5074,6 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>Item ID of ration issued (empty if none).</summary>
         public string RationItemId { get; set; } = string.Empty;
 
-        /// <summary>QM reputation at time of issue (affects ration quality).</summary>
-        public int QmReputation { get; set; }
-
         /// <summary>Company supply level at muster (0-100).</summary>
         public int SupplyLevel { get; set; }
 
@@ -5054,34 +5083,40 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>Number of soldiers sick since previous muster.</summary>
         public int SickSinceLast { get; set; }
 
-        /// <summary>Count of orders completed this period.</summary>
+        /// <summary>Strategic context tag (e.g., "siege", "campaign", "garrison").</summary>
+        public string StrategicContext { get; set; } = string.Empty;
+
+        /// <summary>Quartermaster reputation at time of muster.</summary>
+        public int QmReputation { get; set; }
+
+        /// <summary>Number of orders completed since last muster.</summary>
         public int OrdersCompleted { get; set; }
 
-        /// <summary>Count of orders failed this period.</summary>
+        /// <summary>Number of orders failed since last muster.</summary>
         public int OrdersFailed { get; set; }
 
-        /// <summary>Baggage check outcome: "passed", "confiscated", "bribed", "skipped".</summary>
+        /// <summary>Baggage check outcome (e.g., "passed", "contraband_found", "skipped").</summary>
         public string BaggageOutcome { get; set; } = string.Empty;
 
-        /// <summary>Inspection outcome: "perfect", "basic", "failed", "skipped".</summary>
+        /// <summary>Inspection outcome (e.g., "passed", "failed", "skipped").</summary>
         public string InspectionOutcome { get; set; } = string.Empty;
 
-        /// <summary>Recruit outcome: "mentored", "ignored", "hazed", "skipped".</summary>
+        /// <summary>Recruit outcome (e.g., "recruited", "none_available", "declined").</summary>
         public string RecruitOutcome { get; set; } = string.Empty;
 
-        /// <summary>New tier if promoted this period (0 if no promotion).</summary>
+        /// <summary>Promotion tier if player was promoted during this muster (0 if no promotion).</summary>
         public int PromotionTier { get; set; }
 
-        /// <summary>Current retinue size (T7+ only, 0 otherwise).</summary>
+        /// <summary>Retinue strength at time of muster (for officers with retinues).</summary>
         public int RetinueStrength { get; set; }
 
-        /// <summary>Retinue losses this period (T7+ only).</summary>
+        /// <summary>Number of retinue casualties since last muster.</summary>
         public int RetinueCasualties { get; set; }
 
-        /// <summary>List of fallen retinue member names (T7+ only).</summary>
+        /// <summary>Names of fallen retinue members (for memorial display).</summary>
         public List<string> FallenRetinueNames { get; set; } = new List<string>();
 
-        /// <summary>Flavor text shown to player about the ration.</summary>
+        /// <summary>Flavor text describing ration quality/condition.</summary>
         public string RationFlavorText { get; set; } = string.Empty;
     }
 }
