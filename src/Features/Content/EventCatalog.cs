@@ -446,10 +446,10 @@ namespace Enlisted.Features.Content
 
             // Parse HP requirement (for decisions like Seek Treatment that require being wounded)
             reqs.HpBelow = reqJson["hp_below"]?.Value<int>() ?? reqJson["hpBelow"]?.Value<int>();
-            
+
             // Parse soldier reputation maximum (for theft events that target unpopular soldiers)
             reqs.MaxSoldierRep = reqJson["maxSoldierRep"]?.Value<int>() ?? reqJson["max_soldier_rep"]?.Value<int>();
-            
+
             // Parse baggage items requirement (for theft events that require items to exist)
             reqs.BaggageHasItems = reqJson["baggageHasItems"]?.Value<bool>() ?? reqJson["baggage_has_items"]?.Value<bool>();
 
@@ -466,7 +466,7 @@ namespace Enlisted.Features.Content
             {
                 foreach (var prop in escalationJson.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value > 0)
                     {
                         reqs.MinEscalation[prop.Name] = value;
@@ -518,7 +518,7 @@ namespace Enlisted.Features.Content
 
             // Parse "none" triggers (must all be false)
             eventDef.TriggersNone = ParseStringList(triggersJson["none"]);
-            
+
             // Extract onboarding stage from triggers.all (e.g., "onboarding_stage_1" → 1)
             // This bridges the schema's trigger-based format to the typed requirement system.
             foreach (var trigger in eventDef.TriggersAll)
@@ -533,7 +533,7 @@ namespace Enlisted.Features.Content
                     }
                 }
             }
-            
+
             // Extract onboarding track from root-level "track" field (e.g., "commander", "soldier", "veteran")
             var track = eventJson["track"]?.ToString();
             if (!string.IsNullOrEmpty(track))
@@ -617,9 +617,9 @@ namespace Enlisted.Features.Content
                 option.RiskChance = optJson["risk_chance"]?.Value<int?>() ?? optJson["riskChance"]?.Value<int?>();
 
                 // Parse failure result text
-                option.ResultTextFailureId = optJson["resultFailureTextId"]?.ToString() ?? 
+                option.ResultTextFailureId = optJson["resultFailureTextId"]?.ToString() ??
                                              optJson["result_failure_text_id"]?.ToString() ?? string.Empty;
-                option.ResultTextFailureFallback = optJson["outcome_failure"]?.ToString() ?? 
+                option.ResultTextFailureFallback = optJson["outcome_failure"]?.ToString() ??
                                                    optJson["resultTextFailure"]?.ToString() ?? string.Empty;
 
                 // Parse flag operations
@@ -633,13 +633,13 @@ namespace Enlisted.Features.Content
 
                 // Parse reward choices (sub-choice popup after main option)
                 option.RewardChoices = ParseRewardChoices(optJson["reward_choices"]);
-                
+
                 // Parse onboarding progression flag
-                option.AdvancesOnboarding = optJson["advances_onboarding"]?.Value<bool>() ?? 
+                option.AdvancesOnboarding = optJson["advances_onboarding"]?.Value<bool>() ??
                                            optJson["advancesOnboarding"]?.Value<bool>() ?? false;
-                
+
                 // Parse enlistment abort flag
-                option.AbortsEnlistment = optJson["aborts_enlistment"]?.Value<bool>() ?? 
+                option.AbortsEnlistment = optJson["aborts_enlistment"]?.Value<bool>() ??
                                          optJson["abortsEnlistment"]?.Value<bool>() ?? false;
 
                 eventDef.Options.Add(option);
@@ -723,7 +723,7 @@ namespace Enlisted.Features.Content
                 {
                     effects.SoldierRep = campRep;
                 }
-                
+
                 var lanceRep = effectsJson["lance_reputation"]?.Value<int>();
                 if (lanceRep.HasValue && !effects.SoldierRep.HasValue)
                 {
@@ -766,7 +766,7 @@ namespace Enlisted.Features.Content
                                       effectsJson["retinue_loss"]?.Value<int>();
                 effects.RetinueWounded = effectsJson["retinueWounded"]?.Value<int>() ??
                                          effectsJson["retinue_wounded"]?.Value<int>();
-                
+
                 // Parse baggage train effects
                 effects.GrantTemporaryBaggageAccess = effectsJson["grantTemporaryBaggageAccess"]?.Value<int>() ??
                                                      effectsJson["grant_temporary_baggage_access"]?.Value<int>();
@@ -774,11 +774,11 @@ namespace Enlisted.Features.Content
                                           effectsJson["baggage_delay_days"]?.Value<int>();
                 effects.RandomBaggageLoss = effectsJson["randomBaggageLoss"]?.Value<int>() ??
                                            effectsJson["random_baggage_loss"]?.Value<int>();
-                
+
                 // Parse bag check choice (first-enlistment gear handling)
                 effects.BagCheckChoice = effectsJson["bagCheckChoice"]?.ToString() ??
                                         effectsJson["bag_check_choice"]?.ToString();
-                
+
                 // Parse fatigue effect
                 effects.Fatigue = effectsJson["fatigue"]?.Value<int>();
 
@@ -838,7 +838,7 @@ namespace Enlisted.Features.Content
 
             foreach (var prop in obj.Properties())
             {
-                var value = prop.Value?.Value<int>() ?? 0;
+                var value = prop.Value.Value<int?>() ?? 0;
                 if (value != 0)
                 {
                     target[prop.Name] = value;
@@ -963,7 +963,7 @@ namespace Enlisted.Features.Content
             {
                 foreach (var prop in xpObj.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value != 0)
                     {
                         rewards.Xp[prop.Name] = value;
@@ -977,7 +977,7 @@ namespace Enlisted.Features.Content
             {
                 foreach (var prop in skillXpObj.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value != 0)
                     {
                         rewards.SkillXp[prop.Name] = value;
@@ -991,7 +991,7 @@ namespace Enlisted.Features.Content
             {
                 foreach (var prop in dynamicSkillXpObj.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value != 0)
                     {
                         rewards.DynamicSkillXp[prop.Name] = value;
@@ -1050,7 +1050,7 @@ namespace Enlisted.Features.Content
             // Parse reputation changes
             effects.LordRep = effectsJson["lordRep"]?.Value<int>() ?? effectsJson["lord_reputation"]?.Value<int>();
             effects.OfficerRep = effectsJson["officerRep"]?.Value<int>() ?? effectsJson["officer_reputation"]?.Value<int>();
-            effects.SoldierRep = effectsJson["soldierRep"]?.Value<int>() ?? 
+            effects.SoldierRep = effectsJson["soldierRep"]?.Value<int>() ??
                                  effectsJson["soldier_reputation"]?.Value<int>() ??
                                  effectsJson["camp_reputation"]?.Value<int>() ??
                                  effectsJson["lance_reputation"]?.Value<int>();
@@ -1076,7 +1076,7 @@ namespace Enlisted.Features.Content
             effects.RetinueLoyalty = effectsJson["retinueLoyalty"]?.Value<int>() ?? effectsJson["retinue_loyalty"]?.Value<int>();
             effects.RetinueLoss = effectsJson["retinueLoss"]?.Value<int>() ?? effectsJson["retinue_loss"]?.Value<int>();
             effects.RetinueWounded = effectsJson["retinueWounded"]?.Value<int>() ?? effectsJson["retinue_wounded"]?.Value<int>();
-            
+
             // Parse baggage train effects
             effects.GrantTemporaryBaggageAccess = effectsJson["grantTemporaryBaggageAccess"]?.Value<int>() ??
                                                  effectsJson["grant_temporary_baggage_access"]?.Value<int>();
@@ -1084,11 +1084,11 @@ namespace Enlisted.Features.Content
                                       effectsJson["baggage_delay_days"]?.Value<int>();
             effects.RandomBaggageLoss = effectsJson["randomBaggageLoss"]?.Value<int>() ??
                                        effectsJson["random_baggage_loss"]?.Value<int>();
-            
+
             // Parse bag check choice (first-enlistment gear handling)
             effects.BagCheckChoice = effectsJson["bagCheckChoice"]?.ToString() ??
                                     effectsJson["bag_check_choice"]?.ToString();
-            
+
             // Parse fatigue effect
             effects.Fatigue = effectsJson["fatigue"]?.Value<int>();
 

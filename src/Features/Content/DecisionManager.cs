@@ -22,10 +22,10 @@ namespace Enlisted.Features.Content
         public override void RegisterEvents()
         {
             Instance = this;
-            
+
             // Initialize the decision catalog (loads from JSON via EventCatalog)
             DecisionCatalog.Initialize();
-            
+
             ModLogger.Info(LogCategory, $"DecisionManager registered with {DecisionCatalog.DecisionCount} decisions " +
                 $"({DecisionCatalog.PlayerInitiatedCount} player-initiated, {DecisionCatalog.AutomaticCount} automatic)");
         }
@@ -142,8 +142,8 @@ namespace Enlisted.Features.Content
                     var daysSince = (CampaignTime.Now - lastFired).ToDays;
                     var daysRemaining = (int)Math.Ceiling(cooldownDays - daysSince);
                     result.IsAvailable = false;
-                    result.UnavailableReason = daysRemaining == 1 
-                        ? "Available tomorrow" 
+                    result.UnavailableReason = daysRemaining == 1
+                        ? "Available tomorrow"
                         : $"Available in {daysRemaining} days";
                     return result;
                 }
@@ -162,7 +162,7 @@ namespace Enlisted.Features.Content
             }
 
             // Gate 6: Required flags
-            if (decision.RequiredFlags != null && decision.RequiredFlags.Count > 0)
+            if (decision.RequiredFlags != null && decision.RequiredFlags.Count > 0 && escalation?.State != null)
             {
                 foreach (var flagName in decision.RequiredFlags)
                 {
@@ -177,7 +177,7 @@ namespace Enlisted.Features.Content
             }
 
             // Gate 7: Blocking flags
-            if (decision.BlockingFlags != null && decision.BlockingFlags.Count > 0)
+            if (decision.BlockingFlags != null && decision.BlockingFlags.Count > 0 && escalation?.State != null)
             {
                 foreach (var flagName in decision.BlockingFlags)
                 {

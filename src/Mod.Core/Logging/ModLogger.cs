@@ -759,18 +759,19 @@ namespace Enlisted.Mod.Core.Logging
 		{
 			try
 			{
-				var basePath = string.IsNullOrWhiteSpace(preferredPath) ? ResolveDocumentsPath() : preferredPath;
-				var logDir = Path.GetDirectoryName(basePath);
-				if (string.IsNullOrWhiteSpace(logDir))
-				{
-					logDir = Path.GetDirectoryName(ResolveDocumentsPath());
-				}
+ 			var basePath = string.IsNullOrWhiteSpace(preferredPath) ? ResolveDocumentsPath() : preferredPath;
+ 			var logDir = Path.GetDirectoryName(basePath);
+ 			if (string.IsNullOrWhiteSpace(logDir))
+ 			{
+ 				logDir = Path.GetDirectoryName(ResolveDocumentsPath());
+ 			}
 
-				EnsureDirectoryExists(logDir);
-				var utcNow = DateTime.UtcNow;
+ 			logDir ??= "Debugging";
+ 			EnsureDirectoryExists(logDir);
+ 			var utcNow = DateTime.UtcNow;
 
-				// Collect existing session logs and legacy enlisted.log
-				var sessionFiles = Directory.GetFiles(logDir, $"{SessionPrefix}*.log", SearchOption.TopDirectoryOnly)
+ 			// Collect existing session logs and legacy enlisted.log
+ 			var sessionFiles = Directory.GetFiles(logDir, $"{SessionPrefix}*.log", SearchOption.TopDirectoryOnly)
 					.Select(path => new FileInfo(path))
 					.OrderByDescending(f => f.CreationTimeUtc)
 					.ToList();

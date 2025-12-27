@@ -14,12 +14,12 @@ namespace Enlisted.Features.Retinue.Core
     /// <summary>
     /// Handles automatic granting of raw recruits when player reaches commander tiers (T7-T9).
     /// Part of Retinue System V2.0.
-    /// 
+    ///
     /// Grant amounts:
     /// - T6 to T7: 20 soldiers (initial grant)
     /// - T7 to T8: 10 soldiers (expansion)
     /// - T8 to T9: 10 soldiers (final expansion)
-    /// 
+    ///
     /// Recruits match player's formation type and enlisted lord's culture.
     /// </summary>
     public static class RetinueRecruitmentGrant
@@ -52,7 +52,8 @@ namespace Enlisted.Features.Retinue.Core
                 }
 
                 // First time reaching T7: show formation selection dialog
-                if (newTier >= RetinueManager.CommanderTier1 && previousTier < RetinueManager.CommanderTier1)
+                // newTier >= CommanderTier1 is guaranteed true here due to the check at line 40
+                if (previousTier < RetinueManager.CommanderTier1)
                 {
                     // Check if baggage is delayed - if so, defer formation selection
                     var baggageManager = Logistics.BaggageTrainManager.Instance;
@@ -61,13 +62,13 @@ namespace Enlisted.Features.Retinue.Core
                         var daysRemaining = baggageManager.GetBaggageDelayDaysRemaining();
                         ModLogger.Info(LogCategory,
                             $"First T7 promotion - baggage delayed ({daysRemaining} days), deferring formation selection");
-                        
+
                         // Show notification that formation selection is deferred
                         var message = new TextObject(
                             "{=ret_formation_deferred}You've been promoted to Commander, but the supply wagons are delayed. Formation selection will be available once they arrive.")
                             .ToString();
                         InformationManager.DisplayMessage(new InformationMessage(message));
-                        
+
                         // For now, default to Infantry temporarily
                         // TODO: Add proper queueing system to re-prompt when baggage arrives
                         var defaultFormation = FormationClass.Infantry;
@@ -75,7 +76,7 @@ namespace Enlisted.Features.Retinue.Core
                         GrantRawRecruits(count, defaultFormation, lordCulture);
                         return;
                     }
-                    
+
                     ModLogger.Info(LogCategory, "First T7 promotion - showing formation selection dialog");
                     ShowFormationSelectionDialog(count);
                     return;

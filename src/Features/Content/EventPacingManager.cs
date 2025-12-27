@@ -87,7 +87,7 @@ namespace Enlisted.Features.Content
                     // Allow onboarding events during grace period (they're the tutorial/intro)
                     if (daysSinceEnlistment < gracePeriodDays && !escalationState.IsOnboardingActive)
                     {
-                        ModLogger.Debug(LogCategory, 
+                        ModLogger.Debug(LogCategory,
                             $"Grace period active: {daysSinceEnlistment:F1}/{gracePeriodDays} days since enlistment");
                         return;
                     }
@@ -237,7 +237,7 @@ namespace Enlisted.Features.Content
         public float GetDaysUntilNextWindow()
         {
             var escalationState = EscalationManager.Instance?.State;
-            if (escalationState?.NextNarrativeEventWindow == CampaignTime.Zero)
+            if (escalationState == null || escalationState.NextNarrativeEventWindow == CampaignTime.Zero)
             {
                 return -1f;
             }

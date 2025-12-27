@@ -12,10 +12,10 @@ namespace Enlisted.Mod.Core.Logging
     /// <summary>
     ///     Centralized diagnostics for detecting mod conflicts and logging environment info.
     ///     Writes to a dedicated conflicts.log file in the Debugging folder for easy user access.
-    ///     
+    ///
     ///     This system is designed to be lightweight - it only runs at startup and when
     ///     deferred patches are applied. No per-frame or per-tick overhead.
-    ///     
+    ///
     ///     Usage:
     ///     - Call RunStartupDiagnostics() from OnSubModuleLoad after initial Harmony.PatchAll()
     ///     - Call RefreshDeferredPatches() from NextFrameDispatcherPatch after deferred patches apply
@@ -36,7 +36,7 @@ namespace Enlisted.Mod.Core.Logging
         /// <summary>
         ///     Runs initial startup diagnostics and writes to Debugging/conflicts.log.
         ///     Call this once from OnSubModuleLoad after the main Harmony.PatchAll() completes.
-        ///     
+        ///
         ///     NOTE: This runs before deferred patches are applied, so those won't appear yet.
         ///     Call RefreshDeferredPatches() later to append deferred patch info.
         /// </summary>
@@ -72,7 +72,7 @@ namespace Enlisted.Mod.Core.Logging
         /// <summary>
         ///     Appends deferred patch information to the existing diagnostics log.
         ///     Call this from NextFrameDispatcherPatch.Postfix after deferred patches are applied.
-        ///     
+        ///
         ///     This is separate from RunStartupDiagnostics because deferred patches are applied
         ///     on the first Campaign.Tick() to avoid TypeInitializationException on Proton/Linux.
         /// </summary>
@@ -87,7 +87,7 @@ namespace Enlisted.Mod.Core.Logging
             try
             {
                 _hasDeferredPatchInfo = true;
-                
+
                 WriteLine();
                 WriteLine(new string('=', 72));
                 WriteLine("              DEFERRED PATCHES (Applied on Campaign Start)");
@@ -124,7 +124,7 @@ namespace Enlisted.Mod.Core.Logging
             try
             {
                 var behaviors = behaviorNames?.ToList() ?? new List<string>();
-                
+
                 WriteLine();
                 WriteLine("-- REGISTERED CAMPAIGN BEHAVIORS --");
                 WriteLine();
@@ -263,11 +263,11 @@ namespace Enlisted.Mod.Core.Logging
 
 				return newPath;
 			}
-			catch
-			{
-				// Fallback: use a placeholder filename - no longer create legacy "conflicts.log"
-				return Path.Combine(logDir, "_.log");
-			}
+ 		catch
+ 		{
+ 			// Fallback: use a placeholder filename - no longer create legacy "conflicts.log"
+ 			return Path.Combine(logDir ?? "Debugging", "_.log");
+ 		}
 		}
 
         /// <summary>
@@ -376,7 +376,7 @@ namespace Enlisted.Mod.Core.Logging
         {
             WriteLine();
             WriteLine(new string('-', 72));
-            
+
             if (isPartial)
             {
                 WriteLine("END OF INITIAL DIAGNOSTICS (deferred patches pending)");
@@ -385,7 +385,7 @@ namespace Enlisted.Mod.Core.Logging
             {
                 WriteLine("END OF FULL DIAGNOSTICS");
             }
-            
+
             WriteLine();
             WriteLine("If you're experiencing issues:");
             WriteLine("  1. Check the POTENTIAL CONFLICTS sections above");
@@ -523,7 +523,7 @@ namespace Enlisted.Mod.Core.Logging
                     // Check both our Harmony IDs since we use two instances
                     var ourIds = new HashSet<string> { EnlistedHarmonyId, EnlistedDeferredHarmonyId, ourHarmonyId };
                     var otherMods = owners.Where(o => !ourIds.Contains(o)).ToList();
-                    
+
                     if (otherMods.Count > 0)
                     {
                         var methodName = method.Name;
@@ -594,7 +594,7 @@ namespace Enlisted.Mod.Core.Logging
         ///     Patch order matters: prefixes can skip the original method, postfixes can modify results.
         /// </summary>
         private static void WritePatchExecutionOrder(
-            Harmony harmony, 
+            Harmony harmony,
             List<MethodBase> ourMethods,
             List<(string method, string declaringType, List<string> otherMods)> conflicts,
             string ourHarmonyId)
@@ -617,7 +617,7 @@ namespace Enlisted.Mod.Core.Logging
 
                 var methodName = method.Name;
                 var declaringType = method.DeclaringType?.FullName ?? "Unknown";
-                
+
                 if (!conflicts.Any(c => c.method == methodName && c.declaringType == declaringType))
                 {
                     continue;

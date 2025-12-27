@@ -19,7 +19,7 @@ namespace Enlisted.Features.Equipment.Behaviors
 {
     /// <summary>
     /// Troop selection system allowing players to choose from real Bannerlord troop templates.
-    /// 
+    ///
     /// This system allows players to select actual game troops during promotion, providing
     /// authentic military progression where equipment is replaced (not accumulated) for
     /// realistic military service. Players can choose troops up to their current tier level.
@@ -27,7 +27,7 @@ namespace Enlisted.Features.Equipment.Behaviors
     public sealed class TroopSelectionManager : CampaignBehaviorBase
     {
         public static TroopSelectionManager Instance { get; private set; }
-        
+
         // Promotion state tracking
         private bool _promotionPending;
         private int _pendingTier = 1;
@@ -35,17 +35,17 @@ namespace Enlisted.Features.Equipment.Behaviors
         private string _lastSelectedTroopId;
 
         public string LastSelectedTroopId => _lastSelectedTroopId;
-        
+
         public TroopSelectionManager()
         {
             Instance = this;
         }
-        
+
         public override void RegisterEvents()
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
         }
-        
+
         public override void SyncData(IDataStore dataStore)
         {
             SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
@@ -55,21 +55,21 @@ namespace Enlisted.Features.Equipment.Behaviors
                 dataStore.SyncData("_lastSelectedTroopId", ref _lastSelectedTroopId);
             });
         }
-        
+
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             AddTroopSelectionMenus(starter);
-            
+
             // Development-only: deep validation of troop coverage across cultures/tiers.
             // Disabled by default to keep session logs lightweight for players.
             if (ModConfig.Settings?.RunTroopDiscoveryValidation == true)
             {
                 TroopDiscoveryValidator.ValidateAllCulturesAndTiers();
             }
-            
+
             ModLogger.Info("TroopSelection", "Troop selection system initialized with modern UI styling");
         }
-        
+
         /// <summary>
         /// Menu background initialization for enlisted_troop_selection menu.
         /// Sets culture-appropriate background and ambient audio.
@@ -83,7 +83,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
         }
-        
+
         /// <summary>
         /// Show Master at Arms popup allowing player to select among unlocked troops (tiers ≤ current tier).
         /// Keeps tier unchanged; only equipment/role expression is changed.
@@ -287,7 +287,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             starter.AddGameMenu("enlisted_troop_selection",
                 "Master at Arms\n{TROOP_SELECTION_TEXT}",
                 OnTroopSelectionInit);
-                
+
             // "Collect equipment now" button - opens Master at Arms popup for troop selection (TroopSelection icon)
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_collect_now",
                 "Collect equipment now",
@@ -312,7 +312,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     });
                 },
                 false, 0);
-            
+
             // "Return to camp" button - player declines immediate equipment collection (Leave icon)
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_back",
                 "Return to camp",
@@ -339,7 +339,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     });
                 });
         }
-        
+
         /// <summary>
         /// Show troop selection menu for a specific tier.
         /// Called when player reaches promotion XP threshold.
@@ -364,19 +364,19 @@ namespace Enlisted.Features.Equipment.Behaviors
                 _availableTroops = GetTroopsForCultureAndTier(cultureId, newTier);
                 _pendingTier = newTier;
                 _promotionPending = true;
-                
+
                 if (_availableTroops.Count == 0)
                 {
                     ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-009", $"No troops found for culture {cultureId} tier {newTier}");
-                    
+
                     // Fallback - apply basic tier progression without equipment change
                     enlistment.ApplyBasicPromotion(newTier);
                     return;
                 }
-                
+
                 // Activate troop selection menu
                 GameMenu.ActivateGameMenu("enlisted_troop_selection");
-                
+
                 ModLogger.Info("TroopSelection", $"Troop selection menu opened - {_availableTroops.Count} troops available");
             }
             catch (Exception ex)
@@ -384,7 +384,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 ModLogger.Error("TroopSelection", "Failed to show troop selection menu", ex);
             }
         }
-        
+
         /// <summary>
         /// Initialize troop selection menu with available troop choices.
         /// </summary>
@@ -395,7 +395,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 var backgroundMesh = "encounter_looter"; // Safe fallback
                 var enlistment = EnlistmentBehavior.Instance;
-                
+
                 if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
                 {
                     backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
@@ -404,9 +404,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                 {
                     backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
                 }
-                
+
                 args.MenuContext.SetBackgroundMeshName(backgroundMesh);
-                
+
                 if (!_promotionPending || _availableTroops.Count == 0)
                 {
                     // Initialize menu context
@@ -417,18 +417,18 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Build roleplay-friendly promotion display
                 var enlistmentRef = EnlistmentBehavior.Instance;
                 var rankName = enlistmentRef?.GetRankName(_pendingTier) ?? $"Tier {_pendingTier}";
-                
+
                 var intro = new TextObject("{=enl_master_at_arms_summons_intro}You've been summoned before the Master at Arms.");
                 var promo = new TextObject("{=enl_master_at_arms_promotion_line}\"Soldier, your service has not gone unnoticed. You've earned promotion to {RANK_NAME}.\"");
-                promo.SetTextVariable("RANK_NAME", rankName ?? string.Empty);
+                promo.SetTextVariable("RANK_NAME", rankName);
                 var note = new TextObject("{=enl_master_at_arms_after_t1_note}After Tier 1, gear is not auto-issued. Your chosen kit becomes purchasable from the Quartermaster.");
                 var count = new TextObject("{=enl_master_at_arms_specializations_count}({COUNT} troop specializations available)");
                 count.SetTextVariable("COUNT", _availableTroops.Count);
 
                 var statusText = $"{intro}\n\n{promo}\n\n{note}\n\n{count}";
-                
+
                 MBTextManager.SetTextVariable("TROOP_SELECTION_TEXT", statusText);
-                
+
                 // Dynamically create menu options for each troop
                 CreateTroopSelectionOptions(args);
             }
@@ -438,7 +438,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 MBTextManager.SetTextVariable("TROOP_SELECTION_TEXT", "Error loading troop selection. Please report this issue.");
             }
         }
-        
+
         /// <summary>
         /// Create dynamic menu options for each available troop.
         /// </summary>
@@ -456,7 +456,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 ModLogger.Error("TroopSelection", "Error creating troop selection options", ex);
             }
         }
-        
+
         /// <summary>
         /// Get available troops for specific culture and tier.
         /// Uses real Bannerlord CharacterObject templates.
@@ -467,17 +467,17 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
                 var tree = BuildCultureTroopTree(culture);
-                
-                var availableTroops = tree.Where(troop => 
+
+                var availableTroops = tree.Where(troop =>
                     SafeGetTier(troop) == tier &&
                     !troop.IsHero &&
                     troop.BattleEquipments.Any()).ToList();
-                
+
                 // Add culture fallback troops if no specific tier troops found
                 if (availableTroops.Count == 0 && culture != null)
                 {
                     ModLogger.Info("TroopSelection", $"No troops found at tier {tier}, using culture fallbacks");
-                    
+
                     // Use guaranteed culture troop templates as fallbacks
                     var fallbackTroops = new List<CharacterObject>();
                     if (culture.BasicTroop != null)
@@ -496,11 +496,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         fallbackTroops.Add(culture.RangedMilitiaTroop);
                     }
-                    
+
                     availableTroops = fallbackTroops.Where(t => t.BattleEquipments.Any()).ToList();
                     ModLogger.Info("TroopSelection", $"Using {availableTroops.Count} culture fallback troops");
                 }
-                
+
                 ModLogger.Info("TroopSelection", $"Found {availableTroops.Count} tree troops for {cultureId} tier {tier}");
                 return availableTroops;
             }
@@ -582,7 +582,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             return results;
         }
-        
+
         /// <summary>
         /// Apply equipment from selected troop to hero.
         /// Implements equipment REPLACEMENT system (not accumulation).
@@ -598,7 +598,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Phase 1: Formation/Duties system deleted
                 // Formation preferences will be tracked via native traits in later phase
                 var formation = DetectTroopFormation(selectedTroop);
-                
+
                 if (autoIssueEquipment)
                 {
                     // Equipment is replaced (not accumulated) for realistic military service
@@ -631,11 +631,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                     message.SetTextVariable("TROOP_NAME", selectedTroop.Name);
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                 }
-                
+
                 // Clear promotion state
                 _promotionPending = false;
                 _availableTroops.Clear();
-                
+
                 ModLogger.Info("TroopSelection", autoIssueEquipment
                     ? $"Equipment replaced with {selectedTroop.Name} gear (Formation: {formation}, quest items protected)"
                     : $"Troop selection recorded without auto-issue (Formation: {formation}); gear available at Quartermaster");
@@ -646,7 +646,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     $"Failed to apply selected troop equipment for {selectedTroop?.Name?.ToString() ?? "null"}", ex);
             }
         }
-        
+
         /// <summary>
         /// Detect formation type from troop properties.
         /// Detects the player's military formation based on equipment.
@@ -662,7 +662,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
                 else if (troop.IsMounted)
                 {
-                    return FormationType.Cavalry;       // Sword + Horse  
+                    return FormationType.Cavalry;       // Sword + Horse
                 }
                 else if (troop.IsRanged)
                 {
@@ -678,7 +678,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 return FormationType.Infantry; // Safe fallback
             }
         }
-        
+
         /// <summary>
         /// Handle troop selection by formation type.
         /// Selects the first available troop matching the specified formation type.
@@ -691,7 +691,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 if (troopOfType != null)
                 {
                     ApplySelectedTroopEquipment(Hero.MainHero, troopOfType, autoIssueEquipment: SafeGetTier(troopOfType) <= 1);
-                    
+
                     // Return to main enlisted menu
                     EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                 }
@@ -705,18 +705,18 @@ namespace Enlisted.Features.Equipment.Behaviors
                 ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-014", "Error in troop selection", ex);
             }
         }
-        
+
         /// <summary>
         /// Check if promotion is currently pending.
         /// </summary>
         public bool IsPromotionPending => _promotionPending;
-        
+
         /// <summary>
         /// Get pending promotion tier.
         /// </summary>
         public int PendingTier => _pendingTier;
     }
-    
+
     /// <summary>
     /// Formation types for troop selection and duties system integration.
     /// </summary>
@@ -724,9 +724,9 @@ namespace Enlisted.Features.Equipment.Behaviors
     {
         None,
         Infantry,
-        Archer, 
+        Archer,
         Cavalry,
         HorseArcher
     }
-    
+
 }

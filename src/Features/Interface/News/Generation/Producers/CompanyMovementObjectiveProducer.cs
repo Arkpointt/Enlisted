@@ -141,7 +141,7 @@ namespace Enlisted.Features.Interface.News.Generation.Producers
                 {
                     var settlement = Settlement.Find(lastId);
                     var name = settlement?.Name?.ToString() ?? string.Empty;
-                    if (!string.IsNullOrWhiteSpace(name))
+                    if (!string.IsNullOrWhiteSpace(name) && settlement != null)
                     {
                         snapshot.LastStopTag = settlement.IsTown
                             ? "town_stop"

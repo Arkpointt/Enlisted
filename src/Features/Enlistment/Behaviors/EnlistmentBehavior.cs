@@ -1425,8 +1425,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Debug("Battle", "Lord not in MapEvent - no battle action needed");
             }
-            else if (playerMapEvent != null)
+            else
             {
+                // Both lordMapEvent and playerMapEvent are non-null here
                 ModLogger.Debug("Battle", "Player already in MapEvent - no action needed");
             }
         }
@@ -1518,9 +1519,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var playerSideLabel = lordIsAttacker ? "Attacker" : "Defender";
 
                 // Join the MapEvent on the lord's side right away to block auto-sim resolution
-                main.Party.MapEventSide = targetSide;
-                ModLogger.Info("Battle",
-                    $"Immediate battle join on {playerSideLabel} side (MapEventStarted guard, naval={mapEvent.IsNavalMapEvent})");
+                if (main.Party != null)
+                {
+                    main.Party.MapEventSide = targetSide;
+                    ModLogger.Info("Battle",
+                        $"Immediate battle join on {playerSideLabel} side (MapEventStarted guard, naval={mapEvent.IsNavalMapEvent})");
+                }
 
                 if (PlayerEncounter.Current == null && !_playerEncounterCreatedForBattle)
                 {
@@ -1880,14 +1884,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     // Saving: serialize each cooldown entry individually
                     var index = 0;
-                    foreach (var kvp in _minorFactionDesertionCooldowns)
+                    if (_minorFactionDesertionCooldowns != null)
                     {
-                        var factionId = kvp.Key;
-                        var cooldownEnd = kvp.Value;
+                        foreach (var kvp in _minorFactionDesertionCooldowns)
+                        {
+                            var factionId = kvp.Key;
+                            var cooldownEnd = kvp.Value;
 
-                        SyncKey(dataStore, $"_minorFacDesertion_{index}_id", ref factionId);
-                        SyncKey(dataStore, $"_minorFacDesertion_{index}_end", ref cooldownEnd);
-                        index++;
+                            SyncKey(dataStore, $"_minorFacDesertion_{index}_id", ref factionId);
+                            SyncKey(dataStore, $"_minorFacDesertion_{index}_end", ref cooldownEnd);
+                            index++;
+                        }
                     }
                 }
                 else
@@ -1938,14 +1945,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     // Saving: serialize each cooldown entry individually
                     var index = 0;
-                    foreach (var kvp in _bagCheckAbortCooldowns)
+                    if (_bagCheckAbortCooldowns != null)
                     {
-                        var lordId = kvp.Key;
-                        var cooldownEnd = kvp.Value;
+                        foreach (var kvp in _bagCheckAbortCooldowns)
+                        {
+                            var lordId = kvp.Key;
+                            var cooldownEnd = kvp.Value;
 
-                        SyncKey(dataStore, $"_bagCheckAbort_{index}_id", ref lordId);
-                        SyncKey(dataStore, $"_bagCheckAbort_{index}_end", ref cooldownEnd);
-                        index++;
+                            SyncKey(dataStore, $"_bagCheckAbort_{index}_id", ref lordId);
+                            SyncKey(dataStore, $"_bagCheckAbort_{index}_end", ref cooldownEnd);
+                            index++;
+                        }
                     }
                 }
                 else
@@ -1994,10 +2004,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (!dataStore.IsLoading)
                 {
                     // Saving: serialize each name
-                    for (int i = 0; i < (_soldierNames?.Count ?? 0); i++)
+                    if (_soldierNames != null)
                     {
-                        var name = _soldierNames[i];
-                        SyncKey(dataStore, $"_soldierName_{i}", ref name);
+                        for (int i = 0; i < _soldierNames.Count; i++)
+                        {
+                            var name = _soldierNames[i];
+                            SyncKey(dataStore, $"_soldierName_{i}", ref name);
+                        }
                     }
                 }
                 else
@@ -2096,16 +2109,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     // Saving: serialize each ration record individually
                     var index = 0;
-                    foreach (var ration in _issuedRations)
+                    if (_issuedRations != null)
                     {
-                        var itemId = ration.ItemId;
-                        var amount = ration.Amount;
-                        var issuedAt = ration.IssuedAt;
+                        foreach (var ration in _issuedRations)
+                        {
+                            var itemId = ration.ItemId;
+                            var amount = ration.Amount;
+                            var issuedAt = ration.IssuedAt;
 
-                        SyncKey(dataStore, $"_issuedRation_{index}_itemId", ref itemId);
-                        SyncKey(dataStore, $"_issuedRation_{index}_amount", ref amount);
-                        SyncKey(dataStore, $"_issuedRation_{index}_issuedAt", ref issuedAt);
-                        index++;
+                            SyncKey(dataStore, $"_issuedRation_{index}_itemId", ref itemId);
+                            SyncKey(dataStore, $"_issuedRation_{index}_amount", ref amount);
+                            SyncKey(dataStore, $"_issuedRation_{index}_issuedAt", ref issuedAt);
+                            index++;
+                        }
                     }
                 }
                 else
@@ -2320,7 +2336,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             // Check re-enlistment block before proceeding
-            if (!CanEnlistWithFaction(lord?.MapFaction, out var blockedMessage))
+            if (!CanEnlistWithFaction(lord.MapFaction, out var blockedMessage))
             {
                 InformationManager.DisplayMessage(new InformationMessage(blockedMessage, Colors.Red));
                 ModLogger.Info("Enlistment", $"Re-enlistment blocked: {blockedMessage}");
@@ -2329,7 +2345,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Check for cross-faction baggage transfer before proceeding.
             // If player has baggage stored with a different faction, prompt them to transfer it.
-            if (HasCrossFactionBaggage(lord?.MapFaction))
+            if (HasCrossFactionBaggage(lord.MapFaction))
             {
                 ShowCrossFactionBaggagePrompt(lord);
                 return;
@@ -2918,7 +2934,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 new TextObject("{=baggage_sold_remote}Your old belongings were sold for {GOLD} denars.")
                                     .SetTextVariable("GOLD", sellValue).ToString()));
                         }
-                        _baggageStash.Clear();
+                        _baggageStash?.Clear();
                         _baggageStashFactionId = null;
                         ModLogger.Info("Enlistment", $"Remote baggage sale completed for {sellValue} denars");
                         break;
@@ -2926,7 +2942,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     case "abandon":
                         // Simply discard the baggage
                         var abandonedCount = _baggageStash?.Count ?? 0;
-                        _baggageStash.Clear();
+                        _baggageStash?.Clear();
                         _baggageStashFactionId = null;
                         InformationManager.DisplayMessage(new InformationMessage(
                             new TextObject("{=baggage_abandoned}Your old belongings have been abandoned.").ToString(),
@@ -4831,7 +4847,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // case. The hourly tick runs once per in-game hour, so it provides periodic enforcement.
             if (!IsEnlisted)
             {
-                var partyState = main?.Party;
+                var partyState = main.Party;
                 var inMapEvent = partyState?.MapEvent != null;
                 var isPrisoner = Hero.MainHero?.IsPrisoner == true;
                 var inEncounter = Campaign.Current?.PlayerEncounter != null;
@@ -6428,7 +6444,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Stop if relation below threshold
                     var config = EnlistedConfig.LoadRetirementConfig();
                     var relationStop = config?.PensionRelationStopThreshold ?? 0;
-                    if (faction.Leader != null && Hero.MainHero.GetRelation(faction.Leader) < relationStop)
+                    if (faction.Leader != null && Hero.MainHero != null && Hero.MainHero.GetRelation(faction.Leader) < relationStop)
                     {
                         _isPensionPaused = true;
                         _lastPayOutcome = "pension_paused_relation";
@@ -6607,7 +6623,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     var element = _baggageStash.GetElementCopyAtIndex(i);
                     if (element.EquipmentElement.ItemModifier != null &&
-                        element.EquipmentElement.ItemModifier.Name?.ToString()?.Contains("qm_issued") == true)
+                        element.EquipmentElement.ItemModifier.Name.ToString().Contains("qm_issued"))
                     {
                         itemsToRemove.Add((element.EquipmentElement.Item, element.Amount));
                     }
@@ -7843,20 +7859,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                         // ALWAYS apply protection on captivity release - player shouldn't be attacked immediately
                         // This applies regardless of whether we're in grace period or not
-                        if (mainParty != null)
-                        {
-                            var protectionDuration = CampaignTime.Hours(12f);
-                            var protectionUntil = CampaignTime.Now + protectionDuration;
+                        // mainParty is guaranteed non-null here due to the outer null check
+                        var protectionDuration = CampaignTime.Hours(12f);
+                        var protectionUntil = CampaignTime.Now + protectionDuration;
 
-                            // Native protection - prevents parties from targeting us
-                            mainParty.IgnoreByOtherPartiesTill(protectionUntil);
+                        // Native protection - prevents parties from targeting us
+                        mainParty.IgnoreByOtherPartiesTill(protectionUntil);
 
-                            // Mod-level protection - our EncounterSuppressionPatch will block encounters
-                            _graceProtectionEnds = protectionUntil;
+                        // Mod-level protection - our EncounterSuppressionPatch will block encounters
+                        _graceProtectionEnds = protectionUntil;
 
-                            ModLogger.Info("Captivity",
-                                $"Applied 1-day protection after captivity release (until {protectionUntil})");
-                        }
+                        ModLogger.Info("Captivity",
+                            $"Applied 1-day protection after captivity release (until {protectionUntil})");
                     }
                     _wasPrisonerLastTick = isPrisoner;
 
@@ -7965,7 +7979,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var lordInSiege = IsPartyInActiveSiege(lordParty);
                     var playerInSiege = IsPartyInActiveSiege(mainParty);
 
-                    if (!playerInSiege && mainParty.BesiegerCamp != null)
+                    if (!playerInSiege && mainParty != null && mainParty.BesiegerCamp != null)
                     {
                         mainParty.BesiegerCamp = null;
                         ModLogger.Debug("Siege",
@@ -7975,7 +7989,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Ensure the player is in the lord's army when the lord is in an army
                     // Join seamlessly when the LORD physically merges with the army (not when first assigned)
                     // This prevents teleporting the player across the map - we wait for our lord to arrive first
-                    if (lordInArmy && (mainParty.Army == null || mainParty.Army != lordParty.Army))
+                    if (lordInArmy && mainParty != null && (mainParty.Army == null || mainParty.Army != lordParty.Army))
                     {
                         var targetArmy = lordParty.Army;
                         var armyLeader = targetArmy?.LeaderParty;
@@ -8504,9 +8518,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                mainParty.BesiegerCamp = targetCamp;
-                ModLogger.Info("Battle",
-                    $"Synced player besieger camp with lord's siege at {targetCamp.SiegeEvent?.BesiegedSettlement?.Name?.ToString() ?? "unknown"}");
+                if (mainParty != null)
+                {
+                    mainParty.BesiegerCamp = targetCamp;
+                    ModLogger.Info("Battle",
+                        $"Synced player besieger camp with lord's siege at {targetCamp.SiegeEvent?.BesiegedSettlement?.Name?.ToString() ?? "unknown"}");
+                }
             }
             catch (Exception ex)
             {
@@ -9099,7 +9116,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 var record = GetFactionVeteranRecord(_enlistedLord.MapFaction);
-                return record?.CurrentTermEnd != CampaignTime.Zero && CampaignTime.Now >= record.CurrentTermEnd;
+                return record != null && record.CurrentTermEnd != CampaignTime.Zero && CampaignTime.Now >= record.CurrentTermEnd;
             }
         }
 
@@ -9129,7 +9146,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             var record = GetFactionVeteranRecord(faction);
-            return record.CooldownEnds != CampaignTime.Zero && CampaignTime.Now < record.CooldownEnds;
+            return record != null && record.CooldownEnds != CampaignTime.Zero && CampaignTime.Now < record.CooldownEnds;
         }
 
         /// <summary>
@@ -9144,7 +9161,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             var record = GetFactionVeteranRecord(faction);
             // Must have completed first term and be past cooldown
-            return record.FirstTermCompleted &&
+            return record != null &&
+                   record.FirstTermCompleted &&
                    record.CooldownEnds != CampaignTime.Zero &&
                    CampaignTime.Now >= record.CooldownEnds;
         }
@@ -9192,7 +9210,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var faction = _enlistedLord.MapFaction;
             var record = GetFactionVeteranRecord(faction);
 
-            if (record?.CurrentTermEnd != CampaignTime.Zero && CampaignTime.Now >= record.CurrentTermEnd)
+            if (record != null && record.CurrentTermEnd != CampaignTime.Zero && CampaignTime.Now >= record.CurrentTermEnd)
             {
                 var message =
                     new TextObject(
@@ -10026,13 +10044,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
 
                         // Set pending desertion kingdom to the original lord's kingdom
-                        if (lordKingdom != null)
-                        {
-                            _pendingDesertionKingdom = lordKingdom;
+                        // lordKingdom is guaranteed non-null here due to the conditions above
+                        _pendingDesertionKingdom = lordKingdom;
 
-                            // Apply desertion penalties
-                            ApplyDesertionPenalties();
-                        }
+                        // Apply desertion penalties
+                        ApplyDesertionPenalties();
 
                         // Fire event for other mods (before StopEnlist clears state)
                         OnLeaveEnded?.Invoke();
@@ -10042,7 +10058,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                         var desertionMessage = new TextObject(
                             "{=Enlisted_Message_DesertedToOtherKingdom}You have deserted {ORIGINAL_KINGDOM} by joining {NEW_KINGDOM}. You have been branded a deserter.");
-                        desertionMessage.SetTextVariable("ORIGINAL_KINGDOM", lordKingdom?.Name ?? new TextObject("{=enlist_fallback_army}your lord's army"));
+                        desertionMessage.SetTextVariable("ORIGINAL_KINGDOM", lordKingdom.Name);
                         desertionMessage.SetTextVariable("NEW_KINGDOM", newKingdom.Name);
                         InformationManager.DisplayMessage(new InformationMessage(desertionMessage.ToString()));
 
@@ -10066,7 +10082,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     else
                     {
                         ModLogger.Info("Desertion",
-                            $"Player changed kingdoms during grace period - clearing grace period (left: {oldKingdom?.Name}, joined: {newKingdom?.Name})");
+                            $"Player changed kingdoms during grace period - clearing grace period (left: {oldKingdom.Name}, joined: {newKingdom.Name})");
                     }
 
                     ClearDesertionGracePeriod();
@@ -12833,7 +12849,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Re-hide the party if we're not immediately entering a battle or siege.
                     bool inBattle = mainParty?.Party.MapEvent != null;
                     var inSiege = IsPartyInActiveSiege(mainParty);
-                    if (!inBattle && !inSiege)
+                    if (!inBattle && !inSiege && mainParty != null)
                     {
                         mainParty.IsVisible = false;
                         mainParty.IsActive = false;
@@ -12851,7 +12867,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (party == _enlistedLord?.PartyBelongedTo)
                 {
                     ModLogger.Info("Settlement",
-                        $"Lord {_enlistedLord.Name} left {settlement?.Name?.ToString() ?? "unknown"} - pulling player to follow");
+                        $"Lord {_enlistedLord?.Name?.ToString() ?? "unknown"} left {settlement?.Name?.ToString() ?? "unknown"} - pulling player to follow");
 
                     // LORD LEFT - pull the player out to follow!
                     // Check if player is still in this settlement
@@ -12971,8 +12987,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 // Determine whether this event matters to our enlisted service
-                var lordIsAttacker = attackerParty?.MobileParty == lordParty || attackerParty == lordParty?.Party;
-                var lordIsDefender = defenderParty?.MobileParty == lordParty || defenderParty == lordParty?.Party;
+                var lordIsAttacker = attackerParty?.MobileParty == lordParty || attackerParty == lordParty.Party;
+                var lordIsDefender = defenderParty?.MobileParty == lordParty || defenderParty == lordParty.Party;
                 var inArmy = lordParty.Army != null && main.Army == lordParty.Army;
                 var armyLeaderInvolved = lordParty.Army?.LeaderParty?.Party == attackerParty ||
                                          lordParty.Army?.LeaderParty?.Party == defenderParty;
@@ -13226,8 +13242,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // player hits another major state change (reload, level, new battle, leave).
                     if (EnlistedEncounterBehavior.IsWaitingInReserve)
                     {
-                        var lordStillInBattle = lordParty?.Party.MapEvent != null;
-                        var armyStillInBattle = lordParty?.Army?.Parties?.Any(p => p?.Party?.MapEvent != null) == true;
+                        var lordStillInBattle = lordParty.Party.MapEvent != null;
+                        var armyStillInBattle = lordParty.Army?.Parties?.Any(p => p?.Party.MapEvent != null) == true;
 
                         // Only clear reserve when no active battles remain for the lord/army
                         if (!lordStillInBattle && !armyStillInBattle)
@@ -14106,7 +14122,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Diagnostics",
-                    $"Error evaluating siege state for {party?.LeaderHero?.Name?.ToString() ?? "unknown"}: {ex.Message}");
+                    $"Error evaluating siege state for {party?.LeaderHero.Name.ToString() ?? "unknown"}: {ex.Message}");
             }
 
             return false;

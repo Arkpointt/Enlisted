@@ -36,7 +36,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     return true;
                 }
-                
+
                 var campaign = Campaign.Current;
                 var mainPartyMobile = campaign?.MainParty;
 
@@ -45,26 +45,26 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     return true; // Allow normal activation for other parties
                 }
-                
+
                 // Only check when trying to activate (value = true)
                 if (!value)
                 {
                     return true; // Always allow deactivation
                 }
-                
+
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment == null)
                 {
                     return true;
                 }
-                
+
                 // If player is a prisoner, allow all activation changes (captivity system needs control)
                 // Log this to diagnose "attacked while prisoner" - activation shouldn't normally happen
                 if (Hero.MainHero?.IsPrisoner == true)
                 {
-                    var settlement = Hero.MainHero?.CurrentSettlement?.Name?.ToString() ?? "none";
-                    ModLogger.Info("Captivity", 
-                        $"Party activation allowed while prisoner (value: {value}, settlement: {settlement})");
+                    var settlement = Hero.MainHero.CurrentSettlement?.Name?.ToString() ?? "none";
+                    ModLogger.Info("Captivity",
+                        $"Party activation allowed while prisoner (activating: {value}, settlement: {settlement})");
                     return true;
                 }
 
@@ -76,14 +76,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     ModLogger.Debug("PostDischargeProtection", "Blocked party activation - player waiting in reserve");
                     return false;
                 }
-                
+
                 // If reserve flag is stale (enlistment ended but flag wasn't cleared), clear it
                 if (isInReserve && !enlistment.IsEnlisted)
                 {
                     ModLogger.Debug("PostDischargeProtection", "Clearing stale reserve flag during activation");
                     EnlistedEncounterBehavior.ClearReserveState();
                 }
-                
+
                 // Only intervene when the player has just been discharged and is still in their grace/cleanup window.
                 if (enlistment.IsEnlisted || !enlistment.IsInDesertionGracePeriod)
                 {
@@ -96,14 +96,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 var mainParty = mainPartyMobile.Party;
                 var playerInMapEvent = mainParty?.MapEvent != null;
                 var playerInEncounter = campaign.PlayerEncounter != null;
-                
+
                 if (playerInMapEvent || playerInEncounter)
                 {
-                    ModLogger.Info("PostDischargeProtection", 
+                    ModLogger.Info("PostDischargeProtection",
                         $"Prevented party activation - discharged but still in battle state (MapEvent: {playerInMapEvent}, Encounter: {playerInEncounter})");
                     return false;
                 }
-                
+
                 return true;
             }
             catch (Exception ex)

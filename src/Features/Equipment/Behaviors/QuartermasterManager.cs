@@ -291,6 +291,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 _inventoryState.LastRefreshDay = lastRefreshDay;
                 _inventoryState.LastRefreshSupplyLevel = lastRefreshSupply;
+                _inventoryState.CurrentStock ??= new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
                 _inventoryState.CurrentStock.Clear();
 
                 for (var i = 0; i < stockCount; i++)
@@ -2452,16 +2453,6 @@ namespace Enlisted.Features.Equipment.Behaviors
                 sb.AppendLine();
 
                 // Phase 1: Duties system deleted, no officer privileges display
-                var isProvisioner = false;
-                var isQuartermaster = false;
-
-                if (isProvisioner || isQuartermaster)
-                {
-                    sb.AppendLine("--- Officer Access ---");
-                    sb.AppendLine();
-                    sb.AppendLine("Extended equipment options available.");
-                    sb.AppendLine();
-                }
 
                 MBTextManager.SetTextVariable("QUARTERMASTER_TEXT", sb.ToString());
             }

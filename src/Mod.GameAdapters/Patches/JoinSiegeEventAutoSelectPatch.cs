@@ -94,16 +94,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     lordSide = BattleSideEnum.Attacker;
                     lordRole = "besieger";
                 }
-                else if (lordIsDefender)
-                {
-                    lordSide = BattleSideEnum.Defender;
-                    lordRole = "defender";
-                }
                 else
                 {
-                    // Should not reach here given the checks above, but fail safe
-                    ModLogger.Warn("JoinSiegeEvent", "Could not determine lord's side - allowing native menu");
-                    return true;
+                    // lordIsDefender is guaranteed true here due to the check at line 69
+                    lordSide = BattleSideEnum.Defender;
+                    lordRole = "defender";
                 }
 
                 // Verify lord is actually in this battle

@@ -341,7 +341,7 @@ namespace Enlisted.Features.Conversations.Data
                 option.ActionData = new Dictionary<string, object>();
                 foreach (var prop in actionDataJson.Properties())
                 {
-                    option.ActionData[prop.Name] = prop.Value?.ToObject<object>();
+                    option.ActionData[prop.Name] = prop.Value.ToObject<object>();
                 }
             }
 

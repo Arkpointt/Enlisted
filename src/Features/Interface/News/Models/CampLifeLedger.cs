@@ -80,7 +80,7 @@ namespace Enlisted.Features.Interface.News.Models
             {
                 var newDays = new DailyAggregate[Capacity];
                 var copyCount = Days == null ? 0 : Math.Min(Days.Length, newDays.Length);
-                if (copyCount > 0)
+                if (copyCount > 0 && Days != null)
                 {
                     Array.Copy(Days, 0, newDays, 0, copyCount);
                 }

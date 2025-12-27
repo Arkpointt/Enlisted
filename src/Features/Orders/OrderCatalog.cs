@@ -443,7 +443,7 @@ namespace Enlisted.Features.Orders
             {
                 foreach (var prop in minSkillsJson.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value > 0)
                     {
                         req.MinSkills[prop.Name] = value;
@@ -457,7 +457,7 @@ namespace Enlisted.Features.Orders
             {
                 foreach (var prop in minTraitsJson.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value > 0)
                     {
                         req.MinTraits[prop.Name] = value;
@@ -509,7 +509,7 @@ namespace Enlisted.Features.Orders
             {
                 foreach (var prop in repJson.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value != 0)
                     {
                         outcome.Reputation[prop.Name] = value;
@@ -523,7 +523,7 @@ namespace Enlisted.Features.Orders
             {
                 foreach (var prop in needsJson.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value != 0)
                     {
                         outcome.CompanyNeeds[prop.Name] = value;
@@ -537,7 +537,7 @@ namespace Enlisted.Features.Orders
             {
                 foreach (var prop in skillXpJson.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value != 0)
                     {
                         outcome.SkillXp[prop.Name] = value;
@@ -551,7 +551,7 @@ namespace Enlisted.Features.Orders
             {
                 foreach (var prop in traitXpJson.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value != 0)
                     {
                         outcome.TraitXp[prop.Name] = value;
@@ -565,7 +565,7 @@ namespace Enlisted.Features.Orders
             {
                 foreach (var prop in escalationJson.Properties())
                 {
-                    var value = prop.Value?.Value<int>() ?? 0;
+                    var value = prop.Value.Value<int?>() ?? 0;
                     if (value != 0)
                     {
                         outcome.Escalation[prop.Name] = value;

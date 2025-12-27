@@ -3846,6 +3846,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             var contraband = contrabandResult.MostValuable;
+            if (contraband.Item == null)
+            {
+                _currentMuster.BaggageOutcome = "clean";
+                GameMenu.SwitchToMenu(MusterInspectionMenuId);
+                return;
+            }
+
             var bribeAmount = ContrabandChecker.CalculateBribeAmount(contraband.Value);
 
             // Deduct bribe cost
@@ -3862,7 +3869,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Info(LogCategory, $"Bribe successful: {bribeAmount} denars paid, item kept");
 
                 // Give Charm XP
-                Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 10);
+                if (Hero.MainHero != null)
+                {
+                    Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 10);
+                }
             }
             else
             {
@@ -3874,7 +3884,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Apply scrutiny and fine
                 Escalation.EscalationManager.Instance?.ModifyScrutiny(3, "Failed bribe attempt");
                 var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-                Hero.MainHero.ChangeHeroGold(-fine);
+                if (Hero.MainHero != null)
+                {
+                    Hero.MainHero.ChangeHeroGold(-fine);
+                }
 
                 ModLogger.Warn(LogCategory, $"Bribe failed: lost {bribeAmount} denars + {contraband.Item.Name} + {fine} denars fine");
             }
@@ -3914,6 +3927,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             var contraband = contrabandResult.MostValuable;
+            if (contraband.Item == null)
+            {
+                _currentMuster.BaggageOutcome = "clean";
+                GameMenu.SwitchToMenu(MusterInspectionMenuId);
+                return;
+            }
 
             // 70% success chance, modified by Roguery
             var roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
@@ -3926,7 +3945,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Info(LogCategory, $"Smuggle successful: kept {contraband.Item.Name}");
 
                 // Give Roguery XP
-                Hero.MainHero.AddSkillXp(DefaultSkills.Roguery, 15);
+                if (Hero.MainHero != null)
+                {
+                    Hero.MainHero.AddSkillXp(DefaultSkills.Roguery, 15);
+                }
             }
             else
             {
@@ -3940,7 +3962,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 Escalation.EscalationManager.Instance?.ModifyDiscipline(3, "Attempted smuggling at muster");
 
                 var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-                Hero.MainHero.ChangeHeroGold(-fine);
+                if (Hero.MainHero != null)
+                {
+                    Hero.MainHero.ChangeHeroGold(-fine);
+                }
 
                 ModLogger.Warn(LogCategory, $"Smuggle failed: lost {contraband.Item.Name}, +5 scrutiny, +3 discipline");
             }
@@ -3979,6 +4004,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             var contraband = contrabandResult.MostValuable;
+            if (contraband.Item == null)
+            {
+                _currentMuster.BaggageOutcome = "clean";
+                GameMenu.SwitchToMenu(MusterInspectionMenuId);
+                return;
+            }
 
             // Check if item is equipped and unequip if needed
             var isEquipped = IsItemEquipped(contraband.Item);
@@ -4035,6 +4066,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             var contraband = contrabandResult.MostValuable;
+            if (contraband.Item == null)
+            {
+                _currentMuster.BaggageOutcome = "clean";
+                GameMenu.SwitchToMenu(MusterInspectionMenuId);
+                return;
+            }
 
             // 20% success chance, slightly modified by Charm
             var charm = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm) ?? 0;
@@ -4047,7 +4084,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Info(LogCategory, $"Protest successful: kept {contraband.Item.Name}");
 
                 // Give Charm XP
-                Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 20);
+                if (Hero.MainHero != null)
+                {
+                    Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 20);
+                }
             }
             else
             {
@@ -4068,7 +4108,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 Escalation.EscalationManager.Instance?.ModifyDiscipline(2, "Insubordination at muster");
 
                 var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-                Hero.MainHero.ChangeHeroGold(-fine);
+                if (Hero.MainHero != null)
+                {
+                    Hero.MainHero.ChangeHeroGold(-fine);
+                }
 
                 ModLogger.Warn(LogCategory, $"Protest failed: lost {contraband.Item.Name}, +4 scrutiny, +2 discipline");
             }
