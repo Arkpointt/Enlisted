@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Enlisted.Features.Enlistment.Behaviors;
-using Enlisted.Features.Identity;
 using Enlisted.Mod.Core.Logging;
-using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
