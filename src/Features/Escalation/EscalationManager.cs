@@ -23,6 +23,8 @@ namespace Enlisted.Features.Escalation
     /// - No instant hard fails: this manager never forces game-over; it only tracks and exposes state.
     /// - Internal-only: does not touch vanilla crime/reputation systems.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "RedundantNameQualifier",
+        Justification = "TaleWorlds.Library namespace conflicts with Enlisted.Mod.Core.Config (both contain ConfigurationManager). Adding 'using TaleWorlds.Library;' causes ambiguous reference errors.")]
     public sealed class EscalationManager : CampaignBehaviorBase
     {
         private const string LogCategory = "Escalation";
