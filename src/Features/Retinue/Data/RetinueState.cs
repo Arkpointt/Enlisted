@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.Core;
 
 namespace Enlisted.Features.Retinue.Data
 {
@@ -344,7 +343,7 @@ namespace Enlisted.Features.Retinue.Data
                 return null;
             }
 
-            return NamedVeterans.FirstOrDefault(v => 
+            return NamedVeterans.FirstOrDefault(v =>
                 string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
         }
 

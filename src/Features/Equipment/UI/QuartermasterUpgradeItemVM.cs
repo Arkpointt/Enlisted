@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using TaleWorlds.Core;
 using TaleWorlds.Core.ViewModelCollection.ImageIdentifiers;
 using TaleWorlds.Library;
@@ -18,32 +17,32 @@ namespace Enlisted.Features.Equipment.UI
     {
         [DataSourceProperty]
         public string ItemName { get; private set; }
-        
+
         [DataSourceProperty]
         public string CurrentQualityText { get; private set; }
-        
+
         [DataSourceProperty]
         public string CurrentQualityColor { get; private set; }
-        
+
         [DataSourceProperty]
         public string SlotTypeText { get; private set; }
-        
+
         [DataSourceProperty]
         public ItemImageIdentifierVM Image { get; private set; }
-        
+
         [DataSourceProperty]
         public MBBindingList<UpgradeOptionVm> UpgradeOptions { get; }
-        
+
         [DataSourceProperty]
         public bool HasUpgrades { get; private set; }
-        
+
         [DataSourceProperty]
         public string NoUpgradeReason { get; private set; }
-        
+
         private readonly EquipmentIndex _slot;
         private readonly EquipmentElement _currentElement;
         private readonly QuartermasterUpgradeVm _parent;
-        
+
         /// <summary>
         /// Initialize upgrade item with current equipment.
         /// </summary>
@@ -52,17 +51,17 @@ namespace Enlisted.Features.Equipment.UI
             _slot = slot;
             _currentElement = element;
             _parent = parent ?? throw new ArgumentNullException(nameof(parent));
-            
+
             UpgradeOptions = new MBBindingList<UpgradeOptionVm>();
         }
-        
+
         /// <summary>
         /// Refresh display values when upgrade data changes.
         /// </summary>
         public override void RefreshValues()
         {
             base.RefreshValues();
-            
+
             try
             {
                 if (_currentElement.IsEmpty || _currentElement.Item == null)
@@ -70,25 +69,25 @@ namespace Enlisted.Features.Equipment.UI
                     SetEmptyValues();
                     return;
                 }
-                
+
                 var item = _currentElement.Item;
                 var currentModifier = _currentElement.ItemModifier;
                 var currentQuality = QuartermasterManager.GetModifierQuality(item, currentModifier);
-                
+
                 // Set item display
                 ItemName = item.Name?.ToString() ?? "Unknown Item";
                 SlotTypeText = GetSlotTypeName(_slot);
                 Image = new ItemImageIdentifierVM(item);
-                
+
                 // Set current quality display
                 SetCurrentQualityDisplay(currentQuality);
-                
+
                 // Build available upgrades
                 UpgradeOptions.Clear();
                 BuildUpgradeOptions(item, currentModifier, currentQuality);
-                
+
                 HasUpgrades = UpgradeOptions.Count > 0;
-                
+
                 if (!HasUpgrades)
                 {
                     // Determine why no upgrades are available
@@ -110,7 +109,7 @@ namespace Enlisted.Features.Equipment.UI
                 {
                     NoUpgradeReason = "";
                 }
-                
+
                 // Notify UI of property changes
                 OnPropertyChanged(nameof(ItemName));
                 OnPropertyChanged(nameof(CurrentQualityText));
@@ -126,7 +125,7 @@ namespace Enlisted.Features.Equipment.UI
                 SetEmptyValues();
             }
         }
-        
+
         /// <summary>
         /// Build available upgrade options for this item.
         /// Filters by reputation requirements and modifier group availability.
@@ -141,11 +140,11 @@ namespace Enlisted.Features.Equipment.UI
                     // No modifier group - cannot upgrade
                     return;
                 }
-                
+
                 // Get available upgrade tiers based on QM reputation
-                var availableTiers = QuartermasterManager.Instance?.GetAvailableUpgradeTiers() 
+                var availableTiers = QuartermasterManager.Instance?.GetAvailableUpgradeTiers()
                                    ?? new List<ItemQuality>();
-                
+
                 // Build upgrade options for each tier higher than current quality
                 foreach (var targetQuality in availableTiers)
                 {
@@ -154,7 +153,7 @@ namespace Enlisted.Features.Equipment.UI
                     {
                         continue;
                     }
-                    
+
                     // Check if this quality tier exists for this item
                     var modifiers = modGroup.GetModifiersBasedOnQuality(targetQuality);
                     if (modifiers == null || modifiers.Count == 0)
@@ -162,21 +161,21 @@ namespace Enlisted.Features.Equipment.UI
                         // This quality tier doesn't exist for this item
                         continue;
                     }
-                    
+
                     // Calculate upgrade cost
                     int cost = QuartermasterManager.Instance?.CalculateUpgradeCost(_currentElement, targetQuality) ?? 0;
                     bool canAfford = TaleWorlds.CampaignSystem.Hero.MainHero?.Gold >= cost;
-                    
+
                     // Add upgrade option
                     var upgradeOption = new UpgradeOptionVm(
-                        _slot, 
-                        targetQuality, 
-                        cost, 
+                        _slot,
+                        targetQuality,
+                        cost,
                         canAfford,
                         this);
-                    
+
                     UpgradeOptions.Add(upgradeOption);
-                    
+
                     // Refresh the upgrade option to populate its display values
                     upgradeOption.RefreshValues();
                 }
@@ -186,7 +185,7 @@ namespace Enlisted.Features.Equipment.UI
                 ModLogger.Error("QuartermasterUI", "Error building upgrade options", ex);
             }
         }
-        
+
         /// <summary>
         /// Handle upgrade selection (called by child UpgradeOptionVm).
         /// </summary>
@@ -194,7 +193,7 @@ namespace Enlisted.Features.Equipment.UI
         {
             _parent?.OnUpgradePerformed(slot, targetQuality);
         }
-        
+
         /// <summary>
         /// Set display for current quality tier.
         /// </summary>
@@ -210,7 +209,7 @@ namespace Enlisted.Features.Equipment.UI
                 ItemQuality.Legendary => new TextObject("{=qm_quality_legendary}Legendary").ToString(),
                 _ => new TextObject("{=qm_quality_common}Standard").ToString()
             };
-            
+
             CurrentQualityColor = quality switch
             {
                 ItemQuality.Poor => "#909090FF",        // Light gray
@@ -222,7 +221,7 @@ namespace Enlisted.Features.Equipment.UI
                 _ => "#E8E8E8FF"
             };
         }
-        
+
         /// <summary>
         /// Set safe fallback values for error cases or empty slots.
         /// </summary>
@@ -237,7 +236,7 @@ namespace Enlisted.Features.Equipment.UI
             NoUpgradeReason = new TextObject("{=qm_ui_empty_slot_label}Empty Slot").ToString();
             UpgradeOptions.Clear();
         }
-        
+
         /// <summary>
         /// Get human-readable slot type name for display.
         /// </summary>
@@ -260,7 +259,7 @@ namespace Enlisted.Features.Equipment.UI
             };
         }
     }
-    
+
     /// <summary>
     /// Individual upgrade tier option for an item.
     /// </summary>
@@ -268,31 +267,31 @@ namespace Enlisted.Features.Equipment.UI
     {
         [DataSourceProperty]
         public string QualityText { get; private set; }
-        
+
         [DataSourceProperty]
         public string QualityColor { get; private set; }
-        
+
         [DataSourceProperty]
         public string CostText { get; private set; }
-        
+
         [DataSourceProperty]
         public bool CanAfford { get; private set; }
-        
+
         [DataSourceProperty]
         public bool IsEnabled { get; private set; }
-        
+
         [DataSourceProperty]
         public string DisabledReason { get; private set; }
-        
+
         private readonly EquipmentIndex _slot;
         private readonly ItemQuality _targetQuality;
         private readonly int _cost;
         private readonly QuartermasterUpgradeItemVm _parent;
-        
+
         public UpgradeOptionVm(
-            EquipmentIndex slot, 
-            ItemQuality targetQuality, 
-            int cost, 
+            EquipmentIndex slot,
+            ItemQuality targetQuality,
+            int cost,
             bool canAfford,
             QuartermasterUpgradeItemVm parent)
         {
@@ -302,11 +301,11 @@ namespace Enlisted.Features.Equipment.UI
             CanAfford = canAfford;
             _parent = parent ?? throw new ArgumentNullException(nameof(parent));
         }
-        
+
         public override void RefreshValues()
         {
             base.RefreshValues();
-            
+
             try
             {
                 // Set quality display
@@ -317,7 +316,7 @@ namespace Enlisted.Features.Equipment.UI
                     ItemQuality.Legendary => new TextObject("{=qm_quality_legendary}Legendary").ToString(),
                     _ => _targetQuality.ToString()
                 };
-                
+
                 QualityColor = _targetQuality switch
                 {
                     ItemQuality.Fine => "#90EE90FF",        // Light green
@@ -325,13 +324,13 @@ namespace Enlisted.Features.Equipment.UI
                     ItemQuality.Legendary => "#FFD700FF",   // Gold
                     _ => "#E8E8E8FF"
                 };
-                
+
                 // Set cost display
                 CostText = $"{_cost} denars";
-                
+
                 // Determine if this upgrade is available
                 IsEnabled = CanAfford;
-                
+
                 if (!CanAfford)
                 {
                     DisabledReason = new TextObject("{=qm_upgrade_cannot_afford}You can't afford this upgrade.").ToString();
@@ -340,7 +339,7 @@ namespace Enlisted.Features.Equipment.UI
                 {
                     DisabledReason = "";
                 }
-                
+
                 // Notify UI
                 OnPropertyChanged(nameof(QualityText));
                 OnPropertyChanged(nameof(QualityColor));
@@ -354,7 +353,7 @@ namespace Enlisted.Features.Equipment.UI
                 ModLogger.Error("QuartermasterUI", "Error refreshing upgrade option values", ex);
             }
         }
-        
+
         /// <summary>
         /// Handle clicking on this upgrade option.
         /// </summary>
@@ -366,12 +365,12 @@ namespace Enlisted.Features.Equipment.UI
                 {
                     if (!CanAfford)
                     {
-                        TaleWorlds.Library.InformationManager.DisplayMessage(
-                            new TaleWorlds.Library.InformationMessage(DisabledReason, TaleWorlds.Library.Colors.Red));
+                        InformationManager.DisplayMessage(
+                            new InformationMessage(DisabledReason, Colors.Red));
                     }
                     return;
                 }
-                
+
                 _parent?.OnUpgradeSelected(_slot, _targetQuality);
             }
             catch (Exception ex)

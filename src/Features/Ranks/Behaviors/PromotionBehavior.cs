@@ -137,7 +137,7 @@ namespace Enlisted.Features.Ranks.Behaviors
 
             // SetTier handles retinue grant for T7/T8/T9 promotions
             enlistment.SetTier(targetTier);
-            Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
+            QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
             TriggerPromotionNotification(targetTier);
         }
 

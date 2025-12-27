@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Escalation
 {
@@ -90,14 +92,14 @@ namespace Enlisted.Features.Escalation
 
                 dataStore.SyncData("esc_scrutiny", ref scrutiny);
                 dataStore.SyncData("esc_discipline", ref discipline);
-                
+
                 // Migration: Load old LanceReputation into SoldierReputation
                 if (dataStore.IsLoading)
                 {
                     int oldLanceRep = 0;
                     dataStore.SyncData("esc_rep", ref oldLanceRep);
                     soldierRep = oldLanceRep;
-                    
+
                     // Initialize new reputation fields at neutral
                     lordRep = 50;
                     officerRep = 50;
@@ -109,7 +111,7 @@ namespace Enlisted.Features.Escalation
                     dataStore.SyncData("esc_lordRep", ref lordRep);
                     dataStore.SyncData("esc_officerRep", ref officerRep);
                 }
-                
+
                 dataStore.SyncData("esc_medical", ref medical);
 
                 // Timestamps
@@ -176,7 +178,7 @@ namespace Enlisted.Features.Escalation
                     _state.LastThresholdEventTime = lastThresholdEvent;
 
                     _state.PendingThresholdStoryId = pendingThreshold;
-                    _state.ThresholdStoryLastFired = new System.Collections.Generic.Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+                    _state.ThresholdStoryLastFired = new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
                     for (var i = 0; i < thresholdCount; i++)
                     {
                         var key = string.Empty;
@@ -194,7 +196,7 @@ namespace Enlisted.Features.Escalation
                     _state.NextNarrativeEventWindow = nextNarrativeWindow;
 
                     // Load event cooldown map
-                    _state.EventLastFired = new System.Collections.Generic.Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+                    _state.EventLastFired = new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
                     for (var i = 0; i < eventCooldownCount; i++)
                     {
                         var key = string.Empty;
@@ -208,7 +210,7 @@ namespace Enlisted.Features.Escalation
                     }
 
                     // Load one-time events set
-                    _state.OneTimeEventsFired = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    _state.OneTimeEventsFired = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                     for (var i = 0; i < oneTimeCount; i++)
                     {
                         var eventId = string.Empty;
@@ -251,22 +253,22 @@ namespace Enlisted.Features.Escalation
                         dataStore.SyncData($"esc_onetime_{i}", ref eventId);
                     }
                 }
-                
+
                 // Onboarding state serialization
                 var onboardingStage = _state.OnboardingStage;
                 var onboardingTrack = _state.OnboardingTrack ?? string.Empty;
                 var onboardingStartTime = _state.OnboardingStartTime;
-                
+
                 dataStore.SyncData("esc_onboardingStage", ref onboardingStage);
                 dataStore.SyncData("esc_onboardingTrack", ref onboardingTrack);
                 dataStore.SyncData("esc_onboardingStartTime", ref onboardingStartTime);
-                
+
                 if (dataStore.IsLoading)
                 {
                     _state.OnboardingStage = onboardingStage;
                     _state.OnboardingTrack = onboardingTrack ?? string.Empty;
                     _state.OnboardingStartTime = onboardingStartTime;
-                    
+
                     // Validate onboarding state to handle old saves or corrupted data
                     _state.ValidateOnboardingState();
                 }
@@ -303,7 +305,7 @@ namespace Enlisted.Features.Escalation
                     _state.IsQuietDay = isQuietDay;
 
                     // Load category cooldown map
-                    _state.CategoryLastFired = new System.Collections.Generic.Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+                    _state.CategoryLastFired = new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
                     for (var i = 0; i < categoryCount; i++)
                     {
                         var key = string.Empty;
@@ -381,7 +383,7 @@ namespace Enlisted.Features.Escalation
             }
 
             _state.LastThresholdEventTime = CampaignTime.Now;
-            _state.ThresholdStoryLastFired ??= new System.Collections.Generic.Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            _state.ThresholdStoryLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
             _state.ThresholdStoryLastFired[storyId] = CampaignTime.Now;
             _state.PendingThresholdStoryId = string.Empty;
         }
@@ -536,7 +538,7 @@ namespace Enlisted.Features.Escalation
                 var color = _state.Scrutiny >= EscalationThresholds.ScrutinyShakedown
                     ? TaleWorlds.Library.Colors.Red
                     : TaleWorlds.Library.Colors.Yellow;
-                var msg = new TaleWorlds.Localization.TextObject("{=esc_scrutiny_changed}Scrutiny increased (+{DELTA}) - Status: {STATUS}");
+                var msg = new TextObject("{=esc_scrutiny_changed}Scrutiny increased (+{DELTA}) - Status: {STATUS}");
                 msg.SetTextVariable("DELTA", delta);
                 msg.SetTextVariable("STATUS", statusText);
                 TaleWorlds.Library.InformationManager.DisplayMessage(
@@ -572,7 +574,7 @@ namespace Enlisted.Features.Escalation
                 var color = _state.Discipline >= EscalationThresholds.DisciplineHearing
                     ? TaleWorlds.Library.Colors.Red
                     : TaleWorlds.Library.Colors.Yellow;
-                var msg = new TaleWorlds.Localization.TextObject("{=esc_discipline_changed}Discipline issues (+{DELTA}) - Status: {STATUS}");
+                var msg = new TextObject("{=esc_discipline_changed}Discipline issues (+{DELTA}) - Status: {STATUS}");
                 msg.SetTextVariable("DELTA", delta);
                 msg.SetTextVariable("STATUS", statusText);
                 TaleWorlds.Library.InformationManager.DisplayMessage(
@@ -601,7 +603,7 @@ namespace Enlisted.Features.Escalation
                 var sign = change > 0 ? "+" : "";
                 var statusText = GetSoldierReputationStatus();
                 var color = change > 0 ? TaleWorlds.Library.Colors.Cyan : TaleWorlds.Library.Colors.Yellow;
-                var msg = new TaleWorlds.Localization.TextObject("{=esc_rep_changed}Soldier Reputation: {CHANGE} ({STATUS})");
+                var msg = new TextObject("{=esc_rep_changed}Soldier Reputation: {CHANGE} ({STATUS})");
                 msg.SetTextVariable("CHANGE", $"{sign}{change}");
                 msg.SetTextVariable("STATUS", statusText);
                 TaleWorlds.Library.InformationManager.DisplayMessage(
@@ -609,10 +611,10 @@ namespace Enlisted.Features.Escalation
             }
 
             // Report significant changes to news system
-            if (Math.Abs(delta) >= 10 && Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            if (Math.Abs(delta) >= 10 && EnlistedNewsBehavior.Instance != null)
             {
                 string message = GetReputationChangeMessage("Soldier", delta, _state.SoldierReputation);
-                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddReputationChange(
+                EnlistedNewsBehavior.Instance.AddReputationChange(
                     target: "Soldier",
                     delta: delta,
                     newValue: _state.SoldierReputation,
@@ -637,10 +639,10 @@ namespace Enlisted.Features.Escalation
             LogTrackChange("LordReputation", oldValue, _state.LordReputation, reason);
 
             // Report significant changes to news system
-            if (Math.Abs(delta) >= 10 && Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            if (Math.Abs(delta) >= 10 && EnlistedNewsBehavior.Instance != null)
             {
                 string message = GetReputationChangeMessage("Lord", delta, _state.LordReputation);
-                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddReputationChange(
+                EnlistedNewsBehavior.Instance.AddReputationChange(
                     target: "Lord",
                     delta: delta,
                     newValue: _state.LordReputation,
@@ -663,10 +665,10 @@ namespace Enlisted.Features.Escalation
             LogTrackChange("OfficerReputation", oldValue, _state.OfficerReputation, reason);
 
             // Report significant changes to news system
-            if (Math.Abs(delta) >= 10 && Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            if (Math.Abs(delta) >= 10 && EnlistedNewsBehavior.Instance != null)
             {
                 string message = GetReputationChangeMessage("Officer", delta, _state.OfficerReputation);
-                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddReputationChange(
+                EnlistedNewsBehavior.Instance.AddReputationChange(
                     target: "Officer",
                     delta: delta,
                     newValue: _state.OfficerReputation,
@@ -1182,10 +1184,10 @@ namespace Enlisted.Features.Escalation
             if (evt != null && Content.EventDeliveryManager.Instance != null)
             {
                 Content.EventDeliveryManager.Instance.QueueEvent(evt);
-                
+
                 // Record in global pacer to track daily/weekly limits
                 Content.GlobalEventPacer.RecordAutoEvent(eventId, "escalation");
-                
+
                 ModLogger.Info(LogCategory, $"Queued threshold event: {eventId}");
             }
             else

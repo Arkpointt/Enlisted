@@ -507,7 +507,7 @@ namespace Enlisted.Features.Retinue.Core
         /// Dishonorable and deserter discharges block for 90 days, washout for 30 days.
         /// Honorable, veteran, and grace discharges have no block.
         /// </summary>
-        public static void SetReenlistmentBlock(Data.FactionServiceRecord record, string dischargeBand)
+        public static void SetReenlistmentBlock(FactionServiceRecord record, string dischargeBand)
         {
             if (record == null || string.IsNullOrEmpty(dischargeBand))
             {
@@ -584,7 +584,7 @@ namespace Enlisted.Features.Retinue.Core
                         probation = false;
                         officerRepRestore = savedOfficerRep; // 100% restoration
                         soldierRepRestore = savedSoldierRep; // 100% restoration
-                        ModLogger.Info(LogCategory, 
+                        ModLogger.Info(LogCategory,
                             $"Grace re-entry: restoring tier {targetTier} with {bonusXp} bonus XP, Officer Rep={officerRepRestore}, Soldier Rep={soldierRepRestore}");
                         break;
                     case "honorable":
@@ -735,7 +735,7 @@ namespace Enlisted.Features.Retinue.Core
                 // Clear only the tracking state - troops stay in party as regular members
                 _retinueState?.Clear();
                 ModLogger.Info(LogCategory, "Retinue tracking cleared - troops retained as regular party members");
-                
+
                 // Reset the flag after use
                 EnlistmentBehavior.RetainTroopsOnRetirement = false;
             }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -15,14 +14,14 @@ namespace Enlisted.Features.Retinue.Systems
     /// <summary>
     /// Handles the free, slow replenishment of retinue soldiers via daily tick.
     /// Uses context-aware rates based on battle outcomes, territory, and peace/war status.
-    /// 
+    ///
     /// Trickle Rates:
     ///   Victory (within 3 days): 1 per 2 days (battle survivors join up)
     ///   Defeat (within 5 days): 0 - BLOCKED (morale recovering)
     ///   Friendly territory: 1 per 3 days (local levies assigned)
     ///   On campaign (default): 1 per 4-5 days (transfers from rearguard)
     ///   At peace (5+ days no battle): 1 per 2 days (training complete)
-    /// 
+    ///
     /// V2.0: Now requires Commander rank (T7+) for trickle to activate.
     /// V2.1: Context-aware trickle rates based on campaign state.
     /// </summary>
@@ -98,8 +97,8 @@ namespace Enlisted.Features.Retinue.Systems
                 {
                     // Clear winner exists
                     state.LastBattleWon = mapEvent.WinningSide == mapEvent.PlayerSide;
-                    state.LastBattleOutcome = state.LastBattleWon 
-                        ? Data.BattleOutcome.Victory 
+                    state.LastBattleOutcome = state.LastBattleWon
+                        ? Data.BattleOutcome.Victory
                         : Data.BattleOutcome.Defeat;
                 }
                 else

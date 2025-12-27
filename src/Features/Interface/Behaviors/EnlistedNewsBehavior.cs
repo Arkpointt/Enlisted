@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Enlisted.Features.Camp;
-using Enlisted.Features.Company;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -75,12 +74,12 @@ namespace Enlisted.Features.Interface.Behaviors
         /// Tracks when the player last participated in a battle (for "battle aftermath" flavor).
         /// </summary>
         private CampaignTime _lastPlayerBattleTime = CampaignTime.Zero;
-        
+
         /// <summary>
         /// Type of the last battle: "bandit", "army", "siege", or empty if none.
         /// </summary>
         private string _lastPlayerBattleType = string.Empty;
-        
+
         /// <summary>
         /// Whether the player won their last battle.
         /// </summary>
@@ -101,7 +100,7 @@ namespace Enlisted.Features.Interface.Behaviors
         /// Last time skill progress was checked (cached for 6 hours to avoid expensive recalculation).
         /// </summary>
         private CampaignTime _lastSkillProgressCheck = CampaignTime.Zero;
-        
+
         /// <summary>
         /// Cached skill progress line result (empty string if no skills near level-up).
         /// </summary>
@@ -272,7 +271,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 dataStore.SyncData("en_news_dailyBriefCompany", ref _dailyBriefCompany);
                 dataStore.SyncData("en_news_dailyBriefUnit", ref _dailyBriefUnit);
                 dataStore.SyncData("en_news_dailyBriefKingdom", ref _dailyBriefKingdom);
-                
+
                 // Battle aftermath tracking for daily brief flavor
                 _lastPlayerBattleType ??= string.Empty;
                 dataStore.SyncData("en_news_lastBattleTime", ref _lastPlayerBattleTime);
@@ -493,7 +492,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // Build a flowing narrative paragraph instead of labeled lines
                 var parts = new List<string>();
-                
+
                 if (!string.IsNullOrWhiteSpace(_dailyBriefCompany))
                 {
                     parts.Add(_dailyBriefCompany);
@@ -547,19 +546,19 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     parts.Add(retinueContext);
                 }
-                
+
                 // Add baggage status when notable (locked, delayed, temporary access)
                 var baggageStatus = BuildBaggageStatusLine();
                 if (!string.IsNullOrWhiteSpace(baggageStatus))
                 {
                     parts.Add(baggageStatus);
                 }
-                    
+
                 if (!string.IsNullOrWhiteSpace(_dailyBriefUnit))
                 {
                     parts.Add(_dailyBriefUnit);
                 }
-                    
+
                 if (!string.IsNullOrWhiteSpace(_dailyBriefKingdom))
                 {
                     parts.Add(_dailyBriefKingdom);
@@ -567,7 +566,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // Join sentences into a flowing paragraph
                 var paragraph = string.Join(" ", parts);
-                
+
                 return paragraph;
             }
             catch (Exception ex)
@@ -588,10 +587,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 var lord = enlistment?.CurrentLord;
                 var lordParty = lord?.PartyBelongedTo;
-                
+
                 var lostCount = _lostSinceLastMuster;
                 var woundedCount = lordParty?.MemberRoster?.TotalWounded ?? 0;
-                
+
                 // No casualties to report
                 if (lostCount <= 0 && woundedCount <= 0)
                 {
@@ -605,7 +604,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     text.SetTextVariable("COUNT", $"<span style=\"Alert\">{lostCount}</span>");
                     return text.ToString();
                 }
-                
+
                 // Moderate losses with wounded
                 if (lostCount >= 5)
                 {
@@ -736,10 +735,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 var loyalty = state.RetinueLoyalty;
                 var soldierCount = state.TotalSoldiers;
                 var veteranCount = state.NamedVeterans?.Count ?? 0;
-                
+
                 // Get capacity from tier
                 var enlistment = EnlistmentBehavior.Instance;
-                var capacity = enlistment != null 
+                var capacity = enlistment != null
                     ? Retinue.Core.RetinueManager.GetTierCapacity(enlistment.EnlistmentTier)
                     : 20;
 
@@ -803,7 +802,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 return string.Empty;
             }
         }
-        
+
         /// <summary>
         /// Builds a baggage status line for the Daily Brief when the state is notable.
         /// Shows status for: locked (supply crisis), delayed (days behind), temporary access (hours remaining),
@@ -818,10 +817,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     return string.Empty;
                 }
-                
+
                 var currentAccess = baggageManager.GetCurrentAccess();
                 var party = MobileParty.MainParty;
-                
+
                 // Priority 1: Check for recent raid (within last 3 days) - most urgent
                 var daysSinceRaid = baggageManager.GetDaysSinceLastRaid();
                 if (daysSinceRaid >= 0 && daysSinceRaid <= 3)
@@ -832,14 +831,14 @@ namespace Enlisted.Features.Interface.Behaviors
                         : new TextObject("{=brief_baggage_raided_recent}The baggage raid weighs on everyone's mind. The guards double their watches at night.").ToString();
                     return $"<span style=\"Alert\">{raidText}</span>";
                 }
-                
+
                 // Priority 2: Locked state (supply crisis)
                 if (currentAccess == BaggageAccessState.Locked)
                 {
                     var text = new TextObject("{=brief_baggage_locked}The quartermaster has locked the baggage wagons. Supplies are too scarce for personal requisitions.").ToString();
                     return $"<span style=\"Alert\">{text}</span>";
                 }
-                
+
                 // Priority 3: Active delay
                 var delayDays = baggageManager.GetBaggageDelayDaysRemaining();
                 if (delayDays > 0)
@@ -858,7 +857,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                     return $"<span style=\"Warning\">{delayText}</span>";
                 }
-                
+
                 // Priority 4: Recent arrival (within last 2 days) - good news
                 var daysSinceArrival = baggageManager.GetDaysSinceLastArrival();
                 if (daysSinceArrival >= 0 && daysSinceArrival <= 2)
@@ -869,7 +868,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         : new TextObject("{=brief_baggage_arrived_recent}The wagons are still close. A chance to check your belongings before they fall behind again.").ToString();
                     return $"<span style=\"Success\">{arrivalText}</span>";
                 }
-                
+
                 // Priority 5: Temporary access window
                 if (currentAccess == BaggageAccessState.TemporaryAccess)
                 {
@@ -886,13 +885,13 @@ namespace Enlisted.Features.Interface.Behaviors
                         return line.ToString();
                     }
                 }
-                
+
                 // Priority 6: On march with no access (informational)
                 if (currentAccess == BaggageAccessState.NoAccess && party?.IsMoving == true)
                 {
                     return new TextObject("{=brief_baggage_march}The baggage wagons rumble somewhere behind the column, out of reach for now.").ToString();
                 }
-                
+
                 // Normal state (FullAccess in settlement or halted) - no need to mention
                 return string.Empty;
             }
@@ -1156,7 +1155,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     try
                     {
                         var skillValue = hero.GetSkillValue(skill);
-                        
+
                         // Skip skills at max level (330)
                         if (skillValue >= 330)
                         {
@@ -1743,7 +1742,7 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 _campNewsState?.EnsureInitialized();
-                return _campNewsState?.Ledger?.GetRollingTotals(windowDays) 
+                return _campNewsState?.Ledger?.GetRollingTotals(windowDays)
                        ?? new CampLifeRollingTotals(0, 0, 0, 0, 0, 0);
             }
             catch
@@ -1782,7 +1781,7 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 _orderOutcomes ??= new List<OrderOutcomeRecord>();
-                
+
                 _orderOutcomes.Add(new OrderOutcomeRecord
                 {
                     OrderTitle = orderTitle ?? string.Empty,
@@ -1804,7 +1803,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var resultPrefix = success ? "✓" : "✗";
                 var displayText = $"{resultPrefix} {orderTitle}: {detailedSummary}";
                 var severity = success ? 1 : 2; // Positive for success, Attention for failure
-                
+
                 // Add to personal feed with 1-day display duration
                 AddPersonalNews("order", displayText, null, $"order:{orderTitle}:{dayNumber}", 1, severity);
 
@@ -1825,7 +1824,7 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 _reputationChanges ??= new List<ReputationChangeRecord>();
-                
+
                 _reputationChanges.Add(new ReputationChangeRecord
                 {
                     Target = target ?? string.Empty,
@@ -1858,7 +1857,7 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 _companyNeedChanges ??= new List<CompanyNeedChangeRecord>();
-                
+
                 _companyNeedChanges.Add(new CompanyNeedChangeRecord
                 {
                     Need = need ?? string.Empty,
@@ -1891,7 +1890,7 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 _orderOutcomes ??= new List<OrderOutcomeRecord>();
-                
+
                 var currentDay = (int)CampaignTime.Now.ToDays;
                 return _orderOutcomes
                     .Where(o => currentDay - o.DayNumber <= maxDaysOld)
@@ -1913,7 +1912,7 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 _reputationChanges ??= new List<ReputationChangeRecord>();
-                
+
                 var currentDay = (int)CampaignTime.Now.ToDays;
                 return _reputationChanges
                     .Where(r => currentDay - r.DayNumber <= maxDaysOld)
@@ -1935,7 +1934,7 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 _companyNeedChanges ??= new List<CompanyNeedChangeRecord>();
-                
+
                 var currentDay = (int)CampaignTime.Now.ToDays;
                 return _companyNeedChanges
                     .Where(c => currentDay - c.DayNumber <= maxDaysOld)
@@ -1977,7 +1976,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Queue-based display: only one event outcome visible at a time
                 // Check if there's already an outcome being shown
                 var currentlyShownOutcome = _eventOutcomes.FirstOrDefault(e => e.IsCurrentlyShown);
-                
+
                 if (currentlyShownOutcome == null)
                 {
                     // No outcome currently shown, so show this one immediately
@@ -2515,26 +2514,26 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 _personalFeed ??= new List<DispatchItem>();
-                
+
                 // Check if there's a recent item (same day or last 24h) with lower severity that can be replaced
                 var currentTime = CampaignTime.Now.ToDays;
                 var recentItems = _personalFeed
                     .Where(x => (currentTime - x.DayCreated) <= 1.0) // Within 24h
                     .ToList();
-                
+
                 // Try to find an item with lower severity to replace
                 var replacementTarget = recentItems
                     .Where(x => x.Severity < severity)
                     .OrderBy(x => x.Severity) // Replace lowest severity first
                     .ThenBy(x => x.DayCreated) // Then oldest
                     .FirstOrDefault();
-                
+
                 if (replacementTarget.HeadlineKey != null) // Check if we found a valid target (struct has values)
                 {
                     _personalFeed.Remove(replacementTarget);
                     ModLogger.Debug(LogCategory, $"Replaced lower-severity news (sev {replacementTarget.Severity}) with new item (sev {severity})");
                 }
-                
+
                 // Check if attempting to add a lower-severity item when high-severity items exist
                 var hasHigherSeverity = recentItems.Any(x => x.Severity > severity);
                 if (hasHigherSeverity && recentItems.Count >= MaxPersonalFeedItems)
@@ -2543,7 +2542,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     // Don't add - would be trimmed anyway
                     return;
                 }
-                
+
                 _personalFeed.Add(new DispatchItem
                 {
                     HeadlineKey = headline, // Direct text for muster headlines
@@ -2599,7 +2598,7 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 _personalFeed ??= new List<DispatchItem>();
-                
+
                 return _personalFeed
                     .Where(item => item.DayCreated >= dayNumber)
                     .OrderBy(item => item.DayCreated)
@@ -2621,7 +2620,7 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 _orderOutcomes ??= new List<OrderOutcomeRecord>();
-                
+
                 return _orderOutcomes
                     .Where(outcome => outcome.DayNumber >= dayNumber)
                     .OrderBy(outcome => outcome.DayNumber)
@@ -3080,7 +3079,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     var settlement = party.CurrentSettlement;
                     var settlementName = settlement.Name?.ToString() ?? new TextObject("{=brief_the_settlement}the settlement").ToString();
-                    
+
                     if (settlement.IsTown)
                     {
                         var text = new TextObject("{=brief_rest_town}The company rests at {SETTLEMENT}. The sounds of the town drift into camp — merchants hawking wares, the clatter of cart wheels, the murmur of townsfolk going about their business.");
@@ -3117,7 +3116,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         _ => "{=brief_army_mighty}A mighty army"
                     };
                     var armySizeDesc = new TextObject(armySizeDescId).ToString();
-                    
+
                     var text = new TextObject("{=brief_march_army}{ARMY_DESC} marches under the banner of {LEADER}. {LORD}'s {SIZE} company moves with the column, one warband among many.");
                     text.SetTextVariable("ARMY_DESC", armySizeDesc);
                     text.SetTextVariable("LEADER", armyLeader);
@@ -3150,7 +3149,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 return new TextObject("{=brief_company_fallback}The company marches onward.").ToString();
             }
         }
-        
+
         // Provides flavor text based on terrain and time of day for march descriptions.
         private static string GetTerrainFlavor(MobileParty party)
         {
@@ -3160,10 +3159,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 var isNight = hour < 6 || hour >= 20;
                 var isMorning = hour >= 6 && hour < 10;
                 var isEvening = hour >= 17 && hour < 20;
-                
+
                 // Get terrain type from party position if available
                 var terrainType = Campaign.Current?.MapSceneWrapper?.GetFaceTerrainType(party.CurrentNavigationFace);
-                
+
                 var terrainId = terrainType switch
                 {
                     TerrainType.Mountain or TerrainType.Canyon => isNight
@@ -3178,7 +3177,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     TerrainType.Steppe => isNight
                         ? "{=brief_terrain_steppe_night}The endless steppe stretches dark beneath the stars, the grass whispering in the wind."
                         : "{=brief_terrain_steppe_day}The open steppe allows swift travel, the column stretching across the grasslands.",
-                    TerrainType.Snow => 
+                    TerrainType.Snow =>
                         "{=brief_terrain_cold}The cold bites at exposed skin, and the men huddle in their cloaks as they march.",
                     TerrainType.Bridge or TerrainType.Fording =>
                         "{=brief_terrain_crossing}The crossing slows the column as men and wagons navigate the water.",
@@ -3193,7 +3192,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         ? "{=brief_terrain_default_night}The column marches through the night, torches bobbing in the darkness."
                         : "{=brief_terrain_default_day}The road stretches ahead, and the men settle into the rhythm of the march."
                 };
-                
+
                 return new TextObject(terrainId).ToString();
             }
             catch
@@ -3203,7 +3202,7 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         private static readonly Random FlavorRng = new Random();
-        
+
         private string BuildDailyUnitLine(EnlistmentBehavior enlistment)
         {
             try
@@ -3211,7 +3210,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var tier = enlistment?.EnlistmentTier ?? 1;
                 var hour = CampaignTime.Now.GetHourOfDay;
                 var tierKey = GetTierKey(tier);
-                
+
                 // Priority 1: Recent battle aftermath (within 1 day)
                 if (_lastPlayerBattleTime != CampaignTime.Zero)
                 {
@@ -3227,7 +3226,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                     }
                 }
-                
+
                 // Priority 2: Injuries/illness (from PlayerConditionBehavior)
                 var cond = PlayerConditionBehavior.Instance;
                 if (cond?.IsEnabled() == true && cond.State?.HasAnyCondition == true)
@@ -3267,7 +3266,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (enlistment != null && enlistment.FatigueMax > 0)
                 {
                     var fatiguePct = (float)enlistment.FatigueCurrent / enlistment.FatigueMax;
-                    
+
                     if (fatiguePct <= 0.25f)
                     {
                         var prefix = $"brief_exhausted_{tierKey}_";
@@ -3291,7 +3290,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 return new TextObject("{=brief_fallback_default}You're ready for whatever comes.").ToString();
             }
         }
-        
+
         private static string GetTierKey(int tier)
         {
             if (tier <= 2)
@@ -3308,7 +3307,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             return "veteran";
         }
-        
+
         private static string GetTimeKey(int hour)
         {
             if (hour < 6 || hour >= 20)
@@ -3325,13 +3324,13 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             return "day";
         }
-        
+
         private static string PickRandomLocalizedString(string prefix, int count, string fallbackId = null)
         {
             var index = FlavorRng.Next(1, count + 1);
             var id = $"{prefix}{index}";
             var text = new TextObject($"{{={id}}}").ToString();
-            
+
             // If TextObject didn't resolve (returned the ID), try fallback
             if (text.Contains($"{{={id}}}") || text == id)
             {
@@ -3341,7 +3340,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
                 return string.Empty;
             }
-            
+
             return text;
         }
 
@@ -3365,19 +3364,19 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     return new TextObject("{=brief_realm_quiet}The realm is quiet, for now.").ToString();
                 }
-                
+
                 var kingdomName = kingdom.Name?.ToString() ?? new TextObject("{=brief_the_realm}the realm").ToString();
 
                 // Check active wars for strategic context using FactionManager
                 var enemyKingdoms = Kingdom.All
                     .Where(k => k != kingdom && FactionManager.IsAtWarAgainstFaction(kingdom, k))
                     .ToList();
-                
+
                 var warCount = enemyKingdoms.Count;
-                
+
                 // Count active sieges in the realm (where kingdom is involved)
                 var activeSieges = Campaign.Current?.SiegeEventManager?.SiegeEvents?
-                    .Count(s => s.BesiegedSettlement?.MapFaction == kingdom || 
+                    .Count(s => s.BesiegedSettlement?.MapFaction == kingdom ||
                                s.BesiegerCamp?.LeaderParty?.MapFaction == kingdom) ?? 0;
 
                 // Multi-front war with sieges
@@ -3387,7 +3386,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     text.SetTextVariable("KINGDOM", kingdomName);
                     return text.ToString();
                 }
-                
+
                 // Multiple wars, no active sieges
                 if (warCount >= 2)
                 {
@@ -3395,30 +3394,30 @@ namespace Enlisted.Features.Interface.Behaviors
                     text.SetTextVariable("KINGDOM", kingdomName);
                     return text.ToString();
                 }
-                
+
                 // Single war with active siege
                 if (warCount == 1 && activeSieges > 0)
                 {
                     var enemyKingdom = enemyKingdoms[0];
                     var enemyName = enemyKingdom?.Name?.ToString() ?? new TextObject("{=brief_the_enemy}the enemy").ToString();
-                    
+
                     var text = new TextObject("{=brief_realm_war_siege}The war with {ENEMY} grinds on. Castle walls are contested, and the outcome hangs in the balance.");
                     text.SetTextVariable("ENEMY", enemyName);
                     return text.ToString();
                 }
-                
+
                 // Single war, no siege
                 if (warCount == 1)
                 {
                     var enemyKingdom = enemyKingdoms[0];
                     var enemyName = enemyKingdom?.Name?.ToString() ?? new TextObject("{=brief_the_enemy}the enemy").ToString();
-                    
+
                     var text = new TextObject("{=brief_realm_war}The banners of {KINGDOM} march against {ENEMY}. Scouts bring word of enemy movements, and the lords sharpen their blades.");
                     text.SetTextVariable("KINGDOM", kingdomName);
                     text.SetTextVariable("ENEMY", enemyName);
                     return text.ToString();
                 }
-                
+
                 // Peace time
                 var text2 = new TextObject("{=brief_realm_peace}The realm is at peace, for now. Lords tend to their estates and the common folk go about their business, though every soldier knows it won't last.");
                 return text2.ToString();
@@ -3505,7 +3504,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Skip bandit/looter battles - only report kingdom vs kingdom conflicts
                 bool isAttackerBandit = attackerFaction == null || attackerFaction.IsBanditFaction;
                 bool isDefenderBandit = defenderFaction == null || defenderFaction.IsBanditFaction;
-                
+
                 if (isAttackerBandit || isDefenderBandit)
                 {
                     // Don't report bandit skirmishes - they're too minor for kingdom news
@@ -3594,13 +3593,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Record battle details for daily brief flavor
                 _lastPlayerBattleTime = CampaignTime.Now;
                 _lastPlayerBattleWon = playerWon;
-                
+
                 // Determine battle type
                 var attackerFaction = mapEvent.AttackerSide?.LeaderParty?.MapFaction;
                 var defenderFaction = mapEvent.DefenderSide?.LeaderParty?.MapFaction;
                 var isBandit = (attackerFaction?.IsBanditFaction == true) || (defenderFaction?.IsBanditFaction == true);
                 var isSiege = mapEvent.IsSiegeAssault || mapEvent.MapEventSettlement?.IsFortification == true;
-                
+
                 if (isSiege)
                 {
                     _lastPlayerBattleType = "siege";
@@ -4286,7 +4285,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 var resolved = textObj.ToString();
-                
+
                 return string.IsNullOrWhiteSpace(resolved) ? item.HeadlineKey : resolved;
             }
             catch (Exception ex)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Enlisted.Features.Context;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -3392,7 +3393,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     if (headline.IndexOf("retinue", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         // Extract killed count
-                        var killedMatch = System.Text.RegularExpressions.Regex.Match(headline, @"(\d+)\s+killed");
+                        var killedMatch = Regex.Match(headline, @"(\d+)\s+killed");
                         if (killedMatch.Success && int.TryParse(killedMatch.Groups[1].Value, out int kCount))
                         {
                             killed += kCount;
@@ -3400,7 +3401,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         else
                         {
                             // Try alternate format: "lost X soldier(s)"
-                            var lostMatch = System.Text.RegularExpressions.Regex.Match(headline, @"lost\s+(\d+)\s+soldier");
+                            var lostMatch = Regex.Match(headline, @"lost\s+(\d+)\s+soldier");
                             if (lostMatch.Success && int.TryParse(lostMatch.Groups[1].Value, out int lCount))
                             {
                                 killed += lCount;
@@ -3408,7 +3409,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
 
                         // Extract wounded count
-                        var woundedMatch = System.Text.RegularExpressions.Regex.Match(headline, @"(\d+)\s+wounded");
+                        var woundedMatch = Regex.Match(headline, @"(\d+)\s+wounded");
                         if (woundedMatch.Success && int.TryParse(woundedMatch.Groups[1].Value, out int wCount))
                         {
                             wounded += wCount;
@@ -3420,7 +3421,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     if (headline.IndexOf("has fallen in battle", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         // Extract name from headline
-                        var nameMatch = System.Text.RegularExpressions.Regex.Match(headline, @"^([^\s]+(?:\s+the\s+[^\s]+)?)\s+has\s+fallen");
+                        var nameMatch = Regex.Match(headline, @"^([^\s]+(?:\s+the\s+[^\s]+)?)\s+has\s+fallen");
                         if (nameMatch.Success)
                         {
                             fallenNames.Add(nameMatch.Groups[1].Value.Trim());
@@ -4542,7 +4543,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             // Look for pattern like "+20 XP" or "+20XP"
-            var match = System.Text.RegularExpressions.Regex.Match(summary, @"\+\d+\s*XP");
+            var match = Regex.Match(summary, @"\+\d+\s*XP");
             return match.Success ? $"({match.Value})" : "";
         }
 

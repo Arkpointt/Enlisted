@@ -1,0 +1,149 @@
+﻿QODANA ISSUES REPORT
+================================================================================
+
+Total Issues: 352
+
+
+### src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs (78 issues)
+  - ConstantConditionalAccessQualifier: 1
+  - ConstantNullCoalescingCondition: 2
+  - InvalidXmlDocComment: 5
+  - RedundantAssignment: 7
+  - RedundantDefaultMemberInitializer: 2
+  - RedundantDelegateCreation: 1
+  - RedundantNameQualifier: 42
+  - StringIndexOfIsCultureSpecific.1: 1
+  - UnusedMember.Local: 6
+  - UnusedParameter.Local: 6
+  - UnusedVariable: 5
+
+### src/Features/Conversations/Behaviors/EnlistedDialogManager.cs (53 issues)
+  - RedundantAssignment: 4
+  - RedundantNameQualifier: 47
+  - UnusedParameter.Local: 1
+  - UnusedVariable: 1
+
+### src/Features/Equipment/Behaviors/QuartermasterManager.cs (31 issues)
+  - PatternIsRedundant: 1
+  - RedundantAssignment: 1
+  - RedundantCast: 1
+  - RedundantNameQualifier: 3
+  - UnusedAutoPropertyAccessor.Global: 1
+  - UnusedMember.Local: 18
+  - UnusedParameter.Local: 5
+  - UnusedVariable: 1
+
+### src/Features/Enlistment/Behaviors/MusterMenuHandler.cs (27 issues)
+  - InvalidXmlDocComment: 12
+  - RedundantNameQualifier: 10
+  - UnusedAutoPropertyAccessor.Global: 2
+  - UnusedMember.Local: 1
+  - UnusedParameter.Local: 1
+  - UnusedVariable: 1
+
+### src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs (18 issues)
+  - DefaultStructEqualityIsUsed.Global: 1
+  - RedundantJumpStatement: 1
+  - RedundantUsingDirective: 1
+  - UnusedAutoPropertyAccessor.Global: 12
+  - UnusedVariable: 2
+  - UsageOfDefaultStructEquality: 1
+
+### src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs (17 issues)
+  - EnforceForeachStatementBraces: 3
+  - NotAccessedField.Local: 1
+  - RedundantNameQualifier: 8
+  - RedundantUsingDirective: 1
+  - UnusedMember.Local: 2
+  - UnusedParameter.Local: 2
+
+### src/Features/Escalation/EscalationManager.cs (15 issues)
+  - RedundantNameQualifier: 14
+  - UnusedParameter.Local: 1
+
+### src/Mod.Core/Config/ConfigurationManager.cs (10 issues)
+  - UnusedAutoPropertyAccessor.Local: 10
+
+### src/Features/Content/EventDeliveryManager.cs (8 issues)
+  - RedundantAssignment: 1
+  - RedundantNameQualifier: 7
+
+### src/Features/Equipment/UI/QuartermasterProvisionsVM.cs (6 issues)
+  - PrivateFieldCanBeConvertedToLocalVariable: 1
+  - RedundantUsingDirective: 1
+  - UnusedAutoPropertyAccessor.Global: 2
+  - UnusedVariable: 2
+
+### src/Features/Interface/News/Models/CampLifeLedger.cs (6 issues)
+  - UnusedAutoPropertyAccessor.Global: 6
+
+### src/Features/Ranks/Behaviors/PromotionBehavior.cs (5 issues)
+  - RedundantNameQualifier: 1
+  - UnusedAutoPropertyAccessor.Global: 1
+  - UnusedMember.Local: 1
+  - UnusedVariable: 2
+
+### src/Mod.Core/Logging/ModLogger.cs (5 issues)
+  - RedundantDefaultMemberInitializer: 1
+  - UnusedAutoPropertyAccessor.Local: 3
+  - UnusedMember.Local: 1
+
+### src/Features/Retinue/Data/RetinueState.cs (5 issues)
+  - MemberInitializerValueIgnored: 4
+  - RedundantUsingDirective: 1
+
+### src/Features/Equipment/UI/QuartermasterUpgradeItemVM.cs (5 issues)
+  - RedundantNameQualifier: 3
+  - RedundantUsingDirective: 1
+  - UnusedParameter.Local: 1
+
+### src/Features/Interface/News/Generation/DailyReportGenerator.cs (4 issues)
+  - RedundantNameQualifier: 4
+
+### src/Features/Escalation/EscalationState.cs (4 issues)
+  - RedundantDefaultMemberInitializer: 4
+
+### src/Features/Combat/Behaviors/EnlistedFormationAssignmentBehavior.cs (3 issues)
+  - RedundantUsingDirective: 1
+  - UnusedMember.Local: 2
+
+### src/Features/Logistics/ContrabandChecker.cs (3 issues)
+  - UnusedAutoPropertyAccessor.Global: 3
+
+### src/Features/Content/EventDefinition.cs (3 issues)
+  - UnusedAutoPropertyAccessor.Global: 3
+
+### src/Features/Equipment/UI/QuartermasterEquipmentSelectorVM.cs (3 issues)
+  - UnusedAutoPropertyAccessor.Global: 3
+
+### src/Features/Equipment/Behaviors/TroopSelectionManager.cs (2 issues)
+  - UnusedMember.Local: 2
+
+### src/Features/Content/MapIncidentManager.cs (2 issues)
+  - UnusedAutoPropertyAccessor.Global: 1
+  - UnusedParameter.Local: 1
+
+### src/Features/Interface/News/Generation/Producers/CampNewsContext.cs (2 issues)
+  - UnusedAutoPropertyAccessor.Global: 2
+
+### src/Features/Interface/News/Models/DailyReportModels.cs (2 issues)
+  - UnusedAutoPropertyAccessor.Global: 2
+
+### src/Mod.GameAdapters/Patches/NavalBattleArmyWaitCrashFix.cs (2 issues)
+  - UnusedParameter.Local: 2
+
+### src/Features/Conditions/EnlistedMedicalMenuBehavior.cs (2 issues)
+  - RedundantBoolCompare: 1
+  - UnusedAutoPropertyAccessor.Global: 1
+
+### src/Features/Retinue/Systems/RetinueTrickleSystem.cs (2 issues)
+  - NotAccessedField.Local: 1
+  - RedundantUsingDirective: 1
+
+### src/Features/Interface/News/State/CampNewsState.cs (2 issues)
+  - AssignNullToNotNullAttribute: 1
+  - RedundantUsingDirective: 1
+
+### src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs (2 issues)
+  - UnusedMember.Local: 2
+

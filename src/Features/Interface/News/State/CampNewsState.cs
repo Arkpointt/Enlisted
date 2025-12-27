@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Enlisted.Features.Interface.News.Models;
 using TaleWorlds.CampaignSystem;
 

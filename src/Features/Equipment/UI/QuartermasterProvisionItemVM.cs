@@ -4,7 +4,6 @@ using TaleWorlds.Core;
 using TaleWorlds.Core.ViewModelCollection.ImageIdentifiers;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Util;
 
@@ -12,7 +11,7 @@ namespace Enlisted.Features.Equipment.UI
 {
     /// <summary>
     /// Individual provision item ViewModel for the provisions grid.
-    /// 
+    ///
     /// Represents a single food item card with icon, name, price, quantity,
     /// and Buy 1 / Buy All purchase options.
     /// </summary>
@@ -22,63 +21,63 @@ namespace Enlisted.Features.Equipment.UI
         /// The underlying food item.
         /// </summary>
         public ItemObject Item { get; }
-        
+
         /// <summary>
         /// Price per unit after QM rep markup.
         /// </summary>
         public int Price { get; private set; }
-        
+
         [DataSourceProperty]
         public string ItemName { get; private set; }
-        
+
         [DataSourceProperty]
         public string PriceText { get; private set; }
-        
+
         [DataSourceProperty]
         public string QuantityText { get; private set; }
-        
+
         [DataSourceProperty]
         public int QuantityAvailable { get; private set; }
-        
+
         [DataSourceProperty]
         public bool IsInStock { get; private set; }
-        
+
         [DataSourceProperty]
         public bool CanAffordOne { get; private set; }
-        
+
         [DataSourceProperty]
         public bool CanAffordAll { get; private set; }
-        
+
         [DataSourceProperty]
         public bool BuyOneEnabled { get; private set; }
-        
+
         [DataSourceProperty]
         public bool BuyAllEnabled { get; private set; }
-        
+
         [DataSourceProperty]
         public string StatusText { get; private set; }
-        
+
         /// <summary>
         /// Alpha for card (0.5 when out of stock, 1.0 when available).
         /// </summary>
         [DataSourceProperty]
         public float CardAlpha { get; private set; }
-        
+
         [DataSourceProperty]
         public ItemImageIdentifierVM Image { get; private set; }
-        
+
         [DataSourceProperty]
         public string TooltipText { get; private set; }
-        
+
         /// <summary>
         /// Description of the food item (morale bonus, etc).
         /// </summary>
         [DataSourceProperty]
         public string DescriptionText { get; private set; }
-        
+
         // Parent reference for purchase callbacks
         private readonly QuartermasterProvisionsVm _parent;
-        
+
         /// <summary>
         /// Initialize provision item with food data and pricing.
         /// </summary>
@@ -92,21 +91,21 @@ namespace Enlisted.Features.Equipment.UI
             Price = price;
             QuantityAvailable = quantity;
             _parent = parent ?? throw new ArgumentNullException(nameof(parent));
-            
+
             // Set up image
             if (item != null)
             {
                 Image = new ItemImageIdentifierVM(item);
             }
         }
-        
+
         /// <summary>
         /// Refresh display values when data changes.
         /// </summary>
         public override void RefreshValues()
         {
             base.RefreshValues();
-            
+
             try
             {
                 if (Item == null)
@@ -114,28 +113,28 @@ namespace Enlisted.Features.Equipment.UI
                     SetEmptyValues();
                     return;
                 }
-                
+
                 // Item name
                 ItemName = Item.Name?.ToString() ?? "Unknown Food";
-                
+
                 // Truncate long names
                 if (ItemName.Length > 30)
                 {
                     ItemName = ItemName.Substring(0, 27) + "...";
                 }
-                
+
                 // Price display
                 PriceText = $"{Price} denars";
-                
+
                 // Quantity
                 IsInStock = QuantityAvailable > 0;
-                QuantityText = IsInStock 
-                    ? $"Available: {QuantityAvailable}" 
+                QuantityText = IsInStock
+                    ? $"Available: {QuantityAvailable}"
                     : new TextObject("{=qm_provisions_out_of_stock}Out of Stock").ToString();
-                
+
                 // Card alpha for visual feedback
                 CardAlpha = IsInStock ? 1.0f : 0.5f;
-                
+
                 // Status text
                 if (!IsInStock)
                 {
@@ -145,22 +144,22 @@ namespace Enlisted.Features.Equipment.UI
                 {
                     StatusText = new TextObject("{=qm_provisions_available}Available").ToString();
                 }
-                
+
                 // Check affordability
                 var playerGold = Hero.MainHero?.Gold ?? 0;
                 CanAffordOne = playerGold >= Price;
                 CanAffordAll = playerGold >= (Price * QuantityAvailable);
-                
+
                 // Button enable states
                 BuyOneEnabled = IsInStock && CanAffordOne;
                 BuyAllEnabled = IsInStock && CanAffordAll && QuantityAvailable > 1;
-                
+
                 // Description (morale bonus info)
                 BuildDescription();
-                
+
                 // Tooltip
                 BuildTooltip(playerGold);
-                
+
                 // Notify UI
                 NotifyPropertyChanges();
             }
@@ -170,7 +169,7 @@ namespace Enlisted.Features.Equipment.UI
                 SetEmptyValues();
             }
         }
-        
+
         /// <summary>
         /// Build description text showing food quality/benefits.
         /// </summary>
@@ -181,12 +180,12 @@ namespace Enlisted.Features.Equipment.UI
                 DescriptionText = "";
                 return;
             }
-            
+
             // Default description based on item tier/value
             var tierNum = (int)Item.Tier + 1;
             DescriptionText = $"Tier {tierNum} provisions";
         }
-        
+
         /// <summary>
         /// Build tooltip with pricing and availability details.
         /// </summary>
@@ -197,30 +196,30 @@ namespace Enlisted.Features.Equipment.UI
                 TooltipText = "";
                 return;
             }
-            
+
             var parts = new System.Collections.Generic.List<string>();
-            
+
             parts.Add(Item.Name?.ToString() ?? "Unknown");
             parts.Add($"Price: {Price} denars each");
-            
+
             if (QuantityAvailable > 1)
             {
                 parts.Add($"Buy all ({QuantityAvailable}): {Price * QuantityAvailable} denars");
             }
-            
+
             if (!CanAffordOne)
             {
                 parts.Add($"You need {Price - playerGold} more denars");
             }
-            
+
             if (!IsInStock)
             {
                 parts.Add("Restocks at next muster");
             }
-            
+
             TooltipText = string.Join("\n", parts);
         }
-        
+
         /// <summary>
         /// Set empty/error values.
         /// </summary>
@@ -240,10 +239,10 @@ namespace Enlisted.Features.Equipment.UI
             DescriptionText = "";
             TooltipText = "";
             Image = new ItemImageIdentifierVM(null);
-            
+
             NotifyPropertyChanges();
         }
-        
+
         /// <summary>
         /// Notify UI of all property changes.
         /// </summary>
@@ -264,7 +263,7 @@ namespace Enlisted.Features.Equipment.UI
             OnPropertyChanged(nameof(TooltipText));
             OnPropertyChanged(nameof(Image));
         }
-        
+
         /// <summary>
         /// Buy one unit of this provision.
         /// </summary>
@@ -283,15 +282,15 @@ namespace Enlisted.Features.Equipment.UI
                     else if (!CanAffordOne)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=qm_cannot_afford_provisions}You can't afford this.").ToString(), 
+                            new TextObject("{=qm_cannot_afford_provisions}You can't afford this.").ToString(),
                             Colors.Red));
                     }
                     return;
                 }
-                
+
                 // Process purchase through parent
                 _parent?.OnProvisionPurchased(this, 1);
-                
+
                 // Update local quantity (will be fully refreshed by parent)
                 QuantityAvailable = Math.Max(0, QuantityAvailable - 1);
                 RefreshValues();
@@ -301,7 +300,7 @@ namespace Enlisted.Features.Equipment.UI
                 ModLogger.Error("QuartermasterUI", "Error executing Buy One", ex);
             }
         }
-        
+
         /// <summary>
         /// Buy all available units of this provision.
         /// </summary>
@@ -322,7 +321,7 @@ namespace Enlisted.Features.Equipment.UI
                         // Calculate how many we can afford
                         var playerGold = Hero.MainHero?.Gold ?? 0;
                         var canAffordCount = Price > 0 ? playerGold / Price : 0;
-                        
+
                         if (canAffordCount > 0)
                         {
                             // Buy what we can afford
@@ -333,17 +332,17 @@ namespace Enlisted.Features.Equipment.UI
                         else
                         {
                             InformationManager.DisplayMessage(new InformationMessage(
-                                new TextObject("{=qm_cannot_afford_provisions}You can't afford this.").ToString(), 
+                                new TextObject("{=qm_cannot_afford_provisions}You can't afford this.").ToString(),
                                 Colors.Red));
                         }
                     }
                     return;
                 }
-                
+
                 // Buy all available
                 var quantity = QuantityAvailable;
                 _parent?.OnProvisionPurchased(this, quantity);
-                
+
                 QuantityAvailable = 0;
                 RefreshValues();
             }

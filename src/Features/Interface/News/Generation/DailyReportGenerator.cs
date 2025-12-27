@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Interface.News.Models;
 using Enlisted.Features.Interface.News.Templates;
 using TaleWorlds.Core;
@@ -63,9 +64,9 @@ namespace Enlisted.Features.Interface.News.Generation
             }
 
             // ===== Player Actions: Recent order outcomes (HIGHEST PRIORITY) =====
-            if (Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            if (EnlistedNewsBehavior.Instance != null)
             {
-                var recentOrders = Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.GetRecentOrderOutcomes(maxDaysOld: 1);
+                var recentOrders = EnlistedNewsBehavior.Instance.GetRecentOrderOutcomes(maxDaysOld: 1);
                 foreach (var order in recentOrders)
                 {
                     candidates.Add(Candidate.Raw(
@@ -76,7 +77,7 @@ namespace Enlisted.Features.Interface.News.Generation
                 }
 
                 // ===== Player Actions: Significant reputation changes =====
-                var repChanges = Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.GetRecentReputationChanges(maxDaysOld: 1);
+                var repChanges = EnlistedNewsBehavior.Instance.GetRecentReputationChanges(maxDaysOld: 1);
                 foreach (var change in repChanges)
                 {
                     candidates.Add(Candidate.Raw(
@@ -87,7 +88,7 @@ namespace Enlisted.Features.Interface.News.Generation
                 }
 
                 // ===== Player Actions: Company need changes =====
-                var needChanges = Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.GetRecentCompanyNeedChanges(maxDaysOld: 1);
+                var needChanges = EnlistedNewsBehavior.Instance.GetRecentCompanyNeedChanges(maxDaysOld: 1);
                 foreach (var change in needChanges)
                 {
                     candidates.Add(Candidate.Raw(

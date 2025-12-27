@@ -296,6 +296,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\PlayerEncounterFinishSafetyPatch.cs"/>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="parse_qodana.py" />
     <Content Include="SubModule.xml"/>
     <Content Include="ModuleData\Enlisted\settings.json"/>
     <Content Include="ModuleData\Enlisted\progression_config.json"/>

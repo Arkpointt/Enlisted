@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Interface.News.Models;
 namespace Enlisted.Features.Interface.News.Generation.Producers

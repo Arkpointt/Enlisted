@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Company;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Identity;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Logistics;
 using Enlisted.Features.Ranks;
+using Enlisted.Features.Ranks.Behaviors;
 using Enlisted.Features.Retinue.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
@@ -1204,7 +1206,7 @@ namespace Enlisted.Features.Content
         /// </summary>
         private void ApplyBaggageAccessGrant(int hours)
         {
-            var baggageManager = Features.Logistics.BaggageTrainManager.Instance;
+            var baggageManager = BaggageTrainManager.Instance;
             if (baggageManager == null)
             {
                 ModLogger.Warn(LogCategory, $"ApplyBaggageAccessGrant: BaggageTrainManager not available");
@@ -1225,7 +1227,7 @@ namespace Enlisted.Features.Content
         /// </summary>
         private void ApplyBaggageDelay(int days)
         {
-            var baggageManager = Features.Logistics.BaggageTrainManager.Instance;
+            var baggageManager = BaggageTrainManager.Instance;
             if (baggageManager == null)
             {
                 ModLogger.Warn(LogCategory, "ApplyBaggageDelay: BaggageTrainManager not available");
@@ -1270,7 +1272,7 @@ namespace Enlisted.Features.Content
                 InformationManager.DisplayMessage(new InformationMessage(notification.ToString(), Colors.Red));
 
                 // Track raid for Daily Brief display (if this is from a raid event)
-                var baggageManager = Features.Logistics.BaggageTrainManager.Instance;
+                var baggageManager = BaggageTrainManager.Instance;
                 if (baggageManager != null)
                 {
                     baggageManager.RecordBaggageRaid();
@@ -1380,13 +1382,13 @@ namespace Enlisted.Features.Content
 
             // SetTier handles retinue grant for T7/T8/T9 promotions
             enlistment.SetTier(targetTier);
-            Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
+            QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
 
             // Clear pending promotion flag in PromotionBehavior
-            Features.Ranks.Behaviors.PromotionBehavior.Instance?.ClearPendingPromotion();
+            PromotionBehavior.Instance?.ClearPendingPromotion();
 
             // Trigger promotion notification with culture-specific rank and immersive text
-            Features.Ranks.Behaviors.PromotionBehavior.Instance?.TriggerPromotionNotificationPublic(targetTier);
+            PromotionBehavior.Instance?.TriggerPromotionNotificationPublic(targetTier);
 
             ModLogger.Info(LogCategory, $"Promotion complete: now tier {targetTier}");
         }
@@ -1415,7 +1417,7 @@ namespace Enlisted.Features.Content
             var daysServed = enlistment.EnlistmentDate != CampaignTime.Zero
                 ? (int)(CampaignTime.Now - enlistment.EnlistmentDate).ToDays
                 : 0;
-            Retinue.Core.ServiceRecordManager.Instance?.RecordReservist(
+            ServiceRecordManager.Instance?.RecordReservist(
                 bandLower,
                 daysServed,
                 enlistment.EnlistmentTier,

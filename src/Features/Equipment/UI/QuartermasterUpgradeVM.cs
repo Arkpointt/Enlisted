@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -16,19 +15,19 @@ namespace Enlisted.Features.Equipment.UI
     {
         [DataSourceProperty]
         public string HeaderText { get; private set; }
-        
+
         [DataSourceProperty]
         public string PlayerGoldText { get; private set; }
-        
+
         [DataSourceProperty]
         public MBBindingList<QuartermasterUpgradeItemVm> UpgradeableItems { get; }
-        
+
         [DataSourceProperty]
         public bool HasUpgradeableItems { get; private set; }
-        
+
         [DataSourceProperty]
         public string NoItemsMessage { get; private set; }
-        
+
         /// <summary>
         /// Initialize upgrade screen with player's equipped items.
         /// </summary>
@@ -36,14 +35,14 @@ namespace Enlisted.Features.Equipment.UI
         {
             UpgradeableItems = new MBBindingList<QuartermasterUpgradeItemVm>();
         }
-        
+
         /// <summary>
         /// Refresh all display values.
         /// </summary>
         public override void RefreshValues()
         {
             base.RefreshValues();
-            
+
             try
             {
                 var hero = Hero.MainHero;
@@ -52,16 +51,16 @@ namespace Enlisted.Features.Equipment.UI
                     SetEmptyValues();
                     return;
                 }
-                
+
                 HeaderText = new TextObject("{=qm_upgrade_title}Improve Equipment").ToString();
                 PlayerGoldText = $"Your Gold: {hero.Gold} denars";
-                
+
                 // Build list of equipped items that can be upgraded
                 UpgradeableItems.Clear();
                 BuildUpgradeableItemsList(hero);
-                
+
                 HasUpgradeableItems = UpgradeableItems.Count > 0;
-                
+
                 if (!HasUpgradeableItems)
                 {
                     NoItemsMessage = new TextObject("{=qm_upgrade_no_items}You've nothing that can be improved.").ToString();
@@ -70,13 +69,13 @@ namespace Enlisted.Features.Equipment.UI
                 {
                     NoItemsMessage = "";
                 }
-                
+
                 // Refresh all upgrade items
                 foreach (var item in UpgradeableItems)
                 {
                     item.RefreshValues();
                 }
-                
+
                 // Notify UI
                 OnPropertyChanged(nameof(HeaderText));
                 OnPropertyChanged(nameof(PlayerGoldText));
@@ -89,7 +88,7 @@ namespace Enlisted.Features.Equipment.UI
                 SetEmptyValues();
             }
         }
-        
+
         /// <summary>
         /// Build list of equipped items that can be upgraded.
         /// Only includes items with modifier groups and available upgrade tiers.
@@ -103,31 +102,31 @@ namespace Enlisted.Features.Equipment.UI
                 {
                     var slot = (EquipmentIndex)i;
                     var element = hero.BattleEquipment[slot];
-                    
+
                     // Skip empty slots
                     if (element.IsEmpty || element.Item == null)
                     {
                         continue;
                     }
-                    
+
                     // Skip items without modifier groups (cannot be upgraded)
                     var modGroup = element.Item.ItemComponent?.ItemModifierGroup;
                     if (modGroup == null)
                     {
                         continue;
                     }
-                    
+
                     // Skip items already at Legendary quality
                     var currentQuality = QuartermasterManager.GetModifierQuality(element.Item, element.ItemModifier);
                     if (currentQuality == ItemQuality.Legendary)
                     {
                         continue;
                     }
-                    
+
                     // Check if any upgrade tiers are available for this item
-                    var availableTiers = QuartermasterManager.Instance?.GetAvailableUpgradeTiers() 
+                    var availableTiers = QuartermasterManager.Instance?.GetAvailableUpgradeTiers()
                                        ?? new System.Collections.Generic.List<ItemQuality>();
-                    
+
                     bool hasAvailableUpgrade = false;
                     foreach (var tier in availableTiers)
                     {
@@ -141,7 +140,7 @@ namespace Enlisted.Features.Equipment.UI
                             }
                         }
                     }
-                    
+
                     // Add to list if upgrades are available
                     if (hasAvailableUpgrade)
                     {
@@ -155,7 +154,7 @@ namespace Enlisted.Features.Equipment.UI
                 ModLogger.Error("QuartermasterUI", "Error building upgradeable items list", ex);
             }
         }
-        
+
         /// <summary>
         /// Handle upgrade execution for a specific item.
         /// Called by child QuartermasterUpgradeItemVm when player selects an upgrade.
@@ -170,23 +169,23 @@ namespace Enlisted.Features.Equipment.UI
                     ModLogger.ErrorCode("QuartermasterUI", "E-QM-020", "Upgrade failed: QuartermasterManager instance not found");
                     return;
                 }
-                
+
                 // Perform the upgrade
                 bool success = qm.PerformUpgrade(slot, targetQuality, out string errorMessage);
-                
+
                 if (success)
                 {
                     // Show success message
                     var hero = Hero.MainHero;
                     var item = hero?.BattleEquipment[slot].Item;
                     var qualityName = GetQualityName(targetQuality);
-                    
+
                     var msg = new TextObject("{=qm_upgrade_success}Your {ITEM} has been improved to {QUALITY} quality.");
                     msg.SetTextVariable("ITEM", item?.Name?.ToString() ?? "equipment");
                     msg.SetTextVariable("QUALITY", qualityName);
-                    
+
                     InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Green));
-                    
+
                     // Refresh the screen to show updated equipment and gold
                     RefreshValues();
                 }
@@ -203,7 +202,7 @@ namespace Enlisted.Features.Equipment.UI
                     new TextObject("{=qm_error_upgrade}Error performing upgrade. Please try again.").ToString(), Colors.Red));
             }
         }
-        
+
         /// <summary>
         /// Handle closing the upgrade screen.
         /// </summary>
@@ -219,7 +218,7 @@ namespace Enlisted.Features.Equipment.UI
                 ModLogger.Error("QuartermasterUI", "Error closing upgrade screen", ex);
             }
         }
-        
+
         /// <summary>
         /// Get localized quality name for display.
         /// </summary>
@@ -236,7 +235,7 @@ namespace Enlisted.Features.Equipment.UI
                 _ => quality.ToString()
             };
         }
-        
+
         /// <summary>
         /// Set safe fallback values for error cases.
         /// </summary>

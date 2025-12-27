@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 // Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
 using Enlisted.Debugging.Behaviors;
-using Enlisted.Features.Company;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
@@ -19,6 +18,7 @@ using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Conversation;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
@@ -87,7 +87,7 @@ namespace Enlisted.Features.Interface.Behaviors
         ///     Used to clean up encounter state when leaving settlements.
         /// </summary>
         private bool _syntheticOutsideEncounter;
-        
+
         /// <summary>
         ///     Public accessor for checking if the player has explicitly visited a settlement.
         ///     Used by GenericStateMenuPatch to prevent auto-opening settlement menus when just paused at a settlement.
@@ -219,13 +219,13 @@ namespace Enlisted.Features.Interface.Behaviors
             var playerEncounter = PlayerEncounter.Current != null;
             var lordSiegeEvent = lord?.Party.SiegeEvent != null;
             var siegeRelatedBattle = IsSiegeRelatedBattle(main, lord);
-            
+
             // Settlement encounters are OK - they happen when armies enter towns/castles
             // We only want to block battle/siege encounters, not peaceful settlement visits
             var isSettlementEncounter = playerEncounter &&
                 PlayerEncounter.EncounterSettlement != null &&
                 !playerBattle;
-            
+
             // If it's a settlement encounter (not a battle), allow menu activation
             if (isSettlementEncounter && !lordSiegeEvent && !siegeRelatedBattle)
             {
@@ -462,11 +462,11 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             // Set up global gold icon for inline currency display across all menus
             MBTextManager.SetTextVariable("GOLD_ICON", "{=!}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">");
-            
+
             AddEnlistedMenus(starter);
             ModLogger.Info("Interface", "Enlisted menu system initialized with modern UI styling");
         }
-        
+
         /// <summary>
         /// Menu background initialization for enlisted_status menu.
         /// Sets culture-appropriate background and ambient audio for modern feel.
@@ -477,7 +477,7 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             var enlistment = EnlistmentBehavior.Instance;
             var backgroundMesh = "encounter_looter";
-            
+
             if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
             {
                 backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
@@ -486,12 +486,12 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
             }
-            
+
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
         }
-        
+
         /// <summary>
         /// Menu background initialization for enlisted_decisions menu.
         /// Uses the same culture-appropriate background as other enlisted menus.
@@ -501,7 +501,7 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             var enlistment = EnlistmentBehavior.Instance;
             var backgroundMesh = "encounter_looter";
-            
+
             if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
             {
                 backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
@@ -510,12 +510,12 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
             }
-            
+
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
         }
-        
+
         /// <summary>
         /// Menu background initialization for enlisted_desert_confirm menu.
         /// Sets ominous background for desertion confirmation.
@@ -530,7 +530,7 @@ namespace Enlisted.Features.Interface.Behaviors
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             // Time control left untouched - respects player's current pause/speed setting
         }
-        
+
         /// <summary>
         ///     Real-time tick handler that runs every game frame while the player is enlisted.
         ///     Handles menu state updates, menu transitions, and settlement access logic.
@@ -675,7 +675,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // when enlisted, but this serves as a defensive fallback in case something bypasses the patch.
                 // These are native army menus that would appear when the lord is at settlements or during army operations.
                 // Enlisted soldiers should see their custom menu instead, unless in combat/siege.
-                
+
                 if (_currentMenuId == "army_wait_at_settlement" || _currentMenuId == "army_wait")
                 {
                     // Only override if not in siege or siege-related battle
@@ -687,7 +687,7 @@ namespace Enlisted.Features.Interface.Behaviors
                             // Don't override during battles
                             return;
                         }
-                        
+
                         ModLogger.Warn("Menu", $"FALLBACK: Overriding {_currentMenuId} to enlisted menu (patch may have been bypassed)");
                         // Defer the override to next frame to avoid conflicts with the native menu system
                         NextFrameDispatcher.RunNextFrame(() =>
@@ -1407,7 +1407,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
                     var enlistment = EnlistmentBehavior.Instance;
-                    
+
                     // T7+ for new Commander track retinue system (15/25/35 soldiers)
                     if ((enlistment?.EnlistmentTier ?? 1) < 7)
                     {
@@ -1415,7 +1415,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         args.Tooltip = new TextObject("{=ct_warn_retinue_tier_locked}You must reach Commander rank (Tier 7) to command your own retinue.");
                         return true;
                     }
-                    
+
                     args.Tooltip = new TextObject("{=ct_retinue_tooltip}Manage your personal retinue of soldiers. Recruits trickle in and must be trained through battle.");
                     return true;
                 },
@@ -1481,7 +1481,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    
+
                     // Always enabled - routing happens in handler based on access state
                     var baggageManager = BaggageTrainManager.Instance;
                     if (baggageManager != null)
@@ -1493,7 +1493,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         args.Tooltip = new TextObject("{=baggage_tooltip_full_access}Access your stored belongings");
                     }
-                    
+
                     return true;
                 },
                 OnBaggageTrainSelected,
@@ -1692,7 +1692,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     var totalWounded = lordParty.MemberRoster.TotalWounded;
                     var totalTroops = lordParty.MemberRoster.TotalManCount;
-                    
+
                     if (totalWounded > 0 && totalTroops > 0)
                     {
                         var woundedPercent = (totalWounded * 100) / totalTroops;
@@ -1719,12 +1719,12 @@ namespace Enlisted.Features.Interface.Behaviors
                     var lostSinceMuster = news.LostSinceLastMuster;
                     if (lostSinceMuster > 0)
                     {
-                        var lossText = lostSinceMuster == 1 
-                            ? "1 soldier lost since last muster" 
+                        var lossText = lostSinceMuster == 1
+                            ? "1 soldier lost since last muster"
                             : $"{lostSinceMuster} soldiers lost since last muster";
                         newsItems.Add($"{lossText}");
                     }
-                    
+
                     // Sickness since last muster
                     var sickSinceMuster = news.SickSinceLastMuster;
                     if (sickSinceMuster >= 5)
@@ -1754,7 +1754,7 @@ namespace Enlisted.Features.Interface.Behaviors
                             newsItems.Add("The company's spirits are high");
                             break;
                     }
-                    
+
                     // Food status (only show if problematic)
                     switch (snapshot.Food)
                     {
@@ -1841,16 +1841,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 return string.Empty;
             }
         }
-        
+
         private static readonly Random CampAtmoRng = new Random();
-        
+
         private static string BuildCampAtmosphereLine(Hero lord)
         {
             try
             {
                 var hour = CampaignTime.Now.GetHourOfDay;
                 var party = lord?.PartyBelongedTo;
-                
+
                 // Check for recent battle (within 24 hours)
                 var news = EnlistedNewsBehavior.Instance;
                 if (news != null)
@@ -1861,29 +1861,29 @@ namespace Enlisted.Features.Interface.Behaviors
                         var hoursSinceBattle = (CampaignTime.Now - lastBattleTime).ToHours;
                         if (hoursSinceBattle < 24)
                         {
-                            return playerWon 
-                                ? PickRandom(BattleWonAtmoLines) 
+                            return playerWon
+                                ? PickRandom(BattleWonAtmoLines)
                                 : PickRandom(BattleLostAtmoLines);
                         }
                     }
                 }
-                
+
                 // Context-based atmosphere
                 if (party?.Party?.SiegeEvent != null || party?.BesiegerCamp != null)
                 {
                     return PickRandom(SiegeAtmoLines);
                 }
-                
+
                 if (party?.Army != null)
                 {
                     return PickRandom(ArmyAtmoLines);
                 }
-                
+
                 if (party?.CurrentSettlement != null)
                 {
                     return PickRandom(SettlementAtmoLines);
                 }
-                
+
                 // Default: on the march, time-based
                 if (hour < 6 || hour >= 20)
                 {
@@ -1897,7 +1897,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     return PickRandom(EveningAtmoLines);
                 }
-                
+
                 return PickRandom(DayAtmoLines);
             }
             catch
@@ -1905,12 +1905,12 @@ namespace Enlisted.Features.Interface.Behaviors
                 return "The company goes about its duties.";
             }
         }
-        
+
         private static string PickRandom(string[] lines)
         {
             return lines[CampAtmoRng.Next(lines.Length)];
         }
-        
+
         // Atmosphere lines for different contexts
         private static readonly string[] BattleWonAtmoLines =
         {
@@ -1918,56 +1918,56 @@ namespace Enlisted.Features.Interface.Behaviors
             "The camp buzzes with the energy of triumph. Wounds are tended, tales told.",
             "Victory songs drift through the camp. The company earned this rest."
         };
-        
+
         private static readonly string[] BattleLostAtmoLines =
         {
             "A somber mood hangs over the camp. The cost was high.",
             "Quiet conversations and grim faces. The company licks its wounds.",
             "Few words are spoken. The men tend to their gear and their thoughts."
         };
-        
+
         private static readonly string[] SiegeAtmoLines =
         {
             "The siege works stretch before the walls. Engineers shout orders.",
             "Smoke rises from siege preparations. The walls loom in the distance.",
             "The camp sprawls around the besieged fortification. Tension fills the air."
         };
-        
+
         private static readonly string[] ArmyAtmoLines =
         {
             "The army camp stretches in every direction. Banners flutter in the wind.",
             "Thousands of soldiers go about their duties. The army is a city on the move.",
             "Lords and their retinues mingle. The gathered host is an impressive sight."
         };
-        
+
         private static readonly string[] SettlementAtmoLines =
         {
             "The company has made camp near the settlement. Soldiers come and go.",
             "Market sounds drift from nearby. A welcome respite from the march.",
             "The settlement provides a backdrop to camp life. Rest comes easier here."
         };
-        
+
         private static readonly string[] NightAtmoLines =
         {
             "The fires burn low as men settle in for the night.",
             "Sentries patrol the perimeter. The camp sleeps under the stars.",
             "Night has fallen. Quiet conversations drift from the watch fires."
         };
-        
+
         private static readonly string[] MorningAtmoLines =
         {
             "Dawn breaks over the camp. Men stir and prepare for the day.",
             "The morning muster begins. Sergeants call out orders.",
             "Cook fires crackle to life. The smell of breakfast fills the air."
         };
-        
+
         private static readonly string[] EveningAtmoLines =
         {
             "The day's march is done. Men gather around the evening fires.",
             "Dusk settles over the camp. The company prepares for night.",
             "Evening rations are distributed. Tired soldiers find their rest."
         };
-        
+
         private static readonly string[] DayAtmoLines =
         {
             "The camp is alive with activity. Soldiers drill and maintain gear.",
@@ -1984,7 +1984,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Time state is captured by calling code BEFORE menu activation
                 // (not here - vanilla has already set Stop by the time init runs)
-                
+
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 // Use the lord's kingdom culture background, or fallback to generic encounter mesh
                 var enlistment = EnlistmentBehavior.Instance;
@@ -2053,7 +2053,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // Set text variables for menu display (lord guaranteed non-null from earlier check)
                 var lordName = lord.EncyclopediaLinkWithName?.ToString() ?? lord.Name?.ToString() ?? "Unknown";
-                
+
                 // Get player status flavor text from news behavior
                 var playerStatus = EnlistedNewsBehavior.Instance?.BuildPlayerStatusLine(enlistment);
                 if (string.IsNullOrWhiteSpace(playerStatus))
@@ -2069,7 +2069,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     /* best-effort */
                 }
-                
+
                 // Note: The menu template already prefixes the first line with "Lord:".
                 // PARTY_LEADER should start with the lord name, not "Lord:" again.
                 // We end with a newline so there is a visible gap before the report sections.
@@ -2194,7 +2194,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        // Note: Removed unused utility methods: CalculateServiceDays, GetRankName, GetFormationDisplayInfo, 
+        // Note: Removed unused utility methods: CalculateServiceDays, GetRankName, GetFormationDisplayInfo,
         // GetServiceDays, GetRetirementCountdown - kept for reference in git history
 
         /// <summary>
@@ -2288,7 +2288,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Capture current time state - user may have changed it with spacebar since menu opened
                 QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                
+
                 var manager = TroopSelectionManager.Instance;
                 if (manager == null)
                 {
@@ -2322,7 +2322,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // Try to open conversation with the Quartermaster hero.
                 var qm = enlistment.GetOrCreateQuartermaster();
-                
+
                 if (qm != null && qm.IsAlive)
                 {
                     ModLogger.Info("Quartermaster",
@@ -2405,7 +2405,7 @@ namespace Enlisted.Features.Interface.Behaviors
             // The old GameMenu-based quartermaster system has been removed.
             // Equipment access is now conversation-driven with Gauntlet UI.
             // This fallback should not be reached in normal operation.
-            ModLogger.ErrorCode("Quartermaster", "E-QM-025", 
+            ModLogger.ErrorCode("Quartermaster", "E-QM-025",
                 "Cannot open QM: conversation failed and no fallback available");
             InformationManager.DisplayMessage(new InformationMessage(
                 new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
@@ -2421,19 +2421,19 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 case BaggageAccessState.FullAccess:
                     return new TextObject("{=baggage_tooltip_full_access}Access your stored belongings");
-                
+
                 case BaggageAccessState.Locked:
                     return new TextObject("{=baggage_tooltip_locked}Request baggage access (storage locked down)");
-                
+
                 case BaggageAccessState.TemporaryAccess:
                     return new TextObject("{=baggage_tooltip_full_access}Access your stored belongings");
-                
+
                 case BaggageAccessState.NoAccess:
                 default:
                     return GetNoAccessTooltipWithCost();
             }
         }
-        
+
         /// <summary>
         /// Returns tooltip for NoAccess state, showing tier-appropriate cost for emergency access.
         /// </summary>
@@ -2444,32 +2444,32 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 return new TextObject("{=baggage_tooltip_no_access}Request baggage access (wagons behind the column)");
             }
-            
+
             var tier = enlistment.EnlistmentTier;
             var qmRep = enlistment.QuartermasterRelationship;
-            
+
             // Check if high rep favor is available
             if (qmRep >= 50 && tier >= 3)
             {
                 return new TextObject("{=baggage_tooltip_favor}Request baggage access (favor, no cost)");
             }
-            
+
             // Tier-based cost display
             if (tier < 3)
             {
                 return new TextObject("{=baggage_tooltip_rank_too_low}Baggage unavailable (rank too low)");
             }
-            
+
             if (tier >= 7)
             {
                 return new TextObject("{=baggage_tooltip_officer_free}Request baggage access (free)");
             }
-            
+
             if (tier >= 5)
             {
                 return new TextObject("{=baggage_tooltip_nco_cost}Request baggage access (-2 QM Rep)");
             }
-            
+
             // T3-T4
             return new TextObject("{=baggage_tooltip_enlisted_cost}Request baggage access (-5 QM Rep)");
         }
@@ -2536,7 +2536,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Capture current time state - user may have changed it with spacebar since menu opened
                 QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                
+
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {
@@ -2875,7 +2875,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Capture current time state - user may have changed it with spacebar since menu opened
                 QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                
+
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {
@@ -3185,14 +3185,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
                 }
-                
+
                 // NOTE: Time mode restoration is handled ONCE in OnEnlistedStatusInit, not here.
                 // Previously this tick handler would restore CapturedTimeMode whenever it saw
                 // UnstoppableFastForward, but this fought with user input - when the user clicked
                 // fast forward (which sets UnstoppableFastForward for army members), the next tick
                 // would immediately restore it back to Stop. This caused x3 speed to pause.
                 // The fix is to only handle time mode conversion once during menu init.
-                
+
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system
                 if (dt.ToSeconds <= 0)
@@ -3513,7 +3513,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var enlistment = EnlistmentBehavior.Instance;
                 var decisionManager = DecisionManager.Instance;
-                
+
                 var currentQueuedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var currentOpportunityIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var currentTrainingIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -3524,13 +3524,19 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (decisionManager != null)
                 {
                     foreach (var dec in decisionManager.GetAvailableDecisionsForSection("training").Where(d => d.IsVisible))
+                    {
                         currentTrainingIds.Add(dec.Decision.Id);
-                    
+                    }
+
                     foreach (var dec in decisionManager.GetAvailableDecisionsForSection("social").Where(d => d.IsVisible))
+                    {
                         currentSocialIds.Add(dec.Decision.Id);
-                    
+                    }
+
                     foreach (var dec in decisionManager.GetAvailableDecisionsForSection("camp_life").Where(d => d.IsVisible))
+                    {
                         currentCampLifeIds.Add(dec.Decision.Id);
+                    }
                 }
 
                 var campLifeEnabledNow = false;
@@ -3745,7 +3751,7 @@ namespace Enlisted.Features.Interface.Behaviors
             // Logistics section (new for QM-related decisions)
             var logisticsDecisions = decisionManager?.GetAvailableDecisionsForSection("logistics") ?? Array.Empty<DecisionAvailability>();
             var visibleLogistics = logisticsDecisions.Where(d => d.IsVisible).ToList();
-            
+
             if (visibleLogistics.Count > 0)
             {
                 list.Add(new DecisionsMenuEntry
@@ -3820,10 +3826,10 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Build display text with indent
             var name = GetDecisionDisplayName(decision);
-            
+
             // Log for debugging blank entries
             ModLogger.Info("Interface", $"AddDecisionEntry: id={decision.Id}, titleId={decision.TitleId}, name='{name}'");
-            
+
             if (string.IsNullOrWhiteSpace(name))
             {
                 name = decision.Id ?? "Unknown";
@@ -3858,11 +3864,11 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Use inline title from JSON as first fallback
             var inlineFallback = decision.TitleFallback;
-            
+
             // Build formatted ID as ultimate fallback
             var id = decision.Id ?? "Unknown";
             var formattedId = id;
-            
+
             // Remove common prefixes for cleaner display
             if (formattedId.StartsWith("player_", StringComparison.OrdinalIgnoreCase))
             {
@@ -3879,7 +3885,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Convert underscores to spaces and title case
             var words = formattedId.Split('_');
-            formattedId = string.Join(" ", words.Select(w => 
+            formattedId = string.Join(" ", words.Select(w =>
                 string.IsNullOrEmpty(w) ? w : char.ToUpper(w[0]) + w.Substring(1).ToLower()));
 
             // Use inline title as fallback if available, otherwise use formatted ID
@@ -3893,7 +3899,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     // Use the {=id}fallback format - if XML lookup fails, returns the fallback
                     var textObj = new TextObject($"{{={decision.TitleId}}}{effectiveFallback}");
                     var resolved = textObj.ToString();
-                    
+
                     // Check if resolution worked (not empty and not just the raw {=...} tag)
                     if (!string.IsNullOrWhiteSpace(resolved) && !resolved.StartsWith("{="))
                     {
@@ -3931,13 +3937,13 @@ namespace Enlisted.Features.Interface.Behaviors
                     description = setupText;
                 }
             }
-            
+
             // Fallback to inline setup from JSON if XML lookup failed
             if (string.IsNullOrEmpty(description) && !string.IsNullOrEmpty(decision.SetupFallback))
             {
                 description = decision.SetupFallback;
             }
-            
+
             // Truncate overly long descriptions
             if (!string.IsNullOrEmpty(description) && description.Length > 180)
             {
@@ -4233,7 +4239,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     var lordColor = escalation.State.LordReputation >= 60 ? "Success" : escalation.State.LordReputation >= 40 ? "Warning" : "Alert";
                     var officerColor = escalation.State.OfficerReputation >= 60 ? "Success" : escalation.State.OfficerReputation >= 40 ? "Warning" : "Alert";
                     var soldierColor = escalation.State.SoldierReputation >= 60 ? "Success" : escalation.State.SoldierReputation >= 40 ? "Warning" : "Alert";
-                    
+
                     sb.AppendLine($"<span style=\"Label\">Lord:</span>     <span style=\"{lordColor}\">{escalation.State.LordReputation}/100 ({GetReputationLevel(escalation.State.LordReputation)})</span>");
                     sb.AppendLine($"<span style=\"Label\">Officers:</span> <span style=\"{officerColor}\">{escalation.State.OfficerReputation}/100 ({GetReputationLevel(escalation.State.OfficerReputation)})</span>");
                     sb.AppendLine($"<span style=\"Label\">Soldiers:</span> <span style=\"{soldierColor}\">{escalation.State.SoldierReputation}/100 ({GetSoldierReputationLevel(escalation.State.SoldierReputation)})</span>");
@@ -4498,19 +4504,19 @@ namespace Enlisted.Features.Interface.Behaviors
                 // READINESS: Combat effectiveness and preparation
                 sb.AppendLine(BuildReadinessLine(needs.Readiness, isMarching, isInCombat, needs.Morale < 40));
                 sb.AppendLine();
-                
+
                 // MORALE: The unit's will to fight
                 sb.AppendLine(BuildMoraleLine(needs.Morale, enlistment, isInCombat, isInSiege));
                 sb.AppendLine();
-                
+
                 // SUPPLIES: Food and consumables
                 sb.AppendLine(BuildSuppliesLine(needs.Supplies, isMarching, isInSiege));
                 sb.AppendLine();
-                
+
                 // EQUIPMENT: Maintenance and gear quality
                 sb.AppendLine(BuildEquipmentLine(needs.Equipment, isInCombat, isMarching, party));
                 sb.AppendLine();
-                
+
                 // REST: Fatigue and recovery
                 sb.AppendLine(BuildRestLine(needs.Rest, isMarching, isInSettlement, isInArmy));
 
@@ -4522,7 +4528,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 return new TextObject("{=company_status_unavailable}Company status unavailable.").ToString();
             }
         }
-        
+
         private static string BuildReadinessLine(int value, bool isMarching, bool isInCombat, bool lowMorale)
         {
             // Context: What's affecting readiness?
@@ -4558,16 +4564,16 @@ namespace Enlisted.Features.Interface.Behaviors
             var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
             var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
             var fullText = $"<span style=\"Label\">READINESS:</span> {coloredDescription}";
-            
+
             return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
-        
+
         private static string BuildMoraleLine(int value, EnlistmentBehavior enlistment, bool isInCombat, bool isInSiege)
         {
             // Context: What's affecting morale?
             var context = "";
             var payTension = enlistment?.PayTension ?? 0;
-            
+
             if (payTension >= 50)
             {
                 context = new TextObject("{=status_morale_pay_high} Pay is long overdue and the men are angry.").ToString();
@@ -4598,10 +4604,10 @@ namespace Enlisted.Features.Interface.Behaviors
             var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
             var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
             var fullText = $"<span style=\"Label\">MORALE:</span> {coloredDescription}";
-            
+
             return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
-        
+
         private static string BuildSuppliesLine(int value, bool isMarching, bool isInSiege)
         {
             // Context: What's affecting supplies?
@@ -4628,10 +4634,10 @@ namespace Enlisted.Features.Interface.Behaviors
             var colorStyle = value >= 60 ? "Success" : value >= 40 ? "Warning" : "Alert";
             var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
             var fullText = $"<span style=\"Label\">SUPPLIES:</span> {coloredDescription}";
-            
+
             return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
-        
+
         private static string BuildEquipmentLine(int value, bool isInCombat, bool isMarching, MobileParty party)
         {
             // Context: What's affecting equipment?
@@ -4663,10 +4669,10 @@ namespace Enlisted.Features.Interface.Behaviors
             var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
             var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
             var fullText = $"<span style=\"Label\">EQUIPMENT:</span> {coloredDescription}";
-            
+
             return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
-        
+
         private static string BuildRestLine(int value, bool isMarching, bool isInSettlement, bool isInArmy)
         {
             // Context: What's affecting rest?
@@ -4697,7 +4703,7 @@ namespace Enlisted.Features.Interface.Behaviors
             var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
             var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
             var fullText = $"<span style=\"Label\">REST:</span> {coloredDescription}";
-            
+
             return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
 
@@ -4712,11 +4718,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 var sb = new StringBuilder();
-                sb.AppendLine($"Valor: {hero.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Valor)}");
-                sb.AppendLine($"Mercy: {hero.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Mercy)}");
-                sb.AppendLine($"Generosity: {hero.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Generosity)}");
-                sb.AppendLine($"Honor: {hero.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Honor)}");
-                sb.AppendLine($"Calculating: {hero.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Calculating)}");
+                sb.AppendLine($"Valor: {hero.GetTraitLevel(DefaultTraits.Valor)}");
+                sb.AppendLine($"Mercy: {hero.GetTraitLevel(DefaultTraits.Mercy)}");
+                sb.AppendLine($"Generosity: {hero.GetTraitLevel(DefaultTraits.Generosity)}");
+                sb.AppendLine($"Honor: {hero.GetTraitLevel(DefaultTraits.Honor)}");
+                sb.AppendLine($"Calculating: {hero.GetTraitLevel(DefaultTraits.Calculating)}");
 
                 return sb.ToString();
             }

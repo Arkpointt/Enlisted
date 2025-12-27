@@ -16,6 +16,7 @@ using Enlisted.Features.Camp;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Managers;
 using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
@@ -2712,7 +2713,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         sb.AppendLine();
                         sb.AppendLine("â”€â”€â”€ Retinue Provisioning â”€â”€â”€");
 
-                        var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
+                        var retinueManager = RetinueManager.Instance;
                         var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
 
                         var (retinueName, retinueMorale, retinueDays) = enlistment.GetRetinueProvisioningInfo();
@@ -2955,7 +2956,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 return false;
             }
 
-            var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
+            var retinueManager = RetinueManager.Instance;
             var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
             var baseCost = EnlistmentBehavior.GetRetinueProvisioningCost(tier, soldierCount);
             var cost = enlistment.ApplyQuartermasterDiscount(baseCost);
@@ -3012,7 +3013,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return;
                 }
 
-                var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
+                var retinueManager = RetinueManager.Instance;
                 var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
 
                 if (soldierCount <= 0)
