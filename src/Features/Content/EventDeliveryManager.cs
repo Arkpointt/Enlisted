@@ -715,7 +715,7 @@ namespace Enlisted.Features.Content
                         continue;
                     }
 
-                    SkillObject targetSkill = null;
+                    SkillObject targetSkill;
 
                     switch (dynamicXp.Key.ToLowerInvariant())
                     {

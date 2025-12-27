@@ -47,7 +47,7 @@ namespace Enlisted.Features.Content
             CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEntered);
             CampaignEvents.OnSettlementLeftEvent.AddNonSerializedListener(this, OnSettlementLeft);
             CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
-            
+
             ModLogger.Info(LogCategory, "Map incident manager registered for battle, settlement, and siege events");
         }
 
@@ -86,7 +86,7 @@ namespace Enlisted.Features.Content
                 }
 
                 ModLogger.Info(LogCategory, $"Battle ended, attempting to deliver leaving_battle incident");
-                
+
                 if (TryDeliverIncident("leaving_battle"))
                 {
                     _lastBattleIncidentTime = CampaignTime.Now;
@@ -450,7 +450,7 @@ namespace Enlisted.Features.Content
         /// Selects an event from eligible candidates using weighted random selection.
         /// Context-matching events get a higher weight multiplier.
         /// </summary>
-        private EventDefinition SelectWeightedEvent(System.Collections.Generic.List<EventDefinition> eligible, string context)
+        private EventDefinition SelectWeightedEvent(System.Collections.Generic.List<EventDefinition> eligible, string _)
         {
             if (eligible.Count == 0)
             {
@@ -554,7 +554,7 @@ namespace Enlisted.Features.Content
 
                 if (daysSinceEnlistment < gracePeriodDays)
                 {
-                    ModLogger.Debug(LogCategory, 
+                    ModLogger.Debug(LogCategory,
                         $"Grace period active for map incidents: {daysSinceEnlistment:F1}/{gracePeriodDays} days since enlistment");
                     return false;
                 }

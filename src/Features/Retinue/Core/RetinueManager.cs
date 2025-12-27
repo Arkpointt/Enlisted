@@ -76,7 +76,7 @@ namespace Enlisted.Features.Retinue.Core
         /// Gets the maximum soldier capacity for a given tier.
         /// T1-T6: 0 (companions only)
         /// T7: 20 soldiers
-        /// T8: 30 soldiers  
+        /// T8: 30 soldiers
         /// T9: 40 soldiers
         /// </summary>
         /// <param name="tier">Player's enlistment tier (1-9)</param>
@@ -663,7 +663,7 @@ namespace Enlisted.Features.Retinue.Core
                 if (CampaignTime.Now < cooldownEnd)
                 {
                     var remaining = (cooldownEnd - CampaignTime.Now).ToDays;
-                    ModLogger.Debug(thresholdCategory, 
+                    ModLogger.Debug(thresholdCategory,
                         $"Threshold event on cooldown: {remaining:F1} days remaining");
                     return;
                 }
@@ -671,7 +671,7 @@ namespace Enlisted.Features.Retinue.Core
 
             // Determine current threshold state
             LoyaltyThreshold currentThreshold;
-            string eventId = null;
+            string eventId;
 
             if (currentLoyalty < ThresholdMutiny)
             {
@@ -699,7 +699,7 @@ namespace Enlisted.Features.Retinue.Core
                 // Reset threshold tracking if loyalty recovered to safe zone
                 if (lastThreshold != LoyaltyThreshold.None && lastThreshold != LoyaltyThreshold.High)
                 {
-                    ModLogger.Info(thresholdCategory, 
+                    ModLogger.Info(thresholdCategory,
                         $"Loyalty recovered to safe zone ({currentLoyalty}), resetting threshold tracking");
                     _state.LastLoyaltyThresholdCrossed = LoyaltyThreshold.None;
                 }
@@ -709,7 +709,7 @@ namespace Enlisted.Features.Retinue.Core
             // Check if we already triggered this threshold (prevent duplicate events)
             if (lastThreshold == currentThreshold)
             {
-                ModLogger.Debug(thresholdCategory, 
+                ModLogger.Debug(thresholdCategory,
                     $"Threshold {currentThreshold} already triggered, skipping duplicate event");
                 return;
             }
@@ -720,10 +720,10 @@ namespace Enlisted.Features.Retinue.Core
             {
                 var thresholdValue = (int)currentThreshold;
                 var gap = Math.Abs(currentLoyalty - thresholdValue);
-                
+
                 if (gap < ThresholdHysteresis)
                 {
-                    ModLogger.Debug(thresholdCategory, 
+                    ModLogger.Debug(thresholdCategory,
                         $"Hysteresis: loyalty {currentLoyalty} too close to threshold {thresholdValue} (gap={gap}, need={ThresholdHysteresis})");
                     return;
                 }
@@ -733,7 +733,7 @@ namespace Enlisted.Features.Retinue.Core
             var evt = Content.EventCatalog.GetEvent(eventId);
             if (evt != null)
             {
-                ModLogger.Info(thresholdCategory, 
+                ModLogger.Info(thresholdCategory,
                     $"Loyalty threshold crossed: {lastThreshold} -> {currentThreshold} (loyalty={currentLoyalty}), queuing event {eventId}");
 
                 Content.EventDeliveryManager.Instance?.QueueEvent(evt);

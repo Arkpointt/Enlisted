@@ -231,7 +231,6 @@ namespace Enlisted.Features.Equipment.UI
         {
             // Get QM reputation modifier for provisions
             // Provisions pricing from spec: 1.5× (Trusted) to 2.2× (Hostile)
-            var qmManager = QuartermasterManager.Instance;
             var repMultiplier = GetProvisionsReputationMultiplier();
 
             // Apply supply scarcity pricing (stacks with rep)
@@ -377,7 +376,7 @@ namespace Enlisted.Features.Equipment.UI
                 var sb = new System.Text.StringBuilder();
 
                 // Get food quality info
-                var (qualityName, moraleBonus, fatigueBonus, daysRemaining) = enlistment.GetFoodQualityInfo();
+                var (qualityName, moraleBonus, _, daysRemaining) = enlistment.GetFoodQualityInfo();
 
                 if (daysRemaining > 0)
                 {

@@ -130,7 +130,7 @@ namespace Enlisted.Features.Equipment.UI
         /// Build available upgrade options for this item.
         /// Filters by reputation requirements and modifier group availability.
         /// </summary>
-        private void BuildUpgradeOptions(ItemObject item, ItemModifier currentModifier, ItemQuality currentQuality)
+        private void BuildUpgradeOptions(ItemObject item, ItemModifier _, ItemQuality currentQuality)
         {
             try
             {

@@ -33,7 +33,7 @@ namespace Enlisted.Mod.Core.Config
 		/// Leave disabled for normal play.
 		/// </summary>
 		[DataMember(Name = "RunTroopDiscoveryValidation")]
-		public bool RunTroopDiscoveryValidation { get; set; } = false;
+		public bool RunTroopDiscoveryValidation { get; set; }
 
 		/// <summary>
 		/// Whether to run mod conflict diagnostics at startup and write to conflicts.log.
@@ -200,7 +200,7 @@ namespace Enlisted.Mod.Core.Config
 			public Dictionary<string, LogLevel> ToDictionary()
 			{
 				var dict = new Dictionary<string, LogLevel>(StringComparer.OrdinalIgnoreCase);
-				
+
 				AddLevel(dict, "Battle", Battle);
 				AddLevel(dict, "Siege", Siege);
 				AddLevel(dict, "Combat", Combat);
@@ -224,7 +224,7 @@ namespace Enlisted.Mod.Core.Config
 				AddLevel(dict, "Session", Session);
 				AddLevel(dict, "Config", Config);
 				AddLevel(dict, "Naval", Naval);
-				
+
 				return dict;
 			}
 

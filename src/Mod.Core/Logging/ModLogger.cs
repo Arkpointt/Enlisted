@@ -36,7 +36,7 @@ namespace Enlisted.Mod.Core.Logging
 	public static class ModLogger
 	{
 		private static readonly object Sync = new object();
-		private static string _logFilePath = null; // Will be set in Initialize()
+		private static string _logFilePath; // Will be set in Initialize()
 		private static string _sessionId = "Session-A";
 		private const int MaxSessionLogs = 3;
 		private const string SessionPrefix = "Session-";

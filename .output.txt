@@ -1,206 +1,1159 @@
-﻿High-priority issues: 41
----
-Rule: AssignNullToNotNullAttribute
-File: src/Features/Interface/News/State/CampNewsState.cs
-Line: 43
-Message: Possible 'null' assignment to non-nullable entity
----
-Rule: AssignNullToNotNullAttribute
-File: src/Mod.Core/Logging/ModConflictDiagnostics.cs
-Line: 269
-Message: Possible 'null' assignment to non-nullable entity
----
-Rule: AssignNullToNotNullAttribute
-File: src/Mod.Core/Logging/ModLogger.cs
-Line: 773
-Message: Possible 'null' assignment to non-nullable entity
----
-Rule: AssignNullToNotNullAttribute
-File: src/Features/Interface/News/Models/CampLifeLedger.cs
-Line: 85
-Message: Possible 'null' assignment to non-nullable entity
----
-Rule: CSharpWarnings__CS0162
-File: src/Features/Combat/Behaviors/EnlistedFormationAssignmentBehavior.cs
-Line: 508
-Message: Code is unreachable
----
-Rule: CSharpWarnings__CS0162
-File: src/Features/Combat/Behaviors/EnlistedFormationAssignmentBehavior.cs
-Line: 509
-Message: Code is unreachable
----
-Rule: ConditionIsAlwaysTrueOrFalse
-File: src/Features/Equipment/Behaviors/QuartermasterManager.cs
-Line: 2458
-Message: Expression is always false
----
-Rule: ConditionIsAlwaysTrueOrFalse
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 10029
-Message: Expression is always true
----
-Rule: ConditionIsAlwaysTrueOrFalse
-File: src/Features/Combat/Behaviors/EnlistedFormationAssignmentBehavior.cs
-Line: 508
-Message: Expression is always false
----
-Rule: ConditionIsAlwaysTrueOrFalse
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 7846
-Message: Expression is always true
----
-Rule: ConditionIsAlwaysTrueOrFalse
-File: src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs
-Line: 67
-Message: Expression is always true
----
-Rule: ConditionIsAlwaysTrueOrFalse
-File: src/Mod.GameAdapters/Patches/JoinSiegeEventAutoSelectPatch.cs
-Line: 97
-Message: Expression is always true
----
-Rule: ConditionIsAlwaysTrueOrFalse
-File: src/Features/Retinue/Core/RetinueRecruitmentGrant.cs
-Line: 55
-Message: Expression is always true
----
-Rule: ConditionIsAlwaysTrueOrFalse
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 1428
-Message: Expression is always true
----
-Rule: HeuristicUnreachableCode
-File: src/Features/Equipment/Behaviors/QuartermasterManager.cs
-Line: 2459
-Message: Code is heuristically unreachable
----
-Rule: HeuristicUnreachableCode
-File: src/Mod.GameAdapters/Patches/JoinSiegeEventAutoSelectPatch.cs
-Line: 103
-Message: Code is heuristically unreachable
----
-Rule: PossibleNullReferenceException
-File: src/Features/Content/DecisionManager.cs
-Line: 184
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 9195
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 7968
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/MusterMenuHandler.cs
-Line: 4050
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 7978
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Equipment/Behaviors/QuartermasterManager.cs
-Line: 294
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 2099
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 2929
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/MusterMenuHandler.cs
-Line: 4071
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 12838
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/MusterMenuHandler.cs
-Line: 3943
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Content/DecisionManager.cs
-Line: 169
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/MusterMenuHandler.cs
-Line: 3865
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 1999
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 12854
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 1521
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/MusterMenuHandler.cs
-Line: 3929
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 8507
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/MusterMenuHandler.cs
-Line: 3877
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Content/EventPacingManager.cs
-Line: 245
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 1941
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Interface/News/Generation/Producers/CompanyMovementObjectiveProducer.cs
-Line: 146
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 6431
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 9102
-Message: Possible 'System.NullReferenceException'
----
-Rule: PossibleNullReferenceException
-File: src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs
-Line: 1883
-Message: Possible 'System.NullReferenceException'
+﻿Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Cannot index into a null array.
+At line:1 char:635
++ ... re-Object { $_.locations[0].physicalLocation.artifactLocation.uri -li ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Name                  Count
+----                  -----
+MusterMenuHandler.cs     12
+EnlistmentBehavior.cs     3

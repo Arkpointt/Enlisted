@@ -2094,7 +2094,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                var dayNumber = (int)CampaignTime.Now.ToDays;
                 var headline = new TextObject("{=news_vet_emergence}{NAME} the {TRAIT} has distinguished themselves in your retinue.");
                 headline.SetTextVariable("NAME", veteranName);
                 headline.SetTextVariable("TRAIT", trait ?? "Steady");
@@ -2127,7 +2126,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                var dayNumber = (int)CampaignTime.Now.ToDays;
                 var headline = battlesSurvived > 5
                     ? new TextObject("{=news_vet_death_legend}{NAME}, a legend of {BATTLES} battles and {KILLS} kills, has fallen.")
                     : new TextObject("{=news_vet_death}{NAME}, who served through {BATTLES} battles, has been slain.");

@@ -1201,7 +1201,7 @@ namespace Enlisted.Features.Escalation
         /// <summary>
         /// Generates a contextual message for a reputation change based on target and magnitude.
         /// </summary>
-        private static string GetReputationChangeMessage(string target, int delta, int newValue)
+        private static string GetReputationChangeMessage(string target, int delta, int _)
         {
             if (delta >= 20)
             {

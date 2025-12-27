@@ -21,23 +21,23 @@ namespace Enlisted.Features.Equipment.Managers
         /// </summary>
         [SaveableProperty(1)]
         public Dictionary<string, int> CurrentStock { get; set; } = new Dictionary<string, int>();
-        
+
         /// <summary>
         /// Campaign day when inventory was last refreshed.
         /// Used to determine if 12-day refresh cycle has elapsed.
         /// </summary>
         [SaveableProperty(2)]
         public int LastRefreshDay { get; set; } = -1;
-        
+
         /// <summary>
         /// Supply level percentage used for last inventory refresh.
         /// Stored for reference and diagnostics.
         /// </summary>
         [SaveableProperty(3)]
-        public float LastRefreshSupplyLevel { get; set; } = 0f;
-        
+        public float LastRefreshSupplyLevel { get; set; }
+
         private const int RefreshCycleDays = 12; // Muster cycle duration
-        
+
         /// <summary>
         /// Check if inventory needs to be refreshed based on 12-day muster cycle.
         /// </summary>
@@ -49,13 +49,13 @@ namespace Enlisted.Features.Equipment.Managers
                 // Never refreshed - needs initial refresh
                 return true;
             }
-            
+
             var currentDay = (int)CampaignTime.Now.ToDays;
             var daysSinceRefresh = currentDay - LastRefreshDay;
-            
+
             return daysSinceRefresh >= RefreshCycleDays;
         }
-        
+
         /// <summary>
         /// Refresh inventory based on current supply level.
         /// Generates new stock quantities with supply-based variety and quantity scaling.
@@ -71,34 +71,34 @@ namespace Enlisted.Features.Equipment.Managers
                 UpdateRefreshMetadata(supplyLevel);
                 return;
             }
-            
+
             try
             {
                 ModLogger.Info("Inventory", $"Refreshing QM inventory at {supplyLevel:F1}% supply");
-                
+
                 CurrentStock.Clear();
-                
+
                 // Determine variety and quantity based on supply level
                 var (varietyPercent, minQty, maxQty) = GetStockParameters(supplyLevel);
-                
+
                 // Calculate how many items to stock based on variety percentage
                 var itemCount = Math.Max(1, (int)(availableItems.Count * varietyPercent));
-                
+
                 // Shuffle and select items to stock
                 var itemsToStock = availableItems
                     .OrderBy(_ => MBRandom.RandomFloat) // Shuffle
                     .Take(itemCount)
                     .ToList();
-                
+
                 // Assign quantities to each selected item
                 foreach (var item in itemsToStock)
                 {
                     var quantity = MBRandom.RandomInt(minQty, maxQty + 1); // +1 because RandomInt is exclusive
                     CurrentStock[item.StringId] = quantity;
                 }
-                
+
                 UpdateRefreshMetadata(supplyLevel);
-                
+
                 ModLogger.Info("Inventory", $"Stocked {itemsToStock.Count} items (variety: {varietyPercent:P0}, qty range: {minQty}-{maxQty})");
             }
             catch (Exception ex)
@@ -109,7 +109,7 @@ namespace Enlisted.Features.Equipment.Managers
                 UpdateRefreshMetadata(supplyLevel);
             }
         }
-        
+
         /// <summary>
         /// Get stock parameters (variety %, min qty, max qty) based on supply level.
         /// Supply affects both variety of items available and quantity of each item.
@@ -120,7 +120,7 @@ namespace Enlisted.Features.Equipment.Managers
         {
             // Clamp supply to valid range
             supplyLevel = MathF.Clamp(supplyLevel, 0f, 100f);
-            
+
             // Define stock parameters by supply tier
             if (supplyLevel >= 80f) // Excellent: 80-100%
             {
@@ -141,7 +141,7 @@ namespace Enlisted.Features.Equipment.Managers
             // Critical: 0-29%
             return (0.25f, 1, 1); // 25% variety, 1 each
         }
-        
+
         /// <summary>
         /// Try to purchase an item, decrementing stock if available.
         /// </summary>
@@ -155,27 +155,27 @@ namespace Enlisted.Features.Equipment.Managers
                 ModLogger.Warn("Inventory", "TryPurchase called with null/empty itemStringId");
                 return false;
             }
-            
+
             if (quantity < 1)
             {
                 ModLogger.Warn("Inventory", $"TryPurchase called with invalid quantity: {quantity}");
                 return false;
             }
-            
+
             // Check if item is in stock
             if (!CurrentStock.TryGetValue(itemStringId, out var availableQty))
             {
                 ModLogger.Debug("Inventory", $"Item not in stock: {itemStringId}");
                 return false;
             }
-            
+
             // Check if enough quantity available
             if (availableQty < quantity)
             {
                 ModLogger.Debug("Inventory", $"Insufficient stock for {itemStringId}: need {quantity}, have {availableQty}");
                 return false;
             }
-            
+
             // Decrement stock
             var newQty = availableQty - quantity;
             if (newQty <= 0)
@@ -189,10 +189,10 @@ namespace Enlisted.Features.Equipment.Managers
                 CurrentStock[itemStringId] = newQty;
                 ModLogger.Debug("Inventory", $"Item purchased: {itemStringId} ({quantity}), remaining: {newQty}");
             }
-            
+
             return true;
         }
-        
+
         /// <summary>
         /// Get available quantity for an item.
         /// </summary>
@@ -204,10 +204,10 @@ namespace Enlisted.Features.Equipment.Managers
             {
                 return 0;
             }
-            
+
             return CurrentStock.TryGetValue(itemStringId, out var qty) ? qty : 0;
         }
-        
+
         /// <summary>
         /// Check if an item is currently in stock (quantity > 0).
         /// </summary>
@@ -217,7 +217,7 @@ namespace Enlisted.Features.Equipment.Managers
         {
             return GetAvailableQuantity(itemStringId) > 0;
         }
-        
+
         /// <summary>
         /// Update refresh metadata after inventory generation.
         /// </summary>
@@ -226,7 +226,7 @@ namespace Enlisted.Features.Equipment.Managers
             LastRefreshDay = (int)CampaignTime.Now.ToDays;
             LastRefreshSupplyLevel = supplyLevel;
         }
-        
+
         /// <summary>
         /// Get number of days until next scheduled refresh.
         /// </summary>
@@ -237,14 +237,14 @@ namespace Enlisted.Features.Equipment.Managers
             {
                 return 0; // Never refreshed
             }
-            
+
             var currentDay = (int)CampaignTime.Now.ToDays;
             var daysSinceRefresh = currentDay - LastRefreshDay;
             var daysRemaining = RefreshCycleDays - daysSinceRefresh;
-            
+
             return Math.Max(0, daysRemaining);
         }
-        
+
         /// <summary>
         /// Force an immediate inventory refresh (for debugging or special events).
         /// </summary>
@@ -253,7 +253,7 @@ namespace Enlisted.Features.Equipment.Managers
             ModLogger.Info("Inventory", "Forcing immediate inventory refresh");
             RefreshInventory(supplyLevel, availableItems);
         }
-        
+
         /// <summary>
         /// Clear all inventory (for testing or special scenarios).
         /// </summary>

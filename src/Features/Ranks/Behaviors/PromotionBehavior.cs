@@ -247,7 +247,6 @@ namespace Enlisted.Features.Ranks.Behaviors
             }
 
             var req = PromotionRequirements.GetForTier(enlistment.EnlistmentTier + 1);
-            var escalation = EscalationManager.Instance;
             var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
             var requiredXp = enlistment.EnlistmentTier < tierXp.Length ? tierXp[enlistment.EnlistmentTier] : tierXp[tierXp.Length - 1];
 
@@ -289,7 +288,6 @@ namespace Enlisted.Features.Ranks.Behaviors
             try
             {
                 var currentTier = enlistment.EnlistmentTier;
-                var previousTier = currentTier;
                 var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
 
                 // Already at max tier

@@ -983,9 +983,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var repModifier = GetReputationPriceMultiplier();
 
                 var finalPrice = basePrice * supplyModifier * repModifier;
-                var roundedPrice = (int)MathF.Ceiling(finalPrice);
+                var roundedPrice = MathF.Ceiling(finalPrice);
 
-                return Math.Max(1, roundedPrice); // Minimum 1 denar
+                return Math.Max(1, (int)roundedPrice); // Minimum 1 denar
             }
             catch (Exception ex)
             {
@@ -2688,7 +2688,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Show current status
                 if (enlistment != null)
                 {
-                    var (qualityName, moraleBonus, fatigueBonus, daysRemaining) = enlistment.GetFoodQualityInfo();
+                    var (qualityName, moraleBonus, _, daysRemaining) = enlistment.GetFoodQualityInfo();
 
                     if (daysRemaining > 0)
                     {
@@ -3161,7 +3161,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Handle weapon variant selection.
         /// Uses branch-based collection to show all weapons available in the troop upgrade tree.
         /// </summary>
-        private void OnWeaponVariantsSelected(MenuCallbackArgs args)
+        private void OnWeaponVariantsSelected()
         {
             try
             {
@@ -3417,7 +3417,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Handle armor variant selection (body, head, leg, gloves - capes go in accessories).
         /// </summary>
-        private void OnArmorVariantsSelected(MenuCallbackArgs args)
+        private void OnArmorVariantsSelected()
         {
             try
             {
@@ -4206,7 +4206,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Handle accessory variant selection (capes and shields).
         /// </summary>
-        private void OnAccessoryVariantsSelected(MenuCallbackArgs args)
+        private void OnAccessoryVariantsSelected()
         {
             try
             {
@@ -4270,7 +4270,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Handle mount (horse) variant selection.
         /// </summary>
-        private void OnMountVariantsSelected(MenuCallbackArgs args)
+        private void OnMountVariantsSelected()
         {
             try
             {
@@ -4338,7 +4338,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Handle supply management (food, carry capacity, etc.).
         /// </summary>
-        private void OnSupplyManagementSelected(MenuCallbackArgs args)
+        private void OnSupplyManagementSelected()
         {
             try
             {
@@ -4668,14 +4668,14 @@ namespace Enlisted.Features.Equipment.Behaviors
             // 40-59%: 20% chance each item is out of stock
             // 15-39%: 50% chance each item is out of stock
             // < 15%: Menu is blocked entirely (handled in EnlistedMenuBehavior)
-            float outOfStockChance;
             if (supplyLevel >= 60)
             {
-                outOfStockChance = 0f;
                 ModLogger.Debug("Quartermaster", $"Stock roll: Supplies at {supplyLevel}% - all items in stock");
                 return;
             }
-            else if (supplyLevel >= 40)
+
+            float outOfStockChance;
+            if (supplyLevel >= 40)
             {
                 outOfStockChance = 0.20f;
             }

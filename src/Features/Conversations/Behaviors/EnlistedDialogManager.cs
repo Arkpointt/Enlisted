@@ -1669,7 +1669,7 @@ namespace Enlisted.Features.Conversations.Behaviors
 
             // Culture-specific rank title
             var rankTitle = enlistment != null
-                ? Ranks.RankHelper.GetCurrentRank(enlistment)
+                ? RankHelper.GetCurrentRank(enlistment)
                 : "Soldier";
             MBTextManager.SetTextVariable("PLAYER_RANK", rankTitle);
 
@@ -1727,7 +1727,6 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return;
                 }
 
-                var qmString = QMDialogueCatalog.Instance.ResolveText(node.TextId, node.Text);
                 ModLogger.Info("EnlistedDialogManager", $"Registering JSON node '{nodeId}' with {node.Options.Count} options");
 
                 // Register each player option as a dialogue line
@@ -2302,7 +2301,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return true; // Default to available if can't check
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as Dictionary<EquipmentIndex, List<EquipmentVariantOption>>;
                 return options != null && options.Any(kvp => kvp.Value?.Any(opt => !opt.IsAtLimit) == true);
             }
             catch
@@ -2331,7 +2330,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return true;
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as Dictionary<EquipmentIndex, List<EquipmentVariantOption>>;
                 if (options == null)
                 {
                     return false;
@@ -2440,7 +2439,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return true;
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as Dictionary<EquipmentIndex, List<EquipmentVariantOption>>;
                 return options != null && options.ContainsKey(slot) && options[slot].Any(opt => !opt.IsAtLimit);
             }
             catch
@@ -2495,7 +2494,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
 
                 // Build contextual supply report with archetype flavor
-                string statusText = GetSupplyReportWithArchetypeFlavor(supplies, equipment, morale, readiness,
+                string statusText = GetSupplyReportWithArchetypeFlavor(supplies, equipment, morale,
                     archetype, reputation, strategicContext);
 
                 MBTextManager.SetTextVariable("SUPPLY_STATUS", statusText);
@@ -2514,7 +2513,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         ///     Includes strategic context awareness (winter, battle prep, etc.).
         ///     Fully bulletproof with null checks, validation, and fallbacks.
         /// </summary>
-        private string GetSupplyReportWithArchetypeFlavor(int supplies, int equipment, int morale, int readiness,
+        private string GetSupplyReportWithArchetypeFlavor(int supplies, int equipment, int morale,
             string archetype, int reputation, string strategicContext)
         {
             // Validate and normalize inputs
@@ -2744,7 +2743,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 var archetype = enlistment.QuartermasterArchetype;
                 var reputation = enlistment.QuartermasterRelationship;
                 var tier = enlistment.EnlistmentTier;
-                var rankTitle = Ranks.RankHelper.GetCurrentRank(enlistment);
+                var rankTitle = RankHelper.GetCurrentRank(enlistment);
 
                 // Calculate discount percentage based on reputation
                 var discountPct = GetReputationDiscount(reputation);
@@ -2860,19 +2859,19 @@ namespace Enlisted.Features.Conversations.Behaviors
         ///     Generates a contextual browse response based on supply/equipment levels, archetype, and reputation.
         ///     Uses XML localization strings with full validation and fallback handling.
         /// </summary>
-        private string GetBrowseResponse(int supplies, int equipment, string archetype, int reputation, int tier = 1, string rankTitle = "Soldier", int discountPct = 0)
+        private string GetBrowseResponse(int suppliesParam, int equipmentParam, string archetype, int reputation, int tier = 1, string rankTitle = "Soldier", int discountPct = 0)
         {
             // Validate and normalize inputs
             archetype = ValidateArchetype(archetype);
-            supplies = Clamp(supplies, 0, 100);
-            equipment = Clamp(equipment, 0, 100);
+            int supplies = Clamp(suppliesParam, 0, 100);
+            int equipment = Clamp(equipmentParam, 0, 100);
 
             // Build a contextual response with multiple parts:
             // 1. Stock/supply context
             // 2. Rank acknowledgment (for higher tiers)
             // 3. Price/discount hint based on reputation
 
-            var parts = new System.Collections.Generic.List<string>();
+            var parts = new List<string>();
 
             // Part 1: Stock situation
             if (supplies >= 80)
@@ -3711,8 +3710,8 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return;
             }
 
-            System.Collections.Generic.List<EquipmentVariantOption> variants = null;
-            EquipmentIndex targetSlot = EquipmentIndex.Weapon0;
+            List<EquipmentVariantOption> variants;
+            EquipmentIndex targetSlot;
 
             switch (category)
             {
@@ -3800,7 +3799,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// <summary>
         ///     Gets weapon variants from QuartermasterManager.
         /// </summary>
-        private System.Collections.Generic.List<EquipmentVariantOption> GetWeaponVariants(QuartermasterManager qm)
+        private List<EquipmentVariantOption> GetWeaponVariants(QuartermasterManager qm)
         {
             try
             {
@@ -3808,13 +3807,13 @@ namespace Enlisted.Features.Conversations.Behaviors
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (method == null)
                 {
-                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                    return new List<EquipmentVariantOption>();
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as Dictionary<EquipmentIndex, List<EquipmentVariantOption>>;
                 if (options == null)
                 {
-                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                    return new List<EquipmentVariantOption>();
                 }
 
                 // Flatten all weapon variants into one list, excluding shields (shields go to accessories)
@@ -3826,25 +3825,25 @@ namespace Enlisted.Features.Conversations.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Conversations", "QM: Failed to get weapon variants", ex);
-                return new System.Collections.Generic.List<EquipmentVariantOption>();
+                return new List<EquipmentVariantOption>();
             }
         }
 
         /// <summary>
         ///     Gets accessory variants (capes, shields, harness) from QuartermasterManager.
         /// </summary>
-        private System.Collections.Generic.List<EquipmentVariantOption> GetAccessoryVariants(QuartermasterManager qm)
+        private List<EquipmentVariantOption> GetAccessoryVariants(QuartermasterManager qm)
         {
             try
             {
-                var combined = new System.Collections.Generic.List<EquipmentVariantOption>();
+                var combined = new List<EquipmentVariantOption>();
 
                 // Get capes from armor options
                 var armorMethod = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (armorMethod != null)
                 {
-                    var armorOptions = armorMethod.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                    var armorOptions = armorMethod.Invoke(qm, null) as Dictionary<EquipmentIndex, List<EquipmentVariantOption>>;
                     if (armorOptions?.TryGetValue(EquipmentIndex.Cape, out var capeOptions) == true)
                     {
                         combined.AddRange(capeOptions);
@@ -3856,7 +3855,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (shieldMethod != null)
                 {
-                    var shieldOptions = shieldMethod.Invoke(qm, null) as System.Collections.Generic.List<EquipmentVariantOption>;
+                    var shieldOptions = shieldMethod.Invoke(qm, null) as List<EquipmentVariantOption>;
                     if (shieldOptions != null)
                     {
                         combined.AddRange(shieldOptions);
@@ -3868,14 +3867,14 @@ namespace Enlisted.Features.Conversations.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Conversations", "QM: Failed to get accessory variants", ex);
-                return new System.Collections.Generic.List<EquipmentVariantOption>();
+                return new List<EquipmentVariantOption>();
             }
         }
 
         /// <summary>
         ///     Gets mount variants from QuartermasterManager.
         /// </summary>
-        private System.Collections.Generic.List<EquipmentVariantOption> GetMountVariants(QuartermasterManager qm)
+        private List<EquipmentVariantOption> GetMountVariants(QuartermasterManager qm)
         {
             try
             {
@@ -3889,43 +3888,43 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                 if (troopMethod == null || buildMethod == null || equipMethod == null)
                 {
-                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                    return new List<EquipmentVariantOption>();
                 }
 
-                var troop = troopMethod.Invoke(qm, null) as TaleWorlds.CampaignSystem.CharacterObject;
+                var troop = troopMethod.Invoke(qm, null) as CharacterObject;
                 if (troop == null)
                 {
-                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                    return new List<EquipmentVariantOption>();
                 }
 
                 var equipVariants = equipMethod.Invoke(qm, new object[] { troop })
-                    as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<ItemObject>>;
+                    as Dictionary<EquipmentIndex, List<ItemObject>>;
                 if (equipVariants == null)
                 {
-                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                    return new List<EquipmentVariantOption>();
                 }
 
                 var allVariants = buildMethod.Invoke(qm, new object[] { equipVariants })
-                    as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                    as Dictionary<EquipmentIndex, List<EquipmentVariantOption>>;
 
                 if (allVariants?.TryGetValue(EquipmentIndex.Horse, out var mounts) == true)
                 {
                     return mounts;
                 }
 
-                return new System.Collections.Generic.List<EquipmentVariantOption>();
+                return new List<EquipmentVariantOption>();
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Conversations", "QM: Failed to get mount variants", ex);
-                return new System.Collections.Generic.List<EquipmentVariantOption>();
+                return new List<EquipmentVariantOption>();
             }
         }
 
         /// <summary>
         ///     Gets armor variants for a specific slot.
         /// </summary>
-        private System.Collections.Generic.List<EquipmentVariantOption> GetArmorSlotVariants(QuartermasterManager qm, EquipmentIndex slot)
+        private List<EquipmentVariantOption> GetArmorSlotVariants(QuartermasterManager qm, EquipmentIndex slot)
         {
             try
             {
@@ -3933,21 +3932,21 @@ namespace Enlisted.Features.Conversations.Behaviors
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (method == null)
                 {
-                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                    return new List<EquipmentVariantOption>();
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as Dictionary<EquipmentIndex, List<EquipmentVariantOption>>;
                 if (options?.TryGetValue(slot, out var slotVariants) == true)
                 {
                     return slotVariants;
                 }
 
-                return new System.Collections.Generic.List<EquipmentVariantOption>();
+                return new List<EquipmentVariantOption>();
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Conversations", $"QM: Failed to get armor variants for slot {slot}", ex);
-                return new System.Collections.Generic.List<EquipmentVariantOption>();
+                return new List<EquipmentVariantOption>();
             }
         }
 
@@ -3955,7 +3954,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         ///     Gets all armor variants across all armor slots (head, body, gloves, legs, cape).
         ///     Used when player selects "I need armor" to show everything in one grid.
         /// </summary>
-        private System.Collections.Generic.List<EquipmentVariantOption> GetAllArmorVariants(QuartermasterManager qm)
+        private List<EquipmentVariantOption> GetAllArmorVariants(QuartermasterManager qm)
         {
             try
             {
@@ -3963,17 +3962,17 @@ namespace Enlisted.Features.Conversations.Behaviors
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (method == null)
                 {
-                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                    return new List<EquipmentVariantOption>();
                 }
 
-                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                var options = method.Invoke(qm, null) as Dictionary<EquipmentIndex, List<EquipmentVariantOption>>;
                 if (options == null)
                 {
-                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                    return new List<EquipmentVariantOption>();
                 }
 
                 // Combine all armor slots into a single list (cape goes to accessories)
-                var combined = new System.Collections.Generic.List<EquipmentVariantOption>();
+                var combined = new List<EquipmentVariantOption>();
                 var armorSlots = new[]
                 {
                     EquipmentIndex.Head,
@@ -3995,7 +3994,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Conversations", "QM: Failed to get all armor variants", ex);
-                return new System.Collections.Generic.List<EquipmentVariantOption>();
+                return new List<EquipmentVariantOption>();
             }
         }
 

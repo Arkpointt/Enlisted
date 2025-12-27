@@ -340,28 +340,28 @@ namespace Enlisted.Features.Interface.Behaviors
                             switch (selected)
                             {
                                 case "gold":
-                                    Debugging.Behaviors.DebugToolsBehavior.GiveGold();
+                                    DebugToolsBehavior.GiveGold();
                                     break;
                                 case "xp":
-                                    Debugging.Behaviors.DebugToolsBehavior.GiveEnlistmentXp();
+                                    DebugToolsBehavior.GiveEnlistmentXp();
                                     break;
                                 case "test_event":
-                                    Debugging.Behaviors.DebugToolsBehavior.TestOnboardingScreen();
+                                    DebugToolsBehavior.TestOnboardingScreen();
                                     break;
                                 case "force_event":
-                                    Debugging.Behaviors.DebugToolsBehavior.ForceEventSelection();
+                                    DebugToolsBehavior.ForceEventSelection();
                                     break;
                                 case "reset_window":
-                                    Debugging.Behaviors.DebugToolsBehavior.ResetEventWindow();
+                                    DebugToolsBehavior.ResetEventWindow();
                                     break;
                                 case "list_events":
-                                    Debugging.Behaviors.DebugToolsBehavior.ListEligibleEvents();
+                                    DebugToolsBehavior.ListEligibleEvents();
                                     break;
                                 case "clear_cooldowns":
-                                    Debugging.Behaviors.DebugToolsBehavior.ClearEventCooldowns();
+                                    DebugToolsBehavior.ClearEventCooldowns();
                                     break;
                                 case "pacing_info":
-                                    Debugging.Behaviors.DebugToolsBehavior.ShowEventPacingInfo();
+                                    DebugToolsBehavior.ShowEventPacingInfo();
                                     break;
                             }
                         }
@@ -2049,7 +2049,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                var statusContent = BuildCompactEnlistedStatusText(enlistment);
+                var statusContent = BuildCompactEnlistedStatusText();
 
                 // Set text variables for menu display (lord guaranteed non-null from earlier check)
                 var lordName = lord.EncyclopediaLinkWithName?.ToString() ?? lord.Name?.ToString() ?? "Unknown";
@@ -2108,7 +2108,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        private static string BuildCompactEnlistedStatusText(EnlistmentBehavior enlistment)
+        private static string BuildCompactEnlistedStatusText()
         {
             try
             {
@@ -3594,7 +3594,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 MaybeClearExpiredDecisionsNewFlags();
 
                 // Build comprehensive status text for decision-making context
-                var statusText = BuildDecisionsStatusText(enlistment);
+                var statusText = BuildDecisionsStatusText();
                 MBTextManager.SetTextVariable("DECISIONS_STATUS_TEXT", statusText);
 
                 _cachedDecisionsMenuEntries = BuildDecisionsMenuEntries();
@@ -3632,7 +3632,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        private static string BuildDecisionsStatusText(EnlistmentBehavior enlistment)
+        private static string BuildDecisionsStatusText()
         {
             try
             {

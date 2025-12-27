@@ -83,13 +83,13 @@ namespace Enlisted.Features.Escalation
         // Global event pacing: tracks events across ALL automatic sources (EventPacingManager + MapIncidentManager).
         // These enforce the limits from decision_events.pacing config to prevent event spam.
         public CampaignTime LastAutoEventTime { get; set; } = CampaignTime.Zero;
-        public int AutoEventsToday { get; set; } = 0;
+        public int AutoEventsToday { get; set; }
         public int AutoEventDayNumber { get; set; } = -1;
-        public int AutoEventsThisWeek { get; set; } = 0;
+        public int AutoEventsThisWeek { get; set; }
         public int AutoEventWeekNumber { get; set; } = -1;
 
         // Quiet day flag: if true, no automatic events fire today (rolled once per day).
-        public bool IsQuietDay { get; set; } = false;
+        public bool IsQuietDay { get; set; }
 
         // Per-category cooldown tracking (key = category name, value = last fired time).
         // Used by GlobalEventPacer to enforce per_category_cooldown_days config.
@@ -112,7 +112,7 @@ namespace Enlisted.Features.Escalation
         // Stage 0 = not started or complete, 1-3 = active onboarding stages.
         // Experience track: "green", "seasoned", "veteran" - determines which onboarding content fires.
         // Default to 0 (not started) so old saves and fresh games don't trigger false onboarding.
-        public int OnboardingStage { get; set; } = 0;
+        public int OnboardingStage { get; set; }
         public string OnboardingTrack { get; set; } = string.Empty;
         public CampaignTime OnboardingStartTime { get; set; } = CampaignTime.Zero;
 
@@ -160,7 +160,7 @@ namespace Enlisted.Features.Escalation
             OnboardingTrack = string.Empty;
             OnboardingStartTime = CampaignTime.Zero;
         }
-        
+
         /// <summary>
         /// Validates and repairs corrupted onboarding state.
         /// Called after save/load to handle edge cases from old saves or data corruption.
@@ -173,7 +173,7 @@ namespace Enlisted.Features.Escalation
                 OnboardingStage = 0;
                 OnboardingStartTime = CampaignTime.Zero;
             }
-            
+
             // Out of range stage value = corrupted, reset
             if (OnboardingStage < 0 || OnboardingStage > 3)
             {

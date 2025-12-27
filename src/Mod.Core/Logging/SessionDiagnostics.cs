@@ -66,7 +66,6 @@ namespace Enlisted.Mod.Core.Logging
                 // Only core configurations remain active
 
                 // Core gameplay config (stub in Phase 1)
-                var gameplay = ConfigurationManager.LoadGameplayConfig();
                 sb.AppendLine($"[Gameplay] (stub in Phase 1, will be implemented in Phase 2+)");
 
                 // Retirement config (still active)

@@ -2156,7 +2156,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Create MusterOutcomeRecord for news feed BEFORE OnMusterComplete resets tracking
                     if (_currentMuster != null)
                     {
-                        SafeApplyEffect("CreateMusterRecord", () => CreateMusterOutcomeRecord(enlistment));
+                        SafeApplyEffect("CreateMusterRecord", () => CreateMusterOutcomeRecord());
                     }
 
                     // Mark muster complete (updates tier/XP tracking, resets XP sources)
@@ -2293,7 +2293,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ModLogger.Info(LogCategory, "Discharge threshold marked during muster");
         }
 
-        private void CreateMusterOutcomeRecord(EnlistmentBehavior enlistment)
+        private void CreateMusterOutcomeRecord()
         {
             try
             {
@@ -2304,7 +2304,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                var record = new Interface.Behaviors.MusterOutcomeRecord
+                var record = new MusterOutcomeRecord
                 {
                     DayNumber = _currentMuster.MusterDay,
                     StrategicContext = _currentMuster.StrategicContext ?? string.Empty,
@@ -2579,7 +2579,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private string BuildOrdersSummary()
         {
-            var newsBehavior = Interface.Behaviors.EnlistedNewsBehavior.Instance;
+            var newsBehavior = EnlistedNewsBehavior.Instance;
             if (newsBehavior == null)
             {
                 return "Order records unavailable.";
@@ -2631,14 +2631,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private string BuildPeriodSummary()
         {
-            var newsBehavior = Interface.Behaviors.EnlistedNewsBehavior.Instance;
+            var newsBehavior = EnlistedNewsBehavior.Instance;
             if (newsBehavior == null)
             {
                 return "Event records unavailable.";
             }
 
             var lastMusterDay = _currentMuster?.LastMusterDay ?? 0;
-            var label = lastMusterDay > 0 ? "Since Last Muster" : "Since Enlistment";
 
             var feedItems = newsBehavior.GetPersonalFeedSince(lastMusterDay);
             if (feedItems == null || feedItems.Count == 0)
@@ -2785,7 +2784,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         /// Processes the baggage check during muster init.
-        /// 30% chance to trigger. If contraband found and QM rep < 65, shows options.
+        /// 30% chance to trigger. If contraband found and QM rep &lt; 65, shows options.
         /// Otherwise skips to next stage automatically.
         /// </summary>
         private void ProcessBaggageCheck()
@@ -3883,7 +3882,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ContrabandChecker.ConfiscateItem(contraband.Item);
 
                 // Apply scrutiny and fine
-                Escalation.EscalationManager.Instance?.ModifyScrutiny(3, "Failed bribe attempt");
+                EscalationManager.Instance?.ModifyScrutiny(3, "Failed bribe attempt");
                 var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
                 if (Hero.MainHero != null)
                 {
@@ -3959,8 +3958,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ContrabandChecker.ConfiscateItem(contraband.Item);
 
                 // Heavy penalties for getting caught
-                Escalation.EscalationManager.Instance?.ModifyScrutiny(5, "Caught smuggling contraband");
-                Escalation.EscalationManager.Instance?.ModifyDiscipline(3, "Attempted smuggling at muster");
+                EscalationManager.Instance?.ModifyScrutiny(5, "Caught smuggling contraband");
+                EscalationManager.Instance?.ModifyDiscipline(3, "Attempted smuggling at muster");
 
                 var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
                 if (Hero.MainHero != null)
@@ -4024,7 +4023,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ContrabandChecker.ConfiscateItem(contraband.Item);
 
             // Apply scrutiny and fine
-            Escalation.EscalationManager.Instance?.ModifyScrutiny(2, "Contraband confiscated at muster");
+            EscalationManager.Instance?.ModifyScrutiny(2, "Contraband confiscated at muster");
             var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
             Hero.MainHero.ChangeHeroGold(-fine);
 
@@ -4105,8 +4104,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ContrabandChecker.ConfiscateItem(contraband.Item);
 
                 // Heavy penalties for failed protest
-                Escalation.EscalationManager.Instance?.ModifyScrutiny(4, "Failed protest at muster");
-                Escalation.EscalationManager.Instance?.ModifyDiscipline(2, "Insubordination at muster");
+                EscalationManager.Instance?.ModifyScrutiny(4, "Failed protest at muster");
+                EscalationManager.Instance?.ModifyDiscipline(2, "Insubordination at muster");
 
                 var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
                 if (Hero.MainHero != null)
@@ -4574,7 +4573,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private int CountBattlesThisPeriod()
         {
-            var newsBehavior = Interface.Behaviors.EnlistedNewsBehavior.Instance;
+            var newsBehavior = EnlistedNewsBehavior.Instance;
             if (newsBehavior == null)
             {
                 return 0;

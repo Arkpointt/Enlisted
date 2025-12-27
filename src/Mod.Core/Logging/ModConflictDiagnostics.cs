@@ -594,7 +594,7 @@ namespace Enlisted.Mod.Core.Logging
         ///     Patch order matters: prefixes can skip the original method, postfixes can modify results.
         /// </summary>
         private static void WritePatchExecutionOrder(
-            Harmony harmony,
+            Harmony _,
             List<MethodBase> ourMethods,
             List<(string method, string declaringType, List<string> otherMods)> conflicts,
             string ourHarmonyId)

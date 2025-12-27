@@ -16,10 +16,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// while enlisted in an army. The native code accesses Army.LeaderParty.IsCurrentlyAtSea
     /// without null checks, causing NullReferenceException when the army state is inconsistent
     /// after a naval battle ends.
-    /// 
+    ///
     /// Bug report: "Game crashes after winning a naval battle while under the command of a lord.
     /// Workaround: detaching from the army immediately after the battle prevents the crash."
-    /// 
+    ///
     /// Root cause: Native ArmyWaitMenuTick and game_menu_army_wait_on_init methods access
     /// MobileParty.MainParty.Army.LeaderParty.IsCurrentlyAtSea without null safety.
     /// </summary>
@@ -35,7 +35,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// </summary>
         [HarmonyPrefix]
         [HarmonyPatch("ArmyWaitMenuTick")]
-        private static bool ArmyWaitMenuTick_Prefix(MenuCallbackArgs args, CampaignTime dt)
+        private static bool ArmyWaitMenuTick_Prefix(MenuCallbackArgs args, CampaignTime _)
         {
             try
             {
@@ -63,7 +63,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     // Army has no leader party - this is the naval battle crash scenario
                     // The army may have been partially disbanded or the leader captured
                     LogCrashPrevention("ArmyWaitMenuTick", "Army.LeaderParty is null (likely post-naval battle state)");
-                    
+
                     // Clean up the invalid army reference to prevent repeated crashes
                     try
                     {
@@ -74,7 +74,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     {
                         ModLogger.ErrorCode("Naval", "E-NAVALPATCH-016", "Failed to clean up army reference", cleanupEx);
                     }
-                    
+
                     SafeExitArmyWaitMenu(args);
                     return false;
                 }
@@ -104,9 +104,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 var mainParty = MobileParty.MainParty;
                 if (mainParty?.Army?.LeaderParty == null)
                 {
-                    LogCrashPrevention("game_menu_army_wait_on_init", 
+                    LogCrashPrevention("game_menu_army_wait_on_init",
                         "Army or LeaderParty is null during menu init");
-                    
+
                     // Set a fallback background to prevent further issues
                     try
                     {
@@ -116,7 +116,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     {
                         // Ignore background setting errors
                     }
-                    
+
                     return false;
                 }
 
@@ -135,7 +135,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// </summary>
         [HarmonyPrefix]
         [HarmonyPatch("wait_menu_army_wait_on_init")]
-        private static bool WaitMenuArmyWaitOnInit_Prefix(MenuCallbackArgs args)
+        private static bool WaitMenuArmyWaitOnInit_Prefix(MenuCallbackArgs _)
         {
             try
             {
@@ -150,7 +150,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     LogCrashPrevention("wait_menu_army_wait_on_init",
                         "Army, LeaderParty, or LeaderHero is null");
-                    
+
                     // The native code will crash trying to set text variables
                     // Skip native and the menu will show with default/missing text
                     return false;
@@ -194,7 +194,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             catch (Exception ex)
             {
                 ModLogger.ErrorCode("Naval", "E-NAVALPATCH-020", "Error in SafeExitArmyWaitMenu", ex);
-                
+
                 // Last resort - try to exit to campaign map
                 try
                 {

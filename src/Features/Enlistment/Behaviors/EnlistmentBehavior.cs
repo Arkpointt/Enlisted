@@ -1142,7 +1142,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Restore fatigue by amount (or full if amount <= 0). Clamped to max.
+        ///     Restore fatigue by amount (or full if amount &lt;= 0). Clamped to max.
         /// </summary>
         public void RestoreFatigue(int amount = 0, string reason = null)
         {
@@ -2302,7 +2302,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return true; // No faction check needed
             }
 
-            var record = Retinue.Core.ServiceRecordManager.Instance?.GetOrCreateRecord(faction);
+            var record = ServiceRecordManager.Instance?.GetOrCreateRecord(faction);
             if (record == null)
             {
                 return true; // No record means no block
@@ -3050,7 +3050,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     var newsText = new TextObject("{=baggage_courier_news}A courier delivered {COUNT} items from your old posting.")
                         .SetTextVariable("COUNT", deliveredCount).ToString();
-                    Interface.Behaviors.EnlistedNewsBehavior.Instance?.PostPersonalDispatchText(
+                    EnlistedNewsBehavior.Instance?.PostPersonalDispatchText(
                         "logistics",
                         newsText,
                         $"courier:{(int)CampaignTime.Now.ToDays}");
@@ -3877,10 +3877,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Clear reserve state immediately when enlistment ends for ANY reason
                 // This prevents player getting stuck invisible if lord's party disbands while in reserve
-                if (Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve)
+                if (EnlistedEncounterBehavior.IsWaitingInReserve)
                 {
                     ModLogger.Info("Battle", "Clearing reserve state during service end");
-                    Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
+                    EnlistedEncounterBehavior.ClearReserveState();
                 }
 
                 var main = MobileParty.MainParty;
@@ -4850,9 +4850,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var partyState = main.Party;
                 var inMapEvent = partyState?.MapEvent != null;
                 var isPrisoner = Hero.MainHero?.IsPrisoner == true;
-                var inEncounter = Campaign.Current?.PlayerEncounter != null;
-                var isActive = main.IsActive;
-                var isVisible = main.IsVisible;
 
                 // Only skip visibility enforcement while vanilla systems own the player state. We skip when the
                 // player is actively in a MapEvent (battle) or is a prisoner (captivity system owns the player).
@@ -4907,11 +4904,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                     // If player was in reserve during disbandment, teleport to safety first
                     // This prevents spawning surrounded by enemies at the battle location
-                    var wasInReserve = Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve;
+                    var wasInReserve = EnlistedEncounterBehavior.IsWaitingInReserve;
                     if (wasInReserve)
                     {
                         ModLogger.Info("Battle", "Player was in reserve when party disbanded - teleporting to safety");
-                        Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
+                        EnlistedEncounterBehavior.ClearReserveState();
 
                         // Clear any lingering encounter state
                         if (PlayerEncounter.Current != null)
@@ -4938,7 +4935,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         // Normalize time control to a stoppable mode so reserve wait state does not leave unstoppable speed
                         if (Campaign.Current != null)
                         {
-                            var normalized = Equipment.Behaviors.QuartermasterManager.NormalizeToStoppable(
+                            var normalized = QuartermasterManager.NormalizeToStoppable(
                                 Campaign.Current.TimeControlMode);
                             Campaign.Current.TimeControlMode = normalized;
                         }
@@ -5213,7 +5210,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             else if (canPayPartial && totalWithBackpay > 0)
             {
                 // Partial payment - lord pays 50% of what's owed
-                ProcessPartialPayment(payout, totalWithBackpay);
+                ProcessPartialPayment(payout);
             }
             else if (payout > 0)
             {
@@ -5269,7 +5266,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 // Reset "since last muster" counters for camp news display
-                Interface.Behaviors.EnlistedNewsBehavior.Instance?.ResetMusterCounters();
+                EnlistedNewsBehavior.Instance?.ResetMusterCounters();
             }
             catch (Exception ex)
             {
@@ -5293,7 +5290,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void ReportMusterOutcome()
         {
-            var newsBehavior = Interface.Behaviors.EnlistedNewsBehavior.Instance;
+            var newsBehavior = EnlistedNewsBehavior.Instance;
             if (newsBehavior == null)
             {
                 return;
@@ -5317,14 +5314,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Access the internal counters through reflection or public accessor if available
                 // For now, use the camp news state if accessible
                 var lastSnapshot = newsBehavior.GetType()
-                    .GetField("_lostSinceLastMuster", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    .GetField("_lostSinceLastMuster", BindingFlags.NonPublic | BindingFlags.Instance)
                     ?.GetValue(newsBehavior);
                 if (lastSnapshot is int lost)
                 {
                     lostCount = lost;
                 }
                 var sickSnapshot = newsBehavior.GetType()
-                    .GetField("_sickSinceLastMuster", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    .GetField("_sickSinceLastMuster", BindingFlags.NonPublic | BindingFlags.Instance)
                     ?.GetValue(newsBehavior);
                 if (sickSnapshot is int sick)
                 {
@@ -5348,7 +5345,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 SupplyLevel = supplyLevel,
                 LostSinceLast = lostCount,
                 SickSinceLast = sickCount,
-                RationFlavorText = !string.IsNullOrEmpty(_lastRationItemId) ? GetRationFlavorText(qmRep, _lastRationItemId) : string.Empty
+                RationFlavorText = !string.IsNullOrEmpty(_lastRationItemId) ? GetRationFlavorText(qmRep) : string.Empty
             };
 
             newsBehavior.AddMusterOutcome(record);
@@ -5867,7 +5864,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _lastRationItemId = itemId;
 
             // Display flavor text based on QM reputation
-            string flavorText = GetRationFlavorText(qmRep, itemId);
+            string flavorText = GetRationFlavorText(qmRep);
             InformationManager.DisplayMessage(new InformationMessage(flavorText, Colors.Cyan));
 
             ModLogger.Info("Rations", $"Issued {amount}x {itemId} (QM rep={qmRep})");
@@ -5900,7 +5897,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         /// Generates flavor text for ration issuance based on QM reputation and food type.
         /// </summary>
-        private string GetRationFlavorText(int qmRep, string itemId)
+        private string GetRationFlavorText(int qmRep)
         {
             if (qmRep >= 80)
             {
@@ -5953,7 +5950,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         /// Process partial payment - lord pays current week + 50% of backpay. Reduces tension by 10.
         /// </summary>
-        private void ProcessPartialPayment(int currentPay, int totalOwed)
+        private void ProcessPartialPayment(int currentPay)
         {
             // Pay current week + half of backpay
             var backpayPortion = _owedBackpay / 2;
@@ -6266,10 +6263,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     band = "washout";
                 }
 
-                var lordRelation = 0;
-                var factionRelation = 0;
-                var severance = 0;
-                var isHonorable = false;
+                int lordRelation;
+                int factionRelation;
+                int severance;
+                bool isHonorable;
 
                 switch (band)
                 {
@@ -6616,7 +6613,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             try
             {
-                var itemsToRemove = new System.Collections.Generic.List<(ItemObject item, int count)>();
+                var itemsToRemove = new List<(ItemObject item, int count)>();
 
                 // Identify QM-issued items in baggage
                 for (int i = 0; i < _baggageStash.Count; i++)
@@ -6675,7 +6672,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             // Apply equipment changes safely (ensures visuals refresh).
-            Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, updated);
+            EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, updated);
         }
 
         private void ClearAllEquipment(Hero hero)
@@ -7330,7 +7327,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentTier = 1;
             }
 
-            var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
+            var maxTier = ConfigurationManager.GetMaxTier();
             if (_enlistmentTier > maxTier)
             {
                 _enlistmentTier = maxTier;
@@ -7669,7 +7666,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     try
                     {
                         // TaleWorlds.CampaignSystem.Actions.EndCaptivityAction
-                        var endCaptivityType = typeof(TaleWorlds.CampaignSystem.Actions.EndCaptivityAction);
+                        var endCaptivityType = typeof(EndCaptivityAction);
                         var applyMethod = endCaptivityType.GetMethod("ApplyByEscape",
                             BindingFlags.Static | BindingFlags.Public);
 
@@ -8759,7 +8756,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Find a safe, reachable point just outside engagement range (12-20 map units)
                 // NavigationHelper validates the position is on valid terrain (not water/mountains)
                 // and that there's a navigable path to reach it
-                var safePosition = Helpers.NavigationHelper.FindPointAroundPosition(
+                var safePosition = NavigationHelper.FindPointAroundPosition(
                     referencePosition,
                     MobileParty.NavigationType.Default, // Land navigation
                     maxDistance: 20f,
@@ -9021,7 +9018,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var cultureId = CurrentLord?.Culture?.StringId ??
                                CurrentLord?.Clan?.Kingdom?.Culture?.StringId ??
                                "mercenary";
-                return Mod.Core.Config.ConfigurationManager.GetCultureRankTitle(_enlistmentTier, cultureId);
+                return ConfigurationManager.GetCultureRankTitle(_enlistmentTier, cultureId);
             }
         }
 
@@ -9132,7 +9129,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return null;
             }
 
-            return Retinue.Core.ServiceRecordManager.Instance?.GetOrCreateRecord(faction);
+            return ServiceRecordManager.Instance?.GetOrCreateRecord(faction);
         }
 
         /// <summary>
@@ -10143,7 +10140,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             // Get tier requirements to show progress
-            var tierXP = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
+            var tierXP = ConfigurationManager.GetTierXpRequirements();
             var nextTierXP = _enlistmentTier < tierXP.Length ? tierXP[_enlistmentTier] : tierXP[tierXP.Length - 1];
             var progressPercent = nextTierXP > 0 ? _enlistmentXP * 100 / nextTierXP : 100;
 
@@ -10244,7 +10241,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 // Get XP values from config
-                var battleXP = Mod.Core.Config.ConfigurationManager.GetBattleParticipationXp();
+                var battleXP = ConfigurationManager.GetBattleParticipationXp();
 
                 if (battleXP > 0)
                 {
@@ -11495,7 +11492,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             // Get culture-specific rank title from progression_config.json
             var culture = _enlistedLord?.Culture?.StringId ?? "empire";
-            return Mod.Core.Config.ConfigurationManager.GetCultureRankTitle(tier, culture) ?? $"Tier {tier}";
+            return ConfigurationManager.GetCultureRankTitle(tier, culture) ?? $"Tier {tier}";
         }
 
         #region Minor Faction War Relations
@@ -12567,12 +12564,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             $"ARMY BATTLE DETECTED - Army Leader: {armyLeader?.LeaderHero?.Name}, Lord: {_enlistedLord.Name}");
                         ModLogger.Debug("Battle",
                             $"Army details - Army size: {lordArmy.Parties.Count}, Battle party: {battleParty.LeaderHero?.Name}");
-                        HandleArmyBattle(main, lordParty, lordArmy);
+                        HandleArmyBattle();
                     }
                     else
                     {
                         ModLogger.Info("Battle", $"Individual lord battle detected - Lord: {_enlistedLord.Name}");
-                        HandleIndividualBattle(main, lordParty);
+                        HandleIndividualBattle(lordParty);
                     }
                 }
                 else if (!isBattlePartyInCombat && isPlayerInBattle)
@@ -12592,7 +12589,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Handle army battle participation.
         ///     Uses army membership for battle participation, keeps player party inactive to avoid conflicts.
         /// </summary>
-        private void HandleArmyBattle(MobileParty main, MobileParty lordParty, Army lordArmy)
+        private void HandleArmyBattle()
         {
             try
             {
@@ -12613,7 +12610,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Handle individual lord battle participation.
         ///     Creates temporary army for individual battles when needed.
         /// </summary>
-        private void HandleIndividualBattle(MobileParty main, MobileParty lordParty)
+        private void HandleIndividualBattle(MobileParty lordParty)
         {
             try
             {
@@ -13141,9 +13138,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
-                var attachedToLord = lordParty != null && main?.AttachedTo == lordParty;
-                var shareArmyWithLord = lordParty?.Army != null && main?.Army == lordParty.Army;
-
                 // Early exit for unrelated battles - don't log to avoid spam from all map battles
                 if (!playerParticipated && !lordParticipated)
                 {
@@ -13251,7 +13245,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             EnlistedEncounterBehavior.ClearReserveState();
 
                             // Release any lingering wait flag on the encounter
-                            var encounter = TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Current;
+                            var encounter = PlayerEncounter.Current;
                             if (encounter != null)
                             {
                                 encounter.IsPlayerWaiting = false;
@@ -13309,7 +13303,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // If we defer our Finish() call, both systems race to clean up the same encounter,
                     // causing NullReferenceException when internal state becomes inconsistent.
                     // PlayerEncounterFinishSafetyPatch provides additional crash protection.
-                    if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Current != null)
+                    if (PlayerEncounter.Current != null)
                     {
                         if (wasSiege)
                         {
@@ -13318,11 +13312,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 "Siege battle ended - finishing encounter immediately to avoid native AI race");
                             try
                             {
-                                if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.InsideSettlement)
+                                if (PlayerEncounter.InsideSettlement)
                                 {
-                                    TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.LeaveSettlement();
+                                    PlayerEncounter.LeaveSettlement();
                                 }
-                                TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Finish();
+                                PlayerEncounter.Finish();
                                 ModLogger.Info("Battle", "Finished PlayerEncounter after siege battle (immediate)");
                             }
                             catch (Exception ex)
@@ -13351,14 +13345,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             {
                                 try
                                 {
-                                    if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Current != null)
+                                    if (PlayerEncounter.Current != null)
                                     {
-                                        if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.InsideSettlement)
+                                        if (PlayerEncounter.InsideSettlement)
                                         {
-                                            TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.LeaveSettlement();
+                                            PlayerEncounter.LeaveSettlement();
                                         }
 
-                                        TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Finish();
+                                        PlayerEncounter.Finish();
                                         ModLogger.Info("Battle",
                                             "Finished PlayerEncounter after battle ended (deferred)");
                                     }
@@ -13451,7 +13445,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Get kill count from tracker (if available)
                 var killsThisBattle = 0;
-                var participated = false;
+                bool participated;
 
                 var killTracker = EnlistedKillTrackerBehavior.Instance;
                 if (killTracker != null)
@@ -13740,7 +13734,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         PlayerEncounter.Finish();
                         ModLogger.Info("Battle", "Force-finished PlayerEncounter to prevent stuck state");
                     }
-                    catch (System.Exception ex)
+                    catch (Exception ex)
                     {
                         ModLogger.Warn("Battle", $"Error finishing encounter: {ex.Message} - will rely on watchdog");
                     }
@@ -14191,7 +14185,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                     ModLogger.Debug("Naval",
                         $"Post-naval battle army state validated: Leader={leaderHero.Name}, " +
-                        $"AtSea={leaderParty.IsCurrentlyAtSea}, ArmySize={army.Parties?.Count ?? 0}");
+                        $"AtSea={leaderParty.IsCurrentlyAtSea}, ArmySize={army.Parties.Count}");
                 }
             }
             catch (Exception ex)
