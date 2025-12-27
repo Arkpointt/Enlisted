@@ -7,7 +7,6 @@ using Enlisted.Features.Identity;
 using Enlisted.Features.Orders.Models;
 using Enlisted.Features.Ranks;
 using Enlisted.Mod.Core.Logging;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;

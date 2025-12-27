@@ -7,7 +7,6 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Siege;
 using TaleWorlds.Core;
 
 namespace Enlisted.Mod.GameAdapters.Patches
@@ -59,18 +58,18 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
 
                 var siegeEvent = settlement.SiegeEvent;
-                
+
                 // Determine which side the lord is on
                 // Check if lord is a besieger (attacking the settlement)
                 var lordIsBesieger = siegeEvent.BesiegerCamp?.GetInvolvedPartiesForEventType().Any(p => p == lordParty) == true;
-                
+
                 // Check if lord is a defender (inside the settlement)
                 var lordIsDefender = settlement.Parties.Any(p => p.Party == lordParty);
-                
+
                 if (!lordIsBesieger && !lordIsDefender)
                 {
                     // Lord is not involved in this siege - let player make their own choice
-                    ModLogger.Debug("JoinSiegeEvent", 
+                    ModLogger.Debug("JoinSiegeEvent",
                         $"Lord {lord.Name} not involved in siege of {settlement.Name} - allowing native menu");
                     return true;
                 }
@@ -89,7 +88,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // Determine which side to join based on lord's position
                 BattleSideEnum lordSide;
                 string lordRole;
-                
+
                 if (lordIsBesieger)
                 {
                     lordSide = BattleSideEnum.Attacker;
@@ -110,7 +109,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // Verify lord is actually in this battle
                 var lordIsInBattle = battle.AttackerSide.Parties.Any(p => p.Party == lordParty) ||
                                      battle.DefenderSide.Parties.Any(p => p.Party == lordParty);
-                
+
                 if (!lordIsInBattle)
                 {
                     ModLogger.Debug("JoinSiegeEvent", "Lord not in this specific battle - allowing native menu");
@@ -119,12 +118,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 // Check if we can join on the lord's side
                 bool canJoinNatively = battle.CanPartyJoinBattle(PartyBase.MainParty, lordSide);
-                
+
                 // Check if lord is in a non-Kingdom faction
-                bool isNonKingdomFactionLord = lord.MapFaction != null && 
+                bool isNonKingdomFactionLord = lord.MapFaction != null &&
                                                !(lord.MapFaction is Kingdom) &&
                                                (lord.MapFaction.IsMinorFaction || lord.MapFaction.IsBanditFaction);
-                
+
                 if (!canJoinNatively && !isNonKingdomFactionLord)
                 {
                     // Kingdom lord but faction check failed - let native handle it
@@ -144,7 +143,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     {
                         PlayerEncounter.LeaveSettlement();
                     }
-                    
+
                     // Join the battle on the lord's side
                     PlayerEncounter.JoinBattle(lordSide);
 
@@ -161,7 +160,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                         // Battle is won - handle like native does
                         var inArmy = MobileParty.MainParty.Army != null;
                         var isArmyLeader = inArmy && MobileParty.MainParty.Army.LeaderParty == MobileParty.MainParty;
-                        
+
                         if (inArmy && !isArmyLeader)
                         {
                             // In army but not leader - wait menu
@@ -180,7 +179,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                         }
                     }
 
-                    ModLogger.Info("JoinSiegeEvent", 
+                    ModLogger.Info("JoinSiegeEvent",
                         $"Successfully auto-joined siege battle as {lordRole} and switched menu");
 
                     // Return false to skip native on_init - the join_siege_event menu never displays
@@ -189,14 +188,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 catch (Exception joinEx)
                 {
                     // JoinBattle can fail - fall back to letting native menu show
-                    ModLogger.ErrorCode("JoinSiegeEvent", "E-PATCH-015", 
+                    ModLogger.ErrorCode("JoinSiegeEvent", "E-PATCH-015",
                         "Failed to auto-join siege battle", joinEx);
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.ErrorCode("JoinSiegeEvent", "E-PATCH-016", 
+                ModLogger.ErrorCode("JoinSiegeEvent", "E-PATCH-016",
                     "Error in join_siege_event patch", ex);
                 // Fail open - let native menu show
                 return true;

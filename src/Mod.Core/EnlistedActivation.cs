@@ -1,5 +1,4 @@
 using Enlisted.Mod.Core.Logging;
-using TaleWorlds.CampaignSystem;
 
 namespace Enlisted.Mod.Core
 {
