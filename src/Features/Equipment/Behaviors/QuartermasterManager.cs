@@ -144,22 +144,6 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
 
         /// <summary>
-        /// Switch to a game menu without changing the current time control mode.
-        /// Vanilla SwitchToMenu forcibly pauses time; this wrapper captures and restores the prior state.
-        /// Also updates the captured time mode for the wait menu tick handler.
-        /// </summary>
-        private static void SwitchToMenuPreserveTime(string menuId)
-        {
-            var previousMode = Campaign.Current?.TimeControlMode ?? CampaignTimeControlMode.Stop;
-            CapturedTimeMode = previousMode; // Update for tick handler (shared across all Enlisted menus)
-            GameMenu.SwitchToMenu(menuId);
-            if (Campaign.Current != null)
-            {
-                Campaign.Current.TimeControlMode = previousMode;
-            }
-        }
-
-        /// <summary>
         /// Capture the current time control mode BEFORE activating a wait menu.
         /// Must be called from the calling code before ActivateGameMenu/SwitchToMenu,
         /// not from init handlers (which run after vanilla already sets Stop).
