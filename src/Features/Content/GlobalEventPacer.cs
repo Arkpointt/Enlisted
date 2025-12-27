@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Enlisted.Features.Escalation;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
@@ -11,7 +9,7 @@ namespace Enlisted.Features.Content
     /// Enforces global event pacing limits across all automatic event sources.
     /// Both EventPacingManager and MapIncidentManager check this before firing events.
     /// Reads all limits from enlisted_config.json → decision_events.pacing section.
-    /// 
+    ///
     /// Enforced limits:
     /// - max_per_day: Maximum automatic events per day
     /// - max_per_week: Maximum automatic events per week
@@ -39,7 +37,7 @@ namespace Enlisted.Features.Content
                 {
                     _cachedConfig = ConfigurationManager.LoadEventPacingConfig();
                     _configLoaded = true;
-                    ModLogger.Debug(LogCategory, 
+                    ModLogger.Debug(LogCategory,
                         $"Loaded pacing config: max_per_day={_cachedConfig.MaxPerDay}, " +
                         $"max_per_week={_cachedConfig.MaxPerWeek}, min_hours_between={_cachedConfig.MinHoursBetween}, " +
                         $"window={_cachedConfig.EventWindowMinDays}-{_cachedConfig.EventWindowMaxDays} days");
@@ -181,7 +179,7 @@ namespace Enlisted.Features.Content
                 }
             }
 
-            ModLogger.Debug(LogCategory, 
+            ModLogger.Debug(LogCategory,
                 $"Allowing {eventId}: today={state.AutoEventsToday}/{config.MaxPerDay}, " +
                 $"week={state.AutoEventsThisWeek}/{config.MaxPerWeek}, hour={currentHour}");
             return true;
@@ -258,7 +256,7 @@ namespace Enlisted.Features.Content
                 state.RecordCategoryFired(category);
             }
 
-            ModLogger.Info(LogCategory, 
+            ModLogger.Info(LogCategory,
                 $"Recorded auto event: {eventId} (today={state.AutoEventsToday}, week={state.AutoEventsThisWeek}" +
                 (string.IsNullOrEmpty(category) ? ")" : $", category={category})"));
         }

@@ -2,8 +2,6 @@ using System;
 using System.Text;
 using Enlisted.Mod.Core.Config;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.Core;
-using TaleWorlds.SaveSystem;
 
 namespace Enlisted.Mod.Core.Logging
 {
