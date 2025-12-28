@@ -37,10 +37,6 @@ namespace Enlisted.Features.Equipment.Behaviors
 
         // Equipment variant cache for performance
         private Dictionary<string, Dictionary<EquipmentIndex, List<ItemObject>>> _troopEquipmentVariants;
-        // ReSharper disable once NotAccessedField.Local - Field is assigned for future caching functionality
-        private Dictionary<string, CharacterObject> _currentTroopCache;
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "May be used for future cache invalidation")]
-        private CampaignTime _lastCacheUpdate = CampaignTime.Zero;
         private static readonly HashSet<string> NonReturnableQuestItemIds =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -48,9 +44,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             };
 
         // Quartermaster state
-        private CharacterObject _selectedTroop;
         private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> _availableVariants;
-        private readonly EquipmentIndex _selectedSlot = EquipmentIndex.None;
         private readonly List<ReturnOption> _returnOptions = new List<ReturnOption>();
 
         // Stock availability tracking - items in this set are out of stock until next muster
@@ -60,14 +54,6 @@ namespace Enlisted.Features.Equipment.Behaviors
         // Inventory state for Phase 7: Inventory & Pricing System
         // Tracks stock quantities and refreshes every 12 days at muster
         private QMInventoryState _inventoryState;
-
-        // Conversation tracking for dynamic equipment selection
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "May be used for future conversation-based equipment selection")]
-        private Dictionary<int, EquipmentVariantOption> _conversationWeaponVariants = new Dictionary<int, EquipmentVariantOption>();
-        // ReSharper disable once NotAccessedField.Local - Field is assigned for future conversation-based equipment selection
-        private Dictionary<int, EquipmentVariantOption> _conversationEquipmentVariants = new Dictionary<int, EquipmentVariantOption>();
-        // ReSharper disable once NotAccessedField.Local - Field is assigned for future conversation-based equipment selection
-        private string _conversationEquipmentType = "";
 
         /// <summary>
         /// Represents an item available for selling back to the quartermaster.
@@ -344,7 +330,6 @@ namespace Enlisted.Features.Equipment.Behaviors
         private void InitializeVariantCache()
         {
             _troopEquipmentVariants = new Dictionary<string, Dictionary<EquipmentIndex, List<ItemObject>>>();
-            _currentTroopCache = new Dictionary<string, CharacterObject>();
             _availableVariants = new Dictionary<EquipmentIndex, List<EquipmentVariantOption>>();
         }
 
@@ -1787,7 +1772,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             var options = new Dictionary<EquipmentIndex, List<ItemObject>>();
             var hero = Hero.MainHero;
             var enlistment = EnlistmentBehavior.Instance;
-            var selectedTroop = _selectedTroop ?? GetPlayerSelectedTroop();
+            var selectedTroop = GetPlayerSelectedTroop();
             var formation = DetectTroopFormation(selectedTroop);
             var isCavalryFormation = formation == FormationType.Cavalry || formation == FormationType.HorseArcher;
             var horseOnlyFilter = _forceHorseOnly;
@@ -2222,7 +2207,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var formation = DetectPlayerFormation().ToString();
                 sb.AppendLine($"Rank: {rankName}");
                 sb.AppendLine($"Formation: {formation}");
-                sb.AppendLine($"Troop Type: {_selectedTroop?.Name?.ToString() ?? "Unknown"}");
+                sb.AppendLine($"Troop Type: {GetPlayerSelectedTroop()?.Name?.ToString() ?? "Unknown"}");
                 sb.AppendLine();
                 sb.AppendLine($"Your Gold: {Hero.MainHero.Gold:N0} denars");
                 sb.AppendLine();
@@ -2853,10 +2838,6 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                 if (availableVariants.Count > 1)
                 {
-                    // Store variants for conversation selection
-                    _conversationEquipmentVariants = availableVariants.ToDictionary(v => availableVariants.IndexOf(v) + 1, v => v);
-                    _conversationEquipmentType = equipmentType;
-
                     // Create inquiry for equipment selection
                     var inquiryElements = new List<InquiryElement>();
 

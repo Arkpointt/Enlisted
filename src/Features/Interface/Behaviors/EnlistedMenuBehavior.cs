@@ -320,6 +320,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     new InquiryElement(
                         "pacing_info",
                         new TextObject("{=Enlisted_Debug_PacingInfo}Show Event Pacing Info").ToString(),
+                        null),
+                    new InquiryElement(
+                        "trigger_muster",
+                        new TextObject("{=enlisted_debug_muster}🔧 Trigger Muster").ToString(),
                         null)
                 };
 
@@ -362,6 +366,11 @@ namespace Enlisted.Features.Interface.Behaviors
                                     break;
                                 case "pacing_info":
                                     DebugToolsBehavior.ShowEventPacingInfo();
+                                    break;
+                                case "trigger_muster":
+                                    // Defer muster trigger to next frame to allow inquiry UI to fully close
+                                    // Prevents graphics driver crash from menu transition during popup rendering
+                                    NextFrameDispatcher.RunNextFrame(() => DebugToolsBehavior.TriggerMuster());
                                     break;
                             }
                         }
@@ -1109,7 +1118,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                     args.Tooltip = new TextObject("{=menu_tooltip_debug}Grant gold or enlistment XP for testing.");
-                    return true;
+                    return ModConfig.Settings?.EnableDebugTools == true;
                 },
                 OnDebugToolsSelected,
                 false, 7);
@@ -1531,21 +1540,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                     GameMenu.SwitchToMenu(LeaveServiceMenuId);
-                },
-                false, 99);
-
-            // DEBUG: Trigger Muster (only shows when EnableDebugTools is true)
-            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_debug_muster",
-                "{=enlisted_debug_muster}🔧 DEBUG: Trigger Muster",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    args.Tooltip = new TextObject("{=enlisted_debug_muster_tooltip}[DEBUG] Immediately trigger the muster system for testing.");
-                    return ModConfig.Settings?.EnableDebugTools == true;
-                },
-                _ =>
-                {
-                    DebugToolsBehavior.TriggerMuster();
                 },
                 false, 99);
 

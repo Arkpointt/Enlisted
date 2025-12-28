@@ -16,8 +16,9 @@ Edit `ModuleData/Enlisted/settings.json`:
 ```
 
 **2. In-game access:**
-- While enlisted, press 'C' to open Camp Hub
-- Click "🔧 DEBUG: Trigger Muster" at the bottom of the menu
+- While enlisted, open the main enlisted menu (press 'L' or click your party)
+- Click "Debug Tools" at the bottom of the menu
+- Select "🔧 Trigger Muster" from the popup
 - Muster sequence starts immediately!
 
 The debug option only appears when `EnableDebugTools: true` and you're enlisted.
@@ -75,20 +76,39 @@ Search for `[Debug] TriggerMuster` to find debug trigger events.
 
 ## Visual Example
 
-When `EnableDebugTools: true`, your Camp Hub menu looks like this:
+When `EnableDebugTools: true`, the main enlisted menu includes a "Debug Tools" option:
 
 ```
-ENLISTED CAMP HUB
+ENLISTED STATUS MENU
 ─────────────────────────────
-[Service Records]
-[Manage Companions]
-[Visit Quartermaster]
-[Medical Tent]
-[Access Baggage Train]
-[My Lord...]
-🔧 DEBUG: Trigger Muster    <-- Debug option
-[Back]
+[Camp]
+[Orders]
+[Decisions]
+[Reports]
+[Status]
+[Debug Tools]    <-- Click here
+[Visit Settlement]
 ```
 
-The 🔧 wrench emoji makes it easy to spot in the menu!
+Clicking "Debug Tools" opens a popup with multiple debug options:
+
+```
+DEBUG TOOLS
+─────────────────────────────
+Select a debug action:
+
+○ Give 1000 Gold
+○ Give XP to Rank Up
+○ Test Onboarding Screen
+○ Force Event Selection
+○ Reset Event Window
+○ List Eligible Events
+○ Clear Event Cooldowns
+○ Show Event Pacing Info
+○ 🔧 Trigger Muster    <-- Select this
+
+[OK]  [Cancel]
+```
+
+The 🔧 wrench emoji makes it easy to spot in the popup!
 

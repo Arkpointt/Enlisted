@@ -64,10 +64,9 @@ The pay muster occurs every 12 days (configurable via `payday_interval_days`) an
 [1. MUSTER INTRO]
    • Strategic context flavor text
    • Service record (rank, XP, days served)
-   • Orders summary (completed/failed this period)
    • Period summary (events, battles, XP gained)
    • Health status (if wounded)
-   • Options: Continue | Visit QM After | Defer Muster
+   • Option: Continue to Pay Line
    ↓
 [2. PAY LINE]
    • Pay status (wages owed, backpay, lord's finances)
@@ -186,21 +185,15 @@ Baggage Access: Available (muster window)
 This Period: +120 XP (3 battles, training, orders completed)
 Fatigue: Restored to full (muster rest day)
 
-_____ ORDERS THIS PERIOD _____
-
-• Patrol Duty: Completed (+20 XP, +5 Officer Rep)
-• Guard Watch: Completed (+15 XP)
-• Camp Patrol: Failed (-8 Officer Rep, +3 Scrutiny)
-
-Orders: 2 completed, 1 failed
-
 _____ EVENTS SINCE LAST MUSTER _____
 
 • Day 13: Dice game in camp - won 15 denars
 • Day 16: Battle at Pen Cannoc - Victory (+50 XP)
 • Day 18: Extra training session - gained weapon skill (+20 XP)
 • Day 21: Comrade repaid borrowed coin
-• Day 23: Completed patrol order (+20 XP)
+• Day 23: Completed Patrol Duty order (+20 XP, +5 Officer Rep)
+• Day 24: Completed Guard Watch order (+15 XP)
+• Day 24: Failed Camp Patrol order (-8 Officer Rep, +3 Scrutiny)
 
 [Pay: 156 denars | Supply: 78% | Unit: 2 lost, 1 sick | Battles: 3]
 ```
@@ -242,8 +235,6 @@ When supply drops below 20%, a warning banner appears:
 | Icon | Text | Tooltip | Action |
 |------|------|---------|--------|
 | 💰 Continue | Proceed to Pay Line | Step forward to receive wages. | → Pay Line stage |
-| 🛒 Trade | Visit Quartermaster After Muster | Browse newly refreshed stock after pay. | → Pay Line (flag QM visit) |
-| ⏭ Leave | Skip This Muster (Defer) | Handle this later. Available tomorrow. | Defer to next day → Map |
 
 ---
 
