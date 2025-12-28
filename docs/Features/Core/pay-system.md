@@ -92,11 +92,12 @@ When muster arrives, players proceed to the Pay Line stage where they choose fro
 - Costs 6 fatigue
 - Opens Quartermaster after muster with expanded selection
 
-**4. Accept Promissory Note (IOU)**
+**4. Accept Payment in Arrears**
 - **Only available if Pay Tension >= 60**
-- Defer payment 3 days to ease lord's finances
-- No immediate gold, but avoids tension increase
-- Next payday set to 3 days from now
+- Accept delayed payment until next regular muster
+- Wages remain owed, no immediate gold
+- Eases lord's finances, avoids tension increase
+- Next payday set to next regular muster cycle (12 days)
 
 ### Discharge Options
 

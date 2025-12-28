@@ -399,7 +399,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-                    args.Tooltip = new TextObject("{=muster_pay_accept_tt}Standard payment. Full wages owed.");
+                    args.Tooltip = new TextObject("{=muster_pay_accept_tt}Receive wages owed. Lord's finances determine full/partial payment.");
                     return true;
                 },
                 _ => ResolvePayMusterStandard(),
@@ -411,7 +411,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Bribe;
-                    args.Tooltip = new TextObject("{=muster_pay_recount_tt}Roguery/Charm check to extract more coin through creative accounting.");
+                    args.Tooltip = new TextObject("{=muster_pay_recount_tt}Roguery/Charm check. 120% pay on success. 10 fatigue cost.");
                     return true;
                 },
                 _ => ResolveCorruptionMuster(),
@@ -427,19 +427,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var payout = enlistment?.PendingMusterPay ?? 0;
                     var reducedPay = (int)(payout * 0.6f);
                     MBTextManager.SetTextVariable("REDUCED_PAY", reducedPay);
-                    args.Tooltip = new TextObject("{=muster_pay_side_deal_tt}Take {REDUCED_PAY} denars + premium equipment.");
+                    args.Tooltip = new TextObject("{=muster_pay_side_deal_tt}Take 60% pay + QM access. Opens equipment after muster. 6 fatigue.");
                     return true;
                 },
                 _ => ResolveSideDealMuster(),
                 false, 3);
 
-            // Pay option 4: Accept a Promise of Payment (IOU)
+            // Pay option 4: Accept Payment in Arrears
             starter.AddGameMenuOption(MusterPayMenuId, "muster_pay_iou",
-                "{=muster_pay_iou}Accept a Promise of Payment",
+                "{=muster_pay_iou}Accept Payment in Arrears",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    args.Tooltip = new TextObject("{=muster_pay_iou_tt}Defer payment 3 days. No pay tension increase.");
+                    args.Tooltip = new TextObject("{=muster_pay_iou_tt}Accept delayed payment. Wages remain owed. Paid at next muster.");
                     var enlistment = EnlistmentBehavior.Instance;
                     // Only available if pay tension is high (60+)
                     return enlistment != null && enlistment.PayTension >= 60;
@@ -453,7 +453,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    args.Tooltip = new TextObject("{=muster_pay_discharge_tt}Receive final pay. Service ends. Pension activated.");
+                    args.Tooltip = new TextObject("{=muster_pay_discharge_tt}Process discharge. Receive final pay + pension. Service ends.");
                     var enlistment = EnlistmentBehavior.Instance;
                     return enlistment != null && enlistment.IsPendingDischarge;
                 },

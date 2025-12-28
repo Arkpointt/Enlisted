@@ -265,7 +265,7 @@ Lord's Treasury:      Comfortable
 | 💰 Continue | Accept Your Pay | Full wages owed. Lord's finances determine actual outcome. | Always |
 | 🎲 TakeQuest | Demand a Recount | Roguery/Charm skill check to extract more coin through creative accounting. Costs 10 fatigue. | Always |
 | ⚔ Trade | Trade Pay for Select Gear | Take 60% of pay + choice of premium equipment. Opens QM after muster. Costs 6 fatigue. | Always |
-| 📜 Manage | Accept Promissory Note (IOU) | Defer payment 3 days to ease lord's finances. No tension increase. | Pay Tension >= 60 |
+| 📜 Manage | Accept Payment in Arrears | Accept delayed payment until next muster. Wages remain owed. No tension increase. | Pay Tension >= 60 |
 | 🏴 Leave | Process Final Discharge | Receive final pay. Service ends. Pension activated. | Pending discharge |
 | ⚠ Leave | Smuggle Out (Deserter) | Keep all gear. Lose pension. Deserter penalties. | Pending discharge |
 

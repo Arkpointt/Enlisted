@@ -6193,19 +6193,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                // Keep this internal and simple. Do not pay out today. Keep the pending pay in the ledger. Retry
-                // soon so the player can resolve it when conditions improve.
+                // Accept payment in arrears: wages stay owed, roll into next regular muster cycle
                 _lastPayOutcome = $"promissory:{_pendingMusterPay}";
                 _payMusterPending = false;
-                _nextPayday = CampaignTime.Now + CampaignTime.Days(3f);
+                _nextPayday = ComputeNextPayday();
                 ModLogger.Info("Pay",
-                    $"Pay muster resolved: promissory note accepted (PendingStillOwed={_pendingMusterPay}, NextRetry={_nextPayday})");
+                    $"Pay muster resolved: payment in arrears accepted (PendingStillOwed={_pendingMusterPay}, NextMuster={_nextPayday})");
             }
             catch (Exception ex)
             {
                 ModLogger.Warn("Pay", $"Promissory muster failed: {ex.Message}");
                 _payMusterPending = false;
-                _nextPayday = CampaignTime.Now + CampaignTime.Days(1f);
+                _nextPayday = ComputeNextPayday();
             }
         }
 
