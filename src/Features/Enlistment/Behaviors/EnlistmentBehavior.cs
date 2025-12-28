@@ -6167,9 +6167,36 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 string outcome;
                 if (success)
                 {
-                    // Roll for equipment - placeholder for now, will implement equipment selection
-                    outcome = $"qm_deal_success:{payout}";
-                    ModLogger.Info("Pay", $"QM Deal successful - equipment awarded (placeholder)");
+                    // Roll for equipment tier (90% current, 10% +1 capped at T9)
+                    var currentTier = _currentTier;
+                    var equipmentTier = currentTier;
+                    var tierRoll = MBRandom.RandomFloat;
+                    if (tierRoll <= 0.10f && currentTier < 9)
+                    {
+                        equipmentTier = currentTier + 1;
+                        ModLogger.Info("Pay", $"QM Deal: Tier bonus! Rolling for T{equipmentTier} instead of T{currentTier}");
+                    }
+
+                    // Select equipment weighted by player skills
+                    var selectedItem = SelectEquipmentBySkills(equipmentTier);
+
+                    if (selectedItem != null)
+                    {
+                        // Add item to inventory
+                        Hero.MainHero.PartyBelongedTo?.ItemRoster?.AddToCounts(selectedItem, 1);
+
+                        // Track item for contraband exemption
+                        TrackQuartermasterDealItem(selectedItem);
+
+                        outcome = $"qm_deal_success:{payout}:{selectedItem.StringId}";
+                        ModLogger.Info("Pay", $"QM Deal successful - awarded {selectedItem.Name} (T{equipmentTier})");
+                    }
+                    else
+                    {
+                        // No suitable equipment found, fall back to failure
+                        outcome = $"qm_deal_failure:{payout}";
+                        ModLogger.Info("Pay", $"QM Deal: No suitable equipment found for T{equipmentTier}, giving coin only");
+                    }
                 }
                 else
                 {
@@ -6890,6 +6917,188 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             var weeksOverdue = Math.Max(0, (DaysSincePay - 7) / 7);
             return 10 + (weeksOverdue * 5);
+        }
+
+        /// <summary>
+        /// Selects equipment for Quartermaster's Deal weighted by player skills.
+        /// Prefers weapon types matching player's highest combat skills.
+        /// </summary>
+        private ItemObject SelectEquipmentBySkills(int tier)
+        {
+            try
+            {
+                var qmManager = QuartermasterManager.Instance;
+                if (qmManager == null)
+                {
+                    ModLogger.Warn("Pay", "QM Deal: QuartermasterManager unavailable");
+                    return null;
+                }
+
+                // Get player's formation and culture
+                var formation = GetPlayerFormation();
+                var culture = _enlistedLord?.Culture;
+
+                if (culture == null || string.IsNullOrEmpty(formation))
+                {
+                    ModLogger.Warn("Pay", "QM Deal: Missing formation or culture");
+                    return null;
+                }
+
+                // Get available equipment for tier
+                var equipment = qmManager.GetAvailableEquipmentByFormation(formation, tier, culture);
+                if (equipment == null || equipment.Count == 0)
+                {
+                    ModLogger.Warn("Pay", $"QM Deal: No equipment found for {formation} T{tier} {culture.Name}");
+                    return null;
+                }
+
+                // Flatten all items into a single list with weights
+                var weightedItems = new List<(ItemObject item, float weight)>();
+
+                foreach (var slot in equipment)
+                {
+                    foreach (var item in slot.Value)
+                    {
+                        var weight = CalculateItemWeight(item);
+                        if (weight > 0)
+                        {
+                            weightedItems.Add((item, weight));
+                        }
+                    }
+                }
+
+                if (weightedItems.Count == 0)
+                {
+                    ModLogger.Warn("Pay", "QM Deal: No weighted items available");
+                    return null;
+                }
+
+                // Select item based on weighted random
+                var totalWeight = weightedItems.Sum(x => x.weight);
+                var roll = MBRandom.RandomFloat * totalWeight;
+                var cumulative = 0f;
+
+                foreach (var (item, weight) in weightedItems)
+                {
+                    cumulative += weight;
+                    if (roll <= cumulative)
+                    {
+                        ModLogger.Info("Pay", $"QM Deal selected: {item.Name} (Weight={weight:0.0}/{totalWeight:0.0})");
+                        return item;
+                    }
+                }
+
+                // Fallback to first item
+                return weightedItems[0].item;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Pay", "E-QM-DEAL-001", "Failed to select equipment by skills", ex);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Calculates weight for an item based on player skills.
+        /// Higher skills in relevant categories = higher weight.
+        /// </summary>
+        private float CalculateItemWeight(ItemObject item)
+        {
+            if (item == null) return 0f;
+
+            var hero = Hero.MainHero;
+            var baseWeight = 1.0f;
+
+            // Weapons: Weight by relevant combat skill
+            if (item.PrimaryWeapon != null)
+            {
+                var weaponClass = item.PrimaryWeapon.WeaponClass;
+                var skillValue = 0;
+
+                switch (weaponClass)
+                {
+                    case WeaponClass.OneHandedSword:
+                    case WeaponClass.OneHandedAxe:
+                    case WeaponClass.Mace:
+                    case WeaponClass.Dagger:
+                        skillValue = hero.GetSkillValue(DefaultSkills.OneHanded);
+                        break;
+
+                    case WeaponClass.TwoHandedSword:
+                    case WeaponClass.TwoHandedAxe:
+                    case WeaponClass.TwoHandedMace:
+                        skillValue = hero.GetSkillValue(DefaultSkills.TwoHanded);
+                        break;
+
+                    case WeaponClass.OneHandedPolearm:
+                    case WeaponClass.TwoHandedPolearm:
+                    case WeaponClass.LowGripPolearm:
+                    case WeaponClass.Pike:
+                        skillValue = hero.GetSkillValue(DefaultSkills.Polearm);
+                        break;
+
+                    case WeaponClass.Bow:
+                        skillValue = hero.GetSkillValue(DefaultSkills.Bow);
+                        break;
+
+                    case WeaponClass.Crossbow:
+                        skillValue = hero.GetSkillValue(DefaultSkills.Crossbow);
+                        break;
+
+                    case WeaponClass.Javelin:
+                    case WeaponClass.ThrowingAxe:
+                    case WeaponClass.ThrowingKnife:
+                    case WeaponClass.Stone:
+                        skillValue = hero.GetSkillValue(DefaultSkills.Throwing);
+                        break;
+                }
+
+                // Scale: 0 skill = 1.0x weight, 100 skill = 3.0x weight
+                return baseWeight + (skillValue / 50f);
+            }
+
+            // Armor: Weight by Athletics (light armor) vs Riding (medium/heavy)
+            if (item.ArmorComponent != null)
+            {
+                var bodyArmor = item.ArmorComponent.BodyArmor;
+                if (bodyArmor != null)
+                {
+                    var weight = bodyArmor.Weight;
+                    if (weight < 10f)
+                    {
+                        // Light armor - prefer if high Athletics
+                        var athletics = hero.GetSkillValue(DefaultSkills.Athletics);
+                        return baseWeight + (athletics / 50f);
+                    }
+                    else
+                    {
+                        // Heavy armor - prefer if high Riding
+                        var riding = hero.GetSkillValue(DefaultSkills.Riding);
+                        return baseWeight + (riding / 50f);
+                    }
+                }
+            }
+
+            // Horses: Weight by Riding skill
+            if (item.HorseComponent != null)
+            {
+                var riding = hero.GetSkillValue(DefaultSkills.Riding);
+                return baseWeight + (riding / 50f);
+            }
+
+            return baseWeight;
+        }
+
+        /// <summary>
+        /// Track an item from Quartermaster's Deal for contraband exemption.
+        /// </summary>
+        private void TrackQuartermasterDealItem(ItemObject item)
+        {
+            if (item == null) return;
+
+            // TODO: Implement contraband tracking
+            // For now, just log it
+            ModLogger.Info("Pay", $"QM Deal item tracked for contraband exemption: {item.StringId}");
         }
 
         #endregion
