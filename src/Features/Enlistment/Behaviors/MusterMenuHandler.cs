@@ -546,7 +546,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                     else
                     {
-                        args.Tooltip = new TextObject($"{{=muster_bribe_tt}}Charm check. 50% success. Failure increases scrutiny.");
+                        // Calculate success chance based on Charm skill
+                        var charm = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm) ?? 0;
+                        var successChance = (int)((0.50f + (charm / 1000f)) * 100f);
+                        args.Tooltip = new TextObject($"Pay {bribeAmount} denars. {successChance}% chance. Failure: item lost + fine + scrutiny.");
                     }
 
                     return true;
