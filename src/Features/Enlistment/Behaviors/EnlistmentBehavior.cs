@@ -4993,7 +4993,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Releases escort AI behavior by setting the party to hold mode.
+        ///     Releases escort AI behavior by clearing the escort target and setting the party to hold mode.
         /// </summary>
         /// <param name="main">The party to release escort for.</param>
         /// <param name="clearAttachment">
@@ -5004,15 +5004,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             try
             {
+                // Clear escort target first (releases SetMoveEscortParty)
+                main.SetMoveEscortParty(null, MobileParty.NavigationType.Default, false);
+
                 // Set AI to hold mode to stop following behavior
                 // NOTE: We no longer clear AttachedTo because we never set it (causes crashes)
                 // 1.3.4 API: SetMoveModeHold is on MobileParty directly
                 main.SetMoveModeHold();
-                ModLogger.Debug("Following", "Released escort - set hold mode");
+                ModLogger.Debug("Following", "Released escort - cleared escort target and set hold mode");
             }
             catch (Exception ex)
             {
-                ModLogger.ErrorCode("Following", "E-FOLLOW-001", "Error releasing escort (SetMoveModeHold)", ex);
+                ModLogger.ErrorCode("Following", "E-FOLLOW-001", "Error releasing escort", ex);
             }
         }
 
