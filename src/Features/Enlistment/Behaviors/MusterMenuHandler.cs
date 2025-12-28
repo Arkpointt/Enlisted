@@ -546,9 +546,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                     else
                     {
-                        // Calculate success chance based on Charm skill
+                        // Calculate success chance based on Charm skill (35% base + 20% at Charm 100)
                         var charm = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm) ?? 0;
-                        var successChance = (int)((0.50f + (charm / 1000f)) * 100f);
+                        var successChance = (int)((0.35f + (charm / 500f)) * 100f);
                         args.Tooltip = new TextObject($"Pay {bribeAmount} denars. {successChance}% chance. Failure: item lost + fine + scrutiny.");
                     }
 
@@ -3865,9 +3865,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Deduct bribe cost
             Hero.MainHero.ChangeHeroGold(-bribeAmount);
 
-            // 50% success chance, modified by Charm
+            // 35-55% success chance, modified by Charm (35% base + 20% at Charm 100)
             var charm = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm) ?? 0;
-            var successChance = 0.50f + (charm / 1000f); // +0.1 at Charm 100
+            var successChance = 0.35f + (charm / 500f); // 35% base, 55% at Charm 100
             var success = MBRandom.RandomFloat < successChance;
 
             if (success)
