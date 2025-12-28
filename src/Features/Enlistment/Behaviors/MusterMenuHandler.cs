@@ -23,6 +23,7 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
+using TaleWorlds.ObjectSystem;
 
 namespace Enlisted.Features.Enlistment.Behaviors
 {
@@ -3197,10 +3198,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 "partial" => "Partial Payment",
                 "iou" => "IOU - Pay Delayed",
                 "corruption" => "Corruption Deal",
+                var outcome when outcome != null && outcome.StartsWith("qm_deal_success") => "Quartermaster's Deal",
+                var outcome when outcome != null && outcome.StartsWith("qm_deal_failure") => "Quartermaster's Deal (No Equipment)",
                 _ => "Unknown"
             };
             var payColor = _currentMuster.PayOutcome == "full" ? "Success" : _currentMuster.PayOutcome == "iou" ? "Alert" : "Warning";
             sb.AppendLine($"<span style=\"Label\">PAY RECEIVED:</span>         <span style=\"{payColor}\">{payAmount} denars ({payType})</span>");
+
+            // QM Deal Equipment (if applicable)
+            if (_currentMuster.PayOutcome != null && _currentMuster.PayOutcome.StartsWith("qm_deal_success:"))
+            {
+                var parts = _currentMuster.PayOutcome.Split(':');
+                if (parts.Length >= 3)
+                {
+                    var itemId = parts[2];
+                    var item = MBObjectManager.Instance.GetObject<ItemObject>(itemId);
+                    var itemName = item?.Name?.ToString() ?? itemId;
+                    sb.AppendLine($"<span style=\"Label\">QM DEAL ITEM:</span>         <span style=\"Success\">{itemName}</span>");
+                }
+            }
 
             // Ration Issued
             var rationText = _currentMuster.RationOutcome switch
