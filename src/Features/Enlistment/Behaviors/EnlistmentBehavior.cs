@@ -6116,7 +6116,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _lastPayOutcome = $"corruption_fail:{payout}";
         }
 
-        internal void ResolveSideDealMuster()
+        internal string ResolveSideDealMuster()
         {
             try
             {
@@ -6124,52 +6124,75 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     ModLogger.Info("Pay", "Resolving pay muster: final muster (pending discharge)");
                     FinalizePendingDischarge();
-                    return;
+                    return "discharge";
                 }
 
-                ModLogger.Info("Pay", $"Resolving pay muster: side deal attempt (PendingPay={_pendingMusterPay})");
+                ModLogger.Info("Pay", $"Resolving Quartermaster's Deal (PendingPay={_pendingMusterPay})");
 
                 // Fatigue cost
-                if (!TryConsumeFatigue(6, "side_deal"))
+                if (!TryConsumeFatigue(6, "quartermaster_deal"))
                 {
-                    _lastPayOutcome = "side_deal_blocked_fatigue";
+                    _lastPayOutcome = "qm_deal_blocked_fatigue";
                     _payMusterPending = false;
                     _nextPayday = ComputeNextPayday();
-                    ModLogger.Warn("Pay", $"Side deal muster blocked by fatigue (NextPayday={_nextPayday})");
-                    return;
+                    ModLogger.Warn("Pay", $"Quartermaster's Deal blocked by fatigue (NextPayday={_nextPayday})");
+                    return "blocked_fatigue";
                 }
 
-                var dailyWage = CalculateDailyWage();
                 var payout = Math.Max(0, (int)(_pendingMusterPay * 0.4f));
 
-                // Side deal only makes sense if it produces at least ~one day's wage.
-                // Otherwise, fall back to standard pay.
-                if (payout <= 0 || payout < dailyWage)
+                // Calculate success chance: 70% base + QM rep modifier
+                var qmRep = GetQMReputation();
+                var baseChance = 0.70f;
+                var repModifier = 0f;
+
+                if (qmRep >= 75) repModifier = 0.15f;
+                else if (qmRep >= 50) repModifier = 0.05f;
+                else if (qmRep >= 25) repModifier = 0f;
+                else repModifier = -0.10f;
+
+                var successChance = baseChance + repModifier;
+                var roll = MBRandom.RandomFloat;
+                var success = roll <= successChance;
+
+                ModLogger.Info("Pay", $"QM Deal: Roll={roll:0.00}, Chance={successChance:0.00}, QMRep={qmRep}, Success={success}");
+
+                // Always give 40% pay
+                if (payout > 0)
                 {
-                    ModLogger.Info("Pay",
-                        $"Side deal not worthwhile; falling back to standard (SideDeal={payout}, DailyWage={dailyWage})");
-                    ResolvePayMusterStandard();
-                    return;
+                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, payout);
+                    OnWagePaid?.Invoke(payout);
                 }
 
-                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, payout);
-                OnWagePaid?.Invoke(payout);
+                string outcome;
+                if (success)
+                {
+                    // Roll for equipment - placeholder for now, will implement equipment selection
+                    outcome = $"qm_deal_success:{payout}";
+                    ModLogger.Info("Pay", $"QM Deal successful - equipment awarded (placeholder)");
+                }
+                else
+                {
+                    outcome = $"qm_deal_failure:{payout}";
+                    ModLogger.Info("Pay", $"QM Deal failed - only received {payout} denars");
+                }
 
-                // Placeholder: if no gear picker available, just log outcome.
-                _lastPayOutcome = $"side_deal:{payout}";
-
+                _lastPayOutcome = outcome;
                 _pendingMusterPay = 0;
                 _nextPayday = ComputeNextPayday();
                 _payMusterPending = false;
                 ClearProbation("pay_muster_resolved");
-                ModLogger.Info("Pay", $"Pay muster resolved: side deal (Outcome={_lastPayOutcome}, NextPayday={_nextPayday})");
+                ModLogger.Info("Pay", $"Pay muster resolved: {_lastPayOutcome} (NextPayday={_nextPayday})");
                 OnMusterCycleComplete();
+
+                return outcome;
             }
             catch (Exception ex)
             {
-                ModLogger.Warn("Pay", $"Side deal muster failed: {ex.Message}");
+                ModLogger.Warn("Pay", $"Quartermaster's Deal failed: {ex.Message}");
                 _payMusterPending = false;
                 _nextPayday = ComputeNextPayday();
+                return "error";
             }
         }
 

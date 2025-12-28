@@ -417,17 +417,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _ => ResolveCorruptionMuster(),
                 false, 2);
 
-            // Pay option 3: Trade Pay for Select Gear (side deal)
+            // Pay option 3: Quartermaster's Deal (equipment lottery)
             starter.AddGameMenuOption(MusterPayMenuId, "muster_pay_side_deal",
-                "{=muster_pay_side_deal}Trade Pay for Select Gear",
+                "{=muster_pay_side_deal}Quartermaster's Deal",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-                    var enlistment = EnlistmentBehavior.Instance;
-                    var payout = enlistment?.PendingMusterPay ?? 0;
-                    var reducedPay = (int)(payout * 0.6f);
-                    MBTextManager.SetTextVariable("REDUCED_PAY", reducedPay);
-                    args.Tooltip = new TextObject("{=muster_pay_side_deal_tt}Take 60% pay + QM access. Opens equipment after muster. 6 fatigue.");
+                    args.Tooltip = new TextObject("{=muster_pay_side_deal_tt}Take 40% pay for surplus equipment. 70% chance (your tier). 6 fatigue.");
                     return true;
                 },
                 _ => ResolveSideDealMuster(),
@@ -1933,27 +1929,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             try
             {
-                ModLogger.Info(LogCategory, "Resolving side deal pay from muster menu");
+                ModLogger.Info(LogCategory, "Resolving Quartermaster's Deal from muster menu");
 
                 if (_currentMuster != null)
                 {
-                    _currentMuster.PayOutcome = "side_deal";
-                    // Flag QM visit after muster for gear selection
-                    _currentMuster.VisitQMAfter = true;
+                    _currentMuster.PayOutcome = "qm_deal";
                 }
 
-                enlistment.ResolveSideDealMuster();
+                var outcome = enlistment.ResolveSideDealMuster();
 
                 if (_currentMuster != null)
                 {
-                    _currentMuster.PayOutcome = enlistment.LastPayOutcome;
+                    _currentMuster.PayOutcome = outcome;
                 }
 
-                ModLogger.Debug(LogCategory, $"Side deal pay resolved: {enlistment.LastPayOutcome}");
+                ModLogger.Debug(LogCategory, $"Quartermaster's Deal resolved: {outcome}");
             }
             catch (Exception ex)
             {
-                ModLogger.ErrorCode(LogCategory, "E-MUSTER-004", "Failed to resolve side deal pay", ex);
+                ModLogger.ErrorCode(LogCategory, "E-MUSTER-004", "Failed to resolve Quartermaster's Deal", ex);
             }
 
             ProceedToNextStageFromPay();
