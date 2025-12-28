@@ -1291,7 +1291,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // The menu text uses {MUSTER_DAY} and {MUSTER_INTRO_TEXT} which must be fully populated before rendering
                 try
                 {
-                    MBTextManager.SetTextVariable("MUSTER_DAY", _currentMuster.MusterDay.ToString());
+                    MBTextManager.SetTextVariable("MUSTER_DAY", enlistment.DaysServed.ToString());
 
                     // Build the complete intro text now, not just a placeholder
                     var introText = BuildIntroTextSafe();
@@ -1489,7 +1489,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Build intro text with null safety
                 var introText = BuildIntroTextSafe();
-                MBTextManager.SetTextVariable("MUSTER_DAY", _currentMuster.MusterDay.ToString());
+                MBTextManager.SetTextVariable("MUSTER_DAY", enlistment?.DaysServed.ToString() ?? "?");
                 MBTextManager.SetTextVariable("MUSTER_INTRO_TEXT", introText);
 
                 // Initialize time control on first stage
@@ -1743,7 +1743,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
                 _currentMuster.CurrentStage = MusterCompleteMenuId;
 
-                MBTextManager.SetTextVariable("MUSTER_DAY", _currentMuster.MusterDay.ToString());
+                var enlistment = EnlistmentBehavior.Instance;
+                MBTextManager.SetTextVariable("MUSTER_DAY", enlistment?.DaysServed.ToString() ?? "?");
                 MBTextManager.SetTextVariable("MUSTER_COMPLETE_TEXT", BuildMusterCompleteTextSafe());
             }
             catch (Exception ex)
