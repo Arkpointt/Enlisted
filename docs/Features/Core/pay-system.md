@@ -87,13 +87,25 @@ When muster arrives, players proceed to the Pay Line stage where they choose fro
 - Costs 10 fatigue on attempt
 - Risk of lord relation penalty if failed
 
-**3. Trade Pay for Select Gear (Side Deal)**
-- Take reduced pay (60% of owed) plus access to premium equipment
+**3. Quartermaster's Deal**
+- Lottery system: 70% base chance for surplus equipment (modified by QM rep)
+- Take 40% of wages + chance at equipment
+- **QM Rep Modifiers:**
+  - Rep 75+: 85% chance (base +15%)
+  - Rep 50-74: 75% chance (base +5%)
+  - Rep 25-49: 70% chance (base)
+  - Rep <25: 60% chance (base -10%)
+- **Equipment Selection:**
+  - 90% chance: Current tier equipment
+  - 10% chance: Tier +1 equipment (capped at T9)
+  - Weighted by player skills (OneHanded → swords, Bow → bows, etc.)
+  - Item added directly to inventory, exempt from contraband checks
+- On failure: Still receive 40% pay
 - Costs 6 fatigue
-- Opens Quartermaster after muster with expanded selection
+- Always available
 
 **4. Accept Payment in Arrears**
-- **Only available if Pay Tension >= 60**
+- **Only available when lord cannot afford to pay**
 - Accept delayed payment until next regular muster
 - Wages remain owed, no immediate gold
 - Eases lord's finances, avoids tension increase

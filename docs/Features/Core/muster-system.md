@@ -262,12 +262,12 @@ Lord's Treasury:      Comfortable
 
 | Icon | Option | Description | Availability |
 |------|--------|-------------|--------------|
-| 💰 Continue | Accept Your Pay | Full wages owed. Lord's finances determine actual outcome. | Always |
-| 🎲 TakeQuest | Demand a Recount | Roguery/Charm skill check to extract more coin through creative accounting. Costs 10 fatigue. | Always |
-| ⚔ Trade | Trade Pay for Select Gear | Take 60% of pay + choice of premium equipment. Opens QM after muster. Costs 6 fatigue. | Always |
-| 📜 Manage | Accept Payment in Arrears | Accept delayed payment until next muster. Wages remain owed. No tension increase. | Pay Tension >= 60 |
-| 🏴 Leave | Process Final Discharge | Receive final pay. Service ends. Pension activated. | Pending discharge |
-| ⚠ Leave | Smuggle Out (Deserter) | Keep all gear. Lose pension. Deserter penalties. | Pending discharge |
+| 💰 Continue | Accept Your Pay | Receive wages owed. Lord's finances determine full/partial payment. | Always |
+| 🎲 TakeQuest | Demand a Recount | Roguery/Charm check. 120% pay on success. 10 fatigue cost. | Always |
+| ⚔ Trade | Quartermaster's Deal | Take 40% pay for surplus equipment. 70% chance (your tier). QM rep modifies chance. 6 fatigue. | Always |
+| 📜 Manage | Accept Payment in Arrears | Accept delayed payment until next muster. Wages remain owed. Paid at next muster. | Lord can't afford to pay |
+| 🏴 Leave | Process Final Discharge | Process discharge. Receive final pay + pension. Service ends. | Pending discharge |
+| ⚠ Leave | Smuggle Out (Deserter) | Desert with your gear. Forfeit pension. Hunted as deserter. | Pending discharge |
 
 **Payment Outcomes:**
 

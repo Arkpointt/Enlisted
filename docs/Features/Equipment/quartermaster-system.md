@@ -732,6 +732,96 @@ Provision bundles are ideal for quick morale/fatigue boosts before battles or du
 
 ---
 
+## Quartermaster's Deal
+
+### Overview
+
+At pay muster, soldiers can trade reduced wages for a chance at surplus equipment through the **Quartermaster's Deal** option. This represents the QM offloading excess stock to soldiers willing to take a gamble on what's available.
+
+**Available:** Always (Pay Line menu option 3)
+
+### Mechanics
+
+**Cost:**
+- 40% of wages owed (forfeit 60%)
+- 6 fatigue
+
+**Success Rate:**
+- **Base:** 70% chance to receive equipment
+- **Modified by QM Reputation:**
+  - Rep 75+: 85% (+15%)
+  - Rep 50-74: 75% (+5%)
+  - Rep 25-49: 70% (base)
+  - Rep <25: 60% (-10%)
+
+**On Failure:**
+- Player still receives 40% pay
+- No equipment awarded
+
+**On Success:**
+
+1. **Tier Roll:**
+   - 90% chance: Current tier equipment
+   - 10% chance: Tier +1 equipment (capped at T9)
+
+2. **Equipment Selection:**
+   - Items selected from player's formation and culture
+   - Weighted by player skills:
+     - OneHanded skill → One-handed weapons
+     - TwoHanded skill → Two-handed weapons
+     - Polearm skill → Polearms
+     - Bow skill → Bows
+     - Crossbow skill → Crossbows
+     - Athletics skill → Light armor (<10kg)
+     - Riding skill → Heavy armor, horses
+   - Higher skill = higher weight (0 skill = 1.0x, 100 skill = 3.0x)
+
+3. **Item Delivery:**
+   - Item added directly to inventory
+   - **Exempt from contraband checks** during baggage inspection
+   - Tracked in muster outcome record
+
+### Example Outcomes
+
+**Success (70% roll, T3 Infantry with OneHanded 80):**
+```
+The quartermaster rummages through the supply wagon...
+
+"Got something here that might suit you. Consider us square."
+
+> Received: Fine Arming Sword (Tier 3)
+> Received: 62 denars (40% pay)
+```
+
+**Tier Bonus (10% roll, rolled up to T4):**
+```
+The quartermaster grins.
+
+"You're in luck. Found something from the veteran's stock."
+
+> Received: Reinforced Scale Armor (Tier 4)
+> Received: 62 denars (40% pay)
+```
+
+**Failure (30% roll):**
+```
+The quartermaster rummages through the supply wagon...
+
+"Nothing suitable today. You get the coin instead."
+
+> Received: 62 denars (40% pay)
+```
+
+### Integration Notes
+
+- **QM Reputation Impact:** Better reputation = better odds
+- **Formation Matters:** Infantry get infantry equipment, cavalry get cavalry equipment
+- **Skill Weighting:** Respects player build (sword users get swords, archers get bows)
+- **Contraband Exemption:** Items are official quartermaster issue, not flagged
+- **No Resale:** Like all QM purchases, items can be sold back through buyback system
+
+---
+
 ## Baggage Checks
 
 ### Muster Inspections
