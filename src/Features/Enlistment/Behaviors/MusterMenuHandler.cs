@@ -441,8 +441,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     args.Tooltip = new TextObject("{=muster_pay_iou_tt}Accept delayed payment. Wages remain owed. Paid at next muster.");
                     var enlistment = EnlistmentBehavior.Instance;
-                    // Only available if pay tension is high (60+)
-                    return enlistment != null && enlistment.PayTension >= 60;
+                    if (enlistment == null) return false;
+
+                    // Only available when lord cannot afford to pay
+                    var totalOwed = enlistment.PendingMusterPay + enlistment.OwedBackpay;
+                    var lordCanPay = enlistment.EnlistedLord?.Gold >= totalOwed + 500; // 500 denar buffer
+                    return !lordCanPay && totalOwed > 0;
                 },
                 _ => ResolvePromissoryMuster(),
                 false, 4);
