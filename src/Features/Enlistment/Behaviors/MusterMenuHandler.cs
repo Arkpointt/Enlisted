@@ -357,7 +357,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        /// Registers all 8 muster menu stages with the game starter.
+        /// Registers all 7 muster menu stages with the game starter.
         /// Each menu is a wait menu that hides progress bars and shows formatted text.
         /// </summary>
         private void RegisterMusterMenus(CampaignGameStarter starter)
@@ -895,7 +895,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 },
                 false, 4);
 
-            ModLogger.Debug(LogCategory, "All 8 muster menu stages registered");
+            ModLogger.Debug(LogCategory, "All 7 muster menu stages registered");
         }
 
         /// <summary>
