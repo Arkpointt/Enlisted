@@ -113,9 +113,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             /// <summary>Baggage check outcome: "passed", "confiscated", "bribed", "skipped".</summary>
             public string BaggageOutcome { get; set; }
 
-            /// <summary>Recruit outcome: "mentored", "ignored", "hazed", "skipped".</summary>
-            public string RecruitOutcome { get; set; }
-
             // Promotion tracking (promotion occurs via PromotionBehavior, recap shows at muster)
             /// <summary>True if tier changed since last muster.</summary>
             public bool PromotionOccurredThisPeriod { get; set; }
@@ -207,7 +204,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var payOutcome = _currentMuster.PayOutcome ?? "";
                     var qmDealItemId = _currentMuster.QMDealItemId ?? "";
                     var baggageOutcome = _currentMuster.BaggageOutcome ?? "";
-                    var recruitOutcome = _currentMuster.RecruitOutcome ?? "";
                     var promotionOccurred = _currentMuster.PromotionOccurredThisPeriod;
                     var previousTier = _currentMuster.PreviousTier;
                     var currentTier = _currentMuster.CurrentTier;
@@ -222,7 +218,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     dataStore.SyncData("_muster_payOutcome", ref payOutcome);
                     dataStore.SyncData("_muster_qmDealItemId", ref qmDealItemId);
                     dataStore.SyncData("_muster_baggageOutcome", ref baggageOutcome);
-                    dataStore.SyncData("_muster_recruitOutcome", ref recruitOutcome);
                     dataStore.SyncData("_muster_promotionOccurred", ref promotionOccurred);
                     dataStore.SyncData("_muster_previousTier", ref previousTier);
                     dataStore.SyncData("_muster_currentTier", ref currentTier);
@@ -247,7 +242,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var payOutcome = "";
                         var qmDealItemId = "";
                         var baggageOutcome = "";
-                        var recruitOutcome = "";
                         var promotionOccurred = false;
                         var previousTier = 0;
                         var currentTier = 0;
@@ -262,7 +256,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         dataStore.SyncData("_muster_payOutcome", ref payOutcome);
                         dataStore.SyncData("_muster_qmDealItemId", ref qmDealItemId);
                         dataStore.SyncData("_muster_baggageOutcome", ref baggageOutcome);
-                        dataStore.SyncData("_muster_recruitOutcome", ref recruitOutcome);
                         dataStore.SyncData("_muster_promotionOccurred", ref promotionOccurred);
                         dataStore.SyncData("_muster_previousTier", ref previousTier);
                         dataStore.SyncData("_muster_currentTier", ref currentTier);
@@ -290,7 +283,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 PayOutcome = payOutcome,
                                 QMDealItemId = qmDealItemId,
                                 BaggageOutcome = baggageOutcome,
-                                RecruitOutcome = recruitOutcome,
                                 PromotionOccurredThisPeriod = promotionOccurred,
                                 PreviousTier = previousTier,
                                 CurrentTier = currentTier,
@@ -322,7 +314,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             return stageId == MusterIntroMenuId ||
                    stageId == MusterPayMenuId ||
                    stageId == MusterBaggageMenuId ||
-                   stageId == MusterRecruitMenuId ||
                    stageId == MusterPromotionRecapMenuId ||
                    stageId == MusterRetinueMenuId ||
                    stageId == MusterCompleteMenuId;
@@ -357,7 +348,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        /// Registers all 7 muster menu stages with the game starter.
+        /// Registers all 6 muster menu stages with the game starter.
         /// Each menu is a wait menu that hides progress bars and shows formatted text.
         /// </summary>
         private void RegisterMusterMenus(CampaignGameStarter starter)
@@ -491,7 +482,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Only show if no active contraband confrontation
                     return _currentMuster != null && !IsContrabandConfrontationActive();
                 },
-                _ => GameMenu.SwitchToMenu(MusterRecruitMenuId),
+                _ => ProceedToNextStageFromBaggage(),
                 false, 1);
 
             // Bribe option (Rep 35-64)
@@ -654,97 +645,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _ => HandleProtest(),
                 false, 6);
 
-            // 4. Green Recruit Menu
-            starter.AddWaitGameMenu(MusterRecruitMenuId,
-                "{=muster_recruit_title}GREEN RECRUIT\n{MUSTER_RECRUIT_TEXT}",
-                OnRecruitInit,
-                OnMusterMenuCondition,
-                null,
-                OnMusterMenuTick,
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
-
-            // Recruit option 1: Train Him (Leadership 25+)
-            starter.AddGameMenuOption(MusterRecruitMenuId, "muster_recruit_train",
-                "{=muster_recruit_train}[Leadership 25+] Take Him Aside and Train Him",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
-
-                    // Only show if recruit event is active (not skipped)
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.RecruitOutcome))
-                    {
-                        return false;
-                    }
-
-                    var leadership = Hero.MainHero?.GetSkillValue(DefaultSkills.Leadership) ?? 0;
-
-                    if (leadership < 25)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject("{=muster_recruit_train_blocked}Requires Leadership 25.");
-                    }
-                    else
-                    {
-                        args.Tooltip = new TextObject("{=muster_recruit_train_tt}Train the recruit. +15 Leadership XP, +5 Officer Rep, +6 Soldier Rep.");
-                    }
-
-                    return true;
-                },
-                _ => ResolveRecruitTrain(),
-                false, 1);
-
-            // Recruit option 2: Let Him Figure It Out
-            starter.AddGameMenuOption(MusterRecruitMenuId, "muster_recruit_ignore",
-                "{=muster_recruit_ignore}Let Him Figure It Out",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-
-                    // Only show if recruit event is active
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.RecruitOutcome))
-                    {
-                        return false;
-                    }
-
-                    args.Tooltip = new TextObject("{=muster_recruit_ignore_tt}Ignore the recruit. -2 Soldier Rep.");
-                    return true;
-                },
-                _ => ResolveRecruitIgnore(),
-                false, 2);
-
-            // Recruit option 3: Traditional Welcome (hazing)
-            starter.AddGameMenuOption(MusterRecruitMenuId, "muster_recruit_haze",
-                "{=muster_recruit_haze}Give Him the Traditional Welcome",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
-
-                    // Only show if recruit event is active
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.RecruitOutcome))
-                    {
-                        return false;
-                    }
-
-                    args.Tooltip = new TextObject("{=muster_recruit_haze_tt}Haze the recruit. +4 Soldier Rep, -5 Officer Rep, +8 Discipline.");
-                    return true;
-                },
-                _ => ResolveRecruitHaze(),
-                false, 3);
-
-            // Continue option (shown when recruit is skipped or after resolution)
-            starter.AddGameMenuOption(MusterRecruitMenuId, "muster_recruit_continue",
-                "{=muster_recruit_continue}Continue",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-                    args.Tooltip = new TextObject("{=muster_recruit_continue_tt}Proceed to next stage.");
-                    // Only show if recruit was skipped or already resolved
-                    return _currentMuster != null && !string.IsNullOrEmpty(_currentMuster.RecruitOutcome);
-                },
-                _ => ProceedToNextStageFromRecruit(),
-                false, 4);
-
-            // 6. Promotion Recap Menu
+            // 4. Promotion Recap Menu
             starter.AddWaitGameMenu(MusterPromotionRecapMenuId,
                 "{=muster_promotion_title}PROMOTION ACKNOWLEDGED\n{MUSTER_PROMOTION_TEXT}",
                 OnPromotionInit,
@@ -895,7 +796,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 },
                 false, 4);
 
-            ModLogger.Debug(LogCategory, "All 7 muster menu stages registered");
+            ModLogger.Debug(LogCategory, "All 6 muster menu stages registered");
         }
 
         /// <summary>
@@ -1525,48 +1426,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             MBTextManager.SetTextVariable("MUSTER_BAGGAGE_TEXT", BuildBaggageText());
         }
 
-        private void OnRecruitInit(MenuCallbackArgs args)
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-            _currentMuster.CurrentStage = MusterRecruitMenuId;
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                MBTextManager.SetTextVariable("MUSTER_RECRUIT_TEXT", "Enlistment data unavailable.");
-                return;
-            }
-
-            // Check tier requirement (must be T3+)
-            if (enlistment.EnlistmentTier < 3)
-            {
-                // Too junior to mentor
-                _currentMuster.RecruitOutcome = "skipped_tier";
-                ModLogger.Debug(LogCategory, $"Recruit stage skipped: tier too low (T{enlistment.EnlistmentTier})");
-                ProceedToNextStageFromRecruit();
-                return;
-            }
-
-            // Check 10-day cooldown
-            var currentDay = (int)CampaignTime.Now.ToDays;
-            var daysSinceRecruit = currentDay - enlistment.LastRecruitDay;
-
-            if (daysSinceRecruit < 10)
-            {
-                // On cooldown, skip recruit stage
-                _currentMuster.RecruitOutcome = "skipped_cooldown";
-                ModLogger.Debug(LogCategory, $"Recruit stage skipped: cooldown ({daysSinceRecruit}/10 days)");
-                ProceedToNextStageFromRecruit();
-                return;
-            }
-
-            // Display recruit text
-            MBTextManager.SetTextVariable("MUSTER_RECRUIT_TEXT", BuildRecruitText());
-        }
-
         private void OnPromotionInit(MenuCallbackArgs args)
         {
             if (_currentMuster == null)
@@ -1978,7 +1837,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             GameMenu.SwitchToMenu(MusterBaggageMenuId);
         }
 
-        private void ProceedToNextStageFromRecruit()
+        private void ProceedToNextStageFromBaggage()
         {
             if (_currentMuster == null)
             {
@@ -2223,7 +2082,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     OrdersCompleted = ordersCompleted,
                     OrdersFailed = ordersFailed,
                     BaggageOutcome = _currentMuster.BaggageOutcome ?? "not_conducted",
-                    RecruitOutcome = _currentMuster.RecruitOutcome ?? "skipped",
                     PromotionTier = _currentMuster.PromotionOccurredThisPeriod ? _currentMuster.CurrentTier : 0,
                     RetinueStrength = _currentMuster.RetinueStrength,
                     RetinueCasualties = _currentMuster.RetinueCasualties,
@@ -2809,52 +2667,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 "bribe_failed" => "He takes your gold... then confiscates the item anyway.\n\n\"Nice try. Next!\"",
                 "smuggle_failed" => "His hand shoots out and catches yours.\n\n\"Did you think I wouldn't notice? Confiscated. And you just earned yourself extra scrutiny.\"",
                 _ => "Baggage check complete."
-            };
-        }
-
-        private string BuildRecruitText()
-        {
-            if (_currentMuster == null)
-            {
-                return "[No recruit data]";
-            }
-
-            // Check for skip conditions
-            if (_currentMuster.RecruitOutcome == "skipped_tier")
-            {
-                return "A new recruit joins the company at morning muster. The veterans gather around,\noffering advice and hazing in equal measure.\n\nYou're still too junior to take a recruit under your wing. Leave it to the sergeants.";
-            }
-
-            if (_currentMuster.RecruitOutcome == "skipped_cooldown")
-            {
-                return "The company welcomes the new recruits at morning formation.\n\nYou've mentored recently. The sergeants can handle this batch.";
-            }
-
-            // Active recruit event
-            var sb = new StringBuilder();
-            sb.AppendLine("At morning muster, a terrified-looking recruit stands trembling in");
-            sb.AppendLine("the front rank. He's barely holding his spear correctly, and his eyes");
-            sb.AppendLine("dart nervously at every sound.");
-            sb.AppendLine();
-            sb.AppendLine("The veterans are already snickering. As a seasoned soldier, you could");
-            sb.AppendLine("step in—or let him learn the hard way.");
-            sb.AppendLine();
-
-            // Show Leadership status
-            var leadership = Hero.MainHero?.GetSkillValue(DefaultSkills.Leadership) ?? 0;
-            sb.AppendLine($"Your Leadership skill: {leadership}");
-
-            return sb.ToString();
-        }
-
-private string BuildRecruitResultText(string outcome)
-        {
-            return outcome switch
-            {
-                "mentored" => "You pull the recruit aside after formation and spend the morning drilling him.\n\nBy midday, he's holding his spear properly and his eyes have steadied.\nThe other soldiers notice, and the officers nod approvingly.",
-                "ignored" => "You turn away as the veterans close in, laughing.\n\nThe recruit's on his own. The other soldiers notice your indifference.",
-                "hazed" => "You join the veterans in the traditional welcome. The recruit learns quickly\nthat this life isn't gentle.\n\nThe men laugh and clap you on the back. The officers pretend not to notice.",
-                _ => "Recruit processing complete."
             };
         }
 
@@ -3972,132 +3784,6 @@ private string BuildRecruitResultText(string outcome)
         /// Resolves perfect attention inspection (OneHanded 30+).
         /// Awards +10 OneHanded XP, +6 Officer Rep, +3 Soldier Rep.
         /// </summary>
-        #endregion
-
-        #region Recruit Handlers
-
-        /// <summary>
-        /// Resolves mentoring a recruit (Leadership 25+).
-        /// Awards +15 Leadership XP, +30 Sergeant trait XP, +5 Officer, +6 Soldier, +30 troop XP.
-        /// </summary>
-        private void ResolveRecruitTrain()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            var hero = Hero.MainHero;
-
-            // Award Leadership XP
-            hero?.AddSkillXp(DefaultSkills.Leadership, 15);
-
-            // Award Sergeant trait XP (if implemented)
-            // TODO: Add trait XP when trait system is implemented
-
-            // Award reputation
-            EscalationManager.Instance?.ModifyOfficerReputation(5, "Mentored recruit");
-            EscalationManager.Instance?.ModifySoldierReputation(6, "Mentored recruit");
-
-            // Award enlistment XP (representing troop improvement)
-            enlistment.AddEnlistmentXP(30, "Recruit training");
-
-            // Record outcome
-            _currentMuster.RecruitOutcome = "mentored";
-
-            // Update cooldown
-            var currentDay = (int)CampaignTime.Now.ToDays;
-            typeof(EnlistmentBehavior)
-                .GetField("_lastRecruitDay", BindingFlags.NonPublic | BindingFlags.Instance)
-                ?.SetValue(enlistment, currentDay);
-
-            ModLogger.Info(LogCategory, "Recruit mentored: +15 Leadership XP, +5 Officer, +6 Soldier, +30 XP");
-
-            // Refresh display
-            MBTextManager.SetTextVariable("MUSTER_RECRUIT_TEXT", BuildRecruitResultText("mentored"));
-            ProceedToNextStageFromRecruit();
-        }
-
-        /// <summary>
-        /// Resolves ignoring the recruit.
-        /// Applies -2 Soldier Rep.
-        /// </summary>
-        private void ResolveRecruitIgnore()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            // Apply penalty
-            EscalationManager.Instance?.ModifySoldierReputation(-2, "Ignored recruit");
-
-            // Record outcome
-            _currentMuster.RecruitOutcome = "ignored";
-
-            // Update cooldown
-            var currentDay = (int)CampaignTime.Now.ToDays;
-            typeof(EnlistmentBehavior)
-                .GetField("_lastRecruitDay", BindingFlags.NonPublic | BindingFlags.Instance)
-                ?.SetValue(enlistment, currentDay);
-
-            ModLogger.Info(LogCategory, "Recruit ignored: -2 Soldier");
-
-            // Refresh display
-            MBTextManager.SetTextVariable("MUSTER_RECRUIT_TEXT", BuildRecruitResultText("ignored"));
-            ProceedToNextStageFromRecruit();
-        }
-
-        /// <summary>
-        /// Resolves hazing the recruit.
-        /// Awards +4 Soldier, -5 Officer, +8 Discipline.
-        /// </summary>
-        private void ResolveRecruitHaze()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            // Apply effects
-            EscalationManager.Instance?.ModifySoldierReputation(4, "Hazed recruit");
-            EscalationManager.Instance?.ModifyOfficerReputation(-5, "Hazed recruit");
-            EscalationManager.Instance?.ModifyDiscipline(8, "Hazing recruit at muster");
-
-            // Record outcome
-            _currentMuster.RecruitOutcome = "hazed";
-
-            // Update cooldown
-            var currentDay = (int)CampaignTime.Now.ToDays;
-            typeof(EnlistmentBehavior)
-                .GetField("_lastRecruitDay", BindingFlags.NonPublic | BindingFlags.Instance)
-                ?.SetValue(enlistment, currentDay);
-
-            ModLogger.Info(LogCategory, "Recruit hazed: +4 Soldier, -5 Officer, +8 Discipline");
-
-            // Refresh display
-            MBTextManager.SetTextVariable("MUSTER_RECRUIT_TEXT", BuildRecruitResultText("hazed"));
-            ProceedToNextStageFromRecruit();
-        }
-
         #endregion
 
         #region Helper Methods
