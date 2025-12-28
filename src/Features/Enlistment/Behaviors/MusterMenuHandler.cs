@@ -113,9 +113,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             /// <summary>Baggage check outcome: "passed", "confiscated", "bribed", "skipped".</summary>
             public string BaggageOutcome { get; set; }
 
-            /// <summary>Inspection outcome: "perfect", "basic", "failed", "skipped".</summary>
-            public string InspectionOutcome { get; set; }
-
             /// <summary>Recruit outcome: "mentored", "ignored", "hazed", "skipped".</summary>
             public string RecruitOutcome { get; set; }
 
@@ -210,7 +207,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var payOutcome = _currentMuster.PayOutcome ?? "";
                     var qmDealItemId = _currentMuster.QMDealItemId ?? "";
                     var baggageOutcome = _currentMuster.BaggageOutcome ?? "";
-                    var inspectionOutcome = _currentMuster.InspectionOutcome ?? "";
                     var recruitOutcome = _currentMuster.RecruitOutcome ?? "";
                     var promotionOccurred = _currentMuster.PromotionOccurredThisPeriod;
                     var previousTier = _currentMuster.PreviousTier;
@@ -226,7 +222,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     dataStore.SyncData("_muster_payOutcome", ref payOutcome);
                     dataStore.SyncData("_muster_qmDealItemId", ref qmDealItemId);
                     dataStore.SyncData("_muster_baggageOutcome", ref baggageOutcome);
-                    dataStore.SyncData("_muster_inspectionOutcome", ref inspectionOutcome);
                     dataStore.SyncData("_muster_recruitOutcome", ref recruitOutcome);
                     dataStore.SyncData("_muster_promotionOccurred", ref promotionOccurred);
                     dataStore.SyncData("_muster_previousTier", ref previousTier);
@@ -252,7 +247,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var payOutcome = "";
                         var qmDealItemId = "";
                         var baggageOutcome = "";
-                        var inspectionOutcome = "";
                         var recruitOutcome = "";
                         var promotionOccurred = false;
                         var previousTier = 0;
@@ -268,7 +262,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         dataStore.SyncData("_muster_payOutcome", ref payOutcome);
                         dataStore.SyncData("_muster_qmDealItemId", ref qmDealItemId);
                         dataStore.SyncData("_muster_baggageOutcome", ref baggageOutcome);
-                        dataStore.SyncData("_muster_inspectionOutcome", ref inspectionOutcome);
                         dataStore.SyncData("_muster_recruitOutcome", ref recruitOutcome);
                         dataStore.SyncData("_muster_promotionOccurred", ref promotionOccurred);
                         dataStore.SyncData("_muster_previousTier", ref previousTier);
@@ -297,7 +290,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 PayOutcome = payOutcome,
                                 QMDealItemId = qmDealItemId,
                                 BaggageOutcome = baggageOutcome,
-                                InspectionOutcome = inspectionOutcome,
                                 RecruitOutcome = recruitOutcome,
                                 PromotionOccurredThisPeriod = promotionOccurred,
                                 PreviousTier = previousTier,
@@ -330,7 +322,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             return stageId == MusterIntroMenuId ||
                    stageId == MusterPayMenuId ||
                    stageId == MusterBaggageMenuId ||
-                   stageId == MusterInspectionMenuId ||
                    stageId == MusterRecruitMenuId ||
                    stageId == MusterPromotionRecapMenuId ||
                    stageId == MusterRetinueMenuId ||
@@ -500,7 +491,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Only show if no active contraband confrontation
                     return _currentMuster != null && !IsContrabandConfrontationActive();
                 },
-                _ => GameMenu.SwitchToMenu(MusterInspectionMenuId),
+                _ => GameMenu.SwitchToMenu(MusterRecruitMenuId),
                 false, 1);
 
             // Bribe option (Rep 35-64)
@@ -663,98 +654,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _ => HandleProtest(),
                 false, 6);
 
-            // 4. Equipment Inspection Menu
-            starter.AddWaitGameMenu(MusterInspectionMenuId,
-                "{=muster_inspection_title}EQUIPMENT INSPECTION\n{MUSTER_INSPECTION_TEXT}",
-                OnInspectionInit,
-                OnMusterMenuCondition,
-                null,
-                OnMusterMenuTick,
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
-
-            // Inspection option 1: Perfect Attention (OneHanded 30+)
-            starter.AddGameMenuOption(MusterInspectionMenuId, "muster_inspection_perfect",
-                "{=muster_inspection_perfect}[OneHanded 30+] Stand at Perfect Attention",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.OrderTroopsToAttack;
-
-                    // Only show if inspection is active (not skipped)
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.InspectionOutcome))
-                    {
-                        return false;
-                    }
-
-                    var skill = GetRelevantMeleeSkill();
-                    var skillValue = Hero.MainHero?.GetSkillValue(skill) ?? 0;
-
-                    if (skillValue < 30)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject($"{{=muster_inspection_perfect_blocked}}Requires {skill.Name} 30.");
-                    }
-                    else
-                    {
-                        args.Tooltip = new TextObject("{=muster_inspection_perfect_tt}Flawless presentation. +10 OneHanded XP, +6 Officer Rep, +3 Soldier Rep.");
-                    }
-
-                    return true;
-                },
-                _ => ResolveInspectionPerfect(),
-                false, 1);
-
-            // Inspection option 2: Basic Requirements
-            starter.AddGameMenuOption(MusterInspectionMenuId, "muster_inspection_basic",
-                "{=muster_inspection_basic}Meet the Basic Requirements",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-
-                    // Only show if inspection is active
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.InspectionOutcome))
-                    {
-                        return false;
-                    }
-
-                    args.Tooltip = new TextObject("{=muster_inspection_basic_tt}Presentable enough. +5 OneHanded XP, +2 Officer Rep.");
-                    return true;
-                },
-                _ => ResolveInspectionBasic(),
-                false, 2);
-
-            // Inspection option 3: Appear Slovenly
-            starter.AddGameMenuOption(MusterInspectionMenuId, "muster_inspection_unprepared",
-                "{=muster_inspection_unprepared}Appear Slovenly",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-
-                    // Only show if inspection is active
-                    if (_currentMuster == null || !string.IsNullOrEmpty(_currentMuster.InspectionOutcome))
-                    {
-                        return false;
-                    }
-
-                    args.Tooltip = new TextObject("{=muster_inspection_unprepared_tt}Poor showing. -8 Officer Rep, -4 Soldier Rep, +8 Scrutiny.");
-                    return true;
-                },
-                _ => ResolveInspectionUnprepared(),
-                false, 3);
-
-            // Continue option (shown when inspection is skipped or after resolution)
-            starter.AddGameMenuOption(MusterInspectionMenuId, "muster_inspection_continue",
-                "{=muster_inspection_continue}Continue",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-                    args.Tooltip = new TextObject("{=muster_inspection_continue_tt}Proceed to next stage.");
-                    // Only show if inspection was skipped or already resolved
-                    return _currentMuster != null && !string.IsNullOrEmpty(_currentMuster.InspectionOutcome);
-                },
-                _ => GameMenu.SwitchToMenu(MusterRecruitMenuId),
-                false, 4);
-
-            // 5. Green Recruit Menu
+            // 4. Green Recruit Menu
             starter.AddWaitGameMenu(MusterRecruitMenuId,
                 "{=muster_recruit_title}GREEN RECRUIT\n{MUSTER_RECRUIT_TEXT}",
                 OnRecruitInit,
@@ -1625,53 +1525,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             MBTextManager.SetTextVariable("MUSTER_BAGGAGE_TEXT", BuildBaggageText());
         }
 
-        private void OnInspectionInit(MenuCallbackArgs args)
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-            _currentMuster.CurrentStage = MusterInspectionMenuId;
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                MBTextManager.SetTextVariable("MUSTER_INSPECTION_TEXT", "Enlistment data unavailable.");
-                return;
-            }
-
-            // Check 12-day cooldown
-            var currentDay = (int)CampaignTime.Now.ToDays;
-            var daysSinceInspection = currentDay - enlistment.LastInspectionDay;
-
-            if (daysSinceInspection < 12)
-            {
-                // On cooldown, skip inspection
-                _currentMuster.InspectionOutcome = "skipped_cooldown";
-                ModLogger.Debug(LogCategory, $"Inspection skipped: cooldown ({daysSinceInspection}/12 days)");
-                GameMenu.SwitchToMenu(MusterRecruitMenuId);
-                return;
-            }
-
-            // Check if player wounded <30%
-            var hero = Hero.MainHero;
-            if (hero != null)
-            {
-                var healthPercent = (hero.HitPoints / (float)hero.MaxHitPoints) * 100f;
-                if (healthPercent < 30f)
-                {
-                    // Too wounded, excused from inspection
-                    _currentMuster.InspectionOutcome = "excused_wounded";
-                    ModLogger.Debug(LogCategory, $"Inspection skipped: player wounded ({healthPercent:F0}%)");
-                    GameMenu.SwitchToMenu(MusterRecruitMenuId);
-                    return;
-                }
-            }
-
-            // Display inspection text
-            MBTextManager.SetTextVariable("MUSTER_INSPECTION_TEXT", BuildInspectionText());
-        }
-
         private void OnRecruitInit(MenuCallbackArgs args)
         {
             if (_currentMuster == null)
@@ -1816,7 +1669,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     sb.AppendLine($"Pay: {_currentMuster.PayOutcome ?? "unknown"}");
                     sb.AppendLine($"Baggage: {_currentMuster.BaggageOutcome ?? "not checked"}");
-                    sb.AppendLine($"Inspection: {_currentMuster.InspectionOutcome ?? "skipped"}");
                 }
                 else
                 {
@@ -2371,7 +2223,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     OrdersCompleted = ordersCompleted,
                     OrdersFailed = ordersFailed,
                     BaggageOutcome = _currentMuster.BaggageOutcome ?? "not_conducted",
-                    InspectionOutcome = _currentMuster.InspectionOutcome ?? "skipped",
                     RecruitOutcome = _currentMuster.RecruitOutcome ?? "skipped",
                     PromotionTier = _currentMuster.PromotionOccurredThisPeriod ? _currentMuster.CurrentTier : 0,
                     RetinueStrength = _currentMuster.RetinueStrength,
@@ -2961,40 +2812,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             };
         }
 
-        private string BuildInspectionText()
-        {
-            if (_currentMuster == null)
-            {
-                return "[No inspection data]";
-            }
-
-            // Check for skip conditions
-            if (_currentMuster.InspectionOutcome == "skipped_cooldown")
-            {
-                return "The captain walks the inspection line but doesn't single you out today.\n\n'Carry on,' he says, moving past.\n\nYou were inspected recently. Next inspection will occur in a few days.";
-            }
-
-            if (_currentMuster.InspectionOutcome == "excused_wounded")
-            {
-                return "You fall in with the others, but the sergeant pulls you aside.\n\n'You're excused from inspection today. Get yourself healed up.'\n\nYour wounds excuse you from formal inspection.";
-            }
-
-            // Active inspection
-            var sb = new StringBuilder();
-            sb.AppendLine("The company forms ranks for morning inspection. The captain walks");
-            sb.AppendLine("the line, inspecting each soldier's equipment and bearing.");
-            sb.AppendLine();
-            sb.AppendLine("He stops in front of you, looking you up and down with a critical eye.");
-            sb.AppendLine();
-
-            // Show skill status
-            var skill = GetRelevantMeleeSkill();
-            var skillValue = Hero.MainHero?.GetSkillValue(skill) ?? 0;
-            sb.AppendLine($"Your {skill.Name} skill: {skillValue}");
-
-            return sb.ToString();
-        }
-
         private string BuildRecruitText()
         {
             if (_currentMuster == null)
@@ -3030,18 +2847,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             return sb.ToString();
         }
 
-        private string BuildInspectionResultText(string outcome)
-        {
-            return outcome switch
-            {
-                "perfect" => "Your equipment gleams, your stance is flawless. The captain gives a curt nod of approval.\n\n'This is the standard,' he tells the others.\n\nYour fellow soldiers take note, and the officers remember your discipline.",
-                "basic" => "You're presentable enough. The captain moves on without comment.\n\nYou've met expectations—nothing more, nothing less.",
-                "failed" => "Your equipment is dirty, your bearing slovenly. The captain's face darkens.\n\n'Five laps around camp with full pack,' he orders. 'Then report to the\nquartermaster for extra duties.'\n\nThe other soldiers avoid your gaze as you fall out of formation.",
-                _ => "Inspection complete."
-            };
-        }
-
-        private string BuildRecruitResultText(string outcome)
+private string BuildRecruitResultText(string outcome)
         {
             return outcome switch
             {
@@ -3610,27 +3416,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var baggageColor = _currentMuster.BaggageOutcome == "confiscated" ? "Alert" : _currentMuster.BaggageOutcome == "bribed" ? "Warning" : "Success";
             sb.AppendLine($"<span style=\"Label\">BAGGAGE CHECK:</span>        <span style=\"{baggageColor}\">{baggageText}</span>");
 
-            // Equipment Inspection
-            var inspectionText = _currentMuster.InspectionOutcome switch
-            {
-                "perfect" => "Passed with distinction",
-                "basic" => "Passed - Adequate condition",
-                "failed" => "Failed - Deficiencies noted",
-                "excused_wounds" => "Excused (wounds)",
-                "skipped" => "Not scheduled",
-                _ => "Not conducted"
-            };
-
-            if (_currentMuster.InspectionOutcome == "perfect" || _currentMuster.InspectionOutcome == "failed")
-            {
-                // Add reputation change if applicable
-                var repChange = _currentMuster.InspectionOutcome == "perfect" ? "+6 Officer Rep" : "-4 Officer Rep";
-                inspectionText += $" ({repChange})";
-            }
-
-            var inspectionColor = _currentMuster.InspectionOutcome == "perfect" ? "Success" : _currentMuster.InspectionOutcome == "failed" ? "Alert" : "Default";
-            sb.AppendLine($"<span style=\"Label\">EQUIPMENT INSPECTION:</span> <span style=\"{inspectionColor}\">{inspectionText}</span>");
-
             // Supply Status
             var supplyPct = CompanySupplyManager.Instance?.TotalSupply ?? 0;
             var supplyStatus = supplyPct >= 50 ? "Adequate" : supplyPct >= 20 ? "Low" : "Critical";
@@ -4187,151 +3972,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// Resolves perfect attention inspection (OneHanded 30+).
         /// Awards +10 OneHanded XP, +6 Officer Rep, +3 Soldier Rep.
         /// </summary>
-        private void ResolveInspectionPerfect()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            var skill = GetRelevantMeleeSkill();
-            var hero = Hero.MainHero;
-
-            // Award XP
-            hero?.AddSkillXp(skill, 10);
-
-            // Award reputation
-            EscalationManager.Instance?.ModifyOfficerReputation(6, "Perfect inspection");
-            EscalationManager.Instance?.ModifySoldierReputation(3, "Perfect inspection");
-
-            // Record outcome
-            _currentMuster.InspectionOutcome = "perfect";
-
-            // Update cooldown
-            var currentDay = (int)CampaignTime.Now.ToDays;
-            typeof(EnlistmentBehavior)
-                .GetField("_lastInspectionDay", BindingFlags.NonPublic | BindingFlags.Instance)
-                ?.SetValue(enlistment, currentDay);
-
-            ModLogger.Info(LogCategory, $"Inspection passed perfectly: +10 {skill.Name} XP, +6 Officer, +3 Soldier");
-
-            // Refresh display
-            MBTextManager.SetTextVariable("MUSTER_INSPECTION_TEXT", BuildInspectionResultText("perfect"));
-            GameMenu.SwitchToMenu(MusterRecruitMenuId);
-        }
-
-        /// <summary>
-        /// Resolves basic inspection (meets minimum standards).
-        /// Awards +5 OneHanded XP, +2 Officer Rep.
-        /// </summary>
-        private void ResolveInspectionBasic()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            var skill = GetRelevantMeleeSkill();
-            var hero = Hero.MainHero;
-
-            // Award XP
-            hero?.AddSkillXp(skill, 5);
-
-            // Award reputation
-            EscalationManager.Instance?.ModifyOfficerReputation(2, "Basic inspection");
-
-            // Record outcome
-            _currentMuster.InspectionOutcome = "basic";
-
-            // Update cooldown
-            var currentDay = (int)CampaignTime.Now.ToDays;
-            typeof(EnlistmentBehavior)
-                .GetField("_lastInspectionDay", BindingFlags.NonPublic | BindingFlags.Instance)
-                ?.SetValue(enlistment, currentDay);
-
-            ModLogger.Info(LogCategory, $"Inspection passed: +5 {skill.Name} XP, +2 Officer");
-
-            // Refresh display
-            MBTextManager.SetTextVariable("MUSTER_INSPECTION_TEXT", BuildInspectionResultText("basic"));
-            GameMenu.SwitchToMenu(MusterRecruitMenuId);
-        }
-
-        /// <summary>
-        /// Resolves failed inspection (not ready).
-        /// Applies -8 Officer, -4 Soldier, +8 Scrutiny, +5 Discipline.
-        /// </summary>
-        private void ResolveInspectionUnprepared()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            // Apply penalties
-            EscalationManager.Instance?.ModifyOfficerReputation(-8, "Failed inspection");
-            EscalationManager.Instance?.ModifySoldierReputation(-4, "Failed inspection");
-            EscalationManager.Instance?.ModifyScrutiny(8, "Failed equipment inspection");
-            EscalationManager.Instance?.ModifyDiscipline(5, "Slovenly appearance at inspection");
-
-            // Record outcome
-            _currentMuster.InspectionOutcome = "failed";
-
-            // Update cooldown
-            var currentDay = (int)CampaignTime.Now.ToDays;
-            typeof(EnlistmentBehavior)
-                .GetField("_lastInspectionDay", BindingFlags.NonPublic | BindingFlags.Instance)
-                ?.SetValue(enlistment, currentDay);
-
-            ModLogger.Warn(LogCategory, "Inspection failed: -8 Officer, -4 Soldier, +8 Scrutiny, +5 Discipline");
-
-            // Refresh display
-            MBTextManager.SetTextVariable("MUSTER_INSPECTION_TEXT", BuildInspectionResultText("failed"));
-            GameMenu.SwitchToMenu(MusterRecruitMenuId);
-        }
-
-        /// <summary>
-        /// Gets the relevant melee skill for inspection.
-        /// Returns highest melee skill, or Athletics as fallback.
-        /// </summary>
-        private SkillObject GetRelevantMeleeSkill()
-        {
-            var hero = Hero.MainHero;
-            if (hero == null)
-            {
-                return DefaultSkills.Athletics;
-            }
-
-            var skills = new[]
-            {
-                (skill: DefaultSkills.OneHanded, value: hero.GetSkillValue(DefaultSkills.OneHanded)),
-                (skill: DefaultSkills.TwoHanded, value: hero.GetSkillValue(DefaultSkills.TwoHanded)),
-                (skill: DefaultSkills.Polearm, value: hero.GetSkillValue(DefaultSkills.Polearm))
-            };
-
-            var best = skills.OrderByDescending(s => s.value).FirstOrDefault();
-
-            // If no melee skills, use Athletics
-            return best.value > 0 ? best.skill : DefaultSkills.Athletics;
-        }
-
         #endregion
 
         #region Recruit Handlers
