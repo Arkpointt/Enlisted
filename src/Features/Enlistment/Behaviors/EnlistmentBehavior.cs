@@ -5471,9 +5471,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            // Scan inventory for contraband
+            // Scan inventory for contraband, exempting QM Deal item if present
             string playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
-            var result = ContrabandChecker.ScanInventory(_enlistmentTier, playerRole);
+            var exemptedItemId = MusterMenuHandler.Instance?.GetExemptedItemId();
+            var exemptions = exemptedItemId != null ? new List<string> { exemptedItemId } : null;
+            var result = ContrabandChecker.ScanInventory(_enlistmentTier, playerRole, exemptions);
 
             if (!result.HasContraband)
             {

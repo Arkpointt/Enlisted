@@ -208,6 +208,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var strategicContext = _currentMuster.StrategicContext ?? "";
                     var payReceived = _currentMuster.PayReceived;
                     var payOutcome = _currentMuster.PayOutcome ?? "";
+                    var qmDealItemId = _currentMuster.QMDealItemId ?? "";
                     var baggageOutcome = _currentMuster.BaggageOutcome ?? "";
                     var inspectionOutcome = _currentMuster.InspectionOutcome ?? "";
                     var recruitOutcome = _currentMuster.RecruitOutcome ?? "";
@@ -223,6 +224,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     dataStore.SyncData("_muster_strategicContext", ref strategicContext);
                     dataStore.SyncData("_muster_payReceived", ref payReceived);
                     dataStore.SyncData("_muster_payOutcome", ref payOutcome);
+                    dataStore.SyncData("_muster_qmDealItemId", ref qmDealItemId);
                     dataStore.SyncData("_muster_baggageOutcome", ref baggageOutcome);
                     dataStore.SyncData("_muster_inspectionOutcome", ref inspectionOutcome);
                     dataStore.SyncData("_muster_recruitOutcome", ref recruitOutcome);
@@ -248,6 +250,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var strategicContext = "";
                         var payReceived = 0;
                         var payOutcome = "";
+                        var qmDealItemId = "";
                         var baggageOutcome = "";
                         var inspectionOutcome = "";
                         var recruitOutcome = "";
@@ -263,6 +266,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         dataStore.SyncData("_muster_strategicContext", ref strategicContext);
                         dataStore.SyncData("_muster_payReceived", ref payReceived);
                         dataStore.SyncData("_muster_payOutcome", ref payOutcome);
+                        dataStore.SyncData("_muster_qmDealItemId", ref qmDealItemId);
                         dataStore.SyncData("_muster_baggageOutcome", ref baggageOutcome);
                         dataStore.SyncData("_muster_inspectionOutcome", ref inspectionOutcome);
                         dataStore.SyncData("_muster_recruitOutcome", ref recruitOutcome);
@@ -291,6 +295,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 StrategicContext = strategicContext,
                                 PayReceived = payReceived,
                                 PayOutcome = payOutcome,
+                                QMDealItemId = qmDealItemId,
                                 BaggageOutcome = baggageOutcome,
                                 InspectionOutcome = inspectionOutcome,
                                 RecruitOutcome = recruitOutcome,
@@ -1091,6 +1096,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Debug(LogCategory, $"Deferred muster still blocked: {reason}");
             }
+        }
+
+        /// <summary>
+        /// Gets the exempted item ID from the current muster session (e.g., Quartermaster's Deal item).
+        /// Returns null if no muster is in progress or no exempted item exists.
+        /// Used by contraband checking to exempt legitimately acquired items.
+        /// </summary>
+        public string GetExemptedItemId()
+        {
+            return _currentMuster?.QMDealItemId;
         }
 
         /// <summary>

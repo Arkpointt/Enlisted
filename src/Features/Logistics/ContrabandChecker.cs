@@ -73,8 +73,9 @@ namespace Enlisted.Features.Logistics
         /// </summary>
         /// <param name="playerTier">Player's current enlistment tier (1-9).</param>
         /// <param name="playerRole">Player's current role from EnlistedStatusManager.</param>
+        /// <param name="exemptedItemIds">Optional list of item StringIds to exempt from contraband checks (e.g., QM Deal items).</param>
         /// <returns>Result containing all contraband items found.</returns>
-        public static ContrabandCheckResult ScanInventory(int playerTier, string playerRole)
+        public static ContrabandCheckResult ScanInventory(int playerTier, string playerRole, List<string> exemptedItemIds = null)
         {
             var result = new ContrabandCheckResult();
 
@@ -99,6 +100,13 @@ namespace Enlisted.Features.Logistics
 
                     var item = element.EquipmentElement.Item;
                     var amount = element.Amount;
+
+                    // Check if item is exempted (e.g., from Quartermaster's Deal)
+                    if (exemptedItemIds != null && exemptedItemIds.Contains(item.StringId))
+                    {
+                        ModLogger.Debug(LogCategory, $"Skipping exempted item: {item.StringId} ({item.Name})");
+                        continue;
+                    }
 
                     var violation = CheckItem(item, playerTier, playerRole);
                     if (violation != null)
