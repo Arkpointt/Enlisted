@@ -6170,7 +6170,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (success)
                 {
                     // Roll for equipment tier (90% current, 10% +1 capped at T9)
-                    var currentTier = _currentTier;
+                    var currentTier = _enlistmentTier;
                     var equipmentTier = currentTier;
                     var tierRoll = MBRandom.RandomFloat;
                     if (tierRoll <= 0.10f && currentTier < 9)
@@ -6937,7 +6937,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 // Get player's formation and culture
-                var formation = GetPlayerFormation();
+                var formation = qmManager.GetPlayerFormationString();
                 var culture = _enlistedLord?.Culture;
 
                 if (culture == null || string.IsNullOrEmpty(formation))
@@ -7035,7 +7035,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     case WeaponClass.OneHandedPolearm:
                     case WeaponClass.TwoHandedPolearm:
                     case WeaponClass.LowGripPolearm:
-                    case WeaponClass.Pike:
                         skillValue = hero.GetSkillValue(DefaultSkills.Polearm);
                         break;
 
@@ -7062,22 +7061,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Armor: Weight by Athletics (light armor) vs Riding (medium/heavy)
             if (item.ArmorComponent != null)
             {
-                var bodyArmor = item.ArmorComponent.BodyArmor;
-                if (bodyArmor != null)
+                var armorValue = item.ArmorComponent.BodyArmor +
+                                 item.ArmorComponent.ArmArmor +
+                                 item.ArmorComponent.LegArmor;
+
+                if (armorValue < 30)
                 {
-                    var weight = bodyArmor.Weight;
-                    if (weight < 10f)
-                    {
-                        // Light armor - prefer if high Athletics
-                        var athletics = hero.GetSkillValue(DefaultSkills.Athletics);
-                        return baseWeight + (athletics / 50f);
-                    }
-                    else
-                    {
-                        // Heavy armor - prefer if high Riding
-                        var riding = hero.GetSkillValue(DefaultSkills.Riding);
-                        return baseWeight + (riding / 50f);
-                    }
+                    // Light armor - prefer if high Athletics
+                    var athletics = hero.GetSkillValue(DefaultSkills.Athletics);
+                    return baseWeight + (athletics / 50f);
+                }
+                else
+                {
+                    // Heavy armor - prefer if high Riding
+                    var riding = hero.GetSkillValue(DefaultSkills.Riding);
+                    return baseWeight + (riding / 50f);
                 }
             }
 
