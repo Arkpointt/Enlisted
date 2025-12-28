@@ -254,7 +254,7 @@ namespace Enlisted.Debugging.Behaviors
                 return;
             }
 
-            // Call the muster handler directly to open the 7-stage muster sequence
+            // Call the muster handler directly to open the 6-stage muster sequence
             musterHandler.BeginMusterSequence();
 
             var msg = new TextObject("{=dbg_muster_started}Muster sequence started (debug). Opening intro stage...");

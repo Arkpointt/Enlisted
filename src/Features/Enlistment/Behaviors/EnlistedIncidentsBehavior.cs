@@ -67,7 +67,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        /// Triggers the pay muster sequence using the 7-stage GameMenu system.
+        /// Triggers the pay muster sequence using the 6-stage GameMenu system.
         /// Replaced legacy popup inquiry with comprehensive muster flow.
         /// </summary>
         public void TriggerPayMusterIncident()
@@ -82,7 +82,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                // Trigger the 7-stage GameMenu muster sequence
+                // Trigger the 6-stage GameMenu muster sequence
                 musterHandler.BeginMusterSequence();
                 ModLogger.Info("Incident", "Pay muster triggered via GameMenu system");
             }
