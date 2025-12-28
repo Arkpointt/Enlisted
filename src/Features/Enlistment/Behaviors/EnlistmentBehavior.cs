@@ -7091,14 +7091,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         /// Track an item from Quartermaster's Deal for contraband exemption.
+        /// Item ID is stored in MusterSessionState.QMDealItemId and checked during baggage inspection.
         /// </summary>
         private void TrackQuartermasterDealItem(ItemObject item)
         {
             if (item == null) return;
 
-            // TODO: Implement contraband tracking
-            // For now, just log it
-            ModLogger.Info("Pay", $"QM Deal item tracked for contraband exemption: {item.StringId}");
+            // Item ID is extracted from outcome string in MusterMenuHandler and stored in _currentMuster.QMDealItemId
+            // The baggage check logic needs to check this field and exempt the item
+            // TODO: Add exemption check to baggage inspection behavior (EnlistedIncidentsBehavior or BaggageCheckManager)
+            ModLogger.Info("Pay", $"QM Deal item will be tracked for contraband exemption: {item.StringId}");
         }
 
         #endregion

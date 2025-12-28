@@ -100,8 +100,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
             /// <summary>Amount of pay received.</summary>
             public int PayReceived { get; set; }
 
-            /// <summary>Pay outcome type: "full", "partial", "iou", "corruption".</summary>
+            /// <summary>Pay outcome type: "full", "partial", "iou", "corruption", "qm_deal".</summary>
             public string PayOutcome { get; set; }
+
+            /// <summary>Item StringId from Quartermaster's Deal (for contraband exemption).</summary>
+            public string QMDealItemId { get; set; }
 
             /// <summary>Ration outcome: "issued", "none", "officer_exempt".</summary>
             public string RationOutcome { get; set; }
@@ -1941,6 +1944,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (_currentMuster != null)
                 {
                     _currentMuster.PayOutcome = outcome;
+
+                    // Extract item ID from outcome if successful (format: "qm_deal_success:payout:itemId")
+                    if (outcome != null && outcome.StartsWith("qm_deal_success:"))
+                    {
+                        var parts = outcome.Split(':');
+                        if (parts.Length >= 3)
+                        {
+                            _currentMuster.QMDealItemId = parts[2];
+                            ModLogger.Info(LogCategory, $"QM Deal item tracked for contraband exemption: {parts[2]}");
+                        }
+                    }
                 }
 
                 ModLogger.Debug(LogCategory, $"Quartermaster's Deal resolved: {outcome}");
