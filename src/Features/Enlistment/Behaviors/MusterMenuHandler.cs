@@ -1959,7 +1959,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 else if (requestLeave)
                 {
                     ModLogger.Debug(LogCategory, "Post-muster: requesting temporary leave");
-                    // TODO: Call TemporaryLeaveManager.RequestLeave()
+                    EnlistmentBehavior.Instance?.StartTemporaryLeave();
                 }
 
                 // Queue escalation events that were triggered during muster
