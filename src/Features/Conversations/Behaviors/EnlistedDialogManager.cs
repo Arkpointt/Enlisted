@@ -1149,8 +1149,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         ModLogger.Info("EnlistedDialogManager", $"QM Dialogue: Successfully loaded test node 'qm_hub' with {hubNode.Options.Count} options");
 
                         // Register JSON-based dialogue dynamically
-                        // First register QM lines (what quartermaster says)
-                        RegisterJsonQuartermasterLines(starter, "qm_greeting", "start", 201);
+                        // Register QM greeting and hub (for returning visits when already introduced)
                         RegisterJsonQuartermasterLines(starter, "qm_hub", "start", 200);
                         RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_hub", 199); // Also trigger when already in hub state (for refreshing after submenus)
                         
@@ -1160,7 +1159,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_status_response", "qm_baggage_status_response", 147);
                         RegisterJsonQuartermasterLines(starter, "qm_armor_slots", "qm_armor_slots", 149);
 
-                        // Register introduction flow (first meeting)
+                        // Register introduction flow (first meeting - highest priority from start)
                         RegisterJsonQuartermasterLines(starter, "qm_intro_greeting", "start", 202);
                         
                         // Acknowledgment nodes appear AFTER player selects intro tone from greeting
@@ -1190,7 +1189,6 @@ namespace Enlisted.Features.Conversations.Behaviors
                         RegisterJsonDialogueNode(starter, "qm_intro_ack_military", 151);
                         RegisterJsonDialogueNode(starter, "qm_intro_ack_friendly", 151);
                         RegisterJsonDialogueNode(starter, "qm_intro_ack_flattering", 151);
-                        RegisterJsonDialogueNode(starter, "qm_greeting", 151);
                         RegisterJsonDialogueNode(starter, "qm_hub", 150);
                         RegisterJsonDialogueNode(starter, "qm_browse_response", 149);
                         RegisterJsonDialogueNode(starter, "qm_sell_response", 148);
