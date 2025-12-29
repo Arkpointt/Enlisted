@@ -1152,16 +1152,16 @@ namespace Enlisted.Features.Conversations.Behaviors
                         // Register QM greeting and hub (for returning visits when already introduced)
                         RegisterJsonQuartermasterLines(starter, "qm_hub", "start", 200);
                         RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_hub", 199); // Also trigger when already in hub state (for refreshing after submenus)
-                        
+
                         // Response nodes - only appear after player selects corresponding option from hub
-                        RegisterJsonQuartermasterLines(starter, "qm_browse_response", "qm_browse_response", 150);
+                        RegisterJsonQuartermasterLines(starter, "qm_browse_response", "qm_browse_response", 140);
                         RegisterJsonQuartermasterLines(starter, "qm_sell_response", "qm_sell_response", 148);
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_status_response", "qm_baggage_status_response", 147);
                         RegisterJsonQuartermasterLines(starter, "qm_armor_slots", "qm_armor_slots", 149);
 
                         // Register introduction flow (first meeting - highest priority from start)
                         RegisterJsonQuartermasterLines(starter, "qm_intro_greeting", "start", 202);
-                        
+
                         // Acknowledgment nodes appear AFTER player selects intro tone from greeting
                         RegisterJsonQuartermasterLines(starter, "qm_intro_ack_direct", "qm_intro_ack_direct", 151);
                         RegisterJsonQuartermasterLines(starter, "qm_intro_ack_military", "qm_intro_ack_military", 151);

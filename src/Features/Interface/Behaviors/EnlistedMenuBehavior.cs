@@ -2002,9 +2002,19 @@ namespace Enlisted.Features.Interface.Behaviors
                 Campaign.Current.SetTimeControlModeLock(false);
 
                 // Restore captured time using stoppable equivalents, preserving Stop when paused
-                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
-                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
-                Campaign.Current.TimeControlMode = normalized;
+                // For first enlistment (no captured time), default to x1 speed instead of fast forward
+                var captured = QuartermasterManager.CapturedTimeMode;
+                if (captured.HasValue)
+                {
+                    var normalized = QuartermasterManager.NormalizeToStoppable(captured.Value);
+                    Campaign.Current.TimeControlMode = normalized;
+                }
+                else
+                {
+                    // First enlistment - default to normal speed (x1) instead of fast forward
+                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+                    ModLogger.Debug("Interface", "First enlistment - set time to x1 (StoppablePlay)");
+                }
 
                 RefreshEnlistedStatusDisplay(args);
                 _menuNeedsRefresh = true;
