@@ -304,6 +304,8 @@ namespace Enlisted.Features.Equipment.UI
         {
             try
             {
+                ModLogger.Info("QuartermasterUI", "ShowUpgradeScreen called");
+                
                 // Prevent double-open
                 if (IsUpgradeScreenOpen)
                 {
@@ -311,21 +313,30 @@ namespace Enlisted.Features.Equipment.UI
                     CloseUpgradeScreen(false);
                 }
                 
+                ModLogger.Debug("QuartermasterUI", "Creating upgrade ViewModel");
+                
                 // Create ViewModel
                 _upgradeViewModel = new QuartermasterUpgradeVm();
                 _upgradeViewModel.RefreshValues();
                 
+                ModLogger.Debug("QuartermasterUI", $"ViewModel created, HasUpgradeableItems={_upgradeViewModel.HasUpgradeableItems}");
+                
                 // Create Gauntlet layer for upgrade screen overlay
                 _upgradeLayer = new GauntletLayer("QuartermasterUpgradeScreen", 4000);
+                ModLogger.Debug("QuartermasterUI", "Gauntlet layer created");
                 
                 // Load upgrade screen movie from GUI/Prefabs/Equipment/
+                ModLogger.Debug("QuartermasterUI", "Loading movie: QuartermasterUpgradeScreen");
                 _upgradeMovie = _upgradeLayer.LoadMovie("QuartermasterUpgradeScreen", _upgradeViewModel);
+                ModLogger.Debug("QuartermasterUI", "Movie loaded successfully");
                 
                 // Apply input restrictions and add layer to screen
                 _upgradeLayer.InputRestrictions.SetInputRestrictions();
                 ScreenManager.TopScreen.AddLayer(_upgradeLayer);
                 _upgradeLayer.IsFocusLayer = true;
                 ScreenManager.TrySetFocus(_upgradeLayer);
+                
+                ModLogger.Debug("QuartermasterUI", "Layer added to screen and focused");
                 
                 // Handle ESC key to close upgrade screen
                 _upgradeLayer.Input.RegisterHotKeyCategory(HotKeyManager.GetCategory("GenericCampaignPanelsGameKeyCategory"));
