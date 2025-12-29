@@ -1152,6 +1152,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         // First register QM lines (what quartermaster says)
                         RegisterJsonQuartermasterLines(starter, "qm_greeting", "start", 201);
                         RegisterJsonQuartermasterLines(starter, "qm_hub", "start", 200);
+                        RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_hub", 199); // Also trigger when already in hub state (for refreshing after submenus)
                         
                         // Response nodes - only appear after player selects corresponding option from hub
                         RegisterJsonQuartermasterLines(starter, "qm_browse_response", "qm_browse_response", 150);
@@ -1161,16 +1162,12 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                         // Register introduction flow (first meeting)
                         RegisterJsonQuartermasterLines(starter, "qm_intro_greeting", "start", 202);
+                        
+                        // Acknowledgment nodes appear AFTER player selects intro tone from greeting
                         RegisterJsonQuartermasterLines(starter, "qm_intro_ack_direct", "qm_intro_ack_direct", 151);
                         RegisterJsonQuartermasterLines(starter, "qm_intro_ack_military", "qm_intro_ack_military", 151);
                         RegisterJsonQuartermasterLines(starter, "qm_intro_ack_friendly", "qm_intro_ack_friendly", 151);
                         RegisterJsonQuartermasterLines(starter, "qm_intro_ack_flattering", "qm_intro_ack_flattering", 151);
-
-                        // Register hub menu accessible from intro acknowledgment states
-                        RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_intro_ack_direct", 199);
-                        RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_intro_ack_military", 199);
-                        RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_intro_ack_friendly", 199);
-                        RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_intro_ack_flattering", 199);
 
                         // Register gate nodes (RP responses for blocked actions)
                         RegisterJsonQuartermasterLines(starter, "qm_sell_blocked", "qm_sell_blocked", 148);
