@@ -1,253 +1,253 @@
 <?xml version="1.0" encoding="utf-8"?>
-<base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-      xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+<base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xsd="http://www.w3.org/2001/XMLSchema"
       type="string">
   <tags>
     <tag language="English" />
   </tags>
   <strings>
     <!-- ========== QUARTERMASTER HUB ========== -->
-    <string id="qm_hub_greeting" 
+    <string id="qm_hub_greeting"
             text="What do you need?" />
-    <string id="qm_hub_excellent" 
+    <string id="qm_hub_excellent"
             text="Stores are full. What do you need?" />
-    <string id="qm_hub_good" 
+    <string id="qm_hub_good"
             text="Supplies are holding well. What do you require?" />
-    <string id="qm_hub_fair" 
+    <string id="qm_hub_fair"
             text="What can I do for you?" />
-    <string id="qm_hub_low" 
+    <string id="qm_hub_low"
             text="Stock's running thin, but I'll see what I can do. What do you need?" />
-    <string id="qm_hub_critical" 
+    <string id="qm_hub_critical"
             text="We've next to nothing left. Make it quick." />
-    
+
     <!-- ========== PLAYER HUB OPTIONS ========== -->
-    <string id="qm_player_browse" 
+    <string id="qm_player_browse"
             text="I'm looking for some new gear. What've you got?" />
-    <string id="qm_player_upgrade" 
+    <string id="qm_player_upgrade"
             text="I want to improve what I'm carrying." />
-    <string id="qm_player_sell" 
+    <string id="qm_player_sell"
             text="I've got some equipment to offload... quietly." />
-    <string id="qm_player_officers_armory" 
+    <string id="qm_player_officers_armory"
             text="What about premium officer equipment?" />
-    <string id="qm_player_provisions" 
+    <string id="qm_player_provisions"
             text="I could use some provisions." />
-    <string id="qm_player_supply" 
+    <string id="qm_player_supply"
             text="How are we looking? Supply-wise, I mean." />
-    <string id="qm_player_farewell" 
+    <string id="qm_player_farewell"
             text="That's all for now." />
-    
+
     <!-- ========== QM BROWSE RESPONSES ========== -->
-    <string id="qm_browse_excellent" 
+    <string id="qm_browse_excellent"
             text="Plenty in stock. Recent resupply came through. What are you after—weapons, armor, accessories?" />
-    <string id="qm_browse_good" 
+    <string id="qm_browse_good"
             text="We've a fair bit in stock. Weapons, armor, or accessories?" />
-    <string id="qm_browse_fair" 
+    <string id="qm_browse_fair"
             text="We've got what you'd expect. Weapons, armor, accessories?" />
-    <string id="qm_browse_low" 
+    <string id="qm_browse_low"
             text="Stock's thin right now. We're stretched. But I can show you what's left. What do you need?" />
-    <string id="qm_browse_critical" 
+    <string id="qm_browse_critical"
             text="Pickings are slim. We're rationing everything. I can show you what we've got, but don't expect much." />
-    <string id="qm_browse_default" 
+    <string id="qm_browse_default"
             text="Right, let's see what we've got. Weapons, armor, accessories?" />
-    
+
     <!-- ========== PLAYER CATEGORY OPTIONS ========== -->
-    <string id="qm_player_weapons" 
-            text="Weapons." />
-    <string id="qm_player_armor" 
-            text="Armor." />
-    <string id="qm_player_accessories" 
-            text="Accessories." />
-    <string id="qm_player_horse" 
-            text="A horse." />
-    <string id="qm_player_nevermind" 
+    <string id="qm_player_weapons"
+            text="I need a weapon." />
+    <string id="qm_player_armor"
+            text="I need armor." />
+    <string id="qm_player_accessories"
+            text="I need gear—cape, shield, harness." />
+    <string id="qm_player_horse"
+            text="I need a horse." />
+    <string id="qm_player_nevermind"
             text="Never mind." />
-    
+
     <!-- ========== ARMOR SLOT OPTIONS ========== -->
-    <string id="qm_armor_which" 
+    <string id="qm_armor_which"
             text="What piece are you looking for?" />
-    <string id="qm_player_armor_body" 
-            text="Body armor." />
-    <string id="qm_player_armor_head" 
-            text="A helmet." />
-    <string id="qm_player_armor_hands" 
-            text="Gloves." />
-    <string id="qm_player_armor_legs" 
-            text="Boots." />
-    <string id="qm_player_something_else" 
+    <string id="qm_player_armor_body"
+            text="I need body armor." />
+    <string id="qm_player_armor_head"
+            text="I need a helmet." />
+    <string id="qm_player_armor_hands"
+            text="I need gloves." />
+    <string id="qm_player_armor_legs"
+            text="I need boots." />
+    <string id="qm_player_something_else"
             text="Something else." />
-    
+
     <!-- ========== FIRST MEETING INTRODUCTION ========== -->
-    
+
     <!-- Intro Greetings (6 archetypes + 1 default) -->
-    <string id="qm_intro_greeting_veteran" 
+    <string id="qm_intro_greeting_veteran"
             text="New face. You one of the fresh recruits? What do they call you?" />
-    <string id="qm_intro_greeting_merchant" 
+    <string id="qm_intro_greeting_merchant"
             text="Ah, a new customer. Haven't done business with you before. Name?" />
-    <string id="qm_intro_greeting_bookkeeper" 
+    <string id="qm_intro_greeting_bookkeeper"
             text="I don't have you in my ledger. New arrival? State your name for the record." />
-    <string id="qm_intro_greeting_scoundrel" 
+    <string id="qm_intro_greeting_scoundrel"
             text="Well, well. Fresh meat. What's your name, soldier?" />
-    <string id="qm_intro_greeting_believer" 
+    <string id="qm_intro_greeting_believer"
             text="The Lord sends us new brothers in arms. What name were you given, friend?" />
-    <string id="qm_intro_greeting_eccentric" 
+    <string id="qm_intro_greeting_eccentric"
             text="A new star in my constellation! What sign were you born under? ...No, wait. What's your name?" />
-    <string id="qm_intro_greeting_default" 
+    <string id="qm_intro_greeting_default"
             text="Haven't seen you before. You new? What's your name?" />
-    
+
     <!-- Player Tone Options (4 tones) -->
-    <string id="qm_intro_tone_direct" 
+    <string id="qm_intro_tone_direct"
             text="I'm {PLAYER_NAME}. Just tell me what you've got." />
-    <string id="qm_intro_tone_military" 
-            text="{PLAYER_NAME}, reporting for kit." />
-    <string id="qm_intro_tone_friendly" 
+    <string id="qm_intro_tone_military"
+             text="{PLAYER_NAME}, reporting for duty." />
+    <string id="qm_intro_tone_friendly"
             text="Name's {PLAYER_NAME}. Looking forward to working with you." />
-    <string id="qm_intro_tone_flattering" 
+    <string id="qm_intro_tone_flattering"
             text="They call me {PLAYER_NAME}. I've heard you're the one to know." />
-    
+
     <!-- Acknowledgment: Direct Tone (6 archetypes + 1 default) -->
-    <string id="qm_intro_ack_direct_veteran" 
+    <string id="qm_intro_ack_direct_veteran"
             text="A soldier who gets to the point. Fair enough. I'm the quartermaster here. You need kit, you come to me." />
-    <string id="qm_intro_ack_direct_merchant" 
+    <string id="qm_intro_ack_direct_merchant"
             text="Straight to business? I can work with that. But manners cost nothing, {PLAYER_NAME}." />
-    <string id="qm_intro_ack_direct_bookkeeper" 
+    <string id="qm_intro_ack_direct_bookkeeper"
             text="{PLAYER_NAME}. Noted. I appreciate efficiency, though a little courtesy wouldn't hurt your record." />
-    <string id="qm_intro_ack_direct_scoundrel" 
+    <string id="qm_intro_ack_direct_scoundrel"
             text="[Shrugs] All right, all right. Keep your attitude, see if I care. Just don't expect any favors." />
-    <string id="qm_intro_ack_direct_believer" 
+    <string id="qm_intro_ack_direct_believer"
             text="The Lord teaches patience, but I see you have little. Very well. I'll pray for your manners, {PLAYER_NAME}." />
-    <string id="qm_intro_ack_direct_eccentric" 
+    <string id="qm_intro_ack_direct_eccentric"
             text="Ooh, a fiery one! Mars in ascendant, surely. Very well, {PLAYER_NAME}. Business it is." />
-    <string id="qm_intro_ack_direct_default" 
+    <string id="qm_intro_ack_direct_default"
             text="Right, straight to business then. Fair enough. I'm the quartermaster. You need gear, you come to me." />
-    
+
     <!-- Acknowledgment: Military Tone (6 archetypes + 1 default) -->
-    <string id="qm_intro_ack_military_veteran" 
+    <string id="qm_intro_ack_military_veteran"
             text="Good. You know how this works. Draw your kit, keep it maintained, and we'll get along fine, {PLAYER_NAME}." />
-    <string id="qm_intro_ack_military_merchant" 
+    <string id="qm_intro_ack_military_merchant"
             text="By the book, are you? That's fine by me. Standard procedure, standard prices. Welcome to the company, {PLAYER_NAME}." />
-    <string id="qm_intro_ack_military_bookkeeper" 
+    <string id="qm_intro_ack_military_bookkeeper"
             text="{PLAYER_NAME}, soldier, reporting for equipment. Logged. Follow procedure and we'll have no problems." />
-    <string id="qm_intro_ack_military_scoundrel" 
+    <string id="qm_intro_ack_military_scoundrel"
             text="A proper soldier, eh? Fine, {PLAYER_NAME}. Just don't go reporting every little irregularity you see." />
-    <string id="qm_intro_ack_military_believer" 
+    <string id="qm_intro_ack_military_believer"
             text="A disciplined soul. The Lord approves of order, {PLAYER_NAME}. You'll do well here, I think." />
-    <string id="qm_intro_ack_military_eccentric" 
+    <string id="qm_intro_ack_military_eccentric"
             text="Ah, a Saturn soul! Disciplined, orderly. The stars placed you well, {PLAYER_NAME}. Let's get you equipped." />
-    <string id="qm_intro_ack_military_default" 
+    <string id="qm_intro_ack_military_default"
             text="Good. You know the drill, {PLAYER_NAME}. Report when you need equipment. Welcome to the company." />
-    
+
     <!-- Acknowledgment: Friendly Tone (6 archetypes + 1 default) -->
-    <string id="qm_intro_ack_friendly_veteran" 
+    <string id="qm_intro_ack_friendly_veteran"
             text="Good to meet you too, {PLAYER_NAME}. I've seen too many soldiers forget who keeps them armed. You won't regret being civil." />
-    <string id="qm_intro_ack_friendly_merchant" 
+    <string id="qm_intro_ack_friendly_merchant"
             text="A pleasure doing business, {PLAYER_NAME}. Friendly customers are my favorite kind. We'll get along just fine." />
-    <string id="qm_intro_ack_friendly_bookkeeper" 
+    <string id="qm_intro_ack_friendly_bookkeeper"
             text="{PLAYER_NAME}, recorded with a favorable note. It's refreshing to meet a polite soldier for once." />
-    <string id="qm_intro_ack_friendly_scoundrel" 
+    <string id="qm_intro_ack_friendly_scoundrel"
             text="[Grins] Friendly, eh? I like that. Might have some special opportunities for someone who knows how to talk, {PLAYER_NAME}." />
-    <string id="qm_intro_ack_friendly_believer" 
+    <string id="qm_intro_ack_friendly_believer"
             text="The Lord blesses those with kind hearts, {PLAYER_NAME}. Welcome to our family. May you serve well." />
-    <string id="qm_intro_ack_friendly_eccentric" 
+    <string id="qm_intro_ack_friendly_eccentric"
             text="Venus smiles on you, {PLAYER_NAME}! Such warmth! I see good things in your alignment. Welcome, welcome!" />
-    <string id="qm_intro_ack_friendly_default" 
+    <string id="qm_intro_ack_friendly_default"
             text="Nice to meet you too, {PLAYER_NAME}. It's good to have soldiers who remember their manners. Welcome to the company." />
-    
+
     <!-- Acknowledgment: Flattering Tone (6 archetypes + 1 default) -->
-    <string id="qm_intro_ack_flattering_veteran" 
+    <string id="qm_intro_ack_flattering_veteran"
             text="[Nods approvingly] Smart. You learn fast who matters in an army. Stay on my good side, {PLAYER_NAME}, and I'll see you right." />
-    <string id="qm_intro_ack_flattering_merchant" 
+    <string id="qm_intro_ack_flattering_merchant"
             text="[Chuckles] You've heard right, {PLAYER_NAME}. I'm the one who keeps this army running. And I remember those who appreciate quality." />
-    <string id="qm_intro_ack_flattering_bookkeeper" 
+    <string id="qm_intro_ack_flattering_bookkeeper"
             text="[Adjusts ledger] Well. {PLAYER_NAME}. Someone who recognizes competence. I'm making a special note here." />
-    <string id="qm_intro_ack_flattering_scoundrel" 
+    <string id="qm_intro_ack_flattering_scoundrel"
             text="[Laughs] I like you already, {PLAYER_NAME}. A smooth tongue opens many doors. Including some that should stay shut, if you catch my meaning." />
-    <string id="qm_intro_ack_flattering_believer" 
+    <string id="qm_intro_ack_flattering_believer"
             text="The Lord rewards humility, but honest praise is no sin. You've a good soul, {PLAYER_NAME}. I'll keep you in my prayers." />
-    <string id="qm_intro_ack_flattering_eccentric" 
+    <string id="qm_intro_ack_flattering_eccentric"
             text="[Beams] Mercury's gift of eloquence! Oh, {PLAYER_NAME}, we shall be great allies. The stars told me you'd come!" />
-    <string id="qm_intro_ack_flattering_default" 
+    <string id="qm_intro_ack_flattering_default"
             text="[Smiles] You've heard right, {PLAYER_NAME}. I'm the one to know. And I'll remember that you knew it first." />
-    
+
     <!-- Continue Button -->
-    <string id="qm_continue" 
+    <string id="qm_continue"
             text="[Continue]" />
-    
+
     <!-- ========== TIER GATES ========== -->
-    
+
     <!-- Horse Gate (Cavalry not unlocked at tier) - Archetype Variants -->
-    <string id="qm_gate_horse_veteran" 
+    <string id="qm_gate_horse_veteran"
             text="Horses are for the cavalry line, {PLAYER_NAME}. You're still a {PLAYER_RANK}. Prove yourself in the ranks first, then we'll talk mounts." />
-    <string id="qm_gate_horse_merchant" 
+    <string id="qm_gate_horse_merchant"
             text="A horse? Those are expensive, {PLAYER_NAME}. Reserved for the cavalry line. Make {PLAYER_RANK} mean something first, then come back." />
-    <string id="qm_gate_horse_bookkeeper" 
+    <string id="qm_gate_horse_bookkeeper"
             text="My records show cavalry allocation begins at higher ranks, {PLAYER_NAME}. A {PLAYER_RANK} doesn't qualify. Yet." />
-    <string id="qm_gate_horse_scoundrel" 
+    <string id="qm_gate_horse_scoundrel"
             text="[Laughs] You want a horse, {PLAYER_NAME}? Horses are for cavalry. Work your way up from {PLAYER_RANK}, then we'll talk." />
-    <string id="qm_gate_horse_believer" 
+    <string id="qm_gate_horse_believer"
             text="The Lord grants horses to those who've earned them, {PLAYER_NAME}. As a {PLAYER_RANK}, your path is still on foot. For now." />
-    <string id="qm_gate_horse_eccentric" 
+    <string id="qm_gate_horse_eccentric"
             text="Ah, {PLAYER_NAME}! The stars say you'll ride someday, but not today. A {PLAYER_RANK} must walk before they gallop." />
-    <string id="qm_gate_horse_default" 
+    <string id="qm_gate_horse_default"
             text="Horses aren't issued at your rank, {PLAYER_NAME}. Rise in the ranks first." />
-    
+
     <!-- Officers Armory Gate (Not T7+ - Enlisted) - Archetype Variants -->
-    <string id="qm_gate_officers_rank_veteran" 
+    <string id="qm_gate_officers_rank_veteran"
             text="That stock is for officers, {PLAYER_NAME}. A {PLAYER_RANK} doesn't have access. Earn your commission first." />
-    <string id="qm_gate_officers_rank_merchant" 
+    <string id="qm_gate_officers_rank_merchant"
             text="Officer's inventory requires officer's coin and standing, {PLAYER_NAME}. A {PLAYER_RANK} isn't there yet." />
-    <string id="qm_gate_officers_rank_bookkeeper" 
+    <string id="qm_gate_officers_rank_bookkeeper"
             text="My ledger is clear, {PLAYER_NAME}: officers only. A {PLAYER_RANK} doesn't qualify for this stock." />
-    <string id="qm_gate_officers_rank_scoundrel" 
+    <string id="qm_gate_officers_rank_scoundrel"
             text="That's officer gear, {PLAYER_NAME}. You're a {PLAYER_RANK}. Not an officer. Simple as that." />
-    <string id="qm_gate_officers_rank_believer" 
+    <string id="qm_gate_officers_rank_believer"
             text="The Lord grants rank through merit, {PLAYER_NAME}. As a {PLAYER_RANK}, your commission awaits. Patience." />
-    <string id="qm_gate_officers_rank_eccentric" 
+    <string id="qm_gate_officers_rank_eccentric"
             text="Ah, {PLAYER_NAME}! A {PLAYER_RANK}'s aura isn't bright enough yet. Officers have a certain... glow. Come back when you shine brighter." />
-    <string id="qm_gate_officers_rank_default" 
+    <string id="qm_gate_officers_rank_default"
             text="That's officer stock, {PLAYER_NAME}. A {PLAYER_RANK} doesn't have access yet." />
-    
+
     <!-- Officers Armory Gate (Senior Enlisted - T5-T6) - Archetype Variants -->
-    <string id="qm_gate_officers_nco_veteran" 
+    <string id="qm_gate_officers_nco_veteran"
             text="You're a {PLAYER_RANK}, {PLAYER_NAME}. Respected, but not commissioned. Officer gear requires a commission." />
-    <string id="qm_gate_officers_nco_merchant" 
+    <string id="qm_gate_officers_nco_merchant"
             text="A {PLAYER_RANK} is good for business, {PLAYER_NAME}, but you're not an officer yet. Come back with a commission." />
-    <string id="qm_gate_officers_nco_bookkeeper" 
+    <string id="qm_gate_officers_nco_bookkeeper"
             text="You're listed as {PLAYER_RANK}, {PLAYER_NAME}. Officer inventory is restricted to commissioned ranks." />
-    <string id="qm_gate_officers_nco_scoundrel" 
+    <string id="qm_gate_officers_nco_scoundrel"
             text="{PLAYER_RANK} or not, {PLAYER_NAME}, you're not an officer. That gear's reserved." />
-    <string id="qm_gate_officers_nco_believer" 
+    <string id="qm_gate_officers_nco_believer"
             text="The Lord values your service as {PLAYER_RANK}, {PLAYER_NAME}. But officer's gear is for commissioned ranks. Patience, brother." />
-    <string id="qm_gate_officers_nco_eccentric" 
+    <string id="qm_gate_officers_nco_eccentric"
             text="The constellations mark you as {PLAYER_RANK}, {PLAYER_NAME}. Not officer. The universe has plans. Wait for them." />
-    
+
     <!-- Officers Armory Gate (T7+ but low reputation) - Archetype Variants -->
-    <string id="qm_gate_officers_trust_veteran" 
+    <string id="qm_gate_officers_trust_veteran"
             text="You've got the rank, {PLAYER_RANK} {PLAYER_NAME}, but I don't know you well enough. Build some trust first." />
-    <string id="qm_gate_officers_trust_merchant" 
+    <string id="qm_gate_officers_trust_merchant"
             text="A {PLAYER_RANK}, yes. But trust is earned, not issued with rank, {PLAYER_NAME}. Come back when we know each other better." />
-    <string id="qm_gate_officers_trust_bookkeeper" 
+    <string id="qm_gate_officers_trust_bookkeeper"
             text="My ledger requires a trust score of sixty, {PLAYER_RANK} {PLAYER_NAME}. Yours isn't there yet." />
-    <string id="qm_gate_officers_trust_scoundrel" 
+    <string id="qm_gate_officers_trust_scoundrel"
             text="{PLAYER_RANK}, sure. But do I trust you, {PLAYER_NAME}? Not yet. Come back when we're better acquainted." />
-    <string id="qm_gate_officers_trust_believer" 
+    <string id="qm_gate_officers_trust_believer"
             text="The Lord grants rank, {PLAYER_RANK} {PLAYER_NAME}, but trust is built through deeds. Prove yourself and return." />
-    <string id="qm_gate_officers_trust_eccentric" 
+    <string id="qm_gate_officers_trust_eccentric"
             text="Your stars align for rank, {PLAYER_NAME}, but not yet for trust. The moon must wax twice more." />
-    <string id="qm_gate_officers_trust_default" 
+    <string id="qm_gate_officers_trust_default"
             text="You've got the rank, {PLAYER_RANK} {PLAYER_NAME}, but I don't know you well enough. Build some trust first." />
-    
+
     <!-- Upgrade Gates -->
-    <string id="qm_gate_masterwork_default" 
+    <string id="qm_gate_masterwork_default"
             text="Masterwork? That's skilled labor, {PLAYER_NAME}. I don't do that quality of work for just any {PLAYER_RANK}. Build some standing with me first." />
-    <string id="qm_gate_legendary_default" 
+    <string id="qm_gate_legendary_default"
             text="Legendary work, {PLAYER_NAME}? That's reserved for soldiers I'd trust with my life. A {PLAYER_RANK} hasn't earned that. Not yet." />
-    
+
     <!-- Gate Acknowledgment Options -->
-    <string id="qm_gate_understood" 
+    <string id="qm_gate_understood"
             text="Understood." />
-    <string id="qm_gate_fair_enough" 
+    <string id="qm_gate_fair_enough"
             text="Fair enough." />
-    <string id="qm_gate_right" 
+    <string id="qm_gate_right"
             text="Right..." />
   </strings>
 </base>

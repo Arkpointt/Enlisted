@@ -74,6 +74,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private CampaignTime _lastMusterTriggerAttempt = CampaignTime.Zero;
 
         /// <summary>
+        /// Flag set when QM conversation is opened from muster menu.
+        /// Used to return to enlisted_status menu after conversation ends.
+        /// </summary>
+        private bool _qmOpenedFromMuster;
+
+        /// <summary>
         /// Tracks muster session data including outcomes, progression, and post-muster flags.
         /// Created fresh at the start of each muster and cleared when muster completes.
         /// </summary>
@@ -178,8 +184,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public override void RegisterEvents()
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
+            CampaignEvents.ConversationEnded.AddNonSerializedListener(this, OnConversationEnded);
             Instance = this;
             ModLogger.Info(LogCategory, "MusterMenuHandler registered");
+        }
+
+        private void OnConversationEnded(IEnumerable<CharacterObject> characters)
+        {
+            if (_qmOpenedFromMuster)
+            {
+                _qmOpenedFromMuster = false;
+                ModLogger.Debug(LogCategory, "QM conversation ended, returning to enlisted_status menu");
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    if (EnlistmentBehavior.Instance?.IsEnlisted == true)
+                    {
+                        GameMenu.ActivateGameMenu("enlisted_status");
+                    }
+                });
+            }
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -1096,7 +1119,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // The menu text uses {MUSTER_DAY} and {MUSTER_INTRO_TEXT} which must be fully populated before rendering
                 try
                 {
-                    MBTextManager.SetTextVariable("MUSTER_DAY", enlistment.DaysServed.ToString());
+                    MBTextManager.SetTextVariable("MUSTER_DAY", Math.Round(enlistment.DaysServed).ToString());
 
                     // Build the complete intro text now, not just a placeholder
                     var introText = BuildIntroTextSafe();
@@ -1294,7 +1317,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Build intro text with null safety
                 var introText = BuildIntroTextSafe();
-                MBTextManager.SetTextVariable("MUSTER_DAY", enlistment?.DaysServed.ToString() ?? "?");
+                MBTextManager.SetTextVariable("MUSTER_DAY", enlistment != null ? Math.Round(enlistment.DaysServed).ToString() : "?");
                 MBTextManager.SetTextVariable("MUSTER_INTRO_TEXT", introText);
 
                 // Initialize time control on first stage
@@ -1460,7 +1483,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _currentMuster.CurrentStage = MusterCompleteMenuId;
 
                 var enlistment = EnlistmentBehavior.Instance;
-                MBTextManager.SetTextVariable("MUSTER_DAY", enlistment?.DaysServed.ToString() ?? "?");
+                MBTextManager.SetTextVariable("MUSTER_DAY", enlistment != null ? Math.Round(enlistment.DaysServed).ToString() : "?");
                 MBTextManager.SetTextVariable("MUSTER_COMPLETE_TEXT", BuildMusterCompleteTextSafe());
             }
             catch (Exception ex)
@@ -1933,6 +1956,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 GameMenu.ExitToLast();
 
+                // Return to enlisted menu if no post-muster actions
+                if (!visitQM && !recruitRetinue && !requestLeave)
+                {
+                    NextFrameDispatcher.RunNextFrame(() =>
+                    {
+                        if (EnlistmentBehavior.Instance?.IsEnlisted == true)
+                        {
+                            GameMenu.ActivateGameMenu("enlisted_status");
+                        }
+                    });
+                }
+
                 // Show warning if some effects failed to apply
                 if (effectsPartiallyFailed)
                 {
@@ -2251,7 +2286,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Days served
             var daysServed = enlistment.DaysServed;
-            sb.AppendLine($"<span style=\"Label\">DAYS SERVED:</span> {daysServed} days");
+            sb.AppendLine($"<span style=\"Label\">DAYS SERVED:</span> {Math.Round(daysServed)} days");
 
             // XP progress
             var currentXP = enlistment.EnlistmentXP;
@@ -3945,6 +3980,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             if (qm != null && qm.IsAlive)
             {
                 ModLogger.Info(LogCategory, "Opening quartermaster conversation from muster complete menu");
+                _qmOpenedFromMuster = true;
                 CampaignMapConversation.OpenConversation(
                     new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
                     new ConversationCharacterData(qm.CharacterObject, qm.PartyBelongedTo?.Party));

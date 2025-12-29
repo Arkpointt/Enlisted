@@ -3615,6 +3615,12 @@
     <string id="qm_equipment_response" text="Let me see what I've got in stock for you." />
     <string id="qm_greeting_dynamic" text="{QM_GREETING}" />
     <string id="qm_sell_response" text="[Quartermaster responds to sell request]" />
+    <string id="qm_category_weapons" text="Weapons." />
+    <string id="qm_category_armor" text="Armor." />
+    <string id="qm_category_accessories" text="Accessories." />
+    <string id="qm_category_horse" text="A horse." />
+    <string id="qm_category_nevermind" text="Never mind." />
+    <string id="qm_category_confirm" text="Right. Let's see what we've got." />
 
     <!-- Phase 2: Equipment Quality Display -->
     <string id="qm_quality_poor" text="Poor" />

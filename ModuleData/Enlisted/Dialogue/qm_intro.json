@@ -25,7 +25,7 @@
         {
           "id": "intro_tone_military",
           "textId": "qm_intro_tone_military",
-          "text": "{PLAYER_NAME}, reporting for kit.",
+          "text": "{PLAYER_NAME}, reporting for duty.",
           "tooltip": "Standard military protocol (no change)",
           "next_node": "qm_intro_ack_military",
           "action": "set_player_style",
@@ -73,7 +73,7 @@
         {
           "id": "intro_tone_military",
           "textId": "qm_intro_tone_military",
-          "text": "{PLAYER_NAME}, reporting for kit.",
+          "text": "{PLAYER_NAME}, reporting for duty.",
           "tooltip": "Standard military protocol (no change)",
           "next_node": "qm_intro_ack_military",
           "action": "set_player_style",
@@ -121,7 +121,7 @@
         {
           "id": "intro_tone_military",
           "textId": "qm_intro_tone_military",
-          "text": "{PLAYER_NAME}, reporting for kit.",
+          "text": "{PLAYER_NAME}, reporting for duty.",
           "tooltip": "Standard military protocol (no change)",
           "next_node": "qm_intro_ack_military",
           "action": "set_player_style",
@@ -169,7 +169,7 @@
         {
           "id": "intro_tone_military",
           "textId": "qm_intro_tone_military",
-          "text": "{PLAYER_NAME}, reporting for kit.",
+          "text": "{PLAYER_NAME}, reporting for duty.",
           "tooltip": "Standard military protocol (no change)",
           "next_node": "qm_intro_ack_military",
           "action": "set_player_style",
@@ -217,7 +217,7 @@
         {
           "id": "intro_tone_military",
           "textId": "qm_intro_tone_military",
-          "text": "{PLAYER_NAME}, reporting for kit.",
+          "text": "{PLAYER_NAME}, reporting for duty.",
           "tooltip": "Standard military protocol (no change)",
           "next_node": "qm_intro_ack_military",
           "action": "set_player_style",
@@ -265,7 +265,7 @@
         {
           "id": "intro_tone_military",
           "textId": "qm_intro_tone_military",
-          "text": "{PLAYER_NAME}, reporting for kit.",
+          "text": "{PLAYER_NAME}, reporting for duty.",
           "tooltip": "Standard military protocol (no change)",
           "next_node": "qm_intro_ack_military",
           "action": "set_player_style",
@@ -313,7 +313,7 @@
         {
           "id": "intro_tone_military",
           "textId": "qm_intro_tone_military",
-          "text": "{PLAYER_NAME}, reporting for kit.",
+          "text": "{PLAYER_NAME}, reporting for duty.",
           "tooltip": "Standard military protocol (no change)",
           "next_node": "qm_intro_ack_military",
           "action": "set_player_style",

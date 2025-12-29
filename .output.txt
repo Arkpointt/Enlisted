@@ -1,228 +1,347 @@
 ﻿
-LineNumber Line
----------- ----
-        13 using Enlisted.Features.Retinue.Core;
-        14 using Enlisted.Features.Retinue.Data;
-        44         private const string MusterPromotionRecapMenuId =
-           "enlisted_muster_promotion_recap";
-        45         private const string MusterRetinueMenuId =
-           "enlisted_muster_retinue";
-       129             // Promotion tracking (promotion occurs via
-           PromotionBehavior, recap shows at muster)
-       131             public bool PromotionOccurredThisPeriod { get; set; }
-       139             /// <summary>Campaign day when promotion
-           occurred.</summary>
-       140             public int PromotionDay { get; set; }
-       149             // Retinue (T7+ only)
-       150             /// <summary>Current retinue soldier count.</summary>
-       151             public int RetinueStrength { get; set; }
-       153             /// <summary>Maximum retinue capacity.</summary>
-       154             public int RetinueCapacity { get; set; }
-       156             /// <summary>Retinue casualties this period.</summary>
-       157             public int RetinueCasualties { get; set; }
-       160             public List<string> FallenRetinueNames { get; set; } =
-           new List<string>();
-       166             /// <summary>If true, open retinue recruitment after
-           muster.</summary>
-       167             public bool RecruitRetinueAfter { get; set; }
-       221                     var promotionOccurred =
-           _currentMuster.PromotionOccurredThisPeriod;
-       236                     dataStore.SyncData("_muster_promotionOccurred",
-           ref promotionOccurred);
-       261                         var promotionOccurred = false;
-       276
-           dataStore.SyncData("_muster_promotionOccurred", ref
-           promotionOccurred);
-       304                                 PromotionOccurredThisPeriod =
-           promotionOccurred,
-       337                    stageId == MusterPromotionRecapMenuId ||
-       338                    stageId == MusterRetinueMenuId ||
-       876             // 6. Promotion Recap Menu
-       877             starter.AddWaitGameMenu(MusterPromotionRecapMenuId,
-       878                 "{=muster_promotion_title}⭐  PROMOTION ACKNOWLEDGED
-            ⭐\n{MUSTER_PROMOTION_TEXT}",
-       879                 OnPromotionInit,
-       885             starter.AddGameMenuOption(MusterPromotionRecapMenuId,
-           "muster_promotion_continue",
-       886                 "{=muster_promotion_continue}Acknowledge Promotion",
-       890                     args.Tooltip = new
-           TextObject("{=muster_promotion_continue_tt}Proceed with muster.");
-       893                 _ => ProceedToNextStageFromPromotion(),
-       896             starter.AddGameMenuOption(MusterPromotionRecapMenuId,
-           "muster_promotion_visit_qm",
-       897                 "{=muster_promotion_visit_qm}Visit Quartermaster
-           Now",
-       901                     args.Tooltip = new
-           TextObject("{=muster_promotion_visit_qm_tt}Review newly unlocked
-           equipment. Will return to muster after.");
-       909                         ModLogger.Info(LogCategory, "Player flagged
-           QM visit from promotion stage");
-       911                     ProceedToNextStageFromPromotion();
-       915             // 7. Retinue Muster Menu (T7+ only)
-       916             starter.AddWaitGameMenu(MusterRetinueMenuId,
-       917                 "{=muster_retinue_title}🏴  RETINUE MUSTER
-           🏴\n{MUSTER_RETINUE_TEXT}",
-       918                 OnRetinueInit,
-       924             starter.AddGameMenuOption(MusterRetinueMenuId,
-           "muster_retinue_continue",
-       925                 "{=muster_retinue_continue}Dismiss Retinue",
-       929                     args.Tooltip = new
-           TextObject("{=muster_retinue_continue_tt}Proceed to muster
-           summary.");
-       935             starter.AddGameMenuOption(MusterRetinueMenuId,
-           "muster_retinue_recruit",
-       936                 "{=muster_retinue_recruit}Seek New Soldiers",
-       940                     args.Tooltip = new
-           TextObject("{=muster_retinue_recruit_tt}Open recruitment after
-           muster. Fill retinue openings.");
-       941                     // Only available if retinue has openings
-       942                     return _currentMuster != null &&
-           _currentMuster.RetinueStrength < _currentMuster.RetinueCapacity;
-       948                         _currentMuster.RecruitRetinueAfter = true;
-      1272                 // Check for promotion this period
-      1275                     _currentMuster.PromotionOccurredThisPeriod =
-           true;
-      1278                     _currentMuster.PromotionDay =
-           enlistment.DayOfLastPromotion;
-      1279                     ModLogger.Info(LogCategory, $"Promotion
-           detected this period: T{_currentMuster.PreviousTier} ->
-           T{_currentMuster.CurrentTier}");
-      1751         private void OnPromotionInit(MenuCallbackArgs args)
-      1757             _currentMuster.CurrentStage =
-           MusterPromotionRecapMenuId;
-      1759             MBTextManager.SetTextVariable("MUSTER_PROMOTION_TEXT",
-           BuildPromotionText());
-      1762         private void OnRetinueInit(MenuCallbackArgs args)
-      1768             _currentMuster.CurrentStage = MusterRetinueMenuId;
-      1770             MBTextManager.SetTextVariable("MUSTER_RETINUE_TEXT",
-           BuildRetinueText());
-      2161             // If promotion occurred this period, show recap
-      2162             if (_currentMuster.PromotionOccurredThisPeriod)
-      2164                 GameMenu.SwitchToMenu(MusterPromotionRecapMenuId);
-      2168                 ProceedToNextStageFromPromotion();
-      2172         private void ProceedToNextStageFromPromotion()
-      2175             var retinueMgr = RetinueManager.Instance;
-      2177             // If T7+ with retinue (or just granted retinue), show
-           retinue muster
-      2178             if (enlistment?.EnlistmentTier >= 7 && retinueMgr !=
-           null)
-      2180                 // Show retinue stage even if retinue not formed
-           yet (T7 promotion case)
-      2181                 // or if retinue exists
-      2182                 var hasRetinue = retinueMgr.State?.HasRetinue ??
-           false;
-      2183                 var justPromotedToT7 = _currentMuster?.CurrentTier
-           == 7 && _currentMuster?.PromotionOccurredThisPeriod == true;
-      2185                 if (hasRetinue || justPromotedToT7)
-      2187                     GameMenu.SwitchToMenu(MusterRetinueMenuId);
-      2234             var recruitRetinue =
-           _currentMuster?.RecruitRetinueAfter ?? false;
-      2262                     // Mark newly unlocked items in case promotion
-           occurred this period
-      2295                 else if (recruitRetinue)
-      2297                     ModLogger.Debug(LogCategory, "Post-muster:
-           opening retinue recruitment");
-      2298                     // TODO: Open retinue recruitment screen
-      2414                     PromotionTier =
-           _currentMuster.PromotionOccurredThisPeriod ?
-           _currentMuster.CurrentTier : 0,
-      2415                     RetinueStrength =
-           _currentMuster.RetinueStrength,
-      2416                     RetinueCasualties =
-           _currentMuster.RetinueCasualties,
-      2417                     FallenRetinueNames =
-           _currentMuster.FallenRetinueNames ?? new List<string>(),
-      3155         private string BuildPromotionText()
-      3159                 return "[No promotion data]";
-      3173             var daysSincePromotion = _currentMuster.MusterDay -
-           _currentMuster.PromotionDay;
-      3175             sb.AppendLine("The captain addresses the formation.
-           Your promotion is formally");
-      3179             // Promotion announcement text
-      3180             if (daysSincePromotion == 0)
-      3185             else if (daysSincePromotion == 1)
-      3192                 sb.AppendLine($"\"On Day
-           {_currentMuster.PromotionDay} of this campaign, this soldier was
-           promoted to {currentRank}");
-      3197             sb.AppendLine("The men salute. Your promotion is now
-           part of the official record.");
-      3199             sb.AppendLine("_____ PROMOTION DETAILS _____");
-      3202             // Promotion details
-      3206             if (daysSincePromotion == 0)
-      3208                 sb.AppendLine($"Date of Promotion:   Day
-           {_currentMuster.PromotionDay} (earlier today)");
-      3212                 sb.AppendLine($"Date of Promotion:   Day
-           {_currentMuster.PromotionDay} ({daysSincePromotion} days ago)");
-      3217             // Benefits unlocked at promotion
-      3218             sb.AppendLine("Benefits Unlocked at Promotion:");
-      3250                 sb.AppendLine($"• Commander's retinue granted:
-           {RetinueManager.CommanderCapacity1} soldiers");
-      3254                 sb.AppendLine($"• Retinue capacity expanded to
-           {RetinueManager.CommanderCapacity2} soldiers");
-      3258                 sb.AppendLine($"• Retinue capacity expanded to
-           {RetinueManager.CommanderCapacity3} soldiers");
-      3264             // For multi-tier promotions (e.g., T5→T7), show
-           abilities from all gained tiers
-      3303                 sb.AppendLine("promotion is possible—your place in
-           history is secured.");
-      3307             sb.AppendLine("The promotion proving event occurred
-           when you earned it. This is a");
-      3340                 5 => "Organize squad drills, recommend promotions",
-      3342                 7 => "Command retinue, halt column for baggage
-           access",
-      3370                     abilities.Add("Recommend Comrades for Promotion
-           (social decision)");
-      3378                     abilities.Add("Command personal retinue of 20
-           soldiers");
-      3383                     abilities.Add("Expanded retinue (30 soldiers)");
-      3387                     abilities.Add("Elite retinue (40 soldiers)");
-      3395         private string BuildRetinueText()
-      3399             var retinueMgr = RetinueManager.Instance;
-      3402             if (retinueMgr == null || enlistment == null)
-      3404                 sb.AppendLine("[Retinue system unavailable]");
-      3405                 ModLogger.Warn(LogCategory, "BuildRetinueText:
-           RetinueManager or EnlistmentBehavior unavailable");
-      3409             var state = retinueMgr.State;
-      3410             if (state == null || !state.HasRetinue)
-      3412                 // Edge case: Just promoted to T7 but haven't
-           formed retinue yet
-      3415                     sb.AppendLine("You have been granted the
-           authority to command a personal retinue.");
-      3417                     sb.AppendLine($"Retinue Capacity: 0 /
-           {RetinueManager.CommanderCapacity1} soldiers");
-      3419                     sb.AppendLine("Visit your lord to select your
-           retinue type and begin recruitment.");
-      3423                     sb.AppendLine("Your retinue has been lost. All
-           soldiers have fallen.");
-      3425                     sb.AppendLine("Visit your lord to rebuild your
-           retinue when ready.");
-      3431             // Standard retinue muster display
-      3435             sb.AppendLine("_____ RETINUE STRENGTH _____");
-      3439             var capacity =
-           RetinueManager.GetTierCapacity(enlistment.EnlistmentTier);
-      3444                 _currentMuster.RetinueStrength = current;
-      3445                 _currentMuster.RetinueCapacity = capacity;
-      3450             // Morale (based on RetinueLoyalty)
-      3451             var loyalty = state.RetinueLoyalty;
-      3476                 // Check personal feed for retinue casualty reports
-           since last muster
-      3488                     // Look for retinue casualty entries
-      3489                     // Format: "Your retinue suffered X killed and
-           Y wounded" or "Your retinue lost X soldier(s)"
-      3490                     if (headline.IndexOf("retinue",
-           StringComparison.OrdinalIgnoreCase) >= 0)
-      3530             // Store in muster state for retinue recruitment option
-      3533                 _currentMuster.RetinueCasualties = killed;
-      3534                 _currentMuster.FallenRetinueNames = fallenNames;
-      3559                 sb.AppendLine("Your retinue stands ready. No losses
-           this period.");
-      3605         private string GetEquipmentStatus(RetinueState state)
-      3776                 // Estimate days to promotion
-      3824             var retinueCount =
-           RetinueManager.Instance?.State?.TroopCounts?.Values.Sum() ?? 0;
-      3825             var casualties = _currentMuster.RetinueCasualties;
-      3828             if (currentTier >= 7 && retinueCount > 0)
-      3835                 sb.AppendLine($"<span style=\"Label\">UNIT
-           STATUS:</span>         [No retinue under command]");
-      3873             var morale =
-           RetinueManager.Instance?.State?.RetinueLoyalty ?? 50;
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:565:        }
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:566:      ]
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:567:    },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:568:    {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:569:      "_comment": "Browse
+response - excellent supply (80-100%)",
+> ModuleData\Enlisted\Dialogue\qm_dialogue.json:570:      "id":
+"qm_browse_response",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:571:      "speaker":
+"quartermaster",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:572:      "textId":
+"qm_browse_excellent",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:573:      "text": "Plenty in
+stock. Recent resupply came through. What are you after—weapons, armor,
+accessories?",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:574:      "context": {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:575:        "supply_level":
+"excellent"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:576:      },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:577:      "options": [
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:578:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:579:          "id":
+"browse_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:580:          "textId":
+"qm_player_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:581:          "text":
+"Weapons.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:582:          "tooltip":
+"Browse available weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:583:          "action":
+"open_weapons"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:584:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:585:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:586:          "id":
+"browse_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:587:          "textId":
+"qm_player_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:588:          "text": "Armor.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:589:          "tooltip":
+"Choose armor type",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:590:          "next_node":
+"qm_armor_slots"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:591:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:592:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:593:          "id":
+"browse_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:594:          "textId":
+"qm_player_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:595:          "text":
+"Accessories.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:596:          "tooltip":
+"Capes, shields, horse tack",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:597:          "action":
+"open_accessories"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:598:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:599:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:600:          "id":
+"browse_horse",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:615:        }
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:616:      ]
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:617:    },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:618:    {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:619:      "_comment": "Browse
+response - good supply (60-79%)",
+> ModuleData\Enlisted\Dialogue\qm_dialogue.json:620:      "id":
+"qm_browse_response",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:621:      "speaker":
+"quartermaster",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:622:      "textId":
+"qm_browse_good",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:623:      "text": "We've a
+fair bit in stock. Weapons, armor, or accessories?",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:624:      "context": {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:625:        "supply_level":
+"good"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:626:      },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:627:      "options": [
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:628:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:629:          "id":
+"browse_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:630:          "textId":
+"qm_player_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:631:          "text":
+"Weapons.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:632:          "tooltip":
+"Browse available weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:633:          "action":
+"open_weapons"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:634:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:635:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:636:          "id":
+"browse_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:637:          "textId":
+"qm_player_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:638:          "text": "Armor.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:639:          "tooltip":
+"Choose armor type",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:640:          "next_node":
+"qm_armor_slots"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:641:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:642:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:643:          "id":
+"browse_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:644:          "textId":
+"qm_player_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:645:          "text":
+"Accessories.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:646:          "tooltip":
+"Capes, shields, horse tack",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:647:          "action":
+"open_accessories"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:648:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:649:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:650:          "id":
+"browse_horse",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:665:        }
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:666:      ]
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:667:    },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:668:    {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:669:      "_comment": "Browse
+response - fair supply (40-59%)",
+> ModuleData\Enlisted\Dialogue\qm_dialogue.json:670:      "id":
+"qm_browse_response",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:671:      "speaker":
+"quartermaster",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:672:      "textId":
+"qm_browse_fair",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:673:      "text": "We've got
+what you'd expect. Weapons, armor, accessories?",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:674:      "context": {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:675:        "supply_level":
+"fair"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:676:      },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:677:      "options": [
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:678:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:679:          "id":
+"browse_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:680:          "textId":
+"qm_player_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:681:          "text":
+"Weapons.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:682:          "tooltip":
+"Browse available weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:683:          "action":
+"open_weapons"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:684:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:685:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:686:          "id":
+"browse_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:687:          "textId":
+"qm_player_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:688:          "text": "Armor.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:689:          "tooltip":
+"Choose armor type",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:690:          "next_node":
+"qm_armor_slots"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:691:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:692:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:693:          "id":
+"browse_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:694:          "textId":
+"qm_player_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:695:          "text":
+"Accessories.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:696:          "tooltip":
+"Capes, shields, horse tack",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:697:          "action":
+"open_accessories"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:698:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:699:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:700:          "id":
+"browse_horse",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:715:        }
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:716:      ]
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:717:    },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:718:    {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:719:      "_comment": "Browse
+response - low supply (20-39%)",
+> ModuleData\Enlisted\Dialogue\qm_dialogue.json:720:      "id":
+"qm_browse_response",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:721:      "speaker":
+"quartermaster",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:722:      "textId":
+"qm_browse_low",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:723:      "text": "Stock's
+thin right now. We're stretched. But I can show you what's left. What do you
+need?",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:724:      "context": {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:725:        "supply_level":
+"low"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:726:      },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:727:      "options": [
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:728:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:729:          "id":
+"browse_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:730:          "textId":
+"qm_player_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:731:          "text":
+"Weapons.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:732:          "tooltip":
+"Browse available weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:733:          "action":
+"open_weapons"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:734:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:735:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:736:          "id":
+"browse_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:737:          "textId":
+"qm_player_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:738:          "text": "Armor.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:739:          "tooltip":
+"Choose armor type",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:740:          "next_node":
+"qm_armor_slots"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:741:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:742:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:743:          "id":
+"browse_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:744:          "textId":
+"qm_player_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:745:          "text":
+"Accessories.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:746:          "tooltip":
+"Capes, shields, horse tack",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:747:          "action":
+"open_accessories"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:748:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:749:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:750:          "id":
+"browse_horse",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:765:        }
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:766:      ]
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:767:    },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:768:    {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:769:      "_comment": "Browse
+response - critical supply (0-19%)",
+> ModuleData\Enlisted\Dialogue\qm_dialogue.json:770:      "id":
+"qm_browse_response",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:771:      "speaker":
+"quartermaster",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:772:      "textId":
+"qm_browse_critical",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:773:      "text": "Pickings
+are slim. We're rationing everything. I can show you what we've got, but don't
+expect much.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:774:      "context": {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:775:        "supply_level":
+"critical"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:776:      },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:777:      "options": [
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:778:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:779:          "id":
+"browse_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:780:          "textId":
+"qm_player_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:781:          "text":
+"Weapons.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:782:          "tooltip":
+"Browse available weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:783:          "action":
+"open_weapons"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:784:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:785:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:786:          "id":
+"browse_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:787:          "textId":
+"qm_player_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:788:          "text": "Armor.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:789:          "tooltip":
+"Choose armor type",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:790:          "next_node":
+"qm_armor_slots"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:791:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:792:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:793:          "id":
+"browse_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:794:          "textId":
+"qm_player_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:795:          "text":
+"Accessories.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:796:          "tooltip":
+"Capes, shields, horse tack",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:797:          "action":
+"open_accessories"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:798:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:799:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:800:          "id":
+"browse_horse",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:815:        }
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:816:      ]
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:817:    },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:818:    {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:819:      "_comment": "Browse
+response - default fallback (no supply level available)",
+> ModuleData\Enlisted\Dialogue\qm_dialogue.json:820:      "id":
+"qm_browse_response",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:821:      "speaker":
+"quartermaster",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:822:      "textId":
+"qm_browse_default",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:823:      "text": "Right,
+let's see what we've got. Weapons, armor, accessories?",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:824:      "context": {},
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:825:      "options": [
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:826:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:827:          "id":
+"browse_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:828:          "textId":
+"qm_player_weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:829:          "text":
+"Weapons.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:830:          "tooltip":
+"Browse available weapons",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:831:          "action":
+"open_weapons"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:832:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:833:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:834:          "id":
+"browse_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:835:          "textId":
+"qm_player_armor",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:836:          "text": "Armor.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:837:          "tooltip":
+"Choose armor type",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:838:          "next_node":
+"qm_armor_slots"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:839:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:840:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:841:          "id":
+"browse_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:842:          "textId":
+"qm_player_accessories",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:843:          "text":
+"Accessories.",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:844:          "tooltip":
+"Capes, shields, horse tack",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:845:          "action":
+"open_accessories"
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:846:        },
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:847:        {
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:848:          "id":
+"browse_horse",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:849:          "textId":
+"qm_player_horse",
+  ModuleData\Enlisted\Dialogue\qm_dialogue.json:850:          "text": "A
+horse.",

@@ -552,7 +552,7 @@ Next Muster:         Day 36 (12 days)
 
 | Icon | Text | Availability | Action |
 |------|------|--------------|--------|
-| ✅ Leave | Dismiss | Always | Complete muster → Map |
+| ✅ Leave | Dismiss | Always | Complete muster → enlisted_status menu |
 | 🛒 Trade | Visit Quartermaster | Supply >= 15% | Open QM conversation |
 | 📋 Manage | Review Service Record | Always | Open service records menu |
 | 🏕 Submenu | Request Temporary Leave | Not in combat/siege | Start leave process |

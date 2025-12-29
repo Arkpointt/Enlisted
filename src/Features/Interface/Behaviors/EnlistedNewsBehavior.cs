@@ -2380,7 +2380,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 var sb = new StringBuilder();
-                sb.AppendLine($"Last Muster (Day {record.DayNumber})");
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var daysSince = currentDay - record.DayNumber;
+                sb.AppendLine($"Last Muster ({daysSince} days ago)");
 
                 // Pay line
                 var payText = record.PayOutcome switch
