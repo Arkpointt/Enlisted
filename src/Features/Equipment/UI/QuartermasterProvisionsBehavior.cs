@@ -85,7 +85,12 @@ namespace Enlisted.Features.Equipment.UI
         
         private void OnMapEventEnded(MapEvent mapEvent)
         {
-            if (IsOpen)
+            // Only close UI for actual combat events, not conversations.
+            // Conversations also trigger MapEventEnded, but we want the provisions screen
+            // to remain open after the conversation ends (opened via QM dialogue).
+            bool isCombatEvent = mapEvent?.EventType != MapEvent.BattleTypes.None;
+            
+            if (isCombatEvent && IsOpen)
             {
                 ForceCloseOnInterruption("map event ended");
             }
