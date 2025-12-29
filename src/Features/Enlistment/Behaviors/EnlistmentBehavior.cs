@@ -5861,11 +5861,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Track for muster news reporting
             _lastRationItemId = itemId;
 
-            // Display flavor text based on QM reputation
+            // Flavor text is saved for Personal Feed/Muster news only - not displayed during conversation
+            // Displaying messages during active conversations creates UI clutter and debug text overlap
             string flavorText = GetRationFlavorText(qmRep);
-            InformationManager.DisplayMessage(new InformationMessage(flavorText, Colors.Cyan));
 
-            ModLogger.Info("Rations", $"Issued {amount}x {itemId} (QM rep={qmRep})");
+            ModLogger.Info("Rations", $"Issued {amount}x {itemId} (QM rep={qmRep}), flavor: {flavorText}");
         }
 
         /// <summary>

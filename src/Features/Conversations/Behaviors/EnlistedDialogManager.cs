@@ -1152,22 +1152,33 @@ namespace Enlisted.Features.Conversations.Behaviors
                         // First register QM lines (what quartermaster says)
                         RegisterJsonQuartermasterLines(starter, "qm_greeting", "start", 201);
                         RegisterJsonQuartermasterLines(starter, "qm_hub", "start", 200);
-                        RegisterJsonQuartermasterLines(starter, "qm_browse_response", "qm_hub", 150);
-                        RegisterJsonQuartermasterLines(starter, "qm_armor_slots", "qm_browse_response", 149);
+                        
+                        // Response nodes - only appear after player selects corresponding option from hub
+                        RegisterJsonQuartermasterLines(starter, "qm_browse_response", "qm_browse_response", 150);
+                        RegisterJsonQuartermasterLines(starter, "qm_sell_response", "qm_sell_response", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_baggage_status_response", "qm_baggage_status_response", 147);
+                        RegisterJsonQuartermasterLines(starter, "qm_armor_slots", "qm_armor_slots", 149);
 
                         // Register introduction flow (first meeting)
                         RegisterJsonQuartermasterLines(starter, "qm_intro_greeting", "start", 202);
-                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_direct", "qm_intro_greeting", 151);
-                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_military", "qm_intro_greeting", 151);
-                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_friendly", "qm_intro_greeting", 151);
-                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_flattering", "qm_intro_greeting", 151);
+                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_direct", "qm_intro_ack_direct", 151);
+                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_military", "qm_intro_ack_military", 151);
+                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_friendly", "qm_intro_ack_friendly", 151);
+                        RegisterJsonQuartermasterLines(starter, "qm_intro_ack_flattering", "qm_intro_ack_flattering", 151);
+
+                        // Register hub menu accessible from intro acknowledgment states
+                        RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_intro_ack_direct", 199);
+                        RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_intro_ack_military", 199);
+                        RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_intro_ack_friendly", 199);
+                        RegisterJsonQuartermasterLines(starter, "qm_hub", "qm_intro_ack_flattering", 199);
 
                         // Register gate nodes (RP responses for blocked actions)
-                        RegisterJsonQuartermasterLines(starter, "qm_gate_horse", "qm_browse_response", 148);
-                        RegisterJsonQuartermasterLines(starter, "qm_gate_officers_armory_rank", "qm_hub", 148);
-                        RegisterJsonQuartermasterLines(starter, "qm_gate_officers_armory_trust", "qm_hub", 148);
-                        RegisterJsonQuartermasterLines(starter, "qm_gate_upgrade_masterwork", "qm_hub", 148);
-                        RegisterJsonQuartermasterLines(starter, "qm_gate_upgrade_legendary", "qm_hub", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_sell_blocked", "qm_sell_blocked", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_gate_horse", "qm_gate_horse", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_gate_officers_armory_rank", "qm_gate_officers_armory_rank", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_gate_officers_armory_trust", "qm_gate_officers_armory_trust", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_gate_upgrade_masterwork", "qm_gate_upgrade_masterwork", 148);
+                        RegisterJsonQuartermasterLines(starter, "qm_gate_upgrade_legendary", "qm_gate_upgrade_legendary", 148);
 
                         // Register baggage train emergency access dialogue
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_request_emergency", "start", 195);
@@ -1185,6 +1196,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                         RegisterJsonDialogueNode(starter, "qm_greeting", 151);
                         RegisterJsonDialogueNode(starter, "qm_hub", 150);
                         RegisterJsonDialogueNode(starter, "qm_browse_response", 149);
+                        RegisterJsonDialogueNode(starter, "qm_sell_response", 148);
+                        RegisterJsonDialogueNode(starter, "qm_sell_blocked", 148);
+                        RegisterJsonDialogueNode(starter, "qm_baggage_status_response", 147);
                         RegisterJsonDialogueNode(starter, "qm_armor_slots", 148);
                         RegisterJsonDialogueNode(starter, "qm_gate_horse", 147);
                         RegisterJsonDialogueNode(starter, "qm_gate_officers_armory_rank", 147);
@@ -1206,429 +1220,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
 
                 // ========================================
-                // QUARTERMASTER GREETING (Entry Point)
+                // ALL QUARTERMASTER DIALOGUE IS NOW HANDLED BY JSON
+                // See qm_intro.json and qm_dialogue.json
                 // ========================================
-
-                // First meeting greeting - introduction flow (uses dynamic text)
-                // Goes to qm_intro_greeting to let player choose relationship tone
-                starter.AddDialogLine(
-                    "qm_greeting_first",
-                    "start",
-                    "qm_intro_greeting",
-                    "{=qm_greeting_dynamic}{QM_GREETING}",
-                    () => IsQuartermasterConversation() && !HasMetQuartermaster() && SetQuartermasterGreetingText(),
-                    null,
-                    200); // High priority for first meeting
-
-                // Returning visit greeting - archetype + mood based (uses dynamic text)
-                starter.AddDialogLine(
-                    "qm_greeting_return",
-                    "start",
-                    "qm_hub",
-                    "{=qm_greeting_dynamic}{QM_GREETING}",
-                    () => IsQuartermasterConversation() && HasMetQuartermaster() && SetQuartermasterGreetingText(),
-                    null,
-                    199); // Slightly lower priority for returning visits
-
-                // ========================================
-                // QUARTERMASTER HUB (Main Category Options)
-                // ========================================
-
-                // ========================================
-                // MAIN HUB → EQUIPMENT BROWSE (Two-Level Flow)
-                // Player asks for gear → QM responds with context → Category selection
-                // ========================================
-
-                // Option: Browse Equipment → Goes to QM browse response with context
-                starter.AddPlayerLine(
-                    "qm_browse_equipment",
-                    "qm_hub",
-                    "qm_browse_response",
-                    "{=qm_browse_equipment}I'm looking for some new gear. What've you got?",
-                    HasAnyEquipmentAvailable,
-                    null);
-
-                // ========================================
-                // QM BROWSE RESPONSE (Dynamic with rank/supply/reputation context)
-                // This is where QM gives hints about prices, stock, player standing
-                // ========================================
-
-                // QM Browse Response → Goes to equipment category hub
-                starter.AddDialogLine(
-                    "qm_browse_response_dynamic",
-                    "qm_browse_response",
-                    "qm_equipment_category",
-                    "{=qm_browse_response_dynamic}{BROWSE_RESPONSE}",
-                    SetBrowseResponseText,
-                    null);
-
-                // ========================================
-                // EQUIPMENT CATEGORY HUB (Second Level)
-                // Player picks: Weapons, Armor, Accessories, Horse, or back
-                // ========================================
-
-                // Option: Weapons
-                starter.AddPlayerLine(
-                    "qm_category_weapons",
-                    "qm_equipment_category",
-                    "qm_category_response",
-                    "{=qm_category_weapons}Weapons.",
-                    HasWeaponVariantsAvailable,
-                    () => { _selectedEquipmentCategory = "weapons"; });
-
-                // Option: Armor
-                starter.AddPlayerLine(
-                    "qm_category_armor",
-                    "qm_equipment_category",
-                    "qm_category_response",
-                    "{=qm_category_armor}Armor.",
-                    HasArmorVariantsAvailable,
-                    () => { _selectedEquipmentCategory = "armor"; },
-                    99);
-
-                // Option: Accessories
-                starter.AddPlayerLine(
-                    "qm_category_accessories",
-                    "qm_equipment_category",
-                    "qm_category_response",
-                    "{=qm_category_accessories}Accessories.",
-                    HasAccessoryVariantsAvailable,
-                    () => { _selectedEquipmentCategory = "accessories"; },
-                    98);
-
-                // Option: Horse (gated by cavalry unlock)
-                starter.AddPlayerLine(
-                    "qm_category_horse",
-                    "qm_equipment_category",
-                    "qm_category_response",
-                    "{=qm_category_horse}A horse.",
-                    () => HasMountVariantsAvailable() && IsCavalryUnlocked(),
-                    () => { _selectedEquipmentCategory = "mounts"; },
-                    97);
-
-                // Option: Horse (blocked - cavalry not unlocked)
-                starter.AddPlayerLine(
-                    "qm_category_horse_blocked",
-                    "qm_equipment_category",
-                    "qm_horse_gate_response",
-                    "{=qm_category_horse}A horse.",
-                    () => !IsCavalryUnlocked(),
-                    null,
-                    96);
-
-                // Option: Never mind → Back to main hub
-                starter.AddPlayerLine(
-                    "qm_category_nevermind",
-                    "qm_equipment_category",
-                    "qm_hub",
-                    "{=qm_category_nevermind}Never mind.",
-                    null,
-                    null,
-                    50);
-
-                // QM Category Response → Opens Gauntlet UI for selected category
-                starter.AddDialogLine(
-                    "qm_category_response",
-                    "qm_category_response",
-                    "close_window",
-                    "{=qm_category_confirm}Right. Let's see what we've got.",
-                    null,
-                    OnQuartermasterBrowseCategory);
-
-                // QM Horse Gate Response → Cavalry not unlocked
-                starter.AddDialogLine(
-                    "qm_horse_gate_response",
-                    "qm_horse_gate_response",
-                    "qm_equipment_category",
-                    "{=qm_horse_gate}Horses are for cavalry, not foot soldiers. Earn your spurs first.",
-                    null,
-                    null);
-
-                // Option: Sell Equipment → Opens sell interface
-                starter.AddPlayerLine(
-                    "qm_sell_equipment",
-                    "qm_hub",
-                    "qm_sell_response",
-                    "{=qm_sell_request}I want to sell some equipment.",
-                    CanSellEquipment,
-                    null,
-                    96);
-
-                // Option: Provisions → Opens rations menu
-                starter.AddPlayerLine(
-                    "qm_request_provisions",
-                    "qm_hub",
-                    "qm_provisions_response",
-                    "{=qm_request_provisions}I need better provisions.",
-                    null,
-                    null,
-                    95);
-
-                // Option: Upgrade equipment → Opens upgrade interface
-                starter.AddPlayerLine(
-                    "qm_upgrade_request",
-                    "qm_hub",
-                    "qm_upgrade_response",
-                    "{=qm_upgrade_request}Can you improve my equipment?",
-                    HasUpgradeableEquipment,
-                    null,
-                    94);
-
-                // Option: Supply inquiry → Pure dialogue response
-                starter.AddPlayerLine(
-                    "qm_supply_inquiry",
-                    "qm_hub",
-                    "qm_supply_response",
-                    "{=qm_supply_inquiry}How are our supplies?",
-                    null,
-                    null,
-                    93);
-
-                // ========================================
-                // PAYTENSION DIALOG OPTIONS
-                // ========================================
-
-                // Scoundrel Black Market (tension 40+)
-                starter.AddPlayerLine(
-                    "qm_black_market",
-                    "qm_hub",
-                    "qm_black_market_response",
-                    "{=qm_black_market}I need... alternative supplies.",
-                    IsScoundrelBlackMarketAvailable,
-                    null,
-                    92);
-
-                // Believer Moral Guidance (tension 60+)
-                starter.AddPlayerLine(
-                    "qm_moral_guidance",
-                    "qm_hub",
-                    "qm_moral_guidance_response",
-                    "{=qm_moral_guidance}The men are losing hope. Any guidance?",
-                    IsBelieverGuidanceAvailable,
-                    null,
-                    91);
-
-                // Veteran Survival Advice (tension 80+)
-                starter.AddPlayerLine(
-                    "qm_survival_advice",
-                    "qm_hub",
-                    "qm_survival_advice_response",
-                    "{=qm_survival_advice}Should I... consider my options?",
-                    IsVeteranAdviceAvailable,
-                    null,
-                    90);
-
-                // Help the Lord suggestion (any archetype, tension 40+)
-                starter.AddPlayerLine(
-                    "qm_help_lord",
-                    "qm_hub",
-                    "qm_help_lord_response",
-                    "{=qm_help_lord}Is there anything I can do to help with... the situation?",
-                    IsHelpLordAvailable,
-                    null,
-                    89);
-
-                // Chat (Relationship building) - first time or high relationship
-                starter.AddPlayerLine(
-                    "qm_chat",
-                    "qm_hub",
-                    "qm_chat_response",
-                    "{=qm_chat}How did you end up as quartermaster?",
-                    CanChatWithQuartermaster,
-                    null,
-                    88);
-
-                // Exit conversation
-                starter.AddPlayerLine(
-                    "qm_leave",
-                    "qm_hub",
-                    "qm_farewell_response",
-                    "{=qm_nothing_else}That's all for now.",
-                    null,
-                    null,
-                    50);
-
-                // ========================================
-                // QM RESPONSES - Other Actions
-                // ========================================
-
-                // Sell response → Opens sell interface
-                // Now uses dynamic text based on mood and reputation
-                starter.AddDialogLine(
-                    "qm_sell_response",
-                    "qm_sell_response",
-                    "close_window",
-                    "{=qm_sell_response_dynamic}{SELL_RESPONSE}",
-                    SetSellResponseText,
-                    OnQuartermasterSellRequest);
-
-                // Provisions response → Opens rations menu
-                starter.AddDialogLine(
-                    "qm_provisions_response",
-                    "qm_provisions_response",
-                    "close_window",
-                    "{=qm_provisions_response}Rations are what they are. Take it or leave it.",
-                    null,
-                    OnQuartermasterProvisionsRequest);
-
-                // Upgrade response → Opens upgrade interface
-                // Now uses dynamic text based on archetype and reputation
-                starter.AddDialogLine(
-                    "qm_upgrade_response",
-                    "qm_upgrade_response",
-                    "close_window",
-                    "{=qm_upgrade_response_dynamic}{UPGRADE_RESPONSE}",
-                    SetUpgradeResponseText,
-                    OnQuartermasterUpgradeRequest);
-
-                // Upgrade response (no upgradeable items)
-                starter.AddDialogLine(
-                    "qm_upgrade_response_no",
-                    "qm_upgrade_response",
-                    "qm_hub",
-                    "{=qm_upgrade_response_no}Nothing on you worth the effort. Come back with proper kit.",
-                    () => !HasUpgradeableEquipment(),
-                    null,
-                    200); // Higher priority than the "yes" response
-
-                // Supply inquiry response with dynamic text
-                starter.AddDialogLine(
-                    "qm_supply_response",
-                    "qm_supply_response",
-                    "qm_hub",
-                    "{=qm_supply_response}{SUPPLY_STATUS}",
-                    SetSupplyStatusText,
-                    null);
-
-                // Farewell response
-                starter.AddDialogLine(
-                    "qm_farewell_response",
-                    "qm_farewell_response",
-                    "close_window",
-                    "{=qm_farewell}Come back when you need something.",
-                    null,
-                    null);
-
-                // ========================================
-                // ARMOR SLOT SELECTION HUB
-                // ========================================
-
-                // QM asks which armor piece
-                starter.AddDialogLine(
-                    "qm_armor_slot_hub",
-                    "qm_armor_slot_hub",
-                    "qm_armor_slot_options",
-                    "{=qm_armor_which_slot}What piece are you looking for?",
-                    null,
-                    null);
-
-                // Armor slot options
-                starter.AddPlayerLine(
-                    "qm_armor_helmet",
-                    "qm_armor_slot_options",
-                    "qm_armor_slot_response",
-                    "{=qm_armor_helmet}A helmet.",
-                    () => HasArmorSlotVariants(EquipmentIndex.Head),
-                    () => { _selectedArmorSlot = EquipmentIndex.Head; });
-
-                starter.AddPlayerLine(
-                    "qm_armor_body",
-                    "qm_armor_slot_options",
-                    "qm_armor_slot_response",
-                    "{=qm_armor_body}Body armor.",
-                    () => HasArmorSlotVariants(EquipmentIndex.Body),
-                    () => { _selectedArmorSlot = EquipmentIndex.Body; },
-                    99);
-
-                starter.AddPlayerLine(
-                    "qm_armor_gloves",
-                    "qm_armor_slot_options",
-                    "qm_armor_slot_response",
-                    "{=qm_armor_gloves}Gloves.",
-                    () => HasArmorSlotVariants(EquipmentIndex.Gloves),
-                    () => { _selectedArmorSlot = EquipmentIndex.Gloves; },
-                    98);
-
-                starter.AddPlayerLine(
-                    "qm_armor_boots",
-                    "qm_armor_slot_options",
-                    "qm_armor_slot_response",
-                    "{=qm_armor_boots}Boots.",
-                    () => HasArmorSlotVariants(EquipmentIndex.Leg),
-                    () => { _selectedArmorSlot = EquipmentIndex.Leg; },
-                    97);
-
-                starter.AddPlayerLine(
-                    "qm_armor_cape",
-                    "qm_armor_slot_options",
-                    "qm_armor_slot_response",
-                    "{=qm_armor_cape}A cape or cloak.",
-                    () => HasArmorSlotVariants(EquipmentIndex.Cape),
-                    () => { _selectedArmorSlot = EquipmentIndex.Cape; },
-                    96);
-
-                // Back to hub option
-                starter.AddPlayerLine(
-                    "qm_armor_back",
-                    "qm_armor_slot_options",
-                    "qm_hub",
-                    "{=qm_armor_back}Something else entirely.",
-                    null,
-                    null,
-                    50);
-
-                // Armor slot response → Opens Gauntlet for selected slot
-                starter.AddDialogLine(
-                    "qm_armor_slot_response",
-                    "qm_armor_slot_response",
-                    "close_window",
-                    "{=qm_browse_response}Let me see what's in stock for you.",
-                    null,
-                    OnQuartermasterArmorSlotSelected);
-
-                // ========================================
-                // PAYTENSION DIALOG RESPONSES
-                // ========================================
-
-                starter.AddDialogLine(
-                    "qm_black_market_response",
-                    "qm_black_market_response",
-                    "qm_hub",
-                    "{=qm_black_market_response}Looking for opportunities? I might know some people who can help... for a price.",
-                    null,
-                    OnQuartermasterBlackMarket);
-
-                starter.AddDialogLine(
-                    "qm_moral_guidance_response",
-                    "qm_moral_guidance_response",
-                    "qm_hub",
-                    "{=qm_moral_guidance_response}These are trying times, but faith endures. Remember why you serve.",
-                    null,
-                    OnQuartermasterMoralGuidance);
-
-                starter.AddDialogLine(
-                    "qm_survival_advice_response",
-                    "qm_survival_advice_response",
-                    "qm_hub",
-                    "{=qm_survival_advice_response}I've seen armies fall apart before. Keep your head down and watch for opportunities.",
-                    null,
-                    OnQuartermasterSurvivalAdvice);
-
-                starter.AddDialogLine(
-                    "qm_help_lord_response",
-                    "qm_help_lord_response",
-                    "qm_hub",
-                    "{=qm_help_lord_response}There are ways a loyal soldier could help. Collect debts, escort merchants, that sort of thing.",
-                    null,
-                    OnQuartermasterHelpLordSuggestion);
-
-                starter.AddDialogLine(
-                    "qm_chat_response",
-                    "qm_chat_response",
-                    "qm_hub",
-                    "{=qm_chat_response}It's a long story. Let's just say I ended up here after some... interesting experiences.",
-                    null,
-                    OnQuartermasterChat);
 
                 ModLogger.Info("Conversations", "Quartermaster dialog tree registered");
             }
@@ -1717,109 +1311,203 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             try
             {
-                // Get current game context to find matching nodes
-                var context = GetCurrentDialogueContext();
-                var node = QMDialogueCatalog.Instance.GetNode(nodeId, context);
+                // Get ALL node variants for this ID (not just the one matching current context at registration time)
+                var allNodes = QMDialogueCatalog.Instance.GetAllNodesById(nodeId);
 
-                if (node == null || node.Options == null || node.Options.Count == 0)
+                if (allNodes == null || allNodes.Count == 0)
                 {
-                    ModLogger.Debug("EnlistedDialogManager", $"No JSON node found for '{nodeId}' or node has no options");
+                    ModLogger.Debug("EnlistedDialogManager", $"No JSON node found for '{nodeId}'");
                     return;
                 }
 
-                ModLogger.Info("EnlistedDialogManager", $"Registering JSON node '{nodeId}' with {node.Options.Count} options");
+                ModLogger.Debug("EnlistedDialogManager", $"Found {allNodes.Count} node variants for '{nodeId}'");
 
-                // Register each player option as a dialogue line
-                var priority = basePriority;
-                foreach (var option in node.Options)
+                // Filter to nodes that have player options (QM nodes with options = player's turn to respond)
+                var nodesWithOptions = allNodes.Where(n => n.Options != null && n.Options.Count > 0).ToList();
+
+                ModLogger.Debug("EnlistedDialogManager", $"After filtering, {nodesWithOptions.Count} nodes have options for '{nodeId}'");
+                foreach (var node in allNodes)
                 {
-                    var optionText = QMDialogueCatalog.Instance.ResolveText(option.TextId, option.Text);
+                    var optCount = node.Options?.Count ?? 0;
+                    ModLogger.Debug("EnlistedDialogManager", $"  Node speaker='{node.Speaker}' context_specificity={node.Context?.GetSpecificity() ?? 0} options={optCount}");
+                }
 
-                    // Check if this option has a gate condition
-                    if (option.Gate != null && !string.IsNullOrEmpty(option.Gate.Condition) && !string.IsNullOrEmpty(option.Gate.GateNode))
+                if (nodesWithOptions.Count == 0)
+                {
+                    ModLogger.Debug("EnlistedDialogManager", $"No nodes with player options found for '{nodeId}'");
+                    return;
+                }
+
+                // Register player options for each contextual variant
+                // Sort by specificity (most specific first) to assign highest priority to most specific
+                var sortedNodes = nodesWithOptions.OrderByDescending(n => n.Context?.GetSpecificity() ?? 0).ToList();
+
+                // Track registered option IDs to avoid duplicates when multiple node variants have identical options
+                var registeredOptionIds = new HashSet<string>();
+
+                var totalOptionsRegistered = 0;
+                foreach (var node in sortedNodes)
+                {
+                    var nodeContext = node.Context; // Capture for closure
+                    var specificity = nodeContext?.GetSpecificity() ?? 0;
+
+                    ModLogger.Debug("EnlistedDialogManager",
+                        $"Registering player options for '{nodeId}' variant (specificity={specificity}) with {node.Options.Count} options");
+
+                    // Register each player option as a dialogue line
+                    var priority = basePriority - (sortedNodes.Count - 1 - sortedNodes.IndexOf(node)) * 100;
+                    foreach (var option in node.Options)
                     {
-                        // Register TWO versions of this option:
-                        // 1. Version that passes the gate (normal behavior)
-                        // 2. Version that fails the gate (redirects to gate node)
-
-                        // Version 1: Gate condition PASSES (higher priority)
-                        var outputState = string.IsNullOrEmpty(option.NextNode) ? "close_window" : option.NextNode;
-
-                        ConversationSentence.OnConditionDelegate passCondition = () =>
+                        // Skip if this option ID has already been registered (prevents duplicates across node variants)
+                        if (registeredOptionIds.Contains(option.Id))
                         {
-                            // Check both requirements and gate condition
-                            if (option.Requirements != null && !CheckOptionRequirements(option.Requirements))
+                            ModLogger.Debug("EnlistedDialogManager", $"Skipping duplicate option '{option.Id}' for node '{nodeId}'");
+                            continue;
+                        }
+
+                        registeredOptionIds.Add(option.Id);
+
+                        // Build TextObject pattern string so Bannerlord resolves it at display time (when variables are set)
+                        // Pattern: {=textId}fallback allows XML localization with runtime variable substitution
+                        var optionText = !string.IsNullOrEmpty(option.TextId)
+                            ? $"{{={option.TextId}}}{option.Text ?? string.Empty}"
+                            : option.Text ?? string.Empty;
+
+                        // Check if this option has a gate condition
+                        if (option.Gate != null && !string.IsNullOrEmpty(option.Gate.Condition) && !string.IsNullOrEmpty(option.Gate.GateNode))
+                        {
+                            // Register TWO versions of this option:
+                            // 1. Version that passes the gate (normal behavior)
+                            // 2. Version that fails the gate (redirects to gate node)
+
+                            // Version 1: Gate condition PASSES (higher priority)
+                            var outputState = string.IsNullOrEmpty(option.NextNode) ? "close_window" : option.NextNode;
+
+                            ConversationSentence.OnConditionDelegate passCondition = () =>
                             {
-                                return false;
-                            }
-                            return CheckGateCondition(option.Gate.Condition);
-                        };
+                                // Set text variables at runtime so {PLAYER_NAME} etc. are substituted
+                                SetCommonDialogueVariables();
 
-                        ConversationSentence.OnConsequenceDelegate passConsequence = null;
-                        if (!string.IsNullOrEmpty(option.Action) && option.Action != "none")
-                        {
-                            passConsequence = () => ExecuteDialogueAction(option.Action, option.ActionData);
-                        }
+                                // Only check parent node context if option has requirements
+                                // This allows options without requirements to appear regardless of parent node variant
+                                if (option.Requirements != null)
+                                {
+                                    var currentContext = GetCurrentDialogueContext();
+                                    if (nodeContext != null && !nodeContext.Matches(currentContext))
+                                    {
+                                        return false;
+                                    }
+                                    if (!CheckOptionRequirements(option.Requirements))
+                                    {
+                                        return false;
+                                    }
+                                }
 
-                        starter.AddPlayerLine(
-                            $"json_{nodeId}_{option.Id}_pass",
-                            nodeId,
-                            outputState,
-                            optionText,
-                            passCondition,
-                            passConsequence,
-                            priority);
+                                return CheckGateCondition(option.Gate.Condition);
+                            };
 
-                        // Version 2: Gate condition FAILS (redirects to gate node)
-                        ConversationSentence.OnConditionDelegate failCondition = () =>
-                        {
-                            // Check requirements first (if they fail, hide entirely)
-                            if (option.Requirements != null && !CheckOptionRequirements(option.Requirements))
+                            ConversationSentence.OnConsequenceDelegate passConsequence = null;
+                            if (!string.IsNullOrEmpty(option.Action) && option.Action != "none")
                             {
-                                return false;
+                                passConsequence = () => ExecuteDialogueAction(option.Action, option.ActionData);
                             }
-                            // Show this version only if gate fails
-                            return !CheckGateCondition(option.Gate.Condition);
-                        };
 
-                        starter.AddPlayerLine(
-                            $"json_{nodeId}_{option.Id}_fail",
-                            nodeId,
-                            option.Gate.GateNode, // Redirect to gate node
-                            optionText,
-                            failCondition,
-                            null, // No action when gated
-                            priority - 1); // Lower priority than pass version
+                            starter.AddPlayerLine(
+                                $"json_{nodeId}_spec{specificity}_{option.Id}_pass",
+                                nodeId,
+                                outputState,
+                                optionText,
+                                passCondition,
+                                passConsequence,
+                                priority);
 
-                        priority -= 2; // Account for both versions
-                    }
-                    else
-                    {
-                        // Normal option without gate
-                        var outputState = string.IsNullOrEmpty(option.NextNode) ? "close_window" : option.NextNode;
+                            // Version 2: Gate condition FAILS (redirects to gate node)
+                            ConversationSentence.OnConditionDelegate failCondition = () =>
+                            {
+                                // Set text variables at runtime so {PLAYER_NAME} etc. are substituted
+                                SetCommonDialogueVariables();
 
-                        ConversationSentence.OnConditionDelegate conditionDelegate = null;
-                        if (option.Requirements != null)
-                        {
-                            conditionDelegate = () => CheckOptionRequirements(option.Requirements);
+                                // Only check parent node context if option has requirements
+                                // This allows options without requirements to appear regardless of parent node variant
+                                if (option.Requirements != null)
+                                {
+                                    var currentContext = GetCurrentDialogueContext();
+                                    if (nodeContext != null && !nodeContext.Matches(currentContext))
+                                    {
+                                        return false;
+                                    }
+                                    if (!CheckOptionRequirements(option.Requirements))
+                                    {
+                                        return false;
+                                    }
+                                }
+
+                                // Show this version only if gate fails
+                                return !CheckGateCondition(option.Gate.Condition);
+                            };
+
+                            starter.AddPlayerLine(
+                                $"json_{nodeId}_spec{specificity}_{option.Id}_fail",
+                                nodeId,
+                                option.Gate.GateNode, // Redirect to gate node
+                                optionText,
+                                failCondition,
+                                null, // No action when gated
+                                priority - 1); // Lower priority than pass version
+
+                            priority -= 2; // Account for both versions
+                            totalOptionsRegistered += 2;
                         }
-
-                        ConversationSentence.OnConsequenceDelegate consequenceDelegate = null;
-                        if (!string.IsNullOrEmpty(option.Action) && option.Action != "none")
+                        else
                         {
-                            consequenceDelegate = () => ExecuteDialogueAction(option.Action, option.ActionData);
-                        }
+                            // Normal option without gate
+                            var outputState = string.IsNullOrEmpty(option.NextNode) ? "close_window" : option.NextNode;
 
-                        starter.AddPlayerLine(
-                            $"json_{nodeId}_{option.Id}",
-                            nodeId,
-                            outputState,
-                            optionText,
-                            conditionDelegate,
-                            consequenceDelegate,
-                            priority--);
+                            ConversationSentence.OnConditionDelegate conditionDelegate = () =>
+                            {
+                                // Set text variables at runtime so {PLAYER_NAME} etc. are substituted
+                                SetCommonDialogueVariables();
+
+                                // Only check parent node context if option has requirements
+                                // This allows options without requirements to appear regardless of parent node variant
+                                if (option.Requirements != null)
+                                {
+                                    var currentContext = GetCurrentDialogueContext();
+                                    if (nodeContext != null && !nodeContext.Matches(currentContext))
+                                    {
+                                        return false;
+                                    }
+                                    if (!CheckOptionRequirements(option.Requirements))
+                                    {
+                                        return false;
+                                    }
+                                }
+
+                                return true;
+                            };
+
+                            ConversationSentence.OnConsequenceDelegate consequenceDelegate = null;
+                            if (!string.IsNullOrEmpty(option.Action) && option.Action != "none")
+                            {
+                                consequenceDelegate = () => ExecuteDialogueAction(option.Action, option.ActionData);
+                            }
+
+                            starter.AddPlayerLine(
+                                $"json_{nodeId}_spec{specificity}_{option.Id}",
+                                nodeId,
+                                outputState,
+                                optionText,
+                                conditionDelegate,
+                                consequenceDelegate,
+                                priority--);
+
+                            totalOptionsRegistered++;
+                        }
                     }
                 }
+
+                ModLogger.Info("EnlistedDialogManager",
+                    $"Registered {totalOptionsRegistered} player option variants for '{nodeId}' across {sortedNodes.Count} node variants");
             }
             catch (Exception ex)
             {
@@ -1859,7 +1547,12 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                     var specificity = node.Context?.GetSpecificity() ?? 0;
                     var nodeContext = node.Context; // Capture for closure
-                    var qmText = QMDialogueCatalog.Instance.ResolveText(node.TextId, node.Text);
+
+                    // Build TextObject pattern string so Bannerlord resolves it at display time (when variables are set)
+                    // Pattern: {=textId}fallback allows XML localization with runtime variable substitution
+                    var qmText = !string.IsNullOrEmpty(node.TextId)
+                        ? $"{{={node.TextId}}}{node.Text ?? string.Empty}"
+                        : node.Text ?? string.Empty;
 
                     // Create condition that checks if current game context matches this node's requirements
                     ConversationSentence.OnConditionDelegate condition = () =>
