@@ -85,10 +85,20 @@ namespace Enlisted.Features.Equipment.UI
         
         private void OnMapEventEnded(MapEvent mapEvent)
         {
-            // Only close UI for actual combat events, not conversations.
-            // Conversations also trigger MapEventEnded, but we want the provisions screen
-            // to remain open after the conversation ends (opened via QM dialogue).
-            bool isCombatEvent = mapEvent?.EventType != MapEvent.BattleTypes.None;
+            // Log the event type to diagnose conversation vs combat events
+            var eventType = mapEvent?.EventType.ToString() ?? "null";
+            ModLogger.Debug("QuartermasterUI", $"MapEventEnded (Provisions): EventType={eventType}, IsOpen={IsOpen}");
+            
+            // Don't close UI when mapEvent is null (conversations don't have MapEvents)
+            // Only close for actual combat events (field battles, sieges, raids, etc.)
+            if (mapEvent == null)
+            {
+                ModLogger.Debug("QuartermasterUI", "MapEventEnded with null mapEvent - not closing provisions (likely conversation end)");
+                return;
+            }
+            
+            bool isCombatEvent = mapEvent.EventType != MapEvent.BattleTypes.None;
+            ModLogger.Debug("QuartermasterUI", $"isCombatEvent={isCombatEvent}");
             
             if (isCombatEvent && IsOpen)
             {

@@ -120,10 +120,20 @@ namespace Enlisted.Features.Equipment.UI
         
         private void OnMapEventEnded(MapEvent mapEvent)
         {
-            // Only close UI for actual combat events, not conversations.
-            // Conversations also trigger MapEventEnded, but we want the upgrade/selector screens
-            // to remain open after the conversation ends (opened via "open_upgrade" action).
-            bool isCombatEvent = mapEvent?.EventType != MapEvent.BattleTypes.None;
+            // Log the event type to diagnose conversation vs combat events
+            var eventType = mapEvent?.EventType.ToString() ?? "null";
+            ModLogger.Debug("QuartermasterUI", $"MapEventEnded: EventType={eventType}, IsOpen={IsOpen}, IsUpgradeScreenOpen={IsUpgradeScreenOpen}");
+            
+            // Don't close UI when mapEvent is null (conversations don't have MapEvents)
+            // Only close for actual combat events (field battles, sieges, raids, etc.)
+            if (mapEvent == null)
+            {
+                ModLogger.Debug("QuartermasterUI", "MapEventEnded with null mapEvent - not closing UI (likely conversation end)");
+                return;
+            }
+            
+            bool isCombatEvent = mapEvent.EventType != MapEvent.BattleTypes.None;
+            ModLogger.Debug("QuartermasterUI", $"isCombatEvent={isCombatEvent}");
             
             if (isCombatEvent && IsOpen)
             {
