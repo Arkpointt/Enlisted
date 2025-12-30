@@ -772,12 +772,20 @@ Phase 4 Tasks:
    - 16 files (one per order), 85 total events
    - Events filter by requirements.world_state
 
-5. Implement placeholder text resolution for events:
-   - {SERGEANT} → culture-specific NCO (Empire: "Optio", Vlandia: "Sergeant", etc.)
-   - {LORD_NAME} → enlisted lord's name
-   - {PLAYER_RANK} → culture-specific player rank title
-   - {SOLDIER_NAME}, {COMRADE_NAME} → generated soldier names
-   - See event-system-schemas.md for full placeholder list
+5. Placeholder text resolution for events:
+   ALREADY IMPLEMENTED in src/Features/Content/EventDeliveryManager.cs
+   Method: SetEventTextVariables() (around line 2485)
+   Uses Bannerlord's native TextObject.SetTextVariable()
+   
+   Available placeholders (just use these in JSON, they resolve automatically):
+   - {SERGEANT}, {SERGEANT_NAME}, {NCO_RANK} → culture-specific NCO
+   - {PLAYER_NAME}, {PLAYER_RANK} → player info
+   - {LORD_NAME}, {LORD_TITLE} → enlisted lord
+   - {COMRADE_NAME}, {SOLDIER_NAME}, {VETERAN_1_NAME}, {RECRUIT_NAME} → soldier names
+   - {COMPANY_NAME}, {FACTION_NAME}, {KINGDOM_NAME} → organization names
+   - {OFFICER_NAME}, {CAPTAIN_NAME} → officer names
+   
+   DO NOT BUILD A NEW PLACEHOLDER SYSTEM. Just write JSON with these placeholders.
 
 6. Test coordination:
    - Orders + events don't overwhelm player
@@ -873,10 +881,11 @@ FILES MODIFIED:
 - [ ] src/Features/Orders/Behaviors/OrderProgressionBehavior.cs (NOT YET CREATED - needs implementation)
 
 PLACEHOLDER RESOLUTION:
-- [ ] NOT YET IMPLEMENTED - placeholder system needs to be built
-- Placeholders defined in event JSON but not yet resolved at runtime
-- Required: {SERGEANT}, {LORD_NAME}, {PLAYER_RANK}, {SOLDIER_NAME}, {COMRADE_NAME}
-- See docs/Features/Content/event-system-schemas.md for full list
+- [x] ALREADY EXISTS - src/Features/Content/EventDeliveryManager.cs
+- [x] Method: SetEventTextVariables() (around line 2485)
+- [x] Uses Bannerlord's native TextObject.SetTextVariable()
+- [x] All placeholders work: {SERGEANT}, {LORD_NAME}, {PLAYER_RANK}, {SOLDIER_NAME}, {COMRADE_NAME}, etc.
+- DO NOT BUILD NEW SYSTEM - just write JSON with placeholders, they resolve automatically
 
 KEY DECISIONS MADE:
 - Order issuance timing coordinated via CanIssueOrderNow() check in OrderManager
