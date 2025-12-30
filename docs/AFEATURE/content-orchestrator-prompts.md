@@ -1,6 +1,6 @@
 # Content Orchestrator Implementation Prompts
 
-**Summary:** Copy-paste prompts for each implementation phase of the Content Orchestrator. Use these to guide implementation with your preferred coding assistant.
+**Summary:** Copy-paste prompts for each implementation phase of the Content Orchestrator. Each prompt is designed for a NEW AI chat session with full context recovery.
 
 **Status:** 📋 Reference
 **Last Updated:** 2025-12-30
@@ -8,36 +8,70 @@
 
 ---
 
+## How to Use These Prompts
+
+Each phase prompt is **self-contained for a fresh AI chat**. Every prompt includes:
+1. **Prerequisites** - What must exist before starting
+2. **Context Recovery** - How the new AI verifies previous work
+3. **Tasks** - What to implement
+4. **Acceptance Criteria** - Definition of done
+5. **Handoff Notes Template** - What to capture for the next AI
+
+**Start each new chat by copying the entire prompt block (inside the triple backticks).**
+
+---
+
 ## Index
 
-| Phase | Description | Model | Status |
-|-------|-------------|-------|--------|
-| [Phase 1: Foundation](#phase-1-foundation) | Build core infrastructure | Opus 4 | ✅ Complete |
-| [Phase 2: Selection](#phase-2-content-selection-integration) | Connect to content selection | Opus 4 | |
-| [Phase 3: Cutover](#phase-3-cutover) | Switch to orchestrator | Sonnet 4 | |
-| [Phase 4: Orders](#phase-4-orders-integration) | Coordinate order timing | Sonnet 4 | |
-| [Phase 5: UI](#phase-5-ui-integration-company-report) | Main Menu + Camp Hub UI | Sonnet 4 | |
-| [Phase 5.5: Background](#phase-55-camp-background-simulation) | Autonomous company simulation | Opus 4 | |
-| [Phase 6: Camp Life](#phase-6-camp-life-simulation-living-breathing-world) | Living breathing camp simulation | Opus 4 | |
-| [Phase 7: Variants](#phase-7-content-variants-post-launch) | Add content variants (JSON) | Sonnet 4 | |
-| [Phase 8: Progression](#phase-8-progression-system-future) | Organic escalation evolution | Opus 4 | |
-| [Build & Test](#quick-reference-build--test) | Commands reference | - | |
+| Phase | Description | Model | Chat Strategy | Status |
+|-------|-------------|-------|---------------|--------|
+| [Phase 1](#phase-1-foundation) | Foundation (infrastructure) | Opus 4 | ✅ **DONE** | ✅ Complete |
+| [Phase 2](#phase-2-content-selection-integration) | Content Selection | Opus 4 | 🔒 Standalone | |
+| [Phase 3](#phase-3-cutover--migration) | Cutover & Migration | Sonnet 4 | 🔒 Standalone | |
+| [Phase 4](#phase-4-orders-integration) | Orders Integration | Sonnet 4 | 🔒 Standalone | |
+| [Phase 5](#phase-5-ui-integration-quick-decision-center) | UI Integration | Sonnet 4 | 🔒 Standalone | |
+| [Phase 5.5](#phase-55-camp-background-simulation) | Background Simulation | Opus 4 | 🔒 Standalone | |
+| [Phase 6A-C](#phase-6-camp-life-simulation-living-breathing-world) | Camp Life Core | Opus 4 | ⚡ **COMBINE** | |
+| [Phase 6D-E](#phase-6d-e-camp-life-polish) | Camp Life Polish | Opus 4 | 🔒 Standalone | |
+| [Phase 7](#phase-7-content-variants-post-launch) | Content Variants | Sonnet 4 | 🔒 Standalone | |
+| [Phase 8](#phase-8-progression-system-future) | Progression System | Opus 4 | 🔒 Standalone | |
+| [Build & Test](#quick-reference-build--test) | Commands reference | - | - | |
+
+---
+
+## Chat Strategy Recommendations
+
+| Strategy | Phases | Rationale |
+|----------|--------|-----------|
+| ✅ **DONE** | 1 | Phase 1 is complete - infrastructure exists |
+| **STANDALONE** | 2 | Builds on Phase 1 files; context recovery provided |
+| **STANDALONE** | 3 | Migration is high-risk; needs focused attention |
+| **STANDALONE** | 4 | Order integration is distinct system |
+| **STANDALONE** | 5 | UI work is self-contained |
+| **STANDALONE** | 5.5 | Complex Bannerlord API work needs focus |
+| **COMBINE** | 6A-C | Core functionality; natural continuation |
+| **STANDALONE** | 6D-E | Polish phase; can be done later or by different AI |
+| **STANDALONE** | 7 | JSON-only work; fast iteration |
+| **STANDALONE** | 8 | Future system; clean separation |
 
 ---
 
 ## Model Recommendations
 
-| Phase | Complexity | Recommended Model |
-|-------|------------|-------------------|
-| Phase 1 - Foundation | High (new architecture) | Claude Opus 4 |
-| Phase 2 - Selection | Medium-High (integration) | Claude Opus 4 |
-| Phase 3 - Cutover | Medium (migration) | Claude Sonnet 4 |
-| Phase 4 - Orders | Medium (integration) | Claude Sonnet 4 |
-| Phase 5 - UI | Medium (UI changes) | Claude Sonnet 4 |
-| Phase 5.5 - Background | High (simulation + game API) | Claude Opus 4 |
-| Phase 6 - Camp Life | High (living simulation) | Claude Opus 4 |
-| Phase 7 - Variants | Low (JSON only) | Claude Sonnet 4 |
-| Phase 8 - Progression | High (new system) | Claude Opus 4 |
+| Phase | Complexity | Model | Est. Time | Status |
+|-------|------------|-------|-----------|--------|
+| Phase 1 - Foundation | High | Claude Opus 4 | - | ✅ Done |
+| Phase 2 - Selection | Medium-High | Claude Opus 4 | 1-2 hours | |
+| Phase 3 - Cutover | Medium | Claude Sonnet 4 | 1-2 hours | |
+| Phase 4 - Orders | Medium | Claude Sonnet 4 | 1-2 hours | |
+| Phase 5 - UI | Medium | Claude Sonnet 4 | 1-2 hours | |
+| Phase 5.5 - Background | High | Claude Opus 4 | 2-3 hours | |
+| Phase 6A-C - Camp Life Core | High | Claude Opus 4 | 2-3 hours | |
+| Phase 6D-E - Camp Life Polish | Medium | Sonnet 4 or Opus 4 | 1-2 hours | |
+| Phase 7 - Variants | Low | Claude Sonnet 4 | 30-60 min | |
+| Phase 8 - Progression | High | Claude Opus 4 | 2-3 hours | |
+
+**Total remaining time:** ~12-18 hours (Phase 1 complete)
 
 ---
 
@@ -45,84 +79,83 @@
 
 **Goal:** Build core orchestrator infrastructure without changing existing behavior
 
-```
-I need you to implement Phase 1 of the Content Orchestrator for my Bannerlord mod.
+**Status:** ✅ **COMPLETE** - This phase has been implemented
 
-Read these docs first:
-- docs/Features/Content/content-orchestrator-plan.md (full plan, start with Quick Start Guide)
-- docs/BLUEPRINT.md (coding standards, API verification, logging)
+**What Was Built:**
+- ContentOrchestrator.cs (CampaignBehaviorBase with daily tick)
+- WorldStateAnalyzer.cs (static class for situation analysis)
+- SimulationPressureCalculator.cs (static class for pressure calculation)
+- PlayerBehaviorTracker.cs (static class for preference tracking)
+- Data models in src/Features/Content/Models/
+- Save/load integration in EnlistedSaveDefiner.cs
 
-Phase 1 Tasks:
-1. Create ContentOrchestrator.cs class (CampaignBehaviorBase)
-2. Create WorldStateAnalyzer.cs static class
-3. Create SimulationPressureCalculator.cs static class
-4. Create PlayerBehaviorTracker.cs static class
-5. Create data models (WorldSituation, SimulationPressure, PlayerPreferences, enums)
-6. Wire up daily tick to log analysis (don't affect live system yet)
-7. Add comprehensive logging with category "Orchestrator"
-8. Register all custom types in EnlistedSaveDefiner.cs
-9. Implement SyncData() in ContentOrchestrator for state persistence
+**Files Created:**
+- src/Features/Content/ContentOrchestrator.cs
+- src/Features/Content/WorldStateAnalyzer.cs
+- src/Features/Content/SimulationPressureCalculator.cs
+- src/Features/Content/PlayerBehaviorTracker.cs
+- src/Features/Content/Models/WorldSituation.cs
+- src/Features/Content/Models/SimulationPressure.cs
+- src/Features/Content/Models/PlayerPreferences.cs
+- src/Features/Content/Models/OrchestratorEnums.cs (LordSituation, WarStance, LifePhase, ActivityLevel, DayPhase)
 
-File Locations:
-- Main classes: src/Features/Content/
-- Models: src/Features/Content/Models/
-
-Critical Requirements:
-- Add ALL new files to Enlisted.csproj manually (old-style project)
-- Verify APIs against local decompile at C:\Dev\Enlisted\Decompile\
-- Use ModLogger with category "Orchestrator"
-- Follow ReSharper recommendations
-- Comments describe current behavior (no "Phase X added" style)
-
-API Verification Checklist (verify in decompile BEFORE implementing):
-- MobileParty.CurrentSettlement - property (Settlement?) for garrison detection
-- MobileParty.Army - property (Army?) for solo vs army check
-- MobileParty.Party.SiegeEvent - property (SiegeEvent?) for siege detection
-- FactionManager.IsAtWarAgainstFaction(Kingdom, Kingdom) - method signature
-- CampaignTime.Now - property, verify .GetDayOfYear exists
-- Hero.MainHero - property (use CampaignSafetyGuard.SafeMainHero for null safety)
-
-Save/Load Requirements (CRITICAL - see BLUEPRINT section 628-651):
-1. Register enums in EnlistedSaveDefiner.DefineEnumTypes():
-   - WorldSituation enums (LordSituation, WarStance, LifePhase, ActivityLevel, etc.)
-2. Register classes in EnlistedSaveDefiner.DefineClassTypes():
-   - WorldSituation, SimulationPressure, PlayerPreferences (if persisted as objects)
-3. Register containers in EnlistedSaveDefiner.DefineContainerDefinitions():
-   - Dictionary<string, int> for behavior tracking
-   - Dictionary<string, float> for content engagement
-4. Implement SyncData() in ContentOrchestrator:
-   - Use SaveLoadDiagnostics.SafeSyncData() wrapper
-   - Persist player behavior counts
-   - Persist content engagement tracking
-   - Persist dampening state (events this week, last week reset)
-
-Acceptance Criteria:
+**Verification:**
 - Orchestrator receives daily ticks when enlisted
-- World state analysis logs correctly (LifePhase, ActivityLevel)
+- World state analysis logs correctly
 - Pressure calculation logs sources and total
-- All custom types registered in EnlistedSaveDefiner
-- SyncData() implemented with SafeSyncData() wrapper
-- Can save and load without "Cannot Create Save" error
-- Existing event system still works normally (no changes to live pacing)
-
-Start by reading the orchestrator plan doc, then implement. Show me the files to create.
-```
+- Save/load works without errors
 
 ---
 
 ## Phase 2: Content Selection Integration
 
-**Goal:** Connect orchestrator to content selection
+**Goal:** Connect orchestrator to content selection with fitness scoring
+
+**Chat Strategy:** 🔒 **STANDALONE** - Builds on completed Phase 1
+
+**Prerequisites:** Phase 1 complete (orchestrator infrastructure exists)
 
 ```
-I need you to implement Phase 2 of the Content Orchestrator.
+I need you to implement Phase 2 of the Content Orchestrator for my Bannerlord mod.
 
-Read these docs first:
-- docs/Features/Content/content-orchestrator-plan.md (Phase 2 section)
-- docs/Features/Content/content-system-architecture.md (current system)
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify Phase 1 exists before starting)
+═══════════════════════════════════════════════════════════════════════════════
+
+Phase 1 is COMPLETE. Before implementing Phase 2, verify these files exist:
+
+Phase 1 Files (MUST exist - read them to understand current implementation):
+[ ] src/Features/Content/ContentOrchestrator.cs - CampaignBehaviorBase with daily tick
+[ ] src/Features/Content/WorldStateAnalyzer.cs - static class with AnalyzeSituation()
+[ ] src/Features/Content/SimulationPressureCalculator.cs - static class with CalculatePressure()
+[ ] src/Features/Content/PlayerBehaviorTracker.cs - static class (may need implementation)
+[ ] src/Features/Content/Models/WorldSituation.cs - data model
+[ ] src/Features/Content/Models/SimulationPressure.cs - data model
+[ ] src/Features/Content/Models/PlayerPreferences.cs - data model
+
+Verify Phase 1 is working:
+1. Check logs for "[Orchestrator]" entries on daily tick
+2. Verify WorldSituation contains: LordSituation, WarStance, LifePhase, ActivityLevel
+3. Verify SimulationPressure contains: Value, Sources
+
+READ THE EXISTING FILES before modifying them!
+
+If any Phase 1 files are missing, they need to be created first.
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ
+═══════════════════════════════════════════════════════════════════════════════
+
+Read these docs:
+- docs/AFEATURE/content-orchestrator-plan.md (Phase 2 section)
+- docs/Features/Content/content-system-architecture.md (current event system)
 - docs/Features/Content/event-system-schemas.md (data structures)
+- docs/BLUEPRINT.md (coding standards)
 
-Phase 2 Tasks:
+═══════════════════════════════════════════════════════════════════════════════
+PHASE 2 TASKS
+═══════════════════════════════════════════════════════════════════════════════
+
 1. Integrate with EventSelector.SelectEvent() - add WorldSituation parameter
 2. Implement player behavior tracking (RecordChoice, GetPreferences)
 3. Add preference-based content scoring (fitness calculation)
@@ -146,7 +179,10 @@ Existing Managers to Use (BLUEPRINT requirement - use centralized managers):
 - EscalationManager.Instance - Read discipline, scrutiny for pressure calculation
 - EnlistmentBehavior.Instance - Read enlisted status, lord reference
 
-CRITICAL: Context Mapping Requirements
+═══════════════════════════════════════════════════════════════════════════════
+CRITICAL: CONTEXT MAPPING REQUIREMENTS
+═══════════════════════════════════════════════════════════════════════════════
+
 WorldStateAnalyzer must provide TWO context methods:
 
 1. GetEventContext(WorldSituation) → Returns "Camp", "War", "Siege", "Any"
@@ -174,13 +210,54 @@ For order events, combine LordSituation + WarStance:
 
 See event-system-schemas.md "Context Mapping" section for full details.
 
-Acceptance Criteria:
-- Orchestrator can query EventCatalog with world context
-- Fitness scoring considers world situation + player preferences
-- Logs show clear comparison: "Old system would pick X, new system picks Y"
-- Player preferences begin tracking from choices
+═══════════════════════════════════════════════════════════════════════════════
+ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════════════════
 
-Don't break the existing system. Log comparisons only.
+[ ] Orchestrator can query EventCatalog with world context
+[ ] WorldStateAnalyzer.GetEventContext() returns correct context
+[ ] WorldStateAnalyzer.GetOrderEventWorldState() returns granular keys
+[ ] Fitness scoring considers world situation + player preferences
+[ ] Logs show clear comparison: "Old system would pick X, new system picks Y"
+[ ] PlayerBehaviorTracker.RecordChoice() tracks player choices
+[ ] PlayerBehaviorTracker.GetPreferences() returns preference profile
+[ ] Existing event system still works (no changes to live behavior)
+
+CRITICAL: Don't break the existing system. Log comparisons only.
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (Capture these for Phase 3)
+═══════════════════════════════════════════════════════════════════════════════
+
+When complete, provide these handoff notes for the next AI session:
+
+FILES MODIFIED:
+- [ ] src/Features/Content/WorldStateAnalyzer.cs (added GetEventContext, GetOrderEventWorldState)
+- [ ] src/Features/Content/ContentOrchestrator.cs (added selection logic)
+- [ ] src/Features/Content/PlayerBehaviorTracker.cs (implemented tracking)
+- [ ] src/Features/Content/EventSelector.cs (added fitness scoring)
+
+FILES CREATED:
+- [ ] (any new files)
+
+CONTEXT MAPPING IMPLEMENTED:
+- GetEventContext() maps to: Camp, War, Siege, Any
+- GetOrderEventWorldState() maps to: peacetime_garrison, war_active_campaign, etc.
+
+FITNESS SCORING:
+- (describe how scoring works)
+
+KEY DECISIONS MADE:
+- (list any architectural decisions)
+
+KNOWN ISSUES/TECH DEBT:
+- (list any incomplete items)
+
+VERIFICATION PASSED:
+[ ] Logs show orchestrator selecting content
+[ ] Context mapping returns correct values
+[ ] Fitness scoring considers all factors
+[ ] Existing system unaffected
 ```
 
 ---
@@ -189,8 +266,39 @@ Don't break the existing system. Log comparisons only.
 
 **Goal:** Switch from schedule-driven event pacing to orchestrator-driven content delivery. This is a MIGRATION - old systems get removed.
 
+**Chat Strategy:** 🔒 **STANDALONE** - This is high-risk migration work; needs focused attention
+
+**Prerequisites:** Phase 1+2 complete (orchestrator infrastructure exists and can select content)
+
 ```
 I need you to implement Phase 3 of the Content Orchestrator - the cutover and migration.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify Phase 1+2 work before starting)
+═══════════════════════════════════════════════════════════════════════════════
+
+Before implementing, verify these files exist and work:
+
+Phase 1 Files (must exist):
+[ ] src/Features/Content/ContentOrchestrator.cs - CampaignBehaviorBase with daily tick
+[ ] src/Features/Content/WorldStateAnalyzer.cs - static class with AnalyzeSituation()
+[ ] src/Features/Content/SimulationPressureCalculator.cs - static class with CalculatePressure()
+[ ] src/Features/Content/PlayerBehaviorTracker.cs - static class with RecordChoice()
+[ ] src/Features/Content/Models/WorldSituation.cs - data model with LordSituation, WarStance, etc.
+[ ] src/Features/Content/Models/SimulationPressure.cs - data model with Value, Sources
+[ ] src/Features/Content/Models/PlayerPreferences.cs - data model with preference floats
+
+Phase 2 Integration (must work):
+[ ] WorldStateAnalyzer.GetEventContext() returns "Camp", "War", "Siege", "Any"
+[ ] WorldStateAnalyzer.GetOrderEventWorldState() returns granular keys
+[ ] ContentOrchestrator logs world state analysis on daily tick
+[ ] Fitness scoring implemented (in EventSelector or Orchestrator)
+
+If any of these are missing, read the Phase 1+2 prompt and implement the missing parts first.
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ FIRST
+═══════════════════════════════════════════════════════════════════════════════
 
 Read these docs first:
 - docs/AFEATURE/content-orchestrator-plan.md (Phase 3 + Migration section)
@@ -511,6 +619,43 @@ ACCEPTANCE CRITERIA
    - No evaluation hours
    - No random quiet day rolls
    - Events fire when world state says they should
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (Capture these for Phase 4)
+═══════════════════════════════════════════════════════════════════════════════
+
+When complete, provide these handoff notes for the next AI session:
+
+FILES MODIFIED:
+- [ ] src/Features/Content/EventPacingManager.cs (schedule logic removed)
+- [ ] src/Features/Content/GlobalEventPacer.cs (eval hours/quiet roll removed)
+- [ ] src/Features/Escalation/EscalationState.cs (schedule fields removed)
+- [ ] src/Features/Content/ContentOrchestrator.cs (now takes over daily tick)
+- [ ] ModuleData/Enlisted/enlisted_config.json (orchestrator section added)
+
+WHAT WAS REMOVED:
+- NextNarrativeEventWindow scheduling
+- Evaluation hours (8am, 2pm, 8pm)
+- Random quiet day roll (15%)
+- Event window min/max days config
+
+WHAT WAS KEPT:
+- Safety limits (max_per_day, max_per_week, min_hours_between)
+- Grace period for new enlistees
+- Chain event immediate firing
+
+KEY DECISIONS MADE:
+- (list any architectural decisions)
+
+KNOWN ISSUES/TECH DEBT:
+- (list any incomplete items)
+
+VERIFICATION PASSED:
+[ ] Garrison feels quiet (~0.4 events/day)
+[ ] Campaign feels busy (~1.5 events/day)
+[ ] Siege feels intense (~2.5 events/day)
+[ ] Safety limits still prevent spam
+[ ] No schedule artifacts in logs
 ```
 
 ---
@@ -519,8 +664,37 @@ ACCEPTANCE CRITERIA
 
 **Goal:** Coordinate order timing with orchestrator
 
+**Chat Strategy:** 🔒 **STANDALONE** - Order integration is a distinct system
+
+**Prerequisites:** Phase 3 complete (orchestrator is live and controlling event pacing)
+
 ```
 I need you to implement Phase 4 of the Content Orchestrator - Orders integration.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify Phase 3 work before starting)
+═══════════════════════════════════════════════════════════════════════════════
+
+Before implementing, verify:
+
+Phase 3 Complete:
+[ ] ContentOrchestrator.OnDailyTick() is the primary event firing mechanism
+[ ] EventPacingManager schedule logic REMOVED (no window checking)
+[ ] GlobalEventPacer evaluation hours REMOVED
+[ ] GlobalEventPacer quiet day random roll REMOVED
+[ ] enlisted_config.json has "orchestrator" section with enabled: true
+[ ] World state drives event frequency (garrison quiet, siege intense)
+
+Quick Test:
+1. Launch game, enlist, wait in garrison
+2. Check logs for "[Orchestrator]" entries
+3. Verify frequency matches world state (garrison = ~0.4/day)
+
+If orchestrator isn't live, implement Phase 3 first.
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ FIRST
+═══════════════════════════════════════════════════════════════════════════════
 
 Read these docs first:
 - docs/AFEATURE/content-orchestrator-plan.md (Phase 4 section)
@@ -596,6 +770,36 @@ Acceptance Criteria:
 - Event text displays with culture-specific NCO/officer titles
 - Camp life events fire between orders (orchestrator handles)
 - No overwhelming spam from combined systems
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (Capture these for Phase 5)
+═══════════════════════════════════════════════════════════════════════════════
+
+When complete, provide these handoff notes for the next AI session:
+
+FILES CREATED:
+- [ ] ModuleData/Enlisted/Orders/order_events/*.json (16 event files)
+
+FILES MODIFIED:
+- [ ] src/Features/Content/ContentOrchestrator.cs (added CanIssueOrderNow)
+- [ ] src/Features/Orders/Behaviors/OrderManager.cs (checks orchestrator)
+- [ ] src/Features/Orders/Behaviors/OrderProgressionBehavior.cs (reads WorldSituation)
+
+PLACEHOLDER RESOLUTION:
+- {SERGEANT} → culture-specific NCO title
+- {LORD_NAME} → enlisted lord's name
+- {PLAYER_RANK} → player's rank title
+- (list any others implemented)
+
+KEY DECISIONS MADE:
+- (list any architectural decisions)
+
+VERIFICATION PASSED:
+[ ] Order issuance coordinated with orchestrator
+[ ] Order events fire during duty execution
+[ ] Culture-specific text displays correctly
+[ ] Camp life events fire between orders
+[ ] No spam from combined systems
 ```
 
 ---
@@ -604,8 +808,35 @@ Acceptance Criteria:
 
 **Goal:** Implement the Main Menu Quick Decision Center with KINGDOM, CAMP, YOU sections
 
+**Chat Strategy:** 🔒 **STANDALONE** - UI work is self-contained
+
+**Prerequisites:** Phase 4 complete (orchestrator + orders integration working)
+
 ```
 I need you to implement Phase 5 of the Content Orchestrator - UI Integration.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify Phase 4 work before starting)
+═══════════════════════════════════════════════════════════════════════════════
+
+Before implementing, verify:
+
+Orchestrator Working:
+[ ] ContentOrchestrator.Instance is available
+[ ] WorldStateAnalyzer.AnalyzeSituation() returns valid WorldSituation
+[ ] ContentOrchestrator.CanIssueOrderNow() exists
+[ ] Orders coordinate with orchestrator
+
+Key Classes That Must Exist:
+- src/Features/Content/ContentOrchestrator.cs
+- src/Features/Content/WorldStateAnalyzer.cs
+- src/Features/Content/Models/WorldSituation.cs
+
+If orchestrator isn't working, implement earlier phases first.
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ FIRST
+═══════════════════════════════════════════════════════════════════════════════
 
 Read these docs first:
 - docs/AFEATURE/content-orchestrator-plan.md (Phase 5 section - has full UI spec)
@@ -870,6 +1101,38 @@ Acceptance Criteria:
 - Three buttons navigate to ORDERS, DECISIONS, CAMP
 - DECISIONS shows dynamically generated camp life activities
 - Deep info (rank, tier, records) is in CAMP Hub, not Main Menu
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (Capture these for Phase 5.5)
+═══════════════════════════════════════════════════════════════════════════════
+
+When complete, provide these handoff notes for the next AI session:
+
+FILES CREATED:
+- [ ] src/Features/Content/ForecastGenerator.cs
+- [ ] src/Features/Interface/MainMenuNewsCache.cs
+
+FILES MODIFIED:
+- [ ] src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs (main menu + camp hub)
+- [ ] src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs (summary builders)
+- [ ] src/Features/Ranks/RankHelper.cs (GetNCOTitle, GetOfficerTitle)
+- [ ] ModuleData/Languages/enlisted_strings.xml (localization keys)
+
+UI CHANGES MADE:
+- Main Menu now has KINGDOM, CAMP, YOU sections
+- Camp Hub has CAMP STATUS replacing Reports menu
+- Leave Service removed from Camp Hub (Muster only)
+
+KEY DECISIONS MADE:
+- (list any UI/UX decisions)
+
+VERIFICATION PASSED:
+[ ] Main Menu shows three sections
+[ ] YOU section has natural flowing text
+[ ] Culture-aware rank names work
+[ ] ORDERS, DECISIONS, CAMP buttons navigate correctly
+[ ] Camp Hub shows CAMP STATUS at top
+[ ] Reports menu removed
 ```
 
 ---
@@ -878,10 +1141,36 @@ Acceptance Criteria:
 
 **Goal:** Create an autonomous company that simulates itself daily - soldiers get sick, desert, recover; equipment degrades; incidents occur. This feeds the news system and provides context for the orchestrator.
 
-**Dependency:** Requires Phases 1-5 (Core Orchestrator + UI) to be complete
+**Chat Strategy:** 🔒 **STANDALONE** - Complex Bannerlord API work needs focus
+
+**Prerequisites:** Phases 1-5 complete (Core Orchestrator + UI working)
 
 ```
 I need you to implement Phase 5.5 - Camp Background Simulation for my Bannerlord mod.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify Phase 5 work before starting)
+═══════════════════════════════════════════════════════════════════════════════
+
+Before implementing, verify:
+
+Orchestrator + UI Working:
+[ ] ContentOrchestrator.Instance is available and firing daily
+[ ] WorldStateAnalyzer.AnalyzeSituation() works
+[ ] Main Menu shows KINGDOM, CAMP, YOU sections
+[ ] ForecastGenerator.cs exists (will integrate with it)
+[ ] EnlistedNewsBehavior has BuildCampSummary() method
+
+Key Classes That Must Exist:
+- src/Features/Content/ContentOrchestrator.cs
+- src/Features/Content/ForecastGenerator.cs
+- src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs
+
+This phase CREATES the background data that feeds the UI sections.
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ FIRST
+═══════════════════════════════════════════════════════════════════════════════
 
 Read these docs first:
 - docs/AFEATURE/camp-background-simulation.md (COMPLETE SPEC - read the whole thing)
@@ -980,6 +1269,43 @@ Acceptance Criteria:
 - Forecast section warns player before crisis
 - No hero troops ever removed
 - State persists across save/load
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (Capture these for Phase 6)
+═══════════════════════════════════════════════════════════════════════════════
+
+When complete, provide these handoff notes for the next AI session:
+
+FILES CREATED:
+- [ ] src/Features/Camp/CompanySimulationBehavior.cs
+- [ ] src/Features/Camp/Models/CompanyRoster.cs
+- [ ] src/Features/Camp/Models/CompanyPressure.cs
+- [ ] src/Features/Camp/Models/CampIncident.cs
+- [ ] src/Features/Camp/Models/SimulationDayResult.cs
+- [ ] ModuleData/Enlisted/simulation_config.json
+
+FILES MODIFIED:
+- [ ] src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs (AddCampNews)
+- [ ] Enlisted.csproj (new files added)
+- [ ] src/Mod.Core/SaveSystem/EnlistedSaveDefiner.cs (new types)
+
+KEY API USAGE (verified against decompile):
+- TroopRoster.AddToCounts(CharacterObject, int, int)
+- TroopRoster.TotalWounded
+- TroopRosterElement.Character.IsHero
+
+INTEGRATION POINTS:
+- CompanySimulationBehavior.Instance.Roster for sick/wounded data
+- CompanySimulationBehavior.Instance.Pressure for pressure tracking
+- (list any other integration points)
+
+VERIFICATION PASSED:
+[ ] Daily simulation runs without errors
+[ ] Sick/wounded changes affect real party
+[ ] News items appear in CAMP section
+[ ] Crisis events fire at thresholds
+[ ] Save/load preserves state
+[ ] No heroes ever removed
 ```
 
 ---
@@ -988,12 +1314,49 @@ Acceptance Criteria:
 
 **Goal:** Create a living, breathing military camp that runs independently of player input
 
-**Dependency:** Requires Phases 1-5.5 (Content Orchestrator + Background Simulation) to be complete
+**Chat Strategy:** ⚡ **SPLIT INTO TWO CHATS:**
+- **Phase 6A-C** (this prompt): Core functionality - models, generator, UI
+- **Phase 6D-E** (separate prompt): Polish - learning system, 25+ opportunities
 
-**Note:** Phase 5.5 (Background Simulation) provides the context data that Camp Life uses for opportunity generation.
+**Prerequisites:** Phase 5.5 complete (Background Simulation provides context data)
 
 ```
-I need you to implement Phase 6 of the Content Orchestrator - Camp Life Simulation.
+I need you to implement Phase 6A-C of the Content Orchestrator - Camp Life Simulation Core.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify Phase 5.5 work before starting)
+═══════════════════════════════════════════════════════════════════════════════
+
+Before implementing, verify Phase 5.5 is complete:
+
+Background Simulation Working:
+[ ] CompanySimulationBehavior.cs exists at src/Features/Camp/
+[ ] CompanySimulationBehavior.Instance.Roster available (sick/wounded data)
+[ ] CompanySimulationBehavior.Instance.Pressure available (pressure tracking)
+[ ] Daily simulation generates news items
+[ ] EnlistedNewsBehavior.AddCampNews() method exists
+
+Orchestrator Working:
+[ ] ContentOrchestrator.Instance available
+[ ] WorldStateAnalyzer.AnalyzeSituation() works
+[ ] ContentOrchestrator.GetCurrentDayPhase() available (or implement it)
+
+If background simulation isn't working, implement Phase 5.5 first.
+
+═══════════════════════════════════════════════════════════════════════════════
+SCOPE: PHASE 6A-C ONLY (Core Functionality)
+═══════════════════════════════════════════════════════════════════════════════
+
+This prompt covers:
+- 6A: Models + basic generation
+- 6B: UI integration  
+- 6C: Intelligence (player state, variety)
+
+Phase 6D-E (learning system, 25+ opportunities) will be done in a separate chat.
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ FIRST
+═══════════════════════════════════════════════════════════════════════════════
 
 Read these docs first:
 - docs/AFEATURE/camp-life-simulation.md (COMPLETE SPEC - read the whole thing)
@@ -1266,12 +1629,214 @@ Acceptance Criteria:
 - All edge cases handled gracefully (see Edge Cases section in spec)
 - Saves/loads correctly
 
-Start by reading the FULL camp-life-simulation.md spec (especially Edge Cases section). Implement in phases:
+Start by reading the FULL camp-life-simulation.md spec (especially Edge Cases section). Implement:
 6A: Models + basic generation
 6B: UI integration
 6C: Intelligence (player state, variety)
-6D: Learning system
-6E: Polish (25+ opportunities, descriptions, testing)
+
+(6D-E will be a separate chat - see Phase 6D-E prompt below)
+
+═══════════════════════════════════════════════════════════════════════════════
+ACCEPTANCE CRITERIA (Phase 6A-C)
+═══════════════════════════════════════════════════════════════════════════════
+
+Core Functionality:
+[ ] CampOpportunityGenerator.cs creates opportunities based on context
+[ ] DayPhase affects opportunity selection (synced with Order phases)
+[ ] Fitness scoring uses all 4 layers (world, camp, player, history)
+[ ] UI shows natural language descriptions of what's happening
+[ ] Order-decision tension: risky opportunities have tooltips
+[ ] Player commitment tracking works
+[ ] Basic set of opportunities (10-15) for testing
+
+NOT in this phase:
+- Learning system (6D)
+- Full 25+ opportunities (6E)
+- Extensive playtesting/polish (6E)
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (Capture these for Phase 6D-E)
+═══════════════════════════════════════════════════════════════════════════════
+
+When complete, provide these handoff notes for Phase 6D-E:
+
+FILES CREATED:
+- [ ] src/Features/Interface/MainMenuNewsCache.cs
+- [ ] src/Features/Camp/Models/CampOpportunity.cs
+- [ ] src/Features/Camp/Models/PlayerCommitments.cs
+- [ ] src/Features/Camp/Models/OpportunityType.cs
+- [ ] src/Features/Camp/Models/CampContext.cs
+- [ ] src/Features/Camp/Models/CampMood.cs
+- [ ] src/Features/Camp/Models/DayPhase.cs
+- [ ] src/Features/Camp/Models/OpportunityHistory.cs
+- [ ] src/Features/Camp/CampOpportunityGenerator.cs
+- [ ] ModuleData/Enlisted/camp_opportunities.json
+
+FILES MODIFIED:
+- [ ] src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs
+- [ ] src/Features/Content/PlayerBehaviorTracker.cs
+- [ ] ModuleData/Languages/enlisted_strings.xml
+- [ ] Enlisted.csproj
+- [ ] src/Mod.Core/SaveSystem/EnlistedSaveDefiner.cs
+
+FITNESS SCORING IMPLEMENTATION:
+- (describe how the 4-layer scoring works)
+
+ORDER-DECISION TENSION:
+- (describe how risky opportunities are handled)
+
+OPPORTUNITIES CREATED (10-15 for testing):
+- (list the opportunities added)
+
+REMAINING WORK FOR 6D-E:
+- Learning system not yet implemented
+- Need 10-15 more opportunities
+- Polish and playtesting needed
+
+VERIFICATION PASSED:
+[ ] Camp feels alive - things happening around player
+[ ] Day phase affects opportunities
+[ ] Fitness scoring works correctly
+[ ] Risky opportunities show tooltips
+[ ] Commitment tracking works
+[ ] Edge cases handled gracefully
+```
+
+---
+
+## Phase 6D-E: Camp Life Polish
+
+**Goal:** Add learning system and complete opportunity set
+
+**Chat Strategy:** 🔒 **STANDALONE** - Polish phase, can be done later
+
+**Prerequisites:** Phase 6A-C complete (core camp life working)
+
+```
+I need you to implement Phase 6D-E of Camp Life Simulation - Learning System and Polish.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify Phase 6A-C work before starting)
+═══════════════════════════════════════════════════════════════════════════════
+
+Before implementing, verify Phase 6A-C is complete:
+
+Core Functionality Working:
+[ ] CampOpportunityGenerator.cs exists and generates opportunities
+[ ] Fitness scoring uses all 4 layers
+[ ] DayPhase affects selection (Morning drills, Dusk social)
+[ ] Order-decision tension works (risky opportunities have tooltips)
+[ ] Player commitment tracking works
+[ ] 10-15 opportunities exist for testing
+
+Models That Must Exist:
+- src/Features/Camp/Models/CampOpportunity.cs
+- src/Features/Camp/Models/OpportunityHistory.cs
+- src/Features/Camp/CampOpportunityGenerator.cs
+- ModuleData/Enlisted/camp_opportunities.json
+
+If core functionality isn't working, implement Phase 6A-C first.
+
+═══════════════════════════════════════════════════════════════════════════════
+PHASE 6D: LEARNING SYSTEM
+═══════════════════════════════════════════════════════════════════════════════
+
+Implement learning that adapts to player preferences:
+
+1. Track engagement rates per opportunity type
+   - PlayerBehaviorTracker.RecordOpportunityEngagement(type, engaged)
+   - Track: presented vs engaged for each OpportunityType
+
+2. Adapt scoring based on engagement
+   - +15 fitness for types player engages with
+   - -10 fitness for types player ignores
+   - Apply in CalculateFitness() Layer 4
+
+3. Maintain 70/30 split
+   - 70% learned preference (what player likes)
+   - 30% variety (occasionally show other types)
+
+4. Persist in save system
+   - Add engagement tracking to SyncData()
+
+═══════════════════════════════════════════════════════════════════════════════
+PHASE 6E: POLISH (25+ Opportunities)
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Add remaining opportunities to reach 25+ total:
+
+Training Type:
+- dec_weapon_drill_group, dec_spar_veterans, dec_formation_practice
+- (contextual variants for morning vs evening)
+
+Social Type:
+- dec_cards_high_stakes, dec_dice_casual, dec_storytelling
+- dec_drinking_moderate, dec_drinking_heavy
+
+Economic Type:
+- dec_side_work, dec_trade_goods, dec_gamble_tournament
+
+Recovery Type:
+- dec_rest_shade, dec_rest_full_day, dec_meditation
+
+Special Type:
+- dec_volunteer_extra, dec_help_wounded, dec_mentor_recruit
+
+2. Write natural language descriptions for each:
+
+GOOD: "Veterans are drilling by the wagons. The sergeant is putting
+       them through their paces. Swords clash in rhythm."
+
+BAD:  "Training Opportunity Available"
+
+3. Add all localization keys to enlisted_strings.xml
+
+4. Playtest at each tier level (T1-T3, T4-T6, T7-T9)
+
+5. Tune fitness scoring based on playtesting
+
+═══════════════════════════════════════════════════════════════════════════════
+ACCEPTANCE CRITERIA (Phase 6D-E)
+═══════════════════════════════════════════════════════════════════════════════
+
+Learning System:
+[ ] Engagement tracking persists across sessions
+[ ] Player preferences affect opportunity selection
+[ ] 70/30 split maintains variety
+[ ] Logs show learning adjustments
+
+Polish:
+[ ] 25+ opportunities with natural language descriptions
+[ ] All opportunities have localization keys
+[ ] Garrison, Campaign, Siege feel distinct
+[ ] Morning/Evening feel distinct
+[ ] No repetitive content (variety tracking works)
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (Capture these for Phase 7)
+═══════════════════════════════════════════════════════════════════════════════
+
+FILES MODIFIED:
+- [ ] src/Features/Camp/CampOpportunityGenerator.cs (learning integration)
+- [ ] src/Features/Content/PlayerBehaviorTracker.cs (engagement tracking)
+- [ ] ModuleData/Enlisted/camp_opportunities.json (25+ opportunities)
+- [ ] ModuleData/Languages/enlisted_strings.xml (localization)
+
+OPPORTUNITIES ADDED:
+- (list all 25+ opportunities with IDs)
+
+LEARNING SYSTEM:
+- Engagement tracking implementation
+- 70/30 split logic
+
+PLAYTESTING RESULTS:
+- (note any tuning done)
+
+VERIFICATION PASSED:
+[ ] Learning adapts to player over time
+[ ] 25+ opportunities feel varied
+[ ] All situations feel distinct
+[ ] Natural language immersive
 ```
 
 ---
@@ -1280,8 +1845,29 @@ Start by reading the FULL camp-life-simulation.md spec (especially Edge Cases se
 
 **Goal:** Add contextual variety to high-traffic content
 
+**Chat Strategy:** 🔒 **STANDALONE** - JSON-only work, fast iteration
+
+**Prerequisites:** Phases 1-6 complete (full orchestrator working)
+
 ```
 I need you to add content variants for the Content Orchestrator.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify system is working)
+═══════════════════════════════════════════════════════════════════════════════
+
+This is JSON-only work. Verify the orchestrator is working first:
+
+[ ] Orchestrator fires content based on world state
+[ ] EventRequirementChecker filters by requirements.context
+[ ] Context values work: "Camp", "War", "Siege"
+[ ] Fitness scoring selects best-fit content
+
+No code changes needed - just JSON additions.
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ FIRST
+═══════════════════════════════════════════════════════════════════════════════
 
 Read these docs first:
 - docs/AFEATURE/content-orchestrator-plan.md (Content Variant System Summary section)
@@ -1344,6 +1930,22 @@ Acceptance Criteria:
 - Base events remain as fallbacks
 - Player experience varies by situation
 - Tooltips show exact costs/rewards for each variant
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (For documentation)
+═══════════════════════════════════════════════════════════════════════════════
+
+FILES MODIFIED:
+- [ ] ModuleData/Enlisted/Decisions/decisions.json (decision variants)
+- [ ] ModuleData/Enlisted/Events/*.json (event variants)
+
+VARIANTS CREATED:
+- (list all variants with IDs and contexts)
+
+TESTING RESULTS:
+- Garrison: (which variants appear)
+- Campaign: (which variants appear)
+- Siege: (which variants appear)
 ```
 
 ---
@@ -1352,10 +1954,31 @@ Acceptance Criteria:
 
 **Goal:** Add probabilistic daily progression to escalation tracks (Medical Risk, Discipline, Pay Tension)
 
+**Chat Strategy:** 🔒 **STANDALONE** - Future system, clean separation
+
+**Prerequisites:** Phases 1-6 complete (orchestrator provides world state modifiers)
+
 **Status:** Schema Ready - Implement when ready for organic escalation evolution
 
 ```
 I need you to implement the Progression System for escalation tracks.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify orchestrator integration point exists)
+═══════════════════════════════════════════════════════════════════════════════
+
+Before implementing, verify:
+
+[ ] ContentOrchestrator.Instance is available
+[ ] WorldStateAnalyzer.AnalyzeSituation() works
+[ ] World state can provide modifiers for progression (garrison vs siege)
+
+The orchestrator will provide world state modifiers to progression behaviors.
+If orchestrator isn't working, implement earlier phases first.
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ FIRST
+═══════════════════════════════════════════════════════════════════════════════
 
 Read these docs first:
 - docs/AFEATURE/content-orchestrator-plan.md (Future Expansion: Progression System section)
@@ -1481,6 +2104,38 @@ FUTURE EXTENSION (after Phase 8):
 - Add specific condition types (Fever, Infection, Plague)
 - Add contagion between party members
 - Add permanent consequences (scars, stat penalties)
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (For documentation)
+═══════════════════════════════════════════════════════════════════════════════
+
+FILES CREATED:
+- [ ] src/Features/Escalation/ProgressionBehavior.cs
+- [ ] src/Features/Escalation/MedicalProgressionBehavior.cs
+- [ ] src/Features/Escalation/Models/ProgressionConfig.cs
+- [ ] src/Features/Escalation/Models/ProgressionModifiers.cs
+- [ ] ModuleData/Enlisted/progression_config.json
+
+FILES MODIFIED:
+- [ ] src/Features/Content/ContentOrchestrator.cs (IProgressionModifierProvider)
+- [ ] src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs (YOU section)
+- [ ] ModuleData/Enlisted/Decisions/decisions.json (treatment decision)
+- [ ] ModuleData/Languages/enlisted_strings.xml
+- [ ] Enlisted.csproj
+
+PROGRESSION IMPLEMENTATION:
+- Base probability tables
+- Skill modifiers (Medicine, etc.)
+- Context modifiers (resting, treated)
+- World state modifiers from orchestrator
+
+VERIFICATION PASSED:
+[ ] Daily progression ticks work
+[ ] Probabilities configurable via JSON
+[ ] Skills affect outcomes
+[ ] World state affects outcomes
+[ ] Threshold events fire correctly
+[ ] YOU section shows medical state
 ```
 
 ---
@@ -1505,11 +2160,45 @@ Look for `[Orchestrator]` log entries.
 
 ## Notes
 
-- Each prompt is self-contained but references the main docs
-- Always start by reading the referenced docs
-- The orchestrator plan has the complete technical specs
-- Blueprint has coding standards that must be followed
-- Phases 1-3 are critical path; 4-6 can be adjusted based on playtesting
-- Phase 7 is post-launch polish
-- Phase 8 (Progression System) is future expansion when ready for organic escalation evolution
+### Prompt Design
+
+Each prompt is designed for a **new AI chat session** with full context recovery:
+- **Prerequisites** tell the AI what must exist before starting
+- **Context Recovery** provides verification checklist for previous work
+- **Handoff Notes** capture what was done for the next AI
+
+### Chat Strategy Summary
+
+| Phases | Strategy | Rationale |
+|--------|----------|-----------|
+| 1 | ✅ **DONE** | Phase 1 is complete |
+| 2 | Standalone | Builds on Phase 1; context recovery provided |
+| 3 | Standalone | High-risk migration needs focus |
+| 4 | Standalone | Distinct system (Orders) |
+| 5 | Standalone | UI work is self-contained |
+| 5.5 | Standalone | Complex Bannerlord API work |
+| 6A-C | **COMBINE** | Core functionality builds together |
+| 6D-E | Standalone | Polish phase, can be done later |
+| 7 | Standalone | JSON-only, fast iteration |
+| 8 | Standalone | Future system, clean separation |
+
+### Critical Path
+
+- **Phases 1-3** are the critical path (orchestrator must work)
+- **Phases 4-6** can be adjusted based on playtesting
+- **Phase 7** is post-launch polish (JSON only)
+- **Phase 8** is future expansion when ready
+
+### Documentation References
+
+- **The orchestrator plan** (`content-orchestrator-plan.md`) has complete technical specs
+- **Blueprint** (`BLUEPRINT.md`) has coding standards that must be followed
+- **Event schemas** (`event-system-schemas.md`) has JSON data structures
+
+### If Something Goes Wrong
+
+If a new AI chat finds missing dependencies:
+1. Read the Prerequisites section to identify what's missing
+2. Go back to the appropriate phase prompt
+3. Implement the missing parts before continuing
 
