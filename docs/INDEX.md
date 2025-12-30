@@ -2,7 +2,7 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2025-12-29 (Added Progression System Schema, updated medical-progression-system.md)  
+**Last Updated:** 2025-12-30 (Content Orchestrator Phase 1 complete)
 **Total Documents:** 49
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
@@ -207,8 +207,8 @@ Active feature specifications being developed. These are implementation-ready sp
 
 | Document | Topic | Dependency | Status |
 |----------|-------|------------|--------|
-| [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | Content Orchestrator: replaces schedule-driven event pacing with world-state-driven frequency. Phases 1-5. | None | 📋 Specification |
-| [content-orchestrator-prompts.md](AFEATURE/content-orchestrator-prompts.md) | Implementation prompts for Content Orchestrator and Camp Life. Copy-paste ready. | Reference only | 📋 Specification |
+| [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | Content Orchestrator: replaces schedule-driven event pacing with world-state-driven frequency. Phases 1-5. | None | ⚠️ In Progress |
+| [content-orchestrator-prompts.md](AFEATURE/content-orchestrator-prompts.md) | Implementation prompts for Content Orchestrator and Camp Life. Copy-paste ready. | Reference only | 📋 Reference |
 | [camp-life-simulation.md](AFEATURE/camp-life-simulation.md) | Living breathing camp simulation: 4-layer intelligence (world/camp/player/history), time-of-day cycles, weekly rhythm, learning system. Phase 6. | Content Orchestrator (Phases 1-5) | 📋 Specification |
 | [camp-background-simulation.md](AFEATURE/camp-background-simulation.md) | Autonomous company life: soldiers get sick/injured/desert, equipment degrades, incidents occur, news feed integration. Phase 5.5. | Content Orchestrator (Phase 3) | 📋 Specification |
 | [order-progression-system.md](AFEATURE/order-progression-system.md) | Multi-day order execution replacing instant resolution. | Content Orchestrator (Phase 4) | 📋 Specification |

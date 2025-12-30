@@ -149,6 +149,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs"/>
+    <Compile Include="src\Features\Content\ContentOrchestrator.cs" />
+    <Compile Include="src\Features\Content\PlayerBehaviorTracker.cs" />
+    <Compile Include="src\Features\Content\SimulationPressureCalculator.cs" />
+    <Compile Include="src\Features\Content\WorldStateAnalyzer.cs" />
+    <Compile Include="src\Features\Content\Models\OrchestratorEnums.cs" />
+    <Compile Include="src\Features\Content\Models\WorldSituation.cs" />
+    <Compile Include="src\Features\Content\Models\SimulationPressure.cs" />
+    <Compile Include="src\Features\Content\Models\PlayerPreferences.cs" />
     <Compile Include="src\Mod.Entry\SubModule.cs"/>
     <Compile Include="src\Mod.Core\Config\ModSettings.cs"/>
     <Compile Include="src\Mod.Core\Config\ModConfig.cs"/>

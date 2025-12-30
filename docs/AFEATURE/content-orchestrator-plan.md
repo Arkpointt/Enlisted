@@ -1,10 +1,10 @@
 # Content Orchestrator: Sandbox Life Simulator
 
-**Status:** 📋 Specification  
-**Priority:** High  
-**Complexity:** Major architectural change  
-**Created:** 2025-12-24  
-**Last Updated:** 2025-12-30  
+**Status:** ⚠️ In Progress (Phase 1 Complete)
+**Priority:** High
+**Complexity:** Major architectural change
+**Created:** 2025-12-24
+**Last Updated:** 2025-12-30
 **Related Docs:** [BLUEPRINT](../BLUEPRINT.md), [Order Progression System](order-progression-system.md), [Order Events Master](order-events-master.md), [Orders Content](orders-content.md), [Camp Background Simulation](camp-background-simulation.md), [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md), [News & Reporting System](../Features/UI/news-reporting-system.md)
 
 ---
@@ -49,7 +49,7 @@ Replace the current schedule-driven event pacing system with a **Sandbox Life Si
 Replace schedule-driven event pacing with world-state-driven content orchestration. Garrison duty becomes quiet, campaigns become busy, sieges become intense. All automatic, all realistic.
 
 ### Implementation Order
-1. **Week 1 - Foundation:** Create orchestrator infrastructure without changing existing behavior
+1. ✅ **Week 1 - Foundation:** Create orchestrator infrastructure without changing existing behavior
 2. **Week 2 - Selection:** Integrate with content selection and add player behavior tracking
 3. **Week 3 - Cutover:** Switch from old system to orchestrator
 4. **Week 4 - Orders:** Coordinate order timing with orchestrator
@@ -214,7 +214,7 @@ public List<ChainEvent> PendingChainEvents { get; set; }
       "enabled": true,
       "fitness_threshold": 40,
       "log_decisions": true,
-      
+
       "frequency": {
         "peacetime_garrison": 0.14,      // 1 event per week
         "peacetime_recruiting": 0.35,    // 2.5 per week
@@ -224,13 +224,13 @@ public List<ChainEvent> PendingChainEvents { get; set; }
         "siege_defending": 1.0,          // 7 per week
         "lord_captured": 0.07            // 0.5 per week
       },
-      
+
       "dampening": {
         "after_busy_week_multiplier": 0.7,
         "after_quiet_week_multiplier": 1.2,
         "after_battle_cooldown_days": 1.5
       },
-      
+
       "pressure_modifiers": {
         "low_supplies": 0.1,
         "wounded_company": 0.1,
@@ -276,8 +276,8 @@ public List<ChainEvent> PendingChainEvents { get; set; }
 #### OrderManager
 **Location:** `src/Features/Orders/Behaviors/OrderManager.cs`
 
-**Current:** Issues orders every ~3 days (schedule-based)  
-**Has:** Context awareness (siege=1 day, peace=4 days)  
+**Current:** Issues orders every ~3 days (schedule-based)
+**Has:** Context awareness (siege=1 day, peace=4 days)
 **Needs:** Integration with orchestrator's world state
 
 **Action:** Orchestrator coordinates timing, OrderManager handles selection
@@ -353,7 +353,7 @@ Peacetime Garrison:
   Week 2: Nothing
   Week 3: Day 2 (1 event)
   Week 4: Nothing
-  
+
 Active Siege:
   Day 1: 2 events
   Day 2: 1 event (hit safety limit)
@@ -586,7 +586,7 @@ Adds Pressure (realistic problems):
   Lord angry (low relation): +20
   High discipline: +25
   Wounded player: +15
-  
+
 Reduces Pressure (realistic relief):
   Pay received: -15
   Battle won: -10
@@ -594,7 +594,7 @@ Reduces Pressure (realistic relief):
   Rest day: -10
   In friendly town: -15
   Order success: -10
-  
+
 NOT manufactured for drama - emerges from simulation
 ```
 
@@ -618,12 +618,12 @@ Behavior Patterns:
   "prioritizes_gold": 6 times
   "avoids_danger": 3 times
   "volunteers_for_duty": 12 times
-  
+
 Content Preferences:
   CombatVsSocial: 0.7 (prefers combat content)
   RiskyVsSafe: 0.4 (plays it moderately safe)
   LoyalVsSelfServing: 0.8 (follows orders, helps others)
-  
+
 Selection uses this to deliver content player likes
 ```
 
@@ -649,7 +649,7 @@ Selection uses this to deliver content player likes
 // Garrison variant (context-specific)
 {
   "id": "dec_rest_garrison",
-  "requirements": { 
+  "requirements": {
     "tier": { "min": 1 },
     "context": ["Camp"]
   }
@@ -658,7 +658,7 @@ Selection uses this to deliver content player likes
 // Crisis variant (context-specific)
 {
   "id": "dec_rest_exhausted",
-  "requirements": { 
+  "requirements": {
     "tier": { "min": 1 },
     "context": ["Siege"]
   }
@@ -823,23 +823,23 @@ Selection uses this to deliver content player likes
    - OrderManager checks with orchestrator before issuing new order
    - Orchestrator provides world state for order selection
    - Order issuance happens every 2-4 days (not competing with event budget)
-   
+
 2. Provide `WorldSituation` to `OrderProgressionBehavior` for **order event weighting**
    - Activity level modifies slot event chances during order execution
    - Quiet = ×0.3, Routine = ×0.6, Active = ×1.0, Intense = ×1.5
    - This is separate from narrative event frequency
    - Order events use `requirements.world_state` for context filtering
-   
+
 3. Load order events from JSON files
    - Files located at `ModuleData/Enlisted/Orders/order_events/*.json`
    - Each order has dedicated event pool file (e.g., `guard_events.json`)
    - Events use `world_state` requirements (e.g., `siege_attacking`, `war_marching`)
-   
+
 4. Define **non-order time** handling
    - When player has no active order, orchestrator can fire camp life events
    - These use the standard narrative event frequency tables
    - Player can also use Camp Hub decisions during this time
-   
+
 5. Test full integration across order lifecycle
 
 **Order Event File Structure:**
@@ -887,7 +887,7 @@ Selection uses this to deliver content player likes
    - Add `BuildForecastSection()` to generate NOW + AHEAD text
    - Add `GenerateCampSummary()` for camp activity one-liner
    - Implement culture-aware text resolution for rank names
-   
+
 2. **Navigation Structure**
    - Main Menu shows info + three buttons: ORDERS, DECISIONS, CAMP
    - DECISIONS opens camp life opportunities (dynamically generated)
@@ -901,7 +901,7 @@ Selection uses this to deliver content player likes
    - REMOVE Leave Service option (only accessible from Muster menu)
    - DELETE RegisterReportsMenu() function or gut it
    - KEEP: Service Records, Quartermaster, Retinue, Companions, Medical, Lords, Baggage
-   
+
 4. **Playtest & Tune**
    - Playtest at each tier (T1-T9)
    - Tune frequency tables
@@ -985,65 +985,65 @@ public class ForecastGenerator
         var ahead = BuildAheadText(); // Context-aware forecast
         return (now, ahead);
     }
-    
+
     private string BuildAheadText()
     {
         var forecasts = new List<ForecastItem>();
-        
+
         // === PARTY STATE WARNINGS (from Background Simulation) ===
         var sim = CompanySimulationBehavior.Instance;
-        
+
         // Supply warnings - escalating urgency
         if (sim.Pressure.DaysLowSupplies >= 2)
             forecasts.Add(("The men are hungry. Supplies won't last.", Priority.Critical));
         else if (_needs.GetNeed(CompanyNeed.Supplies) < 40)
             forecasts.Add(("Rations are getting thin.", Priority.High));
-        
+
         // Morale warnings
         if (sim.Pressure.DaysLowMorale >= 2)
             forecasts.Add(("The mood is dark. Something may break.", Priority.Critical));
         else if (_needs.GetNeed(CompanyNeed.Morale) < 40)
             forecasts.Add(("Grumbling in the ranks.", Priority.Medium));
-        
+
         // Health warnings
         if (sim.Roster.SickCount > 5)
             forecasts.Add(("Fever spreading through camp.", Priority.High));
         if (sim.Roster.WoundedCount > sim.Roster.TotalSoldiers * 0.2f)
             forecasts.Add(("Many wounded need care.", Priority.High));
-        
+
         // Discipline warnings
         if (_escalation.GetTrack(EscalationTrack.Discipline) < 30)
             forecasts.Add(("Officers are losing patience.", Priority.Medium));
-        
+
         // Desertion warnings
         if (sim.Pressure.RecentDesertions > 0)
             forecasts.Add(("Men have been slipping away.", Priority.High));
-        
+
         // === ORDER/EVENT FORECASTS ===
-        
+
         // Check for incoming orders
         if (OrderManager.Instance?.IsOrderPending(12.Hours()))
             forecasts.Add(("{NCO_TITLE}'s been making lists.", Priority.Medium));
-        
+
         // Check for upcoming muster
         if (EnlistmentBehavior.Instance?.DaysUntilMuster <= 3)
             forecasts.Add(("Pay day approaches.", Priority.Medium));
-        
+
         // Check for upcoming camp events
         var upcoming = CampOpportunityGenerator.GetUpcomingOpportunities();
         if (upcoming.Any())
             forecasts.Add(("The men are planning something.", Priority.Low));
-        
+
         // Default if nothing else
         if (forecasts.Count == 0)
             forecasts.Add(("Quiet. Almost too quiet.", Priority.Low));
-        
+
         // Sort by priority, take top 2
         var topForecasts = forecasts
             .OrderByDescending(f => f.Priority)
             .Take(2)
             .Select(f => ResolveCultureText(f.Text));
-        
+
         return string.Join(" ", topForecasts);
     }
 }
@@ -1053,14 +1053,14 @@ public class ForecastGenerator
 ```csharp
 public string BuildCampStatusSection()
 {
-    if (ContentOrchestrator.Instance == null) 
+    if (ContentOrchestrator.Instance == null)
         return string.Empty;
-    
+
     var rhythmIcon = GetRhythmIcon();
     var rhythmName = GetRhythmName();
     var activityLevel = GetActivityLevelName();
     var flavorText = ContentOrchestrator.Instance.GetOrchestratorRhythmFlavor();
-    
+
     // Used in Camp Hub header (not Reports menu - that's gone)
     return $"<span style=\"Header\">_____ CAMP STATUS _____</span>\n" +
            $"{rhythmIcon} {rhythmName} - {activityLevel}\n\n{flavorText}";
@@ -1095,7 +1095,7 @@ public class MainMenuNewsCache
     private string _kingdomText;
     private string _campText;
     private string _youText;
-    
+
     public void RefreshIfNeeded()
     {
         // KINGDOM: 24h or major event
@@ -1253,7 +1253,7 @@ public override void SyncData(IDataStore dataStore)
         // Player behavior tracking
         dataStore.SyncData("orchestrator_behaviorCounts", ref _behaviorCounts);
         dataStore.SyncData("orchestrator_contentEngagement", ref _contentEngagement);
-        
+
         // Recent activity tracking for dampening
         dataStore.SyncData("orchestrator_eventsThisWeek", ref _eventsThisWeek);
         dataStore.SyncData("orchestrator_lastWeekReset", ref _lastWeekReset);
@@ -1319,7 +1319,7 @@ ConstructContainerDefinition(typeof(Dictionary<string, int>));
 
 ### Key Classes
 
-**Location:** `src/Features/Content/`  
+**Location:** `src/Features/Content/`
 **Namespace:** `Enlisted.Features.Content`
 
 ```csharp
@@ -1332,21 +1332,21 @@ namespace Enlisted.Features.Content
     public class ContentOrchestrator : CampaignBehaviorBase
     {
         private const string LogCategory = "Orchestrator";
-        
+
         public static ContentOrchestrator Instance { get; private set; }
-        
+
         // Tracking for dampening
         private int _eventsThisWeek;
         private CampaignTime _lastWeekReset = CampaignTime.Zero;
-        
+
         private DayPhase _lastPhase = DayPhase.Night;
-        
+
         public override void RegisterEvents()
         {
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
             CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, CheckPhaseTransition);
         }
-        
+
         /// <summary>
         /// Checks if day phase has changed and fires OnDayPhaseChanged if so.
         /// Runs hourly to detect phase boundaries.
@@ -1360,7 +1360,7 @@ namespace Enlisted.Features.Content
                 OnDayPhaseChanged(currentPhase);
             }
         }
-        
+
         /// <summary>
         /// Fires when military day phase changes (4x per day).
         /// Syncs Orders, Camp Life, and Progression systems.
@@ -1368,34 +1368,34 @@ namespace Enlisted.Features.Content
         private void OnDayPhaseChanged(DayPhase newPhase)
         {
             ModLogger.Info("Orchestrator", $"Day phase changed to {newPhase}");
-            
+
             // Order system handles phase
             OrderProgressionBehavior.Instance?.OnPhaseChanged(newPhase);
-            
+
             // Camp life regenerates opportunities
             CampLifeManager.Instance?.OnPhaseChanged(newPhase);
-            
+
             // Progression ticks at specific phases
             if (newPhase == DayPhase.Dawn)
                 MedicalProgressionBehavior.Instance?.Tick();
             if (newPhase == DayPhase.Dusk)
                 DisciplineProgressionBehavior.Instance?.Tick();
-            
+
             // Refresh UI caches
             MainMenuNewsCache.Instance?.OnPhaseChanged(newPhase);
         }
-        
+
         /// <summary>
         /// Main daily analysis. Runs once at 6am.
         /// Analyzes world state and updates expectations.
         /// </summary>
         private void OnDailyTick()
         {
-            if (!EnlistmentBehavior.Instance.IsEnlisted) 
+            if (!EnlistmentBehavior.Instance.IsEnlisted)
             {
                 return;
             }
-            
+
             // Reset weekly counter
             if (CampaignTime.Now.GetDayOfYear != _lastWeekReset.GetDayOfYear)
             {
@@ -1405,90 +1405,90 @@ namespace Enlisted.Features.Content
                     _lastWeekReset = CampaignTime.Now;
                 }
             }
-            
+
             // 1. Analyze world situation
             var worldSituation = WorldStateAnalyzer.AnalyzeSituation();
             ModLogger.Debug(LogCategory, $"World State: {worldSituation.LifePhase}, Activity: {worldSituation.ExpectedActivity}");
-            
+
             // 2. Calculate simulation pressure
             var pressure = SimulationPressureCalculator.CalculatePressure();
             ModLogger.Debug(LogCategory, $"Pressure: {pressure.Value} from [{string.Join(", ", pressure.Sources)}]");
-            
+
             // 3. Determine realistic frequency
             var frequency = DetermineRealisticFrequency(worldSituation, pressure);
             ModLogger.Info(LogCategory, $"Realistic frequency: {frequency:F2} events/week");
-            
+
             // 4. Should content fire today?
             if (!ShouldDeliverContent(frequency, worldSituation))
             {
                 LogSilence(worldSituation);
                 return;
             }
-            
+
             // 5. Get eligible content
             var candidates = GetEligibleContent(worldSituation);
-            
+
             if (candidates.Count == 0)
             {
                 ModLogger.Debug(LogCategory, "No eligible content for current situation");
                 return;
             }
-            
+
             ModLogger.Debug(LogCategory, $"Eligible candidates: {candidates.Count}");
-            
+
             // 6. Select best fit
             var selected = SelectBestContent(candidates, worldSituation);
-            
+
             if (selected == null)
             {
                 ModLogger.Debug(LogCategory, "No content above fitness threshold");
                 return;
             }
-            
+
             // 7. Check safety limits
             if (!GlobalEventPacer.CanFireAutoEvent(selected.Id, "narrative", out var reason))
             {
                 ModLogger.Debug(LogCategory, $"Blocked {selected.Id}: {reason}");
                 return;
             }
-            
+
             // 8. Deliver
             EventDeliveryManager.Instance.QueueEvent(selected);
             GlobalEventPacer.RecordAutoEvent(selected.Id, "narrative");
             PlayerBehaviorTracker.RecordContentDelivered(selected);
             _eventsThisWeek++;
-            
+
             ModLogger.Info(LogCategory, $"Delivered: {selected.Id} (events this week: {_eventsThisWeek})");
         }
-        
+
         private void LogSilence(WorldSituation situation)
         {
             ModLogger.Debug(LogCategory, $"Quiet day - {situation.LifePhase} with {situation.ExpectedActivity} activity");
         }
     }
-    
+
     public static class WorldStateAnalyzer
     {
         public static WorldSituation AnalyzeSituation()
         {
             var lord = EnlistmentBehavior.Instance.EnlistedLord;
             var party = MobileParty.MainParty;
-            
+
             // Analyze what lord is doing
             var lordSituation = DetermineLordSituation(lord, party);
-            
+
             // Analyze kingdom war status
             var warStance = DetermineWarStance(lord.MapFaction);
-            
+
             // Determine life phase
             var lifePhase = DetermineLifePhase(lordSituation, warStance);
-            
+
             // Calculate expected activity level
             var activityLevel = DetermineActivityLevel(lifePhase, lordSituation);
-            
+
             // Map to realistic frequency
             var frequency = MapToRealisticFrequency(lifePhase, activityLevel);
-            
+
             return new WorldSituation
             {
                 LordSituation = lordSituation,
@@ -1498,7 +1498,7 @@ namespace Enlisted.Features.Content
                 RealisticEventFrequency = frequency
             };
         }
-        
+
         /// <summary>
         /// Maps internal world state to event system context string for filtering.
         /// Used by EventRequirementChecker to filter eligible narrative events.
@@ -1515,7 +1515,7 @@ namespace Enlisted.Features.Content
                 _ => "Any"
             };
         }
-        
+
         /// <summary>
         /// Returns granular world state key for order event weighting.
         /// Order events use detailed world_state requirements (war_marching, siege_attacking, etc.)
@@ -1536,34 +1536,34 @@ namespace Enlisted.Features.Content
             };
         }
     }
-    
+
     public static class SimulationPressureCalculator
     {
         public static SimulationPressure CalculatePressure()
         {
             float pressure = 0;
             var sources = new List<string>();
-            
+
             // Check company state
             var needs = CompanyNeedsManager.Instance;
             if (needs.Supplies < 30) { pressure += 20; sources.Add("Low Supplies"); }
             if (needs.Rest < 30) { pressure += 15; sources.Add("Exhausted Company"); }
-            
+
             // Check escalation
             var escalation = EscalationManager.Instance.State;
             if (escalation.Discipline > 70) { pressure += 25; sources.Add("High Discipline"); }
             if (escalation.Scrutiny > 70) { pressure += 20; sources.Add("Under Scrutiny"); }
-            
+
             // Check player state
             var hero = Hero.MainHero;
             if (hero.HitPoints < hero.MaxHitPoints * 0.5f) { pressure += 15; sources.Add("Wounded"); }
-            
+
             // Check recent orders
             if (OrderManager.Instance.RecentlyFailed) { pressure += 10; sources.Add("Failed Order"); }
-            
+
             // Check location
             if (IsInEnemyTerritory()) { pressure += 15; sources.Add("Enemy Territory"); }
-            
+
             return new SimulationPressure
             {
                 Value = Math.Min(100, pressure),
@@ -1571,20 +1571,20 @@ namespace Enlisted.Features.Content
             };
         }
     }
-    
+
     public static class PlayerBehaviorTracker
     {
         private static Dictionary<string, int> _behaviorCounts = new Dictionary<string, int>();
         private static Dictionary<string, int> _contentEngagement = new Dictionary<string, int>();
-        
+
         public static void RecordChoice(string choiceTag)
         {
             if (!_behaviorCounts.ContainsKey(choiceTag))
                 _behaviorCounts[choiceTag] = 0;
-            
+
             _behaviorCounts[choiceTag]++;
         }
-        
+
         public static PlayerPreferences GetPreferences()
         {
             return new PlayerPreferences
@@ -1600,7 +1600,7 @@ namespace Enlisted.Features.Content
 
 ### Data Models
 
-**Location:** `src/Features/Content/Models/`  
+**Location:** `src/Features/Content/Models/`
 **Namespace:** `Enlisted.Features.Content.Models`
 
 ```csharp
@@ -1615,11 +1615,11 @@ public class WorldSituation
     public LifePhase CurrentPhase { get; set; }  // Overall military life phase
     public ActivityLevel ExpectedActivity { get; set; }  // Expected event density
     public float RealisticEventFrequency { get; set; }  // Events per week (base)
-    
+
     // Military Day Cycle - synced with Order Phases
     public DayPhase CurrentDayPhase { get; set; }  // Dawn, Midday, Dusk, Night
     public int CurrentHour { get; set; }  // 0-23 for precise timing
-    
+
     // Context details for flavor text
     public Settlement CurrentSettlement { get; set; }  // If garrisoned
     public Settlement TargetSettlement { get; set; }  // If marching/sieging
@@ -1647,7 +1647,7 @@ public class SimulationPressure
 {
     public float Value { get; set; }  // 0-100 scale
     public List<string> Sources { get; set; }  // Human-readable reasons
-    
+
     /// <summary>
     /// Converts pressure to frequency modifier.
     /// High pressure = more frequent events.
@@ -1670,7 +1670,7 @@ public class PlayerPreferences
     public float CombatVsSocial { get; set; }  // 0=social only, 1=combat only, 0.5=balanced
     public float RiskyVsSafe { get; set; }  // 0=always safe, 1=always risky
     public float LoyalVsSelfServing { get; set; }  // 0=selfish, 1=dutiful
-    
+
     // Choice counts for debugging
     public int TotalChoicesMade { get; set; }
     public int CombatChoices { get; set; }
@@ -1765,7 +1765,7 @@ public enum WarStance
   "decision_events": {
     "enabled": true,
     "events_folder": "Events",
-    
+
     // Safety limits (prevent spam)
     "pacing": {
       "max_per_day": 2,
@@ -1774,13 +1774,13 @@ public enum WarStance
       "per_event_cooldown_days": 7,
       "per_category_cooldown_days": 1
     },
-    
+
     // Orchestrator configuration
     "orchestrator": {
       "enabled": true,
       "log_decisions": true,
       "fitness_threshold": 40,
-      
+
       // World state → daily event probability
       "frequency": {
         "peacetime_garrison": 0.14,       // ~1 event per week
@@ -1792,7 +1792,7 @@ public enum WarStance
         "lord_captured": 0.07,            // ~0.5 per week
         "defeated_recovery": 0.21         // ~1.5 per week
       },
-      
+
       // Activity dampening after spikes
       "dampening": {
         "after_busy_week_multiplier": 0.7,     // Reduce after >5 events/week
@@ -1801,7 +1801,7 @@ public enum WarStance
         "busy_week_threshold": 5,
         "quiet_week_threshold": 1
       },
-      
+
       // Simulation pressure modifiers (additive to base frequency)
       "pressure": {
         "max_modifier": 0.3,                   // Pressure can add up to 30% more frequency
@@ -1964,7 +1964,7 @@ public static string ForceWorldState(List<string> args)
 
 ### What We're Building
 
-**NOT:** A drama manager that creates story arcs  
+**NOT:** A drama manager that creates story arcs
 **YES:** A life simulator that respects military reality
 
 ### Core Principles
@@ -2131,7 +2131,7 @@ All edge cases should fail safely:
 | 5 | Polish | Playtesting, tuning, documentation |
 | 6+ | Variants | Add content variants incrementally (no code changes) |
 
-**Core Implementation:** 5 weeks  
+**Core Implementation:** 5 weeks
 **Content Enhancement:** Ongoing (variants added as needed)
 
 ---
@@ -2174,7 +2174,7 @@ All edge cases should fail safely:
 ```json
 {
   "id": "dec_rest_garrison",
-  "requirements": { 
+  "requirements": {
     "tier": { "min": 1 },
     "context": ["Camp"]  // ← Garrison only
   },
@@ -2187,7 +2187,7 @@ All edge cases should fail safely:
 ```json
 {
   "id": "dec_rest_exhausted",
-  "requirements": { 
+  "requirements": {
     "tier": { "min": 1 },
     "context": ["Siege", "Battle"]  // ← Crisis only
   },
@@ -2208,8 +2208,8 @@ All edge cases should fail safely:
 
 ### Implementation Status
 
-✅ **Weeks 1-5:** Orchestrator handles current content (no variants)  
-✅ **Week 6+:** Add variants incrementally (no code changes)  
+✅ **Weeks 1-5:** Orchestrator handles current content (no variants)
+✅ **Week 6+:** Add variants incrementally (no code changes)
 ✅ **Player modding:** Edit JSON to create custom variants
 
 **See:**
@@ -2231,7 +2231,7 @@ This is a major architectural shift from "pacing algorithm" to "reality simulato
 
 ## Future Expansion: Progression System
 
-**Status:** Schema Ready (Deferred Implementation)  
+**Status:** Schema Ready (Deferred Implementation)
 **Schema:** [Progression System Schema](../Features/Content/event-system-schemas.md#progression-system-schema-future-foundation)
 
 After the orchestrator is complete, integrate the **Progression System** for organic escalation track evolution.

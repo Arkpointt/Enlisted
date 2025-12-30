@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Enlisted.Features.Content.Models;
 using Enlisted.Features.Equipment.Managers;
 using Enlisted.Features.Logistics;
 using Enlisted.Features.Orders.Models;
@@ -10,9 +11,9 @@ namespace Enlisted.Mod.Core.SaveSystem
 {
     /// <summary>
     /// Registers all custom types used by the Enlisted mod for Bannerlord's save system.
-    /// This definer handles custom classes, container definitions, and enum types that 
+    /// This definer handles custom classes, container definitions, and enum types that
     /// need serialization support beyond what Bannerlord provides by default.
-    /// 
+    ///
     /// Each type registration requires a unique save ID (base ID + offset). The base ID
     /// must be unique across all mods. Container definitions handle generic types like
     /// Dictionary and List with specific type parameters.
@@ -60,9 +61,16 @@ namespace Enlisted.Mod.Core.SaveSystem
             // Retinue enums
             AddEnumDefinition(typeof(LoyaltyThreshold), 50);
             AddEnumDefinition(typeof(BattleOutcome), 51);
-            
+
             // Logistics enums
             AddEnumDefinition(typeof(BaggageAccessState), 52);
+
+            // Content Orchestrator enums
+            AddEnumDefinition(typeof(DayPhase), 60);
+            AddEnumDefinition(typeof(LordSituation), 61);
+            AddEnumDefinition(typeof(LifePhase), 62);
+            AddEnumDefinition(typeof(ActivityLevel), 63);
+            AddEnumDefinition(typeof(WarStance), 64);
         }
 
         /// <summary>

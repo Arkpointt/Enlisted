@@ -351,7 +351,7 @@ namespace Enlisted.Mod.Entry
                     // Quartermaster UI: provides the grid-based equipment selection interface where players
                     // can view stats and select variants.
                     campaignStarter.AddBehavior(new QuartermasterEquipmentSelectorBehavior());
-                    
+
                     // Quartermaster Provisions UI: visual grid for food item purchases (Phase 8).
                     campaignStarter.AddBehavior(new QuartermasterProvisionsBehavior());
 
@@ -387,6 +387,10 @@ namespace Enlisted.Mod.Entry
 
                     // Event delivery system: queues and delivers narrative events to the player via UI popups.
                     campaignStarter.AddBehavior(new EventDeliveryManager());
+
+                    // Content Orchestrator: central coordinator for all content delivery.
+                    // Analyzes world state, calculates appropriate content frequency, and coordinates timing.
+                    campaignStarter.AddBehavior(new ContentOrchestrator());
 
                     // Event pacing system: fires narrative events every 3-5 days based on player role, context, and cooldowns.
                     campaignStarter.AddBehavior(new EventPacingManager());
@@ -430,7 +434,7 @@ namespace Enlisted.Mod.Entry
                     // Initializes static helper methods used throughout the enlistment system
                     EncounterGuard.Initialize();
                     ModLogger.Info("Bootstrap", "Military service behaviors registered successfully");
-                    
+
                     // Log registered behaviors for conflict diagnostics
                     // This helps troubleshoot issues by showing exactly what was registered
                     // NOTE: Use classic collection initializer (ReSharper can choke on newer collection expressions).
@@ -457,6 +461,7 @@ namespace Enlisted.Mod.Entry
                         nameof(CampLifeBehavior),
                         nameof(EscalationManager),
                         nameof(EventDeliveryManager),
+                        nameof(ContentOrchestrator),
                         nameof(OrderManager),
                         nameof(EnlistedNewsBehavior),
                         nameof(RetinueTrickleSystem),

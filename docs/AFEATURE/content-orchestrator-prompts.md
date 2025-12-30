@@ -2,26 +2,26 @@
 
 **Summary:** Copy-paste prompts for each implementation phase of the Content Orchestrator. Use these to guide implementation with your preferred coding assistant.
 
-**Status:** 📋 Reference  
-**Last Updated:** 2025-12-30  
+**Status:** 📋 Reference
+**Last Updated:** 2025-12-30
 **Related Docs:** [Content Orchestrator Plan](content-orchestrator-plan.md), [Camp Background Simulation](camp-background-simulation.md), [Order Events Master](order-events-master.md), [BLUEPRINT](../BLUEPRINT.md)
 
 ---
 
 ## Index
 
-| Phase | Description | Model |
-|-------|-------------|-------|
-| [Phase 1: Foundation](#phase-1-foundation) | Build core infrastructure | Opus 4 |
-| [Phase 2: Selection](#phase-2-content-selection-integration) | Connect to content selection | Opus 4 |
-| [Phase 3: Cutover](#phase-3-cutover) | Switch to orchestrator | Sonnet 4 |
-| [Phase 4: Orders](#phase-4-orders-integration) | Coordinate order timing | Sonnet 4 |
-| [Phase 5: UI](#phase-5-ui-integration-company-report) | Main Menu + Camp Hub UI | Sonnet 4 |
-| [Phase 5.5: Background](#phase-55-camp-background-simulation) | Autonomous company simulation | Opus 4 |
-| [Phase 6: Camp Life](#phase-6-camp-life-simulation-living-breathing-world) | Living breathing camp simulation | Opus 4 |
-| [Phase 7: Variants](#phase-7-content-variants-post-launch) | Add content variants (JSON) | Sonnet 4 |
-| [Phase 8: Progression](#phase-8-progression-system-future) | Organic escalation evolution | Opus 4 |
-| [Build & Test](#quick-reference-build--test) | Commands reference | - |
+| Phase | Description | Model | Status |
+|-------|-------------|-------|--------|
+| [Phase 1: Foundation](#phase-1-foundation) | Build core infrastructure | Opus 4 | ✅ Complete |
+| [Phase 2: Selection](#phase-2-content-selection-integration) | Connect to content selection | Opus 4 | |
+| [Phase 3: Cutover](#phase-3-cutover) | Switch to orchestrator | Sonnet 4 | |
+| [Phase 4: Orders](#phase-4-orders-integration) | Coordinate order timing | Sonnet 4 | |
+| [Phase 5: UI](#phase-5-ui-integration-company-report) | Main Menu + Camp Hub UI | Sonnet 4 | |
+| [Phase 5.5: Background](#phase-55-camp-background-simulation) | Autonomous company simulation | Opus 4 | |
+| [Phase 6: Camp Life](#phase-6-camp-life-simulation-living-breathing-world) | Living breathing camp simulation | Opus 4 | |
+| [Phase 7: Variants](#phase-7-content-variants-post-launch) | Add content variants (JSON) | Sonnet 4 | |
+| [Phase 8: Progression](#phase-8-progression-system-future) | Organic escalation evolution | Opus 4 | |
+| [Build & Test](#quick-reference-build--test) | Commands reference | - | |
 
 ---
 
@@ -153,7 +153,7 @@ WorldStateAnalyzer must provide TWO context methods:
    - Used for narrative event filtering (Camp Hub decisions, automatic events)
    - Maps to event JSON requirements.context field
    - Simple context values
-   
+
 2. GetOrderEventWorldState(WorldSituation) → Returns "peacetime_garrison", "war_marching", etc.
    - Used for order event weighting during duty execution
    - Maps to order event JSON requirements.world_state field
@@ -243,7 +243,7 @@ private void OnDailyTick()
         // Orchestrator handles everything - skip old logic
         return;
     }
-    
+
     // Old schedule logic (will be removed in Phase 3C)
     // ...existing code...
 }
@@ -262,18 +262,18 @@ public void OnDailyTick()
 {
     if (EnlistedConfig.Instance.Orchestrator?.Enabled != true)
         return;
-        
+
     var situation = WorldStateAnalyzer.Analyze();
     var frequency = GetFrequencyForSituation(situation);
     var shouldFire = ShouldFireContent(frequency);
-    
+
     if (shouldFire)
     {
         var content = SelectContent(situation);
         if (content != null)
             DeliverContent(content);
     }
-    
+
     // Set IsQuietDay based on world state, not random roll
     SetQuietDayFromWorldState(situation);
 }
@@ -488,7 +488,7 @@ ACCEPTANCE CRITERIA
 1. GARRISON feels quiet
    - ~0.4 events per day average
    - Lots of "nothing happens" days (world-state quiet, not random)
-   
+
 2. CAMPAIGN feels busy
    - ~1.5 events per day average
    - Consistent activity when marching/active
@@ -543,27 +543,27 @@ Phase 4 Tasks:
 1. Add CanIssueOrderNow() method to ContentOrchestrator
    - Returns bool based on world state timing
    - Called by OrderManager before issuing new order
-   
+
 2. Modify OrderManager.TryIssueOrder() to check orchestrator:
    - if (!ContentOrchestrator.Instance?.CanIssueOrderNow() ?? true) return;
    - Coordinates timing without changing order selection logic
-   
+
 3. Provide GetCurrentWorldSituation() to OrderProgressionBehavior:
    - Used for event slot weighting (Quiet ×0.3, Intense ×1.5)
    - Separate from narrative event frequency
-   
+
 4. Create order event JSON files from order-events-master.md:
    - Load events from ModuleData/Enlisted/Orders/order_events/*.json
    - 16 files (one per order), 85 total events
    - Events filter by requirements.world_state
-   
+
 5. Implement placeholder text resolution for events:
    - {SERGEANT} → culture-specific NCO (Empire: "Optio", Vlandia: "Sergeant", etc.)
    - {LORD_NAME} → enlisted lord's name
    - {PLAYER_RANK} → culture-specific player rank title
    - {SOLDIER_NAME}, {COMRADE_NAME} → generated soldier names
    - See event-system-schemas.md for full placeholder list
-   
+
 6. Test coordination:
    - Orders + events don't overwhelm player
    - Order issuance feels appropriate to situation
@@ -645,24 +645,24 @@ Phase 5 Tasks:
    - BuildNowText(): duty status, physical state
    - BuildAheadText(): context-aware forecast of what's coming
    - Uses culture-aware placeholders: {NCO_TITLE}, {OFFICER_TITLE}
-   
+
 2. CREATE Main Menu sections:
    - BuildKingdomSummary(): 1-2 lines of war/peace status
    - BuildCampSummary(): 1-2 lines of what's happening in camp
    - Both in EnlistedNewsBehavior.cs or new MainMenuBuilder.cs
-   
+
 3. IMPLEMENT culture-aware text resolution:
    - {NCO_TITLE} → "Principalis" (Empire), "Sergeant" (Vlandia), "Drengr" (Sturgia)
    - {OFFICER_TITLE} → "Centurion" (Empire), "Knight" (Vlandia), "Huskarl" (Sturgia)
    - Use RankHelper.GetNCOTitle(culture), RankHelper.GetOfficerTitle(culture)
-   
+
 4. UPDATE EnlistedMenuBehavior.cs - Main Menu (`enlisted_status`):
    - Rebuild main menu with three info sections (KINGDOM, CAMP, YOU)
    - Add ORDERS, DECISIONS, CAMP buttons
    - ORDERS → opens military order view
    - DECISIONS → opens camp life activities (dynamically generated)
    - CAMP → opens deep Camp Hub
-   
+
 5. UPDATE EnlistedMenuBehavior.cs - Camp Hub (`enlisted_camp_hub`):
    - ADD CAMP STATUS section at top (rhythm, activity level, camp situation)
    - ENHANCE RECENT ACTIONS section - merge detailed order/rep tracking from old Reports:
@@ -674,7 +674,7 @@ Phase 5 Tasks:
    - KEEP: Service Records, Quartermaster, Personal Retinue, Companion Assignments,
           Medical Attention, Talk to Lords, Access Baggage Train
    - MOVE Visit Settlement to DECISIONS menu (appears as contextual opportunity when at settlement), Visit Settlement
-   
+
 6. UPDATE RegisterReportsMenu() - DELETE or gut this function:
    - Reports menu no longer exists
    - Camp Hub now shows inline CAMP STATUS instead
@@ -955,7 +955,7 @@ Critical Requirements:
 - Handle edge cases: empty party, prisoner, in battle
 
 Key APIs to verify in decompile:
-- TroopRoster.AddToCounts(CharacterObject, int count, int woundedCount) 
+- TroopRoster.AddToCounts(CharacterObject, int count, int woundedCount)
 - TroopRoster.TotalWounded (property)
 - TroopRoster.TotalManCount (property)
 - TroopRosterElement.Character.IsHero (property)
@@ -1007,7 +1007,7 @@ DEPENDENCY: Phase 5.5 (Background Simulation) must be complete. It provides:
 - Recent incidents for opportunity generation
 
 CORE PHILOSOPHY:
-Camp life happens whether you engage or not. The camp is a living entity with 
+Camp life happens whether you engage or not. The camp is a living entity with
 its own rhythms, schedules, and activities. You are one soldier in a larger world.
 Things occur around you. You can participate, or you can watch. Either is valid.
 
@@ -1057,11 +1057,11 @@ Phase 6 Tasks:
    - ModuleData/Enlisted/camp_opportunities.json
    - 25+ opportunities covering all types
    - Natural language descriptions (what's HAPPENING, not game-y options)
-   
-   GOOD: "Veterans are drilling by the wagons. The sergeant is putting 
+
+   GOOD: "Veterans are drilling by the wagons. The sergeant is putting
           them through their paces. Swords clash in rhythm."
           [Join the drill]
-   
+
    BAD:  "Training Opportunity Available"
           [Start Training]
 
@@ -1101,7 +1101,7 @@ Phase 6 Tasks:
    - RISKY: Detection check when player engages
    - If caught: Apply caughtConsequences (rep loss, discipline, order failure risk)
    - NO SAFE/RISKY CATEGORIES IN UI - just natural opportunities + tooltips
-   
+
    JSON Schema per opportunity:
    ```json
    "orderCompatibility": {
@@ -1122,7 +1122,7 @@ Phase 6 Tasks:
    },
    "tooltipRiskyId": "opp_xxx_risk_tooltip"
    ```
-   
+
    Tooltip shows risk on hover (no emojis, plain text):
    "Risk: You're on duty. If caught: -15 Officer Rep. Detection: ~25%"
 
@@ -1135,7 +1135,7 @@ Phase 6 Tasks:
    - If player is on duty when activity fires, detection check
    - Clear commitment after activity completes or is cancelled
    - Commitment persists across save/load
-   
+
    ```csharp
    public class PlayerCommitments
    {
@@ -1192,7 +1192,7 @@ Order-Decision Tension:
 JSON SCHEMA (camp_opportunities.json):
 
 See docs/Features/Content/event-system-schemas.md "Camp Opportunities Schema" for full definition.
-Key fields: id, type, titleId, descriptionId, actionId, targetDecision, fitness, 
+Key fields: id, type, titleId, descriptionId, actionId, targetDecision, fitness,
 requirements, cooldown, orderCompatibility, detection, caughtConsequences, tooltipRiskyId
 
 Fitness Scoring (all 4 layers):
@@ -1206,7 +1206,7 @@ Fitness Scoring (all 4 layers):
 Camp Context Tracking:
 - DayPhase from ContentOrchestrator.GetCurrentDayPhase() (syncs with Order phases)
 - DaysSinceLastMuster from EnlistmentBehavior muster tracking
-- CampMood derived from: recent battle (+Tense), victory (+Celebration), 
+- CampMood derived from: recent battle (+Tense), victory (+Celebration),
   casualties (+Mourning), normal (+Routine)
 - RecentEvents list from last 24-48 hours
 
@@ -1312,7 +1312,7 @@ Example Variants to Create:
 // Garrison variant (more effective)
 {
   "id": "dec_rest_garrison",
-  "requirements": { 
+  "requirements": {
     "tier": { "min": 1 },
     "context": ["Camp"]
   },
@@ -1322,7 +1322,7 @@ Example Variants to Create:
 // Siege variant (less effective)
 {
   "id": "dec_rest_exhausted",
-  "requirements": { 
+  "requirements": {
     "tier": { "min": 1 },
     "context": ["Siege"]
   },
@@ -1395,7 +1395,7 @@ public class ContentOrchestrator : IProgressionModifierProvider
     public ProgressionModifiers GetProgressionModifiers(string trackName)
     {
         var situation = WorldStateAnalyzer.Analyze();
-        
+
         // Look up modifiers from config based on world state
         return LoadModifiersFromConfig(trackName, situation);
     }
