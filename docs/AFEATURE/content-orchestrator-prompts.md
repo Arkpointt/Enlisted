@@ -804,6 +804,52 @@ Content Summary:
 - Events use world_state requirements (peacetime_garrison, war_marching, siege_attacking, etc.)
 - All event text must use placeholder variables for culture-awareness
 
+═══════════════════════════════════════════════════════════════════════════════
+WRITING STYLE (CRITICAL - Read existing events first!)
+═══════════════════════════════════════════════════════════════════════════════
+
+Before writing ANY event prose, read these existing events for the mod's voice:
+- ModuleData/Enlisted/Orders/order_events/guard_post_events.json (6 events)
+- ModuleData/Enlisted/Orders/order_events/sentry_duty_events.json (5 events)
+
+STYLE RULES:
+
+1. SECOND PERSON, PRESENT TENSE
+   ✅ "You hear a strange noise in the darkness beyond your post."
+   ❌ "The soldier heard a noise." (wrong POV)
+   ❌ "You heard a noise." (wrong tense)
+
+2. SHORT, PUNCHY SENTENCES - Military brevity
+   ✅ "He staggers past. You hope {SERGEANT} doesn't find out."
+   ❌ "The inebriated soldier stumbles past your post, and you find yourself hoping that the sergeant doesn't discover your lapse in judgment."
+
+3. GROUNDED, NOT FLOWERY - Real consequences, not drama
+   ✅ "You trip in the dark and bash your shin. Nothing there."
+   ❌ "Pain lances through your leg as you stumble into the inky blackness, the shadows mocking your foolish bravery."
+
+4. MILITARY ATMOSPHERE - Duty, rank, orders, consequences
+   ✅ "{SERGEANT} told you no one passes without authorization."
+   ✅ "You held your post."
+   ✅ "{SERGEANT} notes your dedication."
+
+5. CHOICES FEEL REAL - Not "good/evil", just different tradeoffs
+   ✅ "Let him through. Not worth the trouble." (pragmatic)
+   ✅ "Turn him away. Orders are orders." (dutiful)
+   ✅ "Report him to {SERGEANT}." (by-the-book)
+
+6. RESULT TEXT IS BRIEF - 1-2 sentences max
+   ✅ "He curses you but stumbles off. You held your post."
+   ❌ "The soldier, clearly frustrated by your adherence to protocol, mutters a string of curses under his breath before turning away..."
+
+7. USE PLACEHOLDERS - For culture-awareness and immersion
+   ✅ "{SERGEANT} hauls him away."
+   ✅ "'Good work, {PLAYER_RANK}. You know your duty.'"
+   ❌ "The sergeant hauls him away." (no placeholder)
+
+TONE: Light military RP. You're a soldier doing a job. Not a hero, not an epic.
+Things break. Orders are annoying. Officers test you. Comrades need help.
+Small moments, real consequences.
+
 Acceptance Criteria:
 - OrderManager checks CanIssueOrderNow() before issuing
 - Orders arrive realistically based on world state
