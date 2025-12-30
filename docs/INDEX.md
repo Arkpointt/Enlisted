@@ -59,6 +59,7 @@
 | **Buyback System** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Buyback System |
 | **Camp Activities (Current)** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | — |
 | **Camp Activities (Future)** | [camp-life-simulation.md](AFEATURE/camp-life-simulation.md) | Living camp simulation (Phase 6) |
+| **Camp Background Simulation** | [camp-background-simulation.md](AFEATURE/camp-background-simulation.md) | Autonomous company life (Phase 5.5) |
 | **Camp Hub (Custom Gauntlet)** | [camp-hub-custom-gauntlet.md](Features/UI/camp-hub-custom-gauntlet.md) | — |
 | **Company Events** | [company-events.md](Features/Core/company-events.md) | — |
 | **Companion Integration** | [companion-management.md](Features/Core/companion-management.md) | — |
@@ -209,6 +210,7 @@ Active feature specifications being developed. These are implementation-ready sp
 | [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | Content Orchestrator: replaces schedule-driven event pacing with world-state-driven frequency. Phases 1-5. | None | 📋 Specification |
 | [content-orchestrator-prompts.md](AFEATURE/content-orchestrator-prompts.md) | Implementation prompts for Content Orchestrator and Camp Life. Copy-paste ready. | Reference only | 📋 Specification |
 | [camp-life-simulation.md](AFEATURE/camp-life-simulation.md) | Living breathing camp simulation: 4-layer intelligence (world/camp/player/history), time-of-day cycles, weekly rhythm, learning system. Phase 6. | Content Orchestrator (Phases 1-5) | 📋 Specification |
+| [camp-background-simulation.md](AFEATURE/camp-background-simulation.md) | Autonomous company life: soldiers get sick/injured/desert, equipment degrades, incidents occur, news feed integration. Phase 5.5. | Content Orchestrator (Phase 3) | 📋 Specification |
 | [order-progression-system.md](AFEATURE/order-progression-system.md) | Multi-day order execution replacing instant resolution. | Content Orchestrator (Phase 4) | 📋 Specification |
 | [ORDER-SYSTEM-MIGRATION.md](AFEATURE/ORDER-SYSTEM-MIGRATION.md) | Migration guide for order system changes. | order-progression-system.md | 📋 Reference |
 | [orders-content.md](AFEATURE/orders-content.md) | Order content definitions (16 orders). | order-progression-system.md | 📋 Specification |
@@ -248,6 +250,7 @@ Active feature specifications being developed. These are implementation-ready sp
 | [ai-behavior-analysis.md](Reference/ai-behavior-analysis.md) | AI behavior analysis: native AI decision-making patterns, party movement logic, combat AI, lord behavior - use for AI-aware feature design | 📚 Reference |
 | [opportunities-system-spec.md](Reference/opportunities-system-spec.md) | ⚠️ **LEGACY** - Replaced by [Camp Life Simulation](AFEATURE/camp-life-simulation.md) | 🗄️ Deprecated |
 | [camp-life-simulation.md](AFEATURE/camp-life-simulation.md) | **NEW** - Orchestrator-driven camp life: fitness scoring, learning system, 0-3 opportunities per open, order-decision tension, forecast system, cached UI sections | ✅ Active |
+| [camp-background-simulation.md](AFEATURE/camp-background-simulation.md) | **NEW** - Autonomous company: soldiers get sick/injured/desert, roster tracking, random incidents, pressure cascades, crisis triggers, news integration | ✅ Active |
 | [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | **NEW** - World-state-driven content delivery: replaces schedule-driven events with context-aware orchestration, frequency by situation (garrison quiet, siege intense) | ✅ Active |
 
 ---

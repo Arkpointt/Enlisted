@@ -4,7 +4,7 @@
 
 **Status:** ✅ Current  
 **Last Updated:** 2025-12-30 (Added order event integration reference)  
-**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Events Master](../../AFEATURE/order-events-master.md)
+**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Events Master](../../AFEATURE/order-events-master.md), [Camp Background Simulation](../../AFEATURE/camp-background-simulation.md)
 
 ---
 

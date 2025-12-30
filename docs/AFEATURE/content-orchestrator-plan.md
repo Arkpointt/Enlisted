@@ -5,7 +5,7 @@
 **Complexity:** Major architectural change  
 **Created:** 2025-12-24  
 **Last Updated:** 2025-12-30  
-**Related Docs:** [BLUEPRINT](../BLUEPRINT.md), [Order Progression System](order-progression-system.md), [Order Events Master](order-events-master.md), [Orders Content](orders-content.md), [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md), [News & Reporting System](../Features/UI/news-reporting-system.md)
+**Related Docs:** [BLUEPRINT](../BLUEPRINT.md), [Order Progression System](order-progression-system.md), [Order Events Master](order-events-master.md), [Orders Content](orders-content.md), [Camp Background Simulation](camp-background-simulation.md), [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md), [News & Reporting System](../Features/UI/news-reporting-system.md)
 
 ---
 
@@ -292,7 +292,25 @@ public List<ChainEvent> PendingChainEvents { get; set; }
 3. Create `SimulationPressureCalculator.cs` to track pressure
 4. Create `PlayerBehaviorTracker.cs` to learn preferences
 5. Add new config section `orchestrator` to `enlisted_config.json`
-6. Leave old systems in place initially
+6. Integrate with `CompanySimulationBehavior` for roster/pressure data (see below)
+7. Leave old systems in place initially
+
+**Background Simulation Integration:**
+The `WorldStateAnalyzer` reads from `CompanySimulationBehavior` ([Camp Background Simulation](camp-background-simulation.md)):
+```csharp
+// WorldStateAnalyzer.cs
+var simulation = CompanySimulationBehavior.Instance;
+
+// Company health context
+worldState["high_casualties"] = simulation.Roster.CasualtyRate > 0.2f;
+worldState["many_sick"] = simulation.Roster.SickCount > 5;
+worldState["recent_desertions"] = simulation.Pressure.RecentDesertions > 0;
+
+// Pressure context (affects event selection)
+worldState["supply_pressure"] = simulation.Pressure.DaysLowSupplies > 2;
+worldState["morale_pressure"] = simulation.Pressure.DaysLowMorale > 2;
+worldState["company_stressed"] = worldState["supply_pressure"] || worldState["morale_pressure"];
+```
 
 **Phase 2: Route Through Orchestrator**
 1. Modify `EventPacingManager.OnDailyTick()` to call `ContentOrchestrator.OnDailyTick()`
@@ -936,12 +954,24 @@ AHEAD shows forecast (context-aware):
 
 **Forecast Signals:**
 
-| Signal | What It Foreshadows | Data Source |
-|--------|---------------------|-------------|
-| "{NCO_TITLE}'s been making lists." | Order in 12-24 hours | `OrderManager` |
-| "The men are planning something." | Social event tomorrow | `CampOpportunityGenerator` |
-| "Pay day approaches." | Muster in 2-3 days | `EnlistmentBehavior` |
-| "Quiet. Almost too quiet." | Nothing imminent | Default |
+| Signal | What It Foreshadows | Data Source | Priority |
+|--------|---------------------|-------------|----------|
+| **Party State Warnings (from Background Simulation)** ||||
+| "The men are hungry. Supplies won't last." | Supply crisis imminent | `CompanySimulationBehavior` | 🔴 Critical |
+| "The mood is dark. Something may break." | Morale crisis imminent | `CompanySimulationBehavior` | 🔴 Critical |
+| "Fever spreading through camp." | Many sick, need medical | `CompanySimulationBehavior` | 🟠 High |
+| "Many wounded need care." | High casualties | `CompanySimulationBehavior` | 🟠 High |
+| "Men have been slipping away." | Recent desertions | `CompanySimulationBehavior` | 🟠 High |
+| "Rations are getting thin." | Supplies low | `CompanyNeedsManager` | 🟠 High |
+| "Grumbling in the ranks." | Morale low | `CompanyNeedsManager` | 🟡 Medium |
+| "Officers are losing patience." | Discipline low | `EscalationManager` | 🟡 Medium |
+| **Order/Event Forecasts** ||||
+| "{NCO_TITLE}'s been making lists." | Order in 12-24 hours | `OrderManager` | 🟡 Medium |
+| "Pay day approaches." | Muster in 2-3 days | `EnlistmentBehavior` | 🟡 Medium |
+| "The men are planning something." | Social event tomorrow | `CampOpportunityGenerator` | 🟢 Low |
+| "Quiet. Almost too quiet." | Nothing imminent | Default | 🟢 Low |
+
+**Priority determines display order.** Critical/High warnings always shown first. Player sees the most urgent 1-2 forecasts.
 
 **Technical Implementation:**
 
@@ -960,16 +990,61 @@ public class ForecastGenerator
     {
         var forecasts = new List<ForecastItem>();
         
+        // === PARTY STATE WARNINGS (from Background Simulation) ===
+        var sim = CompanySimulationBehavior.Instance;
+        
+        // Supply warnings - escalating urgency
+        if (sim.Pressure.DaysLowSupplies >= 2)
+            forecasts.Add(("The men are hungry. Supplies won't last.", Priority.Critical));
+        else if (_needs.GetNeed(CompanyNeed.Supplies) < 40)
+            forecasts.Add(("Rations are getting thin.", Priority.High));
+        
+        // Morale warnings
+        if (sim.Pressure.DaysLowMorale >= 2)
+            forecasts.Add(("The mood is dark. Something may break.", Priority.Critical));
+        else if (_needs.GetNeed(CompanyNeed.Morale) < 40)
+            forecasts.Add(("Grumbling in the ranks.", Priority.Medium));
+        
+        // Health warnings
+        if (sim.Roster.SickCount > 5)
+            forecasts.Add(("Fever spreading through camp.", Priority.High));
+        if (sim.Roster.WoundedCount > sim.Roster.TotalSoldiers * 0.2f)
+            forecasts.Add(("Many wounded need care.", Priority.High));
+        
+        // Discipline warnings
+        if (_escalation.GetTrack(EscalationTrack.Discipline) < 30)
+            forecasts.Add(("Officers are losing patience.", Priority.Medium));
+        
+        // Desertion warnings
+        if (sim.Pressure.RecentDesertions > 0)
+            forecasts.Add(("Men have been slipping away.", Priority.High));
+        
+        // === ORDER/EVENT FORECASTS ===
+        
         // Check for incoming orders
         if (OrderManager.Instance?.IsOrderPending(12.Hours()))
-            forecasts.Add(("{NCO_TITLE}'s been making lists.", Priority.High));
+            forecasts.Add(("{NCO_TITLE}'s been making lists.", Priority.Medium));
+        
+        // Check for upcoming muster
+        if (EnlistmentBehavior.Instance?.DaysUntilMuster <= 3)
+            forecasts.Add(("Pay day approaches.", Priority.Medium));
         
         // Check for upcoming camp events
         var upcoming = CampOpportunityGenerator.GetUpcomingOpportunities();
-        // ...
+        if (upcoming.Any())
+            forecasts.Add(("The men are planning something.", Priority.Low));
         
-        // Resolve culture-aware text
-        return ResolveCultureText(forecasts.First().Text);
+        // Default if nothing else
+        if (forecasts.Count == 0)
+            forecasts.Add(("Quiet. Almost too quiet.", Priority.Low));
+        
+        // Sort by priority, take top 2
+        var topForecasts = forecasts
+            .OrderByDescending(f => f.Priority)
+            .Take(2)
+            .Select(f => ResolveCultureText(f.Text));
+        
+        return string.Join(" ", topForecasts);
     }
 }
 ```

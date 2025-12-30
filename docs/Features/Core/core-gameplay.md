@@ -4,7 +4,7 @@
 
 **Status:** ✅ Current  
 **Last Updated:** 2025-12-23  
-**Related Docs:** [Enlistment](enlistment.md), [Orders System](orders-system.md), [Identity System](../Identity/identity-system.md)
+**Related Docs:** [Enlistment](enlistment.md), [Orders System](orders-system.md), [Identity System](../Identity/identity-system.md), [Camp Background Simulation](../../AFEATURE/camp-background-simulation.md)
 
 ---
 

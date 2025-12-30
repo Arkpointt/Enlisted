@@ -4,7 +4,7 @@
 
 **Status:** 📋 Reference  
 **Last Updated:** 2025-12-30  
-**Related Docs:** [Content Orchestrator Plan](content-orchestrator-plan.md), [Order Events Master](order-events-master.md), [BLUEPRINT](../BLUEPRINT.md)
+**Related Docs:** [Content Orchestrator Plan](content-orchestrator-plan.md), [Camp Background Simulation](camp-background-simulation.md), [Order Events Master](order-events-master.md), [BLUEPRINT](../BLUEPRINT.md)
 
 ---
 
@@ -17,6 +17,7 @@
 | [Phase 3: Cutover](#phase-3-cutover) | Switch to orchestrator | Sonnet 4 |
 | [Phase 4: Orders](#phase-4-orders-integration) | Coordinate order timing | Sonnet 4 |
 | [Phase 5: UI](#phase-5-ui-integration-company-report) | Main Menu + Camp Hub UI | Sonnet 4 |
+| [Phase 5.5: Background](#phase-55-camp-background-simulation) | Autonomous company simulation | Opus 4 |
 | [Phase 6: Camp Life](#phase-6-camp-life-simulation-living-breathing-world) | Living breathing camp simulation | Opus 4 |
 | [Phase 7: Variants](#phase-7-content-variants-post-launch) | Add content variants (JSON) | Sonnet 4 |
 | [Phase 8: Progression](#phase-8-progression-system-future) | Organic escalation evolution | Opus 4 |
@@ -33,6 +34,7 @@
 | Phase 3 - Cutover | Medium (migration) | Claude Sonnet 4 |
 | Phase 4 - Orders | Medium (integration) | Claude Sonnet 4 |
 | Phase 5 - UI | Medium (UI changes) | Claude Sonnet 4 |
+| Phase 5.5 - Background | High (simulation + game API) | Claude Opus 4 |
 | Phase 6 - Camp Life | High (living simulation) | Claude Opus 4 |
 | Phase 7 - Variants | Low (JSON only) | Claude Sonnet 4 |
 | Phase 8 - Progression | High (new system) | Claude Opus 4 |
@@ -872,19 +874,137 @@ Acceptance Criteria:
 
 ---
 
+## Phase 5.5: Camp Background Simulation
+
+**Goal:** Create an autonomous company that simulates itself daily - soldiers get sick, desert, recover; equipment degrades; incidents occur. This feeds the news system and provides context for the orchestrator.
+
+**Dependency:** Requires Phases 1-5 (Core Orchestrator + UI) to be complete
+
+```
+I need you to implement Phase 5.5 - Camp Background Simulation for my Bannerlord mod.
+
+Read these docs first:
+- docs/AFEATURE/camp-background-simulation.md (COMPLETE SPEC - read the whole thing)
+- docs/AFEATURE/content-orchestrator-plan.md (orchestrator integration)
+- docs/Features/UI/news-reporting-system.md (news feed integration)
+- docs/BLUEPRINT.md (coding standards, API verification)
+
+Phase 5.5 Overview:
+This is the BACKGROUND LAYER that makes the company feel alive. It runs automatically
+on the daily tick and generates news. It does NOT require player interaction.
+
+The key integration points are:
+1. Real Bannerlord TroopRoster - wounded troops are REAL game wounds
+2. EnlistedNewsBehavior - push camp news to existing news feed
+3. ContentOrchestrator - provide world state context + queue crisis events
+4. ForecastGenerator - provide warnings for the AHEAD section
+
+Phase 5.5 Tasks:
+
+1. Create CompanySimulationBehavior.cs (CampaignBehaviorBase)
+   - Location: src/Features/Camp/CompanySimulationBehavior.cs
+   - Register in SubModule.xml
+   - Add to Enlisted.csproj
+
+2. Create data models:
+   - CompanyRoster.cs (wrapper around real TroopRoster + overlay)
+   - CompanyPressure.cs (tracks days of low supplies/morale/etc)
+   - CampIncident.cs (struct for random incidents)
+   - SimulationDayResult.cs (result of daily tick)
+   - Location: src/Features/Camp/Models/
+
+3. Implement the 6-phase daily tick:
+   - Phase 1: Consumption (supplies, equipment degradation)
+   - Phase 2: Roster Updates (sick recovery/death, wounded news)
+   - Phase 3: Condition Checks (new sickness, injuries, desertion)
+   - Phase 4: Incident Rolls (random camp incidents)
+   - Phase 5: Pulse Evaluation (threshold crossings)
+   - Phase 6: News Generation (push to EnlistedNewsBehavior)
+
+4. Integrate with real Bannerlord TroopRoster:
+   - Read: party.MemberRoster.TotalWounded, TotalManCount
+   - Write wounds: roster.AddToCounts(troop, 0, woundedCount: 1)
+   - Remove deserters: roster.AddToCounts(troop, -1)
+   - NEVER remove heroes - filter to regulars only
+
+5. Create incident definitions:
+   - Location: ModuleData/Enlisted/simulation_config.json
+   - Categories: camp_life, discipline, social, discovery, problems
+   - Each incident has: id, text, severity, effects, cooldown
+
+6. Add news integration:
+   - Add AddCampNews() method to EnlistedNewsBehavior
+   - Add UpdateCompanyStatus() method to EnlistedNewsBehavior
+   - Push all daily results to news feed
+
+7. Add orchestrator integration:
+   - Expose simulation state for WorldStateAnalyzer
+   - Add QueueCrisisEvent() method for pressure thresholds
+   - Provide data for ForecastGenerator warnings
+
+8. Implement save/load:
+   - SyncData() for SickCount, MissingCount, DeadThisCampaign, pressure, flags
+   - Handle save corruption gracefully
+
+Critical Requirements:
+- Add ALL new files to Enlisted.csproj manually
+- Verify TroopRoster APIs against C:\Dev\Enlisted\Decompile\
+- Use ModLogger with category "Orchestrator" for logging
+- Never remove heroes from roster (filter to regulars)
+- Guard against negative counts (Math.Max(0, value))
+- Handle edge cases: empty party, prisoner, in battle
+
+Key APIs to verify in decompile:
+- TroopRoster.AddToCounts(CharacterObject, int count, int woundedCount) 
+- TroopRoster.TotalWounded (property)
+- TroopRoster.TotalManCount (property)
+- TroopRosterElement.Character.IsHero (property)
+- MobileParty.MemberRoster (property)
+
+Testing Checklist:
+- [ ] Simulation runs on daily tick without errors
+- [ ] Sick count increases/decreases appropriately
+- [ ] Wounded troops appear in game party screen
+- [ ] Desertions actually remove troops from party
+- [ ] Deaths reduce party size
+- [ ] News items appear in CAMP section
+- [ ] Crisis events trigger at pressure thresholds
+- [ ] Forecast warnings appear in AHEAD section
+- [ ] Save/load preserves simulation state
+- [ ] No crashes with empty party or edge cases
+
+Acceptance Criteria:
+- Daily tick generates 1-5 news items about camp life
+- Roster changes (sick, wounded, deserted) affect real party
+- Pressure accumulation leads to crisis events
+- Forecast section warns player before crisis
+- No hero troops ever removed
+- State persists across save/load
+```
+
+---
+
 ## Phase 6: Camp Life Simulation (Living Breathing World)
 
 **Goal:** Create a living, breathing military camp that runs independently of player input
 
-**Dependency:** Requires Phases 1-5 (Content Orchestrator) to be complete
+**Dependency:** Requires Phases 1-5.5 (Content Orchestrator + Background Simulation) to be complete
+
+**Note:** Phase 5.5 (Background Simulation) provides the context data that Camp Life uses for opportunity generation.
 
 ```
 I need you to implement Phase 6 of the Content Orchestrator - Camp Life Simulation.
 
 Read these docs first:
 - docs/AFEATURE/camp-life-simulation.md (COMPLETE SPEC - read the whole thing)
+- docs/AFEATURE/camp-background-simulation.md (Phase 5.5 - provides context data)
 - docs/AFEATURE/content-orchestrator-plan.md (orchestrator you're building on)
 - docs/Features/Campaign/camp-life-simulation.md (existing CampLifeBehavior to keep)
+
+DEPENDENCY: Phase 5.5 (Background Simulation) must be complete. It provides:
+- CompanySimulationBehavior.Instance.Roster (sick/wounded counts)
+- CompanySimulationBehavior.Instance.Pressure (days of low morale/supplies)
+- Recent incidents for opportunity generation
 
 CORE PHILOSOPHY:
 Camp life happens whether you engage or not. The camp is a living entity with 

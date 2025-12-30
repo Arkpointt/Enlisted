@@ -6,7 +6,7 @@
 **Priority:** Phase 6 (After Content Orchestrator Phases 1-5)  
 **Last Updated:** 2025-12-29  
 **Dependency:** Requires [Content Orchestrator](content-orchestrator-plan.md) to be implemented first  
-**Related Docs:** [Content Orchestrator Plan](content-orchestrator-plan.md), [Current Camp Life](../Features/Campaign/camp-life-simulation.md), [UI Systems Master](../Features/UI/ui-systems-master.md), [Progression System Schema](../Features/Content/event-system-schemas.md#progression-system-schema-future-foundation)
+**Related Docs:** [Content Orchestrator Plan](content-orchestrator-plan.md), [Camp Background Simulation](camp-background-simulation.md), [Current Camp Life](../Features/Campaign/camp-life-simulation.md), [UI Systems Master](../Features/UI/ui-systems-master.md), [Progression System Schema](../Features/Content/event-system-schemas.md#progression-system-schema-future-foundation)
 
 ---
 
