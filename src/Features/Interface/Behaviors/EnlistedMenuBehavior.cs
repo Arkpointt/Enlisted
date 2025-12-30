@@ -8,6 +8,7 @@ using Enlisted.Features.Conditions;
 using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
+using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Interface.News.Models;
 using Enlisted.Features.Logistics;
@@ -324,6 +325,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     new InquiryElement(
                         "trigger_muster",
                         new TextObject("{=enlisted_debug_muster}🔧 Trigger Muster").ToString(),
+                        null),
+                    new InquiryElement(
+                        "test_provisions",
+                        new TextObject("{=enlisted_debug_provisions}🍖 Test Provisions Shop").ToString(),
                         null)
                 };
 
@@ -371,6 +376,9 @@ namespace Enlisted.Features.Interface.Behaviors
                                     // Defer muster trigger to next frame to allow inquiry UI to fully close
                                     // Prevents graphics driver crash from menu transition during popup rendering
                                     NextFrameDispatcher.RunNextFrame(() => DebugToolsBehavior.TriggerMuster());
+                                    break;
+                                case "test_provisions":
+                                    DebugToolsBehavior.TestProvisionsShop();
                                     break;
                             }
                         }

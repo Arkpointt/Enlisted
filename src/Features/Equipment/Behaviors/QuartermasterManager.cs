@@ -1576,11 +1576,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                     new TextObject("{=qm_sell_title}Sell Equipment").ToString(),
                     new TextObject("{=qm_sell_description}Select an item to sell back to the quartermaster.").ToString(),
                     elements,
-                    true, // isExitShown
+                    true, // isExitShown (X button at top)
                     1,    // minSelectableOptionCount
                     1,    // maxSelectableOptionCount
                     new TextObject("{=qm_sell_confirm}Sell").ToString(),
-                    new TextObject("{=qm_sell_cancel}Done").ToString(),
+                    null, // No cancel button (X button handles closing)
                     OnSellPopupConfirm,
                     OnSellPopupCancel);
 
@@ -1609,14 +1609,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var selected = selectedElements[0];
 
                 // Check if "Done" was selected
-                if (selected.Identifier is string stringId && stringId == "done")
+                if (selected.Identifier is "done")
                 {
                     RestartQuartermasterConversationFromPopup();
                     return;
                 }
 
                 // Process the sale - EquipmentElement is passed as identifier to preserve modifier info
-                if (selected.Identifier is EquipmentElement element && !element.IsEmpty)
+                if (selected.Identifier is EquipmentElement { IsEmpty: false } element)
                 {
                     var removed = TryReturnSingleItem(element);
                     var buyback = removed ? CalculateQuartermasterBuybackPrice(element) : 0;
@@ -1682,7 +1682,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 var qmHero = enlistment?.GetOrCreateQuartermaster();
 
-                if (qmHero != null && qmHero.IsAlive)
+                if (qmHero is { IsAlive: true })
                 {
                     NextFrameDispatcher.RunNextFrame(() =>
                     {
@@ -2686,29 +2686,6 @@ namespace Enlisted.Features.Equipment.Behaviors
                     new TextObject("{=qm_retinue_error}Failed to provision retinue.").ToString(),
                     Colors.Red));
             }
-        }
-
-        /// <summary>
-        /// Menu background initialization for quartermaster_rations menu.
-        /// </summary>
-        [GameMenuInitializationHandler("quartermaster_rations")]
-        private static void OnQuartermasterRationsBackgroundInit(MenuCallbackArgs args)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            var backgroundMesh = "encounter_looter";
-
-            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
-            }
-            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
-            }
-
-            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
-            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
-            args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
         }
 
         /// <summary>
@@ -3955,10 +3932,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             _lastStockRollSupplyLevel = supplyLevel;
 
             // Phase 7: Check if inventory needs refresh (12-day cycle)
-            if (_inventoryState == null)
-            {
-                _inventoryState = new QMInventoryState();
-            }
+            _inventoryState ??= new QMInventoryState();
 
             if (_inventoryState.NeedsRefresh())
             {
@@ -3976,15 +3950,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 return;
             }
 
-            float outOfStockChance;
-            if (supplyLevel >= 40)
-            {
-                outOfStockChance = 0.20f;
-            }
-            else
-            {
-                outOfStockChance = 0.50f;
-            }
+            var outOfStockChance = supplyLevel >= 40 ? 0.20f : 0.50f;
 
             // Roll for each item in the variant cache (regular tier equipment)
             var itemsRolled = 0;
@@ -4017,7 +3983,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             var officerItemsRolled = 0;
             var officerItemsOutOfStock = 0;
 
-            if (enlistment?.IsEnlisted == true && enlistment.EnlistmentTier >= 7)
+            if (enlistment is { IsEnlisted: true, EnlistmentTier: >= 7 })
             {
                 var culture = enlistment.EnlistedLord?.Culture;
                 var playerTier = enlistment.EnlistmentTier;
@@ -4128,7 +4094,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 var qmRep = enlistment?.GetQMReputation() ?? 0;
 
-                int tierBonus = qmRep >= 90 ? 2 : (qmRep >= 75 ? 2 : 1);
+                var tierBonus = qmRep >= 90 ? 2 : (qmRep >= 75 ? 2 : 1);
                 var maxTroopTier = playerTier + tierBonus; // No artificial cap
 
                 var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
@@ -4165,6 +4131,34 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
 
         /// <summary>
+        /// Get all food items for T7+ officer provisions shop.
+        /// Returns all available food items from the game database.
+        /// </summary>
+        private List<ItemObject> GetFoodItemsForProvisionsShop()
+        {
+            var foodItems = new List<ItemObject>();
+            
+            try
+            {
+                foreach (var item in MBObjectManager.Instance.GetObjectTypeList<ItemObject>())
+                {
+                    if (item?.IsFood == true)
+                    {
+                        foodItems.Add(item);
+                    }
+                }
+                
+                ModLogger.Debug("Quartermaster", $"Found {foodItems.Count} food items for provisions");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error getting food items for provisions shop", ex);
+            }
+            
+            return foodItems;
+        }
+
+        /// <summary>
         /// Refresh inventory at muster based on supply level.
         /// Generates new stock quantities for all available items.
         /// </summary>
@@ -4191,7 +4185,7 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                 // Also include Officers' Armory items if player is T7+
                 var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.IsEnlisted == true && enlistment.EnlistmentTier >= 7)
+                if (enlistment is { IsEnlisted: true, EnlistmentTier: >= 7 })
                 {
                     var culture = enlistment.EnlistedLord?.Culture;
                     var playerTier = enlistment.EnlistmentTier;
@@ -4207,6 +4201,17 @@ namespace Enlisted.Features.Equipment.Behaviors
                             }
                         }
                     }
+                    
+                    // Add food items for T7+ officer provisions shop
+                    var foodItems = GetFoodItemsForProvisionsShop();
+                    foreach (var foodItem in foodItems)
+                    {
+                        if (foodItem != null && !availableItems.Contains(foodItem))
+                        {
+                            availableItems.Add(foodItem);
+                        }
+                    }
+                    ModLogger.Debug("Quartermaster", $"Added {foodItems.Count} food items to provisions inventory");
                 }
 
                 // Refresh inventory state with new stock quantities
@@ -4414,10 +4419,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             var qmReputation = enlistment?.GetQMReputation() ?? 0;
 
-            var availableTiers = new List<ItemQuality>();
-
-            // All reputation levels can upgrade to Fine
-            availableTiers.Add(ItemQuality.Fine);
+            var availableTiers = new List<ItemQuality> { ItemQuality.Fine };
 
             // 30+ reputation: Masterwork available
             if (qmReputation >= 30)
@@ -4452,7 +4454,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             var baseValue = item.Value;
 
             // Get current quality price multiplier
-            float currentPriceMultiplier = currentModifier?.PriceMultiplier ?? 1.0f;
+            var currentPriceMultiplier = currentModifier?.PriceMultiplier ?? 1.0f;
 
             // Get target quality price (use first modifier in quality tier for price calculation)
             var modGroup = item.ItemComponent?.ItemModifierGroup;
@@ -4471,13 +4473,13 @@ namespace Enlisted.Features.Equipment.Behaviors
 
             // Use the first modifier's price multiplier for cost calculation
             var targetModifier = targetModifiers.FirstOrDefault();
-            float targetPriceMultiplier = targetModifier?.PriceMultiplier ?? 1.0f;
+            var targetPriceMultiplier = targetModifier?.PriceMultiplier ?? 1.0f;
 
             // Calculate service markup based on QM reputation
             var enlistment = EnlistmentBehavior.Instance;
             var qmReputation = enlistment?.GetQMReputation() ?? 0;
 
-            float serviceMarkup = qmReputation switch
+            var serviceMarkup = qmReputation switch
             {
                 < 30 => 2.0f,      // High markup for low reputation
                 < 61 => 1.5f,  // Moderate markup for mid reputation
@@ -4486,12 +4488,12 @@ namespace Enlisted.Features.Equipment.Behaviors
 
             // Use long arithmetic to prevent overflow with expensive items
             // Calculate current and target prices as long values
-            long currentPrice = (long)(baseValue * currentPriceMultiplier);
-            long targetPrice = (long)(baseValue * targetPriceMultiplier);
-            long priceDifference = targetPrice - currentPrice;
+            var currentPrice = (long)(baseValue * currentPriceMultiplier);
+            var targetPrice = (long)(baseValue * targetPriceMultiplier);
+            var priceDifference = targetPrice - currentPrice;
 
             // Apply service markup
-            long upgradeCostLong = (long)(priceDifference * serviceMarkup);
+            var upgradeCostLong = (long)(priceDifference * serviceMarkup);
 
             // Clamp to valid int range and ensure non-negative
             if (upgradeCostLong > int.MaxValue)
@@ -4583,7 +4585,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
 
             // Calculate cost
-            int cost = CalculateUpgradeCost(currentElement, targetQuality);
+            var cost = CalculateUpgradeCost(currentElement, targetQuality);
 
             if (cost <= 0)
             {

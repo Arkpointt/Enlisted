@@ -265,6 +265,111 @@ Map incident contexts are used by `MapIncidentManager` to filter incidents based
 }
 ```
 
+---
+
+### Context Mapping (Orchestrator Integration)
+
+The Content Orchestrator uses internal world state keys for frequency calculation but maps them to event context strings for filtering. This ensures events fire with appropriate frequency AND appear in appropriate situations.
+
+**Two-Tier System:**
+
+1. **Internal World State** (Orchestrator frequency lookup)
+   - Keys: `peacetime_garrison`, `war_marching`, `siege_attacking`, etc.
+   - Used in: `enlisted_config.json` → `orchestrator.frequency` table
+   
+2. **Event Context** (Event filtering)
+   - Values: `Camp`, `War`, `Siege`, `Battle`, `Town`, `Peace`, `Any`
+   - Used in: Event JSON → `requirements.context`
+
+**Mapping Table:**
+
+| Orchestrator State | Event Context | Used For |
+|--------------------|---------------|----------|
+| `peacetime_garrison` | `Camp` | Garrison at settlement, no war |
+| `peacetime_recruiting` | `Camp` | Garrison during peacetime patrol |
+| `war_marching` | `War` | Marching to war with army |
+| `war_active_campaign` | `War` | Active campaign operations |
+| `siege_attacking` | `Siege` | Participating in siege assault |
+| `siege_defending` | `Siege` | Defending settlement during siege |
+| `lord_captured` | `Camp` | Recovery period after lord defeated |
+
+**Implementation Example:**
+```csharp
+// In WorldStateAnalyzer.cs
+public static string GetEventContext(WorldSituation situation)
+{
+    return situation.LordSituation switch
+    {
+        LordSituation.InGarrison => "Camp",
+        LordSituation.InSiege => "Siege",
+        LordSituation.InCampaign => "War",
+        LordSituation.Defeated => "Camp",  // Recovery counts as garrison
+        _ => "Any"
+    };
+}
+```
+
+**Usage in Event Selection:**
+```csharp
+var worldSituation = WorldStateAnalyzer.AnalyzeSituation();
+var eventContext = WorldStateAnalyzer.GetEventContext(worldSituation);
+
+// EventRequirementChecker filters events by context
+var eligible = events.Where(e => 
+    e.Requirements.Context == "Any" || 
+    e.Requirements.Context.Contains(eventContext)
+);
+```
+
+**See Also:** [Content Orchestrator Plan](../../AFEATURE/content-orchestrator-plan.md) for complete world state analysis specification.
+
+---
+
+### Requirements: Context vs World State
+
+**IMPORTANT:** There are TWO different requirement fields for situational filtering:
+
+**1. `requirements.context`** - For narrative events (Camp Hub decisions, automatic events)
+- **Uses:** `"Any"`, `"War"`, `"Peace"`, `"Siege"`, `"Camp"`, `"Battle"`, `"Town"`
+- **Mapped from:** `WorldStateAnalyzer.GetEventContext()`
+- **Purpose:** Simple context filtering for narrative content
+
+**2. `requirements.world_state`** - For order events only (during duty execution)
+- **Uses:** `"peacetime_garrison"`, `"war_marching"`, `"war_active_campaign"`, `"siege_attacking"`, `"siege_defending"`, etc.
+- **Mapped from:** `WorldStateAnalyzer.GetOrderEventWorldState()`
+- **Purpose:** Granular state weighting for in-order events
+
+**Example - Narrative Event:**
+```json
+{
+  "id": "dec_rest_garrison",
+  "category": "decision",
+  "requirements": {
+    "context": ["Camp"]  // ← Simplified context for Camp Hub
+  }
+}
+```
+
+**Example - Order Event:**
+```json
+{
+  "id": "scout_enemy_patrol",
+  "order_type": "order_scout_route",
+  "requirements": {
+    "world_state": ["war_marching", "war_active_campaign", "siege_attacking"]  // ← Granular orchestrator state
+  }
+}
+```
+
+**Why Two Systems?**
+- **Narrative events** need simple filtering (Camp/War/Siege)
+- **Order events** need granular weighting (peacetime vs active war vs desperate siege)
+- Both are driven by the same underlying `WorldSituation` analysis
+
+**See:** [Order Events Master](../../AFEATURE/order-events-master.md) for order event examples, [Order Progression System](../../AFEATURE/order-progression-system.md) for execution flow.
+
+---
+
 ### Valid Role Values  
 `"Any"`, `"Soldier"`, `"Scout"`, `"Medic"`, `"Engineer"`, `"Officer"`, `"Operative"`, `"NCO"`
 
@@ -745,7 +850,7 @@ Each option represents a player choice.
 | Rewards | `rewards` | object | ❌ | Resources gained |
 | Effects | `effects` | object | ❌ | State changes |
 | Result Text ID | `resultTextId` | string | ❌ | XML key for outcome narrative |
-| Result Text | `resultText` | string | ❌ | Outcome narrative (displayed in Recent Activities) |
+| Result Text | `resultText` | string or array | ❌ | Outcome narrative (string or array for random selection) |
 | Risk | `risk` | string | ❌ | safe/moderate/risky/dangerous |
 | Risk Chance | `risk_chance` or `riskChance` | int | ❌ | 0-100, success % |
 | Set Flags | `set_flags` or `setFlags` | array | ❌ | Flags to set |
@@ -841,6 +946,40 @@ Each option represents a player choice.
 **Important:** The `resultText` field is still required even though outcomes don't show as popups. It's displayed in Recent Activities and provides crucial narrative feedback.
 
 **See Also:** [News & Reporting System - Event Outcome Queue](../UI/news-reporting-system.md#event-outcome-queue-system)
+
+### Result Text Variants (Array Format)
+
+For replayability, `resultText` can be an array. The system picks randomly:
+
+```json
+{
+  "resultText": [
+    "A stray dog, hunting rats. You return to your post.",
+    "Just the wind. You feel foolish but alert.",
+    "A drunk soldier, relieving himself. He stumbles off.",
+    "Nothing. Shadows and nerves. The night is long."
+  ]
+}
+```
+
+**Parser behavior:**
+- If `resultText` is a string → Use directly
+- If `resultText` is an array → Pick one randomly at display time
+
+Same applies to `failure_resultText` for risky options:
+
+```json
+{
+  "resultText": ["You made it.", "Close call, but you're through."],
+  "failure_resultText": [
+    "You trip on a root. {COMRADE_NAME} snorts. 'Graceful.'",
+    "The 'shortcut' leads to a dead end. Everyone sighs.",
+    "A chicken attacks you. The men will never let you forget this."
+  ]
+}
+```
+
+**Localization:** When using arrays, each variant should have its own `resultTextId` entry, or use a single ID with indexed variants in XML.
 
 ---
 
@@ -1265,6 +1404,728 @@ Normal/Positive (6h) → Can be replaced by anything higher
 - **Backward compatible** - No changes needed to existing event files
 - **Case insensitive** - Parser accepts `"Normal"`, `"NORMAL"`, `"normal"`
 - **Invalid values** - Unknown severities default to `"normal"` with warning log
+
+---
+
+## Camp Opportunities Schema (Phase 6)
+
+**Added:** December 2025 (Content Orchestrator / Camp Life Simulation)
+
+Camp Opportunities are dynamically generated activities that appear in the Main Menu DECISIONS section. Unlike static decisions or scheduled events, these are orchestrator-curated based on world state, time, player condition, and history.
+
+### File Location
+
+| File | Purpose |
+|------|---------|
+| `ModuleData/Enlisted/camp_opportunities.json` | Opportunity definitions |
+
+### Root Structure
+
+```json
+{
+  "schemaVersion": 2,
+  "opportunities": [
+    { ... opportunity definitions ... }
+  ]
+}
+```
+
+### Opportunity Definition
+
+```json
+{
+  "id": "opp_card_game",
+  "type": "social",
+  
+  "titleId": "opp_card_game_title",
+  "title": "Card Game",
+  
+  "descriptionId": "opp_card_game_desc",
+  "description": "A card game is forming by the fire. Stakes look good.",
+  
+  "actionId": "opp_card_game_action",
+  "action": "Sit in",
+  
+  "targetDecision": "dec_gambling",
+  
+  "fitness": {
+    "worldState": {
+      "garrison": 10,
+      "campaign": 5,
+      "siege": -20
+    },
+    "dayPhase": {
+      "morning": -10,
+      "day": 0,
+      "dusk": 15,
+      "night": 5
+    },
+    "playerState": {
+      "fatigueOver70": -20,
+      "fatigueUnder30": 5
+    }
+  },
+  
+  "requirements": {
+    "tier": { "min": 1 },
+    "flags": { "none": ["player_wounded"] }
+  },
+  
+  "cooldown": {
+    "hours": 12
+  },
+  
+  "orderCompatibility": {
+    "default": "risky",
+    "guardPost": "risky",
+    "firewoodDetail": "available",
+    "marchFormation": "blocked"
+  },
+  
+  "detection": {
+    "baseChance": 0.25,
+    "nightModifier": -0.15,
+    "highRepModifier": -0.10
+  },
+  
+  "caughtConsequences": {
+    "officerRep": -15,
+    "discipline": 2,
+    "orderFailureRisk": 0.20
+  },
+  
+  "tooltipRiskyId": "opp_card_game_risk_tooltip",
+  "tooltipRisky": "Risk: You're on guard duty. If caught: -15 Officer Rep. Detection: ~25%"
+}
+```
+
+### Field Reference
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `id` | string | ✅ | Unique ID, prefix `opp_` |
+| `type` | string | ✅ | `training`, `social`, `economic`, `recovery`, `special` |
+| `titleId` | string | ✅ | XML localization key |
+| `title` | string | ❌ | Fallback if localization missing |
+| `descriptionId` | string | ✅ | XML localization key for flavor text |
+| `description` | string | ❌ | Fallback |
+| `actionId` | string | ✅ | XML localization key for button text |
+| `action` | string | ❌ | Fallback (e.g., "Join", "Sit in") |
+| `targetDecision` | string | ❌ | Decision to trigger when engaged |
+| `fitness` | object | ❌ | Scoring modifiers by context |
+| `requirements` | object | ❌ | Standard requirements object |
+| `cooldown` | object | ❌ | Hours before can appear again |
+| `orderCompatibility` | object | ❌ | Behavior during active orders |
+| `detection` | object | ❌ | Risky activity detection chances |
+| `caughtConsequences` | object | ❌ | Consequences if caught |
+| `tooltipRiskyId` | string | ❌ | Localization key for risk tooltip |
+| `tooltipRisky` | string | ❌ | Fallback risk tooltip |
+
+### Order Compatibility Values
+
+| Value | Behavior |
+|-------|----------|
+| `"available"` | No risk. Appears normally. |
+| `"risky"` | Appears with tooltip. Detection check on engage. |
+| `"blocked"` | Filtered out by orchestrator. Doesn't appear. |
+
+### Opportunity Types
+
+| Type | When Appropriate |
+|------|------------------|
+| `training` | Morning, garrison, rested player |
+| `social` | Evening, good morale, off-duty |
+| `economic` | Low gold, quartermaster needs help |
+| `recovery` | Injured, exhausted, siege |
+| `special` | Lord audience, settlement visit, baggage access |
+
+---
+
+## Main Menu Info Sections Schema (Phase 5)
+
+The Main Menu displays three cached info sections. These don't need JSON schemas - they're generated by code. But they need localization keys.
+
+### Required Localization Keys
+
+Add to `ModuleData/Languages/enlisted_strings.xml`:
+
+```xml
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- MAIN MENU - Info Sections (Phase 5 Content Orchestrator)        -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Section Headers -->
+<string id="menu_section_kingdom" text="_____ KINGDOM _____" />
+<string id="menu_section_camp" text="_____ CAMP _____" />
+<string id="menu_section_you" text="_____ YOU _____" />
+
+<!-- YOU Section - Natural flowing text about player status -->
+<string id="menu_you_off_duty" text="You're off duty and well-rested." />
+<string id="menu_you_off_duty_tired" text="You're off duty. Still tired from yesterday." />
+<string id="menu_you_off_duty_scheduled" text="You're off duty. {ORDER_NAME} scheduled for tomorrow at dawn." />
+<string id="menu_you_on_duty" text="On duty - {ORDER_NAME}, day {DAY} of {TOTAL}." />
+<string id="menu_you_on_duty_progress" text="On duty - {ORDER_NAME}. {CURRENT_PHASE}. {NEXT_PHASE} in {HOURS} hours." />
+<string id="menu_you_wounded" text="You're wounded - movement impaired. Off duty until you recover." />
+<string id="menu_you_exhausted" text="Exhausted from today's combat. The {NCO_TITLE} gave everyone rest." />
+<string id="menu_you_sick" text="You're feeling poorly. Rest ordered until you're fit for duty." />
+<string id="menu_you_commitment" text="You've agreed to join the {ACTIVITY} tonight." />
+<string id="menu_you_risk" text="You agreed to the {ACTIVITY} tonight. Risky - you'll need to slip away from your post." />
+<string id="menu_you_default" text="The day stretches ahead." />
+
+<!-- CAMP Section - Living world activities (what's happening around you) -->
+<string id="menu_camp_morning" text="Morning bustle. Camp coming alive." />
+<string id="menu_camp_midday" text="Midday heat. Most resting in shade." />
+<string id="menu_camp_evening" text="Evening calm. Good spirits in camp." />
+<string id="menu_camp_night" text="Night watch. Camp quiet." />
+<string id="menu_camp_drilling" text="Veterans drilling by the wagons." />
+<string id="menu_camp_cards" text="Card game forming tonight by the fire." />
+<string id="menu_camp_dice" text="Dice game by the fire." />
+<string id="menu_camp_roster" text="The {NCO_TITLE}'s making lists - duty roster tomorrow." />
+<string id="menu_camp_qm_open" text="Quartermaster is open." />
+<string id="menu_camp_good_morale" text="Good spirits in camp." />
+<string id="menu_camp_tense" text="Camp is tense. Siege weighs on everyone." />
+<string id="menu_camp_quiet" text="A quiet moment in camp. Rest while you can." />
+
+<!-- KINGDOM Section Content -->
+<string id="menu_kingdom_at_war" text="{KINGDOM_A} at war with {KINGDOM_B}." />
+<string id="menu_kingdom_siege" text="Siege underway at {SETTLEMENT}." />
+<string id="menu_kingdom_peace" text="The realm is at peace." />
+<string id="menu_kingdom_quiet" text="The realm is quiet. No major news." />
+
+<!-- Changed Content Indicator -->
+<string id="menu_new_tag" text="[NEW]" />
+
+<!-- Empty States -->
+<string id="menu_orders_none" text="No active orders." />
+<string id="menu_decisions_none" text="Nothing demands your attention right now." />
+```
+
+---
+
+## Order State Display Schema (Phase 4)
+
+Orders progress through states: FORECAST → SCHEDULED → PENDING → ACTIVE → COMPLETE.
+
+### Required Localization Keys
+
+```xml
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ORDERS MENU - Order State Display (Phase 4)                     -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Order State Headers -->
+<string id="order_state_scheduled" text="SCHEDULED:" />
+<string id="order_state_pending" text="PENDING:" />
+<string id="order_state_active" text="ACTIVE:" />
+<string id="order_state_complete" text="COMPLETE:" />
+
+<!-- Scheduled Order Display -->
+<string id="order_scheduled_line" text="{ORDER_NAME} - tomorrow at dawn" />
+<string id="order_scheduled_hint" text="The {NCO_TITLE} has you down for {ORDER_TYPE} duty." />
+
+<!-- Pending Order Display -->
+<string id="order_pending_prompt" text="Report to {LOCATION} for {ORDER_TYPE} duty." />
+<string id="order_pending_accept" text="Accept Order" />
+<string id="order_pending_decline" text="Decline" />
+
+<!-- Active Order Display -->
+<string id="order_active_progress" text="{ORDER_NAME} (Day {DAY}/{TOTAL})" />
+<string id="order_active_status" text="{CURRENT_PHASE_TEXT}" />
+<string id="order_active_next" text="Next: {NEXT_PHASE} in {HOURS} hours." />
+
+<!-- Complete Order Display -->
+<string id="order_complete_success" text="{ORDER_NAME} - Success" />
+<string id="order_complete_adequate" text="{ORDER_NAME} - Adequate" />
+<string id="order_complete_failed" text="{ORDER_NAME} - Failed" />
+<string id="order_complete_rewards" text="Duty completed. {REWARDS}" />
+
+<!-- Auto-Decline Messages -->
+<string id="order_auto_accept" text="You were assigned {ORDER_NAME} while traveling." />
+<string id="order_auto_decline" text="You missed an order assignment." />
+<string id="order_pending_warning" text="Respond soon or miss the order." />
+<string id="order_roster_changed" text="The roster changed. {ORDER_NAME} cancelled." />
+```
+
+---
+
+## Order-Decision Tension Schema (Phase 6)
+
+When player is on duty, risky activities have detection chances and consequences.
+
+### Required Localization Keys
+
+```xml
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ORDER-DECISION TENSION - Risk Tooltips (Phase 6)                -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Generic Risk Tooltip (fallback) -->
+<string id="opp_risk_tooltip_generic" text="Risk: You're on duty. If caught: {REP_PENALTY} Officer Rep. Detection: ~{DETECTION_CHANCE}%" />
+
+<!-- Caught Notifications -->
+<string id="opp_caught_notification" text="You were caught away from your post!" />
+<string id="opp_caught_detail" text="The {OFFICER_TITLE} noticed your absence. This won't be forgotten." />
+<string id="opp_caught_warning" text="You're on thin ice with command." />
+
+<!-- Order-Specific Tooltips (optional overrides) -->
+<string id="opp_risk_guard_post" text="Risk: Leaving guard post. If caught: Discipline review, -15 Officer Rep." />
+<string id="opp_risk_patrol" text="Risk: Abandoning patrol. If caught: Order may fail." />
+<string id="opp_risk_sentry" text="Risk: Sentry duty. Severe consequences if caught sleeping." />
+```
+
+---
+
+## Culture-Aware Rank Tokens
+
+The Main Menu uses culture-appropriate rank names via tokens. These resolve at runtime based on the enlisted lord's culture.
+
+### Token Reference
+
+| Token | Resolves To | Example (Vlandia) | Example (Battania) |
+|-------|-------------|-------------------|-------------------|
+| `{NCO_TITLE}` | Culture's NCO rank | "Sergeant" | "Warleader" |
+| `{OFFICER_TITLE}` | Culture's officer rank | "Captain" | "Champion" |
+| `{RANK_NAME}` | Player's current rank | "Footman" | "Warrior" |
+
+### Implementation
+
+```csharp
+public static string ResolveToken(string text, CultureObject culture)
+{
+    return text
+        .Replace("{NCO_TITLE}", GetNCOTitle(culture))
+        .Replace("{OFFICER_TITLE}", GetOfficerTitle(culture))
+        .Replace("{RANK_NAME}", GetPlayerRankName(culture));
+}
+```
+
+**Fallback:** If culture lookup fails, use generic English: "the NCO", "the officer", "Soldier".
+
+---
+
+## Localization Checklist (Phase 5-6)
+
+Before implementing Main Menu / Camp Life:
+
+- [ ] All `menu_section_*` keys added to enlisted_strings.xml
+- [ ] All `menu_you_*`, `menu_duty_*`, `menu_state_*` keys added
+- [ ] All `menu_forecast_*` keys added
+- [ ] All `menu_kingdom_*`, `menu_camp_*` keys added
+- [ ] All `order_state_*`, `order_*_line` keys added
+- [ ] All `opp_*` opportunity localization keys added
+- [ ] Culture-aware rank fallbacks tested for all cultures
+- [ ] `[NEW]` tag key added (`menu_new_tag`)
+- [ ] Run `python tools/events/sync_event_strings.py` to verify
+
+---
+
+## Progression System Schema (Future Foundation)
+
+**Status:** 📋 Schema Ready (Implementation Deferred)  
+**Purpose:** Generic probabilistic progression pattern for escalation tracks
+
+This schema defines how any escalation track (Medical Risk, Discipline, Pay Tension, etc.) can have organic, time-based progression instead of purely deterministic event outcomes.
+
+### Core Concept
+
+Instead of "choice = fixed outcome", progression tracks can:
+- **Improve** naturally over time
+- **Stay stable** (no change)
+- **Worsen** (complications, decay)
+
+Daily/hourly probability checks determine outcomes, modified by skills, context, and player actions.
+
+### Progression Definition Schema
+
+Add to any escalation track's config:
+
+```json
+{
+  "progressionConfig": {
+    "track": "medical_risk",
+    "enabled": true,
+    
+    "tick": {
+      "type": "daily",
+      "hour": 6,
+      "skipDuring": ["battle", "muster"]
+    },
+    
+    "thresholdEvents": {
+      "2": "evt_medical_onset",
+      "3": "evt_medical_worsening",
+      "4": "evt_medical_complication",
+      "5": "evt_medical_emergency"
+    },
+    
+    "baseChances": {
+      "1": { "improve": 40, "stable": 50, "worsen": 10 },
+      "2": { "improve": 25, "stable": 55, "worsen": 20 },
+      "3": { "improve": 15, "stable": 50, "worsen": 35 },
+      "4": { "improve": 10, "stable": 45, "worsen": 45 },
+      "5": { "improve": 5, "stable": 40, "worsen": 55 }
+    },
+    
+    "criticalRolls": {
+      "luckyRange": [1, 5],
+      "luckyEffect": -2,
+      "complicationRange": [96, 100],
+      "complicationEffect": +2
+    },
+    
+    "skillModifier": {
+      "skill": "Medicine",
+      "divisor": 3,
+      "maxBonus": 20
+    },
+    
+    "contextModifiers": {
+      "resting": { "improve": +10, "worsen": -10 },
+      "marching": { "improve": -10, "worsen": +10 },
+      "afterBattle": { "improve": -15, "worsen": +15 },
+      "treated": { "improve": +25, "worsen": -25 }
+    },
+    
+    "worldStateModifiers": {
+      "garrison": { "improve": +5, "worsen": -5 },
+      "campaign": { "improve": 0, "worsen": 0 },
+      "siege": { "improve": -10, "worsen": +10 }
+    },
+    
+    "clamps": {
+      "improveMin": 5,
+      "improveMax": 80,
+      "worsenMin": 5,
+      "worsenMax": 70
+    }
+  }
+}
+```
+
+### Field Reference
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `track` | string | Which escalation track this affects |
+| `tick.type` | string | `"daily"`, `"hourly"`, or `"perPhase"` (for orders) |
+| `tick.hour` | int | Hour of day to check (0-23) |
+| `tick.skipDuring` | array | Contexts to skip (battle, muster) |
+| `thresholdEvents` | object | Event IDs to fire when crossing thresholds |
+| `baseChances` | object | Base probabilities per severity level |
+| `criticalRolls` | object | Lucky/complication roll ranges and effects |
+| `skillModifier` | object | Which skill affects this, formula |
+| `contextModifiers` | object | Situational modifiers |
+| `worldStateModifiers` | object | Orchestrator WorldSituation modifiers |
+| `clamps` | object | Min/max probability limits |
+
+### Applicable Tracks
+
+This pattern can apply to any escalation track:
+
+| Track | Tick Type | Skill | Notes |
+|-------|-----------|-------|-------|
+| `medical_risk` | Daily (6am) | Medicine | Health conditions |
+| `discipline` | Daily (8pm) | Leadership | Behavior record |
+| `pay_tension` | Daily | Trade | Financial stress |
+| `scrutiny` | Per-order | Charm | Officer attention |
+| `morale` | Daily | Leadership | Unit morale (future) |
+
+### Orchestrator Integration
+
+The ContentOrchestrator provides world state modifiers to progression systems:
+
+```csharp
+// Progression behavior asks orchestrator for modifiers
+public interface IProgressionModifierProvider
+{
+    ProgressionModifiers GetProgressionModifiers(string trackName);
+}
+
+public class ProgressionModifiers
+{
+    public float ImproveBonus { get; set; }
+    public float WorsenBonus { get; set; }
+    public float TickMultiplier { get; set; } // 0.5 = half as often, 2.0 = twice as often
+}
+
+// Example: ContentOrchestrator implements this
+public ProgressionModifiers GetProgressionModifiers(string trackName)
+{
+    var situation = WorldStateAnalyzer.Analyze();
+    
+    return trackName switch
+    {
+        "medical_risk" => new ProgressionModifiers
+        {
+            ImproveBonus = situation.LordSituation == LordSituation.InGarrison ? 5 : -5,
+            WorsenBonus = situation.LordSituation == LordSituation.InSiege ? 10 : 0,
+            TickMultiplier = situation.ActivityLevel == ActivityLevel.Intense ? 1.5f : 1.0f
+        },
+        _ => new ProgressionModifiers()
+    };
+}
+```
+
+### Threshold Event Delivery
+
+When progression crosses a threshold, the event goes through standard delivery:
+
+```csharp
+// In ProgressionBehavior.OnTick()
+if (crossedThreshold)
+{
+    var eventId = config.ThresholdEvents[newValue.ToString()];
+    EventDeliveryManager.Instance.QueueEvent(eventId);
+}
+```
+
+### Treatment/Action Integration
+
+Player actions set flags that modify next day's roll:
+
+```json
+{
+  "id": "dec_seek_treatment",
+  "effects": {
+    "setFlags": ["treated_today"],
+    "medical_risk": -1
+  }
+}
+```
+
+The progression system checks for `treated_today` flag and applies the `treated` context modifier.
+
+### Implementation Location
+
+```
+src/Features/Escalation/
+├── ProgressionBehavior.cs         (base class)
+├── MedicalProgressionBehavior.cs  (medical-specific)
+├── DisciplineProgressionBehavior.cs
+└── Models/
+    ├── ProgressionConfig.cs
+    └── ProgressionModifiers.cs
+
+ModuleData/Enlisted/
+└── progression_config.json        (all track configurations)
+```
+
+### Localization Keys
+
+```xml
+<!-- Progression Outcome Messages -->
+<string id="prog_medical_improve" text="Feeling stronger today." />
+<string id="prog_medical_stable" text="" /> <!-- No message for stable -->
+<string id="prog_medical_worsen" text="Condition worsened overnight." />
+<string id="prog_medical_lucky" text="The fever broke. Nearly back to normal." />
+<string id="prog_medical_complication" text="Took a bad turn in the night." />
+
+<string id="prog_discipline_improve" text="Your behavior has been noted positively." />
+<string id="prog_discipline_worsen" text="Your conduct is drawing unwanted attention." />
+```
+
+### Future Expansion
+
+Once the foundation is implemented, add:
+1. **Specific Conditions** - Fever, Infection, Plague (each with own progression)
+2. **Contagion** - Spread between party members
+3. **Permanent Consequences** - Scars, stat penalties from critical conditions
+4. **Treatment Quality** - Different lords have different surgeons
+5. **Order Progression** - Orders could use this pattern for phase outcomes
+
+---
+
+## Order Event Schema
+
+**Purpose:** Events that fire during order execution (at slot phases). Different from narrative events in that they use `order_type` instead of `category` and support world state requirements.
+
+**File Locations:**
+```
+ModuleData/Enlisted/Orders/order_events/
+├── guard_events.json       (order_guard_post)
+├── sentry_events.json      (order_sentry_duty)
+├── patrol_events.json      (order_camp_patrol)
+├── patrol_lead_events.json (order_lead_patrol)
+├── scout_events.json       (order_scout_route)
+├── escort_events.json      (order_escort_duty)
+├── firewood_events.json    (order_firewood_detail)
+├── latrine_events.json     (order_latrine_duty)
+├── cleaning_events.json    (order_equipment_cleaning)
+├── muster_events.json      (order_muster_inspection)
+├── march_events.json       (order_march_formation)
+├── medical_events.json     (order_treat_wounded)
+├── repair_events.json      (order_repair_equipment)
+├── forage_events.json      (order_forage_supplies)
+├── training_events.json    (order_train_recruits)
+└── defenses_events.json    (order_inspect_defenses)
+```
+
+### Order Event File Structure
+
+```json
+{
+  "schemaVersion": 2,
+  "order_type": "order_guard_post",
+  "events": [
+    { ... event definitions ... }
+  ]
+}
+```
+
+### Order Event Definition
+
+```json
+{
+  "id": "guard_drunk_soldier",
+  "order_type": "order_guard_post",
+  
+  "titleId": "order_evt_guard_drunk_title",
+  "title": "Drunk Soldier",
+  
+  "setupId": "order_evt_guard_drunk_setup",
+  "setup": "A soldier approaches your post, weaving slightly. He reeks of drink. 'Just let me through.'",
+  
+  "requirements": {
+    "world_state": ["peacetime_garrison", "war_active_campaign"],
+    "tier": { "min": 1, "max": 6 }
+  },
+  
+  "options": [
+    {
+      "id": "let_pass",
+      "textId": "order_evt_guard_drunk_opt_let",
+      "text": "Step aside. Not worth the trouble.",
+      "tooltip": "Avoid confrontation. -1 Officer Rep, +1 Soldier Rep.",
+      "effects": {
+        "officerRep": -1,
+        "soldierRep": 1
+      }
+    },
+    {
+      "id": "turn_away",
+      "textId": "order_evt_guard_drunk_opt_turn",
+      "text": "You're not getting through like this.",
+      "tooltip": "+1 Officer Rep, -1 Soldier Rep.",
+      "effects": {
+        "officerRep": 1,
+        "soldierRep": -1
+      }
+    },
+    {
+      "id": "report",
+      "textId": "order_evt_guard_drunk_opt_report",
+      "text": "Call the sergeant.",
+      "tooltip": "+2 Officer Rep, -2 Soldier Rep.",
+      "effects": {
+        "officerRep": 2,
+        "soldierRep": -2
+      }
+    }
+  ]
+}
+```
+
+### Order Event Fields
+
+| Field | JSON Name | Type | Required | Notes |
+|-------|-----------|------|----------|-------|
+| ID | `id` | string | ✅ | Unique. Convention: `{order_short}_{event_name}` |
+| Order Type | `order_type` | string | ✅ | Which order can trigger this event |
+| Title ID | `titleId` | string | ✅ | XML localization key |
+| Title | `title` | string | ❌ | Fallback if loc missing |
+| Setup ID | `setupId` | string | ✅ | XML key for event description |
+| Setup | `setup` | string | ❌ | Fallback narrative |
+| Requirements | `requirements` | object | ❌ | See below |
+| Options | `options` | array | ✅ | Player choices (same as standard events) |
+| Skill Check | `skill_check` | object | ❌ | Optional skill check |
+| Chain Flags | `sets_flag` | string | ❌ | Flag set on completion |
+| Requires Flag | `requires_flag` | string | ❌ | Flag required to appear |
+
+### Order Event Requirements
+
+Different from narrative events. Uses `world_state` instead of `context`:
+
+```json
+{
+  "requirements": {
+    "world_state": ["peacetime_garrison", "war_marching", "siege_defending"],
+    "tier": { "min": 1, "max": 6 }
+  }
+}
+```
+
+**Valid world_state values:**
+- `peacetime_garrison` - Camp at settlement, no war
+- `peacetime_recruiting` - Patrolling during peace
+- `war_marching` - Moving with army in war
+- `war_active_campaign` - Active campaign operations
+- `siege_attacking` - Attacking in siege
+- `siege_defending` - Defending in siege
+
+### Order Event Skill Check
+
+Optional skill check that modifies option outcomes:
+
+```json
+{
+  "skill_check": {
+    "skill": "Perception",
+    "threshold": 40,
+    "modifies_option": "challenge",
+    "success_bonus": {
+      "officerRep": 2,
+      "skillXp": { "Perception": 10 }
+    },
+    "failure_penalty": {
+      "officerRep": -1
+    }
+  }
+}
+```
+
+### Order Event vs Narrative Event
+
+| Aspect | Order Event | Narrative Event |
+|--------|-------------|-----------------|
+| Delivery | During order phases | MapIncident or EventPacer |
+| Trigger | `order_type` | `category` |
+| Context | `requirements.world_state` | `requirements.context` |
+| File Location | `Orders/order_events/*.json` | `Events/*.json` |
+| Frequency | Controlled by slot phase | Controlled by orchestrator |
+| ID Convention | `{order}_{event}` | `dec_*`, `evt_*`, `mi_*` |
+
+### Order Event Consequence Codes
+
+For reference when reviewing event master document:
+
+**Player Effects:**
+- `HP` = Player health change (use `hpChange` in JSON)
+- `MED` = Medical Risk (0-5 scale, use `medicalRisk` in JSON)
+- `FAT` = Fatigue (use `fatigue` in costs, `fatigueRelief` in rewards)
+- `G` = Gold (use `gold` in effects)
+- `EQ` = Equipment loss/damage (use `equipmentLoss` in effects)
+
+**Reputation:**
+- `REP.S` = Soldier Rep (`soldierRep`, -50 to +50)
+- `REP.O` = Officer Rep (`officerRep`, 0-100)
+- `REP.L` = Lord Rep (`lordRep`, 0-100)
+
+**Escalation (0-100):**
+- `DISC` = Discipline (`discipline`)
+- `SUSP` = Scrutiny (`scrutiny`)
+
+**Company Needs (0-100):**
+- `C.MOR` = Morale (`companyNeeds.Morale`)
+- `C.RDY` = Readiness (`companyNeeds.Readiness`)
+- `C.SUP` = Supplies (`companyNeeds.Supplies`)
+- `C.EQ` = Equipment (`companyNeeds.Equipment`)
+- `C.MEN` = Troop Loss (`troopLoss`)
+- `C.FOOD` = Food (`foodLoss` for loss, `companyNeeds.Supplies` for gain)
+
+**XP:**
+- `XP.{Skill}` = Skill XP (`skillXp.{Skill}`)
+
+**See Also:** [Order Events Master](../../AFEATURE/order-events-master.md) for complete event catalog.
 
 ---
 

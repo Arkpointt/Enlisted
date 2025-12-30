@@ -2,7 +2,7 @@
 
 **Summary:** Complete documentation for the mod's unified content system including technical architecture, JSON schemas, and a full catalog of all 200+ narrative content pieces (events, decisions, orders, and map incidents).
 
-**Total Content:** 200+ pieces including 17 orders, 38 decisions, 80+ events, and 51 map incidents.
+**Total Content:** 200+ pieces including 16 orders, 38 decisions, 80+ events, and 51 map incidents.
 
 ---
 

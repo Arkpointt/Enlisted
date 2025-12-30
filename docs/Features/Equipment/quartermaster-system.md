@@ -3,7 +3,7 @@
 **Summary:** The Quartermaster manages all military logistics for the player's company including equipment purchases with quality modifiers, provisions/rations, buyback services, baggage inspections, and the Officers Armory. The system uses a data-driven dialogue engine with dynamic runtime context evaluation, allowing the Quartermaster to react to supply levels, reputation, and company events in real-time.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23 (Dialogue flow restructured: two-level hub with dynamic contextual responses)  
+**Last Updated:** 2025-12-29 (Provisions: T7+ gate, 2.0-3.2x pricing; Upgrade Screen: grid layout, sequential upgrades, real stats; Armor: removed slot picker, opens Gauntlet directly)  
 **Related Docs:** [Company Supply Simulation](company-supply-simulation.md), [Provisions & Rations System](provisions-rations-system.md)
 
 **System Overview:**
@@ -39,8 +39,8 @@ The Quartermaster is the central logistics hub for enlisted soldiers, managing:
 - **Master at Arms Integration** - Category-filtered equipment browsing (armor/weapons/accessories)
 - **Enhanced UI** - Tooltips show stat modifiers, upgrade indicators, color-coded quality tiers
 - **Buyback Services** - Sell QM-purchased equipment back at 30-65% of value (quality-aware)
-- **Food Rations (T1-T4)** - Issued rations every 12 days, quality based on reputation
-- **Officer Provisions (T5+)** - Premium food shop at 150-200% of town prices
+- **Food Rations (T1-T6)** - Issued rations every 12 days, automatic at muster
+- **Officer Provisions (T7+)** - Premium food shop at 150-200% of town prices
 - **Baggage Inspections** - Muster contraband checks with reputation-based outcomes
 - **Officers Armory** - Elite equipment with quality modifiers (T7+, high reputation)
 - **Supply Gating** - Company supply < 30% blocks equipment changes
@@ -52,7 +52,7 @@ The Quartermaster is the central logistics hub for enlisted soldiers, managing:
 |--------|------------------|
 | **Company Supply** | < 30%: Equipment blocked; affects greetings and responses |
 | **QM Reputation** | -50 to +100: Equipment discounts, buyback rates, food quality |
-| **Player Tier** | T1-T4: Issued rations; T5+: Buy provisions |
+| **Player Tier** | T1-T6: Issued rations (auto); T7+: Buy provisions from shop |
 | **Soldier Reputation** | + QM Rep ≥ 110: Unlocks Officers Armory |
 
 ---
@@ -469,41 +469,114 @@ QM: [Upgrade response based on reputation and archetype]
 
 **Opens Upgrade Interface** showing all equipped items with available upgrade paths.
 
-### Upgrade Interface
+### Upgrade Interface (Gauntlet Grid UI)
 
+The upgrade screen uses a grid layout matching the equipment selector and provisions screens:
+
+**Layout:**
 ```
-=== IMPROVE EQUIPMENT ===
-
-Your Equipped Items:
-
-[Bastard Sword]
-  Current: Worn (Inferior quality)
-  Available Upgrades:
-    → Standard (Common) - 85g
-    → Fine - 320g
-    → Masterwork - 640g (LOCKED: Requires Rep 30+)
-
-[Vlandian Scale Armor]
-  Current: Standard (Common quality)
-  Available Upgrades:
-    → Fine - 280g
-    → Masterwork - 560g (LOCKED: Requires Rep 30+)
-    → Legendary - 1120g (LOCKED: Requires Rep 61+)
-
-[Imperial Helmet]
-  Current: Fine quality
-  Available Upgrades:
-    → Masterwork - 180g
-    → Legendary - 540g (LOCKED: Requires Rep 61+)
-
-[Worn Boots]
-  Already at maximum quality for this item.
-
-[Banner]
-  This item cannot be improved.
-
-[Done] [Back to Conversation]
+┌─────────────────────────────────────────────────┐
+│            Improve Equipment                     │
+├──────────────┬──────────────────────────────────┤
+│              │  [Card 1] [Card 2] [Card 3]      │
+│   Character  │  [Card 4] [Card 5]               │
+│   Preview    │                                   │
+│              │  (scrollable grid, 4 per row)    │
+│  Current     │                                   │
+│  Equipment   │                                   │
+│              │                                   │
+│  Gold: 800⊕  │                                   │
+└──────────────┴──────────────────────────────────┘
 ```
+
+**Left Panel:**
+- Character model showing current equipped gear
+- "Your Current Equipment" label
+- Player's current gold
+
+**Right Panel:**
+- Grid of upgrade cards (4 cards per row)
+- Each card represents ONE equipped item showing its NEXT sequential upgrade
+- Scrollable if more than 8 items visible
+
+**Individual Upgrade Card:**
+```
+┌──────────────────┐
+│   Main Weapon    │
+│  ┌────────────┐  │
+│  │ [Item Icon]│  │
+│  └────────────┘  │
+│  Spiked Mace     │
+│   Standard       │
+│      ↓           │
+│     Fine         │
+│  +2 Armor        │
+│     1500⊕        │
+│   [Improve]      │
+└──────────────────┘
+```
+
+**Card Details:**
+- **Slot Type**: Weapon, Helmet, Armor, etc.
+- **Item Icon**: Visual representation of the item
+- **Item Name**: Display name (e.g., "Spiked Mace")
+- **Current Quality**: Present quality tier (e.g., "Standard")
+- **Arrow**: Visual separator showing upgrade direction
+- **Target Quality**: Next quality tier (e.g., "Fine")
+- **Stat Improvements**: Actual stat bonuses (e.g., "+2 Armor", "+3 Damage, +1 Speed")
+- **Cost**: Gold required for upgrade (varies by item value and QM reputation)
+- **Button State**: Enabled if affordable, greyed if insufficient gold
+
+**Sequential Upgrades:**
+- Only shows the NEXT available quality tier
+- After upgrading Standard → Fine, card refreshes to show Fine → Masterwork
+- Items at maximum quality don't appear in the grid
+
+**Example Scenario:**
+Player has 5 equipped items:
+1. Spiked Mace (Standard) → Card shows: Standard → Fine, +2 Damage, 1500⊕
+2. Leather Cap (Standard) → Card shows: Standard → Fine, +1 Armor, 800⊕
+3. Sackcloth Tunic (Standard) → Card shows: Standard → Fine, +2 Armor, 1200⊕
+4. Horseman Boots (Standard) → Card shows: Standard → Fine, +1 Armor, 750⊕
+5. Hood (Standard) → Card shows: Standard → Fine, +1 Armor, 600⊕
+
+= **5 upgrade cards displayed** in grid (2 rows)
+
+### How Upgrades Work (Native Modifier System)
+
+The upgrade system leverages Bannerlord's native item modifier system. No base item stats are changed.
+
+**Core Components:**
+- **ItemObject**: The base item (e.g., "Spiked Mace") with fixed base stats defined in native XML
+- **ItemModifier**: Quality bonus applied on top of base stats (e.g., "+2 damage")
+- **EquipmentElement**: ItemObject + ItemModifier = displayed item with modified stats
+
+**Upgrade Process:**
+```csharp
+// Before upgrade:
+EquipmentElement = ItemObject("Spiked Mace", baseDamage: 30) + 
+                   ItemModifier("Standard", bonusDamage: 0)
+// Displayed: 30 damage
+
+// After upgrade to Fine:
+EquipmentElement = ItemObject("Spiked Mace", baseDamage: 30) + 
+                   ItemModifier("Fine", bonusDamage: +2)
+// Displayed: 32 damage (30 base + 2 modifier)
+```
+
+**What We're Doing:**
+1. Player brings equipped item to Quartermaster
+2. QM swaps the ItemModifier to a higher quality tier
+3. Same ItemObject, different modifier = improved stats
+4. Bannerlord's native equipment system handles stat calculations
+
+**What We're NOT Doing:**
+- ❌ Modifying base item stats
+- ❌ Creating custom items
+- ❌ Implementing smithing/crafting
+- ✅ Providing an upgrade service using Bannerlord's existing modifier infrastructure
+
+This is exactly how loot quality works in vanilla Bannerlord (finding a "Fine Bastard Sword" vs "Rusty Bastard Sword" - same base item, different modifiers). We're just letting players pay to upgrade between quality tiers.
 
 ### Upgrade Cost Formula
 
@@ -617,7 +690,7 @@ Total Buyback Value: 498g
 
 ## Provisions & Rations
 
-### T1-T4: Issued Rations System
+### T1-T6: Issued Rations System
 
 **Ration Exchange at Muster (Every 12 Days):**
 
@@ -650,9 +723,9 @@ Total Buyback Value: 498g
 - Rations immune to loss events (rats, spoilage, theft)
 - Player must supplement with personal food during shortages
 
-### T5+: Officer Provisions Shop
+### T7+: Officer Provisions Shop
 
-**Transition at T5 Promotion:**
+**Transition at T7 Promotion:**
 ```
 Quartermaster: "Congratulations on your promotion, Lieutenant.
     
@@ -667,12 +740,18 @@ it's convenient when you're in the field. Stock refreshes every muster."
 
 **Shop Pricing:**
 
-| QM Reputation | Price Multiplier | Example (Grain: 10g base) |
-|---------------|------------------|---------------------------|
-| -50 to 0 | 2.0x (200%) | 20g |
-| 1 to 30 | 1.9x (190%) | 19g |
-| 31 to 60 | 1.75x (175%) | 17.5g |
-| 61 to 100 | **1.5x (150%)** | **15g (minimum)** |
+Provisions are always more expensive than town markets (convenience premium for field provisioning):
+
+| QM Reputation | Price Multiplier | Example (Grain: 10g base) | Example (Meat: 30g base) |
+|---------------|------------------|---------------------------|--------------------------|
+| **Trusted (65+)** | **2.0x** | **20g** | **60g** |
+| Friendly (35-64) | 2.3x | 23g | 69g |
+| Neutral (10-34) | 2.5x | 25g | 75g |
+| Wary (-10 to 9) | 2.8x | 28g | 84g |
+| Hostile (< -10) | 3.2x | 32g | 96g |
+
+**Best case scenario:** 2.0x town prices (still double!)  
+**Design:** Even with maximum reputation, QM provisions cost more than town markets. Officers pay for convenience during campaigns.
 
 **Inventory by Supply Level:**
 
@@ -708,29 +787,21 @@ Days of Food Remaining: 12 days
 💡 Town markets are cheaper but require travel.
 ```
 
-### Provision Bundles (All Ranks)
+**Gauntlet Grid UI Implementation:**
 
-In addition to issued rations (T1-T4) and the provisions shop (T5+), the quartermaster offers **prepared provision bundles** that provide immediate morale and fatigue benefits. These are available via the "I could use some provisions" conversation option.
+The provisions shop uses a custom Gauntlet grid interface (similar to equipment browser) with:
+- **Left Panel:** Company info, restock countdown, player gold display
+- **Right Panel:** Scrollable grid of food item cards (4 per row)
+- **Each Card Shows:** Food icon, item name, price per unit, quantity available, Buy 1/Buy All buttons
 
-**Available Bundles:**
+**Rank-Based Access:**
+- **Dialogue Option:** Only visible to T7+ officers (gated via `requirements: { "tier_min": 7 }`)
+- **UI Viewing:** All ranks can view the provisions grid (for progression preview)
+- **Purchase Buttons:** Disabled for T1-T6 (greyed out), enabled for T7+ only
+- **Tooltip (T1-T6):** "Officers Only (Rank T7+)" - shows what's available when they rank up
+- **Click Message (T1-T6):** "Provisions are for officers only (Rank T7+)"
 
-| Bundle | Cost | Duration | Benefits | Requirements |
-|--------|------|----------|----------|--------------|
-| **Supplemental Rations** | 10g | 1 day | +2 morale | None |
-| **Officer's Fare** | 30g | 2 days | +4 morale, +2 fatigue recovery | None |
-| **Commander's Feast** | 75g | 3 days | +8 morale, +5 fatigue recovery | Tier 4+ |
-
-**Key Features:**
-- QM reputation discount applies to bundle costs
-- Benefits apply immediately upon purchase
-- Duration tracks how long the quality food lasts
-- Not reclaimed at muster (these are personal purchases, not issued rations)
-- Available to all ranks (Commander's Feast requires T4+)
-
-**Use Case:**
-Provision bundles are ideal for quick morale/fatigue boosts before battles or during tough campaigns. They're more expensive per day than standard food but provide immediate gameplay benefits beyond just preventing starvation.
-
----
+This creates progression aspiration - lower ranks can browse what's available when they advance to officer, while officers can actually make purchases.
 
 ## Quartermaster's Deal
 
@@ -1251,7 +1322,7 @@ Using non-existent brush names (like `Popup.Background.Medium`) causes UI to ren
 | `src/Features/Equipment/UI/QuartermasterProvisionItemVM.cs` | Provision item view model |
 | `GUI/Prefabs/Equipment/QuartermasterEquipmentGrid.xml` | Equipment grid Gauntlet layout |
 | `GUI/Prefabs/Equipment/QuartermasterUpgradeScreen.xml` | Upgrade screen Gauntlet layout |
-| `ModuleData/Enlisted/Dialogue/qm_dialogue.json` | Main hub, browse, armor slots |
+| `ModuleData/Enlisted/Dialogue/qm_dialogue.json` | Main hub, category selection, supply responses |
 | `ModuleData/Enlisted/Dialogue/qm_gates.json` | Tier gate responses |
 | `ModuleData/Enlisted/Dialogue/qm_intro.json` | First meeting introduction flow |
 | `ModuleData/Languages/enlisted_qm_dialogue.xml` | All QM localization strings |

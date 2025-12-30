@@ -4,8 +4,8 @@
 **Priority:** High  
 **Complexity:** Major architectural change  
 **Created:** 2025-12-24  
-**Last Updated:** 2025-12-24  
-**Related Docs:** [BLUEPRINT](../BLUEPRINT.md), [Order Progression System](order-progression-system.md), [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md), [News & Reporting System](../Features/UI/news-reporting-system.md)
+**Last Updated:** 2025-12-30  
+**Related Docs:** [BLUEPRINT](../BLUEPRINT.md), [Order Progression System](order-progression-system.md), [Order Events Master](order-events-master.md), [Orders Content](orders-content.md), [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md), [News & Reporting System](../Features/UI/news-reporting-system.md)
 
 ---
 
@@ -36,7 +36,8 @@ Replace the current schedule-driven event pacing system with a **Sandbox Life Si
 6. [Technical Specifications](#technical-specifications)
 7. [Testing & Validation](#testing--validation)
 8. [Sandbox Philosophy](#sandbox-philosophy)
-9. [References & Related Docs](#references--related-docs)
+9. [Edge Cases & Special States](#edge-cases--special-states)
+10. [References & Related Docs](#references--related-docs)
 
 ---
 
@@ -403,6 +404,53 @@ This creates the intended rhythm:
 
 ## Target Architecture
 
+### Military Day Cycle
+
+The orchestrator is built around a **4-phase military day cycle** that mirrors authentic military life. This cycle syncs directly with the Order System.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                          MILITARY DAY CYCLE                                     │
+├────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  DAWN (6am-11am)         MIDDAY (12pm-5pm)    DUSK (6pm-9pm)     NIGHT (10pm+) │
+│  ══════════════          ════════════════     ═══════════════    ═════════════ │
+│                                                                                 │
+│  Order Phase 1:          Order Phase 2:       Order Phase 3:     Order Phase 4:│
+│  - Briefings             - Active duty        - Evening meal     - Night watch │
+│  - Morning roll call     - Patrols            - Social time      - Sleep       │
+│  - Work assignments      - Training drills    - Card games       - Quiet       │
+│  - New orders arrive     - Guard posts        - Drinking         - Order ends  │
+│                                                                                 │
+│  Camp Activities:        Camp Activities:     Camp Activities:   Camp Limited: │
+│  - Training              - Work details       - Gambling         - Night guard │
+│  - Equipment check       - Trade/barter       - Storytelling     - Emergencies │
+│  - Medical treatment     - Rest (midday)      - Rest (evening)   - Sleeping    │
+│                                                                                 │
+│  Progression:            Progression:         Progression:       Progression:  │
+│  - Medical roll (6am)    - (none)             - Discipline (8pm) - (none)      │
+│                                                                                 │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**The orchestrator uses DayPhase to:**
+1. **Filter opportunities** - Training in morning, social in evening
+2. **Time order events** - Briefings at 6am, completions at midnight
+3. **Schedule progression rolls** - Medical at dawn, discipline at dusk
+4. **Adjust content tone** - Morning is businesslike, evening is relaxed
+
+```csharp
+public enum DayPhase
+{
+    Dawn,     // 6am-11am: Briefings, training, work (Order Phase 1)
+    Midday,   // 12pm-5pm: Active duty, patrols, drills (Order Phase 2)
+    Dusk,     // 6pm-9pm: Social, meals, relaxation (Order Phase 3)
+    Night     // 10pm-5am: Sleep, night watch (Order Phase 4)
+}
+```
+
+---
+
 ### Component Overview
 
 ```
@@ -447,8 +495,10 @@ This creates the intended rhythm:
 
 **Key Methods:**
 ```csharp
-void OnDailyTick()  // Main simulation loop
+void OnDailyTick()  // Main daily analysis (runs once at 6am)
+void OnDayPhaseChanged(DayPhase newPhase)  // Phase transitions (4x daily)
 WorldSituation AnalyzeCurrentSituation()
+DayPhase GetCurrentDayPhase()  // Dawn, Midday, Dusk, Night
 float CalculateRealisticFrequency()
 SimulationPressure CalculatePressure()
 bool ShouldDeliverContent()  // Based on world state, not schedule
@@ -463,6 +513,7 @@ EventDefinition SelectRealisticContent()
 **Responsibilities:**
 - Analyzes your lord's current situation (garrison, campaign, siege, defeated)
 - Determines kingdom war stance (peacetime, defensive, offensive, desperate)
+- **Tracks current day phase (Dawn, Midday, Dusk, Night)** - synced with Order System
 - Tracks recent world events (battles, sieges, declarations)
 - Calculates realistic activity level for current situation
 - Provides strategic context (8 strategic contexts)
@@ -476,6 +527,22 @@ public class WorldSituation
     public LifePhase CurrentPhase { get; set; }  // Peacetime, Campaign, Siege, Recovery
     public ActivityLevel ExpectedActivity { get; set; }  // Quiet, Routine, Active, Intense
     public float RealisticEventFrequency { get; set; }  // Events per week
+    public DayPhase CurrentDayPhase { get; set; }  // Dawn, Midday, Dusk, Night
+}
+```
+
+**Day Phase Detection:**
+```csharp
+public static DayPhase GetCurrentDayPhase()
+{
+    int hour = (int)CampaignTime.Now.CurrentHourInDay;
+    return hour switch
+    {
+        >= 6 and < 12 => DayPhase.Dawn,      // 6am-11am
+        >= 12 and < 18 => DayPhase.Midday,   // 12pm-5pm
+        >= 18 and < 22 => DayPhase.Dusk,     // 6pm-9pm
+        _ => DayPhase.Night                  // 10pm-5am
+    };
 }
 ```
 
@@ -722,9 +789,16 @@ Selection uses this to deliver content player likes
 ### Phase 4: Orders Integration (Week 4)
 **Goal:** Coordinate order system with orchestrator
 
+**CRITICAL:** The Order Progression System **replaces** the current instant-resolution order mechanism. See [Order System Migration](ORDER-SYSTEM-MIGRATION.md) for what old code must be removed.
+
 **Background:** Orders are now multi-day duty assignments (see [Order Progression System](order-progression-system.md)). The orchestrator needs to understand two separate concepts:
 1. **Order Issuance** - When OrderManager assigns a new duty to the player
 2. **Order Events** - Things that happen during duty execution (handled by OrderProgressionBehavior)
+
+**Content Resources:**
+- **16 orders** defined in [Orders Content](orders-content.md)
+- **85 order events** cataloged in [Order Events Master](order-events-master.md)
+- JSON schema for order events defined in [Event System Schemas](../Features/Content/event-system-schemas.md#order-event-schema)
 
 **Tasks:**
 1. Integrate `OrderManager` with orchestrator for **order issuance timing**
@@ -736,129 +810,173 @@ Selection uses this to deliver content player likes
    - Activity level modifies slot event chances during order execution
    - Quiet = ×0.3, Routine = ×0.6, Active = ×1.0, Intense = ×1.5
    - This is separate from narrative event frequency
+   - Order events use `requirements.world_state` for context filtering
    
-3. Define **non-order time** handling
+3. Load order events from JSON files
+   - Files located at `ModuleData/Enlisted/Orders/order_events/*.json`
+   - Each order has dedicated event pool file (e.g., `guard_events.json`)
+   - Events use `world_state` requirements (e.g., `siege_attacking`, `war_marching`)
+   
+4. Define **non-order time** handling
    - When player has no active order, orchestrator can fire camp life events
    - These use the standard narrative event frequency tables
    - Player can also use Camp Hub decisions during this time
    
-4. Test full integration across order lifecycle
+5. Test full integration across order lifecycle
+
+**Order Event File Structure:**
+```json
+{
+  "schemaVersion": 2,
+  "order_type": "order_guard_post",
+  "events": [
+    {
+      "id": "guard_drunk_soldier",
+      "order_type": "order_guard_post",
+      "requirements": {
+        "world_state": ["peacetime_garrison", "war_active_campaign"]
+      },
+      "options": [ ... ]
+    }
+  ]
+}
+```
 
 **Deliverables:**
 - OrderManager coordinates issuance timing with orchestrator
 - OrderProgressionBehavior receives world state for event weighting
+- Order event JSON files created for all 16 orders (85 total events)
+- All event text uses placeholder variables for culture-awareness (`{SERGEANT}`, `{LORD_NAME}`, etc.)
 - Camp life events fire appropriately between orders
 - All systems work together smoothly
 
 **Acceptance Criteria:**
 - New orders issued every 2-4 days when player has none active
 - Order slot events weighted by world state (siege = more events during duty)
+- Order events filter by `world_state` requirement
+- Event text displays with culture-specific NCO/officer titles (Empire: "Optio", Vlandia: "Sergeant", etc.)
 - Camp life events fire during non-order time
 - No overwhelming spam from combined systems
 
 ---
 
 ### Phase 5: Refinement & UI Integration (Week 5)
-**Goal:** Polish orchestrator and integrate player-facing transparency features
+**Goal:** Polish orchestrator and integrate the Quick Decision Center UI
 
 **Tasks:**
-1. **Company Report UI** (Player-Facing Transparency)
-   - Add `BuildCompanyReportSection()` to `EnlistedNewsBehavior.cs`
-   - Add `GetOrchestratorRhythmFlavor()` method to `ContentOrchestrator.cs`
-   - Split current Daily Brief into "Company Report" and "Daily News"
-   - Update Camp Hub menu to show new layout (see UI Systems doc)
+1. **Main Menu UI** (Quick Decision Center)
+   - Restructure Main Menu (`enlisted_status`) with KINGDOM, CAMP, YOU sections
+   - Add `BuildForecastSection()` to generate NOW + AHEAD text
+   - Add `GenerateCampSummary()` for camp activity one-liner
+   - Implement culture-aware text resolution for rank names
    
-2. **Playtest & Tune**
+2. **Navigation Structure**
+   - Main Menu shows info + three buttons: ORDERS, DECISIONS, CAMP
+   - DECISIONS opens camp life opportunities (dynamically generated)
+   - ORDERS opens military order view
+   - CAMP opens deep Camp Hub
+
+3. **Camp Hub Restructure** (`enlisted_camp_hub`)
+   - ADD CAMP STATUS section at top (rhythm, activity level, camp narrative)
+   - ADD RECENT ACTIONS section (event/order outcomes)
+   - REMOVE Reports menu option (camp status replaces it)
+   - REMOVE Leave Service option (only accessible from Muster menu)
+   - DELETE RegisterReportsMenu() function or gut it
+   - KEEP: Service Records, Quartermaster, Retinue, Companions, Medical, Lords, Baggage
+   
+4. **Playtest & Tune**
    - Playtest at each tier (T1-T9)
    - Tune frequency tables
-   - Tune pressure modifiers
-   - Tune dampening values
-   
-3. **Admin Tools & Documentation**
-   - Add admin commands for testing
-   - Documentation updates
-   - Verify variant filtering works (if any variants added)
+   - Tune forecast signal timing
+   - Verify culture-aware text works for all cultures
 
-**UI Changes (See [UI Systems Master](../UI/ui-systems-master.md)):**
+**UI Structure:**
 
-**Current Camp Hub Header:**
+**Main Menu (`enlisted_status`) - Quick Decision Center:**
 ```
-Lord: [Lord Name]
-Your Rank: [Rank Title] (T#)
-
-_____ COMPANY REPORT _____
-[Combined daily brief with company + kingdom + player status]
-
-_____ RECENT ACTIONS _____
-[Event outcomes]
-```
-
-**New Camp Hub Header:**
-```
-_____ COMPANY REPORT _____
-⚙️ CAMP STATUS: [Rhythm] - [Activity Level]
-
-[Orchestrator context: Why this situation, what to expect]
-
-_____ DAILY NEWS _____
-[Kingdom macro news, casualties, major events]
-
-_____ RECENT ACTIONS _____
-[Event outcomes - unchanged]
+╔══════════════════════════════════════════════════════════╗
+║  _____ KINGDOM _____                                      ║
+║  {War/peace. Major events. 1-2 lines.}                   ║
+║                                                           ║
+║  _____ CAMP _____                                         ║
+║  {What's happening right now. Living world. 1-2 lines.}  ║
+║                                                           ║
+║  _____ YOU _____                                          ║
+║  NOW: {Current duty status. Physical state.}             ║
+║  AHEAD: {Forecast of what's coming. Culture-aware.}      ║
+╠══════════════════════════════════════════════════════════╣
+║            [  ORDERS  ]     ← Military orders             ║
+║            [  DECISIONS  ]  ← Camp life activities        ║
+║            [  CAMP    ]     ← Deep menu (QM, records)     ║
+║            [Back to Map]                                  ║
+╚══════════════════════════════════════════════════════════╝
 ```
 
-**Company Report Examples:**
+**Three Information Sections (cached, stable):**
 
-*Garrison (Quiet):*
-```
-⚙️ CAMP STATUS: Garrison - Quiet
+| Section | Purpose | Refreshes When |
+|---------|---------|----------------|
+| KINGDOM | Macro strategic context | War/peace, siege events, or every 24h |
+| CAMP | Living world + forecasts | Time period changes, or every 6h |
+| YOU | NOW + AHEAD personal state | Player state changes |
 
-Your lord holds at Pravend with no threats on the horizon. 
-The camp has settled into routine. Little disturbs the 
-daily rhythm.
-```
+**Don't regenerate on every menu open.** Cache and refresh on triggers.
+Use `[NEW]` tag with Warning color for changed content.
 
-*Siege Week 2 (High Intensity):*
-```
-⚔️ CAMP STATUS: Siege Operations - High Intensity
+**The YOU Section - NOW + AHEAD:**
 
-Week 2 of the siege at Pen Cannoc. Every hour brings new 
-demands. The pressure never lets up. Your sergeants work 
-overtime keeping order among exhausted soldiers.
-```
+NOW shows current state:
+- Duty status (on order, off duty)
+- Physical state (rested, tired, wounded)
 
-*Campaign (Active):*
-```
-🏹 CAMP STATUS: Campaign - Active Operations
+AHEAD shows forecast (context-aware):
+- When off duty: Hints about incoming orders, camp events
+- When on order: What's coming DURING that order
+- Uses culture-appropriate rank names via `{NCO_TITLE}`, `{OFFICER_TITLE}`
 
-The army marches to war against Battania. Your sergeants 
-manage the daily needs of soldiers on campaign.
-```
+**Forecast Signals:**
+
+| Signal | What It Foreshadows | Data Source |
+|--------|---------------------|-------------|
+| "{NCO_TITLE}'s been making lists." | Order in 12-24 hours | `OrderManager` |
+| "The men are planning something." | Social event tomorrow | `CampOpportunityGenerator` |
+| "Pay day approaches." | Muster in 2-3 days | `EnlistmentBehavior` |
+| "Quiet. Almost too quiet." | Nothing imminent | Default |
 
 **Technical Implementation:**
 
-1. **New Method in ContentOrchestrator.cs:**
+1. **New ForecastGenerator.cs:**
 ```csharp
-public string GetOrchestratorRhythmFlavor()
+public class ForecastGenerator
 {
-    var situation = WorldStateAnalyzer.GetCurrentSituation();
-    var activityLevel = GetCurrentActivityLevel();
-    
-    return (situation.Rhythm, activityLevel) switch
+    public (string Now, string Ahead) BuildPlayerStatus()
     {
-        (MilitaryRhythm.Peacetime, ActivityLevel.Quiet) => 
-            "Your lord holds at {SETTLEMENT} with no threats on the horizon. The camp has settled into routine. Little disturbs the daily rhythm.",
-        (MilitaryRhythm.Siege, ActivityLevel.Intense) => 
-            "Week {WEEK} of the siege at {TARGET}. Every hour brings new demands. The pressure never lets up.",
-        // ... more combinations
-        _ => ""
-    };
+        var now = BuildNowText(); // Duty status, physical state
+        var ahead = BuildAheadText(); // Context-aware forecast
+        return (now, ahead);
+    }
+    
+    private string BuildAheadText()
+    {
+        var forecasts = new List<ForecastItem>();
+        
+        // Check for incoming orders
+        if (OrderManager.Instance?.IsOrderPending(12.Hours()))
+            forecasts.Add(("{NCO_TITLE}'s been making lists.", Priority.High));
+        
+        // Check for upcoming camp events
+        var upcoming = CampOpportunityGenerator.GetUpcomingOpportunities();
+        // ...
+        
+        // Resolve culture-aware text
+        return ResolveCultureText(forecasts.First().Text);
+    }
 }
 ```
 
 2. **New Method in EnlistedNewsBehavior.cs:**
 ```csharp
-public string BuildCompanyReportSection()
+public string BuildCampStatusSection()
 {
     if (ContentOrchestrator.Instance == null) 
         return string.Empty;
@@ -868,29 +986,69 @@ public string BuildCompanyReportSection()
     var activityLevel = GetActivityLevelName();
     var flavorText = ContentOrchestrator.Instance.GetOrchestratorRhythmFlavor();
     
-    return $"<span style=\"Header\">{rhythmIcon} CAMP STATUS: {rhythmName} - {activityLevel}</span>\n\n{flavorText}";
+    // Used in Camp Hub header (not Reports menu - that's gone)
+    return $"<span style=\"Header\">_____ CAMP STATUS _____</span>\n" +
+           $"{rhythmIcon} {rhythmName} - {activityLevel}\n\n{flavorText}";
 }
 ```
 
-3. **Update EnlistedMenuBehavior.cs Camp Hub:**
-   - Remove "Lord:" and "Your Rank:" header lines
-   - Replace `BuildDailyBriefSection()` with `BuildCompanyReportSection()`
-   - Add new `BuildDailyNewsSection()` (kingdom context only)
-   - Keep `BuildRecentActionsSection()` unchanged
+3. **Update EnlistedMenuBehavior.cs Camp Hub (`enlisted_camp_hub`):**
+   - ADD `BuildCampStatusSection()` at top of Camp Hub text
+   - ADD `BuildRecentActionsSection()` after camp status
+   - REMOVE RegisterReportsMenu() - Reports menu no longer exists
+   - REMOVE Leave Service option - only accessible from Muster
+   - Keep remaining Camp Hub options (QM, Records, Companions, etc.)
+
+4. **Update Main Menu (`enlisted_status`):**
+   - ADD KINGDOM section (kingdom news summary)
+   - ADD CAMP section (camp activity + forecast hints)
+   - ADD YOU section (NOW + AHEAD)
+   - Kingdom news stays on Main Menu, not Camp Hub
+
+5. **Order State Flow (FORECAST → SCHEDULED → PENDING → ACTIVE):**
+   - FORECAST: Signal appears in CAMP/YOU sections 12-24h before
+   - SCHEDULED: Appears in ORDERS menu (grayed) 8-18h before
+   - PENDING: Appears with [NEW] tag, player accepts/declines
+   - ACTIVE: Shows progress (Day X/Y), current slot, next slot
+   - COMPLETE: Brief summary with rewards, auto-clears
+
+6. **Info Section Caching:**
+```csharp
+public class MainMenuNewsCache
+{
+    // Cached text, only regenerate on triggers
+    private string _kingdomText;
+    private string _campText;
+    private string _youText;
+    
+    public void RefreshIfNeeded()
+    {
+        // KINGDOM: 24h or major event
+        // CAMP: time period change or 6h
+        // YOU: state change
+    }
+}
+```
+
+7. **DECISIONS Presentation (no SAFE/RISKY labels):**
+   - Orchestrator curates what appears based on player state + order status
+   - "blocked" options filtered out (don't appear)
+   - "risky" options appear normally, TOOLTIP shows risk/consequences
+   - No visual categories in UI - just natural opportunities
 
 **Deliverables:**
 - Polished, player-tested orchestrator
-- Player-facing transparency (Company Report shows orchestrator thinking)
+- Main Menu with KINGDOM, CAMP, YOU sections
+- Camp Hub with inline CAMP STATUS (replaces Reports menu)
+- Leave Service only from Muster menu
 - Admin tools for debugging
-- Complete documentation
-- Content variant guide (for future additions)
 
 **Acceptance Criteria:**
 - Event frequency feels right for all situations
 - Content always makes sense
 - Silence feels appropriate, not empty
-- **Player understands WHY event frequency varies** (via Company Report)
-- Company Report aligns with Daily News (no contradictions)
+- **Player understands camp situation** (via CAMP STATUS in Camp Hub)
+- Kingdom news on Main Menu, camp-specific status in Camp Hub
 - Context filtering works (variants selected appropriately)
 
 ---
@@ -1069,8 +1227,9 @@ ConstructContainerDefinition(typeof(Dictionary<string, int>));
 - See [Order Progression System](order-progression-system.md) for full specification
 
 **6. EnlistedNewsBehavior** (`src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs`)
-- Phase 5: Add `BuildCompanyReportSection()`
-- Split: `BuildDailyBriefSection()` into Daily News section
+- Phase 5: Add `BuildCampStatusSection()` for Camp Hub
+- Phase 5: Add `BuildKingdomSummary()`, `BuildCampSummary()` for Main Menu
+- Phase 5: Remove Reports menu, remove Leave Service from Camp Hub
 - Integration: Call `ContentOrchestrator.GetOrchestratorRhythmFlavor()`
 
 **7. EnlistmentBehavior** (`src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`)
@@ -1105,11 +1264,56 @@ namespace Enlisted.Features.Content
         private int _eventsThisWeek;
         private CampaignTime _lastWeekReset = CampaignTime.Zero;
         
+        private DayPhase _lastPhase = DayPhase.Night;
+        
         public override void RegisterEvents()
         {
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
+            CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, CheckPhaseTransition);
         }
         
+        /// <summary>
+        /// Checks if day phase has changed and fires OnDayPhaseChanged if so.
+        /// Runs hourly to detect phase boundaries.
+        /// </summary>
+        private void CheckPhaseTransition()
+        {
+            var currentPhase = GetCurrentDayPhase();
+            if (currentPhase != _lastPhase)
+            {
+                _lastPhase = currentPhase;
+                OnDayPhaseChanged(currentPhase);
+            }
+        }
+        
+        /// <summary>
+        /// Fires when military day phase changes (4x per day).
+        /// Syncs Orders, Camp Life, and Progression systems.
+        /// </summary>
+        private void OnDayPhaseChanged(DayPhase newPhase)
+        {
+            ModLogger.Info("Orchestrator", $"Day phase changed to {newPhase}");
+            
+            // Order system handles phase
+            OrderProgressionBehavior.Instance?.OnPhaseChanged(newPhase);
+            
+            // Camp life regenerates opportunities
+            CampLifeManager.Instance?.OnPhaseChanged(newPhase);
+            
+            // Progression ticks at specific phases
+            if (newPhase == DayPhase.Dawn)
+                MedicalProgressionBehavior.Instance?.Tick();
+            if (newPhase == DayPhase.Dusk)
+                DisciplineProgressionBehavior.Instance?.Tick();
+            
+            // Refresh UI caches
+            MainMenuNewsCache.Instance?.OnPhaseChanged(newPhase);
+        }
+        
+        /// <summary>
+        /// Main daily analysis. Runs once at 6am.
+        /// Analyzes world state and updates expectations.
+        /// </summary>
         private void OnDailyTick()
         {
             if (!EnlistmentBehavior.Instance.IsEnlisted) 
@@ -1219,6 +1423,43 @@ namespace Enlisted.Features.Content
                 RealisticEventFrequency = frequency
             };
         }
+        
+        /// <summary>
+        /// Maps internal world state to event system context string for filtering.
+        /// Used by EventRequirementChecker to filter eligible narrative events.
+        /// Returns simplified context values: "Camp", "War", "Siege", "Any".
+        /// </summary>
+        public static string GetEventContext(WorldSituation situation)
+        {
+            return situation.LordSituation switch
+            {
+                LordSituation.InGarrison => "Camp",
+                LordSituation.InSiege => "Siege",
+                LordSituation.InCampaign => "War",
+                LordSituation.Defeated => "Camp",  // Recovery counts as garrison
+                _ => "Any"
+            };
+        }
+        
+        /// <summary>
+        /// Returns granular world state key for order event weighting.
+        /// Order events use detailed world_state requirements (war_marching, siege_attacking, etc.)
+        /// for context-specific event selection during duty execution.
+        /// </summary>
+        public static string GetOrderEventWorldState(WorldSituation situation)
+        {
+            // Map situation to config frequency key
+            return (situation.LordSituation, situation.WarStance) switch
+            {
+                (LordSituation.InGarrison, WarStance.Peacetime) => "peacetime_garrison",
+                (LordSituation.InCampaign, WarStance.Peacetime) => "peacetime_recruiting",
+                (LordSituation.InCampaign, WarStance.ActiveWar) => "war_active_campaign",
+                (LordSituation.InSiege, WarStance.ActiveWar) => "siege_attacking",
+                (LordSituation.InSiege, WarStance.DesperateWar) => "siege_defending",
+                (LordSituation.Defeated, _) => "lord_captured",
+                _ => "peacetime_garrison"  // Default to safest/quietest
+            };
+        }
     }
     
     public static class SimulationPressureCalculator
@@ -1300,11 +1541,27 @@ public class WorldSituation
     public ActivityLevel ExpectedActivity { get; set; }  // Expected event density
     public float RealisticEventFrequency { get; set; }  // Events per week (base)
     
+    // Military Day Cycle - synced with Order Phases
+    public DayPhase CurrentDayPhase { get; set; }  // Dawn, Midday, Dusk, Night
+    public int CurrentHour { get; set; }  // 0-23 for precise timing
+    
     // Context details for flavor text
     public Settlement CurrentSettlement { get; set; }  // If garrisoned
     public Settlement TargetSettlement { get; set; }  // If marching/sieging
     public int DaysInCurrentPhase { get; set; }  // How long in this phase
     public bool InEnemyTerritory { get; set; }  // Affects pressure
+}
+
+/// <summary>
+/// Military day cycle - maps directly to Order System's 4 phases.
+/// Content is filtered by DayPhase for appropriate timing.
+/// </summary>
+public enum DayPhase
+{
+    Dawn,     // 6am-11am: Briefings, training, work details (Order Phase 1)
+    Midday,   // 12pm-5pm: Active duty, patrols, main work (Order Phase 2)
+    Dusk,     // 6pm-9pm: Evening meal, social time, relaxation (Order Phase 3)
+    Night     // 10pm-5am: Sleep, night watch, quiet (Order Phase 4)
 }
 
 /// <summary>
@@ -1688,6 +1945,94 @@ public static string ForceWorldState(List<string> args)
 
 ---
 
+## Edge Cases & Special States
+
+The orchestrator must handle these special states that affect content delivery:
+
+### Enlistment State Edge Cases
+
+| State | Orchestrator Behavior |
+|-------|----------------------|
+| **New enlistment (3-day grace)** | Suppress all narrative events and map incidents. Allow Camp Hub decisions. Return early from `ShouldFireContent()`. |
+| **Probation active** | Content still fires but with probation-aware selection. Economic stress events more likely. |
+| **Pending discharge** | Reduce content frequency to 25%. Focus on closure/farewell content. |
+| **Grace period (lord died)** | Suspend orchestrator entirely. Only critical system events (discharge prompts). Resume on re-enlistment. |
+
+### Combat & Movement Edge Cases
+
+| State | Orchestrator Behavior |
+|-------|----------------------|
+| **Active battle** | `LordSituation = InBattle`. No content fires. Queue any pending for post-battle. |
+| **Army marching** | Check `MobileParty.IsMoving`. Reduce frequency. Context = Campaign. |
+| **Player captured** | Suspend orchestrator. No content until release. Clear any pending queue. |
+| **Siege (attacking)** | `LordSituation = InSiege`. High-intensity context. Siege-specific content only. |
+| **Siege (defending)** | Same as attacking but with desperate tone. Higher pressure scores. |
+
+### Muster & Pay Edge Cases
+
+| State | Orchestrator Behavior |
+|-------|----------------------|
+| **Muster day** | Orchestrator defers to muster sequence. `MusterMenuHandler` takes priority. No narrative events. |
+| **Pay tension high (>60)** | Increase economic event weight. PayTension pressure source active. |
+| **Backpay owed** | Similar to high pay tension but longer-term pressure. |
+
+### Supply & Resource Edge Cases
+
+| State | Orchestrator Behavior |
+|-------|----------------------|
+| **Supply < 30%** | Add supply-related pressure. Increase foraging/supply event weight. |
+| **Supply < 20% (critical)** | Force supply crisis context. Block non-survival content. |
+| **Supply > 80%** | Reduce supply pressure to 0. Normal content distribution. |
+
+### Integration Edge Cases
+
+| State | Orchestrator Behavior |
+|-------|----------------------|
+| **Order active** | Check `OrderManager.HasActiveOrder`. Reduce narrative events during duty. Allow duty-specific content. |
+| **Multiple content types eligible** | Priority: Muster > Orders > Escalation thresholds > Narrative events. Never fire competing content. |
+| **Save mid-content** | Complete current content before save. Don't save partial state. |
+| **Load into special state** | Detect state on load. Apply appropriate frequency table. Don't fire content on first tick. |
+
+### UI Caching Edge Cases
+
+| State | Orchestrator Behavior |
+|-------|----------------------|
+| **Fast travel > 2 hours** | Force refresh all info sections on next menu open. |
+| **Save/Load** | Don't persist cache. Rebuild on load from current state. |
+| **Multiple triggers fire** | Batch into single refresh. Don't refresh per-trigger. |
+| **Time speed x4** | No impact - forecasts use game hours, not real seconds. |
+
+### Order Flow Edge Cases
+
+| State | Orchestrator Behavior |
+|-------|----------------------|
+| **Fast travel past SCHEDULED** | Auto-accept order. Notify: "You were assigned {ORDER} while traveling." |
+| **Fast travel past PENDING** | Auto-decline with -5 rep penalty. Notify: "You missed an order assignment." |
+| **Player ignores PENDING 24h** | Auto-decline after 24h. Warning at 18h: "Respond soon or miss the order." |
+| **Order cancelled while SCHEDULED** | Remove from menu. CAMP news: "[NEW] The roster changed. {ORDER} cancelled." |
+| **Forecast wrong (didn't happen)** | Use soft language in forecasts ("likely", "seems"). Never guarantee. |
+
+### Order-Decision Tension Edge Cases
+
+| State | Orchestrator Behavior |
+|-------|----------------------|
+| **Detection timing** | Check BEFORE activity starts. Player sees consequence immediately. |
+| **Order phase changes mid-activity** | Complete activity. Apply consequences at END if caught. |
+| **Caught rep would go negative** | Floor at 0. Show "You're on thin ice with command." |
+| **3+ catches during single order** | Then order failure risk applies (20% per catch after third). |
+
+### Fallback Behavior
+
+All edge cases should fail safely:
+- Unknown state → Default to "Camp" context with standard frequency
+- Null managers → Log warning, disable affected pressure source, continue
+- Config load failure → Use hardcoded defaults
+- Content selection fails → Return empty, log error, try again next tick
+- Info section generation fails → Show fallback text, log error, don't break menu
+- Forecast text missing → Show "The day stretches ahead. Time will tell."
+
+---
+
 ## Risk Assessment & Mitigation
 
 | Risk | Impact | Mitigation |
@@ -1806,6 +2151,72 @@ public static string ForceWorldState(List<string> args)
 4. 🔵 Begin content selection integration
 
 This is a major architectural shift from "pacing algorithm" to "reality simulator." It will make the enlisted experience feel like living a military life in Calradia's endless wars — exactly what the mod is meant to be.
+
+---
+
+## Future Expansion: Progression System
+
+**Status:** Schema Ready (Deferred Implementation)  
+**Schema:** [Progression System Schema](../Features/Content/event-system-schemas.md#progression-system-schema-future-foundation)
+
+After the orchestrator is complete, integrate the **Progression System** for organic escalation track evolution.
+
+### What It Does
+
+Instead of events directly setting escalation values, tracks like Medical Risk, Discipline, and Pay Tension can:
+- **Improve** naturally over time (recovery, good behavior)
+- **Stay stable** (no change)
+- **Worsen** (complications, decay)
+
+Daily probability checks determine outcomes, modified by skills, context, and player actions.
+
+### Orchestrator Integration Points
+
+The orchestrator provides modifiers to progression behaviors:
+
+```csharp
+// ContentOrchestrator implements this interface
+public interface IProgressionModifierProvider
+{
+    ProgressionModifiers GetProgressionModifiers(string trackName);
+}
+
+// Progression behavior asks for world state modifiers
+var modifiers = ContentOrchestrator.Instance.GetProgressionModifiers("medical_risk");
+// Returns: { ImproveBonus: 5, WorsenBonus: 0, TickMultiplier: 0.8 }
+```
+
+### World State Affects Progression
+
+| World Situation | Medical | Discipline | Pay Tension |
+|-----------------|---------|------------|-------------|
+| Garrison | +10 improve | +5 improve | No effect |
+| Campaign | No effect | No effect | No effect |
+| Siege | +15 worsen | -5 improve | +10 worsen |
+| After Battle | +15 worsen | +10 improve | No effect |
+
+### Implementation Order
+
+When ready to implement progression:
+
+1. Add `IProgressionModifierProvider` interface to `ContentOrchestrator`
+2. Create `ProgressionBehavior` base class
+3. Create `MedicalProgressionBehavior` (first implementation)
+4. Add `progression_config.json`
+5. Wire threshold events through `EventDeliveryManager`
+6. Extend to Discipline, Pay Tension, etc.
+
+### Prepared Schema
+
+The schema is already defined in [event-system-schemas.md](../Features/Content/event-system-schemas.md#progression-system-schema-future-foundation), including:
+- `progressionConfig` field structure
+- Probability tables by severity level
+- Skill and context modifiers
+- Critical roll ranges
+- Clamps and limits
+- Localization key patterns
+
+No additional schema work needed - just implement when ready.
 
 ---
 

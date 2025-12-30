@@ -3,8 +3,8 @@
 **Summary:** Complete catalog of all orders for the Order Progression System. Each order includes duration, skills, fatigue, injury risk, phase blocks, and event pool references. This is the content specification for JSON implementation.
 
 **Status:** 📋 Specification  
-**Last Updated:** 2025-12-24  
-**Related Docs:** [Order Progression System](order-progression-system.md), [Order Events](order-events-content.md), [Content Orchestrator](content-orchestrator-plan.md)
+**Last Updated:** 2025-12-30  
+**Related Docs:** [Order Progression System](order-progression-system.md), [Order Events Master](order-events-master.md), [Content Orchestrator](content-orchestrator-plan.md)
 
 ---
 
@@ -660,14 +660,28 @@ Day 3: [routine] [slot] [routine] [resolve]
 
 ```
 ModuleData/Enlisted/Orders/
-├── orders_t1_t3.json     (8 basic orders)
-├── orders_t4_t6.json     (8 specialist orders)
+├── orders_t1_t3.json         (8 basic orders)
+├── orders_t4_t6.json         (8 specialist orders)
 └── order_events/
-    ├── guard_events.json
-    ├── patrol_events.json
-    ├── scout_events.json
-    └── ... (per order type)
+    ├── guard_events.json       (order_guard_post)
+    ├── sentry_events.json      (order_sentry_duty)
+    ├── patrol_events.json      (order_camp_patrol)
+    ├── patrol_lead_events.json (order_lead_patrol)
+    ├── scout_events.json       (order_scout_route)
+    ├── escort_events.json      (order_escort_duty)
+    ├── firewood_events.json    (order_firewood_detail)
+    ├── latrine_events.json     (order_latrine_duty)
+    ├── cleaning_events.json    (order_equipment_cleaning)
+    ├── muster_events.json      (order_muster_inspection)
+    ├── march_events.json       (order_march_formation)
+    ├── medical_events.json     (order_treat_wounded)
+    ├── repair_events.json      (order_repair_equipment)
+    ├── forage_events.json      (order_forage_supplies)
+    ├── training_events.json    (order_train_recruits)
+    └── defenses_events.json    (order_inspect_defenses)
 ```
+
+See [Order Events Master](order-events-master.md) for complete event definitions and consequences.
 
 ### Localization
 

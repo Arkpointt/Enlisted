@@ -1790,6 +1790,11 @@ namespace Enlisted.Features.Conversations.Behaviors
                         OnQuartermasterBrowseCategory();
                         break;
 
+                    case "open_armor":
+                        _selectedEquipmentCategory = "armor";
+                        OnQuartermasterBrowseCategory();
+                        break;
+
                     case "open_armor_body":
                         _selectedArmorSlot = EquipmentIndex.Body;
                         OnQuartermasterArmorSlotSelected();
@@ -3765,31 +3770,36 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
-        ///     Called when player requests provisions.
-        ///     Opens the new Gauntlet provisions UI (Phase 8).
-        ///     T1-T6 see ration info with supplement option; T7+ see full provisions shop.
+        ///     Called when player requests provisions from the quartermaster.
+        ///     T7+ only: Opens the Gauntlet provisions shop with food items.
+        ///     T1-T6 receive issued rations at muster and shouldn't access this.
         /// </summary>
         private void OnQuartermasterProvisionsRequest()
         {
             try
             {
+                var enlistment = EnlistmentBehavior.Instance;
+                var playerTier = enlistment?.EnlistmentTier ?? 1;
+                
+                // All ranks can view provisions, but only T7+ can purchase (enforced in UI)
+                ModLogger.Info("Quartermaster", $"Opening provisions UI for T{playerTier} player");
+                
                 // Defer to next frame so the conversation fully closes before the UI activates.
                 NextFrameDispatcher.RunNextFrame(() =>
                 {
                     try
                     {
                         QuartermasterProvisionsBehavior.ShowProvisionsScreen();
-                        ModLogger.Info("Quartermaster", "Opened provisions UI from dialog (deferred)");
                     }
                     catch (Exception ex)
                     {
-                        ModLogger.ErrorCode("Quartermaster", "E-QM-026", "Failed to open provisions UI from dialog (deferred)", ex);
+                        ModLogger.ErrorCode("Quartermaster", "E-QM-026", "Failed to open provisions UI", ex);
                     }
                 });
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", "Failed to open provisions UI from dialog", ex);
+                ModLogger.Error("Quartermaster", "Failed to open provisions", ex);
             }
         }
 

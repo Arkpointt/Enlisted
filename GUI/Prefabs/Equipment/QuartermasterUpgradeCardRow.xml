@@ -1,15 +1,14 @@
 <Prefab>
 	<Window>
-		<!-- Provision Card Row - Horizontal container for provision cards -->
+		<!-- Upgrade Card Row - Horizontal container for upgrade cards -->
 		<Widget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="5" MarginBottom="5">
 			<Children>
 				<ListPanel DataSource="{Cards}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="HorizontalLeftToRight">
 					<ItemTemplate>
-						<QuartermasterProvisionCard ButtonType="Radio" />
+						<QuartermasterUpgradeCard ButtonType="Radio" />
 					</ItemTemplate>
 				</ListPanel>
 			</Children>
 		</Widget>
 	</Window>
 </Prefab>
-

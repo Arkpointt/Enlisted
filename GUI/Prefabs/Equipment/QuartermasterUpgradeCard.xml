@@ -1,0 +1,61 @@
+<Prefab>
+	<Window>
+		<!-- Upgrade Card - Equipment upgrade with quality improvement -->
+		<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="185" SuggestedHeight="360" MarginTop="10" MarginLeft="10" Tooltip="@TooltipText" AlphaFactor="@CardAlpha">
+			<Children>
+				<!-- Card background with subtle border -->
+				<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element">
+					<Children>
+						<!-- Main card container -->
+						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="5" MarginRight="5" MarginTop="5" MarginBottom="5">
+							<Children>
+								
+								<!-- Slot Type Label (top) -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="5" Brush="SPGeneral.MediumText" Brush.FontSize="11" Brush.TextHorizontalAlignment="Center" Text="@SlotTypeText"/>
+								
+								<!-- Equipment Icon -->
+								<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="70" SuggestedWidth="140" MarginTop="25" HorizontalAlignment="Center" Brush="Encyclopedia.SubPage.Element">
+									<Children>
+										<ImageIdentifierWidget DataSource="{Image}" DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="130" SuggestedHeight="60" HorizontalAlignment="Center" VerticalAlignment="Center" ImageId="@Id" AdditionalArgs="@AdditionalArgs" TextureProviderName="@TextureProviderName" />
+									</Children>
+								</Widget>
+								
+								<!-- Item Name -->
+								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="105" MarginLeft="2" MarginRight="2" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="14" Brush.TextHorizontalAlignment="Center" Text="@ItemName"/>
+								
+								<!-- Current Quality Display -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="130" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextHorizontalAlignment="Center" Brush.TextColor="@CurrentQualityColor" Text="@CurrentQualityText"/>
+								
+								<!-- Upgrade Arrow -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="150" Brush="SPGeneral.MediumText" Brush.FontSize="14" Brush.TextHorizontalAlignment="Center" Text="↓"/>
+								
+								<!-- Target Quality Display (what it will become) -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="170" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="14" Brush.TextHorizontalAlignment="Center" Brush.TextColor="@TargetQualityColor" Text="@TargetQualityText"/>
+								
+								<!-- Stats Improvement -->
+								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="195" MarginLeft="4" MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextHorizontalAlignment="Center" Brush.TextColor="#90EE90FF" Text="@StatsText"/>
+								
+								<!-- Cost Display -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="225" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Text="@CostText"/>
+								
+								<!-- Discount info (if applicable) -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="250" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextHorizontalAlignment="Center" Brush.TextColor="#FFD700FF" Text="@DiscountText" IsVisible="@HasDiscount"/>
+								
+								<!-- Status indicator -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="270" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextHorizontalAlignment="Center" Text="@StatusText"/>
+								
+								<!-- Improve Button -->
+								<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="45" SuggestedWidth="145" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="15" Brush="ButtonBrush1" Command.Click="ExecuteUpgrade" IsEnabled="@IsEnabled">
+									<Children>
+										<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="14" Text="Improve" />
+									</Children>
+								</ButtonWidget>
+								
+							</Children>
+						</Widget>
+					</Children>
+				</BrushWidget>
+			</Children>
+		</Widget>
+	</Window>
+</Prefab>

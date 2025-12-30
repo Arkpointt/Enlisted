@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
+using TaleWorlds.Core.ViewModelCollection;
+using static TaleWorlds.Core.ViewModelCollection.CharacterViewModel;
+using TaleWorlds.Core.ViewModelCollection.Information;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using Enlisted.Features.Equipment.Behaviors;
@@ -9,10 +13,12 @@ using Enlisted.Mod.Core.Logging;
 namespace Enlisted.Features.Equipment.UI
 {
     /// <summary>
-    /// Main upgrade screen ViewModel showing all equipped items with upgrade options.
+    /// Main upgrade screen ViewModel with character preview and grid of upgrade options.
     /// </summary>
     public class QuartermasterUpgradeVm : ViewModel
     {
+        private const int CardsPerRow = 4;
+
         [DataSourceProperty]
         public string HeaderText { get; private set; }
 
@@ -20,25 +26,31 @@ namespace Enlisted.Features.Equipment.UI
         public string PlayerGoldText { get; private set; }
 
         [DataSourceProperty]
-        public MBBindingList<QuartermasterUpgradeItemVm> UpgradeableItems { get; }
+        public string CurrentEquipmentText { get; private set; }
 
         [DataSourceProperty]
-        public bool HasUpgradeableItems { get; private set; }
+        public CharacterViewModel UnitCharacter { get; private set; }
 
         [DataSourceProperty]
-        public string NoItemsMessage { get; private set; }
+        public MBBindingList<QuartermasterUpgradeRowVm> UpgradeRows { get; }
 
-        /// <summary>
-        /// Initialize upgrade screen with player's equipped items.
-        /// </summary>
         public QuartermasterUpgradeVm()
         {
-            UpgradeableItems = new MBBindingList<QuartermasterUpgradeItemVm>();
+            UpgradeRows = new MBBindingList<QuartermasterUpgradeRowVm>();
+
+            // Set up CharacterViewModel for character preview display
+            try
+            {
+                var unitCharacter = new CharacterViewModel(StanceTypes.None);
+                unitCharacter.FillFrom(Hero.MainHero.CharacterObject);
+                UnitCharacter = unitCharacter;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("QuartermasterUI", "Error setting up character view model for upgrade screen", ex);
+            }
         }
 
-        /// <summary>
-        /// Refresh all display values.
-        /// </summary>
         public override void RefreshValues()
         {
             base.RefreshValues();
@@ -52,35 +64,24 @@ namespace Enlisted.Features.Equipment.UI
                     return;
                 }
 
-                HeaderText = new TextObject("{=qm_upgrade_title}Improve Equipment").ToString();
+                HeaderText = "Improve Equipment";
                 PlayerGoldText = $"Your Gold: {hero.Gold} denars";
+                CurrentEquipmentText = "Your Current Equipment";
 
-                // Build list of equipped items that can be upgraded
-                UpgradeableItems.Clear();
-                BuildUpgradeableItemsList(hero);
-
-                HasUpgradeableItems = UpgradeableItems.Count > 0;
-
-                if (!HasUpgradeableItems)
+                // Refresh character preview to show current gear
+                if (UnitCharacter != null && hero.CharacterObject != null)
                 {
-                    NoItemsMessage = new TextObject("{=qm_upgrade_no_items}You've nothing that can be improved.").ToString();
-                }
-                else
-                {
-                    NoItemsMessage = "";
+                    UnitCharacter.FillFrom(hero.CharacterObject);
+                    OnPropertyChanged(nameof(UnitCharacter));
                 }
 
-                // Refresh all upgrade items
-                foreach (var item in UpgradeableItems)
-                {
-                    item.RefreshValues();
-                }
+                // Build upgrade grid
+                BuildUpgradeGrid(hero);
 
-                // Notify UI
                 OnPropertyChanged(nameof(HeaderText));
                 OnPropertyChanged(nameof(PlayerGoldText));
-                OnPropertyChanged(nameof(HasUpgradeableItems));
-                OnPropertyChanged(nameof(NoItemsMessage));
+                OnPropertyChanged(nameof(CurrentEquipmentText));
+                OnPropertyChanged(nameof(UpgradeRows));
             }
             catch (Exception ex)
             {
@@ -90,14 +91,21 @@ namespace Enlisted.Features.Equipment.UI
         }
 
         /// <summary>
-        /// Build list of equipped items that can be upgraded.
-        /// Only includes items with modifier groups and available upgrade tiers.
+        /// Build a grid of upgrade cards (4 cards per row).
+        /// Each card represents one equipped item showing its NEXT sequential upgrade.
         /// </summary>
-        private void BuildUpgradeableItemsList(Hero hero)
+        private void BuildUpgradeGrid(Hero hero)
         {
             try
             {
-                // Check all equipment slots (iterate valid indices only, not NumEquipmentSetSlots)
+                UpgradeRows.Clear();
+                var allCards = new List<QuartermasterUpgradeCardVm>();
+
+                // Get available upgrade tiers for the player (sorted low to high)
+                var availableTiers = QuartermasterManager.Instance?.GetAvailableUpgradeTiers()
+                                   ?? new List<ItemQuality>();
+
+                // Check all equipment slots
                 for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
                 {
                     var slot = (EquipmentIndex)i;
@@ -109,55 +117,64 @@ namespace Enlisted.Features.Equipment.UI
                         continue;
                     }
 
+                    var item = element.Item;
+                    var modGroup = item.ItemComponent?.ItemModifierGroup;
+
                     // Skip items without modifier groups (cannot be upgraded)
-                    var modGroup = element.Item.ItemComponent?.ItemModifierGroup;
                     if (modGroup == null)
                     {
                         continue;
                     }
 
-                    // Skip items already at Legendary quality
-                    var currentQuality = QuartermasterManager.GetModifierQuality(element.Item, element.ItemModifier);
-                    if (currentQuality == ItemQuality.Legendary)
-                    {
-                        continue;
-                    }
+                    // Get current quality
+                    var currentQuality = QuartermasterManager.GetModifierQuality(item, element.ItemModifier);
 
-                    // Check if any upgrade tiers are available for this item
-                    var availableTiers = QuartermasterManager.Instance?.GetAvailableUpgradeTiers()
-                                       ?? new System.Collections.Generic.List<ItemQuality>();
-
-                    bool hasAvailableUpgrade = false;
+                    // Find the NEXT available upgrade tier (sequential upgrades only)
+                    ItemQuality? nextQuality = null;
                     foreach (var tier in availableTiers)
                     {
                         if (tier > currentQuality)
                         {
+                            // Check if this quality tier has modifiers for this item
                             var modifiers = modGroup.GetModifiersBasedOnQuality(tier);
                             if (modifiers != null && modifiers.Count > 0)
                             {
-                                hasAvailableUpgrade = true;
-                                break;
+                                nextQuality = tier;
+                                break; // Take the first higher quality available
                             }
                         }
                     }
 
-                    // Add to list if upgrades are available
-                    if (hasAvailableUpgrade)
+                    // If there's a next quality available, create a card for it
+                    if (nextQuality.HasValue)
                     {
-                        var upgradeItem = new QuartermasterUpgradeItemVm(slot, element, this);
-                        UpgradeableItems.Add(upgradeItem);
+                        var card = new QuartermasterUpgradeCardVm(
+                            slot, item, element.ItemModifier, currentQuality, nextQuality.Value, this);
+                        allCards.Add(card);
                     }
                 }
+
+                // Organize cards into rows of 4
+                for (int i = 0; i < allCards.Count; i += CardsPerRow)
+                {
+                    var row = new QuartermasterUpgradeRowVm();
+                    for (int j = 0; j < CardsPerRow && (i + j) < allCards.Count; j++)
+                    {
+                        row.Cards.Add(allCards[i + j]);
+                    }
+                    UpgradeRows.Add(row);
+                }
+
+                ModLogger.Info("QuartermasterUI", $"Built upgrade grid with {allCards.Count} items in {UpgradeRows.Count} rows (sequential upgrades)");
             }
             catch (Exception ex)
             {
-                ModLogger.Error("QuartermasterUI", "Error building upgradeable items list", ex);
+                ModLogger.Error("QuartermasterUI", "Error building upgrade grid", ex);
             }
         }
 
         /// <summary>
-        /// Handle upgrade execution for a specific item.
-        /// Called by child QuartermasterUpgradeItemVm when player selects an upgrade.
+        /// Handle upgrade execution when player clicks Improve on a card.
         /// </summary>
         public void OnUpgradePerformed(EquipmentIndex slot, ItemQuality targetQuality)
         {
@@ -180,11 +197,8 @@ namespace Enlisted.Features.Equipment.UI
                     var item = hero?.BattleEquipment[slot].Item;
                     var qualityName = GetQualityName(targetQuality);
 
-                    var msg = new TextObject("{=qm_upgrade_success}Your {ITEM} has been improved to {QUALITY} quality.");
-                    msg.SetTextVariable("ITEM", item?.Name?.ToString() ?? "equipment");
-                    msg.SetTextVariable("QUALITY", qualityName);
-
-                    InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Green));
+                    var msg = $"Your {item?.Name?.ToString() ?? "equipment"} has been improved to {qualityName} quality.";
+                    InformationManager.DisplayMessage(new InformationMessage(msg, Colors.Green));
 
                     // Refresh the screen to show updated equipment and gold
                     RefreshValues();
@@ -198,19 +212,14 @@ namespace Enlisted.Features.Equipment.UI
             catch (Exception ex)
             {
                 ModLogger.Error("QuartermasterUI", "Error performing upgrade", ex);
-                InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("{=qm_error_upgrade}Error performing upgrade. Please try again.").ToString(), Colors.Red));
+                InformationManager.DisplayMessage(new InformationMessage("Error performing upgrade. Please try again.", Colors.Red));
             }
         }
 
-        /// <summary>
-        /// Handle closing the upgrade screen.
-        /// </summary>
         public void ExecuteClose()
         {
             try
             {
-                // Close the upgrade screen and return to conversation
                 QuartermasterEquipmentSelectorBehavior.CloseUpgradeScreen();
             }
             catch (Exception ex)
@@ -219,34 +228,26 @@ namespace Enlisted.Features.Equipment.UI
             }
         }
 
-        /// <summary>
-        /// Get localized quality name for display.
-        /// </summary>
         private static string GetQualityName(ItemQuality quality)
         {
             return quality switch
             {
-                ItemQuality.Poor => new TextObject("{=qm_quality_poor}Poor").ToString(),
-                ItemQuality.Inferior => new TextObject("{=qm_quality_inferior}Worn").ToString(),
-                ItemQuality.Common => new TextObject("{=qm_quality_common}Standard").ToString(),
-                ItemQuality.Fine => new TextObject("{=qm_quality_fine}Fine").ToString(),
-                ItemQuality.Masterwork => new TextObject("{=qm_quality_masterwork}Masterwork").ToString(),
-                ItemQuality.Legendary => new TextObject("{=qm_quality_legendary}Legendary").ToString(),
+                ItemQuality.Poor => "Poor",
+                ItemQuality.Inferior => "Worn",
+                ItemQuality.Common => "Standard",
+                ItemQuality.Fine => "Fine",
+                ItemQuality.Masterwork => "Masterwork",
+                ItemQuality.Legendary => "Legendary",
                 _ => quality.ToString()
             };
         }
 
-        /// <summary>
-        /// Set safe fallback values for error cases.
-        /// </summary>
         private void SetEmptyValues()
         {
-            HeaderText = new TextObject("{=qm_upgrade_title}Improve Equipment").ToString();
+            HeaderText = "Improve Equipment";
             PlayerGoldText = "Gold information unavailable";
-            UpgradeableItems.Clear();
-            HasUpgradeableItems = false;
-            NoItemsMessage = new TextObject("{=qm_upgrade_no_items}You've nothing that can be improved.").ToString();
+            CurrentEquipmentText = "Your Current Equipment";
+            UpgradeRows.Clear();
         }
     }
 }
-

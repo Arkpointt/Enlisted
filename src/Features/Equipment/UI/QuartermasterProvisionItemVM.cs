@@ -77,6 +77,9 @@ namespace Enlisted.Features.Equipment.UI
 
         // Parent reference for purchase callbacks
         private readonly QuartermasterProvisionsVm _parent;
+        
+        // Whether player is an officer (T7+) and can purchase provisions
+        private readonly bool _isOfficer;
 
         /// <summary>
         /// Initialize provision item with food data and pricing.
@@ -85,18 +88,23 @@ namespace Enlisted.Features.Equipment.UI
         /// <param name="price">Price per unit after markup</param>
         /// <param name="quantity">Available quantity</param>
         /// <param name="parent">Parent ViewModel for callbacks</param>
-        public QuartermasterProvisionItemVm(ItemObject item, int price, int quantity, QuartermasterProvisionsVm parent)
+        /// <param name="isOfficer">Whether player has officer rank (T7+) to purchase</param>
+        public QuartermasterProvisionItemVm(ItemObject item, int price, int quantity, QuartermasterProvisionsVm parent, bool isOfficer)
         {
             Item = item;
             Price = price;
             QuantityAvailable = quantity;
             _parent = parent ?? throw new ArgumentNullException(nameof(parent));
+            _isOfficer = isOfficer;
 
             // Set up image
             if (item != null)
             {
                 Image = new ItemImageIdentifierVM(item);
             }
+            
+            // Initialize display properties immediately
+            RefreshValues();
         }
 
         /// <summary>
@@ -150,9 +158,9 @@ namespace Enlisted.Features.Equipment.UI
                 CanAffordOne = playerGold >= Price;
                 CanAffordAll = playerGold >= (Price * QuantityAvailable);
 
-                // Button enable states
-                BuyOneEnabled = IsInStock && CanAffordOne;
-                BuyAllEnabled = IsInStock && CanAffordAll && QuantityAvailable > 1;
+                // Button enable states (only officers can purchase)
+                BuyOneEnabled = _isOfficer && IsInStock && CanAffordOne;
+                BuyAllEnabled = _isOfficer && IsInStock && CanAffordAll && QuantityAvailable > 1;
 
                 // Description (morale bonus info)
                 BuildDescription();
@@ -207,7 +215,11 @@ namespace Enlisted.Features.Equipment.UI
                 parts.Add($"Buy all ({QuantityAvailable}): {Price * QuantityAvailable} denars");
             }
 
-            if (!CanAffordOne)
+            if (!_isOfficer)
+            {
+                parts.Add("Officers Only (Rank T7+)");
+            }
+            else if (!CanAffordOne)
             {
                 parts.Add($"You need {Price - playerGold} more denars");
             }
@@ -274,7 +286,13 @@ namespace Enlisted.Features.Equipment.UI
             {
                 if (!BuyOneEnabled)
                 {
-                    if (!IsInStock)
+                    if (!_isOfficer)
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "Provisions are for officers only (Rank T7+).",
+                            Colors.Red));
+                    }
+                    else if (!IsInStock)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
                             new TextObject("{=qm_provisions_out_of_stock_msg}This item is out of stock.").ToString()));
@@ -311,7 +329,13 @@ namespace Enlisted.Features.Equipment.UI
             {
                 if (!BuyAllEnabled)
                 {
-                    if (!IsInStock)
+                    if (!_isOfficer)
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "Provisions are for officers only (Rank T7+).",
+                            Colors.Red));
+                    }
+                    else if (!IsInStock)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
                             new TextObject("{=qm_provisions_out_of_stock_msg}This item is out of stock.").ToString()));
@@ -322,9 +346,9 @@ namespace Enlisted.Features.Equipment.UI
                         var playerGold = Hero.MainHero?.Gold ?? 0;
                         var canAffordCount = Price > 0 ? playerGold / Price : 0;
 
-                        if (canAffordCount > 0)
+                        if (canAffordCount > 0 && _isOfficer)
                         {
-                            // Buy what we can afford
+                            // Buy what we can afford (officers only)
                             _parent?.OnProvisionPurchased(this, canAffordCount);
                             QuantityAvailable = Math.Max(0, QuantityAvailable - canAffordCount);
                             RefreshValues();

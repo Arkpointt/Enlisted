@@ -18,19 +18,19 @@
 								</Widget>
 								
 								<!-- Item Name -->
-								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="85" MarginLeft="2" MarginRight="2" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="14" Brush.TextHorizontalAlignment="Center" Text="@ItemName"/>
+								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="85" MarginLeft="2" MarginRight="2" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="16" Brush.TextHorizontalAlignment="Center" Text="@ItemName"/>
 								
 								<!-- Price Display -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="115" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="14" Brush.TextHorizontalAlignment="Center" Text="@PriceText"/>
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="115" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="16" Brush.TextHorizontalAlignment="Center" Text="@PriceText"/>
 								
 								<!-- Quantity Available -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="140" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextHorizontalAlignment="Center" Text="@QuantityText"/>
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="140" Brush="SPGeneral.SmallText" Brush.FontSize="13" Brush.TextHorizontalAlignment="Center" Text="@QuantityText"/>
 								
 								<!-- Description -->
-								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="160" MarginLeft="4" MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextHorizontalAlignment="Center" Text="@DescriptionText"/>
+								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="160" MarginLeft="4" MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="12" Brush.TextHorizontalAlignment="Center" Text="@DescriptionText"/>
 								
 								<!-- Status indicator -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="185" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextHorizontalAlignment="Center" Text="@StatusText"/>
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="185" Brush="SPGeneral.SmallText" Brush.FontSize="12" Brush.TextHorizontalAlignment="Center" Text="@StatusText"/>
 								
 								<!-- Button container -->
 								<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="100" VerticalAlignment="Bottom" MarginBottom="10">
@@ -39,14 +39,14 @@
 										<!-- Buy 1 Button -->
 										<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="38" SuggestedWidth="145" HorizontalAlignment="Center" MarginBottom="50" Brush="ButtonBrush1" Command.Click="ExecuteBuyOne" IsEnabled="@BuyOneEnabled">
 											<Children>
-												<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="12" Text="Buy 1" />
+												<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="14" Text="Buy 1" />
 											</Children>
 										</ButtonWidget>
 										
 										<!-- Buy All Button -->
 										<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="38" SuggestedWidth="145" HorizontalAlignment="Center" VerticalAlignment="Bottom" Brush="ButtonBrush1" Command.Click="ExecuteBuyAll" IsEnabled="@BuyAllEnabled">
 											<Children>
-												<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="12" Text="Buy All" />
+												<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="14" Text="Buy All" />
 											</Children>
 										</ButtonWidget>
 										

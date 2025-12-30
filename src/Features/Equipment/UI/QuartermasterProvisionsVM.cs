@@ -61,25 +61,24 @@ namespace Enlisted.Features.Equipment.UI
         private const int ItemsPerRow = 4;
 
         /// <summary>
-        /// Initialize provisions ViewModel with tier-based behavior.
-        /// T1-T6: Shows ration info with supplement purchase option.
-        /// T7+: Shows full provisions shop grid.
+        /// Initialize provisions ViewModel.
+        /// All ranks can view provisions, but only T7+ officers can purchase.
         /// </summary>
         public QuartermasterProvisionsVm()
         {
             ProvisionRows = new MBBindingList<QuartermasterProvisionRowVm>();
-
-            // Determine player tier for UI mode selection
+            
             var playerTier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
             _isOfficer = playerTier >= 7;
-
-            ShowRationInfo = !_isOfficer;
-            ShowProvisionsShop = _isOfficer;
-
-            // Build provisions grid
+            
+            // Simple header for all ranks
+            HeaderText = "Company Provisions";
+            
+            ShowRationInfo = false;
+            ShowProvisionsShop = true;
+            
             BuildProvisionsGrid();
-
-            ModLogger.Info("QuartermasterUI", $"Provisions UI initialized - Tier {playerTier}, Officer: {_isOfficer}");
+            ModLogger.Info("QuartermasterUI", $"Provisions UI initialized for T{playerTier} {(_isOfficer ? "officer" : "enlisted")}");
         }
 
         /// <summary>
@@ -95,15 +94,27 @@ namespace Enlisted.Features.Equipment.UI
                 // Get available food items from game data
                 var foodItems = GetAvailableFoodItems();
 
+                ModLogger.Info("QuartermasterUI", $"Found {foodItems.Count} food items for provisions");
+
                 if (foodItems.Count == 0)
                 {
-                    ModLogger.Warn("QuartermasterUI", "No food items available for provisions grid");
+                    ModLogger.Error("QuartermasterUI", "No food items found! Cannot build provisions grid. This should never happen - check game data.");
+                    HeaderText = "Error: No Food Items";
+                    OnPropertyChanged(nameof(HeaderText));
                     return;
                 }
 
                 // Get inventory state for stock quantities
                 var qmManager = QuartermasterManager.Instance;
                 var inventoryState = qmManager?.GetInventoryState();
+                
+                // Ensure inventory has food items (may not be populated until first muster)
+                if (inventoryState != null && inventoryState.CurrentStock.Count == 0)
+                {
+                    ModLogger.Warn("QuartermasterUI", "Inventory state is empty - initializing with food items");
+                    var currentSupplyLevel = CompanySupplyManager.Instance?.TotalSupply ?? 50f;
+                    inventoryState.RefreshInventory(currentSupplyLevel, foodItems);
+                }
 
                 // Get supply level for pricing
                 var supplyLevel = CompanySupplyManager.Instance?.TotalSupply ?? 50f;
@@ -120,7 +131,7 @@ namespace Enlisted.Features.Equipment.UI
                     var basePrice = item.Value;
                     var finalPrice = CalculateProvisionPrice(basePrice, supplyLevel);
 
-                    var provisionItem = new QuartermasterProvisionItemVm(item, finalPrice, quantity, this);
+                    var provisionItem = new QuartermasterProvisionItemVm(item, finalPrice, quantity, this, _isOfficer);
                     provisionItems.Add(provisionItem);
                 }
 
@@ -145,6 +156,18 @@ namespace Enlisted.Features.Equipment.UI
                 }
 
                 ModLogger.Info("QuartermasterUI", $"Built provisions grid with {provisionItems.Count} items in {ProvisionRows.Count} rows");
+                
+                // Debug: Log each row and its cards
+                for (int r = 0; r < ProvisionRows.Count; r++)
+                {
+                    var row = ProvisionRows[r];
+                    ModLogger.Debug("QuartermasterUI", $"Row {r}: {row.Cards.Count} cards");
+                    for (int c = 0; c < row.Cards.Count; c++)
+                    {
+                        var card = row.Cards[c];
+                        ModLogger.Debug("QuartermasterUI", $"  Card {c}: {card.ItemName ?? "NULL"} | Price: {card.PriceText ?? "NULL"} | Qty: {card.QuantityText ?? "NULL"}");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -163,7 +186,10 @@ namespace Enlisted.Features.Equipment.UI
             try
             {
                 // Get all food-related items from object manager
-                foreach (var item in MBObjectManager.Instance.GetObjectTypeList<ItemObject>())
+                var allItems = MBObjectManager.Instance.GetObjectTypeList<ItemObject>();
+                ModLogger.Debug("QuartermasterUI", $"Scanning {allItems.Count} total items for food");
+
+                foreach (var item in allItems)
                 {
                     if (item == null || item.StringId == null)
                     {
@@ -174,13 +200,20 @@ namespace Enlisted.Features.Equipment.UI
                     if (IsFood(item))
                     {
                         foodItems.Add(item);
+                        ModLogger.Info("QuartermasterUI", $"Found food: {item.StringId} | Name: {item.Name} | IsFood={item.IsFood}");
                     }
                 }
 
                 // Sort by value (cheapest first for better UX)
                 foodItems = foodItems.OrderBy(i => i.Value).ToList();
 
-                ModLogger.Debug("QuartermasterUI", $"Found {foodItems.Count} food items for provisions");
+                ModLogger.Info("QuartermasterUI", $"Found {foodItems.Count} food items for provisions from {allItems.Count} total items");
+                
+                // Log the final sorted list
+                foreach (var item in foodItems)
+                {
+                    ModLogger.Info("QuartermasterUI", $"  -> {item.Name} ({item.StringId}) | Value: {item.Value}");
+                }
             }
             catch (Exception ex)
             {
@@ -200,26 +233,26 @@ namespace Enlisted.Features.Equipment.UI
                 return false;
             }
 
-            // Check item type for food/consumables
-            // Food items typically have ItemType = Goods and provide food bonus
-            if (item.ItemType != ItemObject.ItemTypeEnum.Goods)
-            {
-                return false;
-            }
-
-            // Check if item is flagged as food via item properties
-            // The FoodItem flag indicates party food consumption
+            // Primary check: Bannerlord's IsFood property
             if (item.IsFood)
             {
                 return true;
             }
 
-            // Fallback: Check for common food item patterns in StringId
-            var id = item.StringId.ToLowerInvariant();
-            return id.Contains("grain") || id.Contains("meat") || id.Contains("fish") ||
-                   id.Contains("butter") || id.Contains("cheese") || id.Contains("bread") ||
-                   id.Contains("date") || id.Contains("olives") || id.Contains("beer") ||
-                   id.Contains("wine");
+            // Secondary check: Goods with food-related names
+            if (item.ItemType == ItemObject.ItemTypeEnum.Goods)
+            {
+                var id = item.StringId?.ToLowerInvariant() ?? "";
+                if (id.Contains("grain") || id.Contains("meat") || id.Contains("fish") ||
+                    id.Contains("butter") || id.Contains("cheese") || id.Contains("bread") ||
+                    id.Contains("date") || id.Contains("olives") || id.Contains("food") ||
+                    id.Contains("apple") || id.Contains("grape"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -250,35 +283,36 @@ namespace Enlisted.Features.Equipment.UI
             var qmManager = QuartermasterManager.Instance;
             if (qmManager == null)
             {
-                return 1.9f; // Neutral default
+                return 2.5f; // Neutral default
             }
 
             var rep = qmManager.Reputation;
 
-            // Provisions pricing from spec:
-            // Trusted (65+): 1.5× market
-            // Friendly (35-64): 1.75× market
-            // Neutral (10-34): 1.9× market
-            // Wary (-10 to 9): 2.0× market
-            // Hostile (< -10): 2.2× market
+            // Provisions pricing: Always more expensive than town markets
+            // QM is convenience for officers in the field, not a bargain shop
+            // Trusted (65+): 2.0× market (best case - still double town prices)
+            // Friendly (35-64): 2.3× market
+            // Neutral (10-34): 2.5× market
+            // Wary (-10 to 9): 2.8× market
+            // Hostile (< -10): 3.2× market (price gouging)
             if (rep >= 65)
-            {
-                return 1.5f;
-            }
-            if (rep >= 35)
-            {
-                return 1.75f;
-            }
-            if (rep >= 10)
-            {
-                return 1.9f;
-            }
-            if (rep >= -10)
             {
                 return 2.0f;
             }
+            if (rep >= 35)
+            {
+                return 2.3f;
+            }
+            if (rep >= 10)
+            {
+                return 2.5f;
+            }
+            if (rep >= -10)
+            {
+                return 2.8f;
+            }
 
-            return 2.2f;
+            return 3.2f;
         }
 
         /// <summary>
@@ -313,10 +347,8 @@ namespace Enlisted.Features.Equipment.UI
             try
             {
                 var hero = Hero.MainHero;
-
-                HeaderText = _isOfficer
-                    ? new TextObject("{=qm_provisions_header_officer}Provisions").ToString()
-                    : new TextObject("{=qm_provisions_header_enlisted}Rations").ToString();
+                // Simple header for all ranks
+                HeaderText = "Company Provisions";
 
                 PlayerGoldText = $"Your Gold: {hero.Gold} denars";
 

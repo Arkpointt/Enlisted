@@ -119,51 +119,111 @@ All submenus (Orders, Decisions, Reports, etc.) remain as native GameMenu implem
 
 ## Visual Layout
 
+### Design Note
+
+This document describes the **Camp Hub** - the deep interaction menu accessed via [CAMP] from the Main Menu. For the Main Menu (Quick Decision Center) design, see `docs/AFEATURE/camp-life-simulation.md`.
+
 ### Complete Hub Structure
 
 ```
 ╔══════════════════════════════════════════════════════════╗
-║                    ENLISTED CAMP                          ║
+║  CAMP HUB                                                 ║
+║  {RANK_NAME} ({TIER}) • Day {X} of 12 • {LOCATION}       ║
 ╠══════════════════════════════════════════════════════════╣
-║  ⚠ PENDING ORDER [NEW]                     ← Dynamic     ║
-║  ┌──────────────────────────────────────────────────────┐ ║
-║  │ From Sergeant: Guard Duty                            │ ║
-║  │ "Stand watch at the eastern perimeter tonight..."    │ ║
-║  │          [Accept]        [Decline]                   │ ║
-║  └──────────────────────────────────────────────────────┘ ║
-╠══════════════════════════════════════════════════════════╣
-║  🏠 Visit Pravend                          ← Dynamic     ║
-╠══════════════════════════════════════════════════════════╣
-║  [Orders]  [Decisions]  [Reports]  [Quartermaster]       ║
-╠══════════════════════════════════════════════════════════╣
-║  COMPANY REPORT                                           ║
-║  ⚙ CAMP STATUS: Garrison - Quiet                         ║
-║  Your lord holds at Pravend with no threats...           ║
 ║                                                           ║
-║  Company: 67 soldiers garrisoned at Pravend.             ║
-║  Supplies: Adequate | Morale: Good | Rest: Fresh         ║
-╠══════════════════════════════════════════════════════════╣
-║  DAILY NEWS                                               ║
-║  Vlandia is at peace with all neighbors. Merchant        ║
-║  caravans travel the roads freely...                     ║
-╠══════════════════════════════════════════════════════════╣
-║  RECENT ACTIONS                                           ║
-║  • Rest and Recovery: The fatigue lifts.                 ║
-║  ✓ Patrol the Perimeter: All quiet.                      ║
+║  _____ CAMP STATUS _____                                  ║
+║  ⚙️ {RHYTHM} - {ACTIVITY_LEVEL}                          ║
 ║                                                           ║
-║              [View All Actions]                           ║
+║  {Camp situation narrative. What's happening here.}      ║
+║  {Supply state, morale, company condition.}              ║
+║  {Recent camp events. What just happened.}               ║
+║                                                           ║
+║  _____ RECENT ACTIONS _____                               ║
+║  • {Event/order outcome 1}                                ║
+║  • {Event/order outcome 2}                                ║
+║                                                           ║
+╠══════════════════════════════════════════════════════════╣
+║                                                           ║
+║  [Service Records]                                        ║
+║  [Quartermaster]               ← Supply ≥ 15%             ║
+║  [Personal Retinue]            ← T7+ only                 ║
+║  [Companion Assignments]       ← If companions            ║
+║  [Medical Attention]           ← If injured/ill           ║
+║  [Talk to Lords]               ← If lords nearby          ║
+║  [Access Baggage Train]                                   ║
+║                                                           ║
+╠══════════════════════════════════════════════════════════╣
+║            [Back]                                         ║
 ╚══════════════════════════════════════════════════════════╝
 ```
 
-### Dynamic Sections
+**Visit Settlement** appears in DECISIONS menu (not Camp Hub) when at a settlement - it's a contextual opportunity.
 
-| Section | Visibility Condition | Binding |
-|---------|---------------------|---------|
-| **Pending Order** | `OrderManager.GetCurrentOrder() != null` | `@HasPendingOrder` |
-| **[NEW] Badge** | Order issued today or first time seeing it | `@IsNewOrder` |
-| **Visit Settlement** | Lord is at town or castle | `@CanVisitSettlement` |
+**Camp Hub focuses on CAMP, not kingdom.**
+- CAMP STATUS: Military rhythm, activity level, camp-specific situation
+- RECENT ACTIONS: **Full detail** - order outcomes, event results, reputation changes (last 5 days)
+- No kingdom news (that's on Main Menu)
+- No Leave Service (only accessible from Muster menu)
+- No Reports menu (CAMP STATUS + RECENT ACTIONS replaces it)
 
-When no order is pending and not at a settlement, these sections are hidden and the layout collapses cleanly.
+**RECENT ACTIONS format:**
+```
+_____ RECENT ACTIONS _____
+• Guard Duty (yesterday)
+  Completed without incident. +15 discipline XP.
+• Soldier reputation +5 (2 days ago)
+  Helped veteran repair armor.
+```
+
+Uses existing `GetRecentOrderOutcomes()` and `GetRecentReputationChanges()` from `EnlistedNewsBehavior.cs`.
+
+**This is the deep menu** for browsing, equipment, records, companions. Rank, tier, and day info shown here.
+
+### Settlement Access (Dynamic)
+
+When at a settlement, an additional button appears:
+
+```
+╔══════════════════════════════════════════════════════════╗
+║  🏠 Visit {SETTLEMENT_NAME}                               ║
+║  "Enter the town/castle to trade, recruit, or visit."    ║
+╚══════════════════════════════════════════════════════════╝
+```
+
+### Dynamic Menu Options
+
+| Option | Visibility Condition | Binding |
+|--------|---------------------|---------|
+| **Personal Retinue** | Tier 7+ | `@IsT7Plus` |
+| **Companion Assignments** | Has companions | `@HasCompanions` |
+| **Medical Attention** | Injured or ill | `@NeedsMedical` |
+| **Talk to Lords** | Lords in party | `@LordsNearby` |
+
+Note: **Visit Settlement** moved to DECISIONS menu as contextual opportunity (not a Camp Hub button).
+
+---
+
+## Culture-Aware Text
+
+**Critical:** All displayed text must use culture-appropriate rank names.
+
+### Rank Name Resolution
+
+Use `RankHelper.GetRankTitle(culture, tier)` for all rank references:
+
+| Generic Term | Variable | Resolution |
+|--------------|----------|------------|
+| Sergeant | `{NCO_TITLE}` | Empire: "Principalis", Vlandia: "Sergeant", Sturgia: "Drengr" |
+| Captain | `{OFFICER_TITLE}` | Empire: "Centurion", Vlandia: "Knight", Sturgia: "Huskarl" |
+| Your Rank | `{RANK_NAME}` | Player's current rank in lord's culture |
+
+### Implementation
+
+All text uses placeholder variables resolved at display time:
+- `{NCO_TITLE}` - Resolved via `RankHelper.GetNCOTitle(culture)`
+- `{OFFICER_TITLE}` - Resolved via `RankHelper.GetOfficerTitle(culture)`
+- `{LORD_NAME}` - Resolved via `EnlistmentBehavior.EnlistedLord.Name`
+- `{RANK_NAME}` - Resolved via `RankHelper.GetRankTitle(culture, tier)`
 
 ---
 
@@ -1696,8 +1756,6 @@ No reason to rewrite what already works. Custom Gauntlet is only for the main hu
 - [ ] **[NEW] badge shows for fresh orders**
 - [ ] **Accept/Decline buttons work inline**
 - [ ] **Order section hidden when no pending order**
-- [ ] **Visit Settlement button shows when at town/castle**
-- [ ] **Visit Settlement hidden when not at eligible location**
 
 ### Submenus (Native GameMenu) - Must Have
 
@@ -1716,7 +1774,6 @@ No reason to rewrite what already works. Custom Gauntlet is only for the main hu
 - [ ] Hourly updates refresh data while hub open
 - [ ] ESC key closes hub
 - [ ] Order card has visual distinction (background color)
-- [ ] Clicking Visit Settlement opens correct native town/castle menu
 
 ### Nice to Have
 

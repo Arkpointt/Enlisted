@@ -73,8 +73,11 @@
           "id": "request_provisions",
           "textId": "qm_player_provisions",
           "text": "I could use some provisions.",
-          "tooltip": "Browse and purchase food",
-          "action": "open_provisions"
+          "tooltip": "Browse and purchase food (Officers only)",
+          "action": "open_provisions",
+          "requirements": {
+            "tier_min": 7
+          }
         },
         {
           "id": "ask_supply",
@@ -168,8 +171,11 @@
           "id": "request_provisions",
           "textId": "qm_player_provisions",
           "text": "I could use some provisions.",
-          "tooltip": "Browse and purchase food",
-          "action": "open_provisions"
+          "tooltip": "Browse and purchase food (Officers only)",
+          "action": "open_provisions",
+          "requirements": {
+            "tier_min": 7
+          }
         },
         {
           "id": "ask_supply",
@@ -263,8 +269,11 @@
           "id": "request_provisions",
           "textId": "qm_player_provisions",
           "text": "I could use some provisions.",
-          "tooltip": "Browse and purchase food",
-          "action": "open_provisions"
+          "tooltip": "Browse and purchase food (Officers only)",
+          "action": "open_provisions",
+          "requirements": {
+            "tier_min": 7
+          }
         },
         {
           "id": "ask_supply",
@@ -358,8 +367,11 @@
           "id": "request_provisions",
           "textId": "qm_player_provisions",
           "text": "I could use some provisions.",
-          "tooltip": "Browse and purchase food",
-          "action": "open_provisions"
+          "tooltip": "Browse and purchase food (Officers only)",
+          "action": "open_provisions",
+          "requirements": {
+            "tier_min": 7
+          }
         },
         {
           "id": "ask_supply",
@@ -547,8 +559,11 @@
           "id": "request_provisions",
           "textId": "qm_player_provisions",
           "text": "I could use some provisions.",
-          "tooltip": "Browse and purchase food",
-          "action": "open_provisions"
+          "tooltip": "Browse and purchase food (Officers only)",
+          "action": "open_provisions",
+          "requirements": {
+            "tier_min": 7
+          }
         },
         {
           "id": "ask_supply",
@@ -586,8 +601,8 @@
           "id": "browse_armor",
           "textId": "qm_player_armor",
           "text": "Armor.",
-          "tooltip": "Choose armor type",
-          "next_node": "qm_armor_slots"
+          "tooltip": "Browse all armor (helmets, body armor, gloves, boots)",
+          "action": "open_armor"
         },
         {
           "id": "browse_accessories",
@@ -636,8 +651,8 @@
           "id": "browse_armor",
           "textId": "qm_player_armor",
           "text": "Armor.",
-          "tooltip": "Choose armor type",
-          "next_node": "qm_armor_slots"
+          "tooltip": "Browse all armor (helmets, body armor, gloves, boots)",
+          "action": "open_armor"
         },
         {
           "id": "browse_accessories",
@@ -686,8 +701,8 @@
           "id": "browse_armor",
           "textId": "qm_player_armor",
           "text": "Armor.",
-          "tooltip": "Choose armor type",
-          "next_node": "qm_armor_slots"
+          "tooltip": "Browse all armor (helmets, body armor, gloves, boots)",
+          "action": "open_armor"
         },
         {
           "id": "browse_accessories",
@@ -736,8 +751,8 @@
           "id": "browse_armor",
           "textId": "qm_player_armor",
           "text": "Armor.",
-          "tooltip": "Choose armor type",
-          "next_node": "qm_armor_slots"
+          "tooltip": "Browse all armor (helmets, body armor, gloves, boots)",
+          "action": "open_armor"
         },
         {
           "id": "browse_accessories",
@@ -786,8 +801,8 @@
           "id": "browse_armor",
           "textId": "qm_player_armor",
           "text": "Armor.",
-          "tooltip": "Choose armor type",
-          "next_node": "qm_armor_slots"
+          "tooltip": "Browse all armor (helmets, body armor, gloves, boots)",
+          "action": "open_armor"
         },
         {
           "id": "browse_accessories",
@@ -834,8 +849,8 @@
           "id": "browse_armor",
           "textId": "qm_player_armor",
           "text": "Armor.",
-          "tooltip": "Choose armor type",
-          "next_node": "qm_armor_slots"
+          "tooltip": "Browse all armor (helmets, body armor, gloves, boots)",
+          "action": "open_armor"
         },
         {
           "id": "browse_accessories",

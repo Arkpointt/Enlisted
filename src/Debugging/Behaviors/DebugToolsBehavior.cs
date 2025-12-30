@@ -1,5 +1,7 @@
+using System;
 using Enlisted.Features.Content;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Escalation;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
@@ -261,6 +263,29 @@ namespace Enlisted.Debugging.Behaviors
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
             SessionDiagnostics.LogEvent("Debug", "TriggerMuster",
                 $"tier={enlist.EnlistmentTier}, xp={enlist.EnlistmentXP}, pay_owed={enlist.PendingMusterPay}");
+        }
+
+        /// <summary>
+        /// Opens the provisions shop UI for testing, bypassing tier requirements.
+        /// Allows testing of the Gauntlet provisions UI at any tier.
+        /// </summary>
+        public static void TestProvisionsShop()
+        {
+            try
+            {
+                ModLogger.Info("Debug", "Opening provisions shop for testing (bypassing tier requirements)");
+                QuartermasterProvisionsBehavior.ShowProvisionsScreen();
+                
+                var msg = new TextObject("Provisions shop opened (debug). Testing T7+ officer UI.");
+                InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+                SessionDiagnostics.LogEvent("Debug", "TestProvisionsShop", "Provisions UI opened for testing");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Debug", "Failed to open provisions shop for testing", ex);
+                var error = new TextObject("Failed to open provisions shop. Check logs for details.");
+                InformationManager.DisplayMessage(new InformationMessage(error.ToString(), Colors.Red));
+            }
         }
     }
 }

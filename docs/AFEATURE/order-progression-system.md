@@ -1015,6 +1015,10 @@ public class OrderDefinition
     
     public List<string> StrategicTags { get; set; }
     public int CooldownDays { get; set; }
+    
+    // Order-Decision Tension: How strictly is this order supervised?
+    // 1.0 = normal, 1.5 = strict oversight, 0.7 = relaxed oversight
+    public float OversightMultiplier { get; set; } = 1.0f;
 }
 
 public class OrderBlock

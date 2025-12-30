@@ -16,7 +16,7 @@
 - [ai-behavior-analysis.md](ai-behavior-analysis.md) - AI lord behavior analysis
 
 ### Specifications (Not Yet Implemented)
-- [opportunities-system-spec.md](opportunities-system-spec.md) - Automatic opportunities system for Camp Hub
+- [opportunities-system-spec.md](opportunities-system-spec.md) - ⚠️ **LEGACY** - Replaced by [Camp Life Simulation](../AFEATURE/camp-life-simulation.md)
 
 ---
 

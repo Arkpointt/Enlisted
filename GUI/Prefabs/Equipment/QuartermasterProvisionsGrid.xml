@@ -23,13 +23,13 @@
 						<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="350" SuggestedHeight="700" MarginLeft="30" MarginTop="150" HorizontalAlignment="Left" VerticalAlignment="Top">
 							<Children>
 								<!-- Ration info text (T1-T6 only) -->
-								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Left" MarginTop="20" MarginLeft="10" MarginRight="10" Brush="SPGeneral.SmallText" Brush.FontSize="14" Text="@RationInfoText" IsVisible="@ShowRationInfo"/>
+								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Left" MarginTop="20" MarginLeft="10" MarginRight="10" Brush="SPGeneral.SmallText" Brush.FontSize="16" Text="@RationInfoText" IsVisible="@ShowRationInfo"/>
 								
 								<!-- Restock info -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="560" Brush="SPGeneral.MediumText" Brush.FontSize="12" Text="@RestockInfoText"/>
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="560" Brush="SPGeneral.MediumText" Brush.FontSize="14" Text="@RestockInfoText"/>
 								
 								<!-- Player gold display -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="590" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="18" Text="@PlayerGoldText"/>
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="590" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="20" Text="@PlayerGoldText"/>
 							</Children>
 						</Widget>
 

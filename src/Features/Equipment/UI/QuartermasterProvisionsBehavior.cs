@@ -91,13 +91,33 @@ namespace Enlisted.Features.Equipment.UI
         {
             // Log the event type to diagnose conversation vs combat events
             var eventType = mapEvent?.EventType.ToString() ?? "null";
-            ModLogger.Debug("QuartermasterUI", $"MapEventEnded (Provisions): EventType={eventType}, IsOpen={IsOpen}");
+            var isPlayerInMapEvent = MobileParty.MainParty?.MapEvent != null;
+            var isPlayerInConversation = Campaign.Current?.ConversationManager?.IsConversationInProgress ?? false;
+            
+            ModLogger.Debug("QuartermasterUI", 
+                $"MapEventEnded (Provisions): EventType={eventType}, IsOpen={IsOpen}, " +
+                $"PlayerInMapEvent={isPlayerInMapEvent}, PlayerInConversation={isPlayerInConversation}");
             
             // Don't close UI when mapEvent is null (conversations don't have MapEvents)
-            // Only close for actual combat events (field battles, sieges, raids, etc.)
             if (mapEvent == null)
             {
                 ModLogger.Debug("QuartermasterUI", "MapEventEnded with null mapEvent - not closing provisions (likely conversation end)");
+                return;
+            }
+            
+            // Don't close UI if player is currently in a conversation (quartermaster dialogue)
+            // This prevents old/unrelated MapEvents from closing the provisions screen
+            if (isPlayerInConversation)
+            {
+                ModLogger.Debug("QuartermasterUI", "MapEventEnded during conversation - ignoring (QM dialogue in progress)");
+                return;
+            }
+            
+            // Don't close UI if the ended MapEvent is not the player's current MapEvent
+            // This prevents unrelated map events from closing our UI
+            if (MobileParty.MainParty?.MapEvent != mapEvent)
+            {
+                ModLogger.Debug("QuartermasterUI", "MapEventEnded for non-player MapEvent - ignoring");
                 return;
             }
             

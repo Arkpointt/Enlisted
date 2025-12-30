@@ -144,6 +144,8 @@
     <Content Include="GUI\Prefabs\Equipment\QuartermasterProvisionCardRow.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterProvisionsGrid.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterUpgradeScreen.xml"/>
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterUpgradeCard.xml"/>
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterUpgradeCardRow.xml"/>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs"/>
@@ -197,7 +199,8 @@
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterUpgradeVM.cs"/>
-    <Compile Include="src\Features\Equipment\UI\QuartermasterUpgradeItemVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterUpgradeCardVm.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterUpgradeRowVm.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterProvisionsVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterProvisionItemVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterProvisionsBehavior.cs"/>
@@ -388,6 +391,8 @@
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterProvisionCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterProvisionsGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterUpgradeScreen.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterUpgradeCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterUpgradeCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <!-- Workshop files -->
     <Copy SourceFiles="tools\workshop\WorkshopUpdate.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <Copy SourceFiles="tools\workshop\preview.png" DestinationFolder="$(OutputPath)..\..\" Condition="Exists('tools\workshop\preview.png')"/>
