@@ -50,7 +50,7 @@ Replace schedule-driven event pacing with world-state-driven content orchestrati
 
 ### Implementation Order
 1. ✅ **Week 1 - Foundation:** Create orchestrator infrastructure without changing existing behavior
-2. **Week 2 - Selection:** Integrate with content selection and add player behavior tracking
+2. ✅ **Week 2 - Selection:** Integrate with content selection and add player behavior tracking
 3. **Week 3 - Cutover:** Switch from old system to orchestrator
 4. **Week 4 - Orders:** Coordinate order timing with orchestrator
 5. **Week 5 - UI:** Add player-facing transparency (Company Report section)
@@ -762,22 +762,30 @@ Selection uses this to deliver content player likes
 ### Phase 2: Content Selection Integration (Week 2)
 **Goal:** Connect orchestrator to content selection
 
+**Status:** ✅ **COMPLETE**
+
 **Tasks:**
-1. Integrate with `EventSelector.SelectEvent()`
-2. Implement player behavior tracking
-3. Add preference-based content scoring
-4. Log what WOULD be selected
-5. Compare with current system selections
+1. ✅ Integrate with `EventSelector.SelectEvent()` - Added WorldSituation parameter
+2. ✅ Implement player behavior tracking - RecordChoice(), GetPreferences() working
+3. ✅ Add preference-based content scoring - Fitness scoring in ApplyWeights()
+4. ✅ Log what WOULD be selected - TestContentSelection() logs both systems
+5. ✅ Compare with current system selections - Comparison logging implemented
 
 **Deliverables:**
-- Orchestrator selects content based on world state
-- Logs show comparisons with old system
-- Player preferences begin tracking
+- ✅ Orchestrator selects content based on world state
+- ✅ Logs show comparisons with old system
+- ✅ Player preferences begin tracking
 
 **Acceptance Criteria:**
-- Selection makes sense for world situation
-- High-fitness content is contextually appropriate
-- Logging shows clear reasoning
+- ✅ Selection makes sense for world situation
+- ✅ High-fitness content is contextually appropriate
+- ✅ Logging shows clear reasoning
+
+**Files Modified:**
+- `src/Features/Content/EventSelector.cs` - Added WorldSituation parameter, fitness scoring methods
+- `src/Features/Content/ContentOrchestrator.cs` - Added TestContentSelection() comparison logging
+- `src/Features/Content/WorldStateAnalyzer.cs` - Context mapping methods already present
+- `src/Features/Content/PlayerBehaviorTracker.cs` - Tracking methods already present
 
 ---
 

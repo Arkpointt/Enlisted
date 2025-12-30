@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Enlisted.Features.Content.Models;
 using Enlisted.Features.Escalation;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.Core;
@@ -26,8 +27,9 @@ namespace Enlisted.Features.Content
         /// Selects an appropriate event based on current player state, context, and cooldowns.
         /// Returns null if no eligible events are available.
         /// </summary>
+        /// <param name="worldSituation">Optional world situation for fitness scoring. If null, uses basic weighting only.</param>
         /// <returns>The selected EventDefinition, or null if none available.</returns>
-        public static EventDefinition SelectEvent()
+        public static EventDefinition SelectEvent(WorldSituation worldSituation = null)
         {
             try
             {
@@ -60,7 +62,7 @@ namespace Enlisted.Features.Content
                 }
 
                 // Apply weights and select
-                var weightedCandidates = ApplyWeights(candidates, playerRole, currentContext);
+                var weightedCandidates = ApplyWeights(candidates, playerRole, currentContext, worldSituation);
 
                 var selectedEvent = WeightedRandomSelect(weightedCandidates);
 
@@ -175,12 +177,13 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
-        /// Applies weight multipliers based on role match, context match, and priority.
+        /// Applies weight multipliers based on role match, context match, priority, and fitness scoring.
         /// </summary>
         private static List<WeightedEvent> ApplyWeights(
             List<EventDefinition> candidates,
             string playerRole,
-            string currentContext)
+            string currentContext,
+            WorldSituation worldSituation)
         {
             var weighted = new List<WeightedEvent>();
 
@@ -207,10 +210,115 @@ namespace Enlisted.Features.Content
                 // Priority bonus
                 weight *= GetPriorityMultiplier(evt.Timing.Priority);
 
+                // Fitness scoring (if world situation provided)
+                if (worldSituation != null)
+                {
+                    var fitnessScore = CalculateFitnessScore(evt, worldSituation);
+                    weight *= fitnessScore;
+                }
+
                 weighted.Add(new WeightedEvent { Event = evt, Weight = weight });
             }
 
             return weighted;
+        }
+
+        /// <summary>
+        /// Calculates fitness score for an event based on world situation and player preferences.
+        /// Returns a multiplier (0.5 - 2.0) indicating how well the event fits current context.
+        /// </summary>
+        private static float CalculateFitnessScore(EventDefinition evt, WorldSituation situation)
+        {
+            var fitness = 1.0f;
+
+            // World state fitness: does this event make sense RIGHT NOW?
+            var activityFitness = CalculateActivityFitness(evt, situation);
+            fitness *= activityFitness;
+
+            // Player preference fitness: does player engage with this type of content?
+            var preferenceFitness = CalculatePreferenceFitness(evt);
+            fitness *= preferenceFitness;
+
+            return fitness;
+        }
+
+        /// <summary>
+        /// Calculates how well event fits current activity level.
+        /// Quiet garrison = prefer low-key events, intense siege = prefer high-stakes events.
+        /// </summary>
+        private static float CalculateActivityFitness(EventDefinition evt, WorldSituation situation)
+        {
+            // Events can have tags indicating their intensity/tone
+            // For now, use priority as a proxy: high priority = high stakes
+            var eventIntensity = evt.Timing.Priority?.ToLowerInvariant() switch
+            {
+                "critical" => 2.0f,  // High stakes event
+                "high" => 1.5f,
+                "low" => 0.5f,       // Low stakes event
+                _ => 1.0f            // Normal
+            };
+
+            // Match event intensity to situation activity
+            var activityMultiplier = situation.ExpectedActivity switch
+            {
+                ActivityLevel.Quiet => eventIntensity < 1.0f ? 1.5f : 0.7f,      // Prefer low-key in quiet times
+                ActivityLevel.Routine => 1.0f,                                    // Neutral
+                ActivityLevel.Active => eventIntensity > 1.0f ? 1.3f : 0.9f,     // Prefer higher stakes
+                ActivityLevel.Intense => eventIntensity >= 1.5f ? 1.5f : 0.8f,   // Strongly prefer high stakes
+                _ => 1.0f
+            };
+
+            return activityMultiplier;
+        }
+
+        /// <summary>
+        /// Calculates how well event matches player's demonstrated preferences.
+        /// Uses PlayerBehaviorTracker to learn what content player engages with.
+        /// </summary>
+        private static float CalculatePreferenceFitness(EventDefinition evt)
+        {
+            var preferences = PlayerBehaviorTracker.GetPreferences();
+
+            // If no choices recorded yet, return neutral
+            if (preferences.TotalChoicesMade < 5)
+            {
+                return 1.0f;
+            }
+
+            var fitness = 1.0f;
+
+            // Use event ID and category to infer content type
+            // Combat events typically have "combat", "battle", "fight" in ID
+            // Social events have "social", "friend", "conversation" in ID
+            var eventIdLower = evt.Id?.ToLowerInvariant() ?? "";
+            var categoryLower = evt.Category?.ToLowerInvariant() ?? "";
+
+            // Combat vs Social preference
+            if (eventIdLower.Contains("combat") || eventIdLower.Contains("battle") || eventIdLower.Contains("fight"))
+            {
+                if (preferences.CombatVsSocial > 0.6f)
+                    fitness *= 1.3f;  // Player likes combat content
+            }
+            else if (eventIdLower.Contains("social") || eventIdLower.Contains("friend") || eventIdLower.Contains("conversation"))
+            {
+                if (preferences.CombatVsSocial < 0.4f)
+                    fitness *= 1.3f;  // Player likes social content
+            }
+
+            // Risky vs Safe preference (high priority = risky, low priority = safe)
+            var priorityLower = evt.Timing.Priority?.ToLowerInvariant() ?? "normal";
+            if (priorityLower == "critical" || priorityLower == "high")
+            {
+                if (preferences.RiskyVsSafe > 0.6f)
+                    fitness *= 1.2f;  // Player likes risky content
+            }
+            else if (priorityLower == "low")
+            {
+                if (preferences.RiskyVsSafe < 0.4f)
+                    fitness *= 1.2f;  // Player likes safe content
+            }
+
+            return fitness;
         }
 
         /// <summary>

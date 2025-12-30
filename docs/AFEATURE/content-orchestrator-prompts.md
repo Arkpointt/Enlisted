@@ -26,7 +26,7 @@ Each phase prompt is **self-contained for a fresh AI chat**. Every prompt includ
 | Phase | Description | Model | Chat Strategy | Status |
 |-------|-------------|-------|---------------|--------|
 | [Phase 1](#phase-1-foundation) | Foundation (infrastructure) | Opus 4 | ✅ **DONE** | ✅ Complete |
-| [Phase 2](#phase-2-content-selection-integration) | Content Selection | Opus 4 | 🔒 Standalone | |
+| [Phase 2](#phase-2-content-selection-integration) | Content Selection | Opus 4 | ✅ **DONE** | ✅ Complete |
 | [Phase 3](#phase-3-cutover--migration) | Cutover & Migration | Sonnet 4 | 🔒 Standalone | |
 | [Phase 4](#phase-4-orders-integration) | Orders Integration | Sonnet 4 | 🔒 Standalone | |
 | [Phase 5](#phase-5-ui-integration-quick-decision-center) | UI Integration | Sonnet 4 | 🔒 Standalone | |
@@ -1349,7 +1349,7 @@ SCOPE: PHASE 6A-C ONLY (Core Functionality)
 
 This prompt covers:
 - 6A: Models + basic generation
-- 6B: UI integration  
+- 6B: UI integration
 - 6C: Intelligence (player state, variety)
 
 Phase 6D-E (learning system, 25+ opportunities) will be done in a separate chat.

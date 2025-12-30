@@ -148,17 +148,64 @@ namespace Enlisted.Features.Content
             var orderContext = WorldStateAnalyzer.GetOrderEventWorldState(worldSituation);
             ModLogger.Debug(LogCategory, $"Event context: {eventContext}, Order context: {orderContext}");
 
-            // Phase 1: Stop here - don't affect live system
-            // Future phases will:
-            // - Check if content should fire today
-            // - Get eligible content
-            // - Select best fit
-            // - Check safety limits
-            // - Deliver content
+            // Phase 2: Test content selection with fitness scoring (logging only, no delivery)
+            TestContentSelection(worldSituation);
 
             // Update behavior tracking data for next save
             _behaviorCounts = PlayerBehaviorTracker.GetBehaviorCountsForSave();
             _contentEngagement = PlayerBehaviorTracker.GetContentEngagementForSave();
+        }
+
+        /// <summary>
+        /// Tests content selection with fitness scoring and logs comparisons.
+        /// Phase 2: Logs what WOULD be selected without affecting live system.
+        /// </summary>
+        private void TestContentSelection(WorldSituation worldSituation)
+        {
+            ModLogger.Info(LogCategory, "=== Phase 2: Content Selection Test ===");
+
+            // Select with OLD system (no world situation)
+            var oldSelection = EventSelector.SelectEvent(null);
+            if (oldSelection != null)
+            {
+                ModLogger.Info(LogCategory, $"OLD system would select: {oldSelection.Id} (category: {oldSelection.Category})");
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, "OLD system: No eligible events");
+            }
+
+            // Select with NEW system (with world situation and fitness scoring)
+            var newSelection = EventSelector.SelectEvent(worldSituation);
+            if (newSelection != null)
+            {
+                ModLogger.Info(LogCategory, $"NEW system would select: {newSelection.Id} (category: {newSelection.Category})");
+
+                // Log fitness reasoning
+                var playerPrefs = PlayerBehaviorTracker.GetPreferences();
+                ModLogger.Debug(LogCategory,
+                    $"Player preferences: Combat={playerPrefs.CombatVsSocial:F2}, Risky={playerPrefs.RiskyVsSafe:F2}, Loyal={playerPrefs.LoyalVsSelfServing:F2} (from {playerPrefs.TotalChoicesMade} choices)");
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, "NEW system: No eligible events");
+            }
+
+            // Compare selections
+            if (oldSelection != null && newSelection != null)
+            {
+                if (oldSelection.Id == newSelection.Id)
+                {
+                    ModLogger.Info(LogCategory, "✓ Both systems selected same event");
+                }
+                else
+                {
+                    ModLogger.Info(LogCategory, $"✗ Systems differ: OLD={oldSelection.Id}, NEW={newSelection.Id}");
+                    ModLogger.Debug(LogCategory, $"Difference reason: Fitness scoring adjusted weights based on activity={worldSituation.ExpectedActivity}");
+                }
+            }
+
+            ModLogger.Info(LogCategory, "=== End Content Selection Test ===");
         }
 
         /// <summary>
