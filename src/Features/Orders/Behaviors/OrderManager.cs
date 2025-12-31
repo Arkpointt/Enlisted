@@ -39,6 +39,7 @@ namespace Enlisted.Features.Orders.Behaviors
         public override void RegisterEvents()
         {
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
+            CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -72,6 +73,19 @@ namespace Enlisted.Features.Orders.Behaviors
             {
                 TryIssueOrder();
             }
+        }
+
+        /// <summary>
+        /// Hourly tick checks for order state transitions (IMMINENT → PENDING).
+        /// </summary>
+        private void OnHourlyTick()
+        {
+            if (!EnlistmentBehavior.Instance.IsEnlisted)
+            {
+                return;
+            }
+
+            UpdateOrderState();
         }
 
         /// <summary>
@@ -121,7 +135,7 @@ namespace Enlisted.Features.Orders.Behaviors
 
         /// <summary>
         /// Attempts to select and issue a new order from the catalog.
-        /// Phase 4: Coordinates with ContentOrchestrator for timing.
+        /// Phase 10: Creates order in IMMINENT state with 4-8 hour advance warning.
         /// </summary>
         private void TryIssueOrder()
         {
@@ -146,15 +160,67 @@ namespace Enlisted.Features.Orders.Behaviors
                 order.Issuer = OrderCatalog.DetermineOrderIssuer(playerTier, order);
             }
 
+            // Create order in IMMINENT state with 4-8 hour warning
+            CreateImminentOrder(order);
+        }
+
+        /// <summary>
+        /// Creates an order in IMMINENT state with 4-8 hour advance warning.
+        /// The order will transition to PENDING when IssueTime arrives.
+        /// </summary>
+        private void CreateImminentOrder(Order order)
+        {
+            // Calculate issue time (4-8 hours from now)
+            var hoursUntilIssue = MBRandom.RandomFloatRanged(4f, 8f);
+            
             _currentOrder = order;
-            _currentOrder.IssuedTime = CampaignTime.Now;
-            _currentOrder.ExpirationTime = CampaignTime.DaysFromNow(3f);
+            _currentOrder.State = OrderState.Imminent;
+            _currentOrder.ImminentTime = CampaignTime.Now;
+            _currentOrder.IssueTime = CampaignTime.HoursFromNow(hoursUntilIssue);
+            _currentOrder.ExpirationTime = CampaignTime.HoursFromNow(hoursUntilIssue + 72f); // 3 days after issue
             _lastOrderTime = CampaignTime.Now;
+            _orderAccepted = false; // Not yet issued
+
+            ModLogger.Info(LogCategory, 
+                $"Order imminent: {order.Title} from {order.Issuer} (will issue in {hoursUntilIssue:F1} hours)");
+
+            // Refresh the enlisted status menu so the [IMMINENT] marker appears immediately
+            Interface.Behaviors.EnlistedMenuBehavior.Instance?.RefreshEnlistedStatusMenuUi();
+        }
+
+        /// <summary>
+        /// Updates order state, checking for IMMINENT → PENDING transitions.
+        /// Called every hour to check if forecast orders should be issued.
+        /// </summary>
+        private void UpdateOrderState()
+        {
+            if (_currentOrder == null)
+            {
+                return;
+            }
+
+            // Check for IMMINENT → PENDING transition
+            if (_currentOrder.State == OrderState.Imminent && 
+                CampaignTime.Now >= _currentOrder.IssueTime)
+            {
+                TransitionToPending(_currentOrder);
+            }
+        }
+
+        /// <summary>
+        /// Transitions an order from IMMINENT to PENDING state.
+        /// Issues the order to the player for accept/decline (or auto-accepts if mandatory).
+        /// </summary>
+        private void TransitionToPending(Order order)
+        {
+            order.State = OrderState.Pending;
+            order.IssuedTime = CampaignTime.Now;
 
             // Check if order is mandatory (auto-accept)
             if (order.Mandatory)
             {
                 _orderAccepted = true; // Automatically accepted
+                order.State = OrderState.Active;
                 ModLogger.Info(LogCategory, $"Mandatory order assigned: {order.Title} from {order.Issuer}");
 
                 // Show notification that duty has been assigned
@@ -168,6 +234,9 @@ namespace Enlisted.Features.Orders.Behaviors
                 ModLogger.Info(LogCategory, $"Optional order issued: {order.Title} from {order.Issuer}");
                 ShowOrderNotification(order);
             }
+
+            // Refresh the enlisted status menu so the Orders accordion auto-expands for the new order
+            Interface.Behaviors.EnlistedMenuBehavior.Instance?.RefreshEnlistedStatusMenuUi();
         }
 
         /// <summary>
@@ -176,12 +245,13 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         public void AcceptOrder()
         {
-            if (_currentOrder == null)
+            if (_currentOrder == null || _currentOrder.State != OrderState.Pending)
             {
                 return;
             }
 
             _orderAccepted = true;
+            _currentOrder.State = OrderState.Active;
             ModLogger.Info(LogCategory, $"Order accepted: {_currentOrder.Title}");
 
             // Show combat log notification that order has started
@@ -907,6 +977,69 @@ namespace Enlisted.Features.Orders.Behaviors
         public int GetDeclineCount()
         {
             return _declineCount;
+        }
+
+        /// <summary>
+        /// Gets forecast text for the current order if it's in IMMINENT state.
+        /// Returns appropriate text based on order tags (strategic vs company-level).
+        /// </summary>
+        public string GetImminentWarningText()
+        {
+            if (_currentOrder == null || _currentOrder.State != OrderState.Imminent)
+            {
+                return string.Empty;
+            }
+
+            // Strategic orders (high-level, issued by lord/captain)
+            if (_currentOrder.Tags.Contains("strategic"))
+            {
+                return "Expect strategic orders from command soon.";
+            }
+
+            // Company-level orders (issued by sergeant/officer)
+            // Vary text based on order type
+            if (_currentOrder.Tags.Contains("patrol"))
+            {
+                return "Sergeant looking for patrol volunteers.";
+            }
+            if (_currentOrder.Tags.Contains("guard"))
+            {
+                return "Sergeant organizing guard rotations.";
+            }
+            if (_currentOrder.Tags.Contains("scout"))
+            {
+                return "Officers discussing reconnaissance needs.";
+            }
+            if (_currentOrder.Tags.Contains("medical"))
+            {
+                return "Surgeons calling for aid with the wounded.";
+            }
+
+            // Generic company-level forecast
+            return "Sergeant will call for you soon.";
+        }
+
+        /// <summary>
+        /// Gets hours remaining until an imminent order is issued.
+        /// Returns -1 if no imminent order.
+        /// </summary>
+        public float GetHoursUntilIssue()
+        {
+            if (_currentOrder == null || _currentOrder.State != OrderState.Imminent)
+            {
+                return -1f;
+            }
+
+            var hoursRemaining = (float)(_currentOrder.IssueTime - CampaignTime.Now).ToHours;
+            return MathF.Max(0f, hoursRemaining);
+        }
+
+        /// <summary>
+        /// Checks if the current order is imminent (forecast active).
+        /// </summary>
+        public bool IsOrderImminent()
+        {
+            return _currentOrder != null && _currentOrder.State == OrderState.Imminent;
         }
 
         /// <summary>

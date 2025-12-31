@@ -4,6 +4,36 @@ using TaleWorlds.CampaignSystem;
 namespace Enlisted.Features.Orders.Models
 {
     /// <summary>
+    /// Order lifecycle states for forecasting and progression.
+    /// </summary>
+    public enum OrderState
+    {
+        /// <summary>
+        /// Order is imminent - advance warning given 4-8 hours before issue.
+        /// Player sees forecast in daily brief but cannot yet accept/decline.
+        /// </summary>
+        Imminent,
+
+        /// <summary>
+        /// Order has been issued - shows in Orders menu for accept/decline.
+        /// Mandatory orders (T1-T3) skip to Active state automatically.
+        /// </summary>
+        Pending,
+
+        /// <summary>
+        /// Order has been accepted - progressing through phases automatically.
+        /// Managed by OrderProgressionBehavior.
+        /// </summary>
+        Active,
+
+        /// <summary>
+        /// Order is complete - results shown in Recent Activity.
+        /// Historical record only, not actively tracked.
+        /// </summary>
+        Complete
+    }
+
+    /// <summary>
     /// Represents a military order from the chain of command.
     /// Orders are issued periodically (~3 days), can be accepted or declined, and have consequences.
     /// </summary>
@@ -16,11 +46,13 @@ namespace Enlisted.Features.Orders.Models
 
         /// <summary>
         /// Display title shown in UI (e.g., "Reconnaissance Patrol").
+        /// Falls back to context-variant title if available.
         /// </summary>
         public string Title { get; set; }
 
         /// <summary>
         /// Detailed description of the order and its objectives.
+        /// Falls back to context-variant description if available.
         /// </summary>
         public string Description { get; set; }
 
@@ -31,7 +63,24 @@ namespace Enlisted.Features.Orders.Models
         public string Issuer { get; set; }
 
         /// <summary>
-        /// Campaign time when this order was issued.
+        /// Current state in the order lifecycle (Imminent → Pending → Active → Complete).
+        /// </summary>
+        public OrderState State { get; set; } = OrderState.Pending;
+
+        /// <summary>
+        /// Campaign time when imminent warning began (State = Imminent).
+        /// Used to calculate hours until issue.
+        /// </summary>
+        public CampaignTime ImminentTime { get; set; }
+
+        /// <summary>
+        /// Campaign time when this order will be issued (transition Imminent → Pending).
+        /// Set to ImminentTime + 4-8 hours when forecast is created.
+        /// </summary>
+        public CampaignTime IssueTime { get; set; }
+
+        /// <summary>
+        /// Campaign time when this order was actually issued (State = Pending/Active).
         /// </summary>
         public CampaignTime IssuedTime { get; set; }
 
@@ -62,6 +111,32 @@ namespace Enlisted.Features.Orders.Models
         /// Examples: guard duty, muster, latrine duty, basic patrols.
         /// </summary>
         public bool Mandatory { get; set; } = false;
+
+        /// <summary>
+        /// Context-variant text for sea/land awareness.
+        /// Keys: "land", "sea". Each contains Title and Description overrides.
+        /// If the current travel context matches a variant, that text is used.
+        /// </summary>
+        public Dictionary<string, OrderTextVariant> ContextVariants { get; set; }
+    }
+
+    /// <summary>
+    /// Context-specific title and description for an order.
+    /// Used to provide sea/land flavor text variants.
+    /// </summary>
+    public class OrderTextVariant
+    {
+        /// <summary>Context-specific title (e.g., "Deck Watch" for sea, "Guard Post" for land).</summary>
+        public string Title { get; set; }
+
+        /// <summary>Localization ID for title (e.g., "order_guard_post_sea_title").</summary>
+        public string TitleId { get; set; }
+
+        /// <summary>Context-specific description with appropriate flavor text.</summary>
+        public string Description { get; set; }
+
+        /// <summary>Localization ID for description.</summary>
+        public string DescriptionId { get; set; }
     }
 }
 

@@ -83,27 +83,33 @@ namespace Enlisted.Features.Content
             }
 
             // Player commitments (scheduled activities)
-            var commitments = CampOpportunityGenerator.Instance?.Commitments;
-            if (commitments?.HasCommitment == true)
+            var generator = CampOpportunityGenerator.Instance;
+            var nextCommitment = generator?.GetNextCommitment();
+            if (nextCommitment != null)
             {
                 sb.Append(" ");
-                if (!string.IsNullOrEmpty(commitments.CommitmentDisplayText))
+                var hoursUntil = generator.GetHoursUntilCommitment(nextCommitment);
+                var activity = nextCommitment.Title?.ToLower() ?? "an activity";
+                var phase = nextCommitment.ScheduledPhase?.ToLower() ?? "later";
+
+                if (hoursUntil < 1f)
                 {
-                    sb.Append(commitments.CommitmentDisplayText);
+                    sb.Append(new TextObject("{=menu_you_commitment_soon}It's almost time for {ACTIVITY}.").SetTextVariable("ACTIVITY", activity).ToString());
+                }
+                else if (hoursUntil <= 6f)
+                {
+                    sb.Append(new TextObject("{=menu_you_commitment_today}You've committed to {ACTIVITY} this {PHASE}.")
+                        .SetTextVariable("ACTIVITY", activity)
+                        .SetTextVariable("PHASE", phase)
+                        .ToString());
                 }
                 else
                 {
-                    float hoursUntil = commitments.GetHoursUntilActivity();
-                    if (hoursUntil < 1f)
-                    {
-                        sb.Append(new TextObject("{=menu_you_commitment_soon}The lads are expecting you shortly.").ToString());
-                    }
-                    else
-                    {
-                        sb.Append(new TextObject("{=menu_you_commitment}You've agreed to join the lads in {HOURS} hours.")
-                            .SetTextVariable("HOURS", ((int)hoursUntil).ToString())
-                            .ToString());
-                    }
+                    sb.Append(new TextObject("{=menu_you_commitment}You've committed to {ACTIVITY} at {PHASE} ({HOURS}h).")
+                        .SetTextVariable("ACTIVITY", activity)
+                        .SetTextVariable("PHASE", phase)
+                        .SetTextVariable("HOURS", ((int)hoursUntil).ToString())
+                        .ToString());
                 }
             }
 

@@ -9,10 +9,11 @@ using TaleWorlds.CampaignSystem;
 namespace Enlisted.Features.Content
 {
     /// <summary>
-    /// Central coordinator for all content delivery in the Enlisted mod.
-    /// Analyzes world state, calculates appropriate content frequency, and coordinates
-    /// timing across narrative events, orders, and camp life systems.
-    /// When disabled, logs analysis for diagnostics. When enabled, delivers content.
+    /// Central coordinator for content pacing in the Enlisted mod.
+    /// Analyzes world state and provides activity levels to OrderProgressionBehavior.
+    /// Generates forecasts for UI and updates camp opportunities for player decisions.
+    /// Does NOT fire automatic events - content delivery happens through order events (during duty) 
+    /// and player-initiated camp decisions (DECISIONS menu).
     /// </summary>
     public class ContentOrchestrator : CampaignBehaviorBase
     {
@@ -20,10 +21,6 @@ namespace Enlisted.Features.Content
 
         /// <summary>Singleton instance for global access.</summary>
         public static ContentOrchestrator Instance { get; private set; }
-
-        // Track events delivered this week for frequency management
-        private int _eventsThisWeek;
-        private CampaignTime _lastWeekReset = CampaignTime.Zero;
 
         // Track last day phase for phase change detection
         private DayPhase _lastPhase = DayPhase.Night;
@@ -48,8 +45,6 @@ namespace Enlisted.Features.Content
         {
             SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                dataStore.SyncData("orchestrator_eventsThisWeek", ref _eventsThisWeek);
-
                 // Save/load behavior tracking data
                 dataStore.SyncData("orchestrator_behaviorCounts", ref _behaviorCounts);
                 dataStore.SyncData("orchestrator_contentEngagement", ref _contentEngagement);
@@ -113,8 +108,8 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Main daily tick. Runs once per in-game day.
-        /// When orchestrator is enabled, fires content based on world state.
-        /// Otherwise, runs diagnostic analysis and logging only.
+        /// Orchestrator provides activity levels to OrderProgressionBehavior and generates forecasts.
+        /// Does NOT fire automatic events - content delivery happens through orders and player decisions.
         /// </summary>
         private void OnDailyTick()
         {
@@ -123,48 +118,35 @@ namespace Enlisted.Features.Content
                 return;
             }
 
-            // Reset weekly counter if needed
-            ResetWeeklyCounterIfNeeded();
-
             // Analyze world situation
             var worldSituation = WorldStateAnalyzer.AnalyzeSituation();
+            var activityLevel = worldSituation.ExpectedActivity;
+
             ModLogger.Debug(LogCategory,
-                $"World State: Lord={worldSituation.LordIs}, Phase={worldSituation.CurrentPhase}, Activity={worldSituation.ExpectedActivity}");
+                $"World State: Lord={worldSituation.LordIs}, Phase={worldSituation.CurrentPhase}, Activity={activityLevel}");
 
             // Check if orchestrator is enabled
             var config = Mod.Core.Config.ConfigurationManager.LoadOrchestratorConfig();
             if (config?.Enabled == true)
             {
-                // Orchestrator enabled - fire content based on world state
                 ModLogger.Info(LogCategory, "=== Orchestrator Active ===");
+                ModLogger.Info(LogCategory, $"Activity Level: {activityLevel} → OrderProgressionBehavior");
+
+                // Activity level is provided to OrderProgressionBehavior via GetCurrentWorldSituation()
+                // OrderProgressionBehavior uses it to modify order event slot probabilities
 
                 // Set quiet day based on world state
                 SetQuietDayFromWorldState(worldSituation);
 
-                // Get frequency for current situation
-                var frequencyTable = GetFrequencyForSituation(worldSituation);
-                ModLogger.Debug(LogCategory, $"Frequency for {worldSituation.LordIs}: {frequencyTable.Base:F2} events/day");
+                // Generate forecasts for UI (Main Menu NOW and AHEAD sections)
+                // This ensures forecast data is fresh for when player opens menu
+                GenerateForecastData(worldSituation);
 
-                // Decide if content should fire today
-                if (ShouldFireContent(frequencyTable))
-                {
-                    // Select content based on world situation
-                    var content = SelectContent(worldSituation);
+                // Update camp opportunities availability
+                RefreshCampOpportunities(worldSituation);
 
-                    if (content != null)
-                    {
-                        // Deliver the content
-                        DeliverContent(content);
-                    }
-                    else
-                    {
-                        ModLogger.Debug(LogCategory, "No eligible content to deliver");
-                    }
-                }
-                else
-                {
-                    ModLogger.Debug(LogCategory, "Content firing skipped (probabilistic check)");
-                }
+                // TODO Phase 10: Add order planning with 24h/8h/2h warnings
+                // PlanNext24Hours(worldSituation);
             }
             else
             {
@@ -249,7 +231,45 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
+        /// Generates forecast data for UI display.
+        /// Forecasts include player status (duty, health), upcoming events, and company state.
+        /// ForecastGenerator.BuildPlayerStatus() is called by UI on-demand using this data.
+        /// </summary>
+        private void GenerateForecastData(WorldSituation worldSituation)
+        {
+            // Forecast data is cached in various systems for UI consumption:
+            // - OrderManager tracks current/upcoming orders
+            // - CompanySimulationBehavior tracks needs/pressure
+            // - EscalationManager tracks tension levels
+            // - CampOpportunityGenerator tracks commitments
+            
+            // The daily tick ensures all these systems have current data
+            // UI calls ForecastGenerator.BuildPlayerStatus() which reads from these systems
+            
+            ModLogger.Debug(LogCategory, "Forecast data ready for UI");
+        }
+
+        /// <summary>
+        /// Refreshes available camp opportunities based on world state.
+        /// CampOpportunityGenerator filters opportunities by phase, context, and eligibility.
+        /// </summary>
+        private void RefreshCampOpportunities(WorldSituation worldSituation)
+        {
+            // Camp opportunities refresh automatically on phase changes via OnPhaseChanged()
+            // This daily tick can trigger additional logic for opportunity planning
+            
+            var opportunityGen = Camp.CampOpportunityGenerator.Instance;
+            if (opportunityGen != null)
+            {
+                // Opportunities are generated on-demand when player opens DECISIONS menu
+                // CampOpportunityGenerator.GenerateCampLife() uses current world state
+                ModLogger.Debug(LogCategory, "Camp opportunity system active");
+            }
+        }
+
+        /// <summary>
         /// Determines realistic event frequency based on world situation and pressure.
+        /// Used for diagnostic analysis when orchestrator is disabled.
         /// </summary>
         private float DetermineRealisticFrequency(WorldSituation situation, SimulationPressure pressure)
         {
@@ -263,136 +283,11 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
-        /// Resets the weekly event counter if a week has passed.
-        /// </summary>
-        private void ResetWeeklyCounterIfNeeded()
-        {
-            if (_lastWeekReset == CampaignTime.Zero)
-            {
-                _lastWeekReset = CampaignTime.Now;
-                return;
-            }
-
-            var daysSinceReset = (CampaignTime.Now - _lastWeekReset).ToDays;
-            if (daysSinceReset >= 7)
-            {
-                ModLogger.Debug(LogCategory, $"Weekly reset: {_eventsThisWeek} events last week");
-                _eventsThisWeek = 0;
-                _lastWeekReset = CampaignTime.Now;
-            }
-        }
-
-        /// <summary>
         /// Checks if the orchestrator should be active.
         /// </summary>
         private bool IsActive()
         {
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
-        }
-
-        /// <summary>
-        /// Gets the frequency configuration for the current world situation.
-        /// Reads from enlisted_config.json orchestrator.frequency_tables.
-        /// </summary>
-        private Mod.Core.Config.FrequencyTable GetFrequencyForSituation(WorldSituation situation)
-        {
-            var config = Mod.Core.Config.ConfigurationManager.LoadOrchestratorConfig();
-            if (config?.FrequencyTables == null)
-            {
-                ModLogger.Warn(LogCategory, "Orchestrator frequency tables not configured, using defaults");
-                return new Mod.Core.Config.FrequencyTable { Base = 0.4f, Min = 0.3f, Max = 0.5f };
-            }
-
-            // Map world situation to frequency table key
-            string key;
-            if (situation.LordIs == LordSituation.SiegeAttacking || situation.LordIs == LordSituation.SiegeDefending)
-            {
-                key = "siege";
-            }
-            else if (situation.LordIs == LordSituation.WarMarching || situation.LordIs == LordSituation.WarActiveCampaign)
-            {
-                key = "campaign";
-            }
-            else if (situation.LordIs == LordSituation.Defeated || situation.LordIs == LordSituation.Captured)
-            {
-                key = "battle"; // Recovery/captured = suppressed activity
-            }
-            else
-            {
-                key = "garrison"; // PeacetimeGarrison, PeacetimeRecruiting
-            }
-
-            if (config.FrequencyTables.TryGetValue(key, out var table))
-            {
-                return table;
-            }
-
-            ModLogger.Warn(LogCategory, $"Frequency table '{key}' not found, using garrison defaults");
-            return new Mod.Core.Config.FrequencyTable { Base = 0.4f, Min = 0.3f, Max = 0.5f };
-        }
-
-        /// <summary>
-        /// Determines if content should fire today based on frequency.
-        /// Uses probabilistic firing: frequency of 1.5 = 1.5 events per day on average.
-        /// </summary>
-        private bool ShouldFireContent(Mod.Core.Config.FrequencyTable frequency)
-        {
-            // Frequency is events per day
-            // If frequency >= 1.0, fire with certainty and possibly multiple times
-            // If frequency < 1.0, fire probabilistically
-
-            var roll = TaleWorlds.Core.MBRandom.RandomFloat;
-            var shouldFire = roll < frequency.Base;
-
-            ModLogger.Debug(LogCategory, $"Fire check: roll={roll:F2}, frequency={frequency.Base:F2}, result={shouldFire}");
-            return shouldFire;
-        }
-
-        /// <summary>
-        /// Selects content based on world situation using EventSelector.
-        /// </summary>
-        private EventDefinition SelectContent(WorldSituation situation)
-        {
-            var selected = EventSelector.SelectEvent(situation);
-            if (selected != null)
-            {
-                ModLogger.Info(LogCategory, $"Selected content: {selected.Id} (category: {selected.Category})");
-            }
-            else
-            {
-                ModLogger.Debug(LogCategory, "No eligible content available");
-            }
-            return selected;
-        }
-
-        /// <summary>
-        /// Delivers content via EventDeliveryManager and records it with GlobalEventPacer.
-        /// </summary>
-        private void DeliverContent(EventDefinition content)
-        {
-            var deliveryManager = EventDeliveryManager.Instance;
-            if (deliveryManager == null)
-            {
-                ModLogger.Warn(LogCategory, "EventDeliveryManager not available, cannot deliver content");
-                return;
-            }
-
-            // Check GlobalEventPacer limits before firing
-            if (!GlobalEventPacer.CanFireAutoEvent(content.Id, content.Category, out var blockReason))
-            {
-                ModLogger.Info(LogCategory, $"Content blocked by pacing limits: {blockReason}");
-                return;
-            }
-
-            // Queue the event
-            deliveryManager.QueueEvent(content);
-            ModLogger.Info(LogCategory, $"Delivered content: {content.Id}");
-
-            // Record with GlobalEventPacer
-            GlobalEventPacer.RecordAutoEvent(content.Id, content.Category);
-
-            // Update weekly counter
-            _eventsThisWeek++;
         }
 
         /// <summary>

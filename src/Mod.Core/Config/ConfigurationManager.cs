@@ -780,23 +780,47 @@ namespace Enlisted.Mod.Core.Config
     }
 
     /// <summary>
-    /// Content orchestrator configuration for world-state driven content delivery.
+    /// Content orchestrator configuration for world-state driven content pacing.
+    /// Provides activity levels to OrderProgressionBehavior and manages order scheduling.
     /// </summary>
     public sealed class OrchestratorConfig
     {
         public bool Enabled { get; set; } = false;
         public bool LogDecisions { get; set; } = true;
-        public Dictionary<string, FrequencyTable> FrequencyTables { get; set; } = new Dictionary<string, FrequencyTable>();
+
+        /// <summary>
+        /// Activity level multipliers for order event slot probabilities.
+        /// Keys: Quiet, Routine, Active, Intense
+        /// Values: Multiplier applied to slot base chance (0.15 or 0.35)
+        /// Example: Quiet=0.3 means 15% * 0.3 = 4.5% chance for normal slots
+        /// </summary>
+        public Dictionary<string, float> ActivityModifiers { get; set; } = new Dictionary<string, float>
+        {
+            { "Quiet", 0.3f },
+            { "Routine", 0.6f },
+            { "Active", 1.0f },
+            { "Intense", 1.5f }
+        };
+
+        /// <summary>
+        /// Order scheduling configuration for predictive warnings.
+        /// </summary>
+        public OrderSchedulingConfig OrderScheduling { get; set; } = new OrderSchedulingConfig();
     }
 
     /// <summary>
-    /// Frequency table for content delivery based on world state.
+    /// Configuration for order scheduling with advance warnings.
     /// </summary>
-    public sealed class FrequencyTable
+    public sealed class OrderSchedulingConfig
     {
-        public float Base { get; set; }
-        public float Min { get; set; }
-        public float Max { get; set; }
+        /// <summary>Normal orders are forecast 24 hours in advance.</summary>
+        public int NormalAdvanceHours { get; set; } = 24;
+
+        /// <summary>Urgent orders are forecast 8 hours in advance.</summary>
+        public int UrgentAdvanceHours { get; set; } = 8;
+
+        /// <summary>Critical orders appear immediately (0-2 hours).</summary>
+        public int CriticalAdvanceHours { get; set; } = 0;
     }
 
     /// <summary>

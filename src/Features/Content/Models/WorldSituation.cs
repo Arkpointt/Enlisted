@@ -40,5 +40,21 @@ namespace Enlisted.Features.Content.Models
 
         /// <summary>Affects pressure.</summary>
         public bool InEnemyTerritory { get; set; }
+
+        /// <summary>Whether currently at sea (Warsails DLC) or on land.</summary>
+        public TravelContext TravelContext { get; set; }
+    }
+
+    /// <summary>
+    /// Travel context for sea/land awareness.
+    /// Used for context-variant order text and filtering.
+    /// </summary>
+    public enum TravelContext
+    {
+        /// <summary>Normal land travel, garrison, settlement.</summary>
+        Land,
+
+        /// <summary>Naval voyage (Warsails DLC). Party is at sea on a ship.</summary>
+        Sea
     }
 }

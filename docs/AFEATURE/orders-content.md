@@ -3,8 +3,8 @@
 **Summary:** Complete catalog of all orders for the Order Progression System. Each order includes duration, skills, fatigue, injury risk, phase blocks, and event pool references. This is the content specification for JSON implementation.
 
 **Status:** 📋 Specification  
-**Last Updated:** 2025-12-30  
-**Related Docs:** [Order Progression System](order-progression-system.md), [Order Events Master](order-events-master.md), [Content Orchestrator](content-orchestrator-plan.md)
+**Last Updated:** 2025-12-31 (Added context-variant text for sea/land awareness)  
+**Related Docs:** [Order Progression System](order-progression-system.md), [Order Events Master](order-events-master.md), [Content Orchestrator](content-orchestrator-plan.md), [Event System Schemas](../Features/Content/event-system-schemas.md#order-context-variants-sealand-awareness)
 
 ---
 
@@ -52,6 +52,15 @@ Each order follows this JSON structure:
   "issuer": "Sergeant",
   "tier_min": 1,
   "tier_max": 3,
+  
+  "context_variants": {
+    "sea": {
+      "title": "Deck Watch",
+      "titleId": "order_guard_post_sea_title",
+      "description": "Stand watch on the foredeck. Keep your eyes on the horizon.",
+      "descriptionId": "order_guard_post_sea_desc"
+    }
+  },
   
   "duration_days": 2,
   "primary_skill": "Perception",

@@ -2,7 +2,7 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2025-12-31 (Content Orchestrator Phases 1-6F complete)
+**Last Updated:** 2025-12-31 (Orchestrator Phases 1-6F complete, reorganization complete)
 **Total Documents:** 50
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
@@ -57,9 +57,11 @@
 |------------------|-------------------|---------|
 | **Baggage Checks/Inspections** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Baggage Checks |
 | **Buyback System** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Buyback System |
-| **Camp Activities (Current)** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | — |
-| **Camp Activities (Future)** | [camp-life-simulation.md](AFEATURE/camp-life-simulation.md) | Living camp simulation (Phase 6) |
-| **Camp Background Simulation** | [camp-background-simulation.md](AFEATURE/camp-background-simulation.md) | Autonomous company life (Phase 5.5) |
+| **Company Needs** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 5 transparent metrics (Readiness/Morale/etc) |
+| **Camp Hub Decisions** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 34 player-initiated decisions |
+| **Orchestrator Camp Simulation** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Background + Opportunities layers |
+| **Camp Opportunities** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | 29 contextual activities with learning |
+| **Camp Background** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Autonomous roster tracking, incidents |
 | **Camp Hub (Custom Gauntlet)** | [camp-hub-custom-gauntlet.md](Features/UI/camp-hub-custom-gauntlet.md) | — |
 | **Company Events** | [company-events.md](Features/Core/company-events.md) | — |
 | **Companion Integration** | [companion-management.md](Features/Core/companion-management.md) | — |
@@ -176,9 +178,8 @@
 | Document | Topic | Status |
 |----------|-------|--------|
 | [README.md](Features/Content/README.md) | Content folder overview | ✅ Current |
-| [content-system-architecture.md](Features/Content/content-system-architecture.md) | Content system design: JSON-driven event framework, condition evaluation engine, event triggering rules, content file organization, localization integration | ⚠️ Mixed |
+| [content-system-architecture.md](Features/Content/content-system-architecture.md) | Complete content system architecture: world-state-driven orchestration (ContentOrchestrator, WorldStateAnalyzer, SimulationPressureCalculator, PlayerBehaviorTracker), activity level system, native Bannerlord effect integration (IncidentEffectTranslator, trait mapping), JSON-driven content delivery, requirement checking, localization. Phases 1-6F implemented. | ✅ Current |
 | [event-system-schemas.md](Features/Content/event-system-schemas.md) | Event system JSON schemas: event structure (triggers, conditions, options, outcomes), decision schemas, order schemas, dialogue schemas, **Progression System Schema** (generic probabilistic daily rolls for escalation tracks), camp opportunities schema, validation rules | ✅ Current |
-| [content-orchestrator-plan.md](Features/Content/content-orchestrator-plan.md) | Content Orchestrator (Sandbox Life Simulator): replaces schedule-driven pacing with world-state driven frequency, components (WorldStateAnalyzer, SimulationPressureCalculator, PlayerBehaviorTracker), 5-week implementation plan, migration strategy, **Future Expansion: Progression System integration** | 📋 Specification |
 | [event-reward-choices.md](Features/Content/event-reward-choices.md) | Event reward system: player choice outcomes, reward types (gold, items, reputation, XP), branching consequences | 📋 Specification |
 | [medical-progression-system.md](Features/Content/medical-progression-system.md) | First implementation of Progression System: CK3-style probabilistic daily rolls for Medical Risk track, treatment decisions, context/skill modifiers, threshold events. Uses generic [Progression System Schema](Features/Content/event-system-schemas.md#progression-system-schema-future-foundation) | 📋 Specification |
 
@@ -208,25 +209,36 @@
 
 **Location:** `AFEATURE/`
 
-Active feature specifications being developed. These are implementation-ready specs that build on existing systems. Build in order as dependencies require.
+Active feature specifications for ongoing development. Phases 1-6F of Content Orchestrator are COMPLETE and documented in [Content System Architecture](Features/Content/content-system-architecture.md). This section tracks remaining work and future enhancements.
 
-| Document | Topic | Dependency | Status |
-|----------|-------|------------|--------|
-| [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | Content Orchestrator: replaces schedule-driven event pacing with world-state-driven frequency. Phases 1-5.5 complete. | None | ✅ Active |
-| [content-orchestrator-prompts.md](AFEATURE/content-orchestrator-prompts.md) | Implementation prompts for Content Orchestrator and Camp Life. Copy-paste ready. | Reference only | 📋 Reference |
-| [camp-life-simulation.md](AFEATURE/camp-life-simulation.md) | Living breathing camp simulation: 4-layer intelligence (world/camp/player/history), time-of-day cycles, weekly rhythm. Phase 6A-C complete, learning system in 6D-E. | Content Orchestrator (Phases 1-5.5) | ✅ Phase 6A-C Done |
-| [camp-background-simulation.md](AFEATURE/camp-background-simulation.md) | Autonomous company life: soldiers get sick/injured/desert, equipment degrades, incidents occur, news feed integration. Phase 5.5. | Content Orchestrator (Phase 3) | ✅ Implemented |
-| [order-progression-system.md](AFEATURE/order-progression-system.md) | Multi-day order execution replacing instant resolution. | Content Orchestrator (Phase 4) | 📋 Specification |
-| [ORDER-SYSTEM-MIGRATION.md](AFEATURE/ORDER-SYSTEM-MIGRATION.md) | Migration guide for order system changes. | order-progression-system.md | 📋 Reference |
-| [orders-content.md](AFEATURE/orders-content.md) | Order content definitions (16 orders). | order-progression-system.md | 📋 Specification |
-| [order-events-master.md](AFEATURE/order-events-master.md) | Order event master reference (85 events across 16 orders). | order-progression-system.md | 📋 Specification |
-| [phase7-playtesting-guide.md](AFEATURE/phase7-playtesting-guide.md) | Phase 6F integration testing: balance tuning guide, playtesting checklist, config reference. | Phases 1-6D-E | 📋 Reference |
+### Completed & Documented
 
-**Implementation Order:**
-1. Content Orchestrator Phases 1-5 (foundation)
-2. Order Progression System (Phase 4 integration)
-3. Camp Life Simulation (Phase 6)
-4. Content Variants (Phase 7, JSON-only)
+| Document | Topic | Status | Documentation |
+|----------|-------|--------|---------------|
+| Content Orchestrator (Phases 1-6F) | World-state-driven orchestration, activity levels, native effects, UI integration | ✅ Implemented | [Content System Architecture](Features/Content/content-system-architecture.md) |
+| Camp Simulation System | Two-layer system: Background Simulation (autonomous company life) + Camp Opportunities (player-facing activities). 29 opportunities, learning system, pressure tracking, news feed integration. | ✅ Implemented | [Camp Simulation System](Features/Campaign/camp-simulation-system.md) |
+
+### Remaining Work
+
+| Document | Topic | Priority | Status |
+|----------|-------|----------|--------|
+| [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | Remaining orchestrator work: Phases 6G (missing decisions), 9 (decision scheduling), 10 (order warnings) | ⛔ Critical | Active Planning |
+| [content-orchestrator-prompts.md](AFEATURE/content-orchestrator-prompts.md) | Implementation prompts for remaining phases (6G, 7, 8, 9, 10) | 📋 Reference | Copy-paste ready |
+| [order-progression-system.md](AFEATURE/order-progression-system.md) | Multi-day order execution system | ✅ Implemented | Specification |
+| [ORDER-SYSTEM-MIGRATION.md](AFEATURE/ORDER-SYSTEM-MIGRATION.md) | Migration guide for order system changes | 📋 Reference | Guide |
+| [orders-content.md](AFEATURE/orders-content.md) | Order content definitions (16 orders) | 📋 Specification | Reference |
+| [order-events-master.md](AFEATURE/order-events-master.md) | Order event catalog (85 events across 16 orders) | 📋 Specification | Reference |
+| [phase7-playtesting-guide.md](AFEATURE/phase7-playtesting-guide.md) | Integration testing and balance tuning guide | 📋 Reference | Testing guide |
+
+### Critical Path (Remaining)
+
+1. **Phase 6G** (⛔ BLOCKING) - Create 26 missing camp decisions
+2. **Phase 10** (❌ CRITICAL) - Order forecasting & warnings (required for >> speed playability)
+3. **Phase 9** (❌ MUST DO) - Decision scheduling system
+4. **Phase 7** (⏸️ Future) - Content variants (JSON-only)
+5. **Phase 8** (⏸️ Future) - Progression System framework
+
+**Estimated Remaining Work:** 8-10 hours (6G → 10 → 9 sequence)
 
 ---
 
@@ -254,10 +266,9 @@ Active feature specifications being developed. These are implementation-ready sp
 | [native-map-incidents.md](Reference/native-map-incidents.md) | Native game incidents: all vanilla map incidents (bandits, prisoners, travelers), trigger conditions, outcomes, loot tables - use to avoid conflicts with native content | 📚 Reference |
 | [map-incidents-warsails.md](Reference/map-incidents-warsails.md) | Naval DLC map incidents: Warsails expansion content, naval encounters, coastal events - use to avoid DLC conflicts | 📚 Reference |
 | [ai-behavior-analysis.md](Reference/ai-behavior-analysis.md) | AI behavior analysis: native AI decision-making patterns, party movement logic, combat AI, lord behavior - use for AI-aware feature design | 📚 Reference |
-| [opportunities-system-spec.md](Reference/opportunities-system-spec.md) | ⚠️ **LEGACY** - Replaced by [Camp Life Simulation](AFEATURE/camp-life-simulation.md) | 🗄️ Deprecated |
-| [camp-life-simulation.md](AFEATURE/camp-life-simulation.md) | **NEW** - Orchestrator-driven camp life: fitness scoring, learning system, 0-3 opportunities per open, order-decision tension, forecast system, cached UI sections | ✅ Active |
-| [camp-background-simulation.md](AFEATURE/camp-background-simulation.md) | **NEW** - Autonomous company: soldiers get sick/injured/desert, roster tracking, random incidents, pressure cascades, crisis triggers, news integration | ✅ Active |
-| [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | **NEW** - World-state-driven content delivery: replaces schedule-driven events with context-aware orchestration, frequency by situation (garrison quiet, siege intense) | ✅ Active |
+| [opportunities-system-spec.md](Reference/opportunities-system-spec.md) | ⚠️ **LEGACY** - Replaced by [Camp Simulation System](Features/Campaign/camp-simulation-system.md) | 🗄️ Deprecated |
+| [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Two-layer camp system: Background Simulation (autonomous company life) + Camp Opportunities (29 player activities with learning). Complete implementation documentation. | ✅ Implemented |
+| [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | Remaining orchestrator work: Phase 6G (missing decisions), Phase 9 (decision scheduling), Phase 10 (order warnings). Phases 1-6F documented in [Content System Architecture](Features/Content/content-system-architecture.md). | ⚠️ In Progress |
 
 ---
 

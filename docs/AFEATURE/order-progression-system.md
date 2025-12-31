@@ -78,6 +78,7 @@ The Order Progression System transforms orders from instant-resolution tasks int
 - **Rank determines experience** - T1 gets menial work. T6 leads men. Different event pools.
 - **Duty doesn't block gameplay** - On duty? Camp life continues, but some activities are risky/blocked.
 - **World state affects frequency** - Siege duty is intense. Garrison duty is boring.
+- **Context-aware flavor text** - Orders adapt to sea/land travel (Warsails DLC aware). Guard Duty → Deck Watch at sea.
 
 ---
 

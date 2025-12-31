@@ -61,7 +61,238 @@ namespace Enlisted.Features.Camp
         public override void RegisterEvents()
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
+            CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
             ModLogger.Info(LogCategory, "CampOpportunityGenerator registered");
+        }
+
+        /// <summary>
+        /// Hourly tick handler to check for scheduled commitments that should fire.
+        /// Checks at phase boundaries: Dawn (6am), Midday (12pm), Dusk (6pm), Night (12am).
+        /// </summary>
+        private void OnHourlyTick()
+        {
+            try
+            {
+                var currentHour = CampaignTime.Now.GetHourOfDay;
+                var currentDay = (int)CampaignTime.Now.ToDays;
+
+                // Check at phase boundaries only
+                if (currentHour != 6 && currentHour != 12 && currentHour != 18 && currentHour != 0)
+                {
+                    return;
+                }
+
+                var currentPhase = currentHour switch
+                {
+                    6 => "Dawn",
+                    12 => "Midday",
+                    18 => "Dusk",
+                    0 or 24 => "Night",
+                    _ => null
+                };
+
+                if (currentPhase == null)
+                {
+                    return;
+                }
+
+                FireScheduledCommitments(currentPhase, currentDay);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnHourlyTick checking commitments", ex);
+            }
+        }
+
+        /// <summary>
+        /// Fires all commitments scheduled for the given phase and day.
+        /// </summary>
+        private void FireScheduledCommitments(string phase, int day)
+        {
+            var toFire = _commitments.GetCommitmentsForPhase(phase, day);
+
+            if (toFire.Count == 0)
+            {
+                return;
+            }
+
+            ModLogger.Info(LogCategory, $"Firing {toFire.Count} scheduled commitments for {phase} on day {day}");
+
+            foreach (var commitment in toFire)
+            {
+                try
+                {
+                    FireCommitment(commitment);
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.Error(LogCategory, $"Error firing commitment {commitment.OpportunityId}", ex);
+                }
+                finally
+                {
+                    _commitments.RemoveCommitment(commitment.OpportunityId);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Fires a single commitment by delivering the target decision as an event.
+        /// </summary>
+        private void FireCommitment(ScheduledCommitment commitment)
+        {
+            // Get the decision definition
+            var decision = DecisionCatalog.GetDecision(commitment.TargetDecisionId);
+            if (decision == null)
+            {
+                ModLogger.Warn(LogCategory, $"Commitment target decision not found: {commitment.TargetDecisionId}");
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"The scheduled activity ({commitment.Title}) is no longer available.",
+                    Colors.Yellow));
+                return;
+            }
+
+            // Convert to event and queue for delivery
+            var eventDef = new EventDefinition
+            {
+                Id = decision.Id,
+                TitleId = decision.TitleId,
+                TitleFallback = decision.TitleFallback,
+                SetupId = decision.SetupId,
+                SetupFallback = decision.SetupFallback,
+                Category = decision.Category,
+                Requirements = decision.Requirements,
+                Timing = decision.Timing,
+                Options = decision.Options
+            };
+
+            var deliveryManager = EventDeliveryManager.Instance;
+            if (deliveryManager != null)
+            {
+                deliveryManager.QueueEvent(eventDef);
+                ModLogger.Info(LogCategory, $"Fired scheduled commitment: {commitment.OpportunityId} -> {commitment.TargetDecisionId}");
+
+                // Show notification that scheduled activity is starting
+                var phaseText = commitment.ScheduledPhase.ToLower();
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"It's {phaseText}. Time for {commitment.Title.ToLower()}.",
+                    Colors.Cyan));
+            }
+            else
+            {
+                ModLogger.Warn(LogCategory, "EventDeliveryManager not available for scheduled commitment");
+            }
+        }
+
+        /// <summary>
+        /// Commits the player to an opportunity at its scheduled phase.
+        /// The opportunity will grey out in the menu and fire automatically at the scheduled time.
+        /// </summary>
+        public void CommitToOpportunity(CampOpportunity opportunity)
+        {
+            if (opportunity == null)
+            {
+                return;
+            }
+
+            var scheduledPhase = opportunity.GetEffectiveScheduledPhase();
+            var scheduledDay = PlayerCommitments.CalculateScheduledDay(scheduledPhase);
+            var hoursUntil = _commitments.GetHoursUntilCommitment(new ScheduledCommitment
+            {
+                ScheduledPhase = scheduledPhase,
+                ScheduledDay = scheduledDay
+            });
+
+            // Generate display text
+            var phaseText = scheduledPhase.ToLower();
+            var displayText = hoursUntil <= 6
+                ? $"You've committed to {opportunity.TitleFallback?.ToLower() ?? opportunity.Id} this {phaseText}."
+                : $"You've committed to {opportunity.TitleFallback?.ToLower() ?? opportunity.Id} tomorrow at {phaseText}.";
+
+            _commitments.AddCommitment(
+                opportunity.Id,
+                opportunity.TargetDecisionId,
+                opportunity.TitleFallback ?? opportunity.Id,
+                scheduledPhase,
+                scheduledDay,
+                displayText
+            );
+
+            // Record in history as engaged
+            RecordEngagement(opportunity.Id, opportunity.Type);
+
+            // Clear cache to force menu refresh
+            _cachedOpportunities = null;
+
+            ModLogger.Info(LogCategory, $"Committed to {opportunity.Id} for {scheduledPhase} (day {scheduledDay}, ~{hoursUntil:F0}h)");
+
+            // Show confirmation message
+            var message = new TextObject("{=enlisted_commitment_scheduled}You've made plans for {ACTIVITY} at {PHASE}.");
+            message.SetTextVariable("ACTIVITY", opportunity.TitleFallback ?? opportunity.Id);
+            message.SetTextVariable("PHASE", phaseText);
+            InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Cyan));
+        }
+
+        /// <summary>
+        /// Cancels a commitment with a minor fatigue penalty.
+        /// </summary>
+        public void CancelCommitment(string opportunityId)
+        {
+            var commitment = _commitments.GetCommitment(opportunityId);
+            if (commitment == null)
+            {
+                return;
+            }
+
+            _commitments.RemoveCommitment(opportunityId);
+
+            // Apply small fatigue penalty for canceling plans (restless from changing plans)
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment != null)
+            {
+                // Positive delta = spend fatigue, negative = restore
+                enlistment.ModifyFatigue(2);
+            }
+
+            // Clear cache to force menu refresh
+            _cachedOpportunities = null;
+
+            ModLogger.Info(LogCategory, $"Cancelled commitment: {opportunityId}");
+
+            InformationManager.DisplayMessage(new InformationMessage(
+                "{=enlisted_commitment_cancelled}Commitment cancelled. You feel restless from changing plans.",
+                Colors.Yellow));
+        }
+
+        /// <summary>
+        /// Checks if the player is committed to a specific opportunity.
+        /// </summary>
+        public bool IsCommittedTo(string opportunityId)
+        {
+            return _commitments.IsCommittedTo(opportunityId);
+        }
+
+        /// <summary>
+        /// Gets all active commitments for display in the Your Status section.
+        /// </summary>
+        public IReadOnlyList<ScheduledCommitment> GetActiveCommitments()
+        {
+            return _commitments.Commitments;
+        }
+
+        /// <summary>
+        /// Gets the next commitment to fire (closest in time).
+        /// </summary>
+        public ScheduledCommitment GetNextCommitment()
+        {
+            return _commitments.GetNextCommitment();
+        }
+
+        /// <summary>
+        /// Gets hours until a commitment fires.
+        /// </summary>
+        public float GetHoursUntilCommitment(ScheduledCommitment commitment)
+        {
+            return _commitments.GetHoursUntilCommitment(commitment);
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -79,14 +310,41 @@ namespace Enlisted.Features.Camp
                 dataStore.SyncData("camp_timesEngaged", ref timesEngaged);
                 dataStore.SyncData("camp_timesIgnored", ref timesIgnored);
 
-                // Serialize commitments
-                string commitmentId = _commitments.ScheduledActivityId ?? "";
-                float commitmentTime = _commitments.ScheduledTimeHours ?? 0f;
-                string commitmentText = _commitments.CommitmentDisplayText ?? "";
+                // Serialize commitments (new multi-commitment format)
+                var commitmentCount = dataStore.IsSaving ? _commitments.Commitments.Count : 0;
+                dataStore.SyncData("camp_commitmentCount", ref commitmentCount);
 
-                dataStore.SyncData("camp_commitmentId", ref commitmentId);
-                dataStore.SyncData("camp_commitmentTime", ref commitmentTime);
-                dataStore.SyncData("camp_commitmentText", ref commitmentText);
+                // Serialize each commitment
+                if (dataStore.IsSaving)
+                {
+                    for (var i = 0; i < _commitments.Commitments.Count; i++)
+                    {
+                        var c = _commitments.Commitments[i];
+                        var oppId = c.OpportunityId ?? "";
+                        var decId = c.TargetDecisionId ?? "";
+                        var title = c.Title ?? "";
+                        var phase = c.ScheduledPhase ?? "";
+                        var day = c.ScheduledDay;
+                        var commitTime = c.CommitTimeHours;
+                        var display = c.DisplayText ?? "";
+
+                        dataStore.SyncData($"camp_commit_{i}_oppId", ref oppId);
+                        dataStore.SyncData($"camp_commit_{i}_decId", ref decId);
+                        dataStore.SyncData($"camp_commit_{i}_title", ref title);
+                        dataStore.SyncData($"camp_commit_{i}_phase", ref phase);
+                        dataStore.SyncData($"camp_commit_{i}_day", ref day);
+                        dataStore.SyncData($"camp_commit_{i}_time", ref commitTime);
+                        dataStore.SyncData($"camp_commit_{i}_display", ref display);
+                    }
+                }
+
+                // Legacy compatibility: still sync old format for backwards compatibility
+                var legacyId = "";
+                var legacyTime = 0f;
+                var legacyText = "";
+                dataStore.SyncData("camp_commitmentId", ref legacyId);
+                dataStore.SyncData("camp_commitmentTime", ref legacyTime);
+                dataStore.SyncData("camp_commitmentText", ref legacyText);
 
                 // Serialize learning system data (opportunity engagement tracking)
                 var oppPresented = dataStore.IsSaving
@@ -110,18 +368,57 @@ namespace Enlisted.Features.Camp
                         TimesIgnored = timesIgnored ?? new Dictionary<string, int>()
                     };
 
+                    // Restore commitments
                     _commitments = new PlayerCommitments();
-                    if (!string.IsNullOrEmpty(commitmentId))
+
+                    // Try to load new format first
+                    for (var i = 0; i < commitmentCount; i++)
                     {
-                        _commitments.ScheduledActivityId = commitmentId;
-                        _commitments.ScheduledTimeHours = commitmentTime > 0 ? commitmentTime : (float?)null;
-                        _commitments.CommitmentDisplayText = commitmentText;
+                        var oppId = "";
+                        var decId = "";
+                        var title = "";
+                        var phase = "";
+                        var day = 0;
+                        var commitTime = 0f;
+                        var display = "";
+
+                        dataStore.SyncData($"camp_commit_{i}_oppId", ref oppId);
+                        dataStore.SyncData($"camp_commit_{i}_decId", ref decId);
+                        dataStore.SyncData($"camp_commit_{i}_title", ref title);
+                        dataStore.SyncData($"camp_commit_{i}_phase", ref phase);
+                        dataStore.SyncData($"camp_commit_{i}_day", ref day);
+                        dataStore.SyncData($"camp_commit_{i}_time", ref commitTime);
+                        dataStore.SyncData($"camp_commit_{i}_display", ref display);
+
+                        if (!string.IsNullOrEmpty(oppId))
+                        {
+                            _commitments.Commitments.Add(new ScheduledCommitment
+                            {
+                                OpportunityId = oppId,
+                                TargetDecisionId = decId,
+                                Title = title,
+                                ScheduledPhase = phase,
+                                ScheduledDay = day,
+                                CommitTimeHours = commitTime,
+                                DisplayText = display
+                            });
+                        }
+                    }
+
+                    // Fall back to legacy format if no new commitments loaded
+                    if (_commitments.Commitments.Count == 0 && !string.IsNullOrEmpty(legacyId))
+                    {
+#pragma warning disable CS0618 // Intentionally using obsolete for migration
+                        _commitments.ScheduledActivityId = legacyId;
+                        _commitments.ScheduledTimeHours = legacyTime > 0 ? legacyTime : null;
+                        _commitments.CommitmentDisplayText = legacyText;
+#pragma warning restore CS0618
                     }
 
                     // Restore learning system data
                     PlayerBehaviorTracker.LoadOpportunityState(oppPresented, oppEngaged);
 
-                    ModLogger.Debug(LogCategory, $"Loaded opportunity history: {_history.TimesSeen.Count} types seen, {oppPresented?.Count ?? 0} learning entries");
+                    ModLogger.Debug(LogCategory, $"Loaded opportunity history: {_history.TimesSeen.Count} types seen, {_commitments.Commitments.Count} commitments, {oppPresented?.Count ?? 0} learning entries");
                 }
             });
         }
@@ -771,11 +1068,15 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Commits the player to a scheduled activity.
+        /// Commits the player to a scheduled activity (legacy method).
+        /// Use CommitToOpportunity instead for the new scheduling system.
         /// </summary>
+        [Obsolete("Use CommitToOpportunity instead for the new scheduling system")]
         public void CommitToActivity(string activityId, float hoursFromNow, string displayText)
         {
+#pragma warning disable CS0618 // Intentional: legacy compatibility method
             _commitments.CommitTo(activityId, hoursFromNow, displayText);
+#pragma warning restore CS0618
             ModLogger.Info(LogCategory, $"Player committed to {activityId} in {hoursFromNow:F1} hours");
         }
 

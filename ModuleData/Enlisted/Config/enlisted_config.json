@@ -134,28 +134,23 @@
     "orchestrator": {
         "enabled": true,
         "log_decisions": true,
-        "frequency_tables": {
-            "garrison": {
-                "base": 0.4,
-                "min": 0.3,
-                "max": 0.5
-            },
-            "campaign": {
-                "base": 1.5,
-                "min": 1.2,
-                "max": 2.0
-            },
-            "siege": {
-                "base": 2.5,
-                "min": 2.0,
-                "max": 3.5
-            },
-            "battle": {
-                "base": 0.0,
-                "min": 0.0,
-                "max": 0.5
-            }
+        "activity_modifiers": {
+            "Quiet": 0.3,
+            "Routine": 0.6,
+            "Active": 1.0,
+            "Intense": 1.5
+        },
+        "order_scheduling": {
+            "normal_advance_hours": 24,
+            "urgent_advance_hours": 8,
+            "critical_advance_hours": 0
         }
+    },
+    "order_forecasting": {
+        "enabled": true,
+        "imminent_warning_min_hours": 4,
+        "imminent_warning_max_hours": 8,
+        "comment": "Imminent orders provide 4-8 hour advance warning before issue"
     },
     "native_trait_mapping": {
         "enabled": true,

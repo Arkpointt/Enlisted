@@ -89,19 +89,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return;
                 }
 
-                // Check if there's an active settlement encounter (e.g., player paused near a castle).
-                // If so, let the native settlement menu show - don't force the enlisted menu.
-                // This fixes the bug where pausing at a castle shows enlisted menu instead of castle menu.
-                var hasSettlementEncounter = PlayerEncounter.Current != null &&
-                                            PlayerEncounter.EncounterSettlement != null;
-
-                if (hasSettlementEncounter)
-                {
-                    // Player is in a settlement encounter (paused at castle/town) - don't override
-                    // Let the native castle/town menu show
-                    ModLogger.Debug("Menu", $"Settlement encounter active - allowing native menu: {__result}");
-                    return;
-                }
+                // Don't check for settlement encounters here - we want to show the enlisted menu
+                // when paused, even at settlements. Player must explicitly click "Visit Settlement"
+                // to get the town/castle menu (handled by hasExplicitlyVisited check above).
 
                 // Check if lord is in a battle or siege - if so, don't override combat-related menus
                 var lordPartyCheck = enlistment?.CurrentLord?.PartyBelongedTo;

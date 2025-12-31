@@ -1,42 +1,47 @@
 # Content System Architecture
 
-**Summary:** The unified content system manages all narrative content (events, decisions, orders, map incidents) through a centralized delivery pipeline. The system uses JSON content definitions, XML localization, requirement checking, and effect application to create dynamic player experiences that integrate with enlistment, reputation, and progression systems.
+**Summary:** The unified content system manages all narrative content (events, decisions, orders, map incidents) through a world-state driven orchestration pipeline. The Content Orchestrator analyzes your lord's situation and coordinates content delivery to match military reality: garrison duty is quiet, campaigns are busy, sieges are intense. All content uses JSON definitions, XML localization, requirement checking, and native Bannerlord effect integration.
 
-**Status:** ⚠️ Mixed (Current system documented; orchestrator replacement planned)  
-**Last Updated:** 2025-12-24  
-**Related Docs:** [Event Catalog](../../Content/event-catalog-by-system.md), [Content Orchestrator Plan](content-orchestrator-plan.md), [Training System](../Combat/training-system.md)
+**Status:** ✅ Current (World-State Orchestration Implemented)  
+**Last Updated:** 2025-12-31  
+**Related Docs:** [Event Catalog](../../Content/event-catalog-by-system.md), [Training System](../Combat/training-system.md), [Camp Background Simulation](../../AFEATURE/camp-background-simulation.md), [Camp Life Simulation](../../AFEATURE/camp-life-simulation.md)
 
 ---
 
-## ⚠️ Architectural Change in Progress
+## ✅ World-State Orchestration (Implemented 2025-12-30)
 
-**Current State:** This document describes the **current** schedule-driven pacing system.
+The content system now uses **world-state driven orchestration** instead of schedule-based pacing. The Content Orchestrator analyzes your lord's situation (garrison/campaign/siege), war status, and company condition to provide contextually appropriate content.
 
-**Future State:** The [Content Orchestrator](content-orchestrator-plan.md) will replace schedule-driven pacing (event windows, evaluation hours, random quiet days) with a **world-state driven simulation** that matches event frequency to your lord's actual situation (garrison = quiet, campaign = busy, siege = intense).
+**Core Architecture:**
+- **ContentOrchestrator** - Analyzes world state, calculates activity levels, coordinates all systems
+- **WorldStateAnalyzer** - Detects lord situation, war stance, determines context
+- **SimulationPressureCalculator** - Tracks company condition and pressure sources
+- **PlayerBehaviorTracker** - Learns player preferences for better content selection
+- **EventSelector, EventDeliveryManager, EventRequirementChecker** - Reused with world-state awareness
 
-**Key Changes:**
-- **EventPacingManager** - Will be replaced by orchestrator's world-state analysis
-- **GlobalEventPacer** - Will remain as safety limits, but evaluation hours and quiet day rolls will be removed
-- **Config** - `event_window_*`, `evaluation_hours`, `quiet_day_chance` will be replaced with frequency tables
-- **MapIncidentManager** - No changes (already context-driven)
-- **EventSelector, EventDeliveryManager, EventRequirementChecker** - No changes (reused by orchestrator)
-
-**Implementation Status:** Specification phase (see orchestrator plan for 5-week timeline)
+**Key Improvements:**
+- Content frequency matches simulation reality (not arbitrary timers)
+- Activity levels drive order event frequency (quiet/routine/active/intense)
+- Player behavior learning improves content relevance
+- Native Bannerlord effects integrated (traits, skills, morale, health)
+- Camp opportunities dynamically generated based on context
 
 ---
 
 ## Index
 
 1. [Overview](#overview)
-2. [Content Types](#content-types)
-3. [System Architecture](#system-architecture)
-4. [Content Pipeline](#content-pipeline)
-5. [Requirement System](#requirement-system)
-6. [Effect System](#effect-system)
-7. [Delivery Contexts](#delivery-contexts)
-8. [JSON Structure](#json-structure)
-9. [Localization](#localization)
-10. [Implementation Files](#implementation-files)
+2. [Content Orchestrator](#content-orchestrator)
+3. [Content Types](#content-types)
+4. [System Architecture](#system-architecture)
+5. [Content Pipeline](#content-pipeline)
+6. [Requirement System](#requirement-system)
+7. [Effect System](#effect-system)
+8. [Native Effect Integration](#native-effect-integration)
+9. [Delivery Contexts](#delivery-contexts)
+10. [JSON Structure](#json-structure)
+11. [Localization](#localization)
+12. [Implementation Files](#implementation-files)
 
 ---
 
@@ -66,6 +71,144 @@ The content system provides a unified pipeline for delivering narrative content:
 - Integrated (shares state with enlistment/QM systems)
 - Validated (requirement checks prevent invalid delivery)
 - Context-aware (variants selected automatically via requirements)
+- World-state driven (content frequency matches simulation reality)
+
+---
+
+## Content Orchestrator
+
+The Content Orchestrator replaced schedule-driven event pacing with intelligent world-state analysis. Instead of firing events on timers, the system analyzes your lord's actual situation and coordinates content delivery to match military reality.
+
+### Core Components
+
+**ContentOrchestrator** (`src/Features/Content/ContentOrchestrator.cs`)
+- CampaignBehaviorBase that receives daily tick at 6am
+- Analyzes world state and calculates activity level
+- Provides activity levels to OrderProgressionBehavior for order event frequency
+- Coordinates forecast generation for player information
+- Updates camp opportunity generation based on context
+
+**WorldStateAnalyzer** (`src/Features/Content/WorldStateAnalyzer.cs`)
+- Static class that analyzes current game state
+- Determines LordSituation: InGarrison, InCampaign, InSiege, InBattle, Defeated
+- Determines WarStance: Peacetime, ActiveWar, DesperateWar, MultiWarStrained
+- Determines LifePhase: Routine, Strained, Crisis based on company needs
+- Calculates ActivityLevel: Quiet, Routine, Active, Intense
+- Maps contexts for event filtering (Camp/War/Siege/Any)
+
+**SimulationPressureCalculator** (`src/Features/Content/SimulationPressureCalculator.cs`)
+- Static class that tracks realistic pressure sources
+- Adds pressure from: low supplies, wounded company, failed orders, enemy territory, angry lord, high discipline
+- Reduces pressure from: pay received, battle victory, promotions, rest, friendly territory
+- Returns 0-100 pressure value for orchestrator decisions
+- Pressure emerges from simulation, not manufactured for drama
+
+**PlayerBehaviorTracker** (`src/Features/Content/PlayerBehaviorTracker.cs`)
+- Static class that learns player preferences
+- Tracks behavior patterns: helps comrades, takes risks, follows orders, prioritizes gold
+- Builds preference profile: CombatVsSocial, RiskyVsSafe, LoyalVsSelfServing
+- Informs content selection to deliver what player engages with
+- Saves/loads with campaign data
+
+### Activity Level System
+
+The orchestrator provides activity levels that modify order event frequency:
+
+| Activity Level | Lord Situation | Order Event Modifier | Description |
+|----------------|---------------|---------------------|-------------|
+| **Quiet** | Garrison + Peacetime | ×0.3 | Long garrison duty, routine days, little happens |
+| **Routine** | Garrison + War, Marching | ×0.6 | Normal military operations, moderate activity |
+| **Active** | Campaign + War | ×1.0 | Active campaigning, regular events during orders |
+| **Intense** | Siege, Desperate War | ×1.5 | Crisis situations, high-frequency events |
+
+Activity levels are provided to `OrderProgressionBehavior` which fires events during duty execution. This is the PRIMARY content delivery mechanism - order events happen while you're on duty, based on how busy military life is.
+
+### Content Model (Implemented)
+
+The orchestrator coordinates three content tracks:
+
+**1. Order Events (Automatic, During Duty)**
+- Fire during order execution based on activity level
+- 85 order events across 16 order types
+- Weighted by world_state requirements (siege_attacking, war_marching, etc.)
+- Frequency controlled by activity modifiers (Quiet = rare, Intense = frequent)
+
+**2. Camp Decisions (Player-Initiated)**
+- Available in DECISIONS menu when player chooses
+- Dynamically generated opportunities based on world state
+- 29 camp opportunities with fitness scoring
+- Player controls timing completely
+
+**3. Map Incidents (Context-Triggered)**
+- Fire on specific triggers (battles, settlements, encounters)
+- Already context-driven, unchanged by orchestrator
+- Immediate delivery, no frequency gating
+
+### World State Data Flow
+
+```
+Daily Tick (6am) → ContentOrchestrator.OnDailyTick()
+  ↓
+WorldStateAnalyzer.AnalyzeSituation()
+  ├─ Detect lord's situation (garrison/campaign/siege)
+  ├─ Analyze war status (peace/active/desperate)
+  ├─ Check company condition (supplies/morale/fatigue)
+  └─ Return: WorldSituation
+  ↓
+CalculateActivityLevel(WorldSituation)
+  ├─ Garrison + Peacetime = Quiet
+  ├─ Campaign + War = Active
+  ├─ Siege = Intense
+  └─ Return: ActivityLevel (Quiet/Routine/Active/Intense)
+  ↓
+ProvideToOrderSystem()
+  └─ OrderProgressionBehavior uses activity level for event slots
+  ↓
+GenerateForecasts()
+  └─ Create NOW + AHEAD text for main menu display
+  ↓
+UpdateCampOpportunities()
+  └─ Refresh DECISIONS menu based on current context
+```
+
+### Configuration
+
+Orchestrator settings in `ModuleData/Enlisted/enlisted_config.json`:
+
+```json
+{
+  "orchestrator": {
+    "enabled": true,
+    "activity_modifiers": {
+      "Quiet": 0.3,
+      "Routine": 0.6,
+      "Active": 1.0,
+      "Intense": 1.5
+    },
+    "order_scheduling": {
+      "warning_hours_24": 24,
+      "warning_hours_8": 8,
+      "warning_hours_2": 2
+    }
+  }
+}
+```
+
+**Note:** Order scheduling (Phases 9-10) is not yet implemented. Warning system will provide advance notice of upcoming orders for fast-forward playability.
+
+### What This Replaced
+
+**Old System (Removed):**
+- Schedule-driven event windows (fire every 3-5 days on timer)
+- Evaluation hours (specific times when events could fire)
+- Random quiet day rolls (15% chance to suppress events)
+- NextNarrativeEventWindow tracking in EscalationState
+
+**New System (Current):**
+- World-state analysis drives all decisions
+- Activity level matches simulation reality
+- Content frequency emerges from context
+- No arbitrary timing restrictions
 
 ---
 
@@ -643,6 +786,120 @@ Options with success/failure outcomes:
   }
 }
 ```
+
+---
+
+## Native Effect Integration
+
+The content system integrates with Bannerlord's native IncidentEffect system to apply effects that work seamlessly with the base game's mechanics, UI, and tooltips.
+
+### IncidentEffectTranslator
+
+**Location:** `src/Features/Content/IncidentEffectTranslator.cs`
+
+The translator bridges JSON event effects to native Bannerlord `IncidentEffect` objects that the game's engine understands. This provides:
+- Automatic tooltip generation via native `GetHint()` method
+- Integration with native UI feedback systems
+- Proper effect application using Bannerlord's action system
+- Support for multiple effects in a single event outcome
+
+**Supported Native Effects:**
+
+| Effect Type | Native Class | Applied Via | Example |
+|-------------|--------------|-------------|---------|
+| Gold change | `GoldIncidentEffect` | `GiveGoldAction` | Pay, rewards, gambling |
+| Skill XP | `SkillIncidentEffect` | `Hero.AddSkillXp()` | Training, experience gains |
+| Trait level | `TraitIncidentEffect` | `Hero.SetTraitLevel()` | Reputation mapping to traits |
+| Morale | `MoraleIncidentEffect` | `MobileParty.Morale` | Company morale shifts |
+| Health | `HealthIncidentEffect` | `Hero.HitPoints` | Injuries, recovery |
+| Renown | `RenownIncidentEffect` | `Hero.AddRenown()` | Glory, reputation |
+| Wound troops | `WoundTroopsRandomlyIncidentEffect` | `MobileParty.MemberRoster` | Battle casualties |
+
+**Translator Process:**
+
+```
+Event fires → Player chooses option
+  ↓
+EventDeliveryManager.ApplyEffects(option.effects)
+  ↓
+IncidentEffectTranslator.TranslateEffects(effectsJson)
+  ├─ Parse JSON effects
+  ├─ Create native IncidentEffect objects
+  ├─ Native tooltips generated automatically
+  └─ Return: List<IncidentEffect>
+  ↓
+Native Bannerlord applies effects
+  └─ UI feedback, sound effects, visual indicators
+```
+
+### Trait Mapping System
+
+The mod maps Enlisted reputation tracks to native Bannerlord traits, allowing reputation to affect the base game's diplomacy, influence, and NPC reactions.
+
+**Mapping Configuration:**
+
+| Enlisted Track | Native Trait | Rationale | Milestone Notification |
+|----------------|--------------|-----------|------------------------|
+| Soldier Rep | Valor | Bravery, combat spirit | "Your courage is noticed among the ranks." |
+| Officer Rep | Calculating | Tactical thinking, leadership | "The officers see you as a thinker." |
+| Lord Rep | Honor | Duty, keeping your word | "Your lord trusts your word." |
+
+**Configuration:** `ModuleData/Enlisted/enlisted_config.json` → `native_trait_mapping`
+
+```json
+{
+  "native_trait_mapping": {
+    "enabled": true,
+    "scale_divisor": 5,
+    "minimum_change": 1,
+    "soldier_to_valor": true,
+    "officer_to_calculating": true,
+    "lord_to_honor": true
+  }
+}
+```
+
+**Scale Divisor:** Divides reputation changes before applying to traits (default 5). Tuned for ~100 day careers where cumulative reputation builds meaningful trait levels.
+
+**Minimum Change:** Threshold to prevent spam (default 1). Changes below this threshold are ignored.
+
+### TraitMilestoneTracker
+
+**Location:** `src/Features/Content/TraitMilestoneTracker.cs`
+
+Tracks when native traits cross level thresholds and displays milestone notifications to give players feedback on their reputation's impact on the wider game world.
+
+**Tracked Milestones:**
+- Trait level increases (Level 0 → 1, 1 → 2, etc.)
+- Significant threshold crosses (0-25-50-75-100 ranges)
+- Persistent per-campaign tracking
+
+**Notification Examples:**
+- Valor +1: "Your courage is noticed among the ranks."
+- Calculating +1: "The officers see you as a thinker."
+- Honor +1: "Your lord trusts your word."
+
+**Integration Point:** `EventDeliveryManager.ApplyEffects()` checks for trait milestones after applying all effects, displays notification if threshold crossed.
+
+### Benefits of Native Integration
+
+**For Players:**
+- Familiar tooltips that match base game style
+- Effects integrate with existing game systems
+- Reputation affects NPC reactions and diplomacy
+- No need to learn mod-specific mechanics
+
+**For Modders:**
+- Content creators can use native effect types
+- Automatic tooltip generation (no manual text needed)
+- Effects work correctly with other mods
+- Future-proof against game updates
+
+**For Developers:**
+- Leverage Bannerlord's tested action system
+- Native UI feedback (sound, visuals, messages)
+- Proper save/load handling via native effects
+- Reduced custom code maintenance
 
 ---
 

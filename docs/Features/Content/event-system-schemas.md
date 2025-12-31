@@ -2200,6 +2200,49 @@ Optional skill check that modifies option outcomes:
 }
 ```
 
+### Order Context Variants (Sea/Land Awareness)
+
+**Added:** 2025-12-31
+
+Orders support context-variant text to adapt flavor text for sea vs land travel. When at sea (Warsails DLC), orders can display nautical-themed titles and descriptions.
+
+**Order Definition Schema:**
+```json
+{
+  "id": "order_guard_duty",
+  "title": "Guard Duty",
+  "description": "Stand watch through the night. Keep your eyes sharp and your blade ready.",
+  "context_variants": {
+    "sea": {
+      "title": "Deck Watch",
+      "titleId": "order_guard_duty_sea_title",
+      "description": "Stand watch on the foredeck. Keep your eyes on the horizon and your ears on the waves.",
+      "descriptionId": "order_guard_duty_sea_desc"
+    }
+  },
+  ...
+}
+```
+
+**Behavior:**
+- `OrderCatalog.SelectOrder()` checks `WorldStateAnalyzer.DetectTravelContext()`
+- If `MobileParty.IsCurrentlyAtSea == true` (Warsails DLC), applies "sea" variant
+- Falls back to default Title/Description if no variant exists
+- Works without Warsails DLC installed (defaults to "land" context)
+
+**World State Integration:**
+- `WorldSituation.TravelContext` enum: `Land`, `Sea`
+- Populated automatically on every world state analysis
+- Uses reflection to check Warsails API without hard dependency
+
+**Use Cases:**
+| Order | Land | Sea |
+|-------|------|-----|
+| Guard Duty | Stand watch at your post | Stand watch on the foredeck |
+| Camp Patrol | Walk the perimeter | Hull inspection below decks |
+| Firewood Collection | Gather wood with an axe | Scrub the deck with a brush |
+| Equipment Inspection | Check gear with quartermaster | Inspect rigging with the bosun |
+
 ### Order Event vs Narrative Event
 
 | Aspect | Order Event | Narrative Event |

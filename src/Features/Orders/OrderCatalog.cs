@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Enlisted.Features.Content;
+using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Identity;
 using Enlisted.Features.Orders.Models;
@@ -140,10 +142,54 @@ namespace Enlisted.Features.Orders
 
             if (roleOrders.Count > 0)
             {
-                return roleOrders.GetRandomElement();
+                var order = roleOrders.GetRandomElement();
+                return ApplyContextVariant(order);
             }
 
-            return eligibleOrders.GetRandomElement();
+            var selected = eligibleOrders.GetRandomElement();
+            return ApplyContextVariant(selected);
+        }
+
+        /// <summary>
+        /// Applies context-variant text (sea/land) to the selected order if available.
+        /// Replaces Title and Description with context-appropriate variants.
+        /// </summary>
+        private static Order ApplyContextVariant(Order order)
+        {
+            if (order == null || order.ContextVariants == null || order.ContextVariants.Count == 0)
+            {
+                return order;
+            }
+
+            // Get current travel context from orchestrator
+            var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
+            if (worldSituation == null)
+            {
+                return order;
+            }
+
+            var contextKey = WorldStateAnalyzer.GetTravelContextKey(worldSituation);
+
+            // Check if we have a variant for this context
+            if (!order.ContextVariants.TryGetValue(contextKey, out var variant))
+            {
+                return order;
+            }
+
+            // Apply variant text
+            if (!string.IsNullOrEmpty(variant.Title))
+            {
+                order.Title = variant.Title;
+                ModLogger.Debug(LogCategory, $"Applied {contextKey} variant title: {variant.Title}");
+            }
+
+            if (!string.IsNullOrEmpty(variant.Description))
+            {
+                order.Description = variant.Description;
+                ModLogger.Debug(LogCategory, $"Applied {contextKey} variant description for {order.Id}");
+            }
+
+            return order;
         }
 
         /// <summary>

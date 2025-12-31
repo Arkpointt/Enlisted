@@ -55,6 +55,9 @@ namespace Enlisted.Features.Content
             var currentHour = CampaignTime.Now.GetHourOfDay;
             var dayPhase = GetDayPhaseFromHour(currentHour);
 
+            // Detect sea/land travel context
+            var travelContext = DetectTravelContext(party);
+
             return new WorldSituation
             {
                 LordIs = lordSituation,
@@ -67,7 +70,8 @@ namespace Enlisted.Features.Content
                 CurrentSettlement = party.CurrentSettlement,
                 TargetSettlement = party.TargetSettlement,
                 DaysInCurrentPhase = 0, // TODO: Track phase duration
-                InEnemyTerritory = IsInEnemyTerritory(lord, party)
+                InEnemyTerritory = IsInEnemyTerritory(lord, party),
+                TravelContext = travelContext
             };
         }
 
@@ -135,7 +139,8 @@ namespace Enlisted.Features.Content
                 ExpectedActivity = ActivityLevel.Quiet,
                 RealisticEventFrequency = 1.0f,
                 CurrentDayPhase = GetDayPhaseFromHour(CampaignTime.Now.GetHourOfDay),
-                CurrentHour = CampaignTime.Now.GetHourOfDay
+                CurrentHour = CampaignTime.Now.GetHourOfDay,
+                TravelContext = TravelContext.Land
             };
         }
 
@@ -305,6 +310,49 @@ namespace Enlisted.Features.Content
             }
 
             return FactionManager.IsAtWarAgainstFaction(lord.MapFaction, settlementFaction);
+        }
+
+        /// <summary>
+        /// Detects whether party is at sea (Warsails DLC) or on land.
+        /// Uses reflection to safely access Warsails API without hard dependency.
+        /// </summary>
+        private static TravelContext DetectTravelContext(MobileParty party)
+        {
+            if (party == null)
+            {
+                return TravelContext.Land;
+            }
+
+            try
+            {
+                // Check for Warsails DLC sea travel using reflection
+                // MobileParty.IsCurrentlyAtSea property exists in Warsails DLC
+                var isAtSeaProperty = party.GetType().GetProperty("IsCurrentlyAtSea");
+                if (isAtSeaProperty != null)
+                {
+                    var isAtSea = (bool?)isAtSeaProperty.GetValue(party);
+                    if (isAtSea == true)
+                    {
+                        ModLogger.Debug(LogCategory, "Detected sea travel (Warsails DLC)");
+                        return TravelContext.Sea;
+                    }
+                }
+            }
+            catch
+            {
+                // Warsails DLC not present or property access failed - default to land
+            }
+
+            return TravelContext.Land;
+        }
+
+        /// <summary>
+        /// Returns travel context string for order text variant selection.
+        /// Used by OrderCatalog to pick sea or land flavor text.
+        /// </summary>
+        public static string GetTravelContextKey(WorldSituation situation)
+        {
+            return situation.TravelContext == TravelContext.Sea ? "sea" : "land";
         }
     }
 }

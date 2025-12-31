@@ -287,6 +287,101 @@
     <string id="esc_scrutiny_changed" text="Scrutiny increased (+{DELTA}) - Status: {STATUS}" />
     <string id="esc_discipline_changed" text="Discipline issues (+{DELTA}) - Status: {STATUS}" />
     
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- TRAIT MILESTONE NOTIFICATIONS -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Native trait changes from reputation accumulation (Valor from Soldier Rep, Calculating from Officer Rep, Honor from Lord Rep) -->
+    
+    <!-- Valor Trait Milestones (Soldier Reputation → Valor) -->
+    <string id="trait_valor_2" text="Your bravery in battle has become legendary among the troops." />
+    <string id="trait_valor_1" text="Soldiers speak of your courage under fire." />
+    <string id="trait_valor_0" text="Your reputation for valor is unremarkable." />
+    <string id="trait_valor_n1" text="Some whisper that you lack courage." />
+    <string id="trait_valor_n2" text="Your cowardice is well known." />
+    
+    <!-- Calculating Trait Milestones (Officer Reputation → Calculating) -->
+    <string id="trait_calc_2" text="Officers seek your counsel on tactical matters." />
+    <string id="trait_calc_1" text="Your tactical thinking has been noticed by command." />
+    <string id="trait_calc_0" text="Your judgment is considered sound." />
+    <string id="trait_calc_n1" text="Some question your decision-making." />
+    <string id="trait_calc_n2" text="Your poor judgment is notorious." />
+    
+    <!-- Honor Trait Milestones (Lord Reputation → Honor) -->
+    <string id="trait_honor_2" text="Lords speak highly of your sense of duty and honor." />
+    <string id="trait_honor_1" text="Your word is trusted. You've earned respect." />
+    <string id="trait_honor_0" text="You're known as neither particularly honorable nor dishonorable." />
+    <string id="trait_honor_n1" text="Some doubt whether you can be trusted." />
+    <string id="trait_honor_n2" text="Your reputation for dishonor precedes you." />
+    
+    <!-- Generic Trait Change Fallback -->
+    <string id="trait_generic" text="Your {TRAIT} has changed." />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- PHASE 5: MAIN MENU UI & FORECAST SYSTEM -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Quick Decision Center - YOU section (NOW + AHEAD forecasts) -->
+    
+    <!-- NOW Section - Current Player Status -->
+    <string id="menu_you_on_duty" text="On duty - {ORDER_NAME}, day {DAY} of {TOTAL}." />
+    <string id="menu_you_off_duty" text="You're off duty and well-rested." />
+    <string id="menu_you_wounded" text="You're wounded - movement impaired. Off duty until you recover." />
+    <string id="menu_you_commitment_soon" text="The lads are expecting you shortly." />
+    <string id="menu_you_commitment" text="You've agreed to join the lads in {HOURS} hours." />
+    
+    <!-- AHEAD Section - Forecast Warnings (Critical Priority) -->
+    <string id="menu_ahead_supplies_critical" text="The men are hungry. Supplies won't last." />
+    <string id="menu_ahead_morale_critical" text="The mood is dark. Something may break." />
+    
+    <!-- AHEAD Section - Forecast Warnings (High Priority) -->
+    <string id="menu_ahead_supplies_low" text="Rations are getting thin." />
+    <string id="menu_ahead_sick_high" text="Fever spreading through camp." />
+    <string id="menu_ahead_wounded_many" text="Many wounded need care." />
+    <string id="menu_ahead_desertion" text="Men have been slipping away." />
+    
+    <!-- AHEAD Section - Forecast Warnings (Medium Priority) -->
+    <string id="menu_ahead_morale_low" text="Grumbling in the ranks." />
+    <string id="menu_ahead_rest_low" text="The men are exhausted. They need rest." />
+    <string id="menu_ahead_discipline_low" text="Officers are losing patience." />
+    
+    <!-- AHEAD Section - Forecast Events (Low Priority) -->
+    <string id="menu_ahead_order_coming" text="{NCO_TITLE}'s been making lists." />
+    <string id="menu_ahead_muster_soon" text="Pay day approaches." />
+    
+    <!-- AHEAD Section - Default (No Warnings) -->
+    <string id="menu_ahead_default" text="Quiet. Almost too quiet." />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- PHASE 5.5: CAMP BACKGROUND SIMULATION -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Autonomous company simulation news notifications -->
+    
+    <!-- Medical/Recovery Events -->
+    <string id="sim_healed_one" text="A wounded soldier has recovered." />
+    <string id="sim_healed_many" text="{COUNT} wounded soldiers have recovered." />
+    <string id="sim_sick_recovered_one" text="The fever broke. A soldier is back on his feet." />
+    <string id="sim_sick_recovered_many" text="{COUNT} soldiers recovered from illness." />
+    <string id="sim_died_fever" text="A soldier died in the night. Fever took him." />
+    
+    <!-- Sickness/Injury Events -->
+    <string id="sim_sick_new_one" text="A soldier reports fever this morning." />
+    <string id="sim_sick_new_many" text="{COUNT} soldiers report sick this morning." />
+    <string id="sim_injured_one" text="A soldier twisted his ankle during the march." />
+    <string id="sim_injured_many" text="{COUNT} soldiers injured during drill or march." />
+    
+    <!-- Desertion Events -->
+    <string id="sim_missing_one" text="A soldier didn't report for roll call." />
+    <string id="sim_missing_many" text="{COUNT} soldiers are missing from roll call." />
+    <string id="sim_deserted_confirmed" text="He's not coming back. Deserted." />
+    
+    <!-- Crisis Pulse Events (Pressure Thresholds) -->
+    <string id="sim_pulse_supplies_critical" text="Starvation rations. Men eye the horses hungrily." />
+    <string id="sim_pulse_morale_critical" text="The mood is dark. Men speak in whispers. Something may break." />
+    
+    <!-- Company Status Summaries -->
+    <string id="sim_status_morale_low" text="Grumbling in the ranks. The men are restless." />
+    <string id="sim_status_supplies_low" text="Rations are short. Belts tightened." />
+    <string id="sim_status_good" text="The company is in good spirits." />
+    
     <!-- Menu Disabled Tooltips -->
     <string id="menu_disabled_not_enlisted" text="You must be enlisted to access this." />
     <string id="menu_disabled_squads" text="Squad system is disabled." />
@@ -2227,3 +2322,33 @@
     <!-- Onboarding Events -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Event: commander_onboard_01_commission — commander_onboard_01_commission -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Order Forecasting (Phase 10) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="forecast_strategic_orders" text="Expect strategic orders from command soon. (in {HOURS}h)" />
+    <string id="forecast_duty_imminent" text="Duty assignment coming in {HOURS}h: {TITLE}" />
+    <string id="forecast_order_imminent" text="Order opportunity coming in {HOURS}h: {TITLE}" />
+    <string id="enlisted_orders_tooltip_imminent" text="Orders will be issued in {HOURS} hour(s): {TITLE}" />
+    <string id="enlisted_orders_tooltip_imminent_detail" text="Order will be issued in {HOURS} hour(s). Advance warning for preparation." />
+    <string id="enlisted_orders_tooltip_pending" text="You have a pending order from {ISSUER}." />
+    <string id="enlisted_orders_tooltip_none" text="No active orders at this time." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Decision Scheduling (Phase 9) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="enlisted_commitment_scheduled" text="You've made plans for {ACTIVITY} at {PHASE}." />
+    <string id="enlisted_commitment_cancelled" text="Commitment cancelled. You feel restless from changing plans." />
+    <string id="enlisted_commitment_tooltip" text="Scheduled for {PHASE} in {HOURS} hours. Click to cancel." />
+    <string id="enlisted_commitment_firing" text="It's {PHASE}. Time for {ACTIVITY}." />
+    <string id="commitment_soon" text="You've committed to {ACTIVITY}. It's almost time." />
+    <string id="commitment_today" text="You've committed to {ACTIVITY} this {PHASE}." />
+    <string id="commitment_tomorrow" text="You've committed to {ACTIVITY} tomorrow at {PHASE}." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Camp Decisions (Phase 6G) - Orchestrated Opportunities -->
+    <!-- Note: Decisions use JSON fallback text. Full localization TBD. -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+  </strings>
+</base>

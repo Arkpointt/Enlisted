@@ -59,6 +59,36 @@ namespace Enlisted.Features.Camp.Models
         /// <summary>Day phases when this opportunity is available.</summary>
         public List<string> ValidPhases { get; set; } = new List<string>();
 
+        /// <summary>
+        /// Phase when this activity should fire (Dawn/Midday/Dusk/Night).
+        /// If null, uses the first valid phase or Midday as default.
+        /// </summary>
+        public string ScheduledPhase { get; set; }
+
+        /// <summary>
+        /// If true, this opportunity fires immediately when clicked instead of scheduling.
+        /// Used for urgent or time-sensitive activities.
+        /// </summary>
+        public bool Immediate { get; set; }
+
+        /// <summary>
+        /// Gets the effective scheduled phase, falling back to first valid phase or Midday.
+        /// </summary>
+        public string GetEffectiveScheduledPhase()
+        {
+            if (!string.IsNullOrEmpty(ScheduledPhase))
+            {
+                return ScheduledPhase;
+            }
+
+            if (ValidPhases != null && ValidPhases.Count > 0)
+            {
+                return ValidPhases[0];
+            }
+
+            return "Midday";
+        }
+
         /// <summary>Order compatibility settings for order-decision tension.</summary>
         public Dictionary<string, string> OrderCompatibility { get; set; } = new Dictionary<string, string>();
 

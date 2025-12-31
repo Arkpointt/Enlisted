@@ -25,10 +25,11 @@ Players can instantly identify problems at a glance - critical supplies, low rep
 
 | Menu | Colored Elements |
 |------|------------------|
-| **Main Camp Hub** | COMPANY REPORT, COMPANY STATUS, RECENT ACTIONS headers + all status labels/values |
-| **Reports Menu** | DAILY BRIEF, RECENT ACTIVITY, COMPANY STATUS, CAMPAIGN CONTEXT headers + all status lines |
+| **Main Menu (enlisted_status)** | KINGDOM REPORTS, COMPANY REPORTS, PLAYER STATUS headers + all status values |
+| **Camp Hub** | RECENT ACTIVITY, STATUS headers + all status labels/values |
+| **Reports (Legacy)** | DAILY BRIEF, RECENT ACTIVITY, COMPANY STATUS, CAMPAIGN CONTEXT headers (if implemented) |
 | **Status Detail** | REPUTATION, ROLE & SPECIALIZATIONS, PERSONALITY TRAITS headers + reputation values |
-| **Decisions Menu** | COMPANY REPORT header |
+| **Decisions Menu** | COMPANY REPORT header (if present) |
 | **Muster Menu** | All 8 stages use full color scheme: section headers, status labels, reputation values, XP progress, rank titles |
 
 ### Combat Log Messages
@@ -45,27 +46,34 @@ Players can instantly identify problems at a glance - critical supplies, low rep
 
 ## Color Palette
 
-### Semantic Colors
+### Semantic Colors (Custom Styles)
 
 | Style Name | Hex Color | RGB | Purpose | Usage |
 |------------|-----------|-----|---------|-------|
-| **Header** | `#00CCFFFF` | Cyan | Section headers | Major report sections (DAILY BRIEF, COMPANY STATUS, etc.) |
+| **Header** | `#00CCFFFF` | Cyan | Section headers | Major report sections (KINGDOM REPORTS, COMPANY REPORTS, PLAYER STATUS, etc.) |
 | **Label** | `#8CDBC4FF` | Teal | Information labels | Status field names (READINESS:, MORALE:, SUPPLIES:, etc.) |
-| **Success** | `#90EE90FF` | Light Green | Positive status | Good supplies (60+), high reputation |
-| **Warning** | `#FFD700FF` | Gold | Caution status | Fair conditions (40-59), needs attention |
-| **Alert** | `#FF6B6BFF` | Soft Red | Critical status | Poor conditions (<40), immediate attention required |
+| **Success** | `#90EE90FF` | Light Green | Positive status | Good supplies (60+), high reputation, elite troops |
+| **Warning** | `#FFD700FF` | Gold | Caution status | Fair conditions (40-59), [IMMINENT] tags, needs attention |
+| **Alert** | `#FF6B6BFF` | Soft Red | Critical status | Poor conditions (<40), siege situations, immediate attention required |
 | **Critical** | `#FF0000FF` | Bright Red | Extreme danger | Life-threatening injuries, catastrophic failures (with text outline for max visibility) |
 | **Urgent** | `#FFA500FF` | Orange | Time-sensitive neutral | Imminent orders, scheduled events, deadlines (not good/bad, just "act now") |
-| **Default** | `#EEE0C7FF` | Warm Cream | Body text | Standard descriptive text, neutral information |
+| **Default** | `#FAF4DEFF` | Light Cream | Body text | Standard descriptive text, neutral information, troop counts |
 
-### Native Comparison
+### Native Styles (Used by Mod)
 
-The custom colors integrate with Bannerlord's existing GameMenu system:
+| Style Name | Purpose | Usage |
+|------------|---------|-------|
+| **Link** | Interactive elements, highlights | Accordion headers (ORDERS, DECISIONS), [NEW] tags, settlement/army names, contextual highlights |
 
-- **Header** matches native `Link` style color for consistency
-- **Label** matches native `Link.Hero` style (turquoise/teal)
-- **Success/Warning/Alert** are custom semantic colors for status indicators
-- **Default** uses a warmer cream tone than native white for reduced eye strain
+### Integration with Native Styles
+
+The custom colors work alongside Bannerlord's native GameMenu styles:
+
+- **Custom styles** (Header, Label, Success, Warning, Alert) defined in `EnlistedColors.xml`
+- **Native Link style** used for accordion headers, [NEW] tags, and interactive elements  
+- **Header** color (cyan) is similar to native Link for visual consistency
+- **Label** color (teal) provides distinct category labels
+- **Default** uses a light cream tone matching Bannerlord's native text color
 
 ---
 
@@ -222,3 +230,21 @@ Colors work in:
 ### Brush Loading
 
 The brush XML is auto-loaded from `GUI/Brushes/` by the game engine. No explicit registration in SubModule.xml is required for brush files. The brush overrides `GameMenu.InfoText` to add the custom styles to the native brush.
+
+---
+
+## Version History
+
+**December 31, 2025:**
+- Updated menu references to match current implementation:
+  - Main Menu now shows: KINGDOM REPORTS, COMPANY REPORTS, PLAYER STATUS
+  - Camp Hub shows: RECENT ACTIVITY, STATUS
+  - Removed reference to separate Reports Menu (was removed)
+- Added documentation for native **Link** style usage (accordion headers, [NEW] tags, settlement names)
+- Corrected Default color hex to match actual brush file: `#FAF4DEFF`
+- Enhanced color usage examples with actual implementation details
+
+**December 23, 2025:**
+- Initial color scheme documentation
+- Defined 8 semantic colors: Header, Label, Success, Warning, Alert, Critical, Urgent, Default
+- Created `EnlistedColors.xml` brush file

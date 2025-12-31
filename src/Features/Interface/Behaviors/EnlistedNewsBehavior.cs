@@ -496,12 +496,26 @@ namespace Enlisted.Features.Interface.Behaviors
                 var playerParts = new List<string>();
 
                 // Kingdom Reports
+                // Add forecast line first if strategic order is imminent
+                var kingdomForecast = BuildKingdomForecastLine();
+                if (!string.IsNullOrWhiteSpace(kingdomForecast))
+                {
+                    kingdomParts.Add(kingdomForecast);
+                }
+
                 if (!string.IsNullOrWhiteSpace(_dailyBriefKingdom))
                 {
                     kingdomParts.Add(_dailyBriefKingdom);
                 }
 
                 // Company Reports
+                // Add forecast line first if company-level order is imminent
+                var companyForecast = BuildCompanyForecastLine();
+                if (!string.IsNullOrWhiteSpace(companyForecast))
+                {
+                    companyParts.Add(companyForecast);
+                }
+
                 if (!string.IsNullOrWhiteSpace(_dailyBriefCompany))
                 {
                     companyParts.Add(_dailyBriefCompany);
@@ -564,6 +578,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 // Your Status (player)
+                // Add forecast line first if player has imminent duty
+                var playerForecast = BuildPlayerForecastLine();
+                if (!string.IsNullOrWhiteSpace(playerForecast))
+                {
+                    playerParts.Add(playerForecast);
+                }
+
                 if (!string.IsNullOrWhiteSpace(_dailyBriefUnit))
                 {
                     playerParts.Add(_dailyBriefUnit);
@@ -716,6 +737,182 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Debug(LogCategory, $"Error building casualty report: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a forecast line for Kingdom Reports section.
+        /// Shows strategic orders that are imminent (4-8 hours).
+        /// </summary>
+        private string BuildKingdomForecastLine()
+        {
+            try
+            {
+                var orderManager = Orders.Behaviors.OrderManager.Instance;
+                if (orderManager == null || !orderManager.IsOrderImminent())
+                {
+                    return string.Empty;
+                }
+
+                var order = orderManager.GetCurrentOrder();
+                if (order == null || !order.Tags.Contains("strategic"))
+                {
+                    return string.Empty;
+                }
+
+                var hoursUntil = orderManager.GetHoursUntilIssue();
+                var text = new TextObject("{=forecast_strategic_orders}Expect strategic orders from command soon. (in {HOURS}h)");
+                text.SetTextVariable("HOURS", $"{(int)hoursUntil}");
+                return $"<span style=\"Warning\">{text}</span>";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building kingdom forecast: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a forecast line for Company Reports section.
+        /// Shows company-level orders that are imminent (4-8 hours).
+        /// </summary>
+        private string BuildCompanyForecastLine()
+        {
+            try
+            {
+                var orderManager = Orders.Behaviors.OrderManager.Instance;
+                if (orderManager == null || !orderManager.IsOrderImminent())
+                {
+                    return string.Empty;
+                }
+
+                var order = orderManager.GetCurrentOrder();
+                if (order == null || order.Tags.Contains("strategic"))
+                {
+                    // Strategic orders show in Kingdom section, not Company section
+                    return string.Empty;
+                }
+
+                var forecastText = orderManager.GetImminentWarningText();
+                if (string.IsNullOrWhiteSpace(forecastText))
+                {
+                    return string.Empty;
+                }
+
+                var hoursUntil = orderManager.GetHoursUntilIssue();
+                return $"<span style=\"Warning\">{forecastText} (in {(int)hoursUntil}h)</span>";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building company forecast: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a forecast line for Your Status section.
+        /// Shows player-specific duty forecast (imminent orders) and scheduled commitments.
+        /// </summary>
+        private string BuildPlayerForecastLine()
+        {
+            try
+            {
+                var parts = new List<string>();
+
+                // Check for scheduled commitments first (player's plans)
+                var commitmentLine = BuildCommitmentLine();
+                if (!string.IsNullOrWhiteSpace(commitmentLine))
+                {
+                    parts.Add(commitmentLine);
+                }
+
+                // Then check for imminent orders
+                var orderManager = Orders.Behaviors.OrderManager.Instance;
+                if (orderManager != null && orderManager.IsOrderImminent())
+                {
+                    var order = orderManager.GetCurrentOrder();
+                    if (order != null)
+                    {
+                        var hoursUntil = orderManager.GetHoursUntilIssue();
+
+                        // For mandatory orders, phrase as upcoming duty
+                        if (order.Mandatory)
+                        {
+                            var text = new TextObject("{=forecast_duty_imminent}Duty assignment coming in {HOURS}h: {TITLE}");
+                            text.SetTextVariable("HOURS", $"{(int)hoursUntil}");
+                            text.SetTextVariable("TITLE", order.Title);
+                            parts.Add($"<span style=\"Warning\">{text}</span>");
+                        }
+                        else
+                        {
+                            // For optional orders, phrase as opportunity
+                            var text2 = new TextObject("{=forecast_order_imminent}Order opportunity coming in {HOURS}h: {TITLE}");
+                            text2.SetTextVariable("HOURS", $"{(int)hoursUntil}");
+                            text2.SetTextVariable("TITLE", order.Title);
+                            parts.Add($"<span style=\"Warning\">{text2}</span>");
+                        }
+                    }
+                }
+
+                return string.Join(" ", parts);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building player forecast: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a commitment display line for the Your Status section.
+        /// Shows the player's scheduled camp activities.
+        /// </summary>
+        private string BuildCommitmentLine()
+        {
+            try
+            {
+                var generator = Camp.CampOpportunityGenerator.Instance;
+                if (generator == null)
+                {
+                    return string.Empty;
+                }
+
+                var nextCommitment = generator.GetNextCommitment();
+                if (nextCommitment == null)
+                {
+                    return string.Empty;
+                }
+
+                var hoursUntil = generator.GetHoursUntilCommitment(nextCommitment);
+                var activityName = nextCommitment.Title?.ToLower() ?? "an activity";
+                var phase = nextCommitment.ScheduledPhase?.ToLower() ?? "later";
+
+                // Build the commitment line
+                TextObject text;
+                if (hoursUntil <= 1)
+                {
+                    text = new TextObject("{=commitment_soon}You've committed to {ACTIVITY}. It's almost time.");
+                    text.SetTextVariable("ACTIVITY", activityName);
+                }
+                else if (hoursUntil <= 6)
+                {
+                    text = new TextObject("{=commitment_today}You've committed to {ACTIVITY} this {PHASE}.");
+                    text.SetTextVariable("ACTIVITY", activityName);
+                    text.SetTextVariable("PHASE", phase);
+                }
+                else
+                {
+                    text = new TextObject("{=commitment_tomorrow}You've committed to {ACTIVITY} tomorrow at {PHASE}.");
+                    text.SetTextVariable("ACTIVITY", activityName);
+                    text.SetTextVariable("PHASE", phase);
+                }
+
+                return $"<span style=\"Link\">{text}</span>";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building commitment line: {ex.Message}");
                 return string.Empty;
             }
         }

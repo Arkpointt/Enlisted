@@ -1001,14 +1001,27 @@ namespace Enlisted.Features.Interface.Behaviors
                     var headerText = "<span style=\"Link\">ORDERS</span>";
                     if (currentOrder != null)
                     {
-                        var daysAgo = (int)(CampaignTime.Now - currentOrder.IssuedTime).ToDays;
-                        if (daysAgo == 0)
+                        // Show different markers based on order state
+                        if (currentOrder.State == Orders.Models.OrderState.Imminent)
                         {
-                            headerText += " <span style=\"Link\">[NEW]</span>";
+                            headerText += " <span style=\"Warning\">[IMMINENT]</span>";
+                            var hoursUntil = (int)(currentOrder.IssueTime - CampaignTime.Now).ToHours;
+                            args.Tooltip = new TextObject("{=enlisted_orders_tooltip_imminent}Orders will be issued in {HOURS} hour(s): {TITLE}");
+                            args.Tooltip.SetTextVariable("HOURS", hoursUntil.ToString());
+                            args.Tooltip.SetTextVariable("TITLE", currentOrder.Title);
                         }
+                        else if (currentOrder.State == Orders.Models.OrderState.Pending || 
+                                 currentOrder.State == Orders.Models.OrderState.Active)
+                        {
+                            var daysAgo = (int)(CampaignTime.Now - currentOrder.IssuedTime).ToDays;
+                            if (daysAgo == 0 && currentOrder.State == Orders.Models.OrderState.Pending)
+                            {
+                                headerText += " <span style=\"Link\">[NEW]</span>";
+                            }
 
-                        args.Tooltip = new TextObject("{=enlisted_orders_tooltip_pending}You have a pending order from {ISSUER}.");
-                        args.Tooltip.SetTextVariable("ISSUER", currentOrder.Issuer);
+                            args.Tooltip = new TextObject("{=enlisted_orders_tooltip_pending}You have a pending order from {ISSUER}.");
+                            args.Tooltip.SetTextVariable("ISSUER", currentOrder.Issuer);
+                        }
                     }
                     else
                     {
@@ -1022,6 +1035,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 false, 1);
 
             // 1b. Active order row (visible only when expanded and an order exists).
+            // For imminent orders, show as greyed out with [IMMINENT] tag (not yet issued).
             // For mandatory orders (already assigned), show as greyed out with [ASSIGNED] tag.
             // For optional orders, player clicks to view details and Accept/Decline.
             starter.AddGameMenuOption("enlisted_status", "enlisted_active_order",
@@ -1035,9 +1049,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
 
                     var isActive = OrderManager.Instance?.IsOrderActive() ?? false;
+                    var isImminent = currentOrder.State == Orders.Models.OrderState.Imminent;
 
-                    // For mandatory/active orders, disable the option (greyed out)
-                    if (currentOrder.Mandatory || isActive)
+                    // For imminent/mandatory/active orders, disable the option (greyed out)
+                    if (isImminent || currentOrder.Mandatory || isActive)
                     {
                         args.optionLeaveType = GameMenuOption.LeaveType.WaitQuest;
                         args.IsEnabled = false;
@@ -1047,30 +1062,42 @@ namespace Enlisted.Features.Interface.Behaviors
                         args.optionLeaveType = GameMenuOption.LeaveType.Mission;
                     }
 
-                    var row = $"    {currentOrder.Title}";
-                    if (!string.IsNullOrWhiteSpace(currentOrder.Issuer))
+                    // Show phase/state of the order on the left, followed by the title
+                    string phaseLabel;
+                    if (isImminent)
                     {
-                        row = $"    From {currentOrder.Issuer}: {currentOrder.Title}";
+                        var hoursUntil = (int)(currentOrder.IssueTime - CampaignTime.Now).ToHours;
+                        phaseLabel = $"<span style=\"Warning\">[SCHEDULED - {hoursUntil}h]</span>";
                     }
-
-                    // Add status tag
-                    if (currentOrder.Mandatory || isActive)
+                    else if (currentOrder.Mandatory || isActive)
                     {
-                        row += " <span style=\"Link\">[ASSIGNED]</span>";
+                        phaseLabel = "<span style=\"Link\">[ASSIGNED]</span>";
                     }
                     else
                     {
                         var daysAgo = (int)(CampaignTime.Now - currentOrder.IssuedTime).ToDays;
                         if (daysAgo == 0)
                         {
-                            row += " <span style=\"Link\">[NEW]</span>";
+                            phaseLabel = "<span style=\"Link\">[NEW]</span>";
+                        }
+                        else
+                        {
+                            phaseLabel = "<span style=\"Link\">[ASSIGNED]</span>";
                         }
                     }
 
+                    var row = $"    {phaseLabel} {currentOrder.Title}";
+
                     MBTextManager.SetTextVariable("ACTIVE_ORDER_TEXT", row);
                     
-                    // Different tooltip for mandatory vs optional
-                    if (currentOrder.Mandatory)
+                    // Different tooltip based on state
+                    if (isImminent)
+                    {
+                        var hoursUntil = (int)(currentOrder.IssueTime - CampaignTime.Now).ToHours;
+                        args.Tooltip = new TextObject("{=enlisted_orders_tooltip_imminent_detail}Order will be issued in {HOURS} hour(s). Advance warning for preparation.");
+                        args.Tooltip.SetTextVariable("HOURS", hoursUntil.ToString());
+                    }
+                    else if (currentOrder.Mandatory)
                     {
                         args.Tooltip = new TextObject("Mandatory duty assignment. Already in progress.");
                     }
@@ -3036,7 +3063,7 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Builds the main menu narrative as flowing paragraphs with color-coded keywords.
+        /// Builds the main menu narrative with section headers for Kingdom Reports, Company Reports, and Player Status.
         /// Order: Kingdom (macro) → Camp (local) → Player (personal)
         /// </summary>
         private static string BuildMainMenuNarrative(EnlistmentBehavior enlistment, Hero lord)
@@ -3045,36 +3072,36 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 var lordParty = lord?.PartyBelongedTo;
                 var news = EnlistedNewsBehavior.Instance;
-                var parts = new List<string>();
+                var sb = new StringBuilder();
 
-                // PARAGRAPH 1: Kingdom context (macro - what's happening in the realm)
+                // SECTION 1: Kingdom Reports (macro - what's happening in the realm)
                 var kingdomParagraph = BuildKingdomNarrativeParagraph(enlistment, news);
                 if (!string.IsNullOrWhiteSpace(kingdomParagraph))
                 {
-                    parts.Add(kingdomParagraph);
+                    sb.AppendLine("<span style=\"Header\">KINGDOM REPORTS</span>");
+                    sb.AppendLine(kingdomParagraph);
+                    sb.AppendLine();
                 }
 
-                // PARAGRAPH 2: Camp situation and status (local - color-coded keywords)
+                // SECTION 2: Company Reports (local - color-coded keywords)
                 var campParagraph = BuildCampNarrativeParagraph(enlistment, lord, lordParty);
                 if (!string.IsNullOrWhiteSpace(campParagraph))
                 {
-                    parts.Add(campParagraph);
+                    sb.AppendLine("<span style=\"Header\">COMPANY REPORTS</span>");
+                    sb.AppendLine(campParagraph);
+                    sb.AppendLine();
                 }
 
-                // PARAGRAPH 3: Your status (personal - duty, health, notable conditions)
+                // SECTION 3: Player Status (personal - duty, health, notable conditions)
                 var youParagraph = BuildPlayerNarrativeParagraph(enlistment);
                 if (!string.IsNullOrWhiteSpace(youParagraph))
                 {
-                    parts.Add(youParagraph);
+                    sb.AppendLine("<span style=\"Header\">PLAYER STATUS</span>");
+                    sb.AppendLine(youParagraph);
                 }
 
-                if (parts.Count == 0)
-                {
-                    return "The camp awaits your orders.";
-                }
-
-                // Join paragraphs with double newlines for visual separation
-                return string.Join("\n\n", parts);
+                var result = sb.ToString().TrimEnd();
+                return string.IsNullOrWhiteSpace(result) ? "The camp awaits your orders." : result;
             }
             catch
             {
@@ -5069,6 +5096,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         /// Adds a single decision entry to the menu list.
+        /// Handles both immediate and scheduled activities.
         /// </summary>
         private void AddDecisionEntry(List<DecisionsMenuEntry> list, DecisionAvailability availability)
         {
@@ -5089,10 +5117,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 name = decision.Id ?? "Unknown";
                 ModLogger.Warn("Interface", $"Decision '{decision.Id}' had blank display name, using ID as fallback");
             }
-            var displayText = $"    {name}";
-
-            // Build tooltip
-            var tooltipText = GetDecisionTooltip(decision, availability);
 
             // Track camp opportunity for detection checks
             if (availability.CampOpportunity != null)
@@ -5100,15 +5124,96 @@ namespace Enlisted.Features.Interface.Behaviors
                 _decisionsMenuOpportunities[decision.Id] = availability.CampOpportunity;
             }
 
+            // Check if this opportunity is already scheduled
+            var generator = CampOpportunityGenerator.Instance;
+            var opportunity = availability.CampOpportunity;
+            var isCommitted = opportunity != null && generator?.IsCommittedTo(opportunity.Id) == true;
+
+            string displayText;
+            string tooltipText;
+            bool isEnabled;
+            Action<MenuCallbackArgs> onSelected;
+
+            if (isCommitted)
+            {
+                // Show scheduled state
+                var commitment = generator.GetNextCommitment();
+                var hoursUntil = commitment != null ? generator.GetHoursUntilCommitment(commitment) : 0f;
+                var phase = commitment?.ScheduledPhase ?? "soon";
+
+                displayText = $"    {name} [SCHEDULED - {hoursUntil:F0}h]";
+                tooltipText = new TextObject("{=enlisted_commitment_tooltip}Scheduled for {PHASE} in {HOURS} hours. Click to cancel.")
+                    .SetTextVariable("PHASE", phase)
+                    .SetTextVariable("HOURS", $"{hoursUntil:F0}")
+                    .ToString();
+                isEnabled = true; // Enabled but clicking cancels
+                onSelected = _ => OnScheduledDecisionClicked(opportunity);
+            }
+            else
+            {
+                // Normal decision entry
+                displayText = $"    {name}";
+
+                // If this is a schedulable opportunity (not immediate), show the scheduled phase
+                if (opportunity != null && !opportunity.Immediate)
+                {
+                    var phase = opportunity.GetEffectiveScheduledPhase();
+                    displayText += $" ({phase})";
+                }
+
+                tooltipText = GetDecisionTooltip(decision, availability);
+
+                // If this is a schedulable opportunity, add scheduling info to tooltip
+                if (opportunity != null && !opportunity.Immediate)
+                {
+                    var phase = opportunity.GetEffectiveScheduledPhase();
+                    tooltipText += $"\n\nScheduled activity: Will fire at {phase}.";
+                }
+
+                isEnabled = availability.IsAvailable;
+                onSelected = _ => OnDecisionSelected(decision);
+            }
+
             list.Add(new DecisionsMenuEntry
             {
                 Id = decision.Id,
                 Text = displayText,
-                IsEnabled = availability.IsAvailable,
+                IsEnabled = isEnabled,
                 LeaveType = (GameMenuOption.LeaveType)(-1), // No icon for individual decisions
                 Tooltip = new TextObject(tooltipText),
-                OnSelected = _ => OnDecisionSelected(decision)
+                OnSelected = onSelected
             });
+        }
+
+        /// <summary>
+        /// Handles clicking on a scheduled activity to cancel it.
+        /// </summary>
+        private void OnScheduledDecisionClicked(CampOpportunity opportunity)
+        {
+            if (opportunity == null)
+            {
+                return;
+            }
+
+            // Show confirmation dialog
+            var title = opportunity.TitleFallback ?? opportunity.Id;
+            InformationManager.ShowInquiry(new InquiryData(
+                titleText: "Cancel Commitment",
+                text: $"Cancel your plans for {title}?\n\nYou'll feel restless from changing plans (minor fatigue).",
+                isAffirmativeOptionShown: true,
+                isNegativeOptionShown: true,
+                affirmativeText: "Cancel Plans",
+                negativeText: "Keep Plans",
+                affirmativeAction: () =>
+                {
+                    var generator = CampOpportunityGenerator.Instance;
+                    generator?.CancelCommitment(opportunity.Id);
+
+                    // Refresh the menu
+                    GameMenu.SwitchToMenu("enlisted_decisions");
+                },
+                negativeAction: null
+            ), true);
         }
 
         /// <summary>
@@ -5231,9 +5336,27 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Info("Interface", $"Decision selected: {decision.Id}");
 
-                // Check if this is a risky camp opportunity and perform detection check
+                // Check if this is a camp opportunity
                 if (_decisionsMenuOpportunities.TryGetValue(decision.Id, out var opportunity))
                 {
+                    // Check if this is a scheduled (not immediate) activity
+                    if (!opportunity.Immediate)
+                    {
+                        // Schedule the activity instead of firing immediately
+                        var generator = CampOpportunityGenerator.Instance;
+                        if (generator != null)
+                        {
+                            generator.CommitToOpportunity(opportunity);
+
+                            // Refresh the menu to show the scheduled state
+                            GameMenu.SwitchToMenu("enlisted_decisions");
+                            return;
+                        }
+                    }
+
+                    // For immediate activities or if generator not available, continue with normal flow
+
+                    // Check if risky while on duty
                     var campContext = CampOpportunityGenerator.Instance?.AnalyzeCampContext();
                     if (campContext?.PlayerOnDuty == true)
                     {
@@ -5244,7 +5367,7 @@ namespace Enlisted.Features.Interface.Behaviors
                             var generator = CampOpportunityGenerator.Instance;
                             if (generator != null)
                             {
-                                bool success = generator.AttemptRiskyOpportunity(opportunity);
+                                var success = generator.AttemptRiskyOpportunity(opportunity);
                                 if (!success)
                                 {
                                     // Player was caught - don't show the event, already showed notification
@@ -6182,7 +6305,12 @@ namespace Enlisted.Features.Interface.Behaviors
 
         #region Orders Integration
 
-        private void RefreshEnlistedStatusMenuUi()
+        /// <summary>
+        /// Refreshes the enlisted status menu UI to reflect current state changes.
+        /// This is public so other systems (like OrderManager) can trigger menu updates
+        /// when orders are issued, ensuring the accordion auto-expands for new orders.
+        /// </summary>
+        public void RefreshEnlistedStatusMenuUi()
         {
             try
             {
