@@ -19,6 +19,7 @@
       <Style Name="Warning" FontColor="#FFD700FF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0" />
       <Style Name="Alert" FontColor="#FF6B6BFF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0" />
       <Style Name="Critical" FontColor="#FF0000FF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="1" TextOutlineColor="#000000FF" />
+      <Style Name="Urgent" FontColor="#FFA500FF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0.5" TextOutlineColor="#000000FF" />
     </Styles>
   </Brush>
 </Brushes>

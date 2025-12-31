@@ -3,7 +3,7 @@
 **Summary:** Authoritative JSON schema definitions for events, decisions, and orders. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-24 (Removed outcome popup system; resultText now displays in Recent Activities; reward_choices still use popups)  
+**Last Updated:** 2025-12-30 (Updated Camp Opportunities Schema to match implementation; renumbered phases)  
 **Related Docs:** [Content System Architecture](content-system-architecture.md), [Event Catalog](../../Content/event-catalog-by-system.md), [Quartermaster System](../Equipment/quartermaster-system.md)
 
 ---
@@ -245,6 +245,8 @@ All fields are optional. If omitted, no restriction applies.
 | Min Escalation | `minEscalation` | dict | - | Track → threshold |
 | Onboarding Stage | `onboarding_stage` | int | 1-3 | Onboarding events only |
 | Onboarding Track | `onboarding_track` | string | - | green/seasoned/veteran |
+| Not At Sea | `notAtSea` | bool | - | Only appears on land (not at sea) |
+| At Sea | `atSea` | bool | - | Only appears at sea (not on land) |
 
 ### Valid Context Values
 
@@ -372,6 +374,35 @@ var eligible = events.Where(e =>
 
 ### Valid Role Values  
 `"Any"`, `"Soldier"`, `"Scout"`, `"Medic"`, `"Engineer"`, `"Officer"`, `"Operative"`, `"NCO"`
+
+### Sea/Land Context Requirements
+
+Events can be restricted to land or sea travel:
+
+```json
+{
+  "requirements": {
+    "notAtSea": true  // Only fires on land
+  }
+}
+```
+
+```json
+{
+  "requirements": {
+    "atSea": true  // Only fires at sea
+  }
+}
+```
+
+**Use Cases:**
+- Baggage wagon events: `"notAtSea": true` (wagons don't exist at sea)
+- Ship-based events: `"atSea": true` (cargo hold access, sea sickness, etc.)
+- Camp opportunities: Land activities vs maritime activities
+
+**Detection:** Uses `MobileParty.IsCurrentlyAtSea` to determine if the enlisted lord's party is on water.
+
+**Validation:** If both are true or both are false, no filtering occurs (event eligible in all locations).
 
 ---
 
@@ -640,7 +671,7 @@ Player sees: Normal rest option
 3. Role-specific content (add depth)
 4. Tier-specific content (progression feel)
 
-**See:** [Content Orchestrator Plan - Phase 6](content-orchestrator-plan.md#phase-6-content-variants-post-launch-incremental) for variant strategy.
+**See:** [Content Orchestrator Plan - Phase 7](../../AFEATURE/content-orchestrator-plan.md#phase-7-content-variants-post-launch-incremental) for variant strategy.
 
 ---
 
@@ -1409,7 +1440,8 @@ Normal/Positive (6h) → Can be replaced by anything higher
 
 ## Camp Opportunities Schema (Phase 6)
 
-**Added:** December 2025 (Content Orchestrator / Camp Life Simulation)
+**Added:** December 2025 (Content Orchestrator / Camp Life Simulation)  
+**Updated:** December 2025 (Aligned with actual implementation)
 
 Camp Opportunities are dynamically generated activities that appear in the Main Menu DECISIONS section. Unlike static decisions or scheduled events, these are orchestrator-curated based on world state, time, player condition, and history.
 
@@ -1448,38 +1480,17 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
   
   "targetDecision": "dec_gambling",
   
-  "fitness": {
-    "worldState": {
-      "garrison": 10,
-      "campaign": 5,
-      "siege": -20
-    },
-    "dayPhase": {
-      "morning": -10,
-      "day": 0,
-      "dusk": 15,
-      "night": 5
-    },
-    "playerState": {
-      "fatigueOver70": -20,
-      "fatigueUnder30": 5
-    }
-  },
+  "minTier": 1,
+  "maxTier": 0,
+  "cooldownHours": 24,
+  "baseFitness": 50,
   
-  "requirements": {
-    "tier": { "min": 1 },
-    "flags": { "none": ["player_wounded"] }
-  },
-  
-  "cooldown": {
-    "hours": 12
-  },
+  "validPhases": ["Dusk", "Night"],
   
   "orderCompatibility": {
-    "default": "risky",
-    "guardPost": "risky",
-    "firewoodDetail": "available",
-    "marchFormation": "blocked"
+    "guard_duty": "risky",
+    "patrol": "risky",
+    "default": "available"
   },
   
   "detection": {
@@ -1495,7 +1506,12 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
   },
   
   "tooltipRiskyId": "opp_card_game_risk_tooltip",
-  "tooltipRisky": "Risk: You're on guard duty. If caught: -15 Officer Rep. Detection: ~25%"
+  "tooltipRisky": "Gambling while on duty? If you're caught, the sergeant won't be pleased.",
+  
+  "scheduledTime": "tonight",
+  
+  "requiredFlags": [],
+  "blockedByFlags": []
 }
 ```
 
@@ -1512,14 +1528,38 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
 | `actionId` | string | ✅ | XML localization key for button text |
 | `action` | string | ❌ | Fallback (e.g., "Join", "Sit in") |
 | `targetDecision` | string | ❌ | Decision to trigger when engaged |
-| `fitness` | object | ❌ | Scoring modifiers by context |
-| `requirements` | object | ❌ | Standard requirements object |
-| `cooldown` | object | ❌ | Hours before can appear again |
-| `orderCompatibility` | object | ❌ | Behavior during active orders |
+| `minTier` | int | ❌ | Minimum enlistment tier (default: 1) |
+| `maxTier` | int | ❌ | Maximum tier (0 = no max) |
+| `cooldownHours` | int | ❌ | Hours before can appear again (default: 12) |
+| `baseFitness` | int | ❌ | Base fitness score 0-100 (default: 50). Modifiers applied in code. |
+| `validPhases` | array | ❌ | Day phases when eligible: `["Dawn", "Midday", "Dusk", "Night"]` |
+| `orderCompatibility` | object | ❌ | Order type → compatibility value |
 | `detection` | object | ❌ | Risky activity detection chances |
 | `caughtConsequences` | object | ❌ | Consequences if caught |
 | `tooltipRiskyId` | string | ❌ | Localization key for risk tooltip |
 | `tooltipRisky` | string | ❌ | Fallback risk tooltip |
+| `scheduledTime` | string | ❌ | **DEPRECATED** - Use `scheduledPhase` instead |
+| `scheduledPhase` | string | ❌ | **Phase 9** - When activity fires: `"Dawn"`, `"Midday"`, `"Dusk"`, `"Night"`. If omitted, fires immediately (backwards compat). |
+| `immediate` | bool | ❌ | **Phase 9** - If true, fires immediately (ignores scheduledPhase). Default: false. |
+| `requiredFlags` | array | ❌ | Flags that must be set to appear |
+| `blockedByFlags` | array | ❌ | Flags that prevent appearance |
+| `notAtSea` | bool | ❌ | Only appears on land (not at sea) |
+| `atSea` | bool | ❌ | Only appears at sea (not on land) |
+
+### Fitness Scoring
+
+Fitness determines which opportunities appear. The `baseFitness` field sets the starting score (0-100). The `CampOpportunityGenerator` then applies 4 layers of modifiers in code:
+
+| Layer | Source | Example Modifiers |
+|-------|--------|-------------------|
+| **World State (Macro)** | Lord situation, war status | Training +15 in garrison, Social -20 in siege |
+| **Camp Context (Meso)** | Day phase, camp mood, weekly rhythm | Training +10 at dawn, Social +15 at dusk |
+| **Player State (Micro)** | Fatigue, gold, injury | Training -25 if exhausted, Recovery +30 if injured |
+| **History (Meta)** | Recent presentations, engagement rate | -40 if shown <12h ago, +15 if player engages often |
+
+Opportunities with final score < 40 are filtered out. Top N (based on budget) are displayed.
+
+**Why code-computed modifiers?** This approach keeps JSON simple while allowing nuanced, interconnected scoring that responds to game state. The modifiers are transparent in `CampOpportunityGenerator.cs`.
 
 ### Order Compatibility Values
 
@@ -1528,6 +1568,8 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
 | `"available"` | No risk. Appears normally. |
 | `"risky"` | Appears with tooltip. Detection check on engage. |
 | `"blocked"` | Filtered out by orchestrator. Doesn't appear. |
+
+**Order type keys use snake_case:** `guard_duty`, `patrol`, `fatigue_duty`, `default`, etc.
 
 ### Opportunity Types
 
@@ -1538,6 +1580,43 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
 | `economic` | Low gold, quartermaster needs help |
 | `recovery` | Injured, exhausted, siege |
 | `special` | Lord audience, settlement visit, baggage access |
+
+### Valid Day Phases
+
+| Phase | Time | Syncs With |
+|-------|------|------------|
+| `Dawn` | 6am-11am | Order Phase 1 |
+| `Midday` | 12pm-5pm | Order Phase 2 |
+| `Dusk` | 6pm-9pm | Order Phase 3 |
+| `Night` | 10pm-5am | Order Phase 4 |
+
+### Sea/Land Context Filtering
+
+Opportunities can be restricted to land or sea travel using `notAtSea` and `atSea` fields:
+
+**Land-Only Opportunities:**
+```json
+{
+  "id": "opp_rest_tent",
+  "title": "Rest in Tent",
+  "description": "Your bedroll looks inviting...",
+  "notAtSea": true  // Only appears on land
+}
+```
+
+**Sea-Only Opportunities:**
+```json
+{
+  "id": "opp_rest_hammock",
+  "title": "Rest in Hammock",
+  "description": "Your hammock sways with the ship's motion...",
+  "atSea": true  // Only appears at sea
+}
+```
+
+**Detection:** The generator checks `MobileParty.IsCurrentlyAtSea` to filter opportunities based on party location.
+
+**Use Case:** Create contextually appropriate variants for different travel modes (wagons/tents on land, ship/crew at sea).
 
 ---
 
@@ -1602,26 +1681,64 @@ Add to `ModuleData/Languages/enlisted_strings.xml`:
 
 ---
 
-## Order State Display Schema (Phase 4)
+## Order State Display Schema (Phase 10)
 
-Orders progress through states: FORECAST → SCHEDULED → PENDING → ACTIVE → COMPLETE.
+**Updated:** 2025-12-31 - Simplified to imminent warning system
 
-### Required Localization Keys
+Orders progress through states: **IMMINENT** → PENDING → ACTIVE → COMPLETE.
+
+**Time Speeds (from Campaign.cs decompile):**
+- Play (1x): 1 game day = 80 real seconds | 1 hour = 3.3 real seconds
+- FastForward (>>): 1 game day = 20 real seconds | 1 hour = 0.83 real seconds
+
+**Imminent Warning System:**
+- Orchestrator decides "order should fire"
+- Creates order in IMMINENT state with 4-8 hour delay
+- At FastForward: 4-8h = 3.3-6.6 real seconds warning
+- Simple, realistic: "Sergeant will call for you soon" vs long-term forecasting
+
+### Order State Enum (C# Model)
+
+```csharp
+public enum OrderState
+{
+    Imminent,  // 4-8h warning - "Sergeant will call for you soon"
+    Pending,   // Issued - shows in Orders menu for accept/decline
+    Active,    // Accepted - progressing through phases
+    Complete   // Done - results in Recent Activity
+}
+```
+
+### Order Model Fields (Phase 10)
+
+```csharp
+public class Order
+{
+    // ... existing fields ...
+    public OrderState State { get; set; } = OrderState.Pending;
+    public CampaignTime ImminentTime { get; set; }  // When imminent warning began
+    public CampaignTime IssueTime { get; set; }     // When order will be issued (ImminentTime + 4-8h)
+}
+```
+
+### Required Localization Keys (Phase 10)
 
 ```xml
 <!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- ORDERS MENU - Order State Display (Phase 4)                     -->
+<!-- ORDERS MENU - Order State Display (Phase 10)                    -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
 
+<!-- Imminent Warning Display (in summaries) -->
+<!-- Use <span style="Urgent"> for orange time-sensitive color -->
+<string id="order_imminent_kingdom" text="Expect strategic orders from command soon." />
+<string id="order_imminent_company" text="Sergeant looking for volunteers." />
+<string id="order_imminent_player" text="&lt;span style='Urgent'&gt;{ORDER_NAME} in {HOURS} hours&lt;/span&gt;" />
+
 <!-- Order State Headers -->
-<string id="order_state_scheduled" text="SCHEDULED:" />
+<string id="order_state_imminent" text="IMMINENT:" />
 <string id="order_state_pending" text="PENDING:" />
 <string id="order_state_active" text="ACTIVE:" />
 <string id="order_state_complete" text="COMPLETE:" />
-
-<!-- Scheduled Order Display -->
-<string id="order_scheduled_line" text="{ORDER_NAME} - tomorrow at dawn" />
-<string id="order_scheduled_hint" text="The {NCO_TITLE} has you down for {ORDER_TYPE} duty." />
 
 <!-- Pending Order Display -->
 <string id="order_pending_prompt" text="Report to {LOCATION} for {ORDER_TYPE} duty." />
@@ -1643,7 +1760,7 @@ Orders progress through states: FORECAST → SCHEDULED → PENDING → ACTIVE �
 <string id="order_auto_accept" text="You were assigned {ORDER_NAME} while traveling." />
 <string id="order_auto_decline" text="You missed an order assignment." />
 <string id="order_pending_warning" text="Respond soon or miss the order." />
-<string id="order_roster_changed" text="The roster changed. {ORDER_NAME} cancelled." />
+<string id="order_imminent_cancelled" text="World state changed. Order no longer needed." />
 ```
 
 ---

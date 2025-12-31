@@ -43,8 +43,8 @@ namespace Enlisted.Features.Content
 
         public override void SyncData(IDataStore dataStore)
         {
-            // Pacing state is stored in EscalationState (LastNarrativeEventTime, NextNarrativeEventWindow)
-            // No additional sync needed here since EscalationManager handles the state persistence
+            // No additional sync needed - EscalationManager handles all state persistence
+            // Chain events are tracked in EscalationState.PendingChainEvents
         }
 
         /// <summary>
@@ -54,6 +54,14 @@ namespace Enlisted.Features.Content
         {
             try
             {
+                // New: Check if orchestrator is handling events
+                var orchestratorConfig = ConfigurationManager.LoadOrchestratorConfig();
+                if (orchestratorConfig?.Enabled == true)
+                {
+                    // Orchestrator handles everything - skip old logic
+                    return;
+                }
+
                 // Only run when enlisted
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
@@ -78,14 +86,12 @@ namespace Enlisted.Features.Content
 
                 // Grace period: don't fire events for the first few days after enlistment
                 // Give player time to learn the systems before hitting them with narrative events
-                // EXCEPT for onboarding events, which ARE the introduction and should fire immediately
                 if (enlistment.EnlistmentDate != CampaignTime.Zero)
                 {
                     var daysSinceEnlistment = (CampaignTime.Now - enlistment.EnlistmentDate).ToDays;
                     const int gracePeriodDays = 3; // Config: min days before first narrative event
 
-                    // Allow onboarding events during grace period (they're the tutorial/intro)
-                    if (daysSinceEnlistment < gracePeriodDays && !escalationState.IsOnboardingActive)
+                    if (daysSinceEnlistment < gracePeriodDays)
                     {
                         ModLogger.Debug(LogCategory,
                             $"Grace period active: {daysSinceEnlistment:F1}/{gracePeriodDays} days since enlistment");
@@ -95,25 +101,6 @@ namespace Enlisted.Features.Content
 
                 // Check for pending chain events first (highest priority)
                 CheckPendingChainEvents(escalationState);
-
-                // Initialize pacing window if never set
-                if (escalationState.NextNarrativeEventWindow == CampaignTime.Zero)
-                {
-                    SetNextEventWindow(escalationState);
-                    ModLogger.Debug(LogCategory, "Initialized first event window");
-                    return;
-                }
-
-                // Check if we're past the event window
-                if (CampaignTime.Now < escalationState.NextNarrativeEventWindow)
-                {
-                    var daysUntilWindow = (escalationState.NextNarrativeEventWindow - CampaignTime.Now).ToDays;
-                    ModLogger.Debug(LogCategory, $"Not yet in event window (days remaining: {daysUntilWindow:F1})");
-                    return;
-                }
-
-                // Time for an event - try to select and deliver one
-                TryFireEvent(escalationState);
             }
             catch (Exception ex)
             {
@@ -169,7 +156,7 @@ namespace Enlisted.Features.Content
             // Use "narrative" as the category for per-category cooldown tracking
             const string category = "narrative";
 
-            // Check global pacing limits (max_per_day, min_hours_between, evaluation_hours, category cooldown)
+            // Check global pacing limits (max_per_day, min_hours_between, category cooldown)
             if (!GlobalEventPacer.CanFireAutoEvent("paced_narrative", category, out var blockReason))
             {
                 ModLogger.Debug(LogCategory, $"Blocked by global pacing: {blockReason}");
@@ -180,9 +167,7 @@ namespace Enlisted.Features.Content
 
             if (selectedEvent == null)
             {
-                ModLogger.Debug(LogCategory, "No eligible event to fire, extending window");
-                // No event available - try again tomorrow
-                escalationState.NextNarrativeEventWindow = CampaignTime.DaysFromNow(1);
+                ModLogger.Debug(LogCategory, "No eligible event to fire");
                 return;
             }
 
@@ -206,49 +191,12 @@ namespace Enlisted.Features.Content
                 escalationState.RecordOneTimeEventFired(selectedEvent.Id);
             }
 
-            // Update pacing timestamps
-            escalationState.LastNarrativeEventTime = CampaignTime.Now;
-            SetNextEventWindow(escalationState);
-
-            ModLogger.Info(LogCategory, $"Fired event: {selectedEvent.Id}, next window set");
+            ModLogger.Info(LogCategory, $"Fired event: {selectedEvent.Id}");
         }
 
         /// <summary>
-        /// Sets the next event window to a random number of days from now (config-driven).
-        /// Uses event_window_min_days and event_window_max_days from enlisted_config.json.
-        /// </summary>
-        private static void SetNextEventWindow(EscalationState escalationState)
-        {
-            var config = Config;
-            var minDays = Math.Max(1, config.EventWindowMinDays);
-            var maxDays = Math.Max(minDays, config.EventWindowMaxDays);
-
-            // Random days between min and max (inclusive)
-            var days = MBRandom.RandomInt(minDays, maxDays + 1);
-            escalationState.NextNarrativeEventWindow = CampaignTime.DaysFromNow(days);
-
-            ModLogger.Debug(LogCategory, $"Next event window: {days} days from now (config: {minDays}-{maxDays})");
-        }
-
-        /// <summary>
-        /// Gets the number of days until the next event window for diagnostic display.
-        /// Returns -1 if pacing is not initialized.
-        /// </summary>
-        public float GetDaysUntilNextWindow()
-        {
-            var escalationState = EscalationManager.Instance?.State;
-            if (escalationState == null || escalationState.NextNarrativeEventWindow == CampaignTime.Zero)
-            {
-                return -1f;
-            }
-
-            var remaining = (escalationState.NextNarrativeEventWindow - CampaignTime.Now).ToDays;
-            return Math.Max(0f, (float)remaining);
-        }
-
-        /// <summary>
-        /// Forces an immediate event attempt, bypassing the pacing window.
-        /// Used for testing and debug commands.
+        /// Forces an immediate event attempt for testing and debug commands.
+        /// Note: With orchestrator enabled, this bypasses world-state-driven pacing.
         /// </summary>
         public void ForceEventAttempt()
         {
@@ -261,22 +209,6 @@ namespace Enlisted.Features.Content
 
             ModLogger.Info(LogCategory, "Forcing event attempt (debug)");
             TryFireEvent(escalationState);
-        }
-
-        /// <summary>
-        /// Resets the pacing window to fire an event on the next daily tick.
-        /// Used for testing.
-        /// </summary>
-        public void ResetPacingWindow()
-        {
-            var escalationState = EscalationManager.Instance?.State;
-            if (escalationState == null)
-            {
-                return;
-            }
-
-            escalationState.NextNarrativeEventWindow = CampaignTime.Now;
-            ModLogger.Debug(LogCategory, "Pacing window reset to now (will fire next tick)");
         }
     }
 }

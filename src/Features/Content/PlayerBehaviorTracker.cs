@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Enlisted.Features.Content.Models;
 using Enlisted.Mod.Core.Logging;
 
@@ -6,7 +7,7 @@ namespace Enlisted.Features.Content
 {
     /// <summary>
     /// Tracks player behavior and choices to learn content preferences.
-    /// Used by the Content Orchestrator to personalize event selection.
+    /// Used by the Content Orchestrator to personalize event and opportunity selection.
     /// </summary>
     public static class PlayerBehaviorTracker
     {
@@ -17,6 +18,10 @@ namespace Enlisted.Features.Content
 
         // Content engagement tracking (event ID -> times engaged/dismissed)
         private static Dictionary<string, int> _contentEngagement = new Dictionary<string, int>();
+
+        // Opportunity type engagement tracking for learning system
+        private static Dictionary<string, int> _opportunityTypePresented = new Dictionary<string, int>();
+        private static Dictionary<string, int> _opportunityTypeEngaged = new Dictionary<string, int>();
 
         // Cached preferences (recalculated when choices change)
         private static PlayerPreferences _cachedPreferences;
@@ -66,6 +71,151 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
+        /// Records that an opportunity type was presented to the player.
+        /// Called when opportunities are shown in the camp menu.
+        /// </summary>
+        public static void RecordOpportunityPresented(string opportunityType)
+        {
+            if (string.IsNullOrEmpty(opportunityType))
+            {
+                return;
+            }
+
+            var type = opportunityType.ToLowerInvariant();
+            if (!_opportunityTypePresented.ContainsKey(type))
+            {
+                _opportunityTypePresented[type] = 0;
+            }
+
+            _opportunityTypePresented[type]++;
+            _preferencesDirty = true;
+        }
+
+        /// <summary>
+        /// Records that the player engaged with an opportunity type.
+        /// Called when player selects an opportunity from the menu.
+        /// </summary>
+        public static void RecordOpportunityEngagement(string opportunityType, bool engaged)
+        {
+            if (string.IsNullOrEmpty(opportunityType))
+            {
+                return;
+            }
+
+            var type = opportunityType.ToLowerInvariant();
+
+            if (engaged)
+            {
+                if (!_opportunityTypeEngaged.ContainsKey(type))
+                {
+                    _opportunityTypeEngaged[type] = 0;
+                }
+
+                _opportunityTypeEngaged[type]++;
+                ModLogger.Debug(LogCategory, $"Opportunity engaged: {type} (total: {_opportunityTypeEngaged[type]})");
+            }
+
+            _preferencesDirty = true;
+        }
+
+        /// <summary>
+        /// Gets the engagement rate for a specific opportunity type.
+        /// Returns a value between 0 (never engages) and 1 (always engages).
+        /// Returns 0.5 if insufficient data.
+        /// </summary>
+        public static float GetOpportunityEngagementRate(string opportunityType)
+        {
+            if (string.IsNullOrEmpty(opportunityType))
+            {
+                return 0.5f;
+            }
+
+            var type = opportunityType.ToLowerInvariant();
+
+            int presented = _opportunityTypePresented.TryGetValue(type, out var p) ? p : 0;
+            int engaged = _opportunityTypeEngaged.TryGetValue(type, out var e) ? e : 0;
+
+            // Need minimum of 3 presentations to have meaningful data
+            if (presented < 3)
+            {
+                return 0.5f;
+            }
+
+            return (float)engaged / presented;
+        }
+
+        /// <summary>
+        /// Calculates a fitness modifier based on learned player preferences.
+        /// Positive values for types the player likes, negative for ignored types.
+        /// Implements the 70/30 split: 70% learned preference, 30% variety.
+        /// </summary>
+        public static float GetLearningModifier(string opportunityType)
+        {
+            if (string.IsNullOrEmpty(opportunityType))
+            {
+                return 0f;
+            }
+
+            var type = opportunityType.ToLowerInvariant();
+
+            int presented = _opportunityTypePresented.TryGetValue(type, out var p) ? p : 0;
+
+            // Need minimum data to apply learning
+            if (presented < 5)
+            {
+                return 0f;
+            }
+
+            float engagementRate = GetOpportunityEngagementRate(type);
+
+            // 70/30 split: only apply 70% of the full modifier
+            const float learningWeight = 0.7f;
+
+            // High engagement (>60%) = bonus, low engagement (<30%) = penalty
+            if (engagementRate > 0.6f)
+            {
+                // +15 at full learning, scaled by learning weight
+                return 15f * learningWeight;
+            }
+
+            if (engagementRate < 0.3f)
+            {
+                // -10 at full learning, scaled by learning weight
+                return -10f * learningWeight;
+            }
+
+            // Middle ground: no modifier
+            return 0f;
+        }
+
+        /// <summary>
+        /// Gets opportunity type tracking data for saving.
+        /// </summary>
+        public static Dictionary<string, int> GetOpportunityPresentedForSave()
+        {
+            return new Dictionary<string, int>(_opportunityTypePresented);
+        }
+
+        /// <summary>
+        /// Gets opportunity engagement data for saving.
+        /// </summary>
+        public static Dictionary<string, int> GetOpportunityEngagedForSave()
+        {
+            return new Dictionary<string, int>(_opportunityTypeEngaged);
+        }
+
+        /// <summary>
+        /// Loads opportunity tracking data from saved state.
+        /// </summary>
+        public static void LoadOpportunityState(Dictionary<string, int> presented, Dictionary<string, int> engaged)
+        {
+            _opportunityTypePresented = presented ?? new Dictionary<string, int>();
+            _opportunityTypeEngaged = engaged ?? new Dictionary<string, int>();
+            _preferencesDirty = true;
+            ModLogger.Debug(LogCategory, $"Loaded opportunity state: {_opportunityTypePresented.Count} types tracked");
+        }
+
+        /// <summary>
         /// Gets the current player preferences based on recorded choices.
         /// </summary>
         public static PlayerPreferences GetPreferences()
@@ -87,6 +237,8 @@ namespace Enlisted.Features.Content
         {
             _behaviorCounts.Clear();
             _contentEngagement.Clear();
+            _opportunityTypePresented.Clear();
+            _opportunityTypeEngaged.Clear();
             _cachedPreferences = null;
             _preferencesDirty = true;
             ModLogger.Info(LogCategory, "Behavior tracking reset");

@@ -1,0 +1,213 @@
+{
+  "$schema": "simulation_config_schema.json",
+  "_comment": "Company simulation configuration for daily background events",
+
+  "roster": {
+    "baseRecoveryChance": 0.15,
+    "baseDeathChance": 0.02,
+    "baseSicknessRate": 2.0,
+    "baseInjuryRate": 1.0,
+    "baseDesertionRate": 0.5,
+    "_comment": "Rates are per 100 soldiers per day. Sickness 2% means ~2 sick per day in 100-man company"
+  },
+
+  "incidents": {
+    "minPerDay": 0,
+    "maxPerDay": 2,
+    "cooldownDays": 3,
+    "_comment": "How many random incidents can fire each day and default cooldown between repeats"
+  },
+
+  "pressure_thresholds": {
+    "lowSuppliesDays": 3,
+    "lowMoraleDays": 3,
+    "lowRestDays": 2,
+    "highSicknessDays": 2,
+    "desertionCount": 5,
+    "_comment": "Days of low values before triggering crisis events"
+  },
+
+  "incident_definitions": [
+    {
+      "id": "inc_dice_game",
+      "category": "camp_life",
+      "severity": "flavor",
+      "textId": "{=sim_inc_dice}The men found a corner for dice. Someone's flush, someone's broke.",
+      "weight": 15,
+      "cooldown": 5,
+      "effects": {}
+    },
+    {
+      "id": "inc_song_night",
+      "category": "camp_life",
+      "severity": "flavor",
+      "textId": "{=sim_inc_song}An old campaign song drifted through the tents last night.",
+      "weight": 12,
+      "cooldown": 7,
+      "effects": { "Morale": 2 }
+    },
+    {
+      "id": "inc_argument_minor",
+      "category": "discipline",
+      "severity": "minor",
+      "textId": "{=sim_inc_argument}Words exchanged over rations. No blows, but bad blood.",
+      "weight": 12,
+      "cooldown": 4,
+      "effects": { "Discipline": -1 }
+    },
+    {
+      "id": "inc_fight_minor",
+      "category": "discipline",
+      "severity": "minor",
+      "textId": "{=sim_inc_fight}A scuffle in the camp. Bloody noses but nothing broken.",
+      "weight": 8,
+      "cooldown": 5,
+      "effects": { "Morale": -2, "Discipline": -2 }
+    },
+    {
+      "id": "inc_theft_suspected",
+      "category": "problems",
+      "severity": "minor",
+      "textId": "{=sim_inc_theft}Someone's kit went missing. Accusations fly but no proof.",
+      "weight": 8,
+      "cooldown": 6,
+      "effects": { "Morale": -3, "Discipline": -1 },
+      "setsFlag": "theft_tension"
+    },
+    {
+      "id": "inc_letters_home",
+      "category": "social",
+      "severity": "flavor",
+      "textId": "{=sim_inc_letters}A merchant passed through. Letters sent home.",
+      "weight": 10,
+      "cooldown": 10,
+      "effects": { "Morale": 3 }
+    },
+    {
+      "id": "inc_foraging_good",
+      "category": "discovery",
+      "severity": "minor",
+      "textId": "{=sim_inc_forage_good}Foragers found a berry patch. Fresh food for once.",
+      "weight": 8,
+      "cooldown": 7,
+      "effects": { "Supplies": 3, "Morale": 1 }
+    },
+    {
+      "id": "inc_foraging_bad",
+      "category": "problems",
+      "severity": "minor",
+      "textId": "{=sim_inc_forage_bad}Foragers came back empty. The land's been picked clean.",
+      "weight": 6,
+      "cooldown": 5,
+      "effects": { "Supplies": -2 }
+    },
+    {
+      "id": "inc_equipment_break",
+      "category": "problems",
+      "severity": "minor",
+      "textId": "{=sim_inc_equip_break}A shield split during drill. Shoddy wood.",
+      "weight": 10,
+      "cooldown": 4,
+      "effects": { "Equipment": -2 }
+    },
+    {
+      "id": "inc_repair_session",
+      "category": "camp_life",
+      "severity": "flavor",
+      "textId": "{=sim_inc_repair}The men spent the evening mending kit. Quiet, useful work.",
+      "weight": 10,
+      "cooldown": 5,
+      "effects": { "Equipment": 2, "Rest": -1 }
+    },
+    {
+      "id": "inc_campfire_tales",
+      "category": "social",
+      "severity": "flavor",
+      "textId": "{=sim_inc_tales}Stories around the fire. The old hands shared war memories.",
+      "weight": 12,
+      "cooldown": 5,
+      "effects": { "Morale": 2 }
+    },
+    {
+      "id": "inc_drill_accident",
+      "category": "problems",
+      "severity": "notable",
+      "textId": "{=sim_inc_drill_accident}A training accident. Someone took a blow meant for straw.",
+      "weight": 5,
+      "cooldown": 7,
+      "effects": { "Morale": -2 }
+    },
+    {
+      "id": "inc_good_weather",
+      "category": "camp_life",
+      "severity": "flavor",
+      "textId": "{=sim_inc_weather_good}Clear skies and a warm breeze. Spirits lifted.",
+      "weight": 8,
+      "cooldown": 5,
+      "effects": { "Morale": 2, "Rest": 2 }
+    },
+    {
+      "id": "inc_bad_weather",
+      "category": "problems",
+      "severity": "minor",
+      "textId": "{=sim_inc_weather_bad}Rain soaked the camp. Everything damp and miserable.",
+      "weight": 8,
+      "cooldown": 4,
+      "effects": { "Morale": -2, "Rest": -2 }
+    },
+    {
+      "id": "inc_rumor_victory",
+      "category": "social",
+      "severity": "flavor",
+      "textId": "{=sim_inc_rumor_victory}Word of a victory elsewhere in the realm. The men cheer.",
+      "weight": 6,
+      "cooldown": 10,
+      "effects": { "Morale": 3 }
+    },
+    {
+      "id": "inc_rumor_defeat",
+      "category": "problems",
+      "severity": "minor",
+      "textId": "{=sim_inc_rumor_defeat}Dark rumors of a defeat. The men grow quiet.",
+      "weight": 5,
+      "cooldown": 10,
+      "effects": { "Morale": -3 }
+    },
+    {
+      "id": "inc_found_coin",
+      "category": "discovery",
+      "severity": "flavor",
+      "textId": "{=sim_inc_found_coin}Someone found a coin in the road. Lucky day for him.",
+      "weight": 5,
+      "cooldown": 14,
+      "effects": {}
+    },
+    {
+      "id": "inc_local_tavern",
+      "category": "social",
+      "severity": "minor",
+      "textId": "{=sim_inc_tavern}Some of the men snuck off to a local tavern. Came back in good spirits.",
+      "weight": 6,
+      "cooldown": 7,
+      "effects": { "Morale": 3, "Discipline": -2 }
+    },
+    {
+      "id": "inc_sermon",
+      "category": "social",
+      "severity": "flavor",
+      "textId": "{=sim_inc_sermon}A traveling priest gave a sermon. The pious among us knelt.",
+      "weight": 5,
+      "cooldown": 10,
+      "effects": { "Morale": 2 }
+    },
+    {
+      "id": "inc_veteran_advice",
+      "category": "social",
+      "severity": "flavor",
+      "textId": "{=sim_inc_veteran}A veteran showed the greenhorns a trick or two.",
+      "weight": 8,
+      "cooldown": 6,
+      "effects": { "Morale": 1 }
+    }
+  ]
+}

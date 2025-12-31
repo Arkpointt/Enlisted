@@ -32,7 +32,7 @@
         "titleId": "evt_ret_volunteers_title",
         "title": "After the Battle",
         "setupId": "evt_ret_volunteers_setup",
-        "setup": "The battle is won. As your men regroup, you notice soldiers from other units looking your way. Your reputation precedes you, Commander.\n\nA corporal approaches. \"Sir, some of the lads want to join your retinue. What should I tell them?\"",
+        "setup": "A corporal approaches. \"Sir, some soldiers want to join your retinue. What should I tell them?\"",
         "options": [
           {
             "id": "accept_volunteers",
@@ -115,7 +115,7 @@
         "titleId": "evt_ret_recognition_title",
         "title": "Recognition in the Ranks",
         "setupId": "evt_ret_recognition_setup",
-        "setup": "Word of your recent victory has spread through the camp. Your retinue's performance in battle has not gone unnoticed.\n\n{LORD_NAME} approaches you after the evening meal. \"Your men fought well, Commander. The army could use more leaders like you.\"",
+        "setup": "{LORD_NAME} approaches. \"Your men fought well, Commander. The army could use more leaders like you.\"",
         "options": [
           {
             "id": "humble",
@@ -537,7 +537,7 @@
         "titleId": "evt_ret_dispute_title",
         "title": "Trouble in the Ranks",
         "setupId": "evt_ret_dispute_setup",
-        "setup": "Shouting draws you to the fire pit. Two of your soldiers are at each other's throats - one has the other by the collar.\n\n\"He cheated at dice!\" one shouts. \"I'll kill him!\"\n\nYour men watch, waiting to see what their commander does.",
+        "setup": "Two of your soldiers are at each other's throats. \"He cheated at dice!\" one shouts. Your men watch, waiting.",
         "options": [
           {
             "id": "discipline_both",
@@ -637,7 +637,7 @@
         "titleId": "evt_ret_leave_title",
         "title": "A Soldier's Plea",
         "setupId": "evt_ret_leave_setup",
-        "setup": "One of your soldiers approaches, cap in hand. He's been reliable - never shirks, never complains.\n\n\"Commander... my wife sent word. The baby's coming. I know the timing's poor, but... please. Let me go to her. Just for a week.\"",
+        "setup": "A reliable soldier approaches. \"Commander... my wife sent word. The baby's coming. Please, let me go to her. Just for a week.\"",
         "options": [
           {
             "id": "grant_leave",
@@ -717,7 +717,7 @@
         "titleId": "evt_ret_theft_title",
         "title": "Missing Rations",
         "setupId": "evt_ret_theft_setup",
-        "setup": "Your corporal reports a problem: rations have gone missing from the supply cart. Half a week's bread and salt meat, vanished in the night.\n\n\"Could be one of ours, Commander. Could be camp followers. What do you want to do?\"",
+        "setup": "Your corporal reports rations missing from the supply cart. \"Could be one of ours. What do you want to do?\"",
         "options": [
           {
             "id": "investigate",
@@ -811,7 +811,7 @@
         "titleId": "evt_ret_veteran_title",
         "title": "The Old Hand",
         "setupId": "evt_ret_veteran_setup",
-        "setup": "Your oldest soldier pulls you aside after the morning briefing. He's fought in more wars than you've seen winters.\n\n\"Commander... that order you gave. About the patrol route. With respect, it's a bad call. I've seen men die going that way. The ravine bottlenecks. Perfect for ambush.\"",
+        "setup": "Your veteran pulls you aside. \"Commander... that patrol route. With respect, it's a bad call. The ravine bottlenecks. Perfect for ambush.\"",
         "options": [
           {
             "id": "listen",
@@ -893,7 +893,7 @@
         "titleId": "evt_ret_recruits_title",
         "title": "Raw Meat",
         "setupId": "evt_ret_recruits_setup",
-        "setup": "Three new soldiers report for duty, fresh from the training grounds. They look around nervously, still soft, still scared. Your veterans eye them with a mixture of amusement and contempt.\n\nHow do you welcome them to your retinue?",
+        "setup": "Three new soldiers report for duty, fresh from training. Your veterans eye them with amusement. How do you welcome them?",
         "options": [
           {
             "id": "harsh",
@@ -976,7 +976,7 @@
         "titleId": "evt_ret_test_title",
         "title": "Expendable",
         "setupId": "evt_ret_test_setup",
-        "setup": "Your lord calls you to his tent. His expression is grim.\n\n\"I need your retinue to hold the rear while the army withdraws. It's a dangerous position - there will be casualties. But someone must buy us time.\"\n\nHe doesn't say it, but you know: your men are the expendable ones.",
+        "setup": "Your lord calls you to his tent. \"I need your retinue to hold the rear while the army withdraws. It's dangerous, but someone must buy us time.\"",
         "options": [
           {
             "id": "obey",
@@ -1058,7 +1058,7 @@
         "titleId": "evt_ret_morale_title",
         "title": "Grumbling",
         "setupId": "evt_ret_morale_setup",
-        "setup": "Your men are tired, hungry, and fed up. They don't say it to your face, but you hear them muttering around the cookfires. Morale is dangerously low.\n\nSomething must be done before discontent turns to desertion.",
+        "setup": "Morale is dangerously low. You hear grumbling around the cookfires. Something must be done.",
         "options": [
           {
             "id": "share_rations",
@@ -1138,7 +1138,7 @@
         "titleId": "evt_ret_desertion_title",
         "title": "The Runner",
         "setupId": "evt_ret_desertion_setup",
-        "setup": "Your night watch caught a soldier trying to slip away with his gear. He stands before you now, shame-faced and trembling.\n\n\"Commander, I... I couldn't take it anymore. My nerve broke. Please, I wasn't thinking. I just wanted to go home.\"",
+        "setup": "Night watch caught a soldier trying to desert. He stands before you, trembling. \"Commander... my nerve broke. I just wanted to go home.\"",
         "options": [
           {
             "id": "punish",
@@ -1219,7 +1219,7 @@
         "titleId": "evt_ret_promotion_title",
         "title": "From the Ranks",
         "setupId": "evt_ret_promotion_setup",
-        "setup": "One of your soldiers has distinguished himself. In the last skirmish, he held a breach single-handed while others fell back. He's earned recognition.\n\nHow do you reward such bravery?",
+        "setup": "One of your soldiers distinguished himself in the last skirmish, holding a breach single-handed. How do you reward such bravery?",
         "options": [
           {
             "id": "promote_publicly",
@@ -1300,7 +1300,7 @@
         "titleId": "evt_ret_illness_title",
         "title": "Fever in Camp",
         "setupId": "evt_ret_illness_setup",
-        "setup": "Three of your soldiers are down with fever. They cough and shiver in their tents. The camp surgeon looks grim.\n\n\"Could spread, Commander. We should isolate them. But that means stopping to rest while the army marches on.\"",
+        "setup": "Three soldiers are down with fever. The camp surgeon warns it could spread if not isolated.",
         "options": [
           {
             "id": "quarantine",
@@ -1385,7 +1385,7 @@
         "titleId": "evt_ret_memorial_title",
         "title": "A Soldier Remembered",
         "setupId": "evt_ret_memorial_setup",
-        "setup": "One of your named veterans has fallen in battle. Your men gather in somber silence as the body is prepared. This soldier was more than just another face in the ranks - they had earned a name, a reputation, a place in the company's memory.\n\nThe others watch you, waiting to see how you honor the fallen.",
+        "setup": "One of your named veterans has fallen in battle. Your men gather in somber silence. How do you honor the fallen?",
         "options": [
           {
             "id": "hold_memorial",

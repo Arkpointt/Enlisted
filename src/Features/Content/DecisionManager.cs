@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Enlisted.Features.Camp;
+using Enlisted.Features.Camp.Models;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Mod.Core.Logging;
@@ -57,13 +59,117 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Gets all automatic decisions that should trigger based on current context.
-        /// These appear in the Opportunities section.
+        /// These appear in the Opportunities section, powered by the CampOpportunityGenerator.
         /// </summary>
         public IReadOnlyList<DecisionAvailability> GetAvailableOpportunities()
         {
-            // Automatic decisions ("Opportunities") require trigger evaluation (activity, flags, weekly_tick, etc.).
-            // That logic is intentionally deferred; returning none keeps the menu clean until triggers are implemented.
-            return Array.Empty<DecisionAvailability>();
+            var result = new List<DecisionAvailability>();
+
+            try
+            {
+                var generator = CampOpportunityGenerator.Instance;
+                if (generator == null)
+                {
+                    return result;
+                }
+
+                var opportunities = generator.GenerateCampLife();
+                foreach (var opp in opportunities)
+                {
+                    result.Add(ConvertToDecisionAvailability(opp));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get camp opportunities", ex);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Converts a CampOpportunity to a DecisionAvailability for menu display.
+        /// If the opportunity has a TargetDecisionId, uses that decision's definition.
+        /// </summary>
+        private DecisionAvailability ConvertToDecisionAvailability(CampOpportunity opportunity)
+        {
+            DecisionDefinition decision;
+
+            // Check if opportunity targets an existing decision
+            if (!string.IsNullOrEmpty(opportunity.TargetDecisionId))
+            {
+                var targetDecision = DecisionCatalog.GetDecision(opportunity.TargetDecisionId);
+                if (targetDecision != null)
+                {
+                    // Use the target decision but keep opportunity's display text
+                    decision = new DecisionDefinition
+                    {
+                        Id = targetDecision.Id,
+                        TitleId = !string.IsNullOrEmpty(opportunity.TitleId) ? opportunity.TitleId : targetDecision.TitleId,
+                        TitleFallback = !string.IsNullOrEmpty(opportunity.TitleFallback) ? opportunity.TitleFallback : targetDecision.TitleFallback,
+                        SetupId = !string.IsNullOrEmpty(opportunity.DescriptionId) ? opportunity.DescriptionId : targetDecision.SetupId,
+                        SetupFallback = !string.IsNullOrEmpty(opportunity.DescriptionFallback) ? opportunity.DescriptionFallback : targetDecision.SetupFallback,
+                        MenuSection = "opportunities",
+                        IsPlayerInitiated = false,
+                        Options = targetDecision.Options,
+                        Timing = targetDecision.Timing,
+                        Requirements = targetDecision.Requirements
+                    };
+                    ModLogger.Debug(LogCategory, $"Opportunity {opportunity.Id} targets decision {opportunity.TargetDecisionId}");
+                }
+                else
+                {
+                    ModLogger.Warn(LogCategory, $"Opportunity {opportunity.Id} targets unknown decision {opportunity.TargetDecisionId}");
+                    decision = CreateSyntheticDecision(opportunity);
+                }
+            }
+            else
+            {
+                decision = CreateSyntheticDecision(opportunity);
+            }
+
+            // Check if this is risky (player on duty and order compatibility)
+            bool isRisky = false;
+            string riskyTooltip = null;
+            var context = CampOpportunityGenerator.Instance?.AnalyzeCampContext();
+
+            if (context?.PlayerOnDuty == true)
+            {
+                var compat = opportunity.GetOrderCompatibility("");
+                isRisky = compat == "risky";
+                if (isRisky)
+                {
+                    riskyTooltip = opportunity.TooltipRiskyFallback;
+                }
+            }
+
+            return new DecisionAvailability
+            {
+                Decision = decision,
+                IsAvailable = true,
+                IsVisible = true,
+                UnavailableReason = null,
+                IsRisky = isRisky,
+                RiskyTooltip = riskyTooltip,
+                CampOpportunity = opportunity
+            };
+        }
+
+        /// <summary>
+        /// Creates a synthetic decision definition from an opportunity when no target decision exists.
+        /// </summary>
+        private static DecisionDefinition CreateSyntheticDecision(CampOpportunity opportunity)
+        {
+            return new DecisionDefinition
+            {
+                Id = opportunity.Id,
+                TitleId = opportunity.TitleId,
+                TitleFallback = opportunity.TitleFallback,
+                SetupId = opportunity.DescriptionId,
+                SetupFallback = opportunity.DescriptionFallback,
+                MenuSection = "opportunities",
+                IsPlayerInitiated = false
+            };
         }
 
         /// <summary>
@@ -276,6 +382,21 @@ namespace Enlisted.Features.Content
         /// Shown as tooltip when disabled.
         /// </summary>
         public string UnavailableReason { get; set; }
+
+        /// <summary>
+        /// True if this opportunity is risky (player on duty, could get caught).
+        /// </summary>
+        public bool IsRisky { get; set; }
+
+        /// <summary>
+        /// Tooltip explaining the risk when on duty.
+        /// </summary>
+        public string RiskyTooltip { get; set; }
+
+        /// <summary>
+        /// The source CampOpportunity if this came from the generator.
+        /// </summary>
+        public CampOpportunity CampOpportunity { get; set; }
     }
 }
 

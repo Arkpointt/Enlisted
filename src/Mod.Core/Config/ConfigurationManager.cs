@@ -4,6 +4,7 @@ using System.IO;
 using Enlisted.Mod.Core.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using TaleWorlds.Library;
 
 namespace Enlisted.Mod.Core.Config
 {
@@ -14,9 +15,42 @@ namespace Enlisted.Mod.Core.Config
     public static class ConfigurationManager
     {
         private const string LogCategory = "Config";
-        private static readonly string ModuleDataPath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory, 
-            "..", "..", "ModuleData", "Enlisted");
+
+        /// <summary>
+        /// Gets the module data path. Uses TaleWorlds.Library.BasePath to find the game root,
+        /// then constructs the path to Modules/Enlisted/ModuleData/Enlisted.
+        /// </summary>
+        private static string ModuleDataPath
+        {
+            get
+            {
+                if (_moduleDataPath == null)
+                {
+                    try
+                    {
+                        // TaleWorlds.Library.BasePath.Name gives us the game installation root
+                        // Config files are in <GameRoot>/Modules/Enlisted/ModuleData/Enlisted/
+                        var gameRoot = BasePath.Name;
+                        _moduleDataPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted");
+
+                        if (!Directory.Exists(_moduleDataPath))
+                        {
+                            ModLogger.Warn(LogCategory, $"Module data path not found: {_moduleDataPath}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Error(LogCategory, "Failed to determine module data path", ex);
+                        // Fallback to old path construction (may not work but better than null)
+                        _moduleDataPath = Path.Combine(
+                            AppDomain.CurrentDomain.BaseDirectory,
+                            "..", "..", "Modules", "Enlisted", "ModuleData", "Enlisted");
+                    }
+                }
+                return _moduleDataPath;
+            }
+        }
+        private static string _moduleDataPath;
 
         private static readonly JsonSerializerSettings SnakeCaseSettings = new JsonSerializerSettings
         {
@@ -43,7 +77,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "enlisted_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "enlisted_config.json");
                 if (!File.Exists(path))
                 {
                     return new RetirementConfig();
@@ -67,7 +101,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "enlisted_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "enlisted_config.json");
                 if (!File.Exists(path))
                 {
                     ModLogger.Warn(LogCategory, $"Escalation config not found: {path}");
@@ -92,7 +126,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "enlisted_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "enlisted_config.json");
                 if (!File.Exists(path))
                 {
                     return new GameplayConfig();
@@ -110,20 +144,32 @@ namespace Enlisted.Mod.Core.Config
         }
 
         /// <summary>
-        /// Get module data path for config file consumers (Phase 1 stub).
+        /// Get module data path for config file consumers.
+        /// Uses TaleWorlds.Library.BasePath for correct path resolution.
         /// </summary>
         public static string GetModuleDataPathForConsumers()
         {
-            return Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "..", "..", "ModuleData", "Enlisted");
+            try
+            {
+                // Use BasePath.Name to get game root, then add Modules\Enlisted\ModuleData\Enlisted
+                var gameRoot = BasePath.Name;
+                return Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to determine module data path for consumers", ex);
+                // Fallback to corrected path (may not work but better than null)
+                return Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "..", "..", "Modules", "Enlisted", "ModuleData", "Enlisted");
+            }
         }
 
         public static PlayerConditionsConfig LoadPlayerConditionsConfig()
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "enlisted_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "enlisted_config.json");
                 if (!File.Exists(path))
                 {
                     return new PlayerConditionsConfig();
@@ -144,7 +190,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "enlisted_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "enlisted_config.json");
                 if (!File.Exists(path))
                 {
                     return new QuartermasterConfig();
@@ -165,7 +211,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "enlisted_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "enlisted_config.json");
                 if (!File.Exists(path))
                 {
                     return new FinanceConfig();
@@ -186,7 +232,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "enlisted_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "enlisted_config.json");
                 if (!File.Exists(path))
                 {
                     return new CampLifeConfig();
@@ -211,7 +257,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "enlisted_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "enlisted_config.json");
                 if (!File.Exists(path))
                 {
                     return new EventPacingConfig();
@@ -225,6 +271,56 @@ namespace Enlisted.Mod.Core.Config
             {
                 ModLogger.Error(LogCategory, "Failed to load event pacing config", ex);
                 return new EventPacingConfig();
+            }
+        }
+
+        /// <summary>
+        /// Load orchestrator configuration from orchestrator section.
+        /// Controls world-state driven content delivery system.
+        /// </summary>
+        public static OrchestratorConfig LoadOrchestratorConfig()
+        {
+            try
+            {
+                var path = Path.Combine(ModuleDataPath, "Config", "enlisted_config.json");
+                if (!File.Exists(path))
+                {
+                    return new OrchestratorConfig();
+                }
+
+                var json = File.ReadAllText(path);
+                var config = DeserializeSnakeCase<EnlistedConfigRoot>(json);
+                return config?.Orchestrator ?? new OrchestratorConfig();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to load orchestrator config", ex);
+                return new OrchestratorConfig();
+            }
+        }
+
+        /// <summary>
+        /// Load native trait mapping configuration.
+        /// Controls how Enlisted reputation maps to native personality traits.
+        /// </summary>
+        public static NativeTraitMappingConfig LoadNativeTraitMappingConfig()
+        {
+            try
+            {
+                var path = Path.Combine(ModuleDataPath, "Config", "enlisted_config.json");
+                if (!File.Exists(path))
+                {
+                    return new NativeTraitMappingConfig();
+                }
+
+                var json = File.ReadAllText(path);
+                var config = DeserializeSnakeCase<EnlistedConfigRoot>(json);
+                return config?.NativeTraitMapping ?? new NativeTraitMappingConfig();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to load native trait mapping config", ex);
+                return new NativeTraitMappingConfig();
             }
         }
 
@@ -297,7 +393,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "retinue_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "retinue_config.json");
                 if (!File.Exists(path))
                 {
                     return new RetinueConfig();
@@ -320,7 +416,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "equipment_pricing.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "equipment_pricing.json");
                 if (!File.Exists(path))
                 {
                     return new EquipmentPricingConfig();
@@ -343,7 +439,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "progression_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "progression_config.json");
                 if (!File.Exists(path))
                 {
                     return GetFallbackRankTitle(tier);
@@ -392,7 +488,7 @@ namespace Enlisted.Mod.Core.Config
         {
             try
             {
-                var path = Path.Combine(ModuleDataPath, "progression_config.json");
+                var path = Path.Combine(ModuleDataPath, "Config", "progression_config.json");
                 if (!File.Exists(path))
                 {
                     return null;
@@ -419,6 +515,8 @@ namespace Enlisted.Mod.Core.Config
             public CampLifeConfig CampLife { get; set; }
             public PlayerConditionsConfig PlayerConditions { get; set; }
             public DecisionEventsConfig DecisionEvents { get; set; }
+            public OrchestratorConfig Orchestrator { get; set; }
+            public NativeTraitMappingConfig NativeTraitMapping { get; set; }
         }
 
         private sealed class ProgressionConfigFile
@@ -470,15 +568,15 @@ namespace Enlisted.Mod.Core.Config
         // Severance payouts used by camp menu flows.
         public int SeveranceVeteran { get; set; } = 500;
         public int SeveranceHonorable { get; set; } = 1000;
-        
+
         // Pension system
         public int PensionHonorableDaily { get; set; } = 50;
         public int PensionVeteranDaily { get; set; } = 100;
         public int PensionRelationStopThreshold { get; set; } = 0;
-        
+
         // Debug flags
         public bool DebugSkipGearStripping { get; set; } = false;
-        
+
         // Dialog-related retirement properties
         public int CooldownDays { get; set; } = 7;
         public int FirstTermGold { get; set; } = 1000;
@@ -501,7 +599,7 @@ namespace Enlisted.Mod.Core.Config
         public int MedicalRiskDecayIntervalDays { get; set; } = 1;
         public int ThresholdEventCooldownDays { get; set; } = 3;
     }
-    
+
     /// <summary>
     /// Player conditions configuration.
     /// </summary>
@@ -588,20 +686,9 @@ namespace Enlisted.Mod.Core.Config
         public int MaxPerWeek { get; set; } = 8;
         public int MinHoursBetween { get; set; } = 6;
 
-        // Narrative event pacing window (EventPacingManager fires events within this range)
-        public int EventWindowMinDays { get; set; } = 3;
-        public int EventWindowMaxDays { get; set; } = 5;
-
         // Per-event and per-category cooldowns
         public int PerEventCooldownDays { get; set; } = 7;
         public int PerCategoryCooldownDays { get; set; } = 1;
-
-        // Specific hours when events can be evaluated (e.g., morning, afternoon, evening)
-        public List<int> EvaluationHours { get; set; } = new List<int> { 8, 14, 20 };
-
-        // Quiet day system - random chance to skip events entirely for immersion
-        public bool AllowQuietDays { get; set; } = true;
-        public float QuietDayChance { get; set; } = 0.15f;
     }
 
     /// <summary>
@@ -692,5 +779,52 @@ namespace Enlisted.Mod.Core.Config
         public int MinimumHealAmount { get; set; } = 20;
     }
 
+    /// <summary>
+    /// Content orchestrator configuration for world-state driven content delivery.
+    /// </summary>
+    public sealed class OrchestratorConfig
+    {
+        public bool Enabled { get; set; } = false;
+        public bool LogDecisions { get; set; } = true;
+        public Dictionary<string, FrequencyTable> FrequencyTables { get; set; } = new Dictionary<string, FrequencyTable>();
+    }
+
+    /// <summary>
+    /// Frequency table for content delivery based on world state.
+    /// </summary>
+    public sealed class FrequencyTable
+    {
+        public float Base { get; set; }
+        public float Min { get; set; }
+        public float Max { get; set; }
+    }
+
+    /// <summary>
+    /// Configuration for mapping Enlisted custom reputation to native personality traits.
+    /// This provides character sheet integration and affects native lord/companion reactions.
+    /// </summary>
+    public sealed class NativeTraitMappingConfig
+    {
+        /// <summary>
+        /// Whether native trait mapping is enabled.
+        /// When disabled, reputation changes don't affect native personality traits.
+        /// </summary>
+        public bool Enabled { get; set; } = true;
+
+        /// <summary>
+        /// Divisor for scaling reputation changes to trait XP.
+        /// Higher values = slower trait progression. Recommended: 5 for 100-day careers.
+        /// Example: +10 Soldier Rep / 5 = +2 Valor trait XP.
+        /// </summary>
+        public int ScaleDivisor { get; set; } = 5;
+
+        /// <summary>
+        /// Minimum trait change value to apply. Changes below this are skipped to avoid spam.
+        /// Example: If ScaleDivisor=5 and MinimumChange=1, rep changes below 5 are ignored.
+        /// </summary>
+        public int MinimumChange { get; set; } = 1;
+    }
+
 }
+
 

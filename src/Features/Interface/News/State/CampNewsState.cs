@@ -26,6 +26,12 @@ namespace Enlisted.Features.Interface.News.State
         private int _lastCompanyManCount = -1;
         private int _lastCompanyWoundedCount = -1;
 
+        // Company status fields (updated by CompanySimulationBehavior)
+        public int LastFitForDuty { get; set; }
+        public int LastTotalStrength { get; set; }
+        public int LastNetChange { get; set; }
+        public string LastPulseText { get; set; } = string.Empty;
+
         public int LastGeneratedDayNumber => _lastGeneratedDayNumber;
         public CampLifeLedger Ledger => _ledger;
 
@@ -143,6 +149,22 @@ namespace Enlisted.Features.Interface.News.State
             // Baselines for deltas.
             dataStore.SyncData("cn_lastCompanyManCount", ref _lastCompanyManCount);
             dataStore.SyncData("cn_lastCompanyWoundedCount", ref _lastCompanyWoundedCount);
+
+            // Company simulation status fields
+            int lastFitForDuty = LastFitForDuty;
+            int lastTotalStrength = LastTotalStrength;
+            int lastNetChange = LastNetChange;
+            string lastPulseText = LastPulseText ?? string.Empty;
+
+            dataStore.SyncData("cn_lastFitForDuty", ref lastFitForDuty);
+            dataStore.SyncData("cn_lastTotalStrength", ref lastTotalStrength);
+            dataStore.SyncData("cn_lastNetChange", ref lastNetChange);
+            dataStore.SyncData("cn_lastPulseText", ref lastPulseText);
+
+            LastFitForDuty = lastFitForDuty;
+            LastTotalStrength = lastTotalStrength;
+            LastNetChange = lastNetChange;
+            LastPulseText = lastPulseText ?? string.Empty;
 
             SyncArchive(dataStore);
             SyncLedger(dataStore);

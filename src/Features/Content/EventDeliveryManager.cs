@@ -463,213 +463,7 @@ namespace Enlisted.Features.Content
                 }
             }
 
-            // Handle baggage check special events
-            HandleBaggageCheckOutcome(_currentEvent, option, isRisky, success);
-
             OnEventClosed();
-        }
-
-        /// <summary>
-        /// Handles baggage check event outcomes (contraband inspection at muster).
-        /// Calls EnlistmentBehavior methods to process confiscation, bribes, and smuggling.
-        /// </summary>
-        private void HandleBaggageCheckOutcome(EventDefinition evt, EventOption option, bool isRisky, bool success)
-        {
-            // isRisky passed from caller but not used here; success determines risky outcome
-            _ = isRisky;
-
-            if (evt == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            switch (evt.Id)
-            {
-                case "evt_baggage_lookaway":
-                    enlistment.HandleBaggageLookAway();
-                    break;
-
-                case "evt_baggage_bribe":
-                    HandleBribeBaggageEvent(option, success, enlistment);
-                    break;
-
-                case "evt_baggage_confiscate":
-                    HandleConfiscateBaggageEvent(option, success, enlistment);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Handles bribe event outcomes (QM rep 35-64).
-        /// Uses Charm skill to determine bribe success: 60+ auto-success, &lt;30 auto-fail, 30-59 roll.
-        /// </summary>
-        private void HandleBribeBaggageEvent(EventOption option, bool success, EnlistmentBehavior enlistment)
-        {
-            var contraband = enlistment.PendingContrabandCheck;
-            if (contraband == null)
-            {
-                return;
-            }
-
-            switch (option.Id)
-            {
-                case "bribe":
-                    // Calculate bribe amount first
-                    int bribeAmount = ContrabandChecker.CalculateBribeAmount(contraband.TotalValue);
-
-                    // Check if player can afford the bribe
-                    if (Hero.MainHero.Gold < bribeAmount)
-                    {
-                        // Can't afford bribe - confiscation instead
-                        enlistment.HandleBaggageConfiscation();
-
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"You can't afford the {bribeAmount} gold bribe. Contraband confiscated.",
-                            Colors.Red));
-                        break;
-                    }
-
-                    // Apply Charm skill check (60+ auto-success, <30 auto-fail, 30-59 roll)
-                    int charmSkill = Hero.MainHero.GetSkillValue(DefaultSkills.Charm);
-                    bool bribeSuccess = EvaluateCharmCheck(charmSkill);
-
-                    if (bribeSuccess)
-                    {
-                        // Successful bribe - pay and keep item
-                        enlistment.HandleBaggageBribeSuccess(bribeAmount);
-
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"Paid {bribeAmount} gold to the quartermaster. Contraband overlooked.",
-                            Colors.Yellow));
-                    }
-                    else
-                    {
-                        // Failed bribe negotiation - confiscation
-                        enlistment.HandleBaggageConfiscation();
-
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "Bribe rejected. Contraband confiscated.",
-                            Colors.Red));
-                    }
-                    break;
-
-                case "smuggle":
-                    if (success)
-                    {
-                        enlistment.HandleBaggageSmuggleSuccess();
-
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "Contraband hidden successfully. +15 Roguery XP.",
-                            Colors.Green));
-                    }
-                    else
-                    {
-                        enlistment.HandleBaggageSmuggleFailure();
-
-                        var mostValuable = contraband.MostValuable;
-                        string itemName = mostValuable?.Item?.Name?.ToString() ?? "item";
-
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"Caught smuggling! {itemName} confiscated. +4 Scrutiny, -10 QM reputation.",
-                            Colors.Red));
-                    }
-                    break;
-
-                case "surrender":
-                    // Voluntary surrender - confiscation with less penalty
-                    enlistment.HandleBaggageConfiscation();
-
-                    var surrenderedItem = contraband.MostValuable;
-                    string surrenderedItemName = surrenderedItem?.Item?.Name?.ToString() ?? "item";
-                    int fine = ContrabandChecker.CalculateFineAmount(surrenderedItem?.Value ?? 0);
-
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"{surrenderedItemName} surrendered. Fine: {fine} gold.",
-                        Colors.Yellow));
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Evaluates a Charm skill check for bribe negotiation.
-        /// Charm 60+: auto-success. Charm &lt;30: auto-fail. Charm 30-59: random roll.
-        /// </summary>
-        private bool EvaluateCharmCheck(int charmSkill)
-        {
-            if (charmSkill >= 60)
-            {
-                ModLogger.Debug(LogCategory, $"Charm {charmSkill} >= 60: auto-success");
-                return true;
-            }
-
-            if (charmSkill < 30)
-            {
-                ModLogger.Debug(LogCategory, $"Charm {charmSkill} < 30: auto-fail");
-                return false;
-            }
-
-            // Charm 30-59: roll based on skill
-            // Scale from 20% at Charm 30 to 80% at Charm 59
-            float successChance = 0.20f + ((charmSkill - 30) / 29f) * 0.60f;
-            bool success = MBRandom.RandomFloat < successChance;
-
-            ModLogger.Debug(LogCategory, $"Charm {charmSkill}: roll {successChance:P0} -> {(success ? "success" : "fail")}");
-            return success;
-        }
-
-        /// <summary>
-        /// Handles confiscation event outcomes (QM rep &lt; 35).
-        /// </summary>
-        private void HandleConfiscateBaggageEvent(EventOption option, bool success, EnlistmentBehavior enlistment)
-        {
-            var contraband = enlistment.PendingContrabandCheck;
-            if (contraband == null)
-            {
-                return;
-            }
-
-            switch (option.Id)
-            {
-                case "accept":
-                    enlistment.HandleBaggageConfiscation();
-
-                    var confiscatedItem = contraband.MostValuable;
-                    string itemName = confiscatedItem?.Item?.Name?.ToString() ?? "item";
-                    int fine = ContrabandChecker.CalculateFineAmount(confiscatedItem?.Value ?? 0);
-
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"{itemName} confiscated. Fine: {fine} gold. +2 Scrutiny.",
-                        Colors.Red));
-                    break;
-
-                case "protest":
-                    if (success)
-                    {
-                        // Rare success - keep item but owe a favor
-                        enlistment.ClearPendingContrabandCheck();
-
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "Protest accepted. You keep your item, but you owe the quartermaster.",
-                            Colors.Yellow));
-                    }
-                    else
-                    {
-                        // Made things worse
-                        enlistment.HandleBaggageConfiscation();
-
-                        // Extra discipline penalty already in JSON effects_failure
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "Protest backfired. Item confiscated with extra penalties.",
-                            Colors.Red));
-                    }
-                    break;
-            }
         }
 
         /// <summary>
@@ -968,6 +762,10 @@ namespace Enlisted.Features.Content
                 InformationManager.DisplayMessage(new InformationMessage(message, Colors.Green));
                 ModLogger.Info(LogCategory, $"Effects applied: {message}");
             }
+
+            // Check for trait milestones after applying effects (native trait integration)
+            // This detects when personality traits cross level thresholds and pushes news
+            TraitMilestoneTracker.CheckForMilestones(Hero.MainHero);
         }
 
         /// <summary>
@@ -1698,23 +1496,6 @@ namespace Enlisted.Features.Content
                 {
                     state.ClearFlag(flag);
                     ModLogger.Info(LogCategory, $"Cleared flag: {flag}");
-                }
-            }
-
-            // Advance onboarding if option triggers it
-            if (option.AdvancesOnboarding && state.IsOnboardingActive)
-            {
-                var oldStage = state.OnboardingStage;
-                state.AdvanceOnboardingStage();
-                var newStage = state.OnboardingStage;
-
-                if (newStage == 0)
-                {
-                    ModLogger.Info(LogCategory, $"Onboarding complete (was stage {oldStage})");
-                }
-                else
-                {
-                    ModLogger.Info(LogCategory, $"Onboarding advanced: stage {oldStage} to {newStage}");
                 }
             }
         }

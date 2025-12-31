@@ -79,6 +79,30 @@ namespace Enlisted.Features.Ranks
         }
 
         /// <summary>
+        ///     Get the culture-specific NCO title (Tier 4-6 ranks).
+        ///     Used for forecast text and camp narratives.
+        ///     Uses Tier 5 rank as representative NCO title.
+        /// </summary>
+        public static string GetNCOTitle(string cultureId)
+        {
+            // Use tier 5 (mid-NCO) as the representative NCO title
+            // Examples: "Principalis" (Empire), "Sergeant" (Vlandia), "Drengr" (Sturgia)
+            return GetRankTitle(5, cultureId);
+        }
+
+        /// <summary>
+        ///     Get the culture-specific Officer title (Tier 7-9 ranks).
+        ///     Used for forecast text and camp narratives.
+        ///     Uses Tier 7 rank as representative officer title.
+        /// </summary>
+        public static string GetOfficerTitle(string cultureId)
+        {
+            // Use tier 7 (entry officer) as the representative officer title
+            // Examples: "Centurion" (Empire), "Knight" (Vlandia), "Huskarl" (Sturgia)
+            return GetRankTitle(7, cultureId);
+        }
+
+        /// <summary>
         ///     Get the culture-specific commander/officer title (used in some events).
         ///     Uses Tier 8 rank from progression_config.json for consistency.
         /// </summary>

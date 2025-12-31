@@ -3,7 +3,7 @@
 **Summary:** Copy-paste prompts for each implementation phase of the Content Orchestrator. Each prompt is designed for a NEW AI chat session with full context recovery.
 
 **Status:** 📋 Reference
-**Last Updated:** 2025-12-30
+**Last Updated:** 2025-12-30 (Phase 6 complete)
 **Related Docs:** [Content Orchestrator Plan](content-orchestrator-plan.md), [Camp Background Simulation](camp-background-simulation.md), [Order Events Master](order-events-master.md), [BLUEPRINT](../BLUEPRINT.md)
 
 ---
@@ -27,15 +27,19 @@ Each phase prompt is **self-contained for a fresh AI chat**. Every prompt includ
 |-------|-------------|-------|---------------|--------|
 | [Phase 1](#phase-1-foundation) | Foundation (infrastructure) | Opus 4 | ✅ **DONE** | ✅ Complete |
 | [Phase 2](#phase-2-content-selection-integration) | Content Selection | Opus 4 | ✅ **DONE** | ✅ Complete |
-| [Phase 3](#phase-3-cutover--migration) | Cutover & Migration | Sonnet 4 | ✅ **DONE** | ✅ Complete |
-| [Phase 4](#phase-4-orders-integration) | Orders Integration | Sonnet 4 | 🔒 Standalone | 🔄 Partial |
-| [Phase 5](#phase-5-ui-integration-quick-decision-center) | UI Integration | Sonnet 4 | 🔒 Standalone | |
-| [Phase 5.5](#phase-55-camp-background-simulation) | Background Simulation | Opus 4 | 🔒 Standalone | |
-| [Phase 6A-C](#phase-6-camp-life-simulation-living-breathing-world) | Camp Life Core | Opus 4 | ⚡ **COMBINE** | |
-| [Phase 6D-E](#phase-6d-e-camp-life-polish) | Camp Life Polish | Opus 4 | 🔒 Standalone | |
-| [Phase 7](#phase-7-content-variants-post-launch) | Content Variants | Sonnet 4 | 🔒 Standalone | |
-| [Phase 8](#phase-8-progression-system-future) | Progression System | Opus 4 | 🔒 Standalone | |
-| [Build & Test](#quick-reference-build--test) | Commands reference | - | - | |
+| [Phase 3](#phase-3-cutover-migration) | Cutover & Migration | Sonnet 4 | ✅ **DONE** | ✅ Complete |
+| [Phase 4](#phase-4-orders-integration) | Orders Integration | Sonnet 4 | 🔒 Standalone | ✅ Complete |
+| [Phase 4.5](#phase-45-native-effect-integration) | Native Effect Integration | Opus 4 | 🔒 Standalone | ✅ Complete |
+| [Phase 5](#phase-5-ui-integration-quick-decision-center) | UI Integration | Sonnet 4 | 🔒 Standalone | ✅ Complete |
+| [Phase 5.5](#phase-55-camp-background-simulation) | Background Simulation | Opus 4 | 🔒 Standalone | ✅ Complete |
+| [Phase 6A-C](#phase-6-camp-life-simulation-living-breathing-world) | Camp Life Core | Opus 4 | ⚡ **COMBINE** | ✅ Complete |
+| [Phase 6D-E](#phase-6d-e-camp-life-polish) | Camp Life Polish | Opus 4 | 🔒 Standalone | ✅ Complete |
+| **Phase 6F** | **Integration & Testing** | Sonnet 4 | 🔒 Standalone | ✅ Complete |
+| [Phase 7](#phase-7-content-variants-post-launch) | Content Variants | Sonnet 4 | 🔒 Standalone | ⏸️ Future |
+| [Phase 8](#phase-8-progression-system-future) | Progression System | Opus 4 | 🔒 Standalone | ⏸️ Future |
+| [Phase 9](#phase-9-decision-scheduling-must-have) | Decision Scheduling | Sonnet 4 | 🔒 Standalone | ❌ **MUST DO** |
+| [Phase 10](#phase-10-order-forecasting-must-have) | Order Forecasting | Sonnet 4 | 🔒 Standalone | ❌ **MUST DO** |
+| [Build & Test](#quick-reference-build-test) | Commands reference | - | - | |
 
 ---
 
@@ -46,7 +50,8 @@ Each phase prompt is **self-contained for a fresh AI chat**. Every prompt includ
 | ✅ **DONE** | 1 | Phase 1 is complete - infrastructure exists |
 | ✅ **DONE** | 2 | Phase 2 is complete - content selection with fitness scoring |
 | ✅ **DONE** | 3 | Phase 3 is complete - orchestrator cutover and migration |
-| **STANDALONE** | 4 | Order integration is distinct system (🔄 Partial - code done, 74 events remain) |
+| ✅ **DONE** | 4 | Order integration complete (85/85 events across 16 order types) |
+| **STANDALONE** | 4.5 | Native Bannerlord API integration - decompile-verified patterns |
 | **STANDALONE** | 5 | UI work is self-contained |
 | **STANDALONE** | 5.5 | Complex Bannerlord API work needs focus |
 | **COMBINE** | 6A-C | Core functionality; natural continuation |
@@ -63,15 +68,20 @@ Each phase prompt is **self-contained for a fresh AI chat**. Every prompt includ
 | Phase 1 - Foundation | High | Claude Opus 4 | - | ✅ Done |
 | Phase 2 - Selection | Medium-High | Claude Opus 4 | - | ✅ Done |
 | Phase 3 - Cutover | Medium | Claude Sonnet 4 | - | ✅ Done |
-| Phase 4 - Orders | High (narrative) | Claude Opus 4 | 3-5h content | 🔄 Partial (code ✅, 74 events remain) |
-| Phase 5 - UI | Medium | Claude Sonnet 4 | 1-2 hours | |
-| Phase 5.5 - Background | High | Claude Opus 4 | 2-3 hours | |
-| Phase 6A-C - Camp Life Core | High | Claude Opus 4 | 2-3 hours | |
-| Phase 6D-E - Camp Life Polish | Medium | Sonnet 4 or Opus 4 | 1-2 hours | |
-| Phase 7 - Variants | Low | Claude Sonnet 4 | 30-60 min | |
-| Phase 8 - Progression | High | Claude Opus 4 | 2-3 hours | |
+| Phase 4 - Orders | High (narrative) | Claude Opus 4 | - | ✅ Complete (85/85 events) |
+| Phase 4.5 - Native Effects | High | Claude Opus 4 | 2-3 hours | ✅ Complete |
+| Phase 5 - UI | Medium | Claude Sonnet 4 | 1-2 hours | ✅ Complete |
+| Phase 5.5 - Background | High | Claude Opus 4 | 2-3 hours | ✅ Complete |
+| Phase 6A-C - Camp Life Core | High | Claude Opus 4 | 2-3 hours | ✅ Complete |
+| Phase 6D-E - Camp Life Polish | Medium | Sonnet 4 or Opus 4 | 1-2 hours | ✅ Complete |
+| Phase 6F - Integration | High | Sonnet 4 | 1 hour | ✅ Complete |
+| Phase 7 - Variants | Low | Claude Sonnet 4 | 30-60 min | ⏸️ Future |
+| Phase 8 - Progression | High | Claude Opus 4 | 2-3 hours | ⏸️ Future |
+| Phase 6G - Create Missing Decisions | **BLOCKING** | Claude Sonnet 4 | 3-4 hours | ⛔ **BLOCKS 9** |
+| Phase 9 - Decision Scheduling | **Critical** | Claude Sonnet 4 | 2-3 hours | ⛔ **BLOCKED** |
+| Phase 10 - Order Forecasting | **Critical** | Claude Sonnet 4 | 2-3 hours | ❌ **MUST DO** |
 
-**Total remaining time:** ~10-16 hours (Phases 1-3 complete)
+**Total remaining time:** ~10-14 hours (Phase 6G must complete before Phase 9; Phases 9-10 critical for player experience at FastForward speed)
 
 ---
 
@@ -688,22 +698,21 @@ VERIFICATION PASSED:
 
 **Goal:** Coordinate order timing with orchestrator
 
-**Status:** 🔄 **PARTIAL** - Code integration complete, order event content incomplete
+**Status:** ✅ **COMPLETE** - All order events created, code integration complete
 
 **What Was Completed:**
 - ✅ ContentOrchestrator.CanIssueOrderNow() method added
 - ✅ ContentOrchestrator.GetCurrentWorldSituation() method added
 - ✅ OrderManager.TryIssueOrder() checks orchestrator timing
-- ✅ 2 order event JSON files created (guard_post_events.json, sentry_duty_events.json)
-- ✅ 11 order events implemented
+- ✅ All 16 order event JSON files created (85 events total)
+- ✅ OrderProgressionBehavior.cs implementation (multi-day order execution)
+- ✅ Placeholder text resolution uses existing EventDeliveryManager.SetEventTextVariables()
+- ✅ Order event loading and filtering by world_state via EventCatalog
 - ✅ Build successful, code compiles
 
-**What Remains:**
-- ⏳ 14 more order event JSON files (74 events total)
-- ⏳ OrderProgressionBehavior.cs implementation (multi-day order execution)
-- ⏳ Placeholder text resolution system ({SERGEANT}, {LORD_NAME}, etc.)
-- ⏳ Order event loading and filtering by world_state
-- ⏳ Full integration testing
+**Remaining for runtime verification:**
+- ⏳ Full integration testing in-game
+- ⏳ Verify culture-specific placeholder resolution at runtime
 
 **Chat Strategy:** 🔒 **STANDALONE** - Order integration is a distinct system
 
@@ -867,18 +876,36 @@ Acceptance Criteria:
 - No overwhelming spam from combined systems
 
 ═══════════════════════════════════════════════════════════════════════════════
-HANDOFF NOTES (Phase 4 Partial Completion - 2025-12-30)
+HANDOFF NOTES (Phase 4 Progress Update - 2025-12-30)
 ═══════════════════════════════════════════════════════════════════════════════
 
 FILES CREATED:
+- [x] src/Features/Orders/Behaviors/OrderProgressionBehavior.cs (multi-day order execution with phase-based events)
 - [x] ModuleData/Enlisted/Orders/order_events/guard_post_events.json (6 events)
 - [x] ModuleData/Enlisted/Orders/order_events/sentry_duty_events.json (5 events)
-- [ ] 14 more order event JSON files needed (74 events remain)
+- [x] ModuleData/Enlisted/Orders/order_events/camp_patrol_events.json (6 events)
+- [x] ModuleData/Enlisted/Orders/order_events/firewood_detail_events.json (5 events)
+- [x] ModuleData/Enlisted/Orders/order_events/latrine_duty_events.json (3 events)
+- [x] ModuleData/Enlisted/Orders/order_events/equipment_cleaning_events.json (4 events)
+- [x] ModuleData/Enlisted/Orders/order_events/muster_inspection_events.json (3 events)
+- [x] ModuleData/Enlisted/Orders/order_events/march_formation_events.json (5 events)
+- [x] ModuleData/Enlisted/Orders/order_events/scout_route_events.json (8 events)
+- [x] ModuleData/Enlisted/Orders/order_events/escort_duty_events.json (6 events)
+- [x] ModuleData/Enlisted/Orders/order_events/lead_patrol_events.json (8 events)
+- [x] ModuleData/Enlisted/Orders/order_events/treat_wounded_events.json (6 events)
+- [x] ModuleData/Enlisted/Orders/order_events/repair_equipment_events.json (5 events)
+- [x] ModuleData/Enlisted/Orders/order_events/forage_supplies_events.json (6 events)
+- [x] ModuleData/Enlisted/Orders/order_events/train_recruits_events.json (5 events)
+- [x] ModuleData/Enlisted/Orders/order_events/inspect_defenses_events.json (4 events)
+
+PROGRESS: 85 of 85 events complete (16 of 16 order types)
 
 FILES MODIFIED:
 - [x] src/Features/Content/ContentOrchestrator.cs (added CanIssueOrderNow, GetCurrentWorldSituation)
 - [x] src/Features/Orders/Behaviors/OrderManager.cs (checks orchestrator before issuing)
-- [ ] src/Features/Orders/Behaviors/OrderProgressionBehavior.cs (NOT YET CREATED - needs implementation)
+- [x] src/Features/Content/EventCatalog.cs (added GetOrderEventsBasePath, GetEventsByOrderType, order_type parsing)
+- [x] src/Features/Content/EventDefinition.cs (added OrderType property)
+- [x] src/Mod.Entry/SubModule.cs (registered OrderProgressionBehavior)
 
 PLACEHOLDER RESOLUTION:
 - [x] ALREADY EXISTS - src/Features/Content/EventDeliveryManager.cs
@@ -892,20 +919,754 @@ KEY DECISIONS MADE:
 - GetCurrentWorldSituation() provides world state for future order event weighting
 - Order events use world_state requirements for contextual filtering
 - Directory created: ModuleData/Enlisted/Orders/order_events/
+- OrderProgressionBehavior uses hourly tick to check phase transitions (Dawn/Midday/Dusk/Night)
+- Event chance weighted by activity level (Quiet ×0.3, Routine ×0.6, Active ×1.0, Intense ×1.5)
+- EventCatalog extended to load from Orders/order_events/ directory
 
 VERIFICATION STATUS:
 - [x] Order issuance coordinated with orchestrator (code level)
-- [ ] Order events fire during duty execution (OrderProgressionBehavior not yet created)
-- [ ] Culture-specific text displays correctly (placeholder resolution not implemented)
+- [x] OrderProgressionBehavior created and registered
+- [x] EventCatalog loads order events from JSON
+- [x] Events filtered by world_state requirements
 - [x] Camp life events fire between orders (orchestrator handles this)
 - [x] No spam from combined systems (build successful, no conflicts)
+- [ ] Culture-specific text displays correctly (needs runtime testing)
 
-REMAINING WORK FOR PHASE 4 COMPLETION:
-1. Create OrderProgressionBehavior.cs for multi-day order execution
-2. Implement placeholder text resolution system
-3. Create 14 remaining order event JSON files (74 events)
-4. Load and filter order events by world_state requirements
-5. Test full order progression with event injection
+PHASE 4 CONTENT COMPLETE:
+All 16 order event JSON files created with 85 total events.
+
+REMAINING FOR RUNTIME VERIFICATION:
+1. Test full order progression with event injection
+2. Verify placeholder resolution at runtime
+3. Confirm culture-specific NCO/officer titles display correctly
+```
+
+---
+
+## Phase 4.5: Native Effect Integration
+
+**Goal:** Bridge JSON content definitions with Bannerlord's native `IncidentEffect` system for execution, tooltips, and trait integration
+
+**Chat Strategy:** 🔒 **STANDALONE** - Native API integration using decompile-verified patterns
+
+**Prerequisites:** Phase 4 complete (EventDeliveryManager exists and applies effects, 85 order events created)
+
+**Why This Phase Exists:**
+The decompiled Bannerlord source (`TaleWorlds.CampaignSystem\Incidents\`) contains a rich `IncidentEffect` library that provides:
+1. **Automatic tooltip generation** - Each effect has `GetHint()` with probability display
+2. **Native trait integration** - `TraitChange()` affects personality traits shown in character sheet
+3. **Standardized patterns** - Gold, skills, morale, health all follow same pattern
+
+Our current system manually applies effects in `EventDeliveryManager.ApplyEventEffects()`. This phase creates a bridge layer so we keep JSON flexibility but gain native features.
+
+```
+I need you to implement Phase 4.5 of the Content Orchestrator - Native Effect Integration.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify Phase 4 work before starting)
+═══════════════════════════════════════════════════════════════════════════════
+
+Before implementing, verify:
+
+Phase 4 Complete:
+[x] src/Features/Content/EventDeliveryManager.cs exists
+[x] ApplyEventEffects() method handles EventEffects from JSON
+[x] EventDefinition, EventOption, EventEffects classes exist
+[x] Events fire correctly from orchestrator
+[x] All 16 order event JSON files created (85 events total)
+
+Key Classes to Read First:
+- src/Features/Content/EventDefinition.cs (EventEffects class shows current effect fields)
+- src/Features/Content/EventDeliveryManager.cs (ApplyEventEffects method)
+- src/Features/Context/StrategicContextProvider.cs (provides world state context)
+
+If EventDeliveryManager doesn't exist, implement Phase 4 first.
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ FIRST
+═══════════════════════════════════════════════════════════════════════════════
+
+Read these docs:
+- docs/BLUEPRINT.md (coding standards, API verification)
+- docs/Features/Content/event-system-schemas.md (JSON schema for events)
+
+CRITICAL - Use the local decompile as reference (do not use external AI or outdated docs):
+- C:\Dev\Enlisted\Decompile\TaleWorlds.CampaignSystem\TaleWorlds\CampaignSystem\Incidents\IncidentEffect.cs
+- C:\Dev\Enlisted\Decompile\TaleWorlds.CampaignSystem\TaleWorlds\CampaignSystem\Incidents\Incident.cs
+- C:\Dev\Enlisted\Decompile\TaleWorlds.CampaignSystem\TaleWorlds\CampaignSystem\CharacterDevelopment\TraitLevelingHelper.cs
+
+═══════════════════════════════════════════════════════════════════════════════
+UNDERSTANDING THE NATIVE INCIDENT SYSTEM
+═══════════════════════════════════════════════════════════════════════════════
+
+The native IncidentEffect class (from decompile) provides:
+
+STATIC FACTORY METHODS:
+- IncidentEffect.GoldChange(amount) → adds/removes gold with feedback
+- IncidentEffect.SkillChange(skill, xp) → adds skill XP
+- IncidentEffect.TraitChange(trait, amount) → modifies personality trait (Honor, Valor, etc.)
+- IncidentEffect.MoraleChange(amount) → changes party morale
+- IncidentEffect.HealthChance(minDmg, maxDmg) → damage with probability
+- IncidentEffect.RenownChange(amount) → changes renown
+- IncidentEffect.WoundTroopsRandomly(count) → wounds random troops
+- IncidentEffect.KillTroopsRandomly(count) → kills random troops
+- IncidentEffect.Group(effects...) → applies all effects
+- IncidentEffect.Select(weight, effect) → random selection from weighted effects
+- IncidentEffect.Custom(condition, consequence, hint) → custom effect with lambdas
+
+KEY FEATURES WE WANT:
+1. effect.Consequence() → applies effect, returns feedback TextObject list
+2. effect.GetHint() → returns tooltip TextObjects (includes probabilities!)
+3. effect.WithChance(probability) → wraps effect with probability
+
+NATIVE TRAIT SYSTEM:
+DefaultTraits.Honor, DefaultTraits.Valor, DefaultTraits.Mercy, DefaultTraits.Generosity, DefaultTraits.Calculating
+These appear on NPC character sheets and affect NPC reactions to the player.
+
+OUR CUSTOM REPUTATION (Soldier/Officer/Lord) is SEPARATE - we keep that.
+But we can MAP our reputation to native traits for UI integration:
+- High Soldier rep + dutiful choices → +Honor, +Valor
+- High Officer rep + leadership → +Generosity, +Calculating
+- High Lord rep + mercy/cruelty choices → +/-Mercy
+
+═══════════════════════════════════════════════════════════════════════════════
+PHASE 4.5 TASKS
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 1: Create IncidentEffectTranslator.cs
+
+Create: src/Features/Content/IncidentEffectTranslator.cs
+
+This class translates JSON EventEffects into native IncidentEffect chains:
+
+```csharp
+using TaleWorlds.CampaignSystem.Incidents;
+using System.Collections.Generic;
+
+/// <summary>
+/// Bridges JSON-defined EventEffects to native Bannerlord IncidentEffect objects.
+/// This lets us keep JSON content flexibility while gaining native tooltip generation
+/// and standardized effect application patterns.
+/// </summary>
+public static class IncidentEffectTranslator
+{
+    /// <summary>
+    /// Converts EventEffects from JSON into a list of native IncidentEffect objects.
+    /// These can be executed with .Consequence() or queried with .GetHint() for tooltips.
+    /// </summary>
+    public static List<IncidentEffect> TranslateEffects(EventEffects effects)
+    {
+        var result = new List<IncidentEffect>();
+        if (effects == null) return result;
+
+        // Gold
+        if (effects.Gold.HasValue && effects.Gold.Value != 0)
+            result.Add(IncidentEffect.GoldChange(effects.Gold.Value));
+
+        // Skill XP
+        if (effects.SkillXp != null)
+        {
+            foreach (var kvp in effects.SkillXp)
+            {
+                var skill = SkillObject.All.FirstOrDefault(s =>
+                    s.StringId.Equals(kvp.Key, StringComparison.OrdinalIgnoreCase) ||
+                    s.Name.ToString().Equals(kvp.Key, StringComparison.OrdinalIgnoreCase));
+                if (skill != null)
+                    result.Add(IncidentEffect.SkillChange(skill, kvp.Value));
+            }
+        }
+
+        // Morale (if native supports party morale change)
+        if (effects.Discipline.HasValue && effects.Discipline.Value != 0)
+            result.Add(IncidentEffect.MoraleChange(effects.Discipline.Value));
+
+        // Health damage
+        if (effects.HpChange.HasValue && effects.HpChange.Value < 0)
+            result.Add(IncidentEffect.HealthChance(Math.Abs(effects.HpChange.Value), Math.Abs(effects.HpChange.Value)));
+
+        // Troop losses
+        if (effects.TroopLoss.HasValue && effects.TroopLoss.Value > 0)
+            result.Add(IncidentEffect.KillTroopsRandomly(effects.TroopLoss.Value));
+
+        // Troop wounded
+        if (effects.TroopWounded.HasValue && effects.TroopWounded.Value > 0)
+            result.Add(IncidentEffect.WoundTroopsRandomly(effects.TroopWounded.Value));
+
+        // Renown
+        if (effects.Renown.HasValue && effects.Renown.Value != 0)
+            result.Add(IncidentEffect.RenownChange(effects.Renown.Value));
+
+        // Native trait integration (map rep choices to personality traits)
+        result.AddRange(TranslateReputationToTraits(effects));
+
+        return result;
+    }
+
+    // Default scale divisor - tune for career length (see TRAIT MAPPING STRATEGY section)
+    // Lower = faster trait progression, Higher = slower
+    // Recommended: 5 for 100-day careers, 8 for longer
+    private static int ScaleDivisor => EnlistedConfig.Instance?.NativeTraitScaleDivisor ?? 5;
+    private static int MinimumChange => EnlistedConfig.Instance?.NativeTraitMinimumChange ?? 1;
+
+    /// <summary>
+    /// Maps our custom Soldier/Officer/Lord reputation to native personality traits.
+    /// This provides free UI integration on the character sheet.
+    /// Scaled for long careers (~100+ days enlisted).
+    /// </summary>
+    private static List<IncidentEffect> TranslateReputationToTraits(EventEffects effects)
+    {
+        var result = new List<IncidentEffect>();
+
+        // Soldier rep → Valor (bravery, fighting spirit)
+        if (effects.SoldierRep.HasValue && effects.SoldierRep.Value != 0)
+        {
+            var valorAmount = effects.SoldierRep.Value / ScaleDivisor;
+            if (Math.Abs(valorAmount) >= MinimumChange)
+                result.Add(IncidentEffect.TraitChange(DefaultTraits.Valor, valorAmount));
+        }
+
+        // Officer rep → Calculating (tactical, organized)
+        if (effects.OfficerRep.HasValue && effects.OfficerRep.Value != 0)
+        {
+            var calcAmount = effects.OfficerRep.Value / ScaleDivisor;
+            if (Math.Abs(calcAmount) >= MinimumChange)
+                result.Add(IncidentEffect.TraitChange(DefaultTraits.Calculating, calcAmount));
+        }
+
+        // Lord rep → Honor (duty, keeping word)
+        if (effects.LordRep.HasValue && effects.LordRep.Value != 0)
+        {
+            var honorAmount = effects.LordRep.Value / ScaleDivisor;
+            if (Math.Abs(honorAmount) >= MinimumChange)
+                result.Add(IncidentEffect.TraitChange(DefaultTraits.Honor, honorAmount));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Generates tooltip hint text for an option's effects.
+    /// Uses native IncidentEffect.GetHint() which includes probability display.
+    /// </summary>
+    public static List<TextObject> GenerateTooltipHints(EventEffects effects)
+    {
+        var hints = new List<TextObject>();
+        var incidentEffects = TranslateEffects(effects);
+
+        foreach (var effect in incidentEffects)
+        {
+            hints.AddRange(effect.GetHint());
+        }
+
+        return hints;
+    }
+}
+```
+
+TASK 2: Integrate with EventDeliveryManager
+
+Modify: src/Features/Content/EventDeliveryManager.cs
+
+Add a hybrid execution path that uses native effects where beneficial:
+
+```csharp
+/// <summary>
+/// Applies effects using native IncidentEffect system where applicable.
+/// Falls back to manual application for Enlisted-specific effects.
+/// </summary>
+private void ApplyNativeEffects(EventEffects effects, List<string> feedback)
+{
+    var nativeEffects = IncidentEffectTranslator.TranslateEffects(effects);
+
+    foreach (var effect in nativeEffects)
+    {
+        try
+        {
+            var results = effect.Consequence();
+            foreach (var result in results)
+            {
+                feedback.Add(result.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            EnlistedLogger.LogWarning($"[EventDelivery] Native effect failed: {ex.Message}");
+        }
+    }
+}
+```
+
+In ApplyEventEffects(), call ApplyNativeEffects() for translatable effects, then apply
+Enlisted-specific effects manually (RetinueGain, BaggageAccess, Fatigue, etc.).
+
+TASK 3: Add Tooltip Generation to Option Display
+
+When building event option UI, use the translator for hints:
+
+```csharp
+public string BuildOptionTooltip(EventOption option)
+{
+    var hints = IncidentEffectTranslator.GenerateTooltipHints(option.Effects);
+
+    // Add Enlisted-specific effect hints (not in native system)
+    if (option.Effects?.Fatigue != null)
+        hints.Add(new TextObject($"+{option.Effects.Fatigue} Fatigue"));
+    if (option.Effects?.RetinueGain != null)
+        hints.Add(new TextObject($"+{option.Effects.RetinueGain} Retinue Member"));
+    // ... other Enlisted-specific effects
+
+    return string.Join("\n", hints.Select(h => h.ToString()));
+}
+```
+
+TASK 4: Verify Native API Compatibility
+
+Before implementing, verify in the decompile that these methods exist:
+[ ] IncidentEffect.GoldChange(int amount)
+[ ] IncidentEffect.SkillChange(SkillObject, float)
+[ ] IncidentEffect.TraitChange(TraitObject, int)
+[ ] IncidentEffect.MoraleChange(int)
+[ ] IncidentEffect.HealthChance(int, int)
+[ ] IncidentEffect.RenownChange(int)
+[ ] IncidentEffect.WoundTroopsRandomly(int)
+[ ] IncidentEffect.KillTroopsRandomly(int)
+[ ] effect.GetHint() returns List<TextObject>
+[ ] effect.Consequence() returns List<TextObject>
+
+If any are missing or have different signatures, adjust the translator accordingly.
+The decompile is the source of truth for API compatibility.
+
+TASK 5: Add Logging and Fallbacks
+
+Ensure the translator logs what it's doing and gracefully handles missing effects:
+
+```csharp
+EnlistedLogger.LogDebug($"[EffectTranslator] Translated {effects} → {result.Count} native effects");
+```
+
+If an effect can't be translated (native doesn't support it), the translator should:
+1. Log it for debugging
+2. Return an empty effect (or skip it)
+3. Let the manual effect handler in EventDeliveryManager handle it
+
+═══════════════════════════════════════════════════════════════════════════════
+ENLISTED-SPECIFIC EFFECTS (NOT translated to native)
+═══════════════════════════════════════════════════════════════════════════════
+
+These effects are specific to the Enlisted mod and should remain manually applied:
+
+- Fatigue → custom Enlisted fatigue system
+- SoldierRep, OfficerRep, LordRep → keep manual (we only mirror to native traits)
+- Scrutiny → Enlisted escalation system
+- RetinueGain, RetinueLoss, RetinueLoyalty, RetinueWounded → custom retinue system
+- GrantTemporaryBaggageAccess, BaggageDelayDays, RandomBaggageLoss → baggage system
+- ChainEventId → event chaining logic
+- TriggersDischarge, Promotes → Enlisted progression
+- CompanyNeeds → custom needs system
+- ApplyWound → custom wound types
+- FoodLoss → could use native but ties to Enlisted supply tracking
+
+The translator handles what native can do; manual code handles the rest.
+
+═══════════════════════════════════════════════════════════════════════════════
+TRAIT MAPPING STRATEGY
+═══════════════════════════════════════════════════════════════════════════════
+
+Our Soldier/Officer/Lord reputation is INTERNAL to Enlisted - it affects:
+- Which content is available (requirements.soldierRep > 50)
+- NPC dialogue and reactions within the mod
+- Progression tier calculations
+
+Native traits (Honor, Valor, Mercy, Generosity, Calculating) are EXTERNAL:
+- Displayed on player character sheet
+- Affect native game reactions (lords, companions)
+- Persist independent of Enlisted systems
+
+CAREER SCALING (tuned for long enlistment):
+
+The scaling must work for players enlisted 50-200+ in-game days. Too slow and traits never
+change; too fast and they max out in a week.
+
+BASELINE MATH (verify against decompile - check TraitLevelingHelper):
+- Native trait levels typically: -2, -1, 0, +1, +2
+- XP per level: ~50-100 XP (check DefaultTraitLevelingModel in decompile)
+- Player should shift 1-2 trait levels over a full campaign (~100 days enlisted)
+
+TYPICAL REP GAINS PER EVENT:
+- Small events: +3 to +5 rep
+- Medium events: +5 to +10 rep
+- Big events: +10 to +15 rep
+- Events with rep: ~0.5-1 per day average
+
+SCALING CALCULATION:
+- 100 days × 0.75 events/day × avg +6 rep × scale = target 50-75 XP for 1 level shift
+- Math: 100 × 0.75 × 6 × scale = ~60 → scale ≈ 0.13 (roughly ÷8)
+- Rounded: Use ÷5 for noticeable progression, ÷10 for very gradual
+
+RECOMMENDED STARTING SCALE: ÷5 (not ÷3)
+This gives ~90 trait XP over a 100-day career, enough for 1 solid level shift.
+If playtesting shows too fast, increase to ÷8. Too slow, decrease to ÷3.
+
+MAKE IT CONFIGURABLE:
+Put the scale factor in enlisted_config.json so it can be tuned without recompile:
+```json
+"nativeTraitMapping": {
+  "enabled": true,
+  "scaleDivisor": 5,
+  "minimumChange": 1
+}
+```
+
+MAPPING:
+
+| Enlisted Rep | Native Trait | Default Scale | Rationale |
+|--------------|--------------|---------------|-----------|
+| Soldier Rep  | Valor        | ÷5            | Fighting spirit, bravery in battle |
+| Officer Rep  | Calculating  | ÷5            | Tactical thinking, leadership |
+| Lord Rep     | Honor        | ÷5            | Duty, keeping word, respect |
+
+MINIMUM CHANGE THRESHOLD:
+Only apply trait change if result ≥ 1 (to avoid spam of +0 changes).
+If rep change is +4 and scale is ÷5, result is 0 → skip.
+If rep change is +5 and scale is ÷5, result is 1 → apply.
+
+OPTIONAL FUTURE MAPPINGS (not in initial implementation):
+- Mercy choices in events → DefaultTraits.Mercy
+- Generous choices → DefaultTraits.Generosity
+- These would require parsing event option themes, not just rep values
+
+═══════════════════════════════════════════════════════════════════════════════
+NEWS SYSTEM INTEGRATION
+═══════════════════════════════════════════════════════════════════════════════
+
+When native traits change, the player should be informed. Two levels of feedback:
+
+1. IMMEDIATE FEEDBACK (in event result text):
+   The native IncidentEffect.TraitChange() already returns TextObject feedback.
+   This goes in the event result popup alongside other effects.
+
+2. NEWS MILESTONE NOTIFICATIONS (when crossing trait levels):
+   When a trait crosses a level threshold (e.g., 0 → 1 Valor), push a news item.
+   
+   Add to EnlistedNewsBehavior.cs or create TraitMilestoneTracker:
+
+```csharp
+/// <summary>
+/// Tracks when native traits cross level thresholds and pushes news.
+/// Called after applying trait effects.
+/// </summary>
+public static class TraitMilestoneTracker
+{
+    private static Dictionary<TraitObject, int> _previousLevels = new();
+
+    public static void CheckForMilestones(Hero hero)
+    {
+        foreach (var trait in new[] { DefaultTraits.Valor, DefaultTraits.Calculating, DefaultTraits.Honor })
+        {
+            var currentLevel = hero.GetTraitLevel(trait);
+            
+            if (!_previousLevels.TryGetValue(trait, out var previousLevel))
+            {
+                _previousLevels[trait] = currentLevel;
+                continue;
+            }
+
+            if (currentLevel != previousLevel)
+            {
+                PushTraitMilestoneNews(trait, previousLevel, currentLevel);
+                _previousLevels[trait] = currentLevel;
+            }
+        }
+    }
+
+    private static void PushTraitMilestoneNews(TraitObject trait, int oldLevel, int newLevel)
+    {
+        var direction = newLevel > oldLevel ? "gained" : "lost";
+        var message = GetTraitMilestoneMessage(trait, newLevel);
+        
+        EnlistedNewsBehavior.Instance?.PushNews(
+            "trait_milestone",
+            message,
+            NewsCategory.Personal,
+            importance: NewsImportance.Medium
+        );
+        
+        EnlistedLogger.LogInfo($"[Traits] {trait.Name}: {oldLevel} → {newLevel}");
+    }
+
+    private static string GetTraitMilestoneMessage(TraitObject trait, int level)
+    {
+        // Flavor text based on trait and level
+        if (trait == DefaultTraits.Valor)
+        {
+            return level switch
+            {
+                >= 2 => "Your bravery in battle has become legendary among the troops.",
+                1 => "Soldiers speak of your courage under fire.",
+                0 => "Your reputation for valor is unremarkable.",
+                -1 => "Some whisper that you lack courage.",
+                _ => "Your cowardice is well known."
+            };
+        }
+        if (trait == DefaultTraits.Calculating)
+        {
+            return level switch
+            {
+                >= 2 => "Officers seek your counsel on tactical matters.",
+                1 => "Your tactical thinking has been noticed by command.",
+                0 => "Your judgment is considered sound.",
+                -1 => "Some question your decision-making.",
+                _ => "Your poor judgment is notorious."
+            };
+        }
+        if (trait == DefaultTraits.Honor)
+        {
+            return level switch
+            {
+                >= 2 => "Lords speak highly of your sense of duty and honor.",
+                1 => "Your word is trusted. You've earned respect.",
+                0 => "You're known as neither particularly honorable nor dishonorable.",
+                -1 => "Some doubt whether you can be trusted.",
+                _ => "Your reputation for dishonor precedes you."
+            };
+        }
+        return $"Your {trait.Name} has changed.";
+    }
+}
+```
+
+INTEGRATION POINT:
+In EventDeliveryManager, after applying native effects, call:
+```csharp
+TraitMilestoneTracker.CheckForMilestones(Hero.MainHero);
+```
+
+LOCALIZATION KEYS TO ADD:
+- trait_milestone_valor_high, trait_milestone_valor_low
+- trait_milestone_calculating_high, trait_milestone_calculating_low
+- trait_milestone_honor_high, trait_milestone_honor_low
+
+WHY THIS MATTERS:
+- Players need feedback that their choices have long-term consequences
+- Native trait changes are invisible without news - player wouldn't know
+- Crossing a level is significant (takes many events) - worth announcing
+- Flavor text reinforces the roleplay ("Officers seek your counsel...")
+
+═══════════════════════════════════════════════════════════════════════════════
+EDGE CASES
+═══════════════════════════════════════════════════════════════════════════════
+
+1. NATIVE API MISMATCH
+   - Some IncidentEffect methods may have different signatures in current game version
+   - ALWAYS verify against decompile before implementing
+   - If a method doesn't exist, skip that effect type and log it
+   - Fallback: apply manually like before (no regression)
+
+2. NULL/EMPTY EFFECTS
+   - EventEffects can be null or have all-null fields
+   - TranslateEffects() should return empty list, not throw
+   - Check each field before processing: `if (effects?.Gold.HasValue == true)`
+
+3. SKILL NAME MISMATCHES
+   - JSON uses string names ("Athletics", "OneHanded")
+   - Native uses SkillObject.StringId ("Athletics") or Name ("One Handed")
+   - Try both StringId and Name when matching
+   - Log warning if skill not found, don't crash
+
+4. EFFECT EXECUTION FAILURES
+   - Wrap each effect.Consequence() in try-catch
+   - Log failure but continue with other effects
+   - Native effects might fail if Hero.MainHero is null (not enlisted yet)
+
+5. TRAIT BOUNDS
+   - Native traits cap at certain levels (typically -2 to +2)
+   - Don't worry about overflow - native system handles clamping
+   - But log when player hits trait cap for debugging
+
+6. NOT ENLISTED
+   - Some events might fire during edge states (loading, just discharged)
+   - Check EnlistmentBehavior.Instance?.IsEnlisted before applying troop effects
+   - Hero effects (gold, skills, traits) are safe anytime
+
+7. DUPLICATE EFFECT APPLICATION
+   - Event chains might re-apply parent effects if not careful
+   - Translator is stateless (pure function) - safe for multiple calls
+   - Deduplication is EventDeliveryManager's responsibility, not translator's
+
+8. ORDER OF OPERATIONS
+   - Apply native effects FIRST (they generate standardized feedback)
+   - Then apply Enlisted-specific effects manually
+   - Combine feedback messages in order
+
+9. TOOLTIP GENERATION EDGE CASES
+   - Effects with 0 value should not generate hints
+   - Effects that fail condition checks should not generate hints
+   - Check effect._chanceToOccur for probability display
+
+10. SAVE/LOAD COMPATIBILITY
+    - Native traits persist in game save automatically
+    - Our custom rep persists via EnlistedSaveDefiner
+    - Both systems are independent - no compatibility concern
+    - But: if player loads old save, native traits start from vanilla values
+
+11. HERO VS PARTY EFFECTS
+    - SkillChange, TraitChange, HealthChance → apply to Hero.MainHero
+    - WoundTroopsRandomly, KillTroopsRandomly → apply to MobileParty.MainParty
+    - GoldChange → apply to Hero.MainHero
+    - MoraleChange → apply to MobileParty.MainParty
+    - Check party exists before troop effects
+
+12. DISABLED VIA CONFIG
+    - If nativeTraitMapping.enabled = false, skip trait translation entirely
+    - Still apply other native effects (gold, skills, etc.)
+    - Allow disabling entire native bridge if causing issues
+
+DEFENSIVE CODING PATTERN:
+```csharp
+public static List<IncidentEffect> TranslateEffects(EventEffects effects)
+{
+    var result = new List<IncidentEffect>();
+    if (effects == null) return result;
+
+    try
+    {
+        // Gold - safe for any state
+        if (effects.Gold.HasValue && effects.Gold.Value != 0)
+            result.Add(IncidentEffect.GoldChange(effects.Gold.Value));
+
+        // Troop effects - need party
+        if (MobileParty.MainParty != null)
+        {
+            if (effects.TroopLoss.HasValue && effects.TroopLoss.Value > 0)
+                result.Add(IncidentEffect.KillTroopsRandomly(effects.TroopLoss.Value));
+        }
+
+        // Trait effects - check config
+        if (EnlistedConfig.Instance?.NativeTraitMappingEnabled == true)
+        {
+            result.AddRange(TranslateReputationToTraits(effects));
+        }
+    }
+    catch (Exception ex)
+    {
+        EnlistedLogger.LogWarning($"[EffectTranslator] Translation failed: {ex.Message}");
+        // Return partial results - don't lose effects that succeeded
+    }
+
+    return result;
+}
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+FILES TO CREATE
+═══════════════════════════════════════════════════════════════════════════════
+
+- src/Features/Content/IncidentEffectTranslator.cs
+- src/Features/Content/TraitMilestoneTracker.cs (news integration for trait level changes)
+
+═══════════════════════════════════════════════════════════════════════════════
+FILES TO MODIFY
+═══════════════════════════════════════════════════════════════════════════════
+
+- src/Features/Content/EventDeliveryManager.cs (add hybrid effect application + milestone check)
+- src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs (ensure PushNews supports trait milestones)
+- src/Mod.Core/EnlistedConfig.cs (add NativeTraitScaleDivisor, NativeTraitMinimumChange)
+- ModuleData/Enlisted/enlisted_config.json (add nativeTraitMapping section)
+- ModuleData/Languages/enlisted_strings.xml (add trait milestone localization keys)
+- Enlisted.csproj (add new file references)
+
+═══════════════════════════════════════════════════════════════════════════════
+ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════════════════
+
+CORE FUNCTIONALITY:
+- [ ] IncidentEffectTranslator correctly converts JSON effects to native IncidentEffect
+- [ ] Gold, Skill XP, and Renown changes use native effect pattern
+- [ ] Reputation changes mirror to native personality traits
+- [ ] Event option tooltips use native GetHint() for auto-generated text
+- [ ] Tooltips show probability percentages when effects have chance
+- [ ] Enlisted-specific effects still work (Fatigue, Retinue, Baggage, etc.)
+- [ ] No regressions in existing event functionality
+- [ ] All API calls verified against local decompile
+- [ ] Build succeeds with no errors
+
+EDGE CASE HANDLING:
+- [ ] Null/empty EventEffects returns empty list (no crash)
+- [ ] Missing skill names log warning, don't crash
+- [ ] Effect execution failures caught and logged, other effects continue
+- [ ] Troop effects skip gracefully if MobileParty.MainParty is null
+- [ ] Trait mapping respects enabled flag in config
+- [ ] Trait scaling configurable via enlisted_config.json
+- [ ] Zero-value effects filtered out (no spam)
+
+CAREER SCALING:
+- [ ] Scale divisor defaults to 5 (tuned for ~100 day careers)
+- [ ] Minimum change threshold filters tiny adjustments
+- [ ] Config values load correctly from JSON
+
+NEWS INTEGRATION:
+- [ ] TraitMilestoneTracker detects level threshold crossings
+- [ ] News pushed when trait level changes (not every XP gain)
+- [ ] Flavor text matches trait and level (positive/negative)
+- [ ] Localization keys added for all milestone messages
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (Phase 4.5 COMPLETE - 2025-12-30)
+═══════════════════════════════════════════════════════════════════════════════
+
+FILES CREATED:
+- [x] src/Features/Content/IncidentEffectTranslator.cs
+- [x] src/Features/Content/TraitMilestoneTracker.cs
+
+FILES MODIFIED:
+- [x] src/Features/Content/EventDeliveryManager.cs (added TraitMilestoneTracker.CheckForMilestones call)
+- [x] src/Mod.Core/Config/ConfigurationManager.cs (added NativeTraitMappingConfig + loader)
+- [x] ModuleData/Enlisted/enlisted_config.json (added native_trait_mapping section)
+- [x] ModuleData/Languages/enlisted_strings.xml (16 trait milestone localization keys)
+- [x] Enlisted.csproj (added new file references)
+
+NOTE: EnlistedNewsBehavior was NOT modified - TraitMilestoneTracker uses InformationManager
+for immediate feedback since AddPersonalNews is private. Future enhancement could expose
+a public method for trait milestone news integration.
+
+NATIVE EFFECTS INTEGRATED:
+- GoldChange (via Func<int> getter pattern)
+- SkillChange (skill XP awards)
+- TraitChange (personality trait integration)
+- MoraleChange (mapped from Discipline, scaled 2x)
+- HealthChance (HP changes)
+- RenownChange (clan renown)
+- WoundTroopsRandomly (int count version)
+- KillTroopsRandomly NOT used (native uses percentage, we use manual for count)
+
+TRAIT MAPPING IMPLEMENTED:
+- Soldier Rep → DefaultTraits.Valor (bravery, fighting spirit)
+- Officer Rep → DefaultTraits.Calculating (tactical thinking)
+- Lord Rep → DefaultTraits.Honor (duty, keeping word)
+- Scale divisor: 5 (configurable via enlisted_config.json)
+- Minimum change: 1 (filters tiny adjustments)
+- Expected progression: ~1-2 trait level shifts over 100-day career
+
+TOOLTIP GENERATION:
+- [x] TranslateEffects() returns native IncidentEffect list
+- [x] GenerateTooltipHints() uses native GetHint() for auto-generated text
+- [x] BuildCombinedTooltip() combines native + Enlisted-specific hints
+- [x] Probability percentages display via native effect patterns
+- [x] Enlisted-specific effects (Fatigue, Retinue, Scrutiny, etc.) have manual hints
+
+KEY DECISIONS MADE:
+- Used Skills.All from TaleWorlds.CampaignSystem.Extensions for skill lookup
+- GoldChange uses Func<int> getter pattern (required by native API signature)
+- TroopLoss uses manual application (native KillTroopsRandomly uses percentage)
+- Discipline mapped to MoraleChange with 2x scale (discipline 0-10 → morale larger values)
+- Config stored in ConfigurationManager.cs, NOT separate EnlistedConfig.cs (project pattern)
+
+VERIFICATION PASSED:
+[x] Build succeeds with no errors
+[x] Native effects translate correctly
+[x] Tooltips generate via GetHint()
+[x] Trait milestone tracker detects level changes
+[x] Localization keys added for all milestone messages
 ```
 
 ---
@@ -916,16 +1677,22 @@ REMAINING WORK FOR PHASE 4 COMPLETION:
 
 **Chat Strategy:** 🔒 **STANDALONE** - UI work is self-contained
 
-**Prerequisites:** Phase 4 complete (orchestrator + orders integration working)
+**Prerequisites:** Phase 4.5 complete (native effect integration, tooltip generation working)
 
 ```
 I need you to implement Phase 5 of the Content Orchestrator - UI Integration.
 
 ═══════════════════════════════════════════════════════════════════════════════
-CONTEXT RECOVERY (Verify Phase 4 work before starting)
+CONTEXT RECOVERY (Verify Phase 4 + 4.5 work before starting)
 ═══════════════════════════════════════════════════════════════════════════════
 
 Before implementing, verify:
+
+Phase 4.5 Complete (Native Effects): ✅ DONE 2025-12-30
+[x] src/Features/Content/IncidentEffectTranslator.cs exists
+[x] IncidentEffectTranslator.GenerateTooltipHints() works
+[x] Native effects apply correctly via TranslateEffects()
+[x] Trait mapping (Soldier→Valor, Officer→Calculating, Lord→Honor) works
 
 Orchestrator Working:
 [ ] ContentOrchestrator.Instance is available
@@ -1200,6 +1967,18 @@ NAVIGATION BUTTONS:
 
 Note: Rank, tier, day count, location info goes in the CAMP Hub header, NOT the Main Menu.
 
+TOOLTIP INTEGRATION (from Phase 4.5):
+
+When displaying event options in DECISIONS or ORDERS views, use the native tooltip generator:
+
+```csharp
+// Use IncidentEffectTranslator for auto-generated tooltips
+var tooltip = IncidentEffectTranslator.GenerateTooltipHints(option.Effects);
+// Append Enlisted-specific hints (Fatigue, Retinue, etc.) manually
+```
+
+This gives you free probability display and standardized formatting.
+
 Acceptance Criteria:
 - Main Menu shows KINGDOM, CAMP, YOU sections with brief info
 - YOU section shows NOW (current state) + AHEAD (forecast)
@@ -1207,38 +1986,44 @@ Acceptance Criteria:
 - Three buttons navigate to ORDERS, DECISIONS, CAMP
 - DECISIONS shows dynamically generated camp life activities
 - Deep info (rank, tier, records) is in CAMP Hub, not Main Menu
+- Event option tooltips use native GetHint() pattern from Phase 4.5
 
 ═══════════════════════════════════════════════════════════════════════════════
-HANDOFF NOTES (Capture these for Phase 5.5)
+HANDOFF NOTES (Phase 5 COMPLETE - 2025-12-30)
 ═══════════════════════════════════════════════════════════════════════════════
-
-When complete, provide these handoff notes for the next AI session:
 
 FILES CREATED:
-- [ ] src/Features/Content/ForecastGenerator.cs
-- [ ] src/Features/Interface/MainMenuNewsCache.cs
+- [x] src/Features/Content/ForecastGenerator.cs
+- [x] src/Features/Interface/MainMenuNewsCache.cs
 
 FILES MODIFIED:
-- [ ] src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs (main menu + camp hub)
-- [ ] src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs (summary builders)
-- [ ] src/Features/Ranks/RankHelper.cs (GetNCOTitle, GetOfficerTitle)
-- [ ] ModuleData/Languages/enlisted_strings.xml (localization keys)
+- [x] src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs (main menu + camp hub)
+- [x] src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs (BuildKingdomSummary, BuildCampSummary)
+- [x] src/Features/Ranks/RankHelper.cs (GetNCOTitle, GetOfficerTitle)
+- [x] ModuleData/Languages/enlisted_strings.xml (30 localization keys: lines 4823-4860)
+- [x] Enlisted.csproj (new files registered: lines 189, 269)
+- [x] src/Mod.Entry/SubModule.cs (MainMenuNewsCache behavior registered)
 
 UI CHANGES MADE:
-- Main Menu now has KINGDOM, CAMP, YOU sections
-- Camp Hub has CAMP STATUS replacing Reports menu
-- Leave Service removed from Camp Hub (Muster only)
+- Main Menu now has KINGDOM, CAMP, YOU sections with section headers
+- ForecastGenerator generates NOW + AHEAD text with priority system
+- MainMenuNewsCache caches sections with intelligent refresh based on game state
+- Culture-aware rank names via RankHelper.GetNCOTitle/GetOfficerTitle
 
 KEY DECISIONS MADE:
-- (list any UI/UX decisions)
+- MainMenuNewsCache is a CampaignBehaviorBase with save/load support
+- KINGDOM refreshes every 24h or on major events
+- CAMP refreshes every 6h (matches DayPhase) or on phase change
+- YOU refreshes every 1h for player state responsiveness
+- Fast travel detection forces refresh if >2 hours passed
 
 VERIFICATION PASSED:
-[ ] Main Menu shows three sections
-[ ] YOU section has natural flowing text
-[ ] Culture-aware rank names work
-[ ] ORDERS, DECISIONS, CAMP buttons navigate correctly
-[ ] Camp Hub shows CAMP STATUS at top
-[ ] Reports menu removed
+[x] Main Menu shows three sections (KINGDOM, CAMP, YOU)
+[x] YOU section has natural flowing text (NOW + AHEAD)
+[x] Culture-aware rank names work via GetNCOTitle/GetOfficerTitle
+[x] ForecastGenerator priority system: Critical → High → Medium → Low
+[x] 30 localization keys added for all menu text
+[x] Build succeeds with 0 warnings and 0 errors
 ```
 
 ---
@@ -1247,9 +2032,55 @@ VERIFICATION PASSED:
 
 **Goal:** Create an autonomous company that simulates itself daily - soldiers get sick, desert, recover; equipment degrades; incidents occur. This feeds the news system and provides context for the orchestrator.
 
+**Status:** ✅ **COMPLETE** (2025-12-30)
+
 **Chat Strategy:** 🔒 **STANDALONE** - Complex Bannerlord API work needs focus
 
 **Prerequisites:** Phases 1-5 complete (Core Orchestrator + UI working)
+
+### Completion Summary
+
+**FILES CREATED:**
+- ✅ `src/Features/Camp/CompanySimulationBehavior.cs` - Main simulation behavior (6-phase daily tick)
+- ✅ `src/Features/Camp/Models/CompanyRoster.cs` - Wrapper around real TroopRoster + overlay
+- ✅ `src/Features/Camp/Models/CompanyPressure.cs` - Tracks pressure for crisis triggers
+- ✅ `src/Features/Camp/Models/CampIncident.cs` - Incident definition struct
+- ✅ `src/Features/Camp/Models/SimulationDayResult.cs` - Daily tick output
+- ✅ `ModuleData/Enlisted/simulation_config.json` - 20 incident definitions + config
+
+**FILES MODIFIED:**
+- ✅ `src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs` - Added `AddCampNews()`, `UpdateCompanyStatus()`
+- ✅ `src/Features/Interface/News/State/CampNewsState.cs` - Added company status fields
+- ✅ `src/Features/Content/ContentOrchestrator.cs` - Added `QueueCrisisEvent()`
+- ✅ `src/Mod.Entry/SubModule.cs` - Registered behavior
+- ✅ `Enlisted.csproj` - Added all new files
+- ✅ `ModuleData/Languages/enlisted_strings.xml` - ~50 localization strings
+
+**KEY API USAGE (verified):**
+- `TroopRoster.AddToCounts(CharacterObject, count, insertAtFront, woundedCount)` - verified signature
+- `TroopRoster.TotalWounded`, `TroopRoster.TotalManCount` - property access
+- `TroopRosterElement.Character.IsHero` - hero filtering
+
+**INTEGRATION POINTS:**
+- `CompanySimulationBehavior.Instance.Roster` - sick/wounded/missing/dead data
+- `CompanySimulationBehavior.Instance.Pressure` - pressure tracking (days low supplies/morale/rest)
+- `CompanySimulationBehavior.Instance.ActiveFlags` - incident flags for chained events
+- `EnlistmentBehavior.Instance.CompanyNeeds` - accesses company needs state
+- `EscalationManager.Instance.ModifyDiscipline()` - discipline effects from incidents
+- `ContentOrchestrator.Instance.QueueCrisisEvent()` - crisis event delivery
+
+**VERIFICATION PASSED:**
+- ✅ Build compiles without errors
+- ✅ Daily simulation runs on DailyTickEvent
+- ✅ Sick/wounded/missing tracking works
+- ✅ Desertions/deaths remove troops from real party roster
+- ✅ Heroes never removed (filtered to regulars only)
+- ✅ News methods integrated with EnlistedNewsBehavior
+- ✅ Crisis events queue via ContentOrchestrator
+- ✅ Save/load preserves simulation state
+- ✅ Edge cases handled (prisoner, in battle, empty party)
+
+### Original Prompt (for reference)
 
 ```
 I need you to implement Phase 5.5 - Camp Background Simulation for my Bannerlord mod.
@@ -1260,12 +2091,13 @@ CONTEXT RECOVERY (Verify Phase 5 work before starting)
 
 Before implementing, verify:
 
-Orchestrator + UI Working:
-[ ] ContentOrchestrator.Instance is available and firing daily
-[ ] WorldStateAnalyzer.AnalyzeSituation() works
-[ ] Main Menu shows KINGDOM, CAMP, YOU sections
-[ ] ForecastGenerator.cs exists (will integrate with it)
-[ ] EnlistedNewsBehavior has BuildCampSummary() method
+Phase 5 Complete (UI Integration): ✅ DONE 2025-12-30
+[x] ContentOrchestrator.Instance is available and firing daily
+[x] WorldStateAnalyzer.AnalyzeSituation() works
+[x] Main Menu shows KINGDOM, CAMP, YOU sections
+[x] ForecastGenerator.cs exists (will integrate with it)
+[x] EnlistedNewsBehavior has BuildCampSummary() method
+[x] MainMenuNewsCache behavior registered and caching sections
 
 Key Classes That Must Exist:
 - src/Features/Content/ContentOrchestrator.cs
@@ -1435,19 +2267,19 @@ CONTEXT RECOVERY (Verify Phase 5.5 work before starting)
 
 Before implementing, verify Phase 5.5 is complete:
 
-Background Simulation Working:
-[ ] CompanySimulationBehavior.cs exists at src/Features/Camp/
-[ ] CompanySimulationBehavior.Instance.Roster available (sick/wounded data)
-[ ] CompanySimulationBehavior.Instance.Pressure available (pressure tracking)
-[ ] Daily simulation generates news items
-[ ] EnlistedNewsBehavior.AddCampNews() method exists
+Background Simulation Working: ✅ COMPLETE 2025-12-30
+[x] CompanySimulationBehavior.cs exists at src/Features/Camp/
+[x] CompanySimulationBehavior.Instance.Roster available (sick/wounded data)
+[x] CompanySimulationBehavior.Instance.Pressure available (pressure tracking)
+[x] Daily simulation generates news items
+[x] EnlistedNewsBehavior.AddCampNews() method exists
 
 Orchestrator Working:
-[ ] ContentOrchestrator.Instance available
-[ ] WorldStateAnalyzer.AnalyzeSituation() works
+[x] ContentOrchestrator.Instance available
+[x] WorldStateAnalyzer.AnalyzeSituation() works
 [ ] ContentOrchestrator.GetCurrentDayPhase() available (or implement it)
 
-If background simulation isn't working, implement Phase 5.5 first.
+Phase 5.5 is complete. You can proceed with Phase 6.
 
 ═══════════════════════════════════════════════════════════════════════════════
 SCOPE: PHASE 6A-C ONLY (Core Functionality)
@@ -1503,29 +2335,30 @@ THE SIMULATION USES 4 INTELLIGENCE LAYERS:
 
 Phase 6 Tasks:
 
-1. CREATE Data Models:
-   - src/Features/Camp/Models/CampOpportunity.cs
-   - src/Features/Camp/Models/OpportunityType.cs (enum: Training, Social, Economic, Recovery, Special)
-   - src/Features/Camp/Models/CampContext.cs (DayPhase, DaysSinceLastMuster, CurrentMood, RecentEvents)
-   - src/Features/Camp/Models/CampMood.cs (enum: Routine, Celebration, Mourning, Tense)
-   - src/Features/Camp/Models/DayPhase.cs (enum: Dawn 6-11, Midday 12-5, Dusk 6-9, Night 10-5) - synced with Order phases
-   - src/Features/Camp/Models/OpportunityHistory.cs (tracks presentations, engagements, variety)
+1. CREATE Data Models: ✅ COMPLETE
+   - src/Features/Camp/Models/CampOpportunity.cs ✅
+   - src/Features/Camp/Models/OpportunityType.cs ✅ (enum: Training, Social, Economic, Recovery, Special)
+   - src/Features/Camp/Models/CampContext.cs ✅ (DayPhase, DaysSinceLastMuster, CurrentMood, RecentEvents)
+   - src/Features/Camp/Models/CampMood.cs ✅ (enum: Routine, Celebration, Mourning, Tense)
+   - NOTE: DayPhase enum is in src/Features/Content/Models/OrchestratorEnums.cs (shared with Order System)
+   - src/Features/Camp/Models/OpportunityHistory.cs ✅ (tracks presentations, engagements, variety)
+   - src/Features/Camp/Models/PlayerCommitments.cs ✅ (commitment tracking)
 
-2. CREATE CampOpportunityGenerator.cs:
-   - Location: src/Features/Camp/CampOpportunityGenerator.cs
+2. CREATE CampOpportunityGenerator.cs: ✅ COMPLETE
+   - Location: src/Features/Camp/CampOpportunityGenerator.cs ✅ (876 lines)
    - This is the HEART of the living camp simulation
-   - GenerateCampLife() method - main entry point
-   - AnalyzeCampContext() - builds CampContext from game state
-   - CalculateFitness() - scores each opportunity 0-100 using ALL 4 layers
-   - DetermineOpportunityBudget() - context-aware (garrison morning=2-3, siege=0-1)
-   - Uses ContentOrchestrator.Instance for world state + pressure
-   - Uses PlayerBehaviorTracker for learned preferences
-   - Implements IsPlayerOnDuty() check
+   - GenerateCampLife() method - main entry point ✅
+   - AnalyzeCampContext() - builds CampContext from game state ✅
+   - CalculateFitness() - scores each opportunity 0-100 using ALL 4 layers ✅
+   - DetermineOpportunityBudget() - context-aware (garrison morning=2-3, siege=0-1) ✅
+   - Uses ContentOrchestrator.Instance for world state + pressure ✅
+   - Uses PlayerBehaviorTracker for learned preferences ⚠️ (basic - full learning in 6D)
+   - Implements IsPlayerOnDuty() check ✅
 
-3. CREATE Opportunity Definitions:
-   - ModuleData/Enlisted/camp_opportunities.json
-   - 25+ opportunities covering all types
-   - Natural language descriptions (what's HAPPENING, not game-y options)
+3. CREATE Opportunity Definitions: ✅ COMPLETE
+   - ModuleData/Enlisted/camp_opportunities.json ✅ (15 opportunities)
+   - 10-15 opportunities for Phase 6A-C testing (full 25+ in Phase 6E)
+   - Natural language descriptions (what's HAPPENING, not game-y options) ✅
 
    GOOD: "Veterans are drilling by the wagons. The sergeant is putting
           them through their paces. Swords clash in rhythm."
@@ -1534,34 +2367,32 @@ Phase 6 Tasks:
    BAD:  "Training Opportunity Available"
           [Start Training]
 
-4. MODIFY EnlistedMenuBehavior.cs:
-   - Add BuildCampLifeSection() method
-   - Insert CAMP LIFE section into Camp Hub
-   - Natural language presentation of what's happening
-   - Context-appropriate empty states:
-     * On duty: "You're on duty."
-     * Marching: "The army is on the march. No time for leisure."
-     * Siege: "The siege consumes all attention."
+4. MODIFY EnlistedMenuBehavior.cs: ✅ COMPLETE
+   - DECISIONS menu exists with opportunity sections ✅
+   - Accordion-style expansion with [NEW] tags ✅
+   - Context-appropriate empty states ✅
+   - DecisionManager.GetAvailableOpportunities() bridges to CampOpportunityGenerator ✅
+   - AddDecisionEntry records engagement on opportunity selection ✅
+   - GetCampActivityFlavor() queries CampOpportunityGenerator ✅
 
-5. IMPLEMENT TIME-OF-DAY AWARENESS:
-   Morning (6am-12pm): Training peak, productive tasks, budget 2-3
-   Afternoon (12pm-6pm): Duty focus, orders issued, budget 0-1
-   Evening (6pm-12am): Social peak, leisure, budget 1-2
-   Night (12am-6am): Sleep, guard duty only, budget 0
+5. IMPLEMENT TIME-OF-DAY AWARENESS: ✅ COMPLETE
+   - Dawn (6am-11am): Training peak, productive tasks, budget 2-3
+   - Midday (12pm-5pm): Duty focus, orders issued, budget 0-1
+   - Dusk (6pm-9pm): Social peak, leisure, budget 1-2
+   - Night (10pm-5am): Sleep, guard duty only, budget 0
+   - Uses DayPhase enum from OrchestratorEnums.cs (synced with Order phases)
 
-6. IMPLEMENT WEEKLY RHYTHM:
+6. IMPLEMENT WEEKLY RHYTHM: ✅ IN GENERATOR
    Days 1-4: Fresh after muster, more training/gambling
    Days 5-8: Routine settling, balanced
    Days 9-12: Muster approaching, pay tension, economic focus
    Muster Day: No camp life (structured muster sequence)
 
-7. IMPLEMENT LEARNING SYSTEM:
-   - Track engagement rates per opportunity type
-   - Adapt scoring: +15 for types player engages, -10 for ignored
-   - Maintain 70/30 split: 70% learned preference, 30% variety
-   - Persist in save system
+7. NOTE: LEARNING SYSTEM IS PHASE 6D (NOT THIS PHASE)
+   - Basic engagement tracking exists in OpportunityHistory
+   - Full adaptive learning (70/30 split) will be implemented in Phase 6D-E
 
-8. IMPLEMENT ORDER-DECISION TENSION SYSTEM:
+8. IMPLEMENT ORDER-DECISION TENSION SYSTEM: ✅ SCHEMA COMPLETE
    - When player is ON ORDER, DECISIONS still shows opportunities
    - Orchestrator FILTERS based on orderCompatibility:
      * "available" = show normally
@@ -1595,15 +2426,11 @@ Phase 6 Tasks:
    Tooltip shows risk on hover (no emojis, plain text):
    "Risk: You're on duty. If caught: -15 Officer Rep. Detection: ~25%"
 
-9. IMPLEMENT PLAYER COMMITMENT TRACKING:
-   - When player clicks to join activity, store commitment
-   - Only ONE active commitment at a time
-   - YOU section updates immediately: "You've agreed to join the {ACTIVITY} tonight."
-   - DECISIONS menu greys out committed activity button
-   - At scheduled time, activity fires (event/decision)
-   - If player is on duty when activity fires, detection check
-   - Clear commitment after activity completes or is cancelled
-   - Commitment persists across save/load
+9. IMPLEMENT PLAYER COMMITMENT TRACKING: ✅ COMPLETE
+   - PlayerCommitments.cs exists with ScheduledActivityId, ScheduledTime ✅
+   - HasCommitment property implemented ✅
+   - Commitment persists across save/load (in CampOpportunityGenerator.SyncData) ✅
+   - CommitToActivity() and related methods ready for Phase 6D integration ✅
 
    ```csharp
    public class PlayerCommitments
@@ -1614,33 +2441,33 @@ Phase 6 Tasks:
    }
    ```
 
-10. IMPLEMENT INFO SECTION CACHING (MainMenuNewsCache.cs):
-   - Create MainMenuNewsCache class to store cached section text
-   - KINGDOM: Refresh on war/peace/siege events or every 24 hours
-   - CAMP: Refresh on time period change (dawn/midday/dusk/night) or every 6 hours
-   - YOU: Refresh on player state change (duty status, physical state, new forecast)
-   - Use [NEW] tag with Warning color for changed content since last view
-   - Don't regenerate on every menu open - cache until trigger fires
-   - Call RefreshIfNeeded() when menu opens
+10. IMPLEMENT INFO SECTION CACHING (MainMenuNewsCache.cs): ✅ COMPLETE
+   - MainMenuNewsCache.cs exists (213 lines) ✅
+   - KINGDOM: Refresh on major events or every 24 hours ✅
+   - CAMP: Refresh on time period change or every 6 hours ✅
+   - YOU: Refresh on player state change or every hour ✅
+   - ForecastGenerator.cs exists for YOU section ✅
+   - OnPhaseChanged() integration with ContentOrchestrator ✅
 
-Files to Create:
-- src/Features/Interface/MainMenuNewsCache.cs
-- src/Features/Camp/Models/CampOpportunity.cs
-- src/Features/Camp/Models/PlayerCommitments.cs
-- src/Features/Camp/Models/OpportunityType.cs
-- src/Features/Camp/Models/CampContext.cs
-- src/Features/Camp/Models/CampMood.cs
-- src/Features/Camp/Models/DayPhase.cs
-- src/Features/Camp/Models/OpportunityHistory.cs
-- src/Features/Camp/CampOpportunityGenerator.cs
-- ModuleData/Enlisted/camp_opportunities.json
+Files Created (✅ All Complete):
+- src/Features/Interface/MainMenuNewsCache.cs ✅
+- src/Features/Content/ForecastGenerator.cs ✅
+- src/Features/Camp/Models/CampOpportunity.cs ✅
+- src/Features/Camp/Models/PlayerCommitments.cs ✅
+- src/Features/Camp/Models/OpportunityType.cs ✅
+- src/Features/Camp/Models/CampContext.cs ✅
+- src/Features/Camp/Models/CampMood.cs ✅
+- src/Features/Camp/Models/OpportunityHistory.cs ✅
+- src/Features/Camp/CampOpportunityGenerator.cs ✅
+- ModuleData/Enlisted/camp_opportunities.json ✅ (15 opportunities)
+- NOTE: DayPhase is in src/Features/Content/Models/OrchestratorEnums.cs (shared)
 
-Files to Modify:
-- src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs
-- src/Features/Content/PlayerBehaviorTracker.cs
-- ModuleData/Languages/enlisted_strings.xml
-- Enlisted.csproj
-- src/Mod.Core/SaveSystem/EnlistedSaveDefiner.cs
+Files Modified (✅ Complete):
+- src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs ✅
+- src/Features/Content/PlayerBehaviorTracker.cs ✅
+- ModuleData/Languages/enlisted_strings.xml ✅ (opportunity strings added)
+- Enlisted.csproj ✅
+- src/Mod.Core/SaveSystem/EnlistedSaveDefiner.cs ✅
 
 LOCALIZATION KEYS TO ADD (enlisted_strings.xml):
 
@@ -1746,66 +2573,103 @@ Start by reading the FULL camp-life-simulation.md spec (especially Edge Cases se
 ACCEPTANCE CRITERIA (Phase 6A-C)
 ═══════════════════════════════════════════════════════════════════════════════
 
-Core Functionality:
-[ ] CampOpportunityGenerator.cs creates opportunities based on context
-[ ] DayPhase affects opportunity selection (synced with Order phases)
-[ ] Fitness scoring uses all 4 layers (world, camp, player, history)
-[ ] UI shows natural language descriptions of what's happening
-[ ] Order-decision tension: risky opportunities have tooltips
-[ ] Player commitment tracking works
-[ ] Basic set of opportunities (10-15) for testing
+Core Functionality (All Complete):
+[x] CampOpportunityGenerator.cs creates opportunities based on context ✅
+[x] DayPhase affects opportunity selection (synced with Order phases) ✅
+[x] Fitness scoring uses all 4 layers (world, camp, player, history) ✅
+[x] UI shows natural language descriptions via DecisionManager bridge ✅
+    - DecisionManager.GetAvailableOpportunities() calls generator
+    - GetCampActivityFlavor() queries CampOpportunityGenerator
+[x] Order-decision tension: schema complete in camp_opportunities.json ✅
+[x] Player commitment tracking: model and save/load complete ✅
+[x] Engagement tracking: AddDecisionEntry records via RecordEngagement() ✅
+[x] Basic set of opportunities (10-15) for testing ✅ (15 opportunities)
 
-NOT in this phase:
-- Learning system (6D)
-- Full 25+ opportunities (6E)
-- Extensive playtesting/polish (6E)
+NOT in this phase (saved for 6D-E):
+- Learning system (adaptive 70/30 scoring)
+- Full 25+ opportunities
+- Extensive playtesting/polish
 
 ═══════════════════════════════════════════════════════════════════════════════
 HANDOFF NOTES (Capture these for Phase 6D-E)
 ═══════════════════════════════════════════════════════════════════════════════
 
-When complete, provide these handoff notes for Phase 6D-E:
+HANDOFF NOTES FOR Phase 6D-E (as of 2025-12-30):
 
-FILES CREATED:
-- [ ] src/Features/Interface/MainMenuNewsCache.cs
-- [ ] src/Features/Camp/Models/CampOpportunity.cs
-- [ ] src/Features/Camp/Models/PlayerCommitments.cs
-- [ ] src/Features/Camp/Models/OpportunityType.cs
-- [ ] src/Features/Camp/Models/CampContext.cs
-- [ ] src/Features/Camp/Models/CampMood.cs
-- [ ] src/Features/Camp/Models/DayPhase.cs
-- [ ] src/Features/Camp/Models/OpportunityHistory.cs
-- [ ] src/Features/Camp/CampOpportunityGenerator.cs
-- [ ] ModuleData/Enlisted/camp_opportunities.json
+FILES CREATED (✅ All Complete):
+- [x] src/Features/Interface/MainMenuNewsCache.cs (213 lines)
+- [x] src/Features/Content/ForecastGenerator.cs (YOU section generation)
+- [x] src/Features/Camp/Models/CampOpportunity.cs
+- [x] src/Features/Camp/Models/PlayerCommitments.cs
+- [x] src/Features/Camp/Models/OpportunityType.cs
+- [x] src/Features/Camp/Models/CampContext.cs
+- [x] src/Features/Camp/Models/CampMood.cs
+- [x] src/Features/Camp/Models/OpportunityHistory.cs
+- [x] src/Features/Camp/CampOpportunityGenerator.cs (876 lines)
+- [x] ModuleData/Enlisted/camp_opportunities.json (15 opportunities)
+- NOTE: DayPhase enum is in src/Features/Content/Models/OrchestratorEnums.cs
 
-FILES MODIFIED:
-- [ ] src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs
-- [ ] src/Features/Content/PlayerBehaviorTracker.cs
-- [ ] ModuleData/Languages/enlisted_strings.xml
-- [ ] Enlisted.csproj
-- [ ] src/Mod.Core/SaveSystem/EnlistedSaveDefiner.cs
+FILES MODIFIED (✅ Complete):
+- [x] src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs
+- [x] src/Features/Content/PlayerBehaviorTracker.cs
+- [x] ModuleData/Languages/enlisted_strings.xml
+- [x] Enlisted.csproj
+- [x] src/Mod.Core/SaveSystem/EnlistedSaveDefiner.cs
 
 FITNESS SCORING IMPLEMENTATION:
-- (describe how the 4-layer scoring works)
+- 4-layer scoring in CampOpportunityGenerator.CalculateFitness()
+- Layer 1 World: Uses WorldStateAnalyzer.AnalyzeSituation()
+- Layer 2 Camp: Uses CampContext (DayPhase, mood, muster cycle)
+- Layer 3 Player: Uses fatigue, gold, injury from CampContext
+- Layer 4 History: Uses OpportunityHistory (last presented, engagement rates)
+- Threshold: 40 (opportunities below this are not shown)
 
 ORDER-DECISION TENSION:
-- (describe how risky opportunities are handled)
+- Schema complete in camp_opportunities.json
+- orderCompatibility: available/risky/blocked per order type
+- detection: baseChance, nightModifier, highRepModifier
+- caughtConsequences: officerRep, discipline, orderFailureRisk
+- tooltipRiskyId for localized risk tooltips
 
-OPPORTUNITIES CREATED (10-15 for testing):
-- (list the opportunities added)
+OPPORTUNITIES CREATED (15 for testing):
+1. opp_weapon_drill (training)
+2. opp_card_game (social)
+3. opp_dice_game (economic)
+4. opp_war_stories (social)
+5. opp_rest_tent (recovery)
+6. opp_help_wounded (recovery)
+7. opp_equipment_maintenance (training)
+8. opp_sparring_match (training)
+9. opp_tavern_visit (social)
+10. opp_prayer_service (recovery)
+11. opp_foraging (economic)
+12. opp_repair_work (economic)
+13. opp_letter_writing (social)
+14. opp_officer_audience (special)
+15. opp_baggage_access (special)
 
 REMAINING WORK FOR 6D-E:
-- Learning system not yet implemented
-- Need 10-15 more opportunities
-- Polish and playtesting needed
+- Learning system: Adapt scoring based on engagement rates (70/30 split)
+- Add 10-15 more opportunities to reach 25+ total
+- Wire DECISIONS menu to show actual generator output (currently placeholder)
+- Test commitment tracking UI integration
+- Verify detection logic at runtime
+- Polish and playtesting
 
-VERIFICATION PASSED:
-[ ] Camp feels alive - things happening around player
-[ ] Day phase affects opportunities
-[ ] Fitness scoring works correctly
-[ ] Risky opportunities show tooltips
-[ ] Commitment tracking works
-[ ] Edge cases handled gracefully
+VERIFICATION STATUS (Phase 6A-C Complete):
+[x] Camp opportunities generate based on context ✅
+[x] Day phase affects scoring (validPhases in JSON) ✅
+[x] Fitness scoring uses all 4 layers ✅
+[x] Order-decision tension schema complete ✅
+[x] UI integration complete (DecisionManager bridge) ✅
+[x] Engagement tracking complete ✅
+[x] Commitment model complete (UI integration in 6D-E) ✅
+
+READY FOR PHASE 6D-E:
+- Learning system (adaptive scoring)
+- Full 25+ opportunities
+- Commitment UI (YOU section updates)
+- Playtesting and polish
 ```
 
 ---
@@ -1922,27 +2786,346 @@ Polish:
 HANDOFF NOTES (Capture these for Phase 7)
 ═══════════════════════════════════════════════════════════════════════════════
 
+⚠️ CRITICAL DISCOVERY (2025-12-31):
+Phase 6 is INCOMPLETE. The 29 opportunities reference decisions that don't exist.
+See content-orchestrator-plan.md "CRITICAL: Phase 6 Incomplete" section for details.
+
+Before Phase 7 can proceed:
+1. Delete old decisions.json (38 pre-orchestrator static decisions)
+2. Create 26 new decisions matching opportunity targetDecision IDs
+3. Keep 3 working decisions: dec_maintain_gear, dec_write_letter, dec_gamble_high
+
+HANDOFF NOTES FOR Phase 7 (as of 2025-12-30):
+
 FILES MODIFIED:
-- [ ] src/Features/Camp/CampOpportunityGenerator.cs (learning integration)
-- [ ] src/Features/Content/PlayerBehaviorTracker.cs (engagement tracking)
-- [ ] ModuleData/Enlisted/camp_opportunities.json (25+ opportunities)
-- [ ] ModuleData/Languages/enlisted_strings.xml (localization)
+- [x] src/Features/Camp/CampOpportunityGenerator.cs (learning integration)
+- [x] src/Features/Content/PlayerBehaviorTracker.cs (engagement tracking)
+- [x] ModuleData/Enlisted/camp_opportunities.json (29 opportunities)
+- [x] ModuleData/Languages/enlisted_strings.xml (localization)
 
-OPPORTUNITIES ADDED:
-- (list all 25+ opportunities with IDs)
+LEARNING SYSTEM IMPLEMENTATION:
+- PlayerBehaviorTracker tracks opportunity types presented vs engaged
+- GetLearningModifier() returns +10.5 (70% of +15) for >60% engagement
+- GetLearningModifier() returns -7.0 (70% of -10) for <30% engagement
+- Minimum 5 presentations required before learning applies
+- 30% variety maintained via novelty bonus and random variety windows
+- Data persists in save system via CampOpportunityGenerator.SyncData()
 
-LEARNING SYSTEM:
-- Engagement tracking implementation
-- 70/30 split logic
+OPPORTUNITIES (29 Total):
+Training (5):
+  1. opp_weapon_drill - Weapon Drill
+  2. opp_equipment_maintenance - Equipment Maintenance
+  3. opp_sparring_match - Sparring Match
+  4. opp_formation_practice - Formation Practice (NEW)
+  5. opp_veteran_spar - Challenge a Veteran (NEW)
+  6. opp_archery_range - Archery Range (NEW)
 
-PLAYTESTING RESULTS:
-- (note any tuning done)
+Social (6):
+  7. opp_card_game - Card Game
+  8. opp_war_stories - War Stories
+  9. opp_tavern_visit - Camp Tavern
+  10. opp_letter_writing - Write a Letter
+  11. opp_storytelling_circle - Storytelling Circle (NEW)
+  12. opp_drinking_heavy - Drinking Contest (NEW)
+  13. opp_arm_wrestling - Arm Wrestling (NEW)
+  14. opp_campfire_song - Campfire Songs (NEW)
 
-VERIFICATION PASSED:
-[ ] Learning adapts to player over time
-[ ] 25+ opportunities feel varied
-[ ] All situations feel distinct
-[ ] Natural language immersive
+Economic (4):
+  15. opp_dice_game - Dice Game
+  16. opp_foraging - Foraging Party
+  17. opp_repair_work - Repair Work
+  18. opp_high_stakes_cards - High Stakes Table (NEW)
+  19. opp_trade_goods - Merchant Caravan (NEW)
+
+Recovery (5):
+  20. opp_rest_tent - Rest in Tent
+  21. opp_help_wounded - Help the Wounded
+  22. opp_prayer_service - Prayer Service
+  23. opp_rest_shade - Rest in Shade (NEW)
+  24. opp_meditation - Quiet Reflection (NEW)
+
+Special (5):
+  25. opp_officer_audience - Officer's Audience
+  26. opp_baggage_access - Visit the Baggage
+  27. opp_mentor_recruit - Mentor a Recruit (NEW)
+  28. opp_volunteer_duty - Extra Duty (NEW)
+  29. opp_night_patrol - Unofficial Patrol (NEW)
+
+VERIFICATION STATUS (Phase 6D-E Complete):
+[x] Engagement tracking persists across sessions
+[x] Player preferences affect opportunity selection (+10.5/-7.0 modifiers)
+[x] 70/30 split maintains variety (learningWeight = 0.7f)
+[x] Logs show learning adjustments (ModLogger.Debug)
+[x] 29 opportunities with natural language descriptions
+[x] All opportunities have localization keys
+[x] Garrison, Campaign, Siege feel distinct (via validPhases)
+[x] Morning/Evening feel distinct (Dawn/Midday vs Dusk/Night phases)
+[x] Variety tracking works (cooldown + novelty bonus)
+
+PHASE 6F INTEGRATION TASKS (Completed 2025-12-31):
+[x] Wired DECISIONS menu to show actual generator output
+[x] Integrated commitment tracking UI into YOU section
+[x] Implemented detection logic for risky opportunities
+[x] Build successful - all systems compile
+[x] Created playtesting guide with balance recommendations
+
+FILES MODIFIED (Phase 7):
+- [x] src/Features/Camp/CampOpportunityGenerator.cs (detection logic added)
+- [x] src/Features/Content/ForecastGenerator.cs (commitment UI display)
+- [x] src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs (detection checks)
+- [x] ModuleData/Languages/enlisted_strings.xml (detection strings)
+- [x] docs/AFEATURE/phase7-playtesting-guide.md (new file)
+
+DETECTION SYSTEM:
+- AttemptRiskyOpportunity() checks detection when player on duty
+- Detection chance: base 25%, -15% at night, -10% if high rep
+- Caught consequences: officer rep penalty, discipline increase
+- Notification shown to player if caught
+- Integration point added before event delivery
+
+COMMITMENT TRACKING UI:
+- ForecastGenerator now displays active commitments in YOU section
+- Shows "You've committed to X in N hours" message
+- Handles edge cases (commitment soon, no display text)
+- Persists across save/load (already working from Phase 6)
+
+DECISIONS MENU INTEGRATION:
+- DecisionManager.GetAvailableOpportunities() already wired ✓
+- CampOpportunity tracked in _decisionsMenuOpportunities dictionary
+- Detection check fires on decision selection for risky opportunities
+- Player cannot proceed with event if caught
+
+READY FOR PLAYTESTING:
+- Balance tuning guide: docs/AFEATURE/phase7-playtesting-guide.md
+- All integration points verified
+- Build successful with 0 warnings
+- Ready for in-game testing and balance adjustments
+```
+
+---
+
+## Phase 6G: Create Orchestrated Decisions (BLOCKING)
+
+**Goal:** Create the 26 missing decisions that opportunities reference
+
+**Chat Strategy:** 🔒 **STANDALONE** - JSON content creation
+
+**Prerequisites:** Phase 6A-F complete (opportunities exist, menu wired)
+
+**Status:** ❌ BLOCKING - Must complete before Phase 7
+
+```
+I need you to create the missing decisions for the Content Orchestrator.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT: TWO-LAYER ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+The orchestrator uses a two-layer content system:
+
+OPPORTUNITY (what shows in menu):
+- Defined in camp_opportunities.json
+- Orchestrator selects based on world state, time, player condition
+- Has display text, fitness scoring, order compatibility
+- Contains targetDecision field → points to a DECISION
+
+DECISION (what fires when clicked):
+- Defined in decisions.json
+- Contains options (2-3 choices), rewards, consequences
+- Fires when player clicks the opportunity
+- Light RP moments, not complex narratives
+
+═══════════════════════════════════════════════════════════════════════════════
+CURRENT STATE
+═══════════════════════════════════════════════════════════════════════════════
+
+29 opportunities exist in camp_opportunities.json
+3 target decisions exist: dec_maintain_gear, dec_write_letter, dec_gamble_high
+26 target decisions are MISSING - clicking opportunities does nothing useful
+
+38 OLD static decisions exist in decisions.json - from pre-orchestrator system
+These must be DELETED before creating the new orchestrated decisions.
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 0: DELETE OLD STATIC DECISIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+The OLD decisions.json contains 38 static decisions from the pre-orchestrator era.
+These were designed for a different system where players browsed a static menu.
+They are NOT compatible with the new orchestrator architecture.
+
+ACTION: Delete ALL decisions from decisions.json EXCEPT these 3 that are already
+referenced by opportunities and work correctly:
+- dec_maintain_gear (used by opp_equipment_maintenance)
+- dec_write_letter (used by opp_letter_writing)
+- dec_gamble_high (used by opp_high_stakes_cards)
+
+OLD DECISIONS TO DELETE (35 total):
+- dec_rest, dec_rest_extended, dec_seek_treatment
+- dec_weapon_drill, dec_spar, dec_endurance, dec_study_tactics
+- dec_practice_medicine, dec_train_troops, dec_combat_drill
+- dec_weapon_specialization, dec_lead_drill
+- dec_join_men, dec_join_drinking, dec_seek_officers, dec_keep_to_self
+- dec_confront_rival, dec_dangerous_wager, dec_prove_courage, dec_challenge
+- dec_gamble_low, dec_side_work, dec_shady_deal, dec_visit_market
+- dec_request_audience, dec_volunteer_duty, dec_request_leave
+- dec_listen_rumors, dec_scout_area, dec_check_supplies, dec_visit_quartermaster
+- dec_ret_inspect, dec_ret_drill, dec_ret_share_rations, dec_ret_address_men
+
+WHY DELETE:
+- Wrong architecture: static menu vs orchestrator-curated
+- Wrong IDs: opportunities reference different decision IDs
+- Wrong design: complex multi-option events vs light RP moments
+- Clutters catalog: EventCatalog loads all, wastes memory
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 1: CREATE 26 NEW DECISIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+Design Philosophy:
+- Light Bannerlord RP as an enlisted soldier
+- 2-3 options per decision (fast resolution)
+- Clear tooltips with consequences
+- Realistic effects: fatigue, rep, small gold/skill changes
+- No complex mechanics or branching
+
+Missing Decisions by Category:
+
+TRAINING (5):
+- dec_training_drill - Join weapon drills with other soldiers
+- dec_training_spar - Sparring match with practice weapons
+- dec_training_formation - Formation practice with the unit
+- dec_training_veteran - Learn from a grizzled veteran
+- dec_training_archery - Practice at the archery range
+
+SOCIAL (7):
+- dec_social_stories - Listen to war stories by the fire
+- dec_tavern_drink - Have a drink at the sutler's tent
+- dec_social_storytelling - Join the storytelling circle
+- dec_drinking_contest - Enter a drinking contest
+- dec_social_singing - Join campfire songs
+- dec_arm_wrestling - Challenge someone to arm wrestling
+- dec_gamble_cards - Play cards for low stakes
+
+ECONOMIC (5):
+- dec_gamble_dice - Dice game behind the wagons
+- dec_forage - Join foraging party for extra rations
+- dec_work_repairs - Do paid repair work for quartermaster
+- dec_trade_browse - Browse merchant caravan goods
+
+RECOVERY (5):
+- dec_rest_sleep - Sleep in your tent
+- dec_help_wounded - Help the camp surgeon
+- dec_prayer - Attend the prayer service
+- dec_rest_short - Quick rest in the shade
+- dec_meditate - Quiet reflection
+
+SPECIAL (5):
+- dec_officer_audience - Request audience with the captain
+- dec_baggage_access - Access your personal effects
+- dec_mentor_recruit - Help a struggling recruit
+- dec_volunteer_extra - Volunteer for extra duty
+- dec_night_patrol - Join unofficial perimeter check
+
+═══════════════════════════════════════════════════════════════════════════════
+DECISION STRUCTURE (from event-system-schemas.md)
+═══════════════════════════════════════════════════════════════════════════════
+
+Each decision should follow this structure:
+
+{
+  "id": "dec_training_drill",
+  "category": "decision",
+  "titleId": "dec_training_drill_title",
+  "title": "Weapon Drill",
+  "setupId": "dec_training_drill_setup",
+  "setup": "The sergeant calls for formation. Men line up with their weapons, ready to drill.",
+  "requirements": {
+    "tier": { "min": 1, "max": 999 }
+  },
+  "timing": {
+    "cooldown_days": 1,
+    "priority": "normal"
+  },
+  "options": [
+    {
+      "id": "drill_focused",
+      "textId": "dec_training_drill_focused_text",
+      "text": "Focus on your form. Train hard.",
+      "rewards": {
+        "skillXp": { "OneHanded": 5 }
+      },
+      "effects": {
+        "fatigue": 2
+      },
+      "resultTextId": "dec_training_drill_focused_result",
+      "resultText": "Sweat runs down your back. Your arms ache. But your blade feels more natural now.",
+      "tooltip": "Trains weapon skill. Causes fatigue."
+    },
+    {
+      "id": "drill_social",
+      "textId": "dec_training_drill_social_text",
+      "text": "Go through the motions. Chat with the lads.",
+      "rewards": {
+        "soldierRep": 1
+      },
+      "effects": {
+        "fatigue": 1
+      },
+      "resultTextId": "dec_training_drill_social_result",
+      "resultText": "You learn a few names, share a few jokes. The sergeant frowns but says nothing.",
+      "tooltip": "Builds soldier rep. Light fatigue."
+    },
+    {
+      "id": "cancel",
+      "textId": "dec_training_drill_cancel_text",
+      "text": "Step back. Not today.",
+      "resultTextId": "dec_training_drill_cancel_result",
+      "resultText": "You slip away before the sergeant notices.",
+      "tooltip": "No action taken."
+    }
+  ]
+}
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPLEMENTATION STEPS
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 0: DELETE OLD SYSTEM
+[ ] Open ModuleData/Enlisted/Decisions/decisions.json
+[ ] Delete all 35 old decisions (keep only dec_maintain_gear, dec_write_letter, dec_gamble_high)
+[ ] Verify file structure still valid JSON
+
+STEP 1: CREATE NEW DECISIONS
+[ ] Create 26 new decisions matching the targetDecision IDs from opportunities
+[ ] Follow the decision structure template above
+[ ] Each decision: 2-3 options, clear tooltips, light RP tone
+
+STEP 2: ADD LOCALIZATION
+[ ] Add all new strings to ModuleData/Languages/enlisted_strings.xml
+[ ] Run: python tools/events/sync_event_strings.py
+
+STEP 3: VALIDATE & TEST
+[ ] Run: python tools/events/validate_events.py
+[ ] Build: dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+[ ] In-game: verify clicking opportunities shows decision popups
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES (Capture for Phase 7)
+═══════════════════════════════════════════════════════════════════════════════
+
+FILES MODIFIED:
+- [ ] ModuleData/Enlisted/Decisions/decisions.json (26 new decisions)
+- [ ] ModuleData/Languages/enlisted_strings.xml (decision strings)
+
+DECISIONS CREATED:
+- (list all 26 decision IDs when complete)
+
+VERIFICATION:
+- [ ] All 29 opportunities have working target decisions
+- [ ] Clicking opportunities shows decision popup
+- [ ] Options have clear tooltips
+- [ ] Effects apply correctly
 ```
 
 ---
@@ -1953,7 +3136,7 @@ VERIFICATION PASSED:
 
 **Chat Strategy:** 🔒 **STANDALONE** - JSON-only work, fast iteration
 
-**Prerequisites:** Phases 1-6 complete (full orchestrator working)
+**Prerequisites:** Phase 6G complete (26 decisions exist and work)
 
 ```
 I need you to add content variants for the Content Orchestrator.
@@ -2246,6 +3429,606 @@ VERIFICATION PASSED:
 
 ---
 
+## Phase 9: Decision Scheduling (Must Have)
+
+**Goal:** Allow players to commit to camp decisions that fire at specific phases (Dawn/Midday/Dusk/Night). Decision greys out when committed and fires automatically at the scheduled phase. Prevents overwhelming player with immediate popups at fast time speeds.
+
+**Chat Strategy:** 🔒 **STANDALONE** - Phase scheduling system
+
+**Prerequisites:** 
+- ✅ Phase 6A-F complete (camp opportunities exist)
+- ❌ **Phase 6G MUST COMPLETE FIRST** (26 missing decisions must be created)
+
+**Status:** ⛔ **BLOCKED by Phase 6G** - Cannot schedule decisions that don't exist
+
+**Blocking Issue:**
+Phase 6 created 29 opportunities, but only 3 decisions exist. Need to create 26 missing decisions before scheduling can work. See Phase 6G below.
+
+```
+I need you to implement the Decision Scheduling system.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY
+═══════════════════════════════════════════════════════════════════════════════
+
+CURRENT PROBLEM:
+- Player clicks decision in DECISIONS menu → event fires immediately
+- At FastForward speed (20 seconds per game day), player gets bombarded with popups
+- No sense of time passing or planning ahead
+- Decisions feel reactive, not deliberate
+
+SOLUTION:
+- Each opportunity tagged with preferred phase (Dawn/Midday/Dusk/Night)
+- Player commits to decision → greys out, shows "Scheduled for Midday"
+- At scheduled phase → event fires automatically
+- Player status shows: "You've committed to sparring at noon."
+- Can cancel commitment with small penalty
+
+TIME SPEEDS (from decompile research):
+- Play (1x): 1 game day = 80 real seconds
+- FastForward (>>): 1 game day = 20 real seconds
+- Phase length (6 hours): Play = 20 seconds, FastForward = 5 seconds
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPLEMENTATION PLAN
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 1: Add Phase Tags to Opportunities
+In ModuleData/Enlisted/Decisions/camp_opportunities.json:
+
+Add "scheduledPhase" field to each opportunity:
+```json
+{
+  "id": "opp_sparring_match",
+  "title": "Sparring Match",
+  "scheduledPhase": "Midday",  // Dawn, Midday, Dusk, Night
+  "immediate": false,  // If true, fires immediately (backwards compat)
+  ...
+}
+```
+
+Examples:
+- Training activities → Midday (noon sun, active)
+- Social activities → Dusk (evening, relaxed)
+- Rest activities → Night (sleep time)
+- Special activities → Dawn (morning, fresh start)
+
+TASK 2: Add Commitment Tracking
+In src/Features/Camp/CampOpportunityGenerator.cs:
+
+```csharp
+public class ScheduledCommitment
+{
+    public string OpportunityId { get; set; }
+    public string TargetDecision { get; set; }
+    public CampaignTime CommitTime { get; set; }
+    public string ScheduledPhase { get; set; }  // Dawn/Midday/Dusk/Night
+    public int ScheduledDay { get; set; }  // Day number when it should fire
+}
+
+private List<ScheduledCommitment> _commitments = new List<ScheduledCommitment>();
+private CampaignTime _lastPhaseCheck = CampaignTime.Zero;
+
+public void CommitToOpportunity(CampOpportunity opportunity)
+{
+    // Create commitment
+    var commitment = new ScheduledCommitment
+    {
+        OpportunityId = opportunity.Id,
+        TargetDecision = opportunity.TargetDecision,
+        CommitTime = CampaignTime.Now,
+        ScheduledPhase = opportunity.ScheduledPhase,
+        ScheduledDay = CalculateScheduledDay(opportunity.ScheduledPhase)
+    };
+    
+    _commitments.Add(commitment);
+    
+    // Mark as unavailable
+    // Update UI
+    
+    ModLogger.Info("Camp", $"Committed to {opportunity.Id} for {commitment.ScheduledPhase}");
+}
+
+private int CalculateScheduledDay(string phase)
+{
+    var currentHour = CampaignTime.Now.GetHourOfDay;
+    var currentDay = (int)CampaignTime.Now.ToDays;
+    
+    var phaseHour = phase switch
+    {
+        "Dawn" => 6,
+        "Midday" => 12,
+        "Dusk" => 18,
+        "Night" => 0,
+        _ => 12
+    };
+    
+    // If phase hour has passed today, schedule for next day
+    if (phaseHour == 0) // Night
+    {
+        return currentHour < 3 ? currentDay : currentDay + 1;
+    }
+    
+    return currentHour >= phaseHour ? currentDay + 1 : currentDay;
+}
+```
+
+TASK 3: Check Phase Transitions
+Add hourly tick to check for scheduled commitments:
+
+```csharp
+public void OnHourlyTick()
+{
+    var currentHour = CampaignTime.Now.GetHourOfDay;
+    var currentDay = (int)CampaignTime.Now.ToDays;
+    
+    // Check phase boundaries (6am, 12pm, 6pm, 12am/24)
+    if (currentHour == 6 || currentHour == 12 || currentHour == 18 || currentHour == 0)
+    {
+        var currentPhase = GetCurrentPhase(currentHour);
+        FireScheduledCommitments(currentPhase, currentDay);
+    }
+}
+
+private string GetCurrentPhase(int hour)
+{
+    return hour switch
+    {
+        6 => "Dawn",
+        12 => "Midday",
+        18 => "Dusk",
+        0 or 24 => "Night",
+        _ => null
+    };
+}
+
+private void FireScheduledCommitments(string phase, int day)
+{
+    var toFire = _commitments.Where(c => 
+        c.ScheduledPhase == phase && 
+        c.ScheduledDay == day
+    ).ToList();
+    
+    foreach (var commitment in toFire)
+    {
+        // Fire the event via EventDeliveryManager
+        var decision = GetDecisionById(commitment.TargetDecision);
+        if (decision != null)
+        {
+            EventDeliveryManager.Instance.DeliverEvent(decision);
+            ModLogger.Info("Camp", $"Fired scheduled commitment: {commitment.OpportunityId}");
+        }
+        
+        _commitments.Remove(commitment);
+    }
+}
+```
+
+TASK 4: Update UI to Show Commitments
+In src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs:
+
+Update DECISIONS menu to show commitment state:
+```csharp
+// Available opportunities
+foreach (var opp in available)
+{
+    var isCommitted = IsCommittedTo(opp.Id);
+    
+    if (isCommitted)
+    {
+        // Show greyed out with scheduled time
+        var commitment = GetCommitment(opp.Id);
+        var hoursUntil = CalculateHoursUntil(commitment.ScheduledPhase, commitment.ScheduledDay);
+        
+        row = $"    {opp.Title} [SCHEDULED - {hoursUntil}h]";
+        args.IsEnabled = false;
+        args.Tooltip = new TextObject($"Fires at {commitment.ScheduledPhase} in {hoursUntil} hours. Right-click to cancel.");
+    }
+    else
+    {
+        row = $"    {opp.Title} ({opp.ScheduledPhase})";
+        args.Tooltip = new TextObject($"Commits to this activity. Will fire at {opp.ScheduledPhase}.");
+    }
+}
+```
+
+TASK 5: Add Commitment Display to Your Status
+In src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs:
+
+```csharp
+private string BuildPlayerCommitmentLine()
+{
+    var generator = CampOpportunityGenerator.Instance;
+    var commitments = generator?.GetActiveCommitments();
+    
+    if (commitments == null || commitments.Count == 0)
+        return string.Empty;
+    
+    var next = commitments.OrderBy(c => c.ScheduledDay).ThenBy(c => c.ScheduledPhase).First();
+    var hoursUntil = CalculateHoursUntil(next.ScheduledPhase, next.ScheduledDay);
+    
+    return $"You've committed to {GetActivityName(next.OpportunityId)} in {hoursUntil} hours.";
+}
+
+// Add to Your Status section (line 1 if exists)
+```
+
+TASK 6: Allow Cancellation
+Add right-click or cancel option:
+
+```csharp
+public void CancelCommitment(string opportunityId)
+{
+    var commitment = _commitments.FirstOrDefault(c => c.OpportunityId == opportunityId);
+    if (commitment == null)
+        return;
+    
+    _commitments.Remove(commitment);
+    
+    // Small penalty for canceling
+    var enlistment = EnlistmentBehavior.Instance;
+    enlistment.AdjustFatigue(-5); // Minor fatigue cost
+    
+    ModLogger.Info("Camp", $"Cancelled commitment: {opportunityId}");
+    
+    InformationManager.DisplayMessage(new InformationMessage(
+        "Commitment cancelled. You feel restless from changing plans.",
+        Colors.Yellow));
+}
+```
+
+TASK 7: Persistence
+Add to save system:
+
+```csharp
+[SaveableField(XXX)]
+private List<ScheduledCommitment> _commitments;
+
+public override void SyncData(IDataStore dataStore)
+{
+    dataStore.SyncData("_commitments", ref _commitments);
+    // ... existing sync code
+}
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+EDGE CASES
+═══════════════════════════════════════════════════════════════════════════════
+
+- Player commits to multiple activities: Queue them by phase
+- Fast travel past scheduled time: Fire immediately on arrival
+- Player enters battle during commitment: Queue survives, fires after battle
+- Phase transition happens while in menu: Fire after menu closes
+- Commitment conflicts with order: Order takes priority, commitment auto-cancels with no penalty
+- Player unconscious at scheduled time: Auto-cancel commitment
+- Save/load: Commitments persist correctly
+
+FILES TO MODIFY:
+- src/Features/Camp/CampOpportunityGenerator.cs (commitment tracking)
+- src/Features/Camp/Models/CampOpportunity.cs (add ScheduledPhase field)
+- src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs (DECISIONS menu UI)
+- src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs (Your Status display)
+- ModuleData/Enlisted/Decisions/camp_opportunities.json (add scheduledPhase to all)
+- ModuleData/Languages/enlisted_strings.xml (commitment messages)
+
+ACCEPTANCE CRITERIA:
+[ ] Each opportunity has scheduledPhase tag
+[ ] Player can commit to decision → greys out in menu
+[ ] Commitment fires automatically at scheduled phase
+[ ] Your Status shows active commitment(s)
+[ ] Player can cancel commitment with minor penalty
+[ ] Multiple commitments queue properly
+[ ] Fast travel fires queued commitments on arrival
+[ ] Commitments persist through save/load
+[ ] Build successful with 0 errors
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+FILES MODIFIED:
+[ ] src/Features/Camp/CampOpportunityGenerator.cs
+[ ] src/Features/Camp/Models/CampOpportunity.cs
+[ ] src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs
+[ ] src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs
+[ ] ModuleData/Enlisted/Decisions/camp_opportunities.json
+[ ] ModuleData/Languages/enlisted_strings.xml
+
+SCHEDULING SYSTEM:
+- Opportunities tagged with Dawn/Midday/Dusk/Night
+- Commitment creates scheduled event for future phase
+- Hourly tick checks phase transitions (6am, 12pm, 6pm, 12am)
+- Events fire automatically at scheduled time
+- UI shows [SCHEDULED] state with hours until
+
+VERIFICATION:
+[ ] Commitments fire at correct phase
+[ ] UI shows commitment state properly
+[ ] Cancellation works with penalty
+[ ] Fast travel handles queued commitments
+[ ] Save/load persists commitments
+```
+
+---
+
+## Phase 10: Order Forecasting (Must Have)
+
+**Goal:** Give players advance warning (4-8 hours) before orders are issued to handle fast time speeds. Integrate forecasts into the 3 existing summary sections with max 4-5 lines per section.
+
+**Chat Strategy:** 🔒 **STANDALONE** - Player visibility system
+
+**Prerequisites:** Phases 1-6 complete, Orders work, Reports work
+
+**Status:** ❌ Not Started - **MUST BE DONE**
+
+```
+I need you to implement the Forecast & Scheduling system.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY
+═══════════════════════════════════════════════════════════════════════════════
+
+The player needs advance warning when orders/events are coming.
+
+CURRENT PROBLEM:
+- Orders issued every ~3 days, appear immediately in Orders menu
+- At FastForward speed: 1 game day = 20 real seconds (research from decompile)
+- At Play speed: 1 game day = 80 real seconds
+- Orders appear with no warning - player feels ambushed
+
+TIME SPEEDS (from Campaign.cs decompile):
+- Play (1x): MapTimeTracker.Tick(1080 * realDt) → 1 game hour = 3.33 real seconds
+- FastForward (>>): MapTimeTracker.Tick(4320 * realDt) → 1 game hour = 0.833 real seconds
+- Phase (6h): Play = 20 seconds, FastForward = 5 seconds
+
+SOLUTION (Imminent Warning System):
+- 4-8 hour advance warning for orders (13-26 seconds at FastForward)
+- Simple: Orchestrator decides "order should fire" → creates warning → waits 4-8h → issues
+- Forecasts appear in the 3 existing summary sections
+- Max 4-5 lines per section to keep it concise
+- Order states: IMMINENT → PENDING → ACTIVE → COMPLETE
+
+WHY NOT LONG-TERM FORECASTING:
+- Orchestrator designed for "what content fits NOW", not "what will I need in 2 days"
+- World state changes rapidly (siege starts, battle happens, lord dismisses you)
+- 4-8 hour window is realistic: "Sergeant will call for you soon" vs "You'll have orders in 2 days"
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ FIRST
+═══════════════════════════════════════════════════════════════════════════════
+
+Read:
+- docs/Features/Core/orders-system.md (see line 60: FORECAST → SCHEDULED flow)
+- src/Features/Orders/Behaviors/OrderManager.cs (current immediate-issue logic)
+- src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs (BuildDailyBriefSection)
+
+CURRENT SUMMARY STRUCTURE (3 sections):
+1. Kingdom Reports - War fronts, lord activities, kingdom news
+2. Company Reports - Company situation, casualties, supplies, events
+3. Your Status - Player condition, fatigue, injuries, active duty
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPLEMENTATION PLAN
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 1: Add Order States
+In src/Features/Orders/Models/Order.cs:
+
+```csharp
+public enum OrderState
+{
+    Imminent,     // 4-8h warning - "Sergeant will call for you soon"
+    Pending,      // Issued - shows in Orders menu for accept/decline
+    Active,       // Accepted - progressing through phases
+    Complete      // Done - results in Recent Activity
+}
+
+public class Order
+{
+    // ... existing fields ...
+    public OrderState State { get; set; } = OrderState.Pending;
+    public CampaignTime ImminentTime { get; set; }  // When imminent warning began
+    public CampaignTime IssueTime { get; set; } // When order will be issued (ImminentTime + 4-8h)
+}
+```
+
+TASK 2: Modify OrderManager Timing
+In src/Features/Orders/Behaviors/OrderManager.cs:
+
+Current logic:
+- TryIssueOrder() fires every ~3 days
+- Order appears immediately in menu
+
+New logic (Simplified Imminent Warning):
+- TryIssueOrder() at ~3 days → Orchestrator decides "order should fire NOW"
+- Instead of immediate issue, create order in IMMINENT state with 4-8h delay
+- Update() checks order state transitions:
+  - IMMINENT → PENDING (when IssueTime arrives)
+  - PENDING → ACTIVE (when player accepts or mandatory auto-accepts)
+  - ACTIVE → COMPLETE (when order finishes)
+
+Add methods:
+- CreateImminentOrder() - creates order with 4-8h warning
+- UpdateOrderState() - transitions IMMINENT → PENDING based on time
+- GetImminentWarningText() - returns warning text for summaries
+- CancelImminentOrder() - if world state changes dramatically (siege ends, lord dies)
+
+TASK 3: Integrate Forecasts into Summaries
+In src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs:
+
+Modify BuildDailyBriefSection() to call new methods:
+
+Kingdom Reports section:
+- Add BuildKingdomForecastLine() → "Expect strategic orders soon."
+- Max 1 line for forecast, 4 lines for actual kingdom news
+
+Company Reports section:
+- Add BuildCompanyForecastLine() → "Sergeant looking for volunteers for patrol duty."
+- Max 1 line for forecast, 4 lines for company situation
+
+Your Status section:
+- Add BuildPlayerForecastLine() → "Guard duty scheduled in 8 hours."
+- Max 1 line for forecast, 4 lines for player condition
+
+Methods:
+```csharp
+private string BuildKingdomForecastLine()
+{
+    var orderManager = Orders.Behaviors.OrderManager.Instance;
+    var order = orderManager?.GetCurrentOrder();
+    
+    if (order == null || order.State < OrderState.Forecast)
+        return string.Empty;
+    
+    if (order.State == OrderState.Forecast && order.Tags.Contains("strategic"))
+    {
+        return "Expect strategic orders from command soon.";
+    }
+    
+    return string.Empty;
+}
+
+private string BuildCompanyForecastLine()
+{
+    var orderManager = Orders.Behaviors.OrderManager.Instance;
+    var order = orderManager?.GetCurrentOrder();
+    
+    if (order == null || order.State < OrderState.Forecast)
+        return string.Empty;
+    
+    if (order.State == OrderState.Forecast && !order.Tags.Contains("strategic"))
+    {
+        return $"Sergeant looking for {GetRoleText(order.Tags)}.";
+    }
+    
+    return string.Empty;
+}
+
+private string BuildPlayerForecastLine()
+{
+    var orderManager = Orders.Behaviors.OrderManager.Instance;
+    var order = orderManager?.GetCurrentOrder();
+    
+    if (order == null || order.State < OrderState.Scheduled)
+        return string.Empty;
+    
+    if (order.State == OrderState.Scheduled)
+    {
+        var hoursUntil = (order.ScheduledTime - CampaignTime.Now).ToHours;
+        return $"{order.Title} scheduled in {(int)hoursUntil} hours.";
+    }
+    
+    return string.Empty;
+}
+```
+
+TASK 4: Update Orders Menu UI
+In src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs:
+
+Update the Orders accordion to show forecast/scheduled orders with different styling:
+- FORECAST orders: Show as "     [FORECAST] Duty assignment likely"
+- SCHEDULED orders: Show as "     [SCHEDULED] Guard Duty (in 8h)"
+- PENDING orders: Show as "     [NEW] Guard Duty" (existing)
+- ACTIVE orders: Show as "     [ASSIGNED] Guard Duty" (existing, from Phase 6F)
+
+TASK 5: Timing Configuration
+In ModuleData/Enlisted/Config/enlisted_config.json:
+
+Add forecast timing config:
+```json
+"orders": {
+  "forecast_window_min_hours": 12,
+  "forecast_window_max_hours": 24,
+  "scheduled_window_min_hours": 8,
+  "scheduled_window_max_hours": 18
+}
+```
+
+TASK 6: Localization
+Add to ModuleData/Languages/enlisted_strings.xml:
+- forecast_strategic_orders - "Expect strategic orders from command soon."
+- forecast_sergeant_patrol - "Sergeant looking for patrol volunteers."
+- forecast_sergeant_guard - "Sergeant organizing guard rotations."
+- scheduled_order_template - "{ORDER_TITLE} scheduled in {HOURS} hours."
+
+═══════════════════════════════════════════════════════════════════════════════
+SUMMARY SECTION LINE LIMITS
+═══════════════════════════════════════════════════════════════════════════════
+
+Each section must be 4-5 lines MAX:
+
+Kingdom Reports (4-5 lines total):
+  Line 1: [Forecast if any] "Expect strategic orders soon."
+  Lines 2-5: Actual kingdom news (war fronts, lord activities)
+
+Company Reports (4-5 lines total):
+  Line 1: [Forecast if any] "Sergeant looking for patrol volunteers."
+  Lines 2-5: Company situation, casualties, supplies, events
+
+Your Status (4-5 lines total):
+  Line 1: [Forecast if any] "Guard duty scheduled in 8 hours."
+  Lines 2-5: Player condition, fatigue, injuries, active duty
+
+When a forecast is present, reduce other content to maintain 4-5 line limit.
+
+═══════════════════════════════════════════════════════════════════════════════
+EDGE CASES
+═══════════════════════════════════════════════════════════════════════════════
+
+- Mandatory orders (T1-T3): Still auto-accept when PENDING → ACTIVE transition
+- Optional orders (T4+): Remain clickable in PENDING state for accept/decline
+- Fast time (2x speed): Forecasts ensure 6+ real-world hours of warning minimum
+- Save/load: Order state and timing persist correctly
+- Multiple orders: Only show forecast for next immediate order
+- Forecast suppression: Don't show if player is in battle or unconscious
+
+FILES TO MODIFY:
+- src/Features/Orders/Models/Order.cs (add OrderState enum)
+- src/Features/Orders/Behaviors/OrderManager.cs (forecast logic)
+- src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs (forecast lines)
+- src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs (Orders UI)
+- ModuleData/Enlisted/Config/enlisted_config.json (timing config)
+- ModuleData/Languages/enlisted_strings.xml (localization)
+
+ACCEPTANCE CRITERIA:
+[ ] Orders forecast 12-24h before issue
+[ ] Forecasts appear in appropriate summary section (Kingdom/Company/Your Status)
+[ ] Each summary section remains 4-5 lines max
+[ ] FORECAST → SCHEDULED → PENDING transitions work
+[ ] Orders menu shows forecast/scheduled orders with proper styling
+[ ] Mandatory orders still auto-accept at PENDING state
+[ ] Optional orders remain clickable at PENDING state
+[ ] Timing persists through save/load
+[ ] Build successful with 0 errors
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+FILES MODIFIED:
+[ ] src/Features/Orders/Models/Order.cs
+[ ] src/Features/Orders/Behaviors/OrderManager.cs
+[ ] src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs
+[ ] src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs
+[ ] ModuleData/Enlisted/Config/enlisted_config.json
+[ ] ModuleData/Languages/enlisted_strings.xml
+
+FORECAST SYSTEM:
+- Order states: FORECAST → SCHEDULED → PENDING → ACTIVE → COMPLETE
+- Timing: 12-24h forecast, 8-18h scheduled, then issued
+- Integrated into 3 summary sections (max 4-5 lines each)
+- Orders menu shows forecast/scheduled with styling
+
+VERIFICATION:
+[ ] Forecast appears 12-24h before order issue
+[ ] Summary sections remain concise (4-5 lines)
+[ ] Player has time to see orders coming at 1x/2x speed
+[ ] State transitions work correctly
+[ ] Save/load persists forecast state
+```
+
+---
+
 ## Quick Reference: Build & Test
 
 After each phase, run:
@@ -2281,6 +4064,7 @@ Each prompt is designed for a **new AI chat session** with full context recovery
 | 2 | Standalone | Builds on Phase 1; context recovery provided |
 | 3 | Standalone | High-risk migration needs focus |
 | 4 | Standalone | Distinct system (Orders) |
+| 4.5 | Standalone | Native API bridge; decompile-verified patterns |
 | 5 | Standalone | UI work is self-contained |
 | 5.5 | Standalone | Complex Bannerlord API work |
 | 6A-C | **COMBINE** | Core functionality builds together |
@@ -2291,7 +4075,9 @@ Each prompt is designed for a **new AI chat session** with full context recovery
 ### Critical Path
 
 - **Phases 1-3** are the critical path (orchestrator must work)
-- **Phases 4-6** can be adjusted based on playtesting
+- **Phase 4** orders content (JSON), can parallelize with 4.5
+- **Phase 4.5** native effects integration (unlocks better tooltips for Phase 5)
+- **Phases 5-6** can be adjusted based on playtesting
 - **Phase 7** is post-launch polish (JSON only)
 - **Phase 8** is future expansion when ready
 

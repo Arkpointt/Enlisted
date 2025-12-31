@@ -233,7 +233,7 @@ namespace Enlisted.Features.Company
 
             try
             {
-                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "strategic_context_config.json");
+                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "Config", "strategic_context_config.json");
                 
                 if (!File.Exists(configPath))
                 {

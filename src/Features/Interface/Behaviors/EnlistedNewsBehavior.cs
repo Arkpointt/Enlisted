@@ -490,82 +490,120 @@ namespace Enlisted.Features.Interface.Behaviors
                     return string.Empty;
                 }
 
-                // Build a flowing narrative paragraph instead of labeled lines
-                var parts = new List<string>();
+                // Build report with clear section headers: Kingdom, Company, Your Status
+                var kingdomParts = new List<string>();
+                var companyParts = new List<string>();
+                var playerParts = new List<string>();
 
+                // Kingdom Reports
+                if (!string.IsNullOrWhiteSpace(_dailyBriefKingdom))
+                {
+                    kingdomParts.Add(_dailyBriefKingdom);
+                }
+
+                // Company Reports
                 if (!string.IsNullOrWhiteSpace(_dailyBriefCompany))
                 {
-                    parts.Add(_dailyBriefCompany);
+                    companyParts.Add(_dailyBriefCompany);
                 }
 
                 // Add supply context when relevant (< 70%)
                 var supplyContext = BuildSupplyContextLine();
                 if (!string.IsNullOrWhiteSpace(supplyContext))
                 {
-                    parts.Add(supplyContext);
+                    companyParts.Add(supplyContext);
                 }
 
                 // Add casualty report with RP flavor (losses and wounded since last muster)
                 var casualtyLine = BuildCasualtyReportLine();
                 if (!string.IsNullOrWhiteSpace(casualtyLine))
                 {
-                    parts.Add(casualtyLine);
+                    companyParts.Add(casualtyLine);
                 }
 
                 // Add recent event aftermath (events in last 24 hours)
                 var recentEventLine = BuildRecentEventLine();
                 if (!string.IsNullOrWhiteSpace(recentEventLine))
                 {
-                    parts.Add(recentEventLine);
+                    companyParts.Add(recentEventLine);
                 }
 
                 // Add pending chain event hints
                 var pendingLine = BuildPendingEventsLine();
                 if (!string.IsNullOrWhiteSpace(pendingLine))
                 {
-                    parts.Add(pendingLine);
+                    companyParts.Add(pendingLine);
                 }
 
                 // Add flag-based personality context
                 var flagContext = BuildFlagContextLine();
                 if (!string.IsNullOrWhiteSpace(flagContext))
                 {
-                    parts.Add(flagContext);
+                    companyParts.Add(flagContext);
                 }
 
                 // Add skill progress hint if any skill is close to level-up
                 var skillProgress = BuildSkillProgressLine();
                 if (!string.IsNullOrWhiteSpace(skillProgress))
                 {
-                    parts.Add(skillProgress);
+                    companyParts.Add(skillProgress);
                 }
 
                 // Add retinue context for commanders (T7+)
                 var retinueContext = BuildRetinueContextLine();
                 if (!string.IsNullOrWhiteSpace(retinueContext))
                 {
-                    parts.Add(retinueContext);
+                    companyParts.Add(retinueContext);
                 }
 
                 // Add baggage status when notable (locked, delayed, temporary access)
                 var baggageStatus = BuildBaggageStatusLine();
                 if (!string.IsNullOrWhiteSpace(baggageStatus))
                 {
-                    parts.Add(baggageStatus);
+                    companyParts.Add(baggageStatus);
                 }
 
+                // Your Status (player)
                 if (!string.IsNullOrWhiteSpace(_dailyBriefUnit))
                 {
-                    parts.Add(_dailyBriefUnit);
+                    playerParts.Add(_dailyBriefUnit);
                 }
 
-                if (!string.IsNullOrWhiteSpace(_dailyBriefKingdom))
+                // Build final output with three section headers
+                var sb = new System.Text.StringBuilder();
+                
+                if (kingdomParts.Count > 0)
                 {
-                    parts.Add(_dailyBriefKingdom);
+                    sb.AppendLine("Kingdom Reports");
+                    sb.AppendLine();
+                    sb.AppendLine(string.Join(" ", kingdomParts));
                 }
 
-                // Join sentences into a flowing paragraph
-                var paragraph = string.Join(" ", parts);
+                if (companyParts.Count > 0)
+                {
+                    if (kingdomParts.Count > 0)
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine();
+                    }
+                    sb.AppendLine("Company Reports");
+                    sb.AppendLine();
+                    sb.AppendLine(string.Join(" ", companyParts));
+                }
+
+                if (playerParts.Count > 0)
+                {
+                    if (kingdomParts.Count > 0 || companyParts.Count > 0)
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine();
+                    }
+                    sb.AppendLine("Your Status");
+                    sb.AppendLine();
+                    sb.AppendLine(string.Join(" ", playerParts));
+                }
+
+                var paragraph = sb.ToString().TrimEnd();
 
                 return paragraph;
             }
@@ -807,6 +845,7 @@ namespace Enlisted.Features.Interface.Behaviors
         /// Builds a baggage status line for the Daily Brief when the state is notable.
         /// Shows status for: locked (supply crisis), delayed (days behind), temporary access (hours remaining),
         /// recent raids, or recent arrivals. Does not show FullAccess in settlements (normal state).
+        /// Uses sea-specific text when party is at sea.
         /// </summary>
         private static string BuildBaggageStatusLine()
         {
@@ -819,23 +858,37 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 var currentAccess = baggageManager.GetCurrentAccess();
-                var party = MobileParty.MainParty;
+                var enlistment = EnlistmentBehavior.Instance;
+                var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
+                var isAtSea = lordParty?.IsCurrentlyAtSea ?? false;
 
                 // Priority 1: Check for recent raid (within last 3 days) - most urgent
                 var daysSinceRaid = baggageManager.GetDaysSinceLastRaid();
                 if (daysSinceRaid >= 0 && daysSinceRaid <= 3)
                 {
                     // Same-day raid gets specific wording, older raids get general atmosphere
-                    var raidText = daysSinceRaid == 0
-                        ? new TextObject("{=brief_baggage_raided_today}Raiders struck the baggage train this morning. The wagon guards are still counting what's missing.").ToString()
-                        : new TextObject("{=brief_baggage_raided_recent}The baggage raid weighs on everyone's mind. The guards double their watches at night.").ToString();
+                    string raidText;
+                    if (isAtSea)
+                    {
+                        raidText = daysSinceRaid == 0
+                            ? new TextObject("{=brief_baggage_raided_sea}Pirates hit our convoy this morning. The crew is still counting what's missing from the hold.").ToString()
+                            : new TextObject("{=brief_baggage_raided_recent_sea}The pirate attack weighs on everyone's mind. The crew keeps nervous watch on the horizon.").ToString();
+                    }
+                    else
+                    {
+                        raidText = daysSinceRaid == 0
+                            ? new TextObject("{=brief_baggage_raided_today}Raiders struck the baggage train this morning. The wagon guards are still counting what's missing.").ToString()
+                            : new TextObject("{=brief_baggage_raided_recent}The baggage raid weighs on everyone's mind. The guards double their watches at night.").ToString();
+                    }
                     return $"<span style=\"Alert\">{raidText}</span>";
                 }
 
                 // Priority 2: Locked state (supply crisis)
                 if (currentAccess == BaggageAccessState.Locked)
                 {
-                    var text = new TextObject("{=brief_baggage_locked}The quartermaster has locked the baggage wagons. Supplies are too scarce for personal requisitions.").ToString();
+                    var text = isAtSea
+                        ? new TextObject("{=brief_baggage_locked_sea}The quartermaster has locked the ship's hold. Supplies are too scarce for personal requisitions.").ToString()
+                        : new TextObject("{=brief_baggage_locked}The quartermaster has locked the baggage wagons. Supplies are too scarce for personal requisitions.").ToString();
                     return $"<span style=\"Alert\">{text}</span>";
                 }
 
@@ -843,9 +896,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 var delayDays = baggageManager.GetBaggageDelayDaysRemaining();
                 if (delayDays > 0)
                 {
-                    // Use singular or plural phrasing based on day count
+                    // Sea variant uses different phrasing (cargo shifted, not stuck in mud)
                     string delayText;
-                    if (delayDays == 1)
+                    if (isAtSea)
+                    {
+                        delayText = new TextObject("{=brief_baggage_delayed_sea}Rough seas have shifted the cargo. Your belongings are buried under crates for now.").ToString();
+                    }
+                    else if (delayDays == 1)
                     {
                         delayText = new TextObject("{=brief_baggage_delayed_single}The wagons are stuck in the mud, a day behind the column. The drivers curse and strain.").ToString();
                     }
@@ -863,9 +920,17 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (daysSinceArrival >= 0 && daysSinceArrival <= 2)
                 {
                     // Same-day arrival is more urgent/specific than lingering access
-                    var arrivalText = daysSinceArrival == 0
-                        ? new TextObject("{=brief_baggage_arrived_today}The baggage wagons caught up with the column. Men crowd around, looking for their kit.").ToString()
-                        : new TextObject("{=brief_baggage_arrived_recent}The wagons are still close. A chance to check your belongings before they fall behind again.").ToString();
+                    string arrivalText;
+                    if (isAtSea)
+                    {
+                        arrivalText = new TextObject("{=brief_baggage_arrived_today_sea}The ship's quartermaster has opened the hold. Men crowd around, looking for their kit.").ToString();
+                    }
+                    else
+                    {
+                        arrivalText = daysSinceArrival == 0
+                            ? new TextObject("{=brief_baggage_arrived_today}The baggage wagons caught up with the column. Men crowd around, looking for their kit.").ToString()
+                            : new TextObject("{=brief_baggage_arrived_recent}The wagons are still close. A chance to check your belongings before they fall behind again.").ToString();
+                    }
                     return $"<span style=\"Success\">{arrivalText}</span>";
                 }
 
@@ -876,20 +941,36 @@ namespace Enlisted.Features.Interface.Behaviors
                     if (hoursRemaining > 0)
                     {
                         // Use singular or plural phrasing
-                        if (hoursRemaining == 1)
+                        if (isAtSea)
                         {
-                            return new TextObject("{=brief_baggage_temporary}The wagons have halted nearby. A few hours to rummage through your belongings before they move on.").ToString();
+                            if (hoursRemaining == 1)
+                            {
+                                return new TextObject("{=brief_baggage_temporary_sea}The ship has anchored. A few hours to access your belongings in the hold before we sail.").ToString();
+                            }
+                            var seaLine = new TextObject("{=brief_baggage_temporary_plural_sea}The ship has anchored. {HOURS} hours to access your belongings in the hold before we sail.");
+                            seaLine.SetTextVariable("HOURS", hoursRemaining);
+                            return seaLine.ToString();
                         }
-                        var line = new TextObject("{=brief_baggage_temporary_plural}The wagons have halted nearby. {HOURS} hours to rummage through your belongings before they move on.");
-                        line.SetTextVariable("HOURS", hoursRemaining);
-                        return line.ToString();
+                        else
+                        {
+                            if (hoursRemaining == 1)
+                            {
+                                return new TextObject("{=brief_baggage_temporary}The wagons have halted nearby. A few hours to rummage through your belongings before they move on.").ToString();
+                            }
+                            var landLine = new TextObject("{=brief_baggage_temporary_plural}The wagons have halted nearby. {HOURS} hours to rummage through your belongings before they move on.");
+                            landLine.SetTextVariable("HOURS", hoursRemaining);
+                            return landLine.ToString();
+                        }
                     }
                 }
 
-                // Priority 6: On march with no access (informational)
-                if (currentAccess == BaggageAccessState.NoAccess && party?.IsMoving == true)
+                // Priority 6: On march/sail with no access (informational)
+                if (currentAccess == BaggageAccessState.NoAccess && lordParty?.IsMoving == true)
                 {
-                    return new TextObject("{=brief_baggage_march}The baggage wagons rumble somewhere behind the column, out of reach for now.").ToString();
+                    var marchText = isAtSea
+                        ? new TextObject("{=brief_baggage_march_sea}Your belongings are stowed in the ship's hold, inaccessible during the voyage.").ToString()
+                        : new TextObject("{=brief_baggage_march}The baggage wagons rumble somewhere behind the column, out of reach for now.").ToString();
+                    return marchText;
                 }
 
                 // Normal state (FullAccess in settlement or halted) - no need to mention
@@ -1948,6 +2029,303 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
+        /// Builds the KINGDOM section for the Main Menu (Phase 5 - UI Integration).
+        /// Shows high-level kingdom news including war status, sieges, and major events.
+        /// </summary>
+        public string BuildKingdomSummary()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true || enlistment.CurrentLord?.Clan?.Kingdom == null)
+                {
+                    return string.Empty;
+                }
+
+                var kingdom = enlistment.CurrentLord.Clan.Kingdom;
+                var sb = new StringBuilder();
+
+                // Check for active wars - simplified
+                var isAtWar = FactionManager.IsAtWarAgainstFaction(kingdom, null);
+                if (isAtWar)
+                {
+                    sb.Append(new TextObject("{=menu_kingdom_at_war}{KINGDOM} at war with {ENEMY}. Conflict continues.")
+                        .SetTextVariable("KINGDOM", kingdom.Name?.ToString() ?? "Unknown")
+                        .SetTextVariable("ENEMY", "enemies")
+                        .ToString());
+                }
+                else
+                {
+                    sb.Append(new TextObject("{=menu_kingdom_peace}The realm is at peace.").ToString());
+                }
+
+                // Check for ongoing sieges
+                var lord = enlistment.CurrentLord;
+                if (lord?.PartyBelongedTo?.SiegeEvent != null)
+                {
+                    var settlement = lord.PartyBelongedTo.SiegeEvent.BesiegedSettlement;
+                    sb.Append(" ");
+                    sb.Append(new TextObject("{=menu_kingdom_siege}{KINGDOM} besieging {SETTLEMENT}.")
+                        .SetTextVariable("KINGDOM", kingdom.Name?.ToString() ?? "Unknown")
+                        .SetTextVariable("SETTLEMENT", settlement?.Name?.ToString() ?? "Unknown")
+                        .ToString());
+                }
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to build kingdom summary", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds the CAMP section for the Main Menu (Phase 5 - UI Integration).
+        /// Shows immediate camp activities, atmosphere, and time-of-day flavor.
+        /// </summary>
+        public string BuildCampSummary()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    return string.Empty;
+                }
+
+                var sb = new StringBuilder();
+
+                // Time-of-day flavor (simplified - use hour of day)
+                var currentHour = (int)CampaignTime.Now.CurrentHourInDay;
+                string timePhrase;
+                
+                if (currentHour >= 6 && currentHour < 12)
+                {
+                    timePhrase = new TextObject("{=menu_camp_morning}Morning bustle. Camp coming alive.").ToString();
+                }
+                else if (currentHour >= 12 && currentHour < 18)
+                {
+                    timePhrase = new TextObject("{=menu_camp_midday}Midday heat. Most resting in shade.").ToString();
+                }
+                else if (currentHour >= 18 && currentHour < 22)
+                {
+                    timePhrase = new TextObject("{=menu_camp_evening}Evening calm. Good spirits in camp.").ToString();
+                }
+                else
+                {
+                    timePhrase = new TextObject("{=menu_camp_night}Night watch. Camp quiet.").ToString();
+                }
+
+                sb.Append(timePhrase);
+
+                // Add a second sentence about camp activities (simplified for now)
+                // Future: integrate with CampOpportunityGenerator for actual upcoming activities
+                var activityFlavor = GetCampActivityFlavor();
+                if (!string.IsNullOrEmpty(activityFlavor))
+                {
+                    sb.Append(" ");
+                    sb.Append(activityFlavor);
+                }
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to build camp summary", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Gets a flavor sentence about camp activities from the CampOpportunityGenerator.
+        /// </summary>
+        private string GetCampActivityFlavor()
+        {
+            try
+            {
+                var generator = Camp.CampOpportunityGenerator.Instance;
+                if (generator == null)
+                {
+                    return string.Empty;
+                }
+
+                // Get current opportunities from the generator
+                var opportunities = generator.GenerateCampLife();
+                if (opportunities == null || opportunities.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                // Return the first opportunity's description as camp flavor
+                var firstOpp = opportunities[0];
+                if (!string.IsNullOrEmpty(firstOpp.DescriptionFallback))
+                {
+                    return firstOpp.DescriptionFallback;
+                }
+
+                // Fallback: describe by type
+                return firstOpp.Type switch
+                {
+                    Camp.Models.OpportunityType.Training => new TextObject("{=menu_camp_drilling}Veterans drilling by the wagons.").ToString(),
+                    Camp.Models.OpportunityType.Social => new TextObject("{=menu_camp_cards}Card game forming tonight by the fire.").ToString(),
+                    Camp.Models.OpportunityType.Economic => new TextObject("{=menu_camp_trading}Some trading happening in camp.").ToString(),
+                    Camp.Models.OpportunityType.Recovery => new TextObject("{=menu_camp_rest}A quiet moment in camp.").ToString(),
+                    _ => string.Empty
+                };
+            }
+            catch (Exception ex)
+            {
+                Mod.Core.Logging.ModLogger.Debug("News", $"GetCampActivityFlavor failed: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds the CAMP STATUS section for the Camp Hub menu (Phase 5 - UI Integration).
+        /// Provides transparency about the orchestrator's current assessment of camp rhythm and activity level.
+        /// </summary>
+        public string BuildCampStatusSection()
+        {
+            try
+            {
+                var worldSituation = Content.WorldStateAnalyzer.AnalyzeSituation();
+                var sb = new StringBuilder();
+
+                sb.AppendLine("<span style=\"Header\">_____ CAMP STATUS _____</span>");
+
+                // Rhythm icon and activity level
+                var rhythmIcon = worldSituation.ExpectedActivity switch
+                {
+                    Content.Models.ActivityLevel.Quiet => "⚙️",
+                    Content.Models.ActivityLevel.Routine => "🏹",
+                    Content.Models.ActivityLevel.Active => "⚔️",
+                    Content.Models.ActivityLevel.Intense => "⚠️",
+                    _ => "⚙️"
+                };
+
+                var activityName = worldSituation.ExpectedActivity.ToString();
+                sb.AppendLine($"{rhythmIcon} {activityName}");
+                sb.AppendLine();
+
+                // Narrative explaining the situation
+                var narrative = BuildOrchestratorNarrative(worldSituation);
+                sb.AppendLine(narrative);
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to build camp status section", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a 1-2 sentence narrative explaining the orchestrator's current world state assessment.
+        /// </summary>
+        private string BuildOrchestratorNarrative(Content.Models.WorldSituation situation)
+        {
+            try
+            {
+                // Garrison + Peacetime = Quiet
+                if (situation.LordIs == Content.Models.LordSituation.PeacetimeGarrison)
+                {
+                    return "Your lord holds at a settlement with no threats on the horizon. " +
+                           "The camp has settled into routine. Little disturbs the daily rhythm.";
+                }
+
+                // Siege operations
+                if (situation.LordIs == Content.Models.LordSituation.SiegeAttacking || 
+                    situation.LordIs == Content.Models.LordSituation.SiegeDefending)
+                {
+                    return "Siege operations demand constant vigilance. Every hour brings new demands. " +
+                           "The pressure never lets up.";
+                }
+
+                // Campaign operations
+                if (situation.LordIs == Content.Models.LordSituation.WarActiveCampaign || 
+                    situation.LordIs == Content.Models.LordSituation.WarMarching)
+                {
+                    return "The army marches to war. Your sergeants manage the daily needs of soldiers on campaign.";
+                }
+
+                // Default
+                return "Camp operations continue.";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to build orchestrator narrative", ex);
+                return "Camp operations continue.";
+            }
+        }
+
+        /// <summary>
+        /// Builds the RECENT ACTIONS section for the Camp Hub menu (Phase 5 - UI Integration).
+        /// Merges detailed order outcomes and reputation changes from the old Reports menu.
+        /// </summary>
+        public string BuildRecentActionsSection()
+        {
+            try
+            {
+                var parts = new List<string>();
+                var maxDays = 5;
+
+                // Get recent order outcomes
+                var orderOutcomes = GetRecentOrderOutcomes(maxDays);
+                foreach (var outcome in orderOutcomes)
+                {
+                    var timeAgo = GetTimeAgoText(outcome.DayNumber);
+                    parts.Add($"• {outcome.OrderTitle} ({timeAgo})");
+
+                    if (!string.IsNullOrEmpty(outcome.DetailedSummary))
+                    {
+                        parts.Add($"  {outcome.DetailedSummary}");
+                    }
+                }
+
+                // Get recent reputation changes
+                var repChanges = GetRecentReputationChanges(maxDays);
+                foreach (var change in repChanges)
+                {
+                    var timeAgo = GetTimeAgoText(change.DayNumber);
+                    var sign = change.Delta >= 0 ? "+" : "";
+                    parts.Add($"• {change.Target} reputation {sign}{change.Delta} ({timeAgo})");
+
+                    if (!string.IsNullOrEmpty(change.Message))
+                    {
+                        parts.Add($"  {change.Message}");
+                    }
+                }
+
+                if (parts.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                return string.Join("\n", parts);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to build recent actions section", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Gets a human-readable "time ago" string from a day number.
+        /// </summary>
+        private string GetTimeAgoText(int dayNumber)
+        {
+            var currentDay = (int)CampaignTime.Now.ToDays;
+            var daysAgo = currentDay - dayNumber;
+
+            if (daysAgo == 0) return "today";
+            if (daysAgo == 1) return "yesterday";
+            return $"{daysAgo} days ago";
+        }
+
+        /// <summary>
         /// Records an event outcome after an event popup is resolved.
         /// Adds to Personal Feed with a formatted headline showing effects.
         /// </summary>
@@ -2563,6 +2941,107 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "Failed to add to personal feed", ex);
+            }
+        }
+
+        /// <summary>
+        /// Adds a camp simulation news item to the personal feed.
+        /// Called by CompanySimulationBehavior to report daily roster changes, incidents, and pulse events.
+        /// </summary>
+        /// <param name="headline">The localized headline text to display.</param>
+        /// <param name="severity">Severity level: "flavor", "minor", "notable", "serious", "critical".</param>
+        /// <param name="subCategory">Sub-category for grouping: "roster", "incident", "pulse".</param>
+        public void AddCampNews(string headline, string severity, string subCategory)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(headline))
+                {
+                    return;
+                }
+
+                // Map string severity to numeric value matching NewsSeverity enum
+                int severityInt = severity?.ToLowerInvariant() switch
+                {
+                    "flavor" => 0,      // Normal
+                    "minor" => 1,       // Positive (routine camp news)
+                    "notable" => 2,     // Attention
+                    "serious" => 3,     // Urgent
+                    "critical" => 4,    // Critical
+                    _ => 0
+                };
+
+                // Calculate minimum display days based on severity
+                int minDisplayDays = severityInt switch
+                {
+                    4 => 2,     // Critical: 2 days
+                    3 => 1,     // Serious: 1 day
+                    2 => 1,     // Notable: 1 day
+                    _ => 1      // Default: 1 day
+                };
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                var storyKey = $"sim:{subCategory}:{dayNumber}:{headline.GetHashCode():X}";
+
+                _personalFeed ??= new List<DispatchItem>();
+
+                // Check for duplicates with same story key
+                if (_personalFeed.Any(x => x.StoryKey == storyKey))
+                {
+                    return;
+                }
+
+                _personalFeed.Add(new DispatchItem
+                {
+                    HeadlineKey = headline,
+                    DayCreated = dayNumber,
+                    Category = $"simulation_{subCategory}",
+                    Type = DispatchType.Report,
+                    Severity = severityInt,
+                    Confidence = 100,
+                    MinDisplayDays = minDisplayDays,
+                    FirstShownDay = -1,
+                    StoryKey = storyKey
+                });
+
+                // Trim to capacity
+                while (_personalFeed.Count > MaxPersonalFeedItems)
+                {
+                    _personalFeed.RemoveAt(0);
+                }
+
+                ModLogger.Debug(LogCategory, $"Added camp news: {headline} (severity={severity}, category={subCategory})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add camp news", ex);
+            }
+        }
+
+        /// <summary>
+        /// Updates the company status summary displayed in the menu header.
+        /// Called by CompanySimulationBehavior after daily tick to reflect current company state.
+        /// </summary>
+        /// <param name="fitForDuty">Number of soldiers currently fit for duty.</param>
+        /// <param name="totalStrength">Total soldiers in the company (including sick/wounded).</param>
+        /// <param name="netChange">Net change in strength since yesterday (+/- soldiers).</param>
+        /// <param name="pulseText">Brief status text describing company mood (empty if neutral).</param>
+        public void UpdateCompanyStatus(int fitForDuty, int totalStrength, int netChange, string pulseText)
+        {
+            try
+            {
+                // Store in CampNewsState for display in camp menu
+                _campNewsState ??= new CampNewsState();
+                _campNewsState.LastFitForDuty = fitForDuty;
+                _campNewsState.LastTotalStrength = totalStrength;
+                _campNewsState.LastNetChange = netChange;
+                _campNewsState.LastPulseText = pulseText ?? string.Empty;
+
+                ModLogger.Debug(LogCategory, $"Company status updated: {fitForDuty}/{totalStrength} fit ({netChange:+#;-#;0}). {pulseText}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to update company status", ex);
             }
         }
 
@@ -3209,6 +3688,18 @@ namespace Enlisted.Features.Interface.Behaviors
                 var tier = enlistment?.EnlistmentTier ?? 1;
                 var hour = CampaignTime.Now.GetHourOfDay;
                 var tierKey = GetTierKey(tier);
+
+                // Priority 0: Active order (on duty)
+                var orderManager = Orders.Behaviors.OrderManager.Instance;
+                if (orderManager != null && orderManager.IsOrderActive())
+                {
+                    var currentOrder = orderManager.GetCurrentOrder();
+                    if (currentOrder != null)
+                    {
+                        // Show that player is currently on duty
+                        return $"On duty: {currentOrder.Title}.";
+                    }
+                }
 
                 // Priority 1: Recent battle aftermath (within 1 day)
                 if (_lastPlayerBattleTime != CampaignTime.Zero)

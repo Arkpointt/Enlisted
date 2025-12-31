@@ -2,8 +2,8 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2025-12-30 (Content Orchestrator Phase 1 complete)
-**Total Documents:** 49
+**Last Updated:** 2025-12-31 (Content Orchestrator Phases 1-6F complete)
+**Total Documents:** 50
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
 
@@ -75,6 +75,8 @@
 | **Fatigue System** | [camp-fatigue.md](Features/Core/camp-fatigue.md) | — |
 | **First Meeting (QM)** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Quartermaster NPC |
 | **Food & Rations** | [provisions-rations-system.md](Features/Equipment/provisions-rations-system.md) | — |
+| **Battle AI** | [battle-ai-plan.md](Features/Combat/battle-ai-plan.md) | Native AI analysis, Orchestrator proposal |
+| **Agent Combat AI** | [agent-combat-ai.md](Features/Combat/agent-combat-ai.md) | Individual soldier AI tuning, 40+ properties |
 | **Formation Assignment** | [formation-assignment.md](Features/Combat/formation-assignment.md) | — |
 | **Leave System** | [temporary-leave.md](Features/Campaign/temporary-leave.md) | — |
 | **Muster System (Pay Day Ceremony)** | [muster-system.md](Features/Core/muster-system.md) | Menu Flow, All 8 Stages |
@@ -94,6 +96,7 @@
 | **Town Access** | [town-access-system.md](Features/Campaign/town-access-system.md) | — |
 | **Training & XP** | [training-system.md](Features/Combat/training-system.md) | — |
 | **Traits & Identity** | [identity-system.md](Features/Identity/identity-system.md) | — |
+| **Native Trait Mapping** | [content-orchestrator-prompts.md](AFEATURE/content-orchestrator-prompts.md) | Phase 4.5 - Soldier→Valor, Officer→Calculating, Lord→Honor |
 
 ## Root Documentation
 
@@ -154,6 +157,8 @@
 | [README.md](Features/Combat/README.md) | Combat folder overview | ✅ Current |
 | [training-system.md](Features/Combat/training-system.md) | Training and XP: camp training actions (weapon drills, fitness), skill progression (XP rates, skill caps by rank), training events (success/injury/fatigue), cooldowns | ✅ Current |
 | [formation-assignment.md](Features/Combat/formation-assignment.md) | Battle formation logic: T1-T6 soldiers auto-assigned to formation based on equipped weapons (bow→Ranged, horse→Cavalry, both→Horse Archer, melee→Infantry), teleported to formation position. T7+ commanders control their own party, no auto-assignment. | ✅ Current |
+| [battle-ai-plan.md](Features/Combat/battle-ai-plan.md) | Battle AI upgrade plan: native AI analysis (architecture, tactics, behaviors, query systems, morale, terrain, siege), identified gaps, Battle Orchestrator proposal (commander-layer AI for reserves, concentration, coordinated withdrawal), modding entry points | 📋 Plan |
+| [agent-combat-ai.md](Features/Combat/agent-combat-ai.md) | Agent-level combat AI: 40+ tunable properties (blocking, parrying, aiming, reactions, shield use), AgentStatCalculateModel, AI level calculation, BehaviorValueSet, modding entry points, example profiles (Veteran, Elite Guard) | 📋 Plan |
 
 ### Campaign & World
 **Location:** `Features/Campaign/`
@@ -207,14 +212,15 @@ Active feature specifications being developed. These are implementation-ready sp
 
 | Document | Topic | Dependency | Status |
 |----------|-------|------------|--------|
-| [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | Content Orchestrator: replaces schedule-driven event pacing with world-state-driven frequency. Phases 1-5. | None | ⚠️ In Progress |
+| [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | Content Orchestrator: replaces schedule-driven event pacing with world-state-driven frequency. Phases 1-5.5 complete. | None | ✅ Active |
 | [content-orchestrator-prompts.md](AFEATURE/content-orchestrator-prompts.md) | Implementation prompts for Content Orchestrator and Camp Life. Copy-paste ready. | Reference only | 📋 Reference |
-| [camp-life-simulation.md](AFEATURE/camp-life-simulation.md) | Living breathing camp simulation: 4-layer intelligence (world/camp/player/history), time-of-day cycles, weekly rhythm, learning system. Phase 6. | Content Orchestrator (Phases 1-5) | 📋 Specification |
-| [camp-background-simulation.md](AFEATURE/camp-background-simulation.md) | Autonomous company life: soldiers get sick/injured/desert, equipment degrades, incidents occur, news feed integration. Phase 5.5. | Content Orchestrator (Phase 3) | 📋 Specification |
+| [camp-life-simulation.md](AFEATURE/camp-life-simulation.md) | Living breathing camp simulation: 4-layer intelligence (world/camp/player/history), time-of-day cycles, weekly rhythm. Phase 6A-C complete, learning system in 6D-E. | Content Orchestrator (Phases 1-5.5) | ✅ Phase 6A-C Done |
+| [camp-background-simulation.md](AFEATURE/camp-background-simulation.md) | Autonomous company life: soldiers get sick/injured/desert, equipment degrades, incidents occur, news feed integration. Phase 5.5. | Content Orchestrator (Phase 3) | ✅ Implemented |
 | [order-progression-system.md](AFEATURE/order-progression-system.md) | Multi-day order execution replacing instant resolution. | Content Orchestrator (Phase 4) | 📋 Specification |
 | [ORDER-SYSTEM-MIGRATION.md](AFEATURE/ORDER-SYSTEM-MIGRATION.md) | Migration guide for order system changes. | order-progression-system.md | 📋 Reference |
 | [orders-content.md](AFEATURE/orders-content.md) | Order content definitions (16 orders). | order-progression-system.md | 📋 Specification |
 | [order-events-master.md](AFEATURE/order-events-master.md) | Order event master reference (85 events across 16 orders). | order-progression-system.md | 📋 Specification |
+| [phase7-playtesting-guide.md](AFEATURE/phase7-playtesting-guide.md) | Phase 6F integration testing: balance tuning guide, playtesting checklist, config reference. | Phases 1-6D-E | 📋 Reference |
 
 **Implementation Order:**
 1. Content Orchestrator Phases 1-5 (foundation)

@@ -14,6 +14,7 @@ using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Identity;
 using Enlisted.Features.Logistics;
+using Enlisted.Features.Interface;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Orders.Behaviors;
@@ -382,6 +383,14 @@ namespace Enlisted.Mod.Entry
                     // Camp Life Simulation: provides a daily snapshot and Quartermaster/Pay integrations.
                     campaignStarter.AddBehavior(new CampLifeBehavior());
 
+                    // Company Simulation: daily background simulation of soldiers getting sick, deserting,
+                    // recovering, equipment degrading, and incidents occurring. Feeds the news system.
+                    campaignStarter.AddBehavior(new CompanySimulationBehavior());
+
+                    // Camp Opportunity Generator: generates context-aware camp life opportunities
+                    // using 4-layer intelligence (world, camp, player, history) for the living camp experience.
+                    campaignStarter.AddBehavior(new CampOpportunityGenerator());
+
                     // Escalation tracks for scrutiny, discipline, lance reputation, and medical risk. This feature is feature-flagged.
                     campaignStarter.AddBehavior(new EscalationManager());
 
@@ -404,12 +413,20 @@ namespace Enlisted.Mod.Entry
                     // Orders system: issues orders from chain of command, tracks acceptance/decline, applies consequences.
                     campaignStarter.AddBehavior(new OrderManager());
 
+                    // Order progression: handles multi-day order execution with phase-based event injection.
+                    // Events fire during slot phases based on world state and activity level.
+                    campaignStarter.AddBehavior(new OrderProgressionBehavior());
+
                     // Baggage train: manages access to player's personal stowage based on march state and logistics.
                     campaignStarter.AddBehavior(new BaggageTrainManager());
 
                     // News/Dispatches: generates kingdom-wide and personal news headlines.
                     // Read-only observer of campaign events; updates every 2 in-game days.
                     campaignStarter.AddBehavior(new EnlistedNewsBehavior());
+
+                    // Main Menu cache: caches KINGDOM, CAMP, YOU sections for stable display.
+                    // Refreshes based on time intervals and state changes.
+                    campaignStarter.AddBehavior(new MainMenuNewsCache());
 
                     // Retinue trickle system: adds free soldiers over time (every 2-3 days)
                     campaignStarter.AddBehavior(new RetinueTrickleSystem());
@@ -459,11 +476,15 @@ namespace Enlisted.Mod.Entry
                         nameof(ServiceRecordManager),
                         nameof(CampMenuHandler),
                         nameof(CampLifeBehavior),
+                        nameof(CompanySimulationBehavior),
+                        nameof(CampOpportunityGenerator),
                         nameof(EscalationManager),
                         nameof(EventDeliveryManager),
                         nameof(ContentOrchestrator),
                         nameof(OrderManager),
+                        nameof(OrderProgressionBehavior),
                         nameof(EnlistedNewsBehavior),
+                        nameof(MainMenuNewsCache),
                         nameof(RetinueTrickleSystem),
                         nameof(RetinueLifecycleHandler),
                         nameof(RetinueCasualtyTracker),

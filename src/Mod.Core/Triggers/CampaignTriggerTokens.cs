@@ -62,13 +62,7 @@ namespace Enlisted.Mod.Core.Triggers
         public const string IsEnlisted = "is_enlisted";
         public const string AiSafe = "ai_safe";
 
-        // Phase 4: onboarding state flags (implemented by LanceLifeOnboardingBehavior)
-        public const string OnboardingStage1 = "onboarding_stage_1";
-        public const string OnboardingStage2 = "onboarding_stage_2";
-        public const string OnboardingStage3 = "onboarding_stage_3";
-        public const string OnboardingComplete = "onboarding_complete";
-
-        // Phase 4: elapsed day counters (support simple comparisons in triggers)
+        // Elapsed day counters (support simple comparisons in triggers)
         public const string DaysSinceEnlistment = "days_since_enlistment";
         public const string DaysSincePromotion = "days_since_promotion";
         public const string DaysEnlisted = "days_enlisted";
@@ -149,7 +143,6 @@ namespace Enlisted.Mod.Core.Triggers
             ArmyMoving,
             CampEstablished, EnemyNearby, WoundedInCamp, AtSea,
             IsEnlisted, AiSafe,
-            OnboardingStage1, OnboardingStage2, OnboardingStage3, OnboardingComplete,
             LogisticsHigh, MoraleLow, PayTensionHigh, ScrutinyHigh,
             Scrutiny3, Scrutiny5, Scrutiny7, Scrutiny10,
             Discipline3, Discipline5, Discipline7, Discipline10,
@@ -173,7 +166,6 @@ namespace Enlisted.Mod.Core.Triggers
             ArmyMoving,
             CampEstablished, EnemyNearby, WoundedInCamp, AtSea,
             IsEnlisted, AiSafe,
-            OnboardingStage1, OnboardingStage2, OnboardingStage3, OnboardingComplete,
             LogisticsHigh, MoraleLow, PayTensionHigh, ScrutinyHigh,
             Scrutiny3, Scrutiny5, Scrutiny7, Scrutiny10,
             Discipline2, Discipline3, Discipline5, Discipline7, Discipline10,

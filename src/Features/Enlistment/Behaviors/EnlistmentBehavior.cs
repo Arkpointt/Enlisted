@@ -1705,10 +1705,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_hasMetQuartermaster", ref _hasMetQuartermaster);
             SyncKey(dataStore, "_qmPlayerStyle", ref _qmPlayerStyle);
 
-            // Baggage check tracking (contraband inspection system)
-            SyncKey(dataStore, "_lastBaggageCheckDay", ref _lastBaggageCheckDay);
-            SyncKey(dataStore, "_isGracePeriodReenlistment", ref _isGracePeriodReenlistment);
-
             // Food/rations system
             SyncKey(dataStore, "_currentFoodQuality", ref _currentFoodQuality);
             SyncKey(dataStore, "_foodQualityExpires", ref _foodQualityExpires);
@@ -3526,9 +3522,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var resumedFromGrace = resumingGraceService;
                 string experienceTrack = null;
 
-                // Track grace period re-enlistment to skip first muster baggage check
-                _isGracePeriodReenlistment = resumedFromGrace;
-
                 if (resumedFromGrace)
                 {
                     _enlistmentTier = Math.Max(1, graceTier);
@@ -3579,20 +3572,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     _issuedRations.Clear();
                 }
 
-                // Initialize onboarding system for new enlistments (not grace period rejoins)
-                // Onboarding events fire based on the player's experience track over the first few days
-                if (!resumedFromGrace && experienceTrack != null)
-                {
-                    try
-                    {
-                        EscalationManager.Instance?.State?.InitializeOnboarding(experienceTrack);
-                        ModLogger.Info("Enlistment", $"Onboarding initialized for track: {experienceTrack}");
-                    }
-                    catch (Exception onboardEx)
-                    {
-                        ModLogger.Warn("Enlistment", $"Failed to initialize onboarding: {onboardEx.Message}");
-                    }
-                }
 
                 // Reset term-based notification state (used only for informational prompts)
                 _retirementNotificationShown = false;
@@ -4175,15 +4154,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Shutdown supply simulation
                 CompanySupplyManager.Shutdown();
 
-                // Reset onboarding state on discharge
-                try
-                {
-                    EscalationManager.Instance?.State?.ResetOnboarding();
-                }
-                catch
-                {
-                    // Non-critical - log but don't fail discharge
-                }
 
                 _enlistedLord = null;
                 _enlistmentTier = 1;
@@ -5268,16 +5238,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Warn("News", $"Failed to reset muster counters: {ex.Message}");
             }
-
-            try
-            {
-                // Check for contraband items (30% random inspection chance)
-                ProcessBaggageCheck();
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Warn("Contraband", $"Failed to process baggage check at muster: {ex.Message}");
-            }
+            
+            // Note: Baggage/contraband checks are now handled by MusterMenuHandler during the
+            // muster menu sequence (enlisted_muster_baggage stage), not as a post-muster event.
         }
 
         /// <summary>
@@ -5436,279 +5399,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Issue new ration based on QM reputation
             IssueNewRation();
             _lastRationOutcome = "issued";
-        }
-
-        // Tracks the last day a baggage inspection occurred to prevent repeat inspections
-        private float _lastBaggageCheckDay = -1f;
-
-        // Flag to track if current enlistment started via grace period transfer
-        private bool _isGracePeriodReenlistment;
-
-        /// <summary>
-        /// Performs a random baggage inspection at muster.
-        /// 30% chance of inspection. If contraband is found, triggers an event based on QM reputation.
-        /// T7+ commanders are still subject to inspection (no exemption for high tier).
-        /// </summary>
-        private void ProcessBaggageCheck()
-        {
-            // Skip if this is the first muster after grace period transfer
-            if (_isGracePeriodReenlistment)
-            {
-                ModLogger.Debug("Contraband", "Skipping baggage check on first muster after grace transfer");
-                _isGracePeriodReenlistment = false; // Clear flag for next muster
-                return;
-            }
-
-            // Skip if already inspected today
-            float currentDay = (float)CampaignTime.Now.ToDays;
-            if (Math.Abs(currentDay - _lastBaggageCheckDay) < 0.5f)
-            {
-                ModLogger.Debug("Contraband", "Skipping baggage check - already inspected today");
-                return;
-            }
-
-            // 30% random chance of inspection
-            if (MBRandom.RandomFloat > 0.30f)
-            {
-                ModLogger.Debug("Contraband", "No inspection this muster (random chance)");
-                return;
-            }
-
-            // Scan inventory for contraband, exempting QM Deal item if present
-            string playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
-            var exemptedItemId = MusterMenuHandler.Instance?.GetExemptedItemId();
-            var exemptions = exemptedItemId != null ? new List<string> { exemptedItemId } : null;
-            var result = ContrabandChecker.ScanInventory(_enlistmentTier, playerRole, exemptions);
-
-            if (!result.HasContraband)
-            {
-                ModLogger.Debug("Contraband", "Inspection completed - no contraband found");
-                return;
-            }
-
-            // Record inspection time
-            _lastBaggageCheckDay = currentDay;
-
-            ModLogger.Info("Contraband",
-                $"Contraband found: {result.Items.Count} item(s) worth {result.TotalValue} gold");
-
-            // Get QM reputation to determine outcome
-            int qmRep = GetQMReputation();
-
-            // Trigger appropriate event based on QM reputation
-            TriggerBaggageCheckEvent(qmRep, result);
-        }
-
-        /// <summary>
-        /// Triggers the appropriate baggage check event based on QM reputation.
-        /// Rep 65+: Look away (no penalty)
-        /// Rep 35-64: Bribe opportunity with Charm check
-        /// Rep &lt; 35: Confiscation with fine and Scrutiny
-        /// </summary>
-        private void TriggerBaggageCheckEvent(int qmRep, ContrabandChecker.ContrabandCheckResult result)
-        {
-            string eventId;
-
-            if (qmRep >= 65)
-            {
-                eventId = "evt_baggage_lookaway";
-            }
-            else if (qmRep >= 35)
-            {
-                eventId = "evt_baggage_bribe";
-            }
-            else
-            {
-                eventId = "evt_baggage_confiscate";
-            }
-
-            // Store contraband info for event handling
-            _pendingContrabandCheck = result;
-
-            // Queue the event
-            var evt = EventCatalog.GetEvent(eventId);
-            if (evt != null)
-            {
-                EventDeliveryManager.Instance?.QueueEvent(evt);
-                ModLogger.Info("Contraband", $"Queued baggage check event: {eventId} (QM rep={qmRep})");
-            }
-            else
-            {
-                ModLogger.Warn("Contraband", $"Baggage check event not found: {eventId}");
-
-                // Fallback: Direct confiscation if event not found
-                HandleContrabandConfiscationFallback(result);
-            }
-        }
-
-        // Stores pending contraband check result for event handlers
-        private ContrabandChecker.ContrabandCheckResult _pendingContrabandCheck;
-
-        /// <summary>
-        /// Gets the pending contraband check result for event handlers.
-        /// </summary>
-        public ContrabandChecker.ContrabandCheckResult PendingContrabandCheck => _pendingContrabandCheck;
-
-        /// <summary>
-        /// Clears the pending contraband check after event processing.
-        /// </summary>
-        public void ClearPendingContrabandCheck()
-        {
-            _pendingContrabandCheck = null;
-        }
-
-        /// <summary>
-        /// Fallback handler if baggage check events aren't loaded.
-        /// Directly confiscates the most valuable contraband item.
-        /// </summary>
-        private void HandleContrabandConfiscationFallback(ContrabandChecker.ContrabandCheckResult result)
-        {
-            var mostValuable = result.MostValuable;
-            if (mostValuable == null)
-            {
-                return;
-            }
-
-            // Confiscate the item
-            ContrabandChecker.ConfiscateItem(mostValuable.Item);
-
-            // Apply fine (25-50% of item value)
-            int fine = ContrabandChecker.CalculateFineAmount(mostValuable.Value);
-            if (fine > 0 && Hero.MainHero.Gold >= fine)
-            {
-                GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, fine);
-            }
-
-            // Apply Scrutiny penalty
-            EscalationManager.Instance?.ModifyScrutiny(2, "contraband_confiscation");
-
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"Your {mostValuable.Item.Name} was confiscated as contraband. Fine: {fine} gold, +2 Scrutiny.",
-                Colors.Red));
-        }
-
-        /// <summary>
-        /// Called by event handlers to process the "look away" outcome.
-        /// QM ignores the contraband - no penalty.
-        /// </summary>
-        public void HandleBaggageLookAway()
-        {
-            ModLogger.Info("Contraband", "QM looked away - no penalty for contraband");
-            ClearPendingContrabandCheck();
-        }
-
-        /// <summary>
-        /// Called by event handlers to process a successful bribe.
-        /// Player pays bribe, keeps their contraband.
-        /// </summary>
-        public void HandleBaggageBribeSuccess(int bribeAmount)
-        {
-            if (bribeAmount > 0 && Hero.MainHero.Gold >= bribeAmount)
-            {
-                GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, bribeAmount);
-                ModLogger.Info("Contraband", $"Bribe paid: {bribeAmount} gold - contraband kept");
-            }
-            ClearPendingContrabandCheck();
-        }
-
-        /// <summary>
-        /// Called by event handlers to process confiscation.
-        /// Item is removed, fine applied, Scrutiny increased.
-        /// If player can't afford the full fine, takes what they have and adds extra Scrutiny.
-        /// </summary>
-        public void HandleBaggageConfiscation()
-        {
-            var result = _pendingContrabandCheck;
-            if (result == null)
-            {
-                return;
-            }
-
-            var mostValuable = result.MostValuable;
-            if (mostValuable != null)
-            {
-                ContrabandChecker.ConfiscateItem(mostValuable.Item);
-
-                int fine = ContrabandChecker.CalculateFineAmount(mostValuable.Value);
-                int playerGold = Hero.MainHero.Gold;
-
-                if (fine > 0)
-                {
-                    if (playerGold >= fine)
-                    {
-                        // Player can afford the full fine
-                        GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, fine);
-                        EscalationManager.Instance?.ModifyScrutiny(2, "contraband_confiscation");
-
-                        ModLogger.Info("Contraband",
-                            $"Confiscated: {mostValuable.Item.Name}, Fine: {fine}, Scrutiny +2");
-                    }
-                    else if (playerGold > 0)
-                    {
-                        // Player can only afford partial fine - take what they have, extra scrutiny
-                        GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, playerGold);
-                        EscalationManager.Instance?.ModifyScrutiny(3, "contraband_confiscation_debt");
-
-                        ModLogger.Info("Contraband",
-                            $"Confiscated: {mostValuable.Item.Name}, Partial fine: {playerGold}/{fine}, Scrutiny +3");
-                    }
-                    else
-                    {
-                        // Player is broke - extra scrutiny, potential discipline hit
-                        EscalationManager.Instance?.ModifyScrutiny(3, "contraband_confiscation_broke");
-                        EscalationManager.Instance?.ModifyDiscipline(1, "contraband_no_payment");
-
-                        ModLogger.Info("Contraband",
-                            $"Confiscated: {mostValuable.Item.Name}, No gold for fine, Scrutiny +3, Discipline +1");
-                    }
-                }
-                else
-                {
-                    EscalationManager.Instance?.ModifyScrutiny(2, "contraband_confiscation");
-                }
-            }
-
-            ClearPendingContrabandCheck();
-        }
-
-        /// <summary>
-        /// Called by event handlers to process smuggling attempt success.
-        /// Player keeps contraband, no penalty.
-        /// </summary>
-        public void HandleBaggageSmuggleSuccess()
-        {
-            ModLogger.Info("Contraband", "Smuggle successful - contraband hidden");
-            ClearPendingContrabandCheck();
-        }
-
-        /// <summary>
-        /// Called by event handlers to process smuggling attempt failure.
-        /// Double penalty: +4 Scrutiny, -10 QM rep, item confiscated.
-        /// </summary>
-        public void HandleBaggageSmuggleFailure()
-        {
-            var result = _pendingContrabandCheck;
-            if (result == null)
-            {
-                return;
-            }
-
-            var mostValuable = result.MostValuable;
-            if (mostValuable != null)
-            {
-                ContrabandChecker.ConfiscateItem(mostValuable.Item);
-
-                // Double scrutiny penalty
-                EscalationManager.Instance?.ModifyScrutiny(4, "smuggling_caught");
-
-                // -10 QM reputation
-                ModifyQuartermasterRelationship(-10);
-
-                ModLogger.Info("Contraband",
-                    $"Smuggle failed! Confiscated: {mostValuable.Item.Name}, Scrutiny +4, QM rep -10");
-            }
-
-            ClearPendingContrabandCheck();
         }
 
         /// <summary>

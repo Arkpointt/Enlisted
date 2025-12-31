@@ -2,9 +2,11 @@
 
 **Summary:** The news and reporting system tracks game events and generates narrative feedback for the player. It manages two feed types (kingdom-wide and personal), a daily brief with company/player/kingdom context, and a company needs status report. Event and order outcomes are displayed in Recent Activities using a queue system instead of popups to reduce UI interruption. All text uses immersive Bannerlord military flavor instead of raw statistics.
 
-**Status:** ✅ Current  
-**Last Updated:** 2025-12-30 (Added order event integration reference)  
-**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Events Master](../../AFEATURE/order-events-master.md), [Camp Background Simulation](../../AFEATURE/camp-background-simulation.md)
+**2025-12-31 MAJOR UPDATE:** Menu narratives now comprehensively integrate with `WorldStateAnalyzer`, `CampLifeBehavior` pressures, and `CompanySimulationBehavior` for rich, context-aware storytelling that reflects actual simulated world state.
+
+**Status:** ✅ Current - Comprehensive Integration Complete  
+**Last Updated:** 2025-12-31 (Added comprehensive system integration to all menu narratives)  
+**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Events Master](../../AFEATURE/order-events-master.md), [Camp Background Simulation](../../AFEATURE/camp-background-simulation.md), [Content Orchestrator](../../AFEATURE/content-orchestrator-plan.md)
 
 ---
 
@@ -98,6 +100,135 @@ The behavior subscribes to these Bannerlord campaign events:
 | `VillageBeingRaided` | Generate village raid dispatch |
 | `WarDeclared` | Generate war declaration dispatch |
 | `MakePeace` | Generate peace treaty dispatch |
+
+---
+
+## Comprehensive System Integration (2025-12-31)
+
+### Overview
+
+The main menu narratives (Kingdom News, Camp Status, Player Status) now integrate comprehensively with multiple backend systems to create rich, context-aware storytelling that reflects actual simulated world state.
+
+### Integration Architecture
+
+```
+BuildMainMenuNarrative()
+├── BuildKingdomNarrativeParagraph()
+│   ├── WorldStateAnalyzer.WarStance (Desperate/Offensive/Defensive/MultiWar)
+│   ├── GetVisibleKingdomFeedItems() - Recent news
+│   ├── Kingdom.All + FactionManager - Active war enumeration
+│   └── Settlement.All - Active siege counting
+│
+├── BuildCampNarrativeParagraph()
+│   ├── WorldStateAnalyzer.LordSituation (Siege/Campaign/Marching/Garrison)
+│   ├── WorldStateAnalyzer.ActivityLevel (Quiet/Routine/Active/Intense)
+│   ├── CampLifeBehavior pressures:
+│   │   ├── LogisticsStrain (>60 = supply warnings)
+│   │   ├── MoraleShock (>50 = morale context)
+│   │   ├── PayTension (>50 = pay disputes)
+│   │   └── TerritoryPressure (>60 = hostile lands)
+│   ├── GetVisiblePersonalFeedItems() - Recent events
+│   ├── CompanyNeeds metrics (Supplies/Morale/Rest/Equipment)
+│   └── BuildLordRumorsLine() - Strategic gossip based on all above
+│
+└── BuildPlayerNarrativeParagraph()
+    ├── WorldStateAnalyzer for AHEAD forecast:
+    │   ├── LordSituation - Context-aware duty forecasts
+    │   └── ActivityLevel - Intensity predictions
+    ├── CampLifeBehavior for critical warnings:
+    │   ├── LogisticsStrain >70 - "Logistics collapsing"
+    │   ├── MoraleShock >60 - "Morale crisis"
+    │   └── PayTension >60 - "Pay disputes simmer"
+    ├── OrderManager - Current duty state
+    ├── CompanySimulationBehavior - Critical company warnings
+    └── Culture-aware rank names (NCO/Officer titles)
+```
+
+### Lord Rumors System
+
+**Purpose:** Contextual military camp gossip that reflects actual AI decisions and strategic situation.
+
+**Integrates:**
+- `WorldStateAnalyzer.LordSituation` - 8 distinct states (Siege, WarActiveCampaign, WarMarching, PeacetimeGarrison, etc.)
+- `CampLifeBehavior` pressures - Supply/morale/pay/territory context
+- Recent news feed - References recent victories, defeats, army formations
+- Party AI state - Target settlements, army membership, siege status
+
+**Example Outputs:**
+- Siege + LogisticsStrain: *"Siege of Usanc grinds on. Whispers of withdrawal if supplies don't improve."*
+- War + Recent victory: *"After our victory, Lord Hecard marches on Galend. Morale is high."*
+- Garrison + PayTension: *"Men grumble about pay and boredom. Lord better have work for us soon."*
+- Defeated: *"After the defeat, Lord regroups. Men speak of revenge in hushed tones."*
+
+### Kingdom Narrative Integration
+
+**WorldStateAnalyzer.WarStance Usage:**
+- `Desperate` (>60% casualties, losing badly): *"Desperate struggle: X and Y press from all sides."*
+- `Offensive` (wars we declared): *"Active war with X"*
+- `Defensive` (wars against us): *"Conflict with X"*
+- `MultiWar` (>1 enemy): *"War on N fronts: X and Y, plus Z others."*
+- `Peace`: *"The realm is at peace. Trade routes flourish."*
+
+**Siege Context:**
+- Counts active sieges (ours vs. theirs)
+- *"3 sieges underway against enemy strongholds"* vs *"2 of our settlements under siege"*
+- Mixed: *"1 siege presses enemy holds, while 2 threaten our towns"*
+
+### Camp Narrative Integration
+
+**CampLifeBehavior Pressure Integration:**
+```csharp
+// Supply warnings enhanced by LogisticsStrain
+if (companyNeeds.Supplies < 20 || campLife?.LogisticsStrain > 60)
+{
+    // "Supply lines stretched thin" vs "Supplies low"
+}
+
+// Morale context from MoraleShock + PayTension
+if (moraleShock || payProblems)
+{
+    // "Morale shaky from pay disputes and recent setbacks"
+}
+
+// Equipment warnings consider TerritoryPressure
+if (companyNeeds.Equipment < 40 && inHostileTerritory)
+{
+    // "Equipment worn, repairs limited" (can't resupply in enemy lands)
+}
+```
+
+**Activity Level Context:**
+- `Intense` + low rest: *"Men push through fatigue"* (can't stop during siege/assault)
+- `Quiet` + morale issues: *"Men grow restless in garrison"*
+
+### Player Status Integration
+
+**NOW + AHEAD Combined Narrative:**
+
+Current state is blended with world-state-aware forecasts:
+
+```
+OFF DUTY examples based on WorldStateAnalyzer:
+- LordSituation.SiegeAttacking: "Off duty between siege shifts. The Decurion watches for the next call."
+- ActivityLevel.Intense: "Brief respite. The Captain will have orders soon enough."
+- LordSituation.WarMarching: "Off duty but ready. Wartime brings orders without warning."
+- ActivityLevel.Quiet: "Off duty. Garrison life means quiet hours between routines."
+```
+
+**Critical Warnings from Pressures:**
+```
+CompanyNeeds + CampLifeBehavior integration:
+- Supplies <20 OR LogisticsStrain >70: "Men whisper of hunger. Logistics collapsing — resupply urgently."
+- Morale <20 OR MoraleShock >60: "Dark muttering. Morale crisis from pay disputes and setbacks."
+- PayTension >60: "Pay disputes simmer. The NCO works to keep tempers cool."
+```
+
+**Culture-Aware Rank Names:**
+Uses `GetNCOTitle()` and `GetOfficerTitle()` with XML localization:
+- Empire: Decurion/Centurion
+- Vlandia: Sergeant/Captain
+- Sturgia: Druzhina/Boyar
+- (etc. for all 6 cultures)
 
 ---
 
@@ -223,87 +354,63 @@ Events specific to your enlisted lord and your direct participation.
 
 ---
 
-## Daily Brief
+## Main Menu Narrative
 
-A once-per-day narrative paragraph that combines multiple systems. Generated at daily tick and cached for 24 hours.
+The main enlisted menu displays a flowing RP narrative, not structured data. Generated at menu open and cached for the session.
 
-**Color Coding:** Uses semantic color spans from the enlisted color scheme to emphasize important elements:
-- **Alert (Red):** Casualties, critical supply warnings, raids
-- **Warning (Gold):** Low supplies, delays, wounded counts
-- **Success (Green):** Arrivals, skill progress, positive outcomes
+**Design Goals:**
+- **Immersive prose** - Reads like a narrator describing your situation
+- **Color-coded keywords** - Important words highlighted within sentences
+- **No UI chrome** - No section headers, bullet lists, or stat labels
+- **Contextual** - Content varies by situation (garrison vs march vs battle)
 
-**Display Location:** Main enlisted menu
+**Color Coding (embedded in prose):**
+- **Success (Green):** "well-supplied", "good spirits", "morale is high"
+- **Warning (Gold):** "rations running thin", "restless", "late pay"
+- **Alert (Red):** "food running low", "enemy approaching", "wounded"
 
-**Current Structure (Pre-Orchestrator):**
-- Single "COMPANY REPORT" section with combined content
+**Display Location:** Main enlisted menu body text
 
-**Future Structure (With Orchestrator - Phase 5):**
-- **"COMPANY REPORT"** section: Orchestrator rhythm flavor (see below)
-- **"DAILY NEWS"** section: Kingdom context, casualties, events (existing Daily Brief content)
-
----
-
-### Company Report Section (Future - Orchestrator Phase 5)
-
-**Purpose:** Player-facing transparency showing what the orchestrator is thinking.
-
-**Generated by:** `BuildCompanyReportSection()` (new method)
-
-**Content:**
-- Current military life rhythm icon and name (Garrison, Campaign, Siege, etc.)
-- Activity level (Quiet, Active, Intense, Crisis)
-- Observable world facts explaining the situation
-- Implicit signal about expected event frequency
-
-**NOT included:**
-- ❌ Soldier counts (Daily News already reports casualties)
-- ❌ Supply/Morale/Rest bars (those are in Reports submenu)
-- ❌ Redundant information
-
-**Example Output:**
+**Example - Garrison:**
 ```
-⚙️ CAMP STATUS: Garrison - Quiet
+Your lord holds court at Pravend. The afternoon heat keeps most 
+soldiers in the shade of their tents, playing dice or mending kit. 
+A <span style="Success">well-supplied</span> camp with 
+<span style="Success">good spirits</span>.
 
-Your lord holds at Pravend with no threats on the horizon. 
-The camp has settled into routine. Little disturbs the 
-daily rhythm.
+Word from the realm: <span style="Warning">Battania presses our 
+western border</span>, but no battles have reached you yet.
+```
+
+**Example - On Campaign:**
+```
+The column marches east through rolling grasslands. Dust clouds 
+rise behind the baggage train. <span style="Warning">Rations 
+are running thin</span> and the men grow restless.
+
+<span style="Alert">A skirmish with raiders yesterday</span> 
+left three wounded. The campaign wears on.
 ```
 
 **Technical Implementation:**
-```csharp
-public string BuildCompanyReportSection()
-{
-    if (ContentOrchestrator.Instance == null) 
-        return string.Empty;
-    
-    var rhythmIcon = GetRhythmIcon();
-    var rhythmName = GetRhythmName();
-    var activityLevel = GetActivityLevelName();
-    var flavorText = ContentOrchestrator.Instance.GetOrchestratorRhythmFlavor();
-    
-    return $"<span style=\"Header\">{rhythmIcon} CAMP STATUS: {rhythmName} - {activityLevel}</span>\n\n{flavorText}";
-}
-```
-
-**Alignment with Daily News:**
-Both sections pull from the same world state sources, ensuring no contradictions:
-- Same party state checks (battle, siege, settlement, army)
-- Same kingdom state checks (wars, peace, threats)
-- Orchestrator context explains "why," Daily News provides "what happened"
-
-See **[Content Orchestrator Plan](../../Features/Content/content-orchestrator-plan.md#phase-5-refinement--ui-integration-week-5)** for full implementation details.
+- Generated by `BuildMainMenuNarrative()` in `EnlistedMenuBehavior.cs`
+- Pulls from `EnlistedNewsBehavior` for kingdom feed, camp state, player status
+- Color spans embedded directly in prose text
+- Refreshes on menu init only (stable during session)
 
 ---
 
-### Daily News Section (Current: "Daily Brief")
+### Narrative Generation
 
-**Current name:** "COMPANY REPORT" section (will be renamed to "DAILY NEWS" in Phase 5)
+The main menu narrative is built from multiple data sources, woven into flowing prose.
 
-**Generated by:** `BuildDailyNewsSection()` (refactored from existing `BuildDailyBriefSection()`)
+**Generated by:** `BuildMainMenuNarrative()` in `EnlistedMenuBehavior.cs`
 
-**Refactoring Note:** The existing `BuildDailyBriefSection()` will be split into two methods:
-1. `BuildCompanyReportSection()` - Orchestrator rhythm status (new, see above)
-2. `BuildDailyNewsSection()` - Kingdom context, casualties, events (refactored from existing logic)
+**Data Sources:**
+- Party state (battle, siege, settlement, army, march)
+- Company needs (supplies, morale, rest, equipment)
+- Kingdom feed (recent battles, wars, treaties)
+- Player status (injuries, fatigue, active orders)
 
 ### Generation Flow
 

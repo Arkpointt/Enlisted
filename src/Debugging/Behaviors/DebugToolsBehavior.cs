@@ -52,26 +52,6 @@ namespace Enlisted.Debugging.Behaviors
                 $"xp={XpPerClick}, total={enlist.EnlistmentXP}, tier={enlist.EnlistmentTier}");
         }
 
-        /// <summary>
-        /// Test the custom onboarding event screen with a sample event.
-        /// Creates a test event and displays it using the modern Gauntlet UI.
-        /// </summary>
-        public static void TestOnboardingScreen()
-        {
-            var enlist = EnlistmentBehavior.Instance;
-            if (enlist == null)
-            {
-                var warn = new TextObject("{=dbg_test_no_enlist}Cannot test event screen - EnlistmentBehavior not found.");
-                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
-                ModLogger.Warn("Debug", "TestOnboardingScreen: EnlistmentBehavior.Instance is null");
-                return;
-            }
-
-            // Event screen testing is currently inactive.
-            ModLogger.Info("Debug", "TestOnboardingScreen: This feature is currently disabled.");
-
-            /* Original test code has been removed */
-        }
 
         /// <summary>
         /// Forces an immediate event selection attempt bypassing the pacing window.
@@ -100,25 +80,6 @@ namespace Enlisted.Debugging.Behaviors
             var msg = new TextObject("Event selection forced (debug). Check if a popup appears.");
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
             SessionDiagnostics.LogEvent("Debug", "ForceEventSelection", "Forced immediate event attempt");
-        }
-
-        /// <summary>
-        /// Resets the event pacing window, allowing the next daily tick to fire an event.
-        /// </summary>
-        public static void ResetEventWindow()
-        {
-            var pacingManager = EventPacingManager.Instance;
-            if (pacingManager == null)
-            {
-                var warn = new TextObject("Cannot reset window - EventPacingManager not found.");
-                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
-                return;
-            }
-
-            pacingManager.ResetPacingWindow();
-            var msg = new TextObject("Event window reset to now. Next daily tick will attempt event selection.");
-            InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
-            SessionDiagnostics.LogEvent("Debug", "ResetEventWindow", "Pacing window reset");
         }
 
         /// <summary>
@@ -159,39 +120,6 @@ namespace Enlisted.Debugging.Behaviors
             msg.SetTextVariable("C", clearedCount);
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
             SessionDiagnostics.LogEvent("Debug", "ClearEventCooldowns", $"cleared={clearedCount}");
-        }
-
-        /// <summary>
-        /// Shows information about the next event window and pacing state.
-        /// </summary>
-        public static void ShowEventPacingInfo()
-        {
-            var pacingManager = EventPacingManager.Instance;
-            var escalationState = EscalationManager.Instance?.State;
-
-            if (pacingManager == null || escalationState == null)
-            {
-                var warn = new TextObject("Cannot show pacing info - managers not found.");
-                InformationManager.DisplayMessage(new InformationMessage(warn.ToString()));
-                return;
-            }
-
-            var daysUntilNext = pacingManager.GetDaysUntilNextWindow();
-            var lastEventTime = escalationState.LastNarrativeEventTime;
-
-            var msg = daysUntilNext >= 0
-                ? new TextObject("Next event in {D} days. Last event: {L} days ago.")
-                : new TextObject("Event window not initialized yet.");
-
-            if (daysUntilNext >= 0)
-            {
-                msg.SetTextVariable("D", $"{daysUntilNext:F1}");
-                var daysSinceLast = (CampaignTime.Now - lastEventTime).ToDays;
-                msg.SetTextVariable("L", $"{daysSinceLast:F1}");
-            }
-
-            InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
-            ModLogger.Info("Debug", $"Next event window: {daysUntilNext:F1} days, Last: {(CampaignTime.Now - lastEventTime).ToDays:F1} days ago");
         }
 
         /// <summary>
@@ -275,7 +203,7 @@ namespace Enlisted.Debugging.Behaviors
             {
                 ModLogger.Info("Debug", "Opening provisions shop for testing (bypassing tier requirements)");
                 QuartermasterProvisionsBehavior.ShowProvisionsScreen();
-                
+
                 var msg = new TextObject("Provisions shop opened (debug). Testing T7+ officer UI.");
                 InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
                 SessionDiagnostics.LogEvent("Debug", "TestProvisionsShop", "Provisions UI opened for testing");

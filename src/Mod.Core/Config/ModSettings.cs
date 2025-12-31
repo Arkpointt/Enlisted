@@ -8,7 +8,7 @@ using Enlisted.Mod.Core.Logging;
 namespace Enlisted.Mod.Core.Config
 {
 	/// <summary>
-	/// Strongly-typed mod settings loaded from ModuleData/Enlisted/settings.json.
+	/// Strongly-typed mod settings loaded from ModuleData/Enlisted/Config/settings.json.
 	/// Contains configuration options for logging, discovery, and encounter management.
 	/// Defaults are safe and minimal. Fails closed if file is missing or invalid.
 	/// </summary>
@@ -339,7 +339,7 @@ namespace Enlisted.Mod.Core.Config
 		}
 
 		/// <summary>
-		/// Resolves absolute path to ModuleData/Enlisted/settings.json from the executing assembly location.
+		/// Resolves absolute path to ModuleData/Enlisted/Config/settings.json from the executing assembly location.
 		/// </summary>
 		private static string ResolveSettingsPath()
 		{
@@ -355,7 +355,7 @@ namespace Enlisted.Mod.Core.Config
 			moduleRoot = moduleRoot?.Parent; // Enlisted (module root)
 
 			var path = moduleRoot != null
-				? Path.Combine(moduleRoot.FullName, "ModuleData", "Enlisted", "settings.json")
+				? Path.Combine(moduleRoot.FullName, "ModuleData", "Enlisted", "Config", "settings.json")
 				: "settings.json";
 			return path;
 		}

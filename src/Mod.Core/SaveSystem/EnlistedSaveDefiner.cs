@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Enlisted.Features.Camp.Models;
 using Enlisted.Features.Content.Models;
 using Enlisted.Features.Equipment.Managers;
 using Enlisted.Features.Logistics;
@@ -71,6 +72,10 @@ namespace Enlisted.Mod.Core.SaveSystem
             AddEnumDefinition(typeof(LifePhase), 62);
             AddEnumDefinition(typeof(ActivityLevel), 63);
             AddEnumDefinition(typeof(WarStance), 64);
+
+            // Camp Life Simulation enums
+            AddEnumDefinition(typeof(OpportunityType), 70);
+            AddEnumDefinition(typeof(CampMood), 71);
         }
 
         /// <summary>
@@ -83,6 +88,7 @@ namespace Enlisted.Mod.Core.SaveSystem
             // Dictionary types used by various systems
             ConstructContainerDefinition(typeof(Dictionary<string, int>));    // QMInventoryState.CurrentStock, RetinueState.TroopCounts, OrderOutcome dictionaries
             ConstructContainerDefinition(typeof(Dictionary<string, bool>));   // CompanionAssignmentManager (already in CompanionAssignmentSaveDefiner but included for completeness)
+            ConstructContainerDefinition(typeof(Dictionary<string, float>));  // OpportunityHistory.LastPresentedHours
 
             // List types used by various systems
             ConstructContainerDefinition(typeof(List<string>));               // LifetimeServiceRecord.FactionsServed, Order.Tags

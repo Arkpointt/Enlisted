@@ -55,6 +55,13 @@ namespace Enlisted.Features.Orders.Models
         /// Examples: "scout", "medic", "siege", "patrol", "strategic".
         /// </summary>
         public List<string> Tags { get; set; } = [];
+
+        /// <summary>
+        /// If true, this order is automatically accepted when issued (no player choice).
+        /// Mandatory orders represent basic duties that soldiers cannot decline.
+        /// Examples: guard duty, muster, latrine duty, basic patrols.
+        /// </summary>
+        public bool Mandatory { get; set; } = false;
     }
 }
 

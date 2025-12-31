@@ -4,6 +4,7 @@
     "title": "Guard Duty",
     "description": "Stand watch through the night. Keep your eyes sharp and your blade ready.",
     "issuer": "Sergeant",
+    "mandatory": true,
     "tags": ["soldier", "camp", "routine", "defense"],
     "strategic_tags": ["defense", "camp_routine"],
     "requirements": {
@@ -34,6 +35,7 @@
     "title": "Camp Patrol",
     "description": "Walk the perimeter with two men. Keep your eyes open for trouble.",
     "issuer": "Sergeant",
+    "mandatory": true,
     "tags": ["soldier", "camp", "patrol", "defense"],
     "strategic_tags": ["patrol", "defense", "scout"],
     "requirements": {
@@ -64,6 +66,7 @@
     "title": "Firewood Collection",
     "description": "The camp needs fuel. Grab an axe and take two men to gather wood.",
     "issuer": "Sergeant",
+    "mandatory": true,
     "tags": ["soldier", "camp", "routine", "supply"],
     "strategic_tags": ["supply", "camp_routine"],
     "requirements": {
@@ -94,6 +97,7 @@
     "title": "Equipment Inspection",
     "description": "Help the quartermaster check gear. Report anything broken or missing.",
     "issuer": "Sergeant",
+    "mandatory": true,
     "tags": ["soldier", "camp", "routine", "maintenance"],
     "strategic_tags": ["preparation", "camp_routine"],
     "requirements": {
@@ -124,6 +128,7 @@
     "title": "Muster Inspection",
     "description": "Stand for inspection before the lord. Clean your kit and stand straight.",
     "issuer": "Lieutenant",
+    "mandatory": true,
     "tags": ["soldier", "camp", "routine", "inspection"],
     "strategic_tags": ["preparation", "camp_routine"],
     "requirements": {
@@ -151,6 +156,7 @@
     "title": "Sentry Post",
     "description": "Watch the road from the hilltop. Report anything strange.",
     "issuer": "Sergeant",
+    "mandatory": true,
     "tags": ["soldier", "camp", "defense", "scout"],
     "strategic_tags": ["defense", "scout", "camp_routine"],
     "requirements": {

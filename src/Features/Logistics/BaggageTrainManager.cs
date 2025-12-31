@@ -68,7 +68,7 @@ namespace Enlisted.Features.Logistics
             try
             {
                 var moduleDataPath = ConfigurationManager.GetModuleDataPathForConsumers();
-                var configPath = System.IO.Path.Combine(moduleDataPath, "baggage_config.json");
+                var configPath = System.IO.Path.Combine(moduleDataPath, "Config", "baggage_config.json");
                 
                 if (!System.IO.File.Exists(configPath))
                 {
@@ -633,8 +633,8 @@ namespace Enlisted.Features.Logistics
         }
         
         /// <summary>
-        /// Attempts to trigger a baggage-related event during march.
-        /// Uses configured probability weights for different event types.
+        /// Attempts to update baggage status during march.
+        /// Updates state directly - no popup events. Players see status in Daily Brief flavor text.
         /// </summary>
         private void TryTriggerBaggageEvent()
         {
@@ -645,7 +645,10 @@ namespace Enlisted.Features.Logistics
             var caughtUpChance = _config?.Timing?.CaughtUpChancePercent ?? 25;
             if (roll < caughtUpChance)
             {
-                QueueBaggageEvent("evt_baggage_arrived");
+                // Grant temporary access - wagons caught up
+                GrantTemporaryAccess(4); // 4 hours of access
+                _lastArrivalDay = (int)CampaignTime.Now.ToDays;
+                ModLogger.Info(LogCategory, "Baggage wagons caught up with the column");
                 return;
             }
             
@@ -653,9 +656,10 @@ namespace Enlisted.Features.Logistics
             var delayChance = _config?.Events?.DelayEventChanceBadWeather ?? 15;
             if (roll < caughtUpChance + delayChance)
             {
-                // Randomly choose between delayed and stuck events
-                var delayEventId = random.Next(2) == 0 ? "evt_baggage_delayed" : "evt_baggage_stuck";
-                QueueBaggageEvent(delayEventId);
+                // Apply delay - wagons stuck or delayed
+                var delayDays = random.Next(1, 3); // 1-2 days delay
+                ApplyBaggageDelay(delayDays);
+                ModLogger.Info(LogCategory, $"Baggage wagons delayed by {delayDays} days");
                 return;
             }
             
@@ -667,34 +671,14 @@ namespace Enlisted.Features.Logistics
             
             if (isEnemyTerritory && roll < caughtUpChance + delayChance + raidChance)
             {
-                QueueBaggageEvent("evt_baggage_raided");
+                // Apply raid - mark raid day and optionally add delay
+                _lastRaidDay = (int)CampaignTime.Now.ToDays;
+                ApplyBaggageDelay(1); // Raiders cause a 1-day delay
+                ModLogger.Info(LogCategory, "Baggage train was raided");
             }
             
-            // Theft events are triggered by the event system based on requirements (soldier rep check)
-            // so we don't need explicit logic here
-        }
-        
-        /// <summary>
-        /// Queues a baggage event for delivery through the event system.
-        /// </summary>
-        private void QueueBaggageEvent(string eventId)
-        {
-            var eventDef = EventCatalog.GetEvent(eventId);
-            if (eventDef == null)
-            {
-                ModLogger.Warn(LogCategory, $"Baggage event not found: {eventId}");
-                return;
-            }
-            
-            var deliveryManager = EventDeliveryManager.Instance;
-            if (deliveryManager == null)
-            {
-                ModLogger.Warn(LogCategory, "EventDeliveryManager not available");
-                return;
-            }
-            
-            deliveryManager.QueueEvent(eventDef);
-            ModLogger.Info(LogCategory, $"Queued baggage event: {eventId}");
+            // Theft now happens passively (items may go missing over time)
+            // No popup events - the player discovers losses when accessing baggage
         }
     }
     

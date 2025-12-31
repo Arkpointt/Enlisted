@@ -35,7 +35,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// </summary>
         [HarmonyPrefix]
         [HarmonyPatch("ArmyWaitMenuTick")]
-        private static bool ArmyWaitMenuTick_Prefix(MenuCallbackArgs args, CampaignTime _)
+        private static bool ArmyWaitMenuTick_Prefix(MenuCallbackArgs args)
         {
             try
             {

@@ -383,8 +383,8 @@ namespace Enlisted.Features.Equipment.Behaviors
 
         /// <summary>
         /// Snapshot of the backed up personal inventory (items removed from the party roster during enlistment).
-        /// Used by the enlistment bag-check ("stowage") onboarding prompt so it can operate on
-        /// the *pre-service* belongings even after military equipment has been issued.
+        /// Used by the enlistment bag-check ("stowage") process so it can operate on
+        /// the pre-service belongings even after military equipment has been issued.
         /// </summary>
         public ItemRoster GetBackedUpPersonalInventorySnapshot()
         {

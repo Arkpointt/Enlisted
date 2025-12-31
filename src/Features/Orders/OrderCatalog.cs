@@ -415,6 +415,7 @@ namespace Enlisted.Features.Orders
                 Description = orderJson["description"]?.ToString() ?? string.Empty,
                 Issuer = orderJson["issuer"]?.ToString() ?? "auto",
                 Tags = ParseStringList(orderJson["tags"]),
+                Mandatory = orderJson["mandatory"]?.Value<bool>() ?? false,
                 Requirements = ParseRequirements(orderJson["requirements"] as JObject),
                 Consequences = ParseConsequences(orderJson["consequences"] as JObject)
             };

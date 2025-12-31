@@ -1,0 +1,246 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Enlisted.Features.Camp;
+using Enlisted.Features.Company;
+using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Escalation;
+using Enlisted.Features.Orders.Behaviors;
+using Enlisted.Features.Ranks;
+using Enlisted.Mod.Core.Logging;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
+using TaleWorlds.Localization;
+
+namespace Enlisted.Features.Content
+{
+    /// <summary>
+    /// Generates player-specific forecasts for the YOU section of the Main Menu.
+    /// Produces NOW (current status) and AHEAD (upcoming predictions) text incorporating
+    /// duty status, health, fatigue, and culture-aware rank names.
+    /// </summary>
+    public class ForecastGenerator
+    {
+        private const string LogCategory = "ForecastGen";
+
+        private enum Priority { Low, Medium, High, Critical }
+
+        private readonly EnlistmentBehavior _enlistment;
+        private readonly EscalationManager _escalation;
+
+        public ForecastGenerator(EnlistmentBehavior enlistment, EscalationManager escalation)
+        {
+            _enlistment = enlistment;
+            _escalation = escalation;
+        }
+
+        /// <summary>
+        /// Builds the complete player status forecast (NOW and AHEAD sections).
+        /// </summary>
+        public (string Now, string Ahead) BuildPlayerStatus()
+        {
+            try
+            {
+                var now = BuildNowText();
+                var ahead = BuildAheadText();
+                return (now, ahead);
+            }
+            catch (System.Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to build player status", ex);
+                return ("Status unavailable.", "Forecast unavailable.");
+            }
+        }
+
+        /// <summary>
+        /// Builds the NOW text: player's current duty status, physical state, and immediate commitments.
+        /// </summary>
+        private string BuildNowText()
+        {
+            var hero = Hero.MainHero;
+            var sb = new StringBuilder();
+
+            // Duty Status - simplified to just check if order exists
+            var currentOrder = OrderManager.Instance?.GetCurrentOrder();
+            if (currentOrder != null)
+            {
+                sb.Append(new TextObject("{=menu_you_on_duty}On duty - {ORDER_NAME}, day {DAY} of {TOTAL}.")
+                    .SetTextVariable("ORDER_NAME", currentOrder.Title ?? "Orders")
+                    .SetTextVariable("DAY", "1")
+                    .SetTextVariable("TOTAL", "3")
+                    .ToString());
+            }
+            else
+            {
+                sb.Append(new TextObject("{=menu_you_off_duty}You're off duty and well-rested.").ToString());
+            }
+
+            // Physical State
+            if (hero.IsWounded)
+            {
+                sb.Append(" ");
+                sb.Append(new TextObject("{=menu_you_wounded}You're wounded - movement impaired. Off duty until you recover.").ToString());
+            }
+
+            // Player commitments (scheduled activities)
+            var commitments = CampOpportunityGenerator.Instance?.Commitments;
+            if (commitments?.HasCommitment == true)
+            {
+                sb.Append(" ");
+                if (!string.IsNullOrEmpty(commitments.CommitmentDisplayText))
+                {
+                    sb.Append(commitments.CommitmentDisplayText);
+                }
+                else
+                {
+                    float hoursUntil = commitments.GetHoursUntilActivity();
+                    if (hoursUntil < 1f)
+                    {
+                        sb.Append(new TextObject("{=menu_you_commitment_soon}The lads are expecting you shortly.").ToString());
+                    }
+                    else
+                    {
+                        sb.Append(new TextObject("{=menu_you_commitment}You've agreed to join the lads in {HOURS} hours.")
+                            .SetTextVariable("HOURS", ((int)hoursUntil).ToString())
+                            .ToString());
+                    }
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Builds the AHEAD text: upcoming events, warnings, and predictions based on orchestrator state.
+        /// Prioritizes critical warnings (hunger, morale, discipline) over routine forecasts.
+        /// Integrates with CompanySimulationBehavior for pressure-based warnings.
+        /// </summary>
+        private string BuildAheadText()
+        {
+            var forecasts = new List<(string text, Priority priority)>();
+            var cultureId = RankHelper.GetCultureId(_enlistment);
+
+            // === PARTY STATE WARNINGS (from Background Simulation) ===
+            var sim = CompanySimulationBehavior.Instance;
+            var needs = _enlistment?.CompanyNeeds;
+
+            if (sim != null)
+            {
+                // Supply warnings - escalating urgency based on consecutive days of low supplies
+                if (sim.Pressure.DaysLowSupplies >= 2)
+                {
+                    forecasts.Add((
+                        new TextObject("{=menu_ahead_supplies_critical}The men are hungry. Supplies won't last.").ToString(),
+                        Priority.Critical));
+                }
+                else if (needs != null && needs.Supplies < 40)
+                {
+                    forecasts.Add((
+                        new TextObject("{=menu_ahead_supplies_low}Rations are getting thin.").ToString(),
+                        Priority.High));
+                }
+
+                // Morale warnings - escalating urgency based on consecutive days of low morale
+                if (sim.Pressure.DaysLowMorale >= 2)
+                {
+                    forecasts.Add((
+                        new TextObject("{=menu_ahead_morale_critical}The mood is dark. Something may break.").ToString(),
+                        Priority.Critical));
+                }
+                else if (needs != null && needs.Morale < 40)
+                {
+                    forecasts.Add((
+                        new TextObject("{=menu_ahead_morale_low}Grumbling in the ranks.").ToString(),
+                        Priority.Medium));
+                }
+
+                // Health warnings - many sick soldiers spreading illness
+                if (sim.Roster != null && sim.Roster.SickCount > 5)
+                {
+                    forecasts.Add((
+                        new TextObject("{=menu_ahead_sick_high}Fever spreading through camp.").ToString(),
+                        Priority.High));
+                }
+
+                // Wounded warnings - high casualty rate affecting readiness
+                if (sim.Roster != null && sim.Roster.TotalSoldiers > 0 &&
+                    (float)sim.Roster.WoundedCount / sim.Roster.TotalSoldiers > 0.2f)
+                {
+                    forecasts.Add((
+                        new TextObject("{=menu_ahead_wounded_many}Many wounded need care.").ToString(),
+                        Priority.High));
+                }
+
+                // Desertion warnings - recent losses to desertion
+                if (sim.Pressure.RecentDesertions > 0)
+                {
+                    forecasts.Add((
+                        new TextObject("{=menu_ahead_desertion}Men have been slipping away.").ToString(),
+                        Priority.High));
+                }
+
+                // Rest/exhaustion warnings
+                if (sim.Pressure.DaysLowRest >= 2)
+                {
+                    forecasts.Add((
+                        new TextObject("{=menu_ahead_rest_low}The men are exhausted. They need rest.").ToString(),
+                        Priority.High));
+                }
+            }
+
+            // Discipline warnings from escalation tracks (0-10 scale)
+            if (_escalation?.State != null && _escalation.State.Discipline < 3)
+            {
+                forecasts.Add((
+                    new TextObject("{=menu_ahead_discipline_low}Officers are losing patience.").ToString(),
+                    Priority.Medium));
+            }
+
+            // === ORDER/EVENT FORECASTS ===
+            // Check for pending orders (no active order means one might be coming)
+            var orderManager = OrderManager.Instance;
+            if (orderManager != null && orderManager.GetCurrentOrder() == null)
+            {
+                // Player is off-duty, hint that orders may be coming
+                var ncoTitle = RankHelper.GetNCOTitle(cultureId);
+                forecasts.Add((
+                    new TextObject("{=menu_ahead_order_coming}{NCO_TITLE}'s been making lists.")
+                        .SetTextVariable("NCO_TITLE", ncoTitle)
+                        .ToString(),
+                    Priority.Low));
+            }
+
+            // Check for upcoming muster (pay day)
+            if (_enlistment != null && _enlistment.IsEnlisted)
+            {
+                var nextPayday = _enlistment.NextPaydaySafe;
+                if (nextPayday != CampaignTime.Zero)
+                {
+                    double daysUntilMuster = (nextPayday - CampaignTime.Now).ToDays;
+                    if (daysUntilMuster <= 3 && daysUntilMuster > 0)
+                    {
+                        forecasts.Add((
+                            new TextObject("{=menu_ahead_muster_soon}Pay day approaches.").ToString(),
+                            Priority.Medium));
+                    }
+                }
+            }
+
+            // Default if nothing else - quiet day forecast
+            if (forecasts.Count == 0)
+            {
+                forecasts.Add((
+                    new TextObject("{=menu_ahead_default}Quiet. Almost too quiet.").ToString(),
+                    Priority.Low));
+            }
+
+            // Sort by priority descending, take top 2 most urgent forecasts
+            var topForecasts = forecasts
+                .OrderByDescending(f => f.priority)
+                .Take(2)
+                .Select(f => f.text);
+
+            return string.Join(" ", topForecasts);
+        }
+    }
+}

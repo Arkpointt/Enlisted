@@ -74,12 +74,6 @@ namespace Enlisted.Features.Escalation
         public HashSet<string> OneTimeEventsFired { get; set; } =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // Pacing system: timestamp of the last narrative event delivered.
-        public CampaignTime LastNarrativeEventTime { get; set; } = CampaignTime.Zero;
-
-        // Pacing system: next window when an event can fire (set to random 3-5 days after last event).
-        public CampaignTime NextNarrativeEventWindow { get; set; } = CampaignTime.Zero;
-
         // Global event pacing: tracks events across ALL automatic sources (EventPacingManager + MapIncidentManager).
         // These enforce the limits from decision_events.pacing config to prevent event spam.
         public CampaignTime LastAutoEventTime { get; set; } = CampaignTime.Zero;
@@ -107,81 +101,6 @@ namespace Enlisted.Features.Escalation
         // Used for delayed follow-up events (e.g., friend repays loan after 7 days).
         public Dictionary<string, CampaignTime> PendingChainEvents { get; set; } =
             new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
-
-        // Onboarding system: tracks progress through introductory events based on experience track.
-        // Stage 0 = not started or complete, 1-3 = active onboarding stages.
-        // Experience track: "green", "seasoned", "veteran" - determines which onboarding content fires.
-        // Default to 0 (not started) so old saves and fresh games don't trigger false onboarding.
-        public int OnboardingStage { get; set; }
-        public string OnboardingTrack { get; set; } = string.Empty;
-        public CampaignTime OnboardingStartTime { get; set; } = CampaignTime.Zero;
-
-        /// <summary>
-        /// Checks if onboarding is still in progress (not yet complete).
-        /// </summary>
-        public bool IsOnboardingActive => OnboardingStage > 0 && OnboardingStage <= 3;
-
-        /// <summary>
-        /// Checks if the player is at a specific onboarding stage.
-        /// </summary>
-        public bool IsOnboardingStage(int stage) => OnboardingStage == stage;
-
-        /// <summary>
-        /// Advances to the next onboarding stage. Marks complete when stage 3 is finished.
-        /// </summary>
-        public void AdvanceOnboardingStage()
-        {
-            if (OnboardingStage >= 1 && OnboardingStage <= 3)
-            {
-                OnboardingStage++;
-                if (OnboardingStage > 3)
-                {
-                    OnboardingStage = 0; // 0 = complete
-                }
-            }
-        }
-
-        /// <summary>
-        /// Initializes onboarding for a new enlistment.
-        /// </summary>
-        public void InitializeOnboarding(string track)
-        {
-            OnboardingStage = 1;
-            OnboardingTrack = track ?? "seasoned";
-            OnboardingStartTime = CampaignTime.Now;
-        }
-
-        /// <summary>
-        /// Resets onboarding state (called on discharge).
-        /// </summary>
-        public void ResetOnboarding()
-        {
-            OnboardingStage = 0;
-            OnboardingTrack = string.Empty;
-            OnboardingStartTime = CampaignTime.Zero;
-        }
-
-        /// <summary>
-        /// Validates and repairs corrupted onboarding state.
-        /// Called after save/load to handle edge cases from old saves or data corruption.
-        /// </summary>
-        public void ValidateOnboardingState()
-        {
-            // Active onboarding with no track = corrupted, reset to complete
-            if (OnboardingStage > 0 && OnboardingStage <= 3 && string.IsNullOrEmpty(OnboardingTrack))
-            {
-                OnboardingStage = 0;
-                OnboardingStartTime = CampaignTime.Zero;
-            }
-
-            // Out of range stage value = corrupted, reset
-            if (OnboardingStage < 0 || OnboardingStage > 3)
-            {
-                OnboardingStage = 0;
-                OnboardingTrack = string.Empty;
-                OnboardingStartTime = CampaignTime.Zero;
-            }
-        }
 
         /// <summary>
         /// Checks if a flag is currently active (set and not expired).

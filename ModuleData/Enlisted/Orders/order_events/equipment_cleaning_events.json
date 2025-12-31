@@ -1,0 +1,190 @@
+﻿{
+  "schemaVersion": 2,
+  "order_type": "order_equipment_cleaning",
+  "events": [
+    {
+      "id": "cleaning_found_damage",
+      "order_type": "order_equipment_cleaning",
+      "category": "order_event",
+      "severity": "normal",
+      "titleId": "cleaning_found_damage_title",
+      "title": "Damaged Equipment",
+      "setupId": "cleaning_found_damage_setup",
+      "setup": "This sword has a crack in the blade. Someone's been hiding it. Could fail in battle.",
+      "requirements": {
+        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+      },
+      "options": [
+        {
+          "id": "report",
+          "textId": "cleaning_found_damage_report",
+          "text": "Report it to {SERGEANT}.",
+          "effects": {
+            "officerRep": 2
+          },
+          "resultTextId": "cleaning_found_damage_report_result",
+          "resultText": "{SERGEANT} nods. 'Good eye. We'll get it to the smith.'"
+        },
+        {
+          "id": "fix_quietly",
+          "textId": "cleaning_found_damage_fix_quietly",
+          "text": "Try to fix it yourself.",
+          "skillCheck": {
+            "skill": "Crafting",
+            "difficulty": 35
+          },
+          "effects": {
+            "officerRep": 3,
+            "companyNeeds": {
+              "Equipment": 1
+            }
+          },
+          "failEffects": {
+            "officerRep": 1
+          },
+          "resultTextId": "cleaning_found_damage_fix_quietly_result",
+          "resultText": "You work the crack out. Good as new, or close enough.",
+          "failResultTextId": "cleaning_found_damage_fix_quietly_fail",
+          "failResultText": "Beyond your skill. You report it to the smith."
+        },
+        {
+          "id": "ignore",
+          "textId": "cleaning_found_damage_ignore",
+          "text": "Put it back. Not your problem.",
+          "effects": {
+            "officerRep": -2
+          },
+          "resultTextId": "cleaning_found_damage_ignore_result",
+          "resultText": "You set it aside. Someone else can deal with it."
+        }
+      ]
+    },
+    {
+      "id": "cleaning_helped_comrade",
+      "order_type": "order_equipment_cleaning",
+      "category": "order_event",
+      "severity": "normal",
+      "titleId": "cleaning_helped_comrade_title",
+      "title": "Struggling Comrade",
+      "setupId": "cleaning_helped_comrade_setup",
+      "setup": "{COMRADE_NAME} is struggling with a pile of gear. He's new and clearly overwhelmed.",
+      "requirements": {
+        "world_state": ["peacetime_garrison"]
+      },
+      "options": [
+        {
+          "id": "help",
+          "textId": "cleaning_helped_comrade_help",
+          "text": "Help him out.",
+          "effects": {
+            "soldierRep": 3,
+            "fatigue": 3
+          },
+          "resultTextId": "cleaning_helped_comrade_help_result",
+          "resultText": "Together you finish twice as fast. He owes you one."
+        },
+        {
+          "id": "ignore",
+          "textId": "cleaning_helped_comrade_ignore",
+          "text": "Focus on your own work.",
+          "effects": {
+            "soldierRep": -1
+          },
+          "resultTextId": "cleaning_helped_comrade_ignore_result",
+          "resultText": "You finish your pile. He's still working when you leave."
+        },
+        {
+          "id": "mock",
+          "textId": "cleaning_helped_comrade_mock",
+          "text": "Mock his slowness.",
+          "effects": {
+            "soldierRep": -3
+          },
+          "resultTextId": "cleaning_helped_comrade_mock_result",
+          "resultText": "The others laugh. He doesn't. You've made an enemy."
+        }
+      ]
+    },
+    {
+      "id": "cleaning_officer_inspection",
+      "order_type": "order_equipment_cleaning",
+      "category": "order_event",
+      "severity": "attention",
+      "titleId": "cleaning_officer_inspection_title",
+      "title": "Inspection",
+      "setupId": "cleaning_officer_inspection_setup",
+      "setup": "{OFFICER_NAME} walks through, checking the work. He stops at your station.",
+      "requirements": {
+        "world_state": ["peacetime_garrison"]
+      },
+      "options": [
+        {
+          "id": "present_work",
+          "textId": "cleaning_officer_inspection_present_work",
+          "text": "Present your work confidently.",
+          "skillCheck": {
+            "skill": "Crafting",
+            "difficulty": 40
+          },
+          "effects": {
+            "officerRep": 3
+          },
+          "failEffects": {
+            "officerRep": -2
+          },
+          "resultTextId": "cleaning_officer_inspection_present_work_result",
+          "resultText": "He examines a blade, nods. 'Fine work, soldier.'",
+          "failResultTextId": "cleaning_officer_inspection_present_work_fail",
+          "failResultText": "He finds a spot you missed. 'Sloppy. Do it again.'"
+        }
+      ]
+    },
+    {
+      "id": "cleaning_contraband_found",
+      "order_type": "order_equipment_cleaning",
+      "category": "order_event",
+      "severity": "attention",
+      "titleId": "cleaning_contraband_found_title",
+      "title": "Hidden Contraband",
+      "setupId": "cleaning_contraband_found_setup",
+      "setup": "Inside a saddlebag, you find a small pouch. Coins. Someone's been skimming.",
+      "requirements": {
+        "world_state": ["peacetime_garrison"]
+      },
+      "options": [
+        {
+          "id": "report",
+          "textId": "cleaning_contraband_found_report",
+          "text": "Report it to {SERGEANT}.",
+          "effects": {
+            "officerRep": 3
+          },
+          "resultTextId": "cleaning_contraband_found_report_result",
+          "resultText": "{SERGEANT} takes it. Someone's in trouble, but not you."
+        },
+        {
+          "id": "ignore",
+          "textId": "cleaning_contraband_found_ignore",
+          "text": "Put it back. You saw nothing.",
+          "effects": {},
+          "resultTextId": "cleaning_contraband_found_ignore_result",
+          "resultText": "You close the bag. Whatever's going on, you're not part of it."
+        },
+        {
+          "id": "take_it",
+          "textId": "cleaning_contraband_found_take_it",
+          "text": "Pocket the coins.",
+          "effects": {
+            "officerRep": -3,
+            "gold": 15,
+            "escalation": {
+              "scrutiny": 10
+            }
+          },
+          "resultTextId": "cleaning_contraband_found_take_it_result",
+          "resultText": "The coins disappear into your pocket. No one saw."
+        }
+      ]
+    }
+  ]
+}

@@ -6,8 +6,7 @@ namespace Enlisted.Features.Content
 {
     /// <summary>
     /// Determines the player's experience track based on their level and provides
-    /// starting tier calculations for enlistment. Shared between the onboarding system
-    /// (for starting tier) and the training system (for XP modifiers).
+    /// starting tier calculations for enlistment and training XP modifiers.
     /// </summary>
     public static class ExperienceTrackHelper
     {

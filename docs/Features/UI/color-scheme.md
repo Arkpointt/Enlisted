@@ -54,6 +54,8 @@ Players can instantly identify problems at a glance - critical supplies, low rep
 | **Success** | `#90EE90FF` | Light Green | Positive status | Good supplies (60+), high reputation |
 | **Warning** | `#FFD700FF` | Gold | Caution status | Fair conditions (40-59), needs attention |
 | **Alert** | `#FF6B6BFF` | Soft Red | Critical status | Poor conditions (<40), immediate attention required |
+| **Critical** | `#FF0000FF` | Bright Red | Extreme danger | Life-threatening injuries, catastrophic failures (with text outline for max visibility) |
+| **Urgent** | `#FFA500FF` | Orange | Time-sensitive neutral | Imminent orders, scheduled events, deadlines (not good/bad, just "act now") |
 | **Default** | `#EEE0C7FF` | Warm Cream | Body text | Standard descriptive text, neutral information |
 
 ### Native Comparison

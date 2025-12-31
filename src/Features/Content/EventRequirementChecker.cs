@@ -69,12 +69,6 @@ namespace Enlisted.Features.Content
                     return false;
                 }
                 
-                // Check onboarding requirements (stage and track match)
-                if (!MeetsOnboardingRequirements(requirements))
-                {
-                    return false;
-                }
-                
                 // Check HP requirements (for decisions like Seek Treatment)
                 if (!MeetsHpRequirement(requirements))
                 {
@@ -89,6 +83,18 @@ namespace Enlisted.Features.Content
                 
                 // Check baggage has items (for theft events)
                 if (!MeetsBaggageItemsRequirement(requirements))
+                {
+                    return false;
+                }
+                
+                // Check not at sea (for land-based events like baggage wagons)
+                if (!MeetsNotAtSeaRequirement(requirements))
+                {
+                    return false;
+                }
+                
+                // Check at sea (for maritime events like ship's hold)
+                if (!MeetsAtSeaRequirement(requirements))
                 {
                     return false;
                 }
@@ -268,55 +274,6 @@ namespace Enlisted.Features.Content
             };
         }
         
-        /// <summary>
-        /// Checks if the current onboarding state matches the event's requirements.
-        /// Events with OnboardingStage set are only eligible when the player is at that stage.
-        /// Events without OnboardingStage set are eligible regardless of onboarding state.
-        /// </summary>
-        private static bool MeetsOnboardingRequirements(EventRequirements requirements)
-        {
-            // No onboarding requirement = always eligible (not an onboarding event)
-            if (!requirements.OnboardingStage.HasValue)
-            {
-                return true;
-            }
-            
-            var escalation = EscalationManager.Instance?.State;
-            if (escalation == null)
-            {
-                return false;
-            }
-            
-            // Onboarding events require player to be actively enlisted
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null || !enlistment.IsEnlisted)
-            {
-                return false;
-            }
-            
-            // Check if player is at the required onboarding stage
-            if (!escalation.IsOnboardingStage(requirements.OnboardingStage.Value))
-            {
-                return false;
-            }
-            
-            // Stale state check: onboarding active but track is empty = corrupted state, skip
-            if (escalation.IsOnboardingActive && string.IsNullOrEmpty(escalation.OnboardingTrack))
-            {
-                return false;
-            }
-            
-            // If a specific track is required, check that too
-            if (!string.IsNullOrEmpty(requirements.OnboardingTrack))
-            {
-                if (!string.Equals(escalation.OnboardingTrack, requirements.OnboardingTrack, StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-            }
-            
-            return true;
-        }
 
         /// <summary>
         /// Checks if the player's HP is below the required threshold.
@@ -378,6 +335,36 @@ namespace Enlisted.Features.Content
             
             var enlistment = EnlistmentBehavior.Instance;
             return enlistment != null && enlistment.HasBaggageItems();
+        }
+
+        /// <summary>
+        /// Checks if the party is NOT at sea (on land).
+        /// Used for land-based events like baggage wagons that don't make sense during sea travel.
+        /// </summary>
+        private static bool MeetsNotAtSeaRequirement(EventRequirements requirements)
+        {
+            if (requirements.NotAtSea != true)
+            {
+                return true; // No sea restriction
+            }
+            
+            // Check if party is at sea - if so, fail the requirement
+            return !CheckAtSea();
+        }
+
+        /// <summary>
+        /// Checks if the party IS at sea (sailing).
+        /// Used for maritime events like ship's hold access that only make sense during sea travel.
+        /// </summary>
+        private static bool MeetsAtSeaRequirement(EventRequirements requirements)
+        {
+            if (requirements.AtSea != true)
+            {
+                return true; // No maritime requirement
+            }
+            
+            // Check if party is at sea - if not, fail the requirement
+            return CheckAtSea();
         }
 
         /// <summary>
@@ -519,6 +506,7 @@ namespace Enlisted.Features.Content
             {
                 // Campaign state conditions
                 "at_sea" => CheckAtSea(),
+                "not_at_sea" => !CheckAtSea(),
                 "ai_safe" => CheckAiSafe(),
                 "camp_established" => CheckCampEstablished(),
                 

@@ -2,9 +2,10 @@
 
 **Summary:** The Camp Background Simulation creates an autonomous company that lives and breathes without player input. Soldiers get sick, equipment degrades, morale shifts, and incidents occur - all visible through the news feed. This layer provides the context and pressure that makes events meaningful. The player observes camp life; they don't control it.
 
-**Status:** 📋 Specification  
+**Status:** ✅ Implemented  
 **Priority:** Phase 5.5 (After Content Orchestrator core, before Camp Life Simulation UI)  
 **Last Updated:** 2025-12-30  
+**Implementation:** `src/Features/Camp/CompanySimulationBehavior.cs`, `src/Features/Camp/Models/`  
 **Related Docs:** [Camp Life Simulation](camp-life-simulation.md), [News Reporting System](../Features/UI/news-reporting-system.md), [Company Needs](../Features/Core/company-needs.md), [Content Orchestrator](content-orchestrator-plan.md)
 
 ---
@@ -1500,47 +1501,47 @@ CAMP:
 
 ## Implementation Tasks
 
-### Phase 1: Core Data Structures
-- [ ] Create `CompanyRoster` class
-- [ ] Create `CompanyPressure` class
-- [ ] Create `CampIncident` struct
-- [ ] Create `SimulationDayResult` class
-- [ ] Add save/load support for simulation state
-- [ ] Create `SimulationConfig` and JSON loader
+### Phase 1: Core Data Structures ✅
+- [x] Create `CompanyRoster` class - `src/Features/Camp/Models/CompanyRoster.cs`
+- [x] Create `CompanyPressure` class - `src/Features/Camp/Models/CompanyPressure.cs`
+- [x] Create `CampIncident` struct - `src/Features/Camp/Models/CampIncident.cs`
+- [x] Create `SimulationDayResult` class - `src/Features/Camp/Models/SimulationDayResult.cs`
+- [x] Add save/load support for simulation state - in `CompanySimulationBehavior.SyncData()`
+- [x] Create `SimulationConfig` and JSON loader - `ModuleData/Enlisted/simulation_config.json`
 
-### Phase 2: Roster Simulation
-- [ ] Implement roster initialization (from party size)
-- [ ] Implement recovery/death rolls
-- [ ] Implement sickness/injury generation
-- [ ] Implement desertion logic
-- [ ] Hook battle casualties to roster
-- [ ] Generate roster news items
+### Phase 2: Roster Simulation ✅
+- [x] Implement roster initialization (from party size)
+- [x] Implement recovery/death rolls
+- [x] Implement sickness/injury generation
+- [x] Implement desertion logic (two-phase missing → confirmed)
+- [x] Hook battle casualties to roster (`OnBattleEnd`)
+- [x] Generate roster news items
 
-### Phase 3: Incident System
-- [ ] Create incident definitions JSON
-- [ ] Implement incident selection with weights
-- [ ] Implement cooldown tracking
-- [ ] Implement flag system
-- [ ] Generate incident news items
+### Phase 3: Incident System ✅
+- [x] Create incident definitions JSON - `simulation_config.json`
+- [x] Implement incident selection with weights
+- [x] Implement cooldown tracking
+- [x] Implement flag system (`_activeFlags`, `SetsFlag`, `RequiresFlag`)
+- [x] Generate incident news items
 
-### Phase 4: Consumption & Pressure
-- [ ] Implement supply consumption
-- [ ] Implement equipment degradation
-- [ ] Implement pressure tracking
-- [ ] Implement pulse threshold detection
-- [ ] Generate consumption/pulse news
+### Phase 4: Consumption & Pressure ✅
+- [x] Implement supply consumption (reads from CompanyNeedsManager)
+- [x] Implement equipment degradation (via incident effects)
+- [x] Implement pressure tracking (`CompanyPressure` class)
+- [x] Implement pulse threshold detection (`ProcessPulse()`)
+- [x] Generate consumption/pulse news
 
-### Phase 5: Crisis Triggers
-- [ ] Define crisis event templates
-- [ ] Implement pressure → crisis trigger logic
-- [ ] Queue crisis events to orchestrator
-- [ ] Create crisis event JSON files
+### Phase 5: Crisis Triggers ✅
+- [x] Define crisis event IDs (supply_crisis, morale_collapse, etc.)
+- [x] Implement pressure → crisis trigger logic (`CheckCrisisTriggers()`)
+- [x] Queue crisis events to orchestrator (`QueueCrisisEvent()`)
+- [ ] Create crisis event JSON files - *pending: content authoring*
 
-### Phase 6: News Integration
-- [ ] Add camp news category to `EnlistedNewsBehavior`
-- [ ] Implement severity prioritization
-- [ ] Implement summarization for busy days
-- [ ] Add "COMPANY" status section to news
+### Phase 6: News Integration ✅
+- [x] Add camp news methods to `EnlistedNewsBehavior` (`AddCampNews()`, `UpdateCompanyStatus()`)
+- [x] Implement severity prioritization
+- [x] Implement max news cap (5 items/day)
+- [x] Update `CampNewsState` with company status fields
 
 ### Phase 7: Testing & Tuning
 - [ ] Playtest for 30 campaign days

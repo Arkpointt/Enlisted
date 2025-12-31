@@ -27,6 +27,7 @@ namespace Enlisted.Features.Orders.Behaviors
         public static OrderManager Instance { get; private set; }
 
         private Order _currentOrder;
+        private bool _orderAccepted = false; // Tracks if current order is accepted (active) vs offered (waiting)
         private CampaignTime _lastOrderTime = CampaignTime.Never;
         private int _declineCount;
 
@@ -48,11 +49,12 @@ namespace Enlisted.Features.Orders.Behaviors
             // complex Order objects that lack SaveableProperty attributes.
             dataStore.SyncData("_lastOrderTime", ref _lastOrderTime);
             dataStore.SyncData("_declineCount", ref _declineCount);
-            
+
             // Clear any stale order reference on load to ensure clean state
             if (dataStore.IsLoading)
             {
                 _currentOrder = null;
+                _orderAccepted = false;
             }
         }
 
@@ -119,9 +121,17 @@ namespace Enlisted.Features.Orders.Behaviors
 
         /// <summary>
         /// Attempts to select and issue a new order from the catalog.
+        /// Phase 4: Coordinates with ContentOrchestrator for timing.
         /// </summary>
         private void TryIssueOrder()
         {
+            // Phase 4: Check with orchestrator before issuing
+            if (!(Content.ContentOrchestrator.Instance?.CanIssueOrderNow() ?? true))
+            {
+                ModLogger.Debug(LogCategory, "Order issuance blocked by ContentOrchestrator timing");
+                return;
+            }
+
             var order = OrderCatalog.SelectOrder();
             if (order == null)
             {
@@ -141,13 +151,28 @@ namespace Enlisted.Features.Orders.Behaviors
             _currentOrder.ExpirationTime = CampaignTime.DaysFromNow(3f);
             _lastOrderTime = CampaignTime.Now;
 
-            ModLogger.Info(LogCategory, $"Issued order: {order.Title} from {order.Issuer}");
+            // Check if order is mandatory (auto-accept)
+            if (order.Mandatory)
+            {
+                _orderAccepted = true; // Automatically accepted
+                ModLogger.Info(LogCategory, $"Mandatory order assigned: {order.Title} from {order.Issuer}");
 
-            ShowOrderNotification(order);
+                // Show notification that duty has been assigned
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Duty Assigned: {order.Title}",
+                    Colors.Cyan));
+            }
+            else
+            {
+                _orderAccepted = false; // Order is offered, not yet accepted
+                ModLogger.Info(LogCategory, $"Optional order issued: {order.Title} from {order.Issuer}");
+                ShowOrderNotification(order);
+            }
         }
 
         /// <summary>
-        /// Player accepts the current order. Executes immediately with success/failure determination.
+        /// Player accepts the current order. Order becomes active and will progress through phases automatically.
+        /// Order progression is handled by OrderProgressionBehavior.
         /// </summary>
         public void AcceptOrder()
         {
@@ -156,8 +181,16 @@ namespace Enlisted.Features.Orders.Behaviors
                 return;
             }
 
-            ExecuteOrder(_currentOrder);
-            _currentOrder = null;
+            _orderAccepted = true;
+            ModLogger.Info(LogCategory, $"Order accepted: {_currentOrder.Title}");
+
+            // Show combat log notification that order has started
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Order Started: {_currentOrder.Title}",
+                Colors.Cyan));
+
+            // Note: Order now progresses automatically via OrderProgressionBehavior.
+            // It will fire events, update Recent Activity, and complete after phases run.
         }
 
         /// <summary>
@@ -176,12 +209,17 @@ namespace Enlisted.Features.Orders.Behaviors
 
             ModLogger.Info(LogCategory, $"Order declined: {_currentOrder.Title} ({_declineCount} total declines)");
 
+            // Show combat log notification
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Order Declined: {_currentOrder.Title}",
+                Colors.Red));
+
             // Report decline to news system
             if (Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
             {
                 var briefSummary = $"Declined: {_currentOrder.Title}";
                 var detailedSummary = _currentOrder.Consequences.Decline.Text;
-                
+
                 Interface.Behaviors.EnlistedNewsBehavior.Instance.AddOrderOutcome(
                     orderTitle: _currentOrder.Title,
                     success: false,
@@ -202,6 +240,7 @@ namespace Enlisted.Features.Orders.Behaviors
             }
 
             _currentOrder = null;
+            _orderAccepted = false;
         }
 
         /// <summary>
@@ -461,7 +500,7 @@ namespace Enlisted.Features.Orders.Behaviors
                 if (EnlistmentBehavior.Instance is { IsEnlisted: true, CompanyNeeds: not null } enlistment)
                 {
                     var state = enlistment.CompanyNeeds;
-                    
+
                     foreach (var needChange in outcome.CompanyNeeds)
                     {
                         // Parse the need name to enum
@@ -470,10 +509,10 @@ namespace Enlisted.Features.Orders.Behaviors
                             var oldValue = state.GetNeed(need);
                             var newValue = oldValue + needChange.Value;
                             state.SetNeed(need, newValue);
-                            
+
                             // Log the change with before/after values
                             var sign = needChange.Value >= 0 ? "+" : "";
-                            ModLogger.Info(LogCategory, 
+                            ModLogger.Info(LogCategory,
                                 $"Company need changed: {need}: {oldValue} -> {newValue} ({sign}{needChange.Value})");
 
                             // Report significant changes to news system
@@ -492,11 +531,11 @@ namespace Enlisted.Features.Orders.Behaviors
                         }
                         else
                         {
-                            ModLogger.Warn(LogCategory, 
+                            ModLogger.Warn(LogCategory,
                                 $"Unknown company need in order outcome: {needChange.Key}");
                         }
                     }
-                    
+
                     // Check for critical needs and warn player
                     var warnings = CompanyNeedsManager.CheckCriticalNeeds(state);
                     if (warnings.Count > 0)
@@ -554,7 +593,7 @@ namespace Enlisted.Features.Orders.Behaviors
                 var oldHp = hero.HitPoints;
                 var newHp = Math.Max(1, oldHp - outcome.HpLoss.Value);
                 hero.HitPoints = newHp;
-                
+
                 feedbackMessages.Add($"-{outcome.HpLoss.Value} HP");
 
                 ModLogger.Info(LogCategory, $"Player took {outcome.HpLoss.Value} HP damage from order outcome ({oldHp} -> {newHp})");
@@ -580,7 +619,7 @@ namespace Enlisted.Features.Orders.Behaviors
                     // Troop casualties already show their own message, don't duplicate
                 }
             }
-            
+
             // Display feedback to player if any effects were applied
             if (feedbackMessages.Count > 0)
             {
@@ -665,7 +704,7 @@ namespace Enlisted.Features.Orders.Behaviors
         private void ShowOrderNotification(Order order)
         {
             InformationManager.DisplayMessage(new InformationMessage(
-                $"New Order from {order.Issuer}: {order.Title}",
+                $"New Order Available: {order.Title}",
                 Color.FromUint(4282569842u))); // Gold color
         }
 
@@ -712,7 +751,7 @@ namespace Enlisted.Features.Orders.Behaviors
             try
             {
                 var strategicContext = ArmyContextAnalyzer.GetLordStrategicContext(party);
-                
+
                 // Map strategic contexts to legacy context tags for backward compatibility
                 // This allows existing hardcoded orders to still work while supporting new strategic tags
                 return strategicContext switch
@@ -821,6 +860,45 @@ namespace Enlisted.Features.Orders.Behaviors
         public Order GetCurrentOrder()
         {
             return _currentOrder;
+        }
+
+        /// <summary>
+        /// Returns true if there is a current order that has been accepted by the player.
+        /// Used by OrderProgressionBehavior to determine if order should progress through phases.
+        /// </summary>
+        public bool IsOrderActive()
+        {
+            return _currentOrder != null && _orderAccepted;
+        }
+
+        /// <summary>
+        /// Completes the current active order and applies outcome consequences.
+        /// Called by OrderProgressionBehavior when order phases are finished.
+        /// </summary>
+        public void CompleteOrder(bool success)
+        {
+            if (_currentOrder == null || !_orderAccepted)
+            {
+                return;
+            }
+
+            var outcome = success ? _currentOrder.Consequences.Success : _currentOrder.Consequences.Failure;
+            
+            ApplyOrderOutcome(outcome);
+
+            ModLogger.Info(LogCategory, $"Order completed: {_currentOrder.Title} (Success: {success})");
+
+            // Show combat log notification
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Order Completed: {_currentOrder.Title}",
+                success ? Colors.Green : Colors.Yellow));
+
+            // Report to news system
+            ReportOrderOutcome(_currentOrder, success, outcome);
+
+            // Clear the order
+            _currentOrder = null;
+            _orderAccepted = false;
         }
 
         /// <summary>

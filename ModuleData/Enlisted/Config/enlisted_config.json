@@ -107,13 +107,8 @@
             "max_per_day": 2,
             "max_per_week": 8,
             "min_hours_between": 6,
-            "event_window_min_days": 3,
-            "event_window_max_days": 5,
             "per_event_cooldown_days": 7,
-            "per_category_cooldown_days": 1,
-            "evaluation_hours": [8, 14, 20],
-            "allow_quiet_days": true,
-            "quiet_day_chance": 0.15
+            "per_category_cooldown_days": 1
         },
         "activity": {
             "enabled": true,
@@ -135,5 +130,36 @@
             "lance_mate": 2,
             "situation": 1
         }
+    },
+    "orchestrator": {
+        "enabled": true,
+        "log_decisions": true,
+        "frequency_tables": {
+            "garrison": {
+                "base": 0.4,
+                "min": 0.3,
+                "max": 0.5
+            },
+            "campaign": {
+                "base": 1.5,
+                "min": 1.2,
+                "max": 2.0
+            },
+            "siege": {
+                "base": 2.5,
+                "min": 2.0,
+                "max": 3.5
+            },
+            "battle": {
+                "base": 0.0,
+                "min": 0.0,
+                "max": 0.5
+            }
+        }
+    },
+    "native_trait_mapping": {
+        "enabled": true,
+        "scale_divisor": 5,
+        "minimum_change": 1
     }
 }

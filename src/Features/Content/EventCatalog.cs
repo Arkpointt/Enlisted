@@ -69,6 +69,20 @@ namespace Enlisted.Features.Content
                 ModLogger.Warn(LogCategory, $"Decisions directory not found: {decisionsPath}");
             }
 
+            // Load from Order Events directory (for Order Progression System)
+            var orderEventsPath = GetOrderEventsBasePath();
+            if (!string.IsNullOrEmpty(orderEventsPath) && Directory.Exists(orderEventsPath))
+            {
+                var (orderFiles, orderCount, orderWarnings) = LoadFromDirectory(orderEventsPath, "OrderEvents");
+                filesLoaded += orderFiles;
+                eventsLoaded += orderCount;
+                migrationWarnings += orderWarnings;
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, $"Order events directory not found: {orderEventsPath}");
+            }
+
             _initialized = true;
 
             var warningMsg = migrationWarnings > 0 ? $" ({migrationWarnings} migration warnings)" : "";
@@ -189,6 +203,27 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
+        /// Gets events matching the specified order type.
+        /// Used by OrderProgressionBehavior to get events for a specific order (e.g., "order_guard_post").
+        /// </summary>
+        public static IEnumerable<EventDefinition> GetEventsByOrderType(string orderType)
+        {
+            if (!_initialized)
+            {
+                Initialize();
+            }
+
+            if (string.IsNullOrEmpty(orderType))
+            {
+                return Enumerable.Empty<EventDefinition>();
+            }
+
+            return AllEvents.Where(e =>
+                !string.IsNullOrEmpty(e.OrderType) &&
+                e.OrderType.Equals(orderType, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
         /// Gets the base path for event JSON files.
         /// </summary>
         private static string GetEventsBasePath()
@@ -215,6 +250,20 @@ namespace Enlisted.Features.Content
             }
 
             return Path.Combine(modulePath, "ModuleData", "Enlisted", "Decisions");
+        }
+
+        /// <summary>
+        /// Gets the base path for order event JSON files.
+        /// </summary>
+        private static string GetOrderEventsBasePath()
+        {
+            var modulePath = GetModulePath();
+            if (string.IsNullOrEmpty(modulePath))
+            {
+                return string.Empty;
+            }
+
+            return Path.Combine(modulePath, "ModuleData", "Enlisted", "Orders", "order_events");
         }
 
         /// <summary>
@@ -322,6 +371,8 @@ namespace Enlisted.Features.Content
             // Core fields (same in both schemas)
             eventDef.Id = eventJson["id"]?.ToString() ?? string.Empty;
             eventDef.Category = eventJson["category"]?.ToString() ?? "general";
+            eventDef.OrderType = eventJson["order_type"]?.ToString() ?? string.Empty;
+            eventDef.Severity = eventJson["severity"]?.ToString() ?? "normal";
 
             // Parse title/setup IDs - check both new and old locations
             ParseTitleAndSetup(eventJson, eventDef);
@@ -453,6 +504,25 @@ namespace Enlisted.Features.Content
             // Parse baggage items requirement (for theft events that require items to exist)
             reqs.BaggageHasItems = reqJson["baggageHasItems"]?.Value<bool>() ?? reqJson["baggage_has_items"]?.Value<bool>();
 
+            // Parse sea/land context requirements
+            reqs.NotAtSea = reqJson["notAtSea"]?.Value<bool>() ?? reqJson["not_at_sea"]?.Value<bool>();
+            reqs.AtSea = reqJson["atSea"]?.Value<bool>() ?? reqJson["at_sea"]?.Value<bool>();
+
+            // Parse world state requirements for order events
+            // These are detailed context keys like "peacetime_garrison", "war_active_campaign", "siege_defending"
+            var worldStateArray = reqJson["world_state"] as JArray ?? reqJson["worldState"] as JArray;
+            if (worldStateArray != null)
+            {
+                foreach (var state in worldStateArray)
+                {
+                    var stateStr = state.Value<string>();
+                    if (!string.IsNullOrEmpty(stateStr))
+                    {
+                        reqs.WorldState.Add(stateStr);
+                    }
+                }
+            }
+
             // Parse escalation requirements (check both locations)
             var escalationJson = reqJson["minEscalation"] as JObject;
             if (escalationJson == null)
@@ -500,7 +570,6 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Parses trigger conditions from JSON.
-        /// Also extracts onboarding stage from trigger conditions (e.g., "onboarding_stage_1" → stage 1).
         /// </summary>
         private static void ParseTriggers(JObject eventJson, EventDefinition eventDef)
         {
@@ -518,28 +587,6 @@ namespace Enlisted.Features.Content
 
             // Parse "none" triggers (must all be false)
             eventDef.TriggersNone = ParseStringList(triggersJson["none"]);
-
-            // Extract onboarding stage from triggers.all (e.g., "onboarding_stage_1" → 1)
-            // This bridges the schema's trigger-based format to the typed requirement system.
-            foreach (var trigger in eventDef.TriggersAll)
-            {
-                if (trigger.StartsWith("onboarding_stage_", StringComparison.OrdinalIgnoreCase))
-                {
-                    var stagePart = trigger.Substring("onboarding_stage_".Length);
-                    if (int.TryParse(stagePart, out var stage) && stage >= 1 && stage <= 3)
-                    {
-                        eventDef.Requirements.OnboardingStage = stage;
-                        break;
-                    }
-                }
-            }
-
-            // Extract onboarding track from root-level "track" field (e.g., "commander", "soldier", "veteran")
-            var track = eventJson["track"]?.ToString();
-            if (!string.IsNullOrEmpty(track))
-            {
-                eventDef.Requirements.OnboardingTrack = track;
-            }
         }
 
         /// <summary>
@@ -633,10 +680,6 @@ namespace Enlisted.Features.Content
 
                 // Parse reward choices (sub-choice popup after main option)
                 option.RewardChoices = ParseRewardChoices(optJson["reward_choices"]);
-
-                // Parse onboarding progression flag
-                option.AdvancesOnboarding = optJson["advances_onboarding"]?.Value<bool>() ??
-                                           optJson["advancesOnboarding"]?.Value<bool>() ?? false;
 
                 // Parse enlistment abort flag
                 option.AbortsEnlistment = optJson["aborts_enlistment"]?.Value<bool>() ??

@@ -144,12 +144,6 @@ namespace Enlisted.Features.Escalation
                 var thresholdCount = thresholdKeys.Count;
                 dataStore.SyncData("esc_thresholdCount", ref thresholdCount);
 
-                // Event pacing timestamps
-                var lastNarrativeEvent = _state.LastNarrativeEventTime;
-                var nextNarrativeWindow = _state.NextNarrativeEventWindow;
-                dataStore.SyncData("esc_lastNarrativeEvent", ref lastNarrativeEvent);
-                dataStore.SyncData("esc_nextNarrativeWindow", ref nextNarrativeWindow);
-
                 // Event cooldown map (same pattern as threshold cooldowns)
                 var eventKeys = (_state.EventLastFired ?? Enumerable.Empty<System.Collections.Generic.KeyValuePair<string, CampaignTime>>())
                     .Select(k => k.Key)
@@ -192,10 +186,6 @@ namespace Enlisted.Features.Escalation
                             _state.ThresholdStoryLastFired[key] = time;
                         }
                     }
-
-                    // Load event pacing timestamps
-                    _state.LastNarrativeEventTime = lastNarrativeEvent;
-                    _state.NextNarrativeEventWindow = nextNarrativeWindow;
 
                     // Load event cooldown map
                     _state.EventLastFired = new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
@@ -254,25 +244,6 @@ namespace Enlisted.Features.Escalation
                         var eventId = oneTimeKeys[i];
                         dataStore.SyncData($"esc_onetime_{i}", ref eventId);
                     }
-                }
-
-                // Onboarding state serialization
-                var onboardingStage = _state.OnboardingStage;
-                var onboardingTrack = _state.OnboardingTrack ?? string.Empty;
-                var onboardingStartTime = _state.OnboardingStartTime;
-
-                dataStore.SyncData("esc_onboardingStage", ref onboardingStage);
-                dataStore.SyncData("esc_onboardingTrack", ref onboardingTrack);
-                dataStore.SyncData("esc_onboardingStartTime", ref onboardingStartTime);
-
-                if (dataStore.IsLoading)
-                {
-                    _state.OnboardingStage = onboardingStage;
-                    _state.OnboardingTrack = onboardingTrack ?? string.Empty;
-                    _state.OnboardingStartTime = onboardingStartTime;
-
-                    // Validate onboarding state to handle old saves or corrupted data
-                    _state.ValidateOnboardingState();
                 }
 
                 // Global event pacing state (prevents event spam across all automatic sources)

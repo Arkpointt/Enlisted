@@ -1,0 +1,279 @@
+﻿{
+  "schemaVersion": 2,
+  "order_type": "order_firewood_detail",
+  "events": [
+    {
+      "id": "firewood_axe_slip",
+      "order_type": "order_firewood_detail",
+      "category": "order_event",
+      "severity": "attention",
+      "titleId": "firewood_axe_slip_title",
+      "title": "Axe Slip",
+      "setupId": "firewood_axe_slip_setup",
+      "setup": "The axe slips. Blood wells from your hand. Not deep, but it stings.",
+      "requirements": {
+        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+      },
+      "options": [
+        {
+          "id": "quick_fix",
+          "textId": "firewood_axe_slip_quick_fix",
+          "text": "Wrap it and keep working.",
+          "skillCheck": {
+            "skill": "Athletics",
+            "difficulty": 35
+          },
+          "effects": {
+            "hpChange": -8,
+            "medicalRisk": 1
+          },
+          "failEffects": {
+            "hpChange": -12,
+            "medicalRisk": 2
+          },
+          "resultTextId": "firewood_axe_slip_quick_fix_result",
+          "resultText": "You bind it tight. Hurts, but you finish the job.",
+          "failResultTextId": "firewood_axe_slip_quick_fix_fail",
+          "failResultText": "The cut's deeper than you thought. Blood soaks through the bandage."
+        },
+        {
+          "id": "report",
+          "textId": "firewood_axe_slip_report",
+          "text": "Report to the surgeon.",
+          "effects": {
+            "hpChange": -3
+          },
+          "resultTextId": "firewood_axe_slip_report_result",
+          "resultText": "The surgeon cleans and binds it properly. You're back to work soon."
+        },
+        {
+          "id": "push_through",
+          "textId": "firewood_axe_slip_push_through",
+          "text": "Ignore it. Keep chopping.",
+          "effects": {
+            "hpChange": -15,
+            "medicalRisk": 2
+          },
+          "resultTextId": "firewood_axe_slip_push_through_result",
+          "resultText": "Blood drips down the axe handle. You finish, but the wound looks angry."
+        }
+      ]
+    },
+    {
+      "id": "firewood_found_something",
+      "order_type": "order_firewood_detail",
+      "category": "order_event",
+      "severity": "normal",
+      "titleId": "firewood_found_something_title",
+      "title": "Found Something",
+      "setupId": "firewood_found_something_setup",
+      "setup": "Digging out a stump, your shovel hits something metal. A small chest, half-buried.",
+      "requirements": {
+        "world_state": ["war_marching", "war_active_campaign"]
+      },
+      "options": [
+        {
+          "id": "report",
+          "textId": "firewood_found_something_report",
+          "text": "Report it to {SERGEANT}.",
+          "effects": {
+            "officerRep": 2
+          },
+          "resultTextId": "firewood_found_something_report_result",
+          "resultText": "{SERGEANT} takes it for the company. You did the right thing."
+        },
+        {
+          "id": "keep",
+          "textId": "firewood_found_something_keep",
+          "text": "Pocket what's inside.",
+          "effects": {
+            "officerRep": -2,
+            "gold": 15
+          },
+          "resultTextId": "firewood_found_something_keep_result",
+          "resultText": "A few coins. Not much, but it's yours now."
+        },
+        {
+          "id": "investigate",
+          "textId": "firewood_found_something_investigate",
+          "text": "Open it carefully and examine contents.",
+          "effects": {
+            "officerRep": 3,
+            "gold": 20
+          },
+          "resultTextId": "firewood_found_something_investigate_result",
+          "resultText": "Old coins and a map. {SERGEANT} rewards your thoroughness."
+        }
+      ]
+    },
+    {
+      "id": "firewood_wildlife",
+      "order_type": "order_firewood_detail",
+      "category": "order_event",
+      "severity": "attention",
+      "titleId": "firewood_wildlife_title",
+      "title": "Wildlife",
+      "setupId": "firewood_wildlife_setup",
+      "setup": "A boar crashes through the underbrush. It's big, angry, and between you and camp.",
+      "requirements": {
+        "world_state": ["war_marching", "war_active_campaign"]
+      },
+      "options": [
+        {
+          "id": "warn_others",
+          "textId": "firewood_wildlife_warn_others",
+          "text": "Shout a warning to the others.",
+          "effects": {
+            "soldierRep": 2
+          },
+          "resultTextId": "firewood_wildlife_warn_others_result",
+          "resultText": "Everyone backs off. The boar snorts and moves on."
+        },
+        {
+          "id": "kill_it",
+          "textId": "firewood_wildlife_kill_it",
+          "text": "Kill it. Fresh meat for the company.",
+          "skillCheck": {
+            "skill": "Athletics",
+            "difficulty": 40
+          },
+          "effects": {
+            "soldierRep": 3
+          },
+          "failEffects": {
+            "hpChange": -10,
+            "soldierRep": 1
+          },
+          "resultTextId": "firewood_wildlife_kill_it_result",
+          "resultText": "One clean strike. Tonight, the company eats well.",
+          "failResultTextId": "firewood_wildlife_kill_it_fail",
+          "failResultText": "It gores your leg before you bring it down. Worth it for the meat."
+        },
+        {
+          "id": "avoid",
+          "textId": "firewood_wildlife_avoid",
+          "text": "Circle around quietly.",
+          "effects": {},
+          "resultTextId": "firewood_wildlife_avoid_result",
+          "resultText": "You give it wide berth. It never notices you."
+        }
+      ]
+    },
+    {
+      "id": "firewood_work_song",
+      "order_type": "order_firewood_detail",
+      "category": "order_event",
+      "severity": "normal",
+      "titleId": "firewood_work_song_title",
+      "title": "Work Song",
+      "setupId": "firewood_work_song_setup",
+      "setup": "{COMRADE_NAME} starts a work song. The rhythm helps the axes fall in time.",
+      "requirements": {
+        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+      },
+      "options": [
+        {
+          "id": "join",
+          "textId": "firewood_work_song_join",
+          "text": "Join in.",
+          "effects": {
+            "soldierRep": 2,
+            "companyNeeds": {
+              "Morale": 2
+            }
+          },
+          "resultTextId": "firewood_work_song_join_result",
+          "resultText": "Your voice joins the chorus. The work goes faster."
+        },
+        {
+          "id": "stay_quiet",
+          "textId": "firewood_work_song_stay_quiet",
+          "text": "Keep working in silence.",
+          "effects": {},
+          "resultTextId": "firewood_work_song_stay_quiet_result",
+          "resultText": "You focus on the work. The song continues without you."
+        },
+        {
+          "id": "lead_different",
+          "textId": "firewood_work_song_lead_different",
+          "text": "Start a different song—a better one.",
+          "effects": {
+            "soldierRep": 3,
+            "companyNeeds": {
+              "Morale": 5
+            }
+          },
+          "resultTextId": "firewood_work_song_lead_different_result",
+          "resultText": "The men pick up your tune. Soon the whole detail is singing."
+        }
+      ]
+    },
+    {
+      "id": "firewood_competition",
+      "order_type": "order_firewood_detail",
+      "category": "order_event",
+      "severity": "normal",
+      "titleId": "firewood_competition_title",
+      "title": "Competition",
+      "setupId": "firewood_competition_setup",
+      "setup": "{COMRADE_NAME} challenges you to a chopping contest. First to split ten logs wins.",
+      "requirements": {
+        "world_state": ["peacetime_garrison"]
+      },
+      "options": [
+        {
+          "id": "accept",
+          "textId": "firewood_competition_accept",
+          "text": "Accept the challenge.",
+          "skillCheck": {
+            "skill": "Athletics",
+            "difficulty": 35
+          },
+          "effects": {
+            "soldierRep": 3,
+            "fatigue": 5
+          },
+          "failEffects": {
+            "soldierRep": 2,
+            "fatigue": 5
+          },
+          "resultTextId": "firewood_competition_accept_result",
+          "resultText": "You win by two logs. {COMRADE_NAME} buys the drinks tonight.",
+          "failResultTextId": "firewood_competition_accept_fail",
+          "failResultText": "Close, but {COMRADE_NAME} edges you out. Good sport though."
+        },
+        {
+          "id": "decline",
+          "textId": "firewood_competition_decline",
+          "text": "Decline. Save your energy.",
+          "effects": {},
+          "resultTextId": "firewood_competition_decline_result",
+          "resultText": "He shrugs and finds another challenger."
+        },
+        {
+          "id": "raise_stakes",
+          "textId": "firewood_competition_raise_stakes",
+          "text": "Accept, but raise the stakes.",
+          "skillCheck": {
+            "skill": "Athletics",
+            "difficulty": 35
+          },
+          "effects": {
+            "soldierRep": 5,
+            "fatigue": 10,
+            "gold": 20
+          },
+          "failEffects": {
+            "soldierRep": 3,
+            "fatigue": 10,
+            "gold": -20
+          },
+          "resultTextId": "firewood_competition_raise_stakes_result",
+          "resultText": "You win, and his coin. The men cheer.",
+          "failResultTextId": "firewood_competition_raise_stakes_fail",
+          "failResultText": "You lose, and your coin with it. At least you tried."
+        }
+      ]
+    }
+  ]
+}

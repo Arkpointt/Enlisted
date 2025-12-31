@@ -79,11 +79,18 @@ Replaces the legacy passive duties system with explicit, mission-driven tasks.
 
 -   **Frequency**: Orders are issued every 3-5 days by default (config-driven via `enlisted_config.json` → `decision_events.pacing.event_window_min_days` and `event_window_max_days`).
 -   **Chain of Command**: Your rank determines who issues the order (e.g., T1-T2 get orders from a Sergeant; T7+ receive strategic orders from the Lord).
+-   **Mandatory vs Optional**: 
+    - **T1-T3 Basic Duties**: Automatically assigned (no player choice). Guard duty, camp patrol, firewood detail, equipment checks, muster, sentry. Shown as `[ASSIGNED]` (greyed out, not clickable) in Orders menu.
+    - **T4+ Advancement**: Optional orders. Player clicks order row in Orders menu → popup shows order details with [Accept Order] / [Decline Order] buttons. Lead patrol, scout route, train recruits, escort duty. Shown as `[NEW]` (clickable) in Orders menu.
 -   **Requirements**: Orders are filtered by your current Rank, Skills, and Traits.
+-   **Progression**: Orders auto-progress through phases (4/day: Dawn, Midday, Dusk, Night). Events may fire during execution based on world state.
 -   **Outcomes**: Success or failure impacts **Reputation**, **Company Needs**, and grants **Skill/Trait XP**.
--   **Discharge Risk**: Repeatedly declining orders (5+ times) triggers a risk of dishonorable discharge.
+-   **Discharge Risk**: Repeatedly declining optional orders (5+ times) triggers a risk of dishonorable discharge.
+-   **Camp Life Continues**: Being on duty doesn't block gameplay. Camp decisions remain available, with some flagged as risky (detection chance) or blocked while on duty.
 
 **Note:** Orders follow the same pacing system as narrative events. See [Event System Schemas](../Content/event-system-schemas.md#global-event-pacing-enlisted_configjson) for full pacing config details.
+
+**See:** [Order Progression System](../../AFEATURE/order-progression-system.md) for complete technical details.
 
 ---
 

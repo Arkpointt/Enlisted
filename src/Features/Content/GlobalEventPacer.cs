@@ -14,9 +14,9 @@ namespace Enlisted.Features.Content
     /// - max_per_day: Maximum automatic events per day
     /// - max_per_week: Maximum automatic events per week
     /// - min_hours_between: Minimum hours between any automatic events
-    /// - evaluation_hours: Specific hours when events can fire (empty = any hour)
     /// - per_category_cooldown_days: Days between events of same category
-    /// - quiet_day_chance: Random chance to skip events for a day
+    ///
+    /// Quiet day logic is controlled by ContentOrchestrator based on world state.
     /// </summary>
     public static class GlobalEventPacer
     {
@@ -39,8 +39,7 @@ namespace Enlisted.Features.Content
                     _configLoaded = true;
                     ModLogger.Debug(LogCategory,
                         $"Loaded pacing config: max_per_day={_cachedConfig.MaxPerDay}, " +
-                        $"max_per_week={_cachedConfig.MaxPerWeek}, min_hours_between={_cachedConfig.MinHoursBetween}, " +
-                        $"window={_cachedConfig.EventWindowMinDays}-{_cachedConfig.EventWindowMaxDays} days");
+                        $"max_per_week={_cachedConfig.MaxPerWeek}, min_hours_between={_cachedConfig.MinHoursBetween}");
                 }
                 return _cachedConfig;
             }
@@ -48,8 +47,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Checks if an automatic event is allowed to fire right now.
-        /// Enforces all config limits: max_per_day, max_per_week, min_hours_between,
-        /// evaluation_hours, per_category_cooldown, and quiet_day_chance.
+        /// Enforces config limits: max_per_day, max_per_week, min_hours_between, and per_category_cooldown.
         /// </summary>
         /// <param name="eventId">The event ID (for logging)</param>
         /// <param name="reason">Output: why the event was blocked, if any</param>
@@ -68,19 +66,6 @@ namespace Enlisted.Features.Content
         /// <returns>True if the event can fire, false if blocked by pacing limits</returns>
         public static bool CanFireAutoEvent(string eventId, string category, out string reason)
         {
-            return CanFireAutoEvent(eventId, category, skipEvaluationHours: false, out reason);
-        }
-
-        /// <summary>
-        /// Checks if an automatic event is allowed to fire right now with full options.
-        /// </summary>
-        /// <param name="eventId">The event ID (for logging)</param>
-        /// <param name="category">Optional category for per-category cooldown</param>
-        /// <param name="skipEvaluationHours">If true, skips evaluation_hours check (for context-triggered events like map incidents)</param>
-        /// <param name="reason">Output: why the event was blocked, if any</param>
-        /// <returns>True if the event can fire, false if blocked by pacing limits</returns>
-        public static bool CanFireAutoEvent(string eventId, string category, bool skipEvaluationHours, out string reason)
-        {
             reason = null;
 
             var state = EscalationManager.Instance?.State;
@@ -94,7 +79,6 @@ namespace Enlisted.Features.Content
             var now = CampaignTime.Now;
             var currentDay = (int)now.ToDays;
             var currentWeek = currentDay / 7;
-            var currentHour = (int)now.CurrentHourInDay;
 
             // Roll over daily count and quiet day flag if it's a new day
             if (state.AutoEventDayNumber != currentDay)
@@ -111,33 +95,12 @@ namespace Enlisted.Features.Content
                 state.AutoEventsThisWeek = 0;
             }
 
-            // Check quiet day first (only roll once per day when first event is attempted)
-            if (config.AllowQuietDays && state.AutoEventsToday == 0 && !state.IsQuietDay)
-            {
-                var quietRoll = TaleWorlds.Core.MBRandom.RandomFloat;
-                if (quietRoll < config.QuietDayChance)
-                {
-                    state.IsQuietDay = true;
-                    ModLogger.Info(LogCategory, $"Today is a quiet day (roll={quietRoll:F2} < {config.QuietDayChance})");
-                }
-            }
-
+            // Quiet day is set by ContentOrchestrator based on world state
             if (state.IsQuietDay)
             {
                 reason = "Quiet day - no automatic events today";
                 ModLogger.Debug(LogCategory, $"Blocking {eventId}: {reason}");
                 return false;
-            }
-
-            // Check evaluation hours (if specified and not skipped for context-triggered events)
-            if (!skipEvaluationHours && config.EvaluationHours != null && config.EvaluationHours.Count > 0)
-            {
-                if (!config.EvaluationHours.Contains(currentHour))
-                {
-                    reason = $"Not an evaluation hour (current: {currentHour}, allowed: {string.Join(",", config.EvaluationHours)})";
-                    ModLogger.Debug(LogCategory, $"Blocking {eventId}: {reason}");
-                    return false;
-                }
             }
 
             // Check daily limit
@@ -181,7 +144,7 @@ namespace Enlisted.Features.Content
 
             ModLogger.Debug(LogCategory,
                 $"Allowing {eventId}: today={state.AutoEventsToday}/{config.MaxPerDay}, " +
-                $"week={state.AutoEventsThisWeek}/{config.MaxPerWeek}, hour={currentHour}");
+                $"week={state.AutoEventsThisWeek}/{config.MaxPerWeek}");
             return true;
         }
 
@@ -291,6 +254,27 @@ namespace Enlisted.Features.Content
             _configLoaded = false;
             _cachedConfig = null;
             ModLogger.Info(LogCategory, "Pacing config cache cleared");
+        }
+
+        /// <summary>
+        /// Sets the quiet day flag based on world state.
+        /// Called by ContentOrchestrator to control event pacing based on garrison/campaign/siege context.
+        /// </summary>
+        /// <param name="isQuiet">True if today should be a quiet day (no automatic events)</param>
+        public static void SetQuietDay(bool isQuiet)
+        {
+            var state = EscalationManager.Instance?.State;
+            if (state == null)
+            {
+                ModLogger.Warn(LogCategory, "Cannot set quiet day - EscalationState not available");
+                return;
+            }
+
+            if (state.IsQuietDay != isQuiet)
+            {
+                state.IsQuietDay = isQuiet;
+                ModLogger.Debug(LogCategory, $"Quiet day set to: {isQuiet} (orchestrator-driven)");
+            }
         }
     }
 }

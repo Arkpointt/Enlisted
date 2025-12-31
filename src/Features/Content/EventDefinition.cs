@@ -35,9 +35,16 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Event category for filtering and selection weighting.
-        /// Examples: "escalation", "role", "universal", "muster", "crisis".
+        /// Examples: "escalation", "role", "universal", "muster", "crisis", "order_event".
         /// </summary>
         public string Category { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Order type this event belongs to (for order events only).
+        /// Examples: "order_guard_post", "order_sentry_duty", "order_camp_patrol".
+        /// Empty for non-order events.
+        /// </summary>
+        public string OrderType { get; set; } = string.Empty;
 
         /// <summary>
         /// News severity for color coding and persistence when event is posted to news feed.
@@ -122,16 +129,11 @@ namespace Enlisted.Features.Content
         public Dictionary<string, int> MinTraits { get; set; } = [];
 
         /// <summary>
-        /// Onboarding stage required for this event (1, 2, or 3).
-        /// Null means event is not an onboarding event.
+        /// World state requirements for order events.
+        /// Array of world state keys like "peacetime_garrison", "war_active_campaign", "siege_attacking".
+        /// Event is eligible if current world state matches any of these values.
         /// </summary>
-        public int? OnboardingStage { get; set; }
-
-        /// <summary>
-        /// Experience track required for this onboarding event ("green", "seasoned", "veteran").
-        /// Only checked if OnboardingStage is set.
-        /// </summary>
-        public string OnboardingTrack { get; set; }
+        public List<string> WorldState { get; set; } = [];
 
         /// <summary>
         /// Maximum HP percentage for this event to be available.
@@ -152,6 +154,18 @@ namespace Enlisted.Features.Content
         /// Used by theft events to avoid firing when there's nothing to steal.
         /// </summary>
         public bool? BaggageHasItems { get; set; }
+
+        /// <summary>
+        /// If true, requires the party to NOT be at sea (on land).
+        /// Used by land-based events like baggage wagons that don't make sense during sea travel.
+        /// </summary>
+        public bool? NotAtSea { get; set; }
+
+        /// <summary>
+        /// If true, requires the party to BE at sea (sailing).
+        /// Used by maritime events like ship's hold access that only make sense during sea travel.
+        /// </summary>
+        public bool? AtSea { get; set; }
     }
 
     /// <summary>
@@ -287,12 +301,6 @@ namespace Enlisted.Features.Content
         /// Used for branching rewards (training type, compensation method, etc.).
         /// </summary>
         public RewardChoices RewardChoices { get; set; }
-
-        /// <summary>
-        /// If true, selecting this option advances the player's onboarding stage.
-        /// Only relevant for onboarding events. Advances stage 1→2→3→complete.
-        /// </summary>
-        public bool AdvancesOnboarding { get; set; }
 
         /// <summary>
         /// If true, aborts the enlistment process without normal discharge penalties.

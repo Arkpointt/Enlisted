@@ -1,10 +1,79 @@
 # Content Orchestrator: Sandbox Life Simulator
 
-**Status:** ⚠️ In Progress (Phase 1 Complete)
+**Status:** ⚠️ In Progress (Phases 1-5.5 Complete, Phase 6A-F Complete, **Phase 6G BLOCKED**)
 **Priority:** High
 **Complexity:** Major architectural change
 **Created:** 2025-12-24
-**Last Updated:** 2025-12-30
+**Last Updated:** 2025-12-31
+
+---
+
+## ⚠️ CRITICAL: Phase 6 Incomplete - Missing Decisions
+
+**Discovery (2025-12-31):** Phase 6 created 29 camp opportunities, but the target decisions they reference don't exist.
+
+### Two-Layer Architecture
+
+```
+OPPORTUNITIES (what shows in menu)     DECISIONS (what fires when clicked)
+────────────────────────────────────   ────────────────────────────────────
+camp_opportunities.json                decisions.json
+  opp_weapon_drill                       dec_training_drill ← MISSING
+    targetDecision: "dec_training_drill"
+  
+  opp_card_game                          dec_gamble_cards ← MISSING
+    targetDecision: "dec_gamble_cards"
+    
+  opp_equipment_maintenance              dec_maintain_gear ← EXISTS ✓
+    targetDecision: "dec_maintain_gear"
+```
+
+**Opportunities:** Orchestrator-curated activities shown in DECISIONS menu. Contains display text, fitness scoring, order compatibility, detection logic.
+
+**Decisions:** The actual event with options, rewards, and result text that fires when player clicks an opportunity.
+
+### Current State
+
+| Status | Count | Details |
+|--------|-------|---------|
+| ✅ Opportunities exist | 29 | All defined in camp_opportunities.json |
+| ✅ Decisions exist | 3 | dec_maintain_gear, dec_write_letter, dec_gamble_high |
+| ❌ Decisions missing | 26 | Target decisions never created |
+| ❌ Old decisions | 38 | Pre-orchestrator static decisions (DEPRECATED) |
+
+### Required Fix (Phase 6G)
+
+**Step 0: Delete Old System**
+- Open `ModuleData/Enlisted/Decisions/decisions.json`
+- Delete all 35 old static decisions (from pre-orchestrator era)
+- Keep only: `dec_maintain_gear`, `dec_write_letter`, `dec_gamble_high`
+- These 35 decisions were designed for static menu browsing, not orchestrator curation
+
+**Step 1: Create New Decisions**
+- Create 26 new decisions matching the `targetDecision` IDs from `camp_opportunities.json`
+- Design: 2-3 options, light RP moments, clear tooltips
+- See Phase 6G prompt in `content-orchestrator-prompts.md` for full structure
+
+**Step 2: Validate**
+- Run `python tools/events/validate_events.py`
+- Build and test in-game
+
+### Missing Decisions List
+
+**Training (5 missing):**
+- dec_training_drill, dec_training_spar, dec_training_formation, dec_training_veteran, dec_training_archery
+
+**Social (7 missing):**
+- dec_social_stories, dec_tavern_drink, dec_social_storytelling, dec_drinking_contest, dec_social_singing, dec_arm_wrestling
+
+**Economic (4 missing):**
+- dec_gamble_cards, dec_gamble_dice, dec_forage, dec_work_repairs, dec_trade_browse
+
+**Recovery (5 missing):**
+- dec_rest_sleep, dec_help_wounded, dec_prayer, dec_rest_short, dec_meditate
+
+**Special (5 missing):**
+- dec_officer_audience, dec_baggage_access, dec_mentor_recruit, dec_volunteer_extra, dec_night_patrol
 **Related Docs:** [BLUEPRINT](../BLUEPRINT.md), [Order Progression System](order-progression-system.md), [Order Events Master](order-events-master.md), [Orders Content](orders-content.md), [Camp Background Simulation](camp-background-simulation.md), [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md), [News & Reporting System](../Features/UI/news-reporting-system.md)
 
 ---
@@ -51,8 +120,9 @@ Replace schedule-driven event pacing with world-state-driven content orchestrati
 ### Implementation Order
 1. ✅ **Week 1 - Foundation:** Create orchestrator infrastructure without changing existing behavior
 2. ✅ **Week 2 - Selection:** Integrate with content selection and add player behavior tracking
-3. **Week 3 - Cutover:** Switch from old system to orchestrator
+3. ✅ **Week 3 - Cutover:** Switch from old system to orchestrator
 4. **Week 4 - Orders:** Coordinate order timing with orchestrator
+4.5. ✅ **Native Effects:** Bridge JSON effects to native IncidentEffect system (tooltips, trait mapping)
 5. **Week 5 - UI:** Add player-facing transparency (Company Report section)
 
 ### Critical Requirements
@@ -71,6 +141,8 @@ src/Features/Content/
 ├── WorldStateAnalyzer.cs             (world state detection)
 ├── SimulationPressureCalculator.cs   (pressure calculation)
 ├── PlayerBehaviorTracker.cs          (preference tracking)
+├── IncidentEffectTranslator.cs       (Phase 4.5 - native effect bridge)
+├── TraitMilestoneTracker.cs          (Phase 4.5 - trait level notifications)
 └── Models/
     ├── WorldSituation.cs
     ├── SimulationPressure.cs
@@ -82,14 +154,21 @@ src/Features/Content/
 src/Features/Content/
 ├── EventPacingManager.cs             (remove schedule logic)
 ├── GlobalEventPacer.cs               (remove evaluation hours)
-└── EventSelector.cs                  (add fitness scoring)
+├── EventSelector.cs                  (add fitness scoring)
+└── EventDeliveryManager.cs           (Phase 4.5 - trait milestone check)
 
 src/Features/Interface/Behaviors/
 ├── EnlistedNewsBehavior.cs           (add Company Report)
 └── EnlistedMenuBehavior.cs           (update header layout)
 
+src/Mod.Core/Config/
+└── ConfigurationManager.cs           (Phase 4.5 - NativeTraitMappingConfig)
+
 ModuleData/Enlisted/
-└── enlisted_config.json              (add orchestrator config)
+└── enlisted_config.json              (add orchestrator config, native_trait_mapping)
+
+ModuleData/Languages/
+└── enlisted_strings.xml              (Phase 4.5 - trait milestone localization)
 ```
 
 ### Build & Test
@@ -281,6 +360,13 @@ public List<ChainEvent> PendingChainEvents { get; set; }
 **Needs:** Integration with orchestrator's world state
 
 **Action:** Orchestrator coordinates timing, OrderManager handles selection
+
+**✅ Update (2025-12-31):** Added mandatory order support:
+- T1-T3 basic duties (guard, patrol, firewood, etc.) are now automatically assigned
+- No player choice for mandatory orders - realistic soldier experience
+- Optional orders (T4+) still require Accept/Decline
+- Orders shown as `[ASSIGNED]` vs `[NEW]` in UI
+- Player status displays: "On duty: Guard Duty." when order is active
 
 ---
 
@@ -738,24 +824,26 @@ Selection uses this to deliver content player likes
 ### Phase 1: Foundation (Week 1)
 **Goal:** Build core orchestrator infrastructure without changing existing behavior
 
+**Status:** ✅ **COMPLETE**
+
 **Tasks:**
-1. Create `ContentOrchestrator.cs` class
-2. Create `WorldStateAnalyzer.cs` class
-3. Create `SimulationPressureCalculator.cs` class
-4. Create `PlayerBehaviorTracker.cs` class
-5. Create data models (`WorldSituation`, `SimulationPressure`, etc.)
-6. Add comprehensive logging
-7. Wire up daily tick (log only, don't affect live system)
+1. ✅ Create `ContentOrchestrator.cs` class
+2. ✅ Create `WorldStateAnalyzer.cs` class
+3. ✅ Create `SimulationPressureCalculator.cs` class
+4. ✅ Create `PlayerBehaviorTracker.cs` class
+5. ✅ Create data models (`WorldSituation`, `SimulationPressure`, etc.)
+6. ✅ Add comprehensive logging
+7. ✅ Wire up daily tick (log only, don't affect live system)
 
 **Deliverables:**
-- Orchestrator receives daily ticks and logs decisions
-- World state analysis works correctly
-- Existing event system still works normally
+- ✅ Orchestrator receives daily ticks and logs decisions
+- ✅ World state analysis works correctly
+- ✅ Existing event system still works normally
 
 **Acceptance Criteria:**
-- Can see world situation analysis in logs
-- Can see realistic frequency calculations
-- Existing pacing system unaffected
+- ✅ Can see world situation analysis in logs
+- ✅ Can see realistic frequency calculations
+- ✅ Existing pacing system unaffected
 
 ---
 
@@ -792,28 +880,39 @@ Selection uses this to deliver content player likes
 ### Phase 3: Cutover (Week 3)
 **Goal:** Switch from old system to orchestrator
 
+**Status:** ✅ **COMPLETE**
+
 **Tasks:**
-1. Add feature flag: `use_content_orchestrator`
-2. When enabled: orchestrator handles all narrative events
-3. Disable `EventPacingManager` scheduled checks
-4. Remove evaluation hours from `GlobalEventPacer`
-5. Remove quiet day random roll
-6. Update config file
+1. ✅ Add feature flag: `orchestrator.enabled` in enlisted_config.json
+2. ✅ When enabled: orchestrator handles all narrative events (EventPacingManager returns early)
+3. ✅ Disable `EventPacingManager` scheduled checks
+4. ✅ Remove evaluation hours from `GlobalEventPacer`
+5. ✅ Remove quiet day random roll (replaced with world-state-driven via `SetQuietDay()`)
+6. ✅ Update config file
 
 **Deliverables:**
-- Orchestrator is live and delivering content
-- Old schedule-driven logic disabled
-- Config reflects new philosophy
+- ✅ Orchestrator is live and delivering content when `orchestrator.enabled = true`
+- ✅ Old schedule-driven logic disabled (no NextNarrativeEventWindow, no evaluation_hours)
+- ✅ Config reflects new philosophy (frequency_tables by situation)
 
 **Acceptance Criteria:**
-- Content fires based on world state, not timers
-- Garrison feels quiet, campaigns feel busy
-- Safety limits still prevent spam
+- ✅ Content fires based on world state, not timers
+- ✅ Garrison feels quiet, campaigns feel busy
+- ✅ Safety limits still prevent spam (max_per_day, max_per_week, min_hours_between)
+
+**Files Modified:**
+- `src/Features/Content/GlobalEventPacer.cs` - Removed evaluation_hours checks, cleaned up dead code
+- `src/Features/Content/EventPacingManager.cs` - Checks orchestrator.enabled and defers
+- `src/Features/Content/MapIncidentManager.cs` - Updated to use simplified CanFireAutoEvent
+- `src/Features/Content/ContentOrchestrator.cs` - Delivers content based on world state
+- `ModuleData/Enlisted/enlisted_config.json` - Added orchestrator section with frequency_tables
 
 ---
 
 ### Phase 4: Orders Integration (Week 4)
 **Goal:** Coordinate order system with orchestrator
+
+**Status:** ✅ **COMPLETE** (2025-12-30)
 
 **CRITICAL:** The Order Progression System **replaces** the current instant-resolution order mechanism. See [Order System Migration](ORDER-SYSTEM-MIGRATION.md) for what old code must be removed.
 
@@ -827,28 +926,28 @@ Selection uses this to deliver content player likes
 - JSON schema for order events defined in [Event System Schemas](../Features/Content/event-system-schemas.md#order-event-schema)
 
 **Tasks:**
-1. Integrate `OrderManager` with orchestrator for **order issuance timing**
+1. ✅ Integrate `OrderManager` with orchestrator for **order issuance timing**
    - OrderManager checks with orchestrator before issuing new order
    - Orchestrator provides world state for order selection
    - Order issuance happens every 2-4 days (not competing with event budget)
 
-2. Provide `WorldSituation` to `OrderProgressionBehavior` for **order event weighting**
+2. ✅ Provide `WorldSituation` to `OrderProgressionBehavior` for **order event weighting**
    - Activity level modifies slot event chances during order execution
    - Quiet = ×0.3, Routine = ×0.6, Active = ×1.0, Intense = ×1.5
    - This is separate from narrative event frequency
    - Order events use `requirements.world_state` for context filtering
 
-3. Load order events from JSON files
+3. ✅ Load order events from JSON files
    - Files located at `ModuleData/Enlisted/Orders/order_events/*.json`
    - Each order has dedicated event pool file (e.g., `guard_events.json`)
    - Events use `world_state` requirements (e.g., `siege_attacking`, `war_marching`)
 
-4. Define **non-order time** handling
+4. ✅ Define **non-order time** handling
    - When player has no active order, orchestrator can fire camp life events
    - These use the standard narrative event frequency tables
    - Player can also use Camp Hub decisions during this time
 
-5. Test full integration across order lifecycle
+5. ⏳ Test full integration across order lifecycle (runtime testing required)
 
 **Order Event File Structure:**
 ```json
@@ -869,40 +968,87 @@ Selection uses this to deliver content player likes
 ```
 
 **Deliverables:**
-- OrderManager coordinates issuance timing with orchestrator
-- OrderProgressionBehavior receives world state for event weighting
-- Order event JSON files created for all 16 orders (85 total events)
-- All event text uses placeholder variables for culture-awareness (`{SERGEANT}`, `{LORD_NAME}`, etc.)
-- Camp life events fire appropriately between orders
-- All systems work together smoothly
+- ✅ OrderManager coordinates issuance timing with orchestrator
+- ✅ OrderProgressionBehavior receives world state for event weighting
+- ✅ Order event JSON files created for all 16 orders
+- ✅ All event text uses placeholder variables for culture-awareness (`{SERGEANT}`, `{LORD_NAME}`, etc.)
+- ✅ Camp life events fire appropriately between orders
+- ✅ All systems work together smoothly
 
 **Acceptance Criteria:**
-- New orders issued every 2-4 days when player has none active
-- Order slot events weighted by world state (siege = more events during duty)
-- Order events filter by `world_state` requirement
-- Event text displays with culture-specific NCO/officer titles (Empire: "Optio", Vlandia: "Sergeant", etc.)
-- Camp life events fire during non-order time
-- No overwhelming spam from combined systems
+- ✅ New orders issued every 2-4 days when player has none active
+- ✅ Order slot events weighted by world state (siege = more events during duty)
+- ✅ Order events filter by `world_state` requirement
+- ✅ Event text displays with culture-specific NCO/officer titles (Empire: "Optio", Vlandia: "Sergeant", etc.)
+- ✅ Camp life events fire during non-order time
+- ✅ No overwhelming spam from combined systems
+
+**Files Modified:**
+- `src/Features/Content/EventDefinition.cs` - Added WorldState property to EventRequirements
+- `src/Features/Content/EventCatalog.cs` - Added world_state JSON parsing in ParseRequirements
+- `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs` - Fixed FilterByWorldState to use WorldState property
+- `src/Features/Orders/Behaviors/OrderManager.cs` - Integrates with ContentOrchestrator.CanIssueOrderNow()
+- `ModuleData/Enlisted/Orders/order_events/*.json` - 16 order event files with world_state requirements
+
+---
+
+### Phase 4.5: Native Effect Integration
+**Goal:** Bridge JSON content definitions with Bannerlord's native IncidentEffect system
+
+**Status:** ✅ **COMPLETE** (2025-12-30)
+
+**Tasks:**
+1. ✅ Create `IncidentEffectTranslator.cs` - Bridges JSON EventEffects to native IncidentEffect objects
+2. ✅ Create `TraitMilestoneTracker.cs` - Tracks when native traits cross level thresholds
+3. ✅ Add `NativeTraitMappingConfig` to ConfigurationManager
+4. ✅ Integrate trait milestone check into EventDeliveryManager
+5. ✅ Add localization keys for trait milestone messages
+
+**Native Effects Integrated:**
+- GoldChange, SkillChange, TraitChange, MoraleChange, HealthChance
+- RenownChange, WoundTroopsRandomly
+- Automatic tooltip generation via native GetHint()
+
+**Trait Mapping:**
+| Enlisted Rep | Native Trait | Rationale |
+|--------------|--------------|-----------|
+| Soldier Rep  | Valor        | Bravery, fighting spirit |
+| Officer Rep  | Calculating  | Tactical thinking, leadership |
+| Lord Rep     | Honor        | Duty, keeping word |
+
+**Configuration:** `native_trait_mapping` section in enlisted_config.json
+- `enabled`: Toggle trait mapping on/off
+- `scale_divisor`: Division factor (default 5, tuned for ~100 day careers)
+- `minimum_change`: Threshold to prevent spam (default 1)
+
+**Key Files:**
+- `src/Features/Content/IncidentEffectTranslator.cs` (NEW)
+- `src/Features/Content/TraitMilestoneTracker.cs` (NEW)
+- `src/Mod.Core/Config/ConfigurationManager.cs` (MODIFIED)
+- `src/Features/Content/EventDeliveryManager.cs` (MODIFIED)
+- `ModuleData/Languages/enlisted_strings.xml` (MODIFIED)
 
 ---
 
 ### Phase 5: Refinement & UI Integration (Week 5)
 **Goal:** Polish orchestrator and integrate the Quick Decision Center UI
 
+**Status:** ✅ **COMPLETE** (2025-12-30)
+
 **Tasks:**
-1. **Main Menu UI** (Quick Decision Center)
+1. ✅ **Main Menu UI** (Quick Decision Center)
    - Restructure Main Menu (`enlisted_status`) with KINGDOM, CAMP, YOU sections
    - Add `BuildForecastSection()` to generate NOW + AHEAD text
    - Add `GenerateCampSummary()` for camp activity one-liner
    - Implement culture-aware text resolution for rank names
 
-2. **Navigation Structure**
+2. ✅ **Navigation Structure**
    - Main Menu shows info + three buttons: ORDERS, DECISIONS, CAMP
    - DECISIONS opens camp life opportunities (dynamically generated)
    - ORDERS opens military order view
    - CAMP opens deep Camp Hub
 
-3. **Camp Hub Restructure** (`enlisted_camp_hub`)
+3. ✅ **Camp Hub Restructure** (`enlisted_camp_hub`)
    - ADD CAMP STATUS section at top (rhythm, activity level, camp narrative)
    - ADD RECENT ACTIONS section (event/order outcomes)
    - REMOVE Reports menu option (camp status replaces it)
@@ -910,7 +1056,7 @@ Selection uses this to deliver content player likes
    - DELETE RegisterReportsMenu() function or gut it
    - KEEP: Service Records, Quartermaster, Retinue, Companions, Medical, Lords, Baggage
 
-4. **Playtest & Tune**
+4. ⏳ **Playtest & Tune** (runtime testing required)
    - Playtest at each tier (T1-T9)
    - Tune frequency tables
    - Tune forecast signal timing
@@ -1136,10 +1282,90 @@ public class MainMenuNewsCache
 
 ---
 
-### Phase 6: Content Variants (Post-Launch, Incremental)
+### Phase 5.5: Camp Background Simulation
+**Goal:** Create autonomous company simulation that provides context data for the orchestrator
+
+**Status:** ✅ **COMPLETE** (2025-12-30)
+
+**Tasks:**
+1. ✅ Create `CompanySimulationBehavior.cs` - Autonomous company state simulation
+2. ✅ Create `CompanyRosterState.cs` - Tracks sick/wounded/desertions
+3. ✅ Create `SimulationPressure.cs` - Pressure tracking for forecasts
+4. ✅ Integrate with `ForecastGenerator` for party state warnings
+
+**Key Features:**
+- Autonomous sick/wounded tracking (not deterministic from events)
+- Pressure accumulation for crisis warnings (days low supplies, days low morale)
+- Desertion tracking for forecast signals
+- Provides data for "living world" feeling without player input
+
+**Files Created:**
+- `src/Features/Company/CompanySimulationBehavior.cs`
+- `src/Features/Company/Models/CompanyRosterState.cs`
+- `src/Features/Company/Models/SimulationPressure.cs`
+
+**See Also:** [Camp Background Simulation](camp-background-simulation.md)
+
+---
+
+### Phase 6: Camp Life Simulation (Living Breathing World)
+**Goal:** Create a living camp that generates contextual opportunities independently of player input
+
+**Status:** ✅ **Phase 6 COMPLETE** (2025-12-30, sea awareness added 2025-12-31)
+
+**Sub-Phases:**
+- **6A (Foundation):** Core models, generator, basic fitness scoring ✅
+- **6B (UI Integration):** DECISIONS menu, opportunity engagement tracking ✅
+- **6C (Intelligence):** Player state modifiers, budget system, cooldowns ✅
+- **6D (Learning):** Player behavior adaptation, 70/30 split ✅
+- **6E (Polish):** 29 opportunities, edge cases, natural language ✅
+- **6F (Sea Awareness):** Location-based filtering (atSea/notAtSea), 4 sea variants ✅
+
+**Key Concepts:**
+
+**4 Intelligence Layers for Fitness Scoring:**
+1. **World State (Macro):** Lord situation, war status, strategic context
+2. **Camp Context (Meso):** Day phase (synced with orders), camp mood, weekly rhythm
+3. **Player State (Micro):** Fatigue, gold, injury, recent actions
+4. **History (Meta):** Recent presentations, engagement rates, variety maintenance
+
+**Order-Decision Tension:**
+- Opportunities have `orderCompatibility` per order type
+- `available` = safe, `risky` = detection check, `blocked` = filtered out
+- Risky opportunities show consequences in tooltip
+- Detection rolls use `detection.baseChance` + modifiers
+
+**Opportunity Budget:**
+- Context determines how many opportunities (0-3)
+- Garrison morning: 2-3, Siege: 0-1, Campaign evening: 1-2
+- Reduced by probation, low supplies, on-duty status
+
+**Files Created:**
+- `src/Features/Camp/CampOpportunityGenerator.cs` (876 lines, +sea filtering)
+- `src/Features/Camp/Models/CampOpportunity.cs` (+NotAtSea, +AtSea properties)
+- `src/Features/Camp/Models/CampContext.cs`
+- `src/Features/Camp/Models/CampMood.cs`
+- `src/Features/Camp/Models/OpportunityType.cs`
+- `src/Features/Camp/Models/OpportunityHistory.cs`
+- `src/Features/Camp/Models/PlayerCommitments.cs`
+- `src/Features/Camp/Models/DetectionSettings.cs`
+- `src/Features/Camp/Models/CaughtConsequences.cs`
+- `src/Features/Interface/MainMenuNewsCache.cs`
+- `src/Features/Interface/ForecastGenerator.cs`
+- `src/Features/Content/EventDefinition.cs` (+AtSea property)
+- `src/Features/Content/EventRequirementChecker.cs` (+MeetsAtSeaRequirement)
+- `ModuleData/Enlisted/camp_opportunities.json` (29 land + 4 sea = 33 opportunities)
+
+**See Also:** [Camp Life Simulation](camp-life-simulation.md), [Event System Schemas - Camp Opportunities](../Features/Content/event-system-schemas.md#camp-opportunities-schema-phase-6)
+
+---
+
+### Phase 7: Content Variants (Post-Launch, Incremental)
 **Goal:** Add contextual variety to high-traffic content
 
-**When:** After orchestrator is proven (Week 6+)
+**Status:** 🟡 **PARTIALLY IMPLEMENTED** (Sea/land variants added 2025-12-31)
+
+**When:** After orchestrator and camp life are proven (Week 7+)
 
 **Approach:**
 1. Identify repetitive events from playtesting
@@ -1148,12 +1374,26 @@ public class MainMenuNewsCache
 4. Test variant selection in different world states
 
 **Priority Order:**
-1. Training decisions (high-traffic, easy to vary)
-2. Rest/camp decisions (frequent use)
-3. Common events (seen repeatedly)
-4. Role-specific variants (add depth)
+1. ✅ **Sea/land variants** (DONE - first implementation)
+2. Training decisions (high-traffic, easy to vary)
+3. Rest/camp decisions (frequent use)
+4. Common events (seen repeatedly)
+5. Role-specific variants (add depth)
 
-**Example Variants:**
+**Implemented Sea/Land Variants:**
+```json
+// Land-only opportunities (notAtSea: true)
+opp_rest_tent, opp_tavern_visit, opp_foraging, opp_repair_work,
+opp_campfire_song, opp_dice_game, opp_archery_range
+
+// Sea-only opportunities (atSea: true)
+opp_rest_hammock          → "Your hammock sways with the ship's motion..."
+opp_below_deck_drinking   → "The crew is passing around bottles below deck..."
+opp_ship_maintenance      → "Rope splicing, caulking, sail mending..."
+opp_sea_shanty            → "Sailors on deck are singing work songs..."
+```
+
+**Example Future Variants:**
 ```json
 // Training variants by intensity
 dec_weapon_drill          → Base (any context)
@@ -1166,10 +1406,35 @@ dec_rest_garrison         → Camp (more effective)
 dec_rest_exhausted        → Siege (less effective)
 ```
 
-**No Code Changes Needed:**
-- EventRequirementChecker already filters by context
-- Orchestrator already scores all eligible content
-- Variants compete naturally in selection pool
+**Implementation Pattern:**
+- `CampOpportunity` model: Added `NotAtSea` and `AtSea` bool properties
+- `CampOpportunityGenerator`: Checks `MobileParty.IsCurrentlyAtSea` for filtering
+- `EventDefinition` model: Added `AtSea` bool property for events
+- `EventRequirementChecker`: Added `MeetsAtSeaRequirement()` method
+- JSON schema: `"atSea": true` or `"notAtSea": true` in requirements
+- Variants compete naturally in selection pool based on party location
+
+---
+
+### Phase 8: Progression System (Future)
+**Goal:** Generic probabilistic progression pattern for escalation tracks
+
+**Status:** 📋 Schema Ready (Implementation Deferred)
+
+**Concept:**
+Instead of deterministic "choice = fixed outcome", progression tracks can:
+- **Improve** naturally over time
+- **Stay stable** (no change)
+- **Worsen** (complications, decay)
+
+Daily probability checks determine outcomes, modified by skills, context, and player actions.
+
+**Applicable Tracks:**
+- Medical Risk (daily @ 6am, modified by Medicine skill)
+- Discipline (daily @ 8pm, modified by Leadership)
+- Pay Tension (daily, modified by Trade)
+
+**See:** [Event System Schemas - Progression System](../Features/Content/event-system-schemas.md#progression-system-schema-future-foundation)
 
 ---
 
@@ -2234,6 +2499,46 @@ All edge cases should fail safely:
 4. 🔵 Begin content selection integration
 
 This is a major architectural shift from "pacing algorithm" to "reality simulator." It will make the enlisted experience feel like living a military life in Calradia's endless wars — exactly what the mod is meant to be.
+
+---
+
+## Critical Addition: Phases 9-10 - Scheduling & Forecasting
+
+**Status:** ❌ Not Implemented - **MUST HAVE**  
+**Priority:** Critical for player experience at fast time speeds  
+**Implementation:** See [content-orchestrator-prompts.md](content-orchestrator-prompts.md#phase-9-decision-scheduling-must-have)
+
+**Problem:**
+From decompile research (Campaign.cs):
+- **Play (1x):** 1 game day = 80 real seconds (1 min 20 sec)
+- **FastForward (>>):** 1 game day = 20 real seconds
+- At FastForward, orders/events appear with <10 seconds warning
+- Player gets bombarded with immediate popups, no time to plan
+
+**Phase 9: Decision Scheduling**
+Players commit to camp decisions that fire at scheduled phases:
+- Tag opportunities with Dawn/Midday/Dusk/Night
+- Click decision → greys out, shows "Scheduled for Midday"
+- Event fires automatically at phase boundary
+- Player status: "You've committed to sparring at noon"
+- Prevents popup spam at fast speeds
+
+**Phase 10: Order Imminent Warnings**
+Short-term (4-8 hour) warnings before orders issue:
+- Orchestrator decides "order should fire"
+- Instead of immediate issue, creates IMMINENT state with 4-8h delay
+- Warning appears in summaries: "Sergeant will call for you soon"
+- Order issues when delay expires
+- Simpler than long-term forecasting (world state changes too fast)
+
+**Integration:**
+- Decision commitments and order warnings both appear in summaries
+- Max 4-5 lines per section (Kingdom Reports, Company Reports, Your Status)
+- Commitments take priority (player's choice)
+- Orders can override if critical (siege defense)
+
+**Why It Matters:**
+At FastForward speed, 4 hours = 3.3 real seconds, 8 hours = 6.6 real seconds. Even this short warning is **essential** - without it, orders appear instantly with zero reaction time.
 
 ---
 

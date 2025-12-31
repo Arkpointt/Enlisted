@@ -301,8 +301,8 @@ namespace Enlisted.Features.Content
                 // Use "map_incident" as the category for per-category cooldown tracking
                 const string category = "map_incident";
 
-                // Check global pacing limits (skip evaluation_hours since map incidents are context-triggered)
-                if (!GlobalEventPacer.CanFireAutoEvent($"map_incident_{context}", category, skipEvaluationHours: true, out var blockReason))
+                // Check global pacing limits (max_per_day, min_hours_between, category cooldown)
+                if (!GlobalEventPacer.CanFireAutoEvent($"map_incident_{context}", category, out var blockReason))
                 {
                     ModLogger.Debug(LogCategory, $"Blocked by global pacing for {context}: {blockReason}");
                     return false;

@@ -117,7 +117,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         public static class BlockLeavePrisonerConversationPatch
         {
             [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __result is a special injected parameter")]
-            private static void Postfix(ref bool _)
+            private static void Postfix()
             {
                 // This one we don't block - it's just leaving the conversation, not releasing
                 // The prisoner stays imprisoned. Only block actual release actions.

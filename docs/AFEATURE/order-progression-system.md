@@ -2,8 +2,8 @@
 
 **Summary:** Orders are multi-day duty assignments that progress through phases automatically. Events fire contextually during orders based on world state and order type. Players experience being a soldier through the rhythm of assigned duties, occasional events, and accumulated consequences like fatigue and injury.
 
-**Status:** 📋 Specification  
-**Last Updated:** 2025-12-24  
+**Status:** ✅ Implemented (Mandatory Orders Added 2025-12-31)  
+**Last Updated:** 2025-12-31  
 **Related Docs:** [Orders System](../Features/Core/orders-system.md), [Content Orchestrator](content-orchestrator-plan.md), [Medical Progression](../Features/Content/medical-progression-system.md), [Event System Schemas](../Features/Content/event-system-schemas.md)
 
 ---
@@ -32,23 +32,51 @@ The Order Progression System transforms orders from instant-resolution tasks int
 ### Core Loop
 
 ```
-1. Order Issued → Player clicks [Accept]
+1. Order Issued
+   - Mandatory orders (T1-T3 basic duties): Automatically assigned, "Duty Assigned" notification
+   - Optional orders (T4+ advancement): Shows in Orders menu as [NEW] → Player clicks → Popup with Accept/Decline
+
 2. Order auto-progresses through phases (4/day: Dawn, Midday, Dusk, Night)
+
 3. Recent Activity updates with status text each phase
+
 4. Orchestrator checks each "slot" phase → may inject event based on world state
+
 5. IF event fires → Player gets popup, makes decision
+
 6. Consequences accumulate (fatigue, XP, possible injury)
+
 7. Order completes → Summary + rewards in Recent Activity
+
 8. Player rests or accepts next order
 ```
+
+### Mandatory vs Optional Orders
+
+**Mandatory Orders (Automatically Assigned):**
+- Basic T1-T3 duties that soldiers cannot decline
+- Automatically accepted when issued
+- Shows as `[ASSIGNED]` (greyed out, not clickable) in Orders menu
+- Player status displays: "On duty: Guard Duty."
+- Examples: Guard Duty, Camp Patrol, Firewood, Muster, Sentry
+- Realistic: Low-rank soldiers don't choose their duties
+
+**Optional Orders (Player Choice):**
+- T4-T6 advancement and special duties
+- Shows as `[NEW]` (clickable) in Orders menu
+- Player clicks order row → popup shows order details with [Accept Order] / [Decline Order] buttons
+- Declining has consequences (rep penalty, discharge risk)
+- Examples: Lead Patrol, Scout Route, Train Recruits, Escort Duty
 
 ### Key Principles
 
 - **Orders are the job** - Not quests or adventures. Assigned duties.
+- **Mandatory duties are automatic** - T1-T3 soldiers don't choose their duties. They're assigned.
 - **Events happen during duty** - Contextual to what you're doing, not random narrative.
 - **Slow progression** - Routine duty gives tiny XP. Events and combat accelerate it.
 - **Consequences matter** - Fatigue accumulates. Injury is possible. Skill checks have stakes.
 - **Rank determines experience** - T1 gets menial work. T6 leads men. Different event pools.
+- **Duty doesn't block gameplay** - On duty? Camp life continues, but some activities are risky/blocked.
 - **World state affects frequency** - Siege duty is intense. Garrison duty is boring.
 
 ---
@@ -122,9 +150,19 @@ Orders have set durations determining total phases:
 
 ## Order Definitions (T1-T6)
 
-### T1-T3: Basic Soldier Orders
+### T1-T3: Basic Soldier Orders (Mandatory)
 
-Menial, physical, and low-responsibility duties. Short duration, low event chance, high fatigue.
+Menial, physical, and low-responsibility duties. **Automatically assigned - no player choice.** Short duration, low event chance, high fatigue.
+
+**Mandatory Orders:**
+- `order_guard_duty` - Guard Duty
+- `order_camp_patrol` - Camp Patrol  
+- `order_firewood` - Firewood Collection
+- `order_equipment_check` - Equipment Inspection
+- `order_muster` - Muster Inspection
+- `order_sentry` - Sentry Post
+
+These orders are flagged with `"mandatory": true` in JSON and automatically accepted when issued.
 
 #### Guard Post
 ```
@@ -951,6 +989,17 @@ You report to the guard post. Sergeant assigns your position.
 | ❌ | Order failed |
 | 🩹 | Injury occurred |
 
+### Combat Log Notifications
+
+Order state changes are announced in the combat log for immediate player feedback:
+
+- **New Order Available**: Yellow message when order is issued
+- **Order Started**: Green message when player accepts
+- **Order Declined**: Red message when player declines
+- **Order Completed**: Green message with outcome when order finishes
+
+These provide real-time awareness without requiring the player to open menus.
+
 ### Active Order Card
 
 When order is active, Camp Hub shows status:
@@ -998,6 +1047,7 @@ public class OrderDefinition
     public string DescriptionId { get; set; }
     
     public string Issuer { get; set; }  // "Sergeant", "Captain", "Lord"
+    public bool Mandatory { get; set; } = false;  // If true, automatically assigned (no player choice)
     public int TierMin { get; set; }
     public int TierMax { get; set; }
     
