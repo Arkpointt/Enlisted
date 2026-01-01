@@ -40,9 +40,9 @@
 - `native_trait_mapping` section
 - Activity modifiers (Quiet/Routine/Active/Intense)
 
-### ⛔ BLOCKING: Phase 6G - Create Missing Decisions
+### ⛔ BLOCKING: Phase 6G - Create Missing Decisions & Medical Migration
 
-**Problem:** Phase 6 created 29 camp opportunities, but only 3 target decisions exist. 26 decisions are missing.
+**Problem:** Phase 6 created 29 camp opportunities, but only 3 target decisions exist. 26 decisions are missing. Additionally, medical care uses a separate menu system instead of the unified decision system.
 
 **Two-Layer Architecture:**
 ```
@@ -58,12 +58,15 @@ camp_opportunities.json              decisions.json
 - ✅ Decisions exist: 3 (dec_maintain_gear, dec_write_letter, dec_gamble_high)
 - ❌ Decisions missing: 26
 - ❌ Old static decisions: 35 (pre-orchestrator, need deletion)
+- ❌ Medical Tent: Separate menu system (should be decisions)
 
 **Required Fix (Blocks Phase 9):**
 
 1. **Delete Old System** - Remove 35 pre-orchestrator static decisions from `decisions.json`
 2. **Create 26 New Decisions** - Match `targetDecision` IDs from opportunities
-3. **Design Pattern** - 2-3 options, light RP moments, clear tooltips, consequences
+3. **Migrate Medical Care** - Replace Medical Tent menu with 4 medical decisions
+4. **Delete Medical Menu** - Remove `EnlistedMedicalMenuBehavior.cs` (535 lines)
+5. **Design Pattern** - 2-3 options, light RP moments, clear tooltips, consequences
 
 **Missing Decisions List:**
 
@@ -74,8 +77,17 @@ camp_opportunities.json              decisions.json
 | Economic (4) | dec_gamble_cards, dec_gamble_dice, dec_forage, dec_work_repairs |
 | Recovery (5) | dec_rest_sleep, dec_help_wounded, dec_prayer, dec_rest_short, dec_meditate |
 | Special (5) | dec_officer_audience, dec_baggage_access, dec_mentor_recruit, dec_volunteer_extra, dec_night_patrol |
+| **Medical (4)** | **dec_medical_surgeon, dec_medical_rest, dec_medical_herbal, dec_medical_emergency** |
 
-**Estimated Time:** 3-4 hours (Claude Sonnet 4 recommended)
+**Medical Migration Benefits:**
+- Consolidate all camp activities into Decisions menu (consistent UX)
+- Delete 535 lines of menu management code
+- Better integration with content orchestrator and world state
+- Reduce maintenance burden (one system instead of two)
+
+**Estimated Time:** 5-6 hours (3-4 for decisions + 2 for medical migration)
+
+**See:** [Medical Care Migration Plan](medical-care-migration.md) for detailed specifications
 
 ---
 
@@ -359,21 +371,27 @@ For details on implemented features, see:
 
 | Phase | Status | Priority | Estimated Time | Dependencies |
 |-------|--------|----------|----------------|--------------|
-| 6G - Missing Decisions | ⛔ BLOCKING | Critical | 3-4 hours | None |
+| 6G - Missing Decisions + Medical Migration | ⛔ BLOCKING | Critical | 5-6 hours | None |
 | 9 - Decision Scheduling | ❌ MUST DO | High | 2-3 hours | Phase 6G |
 | 10 - Order Forecasting | ❌ MUST DO | Critical | 2-3 hours | None |
 | 7 - Content Variants | ⏸️ Future | Low | 30-60 min | None |
 | 8 - Progression System | ⏸️ Future | Low | 2-3 hours | None |
 
-**Total Critical Work:** ~8-10 hours (6G → 9 → 10)
+**Total Critical Work:** ~10-12 hours (6G → 9 → 10)
 
 **Recommended Order:**
-1. Phase 6G (unblocks Phase 9)
+1. Phase 6G (includes medical migration, unblocks Phase 9)
 2. Phase 10 (critical for playability)
 3. Phase 9 (enhances immersion)
 4. Phase 7-8 (future enhancements)
 
+**Phase 6G Breakdown:**
+- Create 26 missing camp decisions (3-4 hours)
+- Migrate medical care to decisions (2 hours)
+- Delete old systems (535 lines of menu code + 35 old decisions)
+- Result: Unified decision system, reduced complexity
+
 ---
 
-**Last Updated:** 2025-12-31  
+**Last Updated:** 2026-01-01 (Added medical care migration to Phase 6G)  
 **Maintained By:** Project AI Assistant

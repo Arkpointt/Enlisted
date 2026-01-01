@@ -145,7 +145,9 @@
           "id": "access",
           "textId": "dec_access_baggage_open",
           "text": "Open your baggage.",
-          "effects": {},
+          "effects": {
+            "open_baggage_stash": true
+          },
           "resultTextId": "dec_access_baggage_result",
           "resultText": "You rummage through your belongings.",
           "tooltip": "Access your stored items."
@@ -1025,40 +1027,6 @@
           "text": "Think better of it.",
           "resultTextId": "dec_officer_audience_cancel_result",
           "resultText": "You step out of line. Maybe next time.",
-          "tooltip": "No action taken."
-        }
-      ]
-    },
-    {
-      "id": "dec_baggage_access",
-      "category": "decision",
-      "titleId": "dec_baggage_access_title",
-      "title": "Visit the Baggage",
-      "setupId": "dec_baggage_access_setup",
-      "setup": "The baggage train is accessible. Your personal effects are stowed there.",
-      "requirements": {
-        "tier": { "min": 1, "max": 999 },
-        "notAtSea": true
-      },
-      "timing": {
-        "cooldown_days": 1,
-        "priority": "normal"
-      },
-      "options": [
-        {
-          "id": "baggage_check",
-          "textId": "dec_baggage_access_check",
-          "text": "Check on your belongings.",
-          "resultTextId": "dec_baggage_access_check_result",
-          "resultText": "Everything's where you left it. A small comfort in uncertain times.",
-          "tooltip": "Verify your gear is safe."
-        },
-        {
-          "id": "cancel",
-          "textId": "dec_baggage_access_cancel",
-          "text": "No need.",
-          "resultTextId": "dec_baggage_access_cancel_result",
-          "resultText": "It can wait.",
           "tooltip": "No action taken."
         }
       ]

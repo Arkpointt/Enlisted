@@ -688,11 +688,16 @@ namespace Enlisted.Features.Logistics
         /// </summary>
         public BaggageEventProbabilities CalculateEventProbabilities(Content.Models.WorldSituation worldState)
         {
+            // Start with config-based defaults
+            var baseCaughtUp = _config?.Timing?.CaughtUpChancePercent ?? 25;
+            var baseDelay = _config?.Events?.DelayEventChanceBadWeather ?? 15;
+            var baseRaid = _config?.Events?.RaidEventChanceEnemyTerritory ?? 8;
+
             var probs = new BaggageEventProbabilities
             {
-                CaughtUpChance = 25,  // Base
-                DelayChance = 15,     // Base
-                RaidChance = 8        // Base
+                CaughtUpChance = baseCaughtUp,
+                DelayChance = baseDelay,
+                RaidChance = baseRaid
             };
 
             var lordParty = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo;
@@ -716,10 +721,7 @@ namespace Enlisted.Features.Logistics
                     break;
 
                 case Content.Models.ActivityLevel.Routine:
-                    // Normal march - base values
-                    probs.CaughtUpChance = 25;
-                    probs.DelayChance = 15;
-                    probs.RaidChance = 8;
+                    // Normal march - use config base values (already set above)
                     break;
 
                 case Content.Models.ActivityLevel.Quiet:
