@@ -2503,5 +2503,59 @@
     <string id="schedule_forecast_passed" text="passed" />
     <string id="schedule_forecast_upcoming" text="upcoming" />
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Camp Routine Outcomes -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Routine Outcome Types -->
+    <string id="routine_outcome_excellent" text="Excellent" />
+    <string id="routine_outcome_good" text="Good" />
+    <string id="routine_outcome_normal" text="Normal" />
+    <string id="routine_outcome_poor" text="Poor" />
+    <string id="routine_outcome_mishap" text="Mishap" />
+    
+    <!-- Routine News Summaries -->
+    <string id="routine_news_excellent" text="{ACTIVITY}: Exceptional performance" />
+    <string id="routine_news_good" text="{ACTIVITY}: Good progress" />
+    <string id="routine_news_normal" text="{ACTIVITY}: Completed" />
+    <string id="routine_news_poor" text="{ACTIVITY}: Struggled today" />
+    <string id="routine_news_mishap" text="{ACTIVITY}: Incident occurred" />
+    
+    <!-- Orchestrator Override Reasons -->
+    <string id="override_reason_low_supplies" text="Supplies critical" />
+    <string id="override_reason_starvation" text="Starvation imminent" />
+    <string id="override_reason_exhausted" text="Men exhausted" />
+    <string id="override_reason_low_readiness" text="Combat readiness low" />
+    <string id="override_reason_low_morale" text="Morale dangerously low" />
+    <string id="override_reason_variety" text="Variety assignment" />
+    
+    <!-- Override Activity Names -->
+    <string id="override_activity_foraging" text="Foraging Duty" />
+    <string id="override_activity_emergency_foraging" text="Emergency Foraging" />
+    <string id="override_activity_extended_rest" text="Extended Rest" />
+    <string id="override_activity_emergency_drill" text="Emergency Drill" />
+    <string id="override_activity_light_duty" text="Light Duty" />
+    <string id="override_activity_patrol" text="Patrol Duty" />
+    <string id="override_activity_scouting" text="Scouting Assignment" />
+    <string id="override_activity_guard" text="Guard Rotation" />
+    <string id="override_activity_supply_escort" text="Supply Escort" />
+    <string id="override_activity_fortification" text="Camp Fortification" />
+    <string id="override_activity_inspection" text="Equipment Inspection" />
+    <string id="override_activity_messenger" text="Messenger Duty" />
+    
+    <!-- Override Activation Messages -->
+    <string id="override_activate_foraging" text="No training today. Entire company on foraging duty." />
+    <string id="override_activate_emergency_foraging" text="Desperate times. Everyone forages or we starve." />
+    <string id="override_activate_extended_rest" text="No drills today. The sergeant grants rest." />
+    <string id="override_activate_emergency_drill" text="Extra drills ordered. The sergeants are pushing hard." />
+    <string id="override_activate_light_duty" text="Light duty today. The officers are trying to lift spirits." />
+    <string id="override_activate_patrol" text="Assigned to patrol duty this morning." />
+    <string id="override_activate_scouting" text="Selected for a scouting mission." />
+    <string id="override_activate_guard" text="Assigned to night watch." />
+    <string id="override_activate_supply_escort" text="Assigned to escort the supply wagons." />
+    <string id="override_activate_fortification" text="Assigned to reinforce camp defenses." />
+    <string id="override_activate_inspection" text="Full equipment inspection ordered." />
+    <string id="override_activate_messenger" text="Selected as messenger. Dispatches to deliver." />
+
   </strings>
 </base>

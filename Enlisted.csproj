@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
+  
+  <!-- ========================================================================
+       PROJECT CONFIGURATION
+       
+       Single build with optional Battle AI SubModule:
+       - Outputs to: Modules\Enlisted\
+       - BATTLE_AI constant always defined (Battle AI code always compiled)
+       - Battle AI runs as separate SubModule that users can disable in launcher
+       - No performance cost when disabled (SubModule never initializes)
+       
+       See docs/BLUEPRINT.md for complete documentation.
+       ======================================================================== -->
+  
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Enlisted RETAIL</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
@@ -14,16 +27,17 @@
     <Deterministic>true</Deterministic>
     <LangVersion>13.0</LangVersion>
   </PropertyGroup>
+  
+  <!-- RETAIL BUILD: Includes all features including Battle AI -->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Enlisted RETAIL|x64'">
     <OutputPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_Client\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;BATTLE_AI</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <LangVersion>13.0</LangVersion>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
-  <!-- Editor build references (wEditor) removed: project now targets only Retail (Client) build -->
 
   <!-- Retail build references (Client) -->
   <ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Enlisted RETAIL|x64'">
@@ -133,10 +147,15 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+  <!-- ========================================================================
+       GUI ASSETS (Gauntlet UI)
+       ======================================================================== -->
+  
   <ItemGroup>
-    <!-- GUI Brushes -->
+    <!-- GUI Color Brushes -->
     <Content Include="GUI\Brushes\EnlistedColors.xml"/>
-    <!-- GUI Equipment Prefabs -->
+    
+    <!-- Quartermaster Equipment Prefabs -->
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml"/>
@@ -147,24 +166,34 @@
     <Content Include="GUI\Prefabs\Equipment\QuartermasterUpgradeCard.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterUpgradeCardRow.xml"/>
   </ItemGroup>
+  <!-- ========================================================================
+       SOURCE FILES (BOTH VERSIONS)
+       
+       All files listed here are compiled in both Base and Enhanced versions.
+       Battle AI files use #if BATTLE_AI internally for conditional compilation.
+       
+       CRITICAL: This project uses old-style .csproj format. New files must be
+       manually added with <Compile Include="path"/> entries.
+       ======================================================================== -->
+  
   <ItemGroup>
+    <!-- ====================================================================
+         MOD ENTRY & CORE SYSTEMS
+         ==================================================================== -->
     <Compile Include="Properties\AssemblyInfo.cs"/>
-    <Compile Include="src\Features\Content\ContentOrchestrator.cs" />
-    <Compile Include="src\Features\Content\PlayerBehaviorTracker.cs" />
-    <Compile Include="src\Features\Content\SimulationPressureCalculator.cs" />
-    <Compile Include="src\Features\Content\WorldStateAnalyzer.cs" />
-    <Compile Include="src\Features\Content\Models\OrchestratorEnums.cs" />
-    <Compile Include="src\Features\Content\Models\WorldSituation.cs" />
-    <Compile Include="src\Features\Content\Models\SimulationPressure.cs" />
-    <Compile Include="src\Features\Content\Models\PlayerPreferences.cs" />
-    <Compile Include="src\Features\Orders\Behaviors\OrderProgressionBehavior.cs" />
     <Compile Include="src\Mod.Entry\SubModule.cs"/>
+    
+    <!-- Configuration -->
     <Compile Include="src\Mod.Core\Config\ModSettings.cs"/>
     <Compile Include="src\Mod.Core\Config\ModConfig.cs"/>
     <Compile Include="src\Mod.Core\Config\ConfigurationManager.cs"/>
+    
+    <!-- Logging -->
     <Compile Include="src\Mod.Core\Logging\ModLogger.cs"/>
     <Compile Include="src\Mod.Core\Logging\ModConflictDiagnostics.cs"/>
     <Compile Include="src\Mod.Core\Logging\SessionDiagnostics.cs"/>
+    
+    <!-- Core Utilities -->
     <Compile Include="src\Mod.Core\EnlistedActivation.cs"/>
     <Compile Include="src\Mod.Core\CampaignSafetyGuard.cs"/>
     <Compile Include="src\Mod.Core\Triggers\CampaignTriggerTokens.cs"/>
@@ -172,22 +201,35 @@
     <Compile Include="src\Mod.Core\Util\PlayerContext.cs"/>
     <Compile Include="src\Mod.Core\Util\UiTextSanitizer.cs"/>
     <Compile Include="src\Mod.Core\Util\UsedImplicitlyAttribute.cs"/>
+    
+    <!-- Save System -->
     <Compile Include="src\Mod.Core\SaveSystem\EnlistedSaveDefiner.cs"/>
-    <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs"/>
-    <Compile Include="src\Features\Conversations\Data\QMDialogueContext.cs"/>
-    <Compile Include="src\Features\Conversations\Data\QMDialogueNode.cs"/>
-    <Compile Include="src\Features\Conversations\Data\QMDialogueOption.cs"/>
-    <Compile Include="src\Features\Conversations\Data\QMDialogueCatalog.cs"/>
+    
+    <!-- Debugging Tools -->
+    <Compile Include="src\Debugging\Behaviors\DebugToolsBehavior.cs"/>
+    
+    <!-- ====================================================================
+         CORE FEATURES - Enlistment & Identity
+         ==================================================================== -->
+    <!-- Enlistment System -->
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EncounterGuard.cs"/>
     <Compile Include="src\Features\Enlistment\Core\ProgressionConfig.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\MusterMenuHandler.cs"/>
-    <Compile Include="src\Debugging\Behaviors\DebugToolsBehavior.cs"/>
+    
+    <!-- Identity & Traits -->
+    <Compile Include="src\Features\Identity\TraitHelper.cs"/>
+    <Compile Include="src\Features\Identity\EnlistedStatusManager.cs"/>
+    <!-- ====================================================================
+         INTERFACE & UI SYSTEMS
+         ==================================================================== -->
+    <!-- Menus & Interface Behaviors -->
     <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs"/>
     <Compile Include="src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs"/>
     <Compile Include="src\Features\Interface\MainMenuNewsCache.cs"/>
-    <!-- Camp News / Daily Report -->
+    
+    <!-- Daily Report & Camp News -->
     <Compile Include="src\Features\Interface\News\Models\DailyReportModels.cs"/>
     <Compile Include="src\Features\Interface\News\Models\CampLifeLedger.cs"/>
     <Compile Include="src\Features\Interface\News\State\CampNewsState.cs"/>
@@ -198,11 +240,17 @@
     <Compile Include="src\Features\Interface\News\Generation\Producers\CompanyMovementObjectiveProducer.cs"/>
     <Compile Include="src\Features\Interface\News\Generation\Producers\UnitStatusFactProducer.cs"/>
     <Compile Include="src\Features\Interface\News\Generation\Producers\KingdomHeadlineFactProducer.cs"/>
+    <!-- ====================================================================
+         EQUIPMENT & QUARTERMASTER SYSTEMS
+         ==================================================================== -->
+    <!-- Equipment Behaviors -->
     <Compile Include="src\Features\Equipment\Behaviors\TroopSelectionManager.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\EquipmentManager.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\TroopDiscoveryValidator.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\QuartermasterManager.cs"/>
     <Compile Include="src\Features\Equipment\Managers\QMInventoryState.cs"/>
+    
+    <!-- Quartermaster UI (Gauntlet) -->
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorBehavior.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVM.cs"/>
@@ -214,38 +262,87 @@
     <Compile Include="src\Features\Equipment\UI\QuartermasterProvisionsVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterProvisionItemVM.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterProvisionsBehavior.cs"/>
+    
+    <!-- ====================================================================
+         RANKS & PROGRESSION
+         ==================================================================== -->
     <Compile Include="src\Features\Ranks\RankHelper.cs"/>
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs"/>
-    <!-- Company state and strategic context -->
+    
+    <!-- ====================================================================
+         COMPANY MANAGEMENT & STRATEGIC CONTEXT
+         ==================================================================== -->
+    <!-- Company Needs -->
     <Compile Include="src\Features\Company\CompanyNeed.cs"/>
     <Compile Include="src\Features\Company\CompanyNeedsState.cs"/>
     <Compile Include="src\Features\Company\CompanyNeedsManager.cs"/>
+    
+    <!-- Logistics & Supply -->
     <Compile Include="src\Features\Logistics\CompanySupplyManager.cs"/>
     <Compile Include="src\Features\Logistics\ContrabandChecker.cs"/>
     <Compile Include="src\Features\Logistics\BaggageAccessState.cs"/>
     <Compile Include="src\Features\Logistics\BaggageTrainManager.cs"/>
+    
+    <!-- Strategic Context -->
     <Compile Include="src\Features\Context\ArmyContextAnalyzer.cs"/>
     <Compile Include="src\Features\Context\LordObjective.cs"/>
+    
+    <!-- ====================================================================
+         COMBAT SYSTEMS (BASE VERSION - Both Builds)
+         ==================================================================== -->
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs"/>
+    
+    <!-- ====================================================================
+         BATTLE AI SYSTEMS (Optional SubModule)
+         ==================================================================== -->
+    <!-- Battle AI SubModule Entry Point (users can disable in launcher) -->
+    <Compile Include="src\Features\Combat\BattleAI\BattleAISubModule.cs"/>
+    
+    <!-- Battle AI Implementation Files
+         TODO: Add Battle AI files here as they are created:
+         - src\Features\Combat\BattleAI\Behaviors\EnlistedBattleAIBehavior.cs
+         - src\Features\Combat\BattleAI\Orchestration\BattleOrchestrator.cs
+         - src\Features\Combat\BattleAI\Orchestration\BattleContext.cs
+         - src\Features\Combat\BattleAI\Formation\FormationController.cs
+         - src\Features\Combat\BattleAI\Agent\AgentCombatEnhancer.cs
+         See docs/Features/Combat/BATTLE-AI-IMPLEMENTATION-SPEC.md for details.
+    -->
+    <!-- ====================================================================
+         RETINUE SYSTEM (T7+ Commander Features)
+         ==================================================================== -->
+    <!-- Retinue Data Models -->
     <Compile Include="src\Features\Retinue\Data\FactionServiceRecord.cs"/>
     <Compile Include="src\Features\Retinue\Data\LifetimeServiceRecord.cs"/>
     <Compile Include="src\Features\Retinue\Data\NamedVeteran.cs"/>
     <Compile Include="src\Features\Retinue\Data\RetinueState.cs"/>
     <Compile Include="src\Features\Retinue\Data\ReservistRecord.cs"/>
+    
+    <!-- Retinue Core Systems -->
     <Compile Include="src\Features\Retinue\Core\ServiceRecordManager.cs"/>
     <Compile Include="src\Features\Retinue\Core\RetinueManager.cs"/>
     <Compile Include="src\Features\Retinue\Core\RetinueLifecycleHandler.cs"/>
     <Compile Include="src\Features\Retinue\Core\CompanionAssignmentManager.cs"/>
     <Compile Include="src\Features\Retinue\Core\CompanionAssignmentSaveDefiner.cs"/>
     <Compile Include="src\Features\Retinue\Core\RetinueRecruitmentGrant.cs"/>
+    
+    <!-- Retinue Subsystems -->
     <Compile Include="src\Features\Retinue\Systems\RetinueTrickleSystem.cs"/>
     <Compile Include="src\Features\Retinue\Systems\RetinueCasualtyTracker.cs"/>
+    
+    <!-- ====================================================================
+         CAMP LIFE & DAILY ROUTINE
+         ==================================================================== -->
+    <!-- Camp Behaviors -->
     <Compile Include="src\Features\Camp\CampMenuHandler.cs"/>
     <Compile Include="src\Features\Camp\CampLifeBehavior.cs"/>
     <Compile Include="src\Features\Camp\CompanySimulationBehavior.cs"/>
     <Compile Include="src\Features\Camp\CampOpportunityGenerator.cs"/>
+    <Compile Include="src\Features\Camp\CampScheduleManager.cs"/>
+    <Compile Include="src\Features\Camp\CampRoutineProcessor.cs"/>
+    
+    <!-- Camp Models -->
     <Compile Include="src\Features\Camp\Models\CampIncident.cs"/>
     <Compile Include="src\Features\Camp\Models\CampContext.cs"/>
     <Compile Include="src\Features\Camp\Models\CampMood.cs"/>
@@ -258,77 +355,148 @@
     <Compile Include="src\Features\Camp\Models\SimulationDayResult.cs"/>
     <Compile Include="src\Features\Camp\Models\ScheduledPhase.cs"/>
     <Compile Include="src\Features\Camp\Models\ScheduleForecast.cs"/>
-    <Compile Include="src\Features\Camp\CampScheduleManager.cs"/>
+    <Compile Include="src\Features\Camp\Models\RoutineOutcome.cs"/>
+    
+    <!-- Camp Activities (Wildcard - all .cs files) -->
     <Compile Include="src\Features\Activities\*.cs"/>
+    
+    <!-- ====================================================================
+         PLAYER CONDITIONS (Medical System)
+         ==================================================================== -->
     <Compile Include="src\Features\Conditions\PlayerConditionModels.cs"/>
     <Compile Include="src\Features\Conditions\PlayerConditionBehavior.cs"/>
     <Compile Include="src\Features\Conditions\EnlistedMedicalMenuBehavior.cs"/>
+    
+    <!-- ====================================================================
+         ESCALATION & REPUTATION SYSTEM
+         ==================================================================== -->
     <Compile Include="src\Features\Escalation\EscalationState.cs"/>
     <Compile Include="src\Features\Escalation\EscalationThresholds.cs"/>
     <Compile Include="src\Features\Escalation\EscalationManager.cs"/>
+    <!-- ====================================================================
+         CONTENT DELIVERY SYSTEM (Events, Decisions, Orchestration)
+         ==================================================================== -->
+    <!-- Content Orchestration -->
+    <Compile Include="src\Features\Content\ContentOrchestrator.cs" />
+    <Compile Include="src\Features\Content\OrchestratorOverride.cs" />
+    <Compile Include="src\Features\Content\PlayerBehaviorTracker.cs" />
+    <Compile Include="src\Features\Content\SimulationPressureCalculator.cs" />
+    <Compile Include="src\Features\Content\WorldStateAnalyzer.cs" />
+    <Compile Include="src\Features\Content\ForecastGenerator.cs"/>
+    
+    <!-- Content Models -->
+    <Compile Include="src\Features\Content\Models\OrchestratorEnums.cs" />
+    <Compile Include="src\Features\Content\Models\WorldSituation.cs" />
+    <Compile Include="src\Features\Content\Models\SimulationPressure.cs" />
+    <Compile Include="src\Features\Content\Models\PlayerPreferences.cs" />
+    
+    <!-- Event System -->
     <Compile Include="src\Features\Content\EventDefinition.cs"/>
     <Compile Include="src\Features\Content\EventCatalog.cs"/>
-    <Compile Include="src\Features\Content\SkillCheckHelper.cs"/>
-    <Compile Include="src\Features\Content\WeaponSkillHelper.cs"/>
-    <Compile Include="src\Features\Content\ExperienceTrackHelper.cs"/>
     <Compile Include="src\Features\Content\EventDeliveryManager.cs"/>
-    <Compile Include="src\Features\Content\IncidentEffectTranslator.cs"/>
-    <Compile Include="src\Features\Content\TraitMilestoneTracker.cs"/>
     <Compile Include="src\Features\Content\EventRequirementChecker.cs"/>
     <Compile Include="src\Features\Content\EventSelector.cs"/>
     <Compile Include="src\Features\Content\EventPacingManager.cs"/>
     <Compile Include="src\Features\Content\MapIncidentManager.cs"/>
     <Compile Include="src\Features\Content\GlobalEventPacer.cs"/>
+    <Compile Include="src\Features\Content\IncidentEffectTranslator.cs"/>
+    
+    <!-- Decisions System -->
     <Compile Include="src\Features\Content\DecisionCatalog.cs"/>
     <Compile Include="src\Features\Content\DecisionManager.cs"/>
-    <Compile Include="src\Features\Content\ForecastGenerator.cs"/>
-    <Compile Include="src\Features\Identity\TraitHelper.cs"/>
-    <Compile Include="src\Features\Identity\EnlistedStatusManager.cs"/>
+    
+    <!-- Content Helpers -->
+    <Compile Include="src\Features\Content\SkillCheckHelper.cs"/>
+    <Compile Include="src\Features\Content\WeaponSkillHelper.cs"/>
+    <Compile Include="src\Features\Content\ExperienceTrackHelper.cs"/>
+    <Compile Include="src\Features\Content\TraitMilestoneTracker.cs"/>
+    
+    <!-- ====================================================================
+         ORDERS SYSTEM (Chain of Command)
+         ==================================================================== -->
+    <!-- Order Models -->
     <Compile Include="src\Features\Orders\Models\Order.cs"/>
     <Compile Include="src\Features\Orders\Models\OrderRequirement.cs"/>
     <Compile Include="src\Features\Orders\Models\OrderConsequence.cs"/>
     <Compile Include="src\Features\Orders\Models\OrderOutcome.cs"/>
     <Compile Include="src\Features\Orders\Models\PhaseRecap.cs"/>
+    
+    <!-- Order Behaviors -->
+    <Compile Include="src\Features\Orders\Behaviors\OrderProgressionBehavior.cs" />
     <Compile Include="src\Features\Orders\Behaviors\OrderManager.cs"/>
     <Compile Include="src\Features\Orders\OrderCatalog.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\CheckFortificationAttackablePatch.cs"/>
+    
+    <!-- ====================================================================
+         CONVERSATIONS & DIALOGUE SYSTEM
+         ==================================================================== -->
+    <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs"/>
+    <Compile Include="src\Features\Conversations\Data\QMDialogueContext.cs"/>
+    <Compile Include="src\Features\Conversations\Data\QMDialogueNode.cs"/>
+    <Compile Include="src\Features\Conversations\Data\QMDialogueOption.cs"/>
+    <Compile Include="src\Features\Conversations\Data\QMDialogueCatalog.cs"/>
+    <!-- ====================================================================
+         HARMONY PATCHES (Native Game Integration)
+         ==================================================================== -->
+    <!-- Army & Campaign Patches -->
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyCohesionExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyDispersedMenuPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\AbandonArmyBlockPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\ReturnToArmySuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs"/>
+    
+    <!-- Encounter & Combat Patches -->
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterLeaveSuppressionPatch.cs"/>
-    <!-- Disabled: Native game handles siege dismounting -->
-    <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\IncidentsSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\JoinEncounterAutoSelectPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\JoinSiegeEventAutoSelectPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\PlayerEncounterFinishSafetyPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\FormationMessageSuppressionPatch.cs"/>
+    
+    <!-- Siege & Fortification Patches -->
+    <Compile Include="src\Mod.GameAdapters\Patches\CheckFortificationAttackablePatch.cs"/>
+    
+    <!-- Naval Combat Patches -->
     <Compile Include="src\Mod.GameAdapters\Patches\NavalShipExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleShipAssignmentPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleArmyWaitCrashFix.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalMobilePartyVisualUpdateEntityPositionCrashGuardPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\RaftStateSuppressionPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\ReturnToArmySuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\PlayerIsAtSeaTagCrashFix.cs"/>
+    
+    <!-- UI & Message Suppression Patches -->
     <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\FormationMessageSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\InfluenceMessageSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\TownLeaveButtonPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\JoinEncounterAutoSelectPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\JoinSiegeEventAutoSelectPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\PlayerIsAtSeaTagCrashFix.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\CompanionCaptainBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\GenericStateMenuPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\EndCaptivityCleanupPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\AbandonArmyBlockPatch.cs"/>
+    
+    <!-- Discharge & Penalty Patches -->
+    <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs"/>
+    
+    <!-- Misc Patches -->
+    <Compile Include="src\Mod.GameAdapters\Patches\IncidentsSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\CompanionCaptainBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PrisonerActionBlockPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\PlayerEncounterFinishSafetyPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\EndCaptivityCleanupPatch.cs"/>
   </ItemGroup>
+  <!-- ========================================================================
+       CONTENT FILES
+       
+       SubModule.xml contains two SubModule entries:
+       - Core SubModule (always enabled)
+       - Battle AI SubModule (optional, can be disabled in Bannerlord launcher)
+       ======================================================================== -->
+  
   <ItemGroup>
-    <Content Include="parse_qodana.py" />
+    <!-- Module Configuration -->
     <Content Include="SubModule.xml"/>
+    
+    <!-- Configuration Files (JSON) -->
     <Content Include="ModuleData\Enlisted\Config\settings.json"/>
     <Content Include="ModuleData\Enlisted\Config\progression_config.json"/>
     <Content Include="ModuleData\Enlisted\Config\enlisted_config.json"/>
@@ -337,48 +505,78 @@
     <Content Include="ModuleData\Enlisted\Config\strategic_context_config.json"/>
     <Content Include="ModuleData\Enlisted\Config\baggage_config.json"/>
     <Content Include="ModuleData\Enlisted\Config\simulation_config.json"/>
-    <!-- JSON data files are referenced via custom ItemGroups below (for AfterBuild copy).
-         They are NOT duplicated here as Content to avoid ReSharper showing them twice. -->
+    
+    <!-- Localization Files (XML) -->
     <Content Include="ModuleData\Languages\enlisted_strings.xml"/>
     <Content Include="ModuleData\Languages\language_data.xml"/>
     <Content Include="ModuleData\Languages\enlisted_qm_dialogue.xml"/>
+    
+    <!-- Development Tools -->
+    <Content Include="parse_qodana.py" />
   </ItemGroup>
+  <!-- ========================================================================
+       DATA FILE COLLECTIONS (for AfterBuild Copy)
+       
+       These ItemGroups define wildcards for copying JSON data files to the
+       game directory during build. They are NOT Content items to avoid
+       ReSharper showing them twice in the solution explorer.
+       ======================================================================== -->
+  
   <ItemGroup>
-    <!-- Used by AfterBuild to copy player condition definition data into the Bannerlord module folder -->
+    <!-- Player Conditions (Medical system) -->
     <PlayerConditionData Include="ModuleData\Enlisted\Conditions\*.json"/>
   </ItemGroup>
+  
   <ItemGroup>
-    <!-- Used by AfterBuild to copy config data into the Bannerlord module folder -->
+    <!-- Configuration Files -->
     <ConfigData Include="ModuleData\Enlisted\Config\*.json"/>
   </ItemGroup>
+  
   <ItemGroup>
-    <!-- Used by AfterBuild to copy event data into the Bannerlord module folder -->
+    <!-- Events (Narrative content - automatic triggers) -->
     <LanceLifeEventsData Include="ModuleData\Enlisted\Events\*.json"/>
   </ItemGroup>
+  
   <ItemGroup>
-    <!-- Used by AfterBuild to copy dialogue data into the Bannerlord module folder -->
+    <!-- Dialogue (Quartermaster conversations) -->
     <DialogueData Include="ModuleData\Enlisted\Dialogue\*.json"/>
   </ItemGroup>
+  
   <ItemGroup>
-    <!-- Used by AfterBuild to copy decisions data into the Bannerlord module folder -->
+    <!-- Decisions (Player-initiated Camp Hub choices) -->
     <DecisionsData Include="ModuleData\Enlisted\Decisions\*.json"/>
   </ItemGroup>
+  
   <ItemGroup>
-    <!-- Used by AfterBuild to copy Orders data into the Bannerlord module folder -->
+    <!-- Orders (Chain of Command missions) -->
     <OrdersData Include="ModuleData\Enlisted\Orders\*.json"/>
   </ItemGroup>
+  
+  <!-- ========================================================================
+       DOCUMENTATION & PROJECT FILES
+       ======================================================================== -->
+  
   <ItemGroup>
-    <!-- Documentation - All markdown files in docs folder and subfolders -->
+    <!-- Documentation (all markdown files in docs/) -->
     <None Include="docs\**\*.md"/>
+    
+    <!-- NuGet Package Configuration -->
     <None Include="packages.config"/>
-  </ItemGroup>
-  <!-- Language XML files are already referenced as Content above (lines 288-289) -->
-  <ItemGroup>
-    <!-- Module configuration -->
+    
+    <!-- Module Data README -->
     <None Include="ModuleData\Enlisted\README.md"/>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+  
+  <!-- ========================================================================
+       POST-BUILD: COPY FILES TO GAME DIRECTORY
+       
+       This target runs after compilation and copies all content files
+       (XML, JSON, GUI assets) to the Bannerlord module folder.
+       ======================================================================== -->
+  
   <Target Name="AfterBuild">
+    <!-- CREATE DIRECTORY STRUCTURE -->
     <MakeDir Directories="$(OutputPath)..\..\Debugging"/>
     <MakeDir Directories="$(OutputPath)..\..\GUI\Brushes"/>
     <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Equipment"/>
@@ -390,19 +588,25 @@
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Decisions"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Orders"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
-    <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\"/>
+    
+    <!-- COPY MODULE CONFIGURATION -->
+    <Copy SourceFiles="SubModule.xml" DestinationFiles="$(OutputPath)..\..\SubModule.xml"/>
+    
+    <!-- COPY DATA FILES (JSON) -->
     <Copy SourceFiles="@(ConfigData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Config\"/>
     <Copy SourceFiles="@(PlayerConditionData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Conditions\"/>
     <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>
     <Copy SourceFiles="@(DecisionsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Decisions\"/>
     <Copy SourceFiles="@(OrdersData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Orders\"/>
     <Copy SourceFiles="@(DialogueData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Dialogue\"/>
+    
+    <!-- COPY LOCALIZATION FILES (XML) -->
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="ModuleData\Languages\language_data.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="ModuleData\Languages\enlisted_qm_dialogue.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
-    <!-- GUI Brushes -->
+    
+    <!-- COPY GUI ASSETS -->
     <Copy SourceFiles="GUI\Brushes\EnlistedColors.xml" DestinationFolder="$(OutputPath)..\..\GUI\Brushes\"/>
-    <!-- GUI Equipment Prefabs -->
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
@@ -412,9 +616,12 @@
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterUpgradeScreen.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterUpgradeCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterUpgradeCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
-    <!-- Workshop files -->
+    
+    <!-- COPY WORKSHOP FILES (for Steam Workshop uploads) -->
     <Copy SourceFiles="tools\workshop\WorkshopUpdate.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <Copy SourceFiles="tools\workshop\preview.png" DestinationFolder="$(OutputPath)..\..\" Condition="Exists('tools\workshop\preview.png')"/>
+    
+    <!-- CREATE DEBUG LOG FILES -->
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false"/>
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\conflicts.log" Lines="[Init] Precreated by build" Overwrite="false"/>
   </Target>

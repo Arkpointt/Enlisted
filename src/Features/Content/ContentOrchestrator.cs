@@ -1,10 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using Enlisted.Features.Company;
 using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.SaveSystem;
+using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.Library;
 
 namespace Enlisted.Features.Content
 {
@@ -28,6 +33,15 @@ namespace Enlisted.Features.Content
         // Behavior tracking data for save/load
         private Dictionary<string, int> _behaviorCounts = new Dictionary<string, int>();
         private Dictionary<string, int> _contentEngagement = new Dictionary<string, int>();
+
+        // Override system tracking
+        private int _lastVarietyInjectionDay = -10;
+        private int _varietyInjectionsThisWeek;
+        private int _weekStartDay;
+        private JObject _overrideConfig;
+        private bool _overrideConfigLoaded;
+        private OrchestratorOverride _currentOverride;
+        private DayPhase _currentOverridePhase = DayPhase.Night;
 
         public ContentOrchestrator()
         {
@@ -404,5 +418,393 @@ namespace Enlisted.Features.Content
                 ModLogger.Warn(LogCategory, "EventDeliveryManager not available for crisis event delivery");
             }
         }
+
+        #region Schedule Override System
+
+        /// <summary>
+        /// Checks if an orchestrator override should apply to the given phase.
+        /// First checks for need-based overrides (critical supplies, exhaustion, etc.),
+        /// then checks for variety injections if no need-based override applies.
+        /// Returns null if normal schedule should be used.
+        /// </summary>
+        public OrchestratorOverride CheckForScheduleOverride(DayPhase phase)
+        {
+            EnsureOverrideConfigLoaded();
+
+            // Check if we already have an override for this phase
+            if (_currentOverride != null && _currentOverridePhase == phase)
+            {
+                return _currentOverride;
+            }
+
+            // Get company needs for need-based checks
+            var companyNeeds = EnlistmentBehavior.Instance?.CompanyNeeds;
+            if (companyNeeds == null)
+            {
+                return null;
+            }
+
+            // Check for need-based overrides first (highest priority)
+            var needOverride = CheckNeedBasedOverrides(phase, companyNeeds);
+            if (needOverride != null)
+            {
+                _currentOverride = needOverride;
+                _currentOverridePhase = phase;
+                ModLogger.Info(LogCategory, 
+                    $"Need-based override activated: {needOverride.ActivityName} ({needOverride.Reason})");
+                return needOverride;
+            }
+
+            // Check for variety injection
+            if (ShouldInjectVariety())
+            {
+                var varietyOverride = SelectVarietyInjection(phase);
+                if (varietyOverride != null)
+                {
+                    _currentOverride = varietyOverride;
+                    _currentOverridePhase = phase;
+                    _lastVarietyInjectionDay = (int)CampaignTime.Now.ToDays;
+                    _varietyInjectionsThisWeek++;
+                    ModLogger.Info(LogCategory, 
+                        $"Variety injection activated: {varietyOverride.ActivityName}");
+                    return varietyOverride;
+                }
+            }
+
+            // No override - clear cached override if phase changed
+            if (_currentOverridePhase != phase)
+            {
+                _currentOverride = null;
+                _currentOverridePhase = phase;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Checks all need-based override triggers and returns the highest priority override
+        /// if conditions are met.
+        /// </summary>
+        private OrchestratorOverride CheckNeedBasedOverrides(DayPhase phase, CompanyNeedsState needs)
+        {
+            if (_overrideConfig == null)
+            {
+                return null;
+            }
+
+            OrchestratorOverride highestPriorityOverride = null;
+            int highestPriority = -1;
+
+            try
+            {
+                var needOverrides = _overrideConfig["needBasedOverrides"] as JObject;
+                if (needOverrides == null)
+                {
+                    return null;
+                }
+
+                foreach (var overrideDef in needOverrides.Properties())
+                {
+                    var config = overrideDef.Value;
+                    var trigger = config["trigger"];
+                    var overrideData = config["override"];
+
+                    if (trigger == null || overrideData == null)
+                    {
+                        continue;
+                    }
+
+                    // Check if trigger condition is met
+                    var needName = trigger["need"]?.Value<string>();
+                    var threshold = trigger["threshold"]?.Value<int>() ?? 30;
+                    var comparison = trigger["comparison"]?.Value<string>() ?? "lessThan";
+
+                    if (string.IsNullOrEmpty(needName))
+                    {
+                        continue;
+                    }
+
+                    // Get the need value
+                    int needValue = GetNeedValue(needs, needName);
+                    
+                    // Check comparison
+                    bool triggered = comparison == "lessThan" 
+                        ? needValue < threshold 
+                        : needValue > threshold;
+
+                    if (!triggered)
+                    {
+                        continue;
+                    }
+
+                    // Check if override applies to this phase
+                    var affectedPhases = overrideData["affectedPhases"]?.ToObject<List<string>>();
+                    if (affectedPhases != null && affectedPhases.Count > 0)
+                    {
+                        if (!affectedPhases.Contains(phase.ToString()))
+                        {
+                            continue;
+                        }
+                    }
+
+                    // Check priority
+                    var priority = overrideData["priority"]?.Value<int>() ?? 50;
+                    if (priority <= highestPriority)
+                    {
+                        continue;
+                    }
+
+                    // Create override
+                    highestPriorityOverride = new OrchestratorOverride
+                    {
+                        Type = OverrideType.NeedBased,
+                        ActivityCategory = overrideData["category"]?.Value<string>() ?? "foraging",
+                        ActivityName = overrideData["name"]?.Value<string>() ?? "Override Activity",
+                        Description = overrideData["description"]?.Value<string>() ?? "",
+                        Reason = overrideData["reason"]?.Value<string>() ?? "Need critical",
+                        Priority = priority,
+                        AddressesNeed = overrideData["addressesNeed"]?.Value<string>(),
+                        ReplaceBothSlots = overrideData["replaceBothSlots"]?.Value<bool>() ?? true,
+                        SkillAffected = overrideData["skill"]?.Value<string>(),
+                        BaseXpMin = overrideData["baseXpMin"]?.Value<int>() ?? 5,
+                        BaseXpMax = overrideData["baseXpMax"]?.Value<int>() ?? 15,
+                        ActivationText = config["activationText"]?.Value<string>()
+                    };
+                    highestPriority = priority;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error checking need-based overrides", ex);
+            }
+
+            return highestPriorityOverride;
+        }
+
+        /// <summary>
+        /// Gets the value of a company need by name string.
+        /// </summary>
+        private int GetNeedValue(CompanyNeedsState needs, string needName)
+        {
+            return needName.ToLowerInvariant() switch
+            {
+                "supplies" => needs.Supplies,
+                "rest" => needs.Rest,
+                "morale" => needs.Morale,
+                "readiness" => needs.Readiness,
+                "equipment" => needs.Equipment,
+                _ => 100
+            };
+        }
+
+        /// <summary>
+        /// Checks if it's time to inject a variety activity into the schedule.
+        /// Based on days since last injection and weekly limits.
+        /// </summary>
+        public bool ShouldInjectVariety()
+        {
+            EnsureOverrideConfigLoaded();
+
+            // Check world state - skip variety during intense activity or siege
+            var worldSituation = WorldStateAnalyzer.AnalyzeSituation();
+            if (worldSituation.ExpectedActivity == ActivityLevel.Intense)
+            {
+                var settings = _overrideConfig?["varietySettings"];
+                if (settings?["skipDuringIntense"]?.Value<bool>() == true)
+                {
+                    return false;
+                }
+            }
+
+            if (worldSituation.LordIs == LordSituation.SiegeAttacking || 
+                worldSituation.LordIs == LordSituation.SiegeDefending)
+            {
+                var settings = _overrideConfig?["varietySettings"];
+                if (settings?["skipDuringSiege"]?.Value<bool>() == true)
+                {
+                    return false;
+                }
+            }
+
+            var currentDay = (int)CampaignTime.Now.ToDays;
+
+            // Reset weekly counter if new week
+            if (currentDay - _weekStartDay >= 7)
+            {
+                _weekStartDay = currentDay;
+                _varietyInjectionsThisWeek = 0;
+            }
+
+            // Check weekly limit
+            var maxPerWeek = _overrideConfig?["varietySettings"]?["maxInjectionsPerWeek"]?.Value<int>() ?? 2;
+            if (_varietyInjectionsThisWeek >= maxPerWeek)
+            {
+                return false;
+            }
+
+            // Check minimum days between injections
+            var minDays = _overrideConfig?["varietySettings"]?["minDaysBetweenInjections"]?.Value<int>() ?? 3;
+            var daysSinceLastInjection = currentDay - _lastVarietyInjectionDay;
+            
+            if (daysSinceLastInjection < minDays)
+            {
+                return false;
+            }
+
+            // Check if we should roll for injection
+            var maxDays = _overrideConfig?["varietySettings"]?["maxDaysBetweenInjections"]?.Value<int>() ?? 5;
+            
+            // After max days, always inject
+            if (daysSinceLastInjection >= maxDays)
+            {
+                return true;
+            }
+
+            // Between min and max, use probability
+            var injectionChance = _overrideConfig?["varietySettings"]?["injectionChancePerDay"]?.Value<float>() ?? 0.35f;
+            var roll = TaleWorlds.Core.MBRandom.RandomFloat;
+            
+            return roll < injectionChance;
+        }
+
+        /// <summary>
+        /// Selects a variety injection appropriate for the given phase using weighted random selection.
+        /// </summary>
+        public OrchestratorOverride SelectVarietyInjection(DayPhase phase)
+        {
+            EnsureOverrideConfigLoaded();
+
+            if (_overrideConfig == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                var varieties = _overrideConfig["varietyInjections"] as JObject;
+                if (varieties == null)
+                {
+                    return null;
+                }
+
+                // Build weighted pool of eligible varieties for this phase
+                var eligible = new List<(string id, JToken config, int weight)>();
+                int totalWeight = 0;
+
+                foreach (var variety in varieties.Properties())
+                {
+                    var config = variety.Value;
+                    var preferredPhases = config["preferredPhases"]?.ToObject<List<string>>();
+
+                    // Check if this variety applies to current phase
+                    if (preferredPhases != null && preferredPhases.Count > 0)
+                    {
+                        if (!preferredPhases.Contains(phase.ToString()))
+                        {
+                            continue;
+                        }
+                    }
+
+                    var weight = config["weight"]?.Value<int>() ?? 10;
+                    eligible.Add((variety.Name, config, weight));
+                    totalWeight += weight;
+                }
+
+                if (eligible.Count == 0 || totalWeight == 0)
+                {
+                    return null;
+                }
+
+                // Weighted random selection
+                var roll = TaleWorlds.Core.MBRandom.RandomInt(totalWeight);
+                int cumulative = 0;
+                
+                foreach (var (id, config, weight) in eligible)
+                {
+                    cumulative += weight;
+                    if (roll < cumulative)
+                    {
+                        return new OrchestratorOverride
+                        {
+                            Type = OverrideType.VarietyInjection,
+                            ActivityCategory = config["category"]?.Value<string>() ?? "patrol",
+                            ActivityName = config["name"]?.Value<string>() ?? "Special Assignment",
+                            Description = config["description"]?.Value<string>() ?? "",
+                            Reason = "Variety assignment",
+                            Priority = 50,
+                            ReplaceBothSlots = false,
+                            AffectedPhases = new[] { phase },
+                            SkillAffected = config["skill"]?.Value<string>(),
+                            BaseXpMin = config["baseXpMin"]?.Value<int>() ?? 4,
+                            BaseXpMax = config["baseXpMax"]?.Value<int>() ?? 10,
+                            ActivationText = config["activationText"]?.Value<string>()
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error selecting variety injection", ex);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the currently active override for the specified phase, if any.
+        /// Returns null if no override is active.
+        /// </summary>
+        public OrchestratorOverride GetActiveOverride(DayPhase phase)
+        {
+            if (_currentOverride != null && _currentOverridePhase == phase)
+            {
+                return _currentOverride;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Clears the current override. Called when phase transitions or override is consumed.
+        /// </summary>
+        public void ClearCurrentOverride()
+        {
+            _currentOverride = null;
+        }
+
+        /// <summary>
+        /// Ensures the override configuration is loaded from JSON.
+        /// </summary>
+        private void EnsureOverrideConfigLoaded()
+        {
+            if (_overrideConfigLoaded)
+            {
+                return;
+            }
+
+            try
+            {
+                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData",
+                    "Enlisted", "Config", "orchestrator_overrides.json");
+
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn(LogCategory, $"Override config not found at {configPath}");
+                    _overrideConfigLoaded = true;
+                    return;
+                }
+
+                var json = File.ReadAllText(configPath);
+                _overrideConfig = JObject.Parse(json);
+                _overrideConfigLoaded = true;
+                ModLogger.Info(LogCategory, "Orchestrator override config loaded");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to load orchestrator override config", ex);
+                _overrideConfigLoaded = true;
+            }
+        }
+
+        #endregion
     }
 }

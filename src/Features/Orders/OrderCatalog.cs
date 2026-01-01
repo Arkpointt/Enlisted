@@ -208,6 +208,82 @@ namespace Enlisted.Features.Orders
         }
 
         /// <summary>
+        /// Gets the context-appropriate display title for an order based on current travel context.
+        /// Returns sea variant title if at sea and available, otherwise returns the base title.
+        /// This should be used when displaying orders to ensure correct context is shown even if
+        /// the party's travel state changed after the order was issued.
+        /// </summary>
+        public static string GetDisplayTitle(Order order)
+        {
+            if (order == null)
+            {
+                return string.Empty;
+            }
+
+            // If no context variants exist, return base title
+            if (order.ContextVariants == null || order.ContextVariants.Count == 0)
+            {
+                return order.Title ?? string.Empty;
+            }
+
+            // Get current travel context
+            var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
+            if (worldSituation == null)
+            {
+                return order.Title ?? string.Empty;
+            }
+
+            var contextKey = WorldStateAnalyzer.GetTravelContextKey(worldSituation);
+
+            // Check if we have a variant for current context
+            if (order.ContextVariants.TryGetValue(contextKey, out var variant) && 
+                !string.IsNullOrEmpty(variant.Title))
+            {
+                return variant.Title;
+            }
+
+            // Fall back to base title
+            return order.Title ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Gets the context-appropriate display description for an order based on current travel context.
+        /// Returns sea variant description if at sea and available, otherwise returns the base description.
+        /// </summary>
+        public static string GetDisplayDescription(Order order)
+        {
+            if (order == null)
+            {
+                return string.Empty;
+            }
+
+            // If no context variants exist, return base description
+            if (order.ContextVariants == null || order.ContextVariants.Count == 0)
+            {
+                return order.Description ?? string.Empty;
+            }
+
+            // Get current travel context
+            var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
+            if (worldSituation == null)
+            {
+                return order.Description ?? string.Empty;
+            }
+
+            var contextKey = WorldStateAnalyzer.GetTravelContextKey(worldSituation);
+
+            // Check if we have a variant for current context
+            if (order.ContextVariants.TryGetValue(contextKey, out var variant) && 
+                !string.IsNullOrEmpty(variant.Description))
+            {
+                return variant.Description;
+            }
+
+            // Fall back to base description
+            return order.Description ?? string.Empty;
+        }
+
+        /// <summary>
         /// Determines who issues the order based on player rank and order type.
         /// Typically issuer is 2-3 tiers above player.
         /// </summary>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Enlisted.Features.Camp;
+using Enlisted.Features.Camp.Models;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -3212,6 +3213,79 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "Failed to add camp news", ex);
+            }
+        }
+
+        /// <summary>
+        /// Adds a routine activity outcome to the personal news feed.
+        /// Called by CampRoutineProcessor after processing phase transitions.
+        /// </summary>
+        /// <param name="outcome">The routine outcome to add as news.</param>
+        public void AddRoutineOutcome(RoutineOutcome outcome)
+        {
+            try
+            {
+                if (outcome == null)
+                {
+                    return;
+                }
+
+                // Determine severity based on outcome type
+                int severityInt = outcome.Outcome switch
+                {
+                    OutcomeType.Excellent => 1,  // Positive
+                    OutcomeType.Good => 0,       // Normal
+                    OutcomeType.Normal => 0,     // Normal
+                    OutcomeType.Poor => 1,       // Attention (but mild)
+                    OutcomeType.Mishap => 2,     // Attention (something went wrong)
+                    _ => 0
+                };
+
+                // Build headline from outcome
+                string headline = outcome.GetNewsSummary();
+                
+                // Add override context if applicable
+                if (outcome.WasOverride && !string.IsNullOrEmpty(outcome.OverrideReason))
+                {
+                    headline = $"{headline} ({outcome.OverrideReason})";
+                }
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                var storyKey = $"routine:{outcome.Phase}:{outcome.ActivityCategory}:{dayNumber}";
+
+                _personalFeed ??= new List<DispatchItem>();
+
+                // Check for duplicates
+                if (_personalFeed.Any(x => x.StoryKey == storyKey))
+                {
+                    return;
+                }
+
+                _personalFeed.Add(new DispatchItem
+                {
+                    HeadlineKey = headline,
+                    DayCreated = dayNumber,
+                    Category = "routine_activity",
+                    Type = DispatchType.Report,
+                    Severity = severityInt,
+                    Confidence = 100,
+                    MinDisplayDays = 1,
+                    FirstShownDay = -1,
+                    StoryKey = storyKey
+                });
+
+                // Trim to capacity
+                while (_personalFeed.Count > MaxPersonalFeedItems)
+                {
+                    _personalFeed.RemoveAt(0);
+                }
+
+                ModLogger.Debug(LogCategory, 
+                    $"Added routine outcome: {outcome.ActivityName} ({outcome.Outcome})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add routine outcome", ex);
             }
         }
 

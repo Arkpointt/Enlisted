@@ -75,6 +75,7 @@ namespace Enlisted.Features.Camp
 
         /// <summary>
         /// Gets the baseline schedule for a day phase with all deviations applied.
+        /// First checks if the orchestrator wants to inject an override activity.
         /// </summary>
         public ScheduledPhase GetScheduleForPhase(DayPhase phase)
         {
@@ -82,12 +83,52 @@ namespace Enlisted.Features.Camp
             var worldSituation = WorldStateAnalyzer.AnalyzeSituation();
             var companyNeeds = EnlistmentBehavior.Instance?.CompanyNeeds;
 
+            // Check for orchestrator override first (foraging when low supplies, variety injections, etc.)
+            var orchestratorOverride = ContentOrchestrator.Instance?.CheckForScheduleOverride(phase);
+            if (orchestratorOverride != null)
+            {
+                ApplyOrchestratorOverride(baseline, orchestratorOverride);
+                ApplyPlayerCommitments(baseline);
+                return baseline;
+            }
+
             ApplyActivityModifiers(baseline, worldSituation.ExpectedActivity);
             ApplyLordSituationModifiers(baseline, worldSituation.LordIs);
             ApplyPressureOverrides(baseline, companyNeeds, worldSituation);
             ApplyPlayerCommitments(baseline);
 
             return baseline;
+        }
+
+        /// <summary>
+        /// Applies an orchestrator override to the schedule, replacing scheduled activities.
+        /// </summary>
+        private void ApplyOrchestratorOverride(ScheduledPhase schedule, OrchestratorOverride orchestratorOverride)
+        {
+            // Replace slot 1 with override activity
+            schedule.Slot1Category = orchestratorOverride.ActivityCategory;
+            schedule.Slot1Description = orchestratorOverride.ActivityName;
+            schedule.Slot1Weight = 2.0f; // High weight since this is an override
+            schedule.Slot1Skipped = false;
+
+            // Optionally replace slot 2 as well
+            if (orchestratorOverride.ReplaceBothSlots)
+            {
+                schedule.Slot2Category = orchestratorOverride.ActivityCategory;
+                schedule.Slot2Description = orchestratorOverride.Description ?? orchestratorOverride.ActivityName;
+                schedule.Slot2Weight = 1.5f;
+                schedule.Slot2Skipped = false;
+            }
+
+            // Mark deviation with override reason
+            schedule.DeviationReason = orchestratorOverride.Reason;
+            schedule.FlavorText = orchestratorOverride.ActivationText ?? schedule.FlavorText;
+
+            // Store override reference for processor
+            schedule.OrchestratorOverride = orchestratorOverride;
+
+            ModLogger.Debug(LogCategory, 
+                $"Applied orchestrator override: {orchestratorOverride.ActivityName} ({orchestratorOverride.Reason})");
         }
 
         /// <summary>

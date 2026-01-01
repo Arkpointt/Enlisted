@@ -215,6 +215,152 @@ Orchestrator settings in `ModuleData/Enlisted/enlisted_config.json`:
 
 ---
 
+## Camp Routine Orchestration
+
+**Added:** 2025-12-31  
+**Implementation:** `src/Features/Content/ContentOrchestrator.cs` (override system), `src/Features/Camp/CampRoutineProcessor.cs` (automatic processing)  
+**Config Files:** `orchestrator_overrides.json`, `routine_outcomes.json`
+
+The orchestrator extends beyond order event coordination to actively manage the camp's daily routine. It serves as the "brain" that responds to company needs and injects variety into camp life.
+
+### Schedule Override System
+
+The ContentOrchestrator can override the normal camp schedule (`CampScheduleManager`) when company conditions demand it:
+
+**Need-Based Overrides (Immediate Response):**
+```
+Supplies < 30  → Foraging Duty (replaces training)
+Rest < 20      → Extended Rest (skips formations)
+Readiness < 40 → Emergency Drill (extra training)
+Morale < 25    → Light Duty (morale recovery)
+```
+
+**Flow:**
+```
+OnPhaseChanged()
+    ↓
+CheckForScheduleOverride(phase)
+    ↓
+┌──────────────────────┬───────────────────────┐
+│ Critical Need?       │ Variety Due?          │
+└──────────────────────┴───────────────────────┘
+    ↓                       ↓
+NeedBasedOverride      VarietyInjection
+    ↓                       ↓
+    └───────────┬───────────┘
+                ↓
+        OrchestratorOverride
+                ↓
+CampScheduleManager.ApplyOverride()
+```
+
+**Implementation:**
+- `ContentOrchestrator.CheckForScheduleOverride()` - Checks triggers, returns override
+- `ContentOrchestrator.ShouldInjectVariety()` - Tracks timing for variety
+- `ContentOrchestrator.SelectVarietyInjection()` - Picks variety activity
+- `OrchestratorOverride` model - Data structure for overrides
+
+### Variety Injection System
+
+Periodically (every 3-5 days), the orchestrator breaks up routine with special assignments:
+
+**Variety Activities:**
+- Patrol Duty - Perimeter patrols
+- Scouting Assignment - Area reconnaissance  
+- Guard Rotation - Night watch duty
+- Supply Escort - Wagon escort duty
+- Camp Fortification - Defensive improvements
+- Equipment Inspection - Full gear check
+- Messenger Duty - Dispatch carrying
+
+**Selection Criteria:**
+- Weighted random based on phase preference
+- Skips during Intense activity or siege
+- Maximum 2 injections per week
+- Minimum 3 days between injections
+
+**Config:**
+```json
+{
+  "varietySettings": {
+    "minDaysBetweenInjections": 3,
+    "maxDaysBetweenInjections": 5,
+    "injectionChancePerDay": 0.35,
+    "maxInjectionsPerWeek": 2,
+    "skipDuringIntense": true,
+    "skipDuringSiege": true
+  }
+}
+```
+
+### Automatic Routine Processing
+
+When a phase completes, `CampRoutineProcessor` automatically processes scheduled activities:
+
+**Processing Flow:**
+```
+Phase Transition
+    ↓
+CampOpportunityGenerator.ProcessCompletedPhaseRoutine()
+    ↓
+CampRoutineProcessor.ProcessPhaseTransition(phase, schedule)
+    ↓
+For each scheduled slot:
+    ↓
+RollOutcomeType()
+    ├─ Excellent (10%) → +50% XP, bonus effects
+    ├─ Good (25%) → +20% XP
+    ├─ Normal (40%) → Base XP
+    ├─ Poor (18%) → -50% XP
+    └─ Mishap (7%) → -80% XP, potential injury
+    ↓
+ApplyEffects()
+    ├─ Hero.AddSkillXp()
+    ├─ Hero.ChangeHeroGold()
+    ├─ CompanyNeeds.ModifyNeed()
+    └─ ApplyCondition() (on mishap)
+    ↓
+┌───────────────────┬────────────────────┐
+│ Combat Log        │ News Feed          │
+│ (immediate)       │ (summary)          │
+└───────────────────┴────────────────────┘
+```
+
+**Outcome Modifiers:**
+- Player skills → Better training outcomes
+- Fatigue → More mishaps when exhausted
+- Morale → Poor outcomes when morale low
+- Equipment → Training penalties with poor gear
+- Weather/context → Siege = harsh conditions
+
+**Example Outcomes:**
+```
+[Green] Sharp focus today. Movements feel natural. (+22 OneHanded XP)
+[Gray] Another day of practice. (+10 OneHanded XP)
+[Yellow] Sluggish today. Heat didn't help. (+5 OneHanded XP)
+[Red] Twisted ankle during drill. (minor_injury)
+```
+
+**Config Files:**
+- `routine_outcomes.json` - Activity outcome tables, XP ranges, flavor text
+- `orchestrator_overrides.json` - Override triggers, variety pool
+- `camp_schedule.json` - Baseline schedules
+
+**Player Control:**
+- Player commitments override automatic processing
+- Scheduled tag appears on matching opportunities
+- Routine only processes when player has no commitment
+
+**Integration:**
+- Combat log messages with color-coded outcomes
+- News feed integration via `EnlistedNewsBehavior.AddRoutineOutcome()`
+- No popups for routine outcomes (summary only)
+- Decision opportunities still fire for meaningful choices
+
+**Related Docs:** [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md), [Event System Schemas](event-system-schemas.md#camp-routine-configs)
+
+---
+
 ## Content Types
 
 ### Orders

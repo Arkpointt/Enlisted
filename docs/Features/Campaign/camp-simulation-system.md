@@ -743,6 +743,43 @@ if (companyStressed)
 var candidates = GenerateCandidates(worldState, pressure);
 ```
 
+### Orchestrator Override System
+
+**Added:** 2025-12-31 - The orchestrator now actively manages the camp routine schedule.
+
+**Schedule Overrides:**
+The ContentOrchestrator can override the baseline camp schedule when company needs are critical:
+- Supplies < 30 → Foraging Duty (replaces training)
+- Rest < 20 → Extended Rest (skips formations)
+- Readiness < 40 → Emergency Drill (extra training)
+- Morale < 25 → Light Duty (morale recovery)
+
+**Variety Injections:**
+Periodically (every 3-5 days), the orchestrator injects special assignments to break monotony:
+- Patrol Duty, Scouting Assignment, Guard Rotation, etc.
+
+**Automatic Routine Processing:**
+At phase boundaries, `CampRoutineProcessor` automatically processes scheduled activities and generates outcomes with dynamic rolls (Excellent/Good/Normal/Poor/Mishap), applying XP, resources, and conditions without player interaction.
+
+**Integration:**
+```csharp
+// At phase transition
+var override = ContentOrchestrator.Instance.CheckForScheduleOverride(phase);
+if (override != null)
+{
+    // Apply foraging/rest/drill override
+    CampScheduleManager.Instance.ApplyOverride(override);
+}
+
+// Process completed phase routine
+CampRoutineProcessor.ProcessPhaseTransition(completedPhase, schedule);
+// → Generates combat log messages
+// → Adds news feed entries
+// → Applies XP, gold, supply changes
+```
+
+**Related Docs:** [Camp Routine Schedule](camp-routine-schedule-spec.md), [Content System Architecture](../Content/content-system-architecture.md#camp-routine-orchestration)
+
 ---
 
 ## News Feed Integration

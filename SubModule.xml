@@ -16,10 +16,22 @@
         <DependedModule Id="Bannerlord.Harmony" DependentVersion="v2.4.2.225"/>
     </DependedModules>
     <SubModules>
+        <!-- Core SubModule (Required) -->
         <SubModule>
-            <Name value="Enlisted"/>
+            <Name value="Enlisted Core"/>
             <DLLName value="Enlisted.dll"/>
             <SubModuleClassType value="Enlisted.Mod.Entry.SubModule"/>
+            <Tags>
+                <Tag key="DedicatedServerType" value="none"/>
+                <Tag key="IsNoRenderModeElement" value="false"/>
+            </Tags>
+        </SubModule>
+        
+        <!-- Battle AI SubModule (Optional - can be disabled in Bannerlord launcher) -->
+        <SubModule>
+            <Name value="Enlisted Battle AI"/>
+            <DLLName value="Enlisted.dll"/>
+            <SubModuleClassType value="Enlisted.Features.Combat.BattleAI.BattleAISubModule"/>
             <Tags>
                 <Tag key="DedicatedServerType" value="none"/>
                 <Tag key="IsNoRenderModeElement" value="false"/>

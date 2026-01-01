@@ -1,0 +1,534 @@
+{
+  "schemaVersion": 1,
+  "description": "Outcome tables for routine activities. Weights determine probability, rewards vary by outcome quality.",
+  "outcomeWeights": {
+    "default": {
+      "excellent": 10,
+      "good": 25,
+      "normal": 40,
+      "poor": 18,
+      "mishap": 7
+    },
+    "highSkill": {
+      "excellent": 20,
+      "good": 35,
+      "normal": 30,
+      "poor": 12,
+      "mishap": 3
+    },
+    "fatigued": {
+      "excellent": 5,
+      "good": 15,
+      "normal": 35,
+      "poor": 30,
+      "mishap": 15
+    },
+    "lowMorale": {
+      "excellent": 5,
+      "good": 20,
+      "normal": 35,
+      "poor": 28,
+      "mishap": 12
+    }
+  },
+  "activities": {
+    "formation": {
+      "name": "Formation",
+      "skill": "Discipline",
+      "xpRanges": {
+        "excellent": { "min": 15, "max": 22 },
+        "good": { "min": 10, "max": 15 },
+        "normal": { "min": 6, "max": 10 },
+        "poor": { "min": 2, "max": 5 },
+        "mishap": { "min": 0, "max": 2 }
+      },
+      "fatigueChange": 5,
+      "flavorText": {
+        "excellent": [
+          "Perfect alignment. The sergeant nods approval.",
+          "Sharp drill. Officers took notice.",
+          "Crisp movements. Best formation in the company."
+        ],
+        "good": [
+          "Solid formation. No complaints.",
+          "Good showing. You kept pace well.",
+          "Steady drill. The sergeant seemed satisfied."
+        ],
+        "normal": [
+          "Standard formation. Another morning drill.",
+          "Routine inspection passed.",
+          "Formation completed without incident."
+        ],
+        "poor": [
+          "Sloppy. The sergeant's eye lingered on you.",
+          "Out of step. Drew a few looks.",
+          "Distracted. Barely kept up."
+        ],
+        "mishap": [
+          "Stumbled during drill. Earned extra duty.",
+          "Wrong turn. Made the whole line look bad.",
+          "Dropped your weapon. The sergeant's face said it all."
+        ]
+      }
+    },
+    "training": {
+      "name": "Combat Training",
+      "skill": "OneHanded",
+      "xpRanges": {
+        "excellent": { "min": 18, "max": 28 },
+        "good": { "min": 12, "max": 18 },
+        "normal": { "min": 8, "max": 12 },
+        "poor": { "min": 3, "max": 7 },
+        "mishap": { "min": 0, "max": 3 }
+      },
+      "fatigueChange": 12,
+      "mishapCondition": "minor_injury",
+      "mishapChance": 0.4,
+      "flavorText": {
+        "excellent": [
+          "Sharp focus today. Movements feel natural.",
+          "Everything clicked. A veteran watched approvingly.",
+          "Best session in weeks. The muscle memory is building."
+        ],
+        "good": [
+          "Solid session. The drills are paying off.",
+          "Good practice. You're getting faster.",
+          "Strong work. Sword arm feels sure."
+        ],
+        "normal": [
+          "Another day of practice.",
+          "Standard drills completed.",
+          "Training went as expected."
+        ],
+        "poor": [
+          "Distracted. Sergeant noticed.",
+          "Sluggish today. The heat didn't help.",
+          "Off rhythm. Need to focus."
+        ],
+        "mishap": [
+          "Twisted ankle during drill.",
+          "Training partner's swing caught you wrong.",
+          "Overextended. Pulled something."
+        ]
+      }
+    },
+    "work": {
+      "name": "Work Detail",
+      "skill": "Athletics",
+      "xpRanges": {
+        "excellent": { "min": 8, "max": 14 },
+        "good": { "min": 5, "max": 10 },
+        "normal": { "min": 3, "max": 6 },
+        "poor": { "min": 1, "max": 3 },
+        "mishap": { "min": 0, "max": 1 }
+      },
+      "fatigueChange": 15,
+      "goldChance": {
+        "excellent": 0.3,
+        "good": 0.15,
+        "normal": 0.05
+      },
+      "goldRange": { "min": 5, "max": 25 },
+      "flavorText": {
+        "excellent": [
+          "Found a forgotten pouch while digging latrines.",
+          "Efficient work. Finished early, earned coin.",
+          "Good haul. Extra supplies discovered."
+        ],
+        "good": [
+          "Honest work done. Muscles ache, but satisfied.",
+          "Solid effort. Quota met ahead of time.",
+          "Good labor. The quartermaster approved."
+        ],
+        "normal": [
+          "Work details completed.",
+          "Another day of labor.",
+          "Tasks finished. Nothing special."
+        ],
+        "poor": [
+          "Slow progress. Extra hours needed.",
+          "Struggled with the work. Exhausted.",
+          "Behind quota. Not your best day."
+        ],
+        "mishap": [
+          "Dropped a supply crate. Something broke.",
+          "Tool slipped. Cut your hand.",
+          "Back gave out. Need rest."
+        ]
+      }
+    },
+    "social": {
+      "name": "Social Time",
+      "skill": "Charm",
+      "xpRanges": {
+        "excellent": { "min": 10, "max": 15 },
+        "good": { "min": 6, "max": 10 },
+        "normal": { "min": 3, "max": 6 },
+        "poor": { "min": 1, "max": 3 },
+        "mishap": { "min": 0, "max": 1 }
+      },
+      "fatigueChange": -5,
+      "moraleChange": {
+        "excellent": 8,
+        "good": 5,
+        "normal": 2,
+        "poor": 0,
+        "mishap": -5
+      },
+      "flavorText": {
+        "excellent": [
+          "Good stories around the fire. Spirits high.",
+          "Made new friends. The ale flowed freely.",
+          "Laughter and camaraderie. Good for the soul."
+        ],
+        "good": [
+          "Pleasant evening with comrades.",
+          "Shared stories. Good company.",
+          "Relaxed time. Bonds strengthened."
+        ],
+        "normal": [
+          "Quiet evening. Rest well earned.",
+          "Time with the lads. Nothing special.",
+          "Standard camp life. Familiar faces."
+        ],
+        "poor": [
+          "Kept to yourself. Not feeling social.",
+          "Arguments in camp. Tension in the air.",
+          "Awkward evening. Better to have stayed away."
+        ],
+        "mishap": [
+          "Drinking contest gone wrong. Feeling terrible.",
+          "Said the wrong thing. Made enemies.",
+          "Fight broke out. You're involved now."
+        ]
+      }
+    },
+    "economic": {
+      "name": "Trading",
+      "skill": "Trade",
+      "xpRanges": {
+        "excellent": { "min": 8, "max": 12 },
+        "good": { "min": 4, "max": 8 },
+        "normal": { "min": 2, "max": 4 },
+        "poor": { "min": 0, "max": 2 },
+        "mishap": { "min": 0, "max": 0 }
+      },
+      "fatigueChange": 3,
+      "goldChance": {
+        "excellent": 0.6,
+        "good": 0.4,
+        "normal": 0.2,
+        "poor": 0.05
+      },
+      "goldRange": { "min": 10, "max": 50 },
+      "goldLossChance": {
+        "mishap": 0.7
+      },
+      "goldLossRange": { "min": 5, "max": 30 },
+      "flavorText": {
+        "excellent": [
+          "Sharp dealing. Came out well ahead.",
+          "Good trades. Coin purse is heavier.",
+          "Shrewd bargaining. Made real profit."
+        ],
+        "good": [
+          "Fair trades made. Small profit.",
+          "Decent dealing. Nothing lost, something gained.",
+          "Good exchange. Worth the time."
+        ],
+        "normal": [
+          "Some trading done. Broke even.",
+          "Market time. Nothing remarkable.",
+          "Traded supplies. Standard rates."
+        ],
+        "poor": [
+          "Bad deals. Should have walked away.",
+          "Cheated by a merchant. Lesson learned.",
+          "Lost out on trades. Not your day."
+        ],
+        "mishap": [
+          "Gambling debt. Lost more than you should.",
+          "Scammed. Purse is lighter.",
+          "Dice weren't kind. Significant losses."
+        ]
+      }
+    },
+    "recovery": {
+      "name": "Rest",
+      "skill": "Medicine",
+      "xpRanges": {
+        "excellent": { "min": 3, "max": 5 },
+        "good": { "min": 2, "max": 3 },
+        "normal": { "min": 0, "max": 2 },
+        "poor": { "min": 0, "max": 0 },
+        "mishap": { "min": 0, "max": 0 }
+      },
+      "fatigueChange": -25,
+      "recoveryBonus": {
+        "excellent": 1.5,
+        "good": 1.2,
+        "normal": 1.0,
+        "poor": 0.7,
+        "mishap": 0.3
+      },
+      "flavorText": {
+        "excellent": [
+          "Deep, restful sleep. Feel renewed.",
+          "Best rest in weeks. Ready for anything.",
+          "Woke refreshed. Body and mind restored."
+        ],
+        "good": [
+          "Good rest. Feeling better.",
+          "Solid sleep. Recovered well.",
+          "Decent rest. Ready for tomorrow."
+        ],
+        "normal": [
+          "Adequate rest. Morning comes too soon.",
+          "Sleep came eventually. Passable night.",
+          "Rested. Not great, not terrible."
+        ],
+        "poor": [
+          "Restless night. Noise kept you awake.",
+          "Couldn't settle. Mind racing.",
+          "Poor sleep. Still tired."
+        ],
+        "mishap": [
+          "Nightmares. Woke in cold sweat.",
+          "Illness stirring. Stomach troubles.",
+          "Couldn't sleep at all. Exhausted."
+        ]
+      }
+    },
+    "foraging": {
+      "name": "Foraging Duty",
+      "skill": "Scouting",
+      "xpRanges": {
+        "excellent": { "min": 12, "max": 18 },
+        "good": { "min": 8, "max": 12 },
+        "normal": { "min": 4, "max": 8 },
+        "poor": { "min": 1, "max": 4 },
+        "mishap": { "min": 0, "max": 1 }
+      },
+      "fatigueChange": 18,
+      "supplyChange": {
+        "excellent": { "min": 30, "max": 50 },
+        "good": { "min": 15, "max": 30 },
+        "normal": { "min": 5, "max": 15 },
+        "poor": { "min": 0, "max": 5 },
+        "mishap": { "min": -10, "max": 0 }
+      },
+      "mishapCondition": "minor_injury",
+      "mishapChance": 0.3,
+      "flavorText": {
+        "excellent": [
+          "Excellent foraging. Found fresh game and wild vegetables.",
+          "Good hunting grounds discovered. Brought back plenty.",
+          "Rich pickings today. Supplies significantly boosted."
+        ],
+        "good": [
+          "Successful foraging. Decent haul.",
+          "Found good resources. Worth the effort.",
+          "Productive day in the field."
+        ],
+        "normal": [
+          "Standard foraging run. Some supplies gathered.",
+          "Returned with what we could find.",
+          "Modest pickings. Better than nothing."
+        ],
+        "poor": [
+          "Slim pickings. Land is picked over.",
+          "Long hours for little result.",
+          "Barely found anything. Disappointing."
+        ],
+        "mishap": [
+          "Got lost. Returned late and empty-handed.",
+          "Injured by thorns. Had to abandon search.",
+          "Ran into trouble. Lucky to get back."
+        ]
+      }
+    },
+    "patrol": {
+      "name": "Patrol Duty",
+      "skill": "Scouting",
+      "xpRanges": {
+        "excellent": { "min": 10, "max": 16 },
+        "good": { "min": 6, "max": 10 },
+        "normal": { "min": 3, "max": 6 },
+        "poor": { "min": 1, "max": 3 },
+        "mishap": { "min": 0, "max": 1 }
+      },
+      "fatigueChange": 12,
+      "goldChance": {
+        "excellent": 0.2
+      },
+      "goldRange": { "min": 5, "max": 20 },
+      "flavorText": {
+        "excellent": [
+          "Sharp patrol. Spotted potential threat early. Reported to command.",
+          "Found abandoned supplies on route. Good haul.",
+          "Excellent observation. Noticed things others missed."
+        ],
+        "good": [
+          "Thorough patrol. Perimeter secure.",
+          "Good watchfulness. All clear.",
+          "Solid patrol duty. Nothing slipped by."
+        ],
+        "normal": [
+          "Patrol completed. Uneventful.",
+          "Perimeter checked. All quiet.",
+          "Standard patrol. Nothing to report."
+        ],
+        "poor": [
+          "Distracted on patrol. Sergeant noticed.",
+          "Nearly missed a checkpoint. Close call.",
+          "Sloppy patrol. Need to stay alert."
+        ],
+        "mishap": [
+          "Got turned around. Reported late.",
+          "Fell into a ditch. Twisted something.",
+          "Almost walked into an ambush. Lucky escape."
+        ]
+      }
+    },
+    "extended_rest": {
+      "name": "Extended Rest",
+      "skill": "Medicine",
+      "xpRanges": {
+        "excellent": { "min": 2, "max": 4 },
+        "good": { "min": 1, "max": 2 },
+        "normal": { "min": 0, "max": 1 },
+        "poor": { "min": 0, "max": 0 },
+        "mishap": { "min": 0, "max": 0 }
+      },
+      "fatigueChange": -40,
+      "moraleChange": {
+        "excellent": 5,
+        "good": 3,
+        "normal": 1,
+        "poor": 0,
+        "mishap": -2
+      },
+      "flavorText": {
+        "excellent": [
+          "Full day of rest. Completely recovered.",
+          "Sergeant granted easy duty. Feel like a new man.",
+          "Real rest at last. Ready for anything."
+        ],
+        "good": [
+          "Good rest period. Much needed.",
+          "Easy day. Body appreciates it.",
+          "Light duty. Feeling better."
+        ],
+        "normal": [
+          "Rest period granted. Adequate recovery.",
+          "Half-day rest. Some improvement.",
+          "Light duty today. Helped somewhat."
+        ],
+        "poor": [
+          "Rest interrupted. Still tired.",
+          "Couldn't fully relax. Worries persist.",
+          "Rest period cut short. Not enough."
+        ],
+        "mishap": [
+          "Called for duty during rest. Frustrated.",
+          "Rest disturbed. Feel worse than before.",
+          "No real rest. Something always needed."
+        ]
+      }
+    },
+    "emergency_drill": {
+      "name": "Emergency Drill",
+      "skill": "Tactics",
+      "xpRanges": {
+        "excellent": { "min": 15, "max": 24 },
+        "good": { "min": 10, "max": 15 },
+        "normal": { "min": 5, "max": 10 },
+        "poor": { "min": 2, "max": 5 },
+        "mishap": { "min": 0, "max": 2 }
+      },
+      "fatigueChange": 20,
+      "readinessChange": {
+        "excellent": 15,
+        "good": 10,
+        "normal": 5,
+        "poor": 2,
+        "mishap": 0
+      },
+      "mishapCondition": "minor_injury",
+      "mishapChance": 0.35,
+      "flavorText": {
+        "excellent": [
+          "Intense drill. Pushed through. Ready for anything.",
+          "Emergency readiness achieved. The company is sharp.",
+          "Hard training pays off. Reflexes are razor-sharp."
+        ],
+        "good": [
+          "Good emergency drill. Readiness improved.",
+          "Hard work but worth it. More prepared now.",
+          "Solid drill performance. Getting there."
+        ],
+        "normal": [
+          "Emergency drill completed. Standard performance.",
+          "Extra training done. Some improvement.",
+          "Drill finished. Adequate results."
+        ],
+        "poor": [
+          "Struggled with the pace. Barely kept up.",
+          "Emergency drill was rough. Exhausted.",
+          "Not ready. Need more practice."
+        ],
+        "mishap": [
+          "Injured during drill. Too intense.",
+          "Pushed too hard. Something gave.",
+          "Collapsed from exhaustion. Carried back."
+        ]
+      }
+    },
+    "light_duty": {
+      "name": "Light Duty",
+      "skill": "Steward",
+      "xpRanges": {
+        "excellent": { "min": 4, "max": 7 },
+        "good": { "min": 2, "max": 4 },
+        "normal": { "min": 1, "max": 2 },
+        "poor": { "min": 0, "max": 1 },
+        "mishap": { "min": 0, "max": 0 }
+      },
+      "fatigueChange": -10,
+      "moraleChange": {
+        "excellent": 10,
+        "good": 6,
+        "normal": 3,
+        "poor": 1,
+        "mishap": -3
+      },
+      "flavorText": {
+        "excellent": [
+          "Easy day. Spirits lifted across the company.",
+          "Light duty and good company. Morale soaring.",
+          "Relaxed atmosphere. The men needed this."
+        ],
+        "good": [
+          "Light workload. Appreciated by all.",
+          "Easy duties today. Good for morale.",
+          "Lighter schedule. Men seem happier."
+        ],
+        "normal": [
+          "Light duty day. Some rest.",
+          "Easier workload. Welcome change.",
+          "Not much expected today. Fine with that."
+        ],
+        "poor": [
+          "Even light duty felt like a chore.",
+          "Still grumbling despite easy work.",
+          "Low energy even with light duties."
+        ],
+        "mishap": [
+          "Arguments despite easy day. Tensions high.",
+          "Light duty interrupted by crisis.",
+          "Couldn't enjoy the break. Worries mount."
+        ]
+      }
+    }
+  }
+}

@@ -681,7 +681,9 @@ Basic soldier orders have nautical text variants that display when the party is 
 | Sentry Post | Sentry Post | Masthead Watch |
 | Muster Inspection | Muster Inspection | Deck Muster |
 
-Applied automatically by `OrderCatalog.ApplyContextVariant()` when `MobileParty.IsCurrentlyAtSea == true`.
+**Dynamic Display:** Context variants are applied dynamically whenever an order is displayed to the player using `OrderCatalog.GetDisplayTitle()` and `OrderCatalog.GetDisplayDescription()`. This means if a party goes to sea after an order was issued on land, the order will automatically show its sea variant ("Hull Inspection" instead of "Camp Patrol") throughout all UI elements.
+
+**Detection:** Uses `MobileParty.IsCurrentlyAtSea == true` via `WorldStateAnalyzer.DetectTravelContext()` to determine current context at display time.
 
 ### 2. Land-Only Orders (T4-T6)
 

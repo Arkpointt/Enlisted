@@ -46,6 +46,10 @@ namespace Enlisted.Features.Camp
         // Cached opportunities for current phase
         private List<CampOpportunity> _cachedOpportunities;
         private DayPhase _cachePhase = DayPhase.Night;
+        
+        // Track previous phase for routine processing
+        private DayPhase _previousPhase = DayPhase.Night;
+        private bool _hasProcessedFirstPhase;
 
         public CampOpportunityGenerator()
         {
@@ -517,16 +521,58 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Called when day phase changes. Invalidates the opportunity cache and updates the schedule.
+        /// Called when day phase changes. Processes routine for the completed phase,
+        /// invalidates the opportunity cache, and updates the schedule for the new phase.
         /// </summary>
         public void OnPhaseChanged(DayPhase newPhase)
         {
+            // Process routine for the completed phase (the previous phase)
+            if (_hasProcessedFirstPhase && _previousPhase != newPhase)
+            {
+                ProcessCompletedPhaseRoutine(_previousPhase);
+            }
+            
+            // Track for next transition
+            _previousPhase = newPhase;
+            _hasProcessedFirstPhase = true;
+            
+            // Invalidate opportunity cache
             _cachedOpportunities = null;
             
             // Update the schedule manager for the new phase
             CampScheduleManager.Instance?.OnPhaseChanged(newPhase);
             
-            ModLogger.Debug(LogCategory, $"Cache invalidated for phase change to {newPhase}");
+            ModLogger.Debug(LogCategory, $"Phase changed to {newPhase}, cache invalidated");
+        }
+
+        /// <summary>
+        /// Processes the automatic routine activities for a completed phase.
+        /// Generates outcomes and applies them to player state.
+        /// </summary>
+        private void ProcessCompletedPhaseRoutine(DayPhase completedPhase)
+        {
+            // Only process if player is enlisted
+            if (EnlistmentBehavior.Instance?.IsEnlisted != true)
+            {
+                return;
+            }
+
+            // Get the schedule that was active for the completed phase
+            var schedule = CampScheduleManager.Instance?.GetScheduleForPhase(completedPhase);
+            if (schedule == null)
+            {
+                ModLogger.Debug(LogCategory, $"No schedule for completed phase {completedPhase}");
+                return;
+            }
+
+            // Process routine and get outcomes
+            var outcomes = CampRoutineProcessor.ProcessPhaseTransition(completedPhase, schedule);
+            
+            if (outcomes.Count > 0)
+            {
+                ModLogger.Info(LogCategory, 
+                    $"Processed {outcomes.Count} routine activities for {completedPhase}");
+            }
         }
 
         /// <summary>

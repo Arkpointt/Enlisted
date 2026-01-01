@@ -1,3 +1,4 @@
+using Enlisted.Features.Content;
 using Enlisted.Features.Content.Models;
 
 namespace Enlisted.Features.Camp.Models
@@ -82,6 +83,12 @@ namespace Enlisted.Features.Camp.Models
         public string FlavorText { get; set; }
 
         /// <summary>
+        /// Orchestrator override that created this schedule deviation, if any.
+        /// Used by CampRoutineProcessor to apply override-specific processing.
+        /// </summary>
+        public OrchestratorOverride OrchestratorOverride { get; set; }
+
+        /// <summary>
         /// Creates a copy of this schedule with independent property values.
         /// </summary>
         public ScheduledPhase Clone()
@@ -100,7 +107,8 @@ namespace Enlisted.Features.Camp.Models
                 DeviationReason = DeviationReason,
                 HasPlayerCommitment = HasPlayerCommitment,
                 PlayerCommitmentTitle = PlayerCommitmentTitle,
-                FlavorText = FlavorText
+                FlavorText = FlavorText,
+                OrchestratorOverride = OrchestratorOverride
             };
         }
     }

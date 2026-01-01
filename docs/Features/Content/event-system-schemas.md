@@ -1,10 +1,10 @@
 # Event System Schemas
 
-**Summary:** Authoritative JSON schema definitions for events, decisions, and orders. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
+**Summary:** Authoritative JSON schema definitions for events, decisions, orders, and camp routine configs. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-30 (Updated Camp Opportunities Schema to match implementation; renumbered phases)  
-**Related Docs:** [Content System Architecture](content-system-architecture.md), [Event Catalog](../../Content/event-catalog-by-system.md), [Quartermaster System](../Equipment/quartermaster-system.md)
+**Last Updated:** 2025-12-31 (Added camp routine config schemas: routine_outcomes.json, orchestrator_overrides.json)  
+**Related Docs:** [Content System Architecture](content-system-architecture.md), [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md), [Event Catalog](../../Content/event-catalog-by-system.md), [Quartermaster System](../Equipment/quartermaster-system.md)
 
 ---
 
@@ -2202,7 +2202,8 @@ Optional skill check that modifies option outcomes:
 
 ### Order Context Variants (Sea/Land Awareness)
 
-**Added:** 2025-12-31
+**Added:** 2025-12-31  
+**Updated:** 2025-12-31 - Dynamic display system
 
 Orders support context-variant text to adapt flavor text for sea vs land travel. When at sea (Warsails DLC), orders can display nautical-themed titles and descriptions.
 
@@ -2224,11 +2225,22 @@ Orders support context-variant text to adapt flavor text for sea vs land travel.
 }
 ```
 
-**Behavior:**
-- `OrderCatalog.SelectOrder()` checks `WorldStateAnalyzer.DetectTravelContext()`
-- If `MobileParty.IsCurrentlyAtSea == true` (Warsails DLC), applies "sea" variant
-- Falls back to default Title/Description if no variant exists
+**Dynamic Display Behavior:**
+- Context variants are resolved **at display time**, not at order creation time
+- `OrderCatalog.GetDisplayTitle(order)` - Returns context-appropriate title based on current travel state
+- `OrderCatalog.GetDisplayDescription(order)` - Returns context-appropriate description based on current travel state
+- If party goes to sea after an order was issued on land, all UI elements automatically show the sea variant
+- Checks `WorldStateAnalyzer.DetectTravelContext()` which uses `MobileParty.IsCurrentlyAtSea` (Warsails DLC)
+- Falls back to default Title/Description if no variant exists for current context
 - Works without Warsails DLC installed (defaults to "land" context)
+
+**Applied Throughout UI:**
+- Enlisted menu order display
+- Daily Brief forecasts
+- Order detail popups
+- Order notifications (issued, started, completed, declined)
+- Duty log and status summaries
+- News system reports
 
 **World State Integration:**
 - `WorldSituation.TravelContext` enum: `Land`, `Sea`
@@ -2288,6 +2300,329 @@ For reference when reviewing event master document:
 - `XP.{Skill}` = Skill XP (`skillXp.{Skill}`)
 
 **See Also:** [Order Events Master](../../AFEATURE/order-events-master.md) for complete event catalog.
+
+---
+
+## Camp Routine Configs
+
+**Added:** 2025-12-31  
+**Related Docs:** [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md)
+
+Three configuration files define the camp routine system:
+
+### routine_outcomes.json
+
+Defines outcome tables for automatic routine activities. Each activity has weighted outcome probabilities and effect ranges.
+
+**Location:** `ModuleData/Enlisted/Config/routine_outcomes.json`
+
+**Root Structure:**
+```json
+{
+  "schemaVersion": 1,
+  "description": "Outcome tables for routine activities",
+  "outcomeWeights": { ... },
+  "activities": { ... }
+}
+```
+
+#### Outcome Weights
+
+Weight sets determine probability distribution for outcome quality rolls:
+
+```json
+{
+  "outcomeWeights": {
+    "default": {
+      "excellent": 10,
+      "good": 25,
+      "normal": 40,
+      "poor": 18,
+      "mishap": 7
+    },
+    "highSkill": {
+      "excellent": 20,
+      "good": 35,
+      "normal": 30,
+      "poor": 12,
+      "mishap": 3
+    },
+    "fatigued": {
+      "excellent": 5,
+      "good": 15,
+      "normal": 35,
+      "poor": 30,
+      "mishap": 15
+    },
+    "lowMorale": {
+      "excellent": 5,
+      "good": 20,
+      "normal": 35,
+      "poor": 28,
+      "mishap": 12
+    }
+  }
+}
+```
+
+**Weight Sets:**
+- `default` - Normal conditions
+- `highSkill` - Player skilled in activity (bonus to excellent/good)
+- `fatigued` - Player exhausted (penalty, more mishaps)
+- `lowMorale` - Company morale low (mediocre outcomes)
+
+#### Activity Definitions
+
+Each activity category has outcome ranges and flavor text:
+
+```json
+{
+  "activities": {
+    "training": {
+      "name": "Combat Training",
+      "skill": "OneHanded",
+      "xpRanges": {
+        "excellent": { "min": 18, "max": 28 },
+        "good": { "min": 12, "max": 18 },
+        "normal": { "min": 8, "max": 12 },
+        "poor": { "min": 3, "max": 7 },
+        "mishap": { "min": 0, "max": 3 }
+      },
+      "fatigueChange": 12,
+      "mishapCondition": "minor_injury",
+      "mishapChance": 0.4,
+      "flavorText": {
+        "excellent": [
+          "Sharp focus today. Movements feel natural.",
+          "Everything clicked. A veteran watched approvingly."
+        ],
+        "good": [
+          "Solid session. The drills are paying off.",
+          "Good practice. You're getting faster."
+        ],
+        "normal": [
+          "Another day of practice.",
+          "Standard drills completed."
+        ],
+        "poor": [
+          "Distracted. Sergeant noticed.",
+          "Sluggish today. The heat didn't help."
+        ],
+        "mishap": [
+          "Twisted ankle during drill.",
+          "Training partner's swing caught you wrong."
+        ]
+      }
+    }
+  }
+}
+```
+
+**Activity Fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | ✅ | Display name for activity |
+| `skill` | string | ✅ | Skill receiving XP (OneHanded, Scouting, etc.) |
+| `xpRanges` | object | ✅ | Min/max XP for each outcome type |
+| `fatigueChange` | int | ❌ | Base fatigue cost (positive = tiring) |
+| `goldChance` | object | ❌ | Probability of finding gold per outcome type |
+| `goldRange` | object | ❌ | Min/max gold if found |
+| `goldLossChance` | object | ❌ | Probability of losing gold (mishap) |
+| `goldLossRange` | object | ❌ | Min/max gold loss |
+| `supplyChange` | object | ❌ | Min/max supply gain/loss per outcome type |
+| `moraleChange` | object | ❌ | Morale change per outcome type |
+| `mishapCondition` | string | ❌ | Condition ID applied on mishap |
+| `mishapChance` | float | ❌ | Probability condition applies (0.0-1.0) |
+| `flavorText` | object | ✅ | Array of text variants per outcome type |
+
+**Built-in Activities:**
+- `formation` - Morning formations (Discipline XP)
+- `training` - Combat training (OneHanded XP)
+- `work` - Work details (Athletics XP, gold chance)
+- `social` - Social time (Charm XP, morale boost)
+- `economic` - Trading (Trade XP, gold chance/loss)
+- `recovery` - Rest (Medicine XP, fatigue recovery)
+- `foraging` - Foraging duty (Scouting XP, supply gain)
+- `patrol` - Patrol duty (Scouting XP)
+- `extended_rest` - Extended rest (Medicine XP, high recovery)
+- `emergency_drill` - Emergency drill (Tactics XP, readiness boost)
+- `light_duty` - Light duty (Steward XP, morale boost)
+
+### orchestrator_overrides.json
+
+Defines when the ContentOrchestrator can inject overrides into the schedule.
+
+**Location:** `ModuleData/Enlisted/Config/orchestrator_overrides.json`
+
+**Root Structure:**
+```json
+{
+  "schemaVersion": 1,
+  "description": "Orchestrator override definitions",
+  "needBasedOverrides": { ... },
+  "varietyInjections": { ... },
+  "varietySettings": { ... },
+  "priorityRules": { ... }
+}
+```
+
+#### Need-Based Overrides
+
+Triggered automatically when company needs cross thresholds:
+
+```json
+{
+  "needBasedOverrides": {
+    "low_supplies": {
+      "trigger": {
+        "need": "supplies",
+        "threshold": 30,
+        "comparison": "lessThan"
+      },
+      "override": {
+        "category": "foraging",
+        "name": "Foraging Duty",
+        "description": "Company sent to gather supplies",
+        "reason": "Supplies critical",
+        "priority": 100,
+        "addressesNeed": "supplies",
+        "replaceBothSlots": true,
+        "affectedPhases": ["Midday"],
+        "skill": "Scouting",
+        "baseXpMin": 8,
+        "baseXpMax": 15
+      },
+      "activationText": "No training today. Entire company on foraging duty.",
+      "recoveryThreshold": 50,
+      "cooldownDays": 0
+    }
+  }
+}
+```
+
+**Trigger Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `need` | string | Need to check: "supplies", "rest", "morale", "readiness", "equipment" |
+| `threshold` | int | Value threshold (0-100) |
+| `comparison` | string | "lessThan" or "greaterThan" |
+
+**Override Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `category` | string | Activity category (foraging, patrol, extended_rest, etc.) |
+| `name` | string | Display name |
+| `description` | string | Description for schedule |
+| `reason` | string | Reason shown in UI |
+| `priority` | int | Priority for conflict resolution (higher wins) |
+| `addressesNeed` | string | Need this override addresses |
+| `replaceBothSlots` | bool | Replace both activity slots in phase |
+| `affectedPhases` | array | Phases this applies to (empty = all phases) |
+| `skill` | string | Skill receiving XP |
+| `baseXpMin` | int | Minimum XP range |
+| `baseXpMax` | int | Maximum XP range |
+
+**Root Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `activationText` | string | Combat log message when override activates |
+| `recoveryThreshold` | int | Need value to deactivate override |
+| `cooldownDays` | int | Days before override can trigger again |
+
+#### Variety Injections
+
+Special assignments injected periodically to break monotony:
+
+```json
+{
+  "varietyInjections": {
+    "patrol_duty": {
+      "category": "patrol",
+      "name": "Patrol Duty",
+      "description": "Assigned to patrol the perimeter",
+      "preferredPhases": ["Dawn", "Midday"],
+      "weight": 30,
+      "skill": "Scouting",
+      "baseXpMin": 5,
+      "baseXpMax": 12,
+      "activationText": "Assigned to patrol duty this morning."
+    }
+  }
+}
+```
+
+**Variety Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `category` | string | Activity category |
+| `name` | string | Display name |
+| `description` | string | Description for schedule |
+| `preferredPhases` | array | Phases this variety prefers |
+| `weight` | int | Selection weight (higher = more likely) |
+| `skill` | string | Skill receiving XP |
+| `baseXpMin` | int | Minimum XP range |
+| `baseXpMax` | int | Maximum XP range |
+| `activationText` | string | Combat log message when variety triggers |
+
+#### Variety Settings
+
+Controls variety injection frequency:
+
+```json
+{
+  "varietySettings": {
+    "minDaysBetweenInjections": 3,
+    "maxDaysBetweenInjections": 5,
+    "injectionChancePerDay": 0.35,
+    "maxInjectionsPerWeek": 2,
+    "skipDuringIntense": true,
+    "skipDuringSiege": true
+  }
+}
+```
+
+**Settings Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `minDaysBetweenInjections` | int | Minimum days between variety |
+| `maxDaysBetweenInjections` | int | Maximum days (always inject after this) |
+| `injectionChancePerDay` | float | Daily probability (0.0-1.0) |
+| `maxInjectionsPerWeek` | int | Weekly cap on injections |
+| `skipDuringIntense` | bool | Skip during Intense activity level |
+| `skipDuringSiege` | bool | Skip during siege situations |
+
+#### Priority Rules
+
+Conflict resolution settings:
+
+```json
+{
+  "priorityRules": {
+    "needBasedAlwaysWins": true,
+    "conflictResolution": "highestPriority",
+    "maxSimultaneousOverrides": 1
+  }
+}
+```
+
+### camp_schedule.json
+
+Defines baseline schedules per phase (see [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md) for full documentation).
+
+**Location:** `ModuleData/Enlisted/Config/camp_schedule.json`
+
+**Key Sections:**
+- `phases` - Baseline schedule per day phase
+- `categoryMappings` - Maps schedule categories to opportunity types
+- `activityOverrides` - Activity level modifiers (Quiet/Routine/Active/Intense)
+- `pressureOverrides` - Pressure-based deviations (low_morale, exhausted, siege, etc.)
+- `lordSituationModifiers` - Lord situation impacts (garrison, marching, siege)
 
 ---
 

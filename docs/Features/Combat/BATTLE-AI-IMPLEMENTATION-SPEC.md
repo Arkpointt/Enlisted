@@ -16,6 +16,7 @@
 
 ## Table of Contents
 
+0. [Build Configuration Prerequisites](#0-build-configuration-prerequisites)
 1. [Architecture Overview](#1-architecture-overview)
 2. [Implementation Phases](#2-implementation-phases)
    - 2b. [Edge Cases By Phase](#2b-edge-cases-by-phase)
@@ -23,6 +24,217 @@
 4. [API Reference](#4-api-reference)
 5. [Configuration & Tuning](#5-configuration--tuning)
 6. [Testing & Validation](#6-testing--validation)
+
+---
+
+# 0. Build Configuration Prerequisites
+
+## 0.1 Optional SubModule Architecture
+
+Battle AI is implemented as an **optional SubModule** that users can disable in the Bannerlord launcher. The project uses a single build configuration that always compiles Battle AI code.
+
+**Key Points:**
+- Single build: `Enlisted RETAIL` configuration
+- Battle AI always compiled (BATTLE_AI constant always defined)
+- Battle AI runs as separate SubModule users can toggle
+- No performance cost when disabled (SubModule never initializes)
+
+**See [BLUEPRINT.md - Build & Deployment](../../BLUEPRINT.md#build--deployment) for complete documentation.**
+
+## 0.2 Quick Setup Checklist
+
+Before implementing Battle AI, verify:
+
+1. ✅ **Build configuration exists in .csproj:**
+   - `Enlisted RETAIL` (outputs to `Modules\Enlisted\`, defines `BATTLE_AI` constant)
+
+2. ✅ **SubModule.xml has two SubModule entries:**
+   - `Enlisted Core` (required, always enabled)
+   - `Enlisted Battle AI` (optional, users can disable in launcher)
+
+3. ✅ **Build command works:**
+   ```powershell
+   cd C:\Dev\Enlisted\Enlisted; dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+   ```
+
+4. ✅ **BattleAISubModule.cs exists:**
+   - `src/Features/Combat/BattleAI/BattleAISubModule.cs`
+
+## 0.3 Battle AI Code Structure
+
+All Battle AI code must:
+
+1. **Use conditional compilation:** Wrap entire files in `#if BATTLE_AI ... #endif`
+2. **Live in dedicated folder:** `src/Features/Combat/BattleAI/`
+3. **Be added to .csproj:** Add `<Compile Include="..."/>` entries for all new files
+4. **Follow folder structure:**
+   ```
+   src/Features/Combat/BattleAI/
+   ├── Behaviors/
+   │   └── EnlistedBattleAIBehavior.cs      # Mission behavior entry point
+   ├── Orchestration/
+   │   ├── BattleOrchestrator.cs            # Strategic coordinator
+   │   ├── BattleContext.cs                 # Battle state
+   │   └── TacticalAnalyzer.cs              # Threat assessment
+   ├── Formation/
+   │   ├── FormationController.cs           # Formation AI
+   │   └── FormationRoleAssigner.cs         # Role logic
+   └── Agent/
+       ├── AgentCombatEnhancer.cs           # Agent-level AI
+       └── TargetingLogic.cs                # Smart targeting
+   ```
+
+## 0.4 File Template
+
+**Every Battle AI file must use this template:**
+
+```csharp
+#if BATTLE_AI
+using TaleWorlds.Core;
+using TaleWorlds.MountAndBlade;
+using Enlisted.Mod.Core.Logging;
+
+namespace Enlisted.Features.Combat.BattleAI.Orchestration
+{
+    /// <summary>
+    /// Battle AI component - only included in Enhanced version.
+    /// [Description of what this class does]
+    /// </summary>
+    public class MyBattleAIClass
+    {
+        // Implementation here
+        
+        // Use ModLogger with "BattleAI" category
+        private void LogSomething()
+        {
+            ModLogger.Debug("BattleAI", "Your message here");
+        }
+    }
+}
+#endif
+```
+
+## 0.5 Keeping Battle AI Toggle-able
+
+**⚠️ CRITICAL RULE: Complete Separation from Core SubModule**
+
+To ensure users can disable Battle AI via launcher checkbox:
+
+**NEVER do these in Core SubModule (`Enlisted.Mod.Entry.SubModule`):**
+- ❌ Initialize Battle AI systems
+- ❌ Register Battle AI mission behaviors
+- ❌ Call any Battle AI code
+- ❌ Reference Battle AI classes
+
+**ALWAYS do these in BattleAISubModule (`Enlisted.Features.Combat.BattleAI.BattleAISubModule`):**
+- ✅ All Battle AI initialization
+- ✅ All mission behavior registration
+- ✅ All Battle AI code execution
+
+**Why this matters:** If BattleAISubModule is disabled in launcher, it never loads. If core SubModule references Battle AI, it will try to load disabled code and cause errors OR prevent users from disabling it.
+
+## 0.6 Activation Gate
+
+**Battle AI only activates when:**
+
+1. ✅ User has enabled "Enlisted Battle AI" SubModule in Bannerlord launcher
+2. ✅ Player is enlisted (`EnlistmentState.IsEnlisted`)
+3. ✅ In a field battle (not siege/naval)
+4. ✅ Mission has initialized properly
+
+**Implementation in BattleAISubModule:**
+
+```csharp
+#if BATTLE_AI
+using TaleWorlds.MountAndBlade;
+using Enlisted.Mod.Core.Logging;
+
+namespace Enlisted.Features.Combat.BattleAI
+{
+    public class BattleAISubModule : MBSubModuleBase
+    {
+        protected override void OnSubModuleLoad()
+        {
+            base.OnSubModuleLoad();
+            ModLogger.Info("BattleAI", "Battle AI SubModule loaded");
+        }
+        
+        protected override void OnBeforeInitialModuleScreenSetAsRoot()
+        {
+            base.OnBeforeInitialModuleScreenSetAsRoot();
+            // Register mission behavior callbacks here
+        }
+        
+        private void RegisterBattleAIBehaviors(Mission mission)
+        {
+            // Only field battles
+            if (mission.Scene.GetName().Contains("siege") || 
+                mission.Scene.GetName().Contains("naval"))
+            {
+                return;
+            }
+            
+            // Only when player is enlisted
+            if (!EnlistmentState.IsEnlisted)
+            {
+                return;
+            }
+            
+            // Add Battle AI behaviors
+            mission.AddMissionBehavior(new EnlistedBattleAIBehavior());
+            ModLogger.Debug("BattleAI", "Battle AI activated for mission");
+        }
+    }
+}
+#endif
+```
+
+## 0.7 SubModule Structure
+
+**SubModule.xml Configuration:**
+```xml
+<Module>
+    <Name value="Enlisted"/>
+    <Id value="Enlisted"/>
+    <SubModules>
+        <!-- Core SubModule (Required) -->
+        <SubModule>
+            <Name value="Enlisted Core"/>
+            <DLLName value="Enlisted.dll"/>
+            <SubModuleClassType value="Enlisted.Mod.Entry.SubModule"/>
+        </SubModule>
+        
+        <!-- Battle AI SubModule (Optional) -->
+        <SubModule>
+            <Name value="Enlisted Battle AI"/>
+            <DLLName value="Enlisted.dll"/>
+            <SubModuleClassType value="Enlisted.Features.Combat.BattleAI.BattleAISubModule"/>
+        </SubModule>
+    </SubModules>
+</Module>
+```
+
+Users see two checkboxes in Bannerlord launcher:
+- ☑️ **Enlisted Core** (keep enabled)
+- ☑️ **Enlisted Battle AI** (optional)
+
+## 0.8 Adding Battle AI Files to .csproj
+
+When creating new Battle AI files, add them to `Enlisted.csproj`:
+
+```xml
+<ItemGroup>
+  <!-- Battle AI SubModule and implementation files -->
+  <Compile Include="src\Features\Combat\BattleAI\BattleAISubModule.cs"/>
+  <Compile Include="src\Features\Combat\BattleAI\Behaviors\EnlistedBattleAIBehavior.cs"/>
+  <Compile Include="src\Features\Combat\BattleAI\Orchestration\BattleOrchestrator.cs"/>
+  <Compile Include="src\Features\Combat\BattleAI\Orchestration\BattleContext.cs"/>
+  <Compile Include="src\Features\Combat\BattleAI\Orchestration\TacticalAnalyzer.cs"/>
+  <!-- Add more as created -->
+</ItemGroup>
+```
+
+**Remember:** All files use `#if BATTLE_AI` internally. BATTLE_AI is always defined in the build.
 
 ---
 

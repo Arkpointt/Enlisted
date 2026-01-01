@@ -97,6 +97,42 @@ C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Module
 C:\Dev\Enlisted\Decompile\
 ```
 
+## ⚠️ CRITICAL: Optional SubModule Architecture
+
+**Battle AI is implemented as a separate, optional SubModule that users can disable in the Bannerlord launcher.**
+
+**Where to put Battle AI code:**
+- ✅ Entry point: `src/Features/Combat/BattleAI/BattleAISubModule.cs`
+- ✅ All initialization in `BattleAISubModule` class
+- ✅ All mission behavior registration in `BattleAISubModule`
+- ✅ Implementation files in `src/Features/Combat/BattleAI/` subfolders
+
+**Where NOT to put Battle AI code:**
+- ❌ NEVER in Core SubModule (`src/Mod.Entry/SubModule.cs`)
+- ❌ NEVER reference Battle AI from Core SubModule
+- ❌ Core mod must function completely without Battle AI
+
+**Why this matters:** When users uncheck "Enlisted Battle AI" in the launcher, `BattleAISubModule` never loads. If Core SubModule references Battle AI, it either crashes OR prevents disabling it.
+
+**SubModule.xml Structure:**
+```xml
+<SubModules>
+    <!-- Core SubModule (Required) -->
+    <SubModule>
+        <Name value="Enlisted Core"/>
+        <SubModuleClassType value="Enlisted.Mod.Entry.SubModule"/>
+    </SubModule>
+    
+    <!-- Battle AI SubModule (Optional) -->
+    <SubModule>
+        <Name value="Enlisted Battle AI"/>
+        <SubModuleClassType value="Enlisted.Features.Combat.BattleAI.BattleAISubModule"/>
+    </SubModule>
+</SubModules>
+```
+
+**See [BLUEPRINT.md - Critical Battle AI Rules](../../BLUEPRINT.md#critical-battle-ai-rules) for complete documentation.**
+
 ---
 
 ## Critical Project Constraints
@@ -126,6 +162,24 @@ LOGGING:
 - Categories: Combat, BattleAI, Formation, etc.
 - Output: Modules\Enlisted\Debugging\ (in Bannerlord install folder)
 - Format: ModLogger.Info("BattleAI", "message"); ModLogger.Debug/Warn/Error
+
+BATTLE AI ARCHITECTURE (⚠️ CRITICAL):
+- Battle AI is an OPTIONAL SUBMODULE users can disable in Bannerlord launcher
+- Entry point: src/Features/Combat/BattleAI/BattleAISubModule.cs
+- ALL Battle AI initialization MUST happen in BattleAISubModule class
+- NEVER reference Battle AI from Core SubModule (src/Mod.Entry/SubModule.cs)
+- Core mod MUST function completely without Battle AI
+- When SubModule disabled, zero Battle AI code executes (no performance cost)
+
+SubModule.xml has TWO entries:
+  <SubModule>
+    <Name value="Enlisted Core"/>
+    <SubModuleClassType value="Enlisted.Mod.Entry.SubModule"/>
+  </SubModule>
+  <SubModule>
+    <Name value="Enlisted Battle AI"/>
+    <SubModuleClassType value="Enlisted.Features.Combat.BattleAI.BattleAISubModule"/>
+  </SubModule>
 
 ENLISTED-ONLY ACTIVATION:
 - All Battle AI ONLY runs when player is enlisted
@@ -190,9 +244,14 @@ EXISTING UTILITIES:
 - NextFrameDispatcher.RunNextFrame() - Deferred operations
 - CampaignSafetyGuard.SafeMainHero - Null-safe hero access
 
-FOLDER STRUCTURE FOR NEW FILES:
-- src/Features/Combat/ - Battle AI files go here
-- src/Features/Combat/Models/ - Data models and enums
+FOLDER STRUCTURE FOR BATTLE AI FILES:
+- src/Features/Combat/BattleAI/BattleAISubModule.cs - Entry point (required!)
+- src/Features/Combat/BattleAI/Behaviors/ - Mission behaviors
+- src/Features/Combat/BattleAI/Orchestration/ - Strategic AI
+- src/Features/Combat/BattleAI/Formation/ - Formation AI
+- src/Features/Combat/BattleAI/Agent/ - Agent AI
+- src/Features/Combat/BattleAI/Models/ - Data models
+- All Battle AI code uses #if BATTLE_AI wrapper
 - Keep related functionality together
 
 FILE NAMING:
@@ -292,6 +351,23 @@ Read these docs BEFORE implementing:
 PHASE 1 TASKS
 ═══════════════════════════════════════════════════════════════════════════════
 
+⚠️⚠️⚠️ CRITICAL: BATTLE AI SUBMODULE ARCHITECTURE ⚠️⚠️⚠️
+
+ALL Battle AI code MUST be:
+- Created in src/Features/Combat/BattleAI/ folder structure
+- Wrapped in #if BATTLE_AI ... #endif
+- Registered through BattleAISubModule.cs (NOT Core SubModule!)
+- Added to Enlisted.csproj with <Compile Include="..."/>
+
+NEVER put Battle AI code in:
+- src/Mod.Entry/SubModule.cs (Core SubModule)
+- src/Features/Combat/ (outside BattleAI folder)
+
+BattleAISubModule.cs already exists at: src/Features/Combat/BattleAI/BattleAISubModule.cs
+Use it as entry point for ALL Battle AI initialization!
+
+═══════════════════════════════════════════════════════════════════════════════
+
 1.1 ENLISTED ACTIVATION GATE
 - Create utility method: ShouldActivateBattleAI()
 - Check EnlistmentState.IsEnlisted (use existing EnlistmentBehavior.Instance)
@@ -301,22 +377,24 @@ PHASE 1 TASKS
 - Return false if ANY check fails
 
 1.2 MISSIONBEHAVIOR ENTRY POINT
-- Create src/Features/Combat/BattleOrchestratorBehavior.cs
+- Create src/Features/Combat/BattleAI/Behaviors/EnlistedBattleAIBehavior.cs
 - Inherit from MissionBehavior
 - Override OnBehaviorInitialize() - create orchestrators IF activation gate passes
 - Override OnMissionTick(float dt) - tick orchestrators
 - Override OnMissionEnded() - cleanup
-- Register behavior in SubModule.OnMissionStarted callback
+- Register behavior in BattleAISubModule (src/Features/Combat/BattleAI/BattleAISubModule.cs)
+  - NOT in Core SubModule! Use Mission.Current.AddMissionBehavior() from BattleAISubModule
+  - Hook into Mission creation callback in BattleAISubModule.OnBeforeInitialModuleScreenSetAsRoot
 
 1.3 BASIC ORCHESTRATOR SHELL
-- Create src/Features/Combat/BattleOrchestrator.cs
+- Create src/Features/Combat/BattleAI/Orchestration/BattleOrchestrator.cs
 - One orchestrator per team (PlayerTeam + EnemyTeam)
 - Store reference to Team
 - Stub methods: Observe(), Orient(), Decide(), Act()
 - Simple tick method that logs it's running
 
 1.4 BATTLE STATE MODEL
-- Create src/Features/Combat/Models/BattleState.cs
+- Create src/Features/Combat/BattleAI/Models/BattleState.cs
 - Read-only data from Team.QuerySystem:
   - PowerRatio (ours vs theirs)
   - CavalryRatio
@@ -326,11 +404,11 @@ PHASE 1 TASKS
 - Create helper: BattleStateReader.CaptureState(Team team)
 
 1.5 AGENT STAT MODEL OVERRIDE
-- Create src/Features/Combat/EnlistedAgentStatCalculateModel.cs
+- Create src/Features/Combat/BattleAI/Models/EnlistedAgentStatCalculateModel.cs
 - Inherit from SandboxAgentStatCalculateModel
 - Override InitializeAgentStats() - call base, then apply enlisted modifiers
 - Only apply modifiers if activation gate passes
-- Register via GameModelsContext in SubModule.OnGameStart
+- Register via GameModelsContext in BattleAISubModule.OnGameStart
 
 1.6 CONFIGURATION LOADING
 - Add "battle_ai" section to ModuleData/Enlisted/enlisted_config.json
@@ -407,27 +485,32 @@ From BATTLE-AI-IMPLEMENTATION-SPEC.md Section 2b:
 | **Player sets battle size to 1000** | Detect Massive, cap tick frequency at 0.8s minimum |
 
 ═══════════════════════════════════════════════════════════════════════════════
-FILES TO CREATE
+FILES TO CREATE (ALL IN BattleAI FOLDER!)
 ═══════════════════════════════════════════════════════════════════════════════
 
-1. src/Features/Combat/BattleOrchestratorBehavior.cs
-2. src/Features/Combat/BattleOrchestrator.cs
-3. src/Features/Combat/Models/BattleState.cs
-4. src/Features/Combat/BattleStateReader.cs
-5. src/Features/Combat/EnlistedAgentStatCalculateModel.cs
-6. src/Features/Combat/BattleScaleDetector.cs (NEW - handles 1.10)
-7. src/Features/Combat/Models/BattleScale.cs (enum: Skirmish, Small, Medium, Large, Massive)
-8. src/Features/Combat/Models/BattleScaleConfig.cs (scale-specific parameters)
-9. src/Features/Combat/TacticalUtilities.cs (1.7-1.9 utilities)
+BattleAISubModule.cs already exists - MODIFY IT to add mission behavior registration!
 
-REMEMBER: Add all new .cs files to Enlisted.csproj with <Compile Include="..."/>
+1. src/Features/Combat/BattleAI/Behaviors/EnlistedBattleAIBehavior.cs
+2. src/Features/Combat/BattleAI/Orchestration/BattleOrchestrator.cs
+3. src/Features/Combat/BattleAI/Models/BattleState.cs
+4. src/Features/Combat/BattleAI/Orchestration/BattleStateReader.cs
+5. src/Features/Combat/BattleAI/Models/EnlistedAgentStatCalculateModel.cs
+6. src/Features/Combat/BattleAI/Orchestration/BattleScaleDetector.cs (NEW - handles 1.10)
+7. src/Features/Combat/BattleAI/Models/BattleScale.cs (enum: Skirmish, Small, Medium, Large, Massive)
+8. src/Features/Combat/BattleAI/Models/BattleScaleConfig.cs (scale-specific parameters)
+9. src/Features/Combat/BattleAI/Orchestration/TacticalUtilities.cs (1.7-1.9 utilities)
+
+REMEMBER: 
+- Wrap ALL files in #if BATTLE_AI ... #endif
+- Add all new .cs files to Enlisted.csproj with <Compile Include="..."/>
 
 ═══════════════════════════════════════════════════════════════════════════════
 EXISTING FILES TO MODIFY
 ═══════════════════════════════════════════════════════════════════════════════
 
-1. src/Mod.Entry/SubModule.cs
-   - Add BattleOrchestratorBehavior registration in OnMissionStarted
+1. src/Features/Combat/BattleAI/BattleAISubModule.cs (NOT Core SubModule!)
+   - Add EnlistedBattleAIBehavior registration in OnBeforeInitialModuleScreenSetAsRoot
+   - Hook into Mission.MissionBehaviorInitializeEvent or similar
    - Add EnlistedAgentStatCalculateModel registration in OnGameStart
 
 2. ModuleData/Enlisted/enlisted_config.json
@@ -443,15 +526,23 @@ EXISTING FILES TO MODIFY
 ACCEPTANCE CRITERIA
 ═══════════════════════════════════════════════════════════════════════════════
 
+CRITICAL ARCHITECTURE CHECKS:
+[ ] ALL Battle AI files are in src/Features/Combat/BattleAI/ folder
+[ ] ALL Battle AI files wrapped in #if BATTLE_AI ... #endif
+[ ] NO Battle AI references in Core SubModule (src/Mod.Entry/SubModule.cs)
+[ ] ALL registration happens through BattleAISubModule.cs
+[ ] Core mod still functions without Battle AI SubModule enabled
+
+FUNCTIONALITY CHECKS:
 [ ] Activation gate returns false when player not enlisted
 [ ] Activation gate returns true when player is enlisted in field battle
-[ ] BattleOrchestratorBehavior added to mission when enlisted
+[ ] EnlistedBattleAIBehavior added to mission when enlisted
 [ ] BattleOrchestrator created for each team (PlayerTeam, EnemyTeam)
 [ ] Orchestrator ticks log every ~1.5 seconds: "[BattleAI] Team:X Tick"
 [ ] BattleState correctly reads power ratios from TeamQuerySystem
 [ ] EnlistedAgentStatCalculateModel registered and base stats unchanged
 [ ] Config loads from JSON, falls back to defaults if missing
-[ ] All new files added to Enlisted.csproj
+[ ] All new files added to Enlisted.csproj with <Compile Include="..."/>
 [ ] Build succeeds: dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 [ ] No crashes when entering battle while enlisted
 [ ] No crashes when entering battle while NOT enlisted (native AI only)

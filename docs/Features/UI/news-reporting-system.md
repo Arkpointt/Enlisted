@@ -352,6 +352,58 @@ Events specific to your enlisted lord and your direct participation.
 
 **Access:** `EnlistedNewsBehavior.Instance.PersonalFeed` (read-only)
 
+### Routine Outcome Integration
+
+**Added:** 2025-12-31  
+**Implementation:** `CampRoutineProcessor`, `AddRoutineOutcome()`  
+**Related Docs:** [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md)
+
+Automatic routine activities (training, foraging, patrol, etc.) generate feed entries without popups:
+
+**Call Site:**
+```csharp
+// In CampRoutineProcessor.AddToNewsFeed()
+EnlistedNewsBehavior.Instance?.AddRoutineOutcome(outcome);
+```
+
+**Feed Entry Format:**
+```
+Combat Training: Good progress
+Foraging Duty: Excellent results (Supplies critical)
+Morning Formation: Completed
+Patrol Duty: Uneventful
+Extended Rest: Good recovery (Men exhausted)
+```
+
+**Characteristics:**
+- Category: `"routine_activity"`
+- Severity: Based on outcome type (Excellent = Positive, Good/Normal = Normal, Poor/Mishap = Attention)
+- Minimum display: 1 day
+- Override context shown in parentheses if applicable
+
+**When Generated:**
+- At phase boundaries (6am, 12pm, 6pm, 12am)
+- One entry per routine activity processed
+- Only when player has no commitment for that phase
+- Skip if player is on duty
+
+**Display:**
+- Appears in RECENT ACTIVITY section with other camp news
+- Sorted by timestamp
+- Auto-trimmed when feed exceeds 35 items
+
+**Deduplication:**
+- Story key: `"routine:{Phase}:{ActivityCategory}:{DayNumber}"`
+- Prevents multiple entries for same activity on same day
+
+**Integration:**
+- Works alongside event outcomes and order outcomes
+- Uses same personal feed infrastructure
+- No special UI treatment (same format as other news)
+
+**Combat Log Parallel:**
+Routine outcomes also generate instant feedback via combat log messages (see [UI Systems Master](ui-systems-master.md#combat-log--routine-feedback) for details).
+
 ---
 
 ## Main Menu Narrative

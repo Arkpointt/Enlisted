@@ -1009,7 +1009,7 @@ namespace Enlisted.Features.Interface.Behaviors
                             var hoursUntil = (int)(currentOrder.IssueTime - CampaignTime.Now).ToHours;
                             args.Tooltip = new TextObject("{=enlisted_orders_tooltip_imminent}Orders will be issued in {HOURS} hour(s): {TITLE}");
                             args.Tooltip.SetTextVariable("HOURS", hoursUntil.ToString());
-                            args.Tooltip.SetTextVariable("TITLE", currentOrder.Title);
+                            args.Tooltip.SetTextVariable("TITLE", Orders.OrderCatalog.GetDisplayTitle(currentOrder));
                         }
                         else if (currentOrder.State == Orders.Models.OrderState.Pending || 
                                  currentOrder.State == Orders.Models.OrderState.Active)
@@ -1087,7 +1087,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                     }
 
-                    var row = $"    {phaseLabel} {currentOrder.Title}";
+                    var row = $"    {phaseLabel} {Orders.OrderCatalog.GetDisplayTitle(currentOrder)}";
 
                     MBTextManager.SetTextVariable("ACTIVE_ORDER_TEXT", row);
                     
@@ -1639,6 +1639,24 @@ namespace Enlisted.Features.Interface.Behaviors
                     sb.AppendLine();
                 }
 
+                // === PERIOD RECAP (Since last muster - orders, battles, training) ===
+                var periodRecap = BuildPeriodRecapSection(enlistment);
+                if (!string.IsNullOrWhiteSpace(periodRecap))
+                {
+                    sb.AppendLine("<span style=\"Header\">SINCE LAST MUSTER</span>");
+                    sb.AppendLine(periodRecap);
+                    sb.AppendLine();
+                }
+
+                // === UPCOMING (Scheduled activities, expected orders) ===
+                var upcoming = BuildUpcomingSection(enlistment);
+                if (!string.IsNullOrWhiteSpace(upcoming))
+                {
+                    sb.AppendLine("<span style=\"Header\">UPCOMING</span>");
+                    sb.AppendLine(upcoming);
+                    sb.AppendLine();
+                }
+
                 // === RECENT ACTIVITY (What the player and company have been doing) ===
                 var recentActivities = BuildRecentActivitiesNarrative(enlistment, lordParty);
                 if (!string.IsNullOrWhiteSpace(recentActivities))
@@ -1652,7 +1670,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var playerStatus = BuildPlayerPersonalStatus(enlistment);
                 if (!string.IsNullOrWhiteSpace(playerStatus))
                 {
-                    sb.AppendLine("<span style=\"Header\">STATUS</span>");
+                    sb.AppendLine("<span style=\"Header\">YOUR STATUS</span>");
                     sb.AppendLine(playerStatus);
                 }
 
@@ -2087,7 +2105,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Current duty
                 if (currentOrder != null)
                 {
-                    var orderTitle = currentOrder.Title ?? "duty";
+                    var orderTitle = Orders.OrderCatalog.GetDisplayTitle(currentOrder);
+                    if (string.IsNullOrEmpty(orderTitle))
+                    {
+                        orderTitle = "duty";
+                    }
                     var hoursSinceIssued = (CampaignTime.Now - currentOrder.IssuedTime).ToHours;
                     
                     if (hoursSinceIssued < 6)
@@ -2148,6 +2170,240 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 return string.Empty;
             }
+        }
+
+        /// <summary>
+        /// Builds period recap section showing activity since last muster.
+        /// Displays orders completed, battles survived, training done, and XP earned.
+        /// Color-coded for easy scanning: green for positive, gold for neutral/partial, red for negative.
+        /// </summary>
+        private static string BuildPeriodRecapSection(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var parts = new List<string>();
+                var news = EnlistedNewsBehavior.Instance;
+                
+                // Calculate days since last muster
+                var lastMusterDay = enlistment?.LastMusterDay ?? 0;
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var daysSinceMuster = lastMusterDay > 0 ? currentDay - lastMusterDay : 0;
+                var musterDaysRemaining = Math.Max(0, 12 - daysSinceMuster);
+                
+                // Get period statistics from tracking systems
+                var orderOutcomes = news?.GetRecentOrderOutcomes(12) ?? new List<OrderOutcomeRecord>();
+                var eventOutcomes = news?.GetRecentEventOutcomes(12) ?? new List<EventOutcomeRecord>();
+                var xpSources = enlistment?.GetXPSourcesThisPeriod() ?? new Dictionary<string, int>();
+                var lastMuster = news?.GetLastMusterOutcome();
+                
+                // Count completed orders and their success rate
+                var ordersCompleted = orderOutcomes.Count(o => o.Success);
+                var ordersFailed = orderOutcomes.Count(o => !o.Success);
+                
+                // Orders summary with color-coding
+                if (ordersCompleted > 0 || ordersFailed > 0)
+                {
+                    var orderParts = new List<string>();
+                    if (ordersCompleted > 0)
+                    {
+                        orderParts.Add($"<span style=\"Success\">{ordersCompleted} orders completed</span>");
+                    }
+                    if (ordersFailed > 0)
+                    {
+                        orderParts.Add($"<span style=\"Alert\">{ordersFailed} failed</span>");
+                    }
+                    parts.Add(string.Join(", ", orderParts) + ".");
+                }
+                
+                // XP earned this period
+                var totalXP = xpSources.Values.Sum();
+                if (totalXP > 0)
+                {
+                    var topSource = xpSources.OrderByDescending(kvp => kvp.Value).FirstOrDefault();
+                    var xpStyle = totalXP > 50 ? "Success" : "Default";
+                    parts.Add($"<span style=\"{xpStyle}\">+{totalXP} XP</span> earned (mostly from {topSource.Key ?? "service"}).");
+                }
+                
+                // Battles and casualties (from last muster record or news tracking)
+                var lostCount = news?.LostSinceLastMuster ?? 0;
+                var sickCount = news?.SickSinceLastMuster ?? 0;
+                
+                if (lostCount > 0 || sickCount > 0)
+                {
+                    var casualtyParts = new List<string>();
+                    if (lostCount > 0)
+                    {
+                        casualtyParts.Add($"<span style=\"Alert\">{lostCount} lost</span>");
+                    }
+                    if (sickCount > 0)
+                    {
+                        casualtyParts.Add($"<span style=\"Warning\">{sickCount} sick</span>");
+                    }
+                    parts.Add("Company losses: " + string.Join(", ", casualtyParts) + ".");
+                }
+                
+                // Event choices made
+                var eventCount = eventOutcomes.Count;
+                if (eventCount > 0)
+                {
+                    var recentEvent = eventOutcomes.FirstOrDefault();
+                    if (recentEvent != null && !string.IsNullOrWhiteSpace(recentEvent.EventTitle))
+                    {
+                        parts.Add($"<span style=\"Link\">{eventCount} incidents</span> handled (last: {recentEvent.EventTitle}).");
+                    }
+                }
+                
+                // Days until next muster
+                if (musterDaysRemaining > 0)
+                {
+                    var musterStyle = musterDaysRemaining <= 2 ? "Warning" : "Default";
+                    parts.Add($"<span style=\"{musterStyle}\">{musterDaysRemaining} days</span> until next muster.");
+                }
+                else if (enlistment?.IsPayMusterPending == true)
+                {
+                    parts.Add("<span style=\"Warning\">Muster pending.</span> Report for pay.");
+                }
+                
+                if (parts.Count == 0)
+                {
+                    return "New muster period. No activity recorded yet.";
+                }
+                
+                return string.Join(" ", parts);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds upcoming section showing scheduled activities and expected orders.
+        /// Displays player commitments, routine schedule, and order forecasts.
+        /// Color-coded: blue for scheduled commitments, gold for imminent orders.
+        /// </summary>
+        private static string BuildUpcomingSection(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var parts = new List<string>();
+                var orderManager = Orders.Behaviors.OrderManager.Instance;
+                var scheduleManager = Camp.CampScheduleManager.Instance;
+                var opportunityGenerator = Camp.CampOpportunityGenerator.Instance;
+                
+                // Player commitments (scheduled activities)
+                var nextCommitment = opportunityGenerator?.GetNextCommitment();
+                if (nextCommitment != null)
+                {
+                    var hoursUntil = opportunityGenerator.GetHoursUntilCommitment(nextCommitment);
+                    var activity = nextCommitment.Title ?? "activity";
+                    var phase = nextCommitment.ScheduledPhase ?? "later";
+                    
+                    if (hoursUntil < 2f)
+                    {
+                        parts.Add($"<span style=\"Link\">{activity}</span> starting soon.");
+                    }
+                    else
+                    {
+                        parts.Add($"<span style=\"Link\">{activity}</span> scheduled for {phase} ({(int)hoursUntil}h).");
+                    }
+                }
+                
+                // Current order status and forecast
+                var currentOrder = orderManager?.GetCurrentOrder();
+                if (currentOrder != null)
+                {
+                    var orderTitle = currentOrder.Title ?? "duty";
+                    var hoursSinceIssued = currentOrder.IssuedTime != default
+                        ? (CampaignTime.Now - currentOrder.IssuedTime).ToHours
+                        : 0;
+
+                    // Estimate remaining time based on typical order duration (24-72h)
+                    var hoursRemaining = Math.Max(0, 24 - (int)hoursSinceIssued);
+                    if (hoursRemaining > 0)
+                    {
+                        var completeStyle = hoursRemaining < 6 ? "Success" : "Default";
+                        parts.Add($"Current duty: <span style=\"{completeStyle}\">{orderTitle}</span> (~{hoursRemaining}h remaining).");
+                    }
+                    else
+                    {
+                        parts.Add($"Current duty: <span style=\"Link\">{orderTitle}</span> (completing soon).");
+                    }
+                }
+                else if (orderManager?.IsOrderImminent() == true)
+                {
+                    var forecastText = orderManager.GetImminentWarningText();
+                    var hoursUntil = orderManager.GetHoursUntilIssue();
+                    if (!string.IsNullOrWhiteSpace(forecastText))
+                    {
+                        parts.Add($"<span style=\"Warning\">Orders expected:</span> {forecastText} (in {(int)hoursUntil}h).");
+                    }
+                }
+                else
+                {
+                    // Check world state for activity level hints
+                    var worldState = Content.WorldStateAnalyzer.AnalyzeSituation();
+                    if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Intense)
+                    {
+                        parts.Add("<span style=\"Warning\">Expect orders soon.</span> The situation is intense.");
+                    }
+                    else if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Active)
+                    {
+                        parts.Add("Likely to receive orders within the day.");
+                    }
+                    else
+                    {
+                        parts.Add("No orders expected. Routine duties apply.");
+                    }
+                }
+                
+                // Camp schedule forecast (next phase)
+                if (scheduleManager != null)
+                {
+                    var currentPhase = Content.WorldStateAnalyzer.GetDayPhaseFromHour(CampaignTime.Now.GetHourOfDay);
+                    var nextPhase = GetNextPhase(currentPhase);
+                    var schedule = scheduleManager.GetScheduleForPhase(nextPhase);
+                    
+                    if (schedule != null && !string.IsNullOrWhiteSpace(schedule.Slot1Description))
+                    {
+                        var phaseName = nextPhase.ToString().ToLower();
+                        if (schedule.HasDeviation)
+                        {
+                            parts.Add($"<span style=\"Warning\">{phaseName}:</span> {schedule.Slot1Description} ({schedule.DeviationReason}).");
+                        }
+                        else
+                        {
+                            parts.Add($"Next {phaseName}: {schedule.Slot1Description}.");
+                        }
+                    }
+                }
+                
+                if (parts.Count == 0)
+                {
+                    return "All quiet. Enjoy the respite while it lasts.";
+                }
+                
+                return string.Join(" ", parts);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Gets the next day phase in sequence.
+        /// </summary>
+        private static Content.Models.DayPhase GetNextPhase(Content.Models.DayPhase current)
+        {
+            return current switch
+            {
+                Content.Models.DayPhase.Dawn => Content.Models.DayPhase.Midday,
+                Content.Models.DayPhase.Midday => Content.Models.DayPhase.Dusk,
+                Content.Models.DayPhase.Dusk => Content.Models.DayPhase.Night,
+                Content.Models.DayPhase.Night => Content.Models.DayPhase.Dawn,
+                _ => Content.Models.DayPhase.Dawn
+            };
         }
 
         /// <summary>
@@ -2345,13 +2601,20 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
 
+                // Brief period recap: orders and XP this muster period (compact summary for main menu)
+                var periodRecap = BuildBriefPeriodRecap(enlistment);
+                if (!string.IsNullOrWhiteSpace(periodRecap))
+                {
+                    sentences.Add(periodRecap);
+                }
+
                 // Ensure we have content
                 if (sentences.Count == 0)
                 {
                     return "<span style=\"Default\">The camp is quiet. All is in order.</span>";
                 }
 
-                return string.Join(" ", sentences.Take(5));
+                return string.Join(" ", sentences.Take(6));
             }
             catch
             {
@@ -2406,12 +2669,178 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Time-based activity that won't flicker
                 var hour = CampaignTime.Now.GetHourOfDay;
                 if (hour >= 22 || hour < 6)
+                {
                     return "The camp sleeps.";
+                }
                 if (hour < 10)
+                {
                     return "Morning routine underway.";
+                }
                 if (hour < 17)
+                {
                     return "Soldiers go about their duties.";
+                }
                 return "Cook fires light up as evening settles.";
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a compact one-sentence period recap for the main menu camp section.
+        /// Shows key stats: orders done, XP earned, days until muster.
+        /// </summary>
+        private static string BuildBriefPeriodRecap(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var news = EnlistedNewsBehavior.Instance;
+                var orderOutcomes = news?.GetRecentOrderOutcomes(12) ?? new List<OrderOutcomeRecord>();
+                var xpSources = enlistment?.GetXPSourcesThisPeriod() ?? new Dictionary<string, int>();
+                
+                var ordersCompleted = orderOutcomes.Count(o => o.Success);
+                var totalXP = xpSources.Values.Sum();
+                var lastMusterDay = enlistment?.LastMusterDay ?? 0;
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var daysSinceMuster = lastMusterDay > 0 ? currentDay - lastMusterDay : 0;
+                var daysRemaining = Math.Max(0, 12 - daysSinceMuster);
+                
+                // Build compact summary
+                var parts = new List<string>();
+                
+                if (ordersCompleted > 0)
+                {
+                    parts.Add($"<span style=\"Success\">{ordersCompleted} orders</span>");
+                }
+                
+                if (totalXP > 0)
+                {
+                    parts.Add($"<span style=\"Success\">+{totalXP} XP</span>");
+                }
+                
+                if (parts.Count == 0)
+                {
+                    return string.Empty;
+                }
+                
+                // Add muster countdown
+                var musterPart = daysRemaining > 0 
+                    ? $"{daysRemaining}d to muster" 
+                    : "<span style=\"Warning\">muster pending</span>";
+                
+                return $"This period: {string.Join(", ", parts)}. {musterPart}.";
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a compact one-sentence player recap for the main menu player status section.
+        /// Shows key personal achievements: orders done, events handled, training.
+        /// </summary>
+        private static string BuildBriefPlayerRecap(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var news = EnlistedNewsBehavior.Instance;
+                var orderOutcomes = news?.GetRecentOrderOutcomes(12) ?? new List<OrderOutcomeRecord>();
+                var eventOutcomes = news?.GetRecentEventOutcomes(12) ?? new List<EventOutcomeRecord>();
+                var xpSources = enlistment?.GetXPSourcesThisPeriod() ?? new Dictionary<string, int>();
+                
+                var ordersCompleted = orderOutcomes.Count(o => o.Success);
+                var ordersFailed = orderOutcomes.Count(o => !o.Success);
+                var eventsHandled = eventOutcomes.Count;
+                var totalXP = xpSources.Values.Sum();
+                
+                // Only show if there's something to report
+                if (ordersCompleted == 0 && ordersFailed == 0 && eventsHandled == 0)
+                {
+                    return string.Empty;
+                }
+                
+                // Build compact player-focused summary
+                var parts = new List<string>();
+                
+                if (ordersCompleted > 0 && ordersFailed == 0)
+                {
+                    parts.Add($"<span style=\"Success\">{ordersCompleted} duties done well</span>");
+                }
+                else if (ordersCompleted > 0)
+                {
+                    parts.Add($"<span style=\"Success\">{ordersCompleted} duties done</span>");
+                    if (ordersFailed > 0)
+                    {
+                        parts.Add($"<span style=\"Alert\">{ordersFailed} botched</span>");
+                    }
+                }
+                
+                if (totalXP > 30)
+                {
+                    parts.Add($"<span style=\"Success\">+{totalXP} XP earned</span>");
+                }
+                
+                if (parts.Count == 0)
+                {
+                    return string.Empty;
+                }
+                
+                return $"Your record: {string.Join(", ", parts)}.";
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a compact player forecast sentence for the main menu player status section.
+        /// Shows upcoming commitments, expected orders, or activity level hints.
+        /// </summary>
+        private static string BuildBriefPlayerForecast(EnlistmentBehavior enlistment, Orders.Behaviors.OrderManager orderManager)
+        {
+            try
+            {
+                var opportunityGenerator = Camp.CampOpportunityGenerator.Instance;
+                
+                // Check for player commitments first
+                var nextCommitment = opportunityGenerator?.GetNextCommitment();
+                if (nextCommitment != null)
+                {
+                    var hoursUntil = opportunityGenerator.GetHoursUntilCommitment(nextCommitment);
+                    var activity = nextCommitment.Title ?? "activity";
+                    var phase = nextCommitment.ScheduledPhase ?? "later";
+                    
+                    if (hoursUntil < 2f)
+                    {
+                        return $"<span style=\"Link\">Ahead:</span> {activity} starting soon.";
+                    }
+                    return $"<span style=\"Link\">Ahead:</span> {activity} at {phase}.";
+                }
+                
+                // Check for imminent orders
+                if (orderManager?.IsOrderImminent() == true)
+                {
+                    var forecastText = orderManager.GetImminentWarningText();
+                    var hoursUntil = orderManager.GetHoursUntilIssue();
+                    if (!string.IsNullOrWhiteSpace(forecastText) && hoursUntil < 12)
+                    {
+                        return $"<span style=\"Warning\">Ahead:</span> {forecastText} expected.";
+                    }
+                }
+                
+                // Check world state for activity level hints
+                var worldState = Content.WorldStateAnalyzer.AnalyzeSituation();
+                if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Intense)
+                {
+                    return "<span style=\"Warning\">Ahead:</span> Expect orders soon. Stay ready.";
+                }
+                
+                // No specific forecast
+                return string.Empty;
             }
             catch
             {
@@ -2527,7 +2956,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (currentOrder != null)
                 {
                     // Active order - show status
-                    var orderTitle = currentOrder.Title ?? "Duty";
+                    var orderTitle = Orders.OrderCatalog.GetDisplayTitle(currentOrder);
+                    if (string.IsNullOrEmpty(orderTitle))
+                    {
+                        orderTitle = "Duty";
+                    }
                     var issuer = currentOrder.Issuer ?? "Command";
 
                     // Check how long ago the order was issued
@@ -3277,7 +3710,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Opening: Current duty state with world-state-aware forecast
                 if (currentOrder != null)
                 {
-                    var orderTitle = currentOrder.Title ?? "duty";
+                    var orderTitle = Orders.OrderCatalog.GetDisplayTitle(currentOrder);
+                    if (string.IsNullOrEmpty(orderTitle))
+                    {
+                        orderTitle = "duty";
+                    }
                     var hoursSinceIssued = (CampaignTime.Now - currentOrder.IssuedTime).ToHours;
                     
                     if (hoursSinceIssued < 6)
@@ -3377,8 +3814,22 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
 
+                // Player recap: brief summary of their personal performance this period
+                var playerRecap = BuildBriefPlayerRecap(enlistment);
+                if (!string.IsNullOrWhiteSpace(playerRecap))
+                {
+                    sentences.Add(playerRecap);
+                }
+
+                // AHEAD: What's coming up for the player (scheduled activities, expected orders)
+                var playerForecast = BuildBriefPlayerForecast(enlistment, orderManager);
+                if (!string.IsNullOrWhiteSpace(playerForecast) && sentences.Count < 5)
+                {
+                    sentences.Add(playerForecast);
+                }
+
                 // Closing: AHEAD outlook based on WorldStateAnalyzer + present conditions
-                if (sentences.Count < 4)
+                if (sentences.Count < 5)
                 {
                     var leadership = mainHero?.GetSkillValue(DefaultSkills.Leadership) ?? 0;
                     
@@ -3407,13 +3858,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         sentences.Add("<span style=\"Success\">You're rested and ready.</span> Whatever comes, you'll face it.");
                     }
-                    else
-                    {
-                        sentences.Add("Each day teaches something new about life under arms.");
-                    }
                 }
 
-                return string.Join(" ", sentences.Take(5));
+                return string.Join(" ", sentences.Take(6));
             }
             catch
             {
@@ -5571,7 +6018,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var sb = new StringBuilder();
                 sb.AppendLine("<span style=\"Header\">=== DUTY LOG ===</span>");
-                sb.AppendLine($"<span style=\"Label\">Order:</span> {currentOrder.Title}");
+                sb.AppendLine($"<span style=\"Label\">Order:</span> {Orders.OrderCatalog.GetDisplayTitle(currentOrder)}");
                 
                 // Calculate current day and phases
                 var hoursSinceStart = (CampaignTime.Now - currentOrder.IssuedTime).ToHours;
@@ -6447,10 +6894,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 var sb = new StringBuilder();
                 sb.AppendLine($"ORDER FROM: {currentOrder.Issuer}");
                 sb.AppendLine();
-                sb.AppendLine($"TITLE: {currentOrder.Title}");
+                sb.AppendLine($"TITLE: {Orders.OrderCatalog.GetDisplayTitle(currentOrder)}");
                 sb.AppendLine();
                 sb.AppendLine($"OBJECTIVE:");
-                sb.AppendLine(currentOrder.Description);
+                sb.AppendLine(Orders.OrderCatalog.GetDisplayDescription(currentOrder));
                 sb.AppendLine();
 
                 // Show requirements if any
