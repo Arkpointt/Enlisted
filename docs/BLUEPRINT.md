@@ -2,7 +2,7 @@
 
 **Summary:** Complete guide to the Enlisted mod's architecture, coding standards, and development practices. This is the single source of truth for understanding how this project works and how we write code.
 
-**Last Updated:** 2025-12-23
+**Last Updated:** 2026-01-01
 **Target Game:** Bannerlord v1.3.13
 **Related Docs:** [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md), [Reference/native-apis.md](Reference/native-apis.md)
 
@@ -114,6 +114,12 @@ python tools/events/validate_content.py
 cd C:\Dev\Enlisted\Enlisted
 dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 ```
+
+**Upload to Steam Workshop:**
+1. Update `"changenote"` in `tools/workshop/workshop_upload.vdf` with version and changes
+2. Build if code changed: `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
+3. Run upload: `cd C:\Dev\steamcmd; .\steamcmd.exe +login milkyway12 +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit`
+4. See [Steam Workshop Upload](#steam-workshop-upload) section for full details
 
 ---
 
@@ -751,10 +757,70 @@ Battle AI files must be added to the .csproj (they use `#if BATTLE_AI` internall
 
 ## Steam Workshop Upload
 
--   **Workshop ID**: `3621116083`
--   **Config**: `tools/workshop/WorkshopUpdate.xml` and `workshop_upload.vdf`
--   **Process**: Build first, then upload via SteamCMD.
--   **Compatible Version**: 1.3.13
+**Workshop ID**: `3621116083`
+**Location**: https://steamcommunity.com/sharedfiles/filedetails/?id=3621116083
+
+### Quick Upload Process
+
+1. **Build the mod** (if code changed):
+   ```powershell
+   cd C:\Dev\Enlisted\Enlisted
+   dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+   ```
+
+2. **Update changelog** in `tools/workshop/workshop_upload.vdf`:
+   - Edit the `"changenote"` field with version and changes
+   - Use Steam BBCode formatting: `[b]bold[/b]`, `[list][*]item[/list]`, etc.
+
+3. **Upload to Steam Workshop**:
+   ```powershell
+   cd C:\Dev\steamcmd
+   .\steamcmd.exe +login milkyway12 +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit
+   ```
+   - **IMPORTANT**: All commands (`+login`, `+workshop_build_item`, `+quit`) must be in ONE command
+   - SteamCMD uses cached credentials (no password needed if recently logged in)
+   - Enter password/Steam Guard code if prompted (requires manual run in regular PowerShell if credentials expired)
+   - Find cached username: Check `C:\Dev\steamcmd\config\config.vdf` under `"Accounts"` section
+
+### Workshop Files
+
+- `tools/workshop/workshop_upload.vdf` - Main upload config (changenote, description, tags)
+- `tools/workshop/WorkshopUpdate.xml` - TaleWorlds official uploader config (alternative method)
+- `tools/workshop/preview.png` - Workshop thumbnail (512x512 or 1024x1024)
+- `tools/workshop/upload.ps1` - Helper script (requires interactive terminal)
+
+### Updating Description
+
+Edit the `"description"` field in `workshop_upload.vdf` using Steam BBCode:
+- Headings: `[h1]Title[/h1]`, `[h2]Subtitle[/h2]`
+- Lists: `[list][*]Item 1[*]Item 2[/list]`
+- Bold/Italic: `[b]bold[/b]`, `[i]italic[/i]`
+- Links: `[url=https://example.com]Link Text[/url]`
+- Character limit: ~8000 characters
+
+### Common Issues
+
+**"File Not Found" error:**
+- Check `"previewfile"` path is absolute: `C:\Dev\Enlisted\Enlisted\tools\workshop\preview.png`
+- Verify `"contentfolder"` points to: `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted`
+
+**"Not logged on" error:**
+- **CRITICAL**: SteamCMD sessions don't persist between separate command invocations
+- **MUST** include `+login username` in the same command as `+workshop_build_item`
+- **WRONG**: `.\steamcmd.exe +login milkyway12 +quit` then `.\steamcmd.exe +workshop_build_item ...` (login is lost)
+- **CORRECT**: `.\steamcmd.exe +login milkyway12 +workshop_build_item "path/to/file.vdf" +quit` (all in one command)
+- Cached credentials expire after ~2 weeks, then password/Steam Guard required
+- Username is stored in `C:\Dev\steamcmd\config\config.vdf` under `"Accounts"` section
+
+**Upload succeeds but mod doesn't update:**
+- Workshop may take 5-10 minutes to propagate changes
+- Users may need to unsubscribe/resubscribe to force update
+
+**"Read-Host: Windows PowerShell is in NonInteractive mode" error:**
+- The Cursor IDE terminal is non-interactive and cannot prompt for passwords
+- Use cached credentials: `.\steamcmd.exe +login username` (no password parameter)
+- If credentials expired, run the command manually in a regular PowerShell window
+- Alternative: Use `upload.ps1` script in a regular terminal (not Cursor terminal)
 
 ---
 

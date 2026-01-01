@@ -13,7 +13,7 @@ This guide covers how to publish the Enlisted mod to the Steam Workshop for Moun
 
 ### 1. Install SteamCMD
 
-Download and extract SteamCMD to a folder like `C:\SteamCMD\`.
+Download and extract SteamCMD to a folder like `C:\Dev\steamcmd\`.
 
 ### 2. Prepare Your Mod
 
@@ -57,7 +57,7 @@ Edit `workshop_upload.vdf` and update these paths:
 1. Open PowerShell or Command Prompt
 2. Navigate to SteamCMD:
    ```powershell
-   cd C:\SteamCMD
+   cd C:\Dev\steamcmd
    ```
 
 3. Login and upload:
