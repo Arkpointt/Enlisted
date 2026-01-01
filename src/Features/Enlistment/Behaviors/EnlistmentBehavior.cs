@@ -3517,6 +3517,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Preserve supply level during grace period re-enlistment (same as tier/XP preservation)
                 CompanySupplyManager.Initialize(lord, preserveSupply: resumingGraceService);
 
+                // Initialize quartermaster inventory at enlistment start so items are available immediately
+                // Only initialize on new enlistment; grace period re-enlistment preserves existing inventory
+                if (!resumingGraceService)
+                {
+                    try
+                    {
+                        QuartermasterManager.Instance?.RollStockAvailability();
+                        ModLogger.Info("Enlistment", "Initialized quartermaster inventory at enlistment start");
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Warn("Quartermaster", $"Failed to initialize inventory at enlistment start: {ex.Message}");
+                    }
+                }
+
                 SyncActivationState("start_enlist");
 
                 var resumedFromGrace = resumingGraceService;
