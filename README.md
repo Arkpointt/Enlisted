@@ -138,12 +138,16 @@ enlisted transforms bannerlord into a deep soldier career simulator with **275+ 
 - provision bundles with morale/fatigue boosts
 - rank-based button gating in shop interface
 
-**baggage train & inspections**
-- early enlistment inventory handling (prevents "walk in with endgame kit")
+**baggage train & logistics**
+- world-state-aware simulation: baggage delays/raids occur more during intense combat, rarely during peaceful garrison
+- dynamic decision system: "access baggage train" appears in decisions only when wagons are accessible
+- accessibility responds to campaign situation (march state, battles, sieges, settlements)
+- 5 baggage events: wagons arrive, delays (weather/terrain), raids, theft
+- rank-based access: higher ranks can request emergency access or halt column
 - baggage checks during muster ceremonies
 - contraband detection with reputation-based outcomes
+- early enlistment inventory handling (prevents "walk in with endgame kit")
 - reclamation of personal gear upon discharge
-- safe storage of your equipment while serving
 
 **company supply tracking**
 - 0-100% supply scale tracking rations, ammo, repairs, camp supplies
@@ -243,6 +247,8 @@ enlisted transforms bannerlord into a deep soldier career simulator with **275+ 
 - activity level system responds to march state, battles, supplies, morale
 - simulation pressure tracking influences event frequency
 - player behavior tracking adapts content to your choices
+- baggage train simulation responds to campaign conditions (intense siege vs peaceful garrison)
+- event probabilities adapt dynamically to lord situation, war stance, and terrain
 
 **event types**
 - escalation events: reputation/discipline consequences (14 events)
