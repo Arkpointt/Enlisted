@@ -1138,15 +1138,20 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.WaitQuest;
 
-                    // Fetch available decisions from all sources (up to 3 total)
+                    // Fetch available decisions from all sources (up to 3 opportunities + logistics)
                     var decisionManager = DecisionManager.Instance;
                     var allDecisions = new List<DecisionAvailability>();
                     if (decisionManager != null)
                     {
-                        // Collect orchestrated camp opportunities only
-                        allDecisions.AddRange(decisionManager.GetAvailableOpportunities().Where(d => d.IsVisible && d.IsAvailable));
+                        // Collect orchestrated camp opportunities (limit 3)
+                        var opportunities = decisionManager.GetAvailableOpportunities().Where(d => d.IsVisible && d.IsAvailable).Take(3);
+                        allDecisions.AddRange(opportunities);
+                        
+                        // Add logistics decisions (baggage access, etc.) - these don't count against the 3-opportunity limit
+                        var logistics = decisionManager.GetAvailableDecisionsForSection("logistics").Where(d => d.IsVisible && d.IsAvailable);
+                        allDecisions.AddRange(logistics);
                     }
-                    _cachedMainMenuDecisions = allDecisions.Take(3).ToList();
+                    _cachedMainMenuDecisions = allDecisions;
 
                     // Check for new decisions
                     var currentIds = new HashSet<string>(_cachedMainMenuDecisions.Select(d => d.Decision?.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
@@ -1188,8 +1193,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 ToggleDecisionsMainMenuAccordion,
                 false, 3);
 
-            // 2a-c. Decision slots (up to 3, visible when expanded)
-            for (var i = 0; i < 3; i++)
+            // 2a-e. Decision slots (up to 3 opportunities + 2 logistics = 5 max, visible when expanded)
+            for (var i = 0; i < 5; i++)
             {
                 var slotIndex = i;
                 starter.AddGameMenuOption("enlisted_status", $"enlisted_decision_slot_{i}",
@@ -1199,7 +1204,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     false, 4 + i);
             }
 
-            // 3. Camp hub - priority 10 to appear after all decision slots (4-6)
+            // 3. Camp hub - priority 10 to appear after all decision slots (4-8)
             starter.AddGameMenuOption("enlisted_status", "enlisted_camp_hub",
                 "{=enlisted_camp}Camp",
                 args =>
@@ -6667,7 +6672,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private void RefreshMainMenuDecisionSlots()
         {
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < 5; i++)
             {
                 var slotText = string.Empty;
                 if (i < _cachedMainMenuDecisions.Count)
