@@ -165,6 +165,7 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(HidePartyNamePlatePatch);
                     _ = typeof(IncidentsSuppressionPatch);
                     _ = typeof(InfluenceMessageSuppressionPatch);
+                    _ = typeof(InformationManagerDisplayMessagePatch);
                     _ = typeof(JoinEncounterAutoSelectPatch);
                     _ = typeof(JoinSiegeEventAutoSelectPatch);
                     _ = typeof(LootBlockPatch);
@@ -328,6 +329,10 @@ namespace Enlisted.Mod.Entry
                     // Menu system: provides the main enlisted status menu and duty/profession selection interface.
                     // Handles menu state transitions, battle detection, and settlement access.
                     campaignStarter.AddBehavior(new EnlistedMenuBehavior());
+                    
+                    // Combat log: custom scrollable combat log widget that displays messages on the right side
+                    // of the campaign map while enlisted, suppressing the native bottom-left log.
+                    campaignStarter.AddBehavior(new EnlistedCombatLogBehavior());
 
                     // Status manager: determines primary role and specializations based on traits and skills.
                     // Provides formatted status descriptions for UI display.
@@ -463,6 +468,7 @@ namespace Enlisted.Mod.Entry
                         nameof(MusterMenuHandler),
                         nameof(EnlistedDialogManager),
                         nameof(EnlistedMenuBehavior),
+                        nameof(EnlistedCombatLogBehavior),
                         "EnlistedStatusManager",
                         nameof(TroopSelectionManager),
                         nameof(EquipmentManager),

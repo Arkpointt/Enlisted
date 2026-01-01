@@ -20,6 +20,11 @@
       <Style Name="Alert" FontColor="#FF6B6BFF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0" />
       <Style Name="Critical" FontColor="#FF0000FF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="1" TextOutlineColor="#000000FF" />
       <Style Name="Urgent" FontColor="#FFA500FF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0.5" TextOutlineColor="#000000FF" />
+      
+      <!-- Blue variants for intelligence/tactical information -->
+      <Style Name="Intel" FontColor="#6B9FFFFF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="0.5" TextOutlineColor="#000000FF" />
+      <Style Name="Tactical" FontColor="#4682B4FF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="1" TextOutlineColor="#000000FF" />
+      <Style Name="Strategic" FontColor="#1E90FFFF" TextGlowColor="#000000FF" FontSize="22" TextBlur="0" TextGlowRadius="0" TextOutlineAmount="1" TextOutlineColor="#000000FF" />
     </Styles>
   </Brush>
 </Brushes>

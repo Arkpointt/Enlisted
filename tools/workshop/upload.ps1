@@ -7,7 +7,7 @@
 # 3. preview.png created
 
 param(
-    [string]$SteamCmdPath = "C:\SteamCMD\steamcmd.exe",
+    [string]$SteamCmdPath = "C:\Dev\steamcmd\steamcmd.exe",
     [string]$SteamUser = ""
 )
 

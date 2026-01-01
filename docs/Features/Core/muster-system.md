@@ -3,7 +3,7 @@
 **Summary:** The Muster System is a multi-stage GameMenu sequence that occurs every 12 days, guiding players through pay day ceremonies, rank progression displays, equipment inspections, and comprehensive period summaries. Replaces the simple pay inquiry popup with an immersive muster experience that integrates pay, rations, baggage checks, equipment inspections, and promotion acknowledgments.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-24  
+**Last Updated:** 2026-01-01  
 **Related Docs:** [Pay System](pay-system.md), [Enlistment](enlistment.md), [Promotion System](promotion-system.md), [Quartermaster System](../Equipment/quartermaster-system.md), [News & Reporting](../UI/news-reporting-system.md)
 
 ---
@@ -556,7 +556,8 @@ Next Muster:         Day 36 (12 days)
 | 🛒 Trade | Visit Quartermaster | Supply >= 15% | Open QM conversation |
 | 📋 Manage | Review Service Record | Always | Open service records menu |
 | 🏕 Submenu | Request Temporary Leave | Not in combat/siege | Start leave process |
-| 📜 Manage | Request Discharge/Retirement | Always | Request discharge (resolves at next muster) |
+| 📜 Manage | Request Retirement | 252+ days served | Process honorable retirement immediately |
+| 📜 Manage | Request Discharge | Always | Process discharge immediately (outcome varies) |
 
 **Behavior:**
 - All muster outcomes recorded to `EnlistedNewsBehavior` for news feed
@@ -573,17 +574,25 @@ Next Muster:         Day 36 (12 days)
 - Discharge/retirement requests set pending flag (processes at next muster)
 - Full muster report saved to news feed archive
 
-**Discharge/Retirement Option:**
+**Discharge/Retirement Options:**
 
-The "Request Discharge/Retirement" button dynamically changes based on service length:
+Two separate buttons appear at Muster Complete:
 
-- **Retirement (252+ days):** Button shows "Request Retirement" with tooltip emphasizing positive benefits (severance, pension, positive relations)
-- **Discharge (<252 days):** Button shows "Request Discharge" with tooltip showing expected discharge band:
-  - **Veteran/Heroic (200+ days):** Honorable discharge, 3000g severance, +30 relation, pension
-  - **Honorable (100-199 days):** Honorable discharge, 3000g severance, +10 relation, pension
-  - **Washout (<100 days or negative relation):** No severance, -10 relation, gear confiscated
+**1. Request Retirement (Greyed out until eligible)**
+- **Requirements:** 252+ days of service
+- **Tooltip when eligible:** "Complete your term with honor. Receive severance pay and pension. Positive relations."
+- **Tooltip when not eligible:** Shows days served and days remaining (e.g., "Retirement requires 252 days of service. You have served 150 days (102 days remaining).")
+- **Outcome:** Honorable retirement with full benefits
 
-When requested, sets `IsPendingDischarge = true` and processes at the next pay muster (stage 2). Players can cancel the request before the next muster if they change their mind.
+**2. Request Discharge (Always enabled)**
+- **Availability:** Always clickable
+- **Tooltip:** Shows expected discharge band outcome based on current service record:
+  - **Veteran/Heroic (200+ days, T4+):** "Honorable discharge. Receive severance (3000g) and pension. +30 relation with lord."
+  - **Honorable (100-199 days):** "Honorable discharge. Receive severance (3000g) and pension. +10 relation with lord."
+  - **Washout (<100 days or negative lord relation):** "Early discharge (washout). No severance or pension. -10 relation. Gear confiscated."
+- **Outcome:** Processes immediately based on actual discharge band calculation
+
+Both options process the discharge immediately during the muster sequence (no pending flag or waiting for next muster).
 
 ---
 

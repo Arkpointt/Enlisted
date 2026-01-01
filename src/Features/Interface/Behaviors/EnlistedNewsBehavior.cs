@@ -2576,7 +2576,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 // Add to personal feed only if this outcome is currently shown
-                if (outcome.IsCurrentlyShown)
+                // Skip onboarding events (baggage check) as they're one-time setup that shouldn't clutter news
+                var isOnboarding = outcome.EventId != null && outcome.EventId.StartsWith("evt_bagcheck_", StringComparison.OrdinalIgnoreCase);
+                
+                if (outcome.IsCurrentlyShown && !isOnboarding)
                 {
                     // Build display text with narrative for immersive RP
                     string displayText;

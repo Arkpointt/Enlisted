@@ -2,7 +2,7 @@
 
 **Summary:** Quick reference for building, modifying, and extending the Enlisted mod. Covers setup, structure, common tasks, and integration patterns.
 
-**Last Updated:** 2025-12-22  
+**Last Updated:** 2026-01-01  
 **Target Game:** Bannerlord v1.3.13  
 **Related Docs:** [BLUEPRINT.md](BLUEPRINT.md), [Reference/native-apis.md](Reference/native-apis.md)
 
@@ -242,6 +242,24 @@ public class PartyFollowingPatch
 All Enlisted patches use default priority (400). If your mod patches the same methods:
 - Use Priority.Low (200) to run after Enlisted
 - Use Priority.High (600) to run before Enlisted
+
+### Menu Override System
+The mod uses a two-layer approach to prevent native menus from appearing while enlisted:
+
+**Primary Layer - GenericStateMenuPatch:**
+- Patches `DefaultEncounterGameMenuModel.GetGenericStateMenu()`
+- Intercepts menu selection before native system activates it
+- Overrides: `"castle"`, `"castle_outside"`, `"town"`, `"town_outside"`, `"village"`, `"army_wait"`, `"army_wait_at_settlement"`
+- Returns `"enlisted_status"` to keep player in enlisted menu
+- Respects `HasExplicitlyVisitedSettlement` flag (player clicked "Visit Settlement")
+
+**Fallback Layer - OnMenuOpened:**
+- Event handler in `EnlistedMenuBehavior.cs`
+- Catches menus that bypass the Harmony patch
+- Same menu IDs as primary layer
+- Defers override to next frame via `NextFrameDispatcher`
+
+**Critical Detail:** Both layers must handle `*_outside` menu variants. The native system returns `"castle_outside"` and `"town_outside"` when the lord enters a settlement without an explicit player encounter (pause-in-castle scenario).
 
 ---
 

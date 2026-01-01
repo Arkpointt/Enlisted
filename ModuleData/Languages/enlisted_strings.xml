@@ -1217,6 +1217,7 @@
     <!-- MUSTER COMPLETE - DISCHARGE/RETIREMENT OPTIONS -->
     <string id="muster_complete_retire" text="Request Retirement" />
     <string id="muster_complete_retire_tt" text="Complete your term with honor. Receive severance pay and pension. Positive relations." />
+    <string id="muster_complete_retire_blocked_tt" text="Retirement requires 252 days of service. You have served {DAYS_SERVED} days ({DAYS_REMAINING} days remaining)." />
     <string id="muster_complete_discharge" text="Request Discharge" />
     <string id="muster_complete_discharge_veteran_tt" text="Honorable discharge. Receive severance (3000g) and pension. +30 relation with lord." />
     <string id="muster_complete_discharge_honorable_tt" text="Honorable discharge. Receive severance (3000g) and pension. +10 relation with lord." />

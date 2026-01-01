@@ -65,7 +65,7 @@
 | **Camp Background** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Autonomous roster tracking, incidents |
 | **Camp Routine Schedule** | [camp-routine-schedule-spec.md](Features/Campaign/camp-routine-schedule-spec.md) | Baseline daily routine with deviations |
 | **Camp Hub (Custom Gauntlet)** | [camp-hub-custom-gauntlet.md](Features/UI/camp-hub-custom-gauntlet.md) | — |
-| **Combat Log (Enlisted)** | [enlisted-combat-log.md](Features/UI/enlisted-combat-log.md) | Scrollable message feed, right side display |
+| **Combat Log (Enlisted)** | [enlisted-combat-log.md](Features/UI/enlisted-combat-log.md) | ✅ Native-styled scrollable feed with faction-colored encyclopedia links |
 | **Company Events** | [company-events.md](Features/Core/company-events.md) | — |
 | **Companion Integration** | [companion-management.md](Features/Core/companion-management.md) | — |
 | **Contraband Detection** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Baggage Checks |
@@ -204,7 +204,7 @@
 |----------|-------|--------|
 | [README.md](Features/UI/README.md) | UI systems overview | ✅ Current |
 | [ui-systems-master.md](Features/UI/ui-systems-master.md) | Complete UI reference: all menus, screens, and interfaces (camp menu, muster menu, QM interfaces, equipment grids, dialogue flows), Gauntlet implementation patterns, UI technical requirements | ✅ Current |
-| [enlisted-combat-log.md](Features/UI/enlisted-combat-log.md) | Custom combat log widget: scrollable message feed (right side, persistent 5min, 50 message history), suppresses native log while enlisted via Harmony patch, reactive positioning with army menu, color-coded messages, seamless enlisted/non-enlisted transitions | 📋 Specification |
+| [enlisted-combat-log.md](Features/UI/enlisted-combat-log.md) | Custom combat log widget: native-styled scrollable feed (right side, 5min persistence, 50 message history), smart auto-scroll (pauses on manual scroll), inactivity fade (35% after 10s), clickable encyclopedia links with faction-specific colors (kingdoms display in banner colors: Vlandia=red, Sturgia=blue, Battania=green, etc.), suppresses native log while enlisted via Harmony patch, color-coded messages with shadows | ✅ Current |
 | [camp-hub-custom-gauntlet.md](Features/UI/camp-hub-custom-gauntlet.md) | Custom Gauntlet main hub: replaces `enlisted_status` GameMenu with custom layout (horizontal buttons, dynamic order cards, settlement access), all submenus stay native GameMenu, complete implementation spec with ViewModel/XML/Behavior code | 📋 Specification |
 | [color-scheme.md](Features/UI/color-scheme.md) | Professional color palette: hex codes for all UI elements (backgrounds, text, buttons, status indicators), quality tier colors, reputation colors, accessibility considerations | ✅ Current |
 | [news-reporting-system.md](Features/UI/news-reporting-system.md) | News feeds and Daily Brief: event logging, combat summaries, period recaps, notification system, Daily Brief UI (shows last 12 days of activity) | ✅ Current |

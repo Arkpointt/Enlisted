@@ -3709,11 +3709,22 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     try
                     {
-                        CampaignMapConversation.OpenConversation(
-                            new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
-                            new ConversationCharacterData(qmHero.CharacterObject, qmHero.PartyBelongedTo?.Party));
-
-                        ModLogger.Debug("Conversations", "QM: Restarted conversation with quartermaster");
+                        var playerData = new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty);
+                        var qmData = new ConversationCharacterData(qmHero.CharacterObject, qmHero.PartyBelongedTo?.Party);
+                        
+                        // Use sea conversation scene if at sea, otherwise use map conversation
+                        // Mirrors lord conversation behavior for proper scene selection
+                        if (MobileParty.MainParty?.IsCurrentlyAtSea == true)
+                        {
+                            const string seaConversationScene = "conversation_scene_sea_multi_agent";
+                            ModLogger.Debug("Conversations", $"QM: Opening sea conversation using scene: {seaConversationScene}");
+                            CampaignMission.OpenConversationMission(playerData, qmData, seaConversationScene);
+                        }
+                        else
+                        {
+                            CampaignMapConversation.OpenConversation(playerData, qmData);
+                            ModLogger.Debug("Conversations", "QM: Opened land conversation");
+                        }
                     }
                     catch (Exception ex)
                     {

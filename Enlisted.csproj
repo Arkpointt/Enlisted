@@ -154,6 +154,9 @@
   <ItemGroup>
     <!-- GUI Color Brushes -->
     <Content Include="GUI\Brushes\EnlistedColors.xml"/>
+    <Content Include="GUI\Brushes\EnlistedCombatLog.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     
     <!-- Quartermaster Equipment Prefabs -->
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml"/>
@@ -165,6 +168,11 @@
     <Content Include="GUI\Prefabs\Equipment\QuartermasterUpgradeScreen.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterUpgradeCard.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterUpgradeCardRow.xml"/>
+    
+    <!-- Combat Log Interface Prefab -->
+    <Content Include="GUI\Prefabs\Interface\EnlistedCombatLog.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <!-- ========================================================================
        SOURCE FILES (BOTH VERSIONS)
@@ -227,7 +235,16 @@
     <!-- Menus & Interface Behaviors -->
     <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs"/>
     <Compile Include="src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs"/>
+    <Compile Include="src\Features\Interface\Behaviors\EnlistedCombatLogBehavior.cs"/>
     <Compile Include="src\Features\Interface\MainMenuNewsCache.cs"/>
+    
+    <!-- Combat Log ViewModels -->
+    <Compile Include="src\Features\Interface\ViewModels\EnlistedCombatLogVM.cs"/>
+    <Compile Include="src\Features\Interface\ViewModels\CombatLogMessageVM.cs"/>
+    
+    <!-- Interface Utilities -->
+    <Compile Include="src\Features\Interface\Utils\EncyclopediaLinkFormatter.cs"/>
+    <Compile Include="src\Features\Interface\Utils\FactionLinkColorizer.cs"/>
     
     <!-- Daily Report & Camp News -->
     <Compile Include="src\Features\Interface\News\Models\DailyReportModels.cs"/>
@@ -454,6 +471,8 @@
     <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\FormationMessageSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\InformationManagerDisplayMessagePatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\QuartermasterConversationScenePatch.cs"/>
     
     <!-- Siege & Fortification Patches -->
     <Compile Include="src\Mod.GameAdapters\Patches\CheckFortificationAttackablePatch.cs"/>

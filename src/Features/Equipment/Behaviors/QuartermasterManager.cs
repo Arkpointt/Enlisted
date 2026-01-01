@@ -223,9 +223,19 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         try
                         {
-                            CampaignMapConversation.OpenConversation(
-                                new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
-                                new ConversationCharacterData(qmHero.CharacterObject, qmHero.PartyBelongedTo?.Party));
+                            var playerData = new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty);
+                            var qmData = new ConversationCharacterData(qmHero.CharacterObject, qmHero.PartyBelongedTo?.Party);
+                            
+                            // Use sea conversation scene if at sea, otherwise use map conversation
+                            if (MobileParty.MainParty?.IsCurrentlyAtSea == true)
+                            {
+                                const string seaConversationScene = "conversation_scene_sea_multi_agent";
+                                CampaignMission.OpenConversationMission(playerData, qmData, seaConversationScene);
+                            }
+                            else
+                            {
+                                CampaignMapConversation.OpenConversation(playerData, qmData);
+                            }
                             ModLogger.Debug("Quartermaster", "Restarted QM conversation from rations menu");
                         }
                         catch (Exception ex)
@@ -1688,9 +1698,19 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         try
                         {
-                            CampaignMapConversation.OpenConversation(
-                                new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
-                                new ConversationCharacterData(qmHero.CharacterObject, qmHero.PartyBelongedTo?.Party));
+                            var playerData = new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty);
+                            var qmData = new ConversationCharacterData(qmHero.CharacterObject, qmHero.PartyBelongedTo?.Party);
+                            
+                            // Use sea conversation scene if at sea, otherwise use map conversation
+                            if (MobileParty.MainParty?.IsCurrentlyAtSea == true)
+                            {
+                                const string seaConversationScene = "conversation_scene_sea_multi_agent";
+                                CampaignMission.OpenConversationMission(playerData, qmData, seaConversationScene);
+                            }
+                            else
+                            {
+                                CampaignMapConversation.OpenConversation(playerData, qmData);
+                            }
                             ModLogger.Debug("Quartermaster", "Restarted QM conversation from popup");
                         }
                         catch (Exception ex)

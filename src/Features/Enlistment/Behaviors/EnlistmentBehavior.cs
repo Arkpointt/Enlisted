@@ -12323,7 +12323,32 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now);
                     }
 
-                    TryPauseForSettlementEntry();
+                    // For towns and castles, pause and activate enlisted menu
+                    // This handles the case where escort AI brings player into settlement with lord
+                    if (settlement.IsTown || settlement.IsCastle)
+                    {
+                        TryPauseForSettlementEntry();
+
+                        // Check for active battles/sieges - but a settlement encounter is fine
+                        var hasMapEvent = mainParty?.Party.MapEvent != null;
+                        var hasBesiegedSettlement = _enlistedLord?.PartyBelongedTo?.BesiegedSettlement != null;
+                        var inBattleOrSiege = hasMapEvent || hasBesiegedSettlement;
+
+                        ModLogger.Info("Settlement",
+                            $"Player entering {settlement.Name}: MapEvent={hasMapEvent}, Besieged={hasBesiegedSettlement}, inBattleOrSiege={inBattleOrSiege}");
+
+                        if (!inBattleOrSiege)
+                        {
+                            EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+                            ModLogger.Info("Settlement",
+                                $"Activated enlisted menu for player entering {settlement.Name}");
+                        }
+                        else
+                        {
+                            ModLogger.Info("Settlement",
+                                $"GUARDED: Skipped enlisted menu activation - battle/siege active ({settlement.Name})");
+                        }
+                    }
 
                     return;
                 }

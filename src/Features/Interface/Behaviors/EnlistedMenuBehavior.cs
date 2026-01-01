@@ -691,15 +691,27 @@ namespace Enlisted.Features.Interface.Behaviors
                 // These are native army menus that would appear when the lord is at settlements or during army operations.
                 // Enlisted soldiers should see their custom menu instead, unless in combat/siege.
 
-                if (_currentMenuId == "army_wait_at_settlement" || _currentMenuId == "army_wait")
+                if (_currentMenuId == "army_wait_at_settlement" || _currentMenuId == "army_wait" ||
+                    _currentMenuId == "castle" || _currentMenuId == "castle_outside" ||
+                    _currentMenuId == "town" || _currentMenuId == "town_outside")
                 {
+                    ModLogger.Info("Menu", $"OnMenuOpened detected {_currentMenuId} while enlisted - checking for override");
+
                     // Only override if not in siege or siege-related battle
                     if (!lordSiegeEvent && !siegeRelatedBattle)
                     {
                         // For army_wait, also check that player isn't in a battle/encounter
                         if (_currentMenuId == "army_wait" && (playerBattle || playerEncounter))
                         {
-                            // Don't override during battles
+                            ModLogger.Debug("Menu", "Not overriding army_wait - player in battle/encounter");
+                            return;
+                        }
+
+                        // For castle/town menus (both inside and outside variants), check if player explicitly visited
+                        if ((_currentMenuId == "castle" || _currentMenuId == "castle_outside" ||
+                             _currentMenuId == "town" || _currentMenuId == "town_outside") && HasExplicitlyVisitedSettlement)
+                        {
+                            ModLogger.Info("Menu", $"Not overriding {_currentMenuId} - player explicitly visited settlement");
                             return;
                         }
 
@@ -712,6 +724,10 @@ namespace Enlisted.Features.Interface.Behaviors
                                 SafeActivateEnlistedMenu();
                             }
                         });
+                    }
+                    else
+                    {
+                        ModLogger.Debug("Menu", $"Not overriding {_currentMenuId} - siege/battle active");
                     }
                 }
             }
@@ -2441,28 +2457,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     sentences.Add(atmosphere);
                 }
 
-                // Sentence 2: Recent significant event from personal feed
-                // Only show if the event is relatively recent (within last 2 days)
-                var personalItems = news?.GetVisiblePersonalFeedItems(2);
-                if (personalItems != null && personalItems.Count > 0)
-                {
-                    var mostRecent = personalItems[0];
-                    var daysSinceEvent = CampaignTime.Now.ToDays - mostRecent.DayCreated;
-                    
-                    // Add past tense framing for older events
-                    var eventLine = EnlistedNewsBehavior.FormatDispatchForDisplay(mostRecent, true);
-                    if (!string.IsNullOrWhiteSpace(eventLine) && daysSinceEvent < 3)
-                    {
-                        if (daysSinceEvent >= 1)
-                        {
-                            // Past tense for events from yesterday or earlier
-                            eventLine = eventLine.Replace(" arrives", " arrived")
-                                               .Replace(" joins", " joined")
-                                               .Replace(" departs", " departed");
-                        }
-                        sentences.Add(eventLine);
-                    }
-                }
+                // NOTE: Removed personal feed from Company Reports - those belong in Player Status only
+                // Personal routine activities (rest, training, etc.) should not appear in company-level reports
 
                 // Sentence 3: Company status integrating CompanyNeeds + CampLifeBehavior pressures
                 if (companyNeeds != null)
@@ -2613,13 +2609,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
 
-                // Brief period recap: orders and XP this muster period (compact summary for main menu)
-                var periodRecap = BuildBriefPeriodRecap(enlistment);
-                if (!string.IsNullOrWhiteSpace(periodRecap))
-                {
-                    sentences.Add(periodRecap);
-                }
-
                 // Ensure we have content
                 if (sentences.Count == 0)
                 {
@@ -2757,48 +2746,81 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         /// Builds a compact one-sentence player recap for the main menu player status section.
-        /// Shows narrative from recent orders: what happened during duties (routine, spotted tracks, etc.).
+        /// Shows narrative from recent activities in natural Bannerlord RP flavor with color coding.
+        /// Integrates routine outcomes, orders, and events into a flowing status summary.
         /// </summary>
         private static string BuildBriefPlayerRecap(EnlistmentBehavior enlistment)
         {
             try
             {
                 var news = EnlistedNewsBehavior.Instance;
-                var orderOutcomes = news?.GetRecentOrderOutcomes(3) ?? new List<OrderOutcomeRecord>();
+                if (news == null)
+                {
+                    return string.Empty;
+                }
                 
-                // Get the most recent order with a narrative summary
+                // Priority 1: Recent order outcomes (most important)
+                var orderOutcomes = news.GetRecentOrderOutcomes(3);
                 var recentOrder = orderOutcomes.FirstOrDefault(o => !string.IsNullOrWhiteSpace(o.BriefSummary));
                 if (recentOrder != null)
                 {
-                    // Display what happened during the order
                     var narrative = recentOrder.BriefSummary;
-                    var orderTitle = recentOrder.OrderTitle ?? "duty";
-                    
-                    if (recentOrder.Success)
-                    {
-                        return $"Your record: {orderTitle} — {narrative}";
-                    }
-                    else
-                    {
-                        return $"Your record: {orderTitle} — <span style=\"Alert\">{narrative}</span>";
-                    }
+                    var colorStyle = recentOrder.Success ? "Success" : "Alert";
+                    return $"<span style=\"{colorStyle}\">{narrative}</span>";
                 }
                 
-                // No order history - check for recent event outcomes instead
-                var eventOutcomes = news?.GetRecentEventOutcomes(3) ?? new List<EventOutcomeRecord>();
-                var recentEvent = eventOutcomes.FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.EventTitle));
-                if (recentEvent != null)
+                // Priority 2: Check personal feed for routine outcomes and recent events
+                var personalFeed = news.GetVisiblePersonalFeedItems(3);
+                if (personalFeed.Count > 0)
                 {
-                    var eventTitle = recentEvent.EventTitle;
-                    var option = recentEvent.OptionChosen ?? "participated";
-                    return $"Recent: {eventTitle} — you {option.ToLowerInvariant()}.";
+                    // Get most recent item
+                    var recentItem = personalFeed[0];
+                    if (!string.IsNullOrWhiteSpace(recentItem.HeadlineKey))
+                    {
+                        // Determine color based on severity
+                        var colorStyle = recentItem.Severity switch
+                        {
+                            1 => "Success",   // Positive (excellent routine outcome, success)
+                            2 => "Warning",   // Attention (mishap, failure)
+                            3 => "Alert",     // Urgent (critical issues)
+                            4 => "Critical",  // Critical danger
+                            _ => "Default"    // Normal
+                        };
+                        
+                        // For routine activities, strip the activity name prefix if present
+                        // to make it more natural ("Good progress" instead of "Combat Training: Good progress")
+                        var text = recentItem.HeadlineKey;
+                        
+                        // Check if this is a routine outcome - extract just the flavor text
+                        if (recentItem.Category == "routine_activity" && text.Contains(": "))
+                        {
+                            var parts = text.Split(new[] { ": " }, 2, StringSplitOptions.None);
+                            if (parts.Length == 2)
+                            {
+                                text = parts[1]; // Use the flavor text part only
+                            }
+                        }
+                        
+                        // For event outcomes, also simplify by removing event title prefix
+                        // Display just the narrative part for natural flow
+                        if (text.Contains(": ") && !recentItem.Category.StartsWith("simulation_"))
+                        {
+                            var parts = text.Split(new[] { ": " }, 2, StringSplitOptions.None);
+                            if (parts.Length == 2)
+                            {
+                                text = parts[1];
+                            }
+                        }
+                        
+                        return $"<span style=\"{colorStyle}\">{text}</span>";
+                    }
                 }
                 
                 // Fallback based on service time
                 var daysServed = (int)(enlistment?.DaysServed ?? 0);
                 if (daysServed < 2)
                 {
-                    return "Your record: Still settling in. The routine will come.";
+                    return "Still settling in. The routine will come.";
                 }
                 
                 return string.Empty;
@@ -2811,7 +2833,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         /// Builds a compact player forecast sentence for the main menu player status section.
-        /// Shows upcoming commitments, expected orders, or activity level hints.
+        /// Shows upcoming commitments, expected orders, or activity level hints in natural flowing text.
         /// </summary>
         private static string BuildBriefPlayerForecast(EnlistmentBehavior enlistment, Orders.Behaviors.OrderManager orderManager)
         {
@@ -2829,9 +2851,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     
                     if (hoursUntil < 2f)
                     {
-                        return $"<span style=\"Link\">Ahead:</span> {activity} starting soon.";
+                        return $"<span style=\"Link\">{activity} calls shortly.</span>";
                     }
-                    return $"<span style=\"Link\">Ahead:</span> {activity} at {phase}.";
+                    return $"<span style=\"Link\">{activity} comes at {phase}.</span>";
                 }
                 
                 // Check for imminent orders
@@ -2841,7 +2863,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     var hoursUntil = orderManager.GetHoursUntilIssue();
                     if (!string.IsNullOrWhiteSpace(forecastText) && hoursUntil < 12)
                     {
-                        return $"<span style=\"Warning\">Ahead:</span> {forecastText} expected.";
+                        return $"<span style=\"Warning\">{forecastText} — word travels fast.</span>";
                     }
                 }
                 
@@ -2849,28 +2871,28 @@ namespace Enlisted.Features.Interface.Behaviors
                 var worldState = Content.WorldStateAnalyzer.AnalyzeSituation();
                 if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Intense)
                 {
-                    return "<span style=\"Warning\">Ahead:</span> Expect orders soon. Stay ready.";
+                    return "<span style=\"Warning\">The captain's tent is busy. Orders will come.</span>";
                 }
                 else if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Active)
                 {
-                    return "<span style=\"Link\">Ahead:</span> Orders likely within the day.";
+                    return "<span style=\"Link\">Something's in the air. Best stay close to camp.</span>";
                 }
                 else if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Routine)
                 {
                     // Get next phase context
                     var nextPhaseText = worldState.CurrentDayPhase switch
                     {
-                        Content.Models.DayPhase.Dawn => "Afternoon training ahead",
-                        Content.Models.DayPhase.Midday => "Evening leisure ahead",
-                        Content.Models.DayPhase.Dusk => "Rest ahead",
-                        Content.Models.DayPhase.Night => "Morning drill ahead",
-                        _ => "Routine duties ahead"
+                        Content.Models.DayPhase.Dawn => "Training grounds call this afternoon",
+                        Content.Models.DayPhase.Midday => "Evening brings time for cards and rest",
+                        Content.Models.DayPhase.Dusk => "Night watch or bedroll — one or the other",
+                        Content.Models.DayPhase.Night => "Dawn will bring the morning drill",
+                        _ => "The routine continues"
                     };
-                    return $"<span style=\"Success\">Ahead:</span> {nextPhaseText}.";
+                    return $"<span style=\"Default\">{nextPhaseText}.</span>";
                 }
                 
                 // Quiet period fallback
-                return "<span style=\"Success\">Ahead:</span> Quiet period. No orders expected.";
+                return "<span style=\"Default\">Garrison duty. Nothing stirs.</span>";
             }
             catch
             {
@@ -3847,36 +3869,18 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
 
-                // Critical company warnings integrating CampLifeBehavior pressures (AHEAD forecast)
+                // Critical player-relevant warnings from company state (supplies impact player directly)
                 // Skip shock-based warnings for fresh enlistment (< 1 day) - lord's prior battles shouldn't alarm new recruits
                 var freshlyEnlisted = enlistment?.DaysServed < 1f;
                 if (companyNeeds != null)
                 {
                     var logisticsHigh = !freshlyEnlisted && campLife?.LogisticsStrain > 70;
-                    var moraleShock = !freshlyEnlisted && campLife?.MoraleShock > 60;
-                    var payTension = !freshlyEnlisted && campLife?.PayTension > 60;
 
+                    // Only show supplies in player status if it's critical (player goes hungry too)
                     if (companyNeeds.Supplies < 20 || logisticsHigh)
                     {
                         var context = logisticsHigh ? "logistics collapsing" : "rations failing";
                         sentences.Add($"<span style=\"Alert\">The men whisper of hunger.</span> {(char.ToUpper(context[0]) + context.Substring(1))} — resupply needed urgently.");
-                    }
-                    else if (companyNeeds.Morale < 20 || moraleShock)
-                    {
-                        var reason = payTension ? "pay disputes and setbacks" : moraleShock ? "recent defeats" : "hard campaigning";
-                        sentences.Add($"<span style=\"Alert\">The men are losing heart.</span> Morale dangerously low from {reason}.");
-                    }
-                    else if (companyNeeds.Rest < 20 && activityLevel == Content.Models.ActivityLevel.Intense)
-                    {
-                        sentences.Add("<span style=\"Alert\">The men stagger with fatigue.</span> They can't keep this pace much longer.");
-                    }
-                    else if (companyNeeds.Rest < 20 && sentences.Count < 4)
-                    {
-                        sentences.Add("<span style=\"Warning\">The men stagger with fatigue.</span> They'll need rest before the next push.");
-                    }
-                    else if (payTension && sentences.Count < 4)
-                    {
-                        sentences.Add("<span style=\"Warning\">Pay disputes simmer.</span> The {ncoTitle} works to keep tempers cool.");
                     }
                 }
 
@@ -4128,10 +4132,21 @@ namespace Enlisted.Features.Interface.Behaviors
 
                     // Open conversation with quartermaster Hero
                     // The dialog tree is registered in EnlistedDialogManager
-                    CampaignMapConversation.OpenConversation(
-                        new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
-                        new ConversationCharacterData(qm.CharacterObject, qm.PartyBelongedTo?.Party)
-                    );
+                    var playerData = new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty);
+                    var qmData = new ConversationCharacterData(qm.CharacterObject, qm.PartyBelongedTo?.Party);
+                    
+                    // Use sea conversation scene if at sea, otherwise use map conversation
+                    // Mirrors lord conversation behavior for proper scene selection
+                    if (MobileParty.MainParty?.IsCurrentlyAtSea == true)
+                    {
+                        const string seaConversationScene = "conversation_scene_sea_multi_agent";
+                        ModLogger.Info("Interface", $"Opening sea conversation with QM using scene: {seaConversationScene}");
+                        CampaignMission.OpenConversationMission(playerData, qmData, seaConversationScene);
+                    }
+                    else
+                    {
+                        CampaignMapConversation.OpenConversation(playerData, qmData);
+                    }
                 }
                 else
                 {
@@ -4176,10 +4191,19 @@ namespace Enlisted.Features.Interface.Behaviors
                     ModLogger.Info("Baggage", $"Opening QM conversation for baggage request: {requestType}");
 
                     // Open conversation with quartermaster
-                    CampaignMapConversation.OpenConversation(
-                        new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
-                        new ConversationCharacterData(qm.CharacterObject, qm.PartyBelongedTo?.Party)
-                    );
+                    var playerData = new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty);
+                    var qmData = new ConversationCharacterData(qm.CharacterObject, qm.PartyBelongedTo?.Party);
+                    
+                    // Use sea conversation scene if at sea, otherwise use map conversation
+                    if (MobileParty.MainParty?.IsCurrentlyAtSea == true)
+                    {
+                        const string seaConversationScene = "conversation_scene_sea_multi_agent";
+                        CampaignMission.OpenConversationMission(playerData, qmData, seaConversationScene);
+                    }
+                    else
+                    {
+                        CampaignMapConversation.OpenConversation(playerData, qmData);
+                    }
                 }
                 else
                 {

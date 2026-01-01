@@ -1,6 +1,6 @@
 # Enlisted Combat Log
 
-**Status:** Planned  
+**Status:** ✅ Implemented  
 **Category:** UI / Information Display  
 **Related Docs:** [News Reporting System](news-reporting-system.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md)
 
@@ -8,33 +8,33 @@
 
 ## Overview
 
-A custom, persistent combat log widget that displays information messages on the right side of the campaign map screen during enlistment. The system suppresses the native bottom-left combat log while enlisted and routes messages to a scrollable, semi-transparent display positioned above the army menu. When not enlisted (left army, prisoner, quit), the native combat log resumes normal operation.
+A native-styled combat log widget that displays information messages on the right side of the campaign map screen during enlistment. The system suppresses the native bottom-left combat log while enlisted and routes messages to a scrollable, professional display that mimics Bannerlord's native message feed aesthetic.
 
 **Key Features:**
+- Native-style text rendering with faction-specific link colors
+- Transparent background with shadowed text
+- Smart auto-scroll that pauses on user interaction (resumes after 6 seconds idle)
+- Inactivity fade (35% opacity after 10 seconds)
 - Scrollable message history (last 50 messages)
-- Semi-transparent background with persistent text
-- Reactive positioning when army menu opens/closes
+- Mouse wheel scrolling support
 - Automatic message expiration (5 minute lifetime)
-- Color-coded messages matching existing color scheme
-- Seamless transition between enlisted/non-enlisted states
+- Color-coded messages matching game's color scheme
+- Bottom-to-top message ordering (newest at bottom)
+- Automatic repositioning when party screen opens
+- **Clickable encyclopedia links** with faction-specific colors (heroes: cyan, settlements: cyan, kingdoms: faction banner colors)
 
 ---
 
 ## Purpose
 
-**Problem:** The native combat log displays messages at the bottom-left of the screen with very short persistence, making it difficult to review routine outcomes, event results, and order notifications during active enlisted gameplay. The messages fade quickly and cannot be scrolled.
+**Problem:** The native combat log displays messages at the bottom-left of the screen with very short persistence, making it difficult to review routine outcomes, event results, and order notifications during active enlisted gameplay.
 
-**Solution:** Create a dedicated combat log for enlisted soldiers that provides:
-1. **Longer message persistence** - Messages stay visible for 5 minutes instead of a few seconds
+**Solution:** A dedicated combat log that provides:
+1. **Longer message persistence** - Messages stay visible for 5 minutes instead of seconds
 2. **Scrollable history** - Review up to 50 recent messages at any time
-3. **Better positioning** - Right side placement near relevant UI (army menu, status buttons)
-4. **Contextual display** - Only active during enlistment, doesn't interfere with solo play
-
-**Benefits:**
-- Players can review what happened during busy camp routines
-- Event and decision outcomes remain visible for review
-- Order status changes don't get lost in action
-- Clean integration with enlisted UI ecosystem (news, status menu)
+3. **Smart behavior** - Auto-scrolls to newest, pauses when you read, fades when idle
+4. **Native aesthetic** - Uses game's native styling for seamless integration
+5. **Contextual display** - Only active during enlistment
 
 ---
 
@@ -43,26 +43,47 @@ A custom, persistent combat log widget that displays information messages on the
 ### Components
 
 **1. C# ViewModel (`EnlistedCombatLogVM`)**
-- Manages message collection and display
-- Subscribes to message events
-- Handles message expiration and list limits
-- Provides positioning data for XML
+- Manages message collection with 50-message cap
+- Handles message expiration (5 minutes real-time)
+- Controls inactivity fade (35% after 10 seconds)
+- Provides user interaction tracking
+- Manages visibility based on enlistment state
 
 **2. Gauntlet XML Prefab (`EnlistedCombatLog.xml`)**
-- Defines visual layout and positioning
-- Scrollable panel with message list
-- Transparent/minimal visual design
-- Responsive to army menu state
+- Native-style layout with custom brush for link support
+- Uses `Enlisted.CombatLog.Text` brush with link styles
+- Transparent background (no sprite)
+- Native scrollbar with auto-hide
+- Bottom-to-top message layout
+- Proper clipping and scroll behavior
 
-**3. Harmony Patch (`InformationManagerDisplayMessagePatch`)**
+**3. Custom Brush (`EnlistedCombatLog.xml`)**
+- Extends native text styling with link support
+- Defines encyclopedia link colors (Hero: teal-green, Settlement: sky-blue, Kingdom: gold)
+- Includes hover and click states for interactive feedback
+- Matches native text rendering (Galahad font, text glow, outline)
+
+**4. Harmony Patch (`InformationManagerDisplayMessagePatch`)**
 - Intercepts `InformationManager.DisplayMessage()` calls
 - Routes messages to custom log when enlisted
+- Suppresses native display during enlistment
 - Allows native display when not enlisted
 
-**4. Behavior Manager (`EnlistedCombatLogBehavior`)**
-- Campaign behavior to manage lifecycle
+**5. Behavior Manager (`EnlistedCombatLogBehavior`)**
+- Campaign behavior managing UI lifecycle
 - Loads/unloads Gauntlet layer
-- Handles enlisted state changes
+- Tracks scroll position for smart auto-scroll
+- Detects manual scrolling vs automatic
+- Resumes auto-scroll after 6 seconds idle
+- Auto-repositions when party screen opens/closes
+- Subscribes to RichTextWidget EventFire events for link clicks
+- Applies faction-specific colors to kingdom links via FactionLinkColorizer
+
+**6. Faction Link Colorizer (`FactionLinkColorizer`)**
+- Intercepts native messages and replaces generic `Link.Kingdom` styles with faction-specific styles
+- Uses href (encyclopedia link) to identify faction, not display name (more reliable for localization)
+- Maps kingdom StringIds to faction brush styles (Vlandia→red, Sturgia→blue, etc.)
+- Preserves all other message formatting including hero/settlement links
 
 ---
 
@@ -75,241 +96,356 @@ src/Features/Interface/
 ├── ViewModels/
 │   ├── EnlistedCombatLogVM.cs           (Main ViewModel)
 │   └── CombatLogMessageVM.cs            (Individual message)
-└── Behaviors/
-    └── EnlistedCombatLogBehavior.cs     (Manager behavior)
+├── Behaviors/
+│   └── EnlistedCombatLogBehavior.cs     (Manager + scroll control + link events)
+└── Utils/
+    └── FactionLinkColorizer.cs          (Faction-specific link colors)
 
 src/Mod.GameAdapters/Patches/
 └── InformationManagerDisplayMessagePatch.cs
 
 GUI/Prefabs/Interface/
-└── EnlistedCombatLog.xml                (UI layout)
+└── EnlistedCombatLog.xml                (Native-style UI)
+
+GUI/Brushes/
+└── EnlistedCombatLog.xml                (Custom brush with faction link styles)
 ```
 
-### C# ViewModel Structure
+### Key Features Breakdown
 
-**EnlistedCombatLogVM.cs:**
+#### 1. Native-Style Text Rendering with Link Support
+Uses a custom brush that extends native styling with encyclopedia link colors:
+```xml
+<RichTextWidget Brush="Enlisted.CombatLog.Text" 
+                Brush.GlobalAlphaFactor="@AlphaFactor" />
+```
+
+**Enlisted.CombatLog.Text Brush Properties:**
+- Font: Galahad
+- Base Color: `#FAF4DEFF` (cream/beige)
+- Text Glow: `#000000FF` (black)
+- Text Outline: `#000000CC` (black with alpha)
+- Outline Amount: 0.1
+- Font Size: 20
+- Link Styles:
+  - Hero Links: `#8CDBC4FF` (teal-green) with hover brightness
+  - Settlement Links: `#8CBEDEFF` (sky-blue) with hover brightness
+  - Kingdom Links: `#EBD89CFF` (gold) with hover brightness
+
+#### 2. Inactivity Fade
 ```csharp
-public class EnlistedCombatLogVM : ViewModel
+// Fades to 35% opacity after 10 seconds of no activity
+private const float InactivityFadeDelay = 10f;
+private const float DimmedAlpha = 0.35f;
+private const float FullAlpha = 1.0f;
+
+// In Tick():
+_timeSinceLastActivity += dt;
+if (_timeSinceLastActivity >= InactivityFadeDelay)
 {
-    // Properties
-    public MBBindingList<CombatLogMessageVM> Messages { get; }
-    public bool IsVisible { get; set; }
-    public float PositionYOffset { get; set; }  // Adjusts when army menu opens
-    
-    // Configuration
-    private const int MaxMessages = 50;
-    private const float MessageLifetimeSeconds = 300f;  // 5 minutes
-    
-    // Methods
-    public void AddMessage(InformationMessage message)
-    public void Tick(float dt)  // Handle expiration
-    public void UpdatePositioning(bool isArmyMenuOpen)
-    public void Clear()
+    ContainerAlpha = DimmedAlpha;
+}
+
+// Resets on:
+// - New message arrives
+// - User hovers over log
+// - User scrolls
+```
+
+#### 3. Smart Auto-Scroll
+```csharp
+// Behavior tracks scroll position every frame
+var scrollbar = _scrollablePanel.VerticalScrollbar;
+float currentScrollPosition = scrollbar.ValueFloat;
+
+// Detect manual scroll
+if (MathF.Abs(currentScrollPosition - _lastScrollPosition) > 0.01f)
+{
+    _shouldAutoScroll = false;  // Pause auto-scroll
+    _timeSinceLastManualScroll = 0f;
+}
+
+// Resume after 6 seconds idle
+if (_timeSinceLastManualScroll >= AutoScrollResumeDelay)  // 6f
+{
+    _shouldAutoScroll = true;
+}
+
+// Auto-scroll to bottom
+if (_shouldAutoScroll)
+{
+    scrollbar.ValueFloat = scrollbar.MaxValue;
 }
 ```
 
-**CombatLogMessageVM.cs:**
+#### 4. Message Lifecycle
 ```csharp
-public class CombatLogMessageVM : ViewModel
+// Real-time aging (not game time)
+public class CombatLogMessageVM
 {
-    public string Text { get; }
-    public Color MessageColor { get; }
-    public float TimeRemaining { get; set; }
-    public CampaignTime CreatedAt { get; }
+    public DateTime CreatedAt { get; }  // DateTime.UtcNow
     
-    // Auto-fade support (optional)
-    public float AlphaFactor { get; set; }
+    public float GetAgeInSeconds()
+    {
+        return (float)(DateTime.UtcNow - CreatedAt).TotalSeconds;
+    }
+}
+
+// Expiration check in Tick()
+if (age >= MessageLifetimeSeconds)  // 300 seconds
+{
+    Messages.RemoveAt(i);
 }
 ```
 
-### Gauntlet XML Layout
+---
 
-**EnlistedCombatLog.xml:**
+## XML Layout Structure
+
 ```xml
 <Prefab>
   <Window>
-    <Widget DoNotAcceptEvents="true" 
-            WidthSizePolicy="Fixed" 
-            HeightSizePolicy="Fixed"
+    <!-- Main Container (400x280, bottom-right) -->
+    <Widget Id="EnlistedCombatLogWidget" 
+            DoNotAcceptEvents="false"    <!-- Allows mouse input -->
             SuggestedWidth="400" 
-            SuggestedHeight="300"
-            HorizontalAlignment="Right" 
-            VerticalAlignment="Bottom"
-            PositionXOffset="-20"
-            PositionYOffset="@PositionYOffset"
-            IsVisible="@IsVisible">
-      <Children>
+            SuggestedHeight="280"
+            AlphaFactor="@ContainerAlpha"  <!-- Inactivity fade -->
+            Command.HoverBegin="OnUserInteraction"
+            Command.MouseScroll="OnUserInteraction">
+      
+      <!-- Scrollable Panel Container -->
+      <Widget Id="ScrollablePanelContainer" 
+              DoNotAcceptEvents="false">  <!-- Enables scroll events -->
         
-        <!-- Optional semi-transparent background -->
-        <Widget WidthSizePolicy="StretchToParent" 
-                HeightSizePolicy="StretchToParent"
-                Brush="BackgroundBrush"
-                Brush.GlobalAlphaFactor="0.3" />
-        
-        <!-- Scrollable message container -->
-        <ScrollablePanel WidthSizePolicy="StretchToParent" 
-                        HeightSizePolicy="StretchToParent"
-                        AutoScrollToBottom="true"
-                        InnerPanel="MessageListPanel">
-          <Children>
+        <!-- Scrollable Panel (no AutoScrollToBottom, manual control) -->
+        <ScrollablePanel Id="ScrollablePanel"
+                        InnerPanel="ClipRect\InnerPanel"
+                        VerticalScrollbar="..\ScrollbarHolder\VerticalScrollbar">
+          
+          <!-- Clip Rect (keeps messages in bounds) -->
+          <Widget Id="ClipRect" ClipContents="true">
             
-            <!-- Message list -->
-            <ListPanel Id="MessageListPanel"
+            <!-- Message List (VerticalBottomToTop = newest at bottom) -->
+            <ListPanel Id="InnerPanel"
                       DataSource="{Messages}"
-                      WidthSizePolicy="StretchToParent"
-                      HeightSizePolicy="CoverChildren"
                       StackLayout.LayoutMethod="VerticalBottomToTop">
               <ItemTemplate>
                 
-                <!-- Individual message -->
-                <TextWidget WidthSizePolicy="StretchToParent"
-                           HeightSizePolicy="CoverChildren"
-                           Text="@Text"
-                           Brush="CombatLogMessageBrush"
-                           Brush.TextColor="@MessageColor"
-                           Brush.GlobalAlphaFactor="@AlphaFactor"
-                           MarginBottom="2" />
+                <!-- Individual Message -->
+                <RichTextWidget Id="MessageTextWidget"
+                               DoNotAcceptEvents="false"  <!-- Enables link clicks -->
+                               Text="@Text"
+                               Brush="Enlisted.CombatLog.Text"  <!-- Custom brush with link styles -->
+                               Brush.GlobalAlphaFactor="@AlphaFactor"
+                               ClipContents="false" />  <!-- Allows shadows to extend -->
+                <!-- Note: Links handled via EventFire, not Command.LinkClicked -->
                 
               </ItemTemplate>
             </ListPanel>
-            
-          </Children>
+          </Widget>
         </ScrollablePanel>
         
-      </Children>
+        <!-- Native-style Scrollbar (auto-hides) -->
+        <ScrollbarWidget Id="VerticalScrollbar" 
+                        Brush="SPChatlog.Scrollbar.Handle"
+                        Color="#A37434FF"  <!-- Brownish track -->
+                        AlphaFactor="0.7" />
+      </Widget>
     </Widget>
   </Window>
 </Prefab>
 ```
 
-### Harmony Patch
+---
 
-**InformationManagerDisplayMessagePatch.cs:**
+## Encyclopedia Linking
+
+### Overview
+
+Native Bannerlord messages already include clickable encyclopedia links for heroes, settlements, and kingdoms. The combat log preserves these native links and enhances them by applying **faction-specific colors** to kingdom names, making it easy to identify which faction is being mentioned at a glance.
+
+**Link Colors:**
+- **Heroes**: Cyan/teal (native Link.Hero style)
+- **Settlements**: Cyan/teal (native Link.Settlement style)
+- **Kingdoms**: Faction banner colors (Vlandia=red, Sturgia=blue, Battania=green, etc.)
+
+### Technical Implementation
+
+**1. Faction Link Colorization (`FactionLinkColorizer`)**
+
+Native messages use a generic `Link.Kingdom` style for all kingdoms (renders as gold/white). The colorizer intercepts messages and replaces this with faction-specific styles:
+
 ```csharp
-using HarmonyLib;
-using TaleWorlds.Library;
-using Enlisted.Features.Enlistment;
-using Enlisted.Features.Interface.Behaviors;
-
-namespace Enlisted.Mod.GameAdapters.Patches
+public static string ColorizeFactionLinks(string messageText)
 {
-    /// <summary>
-    /// Intercepts InformationManager.DisplayMessage to route messages to the custom
-    /// enlisted combat log when the player is enlisted. Allows native display to resume
-    /// when not enlisted (prisoner, left army, etc.).
-    /// </summary>
-    [HarmonyPatch(typeof(InformationManager), "DisplayMessage")]
-    internal class InformationManagerDisplayMessagePatch
+    if (!messageText.Contains("Link.Kingdom"))
+        return messageText;
+    
+    // Pattern matches: <a style="Link.Kingdom" href="event:Faction:kingdom_1"><b>Name</b></a>
+    var pattern = @"<a style=""Link\.Kingdom"" href=""([^""]+)"">(.+?)</a>";
+    
+    return Regex.Replace(messageText, pattern, match =>
     {
-        /// <summary>
-        /// Prefix that decides whether to show messages in native log or custom log.
-        /// Returns false to suppress native display when enlisted.
-        /// </summary>
-        [HarmonyPrefix]
-        public static bool Prefix(InformationMessage message)
+        var href = match.Groups[1].Value;         // "event:Faction:kingdom_3"
+        var content = match.Groups[2].Value;      // "<b>Khuzaits</b>"
+        
+        // Determine faction style from href (more reliable than display name)
+        string factionStyle = GetFactionStyleFromHref(href);
+        
+        // Replace generic Link.Kingdom with faction-specific style
+        return $"<a style=\"{factionStyle}\" href=\"{href}\">{content}</a>";
+    });
+}
+
+private static string GetFactionStyleFromHref(string href)
+{
+    var stringId = href.ToLower();
+    
+    // href contains faction StringId, e.g., "event:Faction:kingdom_3"
+    if (stringId.Contains("vlandia")) return "Link.FactionVlandia";
+    if (stringId.Contains("sturgia")) return "Link.FactionSturgia";
+    if (stringId.Contains("aserai")) return "Link.FactionAserai";
+    if (stringId.Contains("khuzait")) return "Link.FactionKhuzait";
+    if (stringId.Contains("battania")) return "Link.FactionBattania";
+    if (stringId.Contains("empire_s")) return "Link.FactionEmpire_S";
+    if (stringId.Contains("empire_w")) return "Link.FactionEmpire_W";
+    if (stringId.Contains("north")) return "Link.FactionEmpire_N";
+    
+    return "Link.Kingdom"; // Fallback
+}
+```
+
+**Why href matching instead of display name?**
+- Native messages use demonyms: "Khuzaits", "Battanians", "northern Empire"
+- Kingdom.Name is formal: "Khuzait Khanate", "Battania", "Northern Empire"
+- The href ALWAYS contains the faction StringId, regardless of localization
+- More reliable across all languages and message formats
+
+**2. Link Click Handling (`EnlistedCombatLogBehavior`)**
+
+Links are handled via the `RichTextWidget.EventFire` event (not `Command.LinkClicked`). This is the low-level event mechanism that RichTextWidget uses internally.
+
+```csharp
+// In InitializeUI()
+_dataSource.Messages.ListChanged += OnMessagesListChanged;
+
+// When new messages are added
+private void OnMessagesListChanged(object sender, ListChangedEventArgs e)
+{
+    if (e.ListChangedType == ListChangedType.ItemAdded)
+    {
+        // Schedule subscription for next frame to ensure widgets are created
+        _layer.AddLateUpdateAction(new Action<float>(dt => 
+            SubscribeToMessageWidget(e.NewIndex)));
+    }
+}
+
+// Find and subscribe to RichTextWidget
+private void SubscribeToMessageWidget(int messageIndex)
+{
+    var messageWidget = listPanel.GetChild(messageIndex);
+    
+    // Find the RichTextWidget by type
+    foreach (var child in messageWidget.Children)
+    {
+        if (child is RichTextWidget rtWidget)
         {
-            // Not enlisted: use native combat log
-            if (!EnlistmentManager.IsEnlisted)
-            {
-                return true; // Execute original DisplayMessage
-            }
-            
-            // Enlisted: route to custom combat log
-            var combatLog = EnlistedCombatLogBehavior.Instance;
-            if (combatLog != null)
-            {
-                combatLog.AddMessage(message);
-            }
-            
-            return false; // Skip original DisplayMessage
+            rtWidget.EventFire += OnRichTextWidgetEvent;
+            break;
         }
+    }
+}
+
+// Handle link clicks
+private void OnRichTextWidgetEvent(Widget widget, string eventName, object[] args)
+{
+    if (eventName == "LinkClick" && args.Length > 0 && args[0] is string linkHref)
+    {
+        // Strip "event:" prefix if present
+        var encyclopediaLink = linkHref.StartsWith("event:") 
+            ? linkHref.Substring(6) 
+            : linkHref;
+        
+        // Open encyclopedia page
+        Campaign.Current.EncyclopediaManager.GoToLink(encyclopediaLink);
+        
+        // Reset inactivity timer
+        _dataSource.OnUserInteraction();
     }
 }
 ```
 
-### Campaign Behavior Manager
+**3. XML Link Event Wiring**
 
-**EnlistedCombatLogBehavior.cs:**
-```csharp
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.Engine.GauntletUI;
-using TaleWorlds.GauntletUI.Data;
-using TaleWorlds.Library;
-using Enlisted.Features.Enlistment;
-
-namespace Enlisted.Features.Interface.Behaviors
-{
-    /// <summary>
-    /// Manages the enlisted combat log UI layer lifecycle and message routing.
-    /// Creates the Gauntlet layer when campaign starts and handles visibility
-    /// based on enlistment state.
-    /// </summary>
-    public class EnlistedCombatLogBehavior : CampaignBehaviorBase
-    {
-        public static EnlistedCombatLogBehavior Instance { get; private set; }
-        
-        private GauntletLayer _layer;
-        private EnlistedCombatLogVM _dataSource;
-        private IGauntletMovie _movie;
-        
-        public EnlistedCombatLogBehavior()
-        {
-            Instance = this;
-        }
-        
-        public override void RegisterEvents()
-        {
-            CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(
-                this, OnSessionLaunched);
-        }
-        
-        private void OnSessionLaunched(CampaignGameStarter starter)
-        {
-            InitializeUI();
-        }
-        
-        private void InitializeUI()
-        {
-            // Create Gauntlet layer
-            _layer = new GauntletLayer(200); // Layer priority
-            
-            // Create ViewModel
-            _dataSource = new EnlistedCombatLogVM();
-            
-            // Load prefab
-            _movie = _layer.LoadMovie("EnlistedCombatLog", _dataSource);
-            
-            // Add to screen
-            var mapScreen = ScreenManager.TopScreen as MapScreen;
-            if (mapScreen != null)
-            {
-                mapScreen.AddLayer(_layer);
-            }
-        }
-        
-        /// <summary>
-        /// Called by Harmony patch to add messages to the log.
-        /// </summary>
-        public void AddMessage(InformationMessage message)
-        {
-            _dataSource?.AddMessage(message);
-        }
-        
-        public override void SyncData(IDataStore dataStore)
-        {
-            // No save data needed - messages are transient
-        }
-        
-        protected override void OnEndGame()
-        {
-            _dataSource?.OnFinalize();
-            _movie?.Release();
-            _layer = null;
-            Instance = null;
-        }
-    }
-}
+```xml
+<RichTextWidget Id="MessageTextWidget"
+                DoNotAcceptEvents="false"  <!-- Must be false to receive events -->
+                Text="@Text"
+                Brush="Enlisted.CombatLog.Text" />
 ```
+
+Note: `Command.LinkClicked` is NOT used. RichTextWidget's link events go through `EventFire`, not the normal Gauntlet command system.
+
+**4. Custom Brush Styles**
+
+```xml
+<!-- GUI/Brushes/EnlistedCombatLog.xml -->
+<Brush Name="Enlisted.CombatLog.Text" Font="Galahad">
+  <Styles>
+    <Style Name="Default" FontColor="#FAF4DEFF" TextGlowColor="#000000FF" />
+    
+    <!-- Faction-specific kingdom colors (from spkingdoms.xml, brightened for readability) -->
+    <Style Name="Link.FactionVlandia" FontColor="#C14030FF" />        <!-- Red -->
+    <Style Name="Link.FactionSturgia" FontColor="#3854A0FF" />        <!-- Blue -->
+    <Style Name="Link.FactionAserai" FontColor="#D47838FF" />         <!-- Orange -->
+    <Style Name="Link.FactionKhuzait" FontColor="#5BC0B0FF" />        <!-- Teal -->
+    <Style Name="Link.FactionBattania" FontColor="#5C7E3AFF" />       <!-- Green -->
+    <Style Name="Link.FactionEmpire_N" FontColor="#73447EFF" />       <!-- Purple -->
+    <Style Name="Link.FactionEmpire_W" FontColor="#D078A0FF" />       <!-- Pink -->
+    <Style Name="Link.FactionEmpire_S" FontColor="#B8A0E8FF" />       <!-- Light Purple -->
+    
+    <!-- Generic fallback -->
+    <Style Name="Link.Kingdom" FontColor="#FAF4DEFF" />               <!-- Cream (default) -->
+  </Styles>
+</Brush>
+```
+
+Each faction style includes `.MouseOver` (brightened) and `.MouseDown` (dimmed) states for visual feedback.
+
+### Link Format
+
+**RichTextWidget-Compatible Markup:**
+- Format: `<a style="Link.Type" href="event:{EncyclopediaLink}"><b>Name</b></a>`
+- Examples:
+  - `<a style="Link.Hero" href="event:Hero:lord_1_1"><b>Derthert</b></a>`
+  - `<a style="Link.Settlement" href="event:Settlement:town_V1"><b>Pravend</b></a>`
+  - `<a style="Link.Kingdom" href="event:Faction:faction_1"><b>Vlandia</b></a>`
+
+The `event:` prefix is required by Bannerlord's native encyclopedia system and is stripped before passing to `EncyclopediaManager.GoToLink()`.
+
+### Why This Implementation Works
+
+**Key Architectural Insights:**
+
+1. **Native Messages Already Have Links**: Bannerlord's native messages include properly formatted encyclopedia links. No need to scan and add links ourselves - just enhance the existing ones with faction colors.
+
+2. **href-Based Faction Matching**: Display names vary ("Khuzaits" vs "Khuzait Khanate"), but href always contains the faction StringId. Matching on `href.Contains("khuzait")` works reliably across all languages and message formats.
+
+3. **Regex Link Style Replacement**: Find `<a style="Link.Kingdom"...>` tags and replace only the style attribute, preserving all other content including `<b>` tags and display text.
+
+4. **EventFire vs Command.LinkClicked**: RichTextWidget doesn't fire `Command.LinkClicked` for `<a>` tag clicks. It uses the lower-level `EventFire` event with `eventName == "LinkClick"`.
+
+5. **Dynamic Widget Subscription**: Widgets instantiated from `ItemTemplate` aren't available immediately. Using `ListChanged` event + `AddLateUpdateAction` ensures we subscribe after widget creation.
+
+6. **Type-Based Lookup**: Finding widgets by `Id` doesn't work reliably for `ItemTemplate` instances. Iterating children and checking type (`is RichTextWidget`) is more robust.
+
+7. **Brush File Deployment**: Custom brush files need `<CopyToOutputDirectory>Always</CopyToOutputDirectory>` in `.csproj` to ensure they copy on every build (not just when source is newer).
+
+**Previous Issues Resolved:**
+- Initially tried adding our own encyclopedia links (unnecessary - native already has them)
+- Tried matching by kingdom display name (failed due to demonyms like "Khuzaits")
+- Used `PreserveNewest` for brush deployment (didn't update when manually copied)
 
 ---
 
@@ -317,98 +453,82 @@ namespace Enlisted.Features.Interface.Behaviors
 
 ### Message Flow
 
-**1. Message Generated:**
-- Game code calls `InformationManager.DisplayMessage(new InformationMessage(...))`
-- Examples: routine outcomes, event results, order status changes
+1. **Game generates message** → `InformationManager.DisplayMessage()`
+2. **Harmony patch intercepts** → Checks `EnlistmentBehavior.IsEnlisted`
+3. **If enlisted** → Routes to `EnlistedCombatLogBehavior.AddMessage()`
+4. **Message added** → Creates `CombatLogMessageVM`, adds to list
+5. **Auto-scroll enabled** → New message immediately visible
+6. **After 10s idle** → Fades to 35% opacity
+7. **After 5 minutes** → Message expires and removed
 
-**2. Harmony Patch Intercepts:**
-- Checks `EnlistmentManager.IsEnlisted`
-- If **enlisted**: routes to `EnlistedCombatLogBehavior.AddMessage()` and returns false
-- If **not enlisted**: returns true, native display proceeds normally
+### User Interaction
 
-**3. Custom Log Adds Message:**
-- Creates `CombatLogMessageVM` with text, color, timestamp
-- Adds to `Messages` list (MBBindingList)
-- If list exceeds 50 messages, removes oldest
-- ScrollablePanel auto-scrolls to show new message
-
-**4. Message Persistence:**
-- Message stays in list for 5 minutes
-- `Tick()` method checks age and removes expired messages
-- Optional: fade alpha as message ages (last 30 seconds)
-
-### Positioning Logic
-
-**Base Position:**
-- Right side of screen
-- Bottom alignment
-- 20px margin from screen edge
-- Height: 300px, Width: 400px
-
-**Army Menu Detection:**
-- Monitor `MapScreen.IsInArmyManagement` property
-- When army menu opens: shift log up by army menu height (~150px)
-- When army menu closes: return to base position
-- Smooth transition using VisualDefinition (0.3s ease)
-
-**Z-Order:**
-- Layer priority: 200 (above map, below menus/dialogs)
-- Army menu typically at 300+, so log stays behind it
+| Action | Behavior |
+|--------|----------|
+| **New message arrives** | Auto-scroll to bottom, reset fade timer, full opacity |
+| **User hovers over log** | Reset fade timer, return to full opacity |
+| **User scrolls wheel** | Pause auto-scroll for 10s, reset fade timer, full opacity |
+| **10s no interaction** | Resume auto-scroll, fade to 35% opacity |
+| **User scrolls to bottom** | Treated as manual scroll, pause auto-scroll for 10s |
 
 ### Visibility Rules
 
-| Player State | Combat Log Visible | Native Log Active |
-|-------------|-------------------|-------------------|
-| Enlisted | ✓ Custom | ✗ Suppressed |
-| Solo (never enlisted) | ✗ Hidden | ✓ Normal |
-| Left army | ✗ Hidden | ✓ Normal |
+| Player State | Custom Log | Native Log |
+|-------------|-----------|-----------|
+| Enlisted | ✓ Visible | ✗ Suppressed |
+| Not Enlisted | ✗ Hidden | ✓ Normal |
+| In Battle | ✗ Hidden | ✓ Normal |
 | Prisoner | ✗ Hidden | ✓ Normal |
-| Campaign menu open | ✓ Custom | ✗ Suppressed |
-| Battle (if enlisted) | ✗ Hidden | ✓ Normal* |
-
-*Note: Battle uses its own message system; patch should detect mission active state
-
-### Message Styling
-
-Messages use the existing color scheme from [color-scheme.md](color-scheme.md):
-
-| Message Type | Color | Use Case |
-|-------------|-------|----------|
-| Success | `#44AA44` (Bright Green) | Excellent routine outcomes, successful events |
-| Positive | `#88CC88` (Light Green) | Good outcomes, minor gains |
-| Neutral | `#CCCCCC` (Light Gray) | Normal outcomes, information |
-| Warning | `#CCCC44` (Yellow) | Poor outcomes, minor issues |
-| Failure | `#DB0808` (Red) | Failed decisions, serious problems |
-| Order Status | `#4A9EFF` (Blue) | Order started/completed/failed |
 
 ---
 
-## Configuration Options
+## Configuration
 
-**Exposed via `ModSettings` (future enhancement):**
-
+**Constants in `EnlistedCombatLogVM`:**
 ```csharp
-public class CombatLogSettings
-{
-    /// <summary>Max number of messages to keep in history.</summary>
-    public int MaxMessages { get; set; } = 50;
-    
-    /// <summary>How long messages stay visible (seconds).</summary>
-    public float MessageLifetime { get; set; } = 300f; // 5 minutes
-    
-    /// <summary>Enable fade effect on old messages.</summary>
-    public bool EnableMessageFading { get; set; } = true;
-    
-    /// <summary>Auto-hide log when not receiving messages.</summary>
-    public bool AutoHide { get; set; } = false;
-    
-    /// <summary>Background opacity (0-1).</summary>
-    public float BackgroundAlpha { get; set; } = 0.3f;
-    
-    /// <summary>Font size for messages.</summary>
-    public int FontSize { get; set; } = 16;
-}
+private const int MaxMessages = 50;
+private const float MessageLifetimeSeconds = 300f;  // 5 minutes
+private const float FadeStartSeconds = 270f;        // Start fade at 4.5min
+private const float InactivityFadeDelay = 10f;      // Fade after 10s idle
+private const float DimmedAlpha = 0.35f;
+private const float FullAlpha = 1.0f;
 ```
+
+**Constants in `EnlistedCombatLogBehavior`:**
+```csharp
+private const float AutoScrollResumeDelay = 10f;  // Resume scroll after 10s
+```
+
+**XML Dimensions:**
+- Width: `400px`
+- Height: `280px`
+- Position: Bottom-right, `MarginRight="30"`, `MarginBottom="80"`
+- Font Size: `20` (in Brush.FontSize)
+
+**Brush File:**
+- Location: `GUI/Brushes/EnlistedCombatLog.xml`
+- Must be included in `.csproj` as `<Content Include="..."/>` for deployment
+
+---
+
+## Message Styling
+
+Messages use existing color scheme with native styling:
+
+| Message Type | Color | Use Case |
+|-------------|-------|----------|
+| Success | `#44AA44` | Excellent outcomes, successful events |
+| Positive | `#88CC88` | Good outcomes, minor gains |
+| Neutral | `#CCCCCC` | Normal outcomes, information |
+| Warning | `#CCCC44` | Poor outcomes, minor issues |
+| Failure | `#DB0808` | Failed decisions, serious problems |
+| Order Status | `#4A9EFF` | Order notifications |
+
+All colors rendered with:
+- Black text glow (`#000000FF`)
+- Black text outline (`#000000CC`)
+- Outline amount: `0.1`
+- Per-message alpha fading (last 30 seconds of life)
 
 ---
 
@@ -417,392 +537,315 @@ public class CombatLogSettings
 ### Existing Systems
 
 **1. News Reporting System:**
-- Combat log shows **immediate** feedback (instant)
-- News system shows **persistent** records (Recent Activities)
-- Both work together: log for "what just happened", news for "what happened today"
+- Combat log: Immediate feedback (instant display)
+- News system: Persistent records (Recent Activities)
+- Complementary, not redundant
 
 **2. Event System:**
-- Decision results go to both combat log (instant) and Recent Activities (persistent)
-- Regular event outcomes go to Recent Activities only (avoid spam)
-- Combat log only shows player-initiated actions or important notifications
+- Decision results appear in combat log instantly
+- Regular event outcomes go to Recent Activities only
 
 **3. Order System:**
-- Order status changes (`OrderStarted`, `OrderCompleted`, `OrderFailed`) display in log
-- Color-coded: Blue for status, Green for success, Red for failure
+- Order status changes display in log (blue colored)
+- Completion/failure notifications immediate
 
 **4. Routine System:**
-- Routine outcomes send to combat log via `SendCombatLogMessage()`
+- Routine outcomes send to combat log
 - Shows flavor text with XP gains/losses
-- Color matches outcome quality
-
-### Message Routing Rules
-
-**Send to Combat Log:**
-- ✓ Routine activity outcomes
-- ✓ Decision results (immediate feedback)
-- ✓ Order status changes
-- ✓ Equipment condition warnings
-- ✓ Supply status alerts
-- ✓ Battle participation notifications
-
-**Do NOT Send to Combat Log:**
-- ✗ Regular event outcomes (use Recent Activities only)
-- ✗ Native game messages (kingdom notifications, etc.) when not relevant
-- ✗ Spam-prone notifications (party joined army, etc.)
-
-### Filtering Strategy
-
-Add filtering in `AddMessage()`:
-
-```csharp
-public void AddMessage(InformationMessage message)
-{
-    // Filter out irrelevant native messages
-    if (ShouldFilterMessage(message))
-        return;
-    
-    // Add to log
-    var logMessage = new CombatLogMessageVM(message);
-    Messages.Add(logMessage);
-    
-    // Enforce limit
-    while (Messages.Count > MaxMessages)
-    {
-        Messages.RemoveAt(0);
-    }
-}
-
-private bool ShouldFilterMessage(InformationMessage message)
-{
-    // Example filters:
-    // - Ignore generic "Party spotted" messages
-    // - Ignore kingdom-wide notifications
-    // - Keep only enlisted-relevant messages
-    return false; // Customize based on message.Information
-}
-```
 
 ---
 
 ## Edge Cases
 
-### 1. Enlistment State Changes
+### 1. Rapid Message Spam
+**Scenario:** 20+ messages in quick succession  
+**Behavior:** All added, auto-scrolls to newest, oldest beyond 50 removed
 
-**Scenario:** Player enlists mid-campaign after seeing native log.
+### 2. User Scrolling Up
+**Scenario:** User scrolls to read old messages while new ones arrive  
+**Behavior:** Auto-scroll paused, new messages added off-screen, resumes after 10s
 
-**Behavior:**
-- Harmony patch activates immediately on enlist
-- Native log stops displaying
-- Custom log appears empty (no history carried over)
-- Future messages route to custom log
+### 3. Battle Transitions
+**Scenario:** Enter battle while enlisted  
+**Behavior:** Log hides, battle uses native system, log reappears after battle
 
-**Scenario:** Player leaves army or becomes prisoner.
+### 4. Save/Load
+**Scenario:** Save with messages, then load  
+**Behavior:** Messages not persisted (transient), log starts empty
 
-**Behavior:**
-- Harmony patch deactivates on de-enlist
-- Custom log hides (visibility = false)
-- Native log resumes immediately
-- Custom log messages not cleared (available if re-enlist same session)
-
-### 2. Army Menu Interaction
-
-**Scenario:** Player opens army menu while combat log is showing messages.
-
-**Behavior:**
-- Log smoothly shifts up to avoid overlap
-- Messages remain readable and scrollable
-- Closing army menu shifts log back down
-- Transition animation: 0.3s ease
-
-**Scenario:** Army menu height varies (more/fewer parties).
-
-**Behavior:**
-- Calculate actual army menu height dynamically
-- Adjust log position based on measured height
-- Ensure minimum 10px gap between log and menu
-
-### 3. Message Volume Spikes
-
-**Scenario:** 20+ messages arrive in rapid succession (mass routine processing).
-
-**Behavior:**
-- All messages added to list
-- ScrollablePanel auto-scrolls to show newest
-- Oldest messages beyond 50-count limit removed immediately
-- No performance impact (list capped at 50)
-
-**Scenario:** Player is AFK, messages expire while idle.
-
-**Behavior:**
-- `Tick()` removes expired messages silently
-- List shrinks naturally over 5 minutes
-- Empty list state shows no messages (clean display)
-
-### 4. Screen Resolution Variations
-
-**Scenario:** Player uses non-standard resolution or UI scaling.
-
-**Behavior:**
-- Log uses fixed pixel positioning (400x300) to maintain readability
-- Right-alignment ensures log stays on screen
-- Text wrapping handles narrow widths gracefully
-- Test at 1080p, 1440p, 4K
-
-### 5. Battle Transitions
-
-**Scenario:** Player enters battle while enlisted.
-
-**Behavior:**
-- Combat log hides during battle (mission active)
-- Battle messages use native mission log system
-- After battle, enlisted combat log reappears
-- Battle-related messages (victory, casualties) may appear in log post-battle
-
-### 6. Save/Load
-
-**Scenario:** Player saves game with messages in log, then loads.
-
-**Behavior:**
-- Messages are **not** persisted to save file (transient by design)
-- Log appears empty after load
-- New messages populate as gameplay resumes
-- Rationale: messages are real-time feedback, not historical records
-
-### 7. Mod Conflicts
-
-**Scenario:** Another mod also patches `InformationManager.DisplayMessage()`.
-
-**Behavior:**
-- Harmony patch priority determines order
-- If conflict detected, log warning to ModLogger
-- Fallback: disable suppression, show both native + custom logs
-- Document known conflicts in README
+### 5. Screen Resolution
+**Scenario:** Non-standard resolution or UI scaling  
+**Behavior:** Fixed positioning maintains readability, right-alignment keeps it on-screen
 
 ---
 
 ## Acceptance Criteria
 
 ### Core Functionality
+- [x] Custom combat log displays on right side when enlisted
+- [x] Shows last 50 messages with 5-minute expiration
+- [x] Scrollable with mouse wheel
+- [x] Correct color coding per message type
+- [x] Native log suppressed while enlisted
+- [x] Native log resumes when not enlisted
 
-- [ ] Custom combat log displays on right side of screen when enlisted
-- [ ] Log shows last 50 messages with 5-minute expiration
-- [ ] Messages are scrollable using mouse wheel
-- [ ] Messages use correct color coding per message type
-- [ ] Native combat log is suppressed while enlisted
-- [ ] Native combat log resumes when not enlisted
+### Smart Behavior
+- [x] Auto-scrolls to newest messages
+- [x] Pauses auto-scroll when user manually scrolls
+- [x] Resumes auto-scroll after 6 seconds idle
+- [x] Fades to 35% after 10 seconds of no activity
+- [x] Returns to full opacity on interaction
 
-### Positioning & Layout
+### Interactive Features
+- [x] Hero names are clickable encyclopedia links
+- [x] Settlement names are clickable encyclopedia links
+- [x] Links open corresponding encyclopedia pages
+- [x] Link clicks count as user interaction
 
-- [ ] Log positioned 20px from right edge, bottom-aligned
-- [ ] Log shifts up when army menu opens (smooth transition)
-- [ ] Log shifts down when army menu closes (smooth transition)
-- [ ] No overlap with army menu or other UI elements
-- [ ] Background is semi-transparent (30% alpha) or invisible
-- [ ] Text remains readable against all map backgrounds
-
-### Message Handling
-
-- [ ] Routine outcomes appear in log with flavor text and XP
-- [ ] Decision results appear with appropriate success/failure color
-- [ ] Order status changes appear with blue coloring
-- [ ] Messages older than 5 minutes are automatically removed
-- [ ] List never exceeds 50 messages (oldest removed first)
-- [ ] Auto-scroll to newest message when message added
+### Visual Quality
+- [x] Native `ChatLog.Text` brush styling
+- [x] Transparent background (no sprite)
+- [x] Black text shadows and outlines
+- [x] Proper text clipping within bounds
+- [x] Native-style scrollbar that auto-hides
 
 ### State Transitions
-
-- [ ] Log appears when player enlists
-- [ ] Log hides when player leaves army
-- [ ] Log hides when player becomes prisoner
-- [ ] Log hides during battle/mission
-- [ ] Log reappears after battle (if still enlisted)
-- [ ] Transitions are smooth and bug-free
-
-### Integration
-
-- [ ] Works alongside news reporting system (no conflicts)
-- [ ] Works alongside event system (decisions show in both)
-- [ ] Works alongside order system (status changes visible)
-- [ ] Works alongside routine system (outcomes displayed)
-- [ ] No interference with native game systems
+- [x] Appears when player enlists
+- [x] Hides when player leaves army
+- [x] Hides during battles
+- [x] Smooth transitions
 
 ### Performance
-
-- [ ] No FPS impact with 50 messages in log
-- [ ] No memory leaks over extended play sessions
-- [ ] Smooth scrolling performance
-- [ ] Fast message addition (no stutter when adding messages)
-
-### Error Handling
-
-- [ ] Graceful handling if Gauntlet layer fails to load
-- [ ] Logs error if prefab file missing
-- [ ] Falls back to native log if patch fails
-- [ ] No crashes if ViewModel is null
+- [x] No FPS impact with 50 messages
+- [x] Smooth scrolling
+- [x] No memory leaks
+- [x] Fast message addition
 
 ---
 
-## Future Enhancements
+## Implementation Issues & Resolutions
 
-### Phase 2 Additions
+### Bug #1: Messages Expiring Immediately
 
-**1. Message Filtering:**
-- Toggle switches in settings to show/hide message types
-- "Show Routines", "Show Events", "Show Orders", etc.
-- Per-category filtering without code changes
+**Root Cause:** Used `CampaignTime` (game time) instead of real-time for age calculation.
 
-**2. Message History Panel:**
-- Button to expand log into full-screen overlay
-- Search/filter capability
-- Export to text file for bug reports
-- Show timestamps with each message
+**Resolution:** Changed to `DateTime.UtcNow`:
+```csharp
+// BEFORE (Broken)
+public CampaignTime CreatedAt { get; }
 
-**3. Visual Improvements:**
-- Category icons next to messages (sword for combat, tools for routines)
-- Fade-in animation for new messages
-- Fade-out animation for expiring messages
-- Configurable background styles (dark, light, invisible)
+// AFTER (Fixed)
+public DateTime CreatedAt { get; }
+public float GetAgeInSeconds() => (float)(DateTime.UtcNow - CreatedAt).TotalSeconds;
+```
 
-**4. Integration with Combat:**
-- Special handling for battle start/end notifications
-- Casualty reports in combat log post-battle
-- Victory/defeat outcomes with loot summary
+### Bug #2: UI Not Rendering
 
-**5. Notifications:**
-- Audio cue for high-priority messages (optional)
-- Visual flash or pulse for critical alerts
-- Desktop notifications for background play (advanced)
+**Root Cause:** XML prefab not deployed to game directory.
 
-### Configuration Expansion
+**Resolution:** Added to `.csproj`:
+```xml
+<Content Include="GUI\Prefabs\Interface\EnlistedCombatLog.xml">
+  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+</Content>
+```
 
-**Additional settings:**
-- Log width/height customization
-- Font face and size options
-- Message count limit (25/50/100)
-- Expiration time (2min/5min/10min/infinite)
-- Positioning override (left/right/custom)
+### Bug #3: Background Visible, Text Unreadable
 
----
+**Root Cause:** Used `SPGeneral.Text` brush and had a background sprite.
 
-## Testing Checklist
+**Resolution:** 
+- Removed background widget entirely
+- Changed to `ChatLog.Text` brush
+- Added explicit black glow/outline for readability
 
-### Manual Tests
+### Bug #4: Scrolling Doesn't Work
 
-**Basic Display:**
-- [ ] Log appears when enlisted
-- [ ] Log hides when not enlisted
-- [ ] Messages display with correct colors
-- [ ] Scrolling works smoothly
+**Root Cause:** Layer configured with `DoNotAcceptEvents="true"`, input restrictions not set.
 
-**Army Menu Interaction:**
-- [ ] Log shifts up when army menu opens
-- [ ] Log shifts down when army menu closes
-- [ ] No overlap or visual glitches
-- [ ] Transitions are smooth
+**Resolution:**
+```csharp
+// In InitializeUI():
+_layer.InputRestrictions.SetInputRestrictions(false);
 
-**Message Lifecycle:**
-- [ ] New messages appear at bottom
-- [ ] Old messages scroll up
-- [ ] Messages expire after 5 minutes
-- [ ] List caps at 50 messages
+// In XML:
+DoNotAcceptEvents="false"  // On main widget and container
+```
 
-**State Changes:**
-- [ ] Enlist → log appears
-- [ ] Leave army → log hides, native resumes
-- [ ] Become prisoner → log hides, native resumes
-- [ ] Re-enlist → log reappears
-- [ ] Save/load → log clears and resumes
+### Bug #5: Text Overflowing, No Clipping
 
-**Integration:**
-- [ ] Routine outcomes appear correctly
-- [ ] Decision results appear correctly
-- [ ] Order notifications appear correctly
-- [ ] No duplicate messages in native log
+**Root Cause:** Missing `ClipContents="true"` on container widgets.
 
-### Stress Tests
+**Resolution:** Added to both main container and ClipRect widget.
 
-- [ ] Add 100+ messages rapidly (should cap at 50)
-- [ ] Open/close army menu rapidly (no crashes)
-- [ ] Leave and re-enlist repeatedly (no memory leaks)
-- [ ] Play for 2+ hours enlisted (no performance degradation)
+### Bug #6: Wrong Message Order
 
-### Resolution Tests
+**Root Cause:** Used `VerticalTopToBottom`, oldest messages at top.
 
-- [ ] Test at 1920x1080 (standard)
-- [ ] Test at 2560x1440 (high-res)
-- [ ] Test at 3840x2160 (4K)
-- [ ] Test with UI scaling at 80%, 100%, 120%
+**Resolution:** Changed to `VerticalBottomToTop` to match native behavior.
 
----
+### Bug #7: Auto-Scroll Forced on New Messages
 
-## Implementation Notes
+**Root Cause:** `AddMessage()` was forcing `_shouldAutoScroll = true` every time a new message arrived, overriding user's manual scroll pause.
 
-### Development Order
+**Resolution:** Removed forced auto-scroll from `AddMessage()`. Now respects the 6-second timer after manual scrolling.
 
-1. **Phase 1: Basic Infrastructure** (2 hours)
-   - Create `CombatLogMessageVM` and `EnlistedCombatLogVM`
-   - Create `EnlistedCombatLogBehavior` manager
-   - Register behavior in `SubModule.OnGameStart()`
+### Bug #8: Party Screen Overlap
 
-2. **Phase 2: Gauntlet UI** (2 hours)
-   - Create `EnlistedCombatLog.xml` prefab
-   - Set up scrollable panel and message list
-   - Test basic display and scrolling
+**Root Cause:** Combat log didn't reposition when party screen opened, causing UI overlap.
 
-3. **Phase 3: Harmony Patch** (1 hour)
-   - Create `InformationManagerDisplayMessagePatch`
-   - Test message interception and routing
-   - Verify native log suppression
+**Resolution:** Added `PartyState` detection in `EnlistedCombatLogBehavior.OnTick()`. Log moves up 180px when party screen opens, returns to normal position when closed.
 
-4. **Phase 4: Positioning Logic** (1 hour)
-   - Implement army menu detection
-   - Add position offset calculations
-   - Smooth transition animations
+```csharp
+// Detect party screen and reposition
+bool isPartyScreenOpen = Game.Current?.GameStateManager?.ActiveState is PartyState;
+UpdatePositioning(isPartyScreenOpen);
 
-5. **Phase 5: Integration** (1 hour)
-   - Connect to routine system
-   - Connect to event/decision system
-   - Connect to order system
+// In ViewModel:
+PositionYOffset = isMenuOpen ? -280f : -100f;
+```
 
-6. **Phase 6: Polish & Testing** (1 hour)
-   - Message expiration logic
-   - Edge case handling
-   - Performance testing
+### Bug #9: Encyclopedia Links Not Clickable (Command.LinkClicked)
 
-**Total estimated time: ~8 hours**
+**Root Cause:** Used `Command.LinkClicked` binding on `RichTextWidget`, which is not how RichTextWidget fires link events. RichTextWidget uses the low-level `EventFire` mechanism instead.
 
-### Key Classes to Reference
+**Resolution:** Changed to subscribe to `Widget.EventFire` event and check for `eventName == "LinkClick"`.
 
-- `TaleWorlds.Library.InformationManager` - Message system
-- `TaleWorlds.Library.InformationMessage` - Message data structure
-- `TaleWorlds.CampaignSystem.ViewModelCollection.Map.MapNotificationVM` - Similar pattern for notifications
-- `SandBox.View.Map.MapScreen` - Screen layer management
-- `Enlisted.Features.Enlistment.EnlistmentManager` - Enlisted state checks
+```csharp
+// Wrong approach
+<RichTextWidget Command.LinkClicked="OnLinkClick" />
 
-### Pitfalls to Avoid
+// Correct approach
+richTextWidget.EventFire += OnRichTextWidgetEvent;
 
-1. **Don't store messages in save file** - Makes saves bloated, messages are transient
-2. **Don't forget to unsubscribe events** - Memory leaks on campaign end
-3. **Don't hard-code positioning** - Use responsive layout where possible
-4. **Don't suppress ALL messages** - Battle messages should still work natively
-5. **Don't forget null checks** - Instance may not exist during initialization
+private void OnRichTextWidgetEvent(Widget widget, string eventName, object[] args)
+{
+    if (eventName == "LinkClick" && args[0] is string linkHref) { ... }
+}
+```
 
----
+### Bug #10: Widget Lookup Failed for ItemTemplate Instances
 
-## Related Documentation
+**Root Cause:** Tried to find `RichTextWidget` by ID using `FindChild("MessageTextWidget", true)`, which doesn't work for widgets instantiated from `ItemTemplate` in a `ListPanel`.
 
-- **[News Reporting System](news-reporting-system.md)** - Persistent event display in status menu
-- **[UI Systems Master](ui-systems-master.md)** - Overview of all UI systems
-- **[Color Scheme](color-scheme.md)** - Message color definitions
-- **[Event System](../Content/event-system-schemas.md)** - Decision and event outcomes
-- **[Order System](../Content/order-system-master.md)** - Order status notifications
-- **[Camp Routine System](../Campaign/camp-routine-schedule-spec.md)** - Routine outcome messages
+**Resolution:** Changed to type-based lookup, iterating through `messageWidget.Children` and checking `child is RichTextWidget`.
+
+```csharp
+// Wrong approach
+var richTextWidget = messageWidget.FindChild("MessageTextWidget", true);
+
+// Correct approach
+foreach (var child in messageWidget.Children)
+{
+    if (child is RichTextWidget rtWidget)
+    {
+        richTextWidget = rtWidget;
+        break;
+    }
+}
+```
+
+### Bug #11: Links Not Styled (Rendering in Message Color)
+
+**Root Cause:** `Brush.FontColor="@MessageColor"` binding in XML was overriding all inline styles from `<a style="Link.Hero">` tags.
+
+**Resolution:** Removed the `Brush.FontColor` binding from `RichTextWidget` in XML, allowing `<a>` tag styles to apply their own colors from the brush definition.
+
+```xml
+<!-- Wrong approach -->
+<RichTextWidget Brush="Enlisted.CombatLog.Text" 
+                Brush.FontColor="@MessageColor" />  <!-- Overrides all styles -->
+
+<!-- Correct approach -->
+<RichTextWidget Brush="Enlisted.CombatLog.Text" />  <!-- Allows <a> styles to work -->
+```
+
+### Bug #12: Custom Brush File Not Deployed
+
+**Root Cause:** Created `GUI/Brushes/EnlistedCombatLog.xml` but didn't add it to `.csproj`, so it wasn't copied to the game directory during build.
+
+**Resolution:** Added `<Content Include="GUI\Brushes\EnlistedCombatLog.xml"/>` to `.csproj` to ensure deployment.
+
+```xml
+<ItemGroup>
+  <Content Include="GUI\Brushes\EnlistedCombatLog.xml">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+</ItemGroup>
+```
+
+### Bug #13: Prefab File Not Updated in Game Directory
+
+**Root Cause:** Modified `GUI/Prefabs/Interface/EnlistedCombatLog.xml` to use new brush, but game was running during build, preventing file copy. Game continued using cached old version.
+
+**Resolution:** Manually copied updated prefab to game directory after closing game. Verified `.csproj` had correct `<Content Include>` entry for automatic future deployments.
 
 ---
 
 ## Changelog
 
-**2025-01-01:**
-- Initial specification created
-- Documented architecture and implementation approach
-- Defined acceptance criteria and testing requirements
+**2025-01-01 (Final Update - Faction-Colored Links):**
+- ✅ **Faction-specific kingdom colors implemented** - Each kingdom displays in its banner color
+- Native messages already contain encyclopedia links (heroes, settlements, kingdoms)
+- Created `FactionLinkColorizer` to replace generic `Link.Kingdom` with faction-specific styles
+- Uses href (encyclopedia link) to identify faction, not display name (works across all localizations)
+- Created custom brush file (`GUI/Brushes/EnlistedCombatLog.xml`) with faction-specific link colors from `spkingdoms.xml`
+- Link clicks handled via `RichTextWidget.EventFire` event (not `Command.LinkClicked`)
+- Dynamic widget subscription via `ListChanged` event and `AddLateUpdateAction`
+- Links count as user interaction (resets inactivity timer)
+- **Key Discovery**: Native messages use demonyms ("Khuzaits") not formal names ("Khuzait Khanate")
+- **Key Discovery**: href contains faction StringId, making it more reliable for matching than display text
+- **Key Discovery**: `.csproj` needs `<CopyToOutputDirectory>Always</CopyToOutputDirectory>` for reliable XML deployment
+
+**2025-01-01 (Late Session):**
+- ✅ **Fixed scroll pause behavior** - Manual scrolling now properly pauses auto-scroll
+- ✅ **Added party screen repositioning** - Log moves up when party screen opens
+- ✅ **Fixed duplicate routine messages** - Removed personal feed from Company Reports section
+- ✅ **Reduced auto-scroll resume delay** - Changed from 10s to 6s for better responsiveness
+- All scroll and positioning bugs resolved
+
+**2025-01-01 (Initial):**
+- ✅ **Feature fully implemented and polished**
+- Implemented native `ChatLog.Text` brush styling
+- Added inactivity fade (35% after 10s idle)
+- Implemented smart auto-scroll with pause on manual scroll
+- Added mouse wheel scrolling support
+- Fixed all UI rendering and clipping issues
+- Removed background for transparent native look
+- Achieved professional, native-quality appearance
+- Completed all acceptance criteria
+
+---
+
+## Future Enhancements
+
+### Potential Additions
+
+**1. Message Filtering:**
+- Toggle switches for message types
+- Per-category filtering in settings
+
+**2. Message History Panel:**
+- Full-screen overlay for extended history
+- Search/filter capability
+- Export to text file
+
+**3. Visual Improvements:**
+- Category icons next to messages
+- Fade-in animation for new messages
+- Configurable fade timing
+
+**4. Configuration:**
+- Customizable dimensions
+- Adjustable message lifetime
+- Positioning options
+
+---
+
+## Related Documentation
+
+- **[News Reporting System](news-reporting-system.md)** - Persistent event display
+- **[UI Systems Master](ui-systems-master.md)** - UI overview
+- **[Color Scheme](color-scheme.md)** - Message colors
+- **[Event System](../Content/event-system-schemas.md)** - Event outcomes
+- **[Order System](../Content/order-system-master.md)** - Order notifications

@@ -1,6 +1,6 @@
 # Content Orchestrator: Remaining Implementation Prompts
 
-**Summary:** Copy-paste prompts for unimplemented phases of the Content Orchestrator. Phases 1-6F are COMPLETE. This document contains prompts for remaining work only.
+**Summary:** Copy-paste prompts for unimplemented phases of the Content Orchestrator. Phases 1-6F, 9, and 10 are COMPLETE. This document contains prompts for remaining work only.
 
 **Status:** 📋 Reference (Unimplemented Phases Only)  
 **Last Updated:** 2025-12-31  
@@ -22,6 +22,8 @@ The following phases are **IMPLEMENTED** and documented in [Content System Archi
 | Phase 5 | UI Integration (forecasts, main menu) | ✅ Complete |
 | Phase 5.5 | Camp Background Simulation | ✅ Complete |
 | Phase 6A-F | Camp Life Simulation (29 opportunities) | ✅ Complete |
+| Phase 9 | Decision Scheduling System | ✅ Complete |
+| Phase 10 | Order Forecasting & Warnings | ✅ Complete |
 
 **If you need context on completed phases**, read:
 - [Content System Architecture](../Features/Content/content-system-architecture.md) - Core orchestrator
@@ -37,10 +39,10 @@ The following phases are **IMPLEMENTED** and documented in [Content System Archi
 | [Phase 6G](#phase-6g-create-missing-decisions) | Create 26 missing camp decisions | Sonnet 4 | 3-4h | ⛔ **BLOCKING** |
 | [Phase 7](#phase-7-content-variants) | Content variants (JSON-only) | Sonnet 4 | 30-60m | ⏸️ Future |
 | [Phase 8](#phase-8-progression-system) | Progression System framework | Opus 4 | 2-3h | ⏸️ Future |
-| [Phase 9](#phase-9-decision-scheduling) | Decision scheduling system | Sonnet 4 | 2-3h | ❌ **MUST DO** |
-| [Phase 10](#phase-10-order-forecasting) | Order warnings & forecasting | Sonnet 4 | 2-3h | ❌ **MUST DO** |
+| [Phase 9](#phase-9-decision-scheduling) | Decision scheduling system | Sonnet 4 | 2-3h | ✅ **COMPLETE** |
+| [Phase 10](#phase-10-order-forecasting) | Order warnings & forecasting | Sonnet 4 | 2-3h | ✅ **COMPLETE** |
 
-**Critical Path:** Phase 6G (unblocks Phase 9) → Phase 10 → Phase 9 → Phase 7-8
+**Critical Path:** Phase 6G (create missing decisions) → Phase 7-8 (future enhancements)
 
 ---
 
@@ -415,27 +417,35 @@ Medical Progression System (see [Medical Progression System](../Features/Content
 
 ---
 
-## Phase 9: Decision Scheduling (Must Implement)
+## Phase 9: Decision Scheduling ✅ COMPLETE
 
 **Goal:** Allow players to schedule camp activities at specific times
 
-**Status:** ❌ Not Implemented (BLOCKED by Phase 6G)  
+**Status:** ✅ **IMPLEMENTED**  
 **Priority:** High - Required for immersive time-aware gameplay  
-**Model:** Claude Sonnet 4  
-**Estimated Time:** 2-3 hours
+**Completed:** 2025-12-31
 
-### Problem Statement
+### Implementation Summary
 
-Players can currently do decisions NOW, but can't schedule them for later. This breaks immersion:
-- "I'll spar with you at noon" → Can't actually schedule it
-- Can't plan activities around order schedules
-- No anticipation or commitment system
+Players can now schedule decisions for specific day phases (Dawn, Midday, Dusk, Night) instead of only doing them immediately. The system includes:
 
-### Solution
+**Implemented Components:**
+- `PlayerCommitments.cs` - Tracks scheduled commitments with phase, day, and target decision
+- `CampScheduleManager.cs` - Manages daily schedule and applies player commitments to phases
+- `ScheduledCommitment` class - Stores opportunity ID, target decision, scheduled phase/day, display text
+- Commitment tracking in `CampOpportunityGenerator.GetNextCommitment()`, `GetHoursUntilCommitment()`
+- UI integration in `ForecastGenerator.BuildNowText()` - Shows upcoming commitments with countdown
+- Phase transition detection - Fires commitments when scheduled time arrives
 
-Add scheduling system where players commit to activities at specific times (phases).
+**How It Works:**
+1. Player sees an opportunity (e.g., "spar with fellow soldier")
+2. Can choose "DO NOW" or "SCHEDULE FOR [phase]"
+3. Commitment tracked in save/load system
+4. NOW section shows: "You've committed to sparring match at midday (3h)"
+5. When phase arrives, decision fires automatically
+6. Can track multiple commitments queued by phase
 
-### Implementation Prompt
+### Original Implementation Prompt (For Reference Only)
 
 ```
 I need you to implement the Decision Scheduling system for the Enlisted mod.
@@ -542,28 +552,50 @@ ACCEPTANCE CRITERIA
 
 ---
 
-## Phase 10: Order Forecasting & Warnings (Must Implement)
+## Phase 10: Order Forecasting & Warnings ✅ COMPLETE
 
 **Goal:** Provide advance warning before orders issue (critical for >> speed playability)
 
-**Status:** ❌ Not Implemented  
+**Status:** ✅ **IMPLEMENTED**  
 **Priority:** CRITICAL - Required for fast-forward speeds  
-**Model:** Claude Sonnet 4  
-**Estimated Time:** 2-3 hours
+**Completed:** 2025-12-31
 
-### Problem Statement
+### Implementation Summary
 
-At fast-forward speed (>>), orders appear instantly with no reaction time. Players:
-- Can't finish current activities
-- Can't prepare equipment
-- Can't visit QM before duty starts
-- Miss everything at high time speeds
+Orders now provide advance warnings before issuing, making fast-forward gameplay viable. The system creates warnings 4-8 hours before orders become pending.
 
-### Solution
+**Implemented Components:**
+- `OrderState.Imminent` enum - Advance warning state before Pending
+- `Order.ImminentTime` and `Order.IssueTime` fields - Track warning period
+- `OrderManager.CreateImminentOrder()` - Creates order 4-8 hours before issue
+- `OrderManager.GetImminentWarningText()` - Generates warning text for UI
+- `OrderManager.GetHoursUntilIssue()` - Countdown until order issues
+- `OrderManager.IsOrderImminent()` - Check if warning is active
+- `OrderManager.UpdateOrderState()` - Hourly tick transitions Imminent → Pending when IssueTime arrives
+- UI integration in `EnlistedMenuBehavior` (lines 2343, 2838) - Shows forecasts in AHEAD and ORDERS sections
 
-Three-stage warning system with increasing urgency.
+**Order Lifecycle:**
+```
+CreateImminentOrder (4-8h warning)
+  ↓
+State = Imminent
+ImminentTime = now, IssueTime = now + 4-8h
+  ↓
+UpdateOrderState (hourly tick)
+  ↓
+now >= IssueTime?
+  ↓
+TransitionToPending
+  ↓
+State = Pending (player can accept/decline)
+```
 
-### Implementation Prompt
+**UI Display:**
+- AHEAD section: "Sergeant's organizing duty roster" (soft hint)
+- ORDERS menu: "Order Assignment: Guard Duty (in 6 hours)" (explicit countdown)
+- At high speed (>>), warnings give players time to react
+
+### Original Implementation Prompt (For Reference Only)
 
 ```
 I need you to implement the Order Forecasting & Warning system for the Enlisted mod.

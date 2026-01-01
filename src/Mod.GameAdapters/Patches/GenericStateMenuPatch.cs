@@ -86,6 +86,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 if (hasExplicitlyVisited)
                 {
                     // Player has explicitly clicked "Visit Settlement" - don't override
+                    ModLogger.Debug("Menu", $"GenericStateMenuPatch: Not overriding {__result} - player explicitly visited settlement");
                     return;
                 }
 
@@ -104,11 +105,19 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return;
                 }
 
-                // Override army_wait and army_wait_at_settlement to stay on enlisted menu
-                // This prevents unwanted menu switches when not at a settlement
-                if (__result == "army_wait" || __result == "army_wait_at_settlement")
+                // Override army_wait, army_wait_at_settlement, and settlement menus to stay on enlisted menu
+                // This prevents unwanted menu switches when the player hasn't explicitly chosen to visit
+                // Settlement menus (town/castle/village) should only appear when player clicks "Visit Settlement"
+                // Includes both inside ("castle", "town") and outside ("castle_outside", "town_outside") menus
+                if (__result == "army_wait" || 
+                    __result == "army_wait_at_settlement" ||
+                    __result == "town" ||
+                    __result == "town_outside" ||
+                    __result == "castle" ||
+                    __result == "castle_outside" ||
+                    __result == "village")
                 {
-                    ModLogger.Debug("Menu", $"Menu override: {__result} -> enlisted_status (keeping enlisted menu)");
+                    ModLogger.Info("Menu", $"GenericStateMenuPatch: {__result} -> enlisted_status (keeping enlisted menu)");
                     __result = "enlisted_status";
                 }
             }
