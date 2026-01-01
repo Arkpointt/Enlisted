@@ -306,13 +306,28 @@ def validate_references(event: Dict, file_path: str, ctx: ValidationContext, loc
         if skill_name not in VALID_SKILLS:
             ctx.add_issue("error", "reference", f"Invalid skill name: '{skill_name}'", file_path, event_id)
     
-    # Check skill XP rewards
+    # Check skill XP rewards and effects
     for option in options:
+        # Check rewards.skillXp (for sub-choices)
         rewards = option.get("rewards", {})
         xp_rewards = rewards.get("xp", {}) or rewards.get("skillXp", {})
         for skill_name in xp_rewards.keys():
             if skill_name not in VALID_SKILLS:
                 ctx.add_issue("error", "reference", f"Invalid skill name in rewards: '{skill_name}'", file_path, event_id)
+        
+        # Check effects.skillXp (for main choices)
+        effects = option.get("effects", {})
+        effects_xp = effects.get("skillXp", {})
+        for skill_name in effects_xp.keys():
+            if skill_name not in VALID_SKILLS:
+                ctx.add_issue("error", "reference", f"Invalid skill name in effects: '{skill_name}'", file_path, event_id)
+        
+        # Check failEffects.skillXp (for failed skill checks)
+        fail_effects = option.get("failEffects", {})
+        fail_xp = fail_effects.get("skillXp", {})
+        for skill_name in fail_xp.keys():
+            if skill_name not in VALID_SKILLS:
+                ctx.add_issue("error", "reference", f"Invalid skill name in failEffects: '{skill_name}'", file_path, event_id)
 
 
 # ============================================================================
@@ -409,6 +424,24 @@ def validate_logic(event: Dict, file_path: str, ctx: ValidationContext):
         ctx.add_issue("warning", "logic",
             f"One-time event with low priority ({priority}) - should use 'high' or 'critical'",
             file_path, event_id)
+    
+    # Rule 10: Order events should grant XP
+    order_type = event.get("order_type")
+    if order_type:  # This is an order event
+        options = event.get("options", [])
+        for option in options:
+            opt_id = option.get("id", "unknown")
+            effects = option.get("effects", {})
+            fail_effects = option.get("failEffects", {})
+            
+            # Check if this option grants any XP
+            has_xp = "skillXp" in effects or "skillXp" in fail_effects
+            
+            # Warn if no XP is granted (order events should reward player progression)
+            if not has_xp:
+                ctx.add_issue("warning", "logic",
+                    f"Order event option '{opt_id}' grants no skillXp - players expect XP for completing orders",
+                    file_path, event_id)
 
 
 # ============================================================================
