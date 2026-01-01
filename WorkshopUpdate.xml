@@ -7,32 +7,36 @@
     <UpdateItem>
         <ModuleFolder Value="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"/>
         <!-- A direct path of your module -->   
-        <ChangeNotes Value="v0.9.0.1 - Critical Bug Fixes &amp; XP System Overhaul
+        <ChangeNotes Value="v0.9.0.2 - Baggage Train System &amp; Formation Fixes
 
-[CRITICAL XP FIXES]
-- Fixed 0 XP in muster reports - all activities now properly grant enlistment XP for rank progression
-- Fixed combat XP not tracked - killing enemies now awards tier-scaled XP (higher tier = more XP)
-- Added missing XP rewards to all 85 order events across 11 order types
-- Order events: 10-32 XP per event (scales with difficulty and skill checks)
-- Camp activities: 8-25 XP (training, self-treatment, muster interactions)
-- Combat kills: Tier-scaled using native formula (T5 elite = 3.5x more XP than T1 recruit)
-- Failed skill checks now award 50% XP (learn from mistakes)
-- All XP sources tracked and displayed in muster period summary breakdown
+[NEW FEATURE: BAGGAGE TRAIN SYSTEM]
+- Added comprehensive baggage train availability system that tracks your company's logistics state
+- Baggage access depends on world situation: available in towns, camps, and when stationary
+- Unavailable during active combat, sieges, pursuits, or when traveling at speed
+- New Quartermaster dialogue options for checking baggage status and accessing stored equipment
+- Baggage status now displayed in Camp Hub Company Status summary and Company Reports
+- Baggage inspection during muster now respects world state (skipped if baggage inaccessible)
+- Added 'Check Baggage' event that can trigger when baggage becomes available after travel
+- Moved baggage-related decisions to Decisions accordion for better organization
 
-[QUARTERMASTER FIXES]
-- Fixed Quartermaster showing vanilla companion recruitment dialogue (changed Occupation to Soldier)
-- Fixed Quartermaster dialogue breaking with 'custom_line_a to d Error' messages
-- Fixed supply inquiry closing conversation instead of showing supply report
-- Added fallback dialogue system to ensure QM always works even with corrupted installations
+[FORMATION ASSIGNMENT FIX]
+- Fixed formation assignment system to properly detect player equipment tier (T1-T6)
+- T7+ commanders (Master at Arms and above) now correctly control their own party
+- Formation assignment now accurately reads player's actual equipped gear instead of using fallback logic
 
-[DIAGNOSTICS &amp; VALIDATION]
-- Enhanced conflict detection system to verify mod installation integrity
-- Added module health check that detects missing/corrupt JSON and XML files
-- Added runtime catalog status verification to confirm content loaded successfully
-- Added validation tool checks for missing XP in order events
-- Improved diagnostic logging for user bug reports with installation path detection
+[CAMP HUB IMPROVEMENTS]
+- Added Recap section showing recent events and company status changes
+- Added Forecast section with upcoming events and predicted needs
+- Improved Company Status summary with baggage train availability indicator
+- Enhanced news reporting system with better event categorization
 
-This update resolves widespread reports of '0 XP in muster reports' and Quartermaster dialogue errors." />
+[DOCUMENTATION &amp; POLISH]
+- Updated all feature documentation to reflect baggage train integration
+- Cleaned up abandoned features and stale development files
+- Improved tooltip system with better descriptions for all UI elements
+- Enhanced color scheme documentation for UI consistency
+
+This update adds realistic logistics simulation and fixes formation assignment bugs reported by the community." />
         <!-- Insert patch notes -->
         <Tags> 
             <!-- You can use the following tags: -->

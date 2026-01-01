@@ -236,6 +236,28 @@ Replace the separate menu with **3-4 medical care decisions** that appear in the
 | **Severe** | 10-14 days | -15% max HP | Bedridden, significant pain, barely function |
 | **Critical** | 14-21 days | -30% max HP | Life-threatening, requires immediate care |
 
+**CRITICAL SAFETY RULE:** HP loss from illness/injury is capped at **70% max HP** (30% minimum HP floor).
+
+**Implementation:**
+```csharp
+// When applying illness HP reduction
+var maxHp = Hero.MainHero.CharacterObject.MaxHitPoints();
+var hpLoss = (int)(maxHp * illnessHpPercent);
+var currentHp = Hero.MainHero.HitPoints;
+var newHp = currentHp - hpLoss;
+
+// CRITICAL: Never drop below 30% max HP
+var minimumHp = (int)(maxHp * 0.30f);
+Hero.MainHero.HitPoints = Math.Max(minimumHp, newHp);
+```
+
+**Why This Works:**
+- Injuries can reduce HP (gut wound -50%)
+- Illnesses can reduce HP (critical fever -30%)
+- Combined they might total -80%, but player stops at 30% HP
+- Game remains playable but player is in serious danger
+- Forces medical attention without killing player
+
 ---
 
 ### Activity Restrictions by Severity
@@ -253,6 +275,8 @@ Replace the separate menu with **3-4 medical care decisions** that appear in the
 ---
 
 #### **Moderate Illness** - "You're properly sick. Rest would be wise."
+
+**HP Impact:** -5% max HP (applied when illness starts, clamped to 30% HP floor)
 
 **Blocked:**
 
@@ -283,6 +307,8 @@ Replace the separate menu with **3-4 medical care decisions** that appear in the
 
 #### **Severe Illness** - "You can barely stand. You need care."
 
+**HP Impact:** -15% max HP (applied when illness starts, clamped to 30% HP floor)
+
 **Blocked:** ALL training, ALL physical labor, ALL strenuous social, MOST group activities
 
 **Allowed ONLY:**
@@ -308,6 +334,8 @@ If accepted: -20 skill penalty on all checks
 
 #### **Critical Illness** - "You're dying. Get help NOW."
 
+**HP Impact:** -30% max HP (applied when illness starts, clamped to 30% HP floor)
+
 **Blocked:** ALL decisions except medical care and passive rest
 
 **Allowed ONLY:**
@@ -325,6 +353,8 @@ If accepted: -20 skill penalty on all checks
 - Combat log (urgent): `"[!] Your condition is critical. Seek the surgeon NOW."`
 - Daily: `"You slip in and out of consciousness. Is this how it ends?"`
 - Forecast: `"URGENT: Your condition is life-threatening."`
+
+**Example:** Player with gut wound (-50% HP) gets critical fever (-30%). Total -80%, but clamped to 30% HP minimum. Player survives but is in extreme danger.
 
 ---
 
@@ -1028,7 +1058,105 @@ Remove from `Enlisted.csproj`:
 <Compile Include="src\Features\Conditions\EnlistedMedicalMenuBehavior.cs" />
 ```
 
-### Step 6: Update UI Status Display
+### Step 6: Add Illness HP Reduction (with 30% Floor)
+
+Update `PlayerConditionBehavior.TryApplyIllness()` to apply HP reduction:
+
+```csharp
+public void TryApplyIllness(string illnessType, IllnessSeverity severity, int days, string reason)
+{
+    // ... existing illness application code ...
+    
+    // Apply HP reduction based on severity (with 30% floor)
+    var hero = Hero.MainHero;
+    if (hero != null && severity > IllnessSeverity.Mild)
+    {
+        var maxHp = hero.CharacterObject.MaxHitPoints();
+        var hpPercent = severity switch
+        {
+            IllnessSeverity.Moderate => 0.05f,  // -5%
+            IllnessSeverity.Severe => 0.15f,     // -15%
+            IllnessSeverity.Critical => 0.30f,   // -30%
+            _ => 0f
+        };
+        
+        var hpLoss = (int)(maxHp * hpPercent);
+        var currentHp = hero.HitPoints;
+        var newHp = currentHp - hpLoss;
+        
+        // CRITICAL: Never drop below 30% max HP
+        var minimumHp = (int)(maxHp * 0.30f);
+        hero.HitPoints = Math.Max(minimumHp, newHp);
+        
+        ModLogger.Debug("PlayerConditions", 
+            $"Illness HP reduction: {hpLoss} (current: {currentHp} → {hero.HitPoints}, floor: {minimumHp})");
+    }
+    
+    // ... rest of illness application ...
+}
+```
+
+**Restore HP when illness heals** - Update `PlayerConditionBehavior.OnDailyTick()`:
+
+```csharp
+private void ApplyDailyRecoveryAndRisk()
+{
+    var hadIllnessAtStart = _state.HasIllness;
+    var illnessSeverityAtStart = _state.CurrentIllness;
+    
+    // ... existing daily tick code ...
+    
+    // Restore HP when illness heals (illness HP reduction is temporary)
+    if (hadIllnessAtStart && !_state.HasIllness)
+    {
+        var hero = Hero.MainHero;
+        if (hero != null)
+        {
+            var maxHp = hero.CharacterObject.MaxHitPoints();
+            var hpRestore = illnessSeverityAtStart switch
+            {
+                IllnessSeverity.Moderate => (int)(maxHp * 0.05f),
+                IllnessSeverity.Severe => (int)(maxHp * 0.15f),
+                IllnessSeverity.Critical => (int)(maxHp * 0.30f),
+                _ => 0
+            };
+            
+            if (hpRestore > 0)
+            {
+                hero.HitPoints = Math.Min(maxHp, hero.HitPoints + hpRestore);
+                ModLogger.Debug("PlayerConditions", $"Illness healed, HP restored: +{hpRestore}");
+            }
+        }
+    }
+}
+```
+
+**Test Case:** Player with gut wound (-50% HP) gets critical fever (-30%). Combined = -80%, but HP stops at 30% minimum.
+
+### Step 7: Add Daily Illness Messages
+
+Update `PlayerConditionBehavior.OnDailyTick()` to display status messages:
+
+```csharp
+if (_state.HasIllness)
+{
+    var msg = _state.CurrentIllness switch
+    {
+        IllnessSeverity.Mild => "The cold lingers. You sniffle through the morning.",
+        IllnessSeverity.Moderate => "Another restless night. The fever hasn't broken.",
+        IllnessSeverity.Severe => "You can barely lift yourself from your bedroll. Everything hurts.",
+        IllnessSeverity.Critical => "You slip in and out of consciousness. Is this how it ends?",
+        _ => null
+    };
+    
+    if (msg != null)
+    {
+        InformationManager.DisplayMessage(new InformationMessage(msg, Colors.Yellow));
+    }
+}
+```
+
+### Step 8: Update UI Status Display
 
 Ensure condition status shows in:
 
@@ -1041,7 +1169,7 @@ Condition summary format:
 Health: Recovering from injury (3 days remaining)
 ```
 
-### Step 7: Orchestrator Integration (Phase 6H)
+### Step 9: Orchestrator Integration (Phase 6H)
 
 **Add medical pressure tracking:**
 1. Update `SimulationPressureCalculator.cs` with `GetMedicalPressure()` method
@@ -1074,7 +1202,7 @@ Health: Recovering from injury (3 days remaining)
 1. Add `MedicalPressure`, `RequiresMedicalCare`, `HasCriticalCondition` to `WorldSituation`
 2. Calculate in `WorldStateAnalyzer.AnalyzeCurrentSituation()`
 
-### Step 8: Update Documentation
+### Step 10: Update Documentation
 
 Update references in:
 - `docs/Features/Core/core-gameplay.md` - Update medical care section
@@ -1135,6 +1263,14 @@ Update references in:
 - [ ] Herbal remedy applies 1.75x recovery multiplier (quality) or 1.5x (cheap)
 - [ ] Emergency treatment applies 3.0x recovery multiplier
 
+**HP Impact & Safety Floor:**
+- [ ] Moderate illness reduces HP by 5% max HP
+- [ ] Severe illness reduces HP by 15% max HP
+- [ ] Critical illness reduces HP by 30% max HP
+- [ ] **CRITICAL: HP never drops below 30% max HP from illness/injury combined**
+- [ ] HP is restored when illness heals (duration expires)
+- [ ] HP restoration is capped at max HP
+
 **Cost Deduction:**
 - [ ] Fatigue costs properly consumed
 - [ ] Denar costs properly deducted
@@ -1175,6 +1311,9 @@ Update references in:
 - [ ] What if player gets multiple injuries in quick succession? (Should upgrade to worse)
 - [ ] What if illness triggers during active order execution?
 - [ ] What if severe condition triggers during battle?
+- [ ] **CRITICAL: Player with gut wound (-50% HP) + critical fever (-30%) = stops at 30% HP minimum**
+- [ ] Player with 35% HP gets moderate illness (-5%) = drops to 30% HP (not 30% from 35%)
+- [ ] Player with 100% HP gets critical illness = drops to 70% HP (not below 30% floor)
 
 **Treatment Edge Cases:**
 - [ ] Can player spam treatment options? (Costs should prevent - test fatigue depletion)
@@ -1474,7 +1613,8 @@ private void CheckMedicalPressure()
 **Expected Behavior:**
 - Condition naturally heals after 5 days
 - Medical Risk accumulates daily while untreated (+1 per day = +5 total)
-- Player informed on arrival: "Your injury has healed, but exhaustion has built up (Medical Risk: 5/5)"
+- HP returns when condition heals
+- Player informed on arrival: "Your condition has healed, but exhaustion has built up (Medical Risk: 5/5)"
 
 **Implementation:**
 ```csharp
@@ -1483,6 +1623,8 @@ private void ApplyDailyRecoveryAndRisk()
 {
     // Track if condition existed at start of day
     var hadConditionAtStart = _state.HasAnyCondition;
+    var hadIllnessAtStart = _state.HasIllness;
+    var illnessSeverityAtStart = _state.CurrentIllness;
     var wasUntreatedAtStart = hadConditionAtStart && !_state.UnderMedicalCare;
     
     // Apply recovery
@@ -1503,6 +1645,29 @@ private void ApplyDailyRecoveryAndRisk()
     }
     
     NormalizeState();
+    
+    // Restore HP when illness heals (illness HP reduction is temporary)
+    if (hadIllnessAtStart && !_state.HasIllness)
+    {
+        var hero = Hero.MainHero;
+        if (hero != null)
+        {
+            var maxHp = hero.CharacterObject.MaxHitPoints();
+            var hpRestore = illnessSeverityAtStart switch
+            {
+                IllnessSeverity.Moderate => (int)(maxHp * 0.05f),
+                IllnessSeverity.Severe => (int)(maxHp * 0.15f),
+                IllnessSeverity.Critical => (int)(maxHp * 0.30f),
+                _ => 0
+            };
+            
+            if (hpRestore > 0)
+            {
+                hero.HitPoints = Math.Min(maxHp, hero.HitPoints + hpRestore);
+                ModLogger.Debug("PlayerConditions", $"Illness healed, HP restored: +{hpRestore}");
+            }
+        }
+    }
     
     // Show feedback if condition healed but risk accumulated
     if (hadConditionAtStart && !_state.HasAnyCondition)

@@ -2082,6 +2082,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Mark muster complete (updates tier/XP tracking, resets XP sources)
                     SafeApplyEffect("MusterComplete", () => enlistment.OnMusterComplete());
 
+                    // Invalidate opportunity cache so IsMusterDay recalculates
+                    SafeApplyEffect("InvalidateOpportunityCache", () =>
+                    {
+                        Camp.CampOpportunityGenerator.Instance?.InvalidateCache();
+                        ModLogger.Debug(LogCategory, "Opportunity cache invalidated after muster");
+                    });
+
                     // Refresh quartermaster stock (with null safety)
                     SafeApplyEffect("QMStockRefresh", () =>
                     {

@@ -149,6 +149,7 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(ArmyCohesionExclusionPatch);
                     _ = typeof(ArmyDispersedMenuPatch);
                     _ = typeof(CheckFortificationAttackablePatch);
+                    _ = typeof(CombatLogConversationPatch.MapConversationEndPatch);
                     _ = typeof(CompanionCaptainBlockPatch);
                     _ = typeof(CompanionGeneralBlockPatch);
                     _ = typeof(DischargeRelationPenaltyPatch);
@@ -192,14 +193,16 @@ namespace Enlisted.Mod.Entry
                     // This causes crashes on Proton/Linux and potential issues on Windows under some conditions.
                     var manualPatches = new HashSet<string>
                     {
-                        "HidePartyNamePlatePatch",              // Uses manual patching via ApplyManualPatches()
-                        "ArmyCohesionExclusionPatch",           // Target: DefaultArmyManagementCalculationModel
-                        "SettlementOutsideLeaveButtonPatch",    // Target: EncounterGameMenuBehavior
-                        "JoinEncounterAutoSelectPatch",         // Target: EncounterGameMenuBehavior
-                        "JoinSiegeEventAutoSelectPatch",        // Target: EncounterGameMenuBehavior
-                        "EncounterAbandonArmyBlockPatch",       // Target: EncounterGameMenuBehavior (deferred)
-                        "EncounterAbandonArmyBlockPatch2",      // Target: EncounterGameMenuBehavior (deferred)
-                        "EncounterLeaveSuppressionPatch"        // Target: EncounterGameMenuBehavior (deferred)
+                        "HidePartyNamePlatePatch",                // Uses manual patching via ApplyManualPatches()
+                        "ArmyCohesionExclusionPatch",             // Target: DefaultArmyManagementCalculationModel
+                        "CheckFortificationAttackablePatch",      // Target: EncounterGameMenuBehavior (deferred)
+                        "SettlementOutsideLeaveButtonPatch",      // Target: EncounterGameMenuBehavior
+                        "JoinEncounterAutoSelectPatch",           // Target: EncounterGameMenuBehavior
+                        "JoinSiegeEventAutoSelectPatch",          // Target: EncounterGameMenuBehavior
+                        "EncounterAbandonArmyBlockPatch",         // Target: EncounterGameMenuBehavior (deferred)
+                        "EncounterAbandonArmyBlockPatch2",        // Target: EncounterGameMenuBehavior (deferred)
+                        "EncounterLeaveSuppressionPatch",         // Target: EncounterGameMenuBehavior (deferred)
+                        "MapConversationEndPatch"                 // Target: MapScreen explicit interface (deferred)
                     };
 
                     var assembly = Assembly.GetExecutingAssembly();
@@ -238,7 +241,7 @@ namespace Enlisted.Mod.Entry
 
                     // Deferred patches will be applied later when campaign starts
                     // Applying during SubModule load causes TypeInitializationException on Proton/Linux
-                    ModLogger.Info("Bootstrap", $"{skippedCount} patches deferred until campaign start");
+                    ModLogger.Info("Bootstrap", $"{skippedCount} patches deferred until campaign start (2 nested classes)");
 
                     ModLogger.Info("Bootstrap", $"Harmony patches: {enabledCount} auto, {skippedCount} manual");
                 }
@@ -596,12 +599,14 @@ namespace Enlisted.Mod.Entry
                     // By deferring until the campaign is ready, the localization system is fully initialized.
                     // Each patch is wrapped individually so one failure doesn't block others.
                     ApplyDeferredPatch(harmony, typeof(ArmyCohesionExclusionPatch));
+                    ApplyDeferredPatch(harmony, typeof(CheckFortificationAttackablePatch));
                     ApplyDeferredPatch(harmony, typeof(SettlementOutsideLeaveButtonPatch));
                     ApplyDeferredPatch(harmony, typeof(JoinEncounterAutoSelectPatch));
                     ApplyDeferredPatch(harmony, typeof(JoinSiegeEventAutoSelectPatch));
                     ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch));
                     ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch2));
                     ApplyDeferredPatch(harmony, typeof(EncounterLeaveSuppressionPatch));
+                    ApplyDeferredPatch(harmony, typeof(CombatLogConversationPatch.MapConversationEndPatch));
 
                     // Apply Naval DLC patches that use reflection to find types.
                     // These must be deferred because Naval DLC types aren't available during OnSubModuleLoad.

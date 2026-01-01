@@ -36,64 +36,77 @@ The following phases are **IMPLEMENTED** and documented in [Content System Archi
 
 | Phase | Description | Model | Time | Status |
 |-------|-------------|-------|------|--------|
-| [Phase 6G](#phase-6g-create-missing-decisions) | Create 26 missing camp decisions | Sonnet 4 | 3-4h | ⛔ **BLOCKING** |
+| [Phase 6G](#phase-6g-decisions--medical-migration) | Decisions + Medical Migration | Sonnet 4 | 5-6h | ⛔ **BLOCKING** |
+| [Phase 6H](#phase-6h-medical-orchestration) | Medical System Orchestration | Sonnet 4 | 2h | ⛔ **BLOCKING** |
 | [Phase 7](#phase-7-content-variants) | Content variants (JSON-only) | Sonnet 4 | 30-60m | ⏸️ Future |
 | [Phase 8](#phase-8-progression-system) | Progression System framework | Opus 4 | 2-3h | ⏸️ Future |
 | [Phase 9](#phase-9-decision-scheduling) | Decision scheduling system | Sonnet 4 | 2-3h | ✅ **COMPLETE** |
 | [Phase 10](#phase-10-order-forecasting) | Order warnings & forecasting | Sonnet 4 | 2-3h | ✅ **COMPLETE** |
 
-**Critical Path:** Phase 6G (create missing decisions) → Phase 7-8 (future enhancements)
+**Critical Path:** Phase 6G → Phase 6H → Phase 7-8 (future enhancements)
 
 ---
 
-## Phase 6G: Create Missing Decisions
+## Phase 6G: Decisions + Medical Migration
 
-**Goal:** Create 26 missing camp decisions that opportunities reference
+**Goal:** Create 30 missing camp decisions (26 camp + 4 medical) AND migrate Medical Tent to decisions
 
-**Status:** ⛔ **BLOCKING Phase 9** - Must complete before decision scheduling  
+**Status:** ⛔ **BLOCKING Phase 6H**  
 **Priority:** Critical  
-**Model:** Claude Sonnet 4 (JSON content creation)  
-**Estimated Time:** 3-4 hours
+**Model:** Claude Sonnet 4 (JSON content creation + code changes)  
+**Estimated Time:** 5-6 hours
+
+**See Full Spec:** [Medical Care Migration](medical-care-migration.md)
 
 ### Problem Statement
 
-Phase 6 created 29 camp opportunities in `ModuleData/Enlisted/Opportunities/camp_opportunities.json`, but only 3 target decisions exist. The opportunities reference decisions via `targetDecision` field:
-
-```json
-{
-  "id": "opp_weapon_drill",
-  "targetDecision": "dec_training_drill"  // ← Decision doesn't exist
-}
-```
+Phase 6 created 29 camp opportunities, but only 3 target decisions exist. Additionally, medical care uses a separate menu system instead of decisions.
 
 **Two-Layer Architecture:**
-- **Opportunities** - Orchestrator-curated menu items (fitness scoring, order compatibility, detection logic)
+- **Opportunities** - Orchestrator-curated menu items (fitness scoring, order compatibility)
 - **Decisions** - The actual event with options, outcomes, result text
 
 ### Current State
 
 - ✅ Opportunities exist: 29
 - ✅ Decisions exist: 3 (dec_maintain_gear, dec_write_letter, dec_gamble_high)
-- ❌ Decisions missing: 26
+- ❌ Decisions missing: 26 camp + 4 medical = **30 total**
 - ❌ Old static decisions: 35 (pre-orchestrator, need deletion)
+- ❌ Medical Tent: 535 lines of separate menu code (needs deletion)
 
 ### Required Fix
 
-**Step 0: Delete Old System**
+**Step 0: Delete Old Systems**
 1. Open `ModuleData/Enlisted/Decisions/decisions.json`
 2. Delete all 35 old static decisions
 3. Keep only: dec_maintain_gear, dec_write_letter, dec_gamble_high
 
-**Step 1: Create 26 New Decisions**
+**Step 1: Create 26 Camp Decisions** (see list below)
 
-Each decision needs:
-- 2-3 options with meaningful choices
-- Clear tooltips explaining consequences
-- Appropriate costs/rewards/effects
-- Light RP flavor (not heavy narrative)
-- Culture-aware placeholders ({SERGEANT}, {LORD_NAME}, etc.)
+**Step 2: Create 4 Medical Decisions**
+- dec_medical_surgeon - Seek Surgeon's Care
+- dec_medical_rest - Rest and Recovery
+- dec_medical_herbal - Purchase Herbal Remedy
+- dec_medical_emergency - Emergency Treatment (severe only)
 
-**Step 2: Validate**
+**Step 3: Delete Medical Menu**
+1. Delete `src/Features/Conditions/EnlistedMedicalMenuBehavior.cs` (535 lines)
+2. Remove from `SubModule.cs` and `Enlisted.csproj`
+3. Remove menu option from `EnlistedMenuBehavior.cs`
+
+**Step 4: Add Requirement Checks**
+- Add `hasAnyCondition`, `hasSevereCondition`, `maxIllness` to EventRequirementChecker
+- Add `has_any_condition`, `has_untreated_injury` trigger conditions
+
+**Step 5: Add Illness Severity Thresholds**
+Update existing training/labor decisions with `maxIllness` restrictions:
+- Heavy training: maxIllness: "Mild"
+- Physical labor: maxIllness: "Mild"
+- Strenuous social: maxIllness: "Mild"
+- Light social: maxIllness: "Severe"
+- Rest/medical: Always allowed
+
+**Step 6: Validate**
 ```powershell
 python tools/events/validate_events.py
 cd C:\Dev\Enlisted\Enlisted
@@ -102,131 +115,245 @@ dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 
 ### Missing Decisions List
 
-**Training (5 decisions):**
-- dec_training_drill - Weapon training session
-- dec_training_spar - Practice bout with fellow soldier
-- dec_training_formation - Formation drill practice
-- dec_training_veteran - Learn from experienced soldier
-- dec_training_archery - Archery practice
+**Training (5):** dec_training_drill, dec_training_spar, dec_training_formation, dec_training_veteran, dec_training_archery
 
-**Social (6 decisions):**
-- dec_social_stories - Share stories around fire
-- dec_tavern_drink - Drinks with fellow soldiers
-- dec_social_storytelling - Tell a tale from your past
-- dec_drinking_contest - Drinking competition
-- dec_social_singing - Join the singing
-- dec_arm_wrestling - Arm wrestling match
+**Social (6):** dec_social_stories, dec_tavern_drink, dec_social_storytelling, dec_drinking_contest, dec_social_singing, dec_arm_wrestling
 
-**Economic (4 decisions):**
-- dec_gamble_cards - Card game
-- dec_gamble_dice - Dice game
-- dec_forage - Gather supplies from area
-- dec_work_repairs - Help with camp repairs
+**Economic (4):** dec_gamble_cards, dec_gamble_dice, dec_forage, dec_work_repairs
 
-**Recovery (5 decisions):**
-- dec_rest_sleep - Get some sleep
-- dec_help_wounded - Assist wounded soldiers
-- dec_prayer - Quiet prayer or meditation
-- dec_rest_short - Brief rest break
-- dec_meditate - Meditate on recent events
+**Recovery (5):** dec_rest_sleep, dec_help_wounded, dec_prayer, dec_rest_short, dec_meditate
 
-**Special (5 decisions):**
-- dec_officer_audience - Request meeting with officer
-- dec_baggage_access - Visit baggage train
-- dec_mentor_recruit - Help train new recruit
-- dec_volunteer_extra - Volunteer for extra duty
-- dec_night_patrol - Volunteer for night patrol
+**Special (5):** dec_officer_audience, dec_baggage_access, dec_mentor_recruit, dec_volunteer_extra, dec_night_patrol
+
+**Medical (4):** dec_medical_surgeon, dec_medical_rest, dec_medical_herbal, dec_medical_emergency
 
 ### Implementation Prompt
 
 ```
-I need you to create 26 missing camp decisions for the Enlisted mod.
+I need you to implement Phase 6G: Create 30 missing decisions + migrate medical system.
 
 ═══════════════════════════════════════════════════════════════════════════════
 CONTEXT
 ═══════════════════════════════════════════════════════════════════════════════
 
-Phase 6 created 29 camp opportunities, but only 3 target decisions exist. 
-I need to create the 26 missing decisions.
+Phase 6 created 29 camp opportunities, but only 3 target decisions exist.
+Additionally, medical care uses a separate menu that should be migrated to decisions.
+
+I need to:
+1. Create 26 missing camp decisions
+2. Create 4 medical care decisions
+3. Delete Medical Tent menu system (535 lines)
+4. Add illness severity restrictions to decisions
 
 CRITICAL CONSTRAINTS:
 - Each decision: 2-3 options maximum
 - Clear tooltips explaining what each option does
 - Light RP moments (not heavy narrative)
-- Culture-aware placeholders: {SERGEANT}, {NCO}, {LORD_NAME}, {OFFICER_RANK}
+- Culture-aware placeholders: {SERGEANT}, {NCO}, {LORD_NAME}
 - Follow existing decision patterns from dec_maintain_gear
+- Medical decisions require hasAnyCondition or hasSevereCondition
 
 ═══════════════════════════════════════════════════════════════════════════════
 FILES TO READ FIRST
 ═══════════════════════════════════════════════════════════════════════════════
 
 1. docs/BLUEPRINT.md - Coding standards, tooltip requirements
-2. ModuleData/Enlisted/Decisions/decisions.json - Current decisions
-3. ModuleData/Enlisted/Opportunities/camp_opportunities.json - See targetDecision references
-4. docs/Features/Content/event-system-schemas.md - Decision schema
-5. docs/AFEATURE/content-orchestrator-plan.md - Context on Phase 6G
+2. docs/AFEATURE/medical-care-migration.md - COMPLETE MEDICAL SYSTEM SPEC
+3. docs/Features/Content/event-system-schemas.md - Decision schema (includes maxIllness)
+4. docs/AFEATURE/content-orchestrator-plan.md - Phase 6G/6H context
+5. ModuleData/Enlisted/Decisions/decisions.json - Current decisions
+6. src/Features/Conditions/EnlistedMedicalMenuBehavior.cs - DELETE this file
 
 ═══════════════════════════════════════════════════════════════════════════════
-STEP 1: DELETE OLD DECISIONS
+STEP 1: DELETE OLD SYSTEMS
 ═══════════════════════════════════════════════════════════════════════════════
 
-Open ModuleData/Enlisted/Decisions/decisions.json and:
-1. Delete ALL 35 old static decisions
-2. KEEP ONLY these 3:
-   - dec_maintain_gear
-   - dec_write_letter
-   - dec_gamble_high
+A. Open ModuleData/Enlisted/Decisions/decisions.json and:
+   1. Delete ALL 35 old static decisions
+   2. KEEP ONLY these 3: dec_maintain_gear, dec_write_letter, dec_gamble_high
+
+B. Delete Medical Menu:
+   1. Delete src/Features/Conditions/EnlistedMedicalMenuBehavior.cs (535 lines)
+   2. Remove from src/Mod.Entry/SubModule.cs:
+      campaignStarter.AddBehavior(new EnlistedMedicalMenuBehavior());
+   3. Remove from Enlisted.csproj:
+      <Compile Include="src\Features\Conditions\EnlistedMedicalMenuBehavior.cs"/>
 
 ═══════════════════════════════════════════════════════════════════════════════
-STEP 2: CREATE 26 NEW DECISIONS
+STEP 2: ADD REQUIREMENT CHECKS
 ═══════════════════════════════════════════════════════════════════════════════
 
-For each missing decision from the list below, create a full decision with:
-- titleId, title (fallback)
-- setupId, setup (fallback)
-- 2-3 options with:
-  - textId, text (fallback)
-  - tooltip (REQUIRED - cannot be null)
-  - costs/effects
-  - resultTextId, resultText (fallback)
-  - resultFailureTextId, resultFailureText if risky
+In src/Features/Content/EventRequirementChecker.cs (or equivalent), add:
 
-MISSING DECISIONS:
+```csharp
+// Medical condition requirements
+if (req.ContainsKey("hasAnyCondition"))
+{
+    var required = (bool)req["hasAnyCondition"];
+    var cond = PlayerConditionBehavior.Instance;
+    var has = cond?.State?.HasAnyCondition ?? false;
+    if (required && !has) return false;
+}
 
-**Training:**
-- dec_training_drill
-- dec_training_spar
-- dec_training_formation
-- dec_training_veteran
-- dec_training_archery
+if (req.ContainsKey("hasSevereCondition"))
+{
+    var required = (bool)req["hasSevereCondition"];
+    var cond = PlayerConditionBehavior.Instance;
+    var severe = cond?.State?.CurrentInjury >= InjurySeverity.Severe ||
+                 cond?.State?.CurrentIllness >= IllnessSeverity.Severe;
+    if (required && !severe) return false;
+}
 
-**Social:**
-- dec_social_stories
-- dec_tavern_drink
-- dec_social_storytelling
-- dec_drinking_contest
-- dec_social_singing
-- dec_arm_wrestling
+if (req.ContainsKey("maxIllness"))
+{
+    var maxStr = req["maxIllness"].ToString();
+    var max = ParseIllnessSeverity(maxStr);
+    var current = PlayerConditionBehavior.Instance?.State?.CurrentIllness ?? IllnessSeverity.None;
+    if (current > max) return false;
+}
+```
 
-**Economic:**
-- dec_gamble_cards
-- dec_gamble_dice
-- dec_forage
-- dec_work_repairs
+═══════════════════════════════════════════════════════════════════════════════
+STEP 3: CREATE 26 CAMP DECISIONS
+═══════════════════════════════════════════════════════════════════════════════
 
-**Recovery:**
-- dec_rest_sleep
-- dec_help_wounded
-- dec_prayer
-- dec_rest_short
-- dec_meditate
+For each, create full decision with titleId, setupId, 2-3 options, tooltips.
 
-**Special:**
-- dec_officer_audience
-- dec_baggage_access
-- dec_mentor_recruit
-- dec_volunteer_extra
-- dec_night_patrol
+**Training (add maxIllness: "Mild"):**
+- dec_training_drill, dec_training_spar, dec_training_formation, 
+  dec_training_veteran, dec_training_archery
+
+**Social (strenuous add maxIllness: "Mild", light add maxIllness: "Severe"):**
+- dec_social_stories, dec_tavern_drink, dec_social_storytelling, 
+  dec_drinking_contest, dec_social_singing, dec_arm_wrestling
+
+**Economic (maxIllness: "Mild"):**
+- dec_gamble_cards, dec_gamble_dice, dec_forage, dec_work_repairs
+
+**Recovery (no maxIllness - always allowed):**
+- dec_rest_sleep, dec_help_wounded, dec_prayer, dec_rest_short, dec_meditate
+
+**Special (maxIllness: "Severe"):**
+- dec_officer_audience, dec_baggage_access, dec_mentor_recruit, 
+  dec_volunteer_extra, dec_night_patrol
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 4: CREATE 4 MEDICAL DECISIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+**dec_medical_surgeon** (requires hasAnyCondition: true)
+- Title: "Seek Surgeon's Care"
+- Setup: "You visit the surgeon's tent. The smell of poultices and bloodied linen."
+- Options:
+  1. "Request full treatment" - 2 fatigue, 2.0x recovery, reset Medical Risk
+  2. "Just check the wounds" - 1 fatigue, 1.5x recovery
+  3. "Not now" - No cost, leave
+
+**dec_medical_rest** (requires hasAnyCondition: true)
+- Title: "Rest and Recovery"
+- Setup: "You're still recovering. Today feels like it should be a rest day."
+- Options:
+  1. "Take the day off" - Restore 8 fatigue, 1.5x recovery
+  2. "Light duties only" - Restore 4 fatigue, 1.25x recovery
+  3. "Push through it" - No effect, small worsen risk
+
+**dec_medical_herbal** (requires hasAnyCondition: true, context: Camp/Town)
+- Title: "Purchase Herbal Remedy"
+- Setup: "Camp followers sell herbs—willow bark, yarrow, poppy milk."
+- Options:
+  1. "Buy quality herbs" - 50 denars, 1.75x recovery
+  2. "Buy cheap herbs" - 25 denars, 1.5x recovery, 25% no effect
+  3. "Save your coin" - Leave
+
+**dec_medical_emergency** (requires hasSevereCondition: true)
+- Title: "Emergency Treatment"
+- Setup: "Your condition has worsened. The surgeon says you need immediate care."
+- Options:
+  1. "Aggressive treatment" - 3 fatigue, 100 denars, 3.0x recovery
+  2. "Standard treatment" - 2 fatigue, 2.0x recovery
+  3. "Refuse treatment" - 50% worsen, +2 Medical Risk
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 4A: ADD ILLNESS HP REDUCTION (WITH 30% FLOOR)
+═══════════════════════════════════════════════════════════════════════════════
+
+**CRITICAL SAFETY RULE:** Illnesses reduce HP, but NEVER below 30% max HP minimum.
+
+In PlayerConditionBehavior.TryApplyIllness(), add HP reduction:
+
+```csharp
+public void TryApplyIllness(string illnessType, IllnessSeverity severity, int days, string reason)
+{
+    // ... existing illness application code ...
+    
+    // Apply HP reduction based on severity (with 30% floor)
+    var hero = Hero.MainHero;
+    if (hero != null && severity > IllnessSeverity.Mild)
+    {
+        var maxHp = hero.CharacterObject.MaxHitPoints();
+        var hpPercent = severity switch
+        {
+            IllnessSeverity.Moderate => 0.05f,  // -5%
+            IllnessSeverity.Severe => 0.15f,     // -15%
+            IllnessSeverity.Critical => 0.30f,   // -30%
+            _ => 0f
+        };
+        
+        var hpLoss = (int)(maxHp * hpPercent);
+        var currentHp = hero.HitPoints;
+        var newHp = currentHp - hpLoss;
+        
+        // CRITICAL: Never drop below 30% max HP
+        var minimumHp = (int)(maxHp * 0.30f);
+        hero.HitPoints = Math.Max(minimumHp, newHp);
+        
+        ModLogger.Debug("PlayerConditions", 
+            $"Illness HP reduction: {hpLoss} (current: {currentHp} → {hero.HitPoints}, floor: {minimumHp})");
+    }
+    
+    // ... rest of illness application ...
+}
+```
+
+**Restore HP when illness heals:**
+
+In PlayerConditionBehavior.OnDailyTick(), restore HP when illness duration expires:
+
+```csharp
+private void ApplyDailyRecoveryAndRisk()
+{
+    var hadIllnessAtStart = _state.HasIllness;
+    var illnessSeverityAtStart = _state.CurrentIllness;
+    
+    // ... existing daily tick code ...
+    
+    // Restore HP when illness heals (illness HP reduction is temporary)
+    if (hadIllnessAtStart && !_state.HasIllness)
+    {
+        var hero = Hero.MainHero;
+        if (hero != null)
+        {
+            var maxHp = hero.CharacterObject.MaxHitPoints();
+            var hpRestore = illnessSeverityAtStart switch
+            {
+                IllnessSeverity.Moderate => (int)(maxHp * 0.05f),
+                IllnessSeverity.Severe => (int)(maxHp * 0.15f),
+                IllnessSeverity.Critical => (int)(maxHp * 0.30f),
+                _ => 0
+            };
+            
+            if (hpRestore > 0)
+            {
+                hero.HitPoints = Math.Min(maxHp, hero.HitPoints + hpRestore);
+                ModLogger.Debug("PlayerConditions", $"Illness healed, HP restored: +{hpRestore}");
+            }
+        }
+    }
+}
+```
+
+**Critical Test Case:**
+Player with gut wound (-50% HP) + critical fever (-30% HP) = Combined -80%, but stops at 30% minimum.
 
 ═══════════════════════════════════════════════════════════════════════════════
 DESIGN PATTERNS
@@ -284,17 +411,335 @@ dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 ```
 
 ═══════════════════════════════════════════════════════════════════════════════
+STEP 5: ADD ILLNESS STATUS MESSAGING
+═══════════════════════════════════════════════════════════════════════════════
+
+In PlayerConditionBehavior.OnDailyTick(), add combat log messages:
+
+```csharp
+if (_state.HasIllness)
+{
+    var msg = _state.CurrentIllness switch
+    {
+        IllnessSeverity.Mild => "The cold lingers. You sniffle through the morning.",
+        IllnessSeverity.Moderate => "Another restless night. The fever hasn't broken.",
+        IllnessSeverity.Severe => "You can barely lift yourself from your bedroll. Everything hurts.",
+        IllnessSeverity.Critical => "You slip in and out of consciousness. Is this how it ends?",
+        _ => null
+    };
+    if (msg != null) InformationManager.DisplayMessage(new InformationMessage(msg, Colors.Yellow));
+}
+```
+
+Add localization strings for all illness messages - see medical-care-migration.md.
+
+═══════════════════════════════════════════════════════════════════════════════
 ACCEPTANCE CRITERIA
 ═══════════════════════════════════════════════════════════════════════════════
 
 [ ] All 35 old static decisions deleted
-[ ] All 26 new decisions created
-[ ] Each decision has 2-3 options
+[ ] EnlistedMedicalMenuBehavior.cs deleted (535 lines)
+[ ] All 26 camp decisions created with maxIllness restrictions
+[ ] All 4 medical decisions created with condition requirements
+[ ] hasAnyCondition, hasSevereCondition, maxIllness requirement checks added
+[ ] Illness HP reduction applies with 30% floor (CRITICAL - test injury + illness combo)
+[ ] HP restores when illness heals
+[ ] Daily illness messages display in combat log
 [ ] EVERY option has a non-null tooltip
-[ ] Culture-aware placeholders used throughout
 [ ] Validation passes without errors
 [ ] Build succeeds
-[ ] decisions.json has 29 total decisions (3 kept + 26 new)
+[ ] decisions.json has 33 total decisions (3 kept + 26 camp + 4 medical)
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+---
+
+## Phase 6H: Medical Orchestration
+
+**Goal:** Make the medical system fully world-state-driven through the Content Orchestrator
+
+**Status:** ⛔ **BLOCKING** - Requires Phase 6G complete  
+**Priority:** High  
+**Model:** Claude Sonnet 4  
+**Estimated Time:** 2 hours
+
+**See Full Spec:** [Medical Care Migration](medical-care-migration.md) - Orchestrator Integration section
+
+### Overview
+
+After Phase 6G creates medical decisions, this phase integrates them with the orchestrator for intelligent illness onset, medical care suggestions, and forecasting.
+
+### Implementation Prompt
+
+```
+I need you to implement Phase 6H: Medical System Orchestration for the Enlisted mod.
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT
+═══════════════════════════════════════════════════════════════════════════════
+
+Phase 6G created medical care decisions (dec_medical_surgeon, etc.) and removed
+the Medical Tent menu. Now I need the orchestrator to intelligently:
+1. Trigger illness onset based on Medical Risk
+2. Create camp opportunities for medical care
+3. Show medical warnings in forecast
+
+═══════════════════════════════════════════════════════════════════════════════
+FILES TO READ FIRST
+═══════════════════════════════════════════════════════════════════════════════
+
+1. docs/AFEATURE/medical-care-migration.md - COMPLETE SPEC (Orchestrator section)
+2. docs/Features/Content/event-system-schemas.md - Trigger requirements
+3. src/Features/Content/ContentOrchestrator.cs - Existing orchestrator
+4. src/Features/Content/SimulationPressureCalculator.cs - Pressure tracking
+5. src/Features/Content/WorldStateAnalyzer.cs - World state
+6. src/Features/Content/ForecastGenerator.cs - Forecast text
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 1: ADD MEDICAL PRESSURE TRACKING
+═══════════════════════════════════════════════════════════════════════════════
+
+Add to SimulationPressureCalculator.cs:
+
+```csharp
+public class MedicalPressureAnalysis
+{
+    public int MedicalRisk { get; set; }           // 0-5 from EscalationManager
+    public bool HasCondition { get; set; }         // Active injury/illness
+    public bool HasSevereCondition { get; set; }   // Severe/Critical
+    public bool IsUntreated { get; set; }          // No UnderMedicalCare
+    public int DaysUntreated { get; set; }
+    public float HealthPercent { get; set; }
+    
+    public MedicalPressureLevel GetPressureLevel()
+    {
+        if (HasSevereCondition || MedicalRisk >= 4) return MedicalPressureLevel.Critical;
+        if (HasCondition && IsUntreated && DaysUntreated >= 3) return MedicalPressureLevel.High;
+        if (MedicalRisk >= 3 || (HasCondition && IsUntreated)) return MedicalPressureLevel.Moderate;
+        if (MedicalRisk >= 2) return MedicalPressureLevel.Low;
+        return MedicalPressureLevel.None;
+    }
+}
+
+public enum MedicalPressureLevel { None, Low, Moderate, High, Critical }
+
+public MedicalPressureAnalysis GetMedicalPressure() { ... }
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 2: CREATE CAMP OPPORTUNITIES
+═══════════════════════════════════════════════════════════════════════════════
+
+Add to ModuleData/Enlisted/Opportunities/camp_opportunities.json:
+
+```json
+{
+  "id": "opp_seek_treatment",
+  "title": "Seek Medical Care",
+  "description": "Your condition needs attention. The surgeon can help.",
+  "targetDecision": "dec_medical_surgeon",
+  "requirements": { "hasAnyCondition": true },
+  "priority": 70,
+  "tags": ["medical", "recovery"]
+},
+{
+  "id": "opp_emergency_care",
+  "title": "URGENT: Seek Treatment",
+  "description": "Your condition has worsened. You need immediate care.",
+  "targetDecision": "dec_medical_emergency",
+  "requirements": { "hasSevereCondition": true },
+  "urgency": "critical",
+  "priority": 95,
+  "tags": ["medical", "emergency"]
+},
+{
+  "id": "opp_medical_rest",
+  "title": "Take a Rest Day",
+  "description": "You're recovering. Rest would help.",
+  "targetDecision": "dec_medical_rest",
+  "requirements": { "hasAnyCondition": true },
+  "priority": 50,
+  "tags": ["medical", "rest"]
+}
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 3: CREATE ILLNESS ONSET EVENTS
+═══════════════════════════════════════════════════════════════════════════════
+
+Create ModuleData/Enlisted/Events/illness_onset.json:
+
+```json
+{
+  "schemaVersion": 2,
+  "category": "automatic",
+  "events": [
+    {
+      "id": "evt_illness_onset_fever",
+      "titleId": "evt_illness_fever_title",
+      "title": "Camp Fever",
+      "setupId": "evt_illness_fever_setup",
+      "setup": "You wake feeling hot. Your head pounds. The familiar signs of fever.",
+      "triggers": {
+        "all": ["is_enlisted"],
+        "escalation_requirements": { "medical_risk": 3 }
+      },
+      "requirements": { "tier": { "min": 1 } },
+      "options": [
+        {
+          "id": "accept",
+          "text": "I need to see the surgeon.",
+          "tooltip": "Accept illness. Applies moderate fever (7 days).",
+          "effects": { "applyIllness": { "type": "camp_fever", "severity": "moderate", "days": 7 } },
+          "resultText": "The fever takes hold. You'll need treatment and rest."
+        },
+        {
+          "id": "push_through",
+          "text": "I can push through this.",
+          "tooltip": "Risky. 50% chance illness worsens to severe.",
+          "chance": 0.5,
+          "effects": { "applyIllness": { "type": "camp_fever", "severity": "severe", "days": 10 }, "hpChange": -15 },
+          "resultText": "You try to ignore it. The fever worsens.",
+          "resultFailureText": "You push through. The fever passes."
+        }
+      ]
+    }
+  ]
+}
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 4: UPDATE CONTENT ORCHESTRATOR
+═══════════════════════════════════════════════════════════════════════════════
+
+Add to ContentOrchestrator.cs in daily tick:
+
+```csharp
+private bool _emergencyOpportunityForced = false;
+private int _lastIllnessOnsetDay = -10;
+
+private void CheckMedicalPressure()
+{
+    var pressure = SimulationPressureCalculator.Instance.GetMedicalPressure();
+    var level = pressure.GetPressureLevel();
+    
+    // Critical: Force emergency opportunity (once)
+    if (level == MedicalPressureLevel.Critical && !_emergencyOpportunityForced)
+    {
+        CampOpportunityGenerator.Instance?.ForceOpportunity("opp_emergency_care");
+        _emergencyOpportunityForced = true;
+        return;
+    }
+    
+    // Reset flag when no longer critical
+    if (level < MedicalPressureLevel.Critical) _emergencyOpportunityForced = false;
+    
+    // Roll for illness onset if Medical Risk >= 3 and not already sick
+    if (pressure.MedicalRisk >= 3 && !pressure.HasCondition)
+    {
+        TryTriggerIllnessOnset(pressure);
+    }
+}
+
+private void TryTriggerIllnessOnset(MedicalPressureAnalysis pressure)
+{
+    // Cooldown check
+    var today = (int)CampaignTime.Now.ToDays;
+    if (today - _lastIllnessOnsetDay < 7) return;
+    
+    // Calculate chance
+    var chance = pressure.MedicalRisk * 0.05f; // 5% per risk level
+    if (EnlistmentBehavior.Instance.FatigueCurrent <= 8) chance += 0.10f;
+    if (WorldStateAnalyzer.GetSeason() == Season.Winter) chance += 0.08f;
+    if (WorldStateAnalyzer.GetLordSituation() == LordSituation.InSiege) chance += 0.12f;
+    
+    if (MBRandom.RandomFloat < chance)
+    {
+        _lastIllnessOnsetDay = today;
+        EventDeliveryManager.Instance?.QueueEvent("evt_illness_onset_fever", "medical_risk");
+    }
+}
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 5: UPDATE FORECAST
+═══════════════════════════════════════════════════════════════════════════════
+
+Add to ForecastGenerator.cs:
+
+```csharp
+private void AddMedicalForecast(StringBuilder ahead, StringBuilder concerns)
+{
+    var pressure = SimulationPressureCalculator.Instance.GetMedicalPressure();
+    var cond = PlayerConditionBehavior.Instance;
+    
+    // Critical warning in AHEAD
+    if (pressure.GetPressureLevel() == MedicalPressureLevel.Critical)
+    {
+        if (pressure.HasSevereCondition)
+            ahead.AppendLine("Your condition is severe. Seek the surgeon immediately.");
+        else
+            ahead.AppendLine("Medical Risk critical. Illness likely without rest.");
+    }
+    
+    // Active condition status
+    if (cond?.State?.HasAnyCondition == true)
+    {
+        var days = Math.Max(cond.State.InjuryDaysRemaining, cond.State.IllnessDaysRemaining);
+        var treatment = cond.State.UnderMedicalCare ? "under treatment" : "untreated";
+        ahead.AppendLine($"Recovering from condition ({days} days, {treatment}).");
+        
+        if (!cond.State.UnderMedicalCare && days > 3)
+            concerns.AppendLine($"Medical: Untreated condition ({days} days). Seek care.");
+    }
+    
+    // Medical Risk warning
+    if (pressure.MedicalRisk >= 3 && pressure.GetPressureLevel() != MedicalPressureLevel.Critical)
+        concerns.AppendLine($"Medical Risk: {pressure.MedicalRisk}/5. Rest recommended.");
+}
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 6: UPDATE WORLD STATE
+═══════════════════════════════════════════════════════════════════════════════
+
+Add to WorldSituation model:
+
+```csharp
+public MedicalPressureLevel MedicalPressure { get; set; }
+public bool RequiresMedicalCare { get; set; }
+public bool HasCriticalCondition { get; set; }
+```
+
+Calculate in WorldStateAnalyzer.AnalyzeCurrentSituation().
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 7: SAVE/LOAD
+═══════════════════════════════════════════════════════════════════════════════
+
+Add to ContentOrchestrator.SyncData():
+
+```csharp
+dataStore.SyncData("orchestrator_emergencyForced", ref _emergencyOpportunityForced);
+dataStore.SyncData("orchestrator_lastIllnessDay", ref _lastIllnessOnsetDay);
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════════════════
+
+[ ] MedicalPressureAnalysis class tracks condition state
+[ ] 3 medical camp opportunities created
+[ ] Illness onset event fires when Medical Risk >= 3 (with modifiers)
+[ ] Emergency opportunity forced once when condition critical
+[ ] Illness blocked if player already sick (spam prevention)
+[ ] 7-day cooldown between illness triggers
+[ ] Forecast shows Medical Risk warnings
+[ ] Forecast shows condition recovery status
+[ ] World state includes medical pressure
+[ ] Save/load persists orchestrator medical state
+[ ] Build succeeds without errors
 
 ═══════════════════════════════════════════════════════════════════════════════
 ```
@@ -771,5 +1216,5 @@ python tools/events/validate_events.py
 
 ---
 
-**Last Updated:** 2025-12-31  
+**Last Updated:** 2026-01-01 (Added Phase 6G/6H Medical System Integration)  
 **Maintained By:** Project AI Assistant

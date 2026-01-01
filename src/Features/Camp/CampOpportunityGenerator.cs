@@ -455,6 +455,7 @@ namespace Enlisted.Features.Camp
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment?.IsEnlisted != true)
             {
+                ModLogger.Info(LogCategory, $"GenerateCampLife: Not enlisted (enlistment={enlistment != null}, IsEnlisted={enlistment?.IsEnlisted ?? false})");
                 return new List<CampOpportunity>();
             }
 
@@ -464,13 +465,14 @@ namespace Enlisted.Features.Camp
             // Check for edge cases that block opportunities entirely
             if (ShouldBlockAllOpportunities(campContext, out string blockReason))
             {
-                ModLogger.Debug(LogCategory, $"Opportunities blocked: {blockReason}");
+                ModLogger.Info(LogCategory, $"Opportunities blocked: {blockReason}");
                 return new List<CampOpportunity>();
             }
 
             // Check cache validity
             if (_cachedOpportunities != null && _cachePhase == campContext.DayPhase)
             {
+                ModLogger.Debug(LogCategory, $"Returning cached {_cachedOpportunities.Count} opportunities");
                 return _cachedOpportunities;
             }
 
@@ -483,10 +485,11 @@ namespace Enlisted.Features.Camp
 
             // Determine opportunity budget
             int budget = DetermineOpportunityBudget(worldSituation, campContext);
-            ModLogger.Debug(LogCategory, $"Opportunity budget: {budget} (phase: {campContext.DayPhase}, activity: {campContext.ActivityLevel})");
+            ModLogger.Info(LogCategory, $"Opportunity budget: {budget} (LordIs={worldSituation.LordIs}, phase={campContext.DayPhase}, activity={campContext.ActivityLevel})");
 
             if (budget <= 0)
             {
+                ModLogger.Info(LogCategory, "Budget is 0 - no opportunities available");
                 _cachedOpportunities = new List<CampOpportunity>();
                 _cachePhase = campContext.DayPhase;
                 return _cachedOpportunities;
@@ -494,7 +497,7 @@ namespace Enlisted.Features.Camp
 
             // Generate candidates
             var candidates = GenerateCandidates(worldSituation, campContext, playerPrefs);
-            ModLogger.Debug(LogCategory, $"Generated {candidates.Count} candidates");
+            ModLogger.Info(LogCategory, $"Generated {candidates.Count} candidates from {_opportunityDefinitions.Count} total definitions");
 
             // Score each candidate
             foreach (var candidate in candidates)
@@ -543,6 +546,16 @@ namespace Enlisted.Features.Camp
             CampScheduleManager.Instance?.OnPhaseChanged(newPhase);
             
             ModLogger.Debug(LogCategory, $"Phase changed to {newPhase}, cache invalidated");
+        }
+
+        /// <summary>
+        /// Invalidates the opportunity cache, forcing a fresh generation on next access.
+        /// Called when major state changes occur (like muster completion) that affect opportunity availability.
+        /// </summary>
+        public void InvalidateCache()
+        {
+            _cachedOpportunities = null;
+            ModLogger.Debug(LogCategory, "Opportunity cache manually invalidated");
         }
 
         /// <summary>
@@ -719,29 +732,34 @@ namespace Enlisted.Features.Camp
         {
             var candidates = new List<CampOpportunity>();
             var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            var filterCounts = new Dictionary<string, int>();
 
             foreach (var opp in _opportunityDefinitions)
             {
                 // Tier check
                 if (tier < opp.MinTier)
                 {
+                    IncrementFilterCount(filterCounts, "tier_too_low");
                     continue;
                 }
 
                 if (opp.MaxTier > 0 && tier > opp.MaxTier)
                 {
+                    IncrementFilterCount(filterCounts, "tier_too_high");
                     continue;
                 }
 
                 // Cooldown check
                 if (_history.WasRecentlyShown(opp.Id, opp.CooldownHours))
                 {
+                    IncrementFilterCount(filterCounts, "cooldown");
                     continue;
                 }
 
                 // Day phase check
                 if (opp.ValidPhases.Count > 0 && !opp.ValidPhases.Contains(camp.DayPhase.ToString()))
                 {
+                    IncrementFilterCount(filterCounts, "wrong_phase");
                     continue;
                 }
 
@@ -751,11 +769,13 @@ namespace Enlisted.Features.Camp
                 
                 if (opp.NotAtSea && isAtSea)
                 {
+                    IncrementFilterCount(filterCounts, "at_sea");
                     continue; // Land-only opportunity but party is at sea
                 }
                 
                 if (opp.AtSea && !isAtSea)
                 {
+                    IncrementFilterCount(filterCounts, "on_land");
                     continue; // Sea-only opportunity but party is on land
                 }
 
@@ -766,6 +786,7 @@ namespace Enlisted.Features.Camp
                     var compat = opp.GetOrderCompatibility(currentOrderType);
                     if (compat == "blocked")
                     {
+                        IncrementFilterCount(filterCounts, "order_blocked");
                         continue;
                     }
                 }
@@ -773,12 +794,14 @@ namespace Enlisted.Features.Camp
                 // Injury filter: no training if injured
                 if (camp.PlayerInjured && opp.Type == OpportunityType.Training)
                 {
+                    IncrementFilterCount(filterCounts, "injured");
                     continue;
                 }
 
                 // Gold filter: no gambling if broke
                 if (camp.PlayerGold < 20 && opp.Type == OpportunityType.Economic && opp.Id.Contains("gambl"))
                 {
+                    IncrementFilterCount(filterCounts, "no_gold");
                     continue;
                 }
 
@@ -787,7 +810,26 @@ namespace Enlisted.Features.Camp
                 candidates.Add(candidate);
             }
 
+            // Log filter statistics
+            if (filterCounts.Count > 0)
+            {
+                var filterSummary = string.Join(", ", filterCounts.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+                ModLogger.Info(LogCategory, $"Candidate filters (tier={tier}, phase={camp.DayPhase}, onDuty={camp.PlayerOnDuty}): {filterSummary}");
+            }
+
             return candidates;
+        }
+
+        private static void IncrementFilterCount(Dictionary<string, int> counts, string key)
+        {
+            if (counts.ContainsKey(key))
+            {
+                counts[key]++;
+            }
+            else
+            {
+                counts[key] = 1;
+            }
         }
 
         /// <summary>

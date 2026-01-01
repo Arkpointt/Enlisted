@@ -3589,6 +3589,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _isOnProbation = false;
                 _probationEnds = CampaignTime.Zero;
 
+                // Initialize muster tracking - set last muster to enlistment day so we don't trigger muster immediately
+                if (!resumedFromGrace)
+                {
+                    _lastMusterDay = Campaign.Current != null ? (int)CampaignTime.Now.ToDays : 0;
+                    _tierAtLastMuster = _enlistmentTier;
+                    _xpAtLastMuster = _enlistmentXP;
+                    ModLogger.Info("Enlistment", $"Initialized muster tracking: lastMusterDay={_lastMusterDay}, tier={_tierAtLastMuster}, xp={_xpAtLastMuster}");
+                }
+
                 // Clear issued rations tracking on new enlistment
                 // Note: Grace period re-enlistment preserves tier/XP but not issued rations
                 // Each new service period starts with a fresh ration slate

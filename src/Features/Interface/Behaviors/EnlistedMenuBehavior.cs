@@ -1696,13 +1696,25 @@ namespace Enlisted.Features.Interface.Behaviors
                     var lowTier = 0;
                     foreach (var troop in roster.GetTroopRoster())
                     {
-                        if (troop.Character == null || troop.Character.IsHero) continue;
+                        if (troop.Character == null || troop.Character.IsHero)
+                        {
+                            continue;
+                        }
                         var tier = troop.Character.Tier;
                         var count = troop.Number;
                         
-                        if (tier >= 5) highTier += count;
-                        else if (tier >= 3) midTier += count;
-                        else lowTier += count;
+                        if (tier >= 5)
+                        {
+                            highTier += count;
+                        }
+                        else if (tier >= 3)
+                        {
+                            midTier += count;
+                        }
+                        else
+                        {
+                            lowTier += count;
+                        }
                     }
 
                     var strengthParts = new List<string>();
@@ -1828,11 +1840,15 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 if (lord == null || lordParty == null)
+                {
                     return string.Empty;
+                }
 
                 var kingdom = lord.Clan?.Kingdom;
                 if (kingdom == null)
+                {
                     return string.Empty;
+                }
 
                 // Get comprehensive world state analysis
                 var worldState = Content.WorldStateAnalyzer.AnalyzeSituation();
@@ -2502,32 +2518,44 @@ namespace Enlisted.Features.Interface.Behaviors
                             "<span style=\"Alert\">Supply lines stretched thin</span>" : 
                             GetSupplyPhrase(companyNeeds.Supplies);
                         if (!string.IsNullOrEmpty(phrase))
+                        {
                             statusParts.Add(phrase);
+                        }
                     }
                     else
                     {
                         var supplyPhrase = GetSupplyPhrase(companyNeeds.Supplies);
                         if (!string.IsNullOrEmpty(supplyPhrase))
+                        {
                             statusParts.Add(supplyPhrase);
+                        }
                     }
 
                     // Morale with morale shock context
-                    // Skip shock warnings for fresh enlistment (< 1 day) - the lord's prior battles shouldn't alarm new recruits
+                    // Skip shock warnings for fresh enlistment (< 1 day) - the lord's prior battles shouldn't alarm new recructs
                     var freshlyEnlisted = enlistment?.DaysServed < 1f;
                     var moraleShock = !freshlyEnlisted && campLife?.MoraleShock > 50;
                     var payProblems = !freshlyEnlisted && campLife?.PayTension > 50;
                     if (moraleShock || payProblems)
                     {
                         var issues = new List<string>();
-                        if (moraleShock) issues.Add("recent setbacks");
-                        if (payProblems) issues.Add("pay disputes");
+                        if (moraleShock)
+                        {
+                            issues.Add("recent setbacks");
+                        }
+                        if (payProblems)
+                        {
+                            issues.Add("pay disputes");
+                        }
                         statusParts.Add($"<span style=\"Warning\">morale shaky</span> from {string.Join(" and ", issues)}");
                     }
                     else
                     {
                         var moralePhrase = GetMoralePhrase(companyNeeds.Morale);
                         if (!string.IsNullOrEmpty(moralePhrase))
+                        {
                             statusParts.Add(moralePhrase);
+                        }
                     }
 
                     if (statusParts.Count > 0)
@@ -2542,25 +2570,41 @@ namespace Enlisted.Features.Interface.Behaviors
                 var inHostileTerritory = campLife?.TerritoryPressure > 60;
                 
                 if (wounded > 20)
+                {
                     detailParts.Add($"<span style=\"Alert\">{wounded} wounded</span> strain the healers");
+                }
                 else if (wounded > 5)
+                {
                     detailParts.Add($"<span style=\"Warning\">{wounded} recovering</span> from injuries");
+                }
 
                 if (companyNeeds != null)
                 {
                     if (companyNeeds.Rest < 20)
+                    {
                         detailParts.Add("<span style=\"Alert\">exhaustion</span> weighs on everyone");
+                    }
                     else if (companyNeeds.Rest < 40 && activityLevel == Content.Models.ActivityLevel.Intense)
+                    {
                         detailParts.Add("<span style=\"Warning\">men push through fatigue</span>");
+                    }
                     else if (companyNeeds.Rest < 40)
+                    {
                         detailParts.Add("<span style=\"Warning\">fatigue</span> visible in the ranks");
+                    }
 
                     if (companyNeeds.Equipment < 20)
+                    {
                         detailParts.Add("<span style=\"Alert\">gear failing</span>");
+                    }
                     else if (companyNeeds.Equipment < 40 && inHostileTerritory)
+                    {
                         detailParts.Add("<span style=\"Warning\">equipment worn, repairs limited</span>");
+                    }
                     else if (companyNeeds.Equipment < 40)
+                    {
                         detailParts.Add("<span style=\"Warning\">equipment worn</span>");
+                    }
                 }
 
                 // Add territory pressure warning if high
@@ -2665,15 +2709,25 @@ namespace Enlisted.Features.Interface.Behaviors
         private static string GetSupplyPhrase(int supplies)
         {
             if (supplies >= 80)
+            {
                 return "<span style=\"Success\">Well-stocked with provisions</span>";
+            }
             if (supplies >= 60)
+            {
                 return "<span style=\"Success\">Supplies holding steady</span>";
+            }
             if (supplies >= 40)
+            {
                 return "Rations adequate for now";
+            }
             if (supplies >= 25)
+            {
                 return "<span style=\"Warning\">Food stores running thin</span>";
+            }
             if (supplies >= 15)
+            {
                 return "<span style=\"Alert\">Rations critically low</span>";
+            }
             return "<span style=\"Alert\">Starvation threatens the company</span>";
         }
 
@@ -2683,15 +2737,25 @@ namespace Enlisted.Features.Interface.Behaviors
         private static string GetMoralePhrase(int morale)
         {
             if (morale >= 80)
+            {
                 return "<span style=\"Success\">spirits are high, men confident</span>";
+            }
             if (morale >= 60)
+            {
                 return "<span style=\"Success\">morale strong</span>";
+            }
             if (morale >= 40)
+            {
                 return "morale steady, men focused";
+            }
             if (morale >= 25)
+            {
                 return "<span style=\"Warning\">grumbling in the ranks</span>";
+            }
             if (morale >= 15)
+            {
                 return "<span style=\"Alert\">men on edge, discipline fraying</span>";
+            }
             return "<span style=\"Alert\">morale broken, desertion likely</span>";
         }
 
@@ -2813,42 +2877,45 @@ namespace Enlisted.Features.Interface.Behaviors
                     var recentItem = personalFeed[0];
                     if (!string.IsNullOrWhiteSpace(recentItem.HeadlineKey))
                     {
-                        // Determine color based on severity
-                        var colorStyle = recentItem.Severity switch
-                        {
-                            1 => "Success",   // Positive (excellent routine outcome, success)
-                            2 => "Warning",   // Attention (mishap, failure)
-                            3 => "Alert",     // Urgent (critical issues)
-                            4 => "Critical",  // Critical danger
-                            _ => "Default"    // Normal
-                        };
+                        // Format the dispatch item properly to resolve headline key and placeholders
+                        var text = EnlistedNewsBehavior.FormatDispatchForDisplay(recentItem, includeColor: false);
                         
-                        // For routine activities, strip the activity name prefix if present
-                        // to make it more natural ("Good progress" instead of "Combat Training: Good progress")
-                        var text = recentItem.HeadlineKey;
-                        
-                        // Check if this is a routine outcome - extract just the flavor text
-                        if (recentItem.Category == "routine_activity" && text.Contains(": "))
+                        if (!string.IsNullOrWhiteSpace(text))
                         {
-                            var parts = text.Split(new[] { ": " }, 2, StringSplitOptions.None);
-                            if (parts.Length == 2)
+                            // Determine color based on severity
+                            var colorStyle = recentItem.Severity switch
                             {
-                                text = parts[1]; // Use the flavor text part only
-                            }
-                        }
-                        
-                        // For event outcomes, also simplify by removing event title prefix
-                        // Display just the narrative part for natural flow
-                        if (text.Contains(": ") && !recentItem.Category.StartsWith("simulation_"))
-                        {
-                            var parts = text.Split(new[] { ": " }, 2, StringSplitOptions.None);
-                            if (parts.Length == 2)
+                                1 => "Success",   // Positive (excellent routine outcome, success)
+                                2 => "Warning",   // Attention (mishap, failure)
+                                3 => "Alert",     // Urgent (critical issues)
+                                4 => "Critical",  // Critical danger
+                                _ => "Default"    // Normal
+                            };
+                            
+                            // For routine activities, strip the activity name prefix if present
+                            // to make it more natural ("Good progress" instead of "Combat Training: Good progress")
+                            if (recentItem.Category == "routine_activity" && text.Contains(": "))
                             {
-                                text = parts[1];
+                                var parts = text.Split(new[] { ": " }, 2, StringSplitOptions.None);
+                                if (parts.Length == 2)
+                                {
+                                    text = parts[1]; // Use the flavor text part only
+                                }
                             }
+                            
+                            // For event outcomes, also simplify by removing event title prefix
+                            // Display just the narrative part for natural flow
+                            if (text.Contains(": ") && !recentItem.Category.StartsWith("simulation_"))
+                            {
+                                var parts = text.Split(new[] { ": " }, 2, StringSplitOptions.None);
+                                if (parts.Length == 2)
+                                {
+                                    text = parts[1];
+                                }
+                            }
+                            
+                            return $"<span style=\"{colorStyle}\">{text}</span>";
                         }
-                        
-                        return $"<span style=\"{colorStyle}\">{text}</span>";
                     }
                 }
                 
@@ -3347,7 +3414,10 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private static string PickRandomStable(string[] lines, int seed)
         {
-            if (lines == null || lines.Length == 0) return string.Empty;
+            if (lines == null || lines.Length == 0)
+            {
+                return string.Empty;
+            }
             var rng = new Random(seed);
             return lines[rng.Next(lines.Length)];
         }
@@ -3643,7 +3713,10 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 var kingdom = enlistment?.CurrentLord?.Clan?.Kingdom;
-                if (kingdom == null) return string.Empty;
+                if (kingdom == null)
+                {
+                    return string.Empty;
+                }
 
                 // Get comprehensive world state
                 var worldState = Content.WorldStateAnalyzer.AnalyzeSituation();
@@ -3982,7 +4055,10 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 var culture = lord?.Culture;
-                if (culture == null) return "Sergeant";
+                if (culture == null)
+                {
+                    return "Sergeant";
+                }
 
                 var stringId = culture.StringId switch
                 {
@@ -4011,7 +4087,10 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 var culture = lord?.Culture;
-                if (culture == null) return "Captain";
+                if (culture == null)
+                {
+                    return "Captain";
+                }
 
                 var stringId = culture.StringId switch
                 {
@@ -5808,6 +5887,15 @@ namespace Enlisted.Features.Interface.Behaviors
                                 }
                             }
                         }
+                    }
+
+                    // Record engagement for immediate opportunities (scheduled opportunities are recorded in CommitToOpportunity)
+                    // This ensures the opportunity cooldown is tracked properly and prevents immediate re-appearance
+                    if (opportunity.Immediate)
+                    {
+                        var generator = CampOpportunityGenerator.Instance;
+                        generator?.RecordEngagement(opportunity.Id, opportunity.Type);
+                        ModLogger.Debug("Interface", $"Recorded immediate opportunity engagement: {opportunity.Id}");
                     }
                 }
 
