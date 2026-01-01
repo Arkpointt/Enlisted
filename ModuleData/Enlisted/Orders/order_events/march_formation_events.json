@@ -25,11 +25,13 @@
           },
           "effects": {
             "fatigue": 8,
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Athletics": 22 }
           },
           "failEffects": {
             "fatigue": 10,
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Athletics": 10 }
           },
           "resultTextId": "march_fell_behind_push_harder_result",
           "resultText": "You dig deep and catch up. Your lungs burn but you're back in formation.",
@@ -41,7 +43,8 @@
           "textId": "march_fell_behind_ask_help",
           "text": "Ask {COMRADE_NAME} for help.",
           "effects": {
-            "fatigue": 3
+            "fatigue": 3,
+            "skillXp": { "Athletics": 12 }
           },
           "resultTextId": "march_fell_behind_ask_help_result",
           "resultText": "He takes some of your gear. Together you keep pace."
@@ -52,7 +55,8 @@
           "text": "Fall back to the rear guard.",
           "effects": {
             "fatigue": 2,
-            "officerRep": -3
+            "officerRep": -3,
+            "skillXp": { "Athletics": 6 }
           },
           "resultTextId": "march_fell_behind_fall_back_result",
           "resultText": "You drop back with the stragglers. {SERGEANT} marks it down."
@@ -78,7 +82,8 @@
           "text": "Take some of his gear.",
           "effects": {
             "soldierRep": 3,
-            "fatigue": 5
+            "fatigue": 5,
+            "skillXp": { "Athletics": 18 }
           },
           "resultTextId": "march_helped_comrade_help_result",
           "resultText": "You shoulder his pack. He nods gratefully. You march together."
@@ -88,7 +93,8 @@
           "textId": "march_helped_comrade_ignore",
           "text": "Keep your own pace.",
           "effects": {
-            "soldierRep": -1
+            "soldierRep": -1,
+            "skillXp": { "Athletics": 10 }
           },
           "resultTextId": "march_helped_comrade_ignore_result",
           "resultText": "You push ahead. He falls back to the stragglers."
@@ -98,7 +104,8 @@
           "textId": "march_helped_comrade_report",
           "text": "Report him to {SERGEANT}.",
           "effects": {
-            "soldierRep": -2
+            "soldierRep": -2,
+            "skillXp": { "Athletics": 8 }
           },
           "resultTextId": "march_helped_comrade_report_result",
           "resultText": "{SERGEANT} sends him to the wagons. The men give you cold looks."
@@ -127,10 +134,12 @@
             "difficulty": 35
           },
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Crafting": 22 }
           },
           "failEffects": {
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Crafting": 10 }
           },
           "resultTextId": "march_equipment_problem_quick_fix_result",
           "resultText": "You tie it off without breaking stride. Good enough.",
@@ -142,7 +151,8 @@
           "textId": "march_equipment_problem_report",
           "text": "Report to {SERGEANT} for proper repair.",
           "effects": {
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Athletics": 8 }
           },
           "resultTextId": "march_equipment_problem_report_result",
           "resultText": "He sends you to the supply wagon. You catch up later."
@@ -152,7 +162,8 @@
           "textId": "march_equipment_problem_keep_going",
           "text": "Ignore it. Keep marching.",
           "effects": {
-            "officerRep": -2
+            "officerRep": -2,
+            "skillXp": { "Athletics": 12 }
           },
           "resultTextId": "march_equipment_problem_keep_going_result",
           "resultText": "Your boot flaps with every step. By evening, your foot is raw."
@@ -177,7 +188,8 @@
           "textId": "march_terrain_hazard_warn_others",
           "text": "Warn the men behind you.",
           "effects": {
-            "soldierRep": 2
+            "soldierRep": 2,
+            "skillXp": { "Athletics": 14 }
           },
           "resultTextId": "march_terrain_hazard_warn_others_result",
           "resultText": "You call back the hazards. The men behind navigate safely."
@@ -191,10 +203,12 @@
             "difficulty": 35
           },
           "effects": {
-            "soldierRep": 1
+            "soldierRep": 1,
+            "skillXp": { "Athletics": 20 }
           },
           "failEffects": {
-            "hpChange": -5
+            "hpChange": -5,
+            "skillXp": { "Athletics": 10 }
           },
           "resultTextId": "march_terrain_hazard_navigate_carefully_result",
           "resultText": "You pick your way through. Others follow your path.",
@@ -206,7 +220,8 @@
           "textId": "march_terrain_hazard_rush_through",
           "text": "Rush through to keep pace.",
           "effects": {
-            "hpChange": -8
+            "hpChange": -8,
+            "skillXp": { "Athletics": 14 }
           },
           "resultTextId": "march_terrain_hazard_rush_through_result",
           "resultText": "You stumble twice, catch yourself once. Your knee is bleeding."
@@ -240,12 +255,14 @@
             },
             "escalation": {
               "discipline": 5
-            }
+            },
+            "skillXp": { "Scouting": 18 }
           },
           "failEffects": {
             "escalation": {
               "discipline": 8
-            }
+            },
+            "skillXp": { "Athletics": 8 }
           },
           "resultTextId": "march_foraging_opportunity_grab_it_result",
           "resultText": "You snag a handful and catch up. Extra rations tonight.",
@@ -259,7 +276,8 @@
           "effects": {
             "companyNeeds": {
               "Food": 5
-            }
+            },
+            "skillXp": { "Scouting": 16 }
           },
           "resultTextId": "march_foraging_opportunity_report_location_result",
           "resultText": "He sends foragers back. The company eats better tonight."
@@ -268,7 +286,9 @@
           "id": "ignore",
           "textId": "march_foraging_opportunity_ignore",
           "text": "Keep marching. Not worth the risk.",
-          "effects": {},
+          "effects": {
+            "skillXp": { "Athletics": 10 }
+          },
           "resultTextId": "march_foraging_opportunity_ignore_result",
           "resultText": "You stay in formation. The berries pass by."
         }

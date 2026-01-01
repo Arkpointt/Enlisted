@@ -25,11 +25,13 @@
           },
           "effects": {
             "hpChange": -8,
-            "medicalRisk": 1
+            "medicalRisk": 1,
+            "skillXp": { "Athletics": 22 }
           },
           "failEffects": {
             "hpChange": -12,
-            "medicalRisk": 2
+            "medicalRisk": 2,
+            "skillXp": { "Athletics": 10 }
           },
           "resultTextId": "firewood_axe_slip_quick_fix_result",
           "resultText": "You bind it tight. Hurts, but you finish the job.",
@@ -41,7 +43,8 @@
           "textId": "firewood_axe_slip_report",
           "text": "Report to the surgeon.",
           "effects": {
-            "hpChange": -3
+            "hpChange": -3,
+            "skillXp": { "Medicine": 8 }
           },
           "resultTextId": "firewood_axe_slip_report_result",
           "resultText": "The surgeon cleans and binds it properly. You're back to work soon."
@@ -52,7 +55,8 @@
           "text": "Ignore it. Keep chopping.",
           "effects": {
             "hpChange": -15,
-            "medicalRisk": 2
+            "medicalRisk": 2,
+            "skillXp": { "Athletics": 18 }
           },
           "resultTextId": "firewood_axe_slip_push_through_result",
           "resultText": "Blood drips down the axe handle. You finish, but the wound looks angry."
@@ -77,7 +81,8 @@
           "textId": "firewood_found_something_report",
           "text": "Report it to {SERGEANT}.",
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Tactics": 12 }
           },
           "resultTextId": "firewood_found_something_report_result",
           "resultText": "{SERGEANT} takes it for the company. You did the right thing."
@@ -88,7 +93,8 @@
           "text": "Pocket what's inside.",
           "effects": {
             "officerRep": -2,
-            "gold": 15
+            "gold": 15,
+            "skillXp": { "Roguery": 14 }
           },
           "resultTextId": "firewood_found_something_keep_result",
           "resultText": "A few coins. Not much, but it's yours now."
@@ -99,7 +105,8 @@
           "text": "Open it carefully and examine contents.",
           "effects": {
             "officerRep": 3,
-            "gold": 20
+            "gold": 20,
+            "skillXp": { "Scouting": 16 }
           },
           "resultTextId": "firewood_found_something_investigate_result",
           "resultText": "Old coins and a map. {SERGEANT} rewards your thoroughness."
@@ -124,7 +131,8 @@
           "textId": "firewood_wildlife_warn_others",
           "text": "Shout a warning to the others.",
           "effects": {
-            "soldierRep": 2
+            "soldierRep": 2,
+            "skillXp": { "Tactics": 12 }
           },
           "resultTextId": "firewood_wildlife_warn_others_result",
           "resultText": "Everyone backs off. The boar snorts and moves on."
@@ -138,11 +146,13 @@
             "difficulty": 40
           },
           "effects": {
-            "soldierRep": 3
+            "soldierRep": 3,
+            "skillXp": { "Polearm": 24 }
           },
           "failEffects": {
             "hpChange": -10,
-            "soldierRep": 1
+            "soldierRep": 1,
+            "skillXp": { "Polearm": 12 }
           },
           "resultTextId": "firewood_wildlife_kill_it_result",
           "resultText": "One clean strike. Tonight, the company eats well.",
@@ -153,7 +163,9 @@
           "id": "avoid",
           "textId": "firewood_wildlife_avoid",
           "text": "Circle around quietly.",
-          "effects": {},
+          "effects": {
+            "skillXp": { "Scouting": 10 }
+          },
           "resultTextId": "firewood_wildlife_avoid_result",
           "resultText": "You give it wide berth. It never notices you."
         }
@@ -180,7 +192,8 @@
             "soldierRep": 2,
             "companyNeeds": {
               "Morale": 2
-            }
+            },
+            "skillXp": { "Athletics": 14 }
           },
           "resultTextId": "firewood_work_song_join_result",
           "resultText": "Your voice joins the chorus. The work goes faster."
@@ -189,7 +202,9 @@
           "id": "stay_quiet",
           "textId": "firewood_work_song_stay_quiet",
           "text": "Keep working in silence.",
-          "effects": {},
+          "effects": {
+            "skillXp": { "Athletics": 10 }
+          },
           "resultTextId": "firewood_work_song_stay_quiet_result",
           "resultText": "You focus on the work. The song continues without you."
         },
@@ -201,7 +216,8 @@
             "soldierRep": 3,
             "companyNeeds": {
               "Morale": 5
-            }
+            },
+            "skillXp": { "Charm": 18 }
           },
           "resultTextId": "firewood_work_song_lead_different_result",
           "resultText": "The men pick up your tune. Soon the whole detail is singing."
@@ -231,11 +247,13 @@
           },
           "effects": {
             "soldierRep": 3,
-            "fatigue": 5
+            "fatigue": 5,
+            "skillXp": { "Athletics": 22 }
           },
           "failEffects": {
             "soldierRep": 2,
-            "fatigue": 5
+            "fatigue": 5,
+            "skillXp": { "Athletics": 12 }
           },
           "resultTextId": "firewood_competition_accept_result",
           "resultText": "You win by two logs. {COMRADE_NAME} buys the drinks tonight.",
@@ -246,7 +264,9 @@
           "id": "decline",
           "textId": "firewood_competition_decline",
           "text": "Decline. Save your energy.",
-          "effects": {},
+          "effects": {
+            "skillXp": { "Athletics": 8 }
+          },
           "resultTextId": "firewood_competition_decline_result",
           "resultText": "He shrugs and finds another challenger."
         },
@@ -261,12 +281,14 @@
           "effects": {
             "soldierRep": 5,
             "fatigue": 10,
-            "gold": 20
+            "gold": 20,
+            "skillXp": { "Athletics": 26 }
           },
           "failEffects": {
             "soldierRep": 3,
             "fatigue": 10,
-            "gold": -20
+            "gold": -20,
+            "skillXp": { "Athletics": 14 }
           },
           "resultTextId": "firewood_competition_raise_stakes_result",
           "resultText": "You win, and his coin. The men cheer.",

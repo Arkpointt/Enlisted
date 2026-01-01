@@ -20,7 +20,8 @@
           "textId": "muster_kit_problem_borrow",
           "text": "Quickly borrow from the man beside you.",
           "effects": {
-            "soldierRep": -1
+            "soldierRep": -1,
+            "skillXp": { "Roguery": 10 }
           },
           "resultTextId": "muster_kit_problem_borrow_result",
           "resultText": "He slips you a spare. You owe him."
@@ -30,7 +31,8 @@
           "textId": "muster_kit_problem_face_consequences",
           "text": "Stand tall and face the consequences.",
           "effects": {
-            "officerRep": -5
+            "officerRep": -5,
+            "skillXp": { "Athletics": 12 }
           },
           "resultTextId": "muster_kit_problem_face_consequences_result",
           "resultText": "The officer stops. 'Disgraceful, soldier. Extra duty for you.'"
@@ -44,10 +46,12 @@
             "difficulty": 40
           },
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Charm": 24 }
           },
           "failEffects": {
-            "officerRep": -3
+            "officerRep": -3,
+            "skillXp": { "Charm": 10 }
           },
           "resultTextId": "muster_kit_problem_bluff_result",
           "resultText": "You adjust your stance. The officer passes without noticing.",
@@ -75,7 +79,8 @@
           "text": "Accept humbly.",
           "effects": {
             "officerRep": 3,
-            "soldierRep": 1
+            "soldierRep": 1,
+            "skillXp": { "Charm": 16 }
           },
           "resultTextId": "muster_praised_accept_humbly_result",
           "resultText": "'Thank you, sir.' You keep your eyes forward. The men respect that."
@@ -86,7 +91,8 @@
           "text": "Puff up with pride.",
           "effects": {
             "officerRep": 2,
-            "soldierRep": -2
+            "soldierRep": -2,
+            "skillXp": { "Athletics": 10 }
           },
           "resultTextId": "muster_praised_puff_up_result",
           "resultText": "You can't hide your satisfaction. The men beside you roll their eyes."
@@ -114,7 +120,8 @@
             "escalation": {
               "scrutiny": 8
             },
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Athletics": 14 }
           },
           "resultTextId": "muster_singled_out_stand_firm_result",
           "resultText": "He grunts and moves on. Whatever he was looking for, he didn't find it."
@@ -127,7 +134,8 @@
             "escalation": {
               "scrutiny": 15
             },
-            "officerRep": -1
+            "officerRep": -1,
+            "skillXp": { "Roguery": 8 }
           },
           "resultTextId": "muster_singled_out_look_nervous_result",
           "resultText": "His eyes narrow. He makes a note. You've drawn attention to yourself."
