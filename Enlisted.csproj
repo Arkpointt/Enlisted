@@ -153,7 +153,9 @@
   
   <ItemGroup>
     <!-- GUI Color Brushes -->
-    <Content Include="GUI\Brushes\EnlistedColors.xml"/>
+    <Content Include="GUI\Brushes\EnlistedColors.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="GUI\Brushes\EnlistedCombatLog.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -473,6 +475,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\FormationMessageSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\InformationManagerDisplayMessagePatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\QuartermasterConversationScenePatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\CombatLogConversationPatch.cs"/>
     
     <!-- Siege & Fortification Patches -->
     <Compile Include="src\Mod.GameAdapters\Patches\CheckFortificationAttackablePatch.cs"/>
@@ -600,6 +603,7 @@
     <MakeDir Directories="$(OutputPath)..\..\Debugging"/>
     <MakeDir Directories="$(OutputPath)..\..\GUI\Brushes"/>
     <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Equipment"/>
+    <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Interface"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Config"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Conditions"/>
@@ -627,6 +631,8 @@
     
     <!-- COPY GUI ASSETS -->
     <Copy SourceFiles="GUI\Brushes\EnlistedColors.xml" DestinationFolder="$(OutputPath)..\..\GUI\Brushes\"/>
+    <Copy SourceFiles="GUI\Brushes\EnlistedCombatLog.xml" DestinationFolder="$(OutputPath)..\..\GUI\Brushes\"/>
+    <Copy SourceFiles="GUI\Prefabs\Interface\EnlistedCombatLog.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Interface\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>

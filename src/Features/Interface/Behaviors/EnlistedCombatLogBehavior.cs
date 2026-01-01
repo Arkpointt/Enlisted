@@ -27,7 +27,10 @@ namespace Enlisted.Features.Interface.Behaviors
         private GauntletMovieIdentifier _movie;
         private ScrollablePanel _scrollablePanel;
         private ListPanel _messagesListPanel;
+        private ScreenBase _ownerScreen; // The screen we added our layer to
         private bool _isInitialized;
+        private bool _isLayerActive;
+        private bool _wasInConversation;
         private float _lastScrollPosition;
         private float _timeSinceLastManualScroll;
         private bool _shouldAutoScroll = true;
@@ -43,6 +46,7 @@ namespace Enlisted.Features.Interface.Behaviors
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
             CampaignEvents.TickEvent.AddNonSerializedListener(this, OnTick);
             CampaignEvents.OnGameOverEvent.AddNonSerializedListener(this, OnGameOver);
+            CampaignEvents.ConversationEnded.AddNonSerializedListener(this, OnConversationEnded);
         }
         
         public override void SyncData(IDataStore dataStore)
@@ -65,10 +69,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 _isInitialized = true;
             }
             
+            // Manage layer visibility based on conversation state
+            ManageLayerVisibility();
+            
             // Update ViewModel tick
-            if (_dataSource != null)
+            if (_dataSource != null && _isLayerActive)
             {
                 _dataSource.Tick(dt);
+                _dataSource.UpdateVisibility();
             }
             
             // Detect if party screen or inventory is open and adjust positioning
@@ -159,8 +167,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Subscribe to ViewModel Messages collection changes to handle new message widgets
                 _dataSource.Messages.ListChanged += OnMessagesListChanged;
                 
-                // Add layer to screen
+                // Add layer to screen (initially - will be managed by ManageLayerVisibility thereafter)
                 mapScreen.AddLayer(_layer);
+                _ownerScreen = mapScreen; // Store reference for later removal
+                _isLayerActive = true;
                 
                 ModLogger.Info("Interface", "Enlisted combat log initialized successfully");
             }
@@ -314,6 +324,101 @@ namespace Enlisted.Features.Interface.Behaviors
             CleanUp();
         }
         
+        private void OnConversationEnded(System.Collections.Generic.IEnumerable<CharacterObject> characters)
+        {
+            // Conversation ended - layer will be re-added on next tick if needed
+            _wasInConversation = false;
+        }
+        
+        /// <summary>
+        /// Suspends the combat log layer (hides it during conversations).
+        /// Called by Harmony patch when map conversations start.
+        /// </summary>
+        public void SuspendLayer()
+        {
+            if (_layer == null)
+            {
+                return;
+            }
+            
+            _wasInConversation = true;
+            
+            if (!_isLayerActive)
+            {
+                return; // Already suspended
+            }
+            
+            ScreenManager.SetSuspendLayer(_layer, true);
+            _isLayerActive = false;
+            ModLogger.Debug("Interface", "Combat log layer suspended");
+        }
+        
+        /// <summary>
+        /// Resumes the combat log layer (shows it after conversations end).
+        /// Called by Harmony patch when map conversations end.
+        /// </summary>
+        public void ResumeLayer()
+        {
+            if (_layer == null)
+            {
+                return;
+            }
+            
+            _wasInConversation = false;
+            
+            if (_isLayerActive)
+            {
+                return; // Already active
+            }
+            
+            // Only resume if enlisted
+            if (EnlistmentBehavior.Instance?.IsEnlisted != true)
+            {
+                return;
+            }
+            
+            ScreenManager.SetSuspendLayer(_layer, false);
+            _isLayerActive = true;
+            _dataSource?.UpdateVisibility();
+            ModLogger.Debug("Interface", "Combat log layer resumed");
+        }
+        
+        /// <summary>
+        /// Manages the combat log visibility based on enlistment state and current scene.
+        /// Called every tick. Map conversations are also handled via Harmony patches.
+        /// </summary>
+        private void ManageLayerVisibility()
+        {
+            if (_layer == null)
+            {
+                return;
+            }
+            
+            bool isEnlisted = EnlistmentBehavior.Instance?.IsEnlisted ?? false;
+            
+            // Check if player is in a mission/scene (battles, taverns, halls, arenas, etc.)
+            bool isInMission = TaleWorlds.MountAndBlade.Mission.Current != null;
+            
+            // Should the layer be suspended?
+            // Suspend if: not enlisted, in a mission, or in a conversation (set by Harmony patch)
+            bool shouldSuspend = !isEnlisted || isInMission || _wasInConversation;
+            
+            // Suspend/resume layer as needed
+            if (shouldSuspend && _isLayerActive)
+            {
+                ScreenManager.SetSuspendLayer(_layer, true);
+                _isLayerActive = false;
+                ModLogger.Debug("Interface", $"Combat log suspended (enlisted={isEnlisted}, mission={isInMission}, conversation={_wasInConversation})");
+            }
+            else if (!shouldSuspend && !_isLayerActive)
+            {
+                ScreenManager.SetSuspendLayer(_layer, false);
+                _isLayerActive = true;
+                _dataSource?.UpdateVisibility();
+                ModLogger.Debug("Interface", $"Combat log resumed (enlisted={isEnlisted}, mission={isInMission}, conversation={_wasInConversation})");
+            }
+        }
+        
         private void CleanUp()
         {
             try
@@ -367,13 +472,14 @@ namespace Enlisted.Features.Interface.Behaviors
                     // Release movie first
                     _layer.ReleaseMovie(_movie);
                     
-                    // Remove layer from screen
-                    var mapScreen = ScreenManager.TopScreen;
-                    if (mapScreen != null)
+                    // Remove layer from the screen we added it to
+                    if (_ownerScreen != null)
                     {
-                        mapScreen.RemoveLayer(_layer);
+                        _ownerScreen.RemoveLayer(_layer);
                     }
                     _layer = null;
+                    _ownerScreen = null;
+                    _isLayerActive = false;
                 }
                 
                 // Clean up ViewModel

@@ -180,7 +180,8 @@ namespace Enlisted.Features.Interface.ViewModels
         
         /// <summary>
         /// Updates visibility based on current enlistment state and mission state.
-        /// Hides during missions (conversations, taverns, etc.) - only visible on campaign map.
+        /// Hides during missions (taverns, halls, etc.) - only visible on campaign map.
+        /// Note: Conversations are handled by removing the entire layer, not just hiding the widget.
         /// </summary>
         public void UpdateVisibility()
         {
@@ -188,6 +189,7 @@ namespace Enlisted.Features.Interface.ViewModels
             bool isInMission = TaleWorlds.MountAndBlade.Mission.Current != null;
             
             // Only visible when enlisted AND on campaign map (not in any mission/scene)
+            // Conversations are handled at the layer level by EnlistedCombatLogBehavior
             IsVisible = isEnlisted && !isInMission;
         }
         

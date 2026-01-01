@@ -78,12 +78,22 @@ A native-styled combat log widget that displays information messages on the righ
 - Auto-repositions when party screen opens/closes
 - Subscribes to RichTextWidget EventFire events for link clicks
 - Applies faction-specific colors to kingdom links via FactionLinkColorizer
+- Manages layer suspension during missions and conversations
+- Provides `SuspendLayer()`/`ResumeLayer()` public methods for Harmony patches
 
 **6. Faction Link Colorizer (`FactionLinkColorizer`)**
 - Intercepts native messages and replaces generic `Link.Kingdom` styles with faction-specific styles
 - Uses href (encyclopedia link) to identify faction, not display name (more reliable for localization)
 - Maps kingdom StringIds to faction brush styles (Vlandia→red, Sturgia→blue, etc.)
 - Preserves all other message formatting including hero/settlement links
+
+**7. Harmony Patches**
+- **`CombatLogConversationPatch`**: Hooks into MapScreen's conversation lifecycle to suspend/resume combat log layer
+  - Patches `MapScreen.HandleMapConversationInit` (PostFix) to suspend layer when map conversations start
+  - Patches `MapScreen.OnMapConversationOver` (PostFix) to resume layer when map conversations end
+  - Uses native `ScreenManager.SetSuspendLayer()` approach (same as `GauntletMapBarView`)
+- **`QuartermasterConversationScenePatch`**: Ensures correct scene selection (sea vs land) for quartermaster conversations
+  - Patches `ConversationManager.OpenMapConversation` (Prefix) to inject lord's party data for scene determination
 
 ---
 
@@ -97,12 +107,14 @@ src/Features/Interface/
 │   ├── EnlistedCombatLogVM.cs           (Main ViewModel)
 │   └── CombatLogMessageVM.cs            (Individual message)
 ├── Behaviors/
-│   └── EnlistedCombatLogBehavior.cs     (Manager + scroll control + link events)
+│   └── EnlistedCombatLogBehavior.cs     (Manager + scroll control + link events + visibility)
 └── Utils/
     └── FactionLinkColorizer.cs          (Faction-specific link colors)
 
 src/Mod.GameAdapters/Patches/
-└── InformationManagerDisplayMessagePatch.cs
+├── InformationManagerDisplayMessagePatch.cs    (Message routing)
+├── CombatLogConversationPatch.cs               (Conversation visibility)
+└── QuartermasterConversationScenePatch.cs      (QM scene selection)
 
 GUI/Prefabs/Interface/
 └── EnlistedCombatLog.xml                (Native-style UI)
@@ -478,7 +490,48 @@ The `event:` prefix is required by Bannerlord's native encyclopedia system and i
 | Enlisted | ✓ Visible | ✗ Suppressed |
 | Not Enlisted | ✗ Hidden | ✓ Normal |
 | In Battle | ✗ Hidden | ✓ Normal |
+| In Conversation | ✗ Hidden | ✓ Normal |
+| In Tavern/Hall | ✗ Hidden | ✓ Normal |
 | Prisoner | ✗ Hidden | ✓ Normal |
+
+**Visibility Management System:**
+
+The combat log uses a dual-detection system to hide during conversations and missions:
+
+1. **Map Conversations (Harmony Patch):**
+   - `CombatLogConversationPatch` hooks into `MapScreen.HandleMapConversationInit` and `MapScreen.OnMapConversationOver`
+   - Calls `SuspendLayer()` when conversation starts, `ResumeLayer()` when it ends
+   - Uses native `ScreenManager.SetSuspendLayer()` (same approach as `GauntletMapBarView`)
+
+2. **Missions/Scenes (Tick Detection):**
+   - `ManageLayerVisibility()` checks `Mission.Current != null` every tick
+   - Covers battles, taverns, halls, arenas, and all other mission types
+   - Automatically suspends layer when entering any mission
+
+3. **Enlistment State:**
+   - Always hidden when not enlisted, regardless of other conditions
+   - Only visible on campaign map when enlisted and not in conversation/mission
+
+```csharp
+// Visibility logic in ManageLayerVisibility():
+bool shouldSuspend = !isEnlisted || isInMission || _wasInConversation;
+
+if (shouldSuspend && _isLayerActive)
+{
+    ScreenManager.SetSuspendLayer(_layer, true);  // Hide
+    _isLayerActive = false;
+}
+else if (!shouldSuspend && !_isLayerActive)
+{
+    ScreenManager.SetSuspendLayer(_layer, false);  // Show
+    _isLayerActive = true;
+}
+```
+
+**Why This Approach:**
+- Native game uses `SetSuspendLayer()` for hiding layers during conversations (`GauntletMapBarView`, `GauntletMapBasicView`)
+- Suspending is cleaner than removing/re-adding layers (preserves state, avoids screen reference issues)
+- Combining Harmony patches (conversation lifecycle) + tick detection (missions) provides complete coverage
 
 ---
 
@@ -613,7 +666,10 @@ All colors rendered with:
 - [x] Appears when player enlists
 - [x] Hides when player leaves army
 - [x] Hides during battles
-- [x] Smooth transitions
+- [x] Hides during map conversations (quartermaster, lords, etc.)
+- [x] Hides during mission conversations (sea conversations)
+- [x] Hides in taverns, halls, and all other missions/scenes
+- [x] Smooth transitions using native SetSuspendLayer()
 
 ### Performance
 - [x] No FPS impact with 50 messages
@@ -780,11 +836,44 @@ foreach (var child in messageWidget.Children)
 
 **Resolution:** Manually copied updated prefab to game directory after closing game. Verified `.csproj` had correct `<Content Include>` entry for automatic future deployments.
 
+### Bug #14: Combat Log Visible During Conversations and Missions
+
+**Root Cause:** CampaignBehaviors don't receive MapView lifecycle callbacks (`OnMapConversationStart/Over`). Initial attempts to detect conversations via `ConversationManager.IsConversationFlowActive` or `Mission.Mode` didn't work properly. Tried removing/re-adding layers from `ScreenManager.TopScreen`, but screen reference changes during conversations.
+
+**Resolution:** Created `CombatLogConversationPatch` Harmony patch to hook into the same MapScreen methods that notify native MapViews:
+- Patches `MapScreen.HandleMapConversationInit` (PostFix) → calls `SuspendLayer()`
+- Patches `MapScreen.OnMapConversationOver` (PostFix) → calls `ResumeLayer()`
+- Uses native `ScreenManager.SetSuspendLayer()` (same approach as `GauntletMapBarView`)
+- Combined with `Mission.Current != null` check for battles/taverns/halls
+- Stored `_ownerScreen` reference instead of using `ScreenManager.TopScreen` (which changes)
+
+**Key Insights:**
+1. Native game uses `SetSuspendLayer()` to hide layers during conversations, not remove/add
+2. MapViews receive `OnMapConversationStart/Over` callbacks, but custom behaviors need Harmony patches
+3. Suspending is cleaner than removing (preserves state, avoids screen reference issues)
+4. Combining Harmony patches (conversations) + tick detection (missions) provides complete coverage
+
 ---
 
 ## Changelog
 
-**2025-01-01 (Final Update - Faction-Colored Links):**
+**2025-01-01 (Evening - Conversation/Mission Visibility):**
+- ✅ **Proper visibility management during conversations and missions**
+- Created `CombatLogConversationPatch` to hook into MapScreen's conversation lifecycle
+- Uses native `ScreenManager.SetSuspendLayer()` approach (same as GauntletMapBarView)
+- Patches `MapScreen.HandleMapConversationInit` and `MapScreen.OnMapConversationOver`
+- Added `SuspendLayer()` and `ResumeLayer()` public methods to behavior
+- Combined Harmony patches (conversations) + tick detection (missions) for complete coverage
+- Combat log now properly hides during:
+  - Map conversations (quartermaster, lords, etc.)
+  - Mission-based conversations (sea conversations)
+  - Battles, taverns, halls, arenas
+  - Any other mission/scene
+- **Key Discovery**: Native MapViews receive `OnMapConversationStart/Over` callbacks, but CampaignBehaviors don't
+- **Key Discovery**: Harmony patches on MapScreen methods provide the same lifecycle hooks
+- **Key Discovery**: `SetSuspendLayer()` is cleaner than add/remove (preserves state, no screen reference issues)
+
+**2025-01-01 (Afternoon - Faction-Colored Links):**
 - ✅ **Faction-specific kingdom colors implemented** - Each kingdom displays in its banner color
 - Native messages already contain encyclopedia links (heroes, settlements, kingdoms)
 - Created `FactionLinkColorizer` to replace generic `Link.Kingdom` with faction-specific styles
