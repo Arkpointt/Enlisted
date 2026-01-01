@@ -426,8 +426,9 @@ namespace Enlisted.Features.Conditions
 
                 case "self":
                     cond.ApplyTreatment(cfg.BasicTreatmentMultiplier * 1.5f, "self_treatment");
-                    // Grant medicine XP
+                    // Grant medicine XP and enlistment XP for rank progression
                     Hero.MainHero?.AddSkillXp(DefaultSkills.Medicine, 25);
+                    enlistment?.AddEnlistmentXP(25, "Self-Treatment");
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=medical_self_done}You treat yourself using your medical knowledge.").ToString(),
                         Colors.Green));

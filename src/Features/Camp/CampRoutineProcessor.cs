@@ -523,7 +523,7 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Applies skill XP using the game's skill system.
+        /// Applies skill XP using the game's skill system and awards enlistment XP for rank progression.
         /// </summary>
         private static void ApplySkillXp(string skillName, int xp)
         {
@@ -542,6 +542,9 @@ namespace Enlisted.Features.Camp
                 {
                     hero.AddSkillXp(skill, xp);
                     ModLogger.Debug(LogCategory, $"Applied {xp} XP to {skillName}");
+
+                    // Award enlistment XP for rank progression (what shows in muster reports)
+                    EnlistmentBehavior.Instance?.AddEnlistmentXP(xp, $"Camp: {skillName}");
                 }
             }
             catch (Exception ex)

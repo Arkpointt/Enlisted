@@ -1,4 +1,5 @@
 using System;
+using Enlisted.Features.Enlistment.Behaviors;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -104,6 +105,12 @@ namespace Enlisted.Features.Activities
             // This applies learning rate, skill thresholds, and increments HeroDeveloper._totalXp
             // (driving character level progression).
             hero.HeroDeveloper?.AddSkillXp(skill, raw, isAffectedByFocusFactor: true, shouldNotify: notify);
+
+            // Award enlistment XP for rank progression (what shows in muster reports)
+            if (hero == Hero.MainHero)
+            {
+                EnlistmentBehavior.Instance?.AddEnlistmentXP((int)raw, $"Training: {skill.Name}");
+            }
         }
 
         private static float GetNativeLearningRate(Hero hero, SkillObject skill)

@@ -3660,10 +3660,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _currentMuster.BaggageOutcome = "bribed";
                 ModLogger.Info(LogCategory, $"Bribe successful: {bribeAmount} denars paid, item kept");
 
-                // Give Charm XP
+                // Give Charm XP and enlistment XP for rank progression
                 if (Hero.MainHero != null)
                 {
                     Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 10);
+                    EnlistmentBehavior.Instance?.AddEnlistmentXP(10, "Successful Bribe");
                 }
             }
             else
@@ -3736,10 +3737,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _currentMuster.BaggageOutcome = "smuggled";
                 ModLogger.Info(LogCategory, $"Smuggle successful: kept {contraband.Item.Name}");
 
-                // Give Roguery XP
+                // Give Roguery XP and enlistment XP for rank progression
                 if (Hero.MainHero != null)
                 {
                     Hero.MainHero.AddSkillXp(DefaultSkills.Roguery, 15);
+                    EnlistmentBehavior.Instance?.AddEnlistmentXP(15, "Successful Smuggle");
                 }
             }
             else
@@ -3875,10 +3877,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _currentMuster.BaggageOutcome = "protested";
                 ModLogger.Info(LogCategory, $"Protest successful: kept {contraband.Item.Name}");
 
-                // Give Charm XP
+                // Give Charm XP and enlistment XP for rank progression
                 if (Hero.MainHero != null)
                 {
                     Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 20);
+                    EnlistmentBehavior.Instance?.AddEnlistmentXP(20, "Successful Protest");
                 }
             }
             else

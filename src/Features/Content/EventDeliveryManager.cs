@@ -490,7 +490,8 @@ namespace Enlisted.Features.Content
             // Track applied effects for player feedback
             var feedbackMessages = new List<string>();
 
-            // Apply skill XP
+            // Apply skill XP and track total for enlistment progression
+            int totalSkillXpAwarded = 0;
             if (effects.SkillXp != null)
             {
                 foreach (var skillXp in effects.SkillXp)
@@ -499,6 +500,7 @@ namespace Enlisted.Features.Content
                     if (skill != null)
                     {
                         hero.AddSkillXp(skill, skillXp.Value);
+                        totalSkillXpAwarded += skillXp.Value;
                         feedbackMessages.Add($"+{skillXp.Value} {skillXp.Key} XP");
                         ModLogger.Debug(LogCategory, $"Applied {skillXp.Value} XP to {skillXp.Key}");
                     }
@@ -534,6 +536,7 @@ namespace Enlisted.Features.Content
                     if (targetSkill != null)
                     {
                         hero.AddSkillXp(targetSkill, dynamicXp.Value);
+                        totalSkillXpAwarded += dynamicXp.Value;
                         ModLogger.Debug(LogCategory,
                             $"Applied dynamic {dynamicXp.Key} XP from effects: +{dynamicXp.Value} {targetSkill.Name}");
                     }
@@ -542,6 +545,15 @@ namespace Enlisted.Features.Content
                         ModLogger.Warn(LogCategory, $"Could not resolve dynamic skill for {dynamicXp.Key}");
                     }
                 }
+            }
+
+            // Award enlistment XP based on skill XP earned (for rank progression in muster reports).
+            // This is a critical XP source that players see in their muster period summary.
+            if (totalSkillXpAwarded > 0 && enlistment is { IsEnlisted: true })
+            {
+                var eventTitle = _currentEvent?.TitleFallback ?? "Event";
+                enlistment.AddEnlistmentXP(totalSkillXpAwarded, $"Event: {eventTitle}");
+                ModLogger.Debug(LogCategory, $"Awarded {totalSkillXpAwarded} enlistment XP for event: {eventTitle}");
             }
 
             // Apply trait XP
@@ -2107,7 +2119,8 @@ namespace Enlisted.Features.Content
                 }
             }
 
-            // Apply skill XP rewards with experience track modifier
+            // Apply skill XP rewards with experience track modifier and track for enlistment XP
+            int totalSkillXpAwarded = 0;
             if (rewards.SkillXp != null && rewards.SkillXp.Count > 0)
             {
                 // Get training XP modifier based on hero's experience level
@@ -2130,6 +2143,7 @@ namespace Enlisted.Features.Content
                         }
 
                         hero.AddSkillXp(skill, modifiedXp);
+                        totalSkillXpAwarded += modifiedXp;
                         rewardMessages.Add($"+{modifiedXp} {skillXp.Key} XP");
 
                         // Log with modifier details when modifier is not neutral
@@ -2179,10 +2193,22 @@ namespace Enlisted.Features.Content
                     if (targetSkill != null)
                     {
                         hero.AddSkillXp(targetSkill, dynamicXp.Value);
+                        totalSkillXpAwarded += dynamicXp.Value;
                         rewardMessages.Add($"+{dynamicXp.Value} {targetSkill.Name} XP");
                         ModLogger.Debug(LogCategory,
                             $"Applied dynamic {dynamicXp.Key} XP: +{dynamicXp.Value} {targetSkill.Name}");
                     }
+                }
+            }
+
+            // Award enlistment XP based on skill XP earned (for rank progression in muster reports)
+            if (totalSkillXpAwarded > 0)
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment is { IsEnlisted: true })
+                {
+                    enlistment.AddEnlistmentXP(totalSkillXpAwarded, "Reward");
+                    ModLogger.Debug(LogCategory, $"Awarded {totalSkillXpAwarded} enlistment XP from rewards");
                 }
             }
 

@@ -690,7 +690,8 @@ namespace Enlisted.Features.Orders.Behaviors
             // Track applied effects for player feedback
             var feedbackMessages = new List<string>();
 
-            // Apply skill XP
+            // Apply skill XP and accumulate total for enlistment progression
+            int totalSkillXpAwarded = 0;
             if (outcome.SkillXp != null)
             {
                 foreach (var xp in outcome.SkillXp)
@@ -699,10 +700,20 @@ namespace Enlisted.Features.Orders.Behaviors
                     if (skill != null)
                     {
                         Hero.MainHero.AddSkillXp(skill, xp.Value);
+                        totalSkillXpAwarded += xp.Value;
                         feedbackMessages.Add($"+{xp.Value} {skill.Name} XP");
                         ModLogger.Debug(LogCategory, $"Awarded {xp.Value} XP to {skill.Name}");
                     }
                 }
+            }
+
+            // Award enlistment XP based on skill XP earned (for rank progression in muster reports).
+            // This is the primary source of XP that players see in their muster period summary.
+            if (totalSkillXpAwarded > 0 && EnlistmentBehavior.Instance is { IsEnlisted: true })
+            {
+                var orderTitle = _currentOrder?.Title ?? "Duty";
+                EnlistmentBehavior.Instance.AddEnlistmentXP(totalSkillXpAwarded, $"Order: {orderTitle}");
+                ModLogger.Debug(LogCategory, $"Awarded {totalSkillXpAwarded} enlistment XP for order: {orderTitle}");
             }
 
             // Apply trait XP
