@@ -5950,26 +5950,6 @@ namespace Enlisted.Features.Interface.Behaviors
             GameMenu.SwitchToMenu("enlisted_status");
         }
 
-        private void OnReportsMenuInit(MenuCallbackArgs args)
-        {
-            try
-            {
-                args.MenuContext.GameMenu.StartWait();
-                Campaign.Current.SetTimeControlModeLock(false);
-
-                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
-                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
-                Campaign.Current.TimeControlMode = normalized;
-
-                MBTextManager.SetTextVariable("REPORTS_TEXT", BuildReportsText());
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Interface", "E-UI-020", "Error initializing reports menu", ex);
-                MBTextManager.SetTextVariable("REPORTS_TEXT", "Reports unavailable.");
-            }
-        }
-
         private void OnStatusDetailMenuInit(MenuCallbackArgs args)
         {
             try
@@ -5987,61 +5967,6 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.ErrorCode("Interface", "E-UI-021", "Error initializing status detail menu", ex);
                 MBTextManager.SetTextVariable("STATUS_DETAIL_TEXT", "Status details unavailable.");
-            }
-        }
-
-        private static string BuildReportsText()
-        {
-            try
-            {
-                var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.IsEnlisted != true)
-                {
-                    return "You are not currently enlisted.";
-                }
-
-                var sb = new StringBuilder();
-
-                sb.AppendLine("<span style=\"Header\">_____ DAILY BRIEF _____</span>");
-                var dailyBrief = EnlistedNewsBehavior.Instance?.BuildDailyBriefSection();
-                if (!string.IsNullOrWhiteSpace(dailyBrief))
-                {
-                    sb.AppendLine(dailyBrief);
-                }
-                else
-                {
-                    sb.AppendLine("No brief available for today.");
-                }
-                sb.AppendLine();
-
-                sb.AppendLine("<span style=\"Header\">_____ RECENT ACTIVITY _____</span>");
-                var recentActivity = BuildRecentActivityReport();
-                if (!string.IsNullOrWhiteSpace(recentActivity))
-                {
-                    sb.AppendLine(recentActivity);
-                }
-                else
-                {
-                    sb.AppendLine("No recent activity to report.");
-                }
-                sb.AppendLine();
-
-                sb.AppendLine("<span style=\"Header\">_____ COMPANY STATUS _____</span>");
-                var companyStatus = BuildCompanyStatusReport();
-                sb.AppendLine(companyStatus);
-                sb.AppendLine();
-
-                sb.AppendLine("<span style=\"Header\">_____ CAMPAIGN CONTEXT _____</span>");
-                var lord = enlistment.CurrentLord;
-                var context = Instance?.GetCurrentObjectiveDisplay(lord) ?? "Unknown";
-                sb.AppendLine($"<span style=\"Label\">Lord's Objective:</span> {context}");
-
-                return sb.ToString().TrimEnd();
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Interface", "Failed to build reports text", ex);
-                return "Reports unavailable.";
             }
         }
 
@@ -6308,117 +6233,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 return "Disliked";
             }
             return "Despised";
-        }
-
-        private static string BuildRecentActivityReport()
-        {
-            try
-            {
-                var news = EnlistedNewsBehavior.Instance;
-                if (news == null)
-                {
-                    return "No activity tracking available.";
-                }
-
-                var sb = new StringBuilder();
-                var hasActivity = false;
-
-                // Show recent order outcomes (last 5 days)
-                var recentOrders = news.GetRecentOrderOutcomes(maxDaysOld: 5);
-                if (recentOrders.Count > 0)
-                {
-                    foreach (var order in recentOrders)
-                    {
-                        int daysAgo = (int)CampaignTime.Now.ToDays - order.DayNumber;
-                        string timeStr = daysAgo == 0 ? "today" : daysAgo == 1 ? "yesterday" : $"{daysAgo} days ago";
-
-                        sb.AppendLine($"• {order.OrderTitle} ({timeStr})");
-                        sb.AppendLine($"  {order.DetailedSummary}");
-                        sb.AppendLine();
-                        hasActivity = true;
-                    }
-                }
-
-                // Show significant reputation changes (last 5 days)
-                var recentRep = news.GetRecentReputationChanges(maxDaysOld: 5);
-                if (recentRep.Count > 0)
-                {
-                    foreach (var rep in recentRep)
-                    {
-                        int daysAgo = (int)CampaignTime.Now.ToDays - rep.DayNumber;
-                        string timeStr = daysAgo == 0 ? "today" : daysAgo == 1 ? "yesterday" : $"{daysAgo} days ago";
-
-                        sb.AppendLine($"• {rep.Target} reputation {rep.Delta:+#;-#;0} ({timeStr})");
-                        sb.AppendLine($"  {rep.Message}");
-                        sb.AppendLine();
-                        hasActivity = true;
-                    }
-                }
-
-                return hasActivity ? sb.ToString().TrimEnd() : string.Empty;
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Interface", "Failed to build recent activity report", ex);
-                return "Recent activity unavailable.";
-            }
-        }
-
-        private static string BuildCompanyStatusReport()
-        {
-            try
-            {
-                var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.IsEnlisted != true || enlistment.CompanyNeeds == null)
-                {
-                    return new TextObject("{=company_status_unavailable}Company status unavailable.").ToString();
-                }
-
-                var needs = enlistment.CompanyNeeds;
-                var lord = enlistment.CurrentLord;
-                var party = lord?.PartyBelongedTo;
-                var sb = new StringBuilder();
-
-                // Determine current conditions for context
-                var isMarching = party is { IsMoving: true, CurrentSettlement: null };
-                var isInCombat = party?.MapEvent != null;
-                var isInSiege = party?.Party?.SiegeEvent != null;
-                var isInSettlement = party?.CurrentSettlement != null;
-                var isInArmy = party?.Army != null;
-
-                // READINESS: Combat effectiveness and preparation
-                sb.AppendLine(BuildReadinessLine(needs.Readiness, isMarching, isInCombat, needs.Morale < 40));
-                sb.AppendLine();
-
-                // MORALE: The unit's will to fight
-                sb.AppendLine(BuildMoraleLine(needs.Morale, enlistment, isInCombat, isInSiege));
-                sb.AppendLine();
-
-                // SUPPLIES: Food and consumables
-                sb.AppendLine(BuildSuppliesLine(needs.Supplies, isMarching, isInSiege));
-                
-                // Add baggage train status when notable (raids, delays, arrivals)
-                var baggageStatus = EnlistedNewsBehavior.BuildBaggageStatusLine();
-                if (!string.IsNullOrWhiteSpace(baggageStatus))
-                {
-                    sb.AppendLine(baggageStatus);
-                }
-                sb.AppendLine();
-
-                // EQUIPMENT: Maintenance and gear quality
-                sb.AppendLine(BuildEquipmentLine(needs.Equipment, isInCombat, isMarching, party));
-                sb.AppendLine();
-
-                // REST: Fatigue and recovery
-                sb.AppendLine(BuildRestLine(needs.Rest, isMarching, isInSettlement, isInArmy));
-
-                return sb.ToString().TrimEnd();
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Interface", "Failed to build company status report", ex);
-                return new TextObject("{=company_status_unavailable}Company status unavailable.").ToString();
-            }
         }
 
         private static string BuildReadinessLine(int value, bool isMarching, bool isInCombat, bool lowMorale)

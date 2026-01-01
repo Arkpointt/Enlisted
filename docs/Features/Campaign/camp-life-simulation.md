@@ -89,7 +89,7 @@ These layers interact:
 
 ## The Five Company Needs
 
-The player-facing simulation layer tracks five transparent metrics (0-100) representing your company's operational status. These are visible in Reports menu with narrative descriptions.
+The player-facing simulation layer tracks five transparent metrics (0-100) representing your company's operational status. These are visible in the main Enlisted Status menu (COMPANY REPORTS section) and Camp Hub (COMPANY STATUS summary) with narrative descriptions.
 
 ### 1. Readiness (Combat Preparation)
 **Range:** 0-100  
@@ -206,7 +206,7 @@ The system forecasts upcoming requirements based on **Strategic Context** (loade
 - Readiness: 55 (training continues)
 - Supplies: 60 (stable)
 
-Players can view predictions in Reports menu to prepare for upcoming operations.
+Players can view these dynamics in the main Enlisted Status menu (COMPANY REPORTS) and Camp Hub (COMPANY STATUS with UPCOMING section) to prepare for upcoming operations.
 
 ---
 

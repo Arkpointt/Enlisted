@@ -702,17 +702,24 @@ Updated in `CheckPlayerBattleParticipation()` called from `OnMapEventEnded()`.
 
 ---
 
-## Company Status Report
+## Company Status Reporting
 
-Generated on-demand when Reports menu opens. Does NOT cache.
+Company status information appears in two locations, both generated on-demand:
 
-**Display Location:** Reports menu only (accessed via "Service Records" → "Company Reports")
+**Display Locations:**
+1. **Main enlisted_status menu** → "COMPANY REPORTS" section (via `BuildCampNarrativeParagraph()`)
+   - Atmospheric narrative paragraph blending world state, company needs, baggage status, and location context
+   - Uses world-state-aware generation with activity levels and lord situation
+   - Includes baggage train status when notable (raids, delays, arrivals)
+   
+2. **Camp Hub menu** → "COMPANY STATUS" summary (via `BuildCompanyStatusSummary()`)
+   - Flowing prose combining atmosphere, troop strength/composition, company needs, and location
+   - Includes baggage train status when notable
+   - More detailed than main menu version
 
-**NOT shown on main menu** - The main enlisted menu only shows the Daily Brief and Recent Actions.
+### Specialized Builders
 
-### BuildCompanyStatusReport()
-
-Entry point that calls five specialized builders:
+Context-aware narrative builders used across both displays:
 
 ```csharp
 BuildReadinessLine(value, isMarching, isInCombat, lowMorale)
@@ -721,6 +728,8 @@ BuildSuppliesLine(value, isMarching, isInSiege)
 BuildEquipmentLine(value, isInCombat, isMarching, party)
 BuildRestLine(value, isMarching, isInSettlement, isInArmy)
 ```
+
+These are used by the Camp Hub's detailed status summary.
 
 ### Context Detection
 

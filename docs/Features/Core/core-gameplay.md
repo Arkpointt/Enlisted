@@ -125,16 +125,20 @@ We track three distinct reputation values (-50 to +100):
 ## Native Game Menu (Interface)
 
 All interactions occur through the **Enlisted Status** menu hub:
--   **Enlisted Status**: View rank, active orders, and report summaries.
--   **Camp Submenu**: Perform activities like Rest, Train, or Equipment Checks.
--   **Reports Submenu**: Access the Daily Brief, Service Record, and Company Status (all with immersive RP narrative).
--   **Decisions Submenu**: Handle pending event choices.
--   **Status Submenu**: Detailed view of reputation, traits, and role.
+-   **Enlisted Status**: View rank, active orders, and immersive narrative reports (Kingdom Reports, Company Reports, Player Status).
+-   **Camp Hub**: Access Service Records, Quartermaster, Medical Tent, and Personal Retinue management.
+-   **Decisions Accordion**: Handle pending event choices and camp opportunities (appears when content is available).
 
-### Daily Brief & Reports
-The **Daily Brief** (accessed via Reports menu) provides an immersive narrative summary of your company's status, combining company situation, casualties, supply status, recent events, player condition, and kingdom news into a flowing paragraph.
+### Daily Brief & Company Reports
+The main **Enlisted Status** menu displays three narrative sections:
 
-The **Company Status Report** displays the five company needs (Readiness, Morale, Supplies, Equipment, Rest) with narrative descriptions and contextual explanations for what's affecting each stat.
+1. **Kingdom Reports** - Macro-level: realm politics, wars, recent battles
+2. **Company Reports** - Local: camp atmosphere, troop status, supplies, baggage train, lord's situation
+3. **Player Status** - Personal: duty status, health, fatigue, notable conditions
+
+The **Camp Hub** provides a detailed "COMPANY STATUS" summary with troop composition, needs analysis, recent activity, and upcoming events.
+
+All reports use immersive narrative style with world-state-aware generation (activity levels, lord situation, campaign context).
 
 **For complete details**, see: **[News & Reporting System](../UI/news-reporting-system.md)**
 

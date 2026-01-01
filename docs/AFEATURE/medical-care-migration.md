@@ -14,11 +14,13 @@
 1. [Current System Problems](#current-system-problems)
 2. [Migration Overview](#migration-overview)
 3. [Decision Specifications](#decision-specifications)
-4. [Orchestrator Integration](#orchestrator-integration)
-5. [Implementation Steps](#implementation-steps)
-6. [Files to Delete](#files-to-delete)
-7. [Files to Modify](#files-to-modify)
-8. [Testing Checklist](#testing-checklist)
+4. [Illness Severity Thresholds & Activity Restrictions](#illness-severity-thresholds--activity-restrictions)
+5. [Orchestrator Integration](#orchestrator-integration)
+6. [Implementation Steps](#implementation-steps)
+7. [Files to Delete](#files-to-delete)
+8. [Files to Modify](#files-to-modify)
+9. [Testing Checklist](#testing-checklist)
+10. [Critical Edge Cases & Solutions](#critical-edge-cases--solutions)
 
 ---
 
@@ -220,6 +222,233 @@ Replace the separate menu with **3-4 medical care decisions** that appear in the
    - Effects: 50% chance condition worsens, +2 Medical Risk
    - Tooltip: "DANGER: Severe conditions can worsen without treatment. Not recommended."
    - Feedback: "The surgeon warns you this is unwise. You leave anyway."
+
+---
+
+## Illness Severity Thresholds & Activity Restrictions
+
+### Severity Level Overview
+
+| Severity | Duration | HP Impact | Description |
+|----------|----------|-----------|-------------|
+| **Mild** | 3-5 days | None | Sniffles, minor cold, slight headache |
+| **Moderate** | 5-10 days | -5% max HP | Proper fever, weak, unsteady |
+| **Severe** | 10-14 days | -15% max HP | Bedridden, significant pain, barely function |
+| **Critical** | 14-21 days | -30% max HP | Life-threatening, requires immediate care |
+
+---
+
+### Activity Restrictions by Severity
+
+#### **Mild Illness** - "You're feeling poorly but can manage."
+
+**Blocked:** None  
+**Allowed:** All activities (with warning on strenuous ones)  
+**Orders:** Can accept (no penalty)
+
+**Messages:**
+- Status: `"Slightly under the weather"`
+- Warning: `"You're not at your best today."`
+
+---
+
+#### **Moderate Illness** - "You're properly sick. Rest would be wise."
+
+**Blocked:**
+
+| Category | Blocked Decisions | Reason |
+|----------|------------------|--------|
+| Training | All `dec_training_*` | Too weak for physical exertion |
+| Physical Labor | `dec_forage`, `dec_work_repairs`, `dec_volunteer_extra`, `dec_night_patrol` | Body needs rest |
+| Strenuous Social | `dec_drinking_contest`, `dec_arm_wrestling` | Would worsen condition |
+
+**Allowed:**
+
+| Category | Allowed Decisions |
+|----------|------------------|
+| Light Social | Stories, storytelling, singing, write letter |
+| Rest | Sleep, short rest, meditate, prayer |
+| Economic | Gambling (sitting activity) |
+| Administrative | Officer audience, baggage access |
+| Medical | All medical decisions |
+
+**Orders:** Can accept with warning tooltip: `"You're sick. Order performance may suffer."`
+
+**Messages:**
+- Status: `"Fever. Sweating through your clothes."`
+- Blocked tooltip: `"You're too sick for this. Rest first."`
+- Combat log: `"You feel feverish and weak."`
+
+---
+
+#### **Severe Illness** - "You can barely stand. You need care."
+
+**Blocked:** ALL training, ALL physical labor, ALL strenuous social, MOST group activities
+
+**Allowed ONLY:**
+
+| Category | Allowed Decisions |
+|----------|------------------|
+| Rest | Sleep, short rest, prayer, meditate |
+| Light Social | Write letter (alone, sitting) |
+| Administrative | Baggage access only |
+| Medical | All medical decisions |
+
+**Orders:** Warning prompt required  
+`"You're severely ill. Accepting orders could be dangerous. Proceed anyway?"`  
+If accepted: -20 skill penalty on all checks
+
+**Messages:**
+- Status: `"Severely ill. Every movement is agony."`
+- Blocked tooltip: `"You can barely stand. This is impossible right now."`
+- Combat log: `"Your condition has worsened. You need medical attention."`
+- Daily: `"You wake feeling worse. The fever hasn't broken."`
+
+---
+
+#### **Critical Illness** - "You're dying. Get help NOW."
+
+**Blocked:** ALL decisions except medical care and passive rest
+
+**Allowed ONLY:**
+
+| Category | Allowed Decisions |
+|----------|------------------|
+| Medical | Surgeon, emergency treatment, medical rest |
+| Rest | Sleep (forced bed rest) |
+
+**Orders:** BLOCKED  
+`"You're too ill to accept orders. Seek treatment immediately."`
+
+**Messages:**
+- Status: `"[!] CRITICAL: Near death. Immediate care required."`
+- Combat log (urgent): `"[!] Your condition is critical. Seek the surgeon NOW."`
+- Daily: `"You slip in and out of consciousness. Is this how it ends?"`
+- Forecast: `"URGENT: Your condition is life-threatening."`
+
+---
+
+### Decision Requirement: `maxIllness`
+
+Add to decision JSON to restrict by illness severity:
+
+```json
+{
+  "id": "dec_training_drill",
+  "requirements": {
+    "tier": { "min": 1 },
+    "maxIllness": "Mild"
+  }
+}
+```
+
+**Values:**
+- `"None"` - Only if completely healthy
+- `"Mild"` - Blocks at Moderate or worse
+- `"Moderate"` - Blocks at Severe or worse
+- `"Severe"` - Blocks at Critical only
+- Omitted - No restriction
+
+**Activity → maxIllness Mapping:**
+
+| Activity Type | maxIllness |
+|---------------|------------|
+| Heavy Training (drill, spar, formation) | `"Mild"` |
+| Light Training (archery, veteran chat) | `"Moderate"` |
+| Physical Labor (forage, repairs, patrol) | `"Mild"` |
+| Strenuous Social (drinking, wrestling) | `"Mild"` |
+| Light Social (stories, singing, letters) | `"Severe"` |
+| Rest (sleep, meditate, pray) | Always allowed |
+| Gambling | `"Severe"` |
+| Administrative | `"Severe"` |
+| Medical Care | Always allowed |
+
+---
+
+### Combat Log / Message Timing
+
+**On Illness Onset:**
+```
+"You feel a fever coming on. Your head pounds."
+```
+
+**Daily Tick (while sick):**
+```
+Mild:     "The cold lingers. You sniffle through the morning."
+Moderate: "Another restless night. The fever hasn't broken."
+Severe:   "You can barely lift yourself from your bedroll. Everything hurts."
+Critical: "You slip in and out of consciousness. Is this how it ends?"
+```
+
+**On Severity Worsening:**
+```
+Mild → Moderate:   "Your condition has worsened. The fever is real now."
+Moderate → Severe: "You collapse. The world spins. You need help."
+Severe → Critical: "You feel yourself slipping away. If you don't get treatment soon..."
+```
+
+**On Recovery:**
+```
+Mild:     "The sniffles have passed. You feel fine."
+Moderate: "The fever has broken. You're still weak but improving."
+Severe:   "You survived. It was close, but you're recovering."
+Critical: "You've come back from the brink. The surgeon says you're lucky to be alive."
+```
+
+---
+
+### Enlisted Status Menu Display
+
+**Health line when sick:**
+```
+— YOUR STATUS —
+Health: Sick - Fever (5 days remaining)
+  └ Training and physical labor restricted
+  └ Seek the surgeon for faster recovery
+```
+
+**With both injury and illness:**
+```
+— YOUR STATUS —
+Health: Recovering from injury (3 days) and illness (5 days)
+  └ All training and physical activities blocked
+  └ Under medical care (recovery accelerated)
+```
+
+---
+
+### Localization Strings
+
+```xml
+<!-- Illness Status Messages -->
+<string id="illness_status_mild" text="Slightly under the weather" />
+<string id="illness_status_moderate" text="Fever. Sweating through your clothes." />
+<string id="illness_status_severe" text="Severely ill. Every movement is agony." />
+<string id="illness_status_critical" text="[!] CRITICAL: Near death. Immediate care required." />
+
+<!-- Daily Illness Messages -->
+<string id="illness_daily_mild" text="The cold lingers. You sniffle through the morning." />
+<string id="illness_daily_moderate" text="Another restless night. The fever hasn't broken." />
+<string id="illness_daily_severe" text="You can barely lift yourself from your bedroll. Everything hurts." />
+<string id="illness_daily_critical" text="You slip in and out of consciousness. Is this how it ends?" />
+
+<!-- Illness Worsening -->
+<string id="illness_worsen_moderate" text="Your condition has worsened. The fever is real now." />
+<string id="illness_worsen_severe" text="You collapse. The world spins. You need help." />
+<string id="illness_worsen_critical" text="You feel yourself slipping away. If you don't get treatment soon..." />
+
+<!-- Recovery Messages -->
+<string id="illness_recover_mild" text="The sniffles have passed. You feel fine." />
+<string id="illness_recover_moderate" text="The fever has broken. You're still weak but improving." />
+<string id="illness_recover_severe" text="You survived. It was close, but you're recovering." />
+<string id="illness_recover_critical" text="You've come back from the brink. The surgeon says you're lucky to be alive." />
+
+<!-- Blocked Tooltips -->
+<string id="illness_blocked_moderate" text="You're too sick for this. Rest first." />
+<string id="illness_blocked_severe" text="You can barely stand. This is impossible right now." />
+<string id="illness_blocked_critical" text="You're dying. Seek the surgeon immediately." />
+<string id="illness_blocked_orders" text="You're too ill to accept orders. Seek treatment first." />
+```
 
 ---
 

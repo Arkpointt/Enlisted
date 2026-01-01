@@ -1183,13 +1183,6 @@ public class EnlistedCampHubVM : ViewModel
         _onClose?.Invoke();
     }
     
-    public void ExecuteReports()
-    {
-        // Navigate to Reports menu
-        GameMenu.SwitchToMenu("enlisted_reports");
-        _onClose?.Invoke();
-    }
-    
     public void ExecuteQuartermaster()
     {
         // Open Quartermaster Gauntlet screen

@@ -144,6 +144,14 @@
 ]
 ```
 
+**Medical Conditions:**
+```json
+"all": [
+  "has_any_condition",             // Player has active injury or illness
+  "has_untreated_injury"           // Player has injury without treatment
+]
+```
+
 **Time of Day:**
 ```json
 "time_of_day": ["night", "evening"]  // Only fires during these times
@@ -253,6 +261,27 @@ All fields are optional. If omitted, no restriction applies.
 | Onboarding Track | `onboarding_track` | string | - | green/seasoned/veteran |
 | Not At Sea | `notAtSea` | bool | - | Only appears on land (not at sea) |
 | At Sea | `atSea` | bool | - | Only appears at sea (not on land) |
+| Has Condition | `hasAnyCondition` | bool | - | Requires active injury or illness |
+| Has Severe Condition | `hasSevereCondition` | bool | - | Requires Severe/Critical condition |
+| Max Illness | `maxIllness` | string | See list | Max illness severity allowed |
+
+**Max Illness Values:**
+- `"None"` - Only if completely healthy (no illness)
+- `"Mild"` - Allows Mild only, blocks Moderate+
+- `"Moderate"` - Allows Mild/Moderate, blocks Severe+
+- `"Severe"` - Allows Mild/Moderate/Severe, blocks Critical
+- Omitted - No restriction (always available)
+
+**Example:**
+```json
+{
+  "id": "dec_training_drill",
+  "requirements": {
+    "tier": { "min": 1 },
+    "maxIllness": "Mild"
+  }
+}
+```
 
 ### Valid Context Values
 
