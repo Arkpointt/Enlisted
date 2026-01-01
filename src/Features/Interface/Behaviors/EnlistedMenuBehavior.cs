@@ -1797,6 +1797,13 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
 
+                // Baggage train status when notable (raids, delays, arrivals, lockdowns)
+                var baggageStatus = EnlistedNewsBehavior.BuildBaggageStatusLine();
+                if (!string.IsNullOrWhiteSpace(baggageStatus))
+                {
+                    parts.Add(baggageStatus);
+                }
+
                 // Lord rumors and strategic gossip
                 var rumors = BuildLordRumorsLine(lord, lordParty);
                 if (!string.IsNullOrWhiteSpace(rumors))

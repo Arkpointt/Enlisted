@@ -369,6 +369,7 @@ Create illness onset events that the orchestrator can trigger based on Medical R
 ```json
 {
   "schemaVersion": 2,
+  "category": "automatic",
   "events": [
     {
       "id": "evt_illness_onset_fever",
@@ -438,17 +439,17 @@ Create illness onset events that the orchestrator can trigger based on Medical R
     },
     {
       "id": "evt_illness_onset_injury_infection",
+      "titleId": "evt_illness_onset_infection_title",
       "title": "Infection",
-      "narrative": "The wound has turned angry. Red lines spreading. The smell of rot.",
-      "requirements": {
-        "tier": { "min": 1 },
-        "condition": {
-          "hasInjury": true,
-          "isUntreated": true,
-          "daysUntreated": { "min": 3 }
-        }
+      "setupId": "evt_illness_onset_infection_setup",
+      "setup": "The wound has turned angry. Red lines spreading. The smell of rot.",
+      "triggers": {
+        "all": ["is_enlisted", "has_untreated_injury"],
+        "escalation_requirements": {}
       },
-      "baseChance": 0.25,
+      "requirements": {
+        "tier": { "min": 1 }
+      },
       "outcomes": [
         {
           "id": "seek_surgeon",
@@ -694,34 +695,84 @@ Add to `ModuleData/Languages/enlisted_strings.xml`:
 <!-- ... etc for all options ... -->
 ```
 
-### Step 3: Update Requirement System
+### Step 3: Update Requirement and Trigger Systems
 
-Add new condition requirements to `EventRequirementChecker.cs`:
+**A. Add condition checks to trigger validation** in `EventSelector.cs` or equivalent:
 
 ```csharp
-public bool HasAnyCondition()
+// Add to trigger condition evaluation
+private bool EvaluateTriggerCondition(string condition)
 {
-    var cond = PlayerConditionBehavior.Instance;
-    return cond?.State?.HasAnyCondition == true;
-}
-
-public bool HasSevereCondition()
-{
-    var cond = PlayerConditionBehavior.Instance;
-    if (cond?.State == null) return false;
+    // ... existing conditions ...
     
-    return cond.State.CurrentInjury >= InjurySeverity.Severe ||
-           cond.State.CurrentIllness >= IllnessSeverity.Severe;
+    if (condition == "has_untreated_injury")
+    {
+        var cond = PlayerConditionBehavior.Instance;
+        return cond?.State?.HasInjury == true && 
+               !(cond?.State?.UnderMedicalCare ?? false);
+    }
+    
+    if (condition == "has_any_condition")
+    {
+        var cond = PlayerConditionBehavior.Instance;
+        return cond?.State?.HasAnyCondition ?? false;
+    }
+    
+    // ... rest of conditions ...
 }
 ```
 
-Add to requirement JSON schema:
-```json
+**B. Add condition requirements** to `EventRequirementChecker.cs`:
+
+Add new requirement field support (following schema pattern):
+
+```csharp
+// Add to CheckRequirements method
+public bool CheckRequirements(EventDefinition evt)
 {
-  "condition": {
-    "hasAnyCondition": true
-  }
+    // ... existing checks ...
+    
+    // Medical condition requirements (new)
+    if (evt.Requirements?.ContainsKey("hasAnyCondition") == true)
+    {
+        var required = (bool)evt.Requirements["hasAnyCondition"];
+        var cond = PlayerConditionBehavior.Instance;
+        var hasCondition = cond?.State?.HasAnyCondition ?? false;
+        
+        if (required && !hasCondition) return false;
+        if (!required && hasCondition) return false;
+    }
+    
+    if (evt.Requirements?.ContainsKey("hasSevereCondition") == true)
+    {
+        var required = (bool)evt.Requirements["hasSevereCondition"];
+        var cond = PlayerConditionBehavior.Instance;
+        var hasSevere = cond?.State?.CurrentInjury >= InjurySeverity.Severe ||
+                       cond?.State?.CurrentIllness >= IllnessSeverity.Severe;
+        
+        if (required && !hasSevere) return false;
+        if (!required && hasSevere) return false;
+    }
+    
+    return true;
 }
+```
+
+**C. Update schema documentation:**
+
+Add to `docs/Features/Content/event-system-schemas.md` under "Requirements Object":
+
+```markdown
+| Medical Condition | `hasAnyCondition` | bool | - | Requires active injury or illness |
+| Severe Condition | `hasSevereCondition` | bool | - | Requires severe/critical condition |
+```
+
+Add to "Trigger Condition Strings":
+
+```markdown
+**Medical Conditions:**
+- `"has_any_condition"` - Player has active injury or illness
+- `"has_untreated_injury"` - Player has injury without treatment
 ```
 
 ### Step 4: Remove Medical Menu Option
@@ -888,10 +939,53 @@ Update references in:
 
 ### Edge Cases
 
+**Condition Management:**
 - [ ] What happens if player gains condition while in Decisions menu?
 - [ ] What happens if condition heals while viewing medical decision?
-- [ ] Can player spam treatment options? (Should cost prevent this)
+- [ ] Can player have both injury AND illness simultaneously? (Yes - test both treated)
+- [ ] What if player gets multiple injuries in quick succession? (Should upgrade to worse)
+- [ ] What if illness triggers during active order execution?
+- [ ] What if severe condition triggers during battle?
+
+**Treatment Edge Cases:**
+- [ ] Can player spam treatment options? (Costs should prevent - test fatigue depletion)
 - [ ] Does refusing emergency treatment properly warn player?
+- [ ] What if player can't afford herbal remedy (insufficient gold)?
+- [ ] What if player has 0 fatigue and tries surgeon treatment? (Should disable option)
+- [ ] What happens if treatment is applied but condition immediately worsens?
+
+**Orchestrator Edge Cases:**
+- [ ] Can orchestrator spam illness events? (Cooldowns should prevent)
+- [ ] What if Medical Risk hits 5/5 but player already has illness? (Should not double-trigger)
+- [ ] What if player gets illness while Medical Risk is 0? (Manual illness should work)
+- [ ] Does Medical Risk properly reset to 0 after treatment? (Not negative)
+- [ ] What if multiple pressure systems all demand opportunities? (Priority sorting)
+
+**Timing and State:**
+- [ ] What happens to untreated condition during fast travel?
+- [ ] Does condition persist through save/load cycles?
+- [ ] Does Medical Pressure state persist through save/load?
+- [ ] What if player retires/discharges while having active condition? (Should clear)
+- [ ] What if player leaves enlisted lord's party during treatment?
+
+**Order and Combat Conflicts:**
+- [ ] Can player accept orders while having severe condition?
+- [ ] Should severe conditions prevent order acceptance? (Consider this)
+- [ ] Does training block properly check condition severity?
+- [ ] Can player enter battle with critical condition? (HP should reflect it)
+- [ ] What if player gets emergency opportunity while on active order?
+
+**Forecast and UI:**
+- [ ] Does forecast update when condition severity changes?
+- [ ] What if player has condition but Medical Risk is 0? (Forecast shows condition only)
+- [ ] Does CONCERNS section properly clear when condition is treated?
+- [ ] What if forecast warns about illness but player rests before roll? (Should update)
+
+**Camp Opportunities:**
+- [ ] What if emergency opportunity is forced but player is in combat?
+- [ ] Can emergency opportunity spawn multiple times per day? (Should not)
+- [ ] What if medical opportunity and muster both trigger same day? (Muster takes priority)
+- [ ] Does opportunity priority boost work correctly for multiple medical options?
 
 ---
 
@@ -961,5 +1055,399 @@ Update references in:
 
 ---
 
-**Last Updated:** 2026-01-01 (Added Phase 6H orchestrator integration)  
+## Critical Edge Cases & Solutions
+
+### 1. Concurrent Illness and Injury
+
+**Scenario:** Player has broken rib (injury) and gets camp fever (illness) simultaneously.
+
+**Expected Behavior:**
+- Both tracked separately in `PlayerConditionState`
+- Recovery days tick down independently
+- Training blocked if EITHER is severe+
+- Single treatment applies to both
+- Forecast shows both: "Recovering from injury (3 days) and illness (5 days)"
+
+**Implementation:**
+```csharp
+// In PlayerConditionBehavior.ApplyTreatment()
+if (_state.HasInjury)
+{
+    // Apply recovery multiplier to injury
+    _state.InjuryDaysRemaining = Math.Max(0, (int)(_state.InjuryDaysRemaining / recoveryMultiplier));
+}
+
+if (_state.HasIllness)
+{
+    // Apply recovery multiplier to illness
+    _state.IllnessDaysRemaining = Math.Max(0, (int)(_state.IllnessDaysRemaining / recoveryMultiplier));
+}
+
+// Reset medical risk once (not twice)
+EscalationManager.Instance?.ResetMedicalRisk(reason);
+```
+
+---
+
+### 2. Illness Onset During Active Order
+
+**Scenario:** Player is on patrol duty. Orchestrator rolls illness onset successfully.
+
+**Problem:** Delivering popup event during order execution interrupts narrative flow.
+
+**Solution:** Queue event for delivery after order completes.
+
+**Implementation:**
+```csharp
+// In ContentOrchestrator.TryTriggerIllnessOnset()
+if (OrderManager.Instance?.HasActiveOrder() == true)
+{
+    // Queue for delivery after order completes
+    EventDeliveryManager.Instance?.QueueEventDelayed(eventId, "medical_risk_onset", 
+        deliverAfter: OrderCompletionTime);
+    ModLogger.Debug("Orchestrator", "Illness onset queued until order completion");
+}
+else
+{
+    // Deliver immediately
+    EventDeliveryManager.Instance?.QueueEvent(eventId, "medical_risk_onset");
+}
+```
+
+---
+
+### 3. Medical Risk Spam Prevention
+
+**Scenario:** Medical Risk hits 5/5. Orchestrator rolls daily. Could trigger illness multiple times.
+
+**Problem:** Player gets camp fever, then immediately gets infection, then gets another fever.
+
+**Solution:** Block illness onset if player already has illness.
+
+**Implementation:**
+```csharp
+private void TryTriggerIllnessOnset(MedicalPressureAnalysis pressure)
+{
+    var cond = PlayerConditionBehavior.Instance;
+    
+    // CRITICAL: Don't trigger illness if already sick
+    if (cond?.State?.HasIllness == true)
+    {
+        ModLogger.Debug("Orchestrator", "Illness onset blocked - player already ill");
+        return;
+    }
+    
+    // Don't trigger if recently triggered (cooldown)
+    if (_lastIllnessOnsetDay >= 0 && 
+        CampaignTime.Now.ToDays - _lastIllnessOnsetDay < 7)
+    {
+        ModLogger.Debug("Orchestrator", "Illness onset blocked - cooldown active");
+        return;
+    }
+    
+    // Proceed with roll...
+    if (MBRandom.RandomFloat < chance)
+    {
+        _lastIllnessOnsetDay = (int)CampaignTime.Now.ToDays;
+        // ...
+    }
+}
+```
+
+---
+
+### 4. Severe Condition + Order Acceptance
+
+**Scenario:** Player has severe injury. NCO issues new order.
+
+**Question:** Should player be allowed to accept orders while critically ill?
+
+**Recommended Solution:** Allow acceptance but warn player.
+
+**Implementation:**
+```csharp
+// In OrderManager.CanAcceptOrder()
+public (bool CanAccept, string Reason) CanAcceptOrder()
+{
+    var cond = PlayerConditionBehavior.Instance;
+    
+    // Warn but allow if severe condition
+    if (cond?.State?.HasSevereCondition == true)
+    {
+        return (true, "WARNING: You have a severe medical condition. Orders may be difficult.");
+    }
+    
+    // Block if critical AND untreated
+    if (cond?.State?.HasSevereCondition == true && 
+        !(cond?.State?.UnderMedicalCare ?? false))
+    {
+        return (false, "You're too ill for duty. Seek treatment first.");
+    }
+    
+    return (true, null);
+}
+```
+
+**Tooltip:**
+```
+"Accept Order (WARNING: Severe injury may hinder performance)"
+```
+
+---
+
+### 5. Emergency Opportunity Spam
+
+**Scenario:** Player has critical condition. Orchestrator forces emergency opportunity every phase.
+
+**Problem:** Spams player with "URGENT: Seek Treatment" repeatedly.
+
+**Solution:** Force once, then boost priority but don't force again.
+
+**Implementation:**
+```csharp
+private bool _emergencyOpportunityForced = false;
+
+private void CheckMedicalPressure()
+{
+    var medicalPressure = SimulationPressureCalculator.Instance.GetMedicalPressure();
+    var pressureLevel = medicalPressure.GetPressureLevel();
+    
+    if (pressureLevel == MedicalPressureLevel.Critical)
+    {
+        if (!_emergencyOpportunityForced)
+        {
+            CampOpportunityGenerator.Instance?.ForceOpportunity("opp_emergency_care");
+            _emergencyOpportunityForced = true;
+            ModLogger.Info("Orchestrator", "Emergency care opportunity forced");
+        }
+        else
+        {
+            // Already forced once - just boost priority
+            CampOpportunityGenerator.Instance?.BoostOpportunityPriority("opp_emergency_care", 30);
+        }
+        return;
+    }
+    
+    // Reset flag when no longer critical
+    if (pressureLevel < MedicalPressureLevel.Critical)
+    {
+        _emergencyOpportunityForced = false;
+    }
+}
+```
+
+---
+
+### 6. Fast Travel with Untreated Condition
+
+**Scenario:** Player has injury (5 days remaining, untreated). Fast travels for 10 days.
+
+**Expected Behavior:**
+- Condition naturally heals after 5 days
+- Medical Risk accumulates daily while untreated (+1 per day = +5 total)
+- Player informed on arrival: "Your injury has healed, but exhaustion has built up (Medical Risk: 5/5)"
+
+**Implementation:**
+```csharp
+// In PlayerConditionBehavior.OnDailyTick()
+private void ApplyDailyRecoveryAndRisk()
+{
+    // Track if condition existed at start of day
+    var hadConditionAtStart = _state.HasAnyCondition;
+    var wasUntreatedAtStart = hadConditionAtStart && !_state.UnderMedicalCare;
+    
+    // Apply recovery
+    if (_state.HasInjury)
+    {
+        _state.InjuryDaysRemaining = Math.Max(0, _state.InjuryDaysRemaining - 1);
+    }
+    
+    if (_state.HasIllness)
+    {
+        _state.IllnessDaysRemaining = Math.Max(0, _state.IllnessDaysRemaining - 1);
+    }
+    
+    // Accumulate Medical Risk if untreated
+    if (wasUntreatedAtStart)
+    {
+        EscalationManager.Instance?.ModifyMedicalRisk(1, "condition_untreated");
+    }
+    
+    NormalizeState();
+    
+    // Show feedback if condition healed but risk accumulated
+    if (hadConditionAtStart && !_state.HasAnyCondition)
+    {
+        var medicalRisk = EscalationManager.Instance?.MedicalRisk ?? 0;
+        if (medicalRisk >= 3)
+        {
+            InformationManager.DisplayMessage(new InformationMessage(
+                "Your condition has healed, but the ordeal has taken its toll. You feel exhausted.",
+                Colors.Yellow));
+        }
+        else
+        {
+            InformationManager.DisplayMessage(new InformationMessage(
+                "You've recovered.",
+                Colors.Green));
+        }
+    }
+}
+```
+
+---
+
+### 7. Retirement/Discharge with Active Condition
+
+**Scenario:** Player retires from service while having active illness.
+
+**Expected Behavior:**
+- Conditions cleared on discharge
+- Medical Risk reset to 0
+- Player informed: "The company surgeon gives you a final checkup before discharge."
+
+**Implementation:**
+```csharp
+// In EnlistmentBehavior.Retire() or Discharge()
+public void Retire()
+{
+    // ... existing retirement logic ...
+    
+    // Clear medical conditions on discharge
+    var cond = PlayerConditionBehavior.Instance;
+    if (cond?.State?.HasAnyCondition == true)
+    {
+        cond.State.ClearAll();
+        ModLogger.Info("Enlistment", "Medical conditions cleared on retirement");
+        
+        InformationManager.DisplayMessage(new InformationMessage(
+            "The company surgeon tends to you one last time before discharge.",
+            Colors.White));
+    }
+    
+    // Reset medical risk
+    EscalationManager.Instance?.ResetMedicalRisk("retirement");
+}
+```
+
+---
+
+### 8. Treatment Cost Edge Cases
+
+**Scenario:** Player has 0 fatigue and tries to request surgeon treatment (costs 2 fatigue).
+
+**Expected Behavior:**
+- Option appears but is disabled
+- Tooltip: "Insufficient fatigue (need 2, have 0)"
+
+**Implementation:**
+```csharp
+// In decision JSON requirements
+{
+  "id": "surgeon_treatment",
+  "text": "Request full treatment",
+  "tooltip": "Thorough treatment. Recovery rate doubled. Costs 2 fatigue.",
+  "costs": {
+    "fatigue": 2
+  },
+  "requirements": {
+    "minFatigue": 2  // ← New requirement type
+  }
+}
+```
+
+```csharp
+// In EventRequirementChecker or DecisionManager
+private bool CanAffordCosts(Dictionary<string, int> costs)
+{
+    if (costs?.ContainsKey("fatigue") == true)
+    {
+        var required = costs["fatigue"];
+        var current = EnlistmentBehavior.Instance?.FatigueCurrent ?? 0;
+        
+        if (current < required)
+        {
+            return false; // Option disabled with tooltip
+        }
+    }
+    
+    return true;
+}
+```
+
+---
+
+### 9. Save/Load State Persistence
+
+**Scenario:** Player saves game with Medical Risk 4, untreated injury, and emergency opportunity forced.
+
+**Required Persistence:**
+- ✅ `PlayerConditionState` (already saved via `PlayerConditionBehavior.SyncData`)
+- ✅ Medical Risk (already saved via `EscalationManager.SyncData`)
+- ❌ `_emergencyOpportunityForced` flag (needs save/load)
+- ❌ `_lastIllnessOnsetDay` (needs save/load)
+- ❌ `MedicalPressureAnalysis` state (calculated on-demand, no save needed)
+
+**Implementation:**
+```csharp
+// In ContentOrchestrator.SyncData()
+public override void SyncData(IDataStore dataStore)
+{
+    dataStore.SyncData("orchestrator_emergencyForced", ref _emergencyOpportunityForced);
+    dataStore.SyncData("orchestrator_lastIllnessDay", ref _lastIllnessOnsetDay);
+    
+    // ... existing sync logic ...
+}
+```
+
+---
+
+## Edge Case Testing Script
+
+```csharp
+// Test suite for medical orchestration edge cases
+public class MedicalOrchestrationTests
+{
+    [Test]
+    public void TestConcurrentInjuryAndIllness()
+    {
+        // Apply injury
+        PlayerConditionBehavior.Instance.TryApplyInjury("broken_rib", InjurySeverity.Moderate, 7, "test");
+        Assert.IsTrue(PlayerConditionBehavior.Instance.State.HasInjury);
+        
+        // Apply illness while injury exists
+        PlayerConditionBehavior.Instance.TryApplyIllness("camp_fever", IllnessSeverity.Moderate, 5, "test");
+        Assert.IsTrue(PlayerConditionBehavior.Instance.State.HasIllness);
+        
+        // Both should coexist
+        Assert.IsTrue(PlayerConditionBehavior.Instance.State.HasAnyCondition);
+        
+        // Treatment should affect both
+        PlayerConditionBehavior.Instance.ApplyTreatment(2.0f, "test");
+        Assert.IsTrue(PlayerConditionBehavior.Instance.State.UnderMedicalCare);
+    }
+    
+    [Test]
+    public void TestIllnessSpamPrevention()
+    {
+        // Set high Medical Risk
+        EscalationManager.Instance.SetMedicalRisk(5);
+        
+        // Give player illness
+        PlayerConditionBehavior.Instance.TryApplyIllness("camp_fever", IllnessSeverity.Moderate, 7, "test");
+        
+        // Try to trigger illness onset
+        ContentOrchestrator.Instance.TryTriggerIllnessOnset(...);
+        
+        // Should be blocked (player already ill)
+        Assert.AreEqual(1, EventDeliveryManager.Instance.QueuedEventCount); // No new event queued
+    }
+    
+    // ... more tests ...
+}
+```
+
+---
+
+**Last Updated:** 2026-01-01 (Added edge cases and solutions)  
 **Status:** Ready for Implementation
