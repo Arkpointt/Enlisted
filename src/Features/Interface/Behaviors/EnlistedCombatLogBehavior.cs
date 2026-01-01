@@ -287,10 +287,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 return;
             }
             
-            // Log ALL messages to see what's actually coming through
+            // Debug logging for link formatting (only appears when Debug level is enabled)
             if (message.Information.Contains("<a "))
             {
-                ModLogger.Info("Interface", $"Message with link: {message.Information}");
+                ModLogger.Debug("Interface", $"Message with link: {message.Information}");
             }
             
             // Replace generic Link.Kingdom styles with faction-specific colors

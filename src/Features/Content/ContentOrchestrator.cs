@@ -143,9 +143,7 @@ namespace Enlisted.Features.Content
             var config = Mod.Core.Config.ConfigurationManager.LoadOrchestratorConfig();
             if (config?.Enabled == true)
             {
-                ModLogger.Info(LogCategory, "=== Orchestrator Active ===");
-                ModLogger.Info(LogCategory, $"Activity Level: {activityLevel} → OrderProgressionBehavior");
-
+                // Orchestrator is active - manage world state and forecasts silently
                 // Activity level is provided to OrderProgressionBehavior via GetCurrentWorldSituation()
                 // OrderProgressionBehavior uses it to modify order event slot probabilities
 
@@ -159,32 +157,11 @@ namespace Enlisted.Features.Content
                 // Update camp opportunities availability
                 RefreshCampOpportunities(worldSituation);
 
+                // Debug logging (only appears when Debug level is enabled for this category)
+                ModLogger.Debug(LogCategory, $"Orchestrator active: Activity={activityLevel}, Phase={worldSituation.CurrentPhase}");
+
                 // TODO Phase 10: Add order planning with 24h/8h/2h warnings
                 // PlanNext24Hours(worldSituation);
-            }
-            else
-            {
-                // Orchestrator disabled - run diagnostic analysis only
-                ModLogger.Debug(LogCategory, "Orchestrator disabled - analysis mode only");
-
-                // Calculate simulation pressure
-                var pressure = SimulationPressureCalculator.CalculatePressure();
-                var sourcesText = pressure.Sources.Count > 0
-                    ? string.Join(", ", pressure.Sources)
-                    : "None";
-                ModLogger.Debug(LogCategory, $"Pressure: {pressure.Value:F0}/100 from [{sourcesText}]");
-
-                // Determine realistic frequency
-                var frequency = DetermineRealisticFrequency(worldSituation, pressure);
-                ModLogger.Info(LogCategory, $"Realistic frequency: {frequency:F2} events/week");
-
-                // Log context for future content selection
-                var eventContext = WorldStateAnalyzer.GetEventContext(worldSituation);
-                var orderContext = WorldStateAnalyzer.GetOrderEventWorldState(worldSituation);
-                ModLogger.Debug(LogCategory, $"Event context: {eventContext}, Order context: {orderContext}");
-
-                // Test content selection with fitness scoring (logging only, no delivery)
-                TestContentSelection(worldSituation);
             }
 
             // Update behavior tracking data for next save
@@ -195,16 +172,23 @@ namespace Enlisted.Features.Content
         /// <summary>
         /// Tests content selection with fitness scoring and logs comparisons.
         /// Logs what WOULD be selected without affecting the live system.
+        /// Debug-level logging only - not shown to end users.
         /// </summary>
         private void TestContentSelection(WorldSituation worldSituation)
         {
-            ModLogger.Info(LogCategory, "=== Content Selection Test ===");
+            // All diagnostic logging is at Debug level to avoid spamming end-user logs
+            if (!ModLogger.IsEnabled(LogCategory, LogLevel.Debug))
+            {
+                return; // Skip expensive selection tests if Debug logging is disabled
+            }
+
+            ModLogger.Debug(LogCategory, "=== Content Selection Test ===");
 
             // Select with OLD system (no world situation)
             var oldSelection = EventSelector.SelectEvent(null);
             if (oldSelection != null)
             {
-                ModLogger.Info(LogCategory, $"OLD system would select: {oldSelection.Id} (category: {oldSelection.Category})");
+                ModLogger.Debug(LogCategory, $"OLD system would select: {oldSelection.Id} (category: {oldSelection.Category})");
             }
             else
             {
@@ -215,7 +199,7 @@ namespace Enlisted.Features.Content
             var newSelection = EventSelector.SelectEvent(worldSituation);
             if (newSelection != null)
             {
-                ModLogger.Info(LogCategory, $"NEW system would select: {newSelection.Id} (category: {newSelection.Category})");
+                ModLogger.Debug(LogCategory, $"NEW system would select: {newSelection.Id} (category: {newSelection.Category})");
 
                 // Log fitness reasoning
                 var playerPrefs = PlayerBehaviorTracker.GetPreferences();
@@ -232,16 +216,16 @@ namespace Enlisted.Features.Content
             {
                 if (oldSelection.Id == newSelection.Id)
                 {
-                    ModLogger.Info(LogCategory, "✓ Both systems selected same event");
+                    ModLogger.Debug(LogCategory, "✓ Both systems selected same event");
                 }
                 else
                 {
-                    ModLogger.Info(LogCategory, $"✗ Systems differ: OLD={oldSelection.Id}, NEW={newSelection.Id}");
+                    ModLogger.Debug(LogCategory, $"✗ Systems differ: OLD={oldSelection.Id}, NEW={newSelection.Id}");
                     ModLogger.Debug(LogCategory, $"Difference reason: Fitness scoring adjusted weights based on activity={worldSituation.ExpectedActivity}");
                 }
             }
 
-            ModLogger.Info(LogCategory, "=== End Selection Test ===");
+            ModLogger.Debug(LogCategory, "=== End Selection Test ===");
         }
 
         /// <summary>

@@ -580,6 +580,9 @@
        ======================================================================== -->
   
   <ItemGroup>
+    <!-- Project README -->
+    <None Include="README.md"/>
+    
     <!-- Documentation (all markdown files in docs/) -->
     <None Include="docs\**\*.md"/>
     
