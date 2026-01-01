@@ -287,8 +287,9 @@ Contains military orders from your chain of command - the primary gameplay drive
 - Issued every 3-5 days based on strategic context
 - Success determined by relevant skills (e.g., Scouting for scout orders)
 - Accept or decline - repeated declines lead to discharge
-- Success rewards reputation, XP, gold (T4+), and renown (T7+)
+- Success rewards reputation, skill XP, gold (T4+), and renown (T7+)
 - Failure penalties range from reputation loss to troop casualties
+- **All order events grant skill XP** - this is tracked for rank progression
 
 **Complete Documentation:** `docs/Features/Core/orders-system.md`
 
@@ -388,14 +389,13 @@ Events use a standardized JSON schema. Each event has:
 - `scrutiny`, `discipline` - Escalation meter changes
 - `gold` - Gold reward/penalty
 - `xp` - XP reward
-- `skill_xp` - Skill XP (e.g., `{"Scouting": 50}`)
-- `trait_xp` - Trait XP (e.g., `{"Valor": 10}`)
-- `company_needs` - Company need changes (e.g., `{"Readiness": -10}`)
-- `medical_risk` - Medical risk escalation
-- `denars` - Gold reward/penalty
+- `skillXp` - Skill XP (e.g., `{"Scouting": 50}`) - **REQUIRED for order events**
+- `traitXp` - Trait XP (e.g., `{"Valor": 10}`)
+- `companyNeeds` - Company need changes (e.g., `{"Readiness": -10}`)
+- `medicalRisk` - Medical risk escalation
 - `renown` - Renown reward/penalty
-- `hp_loss` - Player HP damage
-- `troop_loss` - Troop casualties (e.g., `{"min": 1, "max": 3}`)
+- `hpChange` - Player HP damage (negative values)
+- `troopLoss` - Troop casualties (e.g., `{"min": 1, "max": 3}`)
 
 **Text placeholders you can use:**
 - Player: `{PLAYER_NAME}`, `{PLAYER_RANK}`

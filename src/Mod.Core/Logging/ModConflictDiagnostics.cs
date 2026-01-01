@@ -56,6 +56,8 @@ namespace Enlisted.Mod.Core.Logging
                 WriteHeader();
                 WriteEnvironmentInfo();
                 WriteLoadedModules();
+                WriteModuleHealthCheck();
+                WritePatchApplicationHealth(harmony, "MAIN PATCHES");
                 WritePatchConflicts(harmony, "MAIN PATCHES", EnlistedHarmonyId);
                 WriteEnlistedPatchList(harmony, "Main");
                 WriteNoteAboutDeferredPatches();
@@ -96,6 +98,7 @@ namespace Enlisted.Mod.Core.Logging
                 WriteLine($"Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
                 WriteLine();
 
+                WritePatchApplicationHealth(deferredHarmony, "DEFERRED PATCHES");
                 WritePatchConflicts(deferredHarmony, "DEFERRED PATCHES", EnlistedDeferredHarmonyId);
                 WriteEnlistedPatchList(deferredHarmony, "Deferred");
                 WriteCombinedConflictSummary();
@@ -135,10 +138,115 @@ namespace Enlisted.Mod.Core.Logging
                 {
                     WriteLine($"    {name}");
                 }
+
+                // Log runtime catalog status after behaviors are registered
+                WriteRuntimeCatalogStatus();
             }
             catch (Exception ex)
             {
                 ModLogger.ErrorCode("Diagnostics", "E-DIAG-004", "Failed to log behaviors", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Logs the runtime status of content catalogs (how many items actually loaded).
+        ///     This shows whether JSON parsing succeeded, not just if files exist.
+        /// </summary>
+        private static void WriteRuntimeCatalogStatus()
+        {
+            try
+            {
+                WriteLine();
+                WriteLine("-- CONTENT CATALOG STATUS (Runtime) --");
+                WriteLine();
+
+                // Use reflection to check catalog counts without forcing initialization
+                var catalogStatus = new List<(string name, int count, string status)>();
+
+                // QM Dialogue Catalog
+                try
+                {
+                    var qmCatalogType = Type.GetType("Enlisted.Features.Conversations.Data.QMDialogueCatalog, Enlisted");
+                    if (qmCatalogType != null)
+                    {
+                        var instanceProp = qmCatalogType.GetProperty("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                        var instance = instanceProp?.GetValue(null);
+                        var countProp = qmCatalogType.GetProperty("NodeCount");
+                        var count = (int)(countProp?.GetValue(instance) ?? 0);
+                        catalogStatus.Add(("QM Dialogue", count, count > 0 ? "OK" : "EMPTY"));
+                    }
+                }
+                catch { catalogStatus.Add(("QM Dialogue", 0, "ERROR")); }
+
+                // Event Catalog
+                try
+                {
+                    var eventCatalogType = Type.GetType("Enlisted.Features.Content.EventCatalog, Enlisted");
+                    if (eventCatalogType != null)
+                    {
+                        var countProp = eventCatalogType.GetProperty("EventCount", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                        var count = (int)(countProp?.GetValue(null) ?? 0);
+                        catalogStatus.Add(("Events", count, count > 0 ? "OK" : "EMPTY"));
+                    }
+                }
+                catch { catalogStatus.Add(("Events", 0, "ERROR")); }
+
+                // Decision Catalog
+                try
+                {
+                    var decisionCatalogType = Type.GetType("Enlisted.Features.Content.DecisionCatalog, Enlisted");
+                    if (decisionCatalogType != null)
+                    {
+                        var countProp = decisionCatalogType.GetProperty("DecisionCount", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                        var count = (int)(countProp?.GetValue(null) ?? 0);
+                        catalogStatus.Add(("Decisions", count, count > 0 ? "OK" : "EMPTY"));
+                    }
+                }
+                catch { catalogStatus.Add(("Decisions", 0, "ERROR")); }
+
+                // Order Catalog (doesn't have public count, just check if initialized)
+                try
+                {
+                    var orderCatalogType = Type.GetType("Enlisted.Features.Orders.OrderCatalog, Enlisted");
+                    if (orderCatalogType != null)
+                    {
+                        // Try to call GetAvailableOrders to see if it works
+                        catalogStatus.Add(("Orders", -1, "PRESENT"));
+                    }
+                }
+                catch { catalogStatus.Add(("Orders", 0, "ERROR")); }
+
+                // Print catalog status
+                WriteLine("  Catalog               Items    Status");
+                WriteLine("  -------------------  -------  --------");
+                foreach (var (name, count, status) in catalogStatus)
+                {
+                    var countStr = count >= 0 ? count.ToString() : "N/A";
+                    var statusMarker = status == "OK" || status == "PRESENT" ? "✓" : 
+                                      status == "EMPTY" ? "⚠" : "✗";
+                    WriteLine($"  {name,-20} {countStr,7}  {statusMarker} {status}");
+                }
+
+                WriteLine();
+                var hasErrors = catalogStatus.Any(c => c.status == "ERROR");
+                var hasEmpty = catalogStatus.Any(c => c.status == "EMPTY");
+
+                if (hasErrors)
+                {
+                    WriteLine("  [!] Some catalogs failed to load. Check logs for errors.");
+                }
+                else if (hasEmpty)
+                {
+                    WriteLine("  [!] Some catalogs are empty. Check file installation.");
+                }
+                else
+                {
+                    WriteLine("  [✓] All catalogs loaded successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"  ERROR: Failed to check catalog status - {ex.Message}");
             }
         }
 
@@ -469,7 +577,281 @@ namespace Enlisted.Mod.Core.Logging
 
         #endregion
 
+        #region Module Health Check
+
+        /// <summary>
+        ///     Verifies that critical mod files and systems are properly installed.
+        ///     Helps diagnose installation problems vs actual bugs when users report issues.
+        /// </summary>
+        private static void WriteModuleHealthCheck()
+        {
+            WriteLine();
+            WriteLine("-- MODULE HEALTH CHECK --");
+            WriteLine();
+
+            var issues = new List<string>();
+            var warnings = new List<string>();
+
+            try
+            {
+                var gameRoot = TaleWorlds.Library.BasePath.Name;
+                var enlistedModulePath = Path.Combine(gameRoot, "Modules", "Enlisted");
+
+                // Show installation location for user reference
+                WriteLine($"  Installation Type: {(IsWorkshopInstall(enlistedModulePath) ? "Steam Workshop" : "Manual")}");
+                WriteLine($"  Module Location: {enlistedModulePath}");
+                WriteLine();
+
+                // Check Dialogue JSON files
+                WriteLine("  [Dialogue System]");
+                var dialoguePath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted", "Dialogue");
+                if (Directory.Exists(dialoguePath))
+                {
+                    var expectedFiles = new[] { "qm_intro.json", "qm_dialogue.json", "qm_gates.json", "qm_baggage.json" };
+                    var foundCount = 0;
+                    foreach (var expectedFile in expectedFiles)
+                    {
+                        if (File.Exists(Path.Combine(dialoguePath, expectedFile)))
+                        {
+                            foundCount++;
+                        }
+                        else
+                        {
+                            warnings.Add($"Missing dialogue: {expectedFile}");
+                        }
+                    }
+                    WriteLine($"    Dialogue Files: {foundCount}/{expectedFiles.Length}");
+                }
+                else
+                {
+                    issues.Add("Dialogue directory missing");
+                    WriteLine("    Dialogue Files: MISSING");
+                }
+
+                // Check Events JSON files  
+                WriteLine("  [Event System]");
+                var eventsPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted", "Events");
+                if (Directory.Exists(eventsPath))
+                {
+                    var eventFiles = Directory.GetFiles(eventsPath, "*.json").Length;
+                    WriteLine($"    Event Files: {eventFiles}");
+                    if (eventFiles == 0)
+                    {
+                        warnings.Add("No event files found");
+                    }
+                }
+                else
+                {
+                    issues.Add("Events directory missing");
+                    WriteLine("    Event Files: MISSING");
+                }
+
+                // Check Decisions JSON files
+                WriteLine("  [Decision System]");
+                var decisionsPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted", "Decisions");
+                if (Directory.Exists(decisionsPath))
+                {
+                    var decisionFiles = Directory.GetFiles(decisionsPath, "*.json").Length;
+                    WriteLine($"    Decision Files: {decisionFiles}");
+                    if (decisionFiles == 0)
+                    {
+                        warnings.Add("No decision files found");
+                    }
+                }
+                else
+                {
+                    issues.Add("Decisions directory missing");
+                    WriteLine("    Decision Files: MISSING");
+                }
+
+                // Check Orders JSON files
+                WriteLine("  [Order System]");
+                var ordersPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted", "Orders");
+                if (Directory.Exists(ordersPath))
+                {
+                    var orderFiles = Directory.GetFiles(ordersPath, "*.json").Length;
+                    WriteLine($"    Order Files: {orderFiles}");
+                    if (orderFiles == 0)
+                    {
+                        warnings.Add("No order files found");
+                    }
+                }
+                else
+                {
+                    issues.Add("Orders directory missing");
+                    WriteLine("    Order Files: MISSING");
+                }
+
+                // Check Config JSON files
+                WriteLine("  [Configuration System]");
+                var configPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted", "Config");
+                if (Directory.Exists(configPath))
+                {
+                    var expectedConfigs = new[] { 
+                        "settings.json", "progression_config.json", "enlisted_config.json", 
+                        "equipment_pricing.json", "retinue_config.json", "baggage_config.json" 
+                    };
+                    var foundCount = 0;
+                    foreach (var expectedFile in expectedConfigs)
+                    {
+                        if (File.Exists(Path.Combine(configPath, expectedFile)))
+                        {
+                            foundCount++;
+                        }
+                        else
+                        {
+                            warnings.Add($"Missing config: {expectedFile}");
+                        }
+                    }
+                    WriteLine($"    Config Files: {foundCount}/{expectedConfigs.Length}");
+                }
+                else
+                {
+                    issues.Add("Config directory missing");
+                    WriteLine("    Config Files: MISSING");
+                }
+
+                // Check Localization XML files
+                WriteLine("  [Localization System]");
+                var languagesPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Languages");
+                if (Directory.Exists(languagesPath))
+                {
+                    var xmlFiles = new[] { "enlisted_strings.xml", "enlisted_qm_dialogue.xml", "language_data.xml" };
+                    var foundCount = 0;
+                    foreach (var xmlFile in xmlFiles)
+                    {
+                        if (File.Exists(Path.Combine(languagesPath, xmlFile)))
+                        {
+                            foundCount++;
+                        }
+                        else
+                        {
+                            issues.Add($"Missing localization: {xmlFile}");
+                        }
+                    }
+                    WriteLine($"    Localization Files: {foundCount}/{xmlFiles.Length}");
+                }
+                else
+                {
+                    issues.Add("Languages directory missing");
+                    WriteLine("    Localization Files: MISSING");
+                }
+
+                // Summary
+                WriteLine();
+                if (issues.Count == 0 && warnings.Count == 0)
+                {
+                    WriteLine("  [✓] MODULE HEALTH: GOOD");
+                    WriteLine("  All systems operational. Installation verified.");
+                }
+                else
+                {
+                    if (issues.Count > 0)
+                    {
+                        WriteLine($"  [!] CRITICAL ISSUES: {issues.Count}");
+                        foreach (var issue in issues)
+                        {
+                            WriteLine($"      - {issue}");
+                        }
+                    }
+                    
+                    if (warnings.Count > 0)
+                    {
+                        WriteLine($"  [!] WARNINGS: {warnings.Count}");
+                        foreach (var warning in warnings)
+                        {
+                            WriteLine($"      - {warning}");
+                        }
+                    }
+                    
+                    WriteLine();
+                    WriteLine("  RECOMMENDATION: Verify game files or reinstall the mod.");
+                    WriteLine("  Fallback systems may activate for missing content.");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"  ERROR: Health check failed - {ex.Message}");
+                issues.Add($"Health check error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        ///     Detects if the mod was installed via Steam Workshop by checking for WorkshopUpdate.xml.
+        /// </summary>
+        private static bool IsWorkshopInstall(string modulePath)
+        {
+            try
+            {
+                // Workshop installs have WorkshopUpdate.xml in the module root
+                var workshopFile = Path.Combine(modulePath, "WorkshopUpdate.xml");
+                return File.Exists(workshopFile);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        #endregion
+
         #region Conflict Detection
+
+        /// <summary>
+        ///     Verifies that Harmony patches were applied successfully.
+        ///     Helps diagnose when patches fail due to game updates or conflicts.
+        /// </summary>
+        private static void WritePatchApplicationHealth(Harmony harmony, string sectionTitle)
+        {
+            WriteLine();
+            WriteLine($"-- PATCH APPLICATION STATUS ({sectionTitle}) --");
+            WriteLine();
+
+            try
+            {
+                var patchedMethods = harmony.GetPatchedMethods().ToList();
+                WriteLine($"  Patches Applied: {patchedMethods.Count} methods");
+                
+                // Count patch types
+                var prefixCount = 0;
+                var postfixCount = 0;
+                var transpilerCount = 0;
+                var finalizerCount = 0;
+
+                foreach (var method in patchedMethods)
+                {
+                    var patchInfo = Harmony.GetPatchInfo(method);
+                    if (patchInfo != null)
+                    {
+                        prefixCount += patchInfo.Prefixes.Count(p => p.owner == EnlistedHarmonyId || p.owner == EnlistedDeferredHarmonyId);
+                        postfixCount += patchInfo.Postfixes.Count(p => p.owner == EnlistedHarmonyId || p.owner == EnlistedDeferredHarmonyId);
+                        transpilerCount += patchInfo.Transpilers.Count(p => p.owner == EnlistedHarmonyId || p.owner == EnlistedDeferredHarmonyId);
+                        finalizerCount += patchInfo.Finalizers.Count(p => p.owner == EnlistedHarmonyId || p.owner == EnlistedDeferredHarmonyId);
+                    }
+                }
+
+                WriteLine($"    Prefixes:    {prefixCount}");
+                WriteLine($"    Postfixes:   {postfixCount}");
+                WriteLine($"    Transpilers: {transpilerCount}");
+                WriteLine($"    Finalizers:  {finalizerCount}");
+                WriteLine();
+
+                if (patchedMethods.Count == 0)
+                {
+                    WriteLine("  [!] WARNING: No patches applied!");
+                    WriteLine("  This indicates a critical Harmony failure.");
+                    WriteLine("  The mod will not function correctly.");
+                }
+                else
+                {
+                    WriteLine($"  [✓] {sectionTitle} patches applied successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLine($"  ERROR: Failed to check patch status - {ex.Message}");
+            }
+        }
 
         /// <summary>
         ///     Detects when other mods patch the same methods as Enlisted and logs potential conflicts.

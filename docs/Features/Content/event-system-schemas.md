@@ -27,6 +27,12 @@
    - `"effects"` = State changes and rewards for **main options** (reputation, escalation, hpChange, skillXp)
    - **⚠️ CRITICAL:** For main event options, use `effects.skillXp`. Only use `rewards.skillXp` in sub-choice options!
 
+5. **Order Events Must Grant XP:**
+   - All order event options **must** include `skillXp` in their `effects` object
+   - Players expect XP for completing orders (rank progression depends on it)
+   - Failed skill checks should still grant reduced XP (typically 50% of success)
+   - Validation tool (`tools/events/validate_content.py`) warns if order events lack XP rewards
+
 ---
 
 ## File Structure
@@ -2063,6 +2069,8 @@ Once the foundation is implemented, add:
 
 **Purpose:** Events that fire during order execution (at slot phases). Different from narrative events in that they use `order_type` instead of `category` and support world state requirements.
 
+**⚠️ CRITICAL:** All order event options **must** include `skillXp` in their `effects` object. Players expect XP for completing orders. Validation tool will warn if missing.
+
 **File Locations:**
 ```
 ModuleData/Enlisted/Orders/order_events/
@@ -2129,20 +2137,22 @@ ModuleData/Enlisted/Orders/order_events/
       "id": "turn_away",
       "textId": "order_evt_guard_drunk_opt_turn",
       "text": "You're not getting through like this.",
-      "tooltip": "+1 Officer Rep, -1 Soldier Rep.",
+      "tooltip": "+1 Officer Rep, -1 Soldier Rep. +12 Athletics XP.",
       "effects": {
         "officerRep": 1,
-        "soldierRep": -1
+        "soldierRep": -1,
+        "skillXp": { "Athletics": 12 }
       }
     },
     {
       "id": "report",
       "textId": "order_evt_guard_drunk_opt_report",
       "text": "Call the sergeant.",
-      "tooltip": "+2 Officer Rep, -2 Soldier Rep.",
+      "tooltip": "+2 Officer Rep, -2 Soldier Rep. +10 Tactics XP.",
       "effects": {
         "officerRep": 2,
-        "soldierRep": -2
+        "soldierRep": -2,
+        "skillXp": { "Tactics": 10 }
       }
     }
   ]
@@ -2305,6 +2315,7 @@ For reference when reviewing event master document:
 
 **XP:**
 - `XP.{Skill}` = Skill XP (`skillXp.{Skill}`)
+- **REQUIRED:** All order event options must include at least one skill XP reward in `effects`
 
 **See Also:** [Order Events Master](../../AFEATURE/order-events-master.md) for complete event catalog.
 

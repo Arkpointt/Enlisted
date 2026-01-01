@@ -155,19 +155,31 @@ namespace Enlisted.Features.Conversations.Data
             try
             {
                 var gameRoot = BasePath.Name;
+                ModLogger.Debug(LogCategory, $"Game root path: {gameRoot}");
+                
+                // Primary path: Game installation
                 var modulePath = Path.Combine(gameRoot, "Modules", "Enlisted");
-
+                ModLogger.Debug(LogCategory, $"Checking module path: {modulePath}");
+                
                 if (Directory.Exists(modulePath))
                 {
-                    return Path.Combine(modulePath, "ModuleData", "Enlisted", "Dialogue");
+                    var dialoguePath = Path.Combine(modulePath, "ModuleData", "Enlisted", "Dialogue");
+                    ModLogger.Info(LogCategory, $"Using dialogue path: {dialoguePath}");
+                    return dialoguePath;
                 }
 
                 // Fallback for development environment
                 var devPath = Path.Combine(gameRoot, "..", "..", "Enlisted", "ModuleData", "Enlisted", "Dialogue");
                 if (Directory.Exists(devPath))
                 {
-                    return Path.GetFullPath(devPath);
+                    var resolvedPath = Path.GetFullPath(devPath);
+                    ModLogger.Info(LogCategory, $"Using dev dialogue path: {resolvedPath}");
+                    return resolvedPath;
                 }
+                
+                ModLogger.Error(LogCategory, $"Dialogue directory not found! Tried paths:" +
+                    $"\n  1. {modulePath}" +
+                    $"\n  2. {devPath}");
             }
             catch (Exception ex)
             {

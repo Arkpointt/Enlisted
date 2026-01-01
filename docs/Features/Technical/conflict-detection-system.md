@@ -1,9 +1,9 @@
 # Conflict Detection System
 
-**Summary:** Documents the `ModConflictDiagnostics` runtime system that automatically detects Harmony patch conflicts with other mods. Also covers internal system integration points and state management priorities for development.
+**Summary:** Documents the `ModConflictDiagnostics` runtime system that automatically detects Harmony patch conflicts with other mods, verifies mod installation integrity, and validates content catalog loading. Also covers internal system integration points and state management priorities for development.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23  
+**Last Updated:** 2026-01-01  
 **Related Docs:** [Event System Schemas](../Content/event-system-schemas.md), [Encounter Safety](encounter-safety.md), [Content System Architecture](../Content/content-system-architecture.md)
 
 ---
@@ -52,7 +52,15 @@
 
 ### What It Detects
 
-**ModConflictDiagnostics** uses Harmony's patch introspection to find methods that multiple mods patch:
+**ModConflictDiagnostics** performs comprehensive diagnostics:
+
+1. **Harmony Patch Conflicts:** Uses Harmony's patch introspection to find methods that multiple mods patch
+2. **Module Health Check:** Verifies presence of critical JSON/XML files for all content types (Dialogue, Events, Decisions, Orders, Config, Localization)
+3. **Runtime Catalog Status:** Confirms successful loading and parsing of content catalogs via reflection
+4. **Patch Application Status:** Reports total methods patched and breakdown by patch type (prefix, postfix, transpiler, finalizer)
+5. **Installation Path Detection:** Logs game root, mod DLL path, and module path to help diagnose Steam Workshop vs manual installs
+
+**Harmony Patch Conflict Detection:**
 
 ```csharp
 // For each method Enlisted patches
@@ -90,6 +98,89 @@ foreach (var method in harmony.GetPatchedMethods())
 
 **Why Two Phases?**
 Some patches require game systems to initialize first. Patching too early causes `TypeInitializationException` on Proton/Linux.
+
+---
+
+### Module Health & Installation Diagnostics
+
+**Module Health Check** verifies file presence for all content types:
+
+```
+==============================
+MODULE HEALTH CHECK
+==============================
+
+Dialogue System:
+  Directory: C:\...\Modules\Enlisted\ModuleData\Enlisted\Dialogue
+  ✓ qm_dialogue.json (3245 bytes)
+  ✓ qm_gates.json (1876 bytes)
+  ✓ qm_intro.json (2134 bytes)
+  Result: OK - All dialogue files present
+
+Events System:
+  Directory: C:\...\Modules\Enlisted\ModuleData\Enlisted\Events
+  ✓ camp_events.json (45678 bytes)
+  ⚠ Warning: events_crisis.json missing (expected in directory)
+  Result: DEGRADED - Some files missing
+
+Localization:
+  Directory: C:\...\Modules\Enlisted\ModuleData\Languages
+  ✓ enlisted_strings.xml (234567 bytes)
+  ✓ enlisted_qm_dialogue.xml (12345 bytes)
+  Result: OK - All localization files present
+```
+
+**Runtime Catalog Status** confirms successful content loading:
+
+```
+==============================
+RUNTIME CATALOG STATUS
+==============================
+
+EventCatalog:
+  Status: Initialized
+  Event Count: 68
+  Result: OK
+
+QMDialogueCatalog:
+  Status: Initialized
+  Node Count: 47
+  Result: OK
+
+DecisionCatalog:
+  Status: Initialized
+  Decision Count: 38
+  Result: OK
+```
+
+**Patch Application Status** reports Harmony patching success:
+
+```
+==============================
+PATCH APPLICATION STATUS
+==============================
+
+Harmony Instance: com.enlisted.mod
+Total Methods Patched: 42
+  Prefixes: 28
+  Postfixes: 31
+  Transpilers: 3
+  Finalizers: 2
+Result: SUCCESS - All patches applied
+```
+
+**Installation Path Detection** clarifies mod location:
+
+```
+==============================
+ENVIRONMENT INFO
+==============================
+
+Game Root Path:     C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord
+Mod DLL Path:       C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\3621116083\bin\Win64_Shipping_Client\Enlisted.dll
+Mod Module Path:    C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\3621116083
+Installation Type:  Steam Workshop
+```
 
 ---
 

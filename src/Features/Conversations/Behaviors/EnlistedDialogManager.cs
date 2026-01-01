@@ -1140,7 +1140,9 @@ namespace Enlisted.Features.Conversations.Behaviors
             try
             {
                 // Test JSON dialogue catalog loading
-                if (QMDialogueCatalog.Instance != null && QMDialogueCatalog.Instance.NodeCount > 0)
+                var jsonLoaded = QMDialogueCatalog.Instance != null && QMDialogueCatalog.Instance.NodeCount > 0;
+                
+                if (jsonLoaded)
                 {
                     var testContext = new QMDialogueContext { IsIntroduced = true };
                     var hubNode = QMDialogueCatalog.Instance.GetNode("qm_hub", testContext);
@@ -1211,13 +1213,29 @@ namespace Enlisted.Features.Conversations.Behaviors
                     else
                     {
                         ModLogger.Warn("EnlistedDialogManager", "QM Dialogue: Test node 'qm_hub' not found in catalog");
+                        jsonLoaded = false;
                     }
                 }
+                
+                // ========================================
+                // CRITICAL FALLBACK: If JSON failed to load, register basic dialogue
+                // This ensures quartermaster is ALWAYS functional even if JSON files are missing
+                // ========================================
+                if (!jsonLoaded)
+                {
+                    ModLogger.Error("EnlistedDialogManager", 
+                        "========================================\n" +
+                        "QM JSON DIALOGUE FAILED TO LOAD\n" +
+                        "Using fallback dialogue system.\n" +
+                        "Quartermaster will work but with limited dialogue.\n" +
+                        "This indicates a corrupted/incomplete installation.\n" +
+                        "Check Debugging/Conflicts-A_*.log for missing files.\n" +
+                        "========================================");
+                    RegisterFallbackQuartermasterDialogue(starter);
+                }
 
-                // ========================================
-                // ALL QUARTERMASTER DIALOGUE IS NOW HANDLED BY JSON
-                // See qm_intro.json and qm_dialogue.json
-                // ========================================
+                // Note: Quartermaster heroes use Occupation.Soldier (not Wanderer) to prevent
+                // vanilla companion recruitment dialogue from appearing.
 
                 ModLogger.Info("Conversations", "Quartermaster dialog tree registered");
             }
@@ -1225,6 +1243,73 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 ModLogger.Error("Conversations", "Failed to register quartermaster dialogs", ex);
             }
+        }
+
+        /// <summary>
+        /// Fallback dialogue system when JSON fails to load.
+        /// Provides basic quartermaster functionality using XML strings directly.
+        /// </summary>
+        private void RegisterFallbackQuartermasterDialogue(CampaignGameStarter starter)
+        {
+            // QM greeting (first meeting or return)
+            starter.AddDialogLine(
+                "qm_fallback_greeting",
+                "start",
+                "qm_fallback_hub",
+                "{=qm_hub_greeting}What do you need?",
+                IsQuartermasterConversation,
+                null,
+                200);
+
+            // Player: Browse equipment
+            starter.AddPlayerLine(
+                "qm_fallback_browse",
+                "qm_fallback_hub",
+                "close_window",
+                "{=qm_player_browse}I'm looking for some new gear. What've you got?",
+                null,
+                () => {
+                    _selectedEquipmentCategory = "weapons";
+                    OnQuartermasterBrowseCategory();
+                });
+
+            // Player: Upgrade equipment
+            starter.AddPlayerLine(
+                "qm_fallback_upgrade",
+                "qm_fallback_hub",
+                "close_window",
+                "{=qm_player_upgrade}I want to improve what I'm carrying.",
+                null,
+                OnQuartermasterUpgradeRequest);
+
+            // Player: Sell equipment
+            starter.AddPlayerLine(
+                "qm_fallback_sell",
+                "qm_fallback_hub",
+                "close_window",
+                "{=qm_player_sell}I've got some equipment to offload... quietly.",
+                null,
+                OnQuartermasterSellRequest);
+
+            // Player: Provisions (officers only)
+            starter.AddPlayerLine(
+                "qm_fallback_provisions",
+                "qm_fallback_hub",
+                "close_window",
+                "{=qm_player_provisions}I could use some provisions.",
+                () => EnlistmentBehavior.Instance?.EnlistmentTier >= 7,
+                OnQuartermasterProvisionsRequest);
+
+            // Player: Goodbye
+            starter.AddPlayerLine(
+                "qm_fallback_goodbye",
+                "qm_fallback_hub",
+                "close_window",
+                "{=qm_player_farewell}That's all for now.",
+                null,
+                null);
+
+            ModLogger.Info("EnlistedDialogManager", "Fallback quartermaster dialogue registered");
         }
 
         #region Quartermaster Dialog Conditions

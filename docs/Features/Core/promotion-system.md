@@ -3,10 +3,10 @@
 **Summary:** Complete guide to military rank progression from T1 (Follower) to T9 (Marshal). Covers XP requirements, multi-factor promotion criteria, proving events, culture-specific rank titles, and the mechanics of advancement. This system rewards consistent service, combat performance, and maintaining good standing with superiors and comrades.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-01 (XP system overhaul - removed passive daily/battle XP)  
+**Last Updated:** 2026-01-01 (XP system fix - enlistment XP now properly tracked from all sources)  
 **Related Docs:** [Enlistment System](enlistment.md), [Training System](../Combat/training-system.md), [Pay System](pay-system.md), [Order Progression System](../../AFEATURE/order-progression-system.md)
 
-**CRITICAL CHANGE (2025-12-31):** Passive daily XP and automatic battle XP have been **removed entirely**. All XP now comes from orders and events. See [XP Sources](#xp-sources) for details.
+**CRITICAL FIX (2026-01-01):** Fixed XP tracking bug where skill XP was awarded but enlistment XP (used for rank progression) was not. All XP-granting activities now properly update both systems. See [XP Sources](#xp-sources) for details.
 
 ---
 
@@ -154,96 +154,100 @@ This tells you exactly what you need to improve to advance.
 
 ## XP Sources
 
-**MAJOR CHANGE (2025-12-31):** All passive XP has been removed. XP now comes exclusively from active gameplay through the order system.
+**How XP Works:** The mod tracks two types of XP:
+1. **Skill XP** - Individual character skills (Athletics, Tactics, etc.) via `Hero.AddSkillXp()`
+2. **Enlistment XP** - Military rank progression via `EnlistmentBehavior.AddEnlistmentXP()`
 
-### Order Completion XP
-
-**Primary XP Source:** Completing assigned duties  
-**Amount:** 10-30 XP per order (based on order difficulty and tier)  
-**When:** Order completion (after 1-3 days of duty)  
-**Requirements:**
-- Must have an active order
-- Order must be completed (not declined or failed)
-
-**Example:**
-```
-Order Completed: Guard Duty
-+10 XP
-```
-
-For quiet, routine duties, XP gains are minimal. This is intentional - a soldier standing guard isn't learning much.
+Both are awarded simultaneously from all XP-granting activities. Enlistment XP is what advances your tier and appears in muster reports.
 
 ### Order Event XP
 
-**High-Value XP Source:** Events that occur during orders  
-**Amount:** 15-50 XP per event (based on event difficulty and outcome)  
-**When:** Event resolution during order execution  
-**Requirements:**
-- Must have an active order
-- Event must fire during a "slot" phase
-- Player resolves the event (makes choices, passes skill checks)
+**Primary XP Source:** Events that occur during order execution  
+**Amount:** 10-32 XP per event option (varies by skill and difficulty)  
+**When:** Event resolution during order "slot" phases  
+**Frequency:** 15-35% chance per slot (4 slots per day during active orders)
+
+**Skills Awarded:**
+- Guard/Sentry duty → Athletics, Tactics, Scouting
+- Patrol → Scouting, Athletics, Roguery
+- Medical → Medicine
+- Equipment tasks → Crafting
+- Leadership orders → Leadership, Tactics
 
 **Example:**
 ```
-Event: Dead Man's Purse
-+25 XP (event resolution)
-+10 XP (skill check passed)
-= 35 XP total from one event
+Order Event: Drunk Soldier at Guard Post
+Option: Turn him away
++12 Athletics XP (skill progression)
++12 Enlistment XP (rank progression)
 ```
 
-Events are where real progression happens. A 2-day order with one event can grant 50+ XP vs 10 XP for quiet duty.
+All order events grant XP. Failed skill checks typically award 50% of success XP.
 
-### Combat XP (Through Orders Only)
+### Camp Activities XP
 
-**CRITICAL:** There is NO automatic battle XP. You don't get XP just for being in a battle.
+**Source:** Free time activities and camp opportunities  
+**Amount:** 8-25 XP per activity  
+**When:** Player-initiated camp decisions
 
-Combat XP only comes when:
-1. You have an active order during the battle
-2. The order completes (with battle participation bonus)
-3. A battle-related event fires during your order
+**Activities:**
+- Training sessions (weapon skills, athletics)
+- Medical self-treatment
+- Muster interactions (bribe, smuggle, protest)
 
 **Example:**
 ```
-T2 soldier with Guard Duty during a major battle:
-- Order completion: +10 XP
-- Battle event ("Valor in Combat"): +50 XP
-- Total: +60 XP from combat
+Camp Activity: Self-Treatment
++25 Medicine XP (skill)
++25 Enlistment XP (rank)
 ```
 
-**Without an active order during battle:** 0 XP (you're just a body in formation)
+### Combat & Battle XP
 
-### Why This Change?
+**Source:** Skill XP awarded during combat (native Bannerlord system)  
+**Amount:** Varies by kills, hits, tactics used  
+**When:** During battle participation
 
-**Removed Systems:**
-- ❌ Daily "service" XP (25 XP/day) - Passive income feel
-- ❌ Battle participation XP (25 XP/battle) - Encouraged AFK farming
-- ❌ Kill count XP (2 XP/kill) - Rewarded killstealing over soldiering
+Native Bannerlord awards skill XP for combat actions (weapon hits, kills, tactical positioning). The mod converts this skill XP into enlistment XP for rank progression tracking.
 
-**New Philosophy:**
-- ✅ XP comes from doing your job (orders)
-- ✅ Progression accelerates through meaningful events
-- ✅ Combat matters when it intersects with your duties
-- ✅ No "stand around and collect XP" exploits
-- ✅ Aligns with mod's theme: you're a soldier, not a mercenary
+### Narrative Event XP
+
+**Source:** General narrative events (escalation, pay, promotion, etc.)  
+**Amount:** 10-30 XP per event  
+**When:** Event triggers based on context
+
+Events outside the order system can also grant XP through their effects and rewards.
+
+### XP Flow Architecture
+
+**Technical Implementation:**
+1. Activity grants skill XP via `Hero.AddSkillXp(skill, amount)`
+2. Same activity calls `EnlistmentBehavior.AddEnlistmentXP(amount, source)`
+3. Enlistment XP is tracked for rank progression and muster reports
+4. Both types contribute to character development
+
+**Source Tracking:**
+The system tracks XP sources for muster period summaries:
+```
+XP Sources This Period:
+• Order: Guard Post Duty: +48 XP
+• Order: Camp Patrol: +36 XP
+• Camp: Athletics: +20 XP
+• Self-Treatment: +25 XP
+• Training: OneHanded: +15 XP
+```
 
 ### Progression Timeline
 
-At these new rates:
+Typical XP rates per 12-day muster period:
 
-| Tier | XP Required | Quiet Orders Only | With Events | Active Campaign |
-|------|-------------|-------------------|-------------|-----------------|
-| T1→T2 | ~200 | 20 orders (~45 days) | 8 orders (~18 days) | 4-5 orders (~10 days) |
-| T2→T3 | ~400 | 40 orders (~90 days) | 12 orders (~28 days) | 6-8 orders (~15 days) |
-| T3→T4 | ~800 | 80 orders (~180 days) | 20 orders (~45 days) | 10-12 orders (~25 days) |
+| Activity Level | Orders | Events | Camp | Total/Period | T1→T4 Time |
+|---------------|--------|--------|------|--------------|------------|
+| Quiet Garrison | 2 orders | 0-1 events | 1-2 activities | 40-80 XP | 6-12 months |
+| Routine Campaign | 3 orders | 2-3 events | 2-3 activities | 100-150 XP | 3-6 months |
+| Active Campaign | 4 orders | 4-6 events | 3-4 activities | 180-250 XP | 2-3 months |
 
-**A soldier who just does routine duty takes 1-2 years to reach T4.**  
-**A soldier who participates in events and battles reaches T4 in months.**
-
-This matches historical military reality: soldiers who see action advance faster than those in garrison.
-
-### Training & Event XP
-
-Training decisions and narrative events can award XP, but this varies by event. Most training events award skill XP (weapon skills, Athletics, Riding) rather than enlistment tier XP. Check the specific event's reward structure.
+**Key Insight:** Players who engage with order events and camp activities progress 3-4x faster than those who ignore them.
 
 ### Estimated Progression Timeline
 

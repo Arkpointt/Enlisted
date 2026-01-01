@@ -1852,9 +1852,23 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         CompanySupplyManager.RestoreFromSave(_enlistedLord, nonFoodSupply);
                     }
+                    else
+                    {
+                        ModLogger.Warn("SaveLoad", 
+                            $"CompanySupplyManager NOT restored (no enlisted lord). Loaded supply value: {nonFoodSupply:F1}%");
+                    }
 
-                    ModLogger.Debug("SaveLoad",
-                        $"Loaded company needs - R:{readiness} E:{equipment} M:{morale} Rs:{rest} S:{supplies}, NonFood:{nonFoodSupply:F1}%");
+                    // Log at INFO level when supply is critically low to help diagnose issues
+                    if (nonFoodSupply < 15)
+                    {
+                        ModLogger.Info("SaveLoad",
+                            $"SUPPLY WARNING: Loaded critically low supply ({nonFoodSupply:F1}%) - R:{readiness} E:{equipment} M:{morale} Rs:{rest}");
+                    }
+                    else
+                    {
+                        ModLogger.Debug("SaveLoad",
+                            $"Loaded company needs - R:{readiness} E:{equipment} M:{morale} Rs:{rest} S:{supplies}, NonFood:{nonFoodSupply:F1}%");
+                    }
                 }
             }
             catch (Exception ex)
@@ -3650,6 +3664,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // This prevents the player from having their own troops while enlisted, as they're
                 // now part of the lord's military force. Troops will be restored when service ends.
                 TransferPlayerTroopsToLord();
+
+                // BUG FIX: When transitioning from previous service (grace period expired or different kingdom),
+                // the player may still be wearing military gear from their old service. If we have an existing
+                // equipment backup (personal civilian gear), we need to stow the current military gear
+                // before assigning new recruit equipment - otherwise it's lost forever.
+                // This applies when: backup exists AND not resuming same-kingdom grace (different faction service)
+                if (_hasBackedUpEquipment && !resumedFromGrace)
+                {
+                    StowCurrentEquipmentToInventory();
+                }
 
                 // CRITICAL: Issue military equipment BEFORE bag check scheduling
                 // This ensures bag check only processes pre-enlistment civilian gear,
@@ -10205,8 +10229,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 // 4. Set Hero properties
-                // Use Wanderer occupation for generic camp NPCs (Quartermaster not in API)
-                qm.SetNewOccupation(Occupation.Wanderer);
+                // Use Soldier occupation to avoid triggering companion recruitment dialogue
+                // (Wanderer occupation causes vanilla companion recruitment to appear)
+                qm.SetNewOccupation(Occupation.Soldier);
                 qm.HiddenInEncyclopedia = true; // Don't clutter encyclopedia
                 qm.IsKnownToPlayer = true;
                 // Note: HasMet is read-only, but IsKnownToPlayer triggers the met status
@@ -11673,6 +11698,92 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Naval", "Error restoring ship vulnerability", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Save currently equipped items to player inventory before equipment replacement.
+        ///     Called when transitioning between services (different faction) to prevent losing
+        ///     military gear earned during previous service. Items go to party inventory where
+        ///     they can be sold, stored in baggage, or kept for later.
+        /// </summary>
+        private void StowCurrentEquipmentToInventory()
+        {
+            try
+            {
+                var hero = Hero.MainHero;
+                var roster = MobileParty.MainParty?.ItemRoster;
+                if (hero == null || roster == null)
+                {
+                    return;
+                }
+
+                var savedCount = 0;
+                var battleEquipment = hero.BattleEquipment;
+
+                // Save all equipped battle items (weapons, armor, horse) to inventory
+                for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                {
+                    var element = battleEquipment[slot];
+                    if (element.IsEmpty || element.Item == null)
+                    {
+                        continue;
+                    }
+
+                    // Skip quest items - they stay equipped
+                    if (element.IsQuestItem)
+                    {
+                        continue;
+                    }
+
+                    roster.AddToCounts(element, 1);
+                    savedCount++;
+                    ModLogger.Debug("Equipment", $"Stowed to inventory: {element.Item.Name}");
+                }
+
+                // Also save civilian equipment if it differs from battle equipment
+                var civilianEquipment = hero.CivilianEquipment;
+                for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                {
+                    var element = civilianEquipment[slot];
+                    if (element.IsEmpty || element.Item == null)
+                    {
+                        continue;
+                    }
+
+                    // Skip quest items
+                    if (element.IsQuestItem)
+                    {
+                        continue;
+                    }
+
+                    // Don't duplicate items already in battle equipment
+                    var battleElement = battleEquipment[slot];
+                    if (!battleElement.IsEmpty && battleElement.Item == element.Item)
+                    {
+                        continue;
+                    }
+
+                    roster.AddToCounts(element, 1);
+                    savedCount++;
+                    ModLogger.Debug("Equipment", $"Stowed civilian item to inventory: {element.Item.Name}");
+                }
+
+                if (savedCount > 0)
+                {
+                    ModLogger.Info("Equipment",
+                        $"Stowed {savedCount} equipped items to inventory before new service (previous military gear preserved)");
+
+                    // Notify player their items were saved
+                    var message = new TextObject(
+                        "{=Enlisted_Equipment_Stowed}Your previous equipment ({COUNT} items) has been added to your inventory.");
+                    message.SetTextVariable("COUNT", savedCount);
+                    InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Equipment", "Error stowing current equipment to inventory", ex);
             }
         }
 

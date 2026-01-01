@@ -444,6 +444,29 @@ current languages: **english** (default)
 
 **IMPORTANT:** The mod writes all logs directly to the `Debugging` subfolder inside the Enlisted module directory. This is NOT the game's crash logs and NOT your Documents folder.
 
+#### installation locations
+
+**Where the mod is installed depends on how you got it:**
+
+**Steam Workshop:**
+- `C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\3621116083\`
+
+**Manual/Nexus Install:**
+- `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\`
+
+**NOTE:** If you have both installed, you'll see duplicates in the Bannerlord launcher. Unsubscribe from the Workshop version if you're installing manually to avoid conflicts.
+
+#### automatic mod conflict detection
+
+The mod automatically detects conflicts with other mods at startup. Check `Conflicts-A_{timestamp}.log` in the Debugging folder for:
+- Harmony patch conflicts with other mods
+- Module health check (missing/corrupt JSON/XML files)
+- Runtime catalog status (content loading verification)
+- Patch application status (total methods patched)
+- Installation path information (manual vs Steam Workshop)
+
+This comprehensive diagnostic log helps quickly identify whether issues are due to mod conflicts, corrupted installations, or genuine bugs.
+
 **files you should share when reporting issues:**
 - `Session-A_{timestamp}.log` (latest session)
 - `Conflicts-A_{timestamp}.log` (latest conflicts report)

@@ -1255,6 +1255,15 @@ QM (<30%): "We're in crisis. I can't issue any equipment changes until
 - Player style stored in `_qmPlayerStyle` and persists across saves
 - Intro flag (`_hasMetQuartermaster`) skips intro on return visits
 
+**Fallback Dialogue System:**
+- If JSON dialogue files fail to load (missing/corrupt installation), a hardcoded fallback dialogue is activated
+- Ensures basic Quartermaster functionality (browse, upgrade, sell, provisions) always works
+- Fallback uses XML string IDs only, no dynamic context evaluation
+- Error logged to `Session-A_*.log` when fallback activates with installation check instructions
+- Fallback greeting: "What do you need?" (generic, no archetype flavor)
+- All UI screens still accessible through fallback options
+- Implemented to ensure graceful degradation for end-users with corrupted mod installations
+
 **Tier Gate RP Responses:**
 - Character-driven explanations when actions are blocked (not UI blocks)
 - Horse requests blocked for infantry with archetype-specific refusals

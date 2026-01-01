@@ -1216,13 +1216,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 false, 10);
 
             // Debug tools (QA only): grant gold/XP - at very bottom
+            // DISABLED FOR PRODUCTION - change to true in settings.json to enable for testing
             starter.AddGameMenuOption("enlisted_status", "enlisted_debug_tools",
                 "{=Enlisted_Menu_DebugTools}Debug Tools",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                     args.Tooltip = new TextObject("{=menu_tooltip_debug}Grant gold or enlistment XP for testing.");
-                    return ModConfig.Settings?.EnableDebugTools == true;
+                    // Always hidden in production - comment out this line and uncomment below to enable
+                    return false;
+                    // return ModConfig.Settings?.EnableDebugTools == true;
                 },
                 OnDebugToolsSelected,
                 false, 50);

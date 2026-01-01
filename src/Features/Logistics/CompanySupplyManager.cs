@@ -115,7 +115,13 @@ namespace Enlisted.Features.Logistics
                 float supplyChange = _totalSupply - oldSupply;
                 int totalSupply = TotalSupply;
 
-                if (MathF.Abs(supplyChange) > 0.5f)
+                // Always log when critically low to help diagnose stuck supply issues
+                if (totalSupply < 15)
+                {
+                    ModLogger.Info(LogCategory,
+                        $"Supply critically low: {oldSupply:F1}% -> {_totalSupply:F1}% (consumption={consumption:F2}, resupply={resupply:F2})");
+                }
+                else if (MathF.Abs(supplyChange) > 0.5f)
                 {
                     ModLogger.Debug(LogCategory,
                         $"Daily supply update: {oldSupply:F1}% -> {_totalSupply:F1}% ({supplyChange:+0.0;-0.0}), Total={totalSupply}%");
@@ -273,7 +279,8 @@ namespace Enlisted.Features.Logistics
 
         /// <summary>
         /// Calculates daily resupply when in a settlement.
-        /// Base rate is +3% per day in towns/castles, with bonuses for prosperity and ownership.
+        /// Base rate is +40% per day in towns/castles so a single day in settlement can restore access.
+        /// Bonuses for prosperity and ownership provide additional recovery.
         /// </summary>
         private float CalculateSupplyResupply()
         {
@@ -291,24 +298,24 @@ namespace Enlisted.Features.Logistics
                 return 0f;
             }
 
-            // Base resupply: +3% per day
-            float resupply = 3.0f;
+            // Base resupply: +40% per day (fast recovery so 1 day in settlement is meaningful)
+            float resupply = 40.0f;
 
-            // Wealthy settlement bonus: +1% if prosperity > 5000 (Town has Prosperity property)
+            // Wealthy settlement bonus: +5% if prosperity > 5000
             float prosperity = settlement.Town?.Prosperity ?? 0f;
             if (prosperity > 5000)
             {
-                resupply += 1.0f;
+                resupply += 5.0f;
             }
 
-            // Owned settlement bonus: +1% if lord owns the settlement
+            // Owned settlement bonus: +5% if lord owns the settlement
             if (settlement.OwnerClan == lordParty.LeaderHero?.Clan)
             {
-                resupply += 1.0f;
+                resupply += 5.0f;
             }
 
             ModLogger.Debug(LogCategory,
-                $"Resupply in {settlement.Name}: base=3, prosperity={prosperity:F0} ({(prosperity > 5000 ? "+1" : "0")}), " +
+                $"Resupply in {settlement.Name}: base=40, prosperity={prosperity:F0} ({(prosperity > 5000 ? "+5" : "0")}), " +
                 $"owned={settlement.OwnerClan == lordParty.LeaderHero?.Clan} => {resupply:F1}%");
 
             return resupply;

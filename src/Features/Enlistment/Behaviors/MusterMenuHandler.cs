@@ -2249,7 +2249,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     RationOutcome = _currentMuster.RationOutcome ?? "unknown",
                     RationItemId = string.Empty, // Not tracked in current muster state
                     QmReputation = _currentMuster.QMRep,
-                    SupplyLevel = CompanySupplyManager.Instance?.TotalSupply ?? 0,
+                    SupplyLevel = EnlistmentBehavior.Instance?.CompanyNeeds?.Supplies ?? 60,
                     LostSinceLast = 0, // Not tracked in current muster state
                     SickSinceLast = 0, // Not tracked in current muster state
                     OrdersCompleted = ordersCompleted,
@@ -3416,8 +3416,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var baggageColor = _currentMuster.BaggageOutcome == "confiscated" ? "Alert" : _currentMuster.BaggageOutcome == "bribed" ? "Warning" : "Success";
             sb.AppendLine($"<span style=\"Label\">BAGGAGE CHECK:</span>        <span style=\"{baggageColor}\">{baggageText}</span>");
 
-            // Supply Status
-            var supplyPct = CompanySupplyManager.Instance?.TotalSupply ?? 0;
+            // Supply Status - use CompanyNeeds for proper fallback handling
+            var supplyPct = EnlistmentBehavior.Instance?.CompanyNeeds?.Supplies ?? 60;
             var supplyStatus = supplyPct >= 50 ? "Adequate" : supplyPct >= 20 ? "Low" : "Critical";
             var supplyColor = supplyPct >= 50 ? "Success" : supplyPct >= 20 ? "Warning" : "Alert";
             sb.AppendLine($"<span style=\"Label\">SUPPLY STATUS:</span>        <span style=\"{supplyColor}\">{supplyPct}% - {supplyStatus} condition</span>");

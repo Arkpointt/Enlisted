@@ -1,0 +1,86 @@
+"workshopitem"
+{
+	"appid"		"261550"
+	"publishedfileid"		"3621116083"
+	"contentfolder"		"C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted"
+	"previewfile" "C:\Dev\Enlisted\Enlisted\tools\workshop\preview.png"
+	"title"		"Enlisted - Military Service Mod"
+	"description"		"Enlist with any lord, follow orders, climb the ranks, and retire with honor. Lightweight, open-source, and built to play nicely with other mods and UI overhauls. Work in progress: features are still being tuned and expanded. Nexus page: https://www.nexusmods.com/mountandblade2bannerlord/mods/9193?tab=description
+
+[h1]What is this mod?[/h1]
+Live the early game as a soldier instead of running an empire. Earn wages, follow your lord's orders, and let the world unfold around you. Contributions are welcome on GitHub.
+
+[h1]Main Features[/h1]
+[list]
+[*] [b]The life of a soldier[/b] - Ask any lord to enlist. You march, eat, and get paid by your lord; personal loot/prisoner micromanagement is suppressed. Crash guards keep you from getting stuck in edge states.
+[*] [b]Chain of command[/b] - Auto-deploy into your assigned formation; Order of Battle suppressed. F1-F9 commanding disabled. Pick your troop line/formation as you rise (culture-aware, with cooldowns).
+[*] [b]Rank & progression[/b] - Advance through Levy ??? Footman ??? Serjeant ??? Man-at-Arms ??? Banner Serjeant ??? Household Guard for better wages, gear, and discounts.
+[*] [b]Camp life & duties[/b] - Daily duties like Guard, Sentry, Forager, Cook, Messenger, Quartermaster Hand, Field Medic. Passive training per formation (e.g., Athletics for Infantry, Riding for Cavalry). Quartermaster sells culture-appropriate kits that unlock as you rank.
+[*] [b]Command & freedom[/b] - Camp (Tier 2+) to review records and manage companions safely. Personal Retinue (Tier 4+) with upkeep. Recon Missions (Tier 4+) for intel and rewards. Temporary Leave up to 14 days (don't desert).
+[*] [b]Naval support[/b] - Parties follow lords onto ships. Your ships are protected while enlisted; lords cannot commandeer them.
+[/list]
+
+[h1]Retirement[/h1]
+[list]
+[*] Standard term: 252 days (3 years)
+[*] Honorable discharge: gold bonus + relation boost
+[*] Re-enlistment: signing bonus
+[*] Desertion: crime rating + relation loss
+[/list]
+
+[h1]Requirements[/h1]
+[list]
+[*] Mount & Blade II: Bannerlord v1.3.13
+[*] Bannerlord.Harmony v2.4.2+
+[/list]
+
+[h1]Installation[/h1]
+[list]
+[*] Extract to <Bannerlord>\Modules\Enlisted\
+[*] Enable Harmony then Enlisted; load order: Harmony ??? Native ??? ... ??? Enlisted
+[*] Optional tuning: edit JSON in Modules\Enlisted\ModuleData\Enlisted\
+[/list]
+
+[h1]Troubleshooting[/h1]
+[list]
+[*] Logs: Modules\Enlisted\Debugging\enlisted.log (core), conflicts.log (Harmony/load order)
+[*] If you crash, check logs and list other mods/versions before reporting
+[/list]
+
+[h1]How to report issues[/h1]
+[list]
+[*] Share links (Drive/Dropbox/Gist/Pastebin) - you can also email the logs if needed. Email is on Nexus.
+[*] Include newest logs from Modules\Enlisted\Debugging\: Session-A_{timestamp}.log and Conflicts-A_{timestamp}.log (A = newest). Legacy aliases exist, but rotating files are canonical.
+[*] For crashes, add the crash folder from C:\ProgramData\Mount and Blade II Bannerlord\crashes\ (zip it).
+[*] Include what you were doing when it crashed.
+[/list]
+
+[h1]Open Source[/h1]
+[list]
+[*] PRs welcome for fixes, features, and balance on GitHub
+[*] https://github.com/Arkpointt/Enlisted
+[/list]"
+	"visibility"		"0"
+    "tags"
+    {
+		"0"		"Gameplay"
+		"1"		"Singleplayer"
+		"2"		"Overhaul"
+    }
+	"changenote"		"v0.9.0 - Major Content Update
+[list]
+[*] Added Commander's Retinue system for T7+ officers with 23 narrative events
+[*] Added Baggage Train system for inventory management during enlistment
+[*] Fixed formation assignment to properly detect player equipment (T1-T6)
+[*] Added comprehensive tooltip system for all events, decisions, and orders
+[*] Expanded content library to 275+ pieces across 9 military ranks
+[*] Added 85 Order Events with dynamic triggers during duty periods
+[*] Added 16 Military Orders spanning Basic Duties (T1-T3) and Advancement Orders (T4+)
+[*] Added 38 Camp Decisions including training, social, economic, and career activities
+[*] Added Quartermaster equipment system with 6 quality tiers and upgrade paths
+[*] Improved content validation tools and localization system
+[*] Updated for Bannerlord v1.3.13
+[*] Performance improvements and crash guards for sieges and naval integration
+[/list]"
+}
+

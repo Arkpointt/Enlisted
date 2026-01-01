@@ -107,8 +107,8 @@ This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.13** that transf
 
 **Before committing:**
 ```powershell
-# Validate all events have proper fallback text
-python tools/events/validate_events.py
+# Validate all events have proper structure, references, logic, and consistency
+python tools/events/validate_content.py
 
 # Build and check for errors
 cd C:\Dev\Enlisted\Enlisted
@@ -143,7 +143,8 @@ Before committing code, verify:
 
 **Data Files:**
 - [ ] JSON fallback fields immediately follow ID fields
-- [ ] Event validation passes: `python tools/events/validate_events.py`
+- [ ] Order events include skillXp in effects (tooltips cannot be null, XP cannot be missing)
+- [ ] Event validation passes: `python tools/events/validate_content.py`
 
 ---
 
@@ -450,6 +451,12 @@ Never use empty fallback text (`"title": ""`). Always provide the actual text.
 Example full path: `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
 
 The mod writes session logs directly to the `Debugging` folder inside the Enlisted module directory. This is NOT the game's crash logs folder and NOT Documents.
+
+**Installation Locations:**
+- **Steam Workshop:** `C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\3621116083\`
+- **Manual/Nexus:** `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\`
+
+Note: Having both versions installed creates duplicate entries in the launcher and can cause conflicts. The mod includes automatic conflict detection at startup - check `Conflicts-A_{timestamp}.log` for mod compatibility issues.
 
 #### Session Rotation System
 
@@ -962,7 +969,7 @@ public override void SyncData(IDataStore dataStore)
 1. Run `python tools/events/sync_event_strings.py` to automatically extract missing strings from JSON event files and append them to `enlisted_strings.xml`
 2. The script extracts all string IDs (`titleId`, `setupId`, `textId`, `resultTextId`, `resultFailureTextId`) and their fallback texts from JSON, properly escaping special characters (`&#xA;` for newlines, `&apos;` for apostrophes, `&quot;` for quotes)
 3. All existing events now have complete localization (504 strings added Dec 2025 covering escalation thresholds, training events, and general content)
-4. **Validation:** Run `python tools/events/validate_events.py` before committing to catch missing fallback fields. This enforces the Critical JSON Rules above.
+4. **Validation:** Run `python tools/events/validate_content.py` before committing to catch missing fallback fields, invalid skill names, missing XP, and logic errors. This enforces the Critical JSON Rules above.
 
 ### 10. Missing SaveableTypeDefiner Registration
 **Problem:** "Cannot Create Save" error when serializing custom types
@@ -983,3 +990,17 @@ public override void SyncData(IDataStore dataStore)
 ### 14. Redundant Default Parameters
 **Problem:** Passing default parameter values explicitly is redundant and verbose
 **Solution:** Omit parameters that match the method's default value (e.g., `Finish()` instead of `Finish(true)` if `true` is the default)
+
+### 15. Missing XP Rewards in Order Events
+**Problem:** Order events only grant reputation without skill XP, causing "0 XP in muster reports" complaints
+**Solution:**
+1. **All order event options must grant XP** - Use `effects.skillXp` (not `rewards.skillXp`)
+2. Match XP to activity type:
+   - Guard/Sentry duty → Athletics (10-20), Tactics (12-18)
+   - Patrol → Scouting (15-24), Athletics (10-18)
+   - Medical → Medicine (12-32)
+   - Equipment → Crafting (10-25)
+   - Leadership → Leadership (14-30), Tactics (18-32)
+3. Failed skill checks should still grant reduced XP (50% of success)
+4. **Validation:** Run `python tools/events/validate_content.py` - warns if order events lack XP rewards
+5. XP flow: `Hero.AddSkillXp()` (skill progression) + `EnlistmentBehavior.AddEnlistmentXP()` (rank progression)

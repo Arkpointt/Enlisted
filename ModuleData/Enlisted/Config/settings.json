@@ -3,7 +3,7 @@
   "enabled": true,
   "use_new_muster_menu": true,
   "PauseGameDuringMuster": true,
-  "EnableDebugTools": true,
+  "EnableDebugTools": false,
   "LogMenus": true,
   "LogCampaignEvents": true,
   "RunTroopDiscoveryValidation": false,

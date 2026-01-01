@@ -152,6 +152,7 @@
     <string id="Enlisted_Message_LordFallenDischarged" text="Your lord has fallen in battle. You have been honorably discharged." />
     <string id="Enlisted_Message_MinorFactionDeserter" text="You have deserted {LORD}'s company. Your reputation with {FACTION} has suffered, and they will not accept you back for some time." />
     <string id="Enlisted_Message_MinorFactionCooldown" text="{FACTION} will not accept you back for another {DAYS} days due to your past desertion." />
+    <string id="Enlisted_Equipment_Stowed" text="Your previous equipment ({COUNT} items) has been added to your inventory." />
     <string id="Enlisted_Message_BagCheckAbortCooldown" text="{LORD} remembers your hesitation at the wagon line. Return in {DAYS} days, once your affairs are in order." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->

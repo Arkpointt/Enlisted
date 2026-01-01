@@ -1,0 +1,142 @@
+[center][center][center][center][size=6][b][color=#b85e34]ENLISTED[/color][/b][/size]
+[i]Enlist with any lord. Follow orders. Climb the ranks. Retire with honor.[/i]
+[url=https://github.com/Arkpointt/Enlisted][img]https://img.shields.io/badge/GitHub-Source%20Code-blue?style=for-the-badge&logo=github[/img][/url][/center]
+[line]
+[size=4][b][color=#b85e34]WHAT IS THIS MOD?[/color][/b][/size]
+Enlisted transforms Bannerlord into a deep soldier career simulator. Instead of managing an empire, you serve one. Enlist with any Lord, follow their orders, earn your wages, and let the world unfold around you.
+
+It features [b]275+ narrative content pieces[/b] spanning [b]9 military ranks[/b] from fresh recruit to senior commander, built to be lightweight, open-source, and compatible with naval mods and UI overhauls.
+
+[b][color=#c9a96e]A Note on Open Source:[/color][/b]
+Contributions are welcome. Whether it's bug fixes, features, or balance tweaks, PRs are encouraged on [url=https://github.com/Arkpointt/Enlisted]GitHub[/url].
+[line]
+[size=4][b][color=#b85e34]MAIN FEATURES[/color][/b][/size]
+[b][color=#c9a96e]⚔️ THE LIFE OF A SOLDIER[/color][/b]
+[b]Simple Enlistment:[/b] Ask any lord, "I wish to serve in your warband," and you're in.
+[b]True Immersion:[/b] You march, eat, and get paid by your lord. Live inside their campaign loop.
+[b]Crash Guards:[/b] Built-in safety checks for sieges, encounters, captivity, and naval integration.
+[b]Companions:[/b] Your companions stay with you during service. Toggle who fights vs who stays back.
+[b]Temporary Leave:[/b] Visit family, conduct trade, rest and recover. Just don't go AWOL.
+
+[b][color=#c9a96e]🛡️ CHAIN OF COMMAND[/color][/b]
+[b]Automatic Deployment (T1-T6):[/b] Auto-assigned to formation based on your equipped weapons. The Order of Battle screen is suppressed to keep you in the moment.
+[b]16 Military Orders:[/b] Chain of command issues orders from sergeants, lieutenants, and your lord.
+[list][*][b]Basic Duties (T1-T3):[/b] Auto-assigned mandatory tasks (guard duty, camp patrol, firewood detail, equipment checks, muster, sentry).
+[*][b]Advancement Orders (T4+):[/b] Optional missions you can accept or decline (lead patrol, scout route, train recruits, escort duty).[/list]
+[b]85 Order Events:[/b] Dynamic events fire during order execution with 15-35% chance per duty period.
+[b]Follow Orders:[/b] F1-F9 keys are disabled. You don't give the orders; you follow them.
+
+[b][color=#c9a96e]📈 RANK & PROGRESSION (9 TIERS)[/color][/b]
+Climb the ladder through [b]9 distinct tiers[/b] based on battle XP, service time, battles fought, reputation, and discipline:
+[b]T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8 → T9[/b]
+Culture-specific rank titles, narrative "proving events" at key promotions, equipment tier unlocks, and officer privileges at higher ranks.
+
+[b][color=#c9a96e]💰 PAY & MUSTER SYSTEM[/color][/b]
+[b]12-Day Muster Cycle:[/b] Wages accrue daily in a ledger, paid out every 12 days at ceremonial muster events.
+[b]8-Stage Muster Ceremonies:[/b] Immersive pay day events with stages including pay line, baggage check, inspection, recruit, promotion recap, and retinue management.
+[b]Period Summaries:[/b] 12-day recaps with combat/training/orders/XP breakdown.
+[b]Pay Tension System:[/b] When pay is late, tension rises and unlocks special choices.
+
+[b][color=#c9a96e]⛺ CAMP LIFE & DUTIES[/color][/b]
+[b]Two-Layer Camp System:[/b]
+[list][*][b]Background Simulation:[/b] Autonomous company life runs automatically (soldiers get sick, injured, or desert; equipment breaks; morale shifts).
+[*][b]Camp Opportunities:[/b] 29 contextual player activities with fitness scoring that adapts to your preferences.[/list]
+[b]38 Player-Initiated Decisions:[/b] Training (weapon drills, sparring), social (join the men, write letters), economic (gambling, loans), career (request audience, volunteer), information gathering (rumors, scouts), and more.
+[b]Fatigue System:[/b] Actions accumulate fatigue; rest recovers it. Fatigue affects performance and event outcomes.
+[b]Medical Care:[/b] 15 injury types with severity levels, treatment decisions, recovery chains, and surgeon interactions.
+
+[b][color=#c9a96e]🛠️ EQUIPMENT & QUARTERMASTER[/color][/b]
+[b]Quartermaster System (10+ Subsystems):[/b]
+[list][*]Equipment purchasing with reputation-based discounts (0-30%)
+[*][b]6 Quality Tiers:[/b] Shoddy, Standard, Serviceable, Fine, Masterwork, Legendary
+[*][b]Upgrade System:[/b] Sequential quality improvements with real stat bonuses using native ItemModifier
+[*]Gauntlet Grid UI for browsing and upgrades
+[*]Buyback service (30-65% value), tier gates by rank
+[*][b]Officers Armory (T7+):[/b] Elite gear catalog for commanders[/list]
+[b]Provisions & Rations:[/b] T1-T6 issued rations every 12 days. T7+ premium provisions shop with rank-based access.
+[b]Baggage Train:[/b] Early enlistment inventory handling, baggage checks during muster, reclamation of personal gear upon discharge.
+
+[b][color=#c9a96e]🧠 IDENTITY & REPUTATION[/color][/b]
+[b]Emergent Identity:[/b] Your role develops from native Bannerlord traits and choices. Specializations include:
+Officer (Commander 10+) • Scout (ScoutSkills 10+) • Medic (Surgery 10+) • Engineer (SiegeCraft 10+) • Operative (RogueSkills 10+) • NCO (SergeantCommandSkills 8+) • Soldier (default)
+[b]Three Reputation Tracks:[/b]
+[list][*][b]Lord Reputation:[/b] Standing with your commanding lord
+[*][b]Officer Reputation:[/b] Respect from NCOs and officers
+[*][b]Soldier Reputation:[/b] Popularity among rank-and-file troops[/list]
+Each reputation affects different event outcomes, quartermaster discounts, and promotion eligibility.
+
+[b][color=#c9a96e]🏇 COMMANDER'S RETINUE (T7+ OFFICERS)[/color][/b]
+[b]Personal Military Force:[/b] Officers command a personal retinue at T7-T9.
+[b]Context-Aware Reinforcements:[/b] 1-3 troops per battle based on relation and loyalty.
+[b]23 Narrative Events:[/b] 11 character development events, 6 post-battle incidents (heroism, casualties, desertion), 4 camp decisions (discipline, rewards, training).
+[b]Named Veterans:[/b] Persistent characters with loyalty tracking.
+
+[b][color=#c9a96e]📰 UI & REPORTING[/color][/b]
+[b]Native Game Menu Integration:[/b] All interactions through native Bannerlord game menus. Fast, keyboard-friendly.
+[b]Enlisted Status Hub:[/b] Rank, orders, reports, camp activities, and discharge requests.
+[b]Custom Combat Log:[/b] Native-styled scrollable feed with 5-minute persistence, smart auto-scroll, inactivity fade, and clickable encyclopedia links.
+[b]Daily Brief:[/b] Immersive narrative summary of company situation, casualties, supply status, recent events, and kingdom news.
+[b]Gauntlet Interfaces:[/b] Equipment browsing, upgrade system, provisions shop (T7+) with professional color scheme.
+
+[b][color=#c9a96e]🤖 BATTLE AI (OPTIONAL SUBMODULE)[/color][/b]
+Can be [b]disabled via Bannerlord launcher checkbox[/b] (no performance cost when disabled).
+Enlisted-only activation, field battles only (siege and naval use native AI).
+AI improvements through better decision-making, not stat cheating.
+
+[b][color=#c9a96e]⚓ NAVAL SUPPORT[/color][/b]
+Fully compatible with naval mods (War Sails DLC).
+Parties follow lords onto ships.
+Your personal ships are protected from damage while enlisted.
+Naval-only features gracefully gated if DLC not present.
+[line]
+[size=4][b][color=#b85e34]RETIREMENT & DISCHARGE[/color][/b][/size]
+[b]Discharge Process:[/b] Request discharge at camp hub → resolves at next muster (final muster stage).
+[b]Final Settlement:[/b] Final pay settlement, equipment reclamation, and retirement options.
+[b]90-Day Re-Enlistment Cooldown:[/b] After discharge, wait 90 days before re-enlisting with the same faction.
+[b]Desertion:[/b] Walk away early? Expect a crime rating and relation loss.
+[line]
+[size=4][b][color=#b85e34]INSTALLATION[/color][/b][/size]
+[b][color=#c9a96e]Requirements:[/color][/b]
+Mount & Blade II: Bannerlord (supported versions depend on the release you installed)
+[url=https://www.nexusmods.com/mountandblade2bannerlord/mods/2006]Bannerlord.Harmony[/url] (required)
+
+[b][color=#c9a96e]How to Install:[/color][/b]
+1. Extract the [b]Enlisted[/b] folder to your [i]<Bannerlord>\Modules\[/i] directory.
+2. Enable [b]Harmony[/b] and [b]Enlisted[/b] in the game launcher.
+3. [b]Recommended Load Order:[/b]
+   Harmony → Native → SandBoxCore → SandBox → StoryMode → CustomBattle → Enlisted
+
+[b][color=#c9a96e]Optional Battle AI Submodule:[/color][/b]
+If you want to disable the Battle AI, simply uncheck it in the Bannerlord launcher. There is no performance cost when disabled.
+
+[b][color=#c9a96e]Configuration (Optional):[/color][/b]
+You can tweak wages, XP thresholds, duties, and equipment pricing by editing the JSON files found in:
+[i]Modules\Enlisted\ModuleData\Enlisted\Config\[/i]
+
+[b][color=#c9a96e]Troubleshooting:[/color][/b]
+Logs are generated in [i]<Bannerlord>\Modules\Enlisted\Debugging\[/i]
+
+[b]Example path:[/b]
+[i]C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\[/i]
+
+[b]Files to share when reporting issues:[/b]
+[list][*][b]Session-A_*.log[/b] (latest session log)
+[*][b]Conflicts-A_*.log[/b] (latest conflicts report)
+[*][b]Current_Session_README.txt[/b] (points to current files)[/list]
+
+[b]Error Codes:[/b] Enlisted uses stable error codes (e.g., [b][E-CAMPUI-031][/b]) that are searchable and consistent. Please include error codes when reporting issues!
+
+[b]Common Issues:[/b]
+[list][*][b]Mod menu options don't show:[/b] Confirm Bannerlord.Harmony is enabled and loaded before Enlisted.
+[*][b]War Sails / naval features don't work:[/b] Check if War Sails (NavalDLC) expansion is enabled. Check session log for W-DLC-* warnings.
+[*][b]Events don't fire:[/b] Confirm event systems are enabled in enlisted_config.json.[/list]
+[line]
+[size=4][b][color=#b85e34]TRANSLATIONS[/color][/b][/size]
+The mod is fully translatable with [b]1,822 localizable strings[/b].
+See [i]ModuleData/Languages/README.md[/i] for translation instructions.
+Current languages: [b]English[/b] (default)
+[line]
+[size=4][b][color=#b85e34]MORE INFORMATION[/color][/b][/size]
+[b]Full Documentation:[/b] See [i]docs/index.md[/i] in the mod folder
+[b]Source Code:[/b] [url=https://github.com/Arkpointt/Enlisted]GitHub Repository[/url]
+[b]License:[/b] Open Source - contributions welcome![/center][/center][/center]

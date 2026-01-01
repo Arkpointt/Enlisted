@@ -118,6 +118,29 @@ After publishing:
 
 ## Troubleshooting
 
+### Workshop vs Manual Installation Locations
+
+**Steam Workshop subscribers:** The mod installs to:
+```
+C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\3621116083\
+```
+
+**Manual/Nexus users:** The mod should be in:
+```
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\
+```
+
+**IMPORTANT:** If you have both the Workshop version AND a manual install, you'll see duplicate entries in the Bannerlord launcher. This can cause conflicts. Unsubscribe from Workshop if you're testing a manual build.
+
+### Mod Conflict Detection
+
+The mod automatically detects conflicts with other mods at startup. After launching the game with Enlisted enabled, check:
+```
+<Bannerlord>\Modules\Enlisted\Debugging\Conflicts-A_{timestamp}.log
+```
+
+This log shows if other mods are patching the same game methods as Enlisted, which helps diagnose incompatibilities.
+
 ### "Login Failed"
 - Verify Steam credentials
 - Check Steam Guard code

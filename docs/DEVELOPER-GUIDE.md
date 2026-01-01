@@ -148,9 +148,12 @@ C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Module
 - Harmony patch conflicts (other mods patching the same methods)
 - Patch execution order and priorities
 - All registered campaign behaviors
-- Environment info (game version, mod version, OS, runtime)
+- Environment info (game version, mod version, OS, runtime, installation paths)
 - Complete module list
 - Categorized patch inventory (Army/Party, Encounter, Finance, UI/Menu, Combat, etc.)
+- **Module health check:** Verifies presence of JSON/XML files for all content types (Dialogue, Events, Decisions, Orders, Config, Localization)
+- **Runtime catalog status:** Confirms successful loading/parsing of content catalogs (EventCatalog, DecisionCatalog, QMDialogueCatalog, OrderCatalog)
+- **Patch application status:** Reports total number of methods patched and patch counts (prefix, postfix, transpiler, finalizer)
 
 **Configure Log Levels:**
 
