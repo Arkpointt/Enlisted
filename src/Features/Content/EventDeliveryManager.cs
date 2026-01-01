@@ -409,6 +409,30 @@ namespace Enlisted.Features.Content
             // Apply flag changes
             ApplyFlagChanges(option);
 
+            // Special handling: Open baggage stash for dec_access_baggage decision
+            if (_currentEvent != null && 
+                _currentEvent.Id.Equals("dec_access_baggage", StringComparison.OrdinalIgnoreCase) &&
+                !option.Id.Equals("cancel", StringComparison.OrdinalIgnoreCase))
+            {
+                // Open the stash screen
+                var enlistmentBehavior = EnlistmentBehavior.Instance;
+                if (enlistmentBehavior != null)
+                {
+                    NextFrameDispatcher.RunNextFrame(() =>
+                    {
+                        try
+                        {
+                            enlistmentBehavior.TryOpenBaggageTrain();
+                            ModLogger.Info(LogCategory, "Opened baggage stash from decision");
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error(LogCategory, "Failed to open baggage stash from decision", ex);
+                        }
+                    });
+                }
+            }
+
             // Handle enlistment abort (used by bag check)
             if (option.AbortsEnlistment)
             {

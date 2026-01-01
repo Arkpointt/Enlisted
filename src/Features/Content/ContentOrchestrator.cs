@@ -157,6 +157,9 @@ namespace Enlisted.Features.Content
                 // Update camp opportunities availability
                 RefreshCampOpportunities(worldSituation);
 
+                // Update baggage simulation context (world-state-aware probabilities)
+                RefreshBaggageSimulation(worldSituation);
+
                 // Debug logging (only appears when Debug level is enabled for this category)
                 ModLogger.Debug(LogCategory, $"Orchestrator active: Activity={activityLevel}, Phase={worldSituation.CurrentPhase}");
 
@@ -262,6 +265,37 @@ namespace Enlisted.Features.Content
                 // Opportunities are generated on-demand when player opens DECISIONS menu
                 // CampOpportunityGenerator.GenerateCampLife() uses current world state
                 ModLogger.Debug(LogCategory, "Camp opportunity system active");
+            }
+        }
+
+        /// <summary>
+        /// Updates baggage simulation with world-state-aware probabilities.
+        /// Makes baggage events (delays, raids, arrivals) responsive to campaign situation.
+        /// </summary>
+        private void RefreshBaggageSimulation(WorldSituation worldSituation)
+        {
+            var baggageManager = Logistics.BaggageTrainManager.Instance;
+            if (baggageManager == null)
+            {
+                return;
+            }
+
+            try
+            {
+                // Calculate current probabilities for diagnostics
+                var probs = baggageManager.CalculateEventProbabilities(worldSituation);
+                
+                // The probabilities will be used automatically when BaggageTrainManager
+                // checks for events - no need to pass them explicitly
+                
+                ModLogger.Debug(LogCategory, 
+                    $"Baggage simulation updated: CatchUp={probs.CaughtUpChance}%, " +
+                    $"Delay={probs.DelayChance}%, Raid={probs.RaidChance}% " +
+                    $"(Activity={worldSituation.ExpectedActivity})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error refreshing baggage simulation", ex);
             }
         }
 

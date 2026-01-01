@@ -127,6 +127,40 @@
       ]
     },
     {
+      "id": "dec_access_baggage",
+      "category": "decision",
+      "titleId": "dec_access_baggage_title",
+      "title": "Access Baggage Train",
+      "setupId": "dec_access_baggage_setup",
+      "setup": "The baggage wagons are accessible. Time to check your belongings.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_hours": 1,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "access",
+          "textId": "dec_access_baggage_open",
+          "text": "Open your baggage.",
+          "effects": {},
+          "resultTextId": "dec_access_baggage_result",
+          "resultText": "You rummage through your belongings.",
+          "tooltip": "Access your stored items."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_access_baggage_cancel",
+          "text": "Leave it for now.",
+          "resultTextId": "dec_access_baggage_cancel_result",
+          "resultText": "Your belongings can wait.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
       "id": "dec_training_drill",
       "category": "decision",
       "titleId": "dec_training_drill_title",

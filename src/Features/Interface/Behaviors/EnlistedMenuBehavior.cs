@@ -1520,29 +1520,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 },
                 false, 5);
 
-            // Access Baggage Train - always enabled, routes to direct access or QM request based on state
-            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_baggage_train",
-                "{=baggage_menu_option}Access Baggage Train",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-
-                    // Always enabled - routing happens in handler based on access state
-                    var baggageManager = BaggageTrainManager.Instance;
-                    if (baggageManager != null)
-                    {
-                        var accessState = baggageManager.GetCurrentAccess();
-                        args.Tooltip = GetBaggageAccessTooltip(accessState);
-                    }
-                    else
-                    {
-                        args.Tooltip = new TextObject("{=baggage_tooltip_full_access}Access your stored belongings");
-                    }
-
-                    return true;
-                },
-                OnBaggageTrainSelected,
-                false, 6);
+            // Access Baggage Train moved to Decisions accordion - appears only when accessible
 
             // My Lord... - conversation with the current lord (Conversation icon)
             starter.AddGameMenuOption(CampHubMenuId, "camp_hub_talk_to_lord",

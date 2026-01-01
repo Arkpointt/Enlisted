@@ -1673,11 +1673,11 @@
     <string id="qm_upgrade_response_no" text="Nothing on you worth the effort. Come back with proper kit." />
     <string id="qm_upgrade_response_dynamic" text="{UPGRADE_RESPONSE}" />
 
-    <!-- ------------------------------------------------------------------- -->
+    <!-- =================================================================== -->
     <!-- PHASE 6: CONTEXTUAL DIALOGUE STRINGS -->
     <!-- Supply reports, browse responses, sell responses, upgrade responses -->
     <!-- Organized by: archetype, context, reputation -->
-    <!-- ------------------------------------------------------------------- -->
+    <!-- =================================================================== -->
 
     <!-- Supply Reports - Veteran Archetype -->
     <string id="qm_supply_veteran_excellent" text="Supplies are solid. Wagons are full, men are fed. We're ready for whatever comes." />
@@ -2744,6 +2744,18 @@
     <string id="qm_equipment_unavailable" text="Equipment information unavailable" />
     <string id="qm_no_variants_available" text="No {EQUIPMENT_TYPE} variants available" />
     <string id="qm_no_affordable_variants" text="No affordable {EQUIPMENT_TYPE} variants available. You need more gold." />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- DECISIONS - Camp Hub Equipment -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Access Baggage Train Decision -->
+    <string id="dec_access_baggage_title" text="Access Baggage Train" />
+    <string id="dec_access_baggage_setup" text="The baggage wagons are accessible. Time to check your belongings." />
+    <string id="dec_access_baggage_open" text="Open your baggage." />
+    <string id="dec_access_baggage_result" text="You rummage through your belongings." />
+    <string id="dec_access_baggage_cancel" text="Leave it for now." />
+    <string id="dec_access_baggage_cancel_result" text="Your belongings can wait." />
     
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- ORDER SYSTEM - Warnings and Notifications -->
