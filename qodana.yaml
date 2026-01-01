@@ -22,6 +22,12 @@ profile:
 
 #Disable inspections
 exclude:
+  - name: All
+    paths:
+      - "**/*.md"  # Disable all inspections for Markdown files
+  - name: MarkdownIncorrectTableFormatting
+    paths:
+      - "**/*.md"  # Explicitly disable table formatting warnings for Markdown
   - name: UnusedMember.Local
     paths:
       - src/Mod.GameAdapters/Patches/**/*.cs  # Harmony patches - methods called dynamically by Harmony runtime

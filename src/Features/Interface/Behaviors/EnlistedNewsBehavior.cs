@@ -1045,7 +1045,7 @@ namespace Enlisted.Features.Interface.Behaviors
         /// recent raids, or recent arrivals. Does not show FullAccess in settlements (normal state).
         /// Uses sea-specific text when party is at sea.
         /// </summary>
-        private static string BuildBaggageStatusLine()
+        public static string BuildBaggageStatusLine()
         {
             try
             {
@@ -3247,12 +3247,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Build headline from outcome
                 string headline = outcome.GetNewsSummary();
                 
-                // Add override context if applicable
-                if (outcome.WasOverride && !string.IsNullOrEmpty(outcome.OverrideReason))
-                {
-                    headline = $"{headline} ({outcome.OverrideReason})";
-                }
-
                 var dayNumber = (int)CampaignTime.Now.ToDays;
                 var storyKey = $"routine:{outcome.Phase}:{outcome.ActivityCategory}:{dayNumber}";
 

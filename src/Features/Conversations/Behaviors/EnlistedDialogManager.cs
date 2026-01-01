@@ -16,6 +16,7 @@ using Enlisted.Mod.Entry;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Conversation;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -2297,12 +2298,14 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                 // Get strategic context if available
                 var strategicContext = "";
+                var lordSettlement = (Settlement)null;
                 try
                 {
                     var lord = enlistment.EnlistedLord;
                     if (lord?.PartyBelongedTo != null)
                     {
                         strategicContext = ArmyContextAnalyzer.GetLordStrategicContext(lord.PartyBelongedTo);
+                        lordSettlement = lord.PartyBelongedTo.CurrentSettlement;
                     }
                 }
                 catch
@@ -2312,7 +2315,7 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                 // Build contextual supply report with archetype flavor
                 string statusText = GetSupplyReportWithArchetypeFlavor(supplies, equipment, morale,
-                    archetype, reputation, strategicContext);
+                    archetype, reputation, strategicContext, lordSettlement);
 
                 MBTextManager.SetTextVariable("SUPPLY_STATUS", statusText);
                 return true;
@@ -2327,11 +2330,11 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         ///     Generates a supply report with archetype personality and reputation tone.
-        ///     Includes strategic context awareness (winter, battle prep, etc.).
+        ///     Includes strategic context awareness (winter, battle prep, etc.) and resupply status when in settlements.
         ///     Fully bulletproof with null checks, validation, and fallbacks.
         /// </summary>
         private string GetSupplyReportWithArchetypeFlavor(int supplies, int equipment, int morale,
-            string archetype, int reputation, string strategicContext)
+            string archetype, int reputation, string strategicContext, Settlement lordSettlement = null)
         {
             // Validate and normalize inputs
             archetype = ValidateArchetype(archetype);
@@ -2436,6 +2439,16 @@ namespace Enlisted.Features.Conversations.Behaviors
                         baseReport += contextNote;
                     }
                 }
+            }
+
+            // Add resupply context if in a settlement (hourly resupply is active)
+            // Simplified flavor without percentages - just acknowledges we're resupplying
+            if (lordSettlement != null && (lordSettlement.IsTown || lordSettlement.IsCastle) && supplies < 95)
+            {
+                string resupplyStringId = $"qm_resupply_{archetype}_standard";
+                string resupplyNote = GetLocalizedTextSafe(resupplyStringId, 
+                    " We're taking on supplies while we're here.");
+                baseReport += resupplyNote;
             }
 
             return baseReport;

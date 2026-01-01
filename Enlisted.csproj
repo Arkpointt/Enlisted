@@ -153,6 +153,7 @@
   
   <ItemGroup>
     <!-- GUI Color Brushes -->
+    <Content Include="Enlisted.sln.DotSettings" />
     <Content Include="GUI\Brushes\EnlistedColors.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -575,6 +576,11 @@
     <OrdersData Include="ModuleData\Enlisted\Orders\*.json"/>
   </ItemGroup>
   
+  <ItemGroup>
+    <!-- Content (Injuries and other dynamic content) -->
+    <ContentData Include="ModuleData\Enlisted\Content\*.json"/>
+  </ItemGroup>
+  
   <!-- ========================================================================
        DOCUMENTATION & PROJECT FILES
        ======================================================================== -->
@@ -614,6 +620,7 @@
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Decisions"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Orders"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Content"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
     
     <!-- COPY MODULE CONFIGURATION -->
@@ -626,6 +633,7 @@
     <Copy SourceFiles="@(DecisionsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Decisions\"/>
     <Copy SourceFiles="@(OrdersData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Orders\"/>
     <Copy SourceFiles="@(DialogueData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Dialogue\"/>
+    <Copy SourceFiles="@(ContentData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Content\"/>
     
     <!-- COPY LOCALIZATION FILES (XML) -->
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>

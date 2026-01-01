@@ -14,6 +14,7 @@ using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Extensions;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Orders.Behaviors
 {
@@ -982,13 +983,16 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         private void TriggerDischargeWarning()
         {
+            var warningTitle = new TextObject("{=orders_warning_insubordination_title}Warning: Insubordination").ToString();
+            var warningText = new TextObject("{=orders_warning_insubordination_text}Your repeated refusal of orders has not gone unnoticed. Continued insubordination may result in discharge from service.").ToString();
+            var understoodText = new TextObject("{=orders_understood}Understood").ToString();
+            
             InformationManager.ShowInquiry(new InquiryData(
-                titleText: "Warning: Insubordination",
-                text: "Your repeated refusal of orders has not gone unnoticed. " +
-                      "Continued insubordination may result in discharge from service.",
+                titleText: warningTitle,
+                text: warningText,
                 isAffirmativeOptionShown: true,
                 isNegativeOptionShown: false,
-                affirmativeText: "Understood",
+                affirmativeText: understoodText,
                 negativeText: null,
                 affirmativeAction: null,
                 negativeAction: null

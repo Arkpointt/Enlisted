@@ -1471,7 +1471,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (enlistment == null)
                 {
                     ModLogger.Warn(LogCategory, "OnMusterPayInit: EnlistmentBehavior null");
-                    MBTextManager.SetTextVariable("MUSTER_PAY_TEXT", "Pay records unavailable.");
+                    var payUnavailable = new TextObject("{=muster_pay_unavailable}Pay records unavailable").ToString();
+                    MBTextManager.SetTextVariable("MUSTER_PAY_TEXT", $"{payUnavailable}.");
                     MBTextManager.SetTextVariable("PAY_AMOUNT", "0");
                     return;
                 }
@@ -1483,7 +1484,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-MUSTER-002", "OnMusterPayInit failed", ex);
-                MBTextManager.SetTextVariable("MUSTER_PAY_TEXT", "Pay records unavailable. Contact paymaster.");
+                var payContactPaymaster = new TextObject("{=muster_pay_contact_paymaster}Pay records unavailable. Contact paymaster.").ToString();
+                MBTextManager.SetTextVariable("MUSTER_PAY_TEXT", payContactPaymaster);
                 MBTextManager.SetTextVariable("PAY_AMOUNT", "0");
             }
         }
@@ -1538,19 +1540,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _currentMuster?.EncounteredErrors.Add("Pay text generation failed");
 
                 var sb = new StringBuilder();
-                sb.AppendLine("You step forward to the paymaster's table. He opens his ledger.");
+                var payIntro = new TextObject("{=muster_pay_intro}You step forward to the paymaster's table. He opens his ledger.").ToString();
+                var payStatusHeader = new TextObject("{=muster_pay_status_header}PAY STATUS").ToString();
+                var wagesOwedLabel = new TextObject("{=muster_wages_owed}WAGES OWED").ToString();
+                var denarsText = new TextObject("{=muster_denars}denars").ToString();
+                var payUnavailable = new TextObject("{=muster_pay_unavailable}Pay records unavailable").ToString();
+                
+                sb.AppendLine(payIntro);
                 sb.AppendLine();
-                sb.AppendLine("_____ PAY STATUS _____");
+                sb.AppendLine($"_____ {payStatusHeader} _____");
                 sb.AppendLine();
 
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment != null)
                 {
-                    sb.AppendLine($"Wages Owed: {enlistment.PendingMusterPay} denars");
+                    sb.AppendLine($"{wagesOwedLabel}: {enlistment.PendingMusterPay} {denarsText}");
                 }
                 else
                 {
-                    sb.AppendLine("Pay records unavailable.");
+                    sb.AppendLine($"{payUnavailable}.");
                 }
 
                 return sb.ToString();
@@ -1677,12 +1685,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 if (_currentMuster != null)
                 {
-                    sb.AppendLine($"Pay: {_currentMuster.PayOutcome ?? "unknown"}");
+                    var payLabel = new TextObject("{=muster_status_pay}Pay").ToString();
+                    sb.AppendLine($"{payLabel}: {_currentMuster.PayOutcome ?? "unknown"}");
                     sb.AppendLine($"Baggage: {_currentMuster.BaggageOutcome ?? "not checked"}");
                 }
                 else
                 {
-                    sb.AppendLine("Details unavailable.");
+                    var detailsUnavailable = new TextObject("{=muster_details_unavailable}Details unavailable").ToString();
+                    sb.AppendLine($"{detailsUnavailable}.");
                 }
 
                 return sb.ToString();
@@ -2357,7 +2367,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
             {
-                return "Enlistment data unavailable.";
+                return new TextObject("{=muster_enlistment_unavailable}Enlistment data unavailable").ToString() + ".";
             }
 
             // Strategic context flavor text
@@ -2517,7 +2527,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var feedItems = newsBehavior.GetPersonalFeedSince(lastMusterDay);
             if (feedItems == null || feedItems.Count == 0)
             {
-                return "A quiet period. Nothing of note occurred.";
+                return new TextObject("{=muster_quiet_period}A quiet period. Nothing of note occurred.").ToString();
             }
 
             var sb = new StringBuilder();
@@ -2547,7 +2557,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             if (count == 0)
             {
-                return "A quiet period. Nothing of note occurred.";
+                return new TextObject("{=muster_quiet_period}A quiet period. Nothing of note occurred.").ToString();
             }
 
             return sb.ToString();
@@ -2567,7 +2577,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Unit status (simplified for now - could be enhanced with actual casualty tracking)
             var battles = CountBattlesThisPeriod();
 
-            return $"[Pay: {pay:N0} denars | Supply: {supply}% | Battles: {battles}]";
+            var payLabel = new TextObject("{=muster_status_pay}Pay").ToString();
+            var supplyLabel = new TextObject("{=muster_status_supply}Supply").ToString();
+            var battlesLabel = new TextObject("{=muster_status_battles}Battles").ToString();
+            var denarsText = new TextObject("{=muster_denars}denars").ToString();
+            
+            return $"[{payLabel}: {pay:N0} {denarsText} | {supplyLabel}: {supply}% | {battlesLabel}: {battles}]";
         }
 
         private string BuildPayText()
@@ -2575,38 +2590,46 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
             {
-                return "Enlistment data unavailable.";
+                return new TextObject("{=muster_enlistment_unavailable}Enlistment data unavailable").ToString() + ".";
             }
 
             var sb = new StringBuilder();
-            sb.AppendLine(new TextObject("{=muster_pay_intro}You step forward to the paymaster's table. He opens his ledger.").ToString());
+            var payIntro = new TextObject("{=muster_pay_intro}You step forward to the paymaster's table. He opens his ledger.").ToString();
+            var payStatusHeader = new TextObject("{=muster_pay_status_header}PAY STATUS").ToString();
+            var wagesOwedLabel = new TextObject("{=muster_wages_owed}WAGES OWED").ToString();
+            var backpayLabel = new TextObject("{=muster_backpay_outstanding}BACKPAY OUTSTANDING").ToString();
+            var lordTreasuryLabel = new TextObject("{=muster_lord_treasury}LORD'S TREASURY").ToString();
+            var denarsText = new TextObject("{=muster_denars}denars").ToString();
+            
+            sb.AppendLine(payIntro);
             sb.AppendLine();
-            sb.AppendLine("<span style=\"Header\">_____ PAY STATUS _____</span>");
+            sb.AppendLine($"<span style=\"Header\">_____ {payStatusHeader} _____</span>");
             sb.AppendLine();
 
             // Wages owed
             var wages = enlistment.PendingMusterPay;
             var wagesColor = wages > 0 ? "Success" : "Default";
-            sb.AppendLine($"<span style=\"Label\">WAGES OWED:</span>           <span style=\"{wagesColor}\">{wages:N0} denars</span>");
+            sb.AppendLine($"<span style=\"Label\">{wagesOwedLabel}:</span>           <span style=\"{wagesColor}\">{wages:N0} {denarsText}</span>");
 
             // Backpay outstanding
             var backpay = enlistment.OwedBackpay;
             if (backpay > 0)
             {
-                sb.AppendLine($"<span style=\"Label\">BACKPAY OUTSTANDING:</span>  <span style=\"Warning\">{backpay:N0} denars</span>");
+                sb.AppendLine($"<span style=\"Label\">{backpayLabel}:</span>  <span style=\"Warning\">{backpay:N0} {denarsText}</span>");
             }
 
             // Lord's treasury status
             var lordGold = enlistment.EnlistedLord?.Gold ?? 0;
             var wealthStatus = GetLordWealthStatus(lordGold);
             var wealthColor = lordGold > 20000 ? "Success" : lordGold > 5000 ? "Warning" : "Alert";
-            sb.AppendLine($"<span style=\"Label\">LORD'S TREASURY:</span>      <span style=\"{wealthColor}\">{wealthStatus}</span>");
+            sb.AppendLine($"<span style=\"Label\">{lordTreasuryLabel}:</span>      <span style=\"{wealthColor}\">{wealthStatus}</span>");
 
             // Special status indicators
             if (enlistment.IsOnProbation)
             {
+                var probationText = new TextObject("{=muster_probation_rate}[Probation Rate] - Wages reduced 50%").ToString();
                 sb.AppendLine();
-                sb.AppendLine("<span style=\"Warning\">[Probation Rate] - Wages reduced 50%</span>");
+                sb.AppendLine($"<span style=\"Warning\">{probationText}</span>");
             }
 
             if (enlistment.EnlistedLord?.PartyBelongedTo?.Army != null)
@@ -2768,7 +2791,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment == null)
                 {
-                    return "Enlistment data unavailable.";
+                    return new TextObject("{=muster_enlistment_unavailable}Enlistment data unavailable").ToString() + ".";
                 }
 
                 var playerTier = enlistment.EnlistmentTier;
@@ -2853,7 +2876,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
             {
-                return "[Enlistment data unavailable]";
+                var unavailable = new TextObject("{=muster_enlistment_unavailable}Enlistment data unavailable").ToString();
+                return $"[{unavailable}]";
             }
 
             var sb = new StringBuilder();

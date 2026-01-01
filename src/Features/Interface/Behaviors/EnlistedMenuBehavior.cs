@@ -1643,7 +1643,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 var periodRecap = BuildPeriodRecapSection(enlistment);
                 if (!string.IsNullOrWhiteSpace(periodRecap))
                 {
-                    sb.AppendLine("<span style=\"Header\">SINCE LAST MUSTER</span>");
+                    var headerText = new TextObject("{=status_header_since_muster}SINCE LAST MUSTER").ToString();
+                    sb.AppendLine($"<span style=\"Header\">{headerText}</span>");
                     sb.AppendLine(periodRecap);
                     sb.AppendLine();
                 }
@@ -1652,7 +1653,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 var upcoming = BuildUpcomingSection(enlistment);
                 if (!string.IsNullOrWhiteSpace(upcoming))
                 {
-                    sb.AppendLine("<span style=\"Header\">UPCOMING</span>");
+                    var headerText = new TextObject("{=status_header_upcoming}UPCOMING").ToString();
+                    sb.AppendLine($"<span style=\"Header\">{headerText}</span>");
                     sb.AppendLine(upcoming);
                     sb.AppendLine();
                 }
@@ -1661,7 +1663,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 var recentActivities = BuildRecentActivitiesNarrative(enlistment, lordParty);
                 if (!string.IsNullOrWhiteSpace(recentActivities))
                 {
-                    sb.AppendLine("<span style=\"Header\">RECENT ACTIVITY</span>");
+                    var headerText = new TextObject("{=status_header_recent_activity}RECENT ACTIVITY").ToString();
+                    sb.AppendLine($"<span style=\"Header\">{headerText}</span>");
                     sb.AppendLine(recentActivities);
                     sb.AppendLine();
                 }
@@ -1670,7 +1673,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 var playerStatus = BuildPlayerPersonalStatus(enlistment);
                 if (!string.IsNullOrWhiteSpace(playerStatus))
                 {
-                    sb.AppendLine("<span style=\"Header\">YOUR STATUS</span>");
+                    var headerText = new TextObject("{=status_header_your_status}YOUR STATUS").ToString();
+                    sb.AppendLine($"<span style=\"Header\">{headerText}</span>");
                     sb.AppendLine(playerStatus);
                 }
 
@@ -1724,18 +1728,22 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
 
                     var strengthParts = new List<string>();
-                    strengthParts.Add($"<span style=\"Default\">{totalTroops} soldiers</span>");
+                    var soldiersText = new TextObject("{=status_soldiers}soldiers").ToString();
+                    strengthParts.Add($"<span style=\"Default\">{totalTroops} {soldiersText}</span>");
                     
                     if (totalWounded > 0)
                     {
                         var woundedStyle = totalWounded > (totalTroops * 0.3) ? "Alert" : "Warning";
-                        strengthParts.Add($"<span style=\"{woundedStyle}\">{totalWounded} wounded</span>");
+                        var woundedText = new TextObject("{=status_wounded}wounded").ToString();
+                        strengthParts.Add($"<span style=\"{woundedStyle}\">{totalWounded} {woundedText}</span>");
                     }
 
                     if (highTier > 0 || midTier > 0)
                     {
-                        strengthParts.Add($"<span style=\"Success\">{highTier} elite</span>");
-                        strengthParts.Add($"<span style=\"Default\">{midTier} veterans</span>");
+                        var eliteText = new TextObject("{=status_elite}elite").ToString();
+                        var veteransText = new TextObject("{=status_veterans}veterans").ToString();
+                        strengthParts.Add($"<span style=\"Success\">{highTier} {eliteText}</span>");
+                        strengthParts.Add($"<span style=\"Default\">{midTier} {veteransText}</span>");
                     }
 
                     parts.Add(string.Join(", ", strengthParts) + ".");
@@ -1754,17 +1762,21 @@ namespace Enlisted.Features.Interface.Behaviors
 
                     if (companyNeeds.Rest < 40)
                     {
+                        var exhaustedText = new TextObject("{=status_men_exhausted}men exhausted").ToString();
+                        var fatigueText = new TextObject("{=status_fatigue_showing}fatigue showing").ToString();
                         var restPhrase = companyNeeds.Rest < 20 
-                            ? "<span style=\"Alert\">men exhausted</span>" 
-                            : "<span style=\"Warning\">fatigue showing</span>";
+                            ? $"<span style=\"Alert\">{exhaustedText}</span>" 
+                            : $"<span style=\"Warning\">{fatigueText}</span>";
                         needsParts.Add(restPhrase);
                     }
 
                     if (companyNeeds.Equipment < 40)
                     {
+                        var failingText = new TextObject("{=status_gear_failing}gear failing").ToString();
+                        var wornText = new TextObject("{=status_equipment_worn}equipment worn").ToString();
                         var equipPhrase = companyNeeds.Equipment < 20 
-                            ? "<span style=\"Alert\">gear failing</span>" 
-                            : "<span style=\"Warning\">equipment worn</span>";
+                            ? $"<span style=\"Alert\">{failingText}</span>" 
+                            : $"<span style=\"Warning\">{wornText}</span>";
                         needsParts.Add(equipPhrase);
                     }
 
@@ -1776,15 +1788,22 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     if (lordParty.CurrentSettlement != null)
                     {
-                        parts.Add($"Encamped at <span style=\"Link\">{lordParty.CurrentSettlement.Name}</span>.");
+                        var encampedText = new TextObject("{=status_encamped_at}Encamped at {SETTLEMENT}")
+                            .SetTextVariable("SETTLEMENT", lordParty.CurrentSettlement.Name)
+                            .ToString();
+                        parts.Add($"{encampedText}.");
                     }
                     else if (lordParty.TargetSettlement != null)
                     {
-                        parts.Add($"On the march toward <span style=\"Link\">{lordParty.TargetSettlement.Name}</span>.");
+                        var marchText = new TextObject("{=status_on_march_toward}On the march toward {SETTLEMENT}")
+                            .SetTextVariable("SETTLEMENT", lordParty.TargetSettlement.Name)
+                            .ToString();
+                        parts.Add($"{marchText}.");
                     }
                     else
                     {
-                        parts.Add("On patrol in the field.");
+                        var patrolText = new TextObject("{=status_on_patrol}On patrol in the field").ToString();
+                        parts.Add($"{patrolText}.");
                     }
 
                     if (lordParty.Army != null && lordParty.Army.LeaderParty != lordParty)
@@ -1792,7 +1811,10 @@ namespace Enlisted.Features.Interface.Behaviors
                         var armyLeader = lordParty.Army.LeaderParty.LeaderHero;
                         if (armyLeader != null)
                         {
-                            parts.Add($"Part of <span style=\"Link\">{armyLeader.Name}'s army</span>.");
+                            var armyText = new TextObject("{=status_part_of_army}Part of {LORD}'s army")
+                                .SetTextVariable("LORD", armyLeader.Name)
+                                .ToString();
+                            parts.Add($"{armyText}.");
                         }
                     }
                 }
@@ -2114,21 +2136,28 @@ namespace Enlisted.Features.Interface.Behaviors
                     
                     if (hoursSinceIssued < 6)
                     {
-                        parts.Add($"<span style=\"Link\">Fresh orders:</span> {orderTitle}.");
+                        var freshOrdersText = new TextObject("{=status_fresh_orders}Fresh orders").ToString();
+                        parts.Add($"<span style=\"Link\">{freshOrdersText}:</span> {orderTitle}.");
                     }
                     else if (hoursSinceIssued < 24)
                     {
-                        parts.Add($"<span style=\"Link\">On duty:</span> {orderTitle}, hour {(int)hoursSinceIssued}.");
+                        var onDutyText = new TextObject("{=status_on_duty}On duty").ToString();
+                        var hourText = new TextObject("{=status_hour}hour").ToString();
+                        parts.Add($"<span style=\"Link\">{onDutyText}:</span> {orderTitle}, {hourText} {(int)hoursSinceIssued}.");
                     }
                     else
                     {
                         var days = (int)(hoursSinceIssued / 24);
-                        parts.Add($"<span style=\"Warning\">Still on duty:</span> {orderTitle}, day {days}.");
+                        var stillOnDutyText = new TextObject("{=status_still_on_duty}Still on duty").ToString();
+                        var dayText = new TextObject("{=status_day}day").ToString();
+                        parts.Add($"<span style=\"Warning\">{stillOnDutyText}:</span> {orderTitle}, {dayText} {days}.");
                     }
                 }
                 else
                 {
-                    parts.Add("<span style=\"Success\">Off duty.</span> No orders at present.");
+                    var offDutyText = new TextObject("{=status_off_duty}Off duty").ToString();
+                    var noOrdersText = new TextObject("{=status_no_orders_present}No orders at present").ToString();
+                    parts.Add($"<span style=\"Success\">{offDutyText}.</span> {noOrdersText}.");
                 }
 
                 // Physical condition
@@ -2330,11 +2359,13 @@ namespace Enlisted.Features.Interface.Behaviors
                     
                     if (hoursUntil < 2f)
                     {
-                        parts.Add($"<span style=\"Link\">{activity}</span> starting soon.");
+                        var startingSoonText = new TextObject("{=status_starting_soon}starting soon").ToString();
+                        parts.Add($"<span style=\"Link\">{activity}</span> {startingSoonText}.");
                     }
                     else
                     {
-                        parts.Add($"<span style=\"Link\">{activity}</span> scheduled for {phase} ({(int)hoursUntil}h).");
+                        var scheduledForText = new TextObject("{=status_scheduled_for}scheduled for").ToString();
+                        parts.Add($"<span style=\"Link\">{activity}</span> {scheduledForText} {phase} ({(int)hoursUntil}h).");
                     }
                 }
                 
@@ -2349,14 +2380,19 @@ namespace Enlisted.Features.Interface.Behaviors
 
                     // Estimate remaining time based on typical order duration (24-72h)
                     var hoursRemaining = Math.Max(0, 24 - (int)hoursSinceIssued);
+                    var currentDutyText = new TextObject("{=status_current_duty}Current duty").ToString();
                     if (hoursRemaining > 0)
                     {
                         var completeStyle = hoursRemaining < 6 ? "Success" : "Default";
-                        parts.Add($"Current duty: <span style=\"{completeStyle}\">{orderTitle}</span> (~{hoursRemaining}h remaining).");
+                        var remainingText = new TextObject("{=status_hours_remaining}~{HOURS}h remaining")
+                            .SetTextVariable("HOURS", hoursRemaining)
+                            .ToString();
+                        parts.Add($"{currentDutyText}: <span style=\"{completeStyle}\">{orderTitle}</span> ({remainingText}).");
                     }
                     else
                     {
-                        parts.Add($"Current duty: <span style=\"Link\">{orderTitle}</span> (completing soon).");
+                        var completingSoonText = new TextObject("{=status_completing_soon}completing soon").ToString();
+                        parts.Add($"{currentDutyText}: <span style=\"Link\">{orderTitle}</span> ({completingSoonText}).");
                     }
                 }
                 else if (orderManager?.IsOrderImminent() == true)
@@ -2365,7 +2401,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     var hoursUntil = orderManager.GetHoursUntilIssue();
                     if (!string.IsNullOrWhiteSpace(forecastText))
                     {
-                        parts.Add($"<span style=\"Warning\">Orders expected:</span> {forecastText} (in {(int)hoursUntil}h).");
+                        var ordersExpectedText = new TextObject("{=status_orders_expected}Orders expected").ToString();
+                        parts.Add($"<span style=\"Warning\">{ordersExpectedText}:</span> {forecastText} (in {(int)hoursUntil}h).");
                     }
                 }
                 else
@@ -2374,15 +2411,18 @@ namespace Enlisted.Features.Interface.Behaviors
                     var worldState = Content.WorldStateAnalyzer.AnalyzeSituation();
                     if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Intense)
                     {
-                        parts.Add("<span style=\"Warning\">Expect orders soon.</span> The situation is intense.");
+                        var expectSoonText = new TextObject("{=status_expect_orders_soon}Expect orders soon. The situation is intense.").ToString();
+                        parts.Add($"<span style=\"Warning\">{expectSoonText}</span>");
                     }
                     else if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Active)
                     {
-                        parts.Add("Likely to receive orders within the day.");
+                        var likelyText = new TextObject("{=status_likely_receive_orders}Likely to receive orders within the day").ToString();
+                        parts.Add($"{likelyText}.");
                     }
                     else
                     {
-                        parts.Add("No orders expected. Routine duties apply.");
+                        var noOrdersText = new TextObject("{=status_no_orders_expected}No orders expected. Routine duties apply").ToString();
+                        parts.Add($"{noOrdersText}.");
                     }
                 }
                 
@@ -2395,14 +2435,15 @@ namespace Enlisted.Features.Interface.Behaviors
                     
                     if (schedule != null && !string.IsNullOrWhiteSpace(schedule.Slot1Description))
                     {
-                        var phaseName = nextPhase.ToString().ToLower();
+                        var phaseName = GetLocalizedPhaseName(nextPhase);
+                        var nextText = new TextObject("{=status_next}Next").ToString();
                         if (schedule.HasDeviation)
                         {
                             parts.Add($"<span style=\"Warning\">{phaseName}:</span> {schedule.Slot1Description} ({schedule.DeviationReason}).");
                         }
                         else
                         {
-                            parts.Add($"Next {phaseName}: {schedule.Slot1Description}.");
+                            parts.Add($"{nextText} {phaseName}: {schedule.Slot1Description}.");
                         }
                     }
                 }
@@ -2546,6 +2587,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (detailParts.Count > 0)
                 {
                     sentences.Add(string.Join(", ", detailParts) + ".");
+                }
+
+                // Baggage train status when notable (raids, delays, arrivals, lockdowns)
+                var baggageStatus = EnlistedNewsBehavior.BuildBaggageStatusLine();
+                if (!string.IsNullOrWhiteSpace(baggageStatus))
+                {
+                    sentences.Add(baggageStatus);
                 }
 
                 // Sentence 5: Context - location/army status with past/present tense blending
@@ -4645,6 +4693,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 // TEMPORARILY activate the main party so the engine can attach an encounter.
                 var needActivate = !MobileParty.MainParty.IsActive;
 
+                // Set the flag BEFORE deferring to prevent race condition with menu system
+                _syntheticOutsideEncounter = true;
+                HasExplicitlyVisitedSettlement = true;
+
                 // Start a clean outside encounter for the player at the lord's settlement (deferred)
                 NextFrameDispatcher.RunNextFrame(() =>
                 {
@@ -4654,8 +4706,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
 
                     EncounterManager.StartSettlementEncounter(MobileParty.MainParty, settlement);
-                    _syntheticOutsideEncounter = true;
-                    HasExplicitlyVisitedSettlement = true;
                 });
 
                 // The engine will have pushed the outside menu; show it explicitly for safety (deferred)
@@ -5584,13 +5634,20 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Show confirmation dialog
             var title = opportunity.TitleFallback ?? opportunity.Id;
+            var cancelTitle = new TextObject("{=orders_cancel_commitment_title}Cancel Commitment").ToString();
+            var cancelText = new TextObject("{=orders_cancel_commitment_text}Cancel your plans for {ACTIVITY}?\n\nYou'll feel restless from changing plans (minor fatigue).")
+                .SetTextVariable("ACTIVITY", title)
+                .ToString();
+            var cancelPlans = new TextObject("{=orders_cancel_plans}Cancel Plans").ToString();
+            var keepPlans = new TextObject("{=orders_keep_plans}Keep Plans").ToString();
+            
             InformationManager.ShowInquiry(new InquiryData(
-                titleText: "Cancel Commitment",
-                text: $"Cancel your plans for {title}?\n\nYou'll feel restless from changing plans (minor fatigue).",
+                titleText: cancelTitle,
+                text: cancelText,
                 isAffirmativeOptionShown: true,
                 isNegativeOptionShown: true,
-                affirmativeText: "Cancel Plans",
-                negativeText: "Keep Plans",
+                affirmativeText: cancelPlans,
+                negativeText: keepPlans,
                 affirmativeAction: () =>
                 {
                     var generator = CampOpportunityGenerator.Instance;
@@ -6354,6 +6411,13 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // SUPPLIES: Food and consumables
                 sb.AppendLine(BuildSuppliesLine(needs.Supplies, isMarching, isInSiege));
+                
+                // Add baggage train status when notable (raids, delays, arrivals)
+                var baggageStatus = EnlistedNewsBehavior.BuildBaggageStatusLine();
+                if (!string.IsNullOrWhiteSpace(baggageStatus))
+                {
+                    sb.AppendLine(baggageStatus);
+                }
                 sb.AppendLine();
 
                 // EQUIPMENT: Maintenance and gear quality
@@ -6784,12 +6848,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (currentOrder == null)
                 {
                     // No active order
+                    var ordersTitle = new TextObject("{=orders_title}Orders").ToString();
+                    var noOrdersText = new TextObject("{=orders_none_available}No active orders at this time. Check back later.").ToString();
+                    var continueText = new TextObject("{=orders_continue}Continue").ToString();
+                    
                     InformationManager.ShowInquiry(new InquiryData(
-                        titleText: "Orders",
-                        text: "No active orders at this time. Check back later.",
+                        titleText: ordersTitle,
+                        text: noOrdersText,
                         isAffirmativeOptionShown: true,
                         isNegativeOptionShown: false,
-                        affirmativeText: "Continue",
+                        affirmativeText: continueText,
                         negativeText: null,
                         affirmativeAction: null,
                         negativeAction: null
@@ -6836,13 +6904,17 @@ namespace Enlisted.Features.Interface.Behaviors
                 sb.AppendLine($"Issued: {timeStr}");
                 sb.AppendLine($"Declines: {orderManager.GetDeclineCount()}");
 
+                var activeOrderTitle = new TextObject("{=orders_active_title}Active Order").ToString();
+                var acceptText = new TextObject("{=orders_accept}Accept Order").ToString();
+                var declineText = new TextObject("{=orders_decline}Decline Order").ToString();
+                
                 InformationManager.ShowInquiry(new InquiryData(
-                    titleText: "Active Order",
+                    titleText: activeOrderTitle,
                     text: sb.ToString(),
                     isAffirmativeOptionShown: true,
                     isNegativeOptionShown: true,
-                    affirmativeText: "Accept Order",
-                    negativeText: "Decline Order",
+                    affirmativeText: acceptText,
+                    negativeText: declineText,
                     affirmativeAction: () =>
                     {
                         orderManager.AcceptOrder();
@@ -6853,13 +6925,18 @@ namespace Enlisted.Features.Interface.Behaviors
                     negativeAction: () =>
                     {
                         // Show decline confirmation
+                        var declineConfirmTitle = new TextObject("{=orders_decline_confirm_title}Decline Order?").ToString();
+                        var declineConfirmText = new TextObject("{=orders_decline_confirm_text}Declining orders damages your reputation with your superiors. Continue?").ToString();
+                        var yesDeclineText = new TextObject("{=orders_yes_decline}Yes, Decline").ToString();
+                        var cancelText = new TextObject("{=orders_cancel}Cancel").ToString();
+                        
                         InformationManager.ShowInquiry(new InquiryData(
-                            titleText: "Decline Order?",
-                            text: "Declining orders damages your reputation with your superiors. Continue?",
+                            titleText: declineConfirmTitle,
+                            text: declineConfirmText,
                             isAffirmativeOptionShown: true,
                             isNegativeOptionShown: true,
-                            affirmativeText: "Yes, Decline",
-                            negativeText: "Cancel",
+                            affirmativeText: yesDeclineText,
+                            negativeText: cancelText,
                             affirmativeAction: () =>
                             {
                                 orderManager.DeclineOrder();
@@ -6880,6 +6957,24 @@ namespace Enlisted.Features.Interface.Behaviors
 
         #endregion
 
+        #region Localization Helpers
+
+        /// <summary>
+        /// Returns the localized name for a day phase.
+        /// </summary>
+        private static string GetLocalizedPhaseName(Content.Models.DayPhase phase)
+        {
+            return phase switch
+            {
+                Content.Models.DayPhase.Dawn => new TextObject("{=phase_dawn}dawn").ToString(),
+                Content.Models.DayPhase.Midday => new TextObject("{=phase_midday}midday").ToString(),
+                Content.Models.DayPhase.Dusk => new TextObject("{=phase_dusk}dusk").ToString(),
+                Content.Models.DayPhase.Night => new TextObject("{=phase_night}night").ToString(),
+                _ => phase.ToString().ToLower()
+            };
+        }
+
+        #endregion
 
         // Note: Removed unused Military Styling Helper Methods region (GetFormationSymbol, GetProgressBar)
     }

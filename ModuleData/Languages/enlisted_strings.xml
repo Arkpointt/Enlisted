@@ -66,6 +66,121 @@
     <string id="Squad_StylePrompt_Cancel" text="Cancel" />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SERVICE RECORDS - Lifetime and current enlistment stats -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Service Records Headers -->
+    <string id="records_lifetime_summary" text="Lifetime Service Summary" />
+    <string id="records_current_enlistment" text="Current Enlistment" />
+    <string id="records_xp_sources" text="XP Sources" />
+    <string id="records_this_term" text="This Term" />
+    <string id="records_factions_served" text="Factions Served" />
+    <string id="records_combat_statistics" text="Combat Statistics" />
+    
+    <!-- Lifetime Service Labels -->
+    <string id="records_time_in_service" text="Time in Service" />
+    <string id="records_total_enlistments" text="Total Enlistments" />
+    <string id="records_terms_completed" text="Terms Completed" />
+    <string id="records_no_lifetime" text="No lifetime service records found" />
+    <string id="records_career_not_begun" text="Your military career has not yet begun" />
+    <string id="records_year" text="year" />
+    <string id="records_years" text="years" />
+    <string id="records_month" text="month" />
+    <string id="records_months" text="months" />
+    <string id="records_days" text="days" />
+    
+    <!-- Current Enlistment Labels -->
+    <string id="records_tier" text="Tier" />
+    <string id="records_service_xp" text="Service XP" />
+    <string id="records_days_served" text="Days Served" />
+    <string id="records_fatigue" text="Fatigue" />
+    <string id="records_next_tier_req" text="Next Tier Requirement" />
+    <string id="records_max_tier" text="(Max tier)" />
+    <string id="records_discharge" text="Discharge" />
+    <string id="records_pending_discharge" text="Pending (resolves at next pay muster)" />
+    <string id="records_pending_pay" text="Pending Pay (next muster)" />
+    <string id="records_owed_backpay" text="Owed Backpay" />
+    
+    <!-- XP Sources Descriptions -->
+    <string id="records_xp_battles" text="Battles: XP for participating in combat" />
+    <string id="records_xp_duties" text="Duties: Daily XP for assigned tasks" />
+    <string id="records_xp_activities" text="Activities: Skill XP from camp and lance activities" />
+    <string id="records_xp_service" text="Service: Passive XP for time served" />
+    
+    <!-- This Term Labels -->
+    <string id="records_battles" text="Battles" />
+    <string id="records_kills" text="Kills" />
+    
+    <!-- Faction Records -->
+    <string id="records_term" text="term" />
+    <string id="records_terms" text="terms" />
+    <string id="records_in_progress" text="in progress" />
+    
+    <!-- Combat Statistics Labels -->
+    <string id="records_total_battles" text="Total Battles" />
+    <string id="records_enemies_slain" text="Enemies Slain" />
+    
+    <!-- Faction Service Records Screen -->
+    <string id="records_faction_service_title" text="Faction Service Records" />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- STATUS REPORT - Headers and common phrases -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Status Report Section Headers -->
+    <string id="status_header_since_muster" text="SINCE LAST MUSTER" />
+    <string id="status_header_upcoming" text="UPCOMING" />
+    <string id="status_header_recent_activity" text="RECENT ACTIVITY" />
+    <string id="status_header_your_status" text="YOUR STATUS" />
+    
+    <!-- Period Recap Phrases -->
+    <string id="status_orders_handled" text="{COUNT} orders handed down" />
+    <string id="status_battles_fought" text="{COUNT} battles fought" />
+    <string id="status_days_until_muster" text="{COUNT} days until next muster" />
+    
+    <!-- Current Activity Phrases -->
+    <string id="status_fresh_orders" text="Fresh orders" />
+    <string id="status_on_duty" text="On duty" />
+    <string id="status_still_on_duty" text="Still on duty" />
+    <string id="status_current_duty" text="Current duty" />
+    <string id="status_hour" text="hour" />
+    <string id="status_day" text="day" />
+    <string id="status_hours_remaining" text="~{HOURS}h remaining" />
+    <string id="status_completing_soon" text="completing soon" />
+    <string id="status_orders_expected" text="Orders expected" />
+    <string id="status_expect_orders_soon" text="Expect orders soon. The situation is intense." />
+    <string id="status_likely_receive_orders" text="Likely to receive orders within the day" />
+    <string id="status_no_orders_expected" text="No orders expected. Routine duties apply" />
+    <string id="status_off_duty" text="Off duty" />
+    <string id="status_no_orders_present" text="No orders at present" />
+    <string id="status_next" text="Next" />
+    <string id="status_starting_soon" text="starting soon" />
+    <string id="status_scheduled_for" text="scheduled for" />
+    <string id="status_rested_sharp" text="Rested and sharp. Ready for whatever comes" />
+    <string id="status_sergeant_call" text="Sergeant will call for you soon" />
+    <string id="status_word_travels" text="word travels fast" />
+    
+    <!-- Day Phase Names -->
+    <string id="phase_dawn" text="dawn" />
+    <string id="phase_midday" text="midday" />
+    <string id="phase_dusk" text="dusk" />
+    <string id="phase_night" text="night" />
+    
+    <!-- Company Status Phrases -->
+    <string id="status_soldiers" text="soldiers" />
+    <string id="status_wounded" text="wounded" />
+    <string id="status_elite" text="elite" />
+    <string id="status_veterans" text="veterans" />
+    <string id="status_men_exhausted" text="men exhausted" />
+    <string id="status_fatigue_showing" text="fatigue showing" />
+    <string id="status_gear_failing" text="gear failing" />
+    <string id="status_equipment_worn" text="equipment worn" />
+    <string id="status_encamped_at" text="Encamped at {SETTLEMENT}" />
+    <string id="status_on_march_toward" text="On the march toward {SETTLEMENT}" />
+    <string id="status_on_patrol" text="On patrol in the field" />
+    <string id="status_part_of_army" text="Part of {LORD}'s army" />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- CAMP MENU - Squad roster and interactions -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     
@@ -664,6 +779,8 @@
     <string id="ct_companion_intro" text="Determine which companions will stand beside you in battle." />
     <string id="ct_companions_tier_locked" text="You must reach Tier 4 to manage companion assignments." />
     <string id="ct_companions_none" text="No companions in your command." />
+    <string id="ct_companions_stay_back_info" text="Companions set to 'Stay Back' will not spawn in battle" />
+    <string id="ct_companions_stay_back_safe" text="They remain safe, immune to death, wounds, or capture" />
     <string id="ct_companion_fight" text="Will fight alongside you" />
     <string id="ct_companion_stay_back" text="Will guard the camp" />
     <string id="ct_companion_save" text="Save Assignments" />
@@ -2568,6 +2685,73 @@
     <string id="override_activate_fortification" text="Assigned to reinforce camp defenses." />
     <string id="override_activate_inspection" text="Full equipment inspection ordered." />
     <string id="override_activate_messenger" text="Selected as messenger. Dispatches to deliver." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- ORDERS MENU - Dialogs and Messages -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Cancel Commitment Dialog -->
+    <string id="orders_cancel_commitment_title" text="Cancel Commitment" />
+    <string id="orders_cancel_commitment_text" text="Cancel your plans for {ACTIVITY}?\n\nYou'll feel restless from changing plans (minor fatigue)." />
+    <string id="orders_cancel_plans" text="Cancel Plans" />
+    <string id="orders_keep_plans" text="Keep Plans" />
+    
+    <!-- No Active Orders Dialog -->
+    <string id="orders_title" text="Orders" />
+    <string id="orders_none_available" text="No active orders at this time. Check back later." />
+    <string id="orders_continue" text="Continue" />
+    
+    <!-- Active Order Dialog -->
+    <string id="orders_active_title" text="Active Order" />
+    <string id="orders_accept" text="Accept Order" />
+    <string id="orders_decline" text="Decline Order" />
+    
+    <!-- Decline Order Confirmation -->
+    <string id="orders_decline_confirm_title" text="Decline Order?" />
+    <string id="orders_decline_confirm_text" text="Declining orders damages your reputation with your superiors. Continue?" />
+    <string id="orders_yes_decline" text="Yes, Decline" />
+    <string id="orders_cancel" text="Cancel" />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MUSTER MENU - Pay and Status Screens -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Error/Fallback Messages -->
+    <string id="muster_pay_unavailable" text="Pay records unavailable" />
+    <string id="muster_pay_contact_paymaster" text="Pay records unavailable. Contact paymaster." />
+    <string id="muster_details_unavailable" text="Details unavailable" />
+    <string id="muster_enlistment_unavailable" text="Enlistment data unavailable" />
+    <string id="muster_quiet_period" text="A quiet period. Nothing of note occurred." />
+    
+    <!-- Pay Status Screen Headers -->
+    <string id="muster_pay_status_header" text="PAY STATUS" />
+    <string id="muster_wages_owed" text="WAGES OWED" />
+    <string id="muster_backpay_outstanding" text="BACKPAY OUTSTANDING" />
+    <string id="muster_lord_treasury" text="LORD'S TREASURY" />
+    <string id="muster_probation_rate" text="[Probation Rate] - Wages reduced 50%" />
+    
+    <!-- Status Bar Labels -->
+    <string id="muster_status_pay" text="Pay" />
+    <string id="muster_status_supply" text="Supply" />
+    <string id="muster_status_battles" text="Battles" />
+    <string id="muster_denars" text="denars" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- QUARTERMASTER - Equipment and Provisions Messages -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Equipment Messages -->
+    <string id="qm_equipment_unavailable" text="Equipment information unavailable" />
+    <string id="qm_no_variants_available" text="No {EQUIPMENT_TYPE} variants available" />
+    <string id="qm_no_affordable_variants" text="No affordable {EQUIPMENT_TYPE} variants available. You need more gold." />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- ORDER SYSTEM - Warnings and Notifications -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <string id="orders_warning_insubordination_title" text="Warning: Insubordination" />
+    <string id="orders_warning_insubordination_text" text="Your repeated refusal of orders has not gone unnoticed. Continued insubordination may result in discharge from service." />
+    <string id="orders_understood" text="Understood" />
 
   </strings>
 </base>

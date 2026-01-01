@@ -1196,8 +1196,8 @@ The Quartermaster system is tightly integrated with company supply (0-100%):
 **Supply Sources:**
 - Rations provided as part of enlisted service
 - Ammunition, repairs, and camp supplies consumed during operations
-- Resupply in settlements (+3-5% per day)
-- Consumption based on movement, combat, and terrain
+- Resupply in settlements (~2.08-2.92% per hour, 50-70% per full day)
+- Consumption based on movement, combat, and terrain (calculated daily)
 
 **Supply Effects on Quartermaster:**
 

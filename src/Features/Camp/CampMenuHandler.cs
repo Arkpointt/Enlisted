@@ -595,7 +595,8 @@ namespace Enlisted.Features.Camp
             var records = recordManager?.GetAllRecords();
 
             sb.AppendLine();
-            sb.AppendLine("â€” Faction Service Records â€”");
+            var factionServiceRecordsText = new TextObject("{=records_faction_service_title}Faction Service Records").ToString();
+            sb.AppendLine($"— {factionServiceRecordsText} —");
             sb.AppendLine();
 
             if (records == null || records.Count == 0)
@@ -609,8 +610,8 @@ namespace Enlisted.Features.Camp
                 foreach (var record in records.Values.OrderByDescending(r => r.TotalDaysServed))
                 {
                     var factionType = FormatFactionType(record.FactionType);
-                    sb.AppendLine($"â€¢ {record.FactionDisplayName}");
-                    sb.AppendLine($"  {factionType} â€” {record.TermsCompleted} terms, {record.TotalDaysServed} days");
+                    sb.AppendLine($"• {record.FactionDisplayName}");
+                    sb.AppendLine($"  {factionType} — {record.TermsCompleted} terms, {record.TotalDaysServed} days");
                     sb.AppendLine($"  Kills: {record.TotalKills}");
                     sb.AppendLine();
                 }
@@ -815,110 +816,160 @@ namespace Enlisted.Features.Camp
             var lifetime = recordManager?.LifetimeRecord;
 
             sb.AppendLine();
-            sb.AppendLine("â€” Lifetime Service Summary â€”");
+            var lifetimeHeaderText = new TextObject("{=records_lifetime_summary}Lifetime Service Summary").ToString();
+            sb.AppendLine($"— {lifetimeHeaderText} —");
             sb.AppendLine();
 
             if (lifetime == null)
             {
-                sb.AppendLine("No lifetime service records found.");
+                var noRecordsText = new TextObject("{=records_no_lifetime}No lifetime service records found").ToString();
+                var careerNotBegunText = new TextObject("{=records_career_not_begun}Your military career has not yet begun").ToString();
+                sb.AppendLine($"{noRecordsText}.");
                 sb.AppendLine();
-                sb.AppendLine("Your military career has not yet begun.");
+                sb.AppendLine($"{careerNotBegunText}.");
             }
             else
             {
                 // Calculate years and months from total days
                 var (years, months) = lifetime.GetServiceDuration();
+                var yearText = years > 1 
+                    ? new TextObject("{=records_years}years").ToString() 
+                    : new TextObject("{=records_year}year").ToString();
+                var monthText = months != 1 
+                    ? new TextObject("{=records_months}months").ToString() 
+                    : new TextObject("{=records_month}month").ToString();
+                var daysText = new TextObject("{=records_days}days").ToString();
+                
                 var timeString = years > 0
-                    ? $"{years} year{(years > 1 ? "s" : "")}, {months} month{(months != 1 ? "s" : "")}"
-                    : $"{months} month{(months != 1 ? "s" : "")}";
+                    ? $"{years} {yearText}, {months} {monthText}"
+                    : $"{months} {monthText}";
 
                 if (years == 0 && months == 0)
                 {
-                    timeString = $"{lifetime.TotalDaysServed} days";
+                    timeString = $"{lifetime.TotalDaysServed} {daysText}";
                 }
 
-                sb.AppendLine($"Time in Service: {timeString}");
-                sb.AppendLine($"Total Enlistments: {lifetime.TotalEnlistments}");
-                sb.AppendLine($"Terms Completed: {lifetime.TermsCompleted}");
+                var timeInServiceLabel = new TextObject("{=records_time_in_service}Time in Service").ToString();
+                var totalEnlistmentsLabel = new TextObject("{=records_total_enlistments}Total Enlistments").ToString();
+                var termsCompletedLabel = new TextObject("{=records_terms_completed}Terms Completed").ToString();
+                
+                sb.AppendLine($"{timeInServiceLabel}: {timeString}");
+                sb.AppendLine($"{totalEnlistmentsLabel}: {lifetime.TotalEnlistments}");
+                sb.AppendLine($"{termsCompletedLabel}: {lifetime.TermsCompleted}");
                 sb.AppendLine();
 
                 // Current service snapshot (replaces the removed Activity Log + XP Breakdown menus)
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted == true)
                 {
-                    sb.AppendLine("â€” Current Enlistment â€”");
+                    var currentEnlistmentText = new TextObject("{=records_current_enlistment}Current Enlistment").ToString();
+                    sb.AppendLine($"— {currentEnlistmentText} —");
                     sb.AppendLine();
-                    sb.AppendLine($"Tier: {enlistment.EnlistmentTier}");
-                    sb.AppendLine($"Service XP: {enlistment.EnlistmentXP}");
-                    sb.AppendLine($"Days Served: {(int)enlistment.DaysServed}");
-                    sb.AppendLine($"Fatigue: {enlistment.FatigueCurrent}/{enlistment.FatigueMax}");
+                    
+                    var tierLabel = new TextObject("{=records_tier}Tier").ToString();
+                    var serviceXpLabel = new TextObject("{=records_service_xp}Service XP").ToString();
+                    var daysServedLabel = new TextObject("{=records_days_served}Days Served").ToString();
+                    var fatigueLabel = new TextObject("{=records_fatigue}Fatigue").ToString();
+                    var nextTierLabel = new TextObject("{=records_next_tier_req}Next Tier Requirement").ToString();
+                    
+                    sb.AppendLine($"{tierLabel}: {enlistment.EnlistmentTier}");
+                    sb.AppendLine($"{serviceXpLabel}: {enlistment.EnlistmentXP}");
+                    sb.AppendLine($"{daysServedLabel}: {(int)enlistment.DaysServed}");
+                    sb.AppendLine($"{fatigueLabel}: {enlistment.FatigueCurrent}/{enlistment.FatigueMax}");
 
                     if (enlistment.EnlistmentTier < 6)
                     {
                         var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
                         var nextTierXp = enlistment.EnlistmentTier < tierXp.Length ? tierXp[enlistment.EnlistmentTier] : tierXp[tierXp.Length - 1];
-                        sb.AppendLine($"Next Tier Requirement: {nextTierXp} XP");
+                        sb.AppendLine($"{nextTierLabel}: {nextTierXp} XP");
                     }
                     else
                     {
-                        sb.AppendLine("Next Tier Requirement: (Max tier)");
+                        var maxTierText = new TextObject("{=records_max_tier}(Max tier)").ToString();
+                        sb.AppendLine($"{nextTierLabel}: {maxTierText}");
                     }
 
                     if (enlistment.IsPendingDischarge)
                     {
-                        sb.AppendLine("Discharge: Pending (resolves at next pay muster)");
+                        var dischargeLabel = new TextObject("{=records_discharge}Discharge").ToString();
+                        var pendingText = new TextObject("{=records_pending_discharge}Pending (resolves at next pay muster)").ToString();
+                        sb.AppendLine($"{dischargeLabel}: {pendingText}");
                     }
 
                     if (enlistment.PendingMusterPay > 0)
                     {
-                        sb.AppendLine($"Pending Pay (next muster): {enlistment.PendingMusterPay}");
+                        var pendingPayLabel = new TextObject("{=records_pending_pay}Pending Pay (next muster)").ToString();
+                        sb.AppendLine($"{pendingPayLabel}: {enlistment.PendingMusterPay}");
                     }
 
                     if (enlistment.OwedBackpay > 0)
                     {
-                        sb.AppendLine($"Owed Backpay: {enlistment.OwedBackpay}");
+                        var backpayLabel = new TextObject("{=records_owed_backpay}Owed Backpay").ToString();
+                        sb.AppendLine($"{backpayLabel}: {enlistment.OwedBackpay}");
                     }
 
                     sb.AppendLine();
-                    sb.AppendLine("â€” XP Sources â€”");
+                    var xpSourcesText = new TextObject("{=records_xp_sources}XP Sources").ToString();
+                    sb.AppendLine($"— {xpSourcesText} —");
                     sb.AppendLine();
-                    sb.AppendLine("â€¢ Battles: XP for participating in combat");
-                    sb.AppendLine("â€¢ Duties: Daily XP for assigned tasks");
-                    sb.AppendLine("â€¢ Activities: Skill XP from camp and lance activities");
-                    sb.AppendLine("â€¢ Service: Passive XP for time served");
+                    
+                    var xpBattlesText = new TextObject("{=records_xp_battles}Battles: XP for participating in combat").ToString();
+                    var xpDutiesText = new TextObject("{=records_xp_duties}Duties: Daily XP for assigned tasks").ToString();
+                    var xpActivitiesText = new TextObject("{=records_xp_activities}Activities: Skill XP from camp and lance activities").ToString();
+                    var xpServiceText = new TextObject("{=records_xp_service}Service: Passive XP for time served").ToString();
+                    
+                    sb.AppendLine($"• {xpBattlesText}");
+                    sb.AppendLine($"• {xpDutiesText}");
+                    sb.AppendLine($"• {xpActivitiesText}");
+                    sb.AppendLine($"• {xpServiceText}");
                     sb.AppendLine();
 
-                    sb.AppendLine("â€” This Term â€”");
+                    var thisTermText = new TextObject("{=records_this_term}This Term").ToString();
+                    sb.AppendLine($"— {thisTermText} —");
                     sb.AppendLine();
-                    sb.AppendLine($"Battles: {recordManager.CurrentTermBattles}");
-                    sb.AppendLine($"Kills: {recordManager.CurrentTermKills}");
+                    
+                    var battlesLabel = new TextObject("{=records_battles}Battles").ToString();
+                    var killsLabel = new TextObject("{=records_kills}Kills").ToString();
+                    
+                    sb.AppendLine($"{battlesLabel}: {recordManager.CurrentTermBattles}");
+                    sb.AppendLine($"{killsLabel}: {recordManager.CurrentTermKills}");
                     sb.AppendLine();
                 }
 
                 // List factions served
                 if (lifetime.FactionsServed is { Count: > 0 })
                 {
-                    sb.AppendLine("â€” Factions Served â€”");
+                    var factionsServedText = new TextObject("{=records_factions_served}Factions Served").ToString();
+                    sb.AppendLine($"— {factionsServedText} —");
                     sb.AppendLine();
 
+                    var termText = new TextObject("{=records_term}term").ToString();
+                    var termsText = new TextObject("{=records_terms}terms").ToString();
+                    var inProgressText = new TextObject("{=records_in_progress}in progress").ToString();
+                    
                     var allRecords = recordManager.GetAllRecords();
                     foreach (var factionId in lifetime.FactionsServed)
                     {
                         if (allRecords.TryGetValue(factionId, out var record))
                         {
                             var terms = record.TermsCompleted > 0
-                                ? $"{record.TermsCompleted} term{(record.TermsCompleted > 1 ? "s" : "")}"
-                                : "in progress";
-                            sb.AppendLine($"â€¢ {record.FactionDisplayName} ({terms})");
+                                ? $"{record.TermsCompleted} {(record.TermsCompleted > 1 ? termsText : termText)}"
+                                : inProgressText;
+                            sb.AppendLine($"• {record.FactionDisplayName} ({terms})");
                         }
                     }
                     sb.AppendLine();
                 }
 
-                sb.AppendLine("â€” Combat Statistics â€”");
+                var combatStatsText = new TextObject("{=records_combat_statistics}Combat Statistics").ToString();
+                sb.AppendLine($"— {combatStatsText} —");
                 sb.AppendLine();
-                sb.AppendLine($"Total Battles: {lifetime.TotalBattlesFought}");
-                sb.AppendLine($"Enemies Slain: {lifetime.LifetimeKills}");
+                
+                var totalBattlesLabel = new TextObject("{=records_total_battles}Total Battles").ToString();
+                var enemiesSlainLabel = new TextObject("{=records_enemies_slain}Enemies Slain").ToString();
+                
+                sb.AppendLine($"{totalBattlesLabel}: {lifetime.TotalBattlesFought}");
+                sb.AppendLine($"{enemiesSlainLabel}: {lifetime.LifetimeKills}");
             }
 
             return sb.ToString();
@@ -2156,15 +2207,20 @@ namespace Enlisted.Features.Camp
 
                 var sb = new StringBuilder();
                 sb.AppendLine();
-                sb.AppendLine("â€” Companion Assignments â€”");
+                var companionsTitle = new TextObject("{=ct_companions_title}Companion Assignments").ToString();
+                sb.AppendLine($"— {companionsTitle} —");
                 sb.AppendLine();
-                sb.AppendLine("Companions set to 'Stay Back' will not spawn in battle.");
-                sb.AppendLine("They remain safe, immune to death, wounds, or capture.");
+                
+                var stayBackInfo = new TextObject("{=ct_companions_stay_back_info}Companions set to 'Stay Back' will not spawn in battle").ToString();
+                var stayBackSafe = new TextObject("{=ct_companions_stay_back_safe}They remain safe, immune to death, wounds, or capture").ToString();
+                sb.AppendLine($"{stayBackInfo}.");
+                sb.AppendLine($"{stayBackSafe}.");
                 sb.AppendLine();
 
                 if (_cachedCompanions.Count == 0 || manager == null)
                 {
-                    sb.AppendLine("No companions in your command.");
+                    var noCompanionsText = new TextObject("{=ct_companions_none}No companions in your command").ToString();
+                    sb.AppendLine($"{noCompanionsText}.");
                 }
                 else
                 {

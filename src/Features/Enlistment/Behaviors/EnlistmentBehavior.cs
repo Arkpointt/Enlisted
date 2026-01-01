@@ -4818,6 +4818,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // This runs for enlisted players during rest periods (night hours)
             ProcessFatigueRecovery();
 
+            // Process hourly supply resupply when in settlements.
+            // This allows partial-day settlement visits to provide meaningful supply gains.
+            CompanySupplyManager.Instance?.HourlyUpdate();
+
             SyncActivationState("hourly_tick");
             if (!EnlistedActivation.IsActive)
             {
@@ -12500,6 +12504,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     ModLogger.Info("Settlement", $"Lord {hero.Name} entered {settlement.Name} ({settlement.StringId})");
 
+                    // Track supply level for resupply message on departure
+                    CompanySupplyManager.Instance?.OnSettlementEntered(settlement);
+
                     // NOTE: We used to call EnterSettlementAction.ApplyForParty() here to immediately
                     // pull the player into the settlement, but this causes EncounterMenuOverlayVM assertion
                     // failures ("Encounter overlay is open but MapEvent AND SiegeEvent is null").
@@ -12624,6 +12631,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     ModLogger.Info("Settlement",
                         $"Lord {_enlistedLord?.Name?.ToString() ?? "unknown"} left {settlement?.Name?.ToString() ?? "unknown"} - pulling player to follow");
+
+                    // Show resupply message if meaningful supply was gained during the visit
+                    CompanySupplyManager.Instance?.OnSettlementLeft(settlement);
 
                     // LORD LEFT - pull the player out to follow!
                     // Check if player is still in this settlement
