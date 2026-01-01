@@ -1,9 +1,9 @@
 # Company Supply Simulation System
 
-**Summary:** The company supply system tracks logistical health of the military unit including equipment maintenance materials, ammunition/consumables, and fodder/animal care supplies. Supply levels are calculated from inventory, consumed through time and combat, and replenished through quartermaster purchases, creating realistic military logistics gameplay.
+**Summary:** The company supply system tracks logistical health of the military unit including rations, equipment maintenance materials, ammunition/consumables, and fodder/animal care supplies. Supply levels are consumed through time and combat, and replenished through quartermaster purchases and settlement resupply, creating realistic military logistics gameplay.
 
 **Status:** ⚠️ Mixed (Core implemented, enhancements planned)  
-**Last Updated:** 2025-12-23  
+**Last Updated:** 2025-12-31  
 **Related Docs:** [Quartermaster System](quartermaster-system.md), [Provisions & Rations](provisions-rations-system.md)
 
 ---
@@ -11,11 +11,11 @@
 ## Overview
 
 **Company Supply** represents the overall logistical health of your military unit, tracking:
+- Rations and food supplies (provided directly as part of enlisted service)
 - Equipment maintenance materials (repair supplies, oil, leather, whetstone)
 - Ammunition and consumables (arrows, bolts, bandages, medicine)
 - Fodder and animal care supplies (for horses and pack animals)
 - Camp supplies (tents, rope, tools, firewood)
-- **Note:** Food is tracked separately by vanilla Bannerlord's native food system
 
 **Tracked Value:** `CompanyNeedsState.Supplies` (0-100%) — backed by `CompanySupplyManager`
 
@@ -31,79 +31,27 @@
 
 ---
 
-## CRITICAL: Vanilla Food System Integration
+## CRITICAL: Company Scope
 
-### **DO NOT Modify Native Food:**
+Company Supply is scoped to the **Company you are enlisted in** (i.e., the **enlisted lord's party**), not to the full army.
 
-Bannerlord's AI relies heavily on the native food system:
-- `MobileParty.Food` (tracked in `ItemRoster.TotalFood`)
-- `MobileParty.FoodChange` (daily consumption rate)
-- `MobileParty.GetNumDaysForFoodToLast()` (AI decision making)
-- `PartyBase.IsStarving` (when `RemainingFoodPercentage < 0`)
-
-**Key Native Behaviors:**
-1. **FoodConsumptionBehavior**: Consumes food daily based on party size + perks
-2. **PartiesBuyFoodCampaignBehavior**: AI auto-buys food when entering settlements
-3. **AI Decision Making**: Lords check food supply before raids/sieges
-4. **Army Food Sharing**: Armies automatically share food between parties
-
-**Our Approach:**
-- **Observe** lord's food levels to influence our Supply %
-- **Simulate** non-food logistics (ammo, repairs, camp supplies)
-- **Gate** equipment access based on our Supply metric
-- **Never** modify `MobileParty.Food`, `FoodChange`, or food items directly
-
-### **CRITICAL: Company Scope (Not Army Scope)**
-
-Company Supply is intentionally scoped to the **Company you are enlisted in** (i.e., the **enlisted lord’s party**), not to the full army.
-
-- If the enlisted lord is attached to an army, **do not switch** the observation target to the army leader or any aggregate/army-wide value.
-- We may still *observe* vanilla behavior that happens because armies share food (that will naturally change the enlisted lord party’s food days), but we do not treat “being in an army” as a different supply model.
+- The player receives rations and supplies as part of their enlisted service directly
+- Supply tracking uses party size and activity from the enlisted lord's party for consumption calculations
+- If the enlisted lord is attached to an army, supply calculations still use the enlisted lord's party metrics (not army-wide values)
 
 ---
 
 ## Supply Consumption (Daily)
 
-### **Hybrid System: Observation + Simulation**
-
-Our supply system has two components:
-
-#### **1. Food Component (Observed - 40% of total supply)**
-
-We **observe** the lord's party food situation and map it to our supply percentage:
-
-```csharp
-public int CalculateFoodSupplyContribution()
-{
-    MobileParty lordParty = GetLordParty();
-    if (lordParty == null) return 40; // Full food component if not attached
-    
-    int daysOfFood = lordParty.GetNumDaysForFoodToLast();
-    
-    // Map food days to supply contribution (0-40%)
-    if (daysOfFood >= 10) return 40;      // 10+ days = full
-    if (daysOfFood >= 7) return 35;       // 7-9 days = good
-    if (daysOfFood >= 5) return 30;       // 5-6 days = adequate
-    if (daysOfFood >= 3) return 20;       // 3-4 days = low
-    if (daysOfFood >= 1) return 10;       // 1-2 days = critical
-    if (lordParty.Party.IsStarving) return 0; // Starving = no food
-    
-    return 5; // <1 day but not starving yet
-}
-```
-
-**This observes vanilla without modifying it.**
-
-#### **2. Non-Food Component (Simulated - 60% of total supply)**
-
-We **simulate** consumption of:
+The supply system simulates consumption of all logistics including:
+- Rations and food supplies
 - Ammunition (arrows, bolts)
 - Maintenance supplies (oil, whetstone, leather)
 - Medical supplies (bandages, medicine)
 - Camp gear (rope, tools, tents)
 - Animal supplies (horseshoes, fodder supplements)
 
-**Base Consumption Rate:** 1.5% per day (non-food supplies)
+**Base Consumption Rate:** 1.5% per day
 
 **Company Size Modifier:**
 ```csharp
@@ -116,9 +64,9 @@ float sizeMultiplier = companySize / 100.0f;
 // 200 troops = 2.0x consumption (3% per day)
 ```
 
-**Activity Multiplier (Non-Food):**
+**Activity Multiplier:**
 
-| Activity | Multiplier | Daily Non-Food Consumption (100 troops) |
+| Activity | Multiplier | Daily Consumption (100 troops) |
 |----------|------------|--------------------------------|
 | **Resting in settlement** | 0.3x | 0.45% per day |
 | **Traveling (normal)** | 1.0x | 1.5% per day |
@@ -128,7 +76,7 @@ float sizeMultiplier = companySize / 100.0f;
 | **Being besieged** | 1.8x | 2.7% per day |
 | **Battle** | Special | See "Combat Losses" section |
 
-**Terrain Multiplier (Non-Food):**
+**Terrain Multiplier:**
 
 | Terrain | Multiplier | Reason |
 |---------|------------|--------|
@@ -140,12 +88,10 @@ float sizeMultiplier = companySize / 100.0f;
 
 **Total Supply Formula:**
 ```
-Total Supply % = Food Component (0-40%) + Non-Food Component (0-60%)
+Total Supply % (0-100%)
 
-Non-Food Component reduces by:
+Supply reduces by:
   (Base Rate 1.5% × Size Mult × Activity Mult × Terrain Mult) per day
-  
-Food Component updates based on lord's food days remaining
 ```
 
 ---
@@ -194,62 +140,56 @@ These events are designed but not yet created in the content system:
 
 ## Supply Gains (Replenishment)
 
-### **1. Automatic Resupply (Company Context - Non-Food Only)**
+### **1. Automatic Resupply**
 
 When the player is with the enlisted lord and the Company is in a settlement:
 
 ```csharp
-public void DailyNonFoodResupply()
+public void DailyResupply()
 {
-    // Important: resupply is computed for the Company (enlisted lord’s party),
+    // Resupply is computed for the Company (enlisted lord's party),
     // regardless of whether the lord is currently attached to an army.
     if (IsWithEnlistedLordPartyInSettlement())
     {
-        // Settlement resupply: +3% non-food supplies per day in town/castle
-        int nonFoodResupply = 3;
+        // Settlement resupply: +3% supplies per day in town/castle
+        int resupply = 3;
         
         // Wealthy settlements give more (better workshops/smiths)
         if (CurrentSettlement.Prosperity > 5000)
-            nonFoodResupply += 1;
+            resupply += 1;
         
         // Modifier based on settlement relation
         if (CurrentSettlement.OwnerClan == PlayerLord.Clan)
-            nonFoodResupply += 1; // Friendly territory has better access
+            resupply += 1; // Friendly territory has better access
         
-        // Only replenish non-food component (max 60%)
-        int currentNonFood = GetNonFoodSupplyComponent();
-        if (currentNonFood < 60)
+        // Replenish supplies (max 100%)
+        int currentSupply = GetTotalSupply();
+        if (currentSupply < 100)
         {
-            AddNonFoodSupplies(nonFoodResupply);
+            AddSupplies(resupply);
         }
     }
-    
-    // Food component updates separately by observing the enlisted lord party food
-    UpdateFoodComponentFromLordParty();
 }
 ```
 
-**Settlement Resupply (Non-Food):**
+**Settlement Resupply:**
 - In friendly town/castle: +3% per day
 - In wealthy settlement: +4% per day  
 - In owned settlement: +5% per day
-- **Food:** Automatically updates based on lord's party food status (vanilla system handles buying)
 
 ### **2. Quartermaster Duties (Planned - Not Yet Connected)**
 
-The `AddNonFoodSupplies()` method exists but no duties currently call it. When connected:
+The `AddSupplies()` method exists but no duties currently call it. When connected:
 
-| Duty/Activity | Non-Food Gain | Food Impact | Notes |
-|---------------|---------------|-------------|-------|
-| **Foraging Duty** | +2 to +5% | Indirect | Helps lord's party forage (vanilla handles food) |
-| **Inventory Management** | +2% | None | Organize existing supplies, reduce waste |
-| **Equipment Maintenance** | +3% | None | Repair/salvage gear, reclaim materials |
-| **Negotiate with Merchants** | +5 to +10% | Indirect | Buy supplies (costs gold, helps lord buy food) |
-| **Hunt Wildlife** | +1% | Indirect | Supplement food (adds food items to lord's party) |
+| Duty/Activity | Supply Gain | Notes |
+|---------------|-------------|-------|
+| **Foraging Duty** | +2 to +5% | Gather rations and supplies from the field |
+| **Inventory Management** | +2% | Organize existing supplies, reduce waste |
+| **Equipment Maintenance** | +3% | Repair/salvage gear, reclaim materials |
+| **Negotiate with Merchants** | +5 to +10% | Buy supplies and rations (costs gold) |
+| **Hunt Wildlife** | +1 to +3% | Supplement rations with game meat |
 
-**Note:** Food-related duties (foraging, hunting) would add food items to the lord's party's inventory via vanilla systems. This indirectly improves our Food Component by increasing the lord's days of food remaining.
-
-**Implementation Note:** The API is ready (`CompanySupplyManager.Instance.AddNonFoodSupplies(amount, "source")`) but duty handlers need to be updated to call it.
+**Implementation Note:** The API is ready (`CompanySupplyManager.Instance.AddSupplies(amount, "source")`) but duty handlers need to be updated to call it.
 
 ### **3. Supply Wagon Events (Planned - Not Yet Implemented)**
 
@@ -262,13 +202,13 @@ Every 7-14 days (random), if lord is with army:
     If raided: +0% supply
 ```
 
-### **4. Post-Battle Looting (Non-Food Supplies)**
+### **4. Post-Battle Looting**
 
 ```csharp
-public int CalculateNonFoodSupplyLoot(int enemyTroopsKilled, string enemyFaction)
+public int CalculateSupplyLoot(int enemyTroopsKilled, string enemyFaction)
 {
-    // Base loot: arrows, damaged gear, materials
-    int baseLoot = enemyTroopsKilled / 25; // 25 kills = +1% non-food supply
+    // Base loot: rations, arrows, damaged gear, materials
+    int baseLoot = enemyTroopsKilled / 25; // 25 kills = +1% supply
     
     // Faction modifier (equipment quality affects salvage)
     float factionMultiplier = enemyFaction switch
@@ -289,15 +229,13 @@ public int CalculateNonFoodSupplyLoot(int enemyTroopsKilled, string enemyFaction
 ```
 
 **Examples:**
-- Defeat 100 Empire troops: +5% non-food supply (4% base × 1.3)
-- Defeat 75 Khuzait troops: +2% non-food supply (3% base × 0.7)
-- Defeat bandit hideout (50 bandits): +1% non-food supply (2% base × 0.6)
-
-**Food Looting:** Vanilla system handles food items automatically (loot screen)
+- Defeat 100 Empire troops: +5% supply (4% base × 1.3)
+- Defeat 75 Khuzait troops: +2% supply (3% base × 0.7)
+- Defeat bandit hideout (50 bandits): +1% supply (2% base × 0.6)
 
 ### **5. Player Purchases (Partial - Needs Completion)**
 
-**Current State:** A basic supply purchase stub exists in `QuartermasterManager.OnSupplyPurchaseSelected()` that costs 50g and adds grain + tools to the player's roster. However, it does NOT call `AddNonFoodSupplies()` to update the supply percentage.
+**Current State:** A basic supply purchase stub exists in `QuartermasterManager.OnSupplyPurchaseSelected()` that costs 50g and adds grain + tools to the player's roster. However, it does NOT call `AddSupplies()` to update the supply percentage.
 
 **Planned Full System:**
 ```
@@ -315,7 +253,7 @@ Visit town merchant:
     - War/peace (war = 50% markup)
 ```
 
-**To Complete:** Update `OnSupplyPurchaseSelected()` to call `CompanySupplyManager.Instance?.AddNonFoodSupplies(amount, "purchase")` after adding items.
+**To Complete:** Update `OnSupplyPurchaseSelected()` to call `CompanySupplyManager.Instance?.AddSupplies(amount, "purchase")` after adding items.
 
 ---
 
@@ -413,69 +351,41 @@ Automatic effects:
 
 ---
 
-## Technical Implementation: Hybrid Supply System
+## Technical Implementation: Supply System
 
 ### **Core Architecture:**
 
 ```csharp
 public class CompanySupplyManager
 {
-    // Stored components (0-100 scale for easier math)
-    private float _nonFoodSupply = 60.0f; // We manage this
-    private float _lastFoodComponent = 40.0f; // Cached from last check
+    // Total supply level (0-100%)
+    private float _totalSupply = 100.0f;
     
     // Public property returns total (0-100%)
     public int TotalSupply
     {
         get
         {
-            float food = CalculateFoodComponent();
-            float nonFood = _nonFoodSupply;
-            return (int)Math.Min(100, food + nonFood);
+            return (int)Math.Clamp(_totalSupply, 0f, 100f);
         }
     }
     
     /// <summary>
-    /// Observes lord's party food and maps to 0-40% component
-    /// DOES NOT MODIFY vanilla food system
-    /// </summary>
-    private float CalculateFoodComponent()
-    {
-        MobileParty lordParty = GetPlayerLordParty();
-        if (lordParty == null) return 40.0f; // Full if not enlisted
-        
-        int daysOfFood = lordParty.GetNumDaysForFoodToLast();
-        
-        // Map vanilla food days to our 0-40% food component
-        if (lordParty.Party.IsStarving) return 0.0f;
-        if (daysOfFood >= 10) return 40.0f;
-        if (daysOfFood >= 7) return 35.0f;
-        if (daysOfFood >= 5) return 30.0f;
-        if (daysOfFood >= 3) return 20.0f;
-        if (daysOfFood >= 1) return 10.0f;
-        
-        return 5.0f; // <1 day
-    }
-    
-    /// <summary>
-    /// Updates non-food supplies based on activity
+    /// Updates supplies based on activity
     /// Called on daily tick
     /// </summary>
-    public void DailyNonFoodUpdate()
+    public void DailyUpdate()
     {
-        float consumption = CalculateNonFoodConsumption();
-        float resupply = CalculateNonFoodResupply();
+        float consumption = CalculateSupplyConsumption();
+        float resupply = CalculateSupplyResupply();
         
-        _nonFoodSupply = Math.Max(0, Math.Min(60, _nonFoodSupply - consumption + resupply));
-        
-        // Cache food component for comparison
-        _lastFoodComponent = CalculateFoodComponent();
+        _totalSupply = Math.Clamp(_totalSupply - consumption + resupply, 0f, 100f);
     }
     
     /// <summary>
-    /// Simulates non-food supply consumption
+    /// Simulates supply consumption (rations, ammo, equipment maintenance, etc.)
     /// </summary>
-    private float CalculateNonFoodConsumption()
+    private float CalculateSupplyConsumption()
     {
         MobileParty lordParty = GetPlayerLordParty();
         if (lordParty == null) return 0;
@@ -496,9 +406,9 @@ public class CompanySupplyManager
     }
     
     /// <summary>
-    /// Calculates non-food resupply (settlement only)
+    /// Calculates resupply (settlement only)
     /// </summary>
-    private float CalculateNonFoodResupply()
+    private float CalculateSupplyResupply()
     {
         MobileParty lordParty = GetPlayerLordParty();
         if (lordParty == null || lordParty.CurrentSettlement == null) return 0;
@@ -515,38 +425,21 @@ public class CompanySupplyManager
     }
     
     /// <summary>
-    /// Player action: Manual non-food supply gain
+    /// Player action: Manual supply gain from duties, purchases, etc.
     /// </summary>
-    public void AddNonFoodSupplies(float amount)
+    public void AddSupplies(float amount, string source)
     {
-        _nonFoodSupply = Math.Min(60, _nonFoodSupply + amount);
-    }
-    
-    /// <summary>
-    /// Player action: Add food to lord's party (helps food component)
-    /// This USES vanilla system to add items
-    /// </summary>
-    public void AddFoodToLordParty(ItemObject foodItem, int quantity)
-    {
-        MobileParty lordParty = GetPlayerLordParty();
-        if (lordParty == null) return;
-        
-        // Use vanilla system to add food item
-        lordParty.ItemRoster.AddToCounts(foodItem, quantity);
-        
-        // Food component will update automatically on next check
-        // via CalculateFoodComponent() reading lordParty.GetNumDaysForFoodToLast()
+        _totalSupply = Math.Clamp(_totalSupply + amount, 0f, 100f);
     }
 }
 ```
 
 ### **Key Principles:**
 
-1. **Never Modify `MobileParty.Food` directly** - It's a calculated property
-2. **Never Modify `MobileParty.FoodChange`** - AI relies on this
-3. **Read-Only Access:** Use `GetNumDaysForFoodToLast()`, `Party.IsStarving`
-4. **Add Items, Not Stats:** Use `lordParty.ItemRoster.AddToCounts()` for food
-5. **Separate Concerns:** We own non-food (60%), observe food (40%)
+1. **Single Supply Metric:** All logistics (rations, ammo, repairs, camp supplies) tracked as one value
+2. **Player Receives Rations:** Food/rations are part of enlisted service, not shared from lord's party
+3. **Activity-Based Consumption:** Supply drains faster during combat, sieges, harsh terrain
+4. **Settlement Resupply:** Automatic +3-5% per day when in friendly towns/castles
 
 ---
 
@@ -621,32 +514,31 @@ If player has "quartermaster" duty:
 
 ### **Core System (Implemented Dec 2025)**
 
-- [x] `CompanySupplyManager` class with hybrid 40/60 model (`src/Features/Logistics/CompanySupplyManager.cs`)
-- [x] `TotalSupply` property combining food observation + non-food simulation
-- [x] `CalculateFoodComponent()` - observes lord's party food days (read-only)
-- [x] `CalculateNonFoodConsumption()` with 1.5% base rate
+- [x] `CompanySupplyManager` class with unified supply model (`src/Features/Logistics/CompanySupplyManager.cs`)
+- [x] `TotalSupply` property (0-100%) tracking all logistics including rations
+- [x] `CalculateSupplyConsumption()` with 1.5% base rate
 - [x] Size multiplier (partySize / 100)
 - [x] Activity multiplier (siege=2.5x, settlement=0.3x, patrol=1.2x, etc.)
 - [x] Terrain multiplier (desert=1.2x, mountain=1.3x, snow=1.4x, water=1.1x)
-- [x] `CalculateNonFoodResupply()` - settlement-based resupply (+3-5% per day)
+- [x] `CalculateSupplyResupply()` - settlement-based resupply (+3-5% per day)
 - [x] `DailyUpdate()` called from `EnlistmentBehavior.OnDailyTick`
 - [x] `ProcessBattleSupplyChanges()` - casualties, defeat penalty, siege penalty, loot
 - [x] Warning logging at 50% and 30% thresholds via `ModLogger`
 - [x] Equipment menu blocked at <30% supply (in `QuartermasterManager`)
-- [x] Save/load non-food supply value (serialization in EnlistmentBehavior)
+- [x] Save/load supply value (serialization in EnlistmentBehavior)
 - [x] Initialize/Shutdown lifecycle (on enlist/discharge)
-- [x] `AddNonFoodSupplies(float, string)` API ready for duty integration
+- [x] `AddSupplies(float, string)` API ready for duty integration
 - [x] Edge cases: lord captured, on leave, grace period re-enlistment
 
 ### **Partial/Stub Implementations**
 
-- [~] Supply purchase option exists (`OnSupplyPurchaseSelected`) but doesn't call `AddNonFoodSupplies()`
+- [~] Supply purchase option exists (`OnSupplyPurchaseSelected`) but doesn't call `AddSupplies()`
 
 ### **Future Enhancements (Not Yet Implemented)**
 
 - [ ] Display supply % in main menu UI
-- [ ] Connect foraging duty to `AddNonFoodSupplies()` (+3-8%)
-- [ ] Complete supply purchase system (call `AddNonFoodSupplies()`)
+- [ ] Connect foraging duty to `AddSupplies()` (+3-8%)
+- [ ] Complete supply purchase system (call `AddSupplies()`)
 - [ ] Add supply crisis events to JSON (`evt_supply_*`)
 - [ ] Add special loss events (raid, fire, spoilage)
 - [ ] Track deserter supply theft
@@ -662,127 +554,105 @@ If player has "quartermaster" duty:
 
 ### **Week 1: Peacetime**
 ```
-Day 1: Start at 100% supply (Food: 40%, Non-Food: 60%)
-  - Lord has 12 days of food (Food Component: 40%)
-  - Full camp supplies (Non-Food Component: 60%)
+Day 1: Start at 100% supply
+  - Full rations and supplies from enlistment
   
 Day 2: In settlement
-  - Non-Food: 60% - 0.45% consumption + 3% resupply = 62.55% (capped at 60%)
-  - Food: 40% (lord still has 11 days, vanilla auto-bought food)
+  - Supply: 100% - 0.45% consumption + 3% resupply = 100% (stays capped)
   - Total: 100%
   
-Day 3-7: Stay at 100% (resupply > consumption, lord maintains food)
+Day 3-7: Stay at 100% (resupply > consumption)
 
-Result: No supply concerns, vanilla system keeps lord fed
+Result: No supply concerns in peacetime
 ```
 
 ### **Week 2: Campaign Begins**
 ```
 Day 8: Leave settlement, begin patrol
-  - Lord has 10 days of food → Food Component: 40%
-  - Non-Food: 60% - 1.8% (patrol rate) = 58.2%
+  - Supply: 100% - 1.8% (patrol rate) = 98.2%
   - Total: 98.2%
   
 Day 9: Battle against 80 Empire troops
-  - Lord has 9 days of food → Food Component: 40%
-  - Non-Food: 58.2% - 1.8% travel - 4% battle loss + 4% loot = 56.4%
+  - Supply: 98.2% - 1.8% travel - 4% battle loss + 4% loot = 96.4%
   - Total: 96.4%
   
-Day 10-11: Travel (no food buying opportunities, vanilla consuming food)
-  - Lord has 7 days of food → Food Component: 35%
-  - Non-Food: 56.4% - 3.6% = 52.8%
-  - Total: 87.8%
+Day 10-11: Travel (no resupply opportunities)
+  - Supply: 96.4% - 3% = 93.4%
+  - Total: 93.4%
   
 Day 12: Foraging duty
-  - Player adds 3 food items to lord's party → Lord now has 9 days
-  - Food Component: 40%
-  - Non-Food: 52.8% + 3% = 55.8%
-  - Total: 95.8%
+  - Supply: 93.4% - 1.5% travel + 4% foraging = 95.9%
+  - Total: 95.9%
   
 Day 13-14: Return to settlement
-  - Lord buys food (vanilla) → 12 days → Food Component: 40%
-  - Non-Food: 55.8% + 6% (two days resupply) = 60% (capped)
+  - Supply: 95.9% - 0.9% (two days at 0.45%) + 6% resupply = 100% (capped)
   - Total: 100%
 
-Result: Hybrid system works! Vanilla handles food, we manage other logistics
+Result: Campaign pressure manageable with occasional foraging
 ```
 
 ### **Week 3: Siege (Hard Mode)**
 ```
-Day 15: Begin siege (lord has 10 days of food)
-  - Food Component: 40%
-  - Non-Food: 60% - 3.75% (siege rate, 100 troops) = 56.25%
+Day 15: Begin siege
+  - Supply: 100% - 3.75% (siege rate, 100 troops) = 96.25%
   - Total: 96.25%
   
-Day 16-18: Siege continues (vanilla consuming food, can't resupply)
-  - Lord now has 7 days → Food Component: 35%
-  - Non-Food: 56.25% - 11.25% = 45%
-  - Total: 80% (WARNING at 50%)
+Day 16-18: Siege continues (no resupply)
+  - Supply: 96.25% - 11.25% (3 days) = 85%
+  - Total: 85%
   
-Day 19: Assault battle (casualties, lord at 5 days food)
-  - Food Component: 30%
-  - Non-Food: 45% - 3.75% daily - 6% battle loss = 35.25%
-  - Total: 65.25%
+Day 19: Assault battle (casualties)
+  - Supply: 85% - 3.75% daily - 6% battle loss = 75.25%
+  - Total: 75.25%
   
 Day 20: Player does equipment maintenance duty
-  - Food Component: 30% (lord at 4 days)
-  - Non-Food: 35.25% - 3.75% + 3% maintenance = 34.5%
-  - Total: 64.5%
+  - Supply: 75.25% - 3.75% + 3% maintenance = 74.5%
+  - Total: 74.5%
   
-Day 21-23: Continue siege (CRITICAL - lord at 2 days food)
-  - Food Component: 10% (LOW)
-  - Non-Food: 34.5% - 11.25% = 23.25%
-  - Total: 33.25% (CRITICAL - equipment menu blocked!)
+Day 21-23: Continue siege (CRITICAL)
+  - Supply: 74.5% - 11.25% = 63.25%
+  - Total: 63.25%
   
 Day 24: Player negotiates with nearby town merchant (+500g spent)
-  - Lord buys 5 food (+2 days) → Food Component: 20%
-  - Non-Food: 23.25% - 3.75% + 8% purchase = 27.5%
-  - Total: 47.5% (Still critical)
+  - Supply: 63.25% - 3.75% + 10% purchase = 69.5%
+  - Total: 69.5%
   
 Day 25: Siege victory! Loot supplies, enter town
-  - Lord forages from captured town (vanilla) → 10 days → Food Component: 40%
-  - Non-Food: 27.5% + 5% loot + 5% town resupply = 37.5%
-  - Total: 77.5%
+  - Supply: 69.5% + 5% loot + 5% town resupply = 79.5%
+  - Total: 79.5%
   
 Day 26-30: Recover in town
-  - Food Component: 40% (lord maintains via vanilla auto-buy)
-  - Non-Food: 37.5% + 15% (3 days × 5%) = 52.5%
-  - Total: 92.5%
+  - Supply: 79.5% + 15% (3 days × 5%) - 2.25% consumption = 92.25%
+  - Total: 92.25%
 
 Result: Intense siege pressure, realistic logistics, required active management
 ```
 
 ---
 
-## Summary: Why This Hybrid Approach Works
+## Summary: Why This Approach Works
 
-### **Respects Vanilla AI (Implemented):**
-✅ Lord's AI continues to buy food automatically via `PartiesBuyFoodCampaignBehavior`  
-✅ AI decision-making (raids, sieges) still uses `GetNumDaysForFoodToLast()`  
-✅ Army food sharing continues to work naturally  
-✅ Starvation mechanics remain intact  
-
-### **Adds Depth Without Conflicts (Implemented):**
-✅ Non-food logistics (60% of supply) are fully simulated by us  
-✅ Food status (40% of supply) is observed, not modified  
-✅ Equipment gate is based on our hybrid supply metric  
+### **Integrated Supply Model (Implemented):**
+✅ Single unified supply metric (0-100%) tracks all logistics including rations  
+✅ Player receives rations as part of enlisted service (no food sharing from lord)  
+✅ Equipment gate is based on overall supply health  
 ⏳ Player agency via duties (API ready, needs connection)  
 
 ### **Mod Compatibility (Implemented):**
-✅ No modifications to native `MobileParty` properties  
+✅ No modifications to native `MobileParty` food properties  
 ✅ No interference with other mods' food/party systems  
 ✅ All changes are additive (our own systems)  
-✅ Read-only observation of vanilla state  
+✅ Player's food needs handled independently from vanilla  
 
 ### **Gameplay Benefits (Partial):**
-✅ Realistic siege pressure (food + non-food both deplete)  
-✅ Automatic food handling (lord's AI prevents micro-management)  
+✅ Realistic campaign pressure (supplies deplete during extended operations)  
 ✅ Meaningful equipment gate (tied to overall logistics)  
+✅ Settlement resupply provides strategic value  
 ⏳ Player agency via duties (planned, not connected)  
 
 ### **Implementation Simplicity (Implemented):**
 ✅ One manager class (`CompanySupplyManager`)  
-✅ Two independent components (food observed, non-food simulated)  
+✅ Single supply metric (0-100%) for all logistics  
 ✅ Clean separation of concerns  
 ✅ Easy to debug and balance  
 
@@ -791,7 +661,7 @@ Result: Intense siege pressure, realistic logistics, required active management
 **Status**: Core implementation complete (December 2025). Player-facing features need connection.
 
 **What Works Now:**
-1. ✅ `CompanySupplyManager` class with hybrid 40/60 model
+1. ✅ `CompanySupplyManager` class with unified supply model
 2. ✅ Daily consumption based on activity, terrain, party size
 3. ✅ Settlement auto-resupply (+3-5% per day)
 4. ✅ Battle supply changes (losses and loot)
@@ -800,14 +670,14 @@ Result: Intense siege pressure, realistic logistics, required active management
 7. ✅ Warning logging at thresholds
 
 **Main Gaps:**
-1. ⏳ No duties call `AddNonFoodSupplies()` - foraging duty needs connection
+1. ⏳ No duties call `AddSupplies()` - foraging duty needs connection
 2. ⏳ Supply purchase stub exists but doesn't update supply %
 3. ⏳ No supply crisis events in JSON (event IDs are placeholders)
 4. ⏳ No UI display of supply percentage
 
 **Next Steps:**
-1. Connect foraging/quartermaster duties to `AddNonFoodSupplies()`
-2. Fix `OnSupplyPurchaseSelected()` to call `AddNonFoodSupplies()`
+1. Connect foraging/quartermaster duties to `AddSupplies()`
+2. Fix `OnSupplyPurchaseSelected()` to call `AddSupplies()`
 3. Create supply crisis events (`evt_supply_*`) in JSON
 4. Add supply % to Camp Hub status display
 5. Balance consumption/resupply rates based on playtesting

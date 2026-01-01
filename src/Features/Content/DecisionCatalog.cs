@@ -270,17 +270,16 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Extracts delivery info from the decision ID naming convention.
-        /// Player-initiated decisions start with "player_" (legacy) or "dec_" (new spec).
-        /// Menu section is inferred from the ID pattern or defaults based on content.
+        /// Decisions starting with "dec_" are event content triggered by orchestrated opportunities.
+        /// Only legacy "player_" prefix is treated as player-initiated (being phased out).
         /// </summary>
         private static void ExtractDeliveryInfo(DecisionDefinition decision)
         {
             var id = decision.Id?.ToLowerInvariant() ?? string.Empty;
 
-            // Determine if player-initiated based on ID prefix
-            // "player_" = legacy player-initiated events (events_player_decisions.json)
-            // "dec_" = new spec player-initiated decisions (Decisions/decisions.json)
-            decision.IsPlayerInitiated = id.StartsWith("player_") || id.StartsWith("dec_");
+            // Decisions are now orchestrated only - they appear via camp opportunities, not as static menu items.
+            // Legacy "player_" prefix kept for backwards compatibility during migration.
+            decision.IsPlayerInitiated = id.StartsWith("player_");
 
             // Infer menu section from ID pattern
             if (id.Contains("train") || id.Contains("drill") || id.Contains("spar") ||

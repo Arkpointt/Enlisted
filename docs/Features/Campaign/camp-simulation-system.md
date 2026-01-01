@@ -5,7 +5,7 @@
 **Status:** ✅ Implemented  
 **Last Updated:** 2025-12-31  
 **Implementation:** `src/Features/Camp/CompanySimulationBehavior.cs`, `src/Features/Camp/CampOpportunityGenerator.cs`  
-**Related Docs:** [Content System Architecture](../Content/content-system-architecture.md), [News Reporting System](../UI/news-reporting-system.md), [Company Needs](../Core/company-needs.md)
+**Related Docs:** [Content System Architecture](../Content/content-system-architecture.md), [News Reporting System](../UI/news-reporting-system.md), [Company Needs](../Core/company-needs.md), [Camp Routine Schedule](camp-routine-schedule-spec.md)
 
 ---
 

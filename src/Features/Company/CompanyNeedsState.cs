@@ -8,7 +8,7 @@ namespace Enlisted.Features.Company
     /// Tracks the current state of all five company needs for the enlisted lord's party.
     /// Degrades daily based on activities and recovers through appropriate assignments.
     /// NOTE: Serialization is handled manually in ScheduleBehavior.SyncData()
-    /// Supplies now uses CompanySupplyManager for hybrid 40/60 (food/non-food) calculation.
+    /// Supplies uses CompanySupplyManager for unified logistics calculation including rations.
     /// </summary>
     public class CompanyNeedsState
     {
@@ -25,9 +25,9 @@ namespace Enlisted.Features.Company
         public int Rest { get; set; } = 60;
         
         /// <summary>
-        /// Supplies level (0-100). Uses CompanySupplyManager for hybrid calculation:
-        /// 40% from observing lord's party food days, 60% from simulated non-food supplies.
-        /// Falls back to stored value when manager is unavailable.
+        /// Supplies level (0-100). Uses CompanySupplyManager for unified logistics tracking
+        /// including rations, ammunition, repairs, and camp supplies. Falls back to stored
+        /// value when manager is unavailable.
         /// </summary>
         public int Supplies
         {

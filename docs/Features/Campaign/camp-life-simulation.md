@@ -126,7 +126,7 @@ The player-facing simulation layer tracks five transparent metrics (0-100) repre
 **Range:** 0-100  
 **What it represents:** Food stocks and basic consumables
 
-**Special:** Uses hybrid calculation (40% from lord's party food days, 60% simulated non-food supplies via CompanySupplyManager)
+**Special:** Player receives rations directly as part of enlisted service; all supplies (rations, ammo, repairs, camp supplies) tracked as single metric via CompanySupplyManager
 
 **Affected by:**
 - Resupply orders (+10 to +20)

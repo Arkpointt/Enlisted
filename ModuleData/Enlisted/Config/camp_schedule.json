@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "description": "Defines the baseline daily camp routine schedule and deviation rules",
+  "phases": {
+    "Dawn": {
+      "slot1": {
+        "category": "formation",
+        "weight": 0.7,
+        "description": "Morning formation and inspection",
+        "skippedWhen": ["low_morale", "siege", "marching", "exhausted"]
+      },
+      "slot2": {
+        "category": "training",
+        "weight": 0.5,
+        "description": "Early drill",
+        "skippedWhen": ["exhausted", "marching", "siege"]
+      },
+      "flavor": "The camp stirs to life. Sergeants bark orders."
+    },
+    "Midday": {
+      "slot1": {
+        "category": "training",
+        "weight": 0.8,
+        "description": "Combat training",
+        "boostedWhen": ["active_campaign", "pre_battle"]
+      },
+      "slot2": {
+        "category": "work",
+        "weight": 0.6,
+        "description": "Work details and maintenance",
+        "skippedWhen": ["siege"]
+      },
+      "flavor": "The sun climbs high. The serious work begins."
+    },
+    "Dusk": {
+      "slot1": {
+        "category": "social",
+        "weight": 0.8,
+        "description": "Evening leisure",
+        "skippedWhen": ["high_scrutiny", "siege"]
+      },
+      "slot2": {
+        "category": "economic",
+        "weight": 0.5,
+        "description": "Trading and gambling",
+        "skippedWhen": ["high_scrutiny"]
+      },
+      "flavor": "Work ends. Men gather around fires."
+    },
+    "Night": {
+      "slot1": {
+        "category": "recovery",
+        "weight": 0.9,
+        "description": "Rest and sleep",
+        "boostedWhen": ["exhausted", "marching"]
+      },
+      "slot2": {
+        "category": "special",
+        "weight": 0.3,
+        "description": "Night activities",
+        "skippedWhen": ["exhausted"]
+      },
+      "flavor": "The camp grows quiet. Torches gutter."
+    }
+  },
+  "categoryMappings": {
+    "formation": ["training", "special"],
+    "training": ["training"],
+    "work": ["economic", "special"],
+    "social": ["social"],
+    "economic": ["economic"],
+    "recovery": ["recovery"],
+    "special": ["special"]
+  },
+  "activityOverrides": {
+    "Quiet": {
+      "description": "Garrison routine - relaxed schedule",
+      "modifiers": {
+        "training": 0.8,
+        "social": 1.3,
+        "recovery": 1.2,
+        "formation": 0.8
+      }
+    },
+    "Routine": {
+      "description": "Standard operations - baseline schedule",
+      "modifiers": {}
+    },
+    "Active": {
+      "description": "Active campaign - extra training, less leisure",
+      "modifiers": {
+        "training": 1.5,
+        "social": 0.6,
+        "formation": 1.2,
+        "recovery": 0.8
+      }
+    },
+    "Intense": {
+      "description": "Combat operations - minimal schedule",
+      "modifiers": {
+        "training": 0.3,
+        "social": 0.2,
+        "formation": 0.0,
+        "recovery": 1.5,
+        "work": 0.5
+      }
+    }
+  },
+  "pressureOverrides": {
+    "low_morale": {
+      "threshold": 30,
+      "effect": "skip_formations",
+      "description": "Morale too low for formations",
+      "recoveryThreshold": 40
+    },
+    "low_supplies": {
+      "threshold": 30,
+      "effect": "boost_foraging",
+      "description": "Foraging prioritized due to supply shortage",
+      "recoveryThreshold": 40
+    },
+    "high_scrutiny": {
+      "threshold": 70,
+      "effect": "restrict_leisure",
+      "description": "Officers watching closely",
+      "recoveryThreshold": 60
+    },
+    "exhausted": {
+      "threshold": 30,
+      "effect": "boost_recovery",
+      "description": "Men need rest",
+      "recoveryThreshold": 40
+    },
+    "pre_battle": {
+      "hoursBeforeBattle": 24,
+      "effect": "combat_focus",
+      "description": "Final preparations for battle"
+    },
+    "siege": {
+      "effect": "survival_mode",
+      "description": "Siege conditions - survival priorities"
+    },
+    "marching": {
+      "effect": "minimal_schedule",
+      "description": "On the march - evening activities only"
+    }
+  },
+  "lordSituationModifiers": {
+    "PeacetimeGarrison": {
+      "description": "Garrison life - full schedule with extra leisure",
+      "skipPhases": [],
+      "boostCategories": ["social", "recovery"]
+    },
+    "WarMarching": {
+      "description": "On the march - morning and evening only",
+      "skipPhases": ["Midday"],
+      "boostCategories": ["recovery"]
+    },
+    "WarActiveCampaign": {
+      "description": "Active campaign - training focused",
+      "skipPhases": [],
+      "boostCategories": ["training", "formation"]
+    },
+    "SiegeAttacking": {
+      "description": "Siege assault - minimal schedule, work focus",
+      "skipPhases": ["Dusk"],
+      "boostCategories": ["work"]
+    },
+    "SiegeDefending": {
+      "description": "Under siege - survival mode",
+      "skipPhases": ["Midday", "Dusk"],
+      "boostCategories": ["recovery"]
+    }
+  },
+  "scheduleBoostMultiplier": 1.3,
+  "deviationDisplayEnabled": true
+}

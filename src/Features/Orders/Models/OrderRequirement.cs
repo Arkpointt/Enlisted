@@ -32,6 +32,12 @@ namespace Enlisted.Features.Orders.Models
         /// Used to gate specialist orders to appropriate roles.
         /// </summary>
         public Dictionary<string, int> MinTraits { get; set; } = [];
+
+        /// <summary>
+        /// If true, this order can only be issued on land and will be cancelled if the party goes to sea.
+        /// Used for orders that require leaving camp (scouting, foraging, patrolling).
+        /// </summary>
+        public bool NotAtSea { get; set; }
     }
 }
 

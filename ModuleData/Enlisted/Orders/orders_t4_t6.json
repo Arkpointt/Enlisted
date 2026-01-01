@@ -9,7 +9,8 @@
     "requirements": {
       "tier_min": 4,
       "tier_max": 6,
-      "min_skills": { "Scouting": 40 }
+      "min_skills": { "Scouting": 40 },
+      "not_at_sea": true
     },
     "consequences": {
       "success": {
@@ -112,7 +113,8 @@
     "requirements": {
       "tier_min": 4,
       "tier_max": 6,
-      "min_skills": { "Scouting": 30 }
+      "min_skills": { "Scouting": 30 },
+      "not_at_sea": true
     },
     "consequences": {
       "success": {
@@ -149,7 +151,8 @@
     "requirements": {
       "tier_min": 4,
       "tier_max": 6,
-      "min_skills": { "Tactics": 50 }
+      "min_skills": { "Tactics": 50 },
+      "not_at_sea": true
     },
     "consequences": {
       "success": {
@@ -187,7 +190,8 @@
     "requirements": {
       "tier_min": 4,
       "tier_max": 6,
-      "min_skills": { "Engineering": 40 }
+      "min_skills": { "Engineering": 40 },
+      "not_at_sea": true
     },
     "consequences": {
       "success": {

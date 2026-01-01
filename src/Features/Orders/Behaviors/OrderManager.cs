@@ -77,6 +77,7 @@ namespace Enlisted.Features.Orders.Behaviors
 
         /// <summary>
         /// Hourly tick checks for order state transitions (IMMINENT → PENDING).
+        /// Also checks for naval transitions that would cancel land-only orders.
         /// </summary>
         private void OnHourlyTick()
         {
@@ -85,7 +86,57 @@ namespace Enlisted.Features.Orders.Behaviors
                 return;
             }
 
+            // Check if we've gone to sea with an active land-only order
+            CheckNavalOrderConflict();
+
             UpdateOrderState();
+        }
+
+        /// <summary>
+        /// Checks if the current order conflicts with being at sea and cancels it if so.
+        /// Orders with not_at_sea requirement (like scouting, foraging, patrolling) cannot
+        /// be performed on a ship and are stood down when the party embarks.
+        /// </summary>
+        private void CheckNavalOrderConflict()
+        {
+            if (_currentOrder == null)
+            {
+                return;
+            }
+
+            // Check if party is now at sea
+            var enlistment = EnlistmentBehavior.Instance;
+            var isAtSea = enlistment?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            if (!isAtSea)
+            {
+                return;
+            }
+
+            // Check if current order requires land
+            if (!_currentOrder.Requirements.NotAtSea)
+            {
+                return;
+            }
+
+            // Cancel the order - it can't be performed at sea
+            var orderTitle = _currentOrder.Title;
+            ModLogger.Info(LogCategory, $"Order cancelled due to sea travel: {orderTitle}");
+
+            // Report to news system
+            Interface.Behaviors.EnlistedNewsBehavior.Instance?.AddCampNews(
+                headline: $"{orderTitle} stood down - boarding ship",
+                severity: "info",
+                subCategory: "orders"
+            );
+
+            // Show notification
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{orderTitle} stood down - boarding ship",
+                Colors.Yellow));
+
+            // Clear the order
+            _currentOrder = null;
+            _orderAccepted = false;
         }
 
         /// <summary>

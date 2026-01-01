@@ -256,6 +256,9 @@
     <Compile Include="src\Features\Camp\Models\CompanyPressure.cs"/>
     <Compile Include="src\Features\Camp\Models\CompanyRoster.cs"/>
     <Compile Include="src\Features\Camp\Models\SimulationDayResult.cs"/>
+    <Compile Include="src\Features\Camp\Models\ScheduledPhase.cs"/>
+    <Compile Include="src\Features\Camp\Models\ScheduleForecast.cs"/>
+    <Compile Include="src\Features\Camp\CampScheduleManager.cs"/>
     <Compile Include="src\Features\Activities\*.cs"/>
     <Compile Include="src\Features\Conditions\PlayerConditionModels.cs"/>
     <Compile Include="src\Features\Conditions\PlayerConditionBehavior.cs"/>
@@ -285,6 +288,7 @@
     <Compile Include="src\Features\Orders\Models\OrderRequirement.cs"/>
     <Compile Include="src\Features\Orders\Models\OrderConsequence.cs"/>
     <Compile Include="src\Features\Orders\Models\OrderOutcome.cs"/>
+    <Compile Include="src\Features\Orders\Models\PhaseRecap.cs"/>
     <Compile Include="src\Features\Orders\Behaviors\OrderManager.cs"/>
     <Compile Include="src\Features\Orders\OrderCatalog.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\CheckFortificationAttackablePatch.cs"/>
@@ -295,7 +299,6 @@
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterLeaveSuppressionPatch.cs"/>
     <!-- Disabled: Native game handles siege dismounting -->
     <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\FoodSystemPatches.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\IncidentsSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalShipExclusionPatch.cs"/>

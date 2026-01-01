@@ -2,27 +2,30 @@
 
 **Summary:** The unified content system manages all narrative content (events, decisions, orders, map incidents) through a world-state driven orchestration pipeline. The Content Orchestrator analyzes your lord's situation and coordinates content delivery to match military reality: garrison duty is quiet, campaigns are busy, sieges are intense. All content uses JSON definitions, XML localization, requirement checking, and native Bannerlord effect integration.
 
-**Status:** ✅ Current (World-State Orchestration Implemented)  
+**Status:** ✅ **IMPLEMENTED** - ContentOrchestrator, OrderProgressionBehavior, 85 order events active  
 **Last Updated:** 2025-12-31  
-**Related Docs:** [Event Catalog](../../Content/event-catalog-by-system.md), [Training System](../Combat/training-system.md), [Camp Background Simulation](../../AFEATURE/camp-background-simulation.md), [Camp Life Simulation](../../AFEATURE/camp-life-simulation.md)
+**Implementation:** `src/Features/Content/ContentOrchestrator.cs`, `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`  
+**Related Docs:** [Event Catalog](../../Content/event-catalog-by-system.md), [Training System](../Combat/training-system.md), [Order Progression System](../../AFEATURE/order-progression-system.md), [Content Orchestrator Plan](../../AFEATURE/content-orchestrator-plan.md)
 
 ---
 
-## ✅ World-State Orchestration (Implemented 2025-12-30)
+## ✅ World-State Orchestration (IMPLEMENTED 2025-12-30)
 
-The content system now uses **world-state driven orchestration** instead of schedule-based pacing. The Content Orchestrator analyzes your lord's situation (garrison/campaign/siege), war status, and company condition to provide contextually appropriate content.
+The content system uses **world-state driven orchestration** instead of schedule-based pacing. The Content Orchestrator analyzes your lord's situation (garrison/campaign/siege), war status, and company condition to provide contextually appropriate content.
 
-**Core Architecture:**
-- **ContentOrchestrator** - Analyzes world state, calculates activity levels, coordinates all systems
-- **WorldStateAnalyzer** - Detects lord situation, war stance, determines context
-- **SimulationPressureCalculator** - Tracks company condition and pressure sources
-- **PlayerBehaviorTracker** - Learns player preferences for better content selection
-- **EventSelector, EventDeliveryManager, EventRequirementChecker** - Reused with world-state awareness
+**Core Architecture (All Implemented):**
+- **ContentOrchestrator** - Analyzes world state, calculates activity levels, coordinates all systems ✅
+- **WorldStateAnalyzer** - Detects lord situation, war stance, determines context ✅
+- **SimulationPressureCalculator** - Tracks company condition and pressure sources ✅
+- **PlayerBehaviorTracker** - Learns player preferences for better content selection ✅
+- **OrderProgressionBehavior** - Multi-day orders with phase progression and event injection ✅
+- **EventSelector, EventDeliveryManager, EventRequirementChecker** - Reused with world-state awareness ✅
 
-**Key Improvements:**
+**Implementation Benefits:**
 - Content frequency matches simulation reality (not arbitrary timers)
 - Activity levels drive order event frequency (quiet/routine/active/intense)
-- Player behavior learning improves content relevance
+- 85 order events fire contextually during 16 different order types
+- Player behavior learning improves content selection
 - Native Bannerlord effects integrated (traits, skills, morale, health)
 - Camp opportunities dynamically generated based on context
 

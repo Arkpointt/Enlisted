@@ -426,6 +426,20 @@ namespace Enlisted.Features.Camp
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             LoadOpportunityDefinitions();
+            InitializeScheduleManager();
+        }
+
+        /// <summary>
+        /// Initializes the camp schedule manager for routine tracking.
+        /// Creates a schedule manager instance if one doesn't exist.
+        /// </summary>
+        private void InitializeScheduleManager()
+        {
+            if (CampScheduleManager.Instance == null)
+            {
+                _ = new CampScheduleManager();
+                ModLogger.Info(LogCategory, "CampScheduleManager initialized");
+            }
         }
 
         /// <summary>
@@ -503,11 +517,15 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Called when day phase changes. Invalidates the opportunity cache.
+        /// Called when day phase changes. Invalidates the opportunity cache and updates the schedule.
         /// </summary>
         public void OnPhaseChanged(DayPhase newPhase)
         {
             _cachedOpportunities = null;
+            
+            // Update the schedule manager for the new phase
+            CampScheduleManager.Instance?.OnPhaseChanged(newPhase);
+            
             ModLogger.Debug(LogCategory, $"Cache invalidated for phase change to {newPhase}");
         }
 
@@ -727,7 +745,7 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Calculates fitness score for an opportunity using all 4 intelligence layers.
+        /// Calculates fitness score for an opportunity using all 4 intelligence layers plus schedule awareness.
         /// </summary>
         private float CalculateFitness(CampOpportunity opp, WorldSituation world, CampContext camp, 
             PlayerPreferences prefs, OpportunityHistory history)
@@ -746,7 +764,46 @@ namespace Enlisted.Features.Camp
             // LAYER 4: History (Meta)
             score += CalculateHistoryModifier(opp, history);
 
+            // LAYER 5: Schedule Awareness (Routine)
+            score = ApplyScheduleBoost(opp, score, camp);
+
             return Math.Max(0f, Math.Min(100f, score));
+        }
+
+        /// <summary>
+        /// Applies schedule boost to opportunities that match the current routine schedule.
+        /// Opportunities matching scheduled activities get a fitness boost, making them more likely to appear.
+        /// </summary>
+        private float ApplyScheduleBoost(CampOpportunity opp, float currentScore, CampContext camp)
+        {
+            var scheduleManager = CampScheduleManager.Instance;
+            if (scheduleManager == null)
+            {
+                return currentScore;
+            }
+
+            var currentSchedule = scheduleManager.GetScheduleForPhase(camp.DayPhase);
+            if (currentSchedule == null)
+            {
+                return currentScore;
+            }
+
+            // Check if this opportunity matches a scheduled activity category
+            if (scheduleManager.IsScheduledCategory(opp.Type, currentSchedule))
+            {
+                // Apply schedule boost multiplier
+                float boostedScore = currentScore * scheduleManager.ScheduleBoostMultiplier;
+                
+                // Mark the opportunity as scheduled for UI display
+                opp.IsScheduled = true;
+                
+                ModLogger.Debug(LogCategory, 
+                    $"Schedule boost applied to {opp.Id}: {currentScore:F1} -> {boostedScore:F1}");
+                
+                return boostedScore;
+            }
+
+            return currentScore;
         }
 
         private float CalculateWorldStateModifier(CampOpportunity opp, WorldSituation world)

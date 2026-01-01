@@ -3,8 +3,8 @@
 **Summary:** Master list of all narrative content with IDs, titles, descriptions, requirements, effects, and skill checks. This index provides quick reference for all events, decisions, orders, and map incidents in the mod.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23  
-**Related Docs:** [Event Catalog](event-catalog-by-system.md), [Content System Architecture](../Features/Content/content-system-architecture.md)
+**Last Updated:** 2025-12-31  
+**Related Docs:** [Event Catalog](event-catalog-by-system.md), [Content System Architecture](content-system-architecture.md), [Order Events Master](../../AFEATURE/order-events-master.md)
 
 ---
 
@@ -20,13 +20,14 @@
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| **Orders** | 17 | Military directives from chain of command (6 T1-T3, 6 T4-T6, 5 T7-T9) |
+| **Orders** | 16 | Military directives from chain of command (6 T1-T3, 5 T4-T6, 5 T7-T9) |
+| **Order Events** | 85 | Events that fire during order execution (16 event pools, see [Order Events Master](../../AFEATURE/order-events-master.md)) |
 | **Decisions** | 38 | Player-initiated choices from Camp Hub (34 core + 4 retinue T7+) |
 | **Events** | 68 | Context-triggered situations (14 escalation + 5 crisis + 49 role/universal) |
 | **Map Incidents** | 45 | Triggered by map actions (battle, siege, settlement entry/exit, waiting) |
 | **Retinue Map Incidents** | 6 | Post-battle incidents for T7+ commanders with retinue |
 | **Retinue Events** | 17 | Narrative events for retinue management (T7+) |
-| **Total** | **191** | Full content catalog |
+| **Total** | **275** | Full content catalog including order events |
 
 **Training Decisions**: 3 weapon-aware training decisions using dynamic skill XP. Uses `reward_choices` and `dynamic_skill_xp` for equipped weapon training. See [Training System](../Features/Combat/training-system.md) for implementation details.
 

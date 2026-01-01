@@ -113,6 +113,7 @@ namespace Enlisted.Features.Interface.Behaviors
         // Only updates when the underlying data changes.
         private string _cachedMainMenuNarrative = string.Empty;
         private CampaignTime _narrativeLastBuiltAt = CampaignTime.Zero;
+        private int _lastKnownSupplyLevel = -1;
         
         // State tracking for smooth past/present tense transitions (static since EnlistedMenuBehavior is singleton)
         private static Settlement _lastKnownSettlement = null;
@@ -1127,12 +1128,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     var allDecisions = new List<DecisionAvailability>();
                     if (decisionManager != null)
                     {
-                        // Collect from opportunities first (most urgent/contextual)
+                        // Collect orchestrated camp opportunities only
                         allDecisions.AddRange(decisionManager.GetAvailableOpportunities().Where(d => d.IsVisible && d.IsAvailable));
-                        // Then from player-initiated sections
-                        allDecisions.AddRange(decisionManager.GetAvailableDecisionsForSection("training").Where(d => d.IsVisible && d.IsAvailable));
-                        allDecisions.AddRange(decisionManager.GetAvailableDecisionsForSection("social").Where(d => d.IsVisible && d.IsAvailable));
-                        allDecisions.AddRange(decisionManager.GetAvailableDecisionsForSection("camp_life").Where(d => d.IsVisible && d.IsAvailable));
                     }
                     _cachedMainMenuDecisions = allDecisions.Take(3).ToList();
 
@@ -3024,14 +3021,22 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // Only rebuild narrative every 30 seconds to prevent rapid flickering.
-                // This gives the player time to read before text changes.
+                // Check if supply level changed significantly (invalidates cache to prevent stale data)
+                var currentSupply = enlistment?.CompanyNeeds?.Supplies ?? 0;
+                var supplyChanged = _lastKnownSupplyLevel >= 0 && 
+                                   Math.Abs(currentSupply - _lastKnownSupplyLevel) >= 10;
+
+                // Only rebuild narrative every 30 seconds to prevent rapid flickering,
+                // unless supply changed significantly (10+ points).
+                // This gives the player time to read before text changes while keeping supply reports accurate.
                 var minTimeBetweenBuilds = CampaignTime.Seconds(30);
                 if (string.IsNullOrEmpty(_cachedMainMenuNarrative) ||
-                    CampaignTime.Now - _narrativeLastBuiltAt > minTimeBetweenBuilds)
+                    CampaignTime.Now - _narrativeLastBuiltAt > minTimeBetweenBuilds ||
+                    supplyChanged)
                 {
                     _cachedMainMenuNarrative = BuildMainMenuNarrative(enlistment, lord);
                     _narrativeLastBuiltAt = CampaignTime.Now;
+                    _lastKnownSupplyLevel = currentSupply;
                 }
 
                 // Get menu context and set text variable (only if actually changed)
@@ -4536,9 +4541,6 @@ namespace Enlisted.Features.Interface.Behaviors
         private enum DecisionsMenuSection
         {
             Queued,
-            Training,
-            Social,
-            CampLife,
             Opportunities
         }
 
@@ -4547,9 +4549,6 @@ namespace Enlisted.Features.Interface.Behaviors
 
         // Decision menu section collapse state (accordion-style). These persist while the campaign is running.
         private bool _decisionsCollapsedQueued;
-        private bool _decisionsCollapsedTraining;
-        private bool _decisionsCollapsedSocial;
-        private bool _decisionsCollapsedCampLife;
         private bool _decisionsCollapsedOpportunities;
 
         // Accordion behavior: on the first open, everything starts collapsed. After that, we reopen the last expanded
@@ -4563,21 +4562,12 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool _decisionsSnapshotsInitialized;
         private HashSet<string> _decisionsPrevQueuedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private HashSet<string> _decisionsPrevOpportunityIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private HashSet<string> _decisionsPrevTrainingIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private HashSet<string> _decisionsPrevSocialIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private HashSet<string> _decisionsPrevCampLifeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         private bool _decisionsNewQueued;
         private bool _decisionsNewOpportunities;
-        private bool _decisionsNewTraining;
-        private bool _decisionsNewSocial;
-        private bool _decisionsNewCampLife;
 
         private CampaignTime? _decisionsNewQueuedSince;
         private CampaignTime? _decisionsNewOpportunitiesSince;
-        private CampaignTime? _decisionsNewTrainingSince;
-        private CampaignTime? _decisionsNewSocialSince;
-        private CampaignTime? _decisionsNewCampLifeSince;
 
         private static readonly CampaignTime DecisionsNewAutoClearThreshold = CampaignTime.Days(1f);
 
@@ -4606,26 +4596,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     _decisionsNewOpportunitiesSince = null;
                 }
 
-                if (_decisionsNewTraining && _decisionsNewTrainingSince.HasValue &&
-                    now - _decisionsNewTrainingSince.Value > DecisionsNewAutoClearThreshold)
-                {
-                    _decisionsNewTraining = false;
-                    _decisionsNewTrainingSince = null;
-                }
-
-                if (_decisionsNewSocial && _decisionsNewSocialSince.HasValue &&
-                    now - _decisionsNewSocialSince.Value > DecisionsNewAutoClearThreshold)
-                {
-                    _decisionsNewSocial = false;
-                    _decisionsNewSocialSince = null;
-                }
-
-                if (_decisionsNewCampLife && _decisionsNewCampLifeSince.HasValue &&
-                    now - _decisionsNewCampLifeSince.Value > DecisionsNewAutoClearThreshold)
-                {
-                    _decisionsNewCampLife = false;
-                    _decisionsNewCampLifeSince = null;
-                }
             }
             catch
             {
@@ -4656,21 +4626,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         _decisionsNewOpportunities = false;
                         _decisionsNewOpportunitiesSince = null;
-                    }
-                    else if (section == DecisionsMenuSection.Training)
-                    {
-                        _decisionsNewTraining = false;
-                        _decisionsNewTrainingSince = null;
-                    }
-                    else if (section == DecisionsMenuSection.Social)
-                    {
-                        _decisionsNewSocial = false;
-                        _decisionsNewSocialSince = null;
-                    }
-                    else if (section == DecisionsMenuSection.CampLife)
-                    {
-                        _decisionsNewCampLife = false;
-                        _decisionsNewCampLifeSince = null;
                     }
                 }
                 else
@@ -4719,9 +4674,6 @@ namespace Enlisted.Features.Interface.Behaviors
         private void CollapseAllDecisionsSections()
         {
             _decisionsCollapsedQueued = true;
-            _decisionsCollapsedTraining = true;
-            _decisionsCollapsedSocial = true;
-            _decisionsCollapsedCampLife = true;
             _decisionsCollapsedOpportunities = true;
         }
 
@@ -4731,12 +4683,6 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 case DecisionsMenuSection.Queued:
                     return _decisionsCollapsedQueued;
-                case DecisionsMenuSection.Training:
-                    return _decisionsCollapsedTraining;
-                case DecisionsMenuSection.Social:
-                    return _decisionsCollapsedSocial;
-                case DecisionsMenuSection.CampLife:
-                    return _decisionsCollapsedCampLife;
                 case DecisionsMenuSection.Opportunities:
                     return _decisionsCollapsedOpportunities;
                 default:
@@ -4750,15 +4696,6 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 case DecisionsMenuSection.Queued:
                     _decisionsCollapsedQueued = collapsed;
-                    break;
-                case DecisionsMenuSection.Training:
-                    _decisionsCollapsedTraining = collapsed;
-                    break;
-                case DecisionsMenuSection.Social:
-                    _decisionsCollapsedSocial = collapsed;
-                    break;
-                case DecisionsMenuSection.CampLife:
-                    _decisionsCollapsedCampLife = collapsed;
                     break;
                 case DecisionsMenuSection.Opportunities:
                     _decisionsCollapsedOpportunities = collapsed;
@@ -4795,28 +4732,6 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var currentQueuedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var currentOpportunityIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                var currentTrainingIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                var currentSocialIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                var currentCampLifeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                // Collect current decision IDs per section
-                if (decisionManager != null)
-                {
-                    foreach (var dec in decisionManager.GetAvailableDecisionsForSection("training").Where(d => d.IsVisible))
-                    {
-                        currentTrainingIds.Add(dec.Decision.Id);
-                    }
-
-                    foreach (var dec in decisionManager.GetAvailableDecisionsForSection("social").Where(d => d.IsVisible))
-                    {
-                        currentSocialIds.Add(dec.Decision.Id);
-                    }
-
-                    foreach (var dec in decisionManager.GetAvailableDecisionsForSection("camp_life").Where(d => d.IsVisible))
-                    {
-                        currentCampLifeIds.Add(dec.Decision.Id);
-                    }
-                }
 
                 var campLifeEnabledNow = false;
                 var mainParty = MobileParty.MainParty;
@@ -4839,34 +4754,11 @@ namespace Enlisted.Features.Interface.Behaviors
                         _decisionsNewOpportunitiesSince ??= CampaignTime.Now;
                     }
 
-                    // Detect new training decisions (came off cooldown, tier unlock, etc.)
-                    if (!_decisionsNewTraining && currentTrainingIds.Except(_decisionsPrevTrainingIds).Any())
-                    {
-                        _decisionsNewTraining = true;
-                        _decisionsNewTrainingSince ??= CampaignTime.Now;
-                    }
-
-                    // Detect new social decisions
-                    if (!_decisionsNewSocial && currentSocialIds.Except(_decisionsPrevSocialIds).Any())
-                    {
-                        _decisionsNewSocial = true;
-                        _decisionsNewSocialSince ??= CampaignTime.Now;
-                    }
-
-                    // Detect new camp life decisions
-                    if (!_decisionsNewCampLife && currentCampLifeIds.Except(_decisionsPrevCampLifeIds).Any())
-                    {
-                        _decisionsNewCampLife = true;
-                        _decisionsNewCampLifeSince ??= CampaignTime.Now;
-                    }
                 }
 
                 _decisionsSnapshotsInitialized = true;
                 _decisionsPrevQueuedIds = currentQueuedIds;
                 _decisionsPrevOpportunityIds = currentOpportunityIds;
-                _decisionsPrevTrainingIds = currentTrainingIds;
-                _decisionsPrevSocialIds = currentSocialIds;
-                _decisionsPrevCampLifeIds = currentCampLifeIds;
 
                 // Auto-clear markers after a while so they don't stick forever if the player ignores them.
                 MaybeClearExpiredDecisionsNewFlags();
@@ -4984,52 +4876,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
             }
 
-            // Training section
-            list.Add(new DecisionsMenuEntry
-            {
-                Id = "header_training",
-                Text = "<span style=\"Link\">TRAINING</span>" + NewTag(_decisionsNewTraining),
-                IsEnabled = true,
-                LeaveType = GameMenuOption.LeaveType.OrderTroopsToAttack,
-                OnSelected = a => ToggleDecisionsSection(DecisionsMenuSection.Training, a)
-            });
-
-            if (!_decisionsCollapsedTraining)
-            {
-                AddSectionDecisions(list, decisionManager, "training");
-            }
-
-            // Social section
-            list.Add(new DecisionsMenuEntry
-            {
-                Id = "header_social",
-                Text = "<span style=\"Link\">SOCIAL</span>" + NewTag(_decisionsNewSocial),
-                IsEnabled = true,
-                LeaveType = GameMenuOption.LeaveType.Conversation,
-                OnSelected = a => ToggleDecisionsSection(DecisionsMenuSection.Social, a)
-            });
-
-            if (!_decisionsCollapsedSocial)
-            {
-                AddSectionDecisions(list, decisionManager, "social");
-            }
-
-            // Camp Life section
-            list.Add(new DecisionsMenuEntry
-            {
-                Id = "header_camp",
-                Text = "<span style=\"Link\">CAMP LIFE</span>" + NewTag(_decisionsNewCampLife),
-                IsEnabled = true,
-                LeaveType = GameMenuOption.LeaveType.Manage,
-                OnSelected = a => ToggleDecisionsSection(DecisionsMenuSection.CampLife, a)
-            });
-
-            if (!_decisionsCollapsedCampLife)
-            {
-                AddSectionDecisions(list, decisionManager, "camp_life");
-            }
-
-            // Logistics section (new for QM-related decisions)
+            // Logistics section (QM-related decisions, if any exist)
             var logisticsDecisions = decisionManager?.GetAvailableDecisionsForSection("logistics") ?? Array.Empty<DecisionAvailability>();
             var visibleLogistics = logisticsDecisions.Where(d => d.IsVisible).ToList();
 
@@ -5336,6 +5183,9 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Info("Interface", $"Decision selected: {decision.Id}");
 
+                // Mark this decision as currently showing to prevent spam-clicking
+                DecisionManager.Instance?.MarkDecisionAsShowing(decision.Id);
+
                 // Check if this is a camp opportunity
                 if (_decisionsMenuOpportunities.TryGetValue(decision.Id, out var opportunity))
                 {
@@ -5641,6 +5491,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 sb.AppendLine($"Campaign: {Instance?.GetCurrentObjectiveDisplay(lord) ?? "Unknown"}");
                 sb.AppendLine();
 
+                // Add duty log if player is on an active order
+                var dutyLog = BuildDutyLogSection();
+                if (!string.IsNullOrWhiteSpace(dutyLog))
+                {
+                    sb.AppendLine(dutyLog);
+                    sb.AppendLine();
+                }
+
                 sb.AppendLine("<span style=\"Header\">=== REPUTATION ===</span>");
                 if (escalation?.State != null)
                 {
@@ -5686,6 +5544,122 @@ namespace Enlisted.Features.Interface.Behaviors
                 ModLogger.Error("Interface", "Failed to build status detail text", ex);
                 return "Status details unavailable.";
             }
+        }
+
+        /// <summary>
+        /// Builds the duty log section showing phase-by-phase recaps for the current order.
+        /// Shows what happened during each phase (routine, foreshadowing, events).
+        /// </summary>
+        private static string BuildDutyLogSection()
+        {
+            try
+            {
+                var orderManager = Orders.Behaviors.OrderManager.Instance;
+                var progressionBehavior = Orders.Behaviors.OrderProgressionBehavior.Instance;
+                
+                var currentOrder = orderManager?.GetCurrentOrder();
+                if (currentOrder == null || progressionBehavior == null)
+                {
+                    return string.Empty; // No active order, no log to show
+                }
+
+                var recaps = progressionBehavior.GetCurrentOrderRecaps();
+                if (recaps == null || recaps.Count == 0)
+                {
+                    return string.Empty; // No recaps yet
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine("<span style=\"Header\">=== DUTY LOG ===</span>");
+                sb.AppendLine($"<span style=\"Label\">Order:</span> {currentOrder.Title}");
+                
+                // Calculate current day and phases
+                var hoursSinceStart = (CampaignTime.Now - currentOrder.IssuedTime).ToHours;
+                var currentDay = (int)(hoursSinceStart / 24) + 1;
+                var currentPhaseIndex = ((int)hoursSinceStart / 6);
+                
+                // Get current hour to determine current phase
+                var currentHour = (int)CampaignTime.Now.CurrentHourInDay;
+                var currentPhase = GetDayPhaseFromHour(currentHour);
+                
+                // Show recaps grouped by day (show last 8 phases = 2 days max)
+                // .NET 4.7.2 doesn't have TakeLast, so use Skip + Take
+                var recentRecaps = recaps.Count > 8 
+                    ? recaps.Skip(recaps.Count - 8).ToList() 
+                    : recaps;
+                var recapsByDay = recentRecaps.GroupBy(r => r.OrderDay).OrderBy(g => g.Key);
+
+                foreach (var dayGroup in recapsByDay)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"<span style=\"Label\">Day {dayGroup.Key}:</span>");
+                    
+                    // Show all 4 phases for this day
+                    var phasesForDay = dayGroup.OrderBy(r => r.Phase).ToList();
+                    
+                    // Create slots for all 4 phases
+                    var phaseSlots = new Dictionary<Content.Models.DayPhase, string>
+                    {
+                        { Content.Models.DayPhase.Dawn, null },
+                        { Content.Models.DayPhase.Midday, null },
+                        { Content.Models.DayPhase.Dusk, null },
+                        { Content.Models.DayPhase.Night, null }
+                    };
+                    
+                    // Fill in actual recaps
+                    foreach (var recap in phasesForDay)
+                    {
+                        phaseSlots[recap.Phase] = recap.RecapText;
+                    }
+                    
+                    // Display all phases
+                    foreach (var phase in new[] { Content.Models.DayPhase.Dawn, Content.Models.DayPhase.Midday, Content.Models.DayPhase.Dusk, Content.Models.DayPhase.Night })
+                    {
+                        var phaseName = phase.ToString();
+                        var recapText = phaseSlots[phase];
+                        
+                        if (recapText != null)
+                        {
+                            // Phase has happened
+                            sb.AppendLine($"  <span style=\"Label\">[{phaseName}]</span> {recapText}");
+                        }
+                        else
+                        {
+                            // Check if this is the current phase
+                            if (dayGroup.Key == currentDay && phase == currentPhase)
+                            {
+                                sb.AppendLine($"  <span style=\"Warning\">[{phaseName}]</span> <span style=\"Warning\">IN PROGRESS</span>");
+                            }
+                            else if (dayGroup.Key == currentDay)
+                            {
+                                // Future phase today
+                                sb.AppendLine($"  <span style=\"Default\">[{phaseName}]</span> —");
+                            }
+                        }
+                    }
+                }
+
+                return sb.ToString().TrimEnd();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", "Failed to build duty log section", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Gets the day phase from hour of day (for display purposes).
+        /// </summary>
+        private static Content.Models.DayPhase GetDayPhaseFromHour(int hour)
+        {
+            return hour switch
+            {
+                >= 6 and <= 11 => Content.Models.DayPhase.Dawn,
+                >= 12 and <= 17 => Content.Models.DayPhase.Midday,
+                >= 18 and <= 21 => Content.Models.DayPhase.Dusk,
+                _ => Content.Models.DayPhase.Night
+            };
         }
 
         private static string GetReputationLevel(int value)

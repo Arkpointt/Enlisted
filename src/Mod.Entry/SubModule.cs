@@ -160,9 +160,6 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(EncounterLeaveSuppressionPatch);
                     _ = typeof(EndCaptivityCleanupPatch);
                     _ = typeof(EnlistedWaitingPatch);
-                    _ = typeof(FoodSystemPatches);
-                    _ = typeof(FoodSystemPatches.VirtualFoodLinkPatch);
-                    _ = typeof(FoodSystemPatches.SharedFoodConsumptionPatch);
                     _ = typeof(FormationMessageSuppressionPatch);
                     _ = typeof(GenericStateMenuPatch);
                     _ = typeof(HidePartyNamePlatePatch);

@@ -4,6 +4,7 @@ using System.Linq;
 using Enlisted.Features.Content;
 using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Orders.Models;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.SaveSystem;
 using TaleWorlds.CampaignSystem;
@@ -50,6 +51,10 @@ namespace Enlisted.Features.Orders.Behaviors
         private readonly HashSet<string> _recentlyFiredEvents = new();
         private CampaignTime _lastEventCooldownClear = CampaignTime.Zero;
 
+        // Phase recap tracking for duty log (keep last 16 phases = 4 days max)
+        private List<PhaseRecap> _phaseRecaps = new List<PhaseRecap>();
+        private const int MaxRecapsStored = 16;
+
         public OrderProgressionBehavior()
         {
             Instance = this;
@@ -66,6 +71,9 @@ namespace Enlisted.Features.Orders.Behaviors
             {
                 dataStore.SyncData("orderProg_lastHour", ref _lastProcessedHour);
                 dataStore.SyncData("orderProg_lastDay", ref _lastProcessedDay);
+                
+                // Serialize phase recaps list for duty log persistence
+                dataStore.SyncData("orderProg_phaseRecaps", ref _phaseRecaps);
             });
         }
 
@@ -146,16 +154,30 @@ namespace Enlisted.Features.Orders.Behaviors
             var isSlotPhase = hour == MiddayHour || hour == DuskHour;
             var isHighSlot = hour == DuskHour; // Dusk is higher chance
 
+            bool eventFired = false;
+            string eventTitle = null;
+
             if (isSlotPhase)
             {
-                TryFireOrderEvent(currentOrder, isHighSlot);
+                // Try to fire an event and capture if it succeeded
+                var selectedEvent = TryGetOrderEvent(currentOrder, isHighSlot);
+                if (selectedEvent != null)
+                {
+                    FireOrderEvent(selectedEvent);
+                    eventFired = true;
+                    eventTitle = selectedEvent.TitleFallback ?? selectedEvent.Id;
+                }
             }
+
+            // Record phase recap for duty log
+            RecordPhaseRecap(hour, eventFired, eventTitle);
         }
 
         /// <summary>
-        /// Attempts to fire an order event based on world state and activity level.
+        /// Attempts to select an order event based on world state and activity level.
+        /// Returns the selected event if roll succeeds, null otherwise.
         /// </summary>
-        private void TryFireOrderEvent(Models.Order order, bool isHighSlot)
+        private EventDefinition TryGetOrderEvent(Models.Order order, bool isHighSlot)
         {
             // Get world situation from orchestrator
             var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
@@ -171,17 +193,14 @@ namespace Enlisted.Features.Orders.Behaviors
             if (roll > finalChance)
             {
                 ModLogger.Debug(LogCategory, $"Event roll failed: {roll:F2} > {finalChance:F2} (activity: {activityLevel})");
-                return;
+                return null;
             }
 
             ModLogger.Debug(LogCategory, $"Event roll succeeded: {roll:F2} <= {finalChance:F2}");
 
-            // Select and fire an event
+            // Select an event
             var selectedEvent = SelectOrderEvent(order.Id, worldSituation);
-            if (selectedEvent != null)
-            {
-                FireOrderEvent(selectedEvent);
-            }
+            return selectedEvent;
         }
 
         /// <summary>
@@ -319,5 +338,271 @@ namespace Enlisted.Features.Orders.Behaviors
                 ModLogger.Debug(LogCategory, "Cleared order event cooldowns");
             }
         }
+
+        #region Phase Recap System
+
+        /// <summary>
+        /// Creates a recap for the current phase and adds it to the tracking list.
+        /// Called after processing each phase during an order.
+        /// </summary>
+        private void RecordPhaseRecap(int hour, bool eventFired, string eventTitle = null)
+        {
+            var orderManager = OrderManager.Instance;
+            var currentOrder = orderManager?.GetCurrentOrder();
+            if (currentOrder == null)
+            {
+                return;
+            }
+
+            var phase = GetDayPhaseFromHour(hour);
+            var isSlotPhase = hour == MiddayHour || hour == DuskHour;
+            var isHighSlot = hour == DuskHour;
+
+            // Determine phase type for recap generation
+            string phaseType = "routine";
+            if (isSlotPhase)
+            {
+                phaseType = isHighSlot ? "slot!" : "slot";
+            }
+
+            // Generate recap text
+            var recapText = GenerateRecapText(phase, phaseType, eventFired, eventTitle, currentOrder.Id);
+
+            // Create recap entry
+            var recap = new PhaseRecap
+            {
+                Phase = phase,
+                PhaseTime = CampaignTime.Now,
+                RecapText = recapText,
+                EventFired = eventFired,
+                OrderDay = CalculateOrderDay(currentOrder),
+                PhaseNumber = CalculatePhaseNumber(currentOrder),
+                OrderId = currentOrder.Id
+            };
+
+            // Add to list
+            _phaseRecaps.Add(recap);
+
+            // Trim to max storage (keep most recent)
+            while (_phaseRecaps.Count > MaxRecapsStored)
+            {
+                _phaseRecaps.RemoveAt(0);
+            }
+
+            ModLogger.Debug(LogCategory, $"Phase recap recorded: {phase} - {recapText}");
+        }
+
+        /// <summary>
+        /// Generates recap text based on phase type and whether an event fired.
+        /// Uses RP-appropriate language for event outcomes.
+        /// </summary>
+        private string GenerateRecapText(DayPhase phase, string phaseType, bool eventFired, string eventTitle, string orderId)
+        {
+            if (eventFired && !string.IsNullOrEmpty(eventTitle))
+            {
+                // Event fired - use event title with RP-appropriate closing
+                // Pick a random resolution phrase for variety
+                var resolutions = new[]
+                {
+                    "Dealt with.",
+                    "Resolved.",
+                    "Matter settled.",
+                    "Situation addressed.",
+                    "Attended to."
+                };
+                var resolution = resolutions[MBRandom.RandomInt(resolutions.Length)];
+                return $"{eventTitle}. {resolution}";
+            }
+
+            if (phaseType == "slot" || phaseType == "slot!")
+            {
+                // Slot phase but no event - use foreshadowing text
+                return GetForeshadowingText(phase, orderId);
+            }
+
+            // Routine phase - simple status
+            return GetRoutineText(phase);
+        }
+
+        /// <summary>
+        /// Returns foreshadowing text for empty slot phases.
+        /// Creates tension even when no event fires. 
+        /// Naval-aware: uses ship-appropriate text when at sea.
+        /// </summary>
+        private string GetForeshadowingText(DayPhase phase, string orderId)
+        {
+            // Check if we're at sea (Warsails DLC)
+            var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
+            var isAtSea = worldSituation?.TravelContext == Content.Models.TravelContext.Sea;
+
+            // Different foreshadowing based on order type, phase, and travel context
+            var foreshadowing = (orderId, isAtSea) switch
+            {
+                // Naval guard/watch duties
+                ("order_guard_duty", true) or ("order_sentry", true) or ("order_deck_watch", true) => new[]
+                {
+                    "Stared into the fog. Saw naught but grey.",
+                    "Thought I spied a sail on the horizon. Gone now.",
+                    "The sea is restless tonight. No ships in sight.",
+                    "Heard something scrape the hull. Just driftwood.",
+                    "Kept watch over the waves. All clear.",
+                    "Strange lights in the distance. Stars, most like."
+                },
+
+                // Land guard/sentry duties
+                ("order_guard_duty", false) or ("order_sentry", false) => new[]
+                {
+                    "Heard movement in the trees. Naught but wind.",
+                    "Thought I spied something. False alarm.",
+                    "Kept sharp watch. Nothing stirred.",
+                    "Spotted tracks near the perimeter. Origin unknown.",
+                    "Strange shadows in the distance. Gone now.",
+                    "Something rustled in the brush. A beast, most like."
+                },
+
+                // Patrol duties
+                ("order_camp_patrol", _) => new[]
+                {
+                    "Walked the usual rounds. All in order.",
+                    "Two men quarreling by the fire. They parted ways.",
+                    "Found a dropped coin purse. Returned it to the captain.",
+                    "Fresh boot prints in the mud. Nothing amiss.",
+                    "Made extra rounds. The camp sleeps well.",
+                    "Heard raised voices. The matter resolved itself."
+                },
+
+                // Manual labor
+                ("order_firewood", _) or ("order_latrine", _) => new[]
+                {
+                    "Hard labor, but no trouble.",
+                    "Other men worked nearby. We spoke little.",
+                    "The work is done. Uneventful.",
+                    "Kept my head down and toiled on.",
+                    "Honest work. No complaints.",
+                    "Finished the task without incident."
+                },
+
+                // Naval default
+                (_, true) => new[]
+                {
+                    "The sea remains calm. Nothing to report.",
+                    "Watched the horizon. No sails in sight.",
+                    "The ship creaks and groans. All is well.",
+                    "Salt spray and endless water. Quiet passage.",
+                    "Stayed at my post. The voyage continues.",
+                    "Nothing stirs but the waves."
+                },
+
+                // Land default
+                _ => new[]
+                {
+                    "Carried on with duty. All quiet.",
+                    "Nothing unusual to report.",
+                    "The routine continued without issue.",
+                    "Kept watchful. Nothing stirred.",
+                    "Stayed vigilant. A quiet shift.",
+                    "The hours passed without incident."
+                }
+            };
+
+            // Pick a random foreshadowing text
+            var index = MBRandom.RandomInt(foreshadowing.Length);
+            return foreshadowing[index];
+        }
+
+        /// <summary>
+        /// Returns routine text for non-slot phases.
+        /// Naval-aware: uses ship-appropriate text when at sea.
+        /// </summary>
+        private string GetRoutineText(DayPhase phase)
+        {
+            // Check if we're at sea (Warsails DLC)
+            var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
+            var isAtSea = worldSituation?.TravelContext == Content.Models.TravelContext.Sea;
+
+            if (isAtSea)
+            {
+                return phase switch
+                {
+                    DayPhase.Dawn => "Morning watch. The sun breaks through the mist.",
+                    DayPhase.Midday => "Midday duties. The ship holds course.",
+                    DayPhase.Dusk => "Evening falls over calm waters.",
+                    DayPhase.Night => "Night watch. Stars guide our way.",
+                    _ => "The voyage continues."
+                };
+            }
+
+            return phase switch
+            {
+                DayPhase.Dawn => "Morning muster complete. Nothing to report.",
+                DayPhase.Midday => "Afternoon duties. All quiet.",
+                DayPhase.Dusk => "Evening draws in. Camp settles.",
+                DayPhase.Night => "Night watch. Silent and still.",
+                _ => "Duty continues."
+            };
+        }
+
+        /// <summary>
+        /// Calculates which day of the order we're on (1-based).
+        /// </summary>
+        private int CalculateOrderDay(Models.Order order)
+        {
+            var hoursSinceStart = (CampaignTime.Now - order.IssuedTime).ToHours;
+            return (int)(hoursSinceStart / 24) + 1;
+        }
+
+        /// <summary>
+        /// Calculates which phase number within the order (1-based).
+        /// </summary>
+        private int CalculatePhaseNumber(Models.Order order)
+        {
+            var hoursSinceStart = (CampaignTime.Now - order.IssuedTime).ToHours;
+            return ((int)hoursSinceStart / 6) + 1; // 4 phases per day (6 hours each)
+        }
+
+        /// <summary>
+        /// Gets the day phase from hour of day.
+        /// </summary>
+        private static DayPhase GetDayPhaseFromHour(int hour)
+        {
+            return hour switch
+            {
+                >= 6 and <= 11 => DayPhase.Dawn,
+                >= 12 and <= 17 => DayPhase.Midday,
+                >= 18 and <= 21 => DayPhase.Dusk,
+                _ => DayPhase.Night
+            };
+        }
+
+        /// <summary>
+        /// Gets the phase recaps for the current order (last 8 phases = 2 days).
+        /// Returns in chronological order (oldest first).
+        /// </summary>
+        public List<PhaseRecap> GetCurrentOrderRecaps()
+        {
+            var orderManager = OrderManager.Instance;
+            var currentOrder = orderManager?.GetCurrentOrder();
+            if (currentOrder == null)
+            {
+                return new List<PhaseRecap>();
+            }
+
+            // Return recaps for current order only
+            return _phaseRecaps
+                .Where(r => r.OrderId == currentOrder.Id)
+                .OrderBy(r => r.PhaseTime.ToHours)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Clears all phase recaps. Called when an order completes or is cancelled.
+        /// </summary>
+        public void ClearPhaseRecaps()
+        {
+            _phaseRecaps.Clear();
+            ModLogger.Debug(LogCategory, "Phase recaps cleared");
+        }
+
+        #endregion
     }
 }

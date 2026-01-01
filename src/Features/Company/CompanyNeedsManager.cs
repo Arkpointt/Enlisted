@@ -36,7 +36,7 @@ namespace Enlisted.Features.Company
             ModLogger.Debug(LogCategory, "Processing daily degradation...");
 
             // Initial base degradation rates are hard-coded while the configuration system is being expanded.
-            // NOTE: Supplies degradation is now handled by CompanySupplyManager with its hybrid 40/60 model.
+            // NOTE: Supplies degradation is handled by CompanySupplyManager (unified logistics tracking).
             var readinessDegradation = 2;
             var equipmentDegradation = 3;
             var moraleDegradation = 1;

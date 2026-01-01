@@ -159,6 +159,12 @@
       "tier_min": 1,
       "tier_max": 3
     },
+    "context_variants": {
+      "sea": {
+        "title": "Deck Muster",
+        "description": "Assemble on deck for the lord's inspection. Clean your kit and stand ready at the rail."
+      }
+    },
     "consequences": {
       "success": {
         "reputation": { "officer": 6, "lord": 4 },
@@ -186,6 +192,12 @@
     "requirements": {
       "tier_min": 1,
       "tier_max": 3
+    },
+    "context_variants": {
+      "sea": {
+        "title": "Masthead Watch",
+        "description": "Take your turn at the masthead. Watch for sails, land, or anything amiss on the water."
+      }
     },
     "consequences": {
       "success": {

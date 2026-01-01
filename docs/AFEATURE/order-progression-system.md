@@ -2,9 +2,10 @@
 
 **Summary:** Orders are multi-day duty assignments that progress through phases automatically. Events fire contextually during orders based on world state and order type. Players experience being a soldier through the rhythm of assigned duties, occasional events, and accumulated consequences like fatigue and injury.
 
-**Status:** ✅ Implemented (Mandatory Orders Added 2025-12-31)  
+**Status:** ✅ **IMPLEMENTED** - OrderProgressionBehavior, 16 orders, 85 order events active  
 **Last Updated:** 2025-12-31  
-**Related Docs:** [Orders System](../Features/Core/orders-system.md), [Content Orchestrator](content-orchestrator-plan.md), [Medical Progression](../Features/Content/medical-progression-system.md), [Event System Schemas](../Features/Content/event-system-schemas.md)
+**Implementation:** `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`, `ModuleData/Enlisted/Orders/`  
+**Related Docs:** [Orders System](../Features/Core/orders-system.md), [Content Orchestrator](content-orchestrator-plan.md), [Order Events Master](order-events-master.md), [Event System Schemas](../Features/Content/event-system-schemas.md)
 
 ---
 
@@ -78,7 +79,7 @@ The Order Progression System transforms orders from instant-resolution tasks int
 - **Rank determines experience** - T1 gets menial work. T6 leads men. Different event pools.
 - **Duty doesn't block gameplay** - On duty? Camp life continues, but some activities are risky/blocked.
 - **World state affects frequency** - Siege duty is intense. Garrison duty is boring.
-- **Context-aware flavor text** - Orders adapt to sea/land travel (Warsails DLC aware). Guard Duty → Deck Watch at sea.
+- **Naval awareness** - Orders adapt to sea/land travel (Warsails DLC aware). T1-T3 orders show nautical variants at sea (Guard Duty → Deck Watch). T4-T6 land-only orders (scouting, foraging, patrolling) are blocked at sea. Active land orders are cancelled when boarding a ship.
 
 ---
 

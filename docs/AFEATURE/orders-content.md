@@ -1,9 +1,10 @@
 # Orders Content Catalog
 
-**Summary:** Complete catalog of all orders for the Order Progression System. Each order includes duration, skills, fatigue, injury risk, phase blocks, and event pool references. This is the content specification for JSON implementation.
+**Summary:** Complete catalog of all 16 implemented orders for the Order Progression System. Each order includes duration, skills, fatigue, injury risk, phase blocks, and event pool references. This document serves as both specification and implementation reference.
 
-**Status:** 📋 Specification  
-**Last Updated:** 2025-12-31 (Added context-variant text for sea/land awareness)  
+**Status:** ✅ **IMPLEMENTED** - All 16 orders defined in JSON with 85 order events  
+**Last Updated:** 2025-12-31 (Added naval order handling: sea variants, land-only blocking, order cancellation)  
+**Files:** `ModuleData/Enlisted/Orders/orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json`  
 **Related Docs:** [Order Progression System](order-progression-system.md), [Order Events Master](order-events-master.md), [Content Orchestrator](content-orchestrator-plan.md), [Event System Schemas](../Features/Content/event-system-schemas.md#order-context-variants-sealand-awareness)
 
 ---
@@ -660,6 +661,52 @@ Day 3: [routine] [slot] [routine] [resolve]
 - Success: +10 Lord Rep, +8 Officer Rep, +60g, +25 Athletics XP
 - Partial: +5 Lord Rep, +4 Officer Rep, +30g, +15 Athletics XP
 - Failure: -15 Lord Rep, -12 Officer Rep, cargo lost
+
+---
+
+## Naval Order Handling
+
+Orders support naval awareness for the Warsails DLC. The system handles three scenarios:
+
+### 1. Sea Context Variants (T1-T3)
+
+Basic soldier orders have nautical text variants that display when the party is at sea:
+
+| Order | Land Title | Sea Title |
+|-------|------------|-----------|
+| Guard Duty | Guard Duty | Deck Watch |
+| Camp Patrol | Camp Patrol | Hull Inspection |
+| Firewood Collection | Firewood Collection | Deck Scrubbing |
+| Equipment Inspection | Equipment Inspection | Rigging Check |
+| Sentry Post | Sentry Post | Masthead Watch |
+| Muster Inspection | Muster Inspection | Deck Muster |
+
+Applied automatically by `OrderCatalog.ApplyContextVariant()` when `MobileParty.IsCurrentlyAtSea == true`.
+
+### 2. Land-Only Orders (T4-T6)
+
+Specialist orders that require leaving camp are blocked at sea with `"not_at_sea": true`:
+
+| Order | Reason |
+|-------|--------|
+| Scout the Route | Can't ride ahead on horseback at sea |
+| Forage Supplies | Can't take a cart into the countryside |
+| Lead a Patrol | Can't patrol the woods from a ship |
+| Inspect Defenses | Walls and fortifications are at settlements |
+
+These orders are filtered out during selection when at sea and won't be issued.
+
+### 3. Order Cancellation on Embarkation
+
+If the party boards a ship while a land-only order is active, the order is automatically cancelled:
+
+- `OrderManager.CheckNavalOrderConflict()` runs every hour
+- Detects when party goes to sea with an active `not_at_sea` order
+- Cancels the order and clears state
+- Shows notification: "{Order Title} stood down - boarding ship"
+- Reports to news system for Daily Brief
+
+**Example:** Player is on "Lead a Patrol" duty. Lord's army embarks on ships. The order is cancelled with the message "Lead a Patrol stood down - boarding ship" and the player returns to regular duty until a new sea-compatible order is issued.
 
 ---
 

@@ -222,7 +222,8 @@
       "setupId": "dec_training_formation_setup",
       "setup": "The sergeants are putting men through their paces. Shield walls, cavalry charges, the basics of staying alive in a battle line.",
       "requirements": {
-        "tier": { "min": 2, "max": 999 }
+        "tier": { "min": 2, "max": 999 },
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 1,
@@ -308,7 +309,8 @@
       "setupId": "dec_training_archery_setup",
       "setup": "Straw targets behind the wagons. A few archers are loosing arrows, correcting each other's form. There's room for one more.",
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": { "min": 1, "max": 999 },
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 1,
@@ -630,7 +632,8 @@
       "setupId": "dec_gamble_dice_setup",
       "setup": "Behind the supply wagons, men crouch in the dust. Dice rattle. Higher stakes than the card players.",
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": { "min": 1, "max": 999 },
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 2,
@@ -668,7 +671,8 @@
       "setupId": "dec_forage_setup",
       "setup": "A small party is heading out to supplement rations. There might be something extra in it for those who volunteer.",
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": { "min": 1, "max": 999 },
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 2,
@@ -702,7 +706,8 @@
       "setupId": "dec_work_repairs_setup",
       "setup": "The quartermaster needs hands for repairs. Wagon wheels, tent patches, harness mending. Paid work for those willing.",
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": { "min": 1, "max": 999 },
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 1,
@@ -737,7 +742,8 @@
       "setupId": "dec_trade_browse_setup",
       "setup": "A merchant caravan has arrived with goods from distant lands. Some soldiers are already haggling.",
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": { "min": 1, "max": 999 },
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 2,
@@ -884,7 +890,8 @@
       "setupId": "dec_rest_short_setup",
       "setup": "An old oak provides rare shade from the sun. A few soldiers are dozing against its trunk. There's room for one more.",
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": { "min": 1, "max": 999 },
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 1,
@@ -996,7 +1003,8 @@
       "setupId": "dec_baggage_access_setup",
       "setup": "The baggage train is accessible. Your personal effects are stowed there.",
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": { "min": 1, "max": 999 },
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 1,
@@ -1097,7 +1105,8 @@
       "setupId": "dec_night_patrol_setup",
       "setup": "A few soldiers are heading out to check the perimeter. It's not official duty, just men who can't sleep. Sometimes they find things worth finding.",
       "requirements": {
-        "tier": { "min": 2, "max": 999 }
+        "tier": { "min": 2, "max": 999 },
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 2,
@@ -1122,6 +1131,486 @@
           "text": "Let them go.",
           "resultTextId": "dec_night_patrol_cancel_result",
           "resultText": "The night is cold. You stay by the fire.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_deck_drill",
+      "category": "decision",
+      "titleId": "dec_sea_deck_drill_title",
+      "title": "Deck Training",
+      "setupId": "dec_sea_deck_drill_setup",
+      "setup": "Veterans gather on the foredeck at dawn. The ship rolls but they keep their footing. Time to learn balance fighting.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "drill_focused",
+          "textId": "dec_sea_deck_drill_focused",
+          "text": "Focus on footwork. Train hard.",
+          "effects": { "fatigue": 2, "skillXp": { "OneHanded": 5, "Athletics": 3 } },
+          "resultTextId": "dec_sea_deck_drill_focused_result",
+          "resultText": "The deck pitches and rolls. Your legs burn from constant adjustment. But you're learning to fight on an unstable surface.",
+          "tooltip": "+5 One-Handed XP. +3 Athletics XP. Costs 2 fatigue."
+        },
+        {
+          "id": "drill_social",
+          "textId": "dec_sea_deck_drill_social",
+          "text": "Go through the motions. Chat with the lads.",
+          "effects": { "fatigue": 1, "soldierRep": 1 },
+          "resultTextId": "dec_sea_deck_drill_social_result",
+          "resultText": "The veterans share sea-fighting tricks between swings. You learn a few names, share a few jokes about landlubbers.",
+          "tooltip": "+1 Soldier rep. Costs 1 fatigue."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_deck_drill_cancel",
+          "text": "Your stomach isn't ready for that.",
+          "resultTextId": "dec_sea_deck_drill_cancel_result",
+          "resultText": "You grip the rail and let the wave of nausea pass.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_spar",
+      "category": "decision",
+      "titleId": "dec_sea_spar_title",
+      "title": "Shipboard Sparring",
+      "setupId": "dec_sea_spar_setup",
+      "setup": "Two soldiers circle each other on the rolling deck. The crowd forms a rough ring. Fighting on a ship is different.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "spar_aggressive",
+          "textId": "dec_sea_spar_aggressive",
+          "text": "Fight aggressively. Use the ship's motion.",
+          "effects": { "fatigue": 3, "skillXp": { "Athletics": 6 } },
+          "success_chance": 0.50,
+          "resultTextId": "dec_sea_spar_aggressive_win",
+          "resultText": "The ship rolls and you ride it, driving forward when the deck tilts your way. He stumbles. You win.",
+          "failure_resultText": "The deck drops from under you mid-swing. You sprawl across the planking. Lesson learned.",
+          "tooltip": "50% win. +6 Athletics XP. Costs 3 fatigue."
+        },
+        {
+          "id": "spar_defensive",
+          "textId": "dec_sea_spar_defensive",
+          "text": "Stay balanced. Learn the ship's rhythm.",
+          "effects": { "fatigue": 2, "skillXp": { "OneHanded": 3, "Athletics": 2 } },
+          "resultTextId": "dec_sea_spar_defensive_result",
+          "resultText": "You keep your knees bent, weight centered. The match ends in a draw, but you've learned to read the waves.",
+          "tooltip": "+3 One-Handed XP. +2 Athletics XP. Costs 2 fatigue. Safe choice."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_spar_cancel",
+          "text": "Wave them off.",
+          "resultTextId": "dec_sea_spar_cancel_result",
+          "resultText": "You're not ready to fight on a moving floor.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_veteran",
+      "category": "decision",
+      "titleId": "dec_sea_veteran_title",
+      "title": "Salt's Lesson",
+      "setupId": "dec_sea_veteran_setup",
+      "setup": "The old sailor - they call him Salt - has fought more sea battles than you've had hot meals. He's willing to teach, but his lessons are hard.",
+      "requirements": {
+        "tier": { "min": 3, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 2,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "veteran_learn",
+          "textId": "dec_sea_veteran_learn",
+          "text": "Ask him to teach you.",
+          "effects": { "fatigue": 3, "skillXp": { "OneHanded": 6, "Athletics": 4 }, "hpChange": -5 },
+          "resultTextId": "dec_sea_veteran_learn_result",
+          "resultText": "He throws you around the deck for an hour. 'Keep your weight low. The sea fights for the man who respects her.' By the end you're bruised but wiser.",
+          "tooltip": "+6 One-Handed XP. +4 Athletics XP. -5 HP. Costs 3 fatigue."
+        },
+        {
+          "id": "veteran_watch",
+          "textId": "dec_sea_veteran_watch",
+          "text": "Watch him spar with another.",
+          "effects": { "fatigue": 1, "skillXp": { "OneHanded": 3 } },
+          "resultTextId": "dec_sea_veteran_watch_result",
+          "resultText": "He moves like the deck is part of him. Every roll becomes a step, every pitch a feint. Some lessons are in the seeing.",
+          "tooltip": "+3 One-Handed XP. Costs 1 fatigue."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_veteran_cancel",
+          "text": "Leave him be.",
+          "resultTextId": "dec_sea_veteran_cancel_result",
+          "resultText": "He shrugs and turns away. 'Landlubber.'",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_hold_access",
+      "category": "decision",
+      "titleId": "dec_sea_hold_access_title",
+      "title": "Visit the Hold",
+      "setupId": "dec_sea_hold_access_setup",
+      "setup": "The cargo hold is accessible between watches. Your personal effects are stowed below deck.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "hold_check",
+          "textId": "dec_sea_hold_access_check",
+          "text": "Check on your belongings.",
+          "resultTextId": "dec_sea_hold_access_check_result",
+          "resultText": "Everything's secure and dry. The ship's crew know how to stow cargo properly. A small comfort.",
+          "tooltip": "Verify your gear is safe."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_hold_access_cancel",
+          "text": "No need.",
+          "resultTextId": "dec_sea_hold_access_cancel_result",
+          "resultText": "It can wait until port.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_stories",
+      "category": "decision",
+      "titleId": "dec_sea_stories_title",
+      "title": "Sea Tales",
+      "setupId": "dec_sea_stories_setup",
+      "setup": "Old hands gathered by the mainmast, sharing tales of storms and sea battles. A few younger soldiers listen with wide eyes.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "stories_listen",
+          "textId": "dec_sea_stories_listen",
+          "text": "Find a spot and listen.",
+          "effects": { "soldierRep": 1, "skillXp": { "Charm": 2 } },
+          "rewards": { "fatigueRelief": 1 },
+          "resultTextId": "dec_sea_stories_listen_result",
+          "resultText": "Tales of terrible storms, of ships that vanished, of sea monsters and ghost vessels. You learn names, faces, the weight of shared voyages.",
+          "tooltip": "+1 Soldier rep. +2 Charm XP. -1 fatigue."
+        },
+        {
+          "id": "stories_share",
+          "textId": "dec_sea_stories_share",
+          "text": "Share a tale of your own.",
+          "effects": { "soldierRep": 2, "skillXp": { "Charm": 4 } },
+          "resultTextId": "dec_sea_stories_share_result",
+          "resultText": "You tell your piece. They listen. By the end, you're part of the crew.",
+          "tooltip": "+2 Soldier rep. +4 Charm XP."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_stories_cancel",
+          "text": "Not tonight.",
+          "resultTextId": "dec_sea_stories_cancel_result",
+          "resultText": "You pass by the mainmast without stopping.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_singing",
+      "category": "decision",
+      "titleId": "dec_sea_singing_title",
+      "title": "Sea Shanties",
+      "setupId": "dec_sea_singing_setup",
+      "setup": "Someone's started a shanty. The rhythm matches the work - hauling lines, scrubbing decks. The singing is rough but keeps time.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 2,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "singing_join",
+          "textId": "dec_sea_singing_join",
+          "text": "Join the shanty.",
+          "effects": { "soldierRep": 2 },
+          "rewards": { "fatigueRelief": 2 },
+          "resultTextId": "dec_sea_singing_join_result",
+          "resultText": "Your voice joins the chorus. 'Heave away, haul away!' For a moment, you're not soldiers on a ship - just sailors under the sky.",
+          "tooltip": "+2 Soldier rep. -2 fatigue."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_singing_cancel",
+          "text": "Not your kind of thing.",
+          "resultTextId": "dec_sea_singing_cancel_result",
+          "resultText": "You appreciate the music from a distance.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_drink",
+      "category": "decision",
+      "titleId": "dec_sea_drink_title",
+      "title": "Ship's Grog",
+      "setupId": "dec_sea_drink_setup",
+      "setup": "Grog ration's been issued. Some men are trading their share, others are drinking deep. The ship's stores have rum tonight.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "drink_moderate",
+          "textId": "dec_sea_drink_moderate",
+          "text": "Have your ration.",
+          "effects": { "soldierRep": 1 },
+          "rewards": { "fatigueRelief": 2 },
+          "resultTextId": "dec_sea_drink_moderate_result",
+          "resultText": "The grog is rough but warming. You share a laugh with the crew, feel almost human again.",
+          "tooltip": "+1 Soldier rep. -2 fatigue."
+        },
+        {
+          "id": "drink_heavy",
+          "textId": "dec_sea_drink_heavy",
+          "text": "Trade for extra rations.",
+          "costs": { "gold": 15 },
+          "effects": { "soldierRep": 2, "scrutiny": 1 },
+          "rewards": { "fatigueRelief": 4 },
+          "resultTextId": "dec_sea_drink_heavy_result",
+          "resultText": "The night becomes a blur of sea songs and swaying hammocks. You'll regret this when they call for watch.",
+          "tooltip": "+2 Soldier rep. -4 fatigue. +1 Scrutiny. Costs 15 gold."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_drink_cancel",
+          "text": "Save your ration.",
+          "resultTextId": "dec_sea_drink_cancel_result",
+          "resultText": "You trade it for something useful. Clear heads are valuable at sea.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_gamble_dice",
+      "category": "decision",
+      "titleId": "dec_sea_gamble_dice_title",
+      "title": "Below-Decks Dice",
+      "setupId": "dec_sea_gamble_dice_setup",
+      "setup": "Between the cargo and the bilge, men crouch with lanterns and dice. The ship's motion makes every roll uncertain.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 2,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "dice_play",
+          "textId": "dec_sea_gamble_dice_play",
+          "text": "Try your luck.",
+          "costs": { "gold": 25 },
+          "effects": { "scrutiny": 1 },
+          "success_chance": 0.40,
+          "rewards": { "gold": 75 },
+          "resultTextId": "dec_sea_gamble_dice_win",
+          "resultText": "The dice favor you. Coins pile before you as the others curse the ship's roll.",
+          "failure_resultText": "The dice bounce wrong. You walk away lighter in the purse.",
+          "tooltip": "40% to win 75 gold. +1 Scrutiny. Costs 25 gold."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_gamble_dice_cancel",
+          "text": "Walk away.",
+          "resultTextId": "dec_sea_gamble_dice_cancel_result",
+          "resultText": "You resist the temptation. For now.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_rest_hammock",
+      "category": "decision",
+      "titleId": "dec_sea_rest_hammock_title",
+      "title": "Hammock Rest",
+      "setupId": "dec_sea_rest_hammock_setup",
+      "setup": "Your hammock sways with the ship. The rhythm is almost soothing once you get used to it.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "rest_full",
+          "textId": "dec_sea_rest_hammock_full",
+          "text": "Sleep through your off-watch.",
+          "rewards": { "fatigueRelief": 4 },
+          "effects": { "hpChange": 5 },
+          "resultTextId": "dec_sea_rest_hammock_full_result",
+          "resultText": "You sleep deeply, swaying with the sea. When you wake, the world feels slightly less crushing.",
+          "tooltip": "-4 fatigue. +5 HP."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_rest_hammock_cancel",
+          "text": "Can't sleep. Too much going on.",
+          "resultTextId": "dec_sea_rest_hammock_cancel_result",
+          "resultText": "You push through. Sleep can wait until port.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_repairs",
+      "category": "decision",
+      "titleId": "dec_sea_repairs_title",
+      "title": "Ship Repairs",
+      "setupId": "dec_sea_repairs_setup",
+      "setup": "The bosun needs hands for repairs. Rope splicing, sail patching, tar and oakum. Paid work for those willing.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "repairs_work",
+          "textId": "dec_sea_repairs_work",
+          "text": "Put in some work.",
+          "effects": { "fatigue": 2, "skillXp": { "Crafting": 3 } },
+          "rewards": { "gold": 15 },
+          "resultTextId": "dec_sea_repairs_work_result",
+          "resultText": "Honest work. Your hands are rough from the rope by the end, but there's coin in your pouch and the bosun remembers who helps.",
+          "tooltip": "+3 Crafting XP. +15 gold. Costs 2 fatigue."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_repairs_cancel",
+          "text": "Not today.",
+          "resultTextId": "dec_sea_repairs_cancel_result",
+          "resultText": "The bosun finds another pair of hands.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_night_watch",
+      "category": "decision",
+      "titleId": "dec_sea_night_watch_title",
+      "title": "Night Watch Volunteer",
+      "setupId": "dec_sea_night_watch_setup",
+      "setup": "The lookouts are tired. Volunteers to help scan the horizon are always welcome. Sometimes you spot things worth spotting.",
+      "requirements": {
+        "tier": { "min": 2, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 2,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "watch_volunteer",
+          "textId": "dec_sea_night_watch_volunteer",
+          "text": "Take a watch.",
+          "effects": { "fatigue": 2, "skillXp": { "Scouting": 4 }, "soldierRep": 1 },
+          "success_chance": 0.30,
+          "rewards": { "gold": 25 },
+          "resultTextId": "dec_sea_night_watch_find",
+          "resultText": "You spot something - flotsam from a wreck. The captain has it recovered. Finders get a share.",
+          "failure_resultText": "Nothing but stars and waves. But the quiet clears your head.",
+          "tooltip": "30% to find 25 gold. +4 Scouting XP. +1 Soldier rep. Costs 2 fatigue."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_night_watch_cancel",
+          "text": "Let them watch.",
+          "resultTextId": "dec_sea_night_watch_cancel_result",
+          "resultText": "The night is cold. You stay below.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_sea_help_seasick",
+      "category": "decision",
+      "titleId": "dec_sea_help_seasick_title",
+      "title": "Help the Seasick",
+      "setupId": "dec_sea_help_seasick_setup",
+      "setup": "Half the soldiers are green and miserable. The ship's surgeon could use hands to help them keep water down.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "normal"
+      },
+      "options": [
+        {
+          "id": "help_assist",
+          "textId": "dec_sea_help_seasick_assist",
+          "text": "Lend a hand.",
+          "effects": { "fatigue": 2, "skillXp": { "Medicine": 5 }, "soldierRep": 2 },
+          "resultTextId": "dec_sea_help_seasick_assist_result",
+          "resultText": "Buckets and blankets. The work is grim but the men you help look at you with gratitude. You learn what settles a stomach.",
+          "tooltip": "+5 Medicine XP. +2 Soldier rep. Costs 2 fatigue."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_sea_help_seasick_cancel",
+          "text": "Not today.",
+          "resultTextId": "dec_sea_help_seasick_cancel_result",
+          "resultText": "The surgeon finds another helper.",
           "tooltip": "No action taken."
         }
       ]

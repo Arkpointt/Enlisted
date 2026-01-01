@@ -443,6 +443,78 @@ To add translations, see the [Translation Guide](../Languages/README.md).
 
 ---
 
+## JSON File Index
+
+Complete inventory of all JSON configuration and content files.
+
+### Config Files (8)
+- `Config/baggage_config.json` - Baggage train system configuration
+- `Config/enlisted_config.json` - Master mod configuration
+- `Config/equipment_pricing.json` - Quartermaster pricing rules
+- `Config/progression_config.json` - Tier progression and wage system
+- `Config/retinue_config.json` - Commander retinue system
+- `Config/settings.json` - Logging and debug settings
+- `Config/simulation_config.json` - AI simulation configuration
+- `Config/strategic_context_config.json` - War stance and strategic contexts
+
+### Conditions (1)
+- `Conditions/condition_defs.json` - Player condition definitions (injuries/illness)
+
+### Decisions (2)
+- `Decisions/camp_opportunities.json` - Camp opportunity decisions
+- `Decisions/decisions.json` - Player-initiated decisions
+
+### Dialogue (4)
+- `Dialogue/qm_baggage.json` - Quartermaster baggage dialogue
+- `Dialogue/qm_dialogue.json` - Quartermaster main dialogue
+- `Dialogue/qm_gates.json` - Quartermaster gating dialogue
+- `Dialogue/qm_intro.json` - Quartermaster introduction dialogue
+
+### Events (15)
+- `Events/events_bagcheck.json` - Baggage inspection events
+- `Events/events_escalation_thresholds.json` - Escalation threshold events
+- `Events/events_pay_loyal.json` - Pay loyalty events
+- `Events/events_pay_mutiny.json` - Pay mutiny events
+- `Events/events_pay_tension.json` - Pay tension events
+- `Events/events_promotion.json` - Promotion events
+- `Events/events_retinue.json` - Commander retinue events
+- `Events/incidents_battle.json` - After-battle incidents
+- `Events/incidents_leaving.json` - Leaving settlement incidents
+- `Events/incidents_retinue.json` - Retinue-specific incidents
+- `Events/incidents_siege.json` - Siege incidents
+- `Events/incidents_town.json` - Town incidents
+- `Events/incidents_village.json` - Village incidents
+- `Events/incidents_waiting.json` - Waiting/idle incidents
+- `Events/schema_version.json` - Event schema version
+
+### Orders (19)
+**Order Lists:**
+- `Orders/orders_t1_t3.json` - Basic soldier orders (Tier 1-3)
+- `Orders/orders_t4_t6.json` - Specialist orders (Tier 4-6)
+- `Orders/orders_t7_t9.json` - Leadership orders (Tier 7-9)
+
+**Order Events (16):**
+- `Orders/order_events/camp_patrol_events.json` - Camp patrol order outcomes
+- `Orders/order_events/equipment_cleaning_events.json` - Equipment cleaning order outcomes
+- `Orders/order_events/escort_duty_events.json` - Escort duty order outcomes
+- `Orders/order_events/firewood_detail_events.json` - Firewood detail order outcomes
+- `Orders/order_events/forage_supplies_events.json` - Foraging order outcomes
+- `Orders/order_events/guard_post_events.json` - Guard post order outcomes
+- `Orders/order_events/inspect_defenses_events.json` - Defense inspection order outcomes
+- `Orders/order_events/latrine_duty_events.json` - Latrine duty order outcomes
+- `Orders/order_events/lead_patrol_events.json` - Lead patrol order outcomes
+- `Orders/order_events/march_formation_events.json` - March formation order outcomes
+- `Orders/order_events/muster_inspection_events.json` - Muster inspection order outcomes
+- `Orders/order_events/repair_equipment_events.json` - Repair equipment order outcomes
+- `Orders/order_events/scout_route_events.json` - Scout route order outcomes
+- `Orders/order_events/sentry_duty_events.json` - Sentry duty order outcomes
+- `Orders/order_events/train_recruits_events.json` - Train recruits order outcomes
+- `Orders/order_events/treat_wounded_events.json` - Treat wounded order outcomes
+
+**Total JSON Files:** 49
+
+---
+
 ## Support
 
 **If something breaks:**

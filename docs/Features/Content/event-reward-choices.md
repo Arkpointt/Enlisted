@@ -1,9 +1,11 @@
 # Event Reward Choices
 
-**Summary:** Feature specification for extending the event system to allow players to choose how they are rewarded. Players can select between different reward types (XP, gold, reputation) and customize which skills develop, providing meaningful agency over character progression through events.
+**Summary:** System allowing players to choose how they are rewarded after events. Players can select between different reward types (XP, gold, reputation) and customize which skills develop, providing meaningful agency over character progression through events.
 
-**Status:** 📋 Specification  
-**Last Updated:** 2025-12-22  
+**Status:** ⚠️ **CODED BUT NOT CONTENT-IMPLEMENTED** - System exists, no events use it yet  
+**Implementation:** `EventDeliveryManager.ShowSubChoicePopup()`, `RewardChoices` parsing active  
+**Blocker:** None - can add `reward_choices` blocks to any event JSON at any time  
+**Last Updated:** 2025-12-31  
 **Related Docs:** [Content System Architecture](content-system-architecture.md), [Event System Schemas](event-system-schemas.md)
 
 ---
@@ -292,12 +294,14 @@ Add to event option definition:
 }
 ```
 
-### Auto-Selection (Optional Enhancement)
+### Auto-Selection (Future Enhancement)
 
-For players who don't want to micromanage, add preference system:
+**Status:** Not implemented in code or config
+
+For players who don't want to micromanage, a future preference system could auto-select rewards:
 
 ```json
-// In enlisted_config.json
+// Proposed: enlisted_config.json
 "event_preferences": {
   "enabled": true,
   "training_focus": "auto|formation_appropriate|player_choice",
@@ -306,11 +310,13 @@ For players who don't want to micromanage, add preference system:
 }
 ```
 
-**Auto Behavior**:
+**Proposed Behavior**:
 - `formation_appropriate`: Cavalry → riding, Infantry → melee, Archers → bow
 - `prefer_gold`: Always take gold when offered
 - `cautious`: Always take safest option
 - `auto`: Learn from player's last 5 choices
+
+This is **not required** for initial content implementation - manual selection works fine.
 
 ### UI Flow
 
@@ -371,116 +377,84 @@ For players who don't want to micromanage, add preference system:
 ### 4. Reward Choice During AI Fast-Forward
 **Case**: Event fires during army travel (unstoppable fast-forward).
 
-**Handling**: 
-- Option A: Pause time, show dialog (breaks immersion)
-- Option B: Auto-select using preferences (recommended)
-- Option C: Queue for next safe moment
+**Handling Options**: 
+- Option A: Pause time, show dialog (current behavior for all events)
+- Option B: Auto-select using preferences (requires future enhancement)
+- Option C: Queue for next safe moment (requires queue system)
 
-**Recommendation**: Use Option B, log choice in debug category.
+**Current Behavior**: System pauses for player input (same as all inquiry events).
 
 ### 5. Save/Load During Reward Selection
 **Case**: Player saves game while reward dialog is open.
 
 **Handling**: Persist dialog state in save data, restore on load.
 
-## Acceptance Criteria
+## Acceptance Criteria (For Content Implementation)
 
 ### Core Functionality
-- [ ] Event options can specify `reward_choices` with 2-4 options
-- [ ] Reward choice dialog displays after outcome narrative
-- [ ] Selected reward is applied correctly (XP, gold, relations, effects)
-- [ ] Feedback messages show what player received
-- [ ] Conditions (formation, tier, gold) properly filter choices
+- [x] Event options can specify `reward_choices` with 2-4 options (code ready)
+- [x] Reward choice dialog displays after outcome narrative (code ready)
+- [x] Selected reward is applied correctly (code ready)
+- [ ] At least 10 events updated with `reward_choices` blocks
+- [ ] Playtesting confirms choices feel meaningful
 
-### Event Coverage
-- [ ] All training events offer skill focus choices
-- [ ] Social events with gold rewards offer gold/reputation tradeoffs
-- [ ] Weapon training offers formation-appropriate weapon selection
-- [ ] At least 5 events per category updated with choices
+### Event Coverage (Content Work Required)
+- [ ] Training events offer skill focus choices
+- [ ] Social events offer gold/reputation tradeoffs
+- [ ] Weapon training offers formation-appropriate selection
+- [ ] Order events include risk-level or rest focus choices
 
 ### UX/Polish
 - [ ] Tooltips explain tradeoffs clearly
-- [ ] Grayed-out options show why they're unavailable
 - [ ] Reward amounts are balanced across choices (no trap options)
-- [ ] Combat log shows chosen reward clearly
+- [ ] Feedback messages show chosen rewards in combat log
 
-### Optional: Auto-Selection
-- [ ] Config setting to enable/disable auto-select
-- [ ] Formation-appropriate defaults work correctly
-- [ ] Preference learning tracks last 5 choices
-- [ ] Auto-select works during AI-unsafe moments (army travel)
+### Future Enhancements (Not Required)
+- [ ] Auto-selection preferences system
+- [ ] Formation-appropriate defaults
+- [ ] Preference learning from player choices
 
-### Performance
-- [ ] Reward dialog doesn't block time when avoidable
-- [ ] No performance impact when auto-select enabled
-- [ ] Save/load preserves dialog state if interrupted
+## Implementation Status
 
-## Implementation Notes
+### Code (✅ Complete)
+- `RewardChoices` class exists in `EventDefinition.cs`
+- `EventCatalog.ParseRewardChoices()` parses JSON `reward_choices` blocks
+- `EventDeliveryManager.ShowSubChoicePopup()` displays the selection UI
+- System is fully functional and ready to use
 
-### Phase 1: Core Schema & Dialog (Week 1)
-1. Extend `EventOptionDefinition` with `RewardChoices` field
-2. Create `RewardChoiceDialog` inquiry class
-3. Update `EventEffectsApplier` to check for reward choices
-4. Implement two-stage application: outcome → reward selection → apply
+### Content (❌ Not Started)
+- **No events currently use `reward_choices`** in their JSON definitions
+- All event JSONs use fixed rewards (traditional system)
+- This document serves as the specification for future content work
 
-### Phase 2: Event Updates (Week 2)
-1. Update all `events_training.json` events with skill focus choices
-2. Update social events in `events_general.json` with gold/rep tradeoffs
-3. Update weapon training decisions in `Decisions/decisions.json` with weapon selection
-4. Add risk-level choices to 3-5 dangerous events
+### To Implement
+Add `reward_choices` blocks to event option definitions in:
+- `ModuleData/Enlisted/Events/*.json` - Camp events, training, general
+- `ModuleData/Enlisted/Orders/*.json` - Order events during duty
+- `ModuleData/Enlisted/Decisions/*.json` - Player-initiated decisions
 
-### Phase 3: Polish & Balance (Week 3)
-1. Balance reward amounts (test that choices feel equivalent)
-2. Add tooltips explaining tradeoffs
-3. Improve feedback messages (show choices clearly in combat log)
-4. Playtest and iterate
+The system will activate automatically once JSON content includes `reward_choices` blocks.
 
-### Phase 4: Optional Enhancements (Week 4)
-1. Implement preference system in config
-2. Add auto-selection logic
-3. Add preference learning from player choices
-4. Test auto-select during army travel
+## Proposed Event Updates
 
-## Examples to Implement
+These are high-priority candidates for adding `reward_choices` to existing events:
 
-### High-Priority Event Updates
+**1. Training Events** (`ModuleData/Enlisted/Events/events_training_*.json`)
+- Add skill focus choices to all training events
+- Example: Shield wall drill → choose Polearm focus vs Shield focus vs Balanced
 
-**1. Shield Wall Drill** (`inf_train_shield_wall`)
-- Current: Fixed Polearm +25, OneHanded +20, Athletics +15
-- New: Choice between Polearm focus (50), Shield focus (50 OneHanded), or Balanced (25/25)
+**2. Player Decisions** (`ModuleData/Enlisted/Decisions/*.json`)
+- Add gold/reputation tradeoffs to social decisions
+- Add weapon selection to training requests
 
-**2. Lord's Hunt** (`decision_lord_hunt_invitation`)
-- Current: Fixed Gold +15, Soldier Rep +2
-- New: Take gold (25), Build reputation (Soldier +4, Lord +2), or Balanced (12 gold, +2 rep)
+**3. Order Events** (`ModuleData/Enlisted/Orders/*.json`)
+- Add risk-level choices to dangerous duty events
+- Add rest vs socialization choices to downtime events
 
-**3. Weapon Training** (`player_request_training` in events_player_decisions.json)
-- Current: Separate options for each weapon (menu clutter)
-- New: Single "Request Training" option → then choose weapon focus
+**4. General Camp Events** (`ModuleData/Enlisted/Events/events_general.json`)
+- Add reward customization to social interaction events
+- Add NPC relationship targeting (who to befriend)
 
-**4. Dangerous Patrol** (new event to create)
-- Create new patrol event with risk-level choices
-- Demonstrates risk/reward tradeoff mechanic
-
-**5. Evening Dice Game** (`decision_comrade_dice`)
-- Current: Fixed gold in/out
-- New: After winning, choose: "Keep winnings (gold)" vs "Buy rounds (+4 Soldier Rep)"
-
-**6. Camp Socializing** (general event)
-- Current: Generic rep gain
-- New: Choose who to spend time with (NCO +3 vs Fellow Soldiers +2 each vs Lord +1)
-
-### Event Distribution Target
-
-| Event Type | Events to Update | Priority |
-|------------|-----------------|----------|
-| Training (player-initiated) | 12 events | Critical |
-| Combat training (automatic) | 8 events | High |
-| Social events | 10 events | High |
-| Duty-related | 6 events | Medium |
-| Dangerous missions | 5 events | Medium |
-| Rest/downtime | 4 events | Low |
-
-**Total**: ~45 events updated with meaningful choices
 
 ## Success Metrics
 

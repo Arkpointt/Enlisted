@@ -116,6 +116,21 @@ namespace Enlisted.Features.Orders
                 return null;
             }
 
+            // Filter by sea state - exclude land-only orders when at sea
+            var isAtSea = enlistment.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            if (isAtSea)
+            {
+                eligibleOrders = eligibleOrders
+                    .Where(o => !o.Requirements.NotAtSea)
+                    .ToList();
+
+                if (eligibleOrders.Count == 0)
+                {
+                    ModLogger.Debug(LogCategory, "No orders available at sea (all require land)");
+                    return null;
+                }
+            }
+
             // Prefer orders matching context + role
             var contextOrders = eligibleOrders
                 .Where(o => o.Tags.Any(t => t.Equals(context, StringComparison.OrdinalIgnoreCase)))
@@ -511,6 +526,9 @@ namespace Enlisted.Features.Orders
                     }
                 }
             }
+
+            // Parse sea restriction (orders that can only be issued on land)
+            req.NotAtSea = reqJson["not_at_sea"]?.Value<bool>() ?? false;
 
             return req;
         }

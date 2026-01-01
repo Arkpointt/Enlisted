@@ -10,10 +10,9 @@ using TaleWorlds.Library;
 namespace Enlisted.Features.Logistics
 {
     /// <summary>
-    /// Manages company supply calculation using a hybrid 40/60 model.
-    /// The 40% "food component" observes the lord's party food status (read-only, vanilla system).
-    /// The 60% "non-food component" simulates consumption of ammunition, repair materials, and camp supplies.
-    /// This keeps supply responsive to gameplay without modifying vanilla food mechanics.
+    /// Manages company supply calculation based on rations and equipment logistics.
+    /// Tracks supply consumption and resupply for ammunition, repair materials, rations, and camp supplies.
+    /// Player receives rations directly from their service rather than sharing from the lord's food supply.
     /// </summary>
     public class CompanySupplyManager
     {
@@ -25,58 +24,49 @@ namespace Enlisted.Features.Logistics
         public static CompanySupplyManager Instance { get; private set; }
 
         /// <summary>
-        /// The non-food supply component (0-60%). We manage consumption and resupply.
-        /// Represents ammunition, repair materials, medical supplies, and camp gear.
+        /// The total supply level (0-100%). Includes rations, ammunition, repair materials, medical supplies, and camp gear.
         /// </summary>
-        private float _nonFoodSupply = 60.0f;
+        private float _totalSupply = 100.0f;
 
         /// <summary>
-        /// Cached food component from the last calculation. Used for logging changes.
-        /// </summary>
-        private float _lastFoodComponent = 40.0f;
-
-        /// <summary>
-        /// The enlisted lord whose party we observe for food status.
+        /// The enlisted lord whose party we track for context. Used for party size and activity calculations.
         /// </summary>
         private Hero _enlistedLord;
 
         /// <summary>
-        /// Total supply percentage (0-100), combining food observation (0-40%) and non-food simulation (0-60%).
-        /// Food component reflects the lord's party food days; non-food degrades/recovers based on activity.
+        /// Total supply percentage (0-100). Gates equipment access and reflects overall logistics state.
         /// </summary>
         public int TotalSupply
         {
             get
             {
-                float food = CalculateFoodComponent();
-                float nonFood = _nonFoodSupply;
-                return (int)MathF.Clamp(food + nonFood, 0f, 100f);
+                return (int)MathF.Clamp(_totalSupply, 0f, 100f);
             }
         }
 
         /// <summary>
-        /// Current non-food supply level (0-60). Exposed for save/load and debugging.
+        /// Current supply level (0-100). Exposed for save/load and debugging.
         /// </summary>
-        public float NonFoodSupply => _nonFoodSupply;
+        public float NonFoodSupply => _totalSupply;
 
         /// <summary>
         /// Initializes the supply manager singleton and sets the enlisted lord.
         /// Called when player enlists with a lord.
         /// </summary>
         /// <param name="enlistedLord">The lord the player is enlisting with.</param>
-        /// <param name="preserveSupply">If true, preserves existing non-food supply level (for grace period re-enlistment).</param>
+        /// <param name="preserveSupply">If true, preserves existing supply level (for grace period re-enlistment).</param>
         public static void Initialize(Hero enlistedLord, bool preserveSupply = false)
         {
-            float existingSupply = Instance?._nonFoodSupply ?? 60.0f;
+            float existingSupply = Instance?._totalSupply ?? 100.0f;
 
             Instance = new CompanySupplyManager
             {
                 _enlistedLord = enlistedLord,
-                _nonFoodSupply = preserveSupply ? MathF.Clamp(existingSupply, 0f, 60f) : 60.0f
+                _totalSupply = preserveSupply ? MathF.Clamp(existingSupply, 0f, 100f) : 100.0f
             };
 
             ModLogger.Info(LogCategory, preserveSupply
-                ? $"CompanySupplyManager transferred to lord: {enlistedLord?.Name}, preserved supply: {Instance._nonFoodSupply:F1}%"
+                ? $"CompanySupplyManager transferred to lord: {enlistedLord?.Name}, preserved supply: {Instance._totalSupply:F1}%"
                 : $"CompanySupplyManager initialized for lord: {enlistedLord?.Name}");
         }
 
@@ -95,119 +85,48 @@ namespace Enlisted.Features.Logistics
         /// <summary>
         /// Restores supply manager state after a save load.
         /// </summary>
-        public static void RestoreFromSave(Hero enlistedLord, float nonFoodSupply)
+        public static void RestoreFromSave(Hero enlistedLord, float totalSupply)
         {
             Instance = new CompanySupplyManager
             {
                 _enlistedLord = enlistedLord,
-                _nonFoodSupply = MathF.Clamp(nonFoodSupply, 0f, 60f)
+                _totalSupply = MathF.Clamp(totalSupply, 0f, 100f)
             };
-            ModLogger.Info(LogCategory, $"CompanySupplyManager restored: NonFood={nonFoodSupply:F1}%, Lord={enlistedLord?.Name}");
+            ModLogger.Info(LogCategory, $"CompanySupplyManager restored: Supply={totalSupply:F1}%, Lord={enlistedLord?.Name}");
         }
 
-        /// <summary>
-        /// Observes the lord's party food situation and maps it to a 0-40% contribution.
-        /// Does NOT modify vanilla food - purely observational.
-        /// </summary>
-        private float CalculateFoodComponent()
-        {
-            MobileParty lordParty = GetLordParty();
-            if (lordParty == null)
-            {
-                return 40.0f; // Full food component if not attached to a party
-            }
-
-            try
-            {
-                // Check starvation first (vanilla tracks this via Party.IsStarving)
-                if (lordParty.Party.IsStarving)
-                {
-                    return 0.0f;
-                }
-
-                // Observe vanilla food days calculation
-                // GetNumDaysForFoodToLast divides by -FoodChange; if FoodChange >= 0 (recovering), result is invalid
-                float foodChange = lordParty.FoodChange;
-                if (foodChange >= 0f)
-                {
-                    // Party is gaining or stable on food - treat as well-supplied
-                    return 40.0f;
-                }
-
-                int daysOfFood = lordParty.GetNumDaysForFoodToLast();
-
-                // Guard against negative or extreme values from edge cases
-                if (daysOfFood < 0 || daysOfFood > 1000)
-                {
-                    return 40.0f;
-                }
-
-                // Map food days to supply contribution (0-40%)
-                // 10+ days = excellent supply, diminishing returns below that
-                if (daysOfFood >= 10)
-                {
-                    return 40.0f;
-                }
-                if (daysOfFood >= 7)
-                {
-                    return 35.0f;
-                }
-                if (daysOfFood >= 5)
-                {
-                    return 30.0f;
-                }
-                if (daysOfFood >= 3)
-                {
-                    return 20.0f;
-                }
-                if (daysOfFood >= 1)
-                {
-                    return 10.0f;
-                }
-                return 5.0f; // Less than 1 day but not starving yet
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Debug(LogCategory, $"Error calculating food component: {ex.Message}");
-                return 40.0f; // Fail-safe: assume well-supplied
-            }
-        }
 
         /// <summary>
-        /// Processes daily supply updates: consumption and resupply of non-food supplies.
+        /// Processes daily supply updates: consumption and resupply.
         /// Called from EnlistmentBehavior's daily tick while enlisted.
         /// </summary>
         public void DailyUpdate()
         {
             try
             {
-                float oldNonFood = _nonFoodSupply;
-                float oldFood = _lastFoodComponent;
+                float oldSupply = _totalSupply;
 
-                float consumption = CalculateNonFoodConsumption();
-                float resupply = CalculateNonFoodResupply();
+                float consumption = CalculateSupplyConsumption();
+                float resupply = CalculateSupplyResupply();
 
-                _nonFoodSupply = MathF.Clamp(_nonFoodSupply - consumption + resupply, 0f, 60f);
-                _lastFoodComponent = CalculateFoodComponent();
+                _totalSupply = MathF.Clamp(_totalSupply - consumption + resupply, 0f, 100f);
 
                 // Log significant changes
-                float nonFoodChange = _nonFoodSupply - oldNonFood;
-                float foodChange = _lastFoodComponent - oldFood;
+                float supplyChange = _totalSupply - oldSupply;
                 int totalSupply = TotalSupply;
 
-                if (MathF.Abs(nonFoodChange) > 0.5f || MathF.Abs(foodChange) > 2f)
+                if (MathF.Abs(supplyChange) > 0.5f)
                 {
                     ModLogger.Debug(LogCategory,
-                        $"Daily supply update: NonFood {oldNonFood:F1}->{_nonFoodSupply:F1} ({nonFoodChange:+0.0;-0.0}), " +
-                        $"Food {oldFood:F0}->{_lastFoodComponent:F0}, Total={totalSupply}%");
+                        $"Daily supply update: {oldSupply:F1}% -> {_totalSupply:F1}% ({supplyChange:+0.0;-0.0}), Total={totalSupply}%");
                 }
 
                 // Log warnings at thresholds
-                if (totalSupply < 30 && (oldNonFood + oldFood) >= 30)
+                if (totalSupply < 30 && oldSupply >= 30)
                 {
                     ModLogger.Warn(LogCategory, $"Supply CRITICAL: {totalSupply}% - equipment access blocked");
                 }
-                else if (totalSupply < 50 && (oldNonFood + oldFood) >= 50)
+                else if (totalSupply < 50 && oldSupply >= 50)
                 {
                     ModLogger.Info(LogCategory, $"Supply LOW: {totalSupply}% - resupply recommended");
                 }
@@ -219,10 +138,10 @@ namespace Enlisted.Features.Logistics
         }
 
         /// <summary>
-        /// Calculates daily non-food supply consumption based on activity and conditions.
+        /// Calculates daily supply consumption based on activity and conditions.
         /// Base rate is 1.5% per day, modified by company size, activity, and terrain.
         /// </summary>
-        private float CalculateNonFoodConsumption()
+        private float CalculateSupplyConsumption()
         {
             MobileParty lordParty = GetLordParty();
             if (lordParty == null)
@@ -353,10 +272,10 @@ namespace Enlisted.Features.Logistics
         }
 
         /// <summary>
-        /// Calculates daily non-food resupply when in a settlement.
+        /// Calculates daily resupply when in a settlement.
         /// Base rate is +3% per day in towns/castles, with bonuses for prosperity and ownership.
         /// </summary>
-        private float CalculateNonFoodResupply()
+        private float CalculateSupplyResupply()
         {
             MobileParty lordParty = GetLordParty();
             if (lordParty?.CurrentSettlement == null)
@@ -407,7 +326,7 @@ namespace Enlisted.Features.Logistics
         {
             try
             {
-                float oldNonFood = _nonFoodSupply;
+                float oldSupply = _totalSupply;
 
                 // Casualty loss: -1% per 10 troops lost (supplies abandoned/consumed treating wounded)
                 float casualtyLoss = troopsLost / 10f;
@@ -425,14 +344,14 @@ namespace Enlisted.Features.Logistics
                 float lootGain = CalculateBattleLoot(enemiesKilled);
 
                 // Apply changes
-                _nonFoodSupply = MathF.Clamp(_nonFoodSupply - totalLoss + lootGain, 0f, 60f);
+                _totalSupply = MathF.Clamp(_totalSupply - totalLoss + lootGain, 0f, 100f);
 
-                float netChange = _nonFoodSupply - oldNonFood;
+                float netChange = _totalSupply - oldSupply;
 
                 ModLogger.Info(LogCategory,
                     $"Battle supply: casualties={troopsLost} (-{casualtyLoss:F1}%), " +
                     $"defeat={!playerWon} (-{defeatPenalty:F0}%), siege={wasSiege} (-{siegePenalty:F0}%), " +
-                    $"loot={enemiesKilled} kills (+{lootGain:F1}%) => net {netChange:+0.0;-0.0}%, now {_nonFoodSupply:F1}%");
+                    $"loot={enemiesKilled} kills (+{lootGain:F1}%) => net {netChange:+0.0;-0.0}%, now {_totalSupply:F1}%");
             }
             catch (Exception ex)
             {
@@ -462,24 +381,24 @@ namespace Enlisted.Features.Logistics
         }
 
         /// <summary>
-        /// Adds non-food supplies from player actions (foraging duty, purchases, etc.).
+        /// Adds supplies from player actions (foraging duty, purchases, etc.).
         /// </summary>
-        /// <param name="amount">Percentage to add (0-60 range clamped).</param>
+        /// <param name="amount">Percentage to add (0-100 range clamped).</param>
         /// <param name="source">Description of the source for logging.</param>
-        public void AddNonFoodSupplies(float amount, string source)
+        public void AddSupplies(float amount, string source)
         {
             if (amount <= 0)
             {
                 return;
             }
 
-            float oldSupply = _nonFoodSupply;
-            _nonFoodSupply = MathF.Clamp(_nonFoodSupply + amount, 0f, 60f);
-            float actualGain = _nonFoodSupply - oldSupply;
+            float oldSupply = _totalSupply;
+            _totalSupply = MathF.Clamp(_totalSupply + amount, 0f, 100f);
+            float actualGain = _totalSupply - oldSupply;
 
             if (actualGain > 0)
             {
-                ModLogger.Info(LogCategory, $"Added {actualGain:F1}% non-food supplies from {source}. Now: {_nonFoodSupply:F1}%");
+                ModLogger.Info(LogCategory, $"Added {actualGain:F1}% supplies from {source}. Now: {_totalSupply:F1}%");
             }
         }
 
@@ -527,11 +446,11 @@ namespace Enlisted.Features.Logistics
         }
 
         /// <summary>
-        /// Sets the non-food supply value directly. Used for save/load restoration.
+        /// Sets the supply value directly. Used for save/load restoration.
         /// </summary>
-        internal void SetNonFoodSupply(float value)
+        internal void SetTotalSupply(float value)
         {
-            _nonFoodSupply = MathF.Clamp(value, 0f, 60f);
+            _totalSupply = MathF.Clamp(value, 0f, 100f);
         }
 
         /// <summary>

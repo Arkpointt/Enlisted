@@ -135,7 +135,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// </summary>
         [HarmonyPrefix]
         [HarmonyPatch("wait_menu_army_wait_on_init")]
-        private static bool WaitMenuArmyWaitOnInit_Prefix(MenuCallbackArgs _)
+        private static bool WaitMenuArmyWaitOnInit_Prefix(MenuCallbackArgs args)
         {
             try
             {

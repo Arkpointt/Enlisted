@@ -1194,8 +1194,10 @@ QM: "I'm watching you. One more incident and I'm recommending discharge."
 The Quartermaster system is tightly integrated with company supply (0-100%):
 
 **Supply Sources:**
-- 40% observed from lord's food situation
-- 60% simulated from logistics (movement, combat, terrain)
+- Rations provided as part of enlisted service
+- Ammunition, repairs, and camp supplies consumed during operations
+- Resupply in settlements (+3-5% per day)
+- Consumption based on movement, combat, and terrain
 
 **Supply Effects on Quartermaster:**
 

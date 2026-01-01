@@ -1815,8 +1815,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         SyncKey(dataStore, "_companyNeeds_supplies", ref defaultValue);
                     }
 
-                    // Serialize non-food supply component from CompanySupplyManager
-                    var nonFoodSupply = CompanySupplyManager.Instance?.NonFoodSupply ?? 60f;
+                    // Serialize supply component from CompanySupplyManager
+                    var nonFoodSupply = CompanySupplyManager.Instance?.NonFoodSupply ?? 100f;
                     SyncKey(dataStore, "_companySupply_nonFood", ref nonFoodSupply);
                 }
                 else
@@ -1834,8 +1834,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     SyncKey(dataStore, "_companyNeeds_rest", ref rest);
                     SyncKey(dataStore, "_companyNeeds_supplies", ref supplies);
 
-                    // Load non-food supply component
-                    var nonFoodSupply = 60f;
+                    // Load supply component
+                    var nonFoodSupply = 100f;
                     SyncKey(dataStore, "_companySupply_nonFood", ref nonFoodSupply);
 
                     _companyNeeds = new CompanyNeedsState
@@ -5078,7 +5078,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             try
             {
-                // Update company supply simulation (hybrid 40/60 food/non-food model)
+                // Update company supply simulation (unified logistics including rations)
                 CompanySupplyManager.Instance?.DailyUpdate();
 
                 // Accrue daily wage into muster ledger (no clan finance involvement)

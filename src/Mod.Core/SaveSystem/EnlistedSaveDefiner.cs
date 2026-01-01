@@ -45,6 +45,7 @@ namespace Enlisted.Mod.Core.SaveSystem
             AddClassDefinition(typeof(OrderRequirement), 11);
             AddClassDefinition(typeof(OrderConsequence), 12);
             AddClassDefinition(typeof(OrderOutcome), 13);
+            AddClassDefinition(typeof(PhaseRecap), 14);
 
             // Retinue system types
             AddClassDefinition(typeof(NamedVeteran), 20);
@@ -93,6 +94,7 @@ namespace Enlisted.Mod.Core.SaveSystem
             // List types used by various systems
             ConstructContainerDefinition(typeof(List<string>));               // LifetimeServiceRecord.FactionsServed, Order.Tags
             ConstructContainerDefinition(typeof(List<NamedVeteran>));         // RetinueState.NamedVeterans
+            ConstructContainerDefinition(typeof(List<PhaseRecap>));           // OrderProgressionBehavior._phaseRecaps
         }
     }
 }

@@ -2,9 +2,14 @@
 
 **Summary:** Copy-paste prompts for each implementation phase of the Battle AI system. Each prompt is designed for a NEW AI chat session with full context recovery.
 
-**Status:** 📋 Reference
-**Last Updated:** 2025-12-31
-**Related Docs:** [BATTLE-AI-IMPLEMENTATION-SPEC.md](BATTLE-AI-IMPLEMENTATION-SPEC.md), [battle-ai-plan.md](battle-ai-plan.md), [agent-combat-ai.md](agent-combat-ai.md), [BLUEPRINT](../../BLUEPRINT.md)
+**Status:** 📋 Reference | **Updated:** 2025-12-31 (Agent Micro-Tactics System Added)
+
+**Design Note:** This Battle AI system is an original architecture designed for the Enlisted mod, featuring a layered approach (Orchestrator → Formation → Agent) where each layer operates at the appropriate scope. The orchestrator provides strategic coordination, formations execute tactical roles, and individual agents make bounded micro-decisions that support the overall plan. Battlefield realism systems (ammunition tracking, line relief, morale contagion, feints) add depth and create cinematic moments. This architecture creates intelligent, coordinated behavior without the chaos of pure bottom-up autonomy or the rigidity of pure top-down control.
+**Related Docs:** 
+- [BATTLE-AI-IMPLEMENTATION-SPEC.md](BATTLE-AI-IMPLEMENTATION-SPEC.md) - Master implementation spec (all phases, edge cases, work items)
+- [battle-ai-plan.md](battle-ai-plan.md) - Design foundation and tactical details
+- [advanced-tactical-behaviors.md](advanced-tactical-behaviors.md) - Agent AI, cavalry, micro-positioning specs
+- [BLUEPRINT](../../BLUEPRINT.md) - Project constraints and verification requirements
 
 ---
 
@@ -37,7 +42,8 @@ Each phase prompt is **self-contained for a fresh AI chat**. Every prompt includ
 | [Phase 9-11](#phases-9-11-polish-combined) | Reinforcements, pacing, terrain | Sonnet 4 | ⚡ COMBINE | ⬜ TODO |
 | [Phase 12-14](#phases-12-14-formation-systems-combined) | Formation doctrine, shapes, organization | Opus 4 | ⚡ COMBINE | ⬜ TODO |
 | [Phase 15](#phase-15-plan-execution--anti-flip-flop) | State machine, anti-flip-flop | Opus 4 | 🔒 Standalone | ⬜ TODO |
-| [Phase 16-18](#phases-16-18-advanced-polish-combined) | Combat director, retreat, reinforcement | Sonnet 4 | ⚡ COMBINE | ⬜ TODO |
+| [Phase 16-18](#phases-16-18-advanced-polish-combined) | Agent micro-tactics, combat director, retreat, reinforcement | Opus 4 | ⚡ COMBINE | ⬜ TODO |
+| [Phase 19](#phase-19-battlefield-realism-enhancements) | Ammo tracking, line relief, morale contagion, feints, banners | Opus 4 | 🔒 Standalone | ⬜ TODO |
 
 ---
 
@@ -71,9 +77,10 @@ Each phase prompt is **self-contained for a fresh AI chat**. Every prompt includ
 | Phases 9-11 | Medium | Claude Sonnet 4 | 3-4 hours | Polish systems |
 | Phases 12-14 | High | Claude Opus 4 | 4-5 hours | Formation doctrine |
 | Phase 15 | High | Claude Opus 4 | 3-4 hours | State machine |
-| Phases 16-18 | Medium | Claude Sonnet 4 | 3-4 hours | Advanced polish |
+| Phases 16-18 | High | Claude Opus 4 | 5-7 hours | Agent micro-tactics + polish |
+| Phase 19 | High | Claude Opus 4 | 3-4 hours | Battlefield realism (ammo, line relief, morale, feints, high ground) |
 
-**Total estimated time:** ~40-50 hours
+**Total estimated time:** ~49-63 hours (including agent micro-tactics, tactical enhancements, and battlefield realism)
 
 ---
 
@@ -327,9 +334,56 @@ PHASE 1 TASKS
 
 1.6 CONFIGURATION LOADING
 - Add "battle_ai" section to ModuleData/Enlisted/enlisted_config.json
-- Include: enabled (bool), log_decisions (bool), decision_interval_sec (float)
+- Include:
+  * enabled (bool), log_decisions (bool), decision_interval_sec (float)
+  * battleScaling sub-section (1.10): thresholds, reevaluateIntervalSec, hysteresis
 - Load via existing ConfigurationManager
 - Default: enabled=true, log_decisions=true, decision_interval_sec=1.5
+- See 1.10 above for full battleScaling JSON structure
+
+1.7 ACTIVITY DETECTION UTILITIES (NEW - TACTICAL ENHANCEMENT)
+- Create src/Features/Combat/TacticalUtilities.cs
+- IsFormationShooting(formation, threshold) - checks LastRangedAttackTime
+- FormationFightingInMelee(formation, threshold) - checks LastMeleeAttackTime
+- FormationActiveSkirmishersRatio(formation) - percentage actively shooting
+
+1.8 BATTLE JOINED DETECTION WITH HYSTERESIS (NEW - TACTICAL ENHANCEMENT)
+- HasBattleBeenJoined(mainInfantry, currentlyJoined, joinDistance)
+- Uses +5m buffer to prevent flip-flopping (75m to join, 80m to un-join)
+- Critical for cavalry timing and battle phase detection
+
+1.9 FORMATION STATE TRACKING (NEW - TACTICAL ENHANCEMENT)
+- Track formation states: Idle, Moving, Shooting, InMelee, Retreating
+- Used by orchestrator for tactical decisions
+
+1.10 BATTLE SCALE DETECTION (CRITICAL - NEW)
+- Detect battle size: Skirmish (<100), Small (100-200), Medium (200-350), Large (350-500), Massive (500+)
+- Calculate: avgTroops = (ourTroops + estimatedReinforcements + enemyTroops + enemyReinforcements) / 2
+- Re-evaluate every 30 seconds (not every tick)
+- Use hysteresis (20% threshold) to prevent flip-flop
+- Scale AI complexity based on detection:
+  * Skirmish: 1-2 formations, 1-2 ranks, 10% reserve, 5m sample radius, 2.0s tick
+  * Small: 2-3 formations, 2-3 ranks, 15% reserve, 8m sample radius, 1.5s tick
+  * Medium: 3-4 formations, 2-4 ranks, 20% reserve, 10m sample radius, 1.0s tick
+  * Large: 4-6 formations, 3-5 ranks, 25% reserve, 12m sample radius, 1.0s tick
+  * Massive: 5-8 formations, 4-6 ranks, 30% reserve, 15m sample radius, 0.8s tick
+- Disable features for small battles:
+  * Line Relief: OFF for Skirmish, ON for Small+ (if formation > 40 troops)
+  * Feint Maneuvers: OFF for Skirmish/Small, ON for Medium+
+- Store in BattleContext, accessed by all systems
+- Log: "[BattleAI] Scale: Medium (avg 280 troops, formations: 4, maxRanks: 3)"
+
+BATTLE SCALE CONFIG (add to battle_ai_config.json):
+```json
+"battleScaling": {
+  "skirmishThreshold": 100,
+  "smallThreshold": 200,
+  "mediumThreshold": 350,
+  "largeThreshold": 500,
+  "reevaluateIntervalSec": 30.0,
+  "scaleChangeHysteresis": 0.2
+}
+```
 
 ═══════════════════════════════════════════════════════════════════════════════
 EDGE CASES TO HANDLE
@@ -347,6 +401,10 @@ From BATTLE-AI-IMPLEMENTATION-SPEC.md Section 2b:
 | Multiplayer battle detected | Activation gate returns false, skip entirely |
 | Save/load during battle | Handle via OnAfterMissionLoad hook |
 | Team is null or has no agents | Early exit from orchestrator creation |
+| **Battle size very low (< 50 per side)** | Detect Skirmish, disable advanced features (line relief, feints) |
+| **Battle size changes mid-battle (reinforcements)** | Re-evaluate scale every 30 sec, smooth transition, don't reset AI |
+| **Asymmetric battles (100 vs 500)** | Use average for scale detection, adjust per-side formations |
+| **Player sets battle size to 1000** | Detect Massive, cap tick frequency at 0.8s minimum |
 
 ═══════════════════════════════════════════════════════════════════════════════
 FILES TO CREATE
@@ -357,6 +415,10 @@ FILES TO CREATE
 3. src/Features/Combat/Models/BattleState.cs
 4. src/Features/Combat/BattleStateReader.cs
 5. src/Features/Combat/EnlistedAgentStatCalculateModel.cs
+6. src/Features/Combat/BattleScaleDetector.cs (NEW - handles 1.10)
+7. src/Features/Combat/Models/BattleScale.cs (enum: Skirmish, Small, Medium, Large, Massive)
+8. src/Features/Combat/Models/BattleScaleConfig.cs (scale-specific parameters)
+9. src/Features/Combat/TacticalUtilities.cs (1.7-1.9 utilities)
 
 REMEMBER: Add all new .cs files to Enlisted.csproj with <Compile Include="..."/>
 
@@ -393,6 +455,15 @@ ACCEPTANCE CRITERIA
 [ ] Build succeeds: dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 [ ] No crashes when entering battle while enlisted
 [ ] No crashes when entering battle while NOT enlisted (native AI only)
+[ ] Battle scale correctly detected on initialization (log shows scale and troop count)
+[ ] Skirmish scale (< 100) uses 1-2 formations, simplified AI
+[ ] Medium scale (200-350) uses 3-4 formations, full features
+[ ] Massive scale (500+) uses 5-8 formations, reduced tick frequency (0.8s)
+[ ] Scale re-evaluates every 30 seconds (not every tick)
+[ ] Hysteresis prevents flip-flop (requires 20% change to shift scale)
+[ ] Asymmetric battles (50 vs 500) handled without crashing
+[ ] Line relief disabled for Skirmish/Small scales
+[ ] Feint maneuvers disabled for Skirmish/Small scales
 
 ═══════════════════════════════════════════════════════════════════════════════
 HANDOFF NOTES (Capture these for Phase 2)
@@ -406,6 +477,10 @@ FILES CREATED:
 - [ ] src/Features/Combat/Models/BattleState.cs
 - [ ] src/Features/Combat/BattleStateReader.cs
 - [ ] src/Features/Combat/EnlistedAgentStatCalculateModel.cs
+- [ ] src/Features/Combat/BattleScaleDetector.cs
+- [ ] src/Features/Combat/Models/BattleScale.cs (enum)
+- [ ] src/Features/Combat/Models/BattleScaleConfig.cs
+- [ ] src/Features/Combat/TacticalUtilities.cs
 
 FILES MODIFIED:
 - [ ] src/Mod.Entry/SubModule.cs
@@ -417,7 +492,18 @@ KEY APIS VERIFIED IN DECOMPILE:
 - (list which APIs you verified exist)
 
 KEY DECISIONS MADE:
-- (list any architectural decisions)
+- Battle scale detection method (troop count averaging, reinforcement estimation)
+- Hysteresis threshold for scale changes (20% to prevent flip-flop)
+- Scale re-evaluation interval (30 seconds)
+- Feature enable/disable thresholds per scale
+- (list any other architectural decisions)
+
+BATTLE SCALE CONTEXT FOR NEXT PHASE:
+- BattleScale enum and detector are now available in BattleContext/BattleState
+- All phases should respect battle scale when making decisions
+- Phase 12 will use scale for formation count/depth
+- Phase 16.6 will use scale for agent sampling radius
+- Phase 19 will check scale to enable/disable line relief and feints
 
 KNOWN ISSUES/TECH DEBT:
 - (list any incomplete items)
@@ -493,11 +579,14 @@ DOCUMENTATION TO READ FIRST
 Read these docs BEFORE implementing:
 
 1. docs/Features/Combat/BATTLE-AI-IMPLEMENTATION-SPEC.md
-   - Section 2: Phase 2 items (2.1-2.4)
+   - Section 2: Phase 2 items (2.1-2.5 - includes NEW tactical enhancements)
    - Section 2b: Edge Cases for Phase 2
    - Section 3.2: Agent Combat AI specification
 
-2. docs/Features/Combat/agent-combat-ai.md (CRITICAL - read entire doc)
+2. docs/Features/Combat/advanced-tactical-behaviors.md (NEW - CRITICAL)
+   - Section 1: Enhanced Agent Combat AI (skill formulas, objective modifiers, phase modifiers)
+
+3. docs/Features/Combat/agent-combat-ai.md (CRITICAL - read entire doc)
    - AgentDrivenProperties (40+ properties)
    - AI Level calculation from skills
    - BehaviorValueSet (formation-based aggression)
@@ -549,12 +638,28 @@ Elite Profile (Tier 6+ or heroes):
   - AiRandomizedDefendDirectionChance = 0.05f
   - AIAttackOnDecideChance = 0.48f
 
-2.4 SKILL-BASED PROPERTY SCALING
-- Calculate AI level from agent skills (OneHandedSkill + AthleticsSkill, etc.)
-- Scale properties based on skill:
-  - Higher skill = better blocking, less random errors
-  - Lower skill = more hesitation, more mistakes
-- Use exponential smoothing, not linear (elite soldiers MUCH better)
+2.4 SKILL-BASED PROPERTY SCALING WITH FORMULAS (ENHANCED - TACTICAL)
+- Calculate AI level: aiLevel = skillValue / 330f * difficultyMultiplier
+- Apply formulas (from advanced-tactical-behaviors.md):
+  - AIBlockOnDecideAbility = aiLevel * 2f (clamped 0.3-1.0)
+  - AIParryOnDecideAbility = aiLevel * 2.2f (clamped 0.05-0.95)
+  - AiAttackOnDecideChance = aiLevel * 1.2f (clamped 0.1-0.8)
+  - AiShooterError = baseError * (1 - aiLevel * 0.7)
+    - Bow: baseError = 0.003f
+    - Crossbow: baseError = 0.001f (more accurate)
+
+2.5 OBJECTIVE-AWARE COMBAT MODIFIERS (NEW - TACTICAL ENHANCEMENT)
+- Adjust properties based on formation objective:
+  - Attack: AiAttackOnDecideChance * 1.2, AIBlockOnDecideAbility * 0.9
+  - Hold: AiAttackOnDecideChance * 0.7, AIBlockOnDecideAbility * 1.2, Shield * 1.3
+  - Screen: AiAttackOnDecideChance * 0.8, AIBlockOnDecideAbility * 1.1
+  - Fighting Retreat: AiAttackOnDecideChance * 0.5, AIBlockOnDecideAbility * 1.4
+
+2.6 BATTLE PHASE COMBAT MODIFIERS (NEW - TACTICAL ENHANCEMENT)
+- Adjust properties based on battle phase:
+  - Crisis: AiAttackOnDecideChance * 1.15, AIBlockOnDecideAbility * 1.1 (desperation)
+  - Rout: All properties * 0.6-0.7 (panic)
+  - Pursuit: AiAttackOnDecideChance * 1.3, AIBlockOnDecideAbility * 0.85 (confidence)
 
 ═══════════════════════════════════════════════════════════════════════════════
 EDGE CASES TO HANDLE
@@ -759,20 +864,74 @@ PHASE 3 TASKS
   - -Ranged primary weapon
 - Sort formation by FrontLineScore
 
+3.8 MULTI-TIER POSITION VALIDATION
+- When ordering formation to position:
+  1. Try requested position
+  2. If NavMesh invalid, search expanding circles (5m, 10m, 25m, max 50m)
+  3. If no valid position, fallback to current position
+  4. Log warnings and notify orchestrator of failure
+- Validate before any movement order
+
+3.9 TACTICAL POSITION SCORING
+- Score each candidate position (0-2.0):
+  - Height advantage: +0.5
+  - Cover availability: +0.3
+  - Formation spacing: +0.4
+  - Approach quality: +0.3
+  - Enemy LOS: +0.5 (if archers, want LOS; if infantry, don't)
+- Pick best scored position from search radius
+
+3.10 SUPPRESSION DETECTION & RESPONSE
+- Check `UnderRangedAttackRatio` from TeamQuerySystem
+- If > 0.2 (taking heavy fire):
+  - Switch to Loose arrangement (minimize casualties)
+  - Seek better position (use tactical scoring)
+  - Notify orchestrator (may need counter-battery or repositioning)
+- Log suppression events
+
+3.11 INFANTRY CAVALRY THREAT DETECTION
+- Detect charging cavalry within 50m moving toward formation
+- Response:
+  - Stop movement immediately
+  - Face threat direction
+  - Form Square (if 80+ units and shields), else Shield Wall, else Loose
+  - Request cavalry support from orchestrator
+  - Hold until threat passes or is destroyed
+- Threat score = (cavalry speed * cavalry count) / distance
+
+3.12 PLAN-AWARE FLANK PROTECTION
+- If assigned FlankGuard role in battle plan:
+  - Position 30-50m offset from main effort axis
+  - Face likely enemy approach
+  - Intercept threats to main effort
+  - Don't over-commit (stay in supporting position)
+- If no threats, support main effort from flank
+
 ═══════════════════════════════════════════════════════════════════════════════
 EDGE CASES TO HANDLE
 ═══════════════════════════════════════════════════════════════════════════════
 
 | Edge Case | Handling Strategy |
 |-----------|-------------------|
-| Formation has 0 agents | Skip formation entirely |
-| Formation has 1 agent | Treat as solo unit, limited tactics |
-| Formation disbanded mid-charge | Abort charge, reassign agents |
-| All cavalry dead | No cavalry charges possible |
-| Pike infantry have no pikes (dropped) | Fall back to secondary weapons |
-| Multi-weapon soldier all weapons dropped | Mark as non-combatant |
-| Target formation destroyed mid-charge | Acquire new target |
-| Self-organizing with identical troops | Random tie-breaking |
+| Formation has 0 agents | Skip formation entirely, mark as invalid |
+| Formation has 1 agent | Treat as solo unit, limited tactics available |
+| Formation disbanded mid-charge | Abort charge, reassign agents to other formations |
+| All cavalry dead | No cavalry charges possible, remove from options |
+| Mixed formation (infantry + cavalry) | Use dominant type for formation behavior |
+| Formation leader dies | Native handles succession, orchestrator continues |
+| Pike infantry have no pikes (dropped/broken) | Fall back to secondary weapons, skip pike logic |
+| Multi-weapon soldier all weapons dropped | Agent becomes non-combatant, low priority |
+| Target formation destroyed mid-charge | Abort charge, acquire new target |
+| Self-organizing with identical troops | Random tie-breaking, any order valid |
+| **Position invalid (NavMesh Zero)** | Search expanding circles max 50m, fallback to current position |
+| **No valid position in search radius** | Use current formation position, log warning, notify orchestrator |
+| **All sample positions score 0** | Stay in current position (best available) |
+| **Cavalry charging but < 80 units for square** | Use shield wall if shields, loose if no shields |
+| **No shields when cavalry threatens** | Use loose arrangement to minimize charge impact |
+| **Multiple cavalry threats detected** | Respond to highest threat score (closest + fastest) |
+| **Threat destroyed while intercepting** | Acquire new target or return to default flank position |
+| **Orchestrator null when notifying** | Continue with local behavior only, log warning |
+| **UnderRangedAttackRatio unavailable** | Skip suppression response, use objective-based arrangement |
 
 ═══════════════════════════════════════════════════════════════════════════════
 FILES TO CREATE
@@ -782,6 +941,10 @@ FILES TO CREATE
 2. src/Features/Combat/WeaponDiscipline.cs (pike/spear/multi-weapon logic)
 3. src/Features/Combat/FormationOrganizer.cs (self-organizing ranks)
 4. src/Features/Combat/ThreatAssessor.cs (target scoring)
+5. src/Features/Combat/PositionValidator.cs (multi-tier position validation + tactical scoring)
+6. src/Features/Combat/SuppressionDetector.cs (ranged suppression detection)
+7. src/Features/Combat/CavalryThreatDetector.cs (infantry cavalry threat response)
+8. src/Features/Combat/FlankProtector.cs (plan-aware flank positioning)
 
 ═══════════════════════════════════════════════════════════════════════════════
 ACCEPTANCE CRITERIA
@@ -793,6 +956,11 @@ ACCEPTANCE CRITERIA
 [ ] Multi-weapon soldiers use proper progression
 [ ] Heavy troops end up in front ranks
 [ ] Light/ranged troops end up in rear
+[ ] Invalid positions trigger fallback search
+[ ] Suppressed formations reposition and notify orchestrator
+[ ] Infantry respond to cavalry threats (square/shield/loose)
+[ ] Flank guards intercept threats to main effort
+[ ] Position scoring selects tactically sound locations
 [ ] Charge decisions logged
 [ ] Build succeeds
 [ ] No crashes
@@ -1030,36 +1198,73 @@ PHASE 5 TASKS
 - Factors: Enemy vulnerability, own strength, terrain, timing
 - Score each potential action, pick highest
 
-5.2 ARCHER TARGETING DECISIONS
-- Target priority for ranged units:
+5.2 ARCHER EFFECTIVENESS AWARENESS (CRITICAL)
+- Detect if archers are hitting targets:
+  - Check LOS to target using Scene.RayCastForClosestEntityOrTerrain
+  - Track recent ranged casualties caused by formation
+  - Sample 5 agents for LOS checks (performance-friendly)
+- If shooting but NOT hitting (blocked LOS, out of range):
+  - Try micro-adjustments: 8 offsets (±5m, ±3.5m diagonals)
+  - Score positions by: LOS quality, range to target, safety
+  - Move to best micro-position (max 7m adjustment)
+- If hitting targets:
+  - HOLD position (don't break what works)
+  - Continue current target
+- Pass targeting hints for priority:
   1. Low armor targets (max damage)
   2. Low morale targets (break them)
   3. Enemy ranged (counter-battery)
   4. High-value targets (heroes)
-- Pass targeting hints to formations
 
-5.3 CAVALRY RESERVE TIMING
-- Hold cavalry until:
-  - Enemy flank exposed
-  - Enemy archers unprotected
-  - Main line needs relief
-  - Enemy routing (pursuit)
-- Commit criteria logged
+5.3 PLAN-BASED CAVALRY DEPLOYMENT (CRITICAL)
+- Deployment depends on battle plan:
+  - **Hammer & Anvil**: Wait until infantry engaged (30+ sec in melee), then flank charge
+  - **Hook Plans**: Position 30-50m from enemy flank, wait for infantry pin, then charge
+  - **Delay/Defensive**: Hold cavalry unless threatened, only countercharge enemy cavalry
+  - **Pursuit**: Full speed pursuit of routing formations
+- Check formation state before deploying (don't charge if infantry not ready)
+- Log deployment reason: "[BattleAI] Cavalry deployed: Plan=HammerAnvil InfantryEngaged=35s"
 
-5.4 CAVALRY CYCLE CHARGING (CRITICAL)
+5.4 ENHANCED CAVALRY CYCLE CHARGING (9-STATE MACHINE, CRITICAL)
 State machine:
-1. HOLD: Waiting for opportunity
-2. CHARGE: Moving to contact (60m+ distance)
-3. IMPACT: In melee with target
-4. DISENGAGE: Breaking contact (10-15 seconds max melee)
-5. RALLY: Reforming after disengage
-6. REFORM: Preparing for next cycle
+1. **RESERVE**: Holding position, waiting for opportunity
+2. **POSITIONING**: Moving to optimal charge position (30-80m from target)
+3. **BRACING**: Final formation integrity check, preparing to charge
+4. **CHARGING**: Full speed charge to contact (deviation < 5f required)
+5. **CHARGING_PAST**: Passed through enemy formation (lance impact zone)
+6. **IMPACT**: Initial contact with enemy (first 2-3 seconds)
+7. **MELEE**: Sustained melee combat (adaptive timer)
+8. **DISENGAGING**: Breaking contact, moving away from enemy
+9. **RALLYING**: Reforming at rally point
+10. **REFORMING**: Final preparation for next cycle
+
+Formation Integrity Gates:
+- Deviation < 5f to advance from Bracing → Charging
+- Deviation < 12f to maintain charge
+- Deviation > 25f triggers emergency rally
+- Width matching: cavalry width = target width * 1.2 (wider for envelopment)
+
+Adaptive Timers:
+- Charge duration: 15s base, +5s if uphill, -3s if downhill
+- Melee duration: 5s base, +3s if winning (kill ratio > 1.5), -2s if losing
+- Reform duration: 12s base, *0.75 if suppressed, +3s if casualties > 30%
+
+Intelligent Target Selection:
+- Score targets by:
+  - Class: Archers (2.0), Light Infantry (1.5), Heavy Infantry (0.8), Cavalry (0.5)
+  - Distance: closer = better (1.0 at 50m, 0.5 at 150m+)
+  - Vulnerability: routing (2.0), flanked (1.5), engaged (1.0), fresh (0.7)
+  - Threat to team: high (1.5), medium (1.0), low (0.5)
+  - Approach angle: rear/flank (1.5), side (1.0), front (0.6)
+  - Plan priority: main effort target (1.5), supporting (1.0), other (0.7)
+- Pick highest scored target (min score 0.8 to commit)
 
 Rules:
 - Min 60m for charge (momentum)
-- Max 15 seconds in melee (don't get bogged down)
-- Rally point behind own lines
-- 3-6 charges per battle vs native's 1
+- Max melee time by adaptive timer (don't get bogged down)
+- Rally point 50-80m behind own lines
+- 3-6 charges per battle vs native's 1-2
+- Formation cohesion checked every tick
 
 5.5 RESERVE COMMITMENT LOGIC
 - Commit reserve when:
@@ -1081,35 +1286,61 @@ EDGE CASES
 
 | Edge Case | Handling Strategy |
 |-----------|-------------------|
-| No archers on team | Skip archer targeting logic |
+| No archers on team | Skip archer-specific targeting logic |
 | No cavalry on team | Skip cavalry reserve/timing logic |
-| All enemies same armor/tier | Random target selection |
-| Cavalry cannot reach target | Terrain check before commit |
-| Reserve already committed | Ignore duplicate commits |
-| Pursuit targets despawn | End pursuit, consolidate |
-| Cavalry destroyed mid-cycle | Cancel cycle |
+| All enemies same armor/tier | Random target selection, equal priority |
+| Cavalry cannot reach target (terrain) | Terrain check before charge commit |
+| Reserve already committed, commit called again | Ignore duplicate commit commands |
+| Pursuit targets teleport/despawn | End pursuit, transition to consolidation |
+| Cycle charging cavalry destroyed mid-cycle | Cancel cycle, no further cycles |
+| No valid charge targets | Hold cavalry, wait for opportunity |
+| Reserve commit threshold never reached | Continue holding until battle outcome clear |
+| **Archer target destroyed during shooting** | Acquire new target, transition to Approaching state |
+| **Raycast fails or Scene null** | Assume clear LOS (safer than stuck), continue shooting |
+| **All micro-adjustment positions invalid** | Stay in current position, log warning |
+| **MissileRangeAdjusted is 0** | Use fallback range of 100m |
+| **Formation has no ranged weapons** | Skip archer behavior entirely |
+| **Cavalry timer null when checked** | Create new timer with default duration |
+| **Target formation null mid-charge** | Abort charge, transition to Reforming |
+| **DeviationOfPositions returns NaN** | Treat as very high (50f), trigger reform immediately |
+| **Target width is 0** | Use default cavalry width (don't crash) |
+| **Speed is 0 (not moving)** | Adaptive timer: use maximum duration (20s charge) |
+| **Kill ratio undefined (no kills)** | Adaptive timer: use base duration (5s melee) |
+| **All cavalry targets score equally** | Select closest, then random tie-break |
+| **Battle plan null when deploying cavalry** | Use default timing (wait for infantry engaged) |
+| **Infantry not engaged when plan requires** | Hold cavalry, wait for pin condition |
 
 ═══════════════════════════════════════════════════════════════════════════════
 FILES TO CREATE
 ═══════════════════════════════════════════════════════════════════════════════
 
 1. src/Features/Combat/TacticalDecisionEngine.cs
-2. src/Features/Combat/CavalryCycleManager.cs (state machine)
-3. src/Features/Combat/ReserveManager.cs
-4. src/Features/Combat/Models/CavalryCycleState.cs (enum)
+2. src/Features/Combat/CavalryCycleManager.cs (9-state machine + integrity gates + adaptive timers)
+3. src/Features/Combat/ArcherEffectivenessDetector.cs (LOS checks, hit detection, micro-positioning)
+4. src/Features/Combat/ReserveManager.cs
+5. src/Features/Combat/Models/CavalryCycleState.cs (enum with 9 states)
+6. src/Features/Combat/Models/CavalryTargetScore.cs (target scoring model)
 
 ═══════════════════════════════════════════════════════════════════════════════
 ACCEPTANCE CRITERIA
 ═══════════════════════════════════════════════════════════════════════════════
 
-[ ] Cavalry charges from 60m+ with momentum
-[ ] Cavalry disengages after 10-15 seconds melee
-[ ] Cavalry reforms and charges again (3-6 cycles)
+[ ] Cavalry uses 9-state cycle (Reserve→Positioning→Bracing→...→Reforming)
+[ ] Formation integrity gates prevent premature charges (deviation < 5f)
+[ ] Cavalry width matches target width * 1.2
+[ ] Adaptive timers adjust based on terrain, kill ratio, suppression
+[ ] Intelligent target selection scores targets correctly
+[ ] Plan-based deployment (HammerAnvil waits, Hook positions, Delay holds)
+[ ] Cavalry reforms and charges 3-6 times per battle
+[ ] Archers detect when not hitting targets (LOS blocked)
+[ ] Archers micro-adjust position (±5-7m) to improve LOS
+[ ] Archers hold position when hitting effectively
 [ ] Reserve commits at appropriate triggers
-[ ] Archer targeting prioritizes vulnerable targets
 [ ] Pursuit decision made at battle end
-[ ] Logs show cycle states: "[BattleAI] Cavalry:Formation3 CHARGE→IMPACT→DISENGAGE"
+[ ] Logs show: "[BattleAI] Cavalry:F3 Bracing→Charging deviation=3.2f target=Archers score=1.8"
+[ ] Logs show: "[BattleAI] Archers:F2 NoHits detected, adjusting +5m forward"
 [ ] Build succeeds
+[ ] No crashes
 
 ═══════════════════════════════════════════════════════════════════════════════
 HANDOFF NOTES
@@ -1314,20 +1545,50 @@ PHASE 7 TASKS
 - TacticalWithdrawal: Organized fallback (40-60% casualties)
 - LastStand: Fight to end (>60% OR cornered)
 
-7.3 ORGANIZED WITHDRAWAL
-- Designate covering force (rearguard)
-- Step-by-step fallback (bounds)
-- Bound 1: Rearguard holds, main force moves
-- Bound 2: Main force covers, rearguard moves
-- Continue until rally point reached
+7.3 TACTICAL WITHDRAWAL DECISION (CRITICAL)
+- Triggers:
+  - Power ratio < 0.7 (significantly outmatched)
+  - Casualties > 40%
+  - Main effort formation destroyed
+  - Trend shows losing for 30+ seconds
+- **IMPORTANT: Tactical withdrawal = fall back to rally point ON MAP (NOT leave map)**
+- Formations regroup at rally point, reform, reassess
+- Distinguish from full rout (morale collapse, units flee map via vanilla retreat)
+- Log: "[BattleAI] Tactical Withdrawal triggered: PowerRatio=0.58 Casualties=43%"
 
-7.4 RALLY POINTS & REGROUPING
-- Calculate rally point behind own lines
-- Reformation after reaching rally
-- Morale recovery at rally point
-- Resume combat or continue retreat
+7.4 ORGANIZED WITHDRAWAL
+- Designate covering force (rearguard): 20-30% of force
+- Step-by-step fallback (leapfrog bounds):
+  - Bound 1: Rearguard holds position, main force moves 50m back
+  - Bound 2: Main force holds new position, rearguard moves through
+  - Repeat until rally point reached
+- Covering force engages pursuing enemy (delay, not destroy)
+- Main force maintains cohesion during movement
 
-7.5 STALEMATE PREVENTION
+7.5 RALLY POINT SELECTION (CRITICAL)
+- Priority order for rally point:
+  1. **Near spawn point (100m radius)** - reinforcements arrive here
+  2. **Defensible terrain** - high ground, chokepoint, forest edge
+  3. **150m fallback from current position** - if spawn unreachable
+- Validate position (NavMesh, accessibility)
+- Rally point should allow reformation + resumption of combat OR continued withdrawal
+- Log rally point: "[BattleAI] Rally point selected: SpawnPoint X=500 Y=300 Distance=85m"
+
+7.6 FULL ROUT VS TACTICAL WITHDRAWAL (CRITICAL)
+- **Tactical Withdrawal** (orchestrator-controlled):
+  - Formations stay on map
+  - Rally at designated point
+  - Can regroup and resume fighting
+  - Still in battle, just repositioning
+  - AI-driven decision, NOT morale collapse
+- **Full Rout** (vanilla morale system):
+  - Morale collapsed (native game triggers this)
+  - Units flee map entirely (vanilla retreat behavior)
+  - Battle lost
+  - Do NOT interfere with vanilla rout
+- Check morale before triggering tactical withdrawal (if morale already collapsed, don't bother)
+
+7.7 STALEMATE PREVENTION
 - If no significant change in 45 seconds:
   - Force action (commit reserve, attempt flank)
   - Prevents "staring contests"
@@ -1339,19 +1600,27 @@ EDGE CASES
 
 | Edge Case | Handling Strategy |
 |-----------|-------------------|
-| No reserve designated | Mark reserve as empty, skip logic |
-| Rally point unreachable | Select nearest accessible point |
-| Covering force destroyed | Accept losses, continue retreat |
-| Stalemate timer but enemy routing | Cancel stalemate, pursue |
-| Last stand triggered but won | Cancel last stand, exploit |
+| No reserve designated | Mark reserve as empty, skip reserve logic |
+| Rally point unreachable (NavMesh invalid) | Try priority 2 (terrain), then priority 3 (150m fallback) |
+| All rally point options invalid | Stay in current position, fight it out (last stand) |
+| Covering force destroyed during withdrawal | Accept losses, continue main force retreat |
+| Stalemate timer but enemy routing | Cancel stalemate, transition to pursuit |
+| Last stand triggered but won | Cancel last stand, exploit opportunity |
+| **Tactical withdrawal triggered but morale already collapsed** | Skip withdrawal logic, let vanilla rout handle it |
+| **Spawn point null or unavailable** | Use terrain-based rally (priority 2) or fallback (priority 3) |
+| **Formations scattered during withdrawal** | Rally at nearest accessible position for each formation |
+| **Enemy pursues aggressively during withdrawal** | Covering force engages, delay pursuit, accept casualties |
+| **Withdrawal triggered but enemy also withdrawing** | Cancel withdrawal, hold position or cautious advance |
+| **Power ratio improves during withdrawal** | Reassess: continue if momentum lost, stop if can resume fighting |
 
 ═══════════════════════════════════════════════════════════════════════════════
 FILES TO CREATE
 ═══════════════════════════════════════════════════════════════════════════════
 
-1. src/Features/Combat/RetreatCoordinator.cs
-2. src/Features/Combat/RallyPointCalculator.cs
-3. src/Features/Combat/Models/CombatPosture.cs (enum)
+1. src/Features/Combat/RetreatCoordinator.cs (tactical withdrawal + organized bounds)
+2. src/Features/Combat/RallyPointCalculator.cs (spawn-based, terrain-based, fallback selection)
+3. src/Features/Combat/Models/CombatPosture.cs (enum: Engaged, FightingRetreat, TacticalWithdrawal, LastStand)
+4. src/Features/Combat/Models/WithdrawalType.cs (enum: Tactical vs FullRout)
 
 ═══════════════════════════════════════════════════════════════════════════════
 ACCEPTANCE CRITERIA
@@ -1359,11 +1628,17 @@ ACCEPTANCE CRITERIA
 
 [ ] Reserve manager tracks and commits reserves
 [ ] Casualty thresholds trigger posture changes
-[ ] Organized withdrawal with covering force
-[ ] Rally points calculated and used
-[ ] Stalemate prevention triggers action
-[ ] Logs show: "[BattleAI] Posture:Engaged→TacticalWithdrawal (Casualties:42%)"
+[ ] Tactical withdrawal triggers at power < 0.7 or casualties > 40%
+[ ] Formations withdraw to rally point ON MAP (do not leave map)
+[ ] Rally point selected: spawn (100m) > terrain > fallback (150m)
+[ ] Organized withdrawal with leapfrog bounds and covering force
+[ ] Distinguish tactical withdrawal (on map) vs full rout (vanilla flee)
+[ ] Formations reform at rally point and can resume combat
+[ ] Stalemate prevention triggers action after 45s
+[ ] Logs show: "[BattleAI] Tactical Withdrawal triggered: PowerRatio=0.58"
+[ ] Logs show: "[BattleAI] Rally point: SpawnPoint X=500 Y=300 Distance=85m"
 [ ] Build succeeds
+[ ] No crashes
 ```
 
 ---
@@ -1932,7 +2207,7 @@ ACCEPTANCE CRITERIA
 
 # Phases 16-18: Advanced Polish (Combined)
 
-**Goal:** Agent combat director, coordinated retreat details, reinforcement details
+**Goal:** Agent micro-tactics, combat director, coordinated retreat details, reinforcement details
 
 **Status:** ⬜ TODO
 
@@ -1941,7 +2216,7 @@ ACCEPTANCE CRITERIA
 ```
 I need you to implement Phases 16-18 (Advanced Polish) of the Battle AI system for my Bannerlord mod.
 
-These are advanced polish phases that complete the system.
+These are advanced polish phases that complete the system, including the Agent Micro-Tactics System.
 
 ═══════════════════════════════════════════════════════════════════════════════
 CRITICAL PROJECT CONSTRAINTS (from BLUEPRINT.md)
@@ -1964,6 +2239,7 @@ Verify these key files exist from previous phases:
 [ ] src/Features/Combat/ReinforcementManager.cs (Phase 9 - you'll extend)
 [ ] src/Features/Combat/PlanExecutionStateMachine.cs (Phase 15)
 [ ] src/Features/Combat/AgentCombatTuner.cs (Phase 2)
+[ ] src/Features/Combat/FormationOrganizer.cs (Phase 3 - self-organizing ranks)
 
 If missing, complete earlier phases first.
 
@@ -1972,18 +2248,147 @@ DOCUMENTATION TO READ
 ═══════════════════════════════════════════════════════════════════════════════
 
 1. docs/Features/Combat/BATTLE-AI-IMPLEMENTATION-SPEC.md
-   - Section 2: Phases 16, 17, 18 items
+   - Section 2: Phase 16 items (16.1-16.7, including 16.6a-f for agent micro-tactics)
+   - Section 2: Phases 17, 18 items
    - Section 2b: Edge Cases for Phases 16-18
    - Section 3.10: Agent-Level Combat Director
-   - Section 3.11: Coordinated Retreat System
+   - Section 3.11: Agent Micro-Tactics System (CRITICAL - NEW)
+   - Section 3.12: Coordinated Retreat System
 
 2. docs/Features/Combat/battle-ai-plan.md
    - Part 21: Agent-Level Combat Director
    - Part 18: Coordinated Retreat
    - Part 20: Reinforcement Intelligence (details)
 
+
 ═══════════════════════════════════════════════════════════════════════════════
-PHASE 16: AGENT-LEVEL COMBAT DIRECTOR
+PHASE 16.6: AGENT MICRO-TACTICS SYSTEM (CRITICAL - NEW)
+═══════════════════════════════════════════════════════════════════════════════
+
+This system completes our three-layer architecture by adding agent-level micro-decisions.
+Individual agents make small tactical adjustments while staying within formation bounds and
+respecting orchestrator strategy. This creates realistic individual combat behavior without
+sacrificing formation cohesion or strategic coordination.
+
+DESIGN PHILOSOPHY:
+- Agents are NOT autonomous - they operate within strict bounds
+- Micro-decisions support formation objectives (from orchestrator)
+- Only middle ranks get autonomy (front/rear follow orders exactly)
+- Formation stability gates prevent chaos during critical moments
+- All decisions constrained to small radius (2m-8m depending on context)
+
+16.6a AGENT SITUATION SAMPLING
+- Sample nearby agents within 10m radius
+- Detect:
+  - AlliesNearby: count of allies within 10m
+  - EnemiesNearby: count of enemies within 10m
+  - NearestAlly: closest ally agent
+  - NearestEnemy: closest enemy agent
+  - MostThreatenedAlly: ally with worst enemy:ally ratio
+  - HighGround: best terrain position nearby
+  - IsIsolated: < 2 allies within 10m
+  - IsOutnumbered: enemies > allies * 1.5
+
+16.6b MICRO-DECISION EVALUATION (Utility-Based)
+- Decision types:
+  1. Attack: Press toward nearest enemy (default aggressive)
+  2. BackStep: Step back 1-2m (outnumbered, defensive)
+  3. FindAlly: Move toward nearest ally (isolated, seeking support)
+  4. FlankLeft: Sidestep left (enemy exposed on left)
+  5. FlankRight: Sidestep right (enemy exposed on right)
+  6. SupportAlly: Move toward embattled ally (ally outnumbered nearby)
+  7. SeekAdvantage: Move to better position (height/cover available)
+
+- Each decision scored 0-1 based on:
+  - Formation objective (Attack → +0.3 to Attack decision)
+  - Local superiority (Outnumbered → +0.4 to BackStep decision)
+  - Agent health (< 40 HP → +0.3 to BackStep decision)
+  - Isolation (< 2 allies → +0.6 to FindAlly decision)
+  - Terrain (High ground nearby → +0.5 to SeekAdvantage)
+
+- Pick highest scoring decision
+
+16.6c DECISION EXECUTION
+- Execute chosen decision as micro-movement
+- Calculate desired position based on decision
+- Constrain to autonomy radius (see 16.6f)
+- Apply movement to agent
+
+16.6d RANK-BASED AUTONOMY (CRITICAL)
+- Front rank (FormationRankIndex == 0): NO micro-tactics
+  - These are heavy troops holding the line
+  - Need solid, stable front
+  - They follow formation orders EXACTLY
+- Middle ranks (FormationRankIndex == 1-2): MICRO-TACTICS ACTIVE
+  - These troops can make small adjustments
+  - Within 3-5m of formation position
+  - Still constrained by formation
+- Rear ranks (FormationRankIndex >= 3): NO micro-tactics
+  - These are ranged troops or reserves
+  - They follow formation orders EXACTLY
+
+Integration with Phase 14 (Self-Organizing Ranks):
+- Phase 14 already put heavy troops in front (rank 0)
+- Phase 14 already put light troops in rear (rank 3+)
+- Micro-tactics ONLY for middle ranks (1-2)
+- This ensures front line stability while allowing middle ranks to adapt
+
+16.6e FORMATION STABILITY GATES
+Before allowing micro-tactics, check:
+- Formation integrity: DeviationOfPositionsExcludeFarAgents < 15f (not scattered)
+- Casualty rate: CasualtyRatio < 0.2 (not taking heavy losses)
+- Reorganization state: not actively gap filling or reorganizing
+- Movement orders: no active charge/advance orders (respect formation movement)
+
+If ANY gate fails → disable micro-tactics, follow formation orders exactly
+
+16.6f DYNAMIC PARAMETER ADJUSTMENT
+Autonomy radius adapts to context:
+- Base: 3m
+- Main Effort formation: 2m (tighter control)
+- Objective Hold/Screen: 3m (tight)
+- Objective Attack/Pin: 5m (moderate)
+- Objective FightingRetreat: 8m (loose, survival)
+- Battle Phase Crisis: radius * 0.8 (tighten up)
+
+Clamp to 2m-8m range
+
+KEY INTEGRATION POINTS:
+- Orchestrator provides: battle plan, phase, formation objectives
+- Formation Organization (Phase 14) provides: rank assignment (heavy in front)
+- Cohesion Management (Phase 16.7) provides: autonomy radius by objective
+- Micro-Tactics (Phase 16.6) provides: small adjustments within bounds
+
+ARCHITECTURE:
+```
+┌─────────────────────────────────────────────────────────┐
+│  ORCHESTRATOR → Battle plan, phase, objectives          │
+└──────────────────────┬──────────────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────────────┐
+│  FORMATION ORGANIZATION (Phase 14)                      │
+│  Heavy troops → Front rank (0)                          │
+│  Light troops → Rear rank (3+)                          │
+└──────────────────────┬──────────────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────────────┐
+│  RANK-BASED AUTONOMY (Phase 16.6d)                      │
+│  Front (0): NO micro    Middle (1-2): MICRO    Rear: NO │
+└──────────────────────┬──────────────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────────────┐
+│  STABILITY GATES (Phase 16.6e)                          │
+│  Check: integrity, casualties, reorganization           │
+└──────────────────────┬──────────────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────────────┐
+│  MICRO-TACTICS (Phase 16.6a-c)                          │
+│  Sample → Evaluate → Execute → Constrain               │
+└─────────────────────────────────────────────────────────┘
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+PHASE 16.1-16.5: COMBAT DIRECTOR (Drama & Cinematic Moments)
 ═══════════════════════════════════════════════════════════════════════════════
 
 16.1 Champion Duel System
@@ -2010,6 +2415,10 @@ PHASE 16: AGENT-LEVEL COMBAT DIRECTOR
 - Agent drama respects formation orders
 - Never override critical tactical orders
 - Drama is enhancement, not replacement
+
+16.7 Formation Cohesion Management
+- Provides autonomy radius to Phase 16.6f
+- Coordinates with micro-tactics system
 
 ═══════════════════════════════════════════════════════════════════════════════
 PHASE 17: COORDINATED RETREAT (Details)
@@ -2063,22 +2472,303 @@ PHASE 18: REINFORCEMENT DETAILS
 FILES TO CREATE
 ═══════════════════════════════════════════════════════════════════════════════
 
-1. src/Features/Combat/AgentCombatDirector.cs
-2. src/Features/Combat/ChampionDuelManager.cs
-3. src/Features/Combat/CoordinatedRetreatManager.cs
-4. src/Features/Combat/ReinforcementWaveManager.cs
+Phase 16.6 (Agent Micro-Tactics):
+1. src/Features/Combat/AgentMicroTacticsSystem.cs
+2. src/Features/Combat/AgentSituationSampler.cs
+3. src/Features/Combat/MicroDecisionEvaluator.cs
+4. src/Features/Combat/Models/MicroDecision.cs (enum)
+5. src/Features/Combat/Models/TacticalSituation.cs (data class)
+
+Phase 16.1-16.5 (Combat Director):
+6. src/Features/Combat/AgentCombatDirector.cs
+7. src/Features/Combat/ChampionDuelManager.cs
+
+Phase 17-18:
+8. src/Features/Combat/CoordinatedRetreatManager.cs
+9. src/Features/Combat/ReinforcementWaveManager.cs
 
 ═══════════════════════════════════════════════════════════════════════════════
 ACCEPTANCE CRITERIA
 ═══════════════════════════════════════════════════════════════════════════════
 
+Phase 16.6 (Agent Micro-Tactics):
+[ ] Agent situation sampling detects allies/enemies within 10m
+[ ] Utility scoring produces normalized values (0-1) for each decision
+[ ] Best decision selected based on highest utility score
+[ ] Rank-based autonomy: front rank (0) gets NO micro-tactics
+[ ] Rank-based autonomy: middle ranks (1-2) get MICRO-TACTICS
+[ ] Rank-based autonomy: rear ranks (3+) get NO micro-tactics
+[ ] Formation stability gates block micro-tactics when formation scattered (deviation > 15f)
+[ ] Formation stability gates block micro-tactics when casualties > 20%
+[ ] Formation stability gates block micro-tactics during active movement orders
+[ ] Dynamic radius adapts to objective (Hold: 3m, Attack: 5m, Retreat: 8m)
+[ ] Micro-movements constrained to autonomy radius
+[ ] Integration: heavy troops still in front ranks (Phase 14 preserved)
+[ ] Integration: gap filling still active (middle ranks step up when front falls)
+[ ] Logs show: "[BattleAI] Agent:X Rank:1 Decision:FlankLeft Score:0.72 Deviation:2.8m"
+
+Phase 16.1-16.5 (Combat Director):
 [ ] Champion duels occur between heroes
 [ ] Last stand behavior triggers appropriately
+[ ] Banner bearer drama active
+
+Phase 17-18:
 [ ] Coordinated retreat with covering force
 [ ] Step-by-step withdrawal working
 [ ] Reinforcement waves timed strategically
 [ ] Desperation waves trigger when losing
+
+General:
 [ ] Build succeeds
+[ ] No crashes or exceptions
+[ ] All ReSharper/Qodana warnings fixed
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+When complete, provide:
+
+FILES CREATED: (list all)
+FILES MODIFIED: (list all)
+
+KEY MICRO-TACTICS DECISIONS:
+- How did you implement utility scoring?
+- How did you handle rank detection?
+- How did you integrate with formation organization?
+
+KEY DECISIONS: (list any architectural choices)
+KNOWN ISSUES: (list any incomplete items)
+VERIFICATION PASSED: (list what you tested)
+```
+
+---
+
+# Phase 19: Battlefield Realism Enhancements
+
+**Goal:** Add depth systems that make battles feel like real combat - ammunition depletion, line relief, morale contagion, tactical deception, high ground tactics
+
+**Status:** ⬜ TODO
+
+**Prerequisites:** Phase 1-18 complete (especially Phase 14 formation organization and Phase 16 agent systems)
+
+```
+I need you to implement Phase 19 (Battlefield Realism Enhancements) of the Battle AI system for my Bannerlord mod.
+
+These systems add realistic constraints and human elements that make battles more dynamic and cinematic.
+
+═══════════════════════════════════════════════════════════════════════════════
+CRITICAL PROJECT CONSTRAINTS (from BLUEPRINT.md)
+═══════════════════════════════════════════════════════════════════════════════
+
+GAME TARGET: Bannerlord v1.3.13
+API VERIFICATION: Use local decompile at C:\Dev\Enlisted\Decompile\
+PROJECT BUILD: dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+CSPROJ: Manually add new files with <Compile Include="..."/>
+LOGGING: Use ModLogger.Info("BattleAI", "message");
+CODE QUALITY: Follow ReSharper/Qodana strictly, fix all warnings, use braces, no changelog comments
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXT RECOVERY (Verify Phase 1-18 exist before starting)
+═══════════════════════════════════════════════════════════════════════════════
+
+Verify these key files exist from previous phases:
+[ ] src/Features/Combat/BattleOrchestrator.cs
+[ ] src/Features/Combat/FormationOrganizer.cs (Phase 3 - ranks system)
+[ ] src/Features/Combat/AgentMicroTacticsSystem.cs (Phase 16)
+[ ] src/Features/Combat/AgentCombatTuner.cs (Phase 2)
+[ ] src/Features/Combat/RetreatCoordinator.cs (Phase 7)
+
+If missing, complete earlier phases first.
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENTATION TO READ
+═══════════════════════════════════════════════════════════════════════════════
+
+1. docs/Features/Combat/BATTLE-AI-IMPLEMENTATION-SPEC.md
+   - Section 2: Phase 19 items (19.1-19.9)
+   - Section 2b: Edge Cases for Phase 19
+   - Section 3.12: Battlefield Realism Systems (9 systems, API verified)
+
+2. DECOMPILE REFERENCE:
+   - C:\Dev\Enlisted\Decompile\TaleWorlds.MountAndBlade\Agent.cs
+   - C:\Dev\Enlisted\Decompile\TaleWorlds.MountAndBlade\Formation.cs
+   - Check for: ammo APIs, morale APIs, fatigue systems (if any)
+
+═══════════════════════════════════════════════════════════════════════════════
+PHASE 19 SYSTEMS
+═══════════════════════════════════════════════════════════════════════════════
+
+19.1 AMMUNITION TRACKING & BEHAVIOR
+- Track arrow/bolt/javelin count per agent (use weapon.MaxDataValue or estimate)
+- Formation-level ammo status: Fresh (>50%), Low (<25%), Depleted (0%)
+- Behavior changes: conserve when low, switch to melee when depleted
+- Orchestrator notified when archer formation loses ranged capability
+- Agents near fallen allies can scavenge ammo (5 sec action, only when safe)
+
+19.2 LINE RELIEF & ROTATION
+- Active rotation of front-line (rank 0) with middle ranks (rank 1)
+- Triggers: front rank casualties > 40%, lull (no melee 15+ sec), or extended engagement (>60 sec)
+- Sequence: front steps back, middle steps forward, ranks swap
+- Only if formation > 40 troops (need depth for rotation)
+- Not during active charges or retreats
+- Brief stabilization period (5 sec) after rotation
+
+19.3 MORALE CONTAGION
+- Fear/courage spreads between nearby agents (5m radius)
+- Emotions: Fear (routing ally), Courage (rallying cry), Panic (surrounded), Confidence (winning)
+- Effects: Fear -10 morale, Courage +10, Panic -20, Confidence +15
+- Max 3 propagation hops (doesn't spread infinitely)
+- Officers immune to fear contagion
+- Formation morale has floor (won't drop below 10 from contagion)
+
+19.4 COMMANDER DEATH RESPONSE
+- Formation behavior changes when leader killed
+- Temporary confusion period (10-15 sec reduced effectiveness)
+- NCO/hero takes over with transition delay
+- Multiple deaths compound (cumulative penalty)
+
+19.5 BREAKING POINT DETECTION
+- Detect specific formation crack moments:
+  - Flanked + casualties > 30%
+  - Surrounded (enemies on 3+ sides)
+  - Leader dead + losing melee
+- Trigger coordinated collapse OR last stand (depends on context)
+- Require sustained conditions (10+ sec) before triggering
+
+19.6 FEINT MANEUVERS
+- Orchestrator orders fake attacks to draw enemy reserves
+- Execution: advance at 60% speed (loose formation), enemy responds, retreat, main effort attacks
+- Success: enemy reserve moves > 50m toward feint
+- Failure: if enemy doesn't react after 30s, convert to real attack
+- Use when: enemy has large reserve (>30%), we need to create opening
+
+19.7 PURSUIT DEPTH CONTROL
+- Calculated pursuit distance (don't chase too far)
+- Stop at 200m or terrain boundary
+- Recall if enemy rallies (reforms > 50% of original strength)
+- Log: "[BattleAI] Pursuit HALT Distance:195m Reason:TerrainBoundary"
+
+19.8 BANNER RALLYING POINTS
+- Banners act as visual rally points for scattered troops
+- Agents within 15m: +5 morale
+- Scattered agents gravitate toward banner when reforming
+- If bannerman killed, nearby sergeant/hero picks up (automatic transfer)
+- Banner loss: -15 morale penalty
+
+19.9 HIGH GROUND PREFERENCE
+- Agents prefer elevated positions when available (simple Z-axis comparison)
+- Formations position for height advantage over enemy (agent.Z > enemy.Z + 2m)
+- Orchestrator includes height advantage in terrain suitability scoring
+- Only applied when not actively engaged in melee
+- Log: "[BattleAI] Formation:Infantry SeekingHighGround ElevationAdvantage:+4.2m"
+
+═══════════════════════════════════════════════════════════════════════════════
+FILES TO CREATE
+═══════════════════════════════════════════════════════════════════════════════
+
+Ammunition:
+1. src/Features/Combat/AmmunitionTracker.cs
+2. src/Features/Combat/ArcherAmmoManager.cs
+
+Line Relief:
+3. src/Features/Combat/LineReliefManager.cs
+4. src/Features/Combat/FormationRotationCoordinator.cs
+
+Morale:
+5. src/Features/Combat/MoraleContagionSystem.cs
+6. src/Features/Combat/Models/EmotionType.cs (enum)
+
+Tactical:
+7. src/Features/Combat/FeintManager.cs
+8. src/Features/Combat/BannerRallySystem.cs
+9. src/Features/Combat/BreakingPointDetector.cs
+10. src/Features/Combat/CommanderDeathHandler.cs
+
+Terrain:
+11. src/Features/Combat/HighGroundPositioningSystem.cs
+
+═══════════════════════════════════════════════════════════════════════════════
+ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════════════════
+
+Ammunition (19.1):
+[ ] Agents track current ammo count
+[ ] Formation detects when > 60% archers depleted
+[ ] Depleted archers switch to melee weapons
+[ ] Orchestrator notified of archer formation ammo depletion
+[ ] Logs show: "[BattleAI] Formation:Archers AmmoStatus:Low (32%) Conserving:true"
+
+Line Relief (19.2):
+[ ] Front rank rotates with middle rank during lulls
+[ ] Rotation triggers at 40% casualties, lull (15+ sec), or extended engagement (>60 sec)
+[ ] Rotation disabled during active combat
+[ ] Only formations > 40 troops can rotate
+[ ] Brief stabilization period after rotation
+[ ] Logs show: "[BattleAI] Formation:Infantry LineRelief FrontCasualties:42% Swapping ranks"
+
+Morale Contagion (19.3):
+[ ] Fear spreads from routing agents (5m radius)
+[ ] Courage spreads from rallying agents
+[ ] Officers immune to fear contagion
+[ ] Max 3 propagation hops
+[ ] Logs show: "[BattleAI] MoraleContagion Agent:X Emotion:Fear Intensity:0.7 Spread:3 agents"
+
+Breaking Points (19.5):
+[ ] Flanked + 30% casualties triggers break check
+[ ] Surrounded formations enter crisis mode
+[ ] Leader death compounds with other factors
+[ ] Require sustained conditions (10+ sec)
+[ ] Logs show: "[BattleAI] Formation:2 BREAKING_POINT Flanked:true Casualties:35% LeaderDead:true"
+
+Feints (19.6):
+[ ] Orchestrator can order feint maneuvers
+[ ] Feinting formation advances at 60% speed
+[ ] Detects if enemy responds (reserve moves)
+[ ] Converts to real attack if enemy doesn't respond
+[ ] Logs show: "[BattleAI] Feint EXECUTING Formation:Cavalry Target:EnemyCenter"
+
+Banners (19.8):
+[ ] Agents within 15m of banner get morale boost
+[ ] Scattered agents move toward banner
+[ ] Banner transfer when bearer killed
+[ ] Banner loss causes morale penalty
+[ ] Logs show: "[BattleAI] Banner RALLYING Agents:12 AvgDistance:8.3m"
+
+High Ground (19.9):
+[ ] Agents prefer elevated positions (Z-axis comparison)
+[ ] Formations position for height advantage (agent.Z > enemy.Z + 2m)
+[ ] Only applied when not actively in melee
+[ ] Orchestrator scores terrain by elevation advantage
+[ ] Logs show: "[BattleAI] Formation:Infantry SeekingHighGround ElevationAdvantage:+4.2m"
+
+General:
+[ ] Build succeeds
+[ ] No crashes or exceptions
+[ ] All ReSharper/Qodana warnings fixed
+[ ] Systems integrate with existing orchestrator/formation architecture
+
+═══════════════════════════════════════════════════════════════════════════════
+HANDOFF NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+When complete, provide:
+
+FILES CREATED: (list all)
+FILES MODIFIED: (list all)
+
+KEY DECISIONS:
+- How did you detect ammo counts? (weapon API? estimation?)
+- How did you implement morale contagion propagation?
+- How did you implement high ground detection?
+
+INTEGRATION POINTS:
+- How does ammo depletion notify orchestrator?
+- How does line relief integrate with formation ranks?
+- How does high ground preference affect formation positioning?
+
+KNOWN ISSUES: (list any incomplete items)
+VERIFICATION PASSED: (list what you tested)
 ```
 
 ---

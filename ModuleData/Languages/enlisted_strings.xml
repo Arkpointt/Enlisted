@@ -2350,5 +2350,158 @@
     <!-- Note: Decisions use JSON fallback text. Full localization TBD. -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Maritime Decisions (Sea Travel) -->
+    <!-- These decisions only appear when at sea (Warsails DLC) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- Deck Training -->
+    <string id="dec_sea_deck_drill_title" text="Deck Training" />
+    <string id="dec_sea_deck_drill_setup" text="Veterans gather on the foredeck at dawn. The ship rolls but they keep their footing. Time to learn balance fighting." />
+    <string id="dec_sea_deck_drill_focused" text="Focus on footwork. Train hard." />
+    <string id="dec_sea_deck_drill_focused_result" text="The deck pitches and rolls. Your legs burn from constant adjustment. But you're learning to fight on an unstable surface." />
+    <string id="dec_sea_deck_drill_social" text="Go through the motions. Chat with the lads." />
+    <string id="dec_sea_deck_drill_social_result" text="The veterans share sea-fighting tricks between swings. You learn a few names, share a few jokes about landlubbers." />
+    <string id="dec_sea_deck_drill_cancel" text="Your stomach isn't ready for that." />
+    <string id="dec_sea_deck_drill_cancel_result" text="You grip the rail and let the wave of nausea pass." />
+
+    <!-- Shipboard Sparring -->
+    <string id="dec_sea_spar_title" text="Shipboard Sparring" />
+    <string id="dec_sea_spar_setup" text="Two soldiers circle each other on the rolling deck. The crowd forms a rough ring. Fighting on a ship is different." />
+    <string id="dec_sea_spar_aggressive" text="Fight aggressively. Use the ship's motion." />
+    <string id="dec_sea_spar_aggressive_win" text="The ship rolls and you ride it, driving forward when the deck tilts your way. He stumbles. You win." />
+    <string id="dec_sea_spar_defensive" text="Stay balanced. Learn the ship's rhythm." />
+    <string id="dec_sea_spar_defensive_result" text="You keep your knees bent, weight centered. The match ends in a draw, but you've learned to read the waves." />
+    <string id="dec_sea_spar_cancel" text="Wave them off." />
+    <string id="dec_sea_spar_cancel_result" text="You're not ready to fight on a moving floor." />
+
+    <!-- Salt's Lesson (Veteran) -->
+    <string id="dec_sea_veteran_title" text="Salt's Lesson" />
+    <string id="dec_sea_veteran_setup" text="The old sailor - they call him Salt - has fought more sea battles than you've had hot meals. He's willing to teach, but his lessons are hard." />
+    <string id="dec_sea_veteran_learn" text="Ask him to teach you." />
+    <string id="dec_sea_veteran_learn_result" text="He throws you around the deck for an hour. 'Keep your weight low. The sea fights for the man who respects her.' By the end you're bruised but wiser." />
+    <string id="dec_sea_veteran_watch" text="Watch him spar with another." />
+    <string id="dec_sea_veteran_watch_result" text="He moves like the deck is part of him. Every roll becomes a step, every pitch a feint. Some lessons are in the seeing." />
+    <string id="dec_sea_veteran_cancel" text="Leave him be." />
+    <string id="dec_sea_veteran_cancel_result" text="He shrugs and turns away. 'Landlubber.'" />
+
+    <!-- Visit the Hold (Baggage equivalent) -->
+    <string id="dec_sea_hold_access_title" text="Visit the Hold" />
+    <string id="dec_sea_hold_access_setup" text="The cargo hold is accessible between watches. Your personal effects are stowed below deck." />
+    <string id="dec_sea_hold_access_check" text="Check on your belongings." />
+    <string id="dec_sea_hold_access_check_result" text="Everything's secure and dry. The ship's crew know how to stow cargo properly. A small comfort." />
+    <string id="dec_sea_hold_access_cancel" text="No need." />
+    <string id="dec_sea_hold_access_cancel_result" text="It can wait until port." />
+
+    <!-- Sea Tales (Stories equivalent) -->
+    <string id="dec_sea_stories_title" text="Sea Tales" />
+    <string id="dec_sea_stories_setup" text="Old hands gathered by the mainmast, sharing tales of storms and sea battles. A few younger soldiers listen with wide eyes." />
+    <string id="dec_sea_stories_listen" text="Find a spot and listen." />
+    <string id="dec_sea_stories_listen_result" text="Tales of terrible storms, of ships that vanished, of sea monsters and ghost vessels. You learn names, faces, the weight of shared voyages." />
+    <string id="dec_sea_stories_share" text="Share a tale of your own." />
+    <string id="dec_sea_stories_share_result" text="You tell your piece. They listen. By the end, you're part of the crew." />
+    <string id="dec_sea_stories_cancel" text="Not tonight." />
+    <string id="dec_sea_stories_cancel_result" text="You pass by the mainmast without stopping." />
+
+    <!-- Sea Shanties (Singing equivalent) -->
+    <string id="dec_sea_singing_title" text="Sea Shanties" />
+    <string id="dec_sea_singing_setup" text="Someone's started a shanty. The rhythm matches the work - hauling lines, scrubbing decks. The singing is rough but keeps time." />
+    <string id="dec_sea_singing_join" text="Join the shanty." />
+    <string id="dec_sea_singing_join_result" text="Your voice joins the chorus. 'Heave away, haul away!' For a moment, you're not soldiers on a ship - just sailors under the sky." />
+    <string id="dec_sea_singing_cancel" text="Not your kind of thing." />
+    <string id="dec_sea_singing_cancel_result" text="You appreciate the music from a distance." />
+
+    <!-- Ship's Grog (Tavern Drink equivalent) -->
+    <string id="dec_sea_drink_title" text="Ship's Grog" />
+    <string id="dec_sea_drink_setup" text="Grog ration's been issued. Some men are trading their share, others are drinking deep. The ship's stores have rum tonight." />
+    <string id="dec_sea_drink_moderate" text="Have your ration." />
+    <string id="dec_sea_drink_moderate_result" text="The grog is rough but warming. You share a laugh with the crew, feel almost human again." />
+    <string id="dec_sea_drink_heavy" text="Trade for extra rations." />
+    <string id="dec_sea_drink_heavy_result" text="The night becomes a blur of sea songs and swaying hammocks. You'll regret this when they call for watch." />
+    <string id="dec_sea_drink_cancel" text="Save your ration." />
+    <string id="dec_sea_drink_cancel_result" text="You trade it for something useful. Clear heads are valuable at sea." />
+
+    <!-- Below-Decks Dice (Gambling equivalent) -->
+    <string id="dec_sea_gamble_dice_title" text="Below-Decks Dice" />
+    <string id="dec_sea_gamble_dice_setup" text="Between the cargo and the bilge, men crouch with lanterns and dice. The ship's motion makes every roll uncertain." />
+    <string id="dec_sea_gamble_dice_play" text="Try your luck." />
+    <string id="dec_sea_gamble_dice_win" text="The dice favor you. Coins pile before you as the others curse the ship's roll." />
+    <string id="dec_sea_gamble_dice_cancel" text="Walk away." />
+    <string id="dec_sea_gamble_dice_cancel_result" text="You resist the temptation. For now." />
+
+    <!-- Hammock Rest (Rest equivalent) -->
+    <string id="dec_sea_rest_hammock_title" text="Hammock Rest" />
+    <string id="dec_sea_rest_hammock_setup" text="Your hammock sways with the ship. The rhythm is almost soothing once you get used to it." />
+    <string id="dec_sea_rest_hammock_full" text="Sleep through your off-watch." />
+    <string id="dec_sea_rest_hammock_full_result" text="You sleep deeply, swaying with the sea. When you wake, the world feels slightly less crushing." />
+    <string id="dec_sea_rest_hammock_cancel" text="Can't sleep. Too much going on." />
+    <string id="dec_sea_rest_hammock_cancel_result" text="You push through. Sleep can wait until port." />
+
+    <!-- Ship Repairs (Work Repairs equivalent) -->
+    <string id="dec_sea_repairs_title" text="Ship Repairs" />
+    <string id="dec_sea_repairs_setup" text="The bosun needs hands for repairs. Rope splicing, sail patching, tar and oakum. Paid work for those willing." />
+    <string id="dec_sea_repairs_work" text="Put in some work." />
+    <string id="dec_sea_repairs_work_result" text="Honest work. Your hands are rough from the rope by the end, but there's coin in your pouch and the bosun remembers who helps." />
+    <string id="dec_sea_repairs_cancel" text="Not today." />
+    <string id="dec_sea_repairs_cancel_result" text="The bosun finds another pair of hands." />
+
+    <!-- Night Watch Volunteer (Night Patrol equivalent) -->
+    <string id="dec_sea_night_watch_title" text="Night Watch Volunteer" />
+    <string id="dec_sea_night_watch_setup" text="The lookouts are tired. Volunteers to help scan the horizon are always welcome. Sometimes you spot things worth spotting." />
+    <string id="dec_sea_night_watch_volunteer" text="Take a watch." />
+    <string id="dec_sea_night_watch_find" text="You spot something - flotsam from a wreck. The captain has it recovered. Finders get a share." />
+    <string id="dec_sea_night_watch_cancel" text="Let them watch." />
+    <string id="dec_sea_night_watch_cancel_result" text="The night is cold. You stay below." />
+
+    <!-- Help the Seasick (Help Wounded equivalent) -->
+    <string id="dec_sea_help_seasick_title" text="Help the Seasick" />
+    <string id="dec_sea_help_seasick_setup" text="Half the soldiers are green and miserable. The ship's surgeon could use hands to help them keep water down." />
+    <string id="dec_sea_help_seasick_assist" text="Lend a hand." />
+    <string id="dec_sea_help_seasick_assist_result" text="Buckets and blankets. The work is grim but the men you help look at you with gratitude. You learn what settles a stomach." />
+    <string id="dec_sea_help_seasick_cancel" text="Not today." />
+    <string id="dec_sea_help_seasick_cancel_result" text="The surgeon finds another helper." />
+
+    <!-- Camp Schedule System -->
+    <string id="schedule_header" text="Today's Routine" />
+    <string id="schedule_routine_normal" text="Normal routine" />
+    <string id="schedule_routine_disrupted" text="Routine disrupted" />
+    <string id="schedule_deviation_reason" text="{REASON}" />
+    
+    <!-- Schedule Phase Descriptions -->
+    <string id="schedule_dawn_formation" text="Morning formation and inspection" />
+    <string id="schedule_dawn_drill" text="Early drill" />
+    <string id="schedule_midday_training" text="Combat training" />
+    <string id="schedule_midday_work" text="Work details and maintenance" />
+    <string id="schedule_dusk_social" text="Evening leisure" />
+    <string id="schedule_dusk_economic" text="Trading and gambling" />
+    <string id="schedule_night_rest" text="Rest and sleep" />
+    <string id="schedule_night_special" text="Night activities" />
+    
+    <!-- Schedule Phase Flavor Text -->
+    <string id="schedule_flavor_dawn" text="The camp stirs to life. Sergeants bark orders." />
+    <string id="schedule_flavor_midday" text="The sun climbs high. The serious work begins." />
+    <string id="schedule_flavor_dusk" text="Work ends. Men gather around fires." />
+    <string id="schedule_flavor_night" text="The camp grows quiet. Torches gutter." />
+    
+    <!-- Schedule Activity States -->
+    <string id="schedule_activity_scheduled" text="[Scheduled]" />
+    <string id="schedule_activity_cancelled" text="Cancelled" />
+    <string id="schedule_activity_skipped" text="Skipped" />
+    <string id="schedule_player_committed" text="You: {ACTIVITY}" />
+    
+    <!-- Schedule Deviation Reasons -->
+    <string id="schedule_deviation_low_morale" text="Morale too low for formations" />
+    <string id="schedule_deviation_low_supplies" text="Foraging prioritized" />
+    <string id="schedule_deviation_high_scrutiny" text="Officers watching closely" />
+    <string id="schedule_deviation_exhausted" text="Men need rest" />
+    <string id="schedule_deviation_siege" text="Siege conditions - survival priorities" />
+    <string id="schedule_deviation_marching" text="On the march - evening activities only" />
+    <string id="schedule_deviation_pre_battle" text="Final preparations for battle" />
+    
+    <!-- Schedule Forecast -->
+    <string id="schedule_forecast_now" text="now" />
+    <string id="schedule_forecast_passed" text="passed" />
+    <string id="schedule_forecast_upcoming" text="upcoming" />
+
   </strings>
 </base>

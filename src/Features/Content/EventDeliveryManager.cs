@@ -2176,9 +2176,10 @@ namespace Enlisted.Features.Content
             _isShowingEvent = false;
             _currentEvent = null;
 
-            // If this was a decision, force the Camp Hub menu to refresh so cooldowns are reflected
+            // If this was a decision, clear the "currently showing" mark and refresh the menu
             if (wasDecision)
             {
+                DecisionManager.Instance?.ClearCurrentlyShowingDecision();
                 RequestDecisionsMenuRefresh();
             }
 

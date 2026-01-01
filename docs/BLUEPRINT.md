@@ -446,24 +446,50 @@ Example full path: `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade 
 
 The mod writes session logs directly to the `Debugging` folder inside the Enlisted module directory. This is NOT the game's crash logs folder and NOT Documents.
 
+#### Session Rotation System
+
+The logger uses a **three-session rotation** to keep logs organized and manageable:
+
+- **Session-A** - Current/newest session (e.g., `Session-A_2025-12-31_14-30-00.log`)
+- **Session-B** - Previous session (renamed from old Session-A)
+- **Session-C** - Oldest session (renamed from old Session-B)
+- **Current_Session_README.txt** - Points to the active session file
+
+When you start a new game session:
+1. Old Session-B → Session-C (oldest is deleted)
+2. Old Session-A → Session-B
+3. New Session-A is created with current timestamp
+
+**Where to look for logs:**
+- **Game Install:** `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
+  - Check **Session-A** for your current/most recent gameplay
+  - Check **Session-B** if you need the previous session
+  - Check **Session-C** for the oldest kept session
+  - Read **Current_Session_README.txt** to see which file is active
+- **Workspace:** `C:\Dev\Enlisted\Enlisted\Debugging\`
+  - Contains development scripts and build placeholders only
+  - NOT where runtime logs are written
+
 #### Usage:
 ```csharp
 ModLogger.Info("Category", "message");
 ModLogger.Debug("Category", "detailed info");
 ModLogger.Warn("Category", "warning");
 ModLogger.Error("Category", "error details");
+ModLogger.LogOnce("UniqueKey", "Category", "message"); // Only logs once per session
 ```
 
 #### Categories:
 - Enlistment, Combat, Equipment, Events, Orders, Reputation
 - Identity, Company, Context, Interface, Ranks, Conversations
-- Retinue, Camp, Conditions
+- Retinue, Camp, Conditions, Supply, Logistics
 
 #### What to Log:
 - Actions (enlistment, promotions, discharges)
 - Errors and warnings
 - State changes (reputation, needs, orders)
 - Event triggers and outcomes
+- Supply changes (when significant, >10%)
 
 Configure levels in `settings.json`:
 ```json
@@ -477,7 +503,7 @@ Configure levels in `settings.json`:
 ```
 
 #### Performance-Friendly Logging
-All features include logging for error catching and diagnostics to help troubleshoot issues, game updates, or mod conflicts in production.
+All features include logging for error catching and diagnostics to help troubleshoot issues, game updates, or mod conflicts in production. The logger includes throttling and de-duplication to prevent log spam.
 
 ---
 

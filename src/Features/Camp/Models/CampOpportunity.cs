@@ -113,6 +113,19 @@ namespace Enlisted.Features.Camp.Models
         /// <summary>If true, this opportunity only appears at sea (not on land).</summary>
         public bool AtSea { get; set; }
 
+        /// <summary>
+        /// True if this opportunity matches the current camp routine schedule.
+        /// Set during fitness calculation when the opportunity's type matches a scheduled activity category.
+        /// Used for UI display to indicate "[Scheduled]" activities.
+        /// </summary>
+        public bool IsScheduled { get; set; }
+
+        /// <summary>
+        /// Label for the scheduled activity slot this matches (e.g., "Combat training").
+        /// Set by the schedule manager when IsScheduled is true.
+        /// </summary>
+        public string ScheduleLabel { get; set; }
+
         /// <summary>Gets the resolved title text (localized or fallback).</summary>
         public string GetTitle()
         {

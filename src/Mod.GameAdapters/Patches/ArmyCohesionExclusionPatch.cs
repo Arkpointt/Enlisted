@@ -25,10 +25,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// party), these penalties are not thematically appropriate. This patch adds a
     /// compensating bonus to offset the penalties the player's party causes.
     ///
-    /// Note: Even though FoodSystemPatches ties player food to the lord's supply,
-    /// the cohesion calculation may still see the player as starving due to timing
-    /// issues or if the lord's army actually has no food. We compensate for this
-    /// because an embedded soldier shouldn't count as a separate starving party.
+    /// Note: The player receives rations independently through the supply system, but
+    /// the cohesion calculation may still see the player party as starving. We compensate
+    /// for this because an embedded soldier shouldn't count as a separate starving party.
     ///
     /// Uses Postfix approach for maximum compatibility - doesn't block or modify the
     /// native calculation, just adds a compensating modifier afterward.
@@ -103,7 +102,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // 4. Compensate for starvation penalty if applicable
                 // Native applies: -((num1 + 1) / 2) where num1 = count of starving parties
                 // For a single party, that's -(1 + 1) / 2 = -1, but then halved again = -0.5
-                // Note: Even with FoodSystemPatches, player may appear starving due to timing or empty lord supplies
+                // Note: Player receives rations independently, but may still appear as starving to cohesion calculation
                 var starvationCompensation = 0f;
                 if (mainParty.Party.IsStarving)
                 {

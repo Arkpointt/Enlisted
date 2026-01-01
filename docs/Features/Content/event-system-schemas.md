@@ -2238,10 +2238,12 @@ Orders support context-variant text to adapt flavor text for sea vs land travel.
 **Use Cases:**
 | Order | Land | Sea |
 |-------|------|-----|
-| Guard Duty | Stand watch at your post | Stand watch on the foredeck |
-| Camp Patrol | Walk the perimeter | Hull inspection below decks |
-| Firewood Collection | Gather wood with an axe | Scrub the deck with a brush |
-| Equipment Inspection | Check gear with quartermaster | Inspect rigging with the bosun |
+| Guard Duty | Stand watch at your post | Deck Watch - stand watch on the foredeck |
+| Camp Patrol | Walk the perimeter | Hull Inspection - check below decks |
+| Firewood Collection | Gather wood with an axe | Deck Scrubbing - scrub the deck |
+| Equipment Inspection | Check gear with quartermaster | Rigging Check - inspect lines with the bosun |
+| Sentry Post | Watch the road from the hilltop | Masthead Watch - watch from the masthead |
+| Muster Inspection | Stand for inspection before lord | Deck Muster - assemble on deck for inspection |
 
 ### Order Event vs Narrative Event
 

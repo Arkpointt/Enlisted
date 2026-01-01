@@ -21,6 +21,12 @@ namespace Enlisted.Features.Content
 
         public static DecisionManager Instance { get; private set; }
 
+        /// <summary>
+        /// Tracks the decision ID that is currently being shown to prevent spam-clicking.
+        /// Cleared when the event popup closes.
+        /// </summary>
+        private string _currentlyShowingDecisionId;
+
         public override void RegisterEvents()
         {
             Instance = this;
@@ -195,6 +201,15 @@ namespace Enlisted.Features.Content
             var enlistment = EnlistmentBehavior.Instance;
             var escalation = EscalationManager.Instance;
 
+            // Gate 0: Check if this decision is currently being shown (prevent spam-clicking)
+            if (!string.IsNullOrEmpty(_currentlyShowingDecisionId) &&
+                _currentlyShowingDecisionId.Equals(decision.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                result.IsAvailable = false;
+                result.UnavailableReason = "In progress...";
+                return result;
+            }
+
             // Gate 1: Must be enlisted
             if (enlistment?.IsEnlisted != true)
             {
@@ -297,7 +312,52 @@ namespace Enlisted.Features.Content
                 }
             }
 
+            // Gate 8: Sea/land context check
+            if (decision.Requirements != null)
+            {
+                var isAtSea = enlistment?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+
+                // Check if decision requires being NOT at sea (land-only)
+                if (decision.Requirements.NotAtSea == true && isAtSea)
+                {
+                    result.IsAvailable = false;
+                    result.UnavailableReason = "Not available at sea";
+                    return result;
+                }
+
+                // Check if decision requires being at sea (maritime-only)
+                if (decision.Requirements.AtSea == true && !isAtSea)
+                {
+                    result.IsAvailable = false;
+                    result.UnavailableReason = "Only available at sea";
+                    return result;
+                }
+            }
+
             return result;
+        }
+
+        /// <summary>
+        /// Marks a decision as currently being shown to the player.
+        /// This prevents spam-clicking the same decision while its event popup is open.
+        /// </summary>
+        public void MarkDecisionAsShowing(string decisionId)
+        {
+            _currentlyShowingDecisionId = decisionId;
+            ModLogger.Debug(LogCategory, $"Decision marked as showing: {decisionId}");
+        }
+
+        /// <summary>
+        /// Clears the currently showing decision mark.
+        /// Called when the event popup closes.
+        /// </summary>
+        public void ClearCurrentlyShowingDecision()
+        {
+            if (!string.IsNullOrEmpty(_currentlyShowingDecisionId))
+            {
+                ModLogger.Debug(LogCategory, $"Cleared currently showing decision: {_currentlyShowingDecisionId}");
+                _currentlyShowingDecisionId = null;
+            }
         }
 
         /// <summary>
