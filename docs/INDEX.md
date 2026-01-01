@@ -2,7 +2,7 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2026-01-01 (Event frequency rebalance, routine flavor text, native API migration)
+**Last Updated:** 2026-01-01 (Baggage train orchestrator integration, world-state-aware simulation)
 **Total Documents:** 50
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
@@ -144,7 +144,7 @@
 | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Complete quartermaster system with 10+ subsystems: equipment purchasing (category browsing, reputation discounts 0-30%), quality modifiers (6 tiers affecting stats/prices), upgrade system (Gauntlet grid UI, sequential quality improvements with real stat bonuses, native ItemModifier system), buyback service (sell QM gear back at 30-65%), provisions/rations (T1-T6 issued, T7+ shop with Gauntlet grid UI), baggage inspections (contraband checks, rep-based outcomes), Officers Armory (T7+, elite gear), tier gates (rank-based access control), supply integration (equipment blocked <30%), first-meeting intro, contextual dialogue (150+ dynamic responses) | ✅ Current |
 | [provisions-rations-system.md](Features/Equipment/provisions-rations-system.md) | Food and rations: T1-T6 issued rations (12-day cycle, reclaimed at muster, quality by rep), T7+ provisions shop (premium prices 2.0-3.2x town markets, stock by supply level, Gauntlet grid UI with rank-based button gating), provision bundles (morale/fatigue boosts) | ✅ Current |
 | [company-supply-simulation.md](Features/Equipment/company-supply-simulation.md) | Company supply tracking (0-100% scale, includes rations, ammo, repairs, camp supplies), supply effects (equipment access gates, ration availability, QM greeting tone, stock levels), supply-based messaging | ⚠️ Mixed |
-| [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md) | Baggage train access gating based on march state, rank, and context | 📋 Specification |
+| [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md) | Baggage train access gating: world-state-aware simulation (probabilities adapt to campaign situation), dynamic decision system (appears only when accessible), orchestrator integration, rank-based privileges, emergency access, 5 baggage events | ✅ Current |
 
 ### Identity & Traits
 **Location:** `Features/Identity/`
@@ -295,6 +295,6 @@ Active feature specifications for ongoing development. Phases 1-6F of Content Or
 
 ---
 
-**Last reorganization:** 2026-01-01 (Event frequency rebalance, routine flavor text everywhere, native API migration for sea travel)
+**Last reorganization:** 2026-01-01 (Baggage train orchestrator integration, world-state-aware simulation)
 
 

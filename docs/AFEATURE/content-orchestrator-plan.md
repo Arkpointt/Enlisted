@@ -85,9 +85,99 @@ camp_opportunities.json              decisions.json
 - Better integration with content orchestrator and world state
 - Reduce maintenance burden (one system instead of two)
 
-**Estimated Time:** 5-6 hours (3-4 for decisions + 2 for medical migration)
+**Estimated Time:** 5-6 hours (3-4 for decisions + 2-3 for medical migration)
 
 **See:** [Medical Care Migration Plan](medical-care-migration.md) for detailed specifications
+
+---
+
+### ⛔ BLOCKING: Phase 6H - Medical System Orchestration
+
+**Goal:** Make the medical system fully world-state-driven. Replace random/manual illness with intelligent orchestrator control based on Medical Risk, fatigue, and campaign context.
+
+**Status:** ❌ Not Implemented  
+**Priority:** High - Required after Phase 6G  
+**Blocks:** None (enhances existing systems)  
+**Estimated Time:** 2 hours
+
+**Current State:**
+- ✅ Medical conditions tracked (`PlayerConditionBehavior`)
+- ✅ Medical Risk escalation tracked (`EscalationManager`)
+- ❌ Illness onset is random/manual (not orchestrated)
+- ❌ Medical care not integrated with camp opportunities
+- ❌ No forecast warnings for Medical Risk
+- ❌ Medical pressure not part of world state
+
+**Requirements:**
+
+1. **Medical Pressure Tracking**
+   - Add `GetMedicalPressure()` to `SimulationPressureCalculator`
+   - Track: Medical Risk, untreated days, fatigue history, health percent
+   - Return pressure level: None/Low/Moderate/High/Critical
+
+2. **Camp Opportunities Integration**
+   - Create `opp_seek_treatment` (appears when has condition)
+   - Create `opp_emergency_care` (forced when severe condition)
+   - Create `opp_medical_rest` (rest option for recovery)
+   - Priority boosted based on severity
+
+3. **Illness Onset Events**
+   - Create `illness_onset.json` with fever and infection events
+   - Base chance scales with Medical Risk (5% per level)
+   - Context modifiers: winter +8%, siege +12%, fatigue +10%
+   - Triggered by orchestrator daily check
+
+4. **ContentOrchestrator Daily Check**
+   - Add `CheckMedicalPressure()` to daily tick
+   - Force emergency opportunity if critical
+   - Boost treatment priority if high pressure
+   - Roll for illness onset if Medical Risk >= 3
+
+5. **Forecast Integration**
+   - Show condition recovery status in AHEAD
+   - Show Medical Risk warnings in CONCERNS
+   - Show exhaustion warnings (contributes to illness)
+   - Example: "Medical Risk: 4/5. Illness likely without rest."
+
+6. **World State Integration**
+   - Add `MedicalPressure`, `RequiresMedicalCare`, `HasCriticalCondition` to `WorldSituation`
+   - Calculate in `WorldStateAnalyzer`
+   - Use for content filtering and pacing
+
+**Implementation Files:**
+- `src/Features/Content/SimulationPressureCalculator.cs` (add medical tracking)
+- `src/Features/Content/ContentOrchestrator.cs` (add daily medical check)
+- `src/Features/Content/ForecastGenerator.cs` (add medical forecast)
+- `src/Features/Content/WorldStateAnalyzer.cs` (add to situation)
+- `ModuleData/Enlisted/Config/camp_opportunities.json` (add 3 medical opportunities)
+- `ModuleData/Enlisted/Events/illness_onset.json` (new file)
+
+**Benefits:**
+- Illness becomes predictable and preventable (manage Medical Risk)
+- Natural escalation from neglecting health
+- Proactive suggestions for medical care
+- Fully integrated with world-state-driven content
+- Player has agency (rest to avoid illness vs push through)
+
+**Example Flow:**
+```
+Day 1: Player exhausted (fatigue 4/24), Medical Risk +1
+Day 2: Still exhausted, Medical Risk +1 (now 2/5)
+Day 3: Still exhausted, Medical Risk +1 (now 3/5)
+  → Orchestrator: Roll 15% base + 10% fatigue = 25% illness chance
+  → Forecast: "Medical Risk: 3/5. Rest recommended."
+  → Camp Opportunity: "Take a Rest Day" appears
+
+Day 4: Player ignores, still exhausted, Medical Risk +1 (now 4/5)
+  → Orchestrator: Roll 20% base + 10% fatigue + 12% siege = 42% chance
+  → SUCCESS: Illness onset event fires
+  → Player gets camp fever (7 days, moderate severity)
+  
+Day 5: Condition active, no treatment
+  → Camp Opportunity: "Seek Medical Care" priority boosted
+  → Forecast: "Recovering from camp fever (7 days, untreated)."
+  → CONCERNS: "Medical: Untreated condition. Seek care."
+```
 
 ---
 
@@ -372,26 +462,38 @@ For details on implemented features, see:
 | Phase | Status | Priority | Estimated Time | Dependencies |
 |-------|--------|----------|----------------|--------------|
 | 6G - Missing Decisions + Medical Migration | ⛔ BLOCKING | Critical | 5-6 hours | None |
+| 6H - Medical System Orchestration | ⛔ BLOCKING | High | 2 hours | Phase 6G |
 | 9 - Decision Scheduling | ❌ MUST DO | High | 2-3 hours | Phase 6G |
 | 10 - Order Forecasting | ❌ MUST DO | Critical | 2-3 hours | None |
 | 7 - Content Variants | ⏸️ Future | Low | 30-60 min | None |
 | 8 - Progression System | ⏸️ Future | Low | 2-3 hours | None |
 
-**Total Critical Work:** ~10-12 hours (6G → 9 → 10)
+**Total Critical Work:** ~12-14 hours (6G → 6H → 9 → 10)
 
 **Recommended Order:**
-1. Phase 6G (includes medical migration, unblocks Phase 9)
-2. Phase 10 (critical for playability)
-3. Phase 9 (enhances immersion)
-4. Phase 7-8 (future enhancements)
+1. Phase 6G (create decisions, migrate medical menu to decisions)
+2. Phase 6H (integrate medical system with orchestrator)
+3. Phase 10 (critical for playability at fast-forward speeds)
+4. Phase 9 (enhances immersion with time-aware scheduling)
+5. Phase 7-8 (future enhancements)
 
 **Phase 6G Breakdown:**
 - Create 26 missing camp decisions (3-4 hours)
-- Migrate medical care to decisions (2 hours)
+- Create 4 medical care decisions (45 min)
+- Remove medical menu system (15 min)
 - Delete old systems (535 lines of menu code + 35 old decisions)
 - Result: Unified decision system, reduced complexity
 
+**Phase 6H Breakdown:**
+- Add medical pressure tracking (30 min)
+- Create medical camp opportunities (15 min)
+- Create illness onset events (30 min)
+- Update orchestrator daily check (25 min)
+- Update forecast system (20 min)
+- Update world state integration (15 min)
+- Result: Intelligent, world-state-driven medical system
+
 ---
 
-**Last Updated:** 2026-01-01 (Added medical care migration to Phase 6G)  
+**Last Updated:** 2026-01-01 (Added Phase 6H: Medical System Orchestration)  
 **Maintained By:** Project AI Assistant

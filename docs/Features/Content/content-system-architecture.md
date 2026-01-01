@@ -34,6 +34,39 @@ The content system uses **world-state driven orchestration** instead of schedule
 - Player behavior learning improves content selection
 - Native Bannerlord effects integrated (traits, skills, morale, health)
 - Camp opportunities dynamically generated based on context
+- Baggage train simulation responds to campaign conditions
+
+---
+
+## Baggage Train Integration
+
+The baggage train logistics system integrates with the Content Orchestrator to provide world-state-aware event probabilities. Instead of fixed chance values, baggage delays/raids/arrivals occur based on campaign situation.
+
+**Integration Point:** `ContentOrchestrator.RefreshBaggageSimulation()`
+
+Called daily during orchestrator tick, provides `WorldSituation` to BaggageTrainManager for probability calculation.
+
+**Probability Calculation:** `BaggageTrainManager.CalculateEventProbabilities(WorldSituation)`
+
+Analyzes four dimensions to determine baggage event likelihood:
+- **Activity Level** - Intense: 10% catch-up / 35% delay / 20% raid vs. Quiet: 40% / 5% / 2%
+- **Lord Situation** - Defeated armies have scattered baggage, garrison duty is safe
+- **War Stance** - Desperate defensive war increases raids, peacetime is safe
+- **Terrain** - Mountains/snow/rivers slow wagon movement
+
+**Example:**
+```
+Intense siege + Defensive war + Mountain terrain
+= 20% catch-up, 45% delay, 31% raid
+vs.
+Quiet garrison + Peace + Plains
+= 40% catch-up, 2.5% delay, 1% raid
+```
+
+**Configuration Baseline:**
+The "Routine" activity level uses values from `baggage_config.json`, allowing gameplay tuning without code changes.
+
+**Related Documentation:** [Baggage Train Availability](../Equipment/baggage-train-availability.md#world-state-aware-simulation)
 
 ---
 

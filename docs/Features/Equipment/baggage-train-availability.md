@@ -1,30 +1,35 @@
 # Baggage Train Availability System
 
-**Summary:** The Baggage Train system gates player access to their personal stowage based on realistic military logistics. The baggage train marches separately from the fighting column, creating natural access windows during camp, settlement stays, and muster events. This transforms inventory management from a passive storage feature into an active gameplay element with strategic considerations.
+**Summary:** The Baggage Train system gates player access to their personal stowage based on realistic military logistics. The baggage train marches separately from the fighting column, with its accessibility dynamically responding to campaign conditions. World-state-aware simulation means baggage delays/raids occur more frequently during intense combat, while peaceful garrison duty grants reliable access. This transforms inventory management from a passive storage feature into an active gameplay element with strategic considerations.
 
 **Key Features:**
 - ✅ Smart menu routing: One "Access Baggage Train" button → Opens stash OR QM dialogue based on state
 - ✅ Immersive conversation: Blocked access leads to negotiation with QM (archetype-specific)
+- ✅ **World-state-aware simulation:** Event probabilities adapt to campaign situation (siege/retreat/peace)
+- ✅ **Orchestrator integration:** ContentOrchestrator provides campaign context for baggage event probability calculation
 - ✅ Dynamic events: Delays, raids, theft create gameplay drama
 - ✅ **Priority-based news:** Urgent events persist longer (24-48h) and can't be pushed out by routine updates (6h)
 - ✅ **Color-coded notifications:** Event severity determines visual impact (green/yellow/red/critical) AND display duration
 - ✅ **Daily Brief integration:** Shows baggage status (raids, arrivals, delays, temporary access)
 - ✅ **Event tracking:** Records raid/arrival timestamps for contextual Daily Brief messages
 - ✅ Rank progression: Officers gain privileges (halt column, free emergency access)
+- ✅ **Dynamic decision:** Baggage access appears in DECISIONS accordion only when accessible
 
-**Status:** ✅ Complete (Phases 1-6 Implemented)  
-**Last Updated:** 2025-12-24
+**Status:** ✅ Complete (Phases 1-6 + Orchestrator Integration Implemented)  
+**Last Updated:** 2026-01-01
 
 **Completed Features:**
 - **Phase 1-3:** BaggageTrainManager, access states, emergency access, cooldowns
 - **Phase 4:** Full event suite (arrived, delayed, raided, theft)
 - **Phase 5:** Rank-based privileges (T3+ emergency access, T5+ daily windows, T7+ full control)
 - **Phase 6:** Daily Brief status line with raid/arrival tracking, severity-based news priorities
+- **Orchestrator Integration:** World-state-aware probabilities (activity level, lord situation, war stance, terrain)
+- **Dynamic Decision:** Baggage access moved from static menu to dynamic decision (appears only when accessible)
 
 **Deferred to Future Releases:**
 - Phase 7-8: Cross-system integration (leave, combat, siege, discharge edge cases)
 - Phase 9: QM conversation enhancements, performance optimization  
-**Related Docs:** [Quartermaster System](quartermaster-system.md), [Company Supply Simulation](company-supply-simulation.md), [Provisions & Rations](provisions-rations-system.md)
+**Related Docs:** [Quartermaster System](quartermaster-system.md), [Company Supply Simulation](company-supply-simulation.md), [Provisions & Rations](provisions-rations-system.md), [Content System Architecture](../Content/content-system-architecture.md#baggage-train-integration)
 
 ---
 
@@ -34,14 +39,16 @@
 2. [Design Philosophy](#design-philosophy)
 3. [Access States](#access-states)
 4. [Access Conditions](#access-conditions)
-5. [Emergency Access System](#emergency-access-system)
-6. [Baggage Train Events](#baggage-train-events)
-7. [Rank-Based Access](#rank-based-access)
-8. [Integration Points](#integration-points)
-9. [Data Structures](#data-structures)
-10. [Configuration](#configuration)
-11. [Implementation Plan](#implementation-plan)
-12. [Testing Checklist](#testing-checklist)
+5. [World-State-Aware Simulation](#world-state-aware-simulation)
+6. [Emergency Access System](#emergency-access-system)
+7. [Baggage Train Events](#baggage-train-events)
+8. [Rank-Based Access](#rank-based-access)
+9. [Dynamic Decision System](#dynamic-decision-system)
+10. [Integration Points](#integration-points)
+11. [Data Structures](#data-structures)
+12. [Configuration](#configuration)
+13. [Implementation Plan](#implementation-plan)
+14. [Testing Checklist](#testing-checklist)
 
 ---
 
@@ -203,6 +210,134 @@ Periodic "baggage caught up" events create brief access windows on campaign:
 | **After Skirmish** | 2 game hours | 8 hours |
 | **Night Halt** | Until dawn or movement | Once per night |
 | **Rank T7+ Request** | 2 game hours | 12 hours |
+
+---
+
+## World-State-Aware Simulation
+
+### Overview
+
+The baggage train simulation is fully integrated with the Content Orchestrator's world-state analysis system. Instead of using fixed probabilities for baggage events (delays, raids, arrivals), the system calculates contextual probabilities based on current campaign conditions.
+
+**Core Concept:** Baggage logistics are harder during intense combat and easier during peaceful garrison duty.
+
+### ContentOrchestrator Integration
+
+Every day at 6am, the ContentOrchestrator analyzes the current world situation and provides it to all simulation systems, including BaggageTrainManager:
+
+```csharp
+// In ContentOrchestrator.cs
+private void RefreshBaggageSimulation(WorldSituation worldSituation)
+{
+    var baggageManager = Logistics.BaggageTrainManager.Instance;
+    if (baggageManager == null) return;
+    
+    // Probabilities calculated based on world state
+    var probs = baggageManager.CalculateEventProbabilities(worldSituation);
+    
+    // BaggageTrainManager uses these when checking for events
+}
+```
+
+### Contextual Probability System
+
+The `BaggageTrainManager.CalculateEventProbabilities()` method analyzes four key dimensions:
+
+#### 1. Activity Level (ExpectedActivity)
+
+| Activity Level | CaughtUp% | Delay% | Raid% | Reasoning |
+|----------------|-----------|--------|-------|-----------|
+| **Intense** | 10% | 35% | 20% | Desperate retreat/siege - wagons fall behind |
+| **Active** | 20% | 20% | 12% | Active campaign - moderate pressure |
+| **Routine** | 25% | 15% | 8% | Normal march - config baseline values |
+| **Quiet** | 40% | 5% | 2% | Garrison/peacetime - wagons keep up easily |
+
+#### 2. Lord Situation (LordIs)
+
+| Situation | Modifiers | Reasoning |
+|-----------|-----------|-----------|
+| **Defeated** | Delay +20%, Raid +15% | Routed forces, baggage scattered |
+| **Siege** | CatchUp +10%, Raid +5% | Stationary but vulnerable |
+| **Peacetime Garrison** | Delay -50%, Raid -70% | Safe and well-managed |
+
+#### 3. War Stance (KingdomStance)
+
+| Stance | Modifier | Reasoning |
+|--------|----------|-----------|
+| **Desperate** | Raid +12% | Losing badly, enemy raids frequent |
+| **Defensive** | Raid +6% | Under pressure, increased raids |
+| **Offensive** | Raid -3% | Attacking, wagons in friendly territory |
+| **Peace** | Raid 1% | Peacetime, minimal raids |
+
+#### 4. Terrain (Physical Environment)
+
+| Terrain Type | Modifier | Reasoning |
+|--------------|----------|-----------|
+| **Mountain** | Delay +10% | Rough terrain slows wagons |
+| **Snow** | Delay +15% | Snow significantly slows wagons |
+| **Desert** | Delay +8% | Sand is difficult for wheels |
+| **Fording/Water** | Delay +12% | River crossings are slow |
+
+### Example Scenarios
+
+**Intense Siege (Player Army Attacking):**
+```
+Base: Intense (10/35/20)
++ Siege: +10% CatchUp, +5% Raid
++ Defensive War: +6% Raid
++ Mountain Terrain: +10% Delay
+= Final: 20% CatchUp, 45% Delay, 31% Raid
+Result: Wagons rarely accessible, frequently delayed/raided
+```
+
+**Peaceful Garrison (Player Lord at Castle):**
+```
+Base: Quiet (40/5/2)
++ Garrison Situation: -50% Delay, -70% Raid
++ Peace Stance: Raid = 1%
+= Final: 40% CatchUp, 2.5% Delay, 1% Raid
+Result: Wagons frequently accessible, rarely delayed/raided
+```
+
+**Routine Campaign (Normal March):**
+```
+Base: Routine (25/15/8)
++ Desert Terrain: +8% Delay
+= Final: 25% CatchUp, 23% Delay, 8% Raid
+Result: Balanced logistics simulation
+```
+
+### Configuration-Driven Baseline
+
+The "Routine" activity level uses configuration values from `baggage_config.json`:
+
+```json
+{
+  "timing": {
+    "caught_up_chance_percent": 25
+  },
+  "events": {
+    "delay_event_chance_bad_weather": 15,
+    "raid_event_chance_enemy_territory": 8
+  }
+}
+```
+
+All other activity levels apply modifiers to these baseline values. This allows tuning without changing code.
+
+### Benefits
+
+**Gameplay:**
+- Baggage simulation feels connected to campaign situation
+- Players experience logistical pressure during intense combat
+- Peaceful periods provide reliable equipment access
+- Adds strategic dimension to equipment management
+
+**Technical:**
+- Single source of truth for world state (ContentOrchestrator)
+- Probabilities calculated once per day (efficient)
+- Config-driven baselines allow easy tuning
+- No hardcoded values in probability calculation
 
 ---
 
@@ -513,6 +648,103 @@ public bool CanHaltColumn()
     return _enlistmentTier >= 7;
 }
 ```
+
+---
+
+## Dynamic Decision System
+
+### Overview
+
+Baggage access was moved from a static Camp Hub menu option to a dynamic decision in the DECISIONS accordion. This provides better UX by only showing baggage access when the wagons are actually accessible.
+
+### Implementation
+
+**Decision Definition:** `ModuleData/Enlisted/Decisions/decisions.json`
+
+```json
+{
+  "id": "dec_access_baggage",
+  "category": "decision",
+  "titleId": "dec_access_baggage_title",
+  "title": "Access Baggage Train",
+  "setupId": "dec_access_baggage_setup",
+  "setup": "The baggage wagons are accessible. Time to check your belongings.",
+  "requirements": {
+    "tier": { "min": 1, "max": 999 }
+  },
+  "timing": {
+    "cooldown_hours": 1,
+    "priority": "normal"
+  },
+  "options": [
+    {
+      "id": "access",
+      "textId": "dec_access_baggage_open",
+      "text": "Open your baggage.",
+      "effects": {
+        "open_baggage_stash": true
+      },
+      "resultTextId": "dec_access_baggage_result",
+      "resultText": "You rummage through your belongings.",
+      "tooltip": "Access your stored items."
+    }
+  ]
+}
+```
+
+### Visibility Logic
+
+**DecisionManager Special Gate:**
+
+```csharp
+// In DecisionManager.CheckAvailability()
+if (decision.Id.Equals("dec_access_baggage", StringComparison.OrdinalIgnoreCase))
+{
+    var baggageManager = Logistics.BaggageTrainManager.Instance;
+    var accessState = baggageManager.GetCurrentAccess();
+    
+    // Only visible when baggage is accessible
+    if (accessState != BaggageAccessState.FullAccess && 
+        accessState != BaggageAccessState.TemporaryAccess)
+    {
+        result.IsAvailable = false;
+        result.IsVisible = false; // Hide when not accessible
+        result.UnavailableReason = "Baggage train not accessible";
+        return result;
+    }
+}
+```
+
+**Effect Handler:**
+
+```csharp
+// In EventDeliveryManager.ApplyEffects()
+if (effects.OpenBaggageStash == true)
+{
+    EnlistmentBehavior.Instance?.TryOpenBaggageTrain();
+    feedbackMessages.Add("Accessed baggage train.");
+}
+```
+
+### Benefits
+
+**UX Improvements:**
+- Decision only appears when actionable
+- Reduces menu clutter during march
+- Clear indication that baggage is accessible
+- No greyed-out options with unclear reasons
+
+**Design Consistency:**
+- Follows decision system patterns
+- Uses same requirement/availability infrastructure
+- Integrates with cooldown system (prevents spam)
+- Supports same JSON/XML localization approach
+
+**Implementation Simplicity:**
+- Leverages existing decision visibility system
+- No special menu code needed
+- One custom gate check in DecisionManager
+- One effect handler in EventDeliveryManager
 
 ---
 
