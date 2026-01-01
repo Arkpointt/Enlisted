@@ -100,14 +100,35 @@ Full documentation in mod folder. Contributions welcome!"
 		"1"		"Singleplayer"
 		"2"		"Overhaul"
     }
-	"changenote"		"v0.9.0.1 - Critical Bug Fixes
+	"changenote"		"v0.9.0.1 - Critical Bug Fixes & XP System Overhaul
+
+[b]CRITICAL XP FIXES[/b]
 [list]
-[*] [b]Fixed Quartermaster showing vanilla companion recruitment dialogue[/b] - QM now uses Soldier occupation to prevent recruitment option appearing
-[*] [b]Fixed Quartermaster dialogue breaking with error messages[/b] - Added fallback dialogue system that ensures QM always works even with corrupted installations
-[*] [b]Fixed supply inquiry closing conversation[/b] - Supply status report now properly returns to QM hub
-[*] [b]Enhanced diagnostic system[/b] - Mod now detects missing/corrupt JSON and XML files at startup
-[*] [b]Added module health check[/b] - Verifies all content files are present and loaded successfully
-[*] [b]Improved conflict detection[/b] - Installation path detection helps diagnose Steam Workshop vs manual install issues
-[*] Better error logging for user bug reports with comprehensive diagnostic information
-[/list]"
+[*] [b]Fixed 0 XP in muster reports[/b] - All activities now properly award enlistment XP for rank progression
+[*] [b]Fixed combat XP not tracked[/b] - Killing enemies now awards tier-scaled XP (higher tier = more XP)
+[*] [b]Added missing XP rewards[/b] - All 85 order events across 11 order types now grant proper XP
+[*] Order events: 10-32 XP per event (scales with difficulty and skill checks)
+[*] Camp activities: 8-25 XP (training, self-treatment, muster interactions)
+[*] Combat kills: Tier-scaled using native formula (T5 elite = 3.5x more XP than T1 recruit)
+[*] Failed skill checks award 50% XP (learn from mistakes)
+[*] All XP sources tracked and displayed in muster period summary breakdown
+[/list]
+
+[b]QUARTERMASTER FIXES[/b]
+[list]
+[*] [b]Fixed Quartermaster showing vanilla companion recruitment dialogue[/b] - QM now uses Soldier occupation
+[*] [b]Fixed Quartermaster dialogue breaking[/b] - Added fallback system that ensures QM always works
+[*] [b]Fixed supply inquiry closing conversation[/b] - Supply status now properly returns to QM hub
+[/list]
+
+[b]DIAGNOSTICS & VALIDATION[/b]
+[list]
+[*] Enhanced conflict detection to verify mod installation integrity
+[*] Module health check detects missing/corrupt JSON and XML files at startup
+[*] Runtime catalog verification confirms content loaded successfully
+[*] Validation tool checks for missing XP in order events
+[*] Better error logging for bug reports with installation path detection
+[/list]
+
+[i]Resolves widespread reports of '0 XP in muster reports' and Quartermaster dialogue errors.[/i]"
 }

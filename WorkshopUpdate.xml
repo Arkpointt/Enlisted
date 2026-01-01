@@ -7,15 +7,32 @@
     <UpdateItem>
         <ModuleFolder Value="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"/>
         <!-- A direct path of your module -->   
-        <ChangeNotes Value="v0.9.0.1 - Critical Bug Fixes
+        <ChangeNotes Value="v0.9.0.1 - Critical Bug Fixes &amp; XP System Overhaul
+
+[CRITICAL XP FIXES]
+- Fixed 0 XP in muster reports - all activities now properly grant enlistment XP for rank progression
+- Fixed combat XP not tracked - killing enemies now awards tier-scaled XP (higher tier = more XP)
+- Added missing XP rewards to all 85 order events across 11 order types
+- Order events: 10-32 XP per event (scales with difficulty and skill checks)
+- Camp activities: 8-25 XP (training, self-treatment, muster interactions)
+- Combat kills: Tier-scaled using native formula (T5 elite = 3.5x more XP than T1 recruit)
+- Failed skill checks now award 50% XP (learn from mistakes)
+- All XP sources tracked and displayed in muster period summary breakdown
+
+[QUARTERMASTER FIXES]
 - Fixed Quartermaster showing vanilla companion recruitment dialogue (changed Occupation to Soldier)
 - Fixed Quartermaster dialogue breaking with 'custom_line_a to d Error' messages
-- Added fallback dialogue system to ensure Quartermaster always works even with corrupted installations
 - Fixed supply inquiry closing conversation instead of showing supply report
+- Added fallback dialogue system to ensure QM always works even with corrupted installations
+
+[DIAGNOSTICS &amp; VALIDATION]
 - Enhanced conflict detection system to verify mod installation integrity
 - Added module health check that detects missing/corrupt JSON and XML files
 - Added runtime catalog status verification to confirm content loaded successfully
-- Improved diagnostic logging for user bug reports with installation path detection" />
+- Added validation tool checks for missing XP in order events
+- Improved diagnostic logging for user bug reports with installation path detection
+
+This update resolves widespread reports of '0 XP in muster reports' and Quartermaster dialogue errors." />
         <!-- Insert patch notes -->
         <Tags> 
             <!-- You can use the following tags: -->
