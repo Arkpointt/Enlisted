@@ -37,7 +37,7 @@ The pay muster occurs every 12 days (configurable via `payday_interval_days`) an
 
 **Automatic Processes:**
 - Fatigue restored to maximum (muster day = rest day)
-- Ration exchange (T1-T6 receive tier-appropriate rations)
+- Ration exchange (T1-T6: old ration reclaimed, new ration issued based on QM reputation and supply)
 - Quartermaster stock refresh (availability re-rolled based on supply)
 - Period statistics recorded (XP, gold, battles, casualties)
 
@@ -73,9 +73,10 @@ The pay muster occurs every 12 days (configurable via `payday_interval_days`) an
    • Options: Accept Pay | Recount | Side Deal | IOU | Discharge
    ↓
 [RATION EXCHANGE] (automatic)
-   • T1-T6: Current ration replaced with tier-appropriate ration
-   • T7+: Officer rations (exempt from exchange)
+   • T1-T6: Previous ration reclaimed (if any), new ration issued based on QM reputation
+   • T7+: Officers exempt (provision their own retinue)
    • Low supply (<30%): No ration issued, warning in summary
+   • Note: First ration is issued at initial enlistment, not at first muster
    ↓
 [3. BAGGAGE CHECK] (30% chance, skip if not triggered)
    • Contraband detection (if found and rep <65)
@@ -690,7 +691,9 @@ The muster system integrates with numerous systems across the mod:
 
 ### Quartermaster System
 - Stock refresh via `QuartermasterManager.RollStockAvailability()` at muster completion
-- Ration exchange for T1-T6 (tier-appropriate rations based on reputation)
+- Ration exchange for T1-T6 (old ration reclaimed, new ration issued based on QM reputation)
+  - First ration is issued at initial enlistment
+  - Subsequent musters: exchange old ration for new one
 - Baggage checks (contraband detection with reputation-based outcomes)
 - QM reputation affects baggage inspection options
 - Newly unlocked items marked via `UpdateNewlyUnlockedItems()` after tier-up

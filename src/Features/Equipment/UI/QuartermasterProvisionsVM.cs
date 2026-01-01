@@ -62,14 +62,17 @@ namespace Enlisted.Features.Equipment.UI
 
         /// <summary>
         /// Initialize provisions ViewModel.
-        /// All ranks can view provisions, but only T7+ officers can purchase.
+        /// T7+ officers and anyone completely out of food can purchase.
         /// </summary>
         public QuartermasterProvisionsVm()
         {
             ProvisionRows = new MBBindingList<QuartermasterProvisionRowVm>();
             
             var playerTier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
-            _isOfficer = playerTier >= 7;
+            var hasNoFood = !HasAnyFood();
+            
+            // Allow purchase access if: officer rank (T7+) OR completely out of food (emergency access)
+            _isOfficer = playerTier >= 7 || hasNoFood;
             
             // Simple header for all ranks
             HeaderText = "Company Provisions";
@@ -78,7 +81,9 @@ namespace Enlisted.Features.Equipment.UI
             ShowProvisionsShop = true;
             
             BuildProvisionsGrid();
-            ModLogger.Info("QuartermasterUI", $"Provisions UI initialized for T{playerTier} {(_isOfficer ? "officer" : "enlisted")}");
+            
+            var accessReason = playerTier >= 7 ? "officer" : (hasNoFood ? "emergency (no food)" : "enlisted");
+            ModLogger.Info("QuartermasterUI", $"Provisions UI initialized for T{playerTier} {accessReason}");
         }
 
         /// <summary>
@@ -221,6 +226,40 @@ namespace Enlisted.Features.Equipment.UI
             }
 
             return foodItems;
+        }
+
+        /// <summary>
+        /// Check if the player currently has any food in their party inventory.
+        /// Used to determine emergency provisions access for non-officers.
+        /// </summary>
+        private static bool HasAnyFood()
+        {
+            try
+            {
+                var party = MobileParty.MainParty;
+                if (party?.ItemRoster == null)
+                {
+                    return false;
+                }
+
+                // Check if player has any food items in inventory
+                foreach (var element in party.ItemRoster)
+                {
+                    var item = element.EquipmentElement.Item;
+                    if (item != null && item.IsFood)
+                    {
+                        return true;
+                    }
+                }
+
+                ModLogger.Info("QuartermasterUI", "Player has no food in inventory - granting emergency provisions access");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("QuartermasterUI", "Error checking player food inventory", ex);
+                return false; // Fail safe - grant access on error
+            }
         }
 
         /// <summary>

@@ -63,7 +63,8 @@ Related systems (shipping):
 4. Player confirms -> Immediate enlistment with safety measures
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
-7. **First-Enlistment Bag Check** (T1-T6 only, fires once per career):
+7. **Initial Ration Issued** (T1-T6 only): New recruits receive their first ration immediately at enlistment. Quality based on QM reputation (grain/butter/cheese/meat). Commanders (T7+) don't receive issued rations.
+8. **First-Enlistment Bag Check** (T1-T6 only, fires once per career):
    - Deferred **1 hour** after enlistment; fires as narrative event (`evt_bagcheck_first_enlistment`).
    - **Stow it all (200g + 5% value)**: Stashes all inventory + equipped items into baggage train. Costs 200g base + 5% of total inventory value.
    - **Sell it all (60%)**: Liquidates inventory + equipped items at 60% value.
@@ -72,13 +73,13 @@ Related systems (shipping):
    - Baggage is tagged with current faction ID for cross-faction tracking.
    - Skipped at T7+ (commanders have baggage authority).
    - **Abort cooldown**: If the player aborts during bag check, the lord remembers and requires 7 days before accepting them again. Lord gives personalized dialogue about needing to sort out affairs.
-8. **Cross-Faction Baggage Transfer**: If player has baggage stored with a different faction, prompted before enlistment:
+9. **Cross-Faction Baggage Transfer**: If player has baggage stored with a different faction, prompted before enlistment:
    - **Send a courier (50g + 5% of value)**: Items arrive in 3 days, posted to personal news feed.
    - **Sell remotely (40%)**: Immediate gold at reduced rate (worse than in-person sale).
    - **Abandon**: Items lost forever.
    - **Grace period exception**: Re-enlisting within same kingdom during grace period skips this prompt.
-9. **Minor factions only:** Mirror the lord faction's current wars to the player clan.
-10. **Onboarding Events**: New enlistees receive introductory events based on their experience track (green/seasoned/veteran). Events fire in stages (1→2→3→complete) and certain options advance the stage.
+10. **Minor factions only:** Mirror the lord faction's current wars to the player clan.
+11. **Onboarding Events**: New enlistees receive introductory events based on their experience track (green/seasoned/veteran). Events fire in stages (1→2→3→complete) and certain options advance the stage.
 
 **Daily Service:**
 - Follow enlisted lord's party movements automatically (invisible escort AI).

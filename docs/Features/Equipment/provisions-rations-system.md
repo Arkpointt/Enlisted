@@ -1,6 +1,6 @@
 # Provisions & Rations System
 
-**Summary:** The provisions system manages player food requirements across two distinct phases of military service: T1-T6 enlisted soldiers and NCOs receive issued rations every 12 days (ration exchange system), while T7+ officers must purchase provisions from the quartermaster at premium prices. The system creates meaningful food scarcity, integrates with company supply levels, and uses quartermaster reputation to determine ration quality and pricing.
+**Summary:** The provisions system manages player food requirements across two distinct phases of military service: T1-T6 enlisted soldiers and NCOs receive issued rations every 12 days (ration exchange system), while T7+ officers must purchase provisions from the quartermaster at premium prices. Emergency provisions access is granted to any rank when completely out of food. The system creates meaningful food scarcity, integrates with company supply levels, and uses quartermaster reputation to determine ration quality and pricing.
 
 **Status:** ✅ Current  
 **Last Updated:** 2025-12-22  
@@ -14,11 +14,12 @@
 2. [Rank-Based Transition](#rank-based-transition)
 3. [T1-T6: Issued Rations](#t1-t6-issued-rations)
 4. [T7+: Officer Provisioning](#t7-officer-provisioning)
-5. [Food Consumption Mechanics](#food-consumption-mechanics)
-6. [Personal Food Management](#personal-food-management)
-7. [Food Loss Events](#food-loss-events)
-8. [Food Shortage Events](#food-shortage-events)
-9. [Integration & Implementation](#integration--implementation)
+5. [Emergency Provisions Access](#emergency-provisions-access)
+6. [Food Consumption Mechanics](#food-consumption-mechanics)
+7. [Personal Food Management](#personal-food-management)
+8. [Food Loss Events](#food-loss-events)
+9. [Food Shortage Events](#food-shortage-events)
+10. [Integration & Implementation](#integration--implementation)
 
 ---
 
@@ -44,6 +45,12 @@ The provisions system reflects the player's progression from enlisted soldier to
 - **Supply-dependent inventory** - stock refreshes every muster
 - **Reputation affects pricing** - best discount: 150% (never cheaper than towns)
 - **Officer responsibility** - prepares for leading troops with food requirements
+
+### Emergency Provisions Access (All Ranks)
+- **Granted when completely out of food** - any rank can purchase from provisions shop
+- **Prevents starvation** - safety net for poor planning or bad luck
+- **Same premium pricing** - no special discount for emergencies
+- **Automatic detection** - system checks player inventory when opening provisions
 
 **Core Principle:** Food becomes a strategic resource that creates scarcity pressure during campaigns, forcing active management rather than passive accumulation.
 
@@ -335,6 +342,99 @@ Monthly Consumption: 7.5 food items (5 members × 30 days ÷ 20)
 | **QM (max)** | ~338g/month | Major expense, +113g premium |
 
 **Strategic Implication:** Leading troops makes food a significant logistics burden
+
+---
+
+## Emergency Provisions Access
+
+### Overview
+
+Any enlisted soldier (T1-T6) who runs completely out of food gains emergency access to the quartermaster provisions shop. This safety net prevents starvation from poor planning, bad luck, or unexpected events while maintaining the premium pricing structure.
+
+### Access Conditions
+
+**Emergency Access Granted When:**
+- Player has **zero food items** in party inventory
+- Player is enlisted (any tier T1-T9)
+- Quartermaster is accessible (normal availability rules apply)
+
+**Detection:**
+- Automatic check when provisions UI opens
+- System scans `MobileParty.MainParty.ItemRoster` for any `item.IsFood == true`
+- If no food found, emergency access flag enabled
+
+### Pricing & Availability
+
+**No Special Treatment:**
+- Same premium pricing as T7+ officers (1.5× to 2.2× town prices)
+- Same stock limitations (inventory refreshes at muster)
+- Same QM reputation pricing modifiers apply
+- Supply level affects availability and prices
+
+**Design Rationale:**
+- Emergency access prevents unplayable starvation scenarios
+- Premium pricing maintains town market value and planning incentives
+- No discount ensures players still want to avoid this situation
+- Officers always have access (T7+) as a perk of rank
+
+### Player Experience
+
+**T3 Enlisted Example:**
+```
+Player: [Opens Quartermaster menu]
+[System detects: 0 food items in inventory]
+[Emergency access granted]
+
+Provisions Shop:
+  Grain: 25g (normally town: 10g)
+  [Tooltip: "Officers Only (Rank T7+ or emergency: out of food)"]
+  
+Player can now purchase food at premium prices despite being T3.
+```
+
+**After Purchasing Food:**
+```
+Player: [Buys 3 grain for 75g]
+[Next time opens provisions menu]
+[System detects: 3 grain in inventory]
+[Emergency access revoked - back to normal T3 restrictions]
+
+Provisions Shop:
+  Grain: 25g
+  [Buy button disabled - "Officers Only (Rank T7+ or emergency: out of food)"]
+```
+
+### Technical Implementation
+
+**Access Check (QuartermasterProvisionsVm.cs):**
+```csharp
+private static bool HasAnyFood()
+{
+    var party = MobileParty.MainParty;
+    if (party?.ItemRoster == null) return false;
+    
+    foreach (var element in party.ItemRoster)
+    {
+        if (element.EquipmentElement.Item?.IsFood == true)
+            return true;
+    }
+    
+    return false; // No food found - grant emergency access
+}
+
+// In constructor:
+var hasNoFood = !HasAnyFood();
+_isOfficer = playerTier >= 7 || hasNoFood; // Officer OR emergency
+```
+
+### Edge Cases
+
+| Scenario | Behavior |
+|----------|----------|
+| **Player has 1 grain** | No emergency access - normal rank restrictions apply |
+| **Player has food in baggage** | Emergency access granted (baggage doesn't count as available food) |
+| **T7+ officer with no food** | Normal officer access (already have provisions access) |
+| **Grace period desertion** | Emergency access still works if out of food |
 
 ---
 

@@ -3689,6 +3689,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Info("Enlistment", "Grace enlistment equipment restored for new service");
                 }
 
+                // Issue initial food ration on new enlistment (T1-T6 only)
+                // Grace period re-enlistment doesn't get a new ration (they already had one from previous service)
+                // Commanders (T7+) don't receive issued rations
+                if (!resumedFromGrace && _enlistmentTier < 7)
+                {
+                    try
+                    {
+                        IssueNewRation();
+                        ModLogger.Info("Rations", "Issued initial food ration at enlistment start");
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Warn("Rations", $"Failed to issue initial ration at enlistment: {ex.Message}");
+                    }
+                }
+
                 if (resumedFromGrace)
                 {
                     var message =

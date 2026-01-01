@@ -217,7 +217,7 @@ namespace Enlisted.Features.Equipment.UI
 
             if (!_isOfficer)
             {
-                parts.Add("Officers Only (Rank T7+)");
+                parts.Add("Officers Only (Rank T7+ or emergency: out of food)");
             }
             else if (!CanAffordOne)
             {
@@ -289,7 +289,7 @@ namespace Enlisted.Features.Equipment.UI
                     if (!_isOfficer)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "Provisions are for officers only (Rank T7+).",
+                            "Provisions require officer rank (T7+) or emergency access (completely out of food).",
                             Colors.Red));
                     }
                     else if (!IsInStock)
@@ -332,7 +332,7 @@ namespace Enlisted.Features.Equipment.UI
                     if (!_isOfficer)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "Provisions are for officers only (Rank T7+).",
+                            "Provisions require officer rank (T7+) or emergency access (completely out of food).",
                             Colors.Red));
                     }
                     else if (!IsInStock)
