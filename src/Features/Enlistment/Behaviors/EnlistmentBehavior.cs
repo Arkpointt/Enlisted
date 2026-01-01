@@ -5105,12 +5105,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
-                // Award daily XP for military tier progression (config-driven)
-                // This is separate from skill XP, which is handled by formation training and duties
-                var dailyXP = Math.Max(0, EnlistedConfig.GetDailyBaseXp());
-                AddEnlistmentXP(dailyXP, "Daily Service");
+                // XP is now awarded exclusively through the order system (order completion, events)
+                // Daily/battle static XP removed - progression happens through gameplay
 
-                ModLogger.Debug("Enlistment", $"Daily service completed: {wage} gold paid, {dailyXP} XP gained");
+                ModLogger.Debug("Enlistment", $"Daily service completed: {wage} gold paid");
 
                 // Check for retirement eligibility notification (first term complete)
                 CheckRetirementEligibility();
@@ -10044,61 +10042,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Awards battle participation XP after a battle ends (called from OnMapEventEnded).
-        ///     Reads values from progression_config.json for configurability.
-        ///     Note: This is a fallback - OnPlayerBattleEnd awards XP first if it fires.
+        /// REMOVED: Battle XP is now awarded through the order system only.
+        /// Combat progression happens through order completion and order events during battle phases.
+        /// This prevents double XP awards and ensures XP is earned through meaningful gameplay.
         /// </summary>
         /// <param name="participated">Whether the player actively participated in the battle.</param>
+        [Obsolete("Battle XP now awarded through order system only")]
         private void AwardBattleXP(bool participated)
         {
-            try
+            // No-op - XP comes from order system now
+            // Still track battles for promotion requirements
+            if (IsEnlisted && participated && !EnlistedEncounterBehavior.IsWaitingInReserve)
             {
-                if (!IsEnlisted)
-                {
-                    return;
-                }
-
-                // Don't award XP if player is waiting in reserve - they're sitting out all battles
-                if (EnlistedEncounterBehavior.IsWaitingInReserve)
-                {
-                    ModLogger.Debug("Battle", "Skipping XP award - player is waiting in reserve");
-                    return;
-                }
-
-                // Prevent double XP awards - OnPlayerBattleEnd may have already awarded XP
-                if (_battleXPAwardedThisBattle)
-                {
-                    ModLogger.Debug("Battle", "Skipping XP award - already awarded via OnPlayerBattleEnd");
-                    return;
-                }
-
-                if (!participated)
-                {
-                    ModLogger.Debug("Battle", "No battle XP awarded - player did not participate");
-                    return;
-                }
-
-                // Get XP values from config
-                var battleXP = ConfigurationManager.GetBattleParticipationXp();
-
-                if (battleXP > 0)
-                {
-                    AddEnlistmentXP(battleXP, "Battle Participation");
-                    _battleXPAwardedThisBattle = true;
-
-                    // Track battles for promotion requirements.
-                    IncrementBattlesSurvived();
-
-                    // Show notification to player
-                    var message = $"Battle completed! +{battleXP} XP";
-                    InformationManager.DisplayMessage(new InformationMessage(message));
-
-                    ModLogger.Info("Battle", $"Battle XP awarded: {battleXP} (participation) via OnMapEventEnded");
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Battle", "E-BATTLE-007", "Error awarding battle XP", ex);
+                IncrementBattlesSurvived();
             }
         }
 
@@ -12904,11 +12860,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                     }
 
-                    // Award battle XP only if player actually participated (not waiting in reserve)
-                    // Players who chose "Wait in Reserve" opted out of combat and don't earn XP
-                    if (!EnlistedEncounterBehavior.IsWaitingInReserve)
+                    // Award battle loot share if we won (XP now comes from order system)
+                    if (!EnlistedEncounterBehavior.IsWaitingInReserve && playerParticipated)
                     {
-                        AwardBattleXP(playerParticipated);
+                        // Track battles for promotion requirements
+                        if (!_battleXPAwardedThisBattle)
+                        {
+                            _battleXPAwardedThisBattle = true;
+                            IncrementBattlesSurvived();
+                        }
 
                         // Award battle loot share if we won.
                         var playerWon = effectiveMapEvent?.WinningSide == effectiveMapEvent?.PlayerSide;
@@ -13106,11 +13066,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
-                // Award battle XP if player participated
-                if (participated)
+                // Track battle participation for promotion requirements (XP now comes from order system)
+                if (participated && !EnlistedEncounterBehavior.IsWaitingInReserve && !_battleXPAwardedThisBattle)
                 {
-                    AwardBattleXP(killsThisBattle);
-
+                    _battleXPAwardedThisBattle = true;
+                    IncrementBattlesSurvived();
                 }
 
                 // Add kills to current term total (persists to faction record on retirement)
@@ -13135,52 +13095,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Awards XP for battle participation and kills (called from OnPlayerBattleEnd).
-        ///     XP values are loaded from progression_config.json.
+        /// REMOVED: XP is now awarded through order system only.
         /// </summary>
+        [Obsolete("Battle XP now awarded through order system only")]
         private void AwardBattleXP(int kills)
         {
-            try
+            // No-op - XP comes from order system now
+            // Still track battles for promotion requirements
+            if (IsEnlisted && !EnlistedEncounterBehavior.IsWaitingInReserve && !_battleXPAwardedThisBattle)
             {
-                // Don't award XP if player is waiting in reserve - they're sitting out all battles
-                if (EnlistedEncounterBehavior.IsWaitingInReserve)
-                {
-                    ModLogger.Debug("Battle", "Skipping XP award (kills) - player is waiting in reserve");
-                    return;
-                }
-
-                // Prevent double XP awards
-                if (_battleXPAwardedThisBattle)
-                {
-                    ModLogger.Debug("Battle", "Skipping XP award - already awarded this battle");
-                    return;
-                }
-
-                // Load XP values from config
-                var battleParticipationXP = EnlistedConfig.GetBattleParticipationXp();
-                var xpPerKill = EnlistedConfig.GetXpPerKill();
-
-                // Award participation XP (flat bonus for being in battle)
-                if (battleParticipationXP > 0)
-                {
-                    AddEnlistmentXP(battleParticipationXP, "Battle Participation");
-                }
-
-                // Award kill XP (bonus per enemy killed)
-                var killXP = kills * xpPerKill;
-                if (killXP > 0)
-                {
-                    AddEnlistmentXP(killXP, $"Combat Kills ({kills})");
-                }
-
-                // Mark XP as awarded to prevent double awards from OnMapEventEnded
                 _battleXPAwardedThisBattle = true;
-
-                ModLogger.Info("Battle",
-                    $"Battle XP awarded: {battleParticipationXP} (participation) + {killXP} (kills) = {battleParticipationXP + killXP} total");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Battle", "E-BATTLE-017", "Error awarding battle XP", ex);
+                IncrementBattlesSurvived();
             }
         }
 

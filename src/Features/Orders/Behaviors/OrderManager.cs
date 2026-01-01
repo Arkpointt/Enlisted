@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Company;
+using Enlisted.Features.Content;
 using Enlisted.Features.Context;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -119,8 +120,8 @@ namespace Enlisted.Features.Orders.Behaviors
             }
 
             // Cancel the order - it can't be performed at sea
-            var orderTitle = _currentOrder.Title;
-            ModLogger.Info(LogCategory, $"Order cancelled due to sea travel: {orderTitle}");
+            var orderTitle = OrderCatalog.GetDisplayTitle(_currentOrder);
+            ModLogger.Info(LogCategory, $"Order cancelled due to sea travel: {_currentOrder.Title}");
 
             // Report to news system
             Interface.Behaviors.EnlistedNewsBehavior.Instance?.AddCampNews(
@@ -265,7 +266,12 @@ namespace Enlisted.Features.Orders.Behaviors
         private void TransitionToPending(Order order)
         {
             order.State = OrderState.Pending;
-            order.IssuedTime = CampaignTime.Now;
+            
+            // Ensure IssuedTime is set (critical for UI display and order duration tracking)
+            if (order.IssuedTime.ToHours < 1.0)
+            {
+                order.IssuedTime = CampaignTime.Now;
+            }
 
             // Check if order is mandatory (auto-accept)
             if (order.Mandatory)
@@ -276,7 +282,7 @@ namespace Enlisted.Features.Orders.Behaviors
 
                 // Show notification that duty has been assigned
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"Duty Assigned: {order.Title}",
+                    $"Duty Assigned: {OrderCatalog.GetDisplayTitle(order)}",
                     Colors.Cyan));
             }
             else
@@ -301,13 +307,20 @@ namespace Enlisted.Features.Orders.Behaviors
                 return;
             }
 
+            // Safety check: ensure IssuedTime is set (may not be if order was restored from old save)
+            if (_currentOrder.IssuedTime.ToHours < 1.0)
+            {
+                _currentOrder.IssuedTime = CampaignTime.Now;
+                ModLogger.Warn(LogCategory, $"IssuedTime was not set for order {_currentOrder.Id}, defaulting to now");
+            }
+
             _orderAccepted = true;
             _currentOrder.State = OrderState.Active;
             ModLogger.Info(LogCategory, $"Order accepted: {_currentOrder.Title}");
 
             // Show combat log notification that order has started
             InformationManager.DisplayMessage(new InformationMessage(
-                $"Order Started: {_currentOrder.Title}",
+                $"Order Started: {OrderCatalog.GetDisplayTitle(_currentOrder)}",
                 Colors.Cyan));
 
             // Note: Order now progresses automatically via OrderProgressionBehavior.
@@ -331,18 +344,19 @@ namespace Enlisted.Features.Orders.Behaviors
             ModLogger.Info(LogCategory, $"Order declined: {_currentOrder.Title} ({_declineCount} total declines)");
 
             // Show combat log notification
+            var displayTitle = OrderCatalog.GetDisplayTitle(_currentOrder);
             InformationManager.DisplayMessage(new InformationMessage(
-                $"Order Declined: {_currentOrder.Title}",
+                $"Order Declined: {displayTitle}",
                 Colors.Red));
 
             // Report decline to news system
             if (Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
             {
-                var briefSummary = $"Declined: {_currentOrder.Title}";
+                var briefSummary = $"Declined: {displayTitle}";
                 var detailedSummary = _currentOrder.Consequences.Decline.Text;
 
                 Interface.Behaviors.EnlistedNewsBehavior.Instance.AddOrderOutcome(
-                    orderTitle: _currentOrder.Title,
+                    orderTitle: displayTitle,
                     success: false,
                     briefSummary: briefSummary,
                     detailedSummary: detailedSummary ?? "Order declined",
@@ -419,13 +433,16 @@ namespace Enlisted.Features.Orders.Behaviors
                     return;
                 }
 
-                // Create brief summary for daily report
+                // Create brief summary for daily report - use RP-appropriate language
+                var orderDisplayTitle = OrderCatalog.GetDisplayTitle(order);
                 var briefSummary = success
-                    ? $"{order.Title} completed successfully"
-                    : $"{order.Title} - mission failed";
+                    ? GetSuccessBrief(orderDisplayTitle, order.Id)
+                    : GetFailureBrief(orderDisplayTitle, order.Id);
 
-                // Create detailed summary for full report
-                var detailedSummary = outcome.Text ?? (success ? "Order completed." : "Order failed.");
+                // Create detailed summary for full report - fallback to RP text if outcome.Text is null
+                var detailedSummary = outcome.Text ?? (success
+                    ? GetSuccessFallback(order.Id)
+                    : GetFailureFallback(order.Id));
 
                 // Add reputation context if significant
                 if (outcome.Reputation != null)
@@ -451,7 +468,7 @@ namespace Enlisted.Features.Orders.Behaviors
                 }
 
                 Interface.Behaviors.EnlistedNewsBehavior.Instance.AddOrderOutcome(
-                    orderTitle: order.Title,
+                    orderTitle: orderDisplayTitle,
                     success: success,
                     briefSummary: briefSummary,
                     detailedSummary: detailedSummary,
@@ -463,6 +480,116 @@ namespace Enlisted.Features.Orders.Behaviors
             {
                 ModLogger.Error(LogCategory, "Failed to report order outcome", ex);
             }
+        }
+
+        /// <summary>
+        /// Generates an RP-appropriate brief summary for successful order completion.
+        /// Uses order type to select contextually appropriate phrasing.
+        /// </summary>
+        private static string GetSuccessBrief(string orderTitle, string orderId)
+        {
+            // Pick contextually appropriate completion phrase based on order type
+            var prefix = orderId switch
+            {
+                var id when id.Contains("guard") || id.Contains("watch") || id.Contains("sentry")
+                    => "Watch ended, ",
+                var id when id.Contains("patrol")
+                    => "Patrol returned, ",
+                var id when id.Contains("scout")
+                    => "Scout report filed, ",
+                var id when id.Contains("forage") || id.Contains("supply")
+                    => "Resupply complete, ",
+                var id when id.Contains("repair") || id.Contains("equipment")
+                    => "Work finished, ",
+                var id when id.Contains("train") || id.Contains("drill")
+                    => "Drill complete, ",
+                var id when id.Contains("treat") || id.Contains("medical")
+                    => "Wounded tended, ",
+                _ => "Duty complete, "
+            };
+
+            return $"{prefix}{orderTitle} - all in order.";
+        }
+
+        /// <summary>
+        /// Generates an RP-appropriate brief summary for failed order.
+        /// Uses order type to select contextually appropriate phrasing.
+        /// </summary>
+        private static string GetFailureBrief(string orderTitle, string orderId)
+        {
+            // Pick contextually appropriate failure phrase based on order type
+            var suffix = orderId switch
+            {
+                var id when id.Contains("guard") || id.Contains("watch") || id.Contains("sentry")
+                    => " - breach on your watch.",
+                var id when id.Contains("patrol")
+                    => " - patrol met trouble.",
+                var id when id.Contains("scout")
+                    => " - intelligence compromised.",
+                var id when id.Contains("forage") || id.Contains("supply")
+                    => " - returned empty-handed.",
+                var id when id.Contains("repair") || id.Contains("equipment")
+                    => " - botched the work.",
+                var id when id.Contains("train") || id.Contains("drill")
+                    => " - men lost confidence.",
+                var id when id.Contains("treat") || id.Contains("medical")
+                    => " - patient worsened.",
+                _ => " - you fell short."
+            };
+
+            return $"{orderTitle}{suffix}";
+        }
+
+        /// <summary>
+        /// Returns a detailed RP-appropriate fallback for successful order outcomes when
+        /// the outcome text is missing from the order definition.
+        /// </summary>
+        private static string GetSuccessFallback(string orderId)
+        {
+            return orderId switch
+            {
+                var id when id.Contains("guard") || id.Contains("watch") || id.Contains("sentry")
+                    => "The night passed without incident. Your vigilance kept the camp safe.",
+                var id when id.Contains("patrol")
+                    => "You walked the rounds and found nothing amiss. The men rest easier.",
+                var id when id.Contains("scout")
+                    => "You returned with useful intelligence. The officers will make good use of it.",
+                var id when id.Contains("forage") || id.Contains("supply")
+                    => "You brought back what was needed. The company won't go hungry tonight.",
+                var id when id.Contains("repair") || id.Contains("equipment")
+                    => "The work is done well. Blades sharpened, straps mended, armor sound.",
+                var id when id.Contains("train") || id.Contains("drill")
+                    => "The men learned something today. They'll fight better for it.",
+                var id when id.Contains("treat") || id.Contains("medical")
+                    => "Your steady hands eased their suffering. The wounded will recover.",
+                _ => "You did what was asked. The sergeant gives a curt nod of approval."
+            };
+        }
+
+        /// <summary>
+        /// Returns a detailed RP-appropriate fallback for failed order outcomes when
+        /// the outcome text is missing from the order definition.
+        /// </summary>
+        private static string GetFailureFallback(string orderId)
+        {
+            return orderId switch
+            {
+                var id when id.Contains("guard") || id.Contains("watch") || id.Contains("sentry")
+                    => "Something slipped past you in the dark. The sergeant's disappointment cuts deep.",
+                var id when id.Contains("patrol")
+                    => "You missed the signs. The camp stirred with rumor of what you failed to notice.",
+                var id when id.Contains("scout")
+                    => "Your report was wrong. Men may pay for your errors with blood.",
+                var id when id.Contains("forage") || id.Contains("supply")
+                    => "The countryside yielded nothing. Bellies will grumble tonight.",
+                var id when id.Contains("repair") || id.Contains("equipment")
+                    => "Your handiwork won't hold. Someone will curse your name in battle.",
+                var id when id.Contains("train") || id.Contains("drill")
+                    => "The men grumble and drag their feet. You taught them nothing.",
+                var id when id.Contains("treat") || id.Contains("medical")
+                    => "The wounded fared worse under your care. Some wounds you cannot heal.",
+                _ => "You failed in your duty. The sergeant's glare promises consequences."
+            };
         }
 
         /// <summary>
@@ -707,8 +834,17 @@ namespace Enlisted.Features.Orders.Behaviors
                 feedbackMessages.Add($"{(outcome.Renown.Value > 0 ? "+" : "")}{outcome.Renown.Value} Renown");
             }
 
-            // Apply player HP loss (wounds from dangerous orders)
-            if (outcome.HpLoss.HasValue && outcome.HpLoss.Value > 0)
+            // Apply player injuries (narrative-driven injury system with varied severity)
+            if (!string.IsNullOrWhiteSpace(outcome.InjuryType))
+            {
+                var narrative = InjurySystem.ApplyInjury(outcome.InjuryType, "order_outcome");
+                if (!string.IsNullOrWhiteSpace(narrative))
+                {
+                    feedbackMessages.Add(InjurySystem.GetBriefNarrative(outcome.InjuryType));
+                }
+            }
+            // Fallback to old flat HP loss system if no injury type specified
+            else if (outcome.HpLoss.HasValue && outcome.HpLoss.Value > 0)
             {
                 var hero = Hero.MainHero;
                 var oldHp = hero.HitPoints;
@@ -825,7 +961,7 @@ namespace Enlisted.Features.Orders.Behaviors
         private void ShowOrderNotification(Order order)
         {
             InformationManager.DisplayMessage(new InformationMessage(
-                $"New Order Available: {order.Title}",
+                $"New Order Available: {OrderCatalog.GetDisplayTitle(order)}",
                 Color.FromUint(4282569842u))); // Gold color
         }
 
@@ -1011,7 +1147,7 @@ namespace Enlisted.Features.Orders.Behaviors
 
             // Show combat log notification
             InformationManager.DisplayMessage(new InformationMessage(
-                $"Order Completed: {_currentOrder.Title}",
+                $"Order Completed: {OrderCatalog.GetDisplayTitle(_currentOrder)}",
                 success ? Colors.Green : Colors.Yellow));
 
             // Report to news system

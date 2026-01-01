@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "injuries": [
+    {
+      "id": "sprained_ankle",
+      "displayName": "Sprained Ankle",
+      "hpPercentage": 15,
+      "narratives": [
+        "Your ankle rolls on uneven ground. It swells before you can unlace your boot.",
+        "A misstep on loose stone. Your ankle buckles. You'll be limping for days.",
+        "The ground gives way. Your ankle twists wrong. It throbs with every step."
+      ],
+      "briefNarrative": "sprained ankle",
+      "recoveryDays": 3,
+      "severity": "minor"
+    },
+    {
+      "id": "bruised_ribs",
+      "displayName": "Bruised Ribs",
+      "hpPercentage": 20,
+      "narratives": [
+        "Something catches you in the ribs. Every breath is a reminder.",
+        "A blow to your side. Nothing broken, but the bruising runs deep.",
+        "Your ribs ache where you took the hit. Moving hurts. Breathing hurts."
+      ],
+      "briefNarrative": "bruised ribs",
+      "recoveryDays": 5,
+      "severity": "minor"
+    },
+    {
+      "id": "cut_arm",
+      "displayName": "Deep Cut",
+      "hpPercentage": 25,
+      "narratives": [
+        "Steel opens your forearm from elbow to wrist. Blood soaks your sleeve.",
+        "A blade catches your arm. The cut is deep but clean. You bind it tight.",
+        "Your arm bleeds freely from a jagged wound. You tie cloth around it and keep moving."
+      ],
+      "briefNarrative": "deep cut on arm",
+      "recoveryDays": 7,
+      "severity": "moderate"
+    },
+    {
+      "id": "broken_rib",
+      "displayName": "Broken Rib",
+      "hpPercentage": 35,
+      "narratives": [
+        "You hear the crack before you feel it. Something inside snaps. Each breath is agony.",
+        "A blow lands true. Your rib gives way with a wet grinding sound.",
+        "Sharp pain lances through your side. At least one rib is broken. You push on."
+      ],
+      "briefNarrative": "broken rib",
+      "recoveryDays": 14,
+      "severity": "moderate"
+    },
+    {
+      "id": "head_wound",
+      "displayName": "Head Wound",
+      "hpPercentage": 30,
+      "narratives": [
+        "Blood streams down your face. Head wounds bleed heavy. You wipe your eyes and fight on.",
+        "Something strikes your temple hard. The world spins. Blood fills your eye.",
+        "Your head rings like a struck bell. Warm blood mats your hair."
+      ],
+      "briefNarrative": "head wound",
+      "recoveryDays": 10,
+      "severity": "moderate"
+    },
+    {
+      "id": "broken_arm",
+      "displayName": "Broken Arm",
+      "hpPercentage": 45,
+      "narratives": [
+        "Your arm snaps with a sickening crack. Useless now. It hangs at your side.",
+        "Bone breaks through skin. Your sword arm is shattered.",
+        "The impact shatters your forearm. You cradle it against your chest and stagger back."
+      ],
+      "briefNarrative": "broken arm",
+      "recoveryDays": 21,
+      "severity": "severe"
+    },
+    {
+      "id": "gut_wound",
+      "displayName": "Gut Wound",
+      "hpPercentage": 50,
+      "narratives": [
+        "Steel finds your belly. You press your hands against the wound. Blood seeps between your fingers.",
+        "You take iron in the gut. Pain like fire. Someone hauls you back from the line.",
+        "A blade slips under your guard. The wound is deep. You need the surgeon."
+      ],
+      "briefNarrative": "gut wound",
+      "recoveryDays": 30,
+      "severity": "severe"
+    },
+    {
+      "id": "concussion",
+      "displayName": "Severe Concussion",
+      "hpPercentage": 40,
+      "narratives": [
+        "Your head strikes something hard. Everything goes black. When you wake, the world won't stop spinning.",
+        "A crushing blow to the skull. You can't stand straight. Your vision swims.",
+        "The ground rushes up to meet you. Someone drags you clear. You can't remember your name."
+      ],
+      "briefNarrative": "severe concussion",
+      "recoveryDays": 14,
+      "severity": "severe"
+    },
+    {
+      "id": "twisted_knee",
+      "displayName": "Twisted Knee",
+      "hpPercentage": 18,
+      "narratives": [
+        "Your knee buckles. Something tears inside. You can barely put weight on it.",
+        "The joint gives way. Your knee swells before you can unlace your greave.",
+        "Pain shoots through your knee with every step. You'll be slower for a while."
+      ],
+      "briefNarrative": "twisted knee",
+      "recoveryDays": 7,
+      "severity": "minor"
+    },
+    {
+      "id": "shoulder_dislocation",
+      "displayName": "Dislocated Shoulder",
+      "hpPercentage": 35,
+      "narratives": [
+        "Your shoulder wrenches from its socket. The arm hangs wrong. Useless until it's set.",
+        "Something pops in your shoulder. The pain is blinding. You can't lift the arm.",
+        "A twist and a pull. Your shoulder tears free with a wet grinding sound."
+      ],
+      "briefNarrative": "dislocated shoulder",
+      "recoveryDays": 14,
+      "severity": "moderate"
+    },
+    {
+      "id": "punctured_lung",
+      "displayName": "Punctured Lung",
+      "hpPercentage": 55,
+      "narratives": [
+        "Steel slides between your ribs. Something inside collapses. Each breath bubbles with blood.",
+        "You're run through the chest. Breathing becomes a struggle. Pink foam on your lips.",
+        "The blade finds your lung. You cough up frothy red blood. Someone carries you to the surgeon."
+      ],
+      "briefNarrative": "punctured lung",
+      "recoveryDays": 45,
+      "severity": "critical"
+    },
+    {
+      "id": "severed_artery",
+      "displayName": "Severed Artery",
+      "hpPercentage": 60,
+      "narratives": [
+        "Blood pulses from the wound in hot spurts. Your heartbeat measured in crimson jets.",
+        "The blade finds an artery. Blood sprays with each heartbeat. Someone binds it tight.",
+        "You're bleeding out. Fast. A comrade's belt becomes a tourniquet. It saves your life."
+      ],
+      "briefNarrative": "severed artery",
+      "recoveryDays": 30,
+      "severity": "critical"
+    },
+    {
+      "id": "gash_leg",
+      "displayName": "Leg Gash",
+      "hpPercentage": 22,
+      "narratives": [
+        "A blade opens your thigh. Not deep enough to cripple, but you'll be slower.",
+        "Steel scores your leg from hip to knee. Blood runs into your boot.",
+        "Your leg takes a cut. You bind it with a torn sleeve and limp on."
+      ],
+      "briefNarrative": "leg gash",
+      "recoveryDays": 6,
+      "severity": "minor"
+    },
+    {
+      "id": "crushed_hand",
+      "displayName": "Crushed Hand",
+      "hpPercentage": 28,
+      "narratives": [
+        "Your hand is caught between steel and stone. Something crunches. Two fingers don't bend right.",
+        "A blow lands on your sword hand. The bones shift wrong. Gripping anything is agony.",
+        "Your hand takes a crushing blow. You can't make a fist. Holding a weapon is torture."
+      ],
+      "briefNarrative": "crushed hand",
+      "recoveryDays": 12,
+      "severity": "moderate"
+    },
+    {
+      "id": "cracked_skull",
+      "displayName": "Cracked Skull",
+      "hpPercentage": 48,
+      "narratives": [
+        "Your helm saves your life, but the blow still cracks bone. Blood leaks from your ear.",
+        "Something smashes your head. Your skull fractures. The world goes white, then red, then black.",
+        "A mace catches your temple. The bone gives. You collapse. When you wake, you can't hear from one ear."
+      ],
+      "briefNarrative": "cracked skull",
+      "recoveryDays": 28,
+      "severity": "severe"
+    }
+  ]
+}

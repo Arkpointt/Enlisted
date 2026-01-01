@@ -923,13 +923,13 @@ Each option represents a player choice.
 
 **Purpose:** The `resultText` field provides narrative feedback after an event option is chosen.
 
-**Display System:** Event outcomes are **NOT shown as popups** (the outcome popup system was removed as dead code). Instead, they appear in the **Recent Activities** section of the status menu using a queue system.
+**Display System:** Event outcomes are **NOT shown as popups** (the outcome popup system was removed as dead code). Instead, they appear in the **Recent Activities** section of the status menu using a queue system. **Decisions** (events with `category: "decision"`) also display their result text immediately in the combat log for instant feedback.
 
 **What Still Uses Popups:**
 - Initial event setup and option selection (unchanged)
 - Multi-phase/chain events (each phase shows normally)
 - `reward_choices` sub-popups (training focus, etc.) - These still work!
-- Only the outcome narrative after choosing goes to Recent Activities
+- Only the outcome narrative after choosing goes to Recent Activities (and combat log for decisions)
 
 **Queue Behavior:**
 - Only ONE event outcome displays at a time
@@ -969,12 +969,19 @@ Each option represents a player choice.
 }
 ```
 
-**Display Format in Recent Activities:**
+**Display Format:**
+
+*Combat Log (decisions only):*
+```
+You drive him back with a flurry of blows. He yields with a grudging nod. (green text)
+```
+
+*Recent Activities (all events):*
 ```
 • Event Title: Result narrative text here
 ```
 
-**Important:** The `resultText` field is still required even though outcomes don't show as popups. It's displayed in Recent Activities and provides crucial narrative feedback.
+**Important:** The `resultText` field is required for all events and decisions. For regular events, it displays in Recent Activities. For decisions, it displays in both the combat log (immediate) and Recent Activities (persistent).
 
 **See Also:** [News & Reporting System - Event Outcome Queue](../UI/news-reporting-system.md#event-outcome-queue-system)
 

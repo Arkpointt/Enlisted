@@ -64,8 +64,13 @@ namespace Enlisted.Features.Content
             var currentOrder = OrderManager.Instance?.GetCurrentOrder();
             if (currentOrder != null)
             {
+                var orderDisplayTitle = Orders.OrderCatalog.GetDisplayTitle(currentOrder);
+                if (string.IsNullOrEmpty(orderDisplayTitle))
+                {
+                    orderDisplayTitle = "Orders";
+                }
                 sb.Append(new TextObject("{=menu_you_on_duty}On duty - {ORDER_NAME}, day {DAY} of {TOTAL}.")
-                    .SetTextVariable("ORDER_NAME", currentOrder.Title ?? "Orders")
+                    .SetTextVariable("ORDER_NAME", orderDisplayTitle)
                     .SetTextVariable("DAY", "1")
                     .SetTextVariable("TOTAL", "3")
                     .ToString());

@@ -1,12 +1,14 @@
 # News & Reporting System
 
-**Summary:** The news and reporting system tracks game events and generates narrative feedback for the player. It manages two feed types (kingdom-wide and personal), a daily brief with company/player/kingdom context, and a company needs status report. Event and order outcomes are displayed in Recent Activities using a queue system instead of popups to reduce UI interruption. All text uses immersive Bannerlord military flavor instead of raw statistics.
+**Summary:** The news and reporting system tracks game events and generates narrative feedback for the player. It manages two feed types (kingdom-wide and personal), a daily brief with company/player/kingdom context, and a company needs status report. Event and order outcomes are displayed in Recent Activities using a queue system instead of popups to reduce UI interruption. All text uses immersive Bannerlord military flavor instead of raw statistics. Order recaps show narrative summaries ("Routine watch", "Spotted tracks") instead of mechanical XP displays.
 
-**2025-12-31 MAJOR UPDATE:** Menu narratives now comprehensively integrate with `WorldStateAnalyzer`, `CampLifeBehavior` pressures, and `CompanySimulationBehavior` for rich, context-aware storytelling that reflects actual simulated world state.
+**2025-12-31 MAJOR UPDATE:** Menu narratives now comprehensively integrate with `WorldStateAnalyzer`, `CampLifeBehavior` pressures, and `CompanySimulationBehavior` for rich, context-aware storytelling that reflects actual simulated world state. Order outcomes now use RP-appropriate fallback text when JSON text is missing. XP displays removed from recaps in favor of narrative summaries.
+
+**2026-01-01 UPDATE:** Routine activity outcomes now display full flavor text from `routine_outcomes.json` in all contexts (combat log, news feed, Recent Activity). Replaces generic summaries like "Combat Training: Completed" with immersive text like "Sharp focus today. Movements feel natural."
 
 **Status:** ✅ Current - Comprehensive Integration Complete  
-**Last Updated:** 2025-12-31 (Added comprehensive system integration to all menu narratives)  
-**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Events Master](../../AFEATURE/order-events-master.md), [Camp Background Simulation](../../AFEATURE/camp-background-simulation.md), [Content Orchestrator](../../AFEATURE/content-orchestrator-plan.md)
+**Last Updated:** 2026-01-01 (Routine flavor text, fallback improvements)  
+**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Events Master](../../AFEATURE/order-events-master.md), [Order Progression System](../../AFEATURE/order-progression-system.md), [Injury System](../Content/injury-system.md), [Camp Routine Schedule](../Campaign/camp-routine-schedule-spec.md)
 
 ---
 
@@ -242,6 +244,7 @@ Uses `GetNCOTitle()` and `GetOfficerTitle()` with XML localization:
 2. **Maintain Immersion:** Full narrative result text preserved and displayed in Recent Activities
 3. **Prevent Clutter:** Only one outcome visible at a time (events and orders share the feed)
 4. **Natural Discovery:** Players check their status menu to see what happened
+5. **Immediate Feedback for Decisions:** Player-initiated decisions also show result text in combat log instantly
 
 ### What Still Uses Popups
 
@@ -249,6 +252,15 @@ Uses `GetNCOTitle()` and `GetOfficerTitle()` with XML localization:
 - **Multi-phase events** - Each phase shows a new event popup (chains work normally)
 - **Reward choices** - Training focus selection and other sub-choices still use popups
 - Only the **outcome narrative** after making a choice goes to Recent Activities
+
+### Combat Log Display (Decisions Only)
+
+**Decisions** (events with `category: "decision"`) display their result text immediately in the combat log for instant feedback:
+- Success outcomes: Light green text
+- Failure outcomes: Yellow text
+- Also preserved in Recent Activities for later review
+
+**Regular events** (non-decisions) only appear in Recent Activities, not the combat log.
 
 ### Queue Behavior
 
@@ -292,7 +304,86 @@ Recent Activities:
   pickets. The sergeant finds it on his own rounds.
 ```
 
-**Technical Note:** The outcome popup system has been removed (dead code: `ShowResultText()` and `ShowOrderResult()` deleted). Event outcomes are recorded with their full `ResultNarrative` text, and order outcomes use their detailed summary text. Both are added to the personal feed only when actively shown. This reduces cognitive load and allows players to review outcomes at their own pace.
+**Technical Note:** The outcome popup system has been removed (dead code: `ShowResultText()` and `ShowOrderResult()` deleted). Event outcomes are recorded with their full `ResultNarrative` text, and order outcomes use their detailed summary text. Both are added to the personal feed only when actively shown. Decisions additionally display their result text in the combat log via `SendDecisionOutcomeToCombatLog()` for immediate player feedback. This reduces cognitive load while ensuring important player-initiated choices have instant visible results.
+
+### Order Outcome Text (2025-12-31 Update)
+
+Order outcomes now use RP-appropriate fallback text when JSON `text` field is missing. This ensures all order results sound like medieval military reports, not generic game messages.
+
+**Fallback System:**
+
+| Order Type | Success Brief | Failure Brief |
+|------------|---------------|---------------|
+| Guard/Watch/Sentry | "Watch ended, [Order] - all in order." | "[Order] - breach on your watch." |
+| Patrol | "Patrol returned, [Order] - all in order." | "[Order] - patrol met trouble." |
+| Scout | "Scout report filed, [Order] - all in order." | "[Order] - intelligence compromised." |
+| Forage/Supply | "Resupply complete, [Order] - all in order." | "[Order] - returned empty-handed." |
+| Repair/Equipment | "Work finished, [Order] - all in order." | "[Order] - botched the work." |
+| Train/Drill | "Drill complete, [Order] - all in order." | "[Order] - men lost confidence." |
+| Medical | "Wounded tended, [Order] - all in order." | "[Order] - patient worsened." |
+| Default | "Duty complete, [Order] - all in order." | "[Order] - you fell short." |
+
+**Detailed Fallbacks:**
+
+Success examples:
+- Guard: "The night passed without incident. Your vigilance kept the camp safe."
+- Patrol: "You walked the rounds and found nothing amiss. The men rest easier."
+- Scout: "You returned with useful intelligence. The officers will make good use of it."
+
+Failure examples:
+- Guard: "Something slipped past you in the dark. The sergeant's disappointment cuts deep."
+- Patrol: "You missed the signs. The camp stirred with rumor of what you failed to notice."
+- Scout: "Your report was wrong. Men may pay for your errors with blood."
+
+**Implementation:** `OrderManager.GetSuccessBrief()`, `GetFailureBrief()`, `GetSuccessFallback()`, `GetFailureFallback()` provide context-aware text based on order ID patterns.
+
+### Routine Activity Flavor Text (2026-01-01 Update)
+
+Routine activity outcomes (training, foraging, patrol, formations, etc.) now display full narrative flavor text from `ModuleData/Enlisted/Config/routine_outcomes.json` instead of generic summaries.
+
+**Before:**
+```
+Combat Training: Completed
+Combat Training: Good progress
+Combat Training: Exceptional performance
+```
+
+**After (uses flavor text from outcome roll):**
+```
+Combat Training: Sharp focus today. Movements feel natural.
+Combat Training: Solid session. The drills are paying off.
+Combat Training: Crisp movements. Best formation in the company.
+```
+
+**Technical Implementation:**
+- `RoutineOutcome.GetNewsSummary()` now prioritizes `FlavorText` property over generic outcome text
+- `CampRoutineProcessor` generates flavor text from `routine_outcomes.json` based on outcome roll (Excellent/Good/Normal/Poor/Mishap)
+- Same flavor text appears in:
+  - Combat log (bottom-left, real-time)
+  - Personal feed (Recent Activity menu)
+  - Camp Hub "RECENT ACTIVITY" section
+
+**Example routine_outcomes.json entry:**
+```json
+"training": {
+  "flavorText": {
+    "excellent": [
+      "Sharp focus today. Movements feel natural.",
+      "Everything clicked. A veteran watched approvingly."
+    ],
+    "good": [
+      "Solid session. The drills are paying off.",
+      "Good practice. You're getting faster."
+    ],
+    "normal": [
+      "Another day of practice.",
+      "Standard drills completed."
+    ]
+  }
+}
+```
+
+This change applies to all 7 routine activity categories: formation, training, work, social, economic, recovery, and special.
 
 ### Order Event Integration
 

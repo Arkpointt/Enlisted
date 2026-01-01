@@ -104,11 +104,11 @@
         "enabled": true,
         "events_folder": "Events",
         "pacing": {
-            "max_per_day": 2,
-            "max_per_week": 8,
-            "min_hours_between": 6,
+            "max_per_day": 1,
+            "max_per_week": 4,
+            "min_hours_between": 12,
             "per_event_cooldown_days": 7,
-            "per_category_cooldown_days": 1
+            "per_category_cooldown_days": 2
         },
         "activity": {
             "enabled": true,

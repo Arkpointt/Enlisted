@@ -407,16 +407,54 @@ namespace Enlisted.Features.Camp
 
         /// <summary>
         /// Gets flavor text for the outcome from config.
+        /// Checks for sea variants when party is at sea, falls back to land variants.
         /// </summary>
         private static string GetFlavorText(JToken activityConfig, OutcomeType outcome)
         {
-            var texts = activityConfig["flavorText"]?[outcome.ToString().ToLowerInvariant()]?.ToObject<List<string>>();
+            List<string> texts = null;
+            
+            // Check if we're at sea and have sea variants
+            if (IsPartyAtSea())
+            {
+                texts = activityConfig["seaVariants"]?[outcome.ToString().ToLowerInvariant()]?.ToObject<List<string>>();
+                if (texts != null && texts.Count > 0)
+                {
+                    ModLogger.Debug(LogCategory, "Using sea variant flavor text");
+                    return texts[_random.Next(texts.Count)];
+                }
+            }
+            
+            // Fall back to standard land flavor text
+            texts = activityConfig["flavorText"]?[outcome.ToString().ToLowerInvariant()]?.ToObject<List<string>>();
             if (texts == null || texts.Count == 0)
             {
                 return GetDefaultFlavorText(outcome);
             }
 
             return texts[_random.Next(texts.Count)];
+        }
+        
+        /// <summary>
+        /// Checks if the party is currently at sea.
+        /// Uses native IsCurrentlyAtSea property for Warsails DLC compatibility.
+        /// </summary>
+        private static bool IsPartyAtSea()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var party = enlistment?.CurrentLord?.PartyBelongedTo;
+                if (party != null)
+                {
+                    return party.IsCurrentlyAtSea;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn(LogCategory, $"Failed to check sea travel status: {ex.Message}");
+            }
+            
+            return false;
         }
 
         /// <summary>

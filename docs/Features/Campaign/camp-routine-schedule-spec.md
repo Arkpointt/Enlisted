@@ -3,10 +3,16 @@
 **Summary:** A default daily schedule system that gives the camp a predictable military routine. The camp follows a baseline schedule (dawn = formations, midday = work, dusk = social, night = rest) with world state causing deviations. Players can see the upcoming schedule and make commitments that override routine activities.
 
 **Status:** ✅ Implemented  
-**Last Updated:** 2025-12-31  
+**Last Updated:** 2026-01-01 (Reduced slot2 frequency - routine phases are now majority)  
 **Implementation:** `src/Features/Camp/CampScheduleManager.cs`, `src/Features/Camp/CampRoutineProcessor.cs`, `src/Features/Content/ContentOrchestrator.cs`  
 **Config Files:** `camp_schedule.json`, `routine_outcomes.json`, `orchestrator_overrides.json`  
 **Related Docs:** [Camp Simulation System](camp-simulation-system.md), [Content System Architecture](../Content/content-system-architecture.md), [Event System Schemas](../Content/event-system-schemas.md)
+
+**RECENT CHANGES (2026-01-01):**
+- **Slot2 weights significantly reduced**: Dawn 0.5→0.2, Midday 0.6→0.3, Dusk 0.5→0.2, Night 0.3→0.1
+- **Slot2 now skips during routine operations**: Added `"routine"`, `"quiet"`, `"marching"`, `"siege"` to skip conditions
+- **Result**: ~4-5 routine outcomes per day instead of 8. Routine phases are now truly the majority
+- **Flavor text now shows everywhere**: Full narrative text from `routine_outcomes.json` displays in combat log, news feed, and Recent Activity
 
 ---
 
@@ -72,9 +78,9 @@ Add a **baseline schedule layer** that:
       },
       "slot2": {
         "category": "training",
-        "weight": 0.5,
+        "weight": 0.2,
         "description": "Early drill",
-        "skippedWhen": ["exhausted", "marching"]
+        "skippedWhen": ["exhausted", "marching", "siege", "routine", "quiet"]
       },
       "flavor": "The camp stirs to life. Sergeants bark orders."
     },
@@ -87,9 +93,9 @@ Add a **baseline schedule layer** that:
       },
       "slot2": {
         "category": "work",
-        "weight": 0.6,
+        "weight": 0.3,
         "description": "Work details and maintenance",
-        "skippedWhen": ["siege"]
+        "skippedWhen": ["siege", "routine", "quiet", "marching"]
       },
       "flavor": "The sun climbs high. The serious work begins."
     },
@@ -102,9 +108,9 @@ Add a **baseline schedule layer** that:
       },
       "slot2": {
         "category": "economic",
-        "weight": 0.5,
+        "weight": 0.2,
         "description": "Trading and gambling",
-        "skippedWhen": ["high_scrutiny"]
+        "skippedWhen": ["high_scrutiny", "routine", "quiet", "siege", "marching"]
       },
       "flavor": "Work ends. Men gather around fires."
     },
@@ -117,9 +123,9 @@ Add a **baseline schedule layer** that:
       },
       "slot2": {
         "category": "special",
-        "weight": 0.3,
+        "weight": 0.1,
         "description": "Night activities for those who can't sleep",
-        "skippedWhen": ["exhausted"]
+        "skippedWhen": ["exhausted", "routine", "quiet", "marching", "siege"]
       },
       "flavor": "The camp grows quiet. Torches gutter."
     }
@@ -958,6 +964,18 @@ See [Event System Schemas](../Content/event-system-schemas.md#camp-routine-confi
 
 ---
 
+## RECENT CHANGES
+
+**2026-01-01:**
+- **Sea-Aware Flavor Text:** Added `seaVariants` to all routine activities in `routine_outcomes.json` for immersive naval travel narratives (deck drills, fishing, hammock rest, lookout duty, etc.)
+- **Travel Context Detection:** `CampRoutineProcessor.GetFlavorText()` now checks if party is at sea using native `IsCurrentlyAtSea` property and selects appropriate variant
+- **Slot2 Frequency Reduction:** Reduced slot2 weights dramatically (Dawn 0.5→0.2, Midday 0.6→0.3, Dusk 0.5→0.2, Night 0.3→0.1) to reduce routine outcome spam
+- **Skip Conditions Expanded:** Added `"routine"`, `"quiet"`, `"marching"`, `"siege"` to slot2 `skippedWhen` arrays to prevent slot2 during common/peaceful world states
+- **Expected Impact:** Routine outcomes reduced from ~8/day to 4-5/day, with slot2 only firing in special situations
+- **Flavor Text Implementation:** Modified `RoutineOutcome.GetNewsSummary()` to return full `FlavorText` for display in news feeds and recent activity, providing immersive narratives in combat logs, camp summaries, and player status
+
+---
+
 ## Files Created/Modified
 
 **New Files:**
@@ -980,5 +998,5 @@ See [Event System Schemas](../Content/event-system-schemas.md#camp-routine-confi
 
 ---
 
-**Last Updated:** 2025-12-31  
+**Last Updated:** 2026-01-01  
 **Status:** 🔵 Design Complete

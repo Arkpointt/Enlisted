@@ -32,17 +32,18 @@ namespace Enlisted.Features.Orders.Behaviors
         private const int DuskHour = 18;
         private const int NightHour = 0;
 
-        // Event chance constants
-        private const float SlotBaseChance = 0.15f;      // 15% base chance for slot phases
-        private const float HighSlotBaseChance = 0.35f;  // 35% base chance for slot! phases
+        // Event chance constants - tuned so ROUTINE phases are the majority
+        // With 2 slot phases per day, routine activity gives ~12% daily event chance (1 event per 8 days)
+        private const float SlotBaseChance = 0.08f;      // 8% base chance for slot phases
+        private const float HighSlotBaseChance = 0.15f;  // 15% base chance for slot! phases
 
-        // Activity level multipliers
+        // Activity level multipliers - routine is the baseline
         private static readonly Dictionary<ActivityLevel, float> ActivityMultipliers = new()
         {
-            { ActivityLevel.Quiet, 0.3f },
-            { ActivityLevel.Routine, 0.6f },
-            { ActivityLevel.Active, 1.0f },
-            { ActivityLevel.Intense, 1.5f }
+            { ActivityLevel.Quiet, 0.25f },    // Quiet: ~3% daily (very rare events)
+            { ActivityLevel.Routine, 0.5f },   // Routine: ~12% daily (1 event per 8 days)
+            { ActivityLevel.Active, 1.0f },    // Active: ~23% daily (1 event per 4 days)
+            { ActivityLevel.Intense, 2.0f }    // Intense: ~46% daily (1 event every 2 days)
         };
 
         // State tracking

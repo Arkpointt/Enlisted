@@ -120,6 +120,7 @@ namespace Enlisted.Features.Camp.Models
 
         /// <summary>
         /// Creates a short summary for news feed entries.
+        /// Uses flavor text when available for immersive narrative.
         /// </summary>
         public string GetNewsSummary()
         {
@@ -128,7 +129,14 @@ namespace Enlisted.Features.Camp.Models
                 return NewsText;
             }
 
-            // Generate from outcome
+            // Use flavor text directly if available - it's already descriptive and immersive
+            // No need to prefix with activity name as that creates redundancy
+            if (!string.IsNullOrEmpty(FlavorText))
+            {
+                return FlavorText;
+            }
+
+            // Fallback to generic outcome text with activity name
             return Outcome switch
             {
                 OutcomeType.Excellent => $"{ActivityName}: Exceptional performance",

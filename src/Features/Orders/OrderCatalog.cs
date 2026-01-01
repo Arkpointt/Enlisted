@@ -226,14 +226,8 @@ namespace Enlisted.Features.Orders
                 return order.Title ?? string.Empty;
             }
 
-            // Get current travel context
-            var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
-            if (worldSituation == null)
-            {
-                return order.Title ?? string.Empty;
-            }
-
-            var contextKey = WorldStateAnalyzer.GetTravelContextKey(worldSituation);
+            // Get current travel context key
+            var contextKey = GetCurrentTravelContextKey(order);
 
             // Check if we have a variant for current context
             if (order.ContextVariants.TryGetValue(contextKey, out var variant) && 
@@ -263,14 +257,8 @@ namespace Enlisted.Features.Orders
                 return order.Description ?? string.Empty;
             }
 
-            // Get current travel context
-            var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
-            if (worldSituation == null)
-            {
-                return order.Description ?? string.Empty;
-            }
-
-            var contextKey = WorldStateAnalyzer.GetTravelContextKey(worldSituation);
+            // Get current travel context key
+            var contextKey = GetCurrentTravelContextKey(order);
 
             // Check if we have a variant for current context
             if (order.ContextVariants.TryGetValue(contextKey, out var variant) && 
@@ -281,6 +269,25 @@ namespace Enlisted.Features.Orders
 
             // Fall back to base description
             return order.Description ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Gets the current travel context key ("sea" or "land") for order text variant selection.
+        /// Directly checks the party's IsCurrentlyAtSea property for real-time accuracy.
+        /// </summary>
+        private static string GetCurrentTravelContextKey(Order order)
+        {
+            // Directly check party's current sea travel status
+            // This is more accurate than cached WorldSituation
+            var enlistment = Enlistment.Behaviors.EnlistmentBehavior.Instance;
+            var party = enlistment?.CurrentLord?.PartyBelongedTo;
+            
+            if (party != null && party.IsCurrentlyAtSea && order.ContextVariants.ContainsKey("sea"))
+            {
+                return "sea";
+            }
+
+            return "land";
         }
 
         /// <summary>
@@ -641,6 +648,7 @@ namespace Enlisted.Features.Orders
                 Denars = outcomeJson["denars"]?.Value<int>(),
                 Renown = outcomeJson["renown"]?.Value<int>(),
                 HpLoss = outcomeJson["hp_loss"]?.Value<int>(),
+                InjuryType = outcomeJson["injury_type"]?.ToString(),
                 MedicalRisk = outcomeJson["medical_risk"]?.Value<int>()
             };
 

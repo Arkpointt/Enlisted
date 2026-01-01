@@ -842,7 +842,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         {
                             var text = new TextObject("{=forecast_duty_imminent}Duty assignment coming in {HOURS}h: {TITLE}");
                             text.SetTextVariable("HOURS", $"{(int)hoursUntil}");
-                            text.SetTextVariable("TITLE", order.Title);
+                            text.SetTextVariable("TITLE", Orders.OrderCatalog.GetDisplayTitle(order));
                             parts.Add($"<span style=\"Warning\">{text}</span>");
                         }
                         else
@@ -850,7 +850,7 @@ namespace Enlisted.Features.Interface.Behaviors
                             // For optional orders, phrase as opportunity
                             var text2 = new TextObject("{=forecast_order_imminent}Order opportunity coming in {HOURS}h: {TITLE}");
                             text2.SetTextVariable("HOURS", $"{(int)hoursUntil}");
-                            text2.SetTextVariable("TITLE", order.Title);
+                            text2.SetTextVariable("TITLE", Orders.OrderCatalog.GetDisplayTitle(order));
                             parts.Add($"<span style=\"Warning\">{text2}</span>");
                         }
                     }
@@ -3968,7 +3968,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     if (currentOrder != null)
                     {
                         // Show that player is currently on duty
-                        return $"On duty: {currentOrder.Title}.";
+                        return $"On duty: {Orders.OrderCatalog.GetDisplayTitle(currentOrder)}.";
                     }
                 }
 

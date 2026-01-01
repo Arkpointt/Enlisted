@@ -11,9 +11,9 @@
       },
       "slot2": {
         "category": "training",
-        "weight": 0.5,
+        "weight": 0.2,
         "description": "Early drill",
-        "skippedWhen": ["exhausted", "marching", "siege"]
+        "skippedWhen": ["exhausted", "marching", "siege", "routine", "quiet"]
       },
       "flavor": "The camp stirs to life. Sergeants bark orders."
     },
@@ -26,9 +26,9 @@
       },
       "slot2": {
         "category": "work",
-        "weight": 0.6,
+        "weight": 0.3,
         "description": "Work details and maintenance",
-        "skippedWhen": ["siege"]
+        "skippedWhen": ["siege", "routine", "quiet", "marching"]
       },
       "flavor": "The sun climbs high. The serious work begins."
     },
@@ -41,9 +41,9 @@
       },
       "slot2": {
         "category": "economic",
-        "weight": 0.5,
+        "weight": 0.2,
         "description": "Trading and gambling",
-        "skippedWhen": ["high_scrutiny"]
+        "skippedWhen": ["high_scrutiny", "routine", "quiet", "siege", "marching"]
       },
       "flavor": "Work ends. Men gather around fires."
     },
@@ -56,9 +56,9 @@
       },
       "slot2": {
         "category": "special",
-        "weight": 0.3,
+        "weight": 0.1,
         "description": "Night activities",
-        "skippedWhen": ["exhausted"]
+        "skippedWhen": ["exhausted", "routine", "quiet", "marching", "siege"]
       },
       "flavor": "The camp grows quiet. Torches gutter."
     }

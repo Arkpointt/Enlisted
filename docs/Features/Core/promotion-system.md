@@ -3,8 +3,10 @@
 **Summary:** Complete guide to military rank progression from T1 (Follower) to T9 (Marshal). Covers XP requirements, multi-factor promotion criteria, proving events, culture-specific rank titles, and the mechanics of advancement. This system rewards consistent service, combat performance, and maintaining good standing with superiors and comrades.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23  
-**Related Docs:** [Enlistment System](enlistment.md), [Training System](../Combat/training-system.md), [Pay System](pay-system.md)
+**Last Updated:** 2026-01-01 (XP system overhaul - removed passive daily/battle XP)  
+**Related Docs:** [Enlistment System](enlistment.md), [Training System](../Combat/training-system.md), [Pay System](pay-system.md), [Order Progression System](../../AFEATURE/order-progression-system.md)
+
+**CRITICAL CHANGE (2025-12-31):** Passive daily XP and automatic battle XP have been **removed entirely**. All XP now comes from orders and events. See [XP Sources](#xp-sources) for details.
 
 ---
 
@@ -152,49 +154,92 @@ This tells you exactly what you need to improve to advance.
 
 ## XP Sources
 
-### Daily Passive XP
-
-**Amount:** 25 XP per day (configurable in `progression_config.json`)  
-**When:** Awarded during the daily tick (happens once per in-game day)  
-**Requirements:**
-- Must be enlisted (not on leave, not captive)
-- Lord must be alive
-- Automatically granted—no action required
-
-This represents the gradual experience you gain from daily military life: drills, marches, guard duties, and routine service.
-
-```
-+25 XP from Daily Service
-```
-
-### Battle XP
-
-**Base Participation:** 25 XP per battle  
-**Kill Bonus:** 2 XP per enemy killed  
-**When:** Awarded at battle conclusion (when winner determined)  
-**Requirements:**
-- Must actively participate (not waiting in reserve)
-- Battle must conclude with a winner
-- Prevents double-awarding through multiple events
-
-**Example:**
-```
-Battle completed!
-+25 XP from Battle Participation
-+18 XP from Combat Kills (9)
-Total: +43 XP
-```
-
-Battles are your primary source of advancement. A soldier who fights in two battles per week and gets a few kills each time will earn roughly 100-150 XP per week from combat alone.
+**MAJOR CHANGE (2025-12-31):** All passive XP has been removed. XP now comes exclusively from active gameplay through the order system.
 
 ### Order Completion XP
 
-Orders do NOT directly award enlistment tier XP. Instead, they award:
-- **Skill XP**: Improves Bannerlord skills (Leadership, Tactics, Medicine, etc.)
-- **Trait XP**: Develops personality traits that affect identity
-- **Reputation**: Affects Soldier/Officer/Lord reputation values
+**Primary XP Source:** Completing assigned duties  
+**Amount:** 10-30 XP per order (based on order difficulty and tier)  
+**When:** Order completion (after 1-3 days of duty)  
+**Requirements:**
+- Must have an active order
+- Order must be completed (not declined or failed)
 
-The reputation and skill gains from orders help you meet the non-XP promotion requirements (soldier reputation, leader relation through improved performance).
+**Example:**
+```
+Order Completed: Guard Duty
++10 XP
+```
+
+For quiet, routine duties, XP gains are minimal. This is intentional - a soldier standing guard isn't learning much.
+
+### Order Event XP
+
+**High-Value XP Source:** Events that occur during orders  
+**Amount:** 15-50 XP per event (based on event difficulty and outcome)  
+**When:** Event resolution during order execution  
+**Requirements:**
+- Must have an active order
+- Event must fire during a "slot" phase
+- Player resolves the event (makes choices, passes skill checks)
+
+**Example:**
+```
+Event: Dead Man's Purse
++25 XP (event resolution)
++10 XP (skill check passed)
+= 35 XP total from one event
+```
+
+Events are where real progression happens. A 2-day order with one event can grant 50+ XP vs 10 XP for quiet duty.
+
+### Combat XP (Through Orders Only)
+
+**CRITICAL:** There is NO automatic battle XP. You don't get XP just for being in a battle.
+
+Combat XP only comes when:
+1. You have an active order during the battle
+2. The order completes (with battle participation bonus)
+3. A battle-related event fires during your order
+
+**Example:**
+```
+T2 soldier with Guard Duty during a major battle:
+- Order completion: +10 XP
+- Battle event ("Valor in Combat"): +50 XP
+- Total: +60 XP from combat
+```
+
+**Without an active order during battle:** 0 XP (you're just a body in formation)
+
+### Why This Change?
+
+**Removed Systems:**
+- ❌ Daily "service" XP (25 XP/day) - Passive income feel
+- ❌ Battle participation XP (25 XP/battle) - Encouraged AFK farming
+- ❌ Kill count XP (2 XP/kill) - Rewarded killstealing over soldiering
+
+**New Philosophy:**
+- ✅ XP comes from doing your job (orders)
+- ✅ Progression accelerates through meaningful events
+- ✅ Combat matters when it intersects with your duties
+- ✅ No "stand around and collect XP" exploits
+- ✅ Aligns with mod's theme: you're a soldier, not a mercenary
+
+### Progression Timeline
+
+At these new rates:
+
+| Tier | XP Required | Quiet Orders Only | With Events | Active Campaign |
+|------|-------------|-------------------|-------------|-----------------|
+| T1→T2 | ~200 | 20 orders (~45 days) | 8 orders (~18 days) | 4-5 orders (~10 days) |
+| T2→T3 | ~400 | 40 orders (~90 days) | 12 orders (~28 days) | 6-8 orders (~15 days) |
+| T3→T4 | ~800 | 80 orders (~180 days) | 20 orders (~45 days) | 10-12 orders (~25 days) |
+
+**A soldier who just does routine duty takes 1-2 years to reach T4.**  
+**A soldier who participates in events and battles reaches T4 in months.**
+
+This matches historical military reality: soldiers who see action advance faster than those in garrison.
 
 ### Training & Event XP
 
@@ -740,9 +785,10 @@ File: `ModuleData/Enlisted/progression_config.json`
 ```
 
 **Adjusting XP Gain:**
-- Increase `daily_base` for faster passive progression
-- Increase `battle_participation` to reward combat more
-- Increase `xp_per_kill` to reward aggressive fighting
+- XP rates are now defined per-order in `ModuleData/Enlisted/Orders/*.json`
+- Order completion XP is in the `consequences.success.skill_xp` section
+- Event XP is in individual event definitions in `ModuleData/Enlisted/Events/*.json`
+- No global daily/battle XP config (those systems were removed)
 
 ### Tier Requirements
 

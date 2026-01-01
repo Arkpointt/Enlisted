@@ -820,6 +820,91 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 },
                 false, 4);
 
+            // Request Discharge/Retirement option (dynamic text based on eligibility)
+            starter.AddGameMenuOption(MusterCompleteMenuId, "muster_complete_discharge",
+                "{DISCHARGE_BUTTON_TEXT}",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment == null || !enlistment.IsEnlisted)
+                    {
+                        return false;
+                    }
+
+                    // Set button text and tooltip based on retirement eligibility
+                    if (enlistment.IsEligibleForRetirement)
+                    {
+                        // Player is eligible for retirement (252+ days)
+                        MBTextManager.SetTextVariable("DISCHARGE_BUTTON_TEXT", 
+                            new TextObject("{=muster_complete_retire}Request Retirement"));
+                        
+                        args.Tooltip = new TextObject(
+                            "{=muster_complete_retire_tt}Complete your term with honor. Receive severance pay and pension. Positive relations.");
+                    }
+                    else
+                    {
+                        // Player is requesting early discharge - show expected outcome
+                        var daysServed = (int)enlistment.DaysServed;
+                        var negativeRelation = enlistment.CurrentLord != null && 
+                                              Hero.MainHero.GetRelation(enlistment.CurrentLord) < 0;
+                        
+                        // Determine expected discharge band
+                        string band;
+                        if (negativeRelation)
+                        {
+                            band = "washout";
+                        }
+                        else if (daysServed >= 200)
+                        {
+                            band = enlistment.EnlistmentTier >= 4 ? "heroic" : "veteran";
+                        }
+                        else if (daysServed >= 100)
+                        {
+                            band = "honorable";
+                        }
+                        else
+                        {
+                            band = "washout";
+                        }
+                        
+                        MBTextManager.SetTextVariable("DISCHARGE_BUTTON_TEXT", 
+                            new TextObject("{=muster_complete_discharge}Request Discharge"));
+                        
+                        // Set tooltip based on expected discharge band
+                        var tooltipText = band switch
+                        {
+                            "heroic" or "veteran" => 
+                                "{=muster_complete_discharge_veteran_tt}Honorable discharge. Receive severance (3000g) and pension. +30 relation with lord.",
+                            "honorable" => 
+                                "{=muster_complete_discharge_honorable_tt}Honorable discharge. Receive severance (3000g) and pension. +10 relation with lord.",
+                            _ => 
+                                "{=muster_complete_discharge_washout_tt}Early discharge (washout). No severance or pension. -10 relation. Gear confiscated."
+                        };
+                        
+                        args.Tooltip = new TextObject(tooltipText);
+                    }
+                    
+                    return true;
+                },
+                _ =>
+                {
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment?.RequestDischarge() == true)
+                    {
+                        var isRetirement = enlistment.IsEligibleForRetirement;
+                        var messageText = isRetirement
+                            ? "{=discharge_requested_retirement}Retirement requested. Will process at next pay muster."
+                            : "{=discharge_requested_discharge}Discharge requested. Will process at next pay muster.";
+                        
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject(messageText).ToString()));
+                    }
+                    CompleteMusterSequence();
+                },
+                false, 5);
+
             ModLogger.Debug(LogCategory, "All 6 muster menu stages registered");
         }
 

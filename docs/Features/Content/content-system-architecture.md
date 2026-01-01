@@ -3,9 +3,15 @@
 **Summary:** The unified content system manages all narrative content (events, decisions, orders, map incidents) through a world-state driven orchestration pipeline. The Content Orchestrator analyzes your lord's situation and coordinates content delivery to match military reality: garrison duty is quiet, campaigns are busy, sieges are intense. All content uses JSON definitions, XML localization, requirement checking, and native Bannerlord effect integration.
 
 **Status:** ✅ **IMPLEMENTED** - ContentOrchestrator, OrderProgressionBehavior, 85 order events active  
-**Last Updated:** 2025-12-31  
-**Implementation:** `src/Features/Content/ContentOrchestrator.cs`, `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`  
+**Last Updated:** 2026-01-01 (Native API usage for travel context detection)  
+**Implementation:** `src/Features/Content/ContentOrchestrator.cs`, `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`, `src/Features/Content/WorldStateAnalyzer.cs`  
 **Related Docs:** [Event Catalog](../../Content/event-catalog-by-system.md), [Training System](../Combat/training-system.md), [Order Progression System](../../AFEATURE/order-progression-system.md), [Content Orchestrator Plan](../../AFEATURE/content-orchestrator-plan.md)
+
+**RECENT CHANGES (2026-01-01):**
+- **Travel context detection** now uses native `party.IsCurrentlyAtSea` property directly (removed reflection overhead)
+- **WorldStateAnalyzer** simplified - no more reflection-based Warsails DLC detection
+- **OrderCatalog** uses direct property access for sea/land context variant selection
+- **Result**: Cleaner, faster, more maintainable code verified against native decompile
 
 ---
 

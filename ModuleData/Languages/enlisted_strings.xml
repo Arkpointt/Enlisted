@@ -1214,6 +1214,16 @@
     <string id="muster_pay_smuggle" text="Slip Away in the Night" />
     <string id="muster_pay_smuggle_tt" text="Desert with your gear. Forfeit pension. Hunted as a deserter." />
 
+    <!-- MUSTER COMPLETE - DISCHARGE/RETIREMENT OPTIONS -->
+    <string id="muster_complete_retire" text="Request Retirement" />
+    <string id="muster_complete_retire_tt" text="Complete your term with honor. Receive severance pay and pension. Positive relations." />
+    <string id="muster_complete_discharge" text="Request Discharge" />
+    <string id="muster_complete_discharge_veteran_tt" text="Honorable discharge. Receive severance (3000g) and pension. +30 relation with lord." />
+    <string id="muster_complete_discharge_honorable_tt" text="Honorable discharge. Receive severance (3000g) and pension. +10 relation with lord." />
+    <string id="muster_complete_discharge_washout_tt" text="Early discharge (washout). No severance or pension. -10 relation. Gear confiscated." />
+    <string id="discharge_requested_retirement" text="Retirement requested. Will process at next pay muster." />
+    <string id="discharge_requested_discharge" text="Discharge requested. Will process at next pay muster." />
+
     <!-- Baggage Check Menu -->
     <string id="muster_baggage_title" text="⚠️  BAGGAGE CHECK  ⚠️" />
     <string id="muster_baggage_continue" text="Continue" />

@@ -2,8 +2,8 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2025-12-31 (Core systems complete, documentation audit complete)
-**Total Documents:** 49
+**Last Updated:** 2026-01-01 (Event frequency rebalance, routine flavor text, native API migration)
+**Total Documents:** 50
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
 
@@ -58,6 +58,7 @@
 | **Baggage Checks/Inspections** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Baggage Checks |
 | **Buyback System** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Buyback System |
 | **Company Needs** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 5 transparent metrics (Readiness/Morale/etc) |
+| **Injuries** | [injury-system.md](Features/Content/injury-system.md) | Percentage-based HP loss with narrative |
 | **Camp Hub Decisions** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 34 player-initiated decisions |
 | **Orchestrator Camp Simulation** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Background + Opportunities layers |
 | **Camp Opportunities** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | 29 contextual activities with learning |
@@ -183,6 +184,7 @@
 | [content-system-architecture.md](Features/Content/content-system-architecture.md) | Complete content system architecture: world-state-driven orchestration (ContentOrchestrator, WorldStateAnalyzer, SimulationPressureCalculator, PlayerBehaviorTracker), activity level system, native Bannerlord effect integration (IncidentEffectTranslator, trait mapping), JSON-driven content delivery, requirement checking, localization. Phases 1-6F implemented. | ✅ Current |
 | [event-system-schemas.md](Features/Content/event-system-schemas.md) | Event system JSON schemas: event structure (triggers, conditions, options, outcomes), decision schemas, order schemas, dialogue schemas, **Progression System Schema** (generic probabilistic daily rolls for escalation tracks), camp opportunities schema, validation rules | ✅ Current |
 | [event-reward-choices.md](Features/Content/event-reward-choices.md) | Event reward system: player choice outcomes, reward types (gold, items, reputation, XP), branching consequences. Code implemented but no JSON content uses it yet. | ⚠️ Coded, Not Content-Implemented |
+| [injury-system.md](Features/Content/injury-system.md) | Injury system: percentage-based HP loss (15-55%), narrative descriptions, severity levels (Minor to Critical), 15 injury types, contextual application through orders/events, RP-appropriate medieval military flavor. Replaces flat HP loss with immersive consequences. | ✅ Implemented |
 | [medical-progression-system.md](Features/Content/medical-progression-system.md) | First implementation of Progression System: CK3-style probabilistic daily rolls for Medical Risk track, treatment decisions, context/skill modifiers, threshold events. Uses generic [Progression System Schema](Features/Content/event-system-schemas.md#progression-system-schema-future-foundation) | 📋 Specification |
 
 ### Technical Systems
@@ -291,6 +293,6 @@ Active feature specifications for ongoing development. Phases 1-6F of Content Or
 
 ---
 
-**Last reorganization:** 2025-12-31 (Core systems complete, documentation audit complete)
+**Last reorganization:** 2026-01-01 (Event frequency rebalance, routine flavor text everywhere, native API migration for sea travel)
 
 

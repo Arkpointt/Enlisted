@@ -556,6 +556,7 @@ Next Muster:         Day 36 (12 days)
 | 🛒 Trade | Visit Quartermaster | Supply >= 15% | Open QM conversation |
 | 📋 Manage | Review Service Record | Always | Open service records menu |
 | 🏕 Submenu | Request Temporary Leave | Not in combat/siege | Start leave process |
+| 📜 Manage | Request Discharge/Retirement | Always | Request discharge (resolves at next muster) |
 
 **Behavior:**
 - All muster outcomes recorded to `EnlistedNewsBehavior` for news feed
@@ -569,7 +570,20 @@ Next Muster:         Day 36 (12 days)
 - Quartermaster stock has been refreshed based on current supply level
 - Newly unlocked equipment (from tier-up) marked with [NEW] indicator
 - Leave requests transition to temporary leave system
+- Discharge/retirement requests set pending flag (processes at next muster)
 - Full muster report saved to news feed archive
+
+**Discharge/Retirement Option:**
+
+The "Request Discharge/Retirement" button dynamically changes based on service length:
+
+- **Retirement (252+ days):** Button shows "Request Retirement" with tooltip emphasizing positive benefits (severance, pension, positive relations)
+- **Discharge (<252 days):** Button shows "Request Discharge" with tooltip showing expected discharge band:
+  - **Veteran/Heroic (200+ days):** Honorable discharge, 3000g severance, +30 relation, pension
+  - **Honorable (100-199 days):** Honorable discharge, 3000g severance, +10 relation, pension
+  - **Washout (<100 days or negative relation):** No severance, -10 relation, gear confiscated
+
+When requested, sets `IsPendingDischarge = true` and processes at the next pay muster (stage 2). Players can cancel the request before the next muster if they change their mind.
 
 ---
 

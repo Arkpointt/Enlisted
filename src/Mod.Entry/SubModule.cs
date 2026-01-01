@@ -301,6 +301,9 @@ namespace Enlisted.Mod.Entry
                 {
                     // Initialize event catalog before registering behaviors that might use it
                     EventCatalog.Initialize();
+                    
+                    // Initialize injury system with varied severity definitions for narrative-driven injuries
+                    Enlisted.Features.Content.InjurySystem.Initialize();
 
                     // Save/load diagnostics: two marker behaviors registered first/last so we can log
                     // user-friendly "Saving..." / "Save finished" and "Loading..." / "Load finished" lines.

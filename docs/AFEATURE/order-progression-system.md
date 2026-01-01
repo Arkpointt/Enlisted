@@ -1,11 +1,18 @@
 # Order Progression System
 
-**Summary:** Orders are multi-day duty assignments that progress through phases automatically. Events fire contextually during orders based on world state and order type. Players experience being a soldier through the rhythm of assigned duties, occasional events, and accumulated consequences like fatigue and injury.
+**Summary:** Orders are multi-day duty assignments that progress through phases automatically. Events fire contextually during orders based on world state and order type. Players experience being a soldier through the rhythm of assigned duties, occasional events, and accumulated consequences like fatigue and injury. XP progression is now exclusively through orders (no passive daily/battle XP). Narrative recaps replace mechanical XP displays.
 
 **Status:** ✅ **IMPLEMENTED** - OrderProgressionBehavior, 16 orders, 85 order events active  
-**Last Updated:** 2025-12-31  
+**Last Updated:** 2026-01-01 (Event frequency rebalance, RP fallback text, sea/land context fixes)  
 **Implementation:** `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`, `ModuleData/Enlisted/Orders/`  
-**Related Docs:** [Orders System](../Features/Core/orders-system.md), [Content Orchestrator](content-orchestrator-plan.md), [Order Events Master](order-events-master.md), [Event System Schemas](../Features/Content/event-system-schemas.md)
+**Related Docs:** [Orders System](../Features/Core/orders-system.md), [Content Orchestrator](content-orchestrator-plan.md), [Order Events Master](order-events-master.md), [Event System Schemas](../Features/Content/event-system-schemas.md), [Injury System](../Features/Content/injury-system.md)
+
+**RECENT CHANGES (2026-01-01):**
+- **Event frequency drastically reduced**: `SlotBaseChance` 15%→8%, `HighSlotBaseChance` 35%→15%, Routine multiplier 0.6→0.5
+- **Result**: Routine duty now ~12% daily event chance (1 event every 8 days) instead of ~28% (1 every 3-4 days)
+- **Order outcome fallback text**: Added RP-appropriate contextual text when JSON `text` is null ("Watch ended, all in order" vs generic "Order completed")
+- **Sea/land context detection**: Now uses native `party.IsCurrentlyAtSea` property directly (removed reflection overhead)
+- **Narrative recaps prioritized**: Order outcomes show "Routine watch" or "Spotted tracks" instead of "+15 XP"
 
 ---
 
@@ -727,25 +734,33 @@ Examples:
 
 ## XP Progression
 
-### Design: Slow by Default
+### Design: All XP is Earned Through Orders & Events
 
-Routine duty provides minimal XP. This is intentional. A soldier doing guard duty isn't learning much. Real growth comes from events (things happening) and combat (fighting).
+**CRITICAL CHANGE (2025-12-31):** Passive daily XP and automatic battle XP have been **removed entirely**. All XP now comes through:
+1. **Order completion** - Small XP for finishing assigned duties
+2. **Order events** - Larger XP for meaningful events during orders
+3. **Combat participation** - Only if on an active order during battle
 
-### Passive XP (Just Doing Your Job)
+**Why this change?**
+- Makes orders the central progression path (aligns with mod's design)
+- Removes "passive income" feel - you progress by doing your job, not just existing
+- Ensures all XP gains are tied to meaningful gameplay moments
+- Eliminates "stand around and wait for daily tick" strategies
 
-| Tier | XP per Phase | XP per Day | XP on Complete |
-|------|--------------|------------|----------------|
-| T1-T3 | +1 | +4 | +10 |
-| T4-T6 | +2 | +8 | +20 |
+### Order Completion XP (Baseline Rewards)
 
-**Example: 2-day Guard Post (T2 soldier)**
+| Tier | XP on Complete |
+|------|----------------|
+| T1-T3 | +10-15 |
+| T4-T6 | +20-30 |
+
+**Example: 2-day Guard Post (T2 soldier, no events)**
 ```
-8 phases × 1 XP = 8 XP (passive)
-+ 10 XP (completion)
-= 18 total XP for 2 days of duty
+Order completion: +10 XP
+= 10 total XP for 2 days of quiet duty
 ```
 
-That's tiny. On purpose.
+That's minimal. As intended - routine duty shouldn't accelerate progression.
 
 ### Event XP (Something Happened)
 
@@ -768,16 +783,31 @@ Nearly 3× the quiet order. Events matter.
 
 ### Combat XP (Where Real Growth Happens)
 
-| Combat Action | XP |
-|---------------|-----|
-| Battle participated | +50-100 |
-| Kill (melee) | +15-30 |
-| Kill (ranged) | +8-20 |
-| Survived serious wound | +30 |
-| Valor action | +50 |
-| Victory bonus | +25 |
+**CRITICAL:** There is **NO automatic battle XP**. You don't get XP just for being in a battle.
 
-**One battle can provide 100-300 XP.** That's 5-15× a quiet order.
+Combat XP only comes through orders:
+- Order completion XP if you're on duty during battle (order completes with battle bonus)
+- Order event XP if battle triggers an order event ("Valor in Combat", "Wounded in Battle", etc.)
+- Special battle-related orders (distinguished service, heroic actions)
+
+**Example:** A T2 soldier fights a major battle:
+- **Without an active order**: 0 XP (just like a mercenary would get nothing for standing there)
+- **With Guard Duty active**: +10 XP (order completion) + potential event XP if something notable happens
+- **With Reconnaissance Patrol active**: +20 XP (order completion with higher stakes) + likely 25-50 XP from battle events
+
+This design ensures:
+1. All progression is tied to being an enlisted soldier (not a mercenary)
+2. Combat accelerates progression when it intersects with your duties
+3. No "stand in formation and collect XP" exploits
+
+| Combat Source | XP |
+|---------------|-----|
+| Order completed during campaign | +20-50 |
+| Battle event during order | +25-75 |
+| Valor/distinguished service order | +50-100 |
+| Survive critical injury during order | +30 |
+
+**One battle during an order can provide 50-150 XP** through order completion and events.
 
 ### Progression Timeline
 
@@ -798,31 +828,95 @@ This matches historical reality: soldiers who see combat advance faster.
 
 ---
 
+## Phase Recaps & Forecasting
+
+### Order Phase Recaps
+
+Players see narrative recaps of what happened during each order phase in the Camp Hub "SINCE LAST MUSTER" section. Recaps replace mechanical XP displays with immersive narrative.
+
+**Recap Types:**
+
+| Phase Type | Example Text | When Used |
+|------------|--------------|-----------|
+| Routine | "Morning muster complete. Nothing to report." | Non-slot phase, no event |
+| Foreshadowing | "Spotted tracks near the perimeter. Origin unknown." | Slot phase, no event fired |
+| Event | "Dead Man's Purse. Dealt with." | Event fired during phase |
+
+**Implementation:**
+- `OrderProgressionBehavior` records a `PhaseRecap` for each phase
+- Recaps stored in memory (max 40, trimmed oldest first)
+- Displayed in Camp Hub with day/phase context
+- Color-coded by event type (routine = white, foreshadowing = gold, event = green)
+
+**Example Recap Display:**
+```
+_____ SINCE LAST MUSTER (8 days) _____
+
+Day 1, Midday: Routine watch. All quiet.
+Day 1, Dusk: Spotted tracks near perimeter.
+Day 1, Night: The Wounded Enemy. Resolved.
+Day 2, Dawn: Morning muster complete. Nothing to report.
+Day 2, Midday: Routine duties. All in order.
+```
+
+### Order Forecasting
+
+Players see upcoming commitments and order status in the Camp Hub "UPCOMING" section.
+
+**Forecast Elements:**
+
+| Element | Example | Data Source |
+|---------|---------|-------------|
+| Next commitment | "Training this evening (3h)" | CampOpportunityGenerator |
+| Order status | "Guard Duty - Day 2 of 3" | OrderManager.GetCurrentOrder() |
+| Schedule forecast | "Dusk: Downtime, Evening meal" | CampScheduleManager |
+
+**Example Forecast Display:**
+```
+_____ UPCOMING _____
+
+Current Order: Guard Duty - Day 2 of 3
+Next Activity: Training drill this evening (3h)
+
+Tomorrow's Schedule:
+  Dawn: Formation, Morning muster
+  Midday: Work detail
+  Dusk: Downtime, Evening meal
+  Night: Open (rest recommended)
+```
+
+---
+
 ## Orchestrator Integration
 
 The Content Orchestrator manages event injection during orders.
 
 ### Activity Level Affects Event Chance
 
+**Base Chances (2025-12-31 Update):**
+- Slot phase base: 8% (reduced from 15%)
+- Slot! phase base: 15% (reduced from 35%)
+- **Result:** Routine phases are now the majority (~12% daily event chance = 1 event per 8 days)
+
 | Activity Level | Slot Modifier | Slot! Modifier |
 |----------------|---------------|----------------|
-| Quiet (garrison) | ×0.3 | ×0.5 |
-| Routine (peacetime) | ×0.6 | ×0.8 |
+| Quiet (garrison) | ×0.25 | ×0.25 |
+| Routine (peacetime) | ×0.50 | ×0.50 |
 | Active (campaign) | ×1.0 | ×1.0 |
-| Intense (siege) | ×1.5 | ×1.3 |
+| Intense (siege) | ×2.0 | ×2.0 |
 
 **Example: Guard Post during siege vs garrison**
 
-Guard Post has slots at: Dusk Day 1 (15%), Night Day 1 (35%), Dawn Day 2 (15%)
+Guard Post has slots at: Dusk Day 1 (8%), Night Day 1 (15%), Dawn Day 2 (8%)
 
 Garrison (Quiet):
-- Dusk: 15% × 0.3 = 4.5%
-- Night: 35% × 0.5 = 17.5%
-- Dawn: 15% × 0.3 = 4.5%
-- **Expected events: ~0.26** (usually nothing happens)
+- Dusk: 8% × 0.25 = 2%
+- Night: 15% × 0.25 = 3.75%
+- Dawn: 8% × 0.25 = 2%
+- **Expected events: ~0.08** (very rare, routine duty)
 
 Siege (Intense):
-- Dusk: 15% × 1.5 = 22.5%
+- Dusk: 8% × 2.0 = 16%
 - Night: 35% × 1.3 = 45.5%
 - Dawn: 15% × 1.5 = 22.5%
 - **Expected events: ~0.9** (something probably happens)

@@ -396,6 +396,7 @@
     <Compile Include="src\Features\Content\EventDeliveryManager.cs"/>
     <Compile Include="src\Features\Content\EventRequirementChecker.cs"/>
     <Compile Include="src\Features\Content\EventSelector.cs"/>
+    <Compile Include="src\Features\Content\InjurySystem.cs"/>
     <Compile Include="src\Features\Content\EventPacingManager.cs"/>
     <Compile Include="src\Features\Content\MapIncidentManager.cs"/>
     <Compile Include="src\Features\Content\GlobalEventPacer.cs"/>

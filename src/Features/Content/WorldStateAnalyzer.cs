@@ -313,8 +313,8 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
-        /// Detects whether party is at sea (Warsails DLC) or on land.
-        /// Uses reflection to safely access Warsails API without hard dependency.
+        /// Detects whether party is at sea or on land.
+        /// Uses the native IsCurrentlyAtSea property available in modern Bannerlord versions.
         /// </summary>
         private static TravelContext DetectTravelContext(MobileParty party)
         {
@@ -323,24 +323,11 @@ namespace Enlisted.Features.Content
                 return TravelContext.Land;
             }
 
-            try
+            // Directly use IsCurrentlyAtSea property (available in base game)
+            if (party.IsCurrentlyAtSea)
             {
-                // Check for Warsails DLC sea travel using reflection
-                // MobileParty.IsCurrentlyAtSea property exists in Warsails DLC
-                var isAtSeaProperty = party.GetType().GetProperty("IsCurrentlyAtSea");
-                if (isAtSeaProperty != null)
-                {
-                    var isAtSea = (bool?)isAtSeaProperty.GetValue(party);
-                    if (isAtSea == true)
-                    {
-                        ModLogger.Debug(LogCategory, "Detected sea travel (Warsails DLC)");
-                        return TravelContext.Sea;
-                    }
-                }
-            }
-            catch
-            {
-                // Warsails DLC not present or property access failed - default to land
+                ModLogger.Debug(LogCategory, "Detected sea travel");
+                return TravelContext.Sea;
             }
 
             return TravelContext.Land;

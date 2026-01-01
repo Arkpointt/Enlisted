@@ -69,6 +69,33 @@
           "Wrong turn. Made the whole line look bad.",
           "Dropped your weapon. The sergeant's face said it all."
         ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Deck muster sharp as a blade. The ship's master approves.",
+          "Perfect formation despite the rolling deck. Impressive showing.",
+          "Watch inspection passed with honors. You've found your sea legs."
+        ],
+        "good": [
+          "Solid muster on deck. Balance held despite the swell.",
+          "Good showing at watch formation. The crew takes notice.",
+          "Steady despite the ship's roll. The boatswain nods."
+        ],
+        "normal": [
+          "Standard deck muster. Another watch begins.",
+          "Inspection passed. The sea routine continues.",
+          "Formation on deck completed without incident."
+        ],
+        "poor": [
+          "Stumbled on the rolling deck. Drew looks from the crew.",
+          "Out of position. The sea's motion threw you off.",
+          "Sloppy muster. Should've kept your feet better."
+        ],
+        "mishap": [
+          "Lost footing during muster. Slid across the wet deck.",
+          "Wrong position. Made the whole watch look foolish.",
+          "Dropped your weapon over the rail. The master's fury is legendary."
+        ]
       }
     },
     "training": {
@@ -109,6 +136,33 @@
           "Twisted ankle during drill.",
           "Training partner's swing caught you wrong.",
           "Overextended. Pulled something."
+        ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Deck exercises mastered. Footing sure despite the swell.",
+          "Boarding drill went perfectly. The crew watches with respect.",
+          "Sharp practice on the rolling deck. Balance and blade work as one."
+        ],
+        "good": [
+          "Good training session. Finding your sea legs in combat.",
+          "Solid deck drill. The motion's becoming natural.",
+          "Practiced well despite the ship's roll. Improving."
+        ],
+        "normal": [
+          "Standard deck training. Another day at sea.",
+          "Drill completed. The motion still throws you off.",
+          "Practice session done. Nothing remarkable."
+        ],
+        "poor": [
+          "Struggled with the ship's motion. Lost your balance.",
+          "Distracted by the sea. The sergeant wasn't pleased.",
+          "Off rhythm. The deck's roll ruined your timing."
+        ],
+        "mishap": [
+          "Slipped on wet deck during drill. Cracked your knee.",
+          "Training partner's swing sent you into the rigging.",
+          "Lost footing. Twisted something on the way down."
         ]
       }
     },
@@ -155,6 +209,33 @@
           "Tool slipped. Cut your hand.",
           "Back gave out. Need rest."
         ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Deck scrubbing finished in record time. The master's pleased.",
+          "Rigging work done well. Found loose lines before they failed.",
+          "Bilge duty efficient. Discovered smuggled goods. Reward earned."
+        ],
+        "good": [
+          "Solid work on the rigging. Hands raw but proud.",
+          "Deck work completed well. Salt spray in your eyes the whole time.",
+          "Good labor below deck. The ship's running smooth."
+        ],
+        "normal": [
+          "Ship maintenance completed. Another day of sea duty.",
+          "Deck scrubbed. Water work is never done.",
+          "Standard ship's labor. Back aches, hands sting."
+        ],
+        "poor": [
+          "Slow work on the rigging. The boatswain's impatient.",
+          "Struggled with knots. Should know them better by now.",
+          "Behind on deck work. The pitch and roll didn't help."
+        ],
+        "mishap": [
+          "Rope burn from the rigging. Hand's blistered badly.",
+          "Slipped on wet deck. Barrel rolled over your foot.",
+          "Fell from the rigging. Lucky you didn't break bones."
+        ]
       }
     },
     "social": {
@@ -200,6 +281,33 @@
           "Drinking contest gone wrong. Feeling terrible.",
           "Said the wrong thing. Made enemies.",
           "Fight broke out. You're involved now."
+        ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Sea shanties below deck. Spirits soaring despite the voyage.",
+          "Good company and grog. The crew welcomed you in.",
+          "Stories of distant ports. Laughter echoes through the hold."
+        ],
+        "good": [
+          "Pleasant time with the sailors. Learning their ways.",
+          "Shared rum and tales. The crew's warming to you.",
+          "Good evening below deck. Sea life has its moments."
+        ],
+        "normal": [
+          "Quiet time on deck. Stars above, sea below.",
+          "Below deck with the crew. Nothing special.",
+          "Standard ship life. Same faces, same stories."
+        ],
+        "poor": [
+          "Seasick and miserable. Not fit for company.",
+          "Tension below deck. Cramped quarters breed ill will.",
+          "Kept to yourself. The ship feels too small."
+        ],
+        "mishap": [
+          "Drinking game ended badly. Vomiting over the rail all night.",
+          "Insulted a sailor. Made an enemy on a small ship. Unwise.",
+          "Brawl below deck. Captain's furious with all involved."
         ]
       }
     },
@@ -251,6 +359,33 @@
           "Scammed. Purse is lighter.",
           "Dice weren't kind. Significant losses."
         ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Cards below deck. Sharp play, good winnings.",
+          "Traded goods with passing merchant vessel. Profit made.",
+          "Shrewd dealing with the crew. Coin purse much heavier."
+        ],
+        "good": [
+          "Fair trades with sailors. Small profit.",
+          "Decent gambling. Nothing lost, something gained.",
+          "Good exchange of goods. Worth the time."
+        ],
+        "normal": [
+          "Some trading with crew. Broke even.",
+          "Cards and dice. Nothing remarkable.",
+          "Bartered supplies. Standard ship rates."
+        ],
+        "poor": [
+          "Bad bets below deck. Should have stayed away.",
+          "Cheated by a sailor. Hard lesson learned.",
+          "Lost coin to the crew. Not your day."
+        ],
+        "mishap": [
+          "Gambling debt to dangerous men. Trapped on a ship with them.",
+          "Scammed badly. Can't escape your creditors at sea.",
+          "Dice were loaded. Significant losses. They're laughing."
+        ]
       }
     },
     "recovery": {
@@ -296,6 +431,33 @@
           "Nightmares. Woke in cold sweat.",
           "Illness stirring. Stomach troubles.",
           "Couldn't sleep at all. Exhausted."
+        ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Hammock rest with gentle swell. Slept like the dead.",
+          "Best sleep at sea yet. The rhythm of the waves soothes.",
+          "Woke refreshed. Sea air and steady motion worked wonders."
+        ],
+        "good": [
+          "Good rest in the berth. Getting used to the hammock.",
+          "Solid sleep despite the ship's motion. Recovered well.",
+          "Decent rest below deck. Ready for tomorrow's watch."
+        ],
+        "normal": [
+          "Adequate rest. The ship creaks all night.",
+          "Sleep came eventually. Hard to adjust to the motion.",
+          "Rested. The hammock's not comfortable, but it'll do."
+        ],
+        "poor": [
+          "Restless night. The ship's rolling kept you awake.",
+          "Couldn't settle in the hammock. Mind won't quiet.",
+          "Poor sleep. Seasickness lingering."
+        ],
+        "mishap": [
+          "Storm nightmares. Woke to the ship pitching violently.",
+          "Seasickness all night. Stomach roiling with the waves.",
+          "Couldn't sleep at all. The creaking hull sounds like it's breaking."
         ]
       }
     },
@@ -345,6 +507,33 @@
           "Injured by thorns. Had to abandon search.",
           "Ran into trouble. Lucky to get back."
         ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Excellent fishing. Nets bursting with the catch.",
+          "Found a school. Brought back more than the ship can salt.",
+          "Rich haul from the deep. Supplies significantly boosted."
+        ],
+        "good": [
+          "Successful fishing. Decent catch for the mess.",
+          "Good fishing grounds found. Worth dropping the nets.",
+          "Productive time at the rail. Fresh fish for all."
+        ],
+        "normal": [
+          "Standard fishing. Enough for a meal or two.",
+          "Caught what we could. Better than hardtack.",
+          "Modest catch. Supplements the stores."
+        ],
+        "poor": [
+          "Empty nets. The fish aren't biting.",
+          "Long hours for a handful of fish.",
+          "Barely caught anything. Sea's been fished out here."
+        ],
+        "mishap": [
+          "Net tangled. Lost it over the side with the catch.",
+          "Hook pierced your hand. Blood in the water.",
+          "Nearly pulled overboard. Lost all the gear."
+        ]
       }
     },
     "patrol": {
@@ -387,6 +576,33 @@
           "Got turned around. Reported late.",
           "Fell into a ditch. Twisted something.",
           "Almost walked into an ambush. Lucky escape."
+        ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Sharp watch. Spotted distant sails before anyone else. Captain pleased.",
+          "Keen eyes on lookout. Saw the reef in time. Saved the ship.",
+          "Excellent observation from the crow's nest. Reported threats early."
+        ],
+        "good": [
+          "Thorough watch duty. Horizon clear.",
+          "Good vigilance. Nothing escaped your notice.",
+          "Solid lookout duty. The ship's safe on your watch."
+        ],
+        "normal": [
+          "Watch completed. Uneventful seas.",
+          "Lookout duty finished. All quiet.",
+          "Standard watch. Nothing to report to the master."
+        ],
+        "poor": [
+          "Distracted on watch. Nearly missed a signal.",
+          "Dozed at your post. The boatswain saw.",
+          "Sloppy lookout. Need sharper eyes."
+        ],
+        "mishap": [
+          "Fell asleep on watch. Missed approaching vessel. Disciplined.",
+          "Lost grip in the rigging. Fell to deck. Lucky to live.",
+          "Failed to spot the reef. Ship scraped bottom. Your fault."
         ]
       }
     },
@@ -433,6 +649,33 @@
           "Called for duty during rest. Frustrated.",
           "Rest disturbed. Feel worse than before.",
           "No real rest. Something always needed."
+        ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Full day off watch. Slept in the berth, completely recovered.",
+          "Master granted easy duty. Sea air and rest did wonders.",
+          "Real rest at sea. Feel renewed by the ocean."
+        ],
+        "good": [
+          "Good rest period below deck. Much needed break.",
+          "Easy day. The sway of the ship soothes.",
+          "Light duty. Sea air and rest helping."
+        ],
+        "normal": [
+          "Rest period granted. Adequate recovery in the berth.",
+          "Half-day off watch. Some improvement.",
+          "Light duty today. Helped somewhat."
+        ],
+        "poor": [
+          "Rest interrupted by ship's bell. Still tired.",
+          "Couldn't relax. The ship's motion unsettles you.",
+          "Rest period cut short. Storm brewing, all hands needed."
+        ],
+        "mishap": [
+          "Called to emergency during rest. Exhausted and frustrated.",
+          "Seasickness during rest. Feel worse than before.",
+          "No real rest. Ship's always creaking, crew's always loud."
         ]
       }
     },
@@ -482,6 +725,33 @@
           "Pushed too hard. Something gave.",
           "Collapsed from exhaustion. Carried back."
         ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Man overboard drill perfected. Every second counts at sea.",
+          "Boarding practice intense. The crew's ready for pirates.",
+          "Fire drill flawless. Ship's survival depends on this."
+        ],
+        "good": [
+          "Good emergency drill on deck. Readiness improved.",
+          "Hard work in rough seas but worth it. More prepared.",
+          "Solid drill despite the ship's motion. Getting there."
+        ],
+        "normal": [
+          "Emergency drill completed. Standard sea performance.",
+          "Extra training on deck. Some improvement.",
+          "Drill finished. Adequate for shipboard life."
+        ],
+        "poor": [
+          "Struggled with the motion. Barely kept your feet.",
+          "Emergency drill rough. Seasickness and exhaustion.",
+          "Not ready. Need more practice at sea."
+        ],
+        "mishap": [
+          "Injured during boarding drill. Swung wrong on the rope.",
+          "Pushed too hard. Fell from rigging during practice.",
+          "Collapsed from exhaustion on rolling deck. Dragged below."
+        ]
       }
     },
     "light_duty": {
@@ -527,6 +797,33 @@
           "Arguments despite easy day. Tensions high.",
           "Light duty interrupted by crisis.",
           "Couldn't enjoy the break. Worries mount."
+        ]
+      },
+      "seaVariants": {
+        "excellent": [
+          "Easy watch. Spirits lifted across the crew.",
+          "Light duty and calm seas. Morale soaring aboard.",
+          "Relaxed day at sea. The sailors needed this."
+        ],
+        "good": [
+          "Light workload on deck. The crew appreciates it.",
+          "Easy duties today. Good for morale at sea.",
+          "Lighter watch rotation. Men seem happier."
+        ],
+        "normal": [
+          "Light duty day. Some rest from the rigging.",
+          "Easier workload. Welcome change from hard sailing.",
+          "Not much expected today. Fine with that."
+        ],
+        "poor": [
+          "Even light duty felt wrong. Seasickness lingers.",
+          "Still grumbling despite easy watch. Cramped quarters grate.",
+          "Low energy despite light duties. The voyage wears on."
+        ],
+        "mishap": [
+          "Arguments below deck despite easy day. Cabin fever setting in.",
+          "Light duty interrupted by storm. All hands needed.",
+          "Couldn't enjoy the break. Ship's taking on water."
         ]
       }
     }
