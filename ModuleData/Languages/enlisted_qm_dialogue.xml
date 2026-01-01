@@ -33,6 +33,8 @@
             text="I could use some provisions." />
     <string id="qm_player_supply"
             text="How are we looking? Supply-wise, I mean." />
+    <string id="qm_supply_report"
+            text="{SUPPLY_STATUS}" />
     <string id="qm_player_farewell"
             text="That's all for now." />
 

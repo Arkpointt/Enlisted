@@ -1237,6 +1237,27 @@ namespace Enlisted.Features.Conversations.Behaviors
                 // Note: Quartermaster heroes use Occupation.Soldier (not Wanderer) to prevent
                 // vanilla companion recruitment dialogue from appearing.
 
+                // Register supply response node with dynamic SUPPLY_STATUS text variable
+                // This must be registered manually to call SetSupplyStatusText() in the condition
+                starter.AddDialogLine(
+                    "qm_supply_response_dynamic",
+                    "qm_supply_response",
+                    "qm_supply_response",
+                    "{=qm_supply_report}{SUPPLY_STATUS}",
+                    () => IsQuartermasterConversation() && SetSupplyStatusText(),
+                    null,
+                    200);
+
+                // Register the player option to return to hub after seeing supply report
+                starter.AddPlayerLine(
+                    "qm_supply_continue",
+                    "qm_supply_response",
+                    "qm_hub",
+                    "{=qm_continue}[Continue]",
+                    IsQuartermasterConversation,
+                    null,
+                    100);
+
                 ModLogger.Info("Conversations", "Quartermaster dialog tree registered");
             }
             catch (Exception ex)
@@ -1299,6 +1320,25 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "{=qm_player_provisions}I could use some provisions.",
                 () => EnlistmentBehavior.Instance?.EnlistmentTier >= 7,
                 OnQuartermasterProvisionsRequest);
+
+            // Player: Supply inquiry
+            starter.AddPlayerLine(
+                "qm_fallback_supply",
+                "qm_fallback_hub",
+                "qm_fallback_supply_response",
+                "{=qm_player_supply}How are we looking? Supply-wise, I mean.",
+                null,
+                null);
+
+            // QM: Supply response (with dynamic text)
+            starter.AddDialogLine(
+                "qm_fallback_supply_response",
+                "qm_fallback_supply_response",
+                "qm_fallback_hub",
+                "{=qm_supply_report}{SUPPLY_STATUS}",
+                () => IsQuartermasterConversation() && SetSupplyStatusText(),
+                null,
+                200);
 
             // Player: Goodbye
             starter.AddPlayerLine(

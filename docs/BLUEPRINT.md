@@ -356,6 +356,31 @@ ConversationSentence.OnConditionDelegate condition = () => {
 starter.AddDialogLine(id, inputToken, outputToken, text, condition, consequence, priority);
 ```
 
+**Manual Registration for Dynamic Text Variables:**
+When a dialogue node needs to generate text dynamically (not just select from pre-defined variants), manually register both the NPC line and player responses:
+```csharp
+// Register NPC line with text variable setter
+starter.AddDialogLine(
+    "qm_supply_response_dynamic",
+    "qm_supply_response",
+    "qm_supply_response",
+    "{=qm_supply_report}{SUPPLY_STATUS}",
+    () => IsQuartermasterConversation() && SetSupplyStatusText(),  // Sets {SUPPLY_STATUS}
+    null,
+    200);
+
+// Register player options that would normally come from JSON
+starter.AddPlayerLine(
+    "qm_supply_continue",
+    "qm_supply_response",
+    "qm_hub",
+    "{=qm_continue}[Continue]",
+    IsQuartermasterConversation,
+    null,
+    100);
+```
+**Why:** The JSON dialogue loader won't register player options for manually-registered NPC lines. You must register the complete conversation flow manually when using dynamic text generation.
+
 **Benefits:** Full localization support, real-time reaction to game state changes during a single conversation session, and decoupling of content from C# code.
 
 #### JSON for Content/Config

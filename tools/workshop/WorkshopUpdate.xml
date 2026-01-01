@@ -7,7 +7,7 @@
     <UpdateItem>
         <ModuleFolder Value="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"/>
         <!-- A direct path of your module -->   
-        <ChangeNotes Value="v0.9.0" />
+        <ChangeNotes Value="v0.9.0.1 - Critical Bug Fixes: Fixed Quartermaster dialogue issues, added fallback system, enhanced diagnostics" />
         <!-- Insert patch notes -->
         <Tags> 
             <!-- You can use the following tags: -->

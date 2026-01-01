@@ -100,19 +100,14 @@ Full documentation in mod folder. Contributions welcome!"
 		"1"		"Singleplayer"
 		"2"		"Overhaul"
     }
-	"changenote"		"v0.9.0 - Major Content Update
+	"changenote"		"v0.9.0.1 - Critical Bug Fixes
 [list]
-[*] Added Commander's Retinue system for T7+ officers with 23 narrative events
-[*] Added Baggage Train system for inventory management during enlistment
-[*] Fixed formation assignment to properly detect player equipment (T1-T6)
-[*] Added comprehensive tooltip system for all events, decisions, and orders
-[*] Expanded content library to 275+ pieces across 9 military ranks
-[*] Added 85 Order Events with dynamic triggers during duty periods
-[*] Added 16 Military Orders spanning Basic Duties (T1-T3) and Advancement Orders (T4+)
-[*] Added 38 Camp Decisions including training, social, economic, and career activities
-[*] Added Quartermaster equipment system with 6 quality tiers and upgrade paths
-[*] Improved content validation tools and localization system
-[*] Updated for Bannerlord v1.3.13
-[*] Performance improvements and crash guards for sieges and naval integration
+[*] [b]Fixed Quartermaster showing vanilla companion recruitment dialogue[/b] - QM now uses Soldier occupation to prevent recruitment option appearing
+[*] [b]Fixed Quartermaster dialogue breaking with error messages[/b] - Added fallback dialogue system that ensures QM always works even with corrupted installations
+[*] [b]Fixed supply inquiry closing conversation[/b] - Supply status report now properly returns to QM hub
+[*] [b]Enhanced diagnostic system[/b] - Mod now detects missing/corrupt JSON and XML files at startup
+[*] [b]Added module health check[/b] - Verifies all content files are present and loaded successfully
+[*] [b]Improved conflict detection[/b] - Installation path detection helps diagnose Steam Workshop vs manual install issues
+[*] Better error logging for user bug reports with comprehensive diagnostic information
 [/list]"
 }

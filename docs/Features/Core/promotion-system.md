@@ -205,10 +205,25 @@ Camp Activity: Self-Treatment
 ### Combat & Battle XP
 
 **Source:** Skill XP awarded during combat (native Bannerlord system)  
-**Amount:** Varies by kills, hits, tactics used  
+**Amount:** Varies by enemy tier, damage dealt, and killing blows  
 **When:** During battle participation
 
-Native Bannerlord awards skill XP for combat actions (weapon hits, kills, tactical positioning). The mod converts this skill XP into enlistment XP for rank progression tracking.
+Native Bannerlord awards skill XP for combat actions using a tier-scaled formula:
+```
+baseXP = 0.4 × (attackerPower + 0.5) × (victimPower + 0.5) × damage × multiplier
+```
+
+**Enemy tier scaling:**
+- Higher tier enemies have higher "victimPower" values
+- Killing a T5 veteran grants significantly more XP than a T1 recruit
+- Killing blows add the victim's full HP to the damage component (bonus XP)
+- XP is awarded to the weapon skill used (OneHanded, Bow, Polearm, etc.)
+
+**Integration with enlistment:**
+- The mod intercepts native skill XP awards during combat
+- Accumulated combat skill XP is converted to enlistment XP at battle end
+- This appears in muster reports under the "Combat" source
+- All combat skills count: melee weapons, ranged weapons, and Athletics (unarmed)
 
 ### Narrative Event XP
 

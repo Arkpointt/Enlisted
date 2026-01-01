@@ -1353,6 +1353,7 @@ The Quartermaster system uses a dedicated dialogue JSON schema for conversation 
 - **Context-conditional nodes** - Multiple nodes with same ID, different contexts
 - **Gate nodes** - RP responses when player doesn't meet requirements
 - **Actions** - Trigger UI/system behaviors (open Gauntlet, set flags)
+- **Dynamic text variables** - Nodes can use `{VARIABLE}` placeholders that are set at runtime
 
 **Location:** `ModuleData/Enlisted/Dialogue/qm_*.json`
 
@@ -1366,6 +1367,32 @@ The Quartermaster system uses a dedicated dialogue JSON schema for conversation 
 | Branching | `chainsTo` | `next_node` |
 | Conditions | `requirements` + `triggers` | `context` + `gate` |
 | Actions | `effects` | `action` + `action_data` |
+| Text Variables | Static or `{PLAYER_NAME}` | Dynamic runtime generation supported |
+
+**Manual Registration Pattern:**
+When a node uses dynamically-generated text (not just context selection), it must be manually registered in `EnlistedDialogManager.cs`:
+- Manually register the NPC dialogue line with a condition that sets text variables
+- Manually register all player response options (JSON loader won't process them)
+- Example: Supply inquiry response uses `SetSupplyStatusText()` to generate `{SUPPLY_STATUS}` at runtime
+
+**Example JSON (requires manual registration):**
+```json
+{
+  "id": "qm_supply_response",
+  "speaker": "quartermaster",
+  "textId": "qm_supply_report",
+  "text": "{SUPPLY_STATUS}",
+  "context": {},
+  "options": [
+    {
+      "id": "supply_understood",
+      "textId": "qm_continue",
+      "text": "[Continue]",
+      "next_node": "qm_hub"
+    }
+  ]
+}
+```
 
 ---
 

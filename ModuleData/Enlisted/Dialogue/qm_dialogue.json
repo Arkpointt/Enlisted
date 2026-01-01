@@ -84,7 +84,7 @@
           "textId": "qm_player_supply",
           "text": "How are we looking? Supply-wise, I mean.",
           "tooltip": "Get supply status report",
-          "action": "supply_report"
+          "next_node": "qm_supply_response"
         },
         {
           "id": "ask_baggage",
@@ -182,7 +182,7 @@
           "textId": "qm_player_supply",
           "text": "How are we looking? Supply-wise, I mean.",
           "tooltip": "Get supply status report",
-          "action": "supply_report"
+          "next_node": "qm_supply_response"
         },
         {
           "id": "ask_baggage",
@@ -280,7 +280,7 @@
           "textId": "qm_player_supply",
           "text": "How are we looking? Supply-wise, I mean.",
           "tooltip": "Get supply status report",
-          "action": "supply_report"
+          "next_node": "qm_supply_response"
         },
         {
           "id": "ask_baggage",
@@ -378,7 +378,7 @@
           "textId": "qm_player_supply",
           "text": "How are we looking? Supply-wise, I mean.",
           "tooltip": "Get supply status report",
-          "action": "supply_report"
+          "next_node": "qm_supply_response"
         },
         {
           "id": "ask_baggage",
@@ -473,7 +473,7 @@
           "textId": "qm_player_supply",
           "text": "How are we looking? Supply-wise, I mean.",
           "tooltip": "Get supply status report",
-          "action": "supply_report"
+          "next_node": "qm_supply_response"
         },
         {
           "id": "ask_baggage",
@@ -570,7 +570,7 @@
           "textId": "qm_player_supply",
           "text": "How are we looking? Supply-wise, I mean.",
           "tooltip": "Get supply status report",
-          "action": "supply_report"
+          "next_node": "qm_supply_response"
         },
         {
           "id": "farewell",
@@ -1044,6 +1044,22 @@
           "textId": "qm_player_show_items",
           "text": "[Show items]",
           "action": "open_sell"
+        }
+      ]
+    },
+    {
+      "_comment": "Supply status response - shows dynamic supply report",
+      "id": "qm_supply_response",
+      "speaker": "quartermaster",
+      "textId": "qm_supply_report",
+      "text": "{SUPPLY_STATUS}",
+      "context": {},
+      "options": [
+        {
+          "id": "supply_understood",
+          "textId": "qm_continue",
+          "text": "[Continue]",
+          "next_node": "qm_hub"
         }
       ]
     }

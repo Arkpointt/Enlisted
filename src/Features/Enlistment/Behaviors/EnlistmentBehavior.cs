@@ -13233,11 +13233,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
-                // Track battle participation for promotion requirements (XP now comes from order system)
+                // Track battle participation for promotion requirements
                 if (participated && !EnlistedEncounterBehavior.IsWaitingInReserve && !_battleXPAwardedThisBattle)
                 {
                     _battleXPAwardedThisBattle = true;
                     IncrementBattlesSurvived();
+                }
+                
+                // Flush any accumulated combat XP from the skill XP patch.
+                // Native Bannerlord awards skill XP during combat based on enemy tier/power:
+                //   XP = 0.4 × (attackerPower + 0.5) × (victimPower + 0.5) × damage × multiplier
+                // Higher tier enemies have higher power, so killing T5 troops gives more XP than T1.
+                // The patch accumulates this and we flush it here for enlistment rank progression.
+                if (participated)
+                {
+                    SkillSuppressionPatch.FlushAccumulatedCombatXP();
                 }
 
                 // Add kills to current term total (persists to faction record on retirement)
@@ -13261,13 +13271,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Awards XP for battle participation and kills (called from OnPlayerBattleEnd).
-        /// REMOVED: XP is now awarded through order system only.
+        /// Legacy method kept for backwards compatibility.
+        /// Battle XP is now awarded automatically via SkillSuppressionPatch.Postfix which tracks
+        /// combat skill XP (weapon hits/kills) and converts it to enlistment XP.
+        /// Native Bannerlord scales XP by enemy tier through the CombatXpModel.
         /// </summary>
-        [Obsolete("Battle XP now awarded through order system only")]
+        [Obsolete("Battle XP now awarded via SkillSuppressionPatch.Postfix during combat")]
         private void AwardBattleXP(int kills)
         {
-            // No-op - XP comes from order system now
+            // No-op - Combat XP is tracked by SkillSuppressionPatch.Postfix and flushed at battle end
             // Still track battles for promotion requirements
             if (IsEnlisted && !EnlistedEncounterBehavior.IsWaitingInReserve && !_battleXPAwardedThisBattle)
             {
