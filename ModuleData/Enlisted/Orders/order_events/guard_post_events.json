@@ -32,7 +32,8 @@
           "text": "Turn him away. Orders are orders.",
           "effects": {
             "officerRep": 1,
-            "soldierRep": -1
+            "soldierRep": -1,
+            "skillXp": { "Athletics": 12 }
           },
           "resultTextId": "guard_drunk_soldier_turn_away_result",
           "resultText": "He curses you but stumbles off. You held your post."
@@ -43,7 +44,8 @@
           "text": "Report him to {SERGEANT}.",
           "effects": {
             "officerRep": 2,
-            "soldierRep": -2
+            "soldierRep": -2,
+            "skillXp": { "Tactics": 10 }
           },
           "resultTextId": "guard_drunk_soldier_report_result",
           "resultText": "{SERGEANT} hauls him away. The other soldiers give you cold looks."
@@ -72,11 +74,13 @@
             "difficulty": 35
           },
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Scouting": 20 }
           },
           "failEffects": {
             "hpChange": -5,
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Scouting": 8 }
           },
           "resultTextId": "guard_strange_noise_investigate_result",
           "resultText": "You find a stray dog. Better safe than sorry.",
@@ -88,7 +92,8 @@
           "textId": "guard_strange_noise_hold_post",
           "text": "Hold your post and watch.",
           "effects": {
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Tactics": 12 }
           },
           "resultTextId": "guard_strange_noise_hold_post_result",
           "resultText": "The noise fades. You stay alert."
@@ -123,7 +128,8 @@
           "textId": "guard_officer_inspection_challenge",
           "text": "Challenge him properly.",
           "effects": {
-            "officerRep": 4
+            "officerRep": 4,
+            "skillXp": { "Tactics": 18 }
           },
           "resultTextId": "guard_officer_inspection_challenge_result",
           "resultText": "He smiles. 'Good work, {PLAYER_RANK}. You know your duty.'"
@@ -182,13 +188,15 @@
             "difficulty": 30
           },
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Charm": 20 }
           },
           "failEffects": {
             "officerRep": 1,
             "escalation": {
               "scrutiny": 5
-            }
+            },
+            "skillXp": { "Charm": 8 }
           },
           "resultTextId": "guard_noble_demands_challenge_result",
           "resultText": "He's annoyed but respects your duty. {SERGEANT} approves.",
@@ -200,7 +208,8 @@
           "textId": "guard_noble_demands_fetch_officer",
           "text": "Fetch {OFFICER_NAME} to handle this.",
           "effects": {
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Tactics": 10 }
           },
           "resultTextId": "guard_noble_demands_fetch_officer_result",
           "resultText": "{OFFICER_NAME} handles it. You followed procedure."
@@ -236,7 +245,8 @@
           "text": "Offer to stay and finish your shift.",
           "effects": {
             "fatigue": 3,
-            "soldierRep": 2
+            "soldierRep": 2,
+            "skillXp": { "Athletics": 15 }
           },
           "resultTextId": "guard_relieved_early_offer_stay_result",
           "resultText": "{COMRADE_NAME} appreciates it. You finish your full shift."
@@ -262,7 +272,8 @@
           "text": "Stay at your post until relief arrives.",
           "effects": {
             "fatigue": 8,
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Athletics": 20 }
           },
           "resultTextId": "guard_double_shift_stay_result",
           "resultText": "Two more hours pass before {COMRADE_NAME} arrives. {SERGEANT} notes your dedication."
@@ -272,7 +283,8 @@
           "textId": "guard_double_shift_find_them",
           "text": "Go find your relief.",
           "effects": {
-            "fatigue": 3
+            "fatigue": 3,
+            "skillXp": { "Athletics": 10 }
           },
           "resultTextId": "guard_double_shift_find_them_result",
           "resultText": "You find {COMRADE_NAME} asleep. He rushes to the post."

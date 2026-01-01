@@ -20,7 +20,8 @@
           "textId": "cleaning_found_damage_report",
           "text": "Report it to {SERGEANT}.",
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Crafting": 12 }
           },
           "resultTextId": "cleaning_found_damage_report_result",
           "resultText": "{SERGEANT} nods. 'Good eye. We'll get it to the smith.'"
@@ -37,10 +38,12 @@
             "officerRep": 3,
             "companyNeeds": {
               "Equipment": 1
-            }
+            },
+            "skillXp": { "Crafting": 25 }
           },
           "failEffects": {
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Crafting": 10 }
           },
           "resultTextId": "cleaning_found_damage_fix_quietly_result",
           "resultText": "You work the crack out. Good as new, or close enough.",
@@ -52,7 +55,8 @@
           "textId": "cleaning_found_damage_ignore",
           "text": "Put it back. Not your problem.",
           "effects": {
-            "officerRep": -2
+            "officerRep": -2,
+            "skillXp": { "Crafting": 5 }
           },
           "resultTextId": "cleaning_found_damage_ignore_result",
           "resultText": "You set it aside. Someone else can deal with it."
@@ -78,7 +82,8 @@
           "text": "Help him out.",
           "effects": {
             "soldierRep": 3,
-            "fatigue": 3
+            "fatigue": 3,
+            "skillXp": { "Crafting": 18 }
           },
           "resultTextId": "cleaning_helped_comrade_help_result",
           "resultText": "Together you finish twice as fast. He owes you one."
@@ -88,7 +93,8 @@
           "textId": "cleaning_helped_comrade_ignore",
           "text": "Focus on your own work.",
           "effects": {
-            "soldierRep": -1
+            "soldierRep": -1,
+            "skillXp": { "Crafting": 10 }
           },
           "resultTextId": "cleaning_helped_comrade_ignore_result",
           "resultText": "You finish your pile. He's still working when you leave."
@@ -98,7 +104,8 @@
           "textId": "cleaning_helped_comrade_mock",
           "text": "Mock his slowness.",
           "effects": {
-            "soldierRep": -3
+            "soldierRep": -3,
+            "skillXp": { "Crafting": 6 }
           },
           "resultTextId": "cleaning_helped_comrade_mock_result",
           "resultText": "The others laugh. He doesn't. You've made an enemy."
@@ -127,10 +134,12 @@
             "difficulty": 40
           },
           "effects": {
-            "officerRep": 3
+            "officerRep": 3,
+            "skillXp": { "Crafting": 24 }
           },
           "failEffects": {
-            "officerRep": -2
+            "officerRep": -2,
+            "skillXp": { "Crafting": 8 }
           },
           "resultTextId": "cleaning_officer_inspection_present_work_result",
           "resultText": "He examines a blade, nods. 'Fine work, soldier.'",
@@ -157,7 +166,8 @@
           "textId": "cleaning_contraband_found_report",
           "text": "Report it to {SERGEANT}.",
           "effects": {
-            "officerRep": 3
+            "officerRep": 3,
+            "skillXp": { "Tactics": 14 }
           },
           "resultTextId": "cleaning_contraband_found_report_result",
           "resultText": "{SERGEANT} takes it. Someone's in trouble, but not you."
@@ -166,7 +176,9 @@
           "id": "ignore",
           "textId": "cleaning_contraband_found_ignore",
           "text": "Put it back. You saw nothing.",
-          "effects": {},
+          "effects": {
+            "skillXp": { "Crafting": 8 }
+          },
           "resultTextId": "cleaning_contraband_found_ignore_result",
           "resultText": "You close the bag. Whatever's going on, you're not part of it."
         },
@@ -179,7 +191,8 @@
             "gold": 15,
             "escalation": {
               "scrutiny": 10
-            }
+            },
+            "skillXp": { "Roguery": 16 }
           },
           "resultTextId": "cleaning_contraband_found_take_it_result",
           "resultText": "The coins disappear into your pocket. No one saw."

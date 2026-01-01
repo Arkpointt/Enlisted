@@ -30,7 +30,8 @@
           "textId": "sentry_movement_spotted_watch",
           "text": "Watch carefully before deciding.",
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Scouting": 15 }
           },
           "resultTextId": "sentry_movement_spotted_watch_result",
           "resultText": "You identify it as an animal. No need to wake the camp."
@@ -44,11 +45,13 @@
             "difficulty": 40
           },
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Scouting": 22 }
           },
           "failEffects": {
             "hpChange": -8,
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Scouting": 10 }
           },
           "resultTextId": "sentry_movement_spotted_challenge_result",
           "resultText": "Your challenge reveals nothing. You stay alert.",
@@ -75,7 +78,8 @@
           "textId": "sentry_fell_asleep_shake_off",
           "text": "Shake it off and stay alert.",
           "effects": {
-            "fatigue": 3
+            "fatigue": 3,
+            "skillXp": { "Athletics": 18 }
           },
           "resultTextId": "sentry_fell_asleep_shake_off_result",
           "resultText": "You force yourself awake. The rest of the watch is torture."
@@ -85,7 +89,8 @@
           "textId": "sentry_fell_asleep_report_self",
           "text": "Report yourself to {SERGEANT}.",
           "effects": {
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Tactics": 10 }
           },
           "resultTextId": "sentry_fell_asleep_report_self_result",
           "resultText": "{SERGEANT} replaces you. He respects your honesty."
@@ -120,7 +125,8 @@
           "textId": "sentry_challenged_approach_challenge",
           "text": "Challenge them properly.",
           "effects": {
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Tactics": 14 }
           },
           "resultTextId": "sentry_challenged_approach_challenge_result",
           "resultText": "It's {COMRADE_NAME} returning from patrol. Good protocol."
@@ -130,7 +136,8 @@
           "textId": "sentry_challenged_approach_wait",
           "text": "Wait to see who it is.",
           "effects": {
-            "officerRep": 0
+            "officerRep": 0,
+            "skillXp": { "Scouting": 8 }
           },
           "resultTextId": "sentry_challenged_approach_wait_result",
           "resultText": "It's one of ours. You should have challenged them."
@@ -144,11 +151,13 @@
             "difficulty": 40
           },
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Bow": 25 }
           },
           "failEffects": {
             "officerRep": -5,
-            "soldierRep": -5
+            "soldierRep": -5,
+            "skillXp": { "Bow": 8 }
           },
           "resultTextId": "sentry_challenged_approach_shoot_result",
           "resultText": "You drop an enemy scout. {SERGEANT} commends your vigilance.",
@@ -175,7 +184,8 @@
           "textId": "sentry_infiltrator_raise_alarm",
           "text": "Raise the alarm immediately.",
           "effects": {
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "Tactics": 16 }
           },
           "resultTextId": "sentry_infiltrator_raise_alarm_result",
           "resultText": "The camp responds. The infiltrator escapes but the breach is sealed."
@@ -189,11 +199,13 @@
             "difficulty": 35
           },
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "OneHanded": 24 }
           },
           "failEffects": {
             "hpChange": -8,
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": { "OneHanded": 12 }
           },
           "resultTextId": "sentry_infiltrator_challenge_result",
           "resultText": "You confront them. They flee. You prevented a breach.",
@@ -205,7 +217,8 @@
           "textId": "sentry_infiltrator_shoot",
           "text": "Shoot them down.",
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Bow": 22 }
           },
           "resultTextId": "sentry_infiltrator_shoot_result",
           "resultText": "Your arrow finds its mark. The infiltrator falls."
@@ -231,7 +244,8 @@
           "text": "Stay at your post until they arrive.",
           "effects": {
             "fatigue": 5,
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": { "Athletics": 20 }
           },
           "resultTextId": "sentry_relief_late_stay_result",
           "resultText": "{COMRADE_NAME} finally arrives, apologizing. You held your post."
