@@ -8,7 +8,7 @@
 
 **Status:** ✅ Current - Comprehensive Integration Complete  
 **Last Updated:** 2026-01-01 (Routine flavor text, fallback improvements)  
-**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Events Master](../../AFEATURE/order-events-master.md), [Order Progression System](../../AFEATURE/order-progression-system.md), [Injury System](../Content/injury-system.md), [Camp Routine Schedule](../Campaign/camp-routine-schedule-spec.md)
+**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Progression System](../Core/order-progression-system.md), [Orders Content](../Content/orders-content.md), [Injury System](../Content/injury-system.md), [Camp Routine Schedule](../Campaign/camp-routine-schedule-spec.md)
 
 ---
 
@@ -399,7 +399,7 @@ EnlistedNewsBehavior.Instance.AddEventOutcome(
 );
 ```
 
-**See Also:** [Order Events Master](../../AFEATURE/order-events-master.md) for order event definitions and result text variants.
+**See Also:** [Orders Content](../Content/orders-content.md) for order definitions, event files at `ModuleData/Enlisted/Orders/order_events/`.
 
 ---
 

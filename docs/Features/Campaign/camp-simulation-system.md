@@ -505,7 +505,7 @@ public List<CampOpportunity> GenerateCampLife()
 
 **Special (7):**
 - `opp_officer_meeting` - Request audience → dec_officer_audience
-- `opp_baggage_access` - Visit baggage train → dec_baggage_access
+- `opp_baggage_access` - Visit baggage train → dec_baggage_access (bypasses popup, routes to stash/QM)
 - `opp_mentor_recruit` - Help train recruit → dec_mentor_recruit
 - `opp_volunteer_duty` - Volunteer for extra duty → dec_volunteer_extra
 - `opp_night_patrol` - Volunteer for patrol → dec_night_patrol
@@ -824,6 +824,79 @@ public enum NewsCategory
 [MOOD] Men are in good spirits after the victory. (+5 Morale) (8 hours ago)
 [ORDERS] Guard duty assignment completed successfully. (10 hours ago)
 ```
+
+---
+
+## Decision Scheduling System (Phase 9)
+
+**Status:** ✅ Implemented (2025-12-31)  
+**Implementation:** `src/Features/Camp/CampOpportunityGenerator.cs`, `src/Features/Camp/Models/PlayerCommitments.cs`
+
+### Overview
+
+Players can schedule camp opportunities for specific day phases instead of only doing them immediately. This creates anticipation and allows planning around duties.
+
+### How It Works
+
+**Opportunity Scheduling:**
+1. Player sees an opportunity (e.g., "sparring match")
+2. Can choose to act immediately OR schedule for a specific phase
+3. Commitment tracked with phase, day, target decision, display text
+4. Shows in AHEAD section with countdown: `"Sparring match at midday (3h)"`
+5. When phase arrives, decision fires automatically as popup
+6. Removed from commitments after firing
+
+**Day Phases:**
+- **Dawn** (6am) - Morning drills, prayers, morning duties
+- **Midday** (12pm) - Work details, repairs, training
+- **Dusk** (6pm) - Social events, card games, drinking
+- **Night** (12am) - Risky activities, sneaking, gambling
+
+**Implementation Details:**
+```csharp
+// PlayerCommitments.cs
+public class ScheduledCommitment
+{
+    public string OpportunityId { get; set; }
+    public string TargetDecision { get; set; }
+    public string ScheduledPhase { get; set; }   // Dawn/Midday/Dusk/Night
+    public int ScheduledDay { get; set; }
+    public string DisplayText { get; set; }
+}
+
+// CampOpportunityGenerator.cs
+public bool IsCommittedTo(string opportunityId) { ... }
+public ScheduledCommitment GetNextCommitment() { ... }
+public float GetHoursUntilCommitment(ScheduledCommitment c) { ... }
+```
+
+**UI Integration:**
+- `ForecastGenerator.BuildNowText()` shows upcoming commitments with countdown
+- `CampScheduleManager.ApplyPlayerCommitments()` marks them on schedule
+- Phase transition detection fires commitments automatically
+
+**Opportunity Configuration:**
+```json
+{
+  "id": "opp_card_game",
+  "scheduledPhase": "Dusk",
+  "validPhases": ["Dusk", "Night"],
+  "immediate": false
+}
+```
+
+- `immediate: false` → Player commits, fires at scheduled phase (24h ahead)
+- `immediate: true` → Fires now (urgent/time-sensitive activities)
+
+**Benefits:**
+- Immersive time awareness (anticipation of scheduled activities)
+- Players can plan around duties and obligations
+- Natural pacing (activities happen when contextually appropriate)
+- Consequences for broken commitments (reputation/discipline)
+
+**See Also:**  
+- [Camp Routine Schedule](camp-routine-schedule-spec.md) - Daily schedule baseline  
+- [Event System Schemas](../Content/event-system-schemas.md) - Opportunity definitions
 
 ---
 

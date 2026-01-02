@@ -5,7 +5,7 @@
 **Status:** 📋 Specification (Uses Generic Progression Schema)  
 **Last Updated:** 2025-12-29  
 **Schema:** See [Progression System Schema](event-system-schemas.md#progression-system-schema-future-foundation)  
-**Related Docs:** [Event System Schemas](event-system-schemas.md), [Content Orchestrator](../../AFEATURE/content-orchestrator-plan.md)
+**Related Docs:** [Event System Schemas](event-system-schemas.md), [Content System Architecture](content-system-architecture.md)
 
 ---
 
@@ -254,4 +254,4 @@ This is a **future feature**. When ready to implement:
 
 **See Also:**
 - [Progression System Schema](event-system-schemas.md#progression-system-schema-future-foundation) - Generic pattern
-- [Content Orchestrator Plan](../../AFEATURE/content-orchestrator-plan.md) - Integration points
+- [Content System Architecture](content-system-architecture.md) - Integration points

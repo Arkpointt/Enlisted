@@ -385,7 +385,6 @@
          ==================================================================== -->
     <Compile Include="src\Features\Conditions\PlayerConditionModels.cs"/>
     <Compile Include="src\Features\Conditions\PlayerConditionBehavior.cs"/>
-    <Compile Include="src\Features\Conditions\EnlistedMedicalMenuBehavior.cs"/>
     
     <!-- ====================================================================
          ESCALATION & REPUTATION SYSTEM
@@ -408,6 +407,7 @@
     <Compile Include="src\Features\Content\Models\OrchestratorEnums.cs" />
     <Compile Include="src\Features\Content\Models\WorldSituation.cs" />
     <Compile Include="src\Features\Content\Models\SimulationPressure.cs" />
+    <Compile Include="src\Features\Content\Models\MedicalPressureAnalysis.cs" />
     <Compile Include="src\Features\Content\Models\PlayerPreferences.cs" />
     
     <!-- Event System -->

@@ -1,0 +1,661 @@
+{
+  "schemaVersion": 1,
+  "packId": "illness_onset",
+  "category": "medical",
+  "events": [
+    {
+      "id": "illness_onset_minor",
+      "category": "medical",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/Features/Content/medical-care-migration.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {
+          "medical_risk_min": 3
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        },
+        "conditionState": "no_condition"
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "medium",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 1,
+          "category_cooldown_days": 3
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_illness_onset_minor_title",
+        "setupId": "ll_evt_illness_onset_minor_setup",
+        "title": "Feeling Unwell",
+        "setup": "You wake feeling wrong. Head thick, limbs heavy. Could be the food. Could be the cold nights. Could be the camp fever that's been going around.\n\n{SERGEANT_NAME} notices you looking pale at morning muster. \"You feeling alright, {PLAYER_NAME}? You look like you've seen better days.\"\n\nIt's probably nothing. But nothing has a way of becoming something out here.",
+        "options": [
+          {
+            "id": "rest",
+            "text": "\"I should take it easy today.\"",
+            "tooltip": "Reduces fatigue by 15. Rest may prevent illness from worsening.",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 4
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": -1,
+              "fatigue_relief": 15
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You find a quiet corner and rest for a few hours. The heaviness lifts somewhat. Still not right, but better than pushing through until you collapse.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_minor_opt_rest_text",
+            "resultTextId": "ll_evt_illness_onset_minor_opt_rest_outcome"
+          },
+          {
+            "id": "push_through",
+            "text": "\"I'm fine. It's nothing.\"",
+            "tooltip": "50% chance of developing Minor illness. Maintains reputation.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 10,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 5,
+              "medical_risk": 1,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 1,
+              "fatigue_relief": 0,
+              "illness_onset": "minor"
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You shake it off. The soldiers around you respect the grit — nobody wants to serve alongside someone who collapses at the first chill.",
+            "outcome_failure": "You push through the day, but by nightfall you're shivering uncontrollably. The camp surgeon takes one look and shakes his head. \"You should have rested.\" Too late now.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_minor_opt_push_text",
+            "resultTextId": "ll_evt_illness_onset_minor_opt_push_outcome"
+          },
+          {
+            "id": "seek_care",
+            "text": "\"I should see the surgeon.\"",
+            "tooltip": "Costs 10 gold. Reduces medical risk. Prevents illness.",
+            "condition": "gold_10",
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 10,
+              "time_hours": 2
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": -2,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The surgeon gives you a bitter draught and tells you to drink water. \"Not the wine. Water.\" Simple advice, but effective. Whatever was building passes before it takes hold.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_minor_opt_care_text",
+            "resultTextId": "ll_evt_illness_onset_minor_opt_care_outcome"
+          }
+        ]
+      }
+    },
+    {
+      "id": "illness_onset_moderate",
+      "category": "medical",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/Features/Content/medical-care-migration.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {
+          "medical_risk_min": 4
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        },
+        "conditionState": "no_condition"
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 1,
+          "category_cooldown_days": 5
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_illness_onset_moderate_title",
+        "setupId": "ll_evt_illness_onset_moderate_setup",
+        "title": "Fever Sets In",
+        "setup": "You wake in the night drenched in sweat, then shivering, then sweating again. Your tent-mates are giving you worried looks.\n\n\"You need the surgeon,\" one says. \"Before it gets worse.\"\n\nThey're right. The question is whether you can afford to be seen as weak, and whether you can afford not to be.",
+        "options": [
+          {
+            "id": "immediate_care",
+            "text": "Go to the surgeon immediately.",
+            "tooltip": "Costs 15 gold. Prevents Moderate illness. 3 hour rest.",
+            "condition": "gold_15",
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 15,
+              "time_hours": 3
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": -5,
+              "medical_risk": -3,
+              "fatigue_relief": 10
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": ["sought_early_care"],
+            "flags_clear": [],
+            "outcome": "The surgeon's remedies are foul but effective. \"Caught it early,\" she says approvingly. \"Another day and you'd be in a cot for a week.\" Your tent-mates look relieved. Soldiers don't like watching each other waste away.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_moderate_opt_care_text",
+            "resultTextId": "ll_evt_illness_onset_moderate_opt_care_outcome"
+          },
+          {
+            "id": "tough_it_out",
+            "text": "\"I've had worse. I'll be fine.\"",
+            "tooltip": "70% chance of Moderate illness. Small soldier reputation gain.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 30,
+            "costs": {
+              "fatigue": 20,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 10,
+              "medical_risk": 2,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 15,
+              "medical_risk": -1,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 2,
+              "fatigue_relief": 0,
+              "illness_onset": "moderate"
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The fever breaks by morning. You're wrung out but standing. \"Hard as iron, that one,\" someone mutters. You'll take the compliment.",
+            "outcome_failure": "By dawn you can barely stand. The surgeon is called and the diagnosis is grim. \"Bed rest. Days of it. You should have come to me last night.\" Stubbornness has a cost.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_moderate_opt_tough_text",
+            "resultTextId": "ll_evt_illness_onset_moderate_opt_tough_outcome"
+          },
+          {
+            "id": "herbal_remedy",
+            "text": "Try a soldier's remedy — willow bark and rest.",
+            "tooltip": "50% success. No cost. Reduces medical risk on success.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 10,
+              "gold": 0,
+              "time_hours": 2
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 5
+            },
+            "effects_success": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 5,
+              "medical_risk": -2,
+              "fatigue_relief": 10
+            },
+            "effects_failure": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 1,
+              "fatigue_relief": 0,
+              "illness_onset": "minor"
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "An old veteran shows you how to brew the bark. Bitter as sin, but effective. The fever fades by morning and you avoid the surgeon's tent entirely.",
+            "outcome_failure": "The remedy helps some, but not enough. You still fall ill — though perhaps not as badly as you might have. Small comfort.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_moderate_opt_herbal_text",
+            "resultTextId": "ll_evt_illness_onset_moderate_opt_herbal_outcome"
+          }
+        ]
+      }
+    },
+    {
+      "id": "illness_onset_severe",
+      "category": "medical",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/Features/Content/medical-care-migration.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {
+          "medical_risk_min": 5
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        },
+        "conditionState": "no_condition"
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "critical",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 1,
+          "category_cooldown_days": 7
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_illness_onset_severe_title",
+        "setupId": "ll_evt_illness_onset_severe_setup",
+        "title": "Collapse",
+        "setup": "You don't remember falling. One moment you were standing at muster, the next you're on the ground, faces swimming above you.\n\n\"Get the surgeon!\" someone shouts. \"Now!\"\n\nThe world tilts and blurs. Your body has made the decision for you.",
+        "options": [
+          {
+            "id": "accept_treatment",
+            "text": "Submit to the surgeon's care.",
+            "tooltip": "Develops Moderate illness. Begins treatment. Better than the alternative.",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 20,
+              "time_hours": 8
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": -10,
+              "medical_risk": -2,
+              "fatigue_relief": 20,
+              "illness_onset": "moderate",
+              "begin_treatment": true
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": ["collapsed_illness"],
+            "flags_clear": [],
+            "outcome": "The surgeon's tent is dim and smells of herbs. \"You're lucky,\" she says, mixing something. \"I've seen men ignore the signs until it killed them.\" You'll be here a while. But you'll recover.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_severe_opt_accept_text",
+            "resultTextId": "ll_evt_illness_onset_severe_opt_accept_outcome"
+          },
+          {
+            "id": "refuse_treatment",
+            "text": "\"I just need... to rest. I'll be fine.\"",
+            "tooltip": "Develops Severe illness without treatment. High risk of worsening.",
+            "condition": null,
+            "risk": "dangerous",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 30,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 5,
+              "medical_risk": 3,
+              "fatigue_relief": 0,
+              "illness_onset": "severe"
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": ["refused_treatment"],
+            "flags_clear": [],
+            "outcome": "You push yourself up, wave off helping hands. \"I'm fine.\" You're not fine. Everyone knows it. But you stagger back to your tent and collapse there instead. The fever dreams begin that night.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_severe_opt_refuse_text",
+            "resultTextId": "ll_evt_illness_onset_severe_opt_refuse_outcome"
+          }
+        ]
+      }
+    },
+    {
+      "id": "untreated_condition_worsening",
+      "category": "medical",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/Features/Content/medical-care-migration.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_untreated_condition"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        },
+        "conditionState": "untreated",
+        "days_untreated_min": 3
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 2,
+          "category_cooldown_days": 2
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_condition_worsening_title",
+        "setupId": "ll_evt_condition_worsening_setup",
+        "title": "Condition Worsening",
+        "setup": "The pain is getting worse. What started as manageable is now a constant companion, stealing sleep and strength alike.\n\n{SERGEANT_NAME} pulls you aside. \"You need to see the surgeon, {PLAYER_NAME}. This isn't something you can walk off.\"\n\nYou know they're right. But treatment means time away from duty. And time away from duty means questions.",
+        "options": [
+          {
+            "id": "seek_treatment",
+            "text": "\"You're right. I'll go to the surgeon.\"",
+            "tooltip": "Costs gold based on condition severity. Begins treatment.",
+            "condition": "gold_25",
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 25,
+              "time_hours": 4
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": -2,
+              "fatigue_relief": 10,
+              "begin_treatment": true
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": ["refused_treatment"],
+            "outcome": "The surgeon examines you with a frown. \"Should have come sooner.\" The treatment begins — rest, poultices, bitter draughts. But at least you're healing now instead of worsening.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_condition_worsening_opt_treatment_text",
+            "resultTextId": "ll_evt_condition_worsening_opt_treatment_outcome"
+          },
+          {
+            "id": "delay_more",
+            "text": "\"Just a bit longer. I'll manage.\"",
+            "tooltip": "60% chance condition worsens by one level. Increases medical risk.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 40,
+            "costs": {
+              "fatigue": 15,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 5,
+              "medical_risk": 2,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 10,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": -5,
+              "medical_risk": 3,
+              "fatigue_relief": 0,
+              "worsen_condition": true
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You make it through another day. The condition holds steady — no better, no worse. Maybe you'll beat this without the surgeon after all.",
+            "outcome_failure": "By nightfall you know you've made a mistake. The condition has worsened. What could have been treated easily is now serious. Pride has its costs.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_condition_worsening_opt_delay_text",
+            "resultTextId": "ll_evt_condition_worsening_opt_delay_outcome"
+          }
+        ]
+      }
+    }
+  ]
+}

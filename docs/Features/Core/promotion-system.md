@@ -4,7 +4,7 @@
 
 **Status:** ✅ Current  
 **Last Updated:** 2026-01-01 (XP system fix - enlistment XP now properly tracked from all sources)  
-**Related Docs:** [Enlistment System](enlistment.md), [Training System](../Combat/training-system.md), [Pay System](pay-system.md), [Order Progression System](../../AFEATURE/order-progression-system.md)
+**Related Docs:** [Enlistment System](enlistment.md), [Training System](../Combat/training-system.md), [Pay System](pay-system.md), [Order Progression System](order-progression-system.md)
 
 **CRITICAL FIX (2026-01-01):** Fixed XP tracking bug where skill XP was awarded but enlistment XP (used for rank progression) was not. All XP-granting activities now properly update both systems. See [XP Sources](#xp-sources) for details.
 
@@ -149,6 +149,49 @@ Promotion to T3 blocked (82% progress): Days in rank: 28/35, Soldier reputation:
 ```
 
 This tells you exactly what you need to improve to advance.
+
+### Orchestrator Promotion Assistance
+
+When you meet the XP requirement but lack sufficient soldier reputation for promotion, the **Content Orchestrator** automatically helps by prioritizing reputation-gaining camp opportunities.
+
+**How It Works:**
+
+1. **Detection:** System checks if you have enough XP but are blocked by soldier reputation
+2. **Gap Calculation:** Calculates exactly how much reputation you need
+3. **Pressure Tracking:** Adds "Needs +X Rep for Promotion" to the simulation pressure sources
+4. **Fitness Boosting:** Boosts reputation-granting opportunities based on gap size:
+   - Small gap (1-5 rep): +15 fitness boost
+   - Medium gap (6-15 rep): +25 fitness boost  
+   - Large gap (16+ rep): +35 fitness boost
+
+5. **Phase-Aware Boosting:** Opportunities get additional boosts when they match the current camp phase schedule:
+   - **Dawn:** Training activities get +40% extra boost
+   - **Midday:** Training and helping wounded get +30% extra boost  
+   - **Dusk:** Social activities get +50% extra boost (prime social time)
+   - **Night:** Quiet social activities (stories, cards) get +20% extra boost
+
+**Reputation-Granting Opportunities:**
+- Training decisions (dec_training_*) - +3 soldier rep on success
+- Social activities (stories, storytelling, singing) - +1 to +2 soldier rep
+- Helping wounded (+2 soldier rep)
+- Mentoring recruits (+2 soldier rep, +1 officer rep)
+- Arm wrestling, drinking contests - +2 to +4 soldier rep on success
+- Gambling (cards, dice) - +1 to +3 soldier rep
+
+**Integration with Camp Systems:**
+- Respects the camp routine schedule (training at dawn, social at dusk)
+- Cached per opportunity generation cycle for performance
+- Works with existing fitness scoring layers (World State, Camp Context, History)
+- Pressure appears in simulation pressure tracking alongside other sources
+
+**Player Notice:**
+When reputation opportunities are prioritized, the log shows:
+```
+Promotion reputation pressure: boosting rep-granting opportunities (need X more soldier rep)
+```
+
+**No Action Required:**
+This happens automatically. Visit the Decisions menu and you'll see appropriate reputation-gaining opportunities appear more frequently when you need them. The system ensures you always have an intelligent path to meet promotion requirements while respecting the camp's daily rhythm.
 
 ---
 

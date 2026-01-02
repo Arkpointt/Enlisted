@@ -239,31 +239,6 @@ namespace Enlisted.Features.Content
                 return result;
             }
 
-            // Special Gate: Baggage Train accessibility check
-            if (decision.Id.Equals("dec_access_baggage", StringComparison.OrdinalIgnoreCase))
-            {
-                var baggageManager = Enlisted.Features.Logistics.BaggageTrainManager.Instance;
-                if (baggageManager == null)
-                {
-                    result.IsAvailable = false;
-                    result.IsVisible = false;
-                    result.UnavailableReason = "Baggage system unavailable";
-                    return result;
-                }
-
-                var accessState = baggageManager.GetCurrentAccess();
-                
-                // Only make visible when baggage is accessible
-                if (accessState != Enlisted.Features.Logistics.BaggageAccessState.FullAccess && 
-                    accessState != Enlisted.Features.Logistics.BaggageAccessState.TemporaryAccess)
-                {
-                    result.IsAvailable = false;
-                    result.IsVisible = false; // Hide when not accessible
-                    result.UnavailableReason = "Baggage train not accessible";
-                    return result;
-                }
-            }
-
             // Gate 3: Time of day (if specified)
             if (decision.TimeOfDay != null && decision.TimeOfDay.Count > 0)
             {

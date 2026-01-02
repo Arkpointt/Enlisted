@@ -54,7 +54,7 @@ serve as a soldier in any lord's warband. follow orders, earn wages, climb ranks
 
 ### features overview
 
-enlisted transforms bannerlord into a deep soldier career simulator with **275+ narrative content pieces** across 9 military ranks spanning your entire career from fresh recruit to senior commander.
+enlisted transforms bannerlord into a deep soldier career simulator with **270 narrative content pieces** across 9 military ranks spanning your entire career from fresh recruit to senior commander.
 
 #### core military career
 
@@ -196,18 +196,21 @@ enlisted transforms bannerlord into a deep soldier career simulator with **275+ 
   - learning system adapts to your preferences and history
 
 **camp activities & decisions**
-- 38 player-initiated camp hub decisions organized by category:
-  - training: weapon drills, sparring, formation practice
-  - social: join the men, write letters, socialize
-  - economic: gambling, side work, loans
-  - career: request audience, volunteer for duty
-  - information: listen to rumors, scout area
-  - equipment: maintain gear, visit quartermaster
-  - risk-taking: dangerous wagers, prove courage
-  - camp life: rest, seek treatment, personal time
-  - logistics: quartermaster interactions
+- 33 player-initiated camp hub decisions organized by category:
+  - training (8): weapon drills, sparring, formation practice, archery, veteran lessons
+  - social (11): join the men, write letters, socialize, war stories, card games, dice
+  - economic (6): gambling, side work, loans, foraging, repairs, merchant caravans
+  - recovery (8): rest options, sleep, meditation, prayer, help wounded
+  - medical care (4): surgeon treatment, herbal remedies, rest recovery, emergency care
+  - career (5): request audience, volunteer for duty, mentor recruits, extra duty, night patrol
+  - information (3): listen to rumors, scout area
+  - equipment (3): maintain gear, visit quartermaster
+  - risk-taking (4): dangerous wagers, prove courage, high-stakes gambling
+  - special (12): personal time, officer audiences, baggage access, retinue management
 - fatigue system: actions accumulate fatigue, rest recovers it
 - fatigue effects on performance and event outcomes
+- dynamic skill checks: success chances modified by relevant skills (Medicine, Scouting, Athletics, etc.)
+- illness restrictions: severe conditions block strenuous activities until treated
 
 **camp routine schedule**
 - baseline daily routine: dawn formations, midday work, dusk social, night rest
@@ -228,16 +231,22 @@ enlisted transforms bannerlord into a deep soldier career simulator with **275+ 
 - percentage-based hp loss (15-55%) for narrative injuries
 - 15 injury types with contextual descriptions
 - severity levels: minor, moderate, significant, serious, critical
-- medical treatment decisions and recovery chains
-- surgeon interactions and medical progression
+- 4 medical care decisions accessible through the decisions menu:
+  - surgeon treatment (skill check, 100 gold): professional care with better success rates
+  - herbal remedies (skill check, 30 gold): traditional medicine with moderate effectiveness
+  - rest recovery (free): natural healing through camp rest
+  - emergency care (200 gold): immediate treatment for severe/critical conditions
+- illness severity blocks strenuous activities (training, labor) until partially recovered
+- hp reduction based on illness severity with protective 30% hp floor
+- daily condition status messages in combat log
 - rp-appropriate medieval military medical flavor
 
 #### story & narrative
 
-**275+ narrative content pieces**
+**270 narrative content pieces**
 - 16 military orders across all tiers
 - 85 order events that fire during order execution
-- 38 player-initiated camp decisions
+- 33 player-initiated camp decisions (Phase 6G: deleted 35 old, kept 3, added 30 new)
 - 68 context-triggered events
 - 51 map incidents (battle, siege, settlement-triggered)
 - 23 retinue-specific content pieces (t7+ commanders)
@@ -410,8 +419,10 @@ enlisted transforms bannerlord into a deep soldier career simulator with **275+ 
 - fatigue affects performance and event outcomes
 - rest actions in camp recover fatigue
 - injuries are percentage-based hp loss (15-55%)
-- medical treatment and recovery chains
-- can seek treatment at medical menu
+- medical treatment through 4 decision options (surgeon, herbal, rest, emergency)
+- skill checks affect treatment success (Medicine skill improves outcomes)
+- illness severity restricts activities until partially recovered
+- severe conditions require treatment before resuming strenuous duties
 
 ### settings / config
 

@@ -385,9 +385,19 @@ namespace Enlisted.Features.Content
 
             if (isRisky)
             {
+                // Calculate actual chance, including skill modifier if specified
+                var actualChance = CalculateSkillModifiedChance(option);
                 var roll = MBRandom.RandomInt(100);
-                success = roll < option.RiskChance.Value;
-                ModLogger.Info(LogCategory, $"Risky option roll: {roll} vs {option.RiskChance.Value}% -> {(success ? "SUCCESS" : "FAILURE")}");
+                success = roll < actualChance;
+                
+                if (!string.IsNullOrEmpty(option.SkillCheck))
+                {
+                    ModLogger.Info(LogCategory, $"Skill-modified roll: {roll} vs {actualChance}% ({option.SkillCheck} check, base {option.RiskChance.Value}%) -> {(success ? "SUCCESS" : "FAILURE")}");
+                }
+                else
+                {
+                    ModLogger.Info(LogCategory, $"Risky option roll: {roll} vs {actualChance}% -> {(success ? "SUCCESS" : "FAILURE")}");
+                }
             }
 
             // Apply base effects first (always applied)
@@ -408,30 +418,6 @@ namespace Enlisted.Features.Content
 
             // Apply flag changes
             ApplyFlagChanges(option);
-
-            // Special handling: Open baggage stash for dec_access_baggage decision
-            if (_currentEvent != null && 
-                _currentEvent.Id.Equals("dec_access_baggage", StringComparison.OrdinalIgnoreCase) &&
-                !option.Id.Equals("cancel", StringComparison.OrdinalIgnoreCase))
-            {
-                // Open the stash screen
-                var enlistmentBehavior = EnlistmentBehavior.Instance;
-                if (enlistmentBehavior != null)
-                {
-                    NextFrameDispatcher.RunNextFrame(() =>
-                    {
-                        try
-                        {
-                            enlistmentBehavior.TryOpenBaggageTrain();
-                            ModLogger.Info(LogCategory, "Opened baggage stash from decision");
-                        }
-                        catch (Exception ex)
-                        {
-                            ModLogger.Error(LogCategory, "Failed to open baggage stash from decision", ex);
-                        }
-                    });
-                }
-            }
 
             // Handle enlistment abort (used by bag check)
             if (option.AbortsEnlistment)
@@ -1508,6 +1494,78 @@ namespace Enlisted.Features.Content
 
             EnlistedNewsBehavior.Instance.AddEventOutcome(outcome);
             ModLogger.Debug(LogCategory, $"Reported training to news: {summary}");
+        }
+
+        /// <summary>
+        /// Calculates the actual success chance for an option, including skill modifiers.
+        /// Formula: actualChance = baseChance + ((playerSkill - skillBase) / 5)
+        /// Result is clamped to 5-95% to prevent guaranteed outcomes.
+        /// </summary>
+        private static int CalculateSkillModifiedChance(EventOption option)
+        {
+            if (!option.RiskChance.HasValue)
+            {
+                return 100; // Non-risky option always succeeds
+            }
+
+            var baseChance = option.RiskChance.Value;
+
+            // Apply skill modifier if a skill check is specified
+            if (!string.IsNullOrEmpty(option.SkillCheck))
+            {
+                var hero = Hero.MainHero;
+                if (hero != null)
+                {
+                    var skill = SkillCheckHelper.GetSkillByName(option.SkillCheck);
+                    if (skill != null)
+                    {
+                        var playerSkillValue = hero.GetSkillValue(skill);
+                        var skillBase = option.SkillBase > 0 ? option.SkillBase : 50;
+                        
+                        // Each 5 points above/below skill base adds/subtracts 1% chance
+                        var skillModifier = (playerSkillValue - skillBase) / 5;
+                        baseChance += skillModifier;
+                    }
+                }
+            }
+
+            // Clamp to 5-95% to prevent guaranteed outcomes
+            return Math.Max(5, Math.Min(95, baseChance));
+        }
+
+        /// <summary>
+        /// Generates a dynamic tooltip for an option using its template.
+        /// Replaces placeholders: {CHANCE}, {SKILL}, {SKILL_NAME}.
+        /// </summary>
+        public static string GenerateDynamicTooltip(EventOption option)
+        {
+            if (string.IsNullOrEmpty(option.TooltipTemplate))
+            {
+                return option.Tooltip ?? string.Empty;
+            }
+
+            var tooltip = option.TooltipTemplate;
+            var chance = CalculateSkillModifiedChance(option);
+            
+            tooltip = tooltip.Replace("{CHANCE}", chance.ToString());
+
+            if (!string.IsNullOrEmpty(option.SkillCheck))
+            {
+                var skill = SkillCheckHelper.GetSkillByName(option.SkillCheck);
+                var skillValue = 0;
+                var skillName = option.SkillCheck;
+                
+                if (skill != null && Hero.MainHero != null)
+                {
+                    skillValue = Hero.MainHero.GetSkillValue(skill);
+                    skillName = skill.Name?.ToString() ?? option.SkillCheck;
+                }
+                
+                tooltip = tooltip.Replace("{SKILL}", skillValue.ToString());
+                tooltip = tooltip.Replace("{SKILL_NAME}", skillName);
+            }
+
+            return tooltip;
         }
 
         /// <summary>

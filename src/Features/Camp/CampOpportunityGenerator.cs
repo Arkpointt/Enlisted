@@ -47,6 +47,11 @@ namespace Enlisted.Features.Camp
         private List<CampOpportunity> _cachedOpportunities;
         private DayPhase _cachePhase = DayPhase.Night;
         
+        // Promotion reputation pressure (cached per generation cycle for performance)
+        private bool _cachedNeedsReputation = false;
+        private int _cachedReputationGap = 0;
+        private bool _hasShownPromotionRepNotice = false;
+        
         // Track previous phase for routine processing
         private DayPhase _previousPhase = DayPhase.Night;
         private bool _hasProcessedFirstPhase;
@@ -499,14 +504,37 @@ namespace Enlisted.Features.Camp
             var candidates = GenerateCandidates(worldSituation, campContext, playerPrefs);
             ModLogger.Info(LogCategory, $"Generated {candidates.Count} candidates from {_opportunityDefinitions.Count} total definitions");
 
+            // Cache promotion reputation need (calculated once, used for all fitness calculations)
+            (_cachedNeedsReputation, _cachedReputationGap) = SimulationPressureCalculator.CheckPromotionReputationNeed();
+            if (_cachedNeedsReputation && _cachedReputationGap > 0 && !_hasShownPromotionRepNotice)
+            {
+                _hasShownPromotionRepNotice = true;
+                ModLogger.Info(LogCategory, 
+                    $"Promotion reputation pressure: boosting rep-granting opportunities (need {_cachedReputationGap} more soldier rep)");
+            }
+
             // Score each candidate
             foreach (var candidate in candidates)
             {
                 candidate.FitnessScore = CalculateFitness(candidate, worldSituation, campContext, playerPrefs, _history);
             }
 
-            // Select best fitting opportunities
-            var selected = SelectTopN(candidates, budget);
+            // Separate guaranteed opportunities (immediate=true, like baggage access) from normal candidates
+            var guaranteed = candidates.Where(c => c.Immediate).ToList();
+            var normalCandidates = candidates.Where(c => !c.Immediate).ToList();
+
+            // Select best fitting normal opportunities (within budget)
+            var selected = SelectTopN(normalCandidates, budget);
+
+            // Add guaranteed opportunities (always show when available, don't count against budget)
+            foreach (var guaranteedOpp in guaranteed)
+            {
+                if (!selected.Any(s => s.Id == guaranteedOpp.Id))
+                {
+                    selected.Add(guaranteedOpp);
+                    ModLogger.Debug(LogCategory, $"Guaranteed opportunity added: {guaranteedOpp.Id}");
+                }
+            }
 
             // Record presentations for history and learning system
             foreach (var opp in selected)
@@ -519,7 +547,7 @@ namespace Enlisted.Features.Camp
             _cachedOpportunities = selected;
             _cachePhase = campContext.DayPhase;
 
-            ModLogger.Info(LogCategory, $"Selected {selected.Count} opportunities: [{string.Join(", ", selected.Select(o => o.Id))}]");
+            ModLogger.Info(LogCategory, $"Selected {selected.Count} opportunities ({guaranteed.Count} guaranteed): [{string.Join(", ", selected.Select(o => o.Id))}]");
             return selected;
         }
 
@@ -555,7 +583,25 @@ namespace Enlisted.Features.Camp
         public void InvalidateCache()
         {
             _cachedOpportunities = null;
+            
+            // Reset promotion reputation pressure cache (will recalculate on next generation)
+            _cachedNeedsReputation = false;
+            _cachedReputationGap = 0;
+            _hasShownPromotionRepNotice = false;
+            
             ModLogger.Debug(LogCategory, "Opportunity cache manually invalidated");
+        }
+
+        /// <summary>
+        /// Queues a medical opportunity for high-priority display.
+        /// Stub implementation for Phase 6H medical orchestration.
+        /// </summary>
+        public void QueueMedicalOpportunity(string opportunityType)
+        {
+            // Phase 6H stub: Medical opportunities are prioritized through normal fitness scoring
+            // with medical-related opportunities boosted when medical pressure is high
+            ModLogger.Debug(LogCategory, $"Medical opportunity queued: {opportunityType} (stub - using fitness boost instead)");
+            InvalidateCache(); // Force regeneration to pick up new medical context
         }
 
         /// <summary>
@@ -998,7 +1044,157 @@ namespace Enlisted.Features.Camp
                 mod += 10f;
             }
 
+            // PROMOTION REPUTATION PRESSURE: Boost reputation-gaining opportunities when player needs reputation for promotion
+            // Uses cached values calculated once per generation cycle (not per-opportunity)
+            if (_cachedNeedsReputation && _cachedReputationGap > 0)
+            {
+                // Identify opportunities that grant soldier reputation
+                bool grantsReputation = IsReputationGrantingOpportunity(opp.TargetDecisionId);
+                
+                if (grantsReputation)
+                {
+                    // Scale boost based on reputation gap
+                    // Small gap (1-5): +15 fitness
+                    // Medium gap (6-15): +25 fitness
+                    // Large gap (16+): +35 fitness
+                    float repBoost = 15f;
+                    if (_cachedReputationGap >= 16)
+                    {
+                        repBoost = 35f;
+                    }
+                    else if (_cachedReputationGap >= 6)
+                    {
+                        repBoost = 25f;
+                    }
+
+                    // Apply PHASE-AWARE boosting: boost MORE for phase-appropriate activities
+                    // This respects the existing schedule system (training at dawn, social at dusk)
+                    repBoost = ApplyPromotionPhaseBoost(opp, camp.DayPhase, repBoost);
+
+                    mod += repBoost;
+                    ModLogger.Debug(LogCategory, 
+                        $"Promotion reputation boost: +{repBoost:F0} for {opp.Id} (target: {opp.TargetDecisionId}, gap: {_cachedReputationGap}, phase: {camp.DayPhase})");
+                }
+            }
+
             return mod;
+        }
+
+        /// <summary>
+        /// Applies phase-aware boosting to promotion reputation fitness.
+        /// Boosts opportunities that are phase-appropriate higher, respecting the camp schedule.
+        /// </summary>
+        private float ApplyPromotionPhaseBoost(CampOpportunity opp, DayPhase phase, float baseBoost)
+        {
+            // Phase-appropriate activities get a 40% bonus to the rep boost
+            // This ensures we boost activities that fit the schedule (training at dawn, social at dusk)
+            
+            switch (phase)
+            {
+                case DayPhase.Dawn:
+                    // Dawn favors training activities
+                    if (opp.Type == OpportunityType.Training)
+                    {
+                        return baseBoost * 1.4f;
+                    }
+                    // Helping wounded/mentoring also fits dawn routine
+                    if (opp.TargetDecisionId == "dec_help_wounded" || 
+                        opp.TargetDecisionId == "dec_mentor_recruit")
+                    {
+                        return baseBoost * 1.3f;
+                    }
+                    break;
+
+                case DayPhase.Midday:
+                    // Midday favors training and work details
+                    if (opp.Type == OpportunityType.Training)
+                    {
+                        return baseBoost * 1.3f;
+                    }
+                    if (opp.TargetDecisionId == "dec_help_wounded" ||
+                        opp.TargetDecisionId == "dec_volunteer_extra")
+                    {
+                        return baseBoost * 1.2f;
+                    }
+                    break;
+
+                case DayPhase.Dusk:
+                    // Dusk is prime social time - boost social opportunities significantly
+                    if (opp.Type == OpportunityType.Social)
+                    {
+                        return baseBoost * 1.5f;
+                    }
+                    // Economic/gambling also fits dusk schedule
+                    if (opp.Type == OpportunityType.Economic)
+                    {
+                        return baseBoost * 1.2f;
+                    }
+                    break;
+
+                case DayPhase.Night:
+                    // Night has limited opportunities - modest boost for quiet social
+                    if (opp.TargetDecisionId == "dec_social_stories" ||
+                        opp.TargetDecisionId == "dec_social_storytelling")
+                    {
+                        return baseBoost * 1.2f;
+                    }
+                    // Cards/dice can happen at night around fires
+                    if (opp.TargetDecisionId == "dec_gamble_cards" ||
+                        opp.TargetDecisionId == "dec_gamble_dice")
+                    {
+                        return baseBoost * 1.1f;
+                    }
+                    break;
+            }
+
+            // Default: no phase bonus
+            return baseBoost;
+        }
+
+        /// <summary>
+        /// Checks if an opportunity grants soldier reputation by examining its target decision.
+        /// These opportunities help players gain reputation needed for promotions.
+        /// </summary>
+        private bool IsReputationGrantingOpportunity(string targetDecisionId)
+        {
+            if (string.IsNullOrEmpty(targetDecisionId))
+            {
+                return false;
+            }
+
+            // Decisions that grant soldier reputation (based on Phase 6G decisions content)
+            // Training decisions: grant +3 soldierRep on success
+            if (targetDecisionId.StartsWith("dec_training_"))
+            {
+                return true;
+            }
+
+            // Social decisions: grant +1 to +4 soldierRep
+            if (targetDecisionId == "dec_social_stories" ||        // +2 soldierRep
+                targetDecisionId == "dec_social_storytelling" ||   // +1 soldierRep  
+                targetDecisionId == "dec_social_singing" ||        // +2 soldierRep
+                targetDecisionId == "dec_tavern_drink" ||          // +1 soldierRep (moderate)
+                targetDecisionId == "dec_arm_wrestling" ||         // +2 soldierRep on success
+                targetDecisionId == "dec_drinking_contest")        // +4 soldierRep on success
+            {
+                return true;
+            }
+
+            // Helping/mentoring decisions: grant +2 soldierRep
+            if (targetDecisionId == "dec_help_wounded" ||          // +2 soldierRep
+                targetDecisionId == "dec_mentor_recruit")          // +2 soldierRep + +1 officerRep
+            {
+                return true;
+            }
+
+            // Special decisions
+            if (targetDecisionId == "dec_gamble_cards" ||          // +1 soldierRep
+                targetDecisionId == "dec_gamble_high")             // +3 soldierRep on big wins
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private float CalculateHistoryModifier(CampOpportunity opp, OpportunityHistory history)

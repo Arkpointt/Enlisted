@@ -2,10 +2,13 @@
 
 **Summary:** Complete catalog of all 16 implemented orders for the Order Progression System. Each order includes duration, skills, fatigue, injury risk, phase blocks, and event pool references. This document serves as both specification and implementation reference.
 
-**Status:** ✅ **IMPLEMENTED** - All 16 orders defined in JSON with 85 order events  
-**Last Updated:** 2025-12-31 (Added naval order handling: sea variants, land-only blocking, order cancellation)  
-**Files:** `ModuleData/Enlisted/Orders/orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json`  
-**Related Docs:** [Order Progression System](order-progression-system.md), [Order Events Master](order-events-master.md), [Content Orchestrator](content-orchestrator-plan.md), [Event System Schemas](../Features/Content/event-system-schemas.md#order-context-variants-sealand-awareness)
+**Status:** ✅ **IMPLEMENTED** - All 17 orders defined in JSON with 330 order events across 16 event pools  
+**Last Updated:** 2026-01-01 (Updated counts to match reality)  
+**Files:** 
+- Orders: `ModuleData/Enlisted/Orders/orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json`
+- Events: `ModuleData/Enlisted/Orders/order_events/*.json` (16 files, 330 total events)
+
+**Related Docs:** [Order Progression System](../Core/order-progression-system.md), [Content System Architecture](content-system-architecture.md), [Event System Schemas](event-system-schemas.md#order-context-variants-sealand-awareness)
 
 ---
 
@@ -30,11 +33,11 @@ Orders are multi-day duty assignments that progress through phases (4 per day). 
 
 ### Order Count Summary
 
-| Tier Range | Order Count | Focus |
-|------------|-------------|-------|
-| T1-T3 | 8 orders | Menial, physical, routine |
-| T4-T6 | 8 orders | Specialist, skilled, leadership |
-| **Total** | **16 orders** | |
+| Tier Range | Order Count | Event Count | Focus |
+|------------|-------------|-------------|-------|
+| T1-T3 | 8 orders | ~150 events | Menial, physical, routine |
+| T4-T6 | 9 orders | ~180 events | Specialist, skilled, leadership |
+| **Total** | **17 orders** | **330 events** | Events defined in `order_events/*.json` |
 
 ---
 
@@ -739,7 +742,7 @@ ModuleData/Enlisted/Orders/
     └── defenses_events.json    (order_inspect_defenses)
 ```
 
-See [Order Events Master](order-events-master.md) for complete event definitions and consequences.
+See JSON files in `ModuleData/Enlisted/Orders/order_events/` for complete event definitions (330 total events across 16 files).
 
 ### Localization
 

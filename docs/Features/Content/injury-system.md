@@ -5,7 +5,7 @@
 **Status:** ✅ Implemented  
 **Last Updated:** 2025-12-31  
 **Implementation:** `src/Features/Content/InjurySystem.cs`, `ModuleData/Enlisted/Content/injuries.json`  
-**Related Docs:** [Order Progression System](../../AFEATURE/order-progression-system.md), [Event System Schemas](event-system-schemas.md)
+**Related Docs:** [Order Progression System](../Core/order-progression-system.md), [Event System Schemas](event-system-schemas.md)
 
 ---
 

@@ -1,4 +1,5 @@
-﻿using TaleWorlds.CampaignSystem.Settlements;
+﻿using Enlisted.Features.Content;
+using TaleWorlds.CampaignSystem.Settlements;
 
 namespace Enlisted.Features.Content.Models
 {
@@ -43,6 +44,15 @@ namespace Enlisted.Features.Content.Models
 
         /// <summary>Whether currently at sea (Warsails DLC) or on land.</summary>
         public TravelContext TravelContext { get; set; }
+
+        /// <summary>Medical pressure level for orchestrator integration.</summary>
+        public MedicalPressureLevel MedicalPressure { get; set; }
+
+        /// <summary>Player has untreated condition that requires medical care.</summary>
+        public bool RequiresMedicalCare { get; set; }
+
+        /// <summary>Player has Severe or Critical condition requiring immediate attention.</summary>
+        public bool HasCriticalCondition { get; set; }
     }
 
     /// <summary>

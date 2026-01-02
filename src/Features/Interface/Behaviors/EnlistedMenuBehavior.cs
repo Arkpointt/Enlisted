@@ -1500,30 +1500,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnQuartermasterSelected,
                 false, 4);
 
-            // Medical Tent
-            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_medical_tent",
-                "{=enlisted_camp_medical_tent}Medical Tent",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-
-                    var conditions = PlayerConditionBehavior.Instance;
-                    if (conditions?.IsEnabled() != true || conditions.State?.HasAnyCondition != true)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject("{=menu_disabled_healthy}You are in good health. No treatment needed.");
-                        return true;
-                    }
-
-                    args.Tooltip = new TextObject("{=menu_tooltip_seek_medical}Visit the surgeon's tent.");
-                    return true;
-                },
-                _ =>
-                {
-                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                    GameMenu.SwitchToMenu("enlisted_medical");
-                },
-                false, 5);
+            // Medical care migrated to decision system (Phase 6G)
+            // Treatment decisions appear as orchestrated opportunities when player has conditions
+            // See: dec_medical_surgeon, dec_medical_rest, dec_medical_herbal, dec_medical_emergency
 
             // Access Baggage Train moved to Decisions accordion - appears only when accessible
 
@@ -5851,6 +5830,13 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // Mark this decision as currently showing to prevent spam-clicking
                 DecisionManager.Instance?.MarkDecisionAsShowing(decision.Id);
+
+                // Special handling: Route baggage access directly to QM dialogue (bypass popup)
+                if (decision.Id.Equals("dec_baggage_access", StringComparison.OrdinalIgnoreCase))
+                {
+                    OnBaggageTrainSelected(null);
+                    return;
+                }
 
                 // Check if this is a camp opportunity
                 if (_decisionsMenuOpportunities.TryGetValue(decision.Id, out var opportunity))

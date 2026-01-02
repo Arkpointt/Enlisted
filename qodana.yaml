@@ -37,7 +37,6 @@ exclude:
       - src/Features/Equipment/UI/QuartermasterProvisionsVM.cs  # Properties used by Gauntlet UI binding
       - src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs  # Instance singleton pattern
       - src/Features/Combat/Behaviors/EnlistedKillTrackerBehavior.cs  # Instance singleton pattern
-      - src/Features/Conditions/EnlistedMedicalMenuBehavior.cs  # Instance singleton pattern
       - src/Features/Content/MapIncidentManager.cs  # Instance singleton pattern
       - src/Features/Enlistment/Behaviors/MusterMenuHandler.cs  # Instance singleton pattern
       - src/Features/Equipment/UI/QuartermasterEquipmentSelectorBehavior.cs  # Instance singleton pattern

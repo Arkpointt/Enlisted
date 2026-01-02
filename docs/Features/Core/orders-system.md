@@ -1,7 +1,7 @@
 # ⚠️ LEGACY DOCUMENT - REPLACED
 
 **Status:** 🗄️ Deprecated  
-**Replaced By:** [Order Progression System](../../AFEATURE/order-progression-system.md)
+**Replaced By:** [Order Progression System](order-progression-system.md)
 
 ---
 
@@ -28,12 +28,10 @@ This specification described the **OLD instant-resolution orders system** that h
 
 | Topic | Current Documentation |
 |-------|----------------------|
-| **Order Progression System** | [Order Progression System](../../AFEATURE/order-progression-system.md) |
-| **Migration Guide** | [Order System Migration](../../AFEATURE/ORDER-SYSTEM-MIGRATION.md) |
-| **Order Events Master** | [Order Events Master](../../AFEATURE/order-events-master.md) |
-| **Orders Content** | [Orders Content](../../AFEATURE/orders-content.md) |
-| **Content Orchestrator** | [Content Orchestrator Plan](../../AFEATURE/content-orchestrator-plan.md) |
-| **Implementation Prompts** | [Content Orchestrator Prompts - Phase 4](../../AFEATURE/content-orchestrator-prompts.md#phase-4-orders-integration) |
+| **Order Progression System** | [Order Progression System](order-progression-system.md) |
+| **Migration Guide** | [Order System Migration](../../Archive/ORDER-SYSTEM-MIGRATION.md) |
+| **Orders Content** | [Orders Content](../Content/orders-content.md) |
+| **Content System Architecture** | [Content System Architecture](../Content/content-system-architecture.md) |
 
 ---
 
@@ -64,5 +62,5 @@ This specification described the **OLD instant-resolution orders system** that h
 **This file kept for reference only. Do not implement this system.**
 
 **For implementation, use:**
-- [Order Progression System](../../AFEATURE/order-progression-system.md)
-- [ORDER-SYSTEM-MIGRATION.md](../../AFEATURE/ORDER-SYSTEM-MIGRATION.md) for removal instructions
+- [Order Progression System](order-progression-system.md)
+- [ORDER-SYSTEM-MIGRATION.md](../../Archive/ORDER-SYSTEM-MIGRATION.md) for removal instructions

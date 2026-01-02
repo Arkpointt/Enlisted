@@ -3,6 +3,8 @@ using System.Linq;
 using System.Text;
 using Enlisted.Features.Camp;
 using Enlisted.Features.Company;
+using Enlisted.Features.Conditions;
+using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Orders.Behaviors;
@@ -245,6 +247,9 @@ namespace Enlisted.Features.Content
                     Priority.Low));
             }
 
+            // === MEDICAL PRESSURE WARNINGS (Phase 6H) ===
+            AddMedicalForecast(forecasts);
+
             // Sort by priority descending, take top 2 most urgent forecasts
             var topForecasts = forecasts
                 .OrderByDescending(f => f.priority)
@@ -252,6 +257,104 @@ namespace Enlisted.Features.Content
                 .Select(f => f.text);
 
             return string.Join(" ", topForecasts);
+        }
+
+        /// <summary>
+        /// Adds medical-related forecasts based on player condition and medical pressure.
+        /// Part of Phase 6H medical system orchestration.
+        /// </summary>
+        private void AddMedicalForecast(List<(string text, Priority priority)> forecasts)
+        {
+            // Get medical pressure from SimulationPressureCalculator
+            var (medicalAnalysis, pressureLevel) = SimulationPressureCalculator.GetMedicalPressure();
+
+            // Critical: Severe condition requiring immediate attention
+            if (medicalAnalysis.HasSevereCondition)
+            {
+                var condType = GetConditionTypeName();
+                forecasts.Add((
+                    new TextObject("{=menu_ahead_condition_severe}Your {CONDITION} is getting worse. Find a surgeon.")
+                        .SetTextVariable("CONDITION", condType)
+                        .ToString(),
+                    Priority.Critical));
+                return;
+            }
+
+            // High: Untreated condition worsening over time
+            if (medicalAnalysis.HasCondition && medicalAnalysis.IsUntreated && medicalAnalysis.DaysUntreated >= 2)
+            {
+                forecasts.Add((
+                    new TextObject("{=menu_ahead_condition_untreated}You've been ignoring that {CONDITION}. It won't heal itself.")
+                        .SetTextVariable("CONDITION", GetConditionTypeName())
+                        .ToString(),
+                    Priority.High));
+                return;
+            }
+
+            // Moderate: Has condition but under care, or high medical risk
+            if (medicalAnalysis.HasCondition && !medicalAnalysis.IsUntreated)
+            {
+                forecasts.Add((
+                    new TextObject("{=menu_ahead_condition_treated}Treatment is helping. Stay off your feet.").ToString(),
+                    Priority.Low));
+                return;
+            }
+
+            // Warning: Building medical risk without condition yet
+            if (pressureLevel == MedicalPressureLevel.High && !medicalAnalysis.HasCondition)
+            {
+                forecasts.Add((
+                    new TextObject("{=menu_ahead_medical_risk_high}You're pushing too hard. Rest before you collapse.").ToString(),
+                    Priority.High));
+                return;
+            }
+
+            if (pressureLevel == MedicalPressureLevel.Moderate && !medicalAnalysis.HasCondition)
+            {
+                forecasts.Add((
+                    new TextObject("{=menu_ahead_medical_risk_moderate}Fatigue is catching up with you.").ToString(),
+                    Priority.Medium));
+            }
+        }
+
+        /// <summary>
+        /// Gets the localized name of the player's current condition for display.
+        /// </summary>
+        private string GetConditionTypeName()
+        {
+            var cond = PlayerConditionBehavior.Instance?.State;
+            if (cond == null)
+            {
+                return new TextObject("{=condition_generic}ailment").ToString();
+            }
+
+            // Check for injury first (more specific)
+            if (cond.CurrentInjury != InjurySeverity.None)
+            {
+                return cond.CurrentInjury switch
+                {
+                    InjurySeverity.Minor => new TextObject("{=condition_injury_minor}wound").ToString(),
+                    InjurySeverity.Moderate => new TextObject("{=condition_injury_moderate}injury").ToString(),
+                    InjurySeverity.Severe => new TextObject("{=condition_injury_severe}serious wound").ToString(),
+                    InjurySeverity.Critical => new TextObject("{=condition_injury_critical}grievous wound").ToString(),
+                    _ => new TextObject("{=condition_generic}ailment").ToString()
+                };
+            }
+
+            // Check for illness
+            if (cond.CurrentIllness != IllnessSeverity.None)
+            {
+                return cond.CurrentIllness switch
+                {
+                    IllnessSeverity.Mild => new TextObject("{=condition_illness_minor}cough").ToString(),
+                    IllnessSeverity.Moderate => new TextObject("{=condition_illness_moderate}fever").ToString(),
+                    IllnessSeverity.Severe => new TextObject("{=condition_illness_severe}sickness").ToString(),
+                    IllnessSeverity.Critical => new TextObject("{=condition_illness_critical}plague").ToString(),
+                    _ => new TextObject("{=condition_generic}ailment").ToString()
+                };
+            }
+
+            return new TextObject("{=condition_generic}ailment").ToString();
         }
     }
 }

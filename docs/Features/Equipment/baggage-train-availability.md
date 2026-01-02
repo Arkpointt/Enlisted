@@ -655,82 +655,75 @@ public bool CanHaltColumn()
 
 ### Overview
 
-Baggage access was moved from a static Camp Hub menu option to a dynamic decision in the DECISIONS accordion. This provides better UX by only showing baggage access when the wagons are actually accessible.
+Baggage access appears as a decision button in the DECISIONS accordion. When clicked, it **bypasses the popup** and routes directly to either the baggage stash or the QM dialogue based on current access state. This provides seamless access without unnecessary confirmation popups.
 
 ### Implementation
 
-**Decision Definition:** `ModuleData/Enlisted/Decisions/decisions.json`
+**Decision Definition:** `ModuleData/Enlisted/Decisions/camp_decisions.json`
 
 ```json
 {
-  "id": "dec_access_baggage",
+  "id": "dec_baggage_access",
   "category": "decision",
-  "titleId": "dec_access_baggage_title",
+  "titleId": "dec_baggage_access_title",
   "title": "Access Baggage Train",
-  "setupId": "dec_access_baggage_setup",
-  "setup": "The baggage wagons are accessible. Time to check your belongings.",
+  "setupId": "dec_baggage_access_setup",
+  "setup": "Your personal belongings are stowed with the baggage train.",
   "requirements": {
     "tier": { "min": 1, "max": 999 }
   },
-  "timing": {
-    "cooldown_hours": 1,
-    "priority": "normal"
-  },
-  "options": [
-    {
-      "id": "access",
-      "textId": "dec_access_baggage_open",
-      "text": "Open your baggage.",
-      "effects": {
-        "open_baggage_stash": true
-      },
-      "resultTextId": "dec_access_baggage_result",
-      "resultText": "You rummage through your belongings.",
-      "tooltip": "Access your stored items."
-    }
-  ]
+  "timing": { "cooldown_days": 0, "priority": "normal" },
+  "options": []
 }
 ```
 
-### Visibility Logic
+**Note:** The `options` array is empty because this decision never shows a popup. It's intercepted for direct routing.
 
-**DecisionManager Special Gate:**
+### Routing Logic
+
+**Direct Bypass (EnlistedMenuBehavior.OnDecisionSelected):**
 
 ```csharp
-// In DecisionManager.CheckAvailability()
-if (decision.Id.Equals("dec_access_baggage", StringComparison.OrdinalIgnoreCase))
+// Special handling: Route baggage access directly to QM dialogue (bypass popup)
+if (decision.Id.Equals("dec_baggage_access", StringComparison.OrdinalIgnoreCase))
 {
-    var baggageManager = Logistics.BaggageTrainManager.Instance;
-    var accessState = baggageManager.GetCurrentAccess();
-    
-    // Only visible when baggage is accessible
-    if (accessState != BaggageAccessState.FullAccess && 
-        accessState != BaggageAccessState.TemporaryAccess)
-    {
-        result.IsAvailable = false;
-        result.IsVisible = false; // Hide when not accessible
-        result.UnavailableReason = "Baggage train not accessible";
-        return result;
-    }
+    OnBaggageTrainSelected(null);
+    return;
 }
 ```
 
-**Effect Handler:**
+**Smart Routing (EnlistedMenuBehavior.OnBaggageTrainSelected):**
 
 ```csharp
-// In EventDeliveryManager.ApplyEffects()
-if (effects.OpenBaggageStash == true)
+var accessState = baggageManager.GetCurrentAccess();
+
+switch (accessState)
 {
-    EnlistmentBehavior.Instance?.TryOpenBaggageTrain();
-    feedbackMessages.Add("Accessed baggage train.");
+    case BaggageAccessState.FullAccess:
+    case BaggageAccessState.TemporaryAccess:
+        // Direct access to baggage stash
+        enlistment.TryOpenBaggageTrain();
+        break;
+
+    case BaggageAccessState.Locked:
+        // Route to QM conversation for emergency access request
+        OpenQuartermasterConversationForBaggageRequest("locked");
+        break;
+
+    case BaggageAccessState.NoAccess:
+    default:
+        // Route to QM conversation for emergency access request
+        OpenQuartermasterConversationForBaggageRequest("emergency");
+        break;
 }
 ```
 
 ### Benefits
 
 **UX Improvements:**
-- Decision only appears when actionable
-- Reduces menu clutter during march
+- No confirmation popup - immediate action
+- Button always visible while enlisted
+- Smart routing based on access state
 - Clear indication that baggage is accessible
 - No greyed-out options with unclear reasons
 

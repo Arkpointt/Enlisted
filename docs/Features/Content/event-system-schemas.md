@@ -3,7 +3,7 @@
 **Summary:** Authoritative JSON schema definitions for events, decisions, orders, and camp routine configs. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-31 (Added camp routine config schemas: routine_outcomes.json, orchestrator_overrides.json)  
+**Last Updated:** 2026-01-01 (Phase 6G: Added skillCheck/skillBase/tooltipTemplate for dynamic skill checks, hasAnyCondition/hasSevereCondition/maxIllness for medical system)  
 **Related Docs:** [Content System Architecture](content-system-architecture.md), [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md), [Event Catalog](../../Content/event-catalog-by-system.md), [Quartermaster System](../Equipment/quartermaster-system.md)
 
 ---
@@ -358,7 +358,7 @@ var eligible = events.Where(e =>
 );
 ```
 
-**See Also:** [Content Orchestrator Plan](../../AFEATURE/content-orchestrator-plan.md) for complete world state analysis specification.
+**See Also:** [Content System Architecture](content-system-architecture.md) for world state analysis specification.
 
 ---
 
@@ -403,7 +403,7 @@ var eligible = events.Where(e =>
 - **Order events** need granular weighting (peacetime vs active war vs desperate siege)
 - Both are driven by the same underlying `WorldSituation` analysis
 
-**See:** [Order Events Master](../../AFEATURE/order-events-master.md) for order event examples, [Order Progression System](../../AFEATURE/order-progression-system.md) for execution flow.
+**See:** [Order Progression System](../Core/order-progression-system.md) for execution flow, `ModuleData/Enlisted/Orders/order_events/*.json` for 330 event definitions.
 
 ---
 
@@ -706,7 +706,7 @@ Player sees: Normal rest option
 3. Role-specific content (add depth)
 4. Tier-specific content (progression feel)
 
-**See:** [Content Orchestrator Plan - Phase 7](../../AFEATURE/content-orchestrator-plan.md#phase-7-content-variants-post-launch-incremental) for variant strategy.
+**See:** [Content System Architecture](content-system-architecture.md) for variant strategy implementation.
 
 ---
 
@@ -911,33 +911,68 @@ Each option represents a player choice.
 | ID | `id` | string | ✅ | Unique within event |
 | Text ID | `textId` | string | ✅ | XML localization key |
 | Text Fallback | `text` | string | ❌ | Button text if loc missing |
-| Tooltip | `tooltip` | string | ✅ | Cannot be null. Factual, brief description |
+| Tooltip | `tooltip` | string | ✅* | Static tooltip. Required if no `tooltipTemplate` |
+| Tooltip Template | `tooltipTemplate` | string | ✅* | Dynamic tooltip with `{CHANCE}`, `{SKILL}`, `{SKILL_NAME}` |
 | Costs | `costs` | object | ❌ | Resources deducted |
 | Rewards | `rewards` | object | ❌ | Resources gained |
 | Effects | `effects` | object | ❌ | State changes |
 | Result Text ID | `resultTextId` | string | ❌ | XML key for outcome narrative |
 | Result Text | `resultText` | string or array | ❌ | Outcome narrative (string or array for random selection) |
 | Risk | `risk` | string | ❌ | safe/moderate/risky/dangerous |
-| Risk Chance | `risk_chance` or `riskChance` | int | ❌ | 0-100, success % |
+| Risk Chance | `risk_chance` or `riskChance` | int | ❌ | Base success % (0-100), modified by skill |
+| Skill Check | `skillCheck` | string | ❌ | Skill that modifies riskChance (e.g., "Scouting") |
+| Skill Base | `skillBase` | int | ❌ | Skill level where riskChance applies (default 50) |
+| Effects Failure | `effectsFailure` | object | ❌ | Effects applied on failed skill check |
 | Set Flags | `set_flags` or `setFlags` | array | ❌ | Flags to set |
 | Clear Flags | `clear_flags` or `clearFlags` | array | ❌ | Flags to clear |
 | Chains To | `chains_to` or `chainsTo` | string | ❌ | Follow-up event ID |
 | Chain Delay | `chain_delay_hours` or `chainDelayHours` | int | ❌ | Hours before chain fires |
 
+*Either `tooltip` OR `tooltipTemplate` is required (one must be present, cannot both be null).
+
 ---
 
 ## Tooltip Guidelines
 
-**Tooltips cannot be null.** Every option must have a factual, concise, brief description.
+**Tooltips cannot be null.** Every option must have either `tooltip` (static) or `tooltipTemplate` (dynamic).
 
-**Format:** Action + consequences + restrictions (under 80 characters)
+### Dynamic Tooltips (Skill Checks)
 
-**Examples:**
+For options with `skillCheck`, use `tooltipTemplate` with placeholders:
+
+```json
+{
+  "riskChance": 50,
+  "skillCheck": "Scouting",
+  "skillBase": 50,
+  "tooltipTemplate": "{CHANCE}% (Scouting {SKILL}). +15 Supplies. Fail: -5 Supplies."
+}
+```
+
+**Placeholders:**
+- `{CHANCE}` - Calculated success chance based on player skill
+- `{SKILL}` - Player's current skill value
+- `{SKILL_NAME}` - Name of the skill being checked
+
+**Calculation:** `actualChance = riskChance + (playerSkill - skillBase) × 0.5`, clamped 15-95%
+
+**Runtime Display (player has Scouting 72):**
+```
+"61% (Scouting 72). +15 Supplies. Fail: -5 Supplies."
+```
+
+### Static Tooltips (No Skill Check)
+
+For guaranteed options or non-skill-based outcomes, use `tooltip`:
 
 ```json
 // Simple actions
-{"tooltip": "Trains equipped weapon"}
-{"tooltip": "Build stamina and footwork"}
+{"tooltip": "Trains equipped weapon. +3 One-Handed XP."}
+{"tooltip": "Build stamina and footwork. +3 Athletics XP."}
+
+// Guaranteed outcomes
+{"tooltip": "Guaranteed. +25 Supplies. -3 Morale. +3 Scrutiny."}
+{"tooltip": "No action taken."}
 
 // Stat/reputation changes
 {"tooltip": "Harsh welcome. +5 Officer rep. -3 Retinue Loyalty."}
@@ -946,11 +981,9 @@ Each option represents a player choice.
 // Consequences
 {"tooltip": "Accept discharge. 90-day re-enlistment block applies."}
 {"tooltip": "Desert immediately. Criminal record and faction hostility."}
-
-// Requirements
-{"tooltip": "Requires Leadership 50+ to attempt."}
-{"tooltip": "Greyed out: Company Morale must be below 50"}
 ```
+
+**Format:** Action + effects + costs (under 100 characters)
 
 ---
 
@@ -2373,7 +2406,7 @@ For reference when reviewing event master document:
 - `XP.{Skill}` = Skill XP (`skillXp.{Skill}`)
 - **REQUIRED:** All order event options must include at least one skill XP reward in `effects`
 
-**See Also:** [Order Events Master](../../AFEATURE/order-events-master.md) for complete event catalog.
+**See Also:** [Orders Content](orders-content.md) for order definitions, event files at `ModuleData/Enlisted/Orders/order_events/`.
 
 ---
 

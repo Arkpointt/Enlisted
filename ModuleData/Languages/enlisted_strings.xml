@@ -463,6 +463,24 @@
     <string id="menu_ahead_order_coming" text="{NCO_TITLE}'s been making lists." />
     <string id="menu_ahead_muster_soon" text="Pay day approaches." />
     
+    <!-- AHEAD Section - Medical Warnings (Phase 6H) -->
+    <string id="menu_ahead_condition_severe" text="Your {CONDITION} is getting worse. Find a surgeon." />
+    <string id="menu_ahead_condition_untreated" text="You've been ignoring that {CONDITION}. It won't heal itself." />
+    <string id="menu_ahead_condition_treated" text="Treatment is helping. Stay off your feet." />
+    <string id="menu_ahead_medical_risk_high" text="You're pushing too hard. Rest before you collapse." />
+    <string id="menu_ahead_medical_risk_moderate" text="Fatigue is catching up with you." />
+    
+    <!-- Condition Type Names -->
+    <string id="condition_generic" text="ailment" />
+    <string id="condition_injury_minor" text="wound" />
+    <string id="condition_injury_moderate" text="injury" />
+    <string id="condition_injury_severe" text="serious wound" />
+    <string id="condition_injury_critical" text="grievous wound" />
+    <string id="condition_illness_minor" text="cough" />
+    <string id="condition_illness_moderate" text="fever" />
+    <string id="condition_illness_severe" text="sickness" />
+    <string id="condition_illness_critical" text="plague" />
+    
     <!-- AHEAD Section - Default (No Warnings) -->
     <string id="menu_ahead_default" text="Quiet. Almost too quiet." />
     
@@ -2737,6 +2755,14 @@
     <string id="muster_denars" text="denars" />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- DECISIONS - Camp Hub Equipment -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Access Baggage Train Decision (bypassed - goes directly to QM dialogue) -->
+    <string id="dec_baggage_access_title" text="Access Baggage Train" />
+    <string id="dec_baggage_access_setup" text="Your personal belongings are stowed with the baggage train." />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- QUARTERMASTER - Equipment and Provisions Messages -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     
@@ -2744,18 +2770,6 @@
     <string id="qm_equipment_unavailable" text="Equipment information unavailable" />
     <string id="qm_no_variants_available" text="No {EQUIPMENT_TYPE} variants available" />
     <string id="qm_no_affordable_variants" text="No affordable {EQUIPMENT_TYPE} variants available. You need more gold." />
-    
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- DECISIONS - Camp Hub Equipment -->
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    
-    <!-- Access Baggage Train Decision -->
-    <string id="dec_access_baggage_title" text="Access Baggage Train" />
-    <string id="dec_access_baggage_setup" text="The baggage wagons are accessible. Time to check your belongings." />
-    <string id="dec_access_baggage_open" text="Open your baggage." />
-    <string id="dec_access_baggage_result" text="You rummage through your belongings." />
-    <string id="dec_access_baggage_cancel" text="Leave it for now." />
-    <string id="dec_access_baggage_cancel_result" text="Your belongings can wait." />
     
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- ORDER SYSTEM - Warnings and Notifications -->

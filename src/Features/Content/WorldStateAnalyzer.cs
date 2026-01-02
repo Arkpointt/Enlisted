@@ -58,6 +58,9 @@ namespace Enlisted.Features.Content
             // Detect sea/land travel context
             var travelContext = DetectTravelContext(party);
 
+            // Analyze medical pressure for orchestrator integration
+            var (medicalAnalysis, medicalLevel) = SimulationPressureCalculator.GetMedicalPressure();
+
             return new WorldSituation
             {
                 LordIs = lordSituation,
@@ -71,7 +74,10 @@ namespace Enlisted.Features.Content
                 TargetSettlement = party.TargetSettlement,
                 DaysInCurrentPhase = 0, // TODO: Track phase duration
                 InEnemyTerritory = IsInEnemyTerritory(lord, party),
-                TravelContext = travelContext
+                TravelContext = travelContext,
+                MedicalPressure = medicalLevel,
+                RequiresMedicalCare = medicalAnalysis.HasCondition && medicalAnalysis.IsUntreated,
+                HasCriticalCondition = medicalAnalysis.HasSevereCondition
             };
         }
 
@@ -140,7 +146,10 @@ namespace Enlisted.Features.Content
                 RealisticEventFrequency = 1.0f,
                 CurrentDayPhase = GetDayPhaseFromHour(CampaignTime.Now.GetHourOfDay),
                 CurrentHour = CampaignTime.Now.GetHourOfDay,
-                TravelContext = TravelContext.Land
+                TravelContext = TravelContext.Land,
+                MedicalPressure = MedicalPressureLevel.None,
+                RequiresMedicalCare = false,
+                HasCriticalCondition = false
             };
         }
 

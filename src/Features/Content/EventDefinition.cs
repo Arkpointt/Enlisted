@@ -166,6 +166,26 @@ namespace Enlisted.Features.Content
         /// Used by maritime events like ship's hold access that only make sense during sea travel.
         /// </summary>
         public bool? AtSea { get; set; }
+
+        /// <summary>
+        /// If true, requires the player to have any condition (injury, illness, or exhaustion).
+        /// Used by medical decisions that only appear when the player needs treatment.
+        /// </summary>
+        public bool? HasAnyCondition { get; set; }
+
+        /// <summary>
+        /// If true, requires the player to have a severe or critical condition.
+        /// Used by emergency medical decisions that only appear for urgent cases.
+        /// </summary>
+        public bool? HasSevereCondition { get; set; }
+
+        /// <summary>
+        /// Maximum illness severity allowed for this event to be available.
+        /// Valid values: "None", "Mild", "Moderate", "Severe". 
+        /// Used by training/labor decisions to block strenuous activity when too ill.
+        /// "None" means player must have no illness. Null means no illness restriction.
+        /// </summary>
+        public string MaxIllness { get; set; }
     }
 
     /// <summary>
@@ -249,6 +269,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Percentage chance of success for risky options (0-100). Null for safe options.
+        /// This is the base chance, which may be modified by skillCheck if specified.
         /// </summary>
         public int? RiskChance { get; set; }
 
@@ -256,6 +277,26 @@ namespace Enlisted.Features.Content
         /// Risk level for this option: "low", "medium", "high". Used for UI hints.
         /// </summary>
         public string Risk { get; set; }
+
+        /// <summary>
+        /// Skill name used to modify success chance (e.g., "Medicine", "Athletics", "Roguery").
+        /// When specified, player's skill level adds to the base RiskChance percentage.
+        /// Formula: actualChance = RiskChance + ((playerSkill - skillBase) / 5)
+        /// </summary>
+        public string SkillCheck { get; set; }
+
+        /// <summary>
+        /// Base skill level for skill checks (default 50).
+        /// Player skill above this grants bonus success chance, below grants penalty.
+        /// </summary>
+        public int SkillBase { get; set; } = 50;
+
+        /// <summary>
+        /// Template for generating dynamic tooltips that show calculated success chance.
+        /// Supports placeholders: {CHANCE}, {SKILL}, {SKILL_NAME}.
+        /// Example: "{CHANCE}% success ({SKILL_NAME} {SKILL}). Treats illness. Costs 100 gold."
+        /// </summary>
+        public string TooltipTemplate { get; set; }
 
         /// <summary>
         /// Inline fallback result text for failure outcome. Used for risky options.

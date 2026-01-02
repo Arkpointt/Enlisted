@@ -374,8 +374,8 @@ namespace Enlisted.Mod.Entry
 
                     // Lance Story system, Lance Life Events, Decision Events, Lance Banner, Lance Menu deleted in Phase 1 refactor
 
-                    // Medical menu: treatment options when injured/ill/exhausted
-                    campaignStarter.AddBehavior(new EnlistedMedicalMenuBehavior());
+                    // Medical care migrated to decision system (Phase 6G)
+                    // Treatment options appear as orchestrated opportunities via dec_medical_* decisions
 
                     // Battle encounter system: detects when the lord enters battle and handles player participation,
                     // manages menu transitions during battles, and provides battle wait menu options.

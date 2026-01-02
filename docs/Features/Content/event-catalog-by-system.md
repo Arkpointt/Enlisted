@@ -477,13 +477,20 @@ Situations that arise based on context and state. Player responds.
 | Disc 8 | Disciplinary Hearing | Face the captain |
 | Disc 10 | Court Martial | Trial |
 
-**Escalation: Medical**
-| Threshold | Event | Stakes |
-|-----------|-------|--------|
-| Med 2 | Feeling Unwell (`medical_onset`) | Minor symptoms |
-| Med 3 | Worsening (`medical_worsening`) | Performance impact |
-| Med 4 | Complication (`medical_complication`) | Serious complications |
-| Med 5 | Emergency (`medical_emergency`) | Life-threatening |
+**Escalation: Medical** (Phase 6H - Orchestrator Integration)
+| Medical Risk | Event | Description |
+|--------------|-------|-------------|
+| Risk 3+ | Feeling Unwell (`illness_onset_minor`) | Minor illness onset, choice to rest or push through |
+| Risk 4+ | Fever Sets In (`illness_onset_moderate`) | Moderate illness, treatment urgently recommended |
+| Risk 5+ | Collapse (`illness_onset_severe`) | Severe illness, automatic treatment begins |
+| 3+ days untreated | Condition Worsening (`untreated_condition_worsening`) | Existing condition deteriorating without care |
+
+**Notes:**
+- Events fired by `ContentOrchestrator.CheckIllnessOnsetTriggers()` based on daily pressure analysis
+- Probability: 5% per Medical Risk level + modifiers (fatigue +10%, siege +12%, consecutive days +5% each)
+- 7-day cooldown between illness triggers to prevent spam
+- Blocked if player already has active condition
+- See [Medical Progression System](medical-progression-system.md) for full specification
 
 **Reputation Milestones** (First time crossing threshold)
 | Track | Thresholds | Effect |

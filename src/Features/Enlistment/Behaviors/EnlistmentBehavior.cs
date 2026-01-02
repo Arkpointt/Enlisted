@@ -2407,9 +2407,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             EnsureBaggageStash();
 
-            // Local helper: add an item roster into baggage stash.
+            // Local helper: add an item roster into baggage stash and remove from live inventory.
             void AddRosterToBaggage(ItemRoster roster)
             {
+                var partyRoster = MobileParty.MainParty?.ItemRoster;
+                if (partyRoster == null)
+                {
+                    ModLogger.Warn("Baggage", "Cannot add to baggage: party roster is null");
+                    return;
+                }
+
+                var itemsStowed = 0;
                 foreach (var element in roster)
                 {
                     if (element.EquipmentElement.Item == null || element.Amount <= 0)
@@ -2423,7 +2431,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         continue;
                     }
 
+                    // Add to baggage stash
                     _baggageStash.AddToCounts(element.EquipmentElement, element.Amount);
+                    
+                    // Remove from live inventory (in case items were restored between backup and bag check)
+                    partyRoster.AddToCounts(element.EquipmentElement, -element.Amount);
+                    
+                    itemsStowed += element.Amount;
+                    ModLogger.Debug("Baggage", $"Stowed {element.Amount}x {element.EquipmentElement.Item.Name} to baggage");
+                }
+                
+                if (itemsStowed > 0)
+                {
+                    ModLogger.Info("Baggage", $"Moved {itemsStowed} items from inventory to baggage stash");
                 }
             }
 
@@ -2473,7 +2493,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
                 case "sell":
                 {
+                    var partyRoster = MobileParty.MainParty?.ItemRoster;
                     var totalValue = 0f;
+                    var itemsSold = 0;
+                    
                     foreach (var element in backedUpInventory)
                     {
                         if (element.EquipmentElement.Item == null || element.Amount <= 0)
@@ -2487,6 +2510,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
 
                         totalValue += element.EquipmentElement.Item.Value * element.Amount * 0.60f;
+                        itemsSold += element.Amount;
+                        
+                        // Remove from live inventory (in case items were restored between backup and bag check)
+                        if (partyRoster != null)
+                        {
+                            partyRoster.AddToCounts(element.EquipmentElement, -element.Amount);
+                        }
                     }
 
                     var gain = (int)Math.Floor(totalValue);
@@ -2496,6 +2526,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         InformationManager.DisplayMessage(new InformationMessage(
                             new TextObject("{=qm_liquidate_gain}You receive {GOLD} denars from liquidating your possessions.")
                                 .SetTextVariable("GOLD", gain).ToString()));
+                        ModLogger.Info("Baggage", $"Sold {itemsSold} items from inventory for {gain} denars");
                     }
 
                     break;

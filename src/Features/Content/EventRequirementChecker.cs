@@ -1,4 +1,5 @@
 using System;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Context;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -95,6 +96,24 @@ namespace Enlisted.Features.Content
                 
                 // Check at sea (for maritime events like ship's hold)
                 if (!MeetsAtSeaRequirement(requirements))
+                {
+                    return false;
+                }
+                
+                // Check hasAnyCondition (for medical decisions that require being injured/ill)
+                if (!MeetsHasAnyConditionRequirement(requirements))
+                {
+                    return false;
+                }
+                
+                // Check hasSevereCondition (for emergency medical decisions)
+                if (!MeetsHasSevereConditionRequirement(requirements))
+                {
+                    return false;
+                }
+                
+                // Check maxIllness (blocks training/labor when too ill)
+                if (!MeetsMaxIllnessRequirement(requirements))
                 {
                     return false;
                 }
@@ -365,6 +384,87 @@ namespace Enlisted.Features.Content
             
             // Check if party is at sea - if not, fail the requirement
             return CheckAtSea();
+        }
+
+        /// <summary>
+        /// Checks if the player has any condition (injury, illness, or exhaustion).
+        /// Used by medical decisions that only appear when the player needs treatment.
+        /// </summary>
+        private static bool MeetsHasAnyConditionRequirement(EventRequirements requirements)
+        {
+            if (requirements.HasAnyCondition != true)
+            {
+                return true; // No condition requirement
+            }
+            
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return false; // Condition system disabled
+            }
+            
+            return conditions.State?.HasAnyCondition == true;
+        }
+
+        /// <summary>
+        /// Checks if the player has a severe or critical condition.
+        /// Used by emergency medical decisions that only appear for urgent cases.
+        /// </summary>
+        private static bool MeetsHasSevereConditionRequirement(EventRequirements requirements)
+        {
+            if (requirements.HasSevereCondition != true)
+            {
+                return true; // No severe condition requirement
+            }
+            
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return false;
+            }
+            
+            var state = conditions.State;
+            if (state == null)
+            {
+                return false;
+            }
+            
+            // Check for severe or critical injury/illness
+            return state.CurrentInjury >= InjurySeverity.Severe ||
+                   state.CurrentIllness >= IllnessSeverity.Severe;
+        }
+
+        /// <summary>
+        /// Checks if the player's illness severity is at or below the maximum allowed.
+        /// Used by training/labor decisions to block strenuous activity when too ill.
+        /// Valid maxIllness values: "None", "Mild", "Moderate", "Severe" (null = no restriction)
+        /// </summary>
+        private static bool MeetsMaxIllnessRequirement(EventRequirements requirements)
+        {
+            if (string.IsNullOrEmpty(requirements.MaxIllness))
+            {
+                return true; // No illness restriction
+            }
+            
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return true; // Condition system disabled, allow the event
+            }
+            
+            var currentIllness = conditions.State?.CurrentIllness ?? IllnessSeverity.None;
+            
+            // Parse the max allowed severity
+            var maxAllowed = requirements.MaxIllness.ToLowerInvariant() switch
+            {
+                "none" => IllnessSeverity.None,
+                "mild" => IllnessSeverity.Mild,
+                "moderate" => IllnessSeverity.Moderate,
+                "severe" => IllnessSeverity.Severe,
+                _ => IllnessSeverity.Critical // Unknown value = allow all
+            };
+            
+            return currentIllness <= maxAllowed;
         }
 
         /// <summary>

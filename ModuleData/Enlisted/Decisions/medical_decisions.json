@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 2,
+  "packId": "medical_decisions",
+  "category": "decision",
+  "description": "Medical care decisions that replace the old Medical Tent menu - Phase 6G migration",
+  "events": [
+    {
+      "id": "dec_medical_surgeon",
+      "category": "decision",
+      "titleId": "dec_medical_surgeon_title",
+      "title": "Surgeon's Treatment",
+      "setupId": "dec_medical_surgeon_setup",
+      "setup": "The camp surgeon is available. Professional treatment costs coin but heals faster.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "hasAnyCondition": true
+      },
+      "timing": { "cooldown_days": 3, "priority": "high" },
+      "options": [
+        {
+          "id": "surgeon_treat",
+          "textId": "dec_medical_surgeon_treat",
+          "text": "Request treatment.",
+          "costs": { "gold": 100 },
+          "skillCheck": "Medicine",
+          "skillBase": 50,
+          "riskChance": 70,
+          "tooltipTemplate": "{CHANCE}% success (Medicine {SKILL}). Treats condition. Resets medical risk. Costs 100 gold.",
+          "effects_success": { "hpChange": 20, "medicalRisk": -5 },
+          "effects_failure": { "hpChange": 5, "medicalRisk": -2 },
+          "resultTextId": "dec_medical_surgeon_success_result",
+          "resultText": "The surgeon's skilled hands work quickly. Clean bandages, proper treatment. You'll mend well.",
+          "resultTextFailure": "The surgeon does what he can, but your condition is stubborn. Partial improvement.",
+          "tooltip": "70% base success. Treats condition. Resets medical risk. Costs 100 gold."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_medical_surgeon_cancel",
+          "text": "I'll manage without.",
+          "resultTextId": "dec_medical_surgeon_cancel_result",
+          "resultText": "You turn away from the surgeon's tent. The pain will have to wait.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_medical_rest",
+      "category": "decision",
+      "titleId": "dec_medical_rest_title",
+      "title": "Rest and Recover",
+      "setupId": "dec_medical_rest_setup",
+      "setup": "Sometimes the body just needs time. Extended rest might help you heal.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "hasAnyCondition": true
+      },
+      "timing": { "cooldown_days": 1, "priority": "normal" },
+      "options": [
+        {
+          "id": "rest_extended",
+          "textId": "dec_medical_rest_extended",
+          "text": "Take time to rest.",
+          "effects": { "hpChange": 10, "medicalRisk": -1 },
+          "rewards": { "fatigueRelief": 3 },
+          "resultTextId": "dec_medical_rest_result",
+          "resultText": "You rest. The fever fades. The wounds ache less. Time heals.",
+          "tooltip": "+10 HP. -3 fatigue. -1 Medical risk. Free but slow."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_medical_rest_cancel",
+          "text": "Can't afford to rest.",
+          "resultTextId": "dec_medical_rest_cancel_result",
+          "resultText": "There's too much to do. You push through.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_medical_herbal",
+      "category": "decision",
+      "titleId": "dec_medical_herbal_title",
+      "title": "Herbal Remedy",
+      "setupId": "dec_medical_herbal_setup",
+      "setup": "A camp follower sells herbal remedies. Cheaper than the surgeon, if you know what you're doing.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "hasAnyCondition": true
+      },
+      "timing": { "cooldown_days": 2, "priority": "normal" },
+      "options": [
+        {
+          "id": "herbal_buy",
+          "textId": "dec_medical_herbal_buy",
+          "text": "Try the remedy.",
+          "costs": { "gold": 30 },
+          "skillCheck": "Medicine",
+          "skillBase": 30,
+          "riskChance": 50,
+          "tooltipTemplate": "{CHANCE}% success (Medicine {SKILL}). Partial healing. Costs 30 gold.",
+          "effects_success": { "hpChange": 15, "medicalRisk": -2 },
+          "effects_failure": { "hpChange": 5 },
+          "resultTextId": "dec_medical_herbal_success_result",
+          "resultText": "The bitter tea works. You feel the fever breaking, strength returning.",
+          "resultTextFailure": "The remedy helps a little, but not as much as you hoped.",
+          "tooltip": "50% base success. Partial healing. Cheaper than surgeon."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_medical_herbal_cancel",
+          "text": "I don't trust folk remedies.",
+          "resultTextId": "dec_medical_herbal_cancel_result",
+          "resultText": "Better to suffer than risk some hedge-witch's brew.",
+          "tooltip": "No action taken."
+        }
+      ]
+    },
+    {
+      "id": "dec_medical_emergency",
+      "category": "decision",
+      "titleId": "dec_medical_emergency_title",
+      "title": "Emergency Care",
+      "setupId": "dec_medical_emergency_setup",
+      "setup": "Your condition is critical. Without immediate treatment, things will get worse.",
+      "requirements": {
+        "tier": { "min": 1, "max": 999 },
+        "hasSevereCondition": true
+      },
+      "timing": { "cooldown_days": 1, "priority": "critical" },
+      "options": [
+        {
+          "id": "emergency_treat",
+          "textId": "dec_medical_emergency_treat",
+          "text": "Get emergency treatment.",
+          "costs": { "gold": 200 },
+          "effects": { "hpChange": 30, "medicalRisk": -10 },
+          "resultTextId": "dec_medical_emergency_result",
+          "resultText": "The surgeon works urgently. It costs you dearly, but you'll live.",
+          "tooltip": "Immediate treatment. +30 HP. Resets medical risk. Costs 200 gold."
+        },
+        {
+          "id": "emergency_tough",
+          "textId": "dec_medical_emergency_tough",
+          "text": "I'll tough it out.",
+          "effects": { "medicalRisk": 2 },
+          "riskChance": 40,
+          "effects_failure": { "hpChange": -10 },
+          "resultTextId": "dec_medical_emergency_tough_result",
+          "resultText": "You grit your teeth. The pain is bearable. Barely.",
+          "resultTextFailure": "You collapse. The condition worsens. Stubborn fool.",
+          "tooltip": "40% to survive. Failure: -10 HP. +2 Medical risk. Risky."
+        },
+        {
+          "id": "cancel",
+          "textId": "dec_medical_emergency_cancel",
+          "text": "I need to think about this.",
+          "resultTextId": "dec_medical_emergency_cancel_result",
+          "resultText": "The surgeon shakes his head. Time is running out.",
+          "tooltip": "No action taken. Condition continues."
+        }
+      ]
+    }
+  ]
+}

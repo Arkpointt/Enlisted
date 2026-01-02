@@ -4,7 +4,7 @@
 
 **Status:** ✅ Current  
 **Last Updated:** 2025-12-23  
-**Related Docs:** [Enlistment](enlistment.md), [Orders System](orders-system.md), [Identity System](../Identity/identity-system.md), [Camp Background Simulation](../../AFEATURE/camp-background-simulation.md)
+**Related Docs:** [Enlistment](enlistment.md), [Order Progression System](order-progression-system.md), [Identity System](../Identity/identity-system.md), [Camp Simulation System](../Campaign/camp-simulation-system.md)
 
 ---
 
@@ -48,7 +48,7 @@ The mod is built on three core transformations introduced in v2.0:
 - **Strategic Context**: `src/Features/Context/ArmyContextAnalyzer.cs`
 - **News & Reports**: `src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs`
 - **Quartermaster**: `src/Features/Equipment/Behaviors/QuartermasterManager.cs`
-- **Medical Care**: `src/Features/Conditions/EnlistedMedicalMenuBehavior.cs`
+- **Medical Care**: Integrated into decision system (see `ModuleData/Enlisted/Decisions/medical_decisions.json`)
 
 ### Core Data Sources (ModuleData)
 
@@ -90,7 +90,7 @@ Replaces the legacy passive duties system with explicit, mission-driven tasks.
 
 **Note:** Orders follow the same pacing system as narrative events. See [Event System Schemas](../Content/event-system-schemas.md#global-event-pacing-enlisted_configjson) for full pacing config details.
 
-**See:** [Order Progression System](../../AFEATURE/order-progression-system.md) for complete technical details.
+**See:** [Order Progression System](order-progression-system.md) for complete technical details.
 
 ---
 
@@ -126,8 +126,8 @@ We track three distinct reputation values (-50 to +100):
 
 All interactions occur through the **Enlisted Status** menu hub:
 -   **Enlisted Status**: View rank, active orders, and immersive narrative reports (Kingdom Reports, Company Reports, Player Status).
--   **Camp Hub**: Access Service Records, Quartermaster, Medical Tent, and Personal Retinue management.
--   **Decisions Accordion**: Handle pending event choices and camp opportunities (appears when content is available).
+-   **Camp Hub**: Access Service Records, Quartermaster, and Personal Retinue management.
+-   **Decisions Accordion**: Handle pending event choices, camp opportunities, and medical care (appears when content is available).
 
 ### Daily Brief & Company Reports
 The main **Enlisted Status** menu displays three narrative sections:
@@ -233,7 +233,7 @@ At Commander rank (T7+), you gain command over your own soldiers, transforming f
 ## Fatigue + Conditions
 
 -   **Fatigue**: A budget consumed by orders and camp activities. Restores while resting in camp.
--   **Conditions**: Tracks injuries, illnesses, and exhaustion. These must be managed via the Medical Care menu in camp.
+-   **Conditions**: Tracks injuries, illnesses, and exhaustion. These are managed through medical decisions (dec_medical_surgeon, dec_medical_rest, dec_medical_herbal, dec_medical_emergency) that appear in the Decisions menu when needed.
 
 ---
 

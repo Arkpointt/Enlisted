@@ -508,6 +508,11 @@ namespace Enlisted.Features.Content
             reqs.NotAtSea = reqJson["notAtSea"]?.Value<bool>() ?? reqJson["not_at_sea"]?.Value<bool>();
             reqs.AtSea = reqJson["atSea"]?.Value<bool>() ?? reqJson["at_sea"]?.Value<bool>();
 
+            // Parse medical condition requirements
+            reqs.HasAnyCondition = reqJson["hasAnyCondition"]?.Value<bool>() ?? reqJson["has_any_condition"]?.Value<bool>();
+            reqs.HasSevereCondition = reqJson["hasSevereCondition"]?.Value<bool>() ?? reqJson["has_severe_condition"]?.Value<bool>();
+            reqs.MaxIllness = reqJson["maxIllness"]?.ToString() ?? reqJson["max_illness"]?.ToString();
+
             // Parse world state requirements for order events
             // These are detailed context keys like "peacetime_garrison", "war_active_campaign", "siege_defending"
             var worldStateArray = reqJson["world_state"] as JArray ?? reqJson["worldState"] as JArray;
@@ -662,6 +667,11 @@ namespace Enlisted.Features.Content
 
                 // Parse risk chance for risky options
                 option.RiskChance = optJson["risk_chance"]?.Value<int?>() ?? optJson["riskChance"]?.Value<int?>();
+
+                // Parse dynamic skill check fields
+                option.SkillCheck = optJson["skillCheck"]?.ToString() ?? optJson["skill_check"]?.ToString();
+                option.SkillBase = optJson["skillBase"]?.Value<int>() ?? optJson["skill_base"]?.Value<int>() ?? 50;
+                option.TooltipTemplate = optJson["tooltipTemplate"]?.ToString() ?? optJson["tooltip_template"]?.ToString();
 
                 // Parse failure result text
                 option.ResultTextFailureId = optJson["resultFailureTextId"]?.ToString() ??

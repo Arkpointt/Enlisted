@@ -3,8 +3,8 @@
 **Summary:** Master list of all narrative content with IDs, titles, descriptions, requirements, effects, and skill checks. This index provides quick reference for all events, decisions, orders, and map incidents in the mod.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-31  
-**Related Docs:** [Event Catalog](event-catalog-by-system.md), [Content System Architecture](content-system-architecture.md), [Order Events Master](../../AFEATURE/order-events-master.md)
+**Last Updated:** 2026-01-01 (Updated order event counts to match reality: 330 events)  
+**Related Docs:** [Event Catalog](event-catalog-by-system.md), [Content System Architecture](content-system-architecture.md), [Orders Content](orders-content.md)
 
 ---
 
@@ -20,14 +20,14 @@
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| **Orders** | 16 | Military directives from chain of command (6 T1-T3, 5 T4-T6, 5 T7-T9) |
-| **Order Events** | 85 | Events that fire during order execution (16 event pools, see [Order Events Master](../../AFEATURE/order-events-master.md)) |
-| **Decisions** | 38 | Player-initiated choices from Camp Hub (34 core + 4 retinue T7+) |
-| **Events** | 68 | Context-triggered situations (14 escalation + 5 crisis + 49 role/universal) |
+| **Orders** | 17 | Military directives from chain of command (see [Orders Content](orders-content.md)) |
+| **Order Events** | 330 | Events that fire during order execution (16 event pools in `ModuleData/Enlisted/Orders/order_events/`) |
+| **Decisions** | 33 | Player-initiated choices from Camp Hub (3 core + 26 camp + 4 medical) |
+| **Events** | 72 | Context-triggered situations (14 escalation + 4 medical orchestration + 5 crisis + 49 role/universal) |
 | **Map Incidents** | 45 | Triggered by map actions (battle, siege, settlement entry/exit, waiting) |
 | **Retinue Map Incidents** | 6 | Post-battle incidents for T7+ commanders with retinue |
 | **Retinue Events** | 17 | Narrative events for retinue management (T7+) |
-| **Total** | **275** | Full content catalog including order events |
+| **Total** | **520** | Full content catalog including order events |
 
 **Training Decisions**: 3 weapon-aware training decisions using dynamic skill XP. Uses `reward_choices` and `dynamic_skill_xp` for equipped weapon training. See [Training System](../Features/Combat/training-system.md) for implementation details.
 
@@ -40,8 +40,8 @@
 | Section | Contents |
 |---------|----------|
 | [Orders](#orders-17-total) | T1-T3 Basic, T4-T6 Specialist, T7-T9 Leadership |
-| [Decisions](#decisions-38-total) | Self-Care, Training, Social, Economic, Career, Info, Equipment, Risk, Retinue (T7+) |
-| [Events](#events-69-total) | Escalation (Scrutiny, Discipline, Medical), Role (Scout, Medic, Engineer, Officer, Operative, NCO), Universal |
+| [Decisions](#decisions-33-total) | Core, Training, Social, Economic, Recovery, Special, Medical |
+| [Events](#events-72-total) | Escalation (Scrutiny, Discipline), Medical Orchestration (Illness Onset), Role (Scout, Medic, Engineer, Officer, Operative, NCO), Universal |
 | [Map Incidents](#map-incidents-45-total) | LeavingBattle, DuringSiege, EnteringTown, EnteringVillage, LeavingSettlement, WaitingInSettlement |
 | [Retinue Content](#retinue-content-t7-only-23-total) | Retinue Events (17), Map Incidents (6) for T7+ commanders |
 | [Coverage Summary](#content-coverage-summary) | Counts and next steps |
@@ -96,89 +96,99 @@ Some orders have severe failure penalties beyond reputation loss:
 
 ---
 
-## Decisions (38 total)
+## Decisions (33 total)
 
-**File:** `ModuleData/Enlisted/Decisions/decisions.json`  
+**Files:**
+- `ModuleData/Enlisted/Decisions/decisions.json` (3 core decisions)
+- `ModuleData/Enlisted/Decisions/camp_decisions.json` (26 camp decisions)
+- `ModuleData/Enlisted/Decisions/medical_decisions.json` (4 medical decisions)
+
 **Delivery:** Player-initiated from Camp Hub menu (inline selection, not popup)  
-**ID Prefix:** `dec_*` (e.g., `dec_rest`, `dec_spar`, `dec_gamble_low`)  
-**System:** Loaded by EventCatalog → filtered by DecisionCatalog → displayed in Camp Hub  
-**Breakdown:** 34 core decisions (T1-T6) + 4 retinue decisions (T7+ only, requires retinue)
+**ID Prefix:** `dec_*` (e.g., `dec_training_drill`, `dec_medical_surgeon`, `dec_gamble_high`)  
+**System:** Loaded by EventCatalog → filtered by DecisionCatalog → displayed in Camp Hub
 
-### Self-Care (3)
+**Phase 6G Changes (2026-01-01):**
+- **DELETED:** 35 old static decisions (pre-orchestrator)
+- **KEPT:** 3 essential decisions (dec_maintain_gear, dec_write_letter, dec_gamble_high)
+- **ADDED:** 30 new decisions (26 camp + 4 medical)
+- **NET CHANGE:** 38 → 33 decisions (-5 total)
+- **Features:** Dynamic skill checks (success modified by player skill), illness restrictions (`maxIllness`), Medical Tent menu system replaced
 
-| ID | Name | Premise | Systems |
-|----|------|---------|---------|
-| `dec_rest` | Rest | Find a quiet spot and close your eyes. | Rest |
-| `dec_rest_extended` | Extended Rest | You need real sleep, not just a nap. | Rest |
-| `dec_seek_treatment` | Seek Treatment | The surgeon's tent. Time to deal with this properly. | Gold, Medical Risk, HP |
-
-### Training (9)
-
-| ID | Name | Premise | Skill Check | Base Risk | Outcomes |
-|----|------|---------|-------------|-----------|----------|
-| `dec_weapon_drill` | Weapon Drill | Practice forms with the training posts. | Combat | 5% injury | +XP. High skill: bonus XP |
-| `dec_spar` | Sparring Match | {SOLDIER_NAME} invites you to the practice ring. | Combat, Athletics | 25% injury | Friendly or hard sparring. Hard: more XP, HP loss |
-| `dec_endurance` | Endurance Training | Run the camp perimeter until your lungs burn. | Athletics | 10% injury | +XP. Athletics 60+: reduced injury |
-| `dec_study_tactics` | Study Tactics | Borrow a map, think about formations. | Tactics | 0% | +XP. Tactics 60+: bonus insight |
-| `dec_practice_medicine` | Practice Medicine | Offer to help the surgeon with simple cases. | Medicine | 0% | +XP. Medicine 40+: required |
-| `dec_train_troops` | Train the Men | Take recruits through drills. | Leadership | 20% injury | **Troop XP**. Leadership 80+: no deaths |
-| `dec_combat_drill` | Combat Drill | Request extra drill time with the sergeant. | — | 0% | **Equipped weapon XP** or weakest skill |
-| `dec_weapon_specialization` | Weapon Specialization | Focus training on your equipped weapon. | — | 0% | **Dynamic XP** based on equipped weapon |
-| `dec_lead_drill` | Lead Drill Practice | Lead drill practice for younger soldiers. (T7+) | Leadership | 0% | **Troop XP**, Officer/Soldier Rep |
-
-### Social (6)
-
-| ID | Name | Premise | Injury Risk | Systems |
-|----|------|---------|-------------|---------|
-| `dec_join_men` | Join the Men | Sit by their fire, share stories. | 5% | Soldier Rep, Scrutiny |
-| `dec_join_drinking` | Join the Drinking | Someone's opened a cask. Join in. | 15% | Soldier Rep, Scrutiny, Medical Risk |
-| `dec_seek_officers` | Seek the Officers | Linger near the command tent, look useful. | 0% | Officer Rep |
-| `dec_keep_to_self` | Keep to Yourself | Sometimes solitude is worth more than company. | 0% | Rest |
-| `dec_write_letter` | Write a Letter Home | Ink, paper, and memories of another life. | 0% | Flavor, callback chance |
-| `dec_confront_rival` | Confront Your Rival | This has gone on long enough. Time to settle it. | 40% | Rep, Discipline, HP |
-
-### Economic (5)
-
-| ID | Name | Premise | Injury Risk | Systems |
-|----|------|---------|-------------|---------|
-| `dec_gamble_low` | Gamble (Low Stakes) | Dice game behind the wagons. Casual or shrewd play. | 5% | Gold, Soldier Rep, Scrutiny |
-| `dec_gamble_high` | Gamble (High Stakes) | Real money. Real risk. | 15% | Gold, Scrutiny, HP |
-| `dec_side_work` | Side Work | Someone in camp needs labor. Pays decent. | 10% | Gold, Rest, HP |
-| `dec_shady_deal` | Shady Deal | A man knows a man who has something to sell. | 20% | Gold, Scrutiny, HP |
-| `dec_visit_market` | Visit the Market | Browse what the town has to offer. | 0% | Gold (spend) |
-
-### Career (3)
+### Core Decisions (3 - Kept from original 38)
 
 | ID | Name | Premise | Systems |
 |----|------|---------|---------|
-| `dec_request_audience` | Request an Audience | Petition the lord. Recognition, pay advance, or opportunity. | Lord Rep, Officer Rep, Gold |
-| `dec_volunteer_duty` | Volunteer for Duty | Tell the sergeant you want extra work. | Officer Rep |
-| `dec_request_leave` | Request Leave | Ask permission to visit town on your own time. | Officer Rep |
+| `dec_maintain_gear` | Maintain Your Gear | Oil, polish, sharpen. Keep it battle-ready. | Equipment, Fatigue, maxIllness: Moderate |
+| `dec_write_letter` | Write a Letter Home | Ink, paper, and memories of another life. | Fatigue, Gold |
+| `dec_gamble_high` | High Stakes Game | Real money. Real risk. Fortunes change hands. | 45% win 150 gold, +3 rep, +2 Scrutiny. Costs 50 gold. Requires T2+. |
 
-### Information (3)
+### Training (5)
 
-| ID | Name | Premise | Injury Risk | Systems |
-|----|------|---------|-------------|---------|
-| `dec_listen_rumors` | Listen to Rumors | Keep your ears open around camp. | 0% | World info |
-| `dec_scout_area` | Scout the Surroundings | Take a walk beyond the camp perimeter. | 15% | Scouting XP, HP |
-| `dec_check_supplies` | Check Supply Situation | Ask the quartermaster how we're doing. | 0% | Company Needs info |
+| ID | Name | Premise | Skill Check | Outcomes | Illness Limit |
+|----|------|---------|-------------|----------|---------------|
+| `dec_training_drill` | Weapon Drill | The sergeant calls for formation. Men line up with their weapons. | Equipped weapon | +8 XP to equipped weapon. Costs 2 fatigue. | Mild |
+| `dec_training_spar` | Sparring Match | A soldier tosses you a practice sword. The crowd forms a circle. | Athletics | 55% success: +3 rep, +6 Athletics XP. Fail: -5 HP, +3 XP. Costs 3 fatigue. | Mild |
+| `dec_training_formation` | Formation Practice | Sergeants putting men through shield walls and maneuvers. | Tactics, Polearm | +4 Tactics XP, +3 Polearm XP. Costs 2 fatigue. | Mild |
+| `dec_training_veteran` | Learn from Veterans | Old soldiers sharing hard-won knowledge. | — | +5 XP to chosen skill. Costs 1 fatigue. | Mild |
+| `dec_training_archery` | Archery Practice | Target practice with bow or crossbow. | Bow/Crossbow | +6 ranged XP. Costs 2 fatigue. | Mild |
 
-### Equipment (2)
+### Social (11)
 
-| ID | Name | Premise | Systems |
-|----|------|---------|---------|
-| `dec_maintain_gear` | Maintain Your Gear | Oil, polish, sharpen. Keep it battle-ready. | Equipment |
-| `dec_visit_quartermaster` | Visit the Quartermaster | See what's available, maybe make a request. | Gold |
+| ID | Name | Premise | Risk | Outcomes | Illness Limit |
+|----|------|---------|------|----------|---------------|
+| `dec_social_stories` | War Stories | Veterans sharing tales of old campaigns. | — | +2 Soldier rep. -1 fatigue. | Severe |
+| `dec_social_storytelling` | Tell a Story | Share your own experiences around the fire. | — | +1 Soldier rep. -1 fatigue. | Severe |
+| `dec_social_singing` | Join the Singing | Men singing old songs. Join in or just listen. | — | +1 Morale. -1 fatigue. | Severe |
+| `dec_tavern_drink` | Visit the Tavern | Ale, dice, and conversation. | — | +2 Morale. Costs 15 gold, 1 fatigue. | Severe |
+| `dec_drinking_contest` | Drinking Contest | Serious drinking. Winner takes the pot. | 35% | Win: 80 gold, +4 rep. Lose: embarrassment. Costs 20 gold, 2 fatigue, +1 Scrutiny. | Mild |
+| `dec_arm_wrestling` | Arm Wrestling Match | Test your strength against another soldier. | 45% | Win: 40 gold, +2 rep. Lose: try again later. Costs 15 gold, 1 fatigue. | Mild |
+| `dec_gamble_cards` | Card Game | Friendly stakes, good company. | 50% | Win: 25 gold, +1 rep. Lose: -10 gold. Costs 10 gold. | Severe |
+| `dec_gamble_dice` | Dice Game | Behind the supply wagons. Higher stakes. | 40% | Win: 75 gold. Lose: -25 gold. Costs 25 gold, +1 Scrutiny. | Severe |
 
-### Risk-Taking (3)
+### Economic (6)
 
-| ID | Name | Premise | Injury Risk | Systems |
-|----|------|---------|-------------|---------|
-| `dec_dangerous_wager` | Accept a Dangerous Wager | {SOLDIER_NAME} bets you can't do something stupid. Bold or clever approach. | 50% | Gold, HP, Soldier Rep, Valor |
-| `dec_prove_courage` | Prove Your Courage | Do something reckless to earn respect. | 35% | Valor, Rep, HP |
-| `dec_challenge` | Challenge Someone | Call them out. Settle it properly. | 60% | Rep, Valor, HP |
+| ID | Name | Premise | Skill Check | Outcomes | Illness Limit |
+|----|------|---------|-------------|----------|---------------|
+| `dec_forage` | Forage for Supplies | Search the area for food and useful materials. | **Scouting** | 60% base: +15 Supplies. Fail: -5 Supplies. Skill-modified. Costs 2 fatigue. | Mild |
+| `dec_work_repairs` | Help with Repairs | Wagon wheels, tent patches, harness mending. | — | Earn 30 gold. +1 Soldier rep. Costs 2 fatigue. | Mild |
+| `dec_trade_browse` | Browse Merchant Caravan | Traveling merchants with the army. | — | Shop interface. Costs time. | Severe |
 
-### Retinue Management (4, T7+ only)
+### Recovery (5)
+
+| ID | Name | Premise | Outcomes | Illness Limit |
+|----|------|---------|----------|---------------|
+| `dec_rest_sleep` | Get Some Sleep | Find a quiet spot and close your eyes. | +3 Rest. -3 fatigue. | None |
+| `dec_rest_short` | Short Rest | Quick break between duties. | +1 Rest. -1 fatigue. | None |
+| `dec_meditate` | Meditate | Clear your mind. Find stillness. | +2 Rest. -2 fatigue. | None |
+| `dec_prayer` | Pray | Words of the old prayers. Familiar rhythm. | +1 Rest. -1 fatigue. | None |
+| `dec_help_wounded` | Help the Wounded | Clean bandages, water, simple care. | +2 Soldier rep. +3 Medicine XP. -1 Medical Risk. Costs 1 fatigue. | None |
+
+### Special (5)
+
+| ID | Name | Premise | Outcomes | Illness Limit |
+|----|------|---------|----------|---------------|
+| `dec_officer_audience` | Request Officer Audience | Seek an audience with the captain. | +3 Officer rep. | Severe |
+| `dec_mentor_recruit` | Mentor a Recruit | Show a struggling recruit how it's done. | +2 Soldier rep. +1 Officer rep. +5 Leadership XP. Costs 1 fatigue. Requires T3+. | Severe |
+| `dec_volunteer_extra` | Volunteer for Extra Duty | Step forward for additional work. | +2 Officer rep. -2 Discipline. Costs 2 fatigue. | Severe |
+| `dec_night_patrol` | Night Patrol | Join the perimeter check. | 30% to find 25 gold. +5 Scouting XP. +1 rep. Costs 2 fatigue. | Severe |
+| `dec_baggage_access` | Access Baggage Train | Routes to baggage stash OR QM dialogue based on access state. | Direct routing (no popup). | None |
+
+### Medical (4) **NEW - Phase 6G**
+
+**Replaces:** Medical Tent menu system (535 lines deleted from `EnlistedMedicalMenuBehavior.cs`)  
+**Requirements:** `hasAnyCondition: true` (appears only when injured/ill/exhausted)  
+**Features:** Dynamic skill checks, skill-modified success chances, illness severity restrictions
+
+| ID | Name | Premise | Skill Check | Outcomes | Requirements |
+|----|------|---------|-------------|----------|--------------|
+| `dec_medical_surgeon` | Surgeon's Treatment | Professional care from the camp surgeon. | **Medicine** | 70% base (+skill mod): +20 HP, -5 Medical Risk. Fail: +5 HP, -2 Risk. Costs 100 gold. | Has any condition |
+| `dec_medical_rest` | Rest and Recover | Sometimes the body just needs time. | — | +10 HP. -3 fatigue. -1 Medical Risk. Free but slow. | Has any condition |
+| `dec_medical_herbal` | Herbal Remedy | Cheaper than surgeon, if you know what you're doing. | **Medicine** | 50% base (+skill mod): +15 HP, -2 Risk. Fail: +5 HP. Costs 30 gold. | Has any condition |
+| `dec_medical_emergency` | Emergency Care | Critical condition requires immediate treatment. | — | Pay: +30 HP, -10 Risk (200 gold). Tough it out: 40% fail = -10 HP, +2 Risk. | Severe/Critical condition |
+
+---
+
+**Note:** Retinue decisions were removed. The 4 retinue-specific decisions (`dec_ret_*`) listed in previous versions no longer exist.
 
 | ID | Name | Premise | Systems |
 |----|------|---------|---------|
@@ -189,7 +199,7 @@ Some orders have severe failure penalties beyond reputation loss:
 
 ---
 
-## Events (69 total)
+## Events (72 total)
 
 ### Escalation: Scrutiny (5)
 
@@ -211,14 +221,19 @@ Some orders have severe failure penalties beyond reputation loss:
 | `evt_disc_8` | 8 | Disciplinary Hearing | Stand before the captain. Explain yourself. | Honest defense / Eloquent excuse / Accept punishment |
 | `evt_disc_10` | 10 | Court Martial | This is a trial. The lord himself presides. | Plead mercy / Defend your actions / Demand trial by combat |
 
-### Escalation: Medical (4)
+### Medical Orchestration: Illness Onset (4) **Phase 6H**
 
-| ID | Threshold | Name | Premise | Options |
-|----|-----------|------|---------|---------|
-| `medical_onset` | 2 | Feeling Unwell | Something's wrong. Fatigue that won't lift. Ache that wasn't there yesterday. | "Just tired. Need sleep." / "I'm fine. Back to it." (risky 50%) / "Should see the surgeon." / "Got herbs in my kit." (risky 60%) |
-| `medical_worsening` | 3 | Worsening | It's worse today. What started manageable has become harder to ignore. | "Finally give in. See the surgeon." / "Keep pushing. It's not that bad." (risky 60%) / "Take it easy. Rest without formal treatment." / "Try herbal remedies." (risky 50%) |
-| `medical_complication` | 4 | Complication | Fever hits in the night. The condition has become something worse. Infection, inflammation. | "Get me to the surgeon." / "I'm fine. Just need water." (risky 30%) / "There's medicine in my kit. Help me take it." (risky 50%) / "Get {SERGEANT_NAME}. They'll know what to do." |
-| `medical_emergency` | 5 | Emergency | You collapse. One moment standing, next on the ground. Voices distant and echoey. | "Fight to stay conscious." (risky 40%) / "Let go. Trust them to fix this." / "Try to tell them something. Important." (risky 30%) |
+Triggered by `ContentOrchestrator` based on Medical Risk escalation track. Probability: 5% per Medical Risk level + modifiers (fatigue +10%, siege +12%, consecutive high pressure days +5% each). 7-day cooldown, blocked if player already has condition.
+
+| ID | Medical Risk | Name | Premise | Options |
+|----|--------------|------|---------|---------|
+| `illness_onset_minor` | 3+ | Feeling Unwell | You wake feeling wrong. Head thick, limbs heavy. Could be the food, the cold, the camp fever going around. | "I should take it easy today." (reduces fatigue, -1 Med Risk) / "I'm fine. It's nothing." (50% → Minor illness) / "I should see the surgeon." (10 gold, prevents illness) |
+| `illness_onset_moderate` | 4+ | Fever Sets In | You wake drenched in sweat, then shivering, then sweating again. Your tent-mates look worried. | "Go to the surgeon immediately." (15 gold, prevents) / "I've had worse. I'll be fine." (70% → Moderate illness) / "Herbal remedy - willow bark and rest." (50% → Minor illness or prevents) |
+| `illness_onset_severe` | 5+ | Collapse | You don't remember falling. One moment standing at muster, the next on the ground. "Get the surgeon!" someone shouts. | "Submit to the surgeon's care." (20 gold, Moderate illness + treatment begins) / "I just need... to rest. I'll be fine." (Severe illness, no treatment, high risk) |
+| `untreated_condition_worsening` | 3+ days untreated | Condition Worsening | The pain is getting worse. What started manageable is now constant, stealing sleep and strength. | "You're right. I'll go to the surgeon." (25 gold, begins treatment) / "Just a bit longer. I'll manage." (60% → condition worsens by one level) |
+
+**File:** `ModuleData/Enlisted/Events/illness_onset.json`  
+**See:** [Medical Progression System](medical-progression-system.md) for full specification
 
 ### Muster Events (6)
 
