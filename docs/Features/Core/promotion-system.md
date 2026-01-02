@@ -3,10 +3,12 @@
 **Summary:** Complete guide to military rank progression from T1 (Follower) to T9 (Marshal). Covers XP requirements, multi-factor promotion criteria, proving events, culture-specific rank titles, and the mechanics of advancement. This system rewards consistent service, combat performance, and maintaining good standing with superiors and comrades.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-01 (XP system fix - enlistment XP now properly tracked from all sources)  
+**Last Updated:** 2026-01-01 (Promotion state reset fix - declined/pending promotions now clear on re-enlistment)  
 **Related Docs:** [Enlistment System](enlistment.md), [Training System](../Combat/training-system.md), [Pay System](pay-system.md), [Order Progression System](order-progression-system.md)
 
-**CRITICAL FIX (2026-01-01):** Fixed XP tracking bug where skill XP was awarded but enlistment XP (used for rank progression) was not. All XP-granting activities now properly update both systems. See [XP Sources](#xp-sources) for details.
+**RECENT FIXES:**
+- **(2026-01-01)** Fixed bug where promotions were permanently blocked after re-enlistment if the previous lord was defeated while a proving event was pending. Declined promotions and pending promotion events now properly reset when starting new service with a different lord.
+- **(2026-01-01)** Fixed XP tracking bug where skill XP was awarded but enlistment XP (used for rank progression) was not. All XP-granting activities now properly update both systems. See [XP Sources](#xp-sources) for details.
 
 ---
 
@@ -712,7 +714,7 @@ Reduce discipline risk before advancing.
 
 ### Declined Promotion
 
-If you decline a proving event (like T6→T7), promotion is permanently blocked for that tier until you manually request it:
+If you decline a proving event (like T6→T7), promotion is blocked for that tier until you manually request it:
 
 ```
 Promotion to T7 previously declined - must request via dialog
@@ -723,6 +725,11 @@ Promotion to T7 previously declined - must request via dialog
 - Use a specific dialogue option to request the promotion
 - You must still meet all requirements
 - The proving event may be offered again, or promotion may be granted directly
+
+**Re-enlistment Behavior:**
+- Declined promotions are cleared when you re-enlist with a new lord (fresh start)
+- Pending promotion events are cancelled when your current service ends
+- This prevents promotion blocks from carrying over between enlistments
 
 ### Missing Requirements
 

@@ -2,7 +2,7 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2026-01-01 (Maritime medical system: context-aware illnesses, sea variants, illness-type-aware events)
+**Last Updated:** 2026-01-01 (Promotion state reset fix, maritime medical system)
 **Total Documents:** 50
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.

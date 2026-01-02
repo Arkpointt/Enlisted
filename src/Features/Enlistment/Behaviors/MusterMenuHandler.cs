@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Enlisted.Features.Context;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
+using Enlisted.Features.Ranks.Behaviors;
 using Enlisted.Features.Identity;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Logistics;
@@ -3489,11 +3490,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var progressColor = progressPercent >= 75 ? "Success" : progressPercent >= 40 ? "Warning" : "Default";
                 sb.AppendLine($"<span style=\"Label\">TOTAL EXPERIENCE:</span>     <span style=\"{progressColor}\">{currentXP} / {xpForNextRank} XP to {nextRankName} ({progressPercent}%)</span>");
 
-                // Estimate days to promotion
+                // Estimate days to promotion based on XP rate
                 var periodDays = Math.Max(1, _currentMuster.MusterDay - _currentMuster.LastMusterDay);
                 var dailyRate = xpThisPeriod / (float)periodDays;
                 var estimatedDays = dailyRate > 0 ? (int)(xpNeeded / dailyRate) : 999;
-                sb.AppendLine($"<span style=\"Label\">STATUS:</span>               {xpNeeded} XP needed (~{estimatedDays} days at current pace)");
+
+                // Add multi-factor requirements check
+                BuildPromotionRequirementsCheck(sb, enlistment, currentTier, nextRankName, estimatedDays);
             }
 
             // XP Sources breakdown
@@ -3514,6 +3517,125 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 // Fallback: all XP from daily service
                 sb.AppendLine($"• Daily service: <span style=\"Success\">+{xpThisPeriod} XP</span>");
+            }
+        }
+
+        /// <summary>
+        /// Builds the multi-factor promotion requirements checklist.
+        /// Shows players exactly what requirements they've met and what's blocking promotion.
+        /// </summary>
+        private void BuildPromotionRequirementsCheck(StringBuilder sb, EnlistmentBehavior enlistment, int currentTier, string nextRankName, int estimatedDays)
+        {
+            var targetTier = currentTier + 1;
+            var req = PromotionRequirements.GetForTier(targetTier);
+            var escalation = EscalationManager.Instance;
+
+            // Get current values for each requirement
+            var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
+            var requiredXp = currentTier < tierXp.Length ? tierXp[currentTier] : tierXp[tierXp.Length - 1];
+            var currentXp = enlistment.EnlistmentXP;
+            var daysInRank = enlistment.DaysInRank;
+            var battles = enlistment.BattlesSurvived;
+            var soldierRep = escalation?.State?.SoldierReputation ?? 0;
+            var discipline = escalation?.State?.Discipline ?? 0;
+            var leaderRelation = enlistment.EnlistedLord?.GetRelationWithPlayer() ?? 0;
+
+            // Check each requirement
+            var xpReady = currentXp >= requiredXp;
+            var daysReady = daysInRank >= req.DaysInRank;
+            var battlesReady = battles >= req.BattlesRequired;
+            var soldierRepReady = soldierRep >= req.MinSoldierReputation;
+            var leaderRelReady = leaderRelation >= req.MinLeaderRelation;
+            var disciplineReady = discipline < req.MaxDiscipline;
+
+            var allReady = xpReady && daysReady && battlesReady && soldierRepReady && leaderRelReady && disciplineReady;
+
+            // Build the section
+            sb.AppendLine();
+            sb.AppendLine($"<span style=\"Header\">_____ NEXT RANK: {nextRankName.ToUpperInvariant()} (T{targetTier}) _____</span>");
+            sb.AppendLine();
+
+            // Estimate display
+            if (allReady)
+            {
+                sb.AppendLine($"<span style=\"Label\">STATUS:</span>               <span style=\"Success\">All requirements met - promotion imminent!</span>");
+            }
+            else
+            {
+                sb.AppendLine($"<span style=\"Label\">ESTIMATED:</span>            ~{estimatedDays} days at current pace");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("<span style=\"Label\">REQUIREMENTS:</span>");
+
+            // Experience
+            var xpIcon = xpReady ? "✓" : "✗";
+            var xpColor = xpReady ? "Success" : "Alert";
+            var xpStatus = xpReady ? "(Ready)" : $"(Need +{requiredXp - currentXp})";
+            sb.AppendLine($"  <span style=\"{xpColor}\">{xpIcon}</span> Experience:      {currentXp:N0}/{requiredXp:N0} XP {xpStatus}");
+
+            // Days in Rank
+            var daysIcon = daysReady ? "✓" : "✗";
+            var daysColor = daysReady ? "Success" : "Alert";
+            var daysStatus = daysReady ? "(Ready)" : $"(Need +{req.DaysInRank - daysInRank} days)";
+            sb.AppendLine($"  <span style=\"{daysColor}\">{daysIcon}</span> Time in Rank:    {daysInRank}/{req.DaysInRank} days {daysStatus}");
+
+            // Battles
+            var battlesIcon = battlesReady ? "✓" : "✗";
+            var battlesColor = battlesReady ? "Success" : "Alert";
+            var battlesStatus = battlesReady ? "(Ready)" : $"(Need +{req.BattlesRequired - battles})";
+            sb.AppendLine($"  <span style=\"{battlesColor}\">{battlesIcon}</span> Battles Fought:  {battles}/{req.BattlesRequired} battles {battlesStatus}");
+
+            // Soldier Reputation
+            var soldierIcon = soldierRepReady ? "✓" : "✗";
+            var soldierColor = soldierRepReady ? "Success" : "Alert";
+            var soldierStatus = soldierRepReady ? "(Ready)" : $"(Need +{req.MinSoldierReputation - soldierRep})";
+            sb.AppendLine($"  <span style=\"{soldierColor}\">{soldierIcon}</span> Soldier Rep:     {soldierRep}/{req.MinSoldierReputation} {soldierStatus}");
+
+            // Leader Relation
+            var leaderIcon = leaderRelReady ? "✓" : "✗";
+            var leaderColor = leaderRelReady ? "Success" : "Alert";
+            var leaderStatus = leaderRelReady ? "(Ready)" : $"(Need +{req.MinLeaderRelation - leaderRelation})";
+            sb.AppendLine($"  <span style=\"{leaderColor}\">{leaderIcon}</span> Leader Relation: {leaderRelation}/{req.MinLeaderRelation} {leaderStatus}");
+
+            // Discipline (lower is better)
+            var discIcon = disciplineReady ? "✓" : "✗";
+            var discColor = disciplineReady ? "Success" : "Alert";
+            var discStatus = disciplineReady ? "(Safe)" : "(Too high!)";
+            sb.AppendLine($"  <span style=\"{discColor}\">{discIcon}</span> Discipline:      {discipline}/{req.MaxDiscipline} max {discStatus}");
+
+            // Show blocker advice if not ready
+            if (!allReady)
+            {
+                sb.AppendLine();
+                var blockers = new List<string>();
+
+                if (!xpReady)
+                {
+                    blockers.Add("Gain more XP from orders, combat, and training");
+                }
+                if (!daysReady)
+                {
+                    blockers.Add("Continue serving to accumulate time in rank");
+                }
+                if (!battlesReady)
+                {
+                    blockers.Add("Participate in more battles (not reserve duty)");
+                }
+                if (!soldierRepReady)
+                {
+                    blockers.Add("Improve soldier reputation via orders and events");
+                }
+                if (!leaderRelReady)
+                {
+                    blockers.Add("Build relation with your lord via successful orders");
+                }
+                if (!disciplineReady)
+                {
+                    blockers.Add("Reduce discipline through good behavior");
+                }
+
+                sb.AppendLine($"<span style=\"Warning\">BLOCKERS:</span> {string.Join("; ", blockers)}.");
             }
         }
 
