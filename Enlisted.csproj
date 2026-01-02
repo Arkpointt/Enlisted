@@ -299,7 +299,6 @@
     
     <!-- Logistics & Supply -->
     <Compile Include="src\Features\Logistics\CompanySupplyManager.cs"/>
-    <Compile Include="src\Features\Logistics\ContrabandChecker.cs"/>
     <Compile Include="src\Features\Logistics\BaggageAccessState.cs"/>
     <Compile Include="src\Features\Logistics\BaggageTrainManager.cs"/>
     

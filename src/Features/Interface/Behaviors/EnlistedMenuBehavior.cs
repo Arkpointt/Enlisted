@@ -1287,9 +1287,6 @@ namespace Enlisted.Features.Interface.Behaviors
             // === LEAVE OPTIONS (grouped at bottom) ===
 
             // No "return to duties" option needed - player IS doing duties by being in this menu
-
-            // Add desertion confirmation menu
-            AddDesertionConfirmMenu(starter);
         }
 
         /// <summary>
@@ -4046,10 +4043,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         sentences.Add("Garrison duty suits a measured leader. The men trust your judgment.");
                     }
-                    else if (currentOrder != null)
-                    {
-                        sentences.Add("One task at a time, and the duty will be done.");
-                    }
                     else if (mainHero?.IsWounded != true && enlistment?.FatigueCurrent > 70)
                     {
                         sentences.Add("<span style=\"Success\">You're rested and ready.</span> Whatever comes, you'll face it.");
@@ -4974,9 +4967,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     new TextObject("{=Enlisted_FreeDesert_Cancel}Stay").ToString(),
                     () =>
                     {
-                        // Process free desertion - no major penalties
-                        enlistment.ProcessFreeDesertion();
-                        ModLogger.Info("Interface", "Player executed free desertion due to high PayTension");
+                        // DEPRECATED: Free desertion removed - desertion now only happens at muster
+                        ModLogger.Warn("Interface", "Free desertion is deprecated - use muster discharge instead");
                     },
                     () =>
                     {
@@ -5096,26 +5088,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // Execute the desertion
-                enlistment.DesertArmy();
-
-                // Exit to campaign map
-                NextFrameDispatcher.RunNextFrame(() =>
-                {
-                    try
-                    {
-                        if (Campaign.Current?.CurrentMenuContext != null)
-                        {
-                            GameMenu.ExitToLast();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        ModLogger.ErrorCode("Interface", "E-UI-028", "Error exiting menu after desertion", ex);
-                    }
-                });
-
-                ModLogger.Info("Interface", "Desertion confirmed and executed");
+                // Execute the desertion - DEPRECATED: Player-triggered desertion removed
+                // Desertion now only happens as muster discharge outcome
+                ModLogger.Warn("Interface", "Desert Army action is deprecated - use muster discharge instead");
+                return;
             }
             catch (Exception ex)
             {

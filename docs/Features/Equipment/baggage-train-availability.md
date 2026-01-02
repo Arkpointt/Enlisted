@@ -1917,29 +1917,33 @@ if (EnlistedEncounterBehavior.IsWaitingInReserve)
 
 | Discharge Type | Baggage Handling | Reasoning |
 |----------------|------------------|-----------|
+| Heroic | Keep all | Exceptional service |
 | Veteran | Keep all | Outstanding service |
-| Honorable | Keep all | Good service |
-| Washout | Keep all | Completed service |
+| Honorable | Keep all | Earned through service |
+| Washout | QM-issued reclaimed | Failed service |
 | Dishonorable | QM-issued reclaimed | Misconduct |
 | Deserter | All forfeited | Abandoned post |
-| Grace (lord death) | Keep all | Not player's fault |
 
-**Implementation Note:** Already has `ReclaimQmIssuedEquipment()` at discharge. Extend for baggage:
+**Implementation Note:** Implemented in `HandleBaggageOnDischarge()`:
 ```csharp
 private void HandleBaggageOnDischarge(string dischargeBand)
 {
     switch (dischargeBand)
     {
         case "deserter":
-            // Forfeit all baggage
+            // Forfeit all baggage (abandoned post)
             _baggageStash.Clear();
-            ModLogger.Info("Discharge", "Baggage forfeited due to desertion");
             break;
         case "dishonorable":
-            // Reclaim QM-issued items from baggage
+        case "washout":
+            // Reclaim QM-issued items only
             ReclaimQmIssuedFromBaggage();
             break;
-        // Other bands: keep all baggage
+        case "honorable":
+        case "veteran":
+        case "heroic":
+            // Keep all baggage (earned through service)
+            break;
     }
 }
 ```

@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 2,
+  "packId": "events_baggage_stowage",
+  "category": "onboarding",
+  "events": [
+    {
+      "id": "evt_baggage_stowage_first_enlistment",
+      "category": "onboarding",
+      "severity": "normal",
+      "titleId": "evt_baggage_stowage_title",
+      "title": "Stowing Your Belongings",
+      "setupId": "evt_baggage_stowage_setup",
+      "setup": "The quartermaster's clerk stops you, ledger in hand. 'That's civilian kit. Can't march in that. Regimental rules.'\n\nHe gestures to the wagon. 'Everything goes in storage for two hundred denars plus five percent, or I liquidate it at sixty on the denar. Your choice.'",
+      "requirements": {
+        "minTier": 1,
+        "maxTier": 6,
+        "context": "Any"
+      },
+      "timing": {
+        "cooldownDays": 0,
+        "priority": "critical",
+        "oneTime": true
+      },
+      "options": [
+        {
+          "id": "pay",
+          "textId": "evt_baggage_stowage_opt_pay",
+          "text": "\"Fair enough. I'll pay the storage fee.\"",
+          "resultTextId": "evt_baggage_stowage_opt_pay_result",
+          "resultText": "You pay the fee. The clerk hands you a chalk marker with your storage number.\n\n'Guard that number,' he says, scratching an entry in his ledger. 'Lose it, you'll regret it.'\n\nYour things disappear into the wagon, officially logged and secured. You're issued military kit. When the wagon rolls away, you feel lighter—like something's been decided for you.",
+          "tooltip": "Pay 200g + 5% of item value. Standard storage.",
+          "risk": "safe",
+          "effects": {
+            "bagCheckChoice": "stash"
+          }
+        },
+        {
+          "id": "charm",
+          "textId": "evt_baggage_stowage_opt_charm",
+          "text": "\"I don't have that kind of coin. There must be another way.\"",
+          "resultTextId": "evt_baggage_stowage_opt_charm_result",
+          "resultText": "You explain your situation—honest, earnest. The clerk studies you for a moment.\n\nHe sighs. 'I shouldn't... but alright.' He waves at the wagon. 'Get it stowed. No charge. But keep this between us.'\n\nHe makes a proper ledger entry. Your things are logged and secured. You've made an ally here.",
+          "resultTextFailureId": "evt_baggage_stowage_opt_charm_result_fail",
+          "resultTextFailure": "You explain your situation, but the clerk just shakes his head.\n\n'Heard it all before, friend. Storage fee or liquidation. Those are the rules.' His quill doesn't waver.\n\nYou pay the standard fee. Your things are logged, but the clerk won't forget you tried to dodge payment.",
+          "tooltipTemplate": "{CHANCE}% (Charm {SKILL}). Free storage, +2 QM rep. Fail: Pay fee.",
+          "risk": "risky",
+          "riskChance": 50,
+          "skillCheck": "Charm",
+          "skillBase": 50,
+          "effects": {
+            "bagCheckChoice": "stash",
+            "qmRep": 2
+          },
+          "effectsFailure": {
+            "bagCheckChoice": "stash",
+            "qmRep": -1
+          }
+        },
+        {
+          "id": "trade",
+          "textId": "evt_baggage_stowage_opt_trade",
+          "text": "\"Let's talk price. That fee seems steep for a simple service.\"",
+          "resultTextId": "evt_baggage_stowage_opt_trade_result",
+          "resultText": "You point out comparable storage rates in nearby towns, the wagon's current capacity, the clerk's actual workload.\n\nHe narrows his eyes, then chuckles. 'You know your business. Alright—hundred denars flat, no percentage. Fair deal.'\n\nYour things are logged at the reduced rate. Proper ledger entry, properly secured.",
+          "resultTextFailureId": "evt_baggage_stowage_opt_trade_result_fail",
+          "resultTextFailure": "You cite prices and precedent, but the clerk isn't impressed.\n\n'This isn't a market stall, friend. Two hundred plus five percent. Those are the regulations.' He taps the ledger pointedly.\n\nYou pay the standard fee. At least your things are properly logged.",
+          "tooltipTemplate": "{CHANCE}% (Trade {SKILL}). Half price (100g flat). Fail: Pay full.",
+          "risk": "risky",
+          "riskChance": 50,
+          "skillCheck": "Trade",
+          "skillBase": 50,
+          "effects": {
+            "bagCheckChoice": "stash",
+            "gold": -100
+          },
+          "effectsFailure": {
+            "bagCheckChoice": "stash"
+          }
+        },
+        {
+          "id": "smuggle",
+          "textId": "evt_baggage_stowage_opt_smuggle",
+          "text": "\"I'll handle it myself tonight.\"",
+          "resultTextId": "evt_baggage_stowage_opt_smuggle_result",
+          "resultText": "You wait for nightfall. The camp settles. Torches flicker low.\n\nYou slip through the shadows to the wagon line. Quiet footsteps. Quick hands. Your things disappear into a crate, hidden beneath supply sacks. No fee. No questions asked.\n\nTwo hundred denars saved.",
+          "resultTextFailureId": "evt_baggage_stowage_opt_smuggle_result_fail",
+          "resultTextFailure": "You wait for nightfall, but the wagon guards are alert tonight.\n\n'You lost, soldier?' One steps from the shadows, hand on his cudgel. The clerk appears, summoned by the commotion.\n\nHe looks disappointed. 'Trying to dodge the fee, were you?' He makes a note in his ledger. 'Full price. Plus an extra fifty for wasting my time.'\n\nYour things are stored, but you've made an enemy here. And your name's been marked.",
+          "tooltipTemplate": "{CHANCE}% (Roguery {SKILL}). Free storage. Fail: 250g, +2 Scrutiny.",
+          "risk": "dangerous",
+          "riskChance": 50,
+          "skillCheck": "Roguery",
+          "skillBase": 50,
+          "effects": {
+            "bagCheckChoice": "stash"
+          },
+          "effectsFailure": {
+            "bagCheckChoice": "stash",
+            "gold": -250,
+            "scrutiny": 2,
+            "qmRep": -3
+          }
+        },
+        {
+          "id": "sell",
+          "textId": "evt_baggage_stowage_opt_sell",
+          "text": "\"Liquidate it all. I'm traveling light.\"",
+          "resultTextId": "evt_baggage_stowage_opt_sell_result",
+          "resultText": "Your things are assessed quickly. 'Sixty on the denar,' the clerk announces. It's not fair, but you're not in a position to haggle.\n\nCoin changes hands. He scratches a line in his ledger. 'Clean break. Easier that way.' You're issued military kit and march with the column.\n\nNo baggage to worry about. No fees. No risks. Just you and what you can carry.",
+          "tooltip": "Sell all at 60%. No storage. Clean break.",
+          "risk": "safe",
+          "effects": {
+            "bagCheckChoice": "sell"
+          }
+        },
+        {
+          "id": "abort",
+          "textId": "evt_baggage_stowage_opt_abort",
+          "text": "\"I've changed my mind.\"",
+          "resultTextId": "evt_baggage_stowage_opt_abort_result",
+          "resultText": "The clerk's quill stops. 'Changed your mind.' He's seen it before.\n\nHe closes the ledger. 'Your lord won't be pleased. Go on, before anyone notices.'\n\nYou gather your things. The other soldiers don't meet your eyes. The column marches on without you.",
+          "tooltip": "Leave service before it starts. -10 Lord reputation.",
+          "risk": "safe",
+          "abortsEnlistment": true,
+          "effects": {
+            "lordRep": -10
+          }
+        }
+      ]
+    }
+  ]
+}

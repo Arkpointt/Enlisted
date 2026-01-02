@@ -375,7 +375,7 @@ This reminds players to visit the Quartermaster to:
 **8. Muster Recap**
 - At the next muster (12-day pay cycle), a **Promotion Recap** stage displays
 - This formal acknowledgment shows when the promotion occurred during the period
-- Recap appears as stage 6 in the muster sequence (after inspections/recruit, before retinue/complete)
+- Recap appears as stage 4 in the muster sequence (after recruit, before retinue/complete)
 - **Formal acknowledgment before assembled company:** Captain addresses formation with official recognition
 - **Promotion details displayed:**
   - Previous rank → Current rank

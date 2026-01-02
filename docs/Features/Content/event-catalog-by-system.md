@@ -518,10 +518,9 @@ Camp life, moral dilemmas, social situations. Not skill-gated but may have skill
 
 | Event | Cooldown | Trigger | Options |
 |-------|----------|---------|---------|
-| Equipment Inspection (`evt_muster_inspection`) | 12 days | Muster day (automatic) | Perfect Attention (OneHanded 30+), Basic Requirements, Not Ready |
 | Green Recruit (`evt_muster_new_recruit`) | 10 days | Muster day if T3+ | Train Him (Leadership 25+), Ignore, Haze |
 
-**Note:** These events fire as menu stages during the muster sequence (see [Muster Menu System](../Core/muster-menu-revamp.md)). They are filtered out of random camp event selection to prevent duplication.
+**Note:** This event fires as a menu stage during the muster sequence (see [Muster Menu System](../Core/muster-menu-revamp.md)). It is filtered out of random camp event selection to prevent duplication.
 
 ---
 

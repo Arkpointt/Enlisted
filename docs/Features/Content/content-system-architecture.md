@@ -1002,7 +1002,7 @@ Tracks when native traits cross level thresholds and displays milestone notifica
 |---------|------|----------------|
 | `"camp"` | In camp, daily | Gambling, storytelling, brawls |
 | `"march"` | Party moving | Patrol encounters, terrain challenges |
-| `"muster"` | Every 12 days | Pay events, inspections, promotions |
+| `"muster"` | Every 12 days | Pay events, promotions |
 | `"leaving_battle"` | After player battle ends | Looting, wounded comrades, battlefield finds |
 | `"during_siege"` | Hourly while besieging | Water rationing, desertion, disease |
 | `"entering_town"` | Opening town/castle menu | Tavern encounters, merchants, old friends |

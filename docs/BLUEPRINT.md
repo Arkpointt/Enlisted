@@ -986,7 +986,7 @@ public override void SyncData(IDataStore dataStore)
 |---------|---------|
 | `enlisted_camp_hub` | Central navigation hub with accordion-style decision sections. |
 | `enlisted_medical` | Medical care and treatment (when player has active condition). |
-| `enlisted_muster_*` | Multi-stage muster system sequence (8 stages, every 12 days). See [Muster System](Features/Core/muster-system.md). |
+| `enlisted_muster_*` | Multi-stage muster system sequence (6 stages, every 12 days). See [Muster System](Features/Core/muster-system.md). |
 
 **Decision Sections (within Camp Hub):**
 - TRAINING - Training-related player decisions (dec_weapon_drill, dec_spar, etc.)
@@ -1000,17 +1000,17 @@ public override void SyncData(IDataStore dataStore)
 - LOGISTICS - Quartermaster-related (from events_player_decisions.json)
 
 **Muster System (Pay Day Ceremony):**
-- Multi-stage GameMenu sequence (8 stages) occurring every 12 days
+- Multi-stage GameMenu sequence (6 stages) occurring every 12 days
 - Replaces simple pay inquiry popup with comprehensive muster experience
-- Stages: Intro → Pay Line → Baggage Check → Inspection → Recruit → Promotion Recap → Retinue → Complete
-- Integrates pay, rations, baggage checks, equipment inspections, rank progression
+- Stages: Intro → Pay Line → Recruit → Promotion Recap → Retinue → Complete
+- Integrates pay, rations, rank progression
 - Configurable time pause behavior (default: paused during muster)
 - See [Muster System](Features/Core/muster-system.md) for complete flow
 
 **Event Delivery:**
 - Uses `MultiSelectionInquiryData` popups for narrative events
 - Triggered by: EventPacingManager, EscalationManager, DecisionManager
-- Muster-specific events (inspection, recruit, baggage) integrated as menu stages
+- Muster-specific event (recruit) integrated as menu stage
 - See [Event Delivery System](Features/UI/ui-systems-master.md#event-delivery-system)
 
 **Localization:**

@@ -102,6 +102,14 @@ Full documentation in mod folder. Contributions welcome!"
     }
 	"changenote"		"v0.9.1 - Major Content Update
 
+[b]CRITICAL FIXES[/b]
+[list]
+[*] [b]Fixed promotion state resetting on re-enlistment[/b] - Promotions now persist correctly between service periods
+[*] [b]Fixed item confiscation crash[/b] - Improved safety when processing contraband items
+[*] [b]Fixed ghost condition bug[/b] - Conditions now properly clear when no longer applicable
+[*] [b]Multi-factor promotion requirements[/b] - Promotions now check discipline, reputation, and service time
+[/list]
+
 [b]NEW: BAGGAGE TRAIN SYSTEM[/b]
 [list]
 [*] World-state-aware baggage: accessible in towns/camps when stationary

@@ -83,8 +83,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
     /// <summary>
     ///     Core behavior managing the player's enlistment in a lord's military service.
     ///     This behavior tracks the enlisted lord, manages party following and battle participation,
-    ///     handles equipment backup/restoration, processes XP and promotions, and manages party
-    ///     activity state to prevent unwanted encounters while allowing battle participation.
+    ///     processes XP and promotions, handles baggage storage, and manages party activity state
+    ///     to prevent unwanted encounters while allowing battle participation.
     ///     The system works by attaching the player's party to the lord's party, making the player
     ///     invisible and inactive during normal travel (preventing random encounters), but activating
     ///     the player when the lord enters battles so they can participate.
@@ -135,18 +135,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _playerEncounterCreatedForBattle;
 
         /// <summary>
-        ///     Campaign time when the desertion grace period ends.
-        ///     If current time exceeds this and player hasn't rejoined, desertion penalties apply.
-        ///     Set when army is defeated or lord is captured, giving player 14 days to rejoin another lord in the same kingdom.
-        /// </summary>
-        private CampaignTime _desertionGracePeriodEnd = CampaignTime.Zero;
-
-        /// <summary>
         ///     Tracks whether an army was created specifically for battle participation.
         ///     If true, the army should be disbanded after the battle completes to prevent
         ///     the player from remaining in an army when not needed.
         /// </summary>
         private bool _disbandArmyAfterBattle;
+
+        /// <summary>
+        ///     Campaign time when the desertion grace period ends.
+        ///     If current time exceeds this and player hasn't rejoined, desertion penalties apply.
+        ///     Set when army is defeated or lord is captured, giving player 14 days to rejoin another lord in the same kingdom.
+        /// </summary>
+        private CampaignTime _desertionGracePeriodEnd = CampaignTime.Zero;
 
         /// <summary>
         ///     The lord the player is currently serving under, or null if not enlisted.
@@ -197,12 +197,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _loggedWageBreakdownFailure;
 
         private CampaignTime _graceProtectionEnds = CampaignTime.Zero;
-
-        /// <summary>
-        ///     Whether the player's personal equipment has been backed up before enlistment.
-        ///     Equipment is backed up once at the start of service and restored when service ends.
-        /// </summary>
-        private bool _hasBackedUpEquipment;
 
         // Deferred bag check scheduling (avoids blocking enlistment flow)
         private bool _bagCheckScheduled;
@@ -310,24 +304,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private string _pendingPlayerCaptureReason;
         private bool _pendingVisibilityRestore;
         private CampaignTime _pendingVisibilityRestoreStartTime = CampaignTime.Zero;
-
-        /// <summary>
-        ///     Backup of the player's battle equipment before enlistment.
-        ///     Restored when the player ends their service.
-        /// </summary>
-        private TaleWorlds.Core.Equipment _personalBattleEquipment;
-
-        /// <summary>
-        ///     Backup of the player's civilian equipment before enlistment.
-        ///     Restored when the player ends their service.
-        /// </summary>
-        private TaleWorlds.Core.Equipment _personalCivilianEquipment;
-
-        /// <summary>
-        ///     Backup of the player's inventory items before enlistment.
-        ///     Restored when the player ends their service.
-        /// </summary>
-        private ItemRoster _personalInventory = new ItemRoster();
 
         // Baggage train stash for enlistment storage
         private ItemRoster _baggageStash = new ItemRoster();
@@ -561,6 +537,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public bool IsEnlisted => _enlistedLord != null && !_isOnLeave;
 
         /// <summary>
+        ///     Whether the player is currently in a desertion grace period.
+        ///     During this time, they can rejoin any lord in the same kingdom to avoid desertion penalties.
+        /// </summary>
+        public bool IsInDesertionGracePeriod =>
+            _pendingDesertionKingdom != null &&
+            CampaignTime.Now < _desertionGracePeriodEnd;
+
+        /// <summary>
+        ///     Kingdom that the player needs to rejoin during grace period to avoid desertion.
+        ///     Returns null if not in grace period.
+        /// </summary>
+        public Kingdom PendingDesertionKingdom => _pendingDesertionKingdom;
+
+        /// <summary>
         ///     The lord the player is currently serving under.
         /// </summary>
         public Hero EnlistedLord => _enlistedLord;
@@ -575,14 +565,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Campaign time when the current leave started.
         /// </summary>
         public CampaignTime LeaveStartDate => _leaveStartDate;
-
-        /// <summary>
-        ///     Whether the player is currently in a desertion grace period.
-        ///     During this time, they can rejoin any lord in the same kingdom to avoid desertion penalties.
-        /// </summary>
-        public bool IsInDesertionGracePeriod =>
-            _pendingDesertionKingdom != null &&
-            CampaignTime.Now < _desertionGracePeriodEnd;
 
         /// <summary>
         ///     Full name with rank of the NCO (e.g., "Sergeant Aldric" or "Huskarl Bjorn").
@@ -710,12 +692,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 EnlistedActivation.SetActive(shouldBeActive, reason);
             }
         }
-
-        /// <summary>
-        ///     Kingdom that the player needs to rejoin during grace period to avoid desertion.
-        ///     Returns null if not in grace period.
-        /// </summary>
-        public Kingdom PendingDesertionKingdom => _pendingDesertionKingdom;
 
         /// <summary>
         ///     The lord the player is currently serving under.
@@ -1620,10 +1596,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_enlistmentTier", ref _enlistmentTier);
             SyncKey(dataStore, "_enlistmentXP", ref _enlistmentXP);
             SyncKey(dataStore, "_lastPromotionBlockedMessageTime", ref _lastPromotionBlockedMessageTime);
-            SyncKey(dataStore, "_hasBackedUpEquipment", ref _hasBackedUpEquipment);
-            SyncKey(dataStore, "_personalBattleEquipment", ref _personalBattleEquipment);
-            SyncKey(dataStore, "_personalCivilianEquipment", ref _personalCivilianEquipment);
-            SyncKey(dataStore, "_personalInventory", ref _personalInventory);
             SyncKey(dataStore, "_baggageStash", ref _baggageStash);
             SyncKey(dataStore, "_baggageStashFactionId", ref _baggageStashFactionId);
             SyncKey(dataStore, "_bagCheckCompleted", ref _bagCheckCompleted);
@@ -1723,7 +1695,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_minorFactionWarRelations", ref _minorFactionWarRelations);
 
             // Serialize minor faction desertion cooldowns - manual serialization for Dictionary<string, CampaignTime>
-            // Bannerlord's save system can serialize this dictionary directly since both types are primitives
             SerializeMinorFactionDesertionCooldowns(dataStore);
 
             // Serialize bag check abort cooldowns - tracks when player aborted enlistment during bag check
@@ -1884,6 +1855,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Manually serialize/deserialize minor faction desertion cooldowns.
+        ///     Minor factions don't have a crime rating system, so we track when players leave their service.
         ///     Uses a simple count + individual field approach for maximum compatibility.
         /// </summary>
         private void SerializeMinorFactionDesertionCooldowns(IDataStore dataStore)
@@ -2378,282 +2350,47 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ContinueStartEnlistInternal(lord);
         }
 
-        /// <summary>
-        /// Bag-check processing when the player's personal belongings have already been backed up by <see cref="EquipmentManager"/>.
-        /// This is the normal flow: equipment backup happens during enlistment, then the bag-check prompt
-        /// decides what happens to the *stored* personal inventory (stash/sell/smuggle) without touching military-issued kit.
-        ///
-        /// IMPORTANT: This only processes the backed-up personal INVENTORY (party item roster).
-        /// Personal equipped sets (battle/civilian) are still restored on discharge via <see cref="EquipmentManager"/>.
-        /// </summary>
-        private bool TryHandleBagCheckUsingBackedUpPersonalInventory(Hero hero, string choice)
+        public void HandleBagCheckChoice(string choice)
         {
-            var equipmentManager = EquipmentManager.Instance;
-            if (equipmentManager?.HasBackedUpEquipment != true)
-            {
-                return false;
-            }
-
-            // Snapshot what was removed from the player's inventory at enlistment time.
-            var backedUpInventory = equipmentManager.GetBackedUpPersonalInventorySnapshot();
-
-            // If there's nothing to process, treat it as handled (and clear the snapshot store to avoid restoring "ghost" items later).
-            if (backedUpInventory == null || backedUpInventory.Count == 0)
-            {
-                equipmentManager.ClearBackedUpPersonalInventory();
-                ModLogger.Info("Enlistment", "Bag check: no backed-up personal inventory found to process.");
-                return true;
-            }
-
+            // Process all items currently in the player's inventory (personal gear + any equipped items stowed to inventory).
             EnsureBaggageStash();
 
-            // Local helper: add an item roster into baggage stash and remove from live inventory.
-            void AddRosterToBaggage(ItemRoster roster)
+            // Calculate storage fee: 200g + 5% of inventory value
+            var totalValue = 0f;
+            var partyRoster = MobileParty.MainParty?.ItemRoster;
+            if (partyRoster != null)
             {
-                var partyRoster = MobileParty.MainParty?.ItemRoster;
-                if (partyRoster == null)
-                {
-                    ModLogger.Warn("Baggage", "Cannot add to baggage: party roster is null");
-                    return;
-                }
-
-                var itemsStowed = 0;
-                foreach (var element in roster)
+                foreach (var element in partyRoster)
                 {
                     if (element.EquipmentElement.Item == null || element.Amount <= 0)
                     {
                         continue;
                     }
-
-                    // Quest items are excluded from the backup inventory, but keep this guard anyway for safety.
+                    // Skip quest items in fee calculation
                     if (element.EquipmentElement.IsQuestItem)
                     {
                         continue;
                     }
-
-                    // Add to baggage stash
-                    _baggageStash.AddToCounts(element.EquipmentElement, element.Amount);
-                    
-                    // Remove from live inventory (in case items were restored between backup and bag check)
-                    partyRoster.AddToCounts(element.EquipmentElement, -element.Amount);
-                    
-                    itemsStowed += element.Amount;
-                    ModLogger.Debug("Baggage", $"Stowed {element.Amount}x {element.EquipmentElement.Item.Name} to baggage");
-                }
-                
-                if (itemsStowed > 0)
-                {
-                    ModLogger.Info("Baggage", $"Moved {itemsStowed} items from inventory to baggage stash");
+                    totalValue += element.EquipmentElement.Item.Value * element.Amount;
                 }
             }
+            var storageFee = 200 + (int)Math.Floor(totalValue * 0.05f);
 
-            // Local helper: charge a wagon fee using party gold.
-            void TryChargeWagonFee(int feeAmount)
-            {
-                if (feeAmount <= 0)
-                {
-                    return;
-                }
-
-                var partyGold = Hero.MainHero?.PartyBelongedTo?.PartyTradeGold ?? 0;
-                var fee = Math.Min(feeAmount, partyGold);
-                if (fee <= 0)
-                {
-                    ModLogger.Info("Gold", "No gold available for wagon fee - proceeding without charge.");
-                    return;
-                }
-
-                GiveGoldAction.ApplyBetweenCharacters(hero, null, fee);
-                InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("{=qm_fee_paid}You pay {FEE} denars for the wagon fee.")
-                        .SetTextVariable("FEE", fee).ToString()));
-            }
-
-            // Execute choice using backed-up inventory.
             switch (choice)
             {
                 case "stash":
-                {
-                    // Calculate total inventory value for stowage fee (200g + 5% of value)
-                    var totalValue = 0f;
-                    foreach (var element in backedUpInventory)
-                    {
-                        if (element.EquipmentElement.Item == null || element.Amount <= 0)
-                        {
-                            continue;
-                        }
-                        totalValue += element.EquipmentElement.Item.Value * element.Amount;
-                    }
-
-                    var storageFee = 200 + (int)Math.Floor(totalValue * 0.05f);
-
-                    AddRosterToBaggage(backedUpInventory);
-                    TryChargeWagonFee(storageFee);
+                    StashAllBelongings(Hero.MainHero, chargeFee: storageFee);
                     break;
-                }
                 case "sell":
-                {
-                    var partyRoster = MobileParty.MainParty?.ItemRoster;
-                    var totalValue = 0f;
-                    var itemsSold = 0;
-                    
-                    foreach (var element in backedUpInventory)
-                    {
-                        if (element.EquipmentElement.Item == null || element.Amount <= 0)
-                        {
-                            continue;
-                        }
-
-                        if (element.EquipmentElement.IsQuestItem)
-                        {
-                            continue;
-                        }
-
-                        totalValue += element.EquipmentElement.Item.Value * element.Amount * 0.60f;
-                        itemsSold += element.Amount;
-                        
-                        // Remove from live inventory (in case items were restored between backup and bag check)
-                        if (partyRoster != null)
-                        {
-                            partyRoster.AddToCounts(element.EquipmentElement, -element.Amount);
-                        }
-                    }
-
-                    var gain = (int)Math.Floor(totalValue);
-                    if (gain > 0)
-                    {
-                        GiveGoldAction.ApplyBetweenCharacters(null, hero, gain);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=qm_liquidate_gain}You receive {GOLD} denars from liquidating your possessions.")
-                                .SetTextVariable("GOLD", gain).ToString()));
-                        ModLogger.Info("Baggage", $"Sold {itemsSold} items from inventory for {gain} denars");
-                    }
-
+                    LiquidateAllBelongings(Hero.MainHero, 0.60f);
                     break;
-                }
                 case "smuggle":
-                {
-                    // Smuggle attempt: try to stow everything WITHOUT paying the storage fee
-                    // Hard Roguery check determines if you get away with it
-                    var roguery = hero.GetSkillValue(DefaultSkills.Roguery);
-                    var difficulty = 80; // High difficulty
-                    var roll = MBRandom.RandomInt(100);
-                    var successThreshold = Math.Max(0, roguery - (difficulty - 50));
-                    var success = roll < successThreshold;
-
-                    ModLogger.Info("BagCheck", $"Smuggle attempt: Roguery {roguery}, Roll {roll} vs threshold {successThreshold} = {(success ? "SUCCESS" : "FAIL")}");
-
-                    // Always stow everything in baggage
-                    AddRosterToBaggage(backedUpInventory);
-
-                    if (success)
-                    {
-                        // Got away with it - no fee charged
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=qm_smuggle_success}You slip everything past the ledger without paying. The clerk never noticed.")
-                                .ToString(),
-                            Colors.Green));
-                    }
-                    else
-                    {
-                        // Caught - forced to pay the fee plus scrutiny penalty
-                        var totalValue = 0f;
-                        foreach (var element in backedUpInventory)
-                        {
-                            if (element.EquipmentElement.Item == null || element.Amount <= 0)
-                            {
-                                continue;
-                            }
-                            totalValue += element.EquipmentElement.Item.Value * element.Amount;
-                        }
-
-                        var storageFee = 200 + (int)Math.Floor(totalValue * 0.05f);
-                        TryChargeWagonFee(storageFee);
-
-                        // Add scrutiny for attempted deception
-                        var escalation = EscalationManager.Instance?.State;
-                        if (escalation != null)
-                        {
-                            escalation.Scrutiny = Math.Min(10, escalation.Scrutiny + 1);
-                        }
-
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=qm_smuggle_fail}Caught trying to dodge the fee. You pay anyway, and the clerk makes a note in his ledger.")
-                                .ToString(),
-                            Colors.Red));
-                    }
-
+                    SmuggleOneItem(Hero.MainHero);
                     break;
-                }
                 default:
-                {
-                    // Calculate storage fee for default case
-                    var totalValue = 0f;
-                    foreach (var element in backedUpInventory)
-                    {
-                        if (element.EquipmentElement.Item == null || element.Amount <= 0)
-                        {
-                            continue;
-                        }
-                        totalValue += element.EquipmentElement.Item.Value * element.Amount;
-                    }
-
-                    var storageFee = 200 + (int)Math.Floor(totalValue * 0.05f);
-
-                    AddRosterToBaggage(backedUpInventory);
-                    TryChargeWagonFee(storageFee);
+                    // Default to stow to avoid enlistment without cleanup
+                    StashAllBelongings(Hero.MainHero, chargeFee: storageFee);
                     break;
-                }
-            }
-
-            // The backed up inventory has now been handled (moved to baggage/sold/confiscated).
-            // Clear it so discharge restoration doesn't duplicate items.
-            equipmentManager.ClearBackedUpPersonalInventory();
-            return true;
-        }
-
-        public void HandleBagCheckChoice(string choice)
-        {
-            // Preferred flow: operate on the backed-up personal inventory so we never touch military-issued kit.
-            // Fallback: if no backup exists (unexpected), operate on the live roster/equipment.
-            var handledViaBackup = TryHandleBagCheckUsingBackedUpPersonalInventory(Hero.MainHero, choice);
-
-            if (!handledViaBackup)
-            {
-                EnsureBaggageStash();
-
-                // Calculate storage fee: 200g + 5% of inventory value
-                var totalValue = 0f;
-                var partyRoster = MobileParty.MainParty?.ItemRoster;
-                if (partyRoster != null)
-                {
-                    foreach (var element in partyRoster)
-                    {
-                        if (element.EquipmentElement.Item == null || element.Amount <= 0)
-                        {
-                            continue;
-                        }
-                        totalValue += element.EquipmentElement.Item.Value * element.Amount;
-                    }
-                }
-                var storageFee = 200 + (int)Math.Floor(totalValue * 0.05f);
-
-                switch (choice)
-                {
-                    case "stash":
-                        StashAllBelongings(Hero.MainHero, chargeFee: storageFee);
-                        break;
-                    case "sell":
-                        LiquidateAllBelongings(Hero.MainHero, 0.60f);
-                        break;
-                    case "smuggle":
-                        SmuggleOneItem(Hero.MainHero);
-                        break;
-                    default:
-                        // Default to stow to avoid enlistment without cleanup
-                        StashAllBelongings(Hero.MainHero, chargeFee: storageFee);
-                        break;
-                }
             }
 
             _bagCheckCompleted = true;
@@ -3260,7 +2997,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
 
                     // Clear non-quest items from roster
-                    var itemsToRemove = partyRoster.Where(e => !e.EquipmentElement.IsQuestItem).ToList();
+                    var itemsToRemove = partyRoster.Where(e => 
+                        !e.EquipmentElement.IsQuestItem
+                    ).ToList();
                     foreach (var item in itemsToRemove)
                     {
                         partyRoster.AddToCounts(item.EquipmentElement, -item.Amount);
@@ -3272,8 +3011,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
-                MoveEquipmentToStash(hero.BattleEquipment);
-                MoveEquipmentToStash(hero.CivilianEquipment);
+                // DO NOT stash equipped items - they've already been replaced with military equipment at enlistment
+                // The bag check should only process inventory items (civilian gear that wasn't equipped)
 
             if (chargeFee > 0)
             {
@@ -3329,7 +3068,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
 
                     // Clear only non-quest items from roster
-                    var itemsToRemove = partyRoster.Where(e => !e.EquipmentElement.IsQuestItem).ToList();
+                    var itemsToRemove = partyRoster.Where(e => 
+                        !e.EquipmentElement.IsQuestItem
+                    ).ToList();
                     foreach (var item in itemsToRemove)
                     {
                         partyRoster.AddToCounts(item.EquipmentElement, -item.Amount);
@@ -3341,8 +3082,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
-                totalValue += ExtractEquipmentValue(hero.BattleEquipment, rate);
-                totalValue += ExtractEquipmentValue(hero.CivilianEquipment, rate);
+                // DO NOT sell equipped items - they've already been replaced with military equipment at enlistment
+                // The bag check should only process inventory items (civilian gear that wasn't equipped)
 
                 var gain = (int)Math.Floor(totalValue);
                 if (gain > 0)
@@ -3530,15 +3271,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var graceXP = _savedGraceXP;
                 var graceTroopId = _savedGraceTroopId;
 
-                // Backup player's personal equipment before service begins
-                // This ensures the player gets their original equipment back when service ends
-                // Equipment is backed up once at the start to prevent losing items during service
-                if (!_hasBackedUpEquipment)
-                {
-                    BackupPlayerEquipment();
-                    _hasBackedUpEquipment = true;
-                }
-
             if (!_bagCheckEverCompleted)
             {
                 _bagCheckCompleted = false;
@@ -3705,16 +3437,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // now part of the lord's military force. Troops will be restored when service ends.
                 TransferPlayerTroopsToLord();
 
-                // BUG FIX: When transitioning from previous service (grace period expired or different kingdom),
-                // the player may still be wearing military gear from their old service. If we have an existing
-                // equipment backup (personal civilian gear), we need to stow the current military gear
-                // before assigning new recruit equipment - otherwise it's lost forever.
-                // This applies when: backup exists AND not resuming same-kingdom grace (different faction service)
-                if (_hasBackedUpEquipment && !resumedFromGrace)
-                {
-                    StowCurrentEquipmentToInventory();
-                }
-
                 // CRITICAL: Issue military equipment BEFORE bag check scheduling
                 // This ensures bag check only processes pre-enlistment civilian gear,
                 // not the military-issued T1 equipment
@@ -3822,7 +3544,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Info("Enlistment",
                     $"Successfully enlisted with {lord.Name} - Tier {_enlistmentTier}, XP: {_enlistmentXP}, Kingdom: {lord.MapFaction?.Name?.ToString() ?? "Independent"}, Culture: {lord.Culture?.StringId ?? "unknown"}");
                 ModLogger.Info("Enlistment",
-                    $"Enlistment date: {_enlistmentDate}, Equipment backed up: {_hasBackedUpEquipment}, Grace resume: {resumedFromGrace}");
+                    $"Enlistment date: {_enlistmentDate}, Grace resume: {resumedFromGrace}");
 
                 // Fire event for other mods
                 OnEnlisted?.Invoke(lord);
@@ -3830,7 +3552,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Persistent Lance Leaders: connect/create the current leader now that we are enlisted.
 
                 // Trigger the deferred bag-check as soon as enlistment finishes (best-effort).
-                // The bag-check uses backed-up personal inventory, so this is safe even after military gear issuance.
+                // The bag-check processes whatever is currently in the player's inventory at that moment.
                 // If the player is in a vulnerable state (battle/encounter/prisoner), this will simply no-op
                 // and the hourly tick will retry later.
                 try
@@ -3854,13 +3576,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentXP = 0;
                 _enlistmentDate = CampaignTime.Zero;
                 _isOnLeave = false;
-
-                // Restore equipment if backup was created
-                if (_hasBackedUpEquipment)
-                {
-                    RestorePersonalEquipment();
-                    _hasBackedUpEquipment = false;
-                }
 
                 // Deactivate enlisted mode
                 SyncActivationState("enlistment_failed");
@@ -4050,31 +3765,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         ModLogger.Info("Naval",
                             "Player stranded at sea but is prisoner - letting native handle stranding after release");
                     }
-                }
-
-                // Restore the player's personal equipment that was backed up at enlistment start
-                // EXCEPTION: During grace period (retainKingdomDuringGrace=true), keep enlisted equipment
-                // RETIREMENT REWARD: Honorable discharge = keep military gear, get old stuff back in inventory
-                if (_hasBackedUpEquipment && !retainKingdomDuringGrace)
-                {
-                    if (isHonorableDischarge)
-                    {
-                        // RETIREMENT: Player keeps military gear AND gets personal stuff back in inventory
-                        RestorePersonalEquipmentToInventory();
-                        _hasBackedUpEquipment = false;
-                        ModLogger.Info("Equipment", "Retirement reward: keeping military gear, personal items to inventory");
-                    }
-                    else
-                    {
-                        // REGULAR DISCHARGE: Replace military gear with original personal equipment
-                        RestorePersonalEquipment();
-                        _hasBackedUpEquipment = false;
-                        ModLogger.Info("Equipment", "Personal equipment restored - full discharge");
-                    }
-                }
-                else if (retainKingdomDuringGrace)
-                {
-                    ModLogger.Info("Equipment", "Keeping enlisted equipment during grace period");
                 }
 
                 // Return any stowed belongings from the baggage train stash so they are not stranded behind the camp UI.
@@ -4293,7 +3983,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Error("Enlistment", "Error ending service", ex);
                 // Ensure critical state is cleared even if restoration fails
                 _enlistedLord = null;
-                _hasBackedUpEquipment = false;
                 _disbandArmyAfterBattle = false;
             }
             finally
@@ -4651,161 +4340,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     receives desertion penalties: -50 relation with all lords in the kingdom and
         ///     +50 crime rating. After deserting, the player is free to enlist with other factions.
         /// </summary>
-        public void DesertArmy()
-        {
-            try
-            {
-                if (!IsEnlisted)
-                {
-                    ModLogger.Warn("Desertion", "Cannot desert - not currently enlisted");
-                    return;
-                }
-
-                var enlistedKingdom = _enlistedLord?.MapFaction as Kingdom;
-                var kingdomName = enlistedKingdom?.Name?.ToString() ?? "the army";
-
-                ModLogger.Info("Desertion", $"Player voluntarily deserting from {kingdomName}");
-
-                var playerClan = Clan.PlayerClan;
-                if (playerClan == null)
-                {
-                    ModLogger.ErrorCode("Desertion", "E-DESERT-006", "Cannot desert - player clan is null",
-                        new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
-                    return;
-                }
-
-                // Store kingdom reference before clearing enlistment state
-                var targetKingdom = enlistedKingdom;
-
-                // === STEP 1: End enlistment WITHOUT restoring equipment ===
-                // Player keeps their enlisted gear as "stolen" equipment
-                var main = MobileParty.MainParty;
-                if (main != null)
-                {
-                    // Remove from army if in one
-                    if (main.Army != null)
-                    {
-                        try
-                        {
-                            main.Army = null;
-                        }
-                        catch (Exception ex)
-                        {
-                            ModLogger.ErrorCode("Desertion", "E-DESERT-002", "Error removing from army", ex);
-                            main.Army = null;
-                        }
-                    }
-
-                    // Release escort
-                    TryReleaseEscort(main, true);
-                    TrySetShouldJoinPlayerBattles(main, false);
-
-                    // Restore party visibility
-                    main.IsVisible = true;
-                    main.IsActive = true;
-                    EncounterGuard.ShowPlayerPartyVisual();
-
-                    // CRITICAL: Reset camera to follow player's party instead of lord's party
-                    // Without this, the camera remains stuck following the lord after discharge,
-                    // causing movement softlock where player can't control their character
-                    try
-                    {
-                        main.Party.SetAsCameraFollowParty();
-                    }
-                    catch (Exception cameraEx)
-                    {
-                        ModLogger.Warn("Desertion", $"Failed to reset camera to player party: {cameraEx.Message}");
-                    }
-                }
-
-                // Restore companions (but NOT equipment - player keeps enlisted gear)
-                RestoreCompanionsToPlayer();
-
-                // Clear the equipment backup flag WITHOUT restoring - player keeps their gear
-                // This effectively "forfeits" the backed up equipment
-                _hasBackedUpEquipment = false;
-                ModLogger.Info("Desertion", "Equipment backup cleared - player keeps enlisted gear");
-
-                // Clear enlistment state
-                var previousLord = _enlistedLord;
-                _enlistedLord = null;
-                _enlistmentTier = 1;
-                _enlistmentXP = 0;
-                _enlistmentDate = CampaignTime.Zero;
-                _disbandArmyAfterBattle = false;
-                ClearPayState("desertion");
-
-                // Clear any active grace period state
-                ClearDesertionGracePeriod();
-
-                // === STEP 2: Apply desertion penalties ===
-                if (targetKingdom != null && !targetKingdom.IsEliminated)
-                {
-                    // Kingdom desertion: -50 relation with all lords in kingdom + crime rating
-                    var lordsPenalized = 0;
-                    foreach (Clan clan in targetKingdom.Clans)
-                    {
-                        if (clan.Leader != null && clan.Leader != Hero.MainHero && clan.Leader.IsAlive)
-                        {
-                            ChangeRelationAction.ApplyPlayerRelation(clan.Leader, -50);
-                            lordsPenalized++;
-                        }
-                    }
-
-                    // Apply crime rating (+50)
-                    ChangeCrimeRatingAction.Apply(targetKingdom, 50f);
-
-                    ModLogger.Info("Desertion",
-                        $"Applied desertion penalties: -50 relation with {lordsPenalized} lords, +50 crime rating");
-                }
-                else if (previousLord != null && previousLord.MapFaction != null && !(previousLord.MapFaction is Kingdom))
-                {
-                    // Minor faction desertion: no crime rating (they have no judicial system),
-                    // but apply relation penalties and cooldown
-                    ApplyMinorFactionDesertionPenalties(previousLord);
-                }
-
-                // === STEP 3: Leave the kingdom ===
-                if (playerClan.Kingdom != null)
-                {
-                    try
-                    {
-                        ChangeKingdomAction.ApplyByLeaveKingdomAsMercenary(playerClan);
-                        ModLogger.Info("Desertion", "Left kingdom as deserter");
-                    }
-                    catch (Exception ex)
-                    {
-                        ModLogger.ErrorCode("Desertion", "E-DESERT-003", "Error leaving kingdom", ex);
-                    }
-                }
-
-                // Clear kingdom tracking
-                _originalKingdom = null;
-                _wasIndependentClan = false;
-
-                // Display notification
-                var message =
-                    new TextObject(
-                        "You have deserted from {KINGDOM}. You are now branded a deserter and your reputation has suffered greatly.");
-                message.SetTextVariable("KINGDOM", targetKingdom?.Name ?? new TextObject("{=enlist_fallback_army}the army"));
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-
-                // Log state transition
-                SessionDiagnostics.LogStateTransition("Enlistment", "Enlisted", "Deserted",
-                    $"Kingdom: {kingdomName}, Lord: {previousLord?.Name?.ToString() ?? "unknown"}");
-
-                // Fire discharge event
-                OnDischarged?.Invoke("Voluntary desertion");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Desertion", "Error during voluntary desertion", ex);
-                // Ensure critical state is cleared
-                _enlistedLord = null;
-                _hasBackedUpEquipment = false;
-            }
-        }
-
         private bool TryApplyGraceEquipment(bool resumedFromGrace, string preferredTroopId)
         {
             if (!resumedFromGrace || _enlistedLord?.Culture == null)
@@ -6407,8 +5941,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         /// Handles baggage stash on discharge based on the discharge type.
-        /// Deserters forfeit all baggage, dishonorable discharges reclaim QM-issued items,
-        /// and honorable discharges keep all baggage.
+        /// - Deserter: Forfeit ALL baggage (abandoned post)
+        /// - Dishonorable/Washout: QM reclaims issued items from baggage
+        /// - Honorable/Veteran/Heroic: Keep all baggage (earned through service)
         /// </summary>
         private void HandleBaggageOnDischarge(string band)
         {
@@ -6432,18 +5967,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         break;
 
                     case "dishonorable":
-                        // Dishonorable discharge: QM reclaims issued items from baggage
-                        // Items with "qm_issued" tag are removed from stash
-                        ReclaimQmIssuedFromBaggage();
-                        ModLogger.Info("Discharge", "QM-issued items reclaimed from baggage (dishonorable discharge)");
+                    case "washout":
+                        // Dishonorable/washout: Baggage is forfeited (no item tracking needed)
+                        ModLogger.Info("Discharge", $"Baggage forfeited due to {band} discharge");
                         break;
 
-                    case "washout":
                     case "honorable":
                     case "veteran":
                     case "heroic":
-                        // Keep all baggage for these discharge types
-                        ModLogger.Debug("Discharge", $"Baggage preserved ({band} discharge)");
+                        // Honorable discharge: Keep all baggage (earned through service)
+                        ModLogger.Debug("Discharge", $"Baggage preserved - honorable service ({band} discharge)");
                         break;
 
                     default:
@@ -6455,51 +5988,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Discharge", "Error handling baggage on discharge", ex);
-            }
-        }
-
-        /// <summary>
-        /// Reclaims QM-issued items from the baggage stash.
-        /// Items with "qm_issued" modifier are removed.
-        /// </summary>
-        private void ReclaimQmIssuedFromBaggage()
-        {
-            if (_baggageStash == null || _baggageStash.Count == 0)
-            {
-                return;
-            }
-
-            try
-            {
-                var itemsToRemove = new List<(ItemObject item, int count)>();
-
-                // Identify QM-issued items in baggage
-                for (int i = 0; i < _baggageStash.Count; i++)
-                {
-                    var element = _baggageStash.GetElementCopyAtIndex(i);
-                    if (element.EquipmentElement.ItemModifier != null &&
-                        element.EquipmentElement.ItemModifier.Name.ToString().Contains("qm_issued"))
-                    {
-                        itemsToRemove.Add((element.EquipmentElement.Item, element.Amount));
-                    }
-                }
-
-                // Remove QM-issued items from stash
-                int totalRemoved = 0;
-                foreach (var (item, count) in itemsToRemove)
-                {
-                    _baggageStash.AddToCounts(item, -count);
-                    totalRemoved += count;
-                }
-
-                if (totalRemoved > 0)
-                {
-                    ModLogger.Info("Discharge", $"Reclaimed {totalRemoved} QM-issued items from baggage");
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Discharge", "Error reclaiming QM-issued items from baggage", ex);
             }
         }
 
@@ -6912,8 +6400,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             if (item == null) return;
 
             // Item ID is extracted from outcome string in MusterMenuHandler and stored in _currentMuster.QMDealItemId
-            // The baggage check logic needs to check this field and exempt the item
-            // TODO: Add exemption check to baggage inspection behavior (EnlistedIncidentsBehavior or BaggageCheckManager)
+            // The baggage check logic reads this field via BuildContrabandExemptionList() and exempts the item
             ModLogger.Info("Pay", $"QM Deal item will be tracked for contraband exemption: {item.StringId}");
         }
 
@@ -7064,12 +6551,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        /// Check if free desertion is available (no penalty at 60+ tension).
-        /// When pay is severely delayed, the lord understands if soldiers leave.
-        /// </summary>
-        public bool IsFreeDesertionAvailable => _payTension >= 60 && IsEnlisted;
-
-        /// <summary>
         /// Reduces PayTension by the specified amount.
         /// Used when the player helps the lord.
         /// </summary>
@@ -7098,38 +6579,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// Process free desertion when PayTension is 60+.
         /// Minimal penalties compared to normal desertion.
         /// </summary>
-        public void ProcessFreeDesertion()
-        {
-            if (!IsFreeDesertionAvailable)
-            {
-                ModLogger.Warn("Pay", "Free desertion not available - tension below 60");
-                return;
-            }
-
-            try
-            {
-                // Minimal relation penalty - lord understands
-                if (_enlistedLord != null)
-                {
-                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -5, false);
-                }
-
-                // No bounty, no faction penalty
-                ModLogger.Info("Pay", $"Processing free desertion (PayTension={_payTension})");
-
-                // End enlistment cleanly
-                StopEnlist("free_desertion_pay_crisis", isHonorableDischarge: false);
-
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "You leave quietly. No one blames you — you weren't paid.",
-                    Colors.Yellow));
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Pay", "E-PAY-003", "Error processing free desertion", ex);
-            }
-        }
-
         /// <summary>
         /// Check for NPC soldier desertion due to high pay tension.
         /// Only applies to commanders (T7+) with retinue.
@@ -11601,111 +11050,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         #endregion
 
-        /// <summary>
-        ///     Backup player equipment before service to prevent loss.
-        ///     Now delegated to EquipmentManager for centralized handling.
-        /// </summary>
-        private void BackupPlayerEquipment()
-        {
-            try
-            {
-                // Use centralized equipment management.
-                var equipmentManager = EquipmentManager.Instance;
-                if (equipmentManager != null)
-                {
-                    equipmentManager.BackupPersonalEquipment();
-                }
-                else
-                {
-                    // Fallback: Basic backup if equipment manager not available
-                    _personalBattleEquipment = Hero.MainHero.BattleEquipment.Clone();
-                    _personalCivilianEquipment = Hero.MainHero.CivilianEquipment.Clone();
-                }
-
-                ModLogger.Info("Equipment", "Personal equipment backed up");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Equipment", "Error backing up equipment", ex);
-                throw;
-            }
-        }
-
-        /// <summary>
-        ///     Restore personal equipment from backup.
-        ///     Now delegated to EquipmentManager for centralized handling.
-        /// </summary>
-        private void RestorePersonalEquipment()
-        {
-            try
-            {
-                // Use centralized equipment management.
-                var equipmentManager = EquipmentManager.Instance;
-                if (equipmentManager != null)
-                {
-                    equipmentManager.RestorePersonalEquipment();
-                }
-                else
-                {
-                    // Fallback: Basic restoration if equipment manager not available
-                    if (_personalBattleEquipment != null)
-                    {
-                        EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, _personalBattleEquipment);
-                    }
-
-                    if (_personalCivilianEquipment != null)
-                    {
-                        Hero.MainHero.CivilianEquipment.FillFrom(_personalCivilianEquipment, false);
-                    }
-                }
-
-                ModLogger.Info("Equipment", "Personal equipment restored");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Equipment", "Error restoring equipment", ex);
-            }
-        }
-
-        /// <summary>
-        /// Restore personal equipment to INVENTORY for retirement.
-        /// Player keeps military gear AND gets old stuff back in inventory.
-        /// This is a reward for completing honorable service.
-        /// </summary>
-        private void RestorePersonalEquipmentToInventory()
-        {
-            try
-            {
-                var equipmentManager = EquipmentManager.Instance;
-                if (equipmentManager != null)
-                {
-                    equipmentManager.RestorePersonalEquipmentToInventory();
-                }
-                else
-                {
-                    // Fallback: Add backed up items to inventory
-                    var itemRoster = MobileParty.MainParty.ItemRoster;
-
-                    if (_personalBattleEquipment != null)
-                    {
-                        for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
-                        {
-                            var item = _personalBattleEquipment[slot].Item;
-                            if (item != null)
-                            {
-                                itemRoster.AddToCounts(new EquipmentElement(item), 1);
-                            }
-                        }
-                    }
-
-                    ModLogger.Info("Equipment", "Retirement: personal equipment added to inventory (fallback)");
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Equipment", "Error restoring equipment to inventory for retirement", ex);
-            }
-        }
+        // Equipment backup system removed - we track QM-issued gear via item modifiers.
+        // Discharge works by: reclaiming QM equipment + returning baggage stash items.
+        // Player can sell/trade equipment freely without backup system interference.
 
         /// <summary>
         ///     Make player's ships invulnerable to prevent damage while enlisted.
@@ -12134,31 +11481,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Update the enlisted lord (progression stays the same)
                 _enlistedLord = newLord;
 
-                // Handle equipment for transfer
-                // During grace period, player keeps their enlisted equipment (already backed up)
-                // Only need to handle case where equipment wasn't backed up (shouldn't happen normally)
-                if (!_hasBackedUpEquipment)
-                {
-                    // Edge case: equipment not backed up - back it up now
-                    BackupPlayerEquipment();
-                    _hasBackedUpEquipment = true;
-                    ModLogger.Info("Enlistment", "Backed up personal equipment during service transfer");
-
-                    // Apply enlisted equipment for new lord
-                    var appliedGraceEquipment = TryApplyGraceEquipment(true, _savedGraceTroopId);
-                    if (!appliedGraceEquipment)
-                    {
-                        AssignInitialEquipment();
-                        SetInitialFormation();
-                        ModLogger.Info("Enlistment", "Applied enlisted equipment during service transfer");
-                    }
-                }
-                else
-                {
-                    // Normal case: player already has enlisted equipment from grace period
-                    // Keep current equipment - they're still a soldier in the same kingdom
-                    ModLogger.Info("Enlistment", "Keeping enlisted equipment during service transfer (same kingdom)");
-                }
+                // Player keeps their current equipment during service transfer
+                ModLogger.Info("Enlistment", "Keeping enlisted equipment during service transfer");
 
                 // Transfer any companions/troops to new lord's party
                 TransferPlayerTroopsToLord();

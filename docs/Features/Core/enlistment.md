@@ -66,8 +66,8 @@ Related systems (shipping):
 7. **Initial Ration Issued** (T1-T6 only): New recruits receive their first ration immediately at enlistment. Quality based on QM reputation (grain/butter/cheese/meat). Commanders (T7+) don't receive issued rations.
 8. **First-Enlistment Bag Check** (T1-T6 only, fires once per career):
    - Deferred **1 hour** after enlistment; fires as narrative event (`evt_bagcheck_first_enlistment`).
-   - **Stow it all (200g + 5% value)**: Stashes all inventory + equipped items into baggage train. Costs 200g base + 5% of total inventory value.
-   - **Sell it all (60%)**: Liquidates inventory + equipped items at 60% value.
+   - **Stow it all (200g + 5% value)**: Stashes pre-enlistment civilian gear into baggage train. Costs 200g base + 5% of total inventory value. **Protected:** Quest items and QM-issued military equipment stay with player.
+   - **Sell it all (60%)**: Liquidates pre-enlistment civilian gear at 60% value. **Protected:** Quest items and QM-issued military equipment stay with player.
    - **Smuggle (Roguery 30+)**: Hard skill check to stow everything without paying the fee. If caught: pay full fee + 1 Scrutiny.
    - **Abort enlistment**: Changes mind and leaves service before it starts. -10 Lord reputation. Party restored to normal state. Lord will not accept the player for 7 days. No other penalties.
    - Baggage is tagged with current faction ID for cross-faction tracking.

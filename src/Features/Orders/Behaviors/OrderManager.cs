@@ -32,6 +32,7 @@ namespace Enlisted.Features.Orders.Behaviors
         private bool _orderAccepted = false; // Tracks if current order is accepted (active) vs offered (waiting)
         private CampaignTime _lastOrderTime = CampaignTime.Never;
         private int _declineCount;
+        private bool _lastKnownSeaState = false; // Tracks sea/land state for detecting transitions
 
         public OrderManager()
         {
@@ -80,6 +81,7 @@ namespace Enlisted.Features.Orders.Behaviors
         /// <summary>
         /// Hourly tick checks for order state transitions (IMMINENT → PENDING).
         /// Also checks for naval transitions that would cancel land-only orders.
+        /// Also detects sea/land travel context changes to refresh order display variants.
         /// </summary>
         private void OnHourlyTick()
         {
@@ -90,6 +92,9 @@ namespace Enlisted.Features.Orders.Behaviors
 
             // Check if we've gone to sea with an active land-only order
             CheckNavalOrderConflict();
+
+            // Check for sea/land transitions to refresh order display
+            CheckTravelContextTransition();
 
             UpdateOrderState();
         }
@@ -139,6 +144,48 @@ namespace Enlisted.Features.Orders.Behaviors
             // Clear the order
             _currentOrder = null;
             _orderAccepted = false;
+            _lastKnownSeaState = false; // Reset sea state tracking
+        }
+
+        /// <summary>
+        /// Detects travel context transitions (sea to land or land to sea) while an order is active.
+        /// When a transition occurs, refreshes the UI so order display variants update immediately.
+        /// This ensures "Deck Watch" becomes "Guard Duty" when disembarking, and vice versa.
+        /// </summary>
+        private void CheckTravelContextTransition()
+        {
+            // Only check if we have an active order with context variants
+            if (_currentOrder == null)
+            {
+                return;
+            }
+
+            // Only matters for orders that have sea/land variants
+            if (_currentOrder.ContextVariants == null || _currentOrder.ContextVariants.Count == 0)
+            {
+                return;
+            }
+
+            // Get current sea state
+            var enlistment = EnlistmentBehavior.Instance;
+            var currentlyAtSea = enlistment?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+
+            // Detect transition
+            if (currentlyAtSea != _lastKnownSeaState)
+            {
+                var transitionType = currentlyAtSea ? "land → sea" : "sea → land";
+                ModLogger.Debug(LogCategory, 
+                    $"Travel context transition detected ({transitionType}) while order active: {_currentOrder.Id}");
+
+                // Update tracked state
+                _lastKnownSeaState = currentlyAtSea;
+
+                // Refresh UI so the order display updates with the correct variant
+                Interface.Behaviors.EnlistedMenuBehavior.Instance?.RefreshEnlistedStatusMenuUi();
+                
+                ModLogger.Info(LogCategory, 
+                    $"Order display refreshed for context change: {OrderCatalog.GetDisplayTitle(_currentOrder)}");
+            }
         }
 
         /// <summary>
@@ -233,6 +280,10 @@ namespace Enlisted.Features.Orders.Behaviors
             _currentOrder.ExpirationTime = CampaignTime.HoursFromNow(hoursUntilIssue + 72f); // 3 days after issue
             _lastOrderTime = CampaignTime.Now;
             _orderAccepted = false; // Not yet issued
+
+            // Initialize sea state tracking for context variant transitions
+            var enlistment = EnlistmentBehavior.Instance;
+            _lastKnownSeaState = enlistment?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
 
             ModLogger.Info(LogCategory, 
                 $"Order imminent: {order.Title} from {order.Issuer} (will issue in {hoursUntilIssue:F1} hours)");
@@ -377,6 +428,7 @@ namespace Enlisted.Features.Orders.Behaviors
 
             _currentOrder = null;
             _orderAccepted = false;
+            _lastKnownSeaState = false; // Reset sea state tracking
         }
 
         /// <summary>
@@ -1171,6 +1223,7 @@ namespace Enlisted.Features.Orders.Behaviors
             // Clear the order
             _currentOrder = null;
             _orderAccepted = false;
+            _lastKnownSeaState = false; // Reset sea state tracking
         }
 
         /// <summary>

@@ -558,8 +558,8 @@
     <string id="Enlisted_Menu_VisitSettlementNamed" text="Visit {SETTLEMENT}" />
 
     <!-- Menu Symbols & Duties -->
-    <string id="Enlisted_Symbol_Selected" text="✓ {NAME}" />
-    <string id="Enlisted_Symbol_Unselected" text="○ {NAME}" />
+    <string id="Enlisted_Symbol_Selected" text="[X] {NAME}" />
+    <string id="Enlisted_Symbol_Unselected" text="[ ] {NAME}" />
     <string id="Enlisted_Duty_Name_Enlisted" text="Enlisted" />
     <string id="Enlisted_Duty_Name_Forager" text="Forager" />
     <string id="Enlisted_Duty_Name_Sentry" text="Sentry" />
@@ -854,33 +854,37 @@
     <string id="qm_btn_understood" text="Understood" />
     
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- QUARTERMASTER - Bag Check (Legacy/Fallback strings) -->
+    <!-- BAGGAGE STOWAGE - First Enlistment (Onboarding) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <string id="qm_bagcheck_title" text="Enlistment Bag Check" />
-    <string id="qm_bagcheck_body" text="The quartermaster lifts his quill. &quot;You can't march in that finery. Regimental rules. Everything goes in the wagons or my ledger. If the wagons burn, so does your past life. How do you want this written, soldier?&quot;" />
-    <string id="qm_stow_all" text="&quot;Stow it all&quot; (200g + 5%)" />
-    <string id="qm_stow_hint" text="Move everything into the baggage wagon. Costs 200g plus 5% of inventory value." />
-    <string id="qm_sell_all" text="&quot;Sell it all&quot; (60%)" />
-    <string id="qm_sell_hint" text="Liquidate the lot at a battlefield rate and march off heavier in coin." />
-    <string id="qm_smuggle_one" text="&quot;I'm keeping one thing&quot; (Roguery 30+)" />
-    <string id="qm_smuggle_hint" text="Slip one prized piece past the ledger; if caught, it's gone." />
-    <string id="qm_continue" text="Continue" />
+    <string id="evt_baggage_stowage_title" text="Stowing Your Belongings" />
+    <string id="evt_baggage_stowage_setup" text="The quartermaster's clerk stops you, ledger in hand. 'That's civilian kit. Can't march in that. Regimental rules.'&#xA;&#xA;He gestures to the wagon. 'Everything goes in storage for two hundred denars plus five percent, or I liquidate it at sixty on the denar. Your choice.'" />
     
-    <!-- Bag Check Event (Narrative Event Version) -->
-    <string id="evt_bagcheck_title" text="The Quartermaster's Ledger" />
-    <string id="evt_bagcheck_setup" text="A wagon catches up to the column. The quartermaster's wagon.&#xA;&#xA;A clerk hops down before the wheels stop turning, ledger already open, quill wet. Behind him, soldiers are unloading crates, stacking sacks. The organized chaos of army logistics.&#xA;&#xA;He finds you in the crowd. &quot;New blood. Saw your name on the roster.&quot; He looks you up and down, taking inventory. &quot;That's civilian kit. Can't march in that. Regimental rules.&quot;&#xA;&#xA;He gestures toward the wagon. Crates marked with chalk numbers. Rolled bundles. Someone's past life, stowed for safekeeping.&#xA;&#xA;&quot;Everything goes in the wagons or my ledger. Storage fee's two hundred denars, plus five percent of value for the trouble. Or I can liquidate the lot right here—sixty on the denar, take it or leave it.&quot;&#xA;&#xA;He waits, quill poised. Behind you, other soldiers are watching. Some remember standing where you're standing now." />
-    <string id="evt_bagcheck_opt_stash" text="&quot;Stow it all. I'll pay the fee.&quot;" />
-    <string id="evt_bagcheck_opt_stash_result" text="The fee changes hands. The clerk scratches your name in his ledger, then hands you a chalk marker—a number. Your number.&#xA;&#xA;&quot;Guard that marker. Lose it, and you'll spend half a day proving which crate is yours.&quot;&#xA;&#xA;Soldiers take your things. Your old clothes. Your civilian possessions. Your past. They disappear into the wagon's darkness, stacked with a hundred other lives put on hold.&#xA;&#xA;You're issued military kit. It fits well enough. It smells like the last person who wore it.&#xA;&#xA;When the wagon rolls away, you feel lighter. Not free—lighter. Like something's been decided for you." />
-    <string id="evt_bagcheck_opt_sell" text="&quot;Liquidate it. I'm traveling light.&quot;" />
-    <string id="evt_bagcheck_opt_sell_result" text="The clerk nods. Professional. He's done this before.&#xA;&#xA;Your things are assessed in minutes. Quick eyes. Quicker math. &quot;Sixty on the denar. Fair market rate for field conditions.&quot; It's not, but you both know you're not in a position to haggle.&#xA;&#xA;Coin changes hands. Your old life converted to gold, then tucked into a pouch at your belt. The clerk scratches a line in his ledger. Done.&#xA;&#xA;&quot;Clean break,&quot; he says. &quot;Easier that way.&quot;&#xA;&#xA;You're issued military kit. Standard gear. Nothing that was yours, but nothing that ties you to what came before, either.&#xA;&#xA;The wagon rolls on without your possessions. You march with the column." />
-    <string id="evt_bagcheck_opt_smuggle" text="&quot;I'll handle it myself.&quot;" />
-    <string id="evt_bagcheck_opt_smuggle_result" text="You wait until the clerk's attention shifts. Other soldiers stepping forward. The organized chaos of the wagon line.&#xA;&#xA;You move quickly. Quietly. Loading your things into an unmarked crate like you've done this a dozen times. Like you belong here. Like you're just another soldier handling routine business.&#xA;&#xA;The clerk glances your way. Pauses. His quill hovers over the ledger.&#xA;&#xA;Then someone calls his name. A problem with another crate. He turns away.&#xA;&#xA;Your gear disappears into the wagon without a marker. Without a fee. Without a record.&#xA;&#xA;Whether he noticed or chose not to see, you'll never know. But when the wagon rolls on, you're two hundred denars richer and no one's said a word." />
-    <string id="evt_bagcheck_opt_abort" text="&quot;I've changed my mind.&quot;" />
-    <string id="evt_bagcheck_opt_abort_result" text="The clerk's quill stops mid-scratch.&#xA;&#xA;&quot;Changed your mind.&quot;&#xA;&#xA;Not a question. A statement. He's seen it before. Men who thought they wanted this life, then felt the weight of it settling on their shoulders.&#xA;&#xA;He closes the ledger. Doesn't ask why. Doesn't need to.&#xA;&#xA;&quot;Your lord won't be pleased. Wasted his time. Wasted mine.&quot; He gestures back toward the road you came from. &quot;Go on, then. Before anyone notices.&quot;&#xA;&#xA;You gather your things. Still yours. Still civilian. The other soldiers don't meet your eyes as you pass.&#xA;&#xA;Some roads, once you step off them, you can't step back on easily.&#xA;&#xA;The column marches on without you." />
-    <string id="qm_fee_paid" text="You pay {FEE} denars for the wagon fee." />
-    <string id="qm_liquidate_gain" text="You receive {GOLD} denars from liquidating your possessions." />
-    <string id="qm_smuggle_success" text="You slip everything past the ledger without paying. The clerk never noticed." />
-    <string id="qm_smuggle_fail" text="Caught trying to dodge the fee. You pay anyway, and the clerk makes a note in his ledger." />
+    <!-- Option: Pay Standard Fee -->
+    <string id="evt_baggage_stowage_opt_pay" text="&quot;Fair enough. I'll pay the storage fee.&quot;" />
+    <string id="evt_baggage_stowage_opt_pay_result" text="You pay the fee. The clerk hands you a chalk marker with your storage number.&#xA;&#xA;'Guard that number,' he says, scratching an entry in his ledger. 'Lose it, you'll regret it.'&#xA;&#xA;Your things disappear into the wagon, logged and secured. You're issued military kit. When the wagon rolls away, you feel lighter—like something's been decided for you." />
+    
+    <!-- Option: Charm (Talk Into Free Storage) -->
+    <string id="evt_baggage_stowage_opt_charm" text="&quot;I don't have that kind of coin. There must be another way.&quot;" />
+    <string id="evt_baggage_stowage_opt_charm_result" text="You explain your situation—honest, earnest. The clerk studies you for a moment.&#xA;&#xA;He sighs. 'I shouldn't... but alright.' He waves at the wagon. 'Get it stowed. No charge. But keep this between us.'&#xA;&#xA;He makes a ledger entry. Your things are logged and secured. You've made an ally here." />
+    <string id="evt_baggage_stowage_opt_charm_result_fail" text="You explain your situation, but the clerk just shakes his head.&#xA;&#xA;'Heard it all before, friend. Storage fee or liquidation. Those are the rules.' His quill doesn't waver.&#xA;&#xA;You pay the standard fee. Your things are logged, but the clerk won't forget you tried to dodge payment." />
+    
+    <!-- Option: Trade (Negotiate Price) -->
+    <string id="evt_baggage_stowage_opt_trade" text="&quot;Let's talk price. That fee seems steep for a simple service.&quot;" />
+    <string id="evt_baggage_stowage_opt_trade_result" text="You point out comparable storage rates in nearby towns, the wagon's current capacity, the clerk's actual workload.&#xA;&#xA;He narrows his eyes, then chuckles. 'You know your business. Alright—hundred denars flat, no percentage. Fair deal.'&#xA;&#xA;Your things are logged at the reduced rate. Proper ledger entry, properly secured." />
+    <string id="evt_baggage_stowage_opt_trade_result_fail" text="You cite prices and precedent, but the clerk isn't impressed.&#xA;&#xA;'This isn't a market stall, friend. Two hundred plus five percent. Those are the regulations.' He taps the ledger pointedly.&#xA;&#xA;You pay the standard fee. At least your things are properly logged." />
+    
+    <!-- Option: Roguery (Smuggle) -->
+    <string id="evt_baggage_stowage_opt_smuggle" text="&quot;I'll handle it myself tonight.&quot;" />
+    <string id="evt_baggage_stowage_opt_smuggle_result" text="You wait for nightfall. The camp settles. Torches flicker low.&#xA;&#xA;You slip through the shadows to the wagon line. Quiet footsteps. Quick hands. Your things disappear into a crate, hidden beneath supply sacks. No fee. No questions asked.&#xA;&#xA;Two hundred denars saved." />
+    <string id="evt_baggage_stowage_opt_smuggle_result_fail" text="You wait for nightfall, but the wagon guards are alert tonight.&#xA;&#xA;'You lost, soldier?' One steps from the shadows, hand on his cudgel. The clerk appears, summoned by the commotion.&#xA;&#xA;He looks disappointed. 'Trying to dodge the fee, were you?' He makes a note in his ledger. 'Full price. Plus an extra fifty for wasting my time.'&#xA;&#xA;Your things are stored, but you've made an enemy here. And your name's been marked." />
+    
+    <!-- Option: Sell -->
+    <string id="evt_baggage_stowage_opt_sell" text="&quot;Liquidate it all. I'm traveling light.&quot;" />
+    <string id="evt_baggage_stowage_opt_sell_result" text="Your things are assessed quickly. 'Sixty on the denar,' the clerk announces. It's not fair, but you're not in a position to haggle.&#xA;&#xA;Coin changes hands. He scratches a line in his ledger. 'Clean break. Easier that way.' You're issued military kit and march with the column.&#xA;&#xA;No baggage to worry about. No fees. No risks. Just you and what you can carry." />
+    
+    <!-- Option: Abort Enlistment -->
+    <string id="evt_baggage_stowage_opt_abort" text="&quot;I've changed my mind.&quot;" />
+    <string id="evt_baggage_stowage_opt_abort_result" text="The clerk's quill stops. 'Changed your mind.' He's seen it before.&#xA;&#xA;He closes the ledger. 'Your lord won't be pleased. Go on, before anyone notices.'&#xA;&#xA;You gather your things. The other soldiers don't meet your eyes. The column marches on without you." />
     <string id="qm_baggage_no_fatigue" text="You are too exhausted to rummage through the baggage train." />
     <string id="baggage_menu_option" text="Access Baggage Train" />
     <string id="baggage_tooltip_full_access" text="Access your stored belongings" />
@@ -1332,7 +1336,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     
     <!-- Muster Intro Menu -->
-    <string id="muster_intro_title" text="⚔  PAY MUSTER - DAY {MUSTER_DAY}  ⚔" />
+    <string id="muster_intro_title" text="===  PAY MUSTER - DAY {MUSTER_DAY}  ===" />
     <string id="muster_continue" text="Proceed to Pay Line" />
     <string id="muster_continue_tt" text="Step forward to receive wages." />
     <string id="muster_qm_after" text="Visit Quartermaster After Muster" />
@@ -1359,7 +1363,7 @@
     <string id="muster_pay_intro" text="You step forward to the paymaster's table. He opens his ledger." />
 
     <!-- Pay Line Menu -->
-    <string id="muster_pay_title" text="💰  PAYMASTER'S LINE  💰" />
+    <string id="muster_pay_title" text="===  PAYMASTER'S LINE  ===" />
     <string id="muster_pay_accept" text="Accept Your Pay ({PAY_AMOUNT} denars)" />
     <string id="muster_pay_accept_tt" text="Standard payment. Full wages owed." />
     <string id="muster_pay_recount" text="Demand a Recount" />
@@ -1385,7 +1389,7 @@
     <string id="discharge_requested_discharge" text="Discharge requested. Will process at next pay muster." />
 
     <!-- Baggage Check Menu -->
-    <string id="muster_baggage_title" text="⚠️  BAGGAGE CHECK  ⚠️" />
+    <string id="muster_baggage_title" text="[!]  BAGGAGE CHECK  [!]" />
     <string id="muster_baggage_continue" text="Continue" />
     <string id="muster_baggage_continue_tt" text="Proceed to next stage." />
     <string id="muster_baggage_bribe" text="Pay Him Off" />
@@ -1401,20 +1405,8 @@
     <string id="muster_baggage_protest" text="Protest the Seizure" />
     <string id="muster_protest_tt" text="20% success. Failure adds scrutiny and discipline." />
 
-    <!-- Equipment Inspection Menu -->
-    <string id="muster_inspection_title" text="⚔️  EQUIPMENT INSPECTION  ⚔️" />
-    <string id="muster_inspection_perfect" text="[OneHanded 30+] Stand at Perfect Attention" />
-    <string id="muster_inspection_perfect_tt" text="Flawless presentation. +10 OneHanded XP, +6 Officer Rep, +3 Soldier Rep." />
-    <string id="muster_inspection_perfect_blocked" text="Requires {SKILL} 30." />
-    <string id="muster_inspection_basic" text="Meet the Basic Requirements" />
-    <string id="muster_inspection_basic_tt" text="Presentable enough. +5 OneHanded XP, +2 Officer Rep." />
-    <string id="muster_inspection_unprepared" text="Appear Slovenly" />
-    <string id="muster_inspection_unprepared_tt" text="Poor showing. -8 Officer Rep, -4 Soldier Rep, +8 Scrutiny." />
-    <string id="muster_inspection_continue" text="Continue" />
-    <string id="muster_inspection_continue_tt" text="Proceed to next stage." />
-
     <!-- Green Recruit Menu -->
-    <string id="muster_recruit_title" text="👥  GREEN RECRUIT  👥" />
+    <string id="muster_recruit_title" text="===  GREEN RECRUIT  ===" />
     <string id="muster_recruit_train" text="[Leadership 25+] Take Him Aside and Train Him" />
     <string id="muster_recruit_train_tt" text="Train the recruit. +15 Leadership XP, +5 Officer Rep, +6 Soldier Rep." />
     <string id="muster_recruit_train_blocked" text="Requires Leadership 25." />
@@ -1426,21 +1418,21 @@
     <string id="muster_recruit_continue_tt" text="Proceed to next stage." />
 
     <!-- Promotion Recap Menu -->
-    <string id="muster_promotion_title" text="⭐  PROMOTION ACKNOWLEDGED  ⭐" />
+    <string id="muster_promotion_title" text="***  PROMOTION ACKNOWLEDGED  ***" />
     <string id="muster_promotion_continue" text="Acknowledge Promotion" />
     <string id="muster_promotion_continue_tt" text="Proceed with muster." />
     <string id="muster_promotion_visit_qm" text="Visit Quartermaster Now" />
     <string id="muster_promotion_visit_qm_tt" text="Review newly unlocked equipment. Will return to muster after." />
 
     <!-- Retinue Muster Menu -->
-    <string id="muster_retinue_title" text="🏴  RETINUE MUSTER  🏴" />
+    <string id="muster_retinue_title" text="===  RETINUE MUSTER  ===" />
     <string id="muster_retinue_continue" text="Dismiss Retinue" />
     <string id="muster_retinue_continue_tt" text="Proceed to muster summary." />
     <string id="muster_retinue_recruit" text="Seek New Soldiers" />
     <string id="muster_retinue_recruit_tt" text="Open recruitment after muster. Fill retinue openings." />
 
     <!-- Muster Complete Menu -->
-    <string id="muster_complete_title" text="⚔  MUSTER COMPLETE - DAY {MUSTER_DAY}  ⚔" />
+    <string id="muster_complete_title" text="===  MUSTER COMPLETE - DAY {MUSTER_DAY}  ===" />
     <string id="muster_complete_dismiss" text="Dismiss" />
     <string id="muster_complete_dismiss_tt" text="Return to map. Muster complete." />
     <string id="muster_complete_qm" text="Visit Quartermaster" />

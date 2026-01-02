@@ -336,6 +336,27 @@ namespace Enlisted.Features.Content
                 }
             }
 
+            // Gate 9: Baggage access decision - only show when baggage is accessible
+            if (decision.Id.Equals("dec_baggage_access", StringComparison.OrdinalIgnoreCase))
+            {
+                var baggageManager = Logistics.BaggageTrainManager.Instance;
+                if (baggageManager != null)
+                {
+                    var accessState = baggageManager.GetCurrentAccess();
+                    
+                    // Only show decision when baggage is actually accessible
+                    // (FullAccess or TemporaryAccess, but not NoAccess or Locked)
+                    if (accessState == Logistics.BaggageAccessState.NoAccess || 
+                        accessState == Logistics.BaggageAccessState.Locked)
+                    {
+                        result.IsAvailable = false;
+                        result.IsVisible = false;
+                        result.UnavailableReason = "Baggage not currently accessible";
+                        return result;
+                    }
+                }
+            }
+
             return result;
         }
 

@@ -2539,28 +2539,6 @@ namespace Enlisted.Features.Camp
                 _ => OnSellIssuedGear(),
                 false, 4);
 
-            // Option 5: Listen to Desertion Talk (70+ tension)
-            starter.AddGameMenuOption(
-                DesperateMeasuresMenuId,
-                "dm_desertion_talk",
-                "{=dm_desertion_talk}Listen to Desertion Talk",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Escape;
-                    var enlistment = EnlistmentBehavior.Instance;
-                    var tension = enlistment?.PayTension ?? 0;
-
-                    if (tension < 70)
-                    {
-                        return false;
-                    }
-
-                    args.Tooltip = new TextObject("{=dm_desertion_tooltip}Some soldiers are planning to slip away. Hear what they have to say.");
-                    return true;
-                },
-                _ => OnDesertionTalk(),
-                false, 5);
-
             // Back option
             starter.AddGameMenuOption(
                 DesperateMeasuresMenuId,
@@ -2887,32 +2865,6 @@ namespace Enlisted.Features.Camp
 
             ModLogger.Info(LogCategory, $"Sold issued gear for {goldGain}g");
             SwitchToMenuPreserveTime(DesperateMeasuresMenuId);
-        }
-
-        private void OnDesertionTalk()
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            var freeDesertion = enlistment?.IsFreeDesertionAvailable == true;
-
-            if (freeDesertion)
-            {
-                InformationManager.ShowInquiry(new InquiryData(
-                    new TextObject("{=dm_desertion_title}Desertion Talk").ToString(),
-                    new TextObject("{=dm_desertion_body}Several soldiers are planning to slip away tonight. They invite you to join them.\n\n\"The lord's broken his word. We've earned our freedom. No one would blame you for coming with us.\"\n\nWill you desert with them?").ToString(),
-                    true, true,
-                    new TextObject("{=dm_desertion_accept}Desert Now").ToString(),
-                    new TextObject("{=dm_desertion_decline}Stay").ToString(),
-                    () => enlistment?.ProcessFreeDesertion(),
-                    null));
-            }
-            else
-            {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("{=dm_desertion_not_ready}You listen to the deserters' plans, but decide the risk isn't worth it... yet.").ToString(),
-                    Colors.Gray));
-            }
-
-            ModLogger.Info(LogCategory, $"Desertion talk (freeDesertion={freeDesertion})");
         }
 
         // ========================================

@@ -60,7 +60,7 @@
 | Map Incidents | `ModuleData/Enlisted/Events/incidents_*.json` | `mi_*` | Popup inquiry |
 | **Muster Menu Stages** | *See note below* | `evt_muster_*` | **GameMenu stage** |
 
-**Note on Muster Events:** Some events (`evt_muster_inspection`, `evt_muster_new_recruit`, `evt_baggage_*`) are delivered as GameMenu stages during the muster sequence rather than popup inquiries. The JSON definitions remain in `events_*.json` files, but `MusterMenuHandler` converts them to menu text instead of using `MultiSelectionInquiryData`. Effects still apply via `EventDeliveryManager.ApplyEffects()`. See [Muster Menu System](../Core/muster-menu-revamp.md).
+**Note on Muster Events:** The `evt_muster_new_recruit` event is delivered as a GameMenu stage during the muster sequence rather than a popup inquiry. The JSON definition remains in `events_*.json` files, but `MusterMenuHandler` converts it to menu text instead of using `MultiSelectionInquiryData`. Effects still apply via `EventDeliveryManager.ApplyEffects()`. See [Muster Menu System](../Core/muster-menu-revamp.md).
 
 ---
 

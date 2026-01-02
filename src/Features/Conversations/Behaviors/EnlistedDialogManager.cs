@@ -3290,23 +3290,10 @@ namespace Enlisted.Features.Conversations.Behaviors
         [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
         public string GetSurvivalAdviceResponseLine()
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            var freeDesertion = enlistment?.IsFreeDesertionAvailable == true;
-
-            if (freeDesertion)
-            {
-                return "Listen to me carefully. I've seen this before. The lord's broke, the men are starving, and the whole thing's falling apart. " +
-                       "At this point? No one would blame you for walking away. The lord broke his end of the deal first. " +
-                       "If you do decide to leave... do it at night. Head for the nearest village. Don't look back. " +
-                       "But if you stay... stay for the right reasons. Not because you can't leave.";
-            }
-            else
-            {
-                return "Things are bad, I won't lie to you. But we've been in tough spots before. " +
-                       "Keep your head down, don't volunteer for anything stupid, and watch your purse. " +
-                       "Some men are getting desperate - and desperate men do foolish things. " +
-                       "If it gets worse... well, we'll talk then.";
-            }
+            return "Things are bad, I won't lie to you. But we've been in tough spots before. " +
+                   "Keep your head down, don't volunteer for anything stupid, and watch your purse. " +
+                   "Some men are getting desperate - and desperate men do foolish things. " +
+                   "If it gets worse... well, we'll talk then.";
         }
 
         /// <summary>
@@ -4253,21 +4240,11 @@ namespace Enlisted.Features.Conversations.Behaviors
             // Increase relationship for confiding
             enlistment.ModifyQuartermasterRelationship(2);
 
-            // Check if free desertion is available
-            if (enlistment.IsFreeDesertionAvailable)
-            {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "The veteran nods knowingly. 'If you need to leave... no one would blame you. The Lord's broken his contract with us.'",
-                    Colors.Yellow));
-            }
-            else
-            {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "The veteran shares tips for surviving hard times. 'Keep your head down. Watch for opportunities.'",
-                    Colors.Yellow));
-            }
+            InformationManager.DisplayMessage(new InformationMessage(
+                "The veteran shares tips for surviving hard times. 'Keep your head down. Watch for opportunities.'",
+                Colors.Yellow));
 
-            ModLogger.Info("Quartermaster", $"Survival advice dialog triggered (freeDesertion={enlistment.IsFreeDesertionAvailable})");
+            ModLogger.Info("Quartermaster", "Survival advice dialog triggered");
         }
 
         /// <summary>
