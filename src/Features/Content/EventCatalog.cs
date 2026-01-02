@@ -1145,6 +1145,12 @@ namespace Enlisted.Features.Content
             // Parse fatigue effect
             effects.Fatigue = effectsJson["fatigue"]?.Value<int>();
 
+            // Parse medical effects (illness, injury, treatment, worsening)
+            effects.IllnessOnset = effectsJson["illnessOnset"]?.ToString() ?? effectsJson["illness_onset"]?.ToString();
+            effects.InjuryOnset = effectsJson["injuryOnset"]?.ToString() ?? effectsJson["injury_onset"]?.ToString();
+            effects.BeginTreatment = effectsJson["beginTreatment"]?.Value<bool>() ?? effectsJson["begin_treatment"]?.Value<bool>();
+            effects.WorsenCondition = effectsJson["worsenCondition"]?.Value<bool>() ?? effectsJson["worsen_condition"]?.Value<bool>();
+
             // Parse company needs
             ParseDictionaryField(effectsJson, "companyNeeds", effects.CompanyNeeds);
             ParseDictionaryField(effectsJson, "company_needs", effects.CompanyNeeds);

@@ -963,6 +963,27 @@ QM: "Caught you. This is going in my report."
 QM: "Don't let me catch you again."
 ```
 
+### Technical Implementation
+
+**Item Confiscation Safety:**
+
+The confiscation system includes defensive coding to prevent crashes during item removal:
+
+1. **Equipped Item Handling:** Items are checked and unequipped before confiscation using StringId comparison instead of reference equality to avoid instance mismatch crashes
+2. **Null Safety:** All item operations wrapped in null checks and try-catch blocks
+3. **Verification:** Confiscation verifies item exists in inventory before attempting removal
+4. **Graceful Degradation:** If confiscation fails, the system logs the error and continues without crashing
+
+**Implementation Files:**
+- `src/Features/Logistics/ContrabandChecker.cs` - Item scanning and confiscation logic
+- `src/Features/Enlistment/Behaviors/MusterMenuHandler.cs` - Baggage check event handlers with equipped item management
+
+**Key Safety Patterns:**
+- Use `ItemObject.StringId` comparison instead of `==` reference equality when checking equipped items
+- Clone equipment before modification, then apply with `FillFrom()`
+- Wrap all confiscation operations in exception handlers to prevent game crashes
+- Log detailed diagnostics for troubleshooting confiscation failures
+
 ---
 
 ## Officers Armory

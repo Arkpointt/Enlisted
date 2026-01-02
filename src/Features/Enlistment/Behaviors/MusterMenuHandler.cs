@@ -3702,18 +3702,31 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 _currentMuster.BaggageOutcome = "bribe_failed";
 
-                // Confiscate item
-                ContrabandChecker.ConfiscateItem(contraband.Item);
-
-                // Apply scrutiny and fine
-                EscalationManager.Instance?.ModifyScrutiny(3, "Failed bribe attempt");
-                var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-                if (Hero.MainHero != null)
+                try
                 {
-                    Hero.MainHero.ChangeHeroGold(-fine);
-                }
+                    // Confiscate item
+                    bool confiscated = ContrabandChecker.ConfiscateItem(contraband.Item);
+                    
+                    if (!confiscated)
+                    {
+                        ModLogger.Warn(LogCategory, $"Failed to confiscate {contraband.Item?.Name} after bribe failure");
+                    }
 
-                ModLogger.Warn(LogCategory, $"Bribe failed: lost {bribeAmount} denars + {contraband.Item.Name} + {fine} denars fine");
+                    // Apply scrutiny and fine
+                    EscalationManager.Instance?.ModifyScrutiny(3, "Failed bribe attempt");
+                    var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
+                    if (Hero.MainHero != null)
+                    {
+                        Hero.MainHero.ChangeHeroGold(-fine);
+                    }
+
+                    var itemName = contraband.Item?.Name?.ToString() ?? "item";
+                    ModLogger.Warn(LogCategory, $"Bribe failed: lost {bribeAmount} denars + {itemName} + {fine} denars fine");
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.Error(LogCategory, "Error during bribe failure confiscation", ex);
+                }
             }
 
             // Refresh display with outcome
@@ -3779,20 +3792,33 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 _currentMuster.BaggageOutcome = "smuggle_failed";
 
-                // Confiscate item
-                ContrabandChecker.ConfiscateItem(contraband.Item);
-
-                // Heavy penalties for getting caught
-                EscalationManager.Instance?.ModifyScrutiny(5, "Caught smuggling contraband");
-                EscalationManager.Instance?.ModifyDiscipline(3, "Attempted smuggling at muster");
-
-                var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-                if (Hero.MainHero != null)
+                try
                 {
-                    Hero.MainHero.ChangeHeroGold(-fine);
-                }
+                    // Confiscate item
+                    bool confiscated = ContrabandChecker.ConfiscateItem(contraband.Item);
+                    
+                    if (!confiscated)
+                    {
+                        ModLogger.Warn(LogCategory, $"Failed to confiscate {contraband.Item?.Name} after smuggle failure");
+                    }
 
-                ModLogger.Warn(LogCategory, $"Smuggle failed: lost {contraband.Item.Name}, +5 scrutiny, +3 discipline");
+                    // Heavy penalties for getting caught
+                    EscalationManager.Instance?.ModifyScrutiny(5, "Caught smuggling contraband");
+                    EscalationManager.Instance?.ModifyDiscipline(3, "Attempted smuggling at muster");
+
+                    var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
+                    if (Hero.MainHero != null)
+                    {
+                        Hero.MainHero.ChangeHeroGold(-fine);
+                    }
+
+                    var itemName = contraband.Item?.Name?.ToString() ?? "item";
+                    ModLogger.Warn(LogCategory, $"Smuggle failed: lost {itemName}, +5 scrutiny, +3 discipline");
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.Error(LogCategory, "Error during smuggle failure confiscation", ex);
+                }
             }
 
             // Refresh display with outcome
@@ -3836,25 +3862,41 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            // Check if item is equipped and unequip if needed
-            var isEquipped = IsItemEquipped(contraband.Item);
-            if (isEquipped)
+            try
             {
-                UnequipItem(contraband.Item);
-                ModLogger.Debug(LogCategory, $"Unequipped {contraband.Item.Name} before confiscation");
+                // Check if item is equipped and unequip if needed
+                var isEquipped = IsItemEquipped(contraband.Item);
+                if (isEquipped)
+                {
+                    UnequipItem(contraband.Item);
+                    ModLogger.Debug(LogCategory, $"Unequipped {contraband.Item.Name} before confiscation");
+                }
+
+                // Confiscate item
+                bool confiscated = ContrabandChecker.ConfiscateItem(contraband.Item);
+                
+                if (!confiscated)
+                {
+                    ModLogger.Warn(LogCategory, $"Failed to confiscate {contraband.Item?.Name} - item may have already been removed");
+                    _currentMuster.BaggageOutcome = "clean";
+                    GameMenu.SwitchToMenu(MusterInspectionMenuId);
+                    return;
+                }
+
+                // Apply scrutiny and fine
+                EscalationManager.Instance?.ModifyScrutiny(2, "Contraband confiscated at muster");
+                var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
+                Hero.MainHero?.ChangeHeroGold(-fine);
+
+                _currentMuster.BaggageOutcome = "confiscated";
+
+                ModLogger.Info(LogCategory, $"Confiscation: lost {contraband.Item.Name}, {fine} denars fine, +2 scrutiny");
             }
-
-            // Confiscate item
-            ContrabandChecker.ConfiscateItem(contraband.Item);
-
-            // Apply scrutiny and fine
-            EscalationManager.Instance?.ModifyScrutiny(2, "Contraband confiscated at muster");
-            var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-            Hero.MainHero.ChangeHeroGold(-fine);
-
-            _currentMuster.BaggageOutcome = "confiscated";
-
-            ModLogger.Info(LogCategory, $"Confiscation: lost {contraband.Item.Name}, {fine} denars fine, +2 scrutiny");
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error during confiscation process", ex);
+                _currentMuster.BaggageOutcome = "clean";
+            }
 
             // Refresh display with outcome
             MBTextManager.SetTextVariable("MUSTER_BAGGAGE_TEXT", BuildBaggageText());
@@ -3919,27 +3961,40 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 _currentMuster.BaggageOutcome = "protested";
 
-                // Check if equipped and unequip if needed
-                var isEquipped = IsItemEquipped(contraband.Item);
-                if (isEquipped)
+                try
                 {
-                    UnequipItem(contraband.Item);
+                    // Check if equipped and unequip if needed
+                    var isEquipped = IsItemEquipped(contraband.Item);
+                    if (isEquipped)
+                    {
+                        UnequipItem(contraband.Item);
+                    }
+
+                    // Confiscate item
+                    bool confiscated = ContrabandChecker.ConfiscateItem(contraband.Item);
+                    
+                    if (!confiscated)
+                    {
+                        ModLogger.Warn(LogCategory, $"Failed to confiscate {contraband.Item?.Name} after protest failure");
+                    }
+
+                    // Heavy penalties for failed protest
+                    EscalationManager.Instance?.ModifyScrutiny(4, "Failed protest at muster");
+                    EscalationManager.Instance?.ModifyDiscipline(2, "Insubordination at muster");
+
+                    var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
+                    if (Hero.MainHero != null)
+                    {
+                        Hero.MainHero.ChangeHeroGold(-fine);
+                    }
+
+                    var itemName = contraband.Item?.Name?.ToString() ?? "item";
+                    ModLogger.Warn(LogCategory, $"Protest failed: lost {itemName}, +4 scrutiny, +2 discipline");
                 }
-
-                // Confiscate item
-                ContrabandChecker.ConfiscateItem(contraband.Item);
-
-                // Heavy penalties for failed protest
-                EscalationManager.Instance?.ModifyScrutiny(4, "Failed protest at muster");
-                EscalationManager.Instance?.ModifyDiscipline(2, "Insubordination at muster");
-
-                var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-                if (Hero.MainHero != null)
+                catch (Exception ex)
                 {
-                    Hero.MainHero.ChangeHeroGold(-fine);
+                    ModLogger.Error(LogCategory, "Error during protest failure confiscation", ex);
                 }
-
-                ModLogger.Warn(LogCategory, $"Protest failed: lost {contraband.Item.Name}, +4 scrutiny, +2 discipline");
             }
 
             // Refresh display with outcome
@@ -3952,21 +4007,35 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private bool IsItemEquipped(ItemObject item)
         {
-            var hero = Hero.MainHero;
-            if (hero == null)
+            if (item == null)
             {
                 return false;
             }
 
-            var equipment = hero.BattleEquipment;
-            for (int i = 0; i < 12; i++) // 12 equipment slots
+            var hero = Hero.MainHero;
+            if (hero?.BattleEquipment == null)
             {
-                var slot = (EquipmentIndex)i;
-                var element = equipment.GetEquipmentFromSlot(slot);
-                if (element.Item == item)
+                return false;
+            }
+
+            try
+            {
+                var equipment = hero.BattleEquipment;
+                for (int i = 0; i < 12; i++) // 12 equipment slots
                 {
-                    return true;
+                    var slot = (EquipmentIndex)i;
+                    var element = equipment.GetEquipmentFromSlot(slot);
+                    
+                    // Use StringId comparison instead of reference equality to avoid crashes
+                    if (element.Item != null && element.Item.StringId == item.StringId)
+                    {
+                        return true;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, $"Error checking if item {item.Name} is equipped", ex);
             }
 
             return false;
@@ -3977,24 +4046,51 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void UnequipItem(ItemObject item)
         {
-            var hero = Hero.MainHero;
-            if (hero == null)
+            if (item == null)
             {
+                ModLogger.Warn(LogCategory, "Attempted to unequip null item");
                 return;
             }
 
-            var equipment = hero.BattleEquipment.Clone();
-            for (int i = 0; i < 12; i++)
+            var hero = Hero.MainHero;
+            if (hero?.BattleEquipment == null)
             {
-                var slot = (EquipmentIndex)i;
-                var element = equipment.GetEquipmentFromSlot(slot);
-                if (element.Item == item)
+                ModLogger.Warn(LogCategory, $"Cannot unequip {item.Name} - hero or equipment is null");
+                return;
+            }
+
+            try
+            {
+                var equipment = hero.BattleEquipment.Clone();
+                bool foundAndRemoved = false;
+
+                for (int i = 0; i < 12; i++)
                 {
-                    equipment[slot] = EquipmentElement.Invalid;
-                    hero.BattleEquipment.FillFrom(equipment);
-                    ModLogger.Debug(LogCategory, $"Unequipped {item.Name} from slot {slot}");
-                    return;
+                    var slot = (EquipmentIndex)i;
+                    var element = equipment.GetEquipmentFromSlot(slot);
+                    
+                    // Use StringId comparison instead of reference equality to avoid crashes
+                    if (element.Item != null && element.Item.StringId == item.StringId)
+                    {
+                        equipment[slot] = EquipmentElement.Invalid;
+                        foundAndRemoved = true;
+                        ModLogger.Debug(LogCategory, $"Unequipped {item.Name} from slot {slot}");
+                        break;
+                    }
                 }
+
+                if (foundAndRemoved)
+                {
+                    hero.BattleEquipment.FillFrom(equipment);
+                }
+                else
+                {
+                    ModLogger.Debug(LogCategory, $"Item {item.Name} was not found in equipment slots");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, $"Failed to unequip item {item.Name}", ex);
             }
         }
 

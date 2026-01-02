@@ -4018,6 +4018,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         // Also show the 3D visual entity (separate from nameplate VM)
                         EncounterGuard.ShowPlayerPartyVisual();
 
+                        // CRITICAL: Reset camera to follow player's party instead of lord's party
+                        // Without this, the camera remains stuck following the lord after discharge,
+                        // causing movement softlock where player can't control their character
+                        try
+                        {
+                            main.Party.SetAsCameraFollowParty();
+                        }
+                        catch (Exception cameraEx)
+                        {
+                            ModLogger.Warn("Enlistment", $"Failed to reset camera to player party: {cameraEx.Message}");
+                        }
+
                         ModLogger.Info("Enlistment", "Party activated and made visible (no active battle state)");
                     }
 
@@ -4692,6 +4704,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     main.IsVisible = true;
                     main.IsActive = true;
                     EncounterGuard.ShowPlayerPartyVisual();
+
+                    // CRITICAL: Reset camera to follow player's party instead of lord's party
+                    // Without this, the camera remains stuck following the lord after discharge,
+                    // causing movement softlock where player can't control their character
+                    try
+                    {
+                        main.Party.SetAsCameraFollowParty();
+                    }
+                    catch (Exception cameraEx)
+                    {
+                        ModLogger.Warn("Desertion", $"Failed to reset camera to player party: {cameraEx.Message}");
+                    }
                 }
 
                 // Restore companions (but NOT equipment - player keeps enlisted gear)
@@ -13643,6 +13667,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
             if (!mainParty.IsVisible)
             {
                 mainParty.IsVisible = true;
+            }
+
+            // CRITICAL: Reset camera to follow player's party instead of lord's party
+            // Without this, the camera remains stuck following the lord after discharge,
+            // causing movement softlock where player can't control their character
+            try
+            {
+                mainParty.Party.SetAsCameraFollowParty();
+            }
+            catch (Exception cameraEx)
+            {
+                ModLogger.Warn("Enlistment", $"Failed to reset camera to player party: {cameraEx.Message}");
             }
 
             ModLogger.Info("Enlistment", "Party visibility restored after encounter cleanup");

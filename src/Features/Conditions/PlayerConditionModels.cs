@@ -88,7 +88,12 @@ namespace Enlisted.Features.Conditions
 
         public bool HasInjury => CurrentInjury != InjurySeverity.None && InjuryDaysRemaining > 0;
         public bool HasIllness => CurrentIllness != IllnessSeverity.None && IllnessDaysRemaining > 0;
-        public bool HasAnyCondition => HasInjury || HasIllness || Exhaustion != ExhaustionLevel.None;
+        
+        /// <summary>
+        /// True if player has an injury or illness requiring medical attention.
+        /// Exhaustion is NOT included as it doesn't require surgeon/medical decisions.
+        /// </summary>
+        public bool HasAnyCondition => HasInjury || HasIllness;
 
         public void ClearTreatment()
         {

@@ -4,6 +4,308 @@
   "category": "medical",
   "events": [
     {
+      "id": "illness_onset_minor_sea",
+      "category": "medical",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 6 },
+        "content_doc": "docs/Features/Content/medical-care-migration.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "ai_safe", "at_sea"],
+        "any": [],
+        "time_of_day": ["any"],
+        "escalation_requirements": { "medical_risk_min": 3 }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 6 },
+        "conditionState": "no_condition",
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "medium",
+        "one_time": false,
+        "rate_limit": { "max_per_week": 1, "category_cooldown_days": 3 }
+      },
+      "content": {
+        "titleId": "ll_evt_illness_onset_minor_sea_title",
+        "setupId": "ll_evt_illness_onset_minor_sea_setup",
+        "title": "Something Not Right",
+        "setup": "The ship rolls beneath your hammock as you wake, but something else is wrong. A deep weariness, a queasy feeling that goes beyond the usual sea-sickness. You've seen this before — ship fever spreads fast in close quarters.\n\nThe bosun's mate notices you looking green. \"You steady? Surgeon's belowdecks if you need him. No shame in it — half the fresh hands catch something their first passage.\"",
+        "options": [
+          {
+            "id": "rest_sea",
+            "text": "Find a quiet spot on deck for fresh air.",
+            "tooltip": "Reduces fatigue by 15. Fresh air may prevent illness from taking hold.",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 4 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "scrutiny": 0, "discipline": 0, "soldierRep": 0, "medical_risk": -1, "fatigue_relief": 15 },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You find a spot near the bow where the salt wind blows fresh. Hours watching the horizon, breathing deep. The queasy feeling fades. Whatever was building seems to pass.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_minor_sea_opt_rest_text",
+            "resultTextId": "ll_evt_illness_onset_minor_sea_opt_rest_outcome"
+          },
+          {
+            "id": "push_through_sea",
+            "text": "I've sailed before. It'll pass.",
+            "tooltip": "50% chance of developing Minor ship fever. Maintains reputation.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": { "fatigue": 10, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "scrutiny": 0, "discipline": 0, "soldierRep": 5, "medical_risk": 1, "fatigue_relief": 0 },
+            "effects_success": { "scrutiny": 0, "discipline": 0, "soldierRep": 5, "medical_risk": 0, "fatigue_relief": 0 },
+            "effects_failure": { "scrutiny": 0, "discipline": 0, "soldierRep": 0, "medical_risk": 1, "fatigue_relief": 0, "illness_onset": "minor" },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You shake it off. The sailors around you nod approvingly — they've seen too many soldiers mewling in their hammocks. You're not one of those.",
+            "outcome_failure": "By the next watch you're shivering in your hammock. The ship's surgeon appears with a foul-smelling tincture. \"Caught the ship fever. Should have come up for air.\"",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_minor_sea_opt_push_text",
+            "resultTextId": "ll_evt_illness_onset_minor_sea_opt_push_outcome"
+          },
+          {
+            "id": "seek_care_sea",
+            "text": "Find the ship's surgeon.",
+            "tooltip": "Costs 10 gold. Reduces medical risk. Prevents illness.",
+            "condition": "gold_10",
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 10, "time_hours": 2 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "scrutiny": 0, "discipline": 0, "soldierRep": 0, "medical_risk": -2, "fatigue_relief": 0 },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The ship's surgeon, a weathered man with salt-stained hands, looks you over. \"Lime juice and grog,\" he prescribes. \"And stay topside when you can. Stale air belowdecks breeds sickness.\" Sound advice.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_minor_sea_opt_care_text",
+            "resultTextId": "ll_evt_illness_onset_minor_sea_opt_care_outcome"
+          }
+        ]
+      }
+    },
+    {
+      "id": "illness_onset_moderate_sea",
+      "category": "medical",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 6 },
+        "content_doc": "docs/Features/Content/medical-care-migration.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "ai_safe", "at_sea"],
+        "any": [],
+        "time_of_day": ["any"],
+        "escalation_requirements": { "medical_risk_min": 4 }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 6 },
+        "conditionState": "no_condition",
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": { "max_per_week": 1, "category_cooldown_days": 5 }
+      },
+      "content": {
+        "titleId": "ll_evt_illness_onset_moderate_sea_title",
+        "setupId": "ll_evt_illness_onset_moderate_sea_setup",
+        "title": "Ship Fever",
+        "setup": "The night watch finds you collapsed on the orlop deck, burning with fever. The ship's hold reeks of tar and bilge, but your body has given out before you could reach your hammock.\n\nSailors haul you up, muttering about \"the fever that spreads.\" In close quarters, sickness moves fast. The surgeon's mate appears with a lantern.\n\n\"We need to move you topside. Fresh air or this gets worse.\"",
+        "options": [
+          {
+            "id": "immediate_care_sea",
+            "text": "Let them take me to the surgeon.",
+            "tooltip": "Costs 15 gold. Prevents Moderate illness. Recovery on deck.",
+            "condition": "gold_15",
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 15, "time_hours": 3 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "scrutiny": 0, "discipline": 0, "soldierRep": -5, "medical_risk": -3, "fatigue_relief": 10 },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": ["sought_early_care"],
+            "flags_clear": [],
+            "outcome": "They rig a canvas shelter near the mainmast where the air is clean. The surgeon's remedies are vile — vinegar and who knows what else — but the fever breaks by morning. The sea wind carries away what lingers.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_moderate_sea_opt_care_text",
+            "resultTextId": "ll_evt_illness_onset_moderate_sea_opt_care_outcome"
+          },
+          {
+            "id": "tough_it_out_sea",
+            "text": "I'll ride it out. Get me back to my hammock.",
+            "tooltip": "70% chance of Moderate ship fever. Sailor reputation preserved.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 30,
+            "costs": { "fatigue": 20, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "scrutiny": 0, "discipline": 0, "soldierRep": 10, "medical_risk": 2, "fatigue_relief": 0 },
+            "effects_success": { "scrutiny": 0, "discipline": 0, "soldierRep": 15, "medical_risk": -1, "fatigue_relief": 0 },
+            "effects_failure": { "scrutiny": 0, "discipline": 0, "soldierRep": 0, "medical_risk": 2, "fatigue_relief": 0, "illness_onset": "moderate" },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You sweat through the night in your hammock, but by dawn the worst has passed. The sailors respect it — no one wants to share a ship with weaklings who can't handle a rough passage.",
+            "outcome_failure": "The fever takes hold proper. By the second day you can barely stand. The surgeon has you moved to the sick bay with the others. \"At least three days,\" he says grimly. You're going nowhere.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_moderate_sea_opt_tough_text",
+            "resultTextId": "ll_evt_illness_onset_moderate_sea_opt_tough_outcome"
+          },
+          {
+            "id": "seaman_remedy_sea",
+            "text": "Is there grog? The old sailors swear by it.",
+            "tooltip": "50% success. No gold cost. Traditional sailor's remedy.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": { "fatigue": 10, "gold": 0, "time_hours": 2 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "scrutiny": 0, "discipline": 0, "soldierRep": 0, "medical_risk": 0, "fatigue_relief": 5 },
+            "effects_success": { "scrutiny": 0, "discipline": 0, "soldierRep": 5, "medical_risk": -2, "fatigue_relief": 10 },
+            "effects_failure": { "scrutiny": 0, "discipline": 0, "soldierRep": 0, "medical_risk": 1, "fatigue_relief": 0, "illness_onset": "minor" },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "An old hand produces a flask. \"Half rum, half lime juice, splash of seawater.\" Tastes like death, works like a charm. By morning you're shaky but standing.",
+            "outcome_failure": "The grog helps the symptoms but not the cause. You still come down with something — not as bad as it could have been, but you're stuck in your hammock for a day or more.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_moderate_sea_opt_grog_text",
+            "resultTextId": "ll_evt_illness_onset_moderate_sea_opt_grog_outcome"
+          }
+        ]
+      }
+    },
+    {
+      "id": "illness_onset_severe_sea",
+      "category": "medical",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 6 },
+        "content_doc": "docs/Features/Content/medical-care-migration.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "ai_safe", "at_sea"],
+        "any": [],
+        "time_of_day": ["any"],
+        "escalation_requirements": { "medical_risk_min": 5 }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 6 },
+        "conditionState": "no_condition",
+        "atSea": true
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "critical",
+        "one_time": false,
+        "rate_limit": { "max_per_week": 1, "category_cooldown_days": 7 }
+      },
+      "content": {
+        "titleId": "ll_evt_illness_onset_severe_sea_title",
+        "setupId": "ll_evt_illness_onset_severe_sea_setup",
+        "title": "Man Overboard — Almost",
+        "setup": "You wake to shouting. Someone is hauling you back from the rail, where you'd apparently been trying to climb in the grip of fever-dreams.\n\n\"He's burning up!\" a voice calls. \"Get the surgeon!\"\n\nThe deck tilts and spins. Stars wheel overhead. Somewhere below, voices argue about whether you'll make it to port.",
+        "options": [
+          {
+            "id": "accept_treatment_sea",
+            "text": "Let them take me belowdecks.",
+            "tooltip": "Develops Moderate ship fever. Begins treatment in sick bay.",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 20, "time_hours": 8 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "scrutiny": 0, "discipline": 0, "soldierRep": -10, "medical_risk": -2, "fatigue_relief": 20, "illness_onset": "moderate", "begin_treatment": true },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": ["collapsed_illness"],
+            "flags_clear": [],
+            "outcome": "The sick bay is cramped and smells of vinegar, but it's better than the alternative. The surgeon works by lantern light, mixing remedies. \"Lucky they caught you at the rail,\" he mutters. You'll recover. Eventually.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_severe_sea_opt_accept_text",
+            "resultTextId": "ll_evt_illness_onset_severe_sea_opt_accept_outcome"
+          },
+          {
+            "id": "refuse_treatment_sea",
+            "text": "Just... tie me to the mast. I'll ride it out.",
+            "tooltip": "Develops Severe ship fever without treatment. High risk.",
+            "condition": null,
+            "risk": "dangerous",
+            "risk_chance": null,
+            "costs": { "fatigue": 30, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "scrutiny": 0, "discipline": 0, "soldierRep": 5, "medical_risk": 3, "fatigue_relief": 0, "illness_onset": "severe" },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": ["refused_treatment"],
+            "flags_clear": [],
+            "outcome": "They lash you to the mainmast with spare line, as requested. The night is endless fever-dreams of drowning. Somehow you're still alive at dawn. The sailors cross themselves when they see you. Not sure if that's good or bad.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_illness_onset_severe_sea_opt_refuse_text",
+            "resultTextId": "ll_evt_illness_onset_severe_sea_opt_refuse_outcome"
+          }
+        ]
+      }
+    },
+    {
       "id": "illness_onset_minor",
       "category": "medical",
       "metadata": {
@@ -23,7 +325,8 @@
       "triggers": {
         "all": [
           "is_enlisted",
-          "ai_safe"
+          "ai_safe",
+          "not_at_sea"
         ],
         "any": [],
         "time_of_day": [
@@ -40,7 +343,8 @@
           "min": 1,
           "max": 6
         },
-        "conditionState": "no_condition"
+        "conditionState": "no_condition",
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 7,
@@ -204,7 +508,8 @@
       "triggers": {
         "all": [
           "is_enlisted",
-          "ai_safe"
+          "ai_safe",
+          "not_at_sea"
         ],
         "any": [],
         "time_of_day": [
@@ -221,7 +526,8 @@
           "min": 1,
           "max": 6
         },
-        "conditionState": "no_condition"
+        "conditionState": "no_condition",
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 10,
@@ -398,7 +704,8 @@
       "triggers": {
         "all": [
           "is_enlisted",
-          "ai_safe"
+          "ai_safe",
+          "not_at_sea"
         ],
         "any": [],
         "time_of_day": [
@@ -415,7 +722,8 @@
           "min": 1,
           "max": 6
         },
-        "conditionState": "no_condition"
+        "conditionState": "no_condition",
+        "notAtSea": true
       },
       "timing": {
         "cooldown_days": 14,
@@ -513,6 +821,92 @@
       }
     },
     {
+      "id": "untreated_condition_worsening_sea",
+      "category": "medical",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 6 },
+        "content_doc": "docs/Features/Content/medical-care-migration.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "ai_safe", "has_untreated_condition", "has_maritime_illness"],
+        "any": [],
+        "time_of_day": ["any"],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 6 },
+        "conditionState": "untreated",
+        "days_untreated_min": 3
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": { "max_per_week": 2, "category_cooldown_days": 2 }
+      },
+      "content": {
+        "titleId": "ll_evt_condition_worsening_sea_title",
+        "setupId": "ll_evt_condition_worsening_sea_setup",
+        "title": "Worsening at Sea",
+        "setup": "The ship pitches and rolls, and every lurch sends pain through you. Whatever ails you is getting worse — the cramped quarters, the stale air belowdecks, the salt in everything. No place for a sick man.\n\nThe bosun's mate finds you propped against a bulkhead, looking grey. \"You need the surgeon, soldier. There's nowhere to run on a ship when sickness spreads.\"",
+        "options": [
+          {
+            "id": "seek_treatment_sea",
+            "text": "Take me to the surgeon's berth.",
+            "tooltip": "Costs 25 gold. Begins treatment in sick bay.",
+            "condition": "gold_25",
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 25, "time_hours": 4 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "scrutiny": 0, "discipline": 0, "soldierRep": 0, "medical_risk": -2, "fatigue_relief": 10, "begin_treatment": true },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": ["refused_treatment"],
+            "outcome": "The sick bay is a cramped space near the waterline, lit by a single swaying lantern. The surgeon works with practiced hands despite the ship's motion. \"You'll mend,\" he says. \"But stay here. No climbing, no watches until I say.\"",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_condition_worsening_sea_opt_treatment_text",
+            "resultTextId": "ll_evt_condition_worsening_sea_opt_treatment_outcome"
+          },
+          {
+            "id": "delay_more_sea",
+            "text": "I can't afford to be laid up. We're days from port.",
+            "tooltip": "60% chance condition worsens by one level. Dangerous at sea.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 40,
+            "costs": { "fatigue": 15, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "scrutiny": 0, "discipline": 0, "soldierRep": 5, "medical_risk": 2, "fatigue_relief": 0 },
+            "effects_success": { "scrutiny": 0, "discipline": 0, "soldierRep": 10, "medical_risk": 0, "fatigue_relief": 0 },
+            "effects_failure": { "scrutiny": 0, "discipline": 0, "soldierRep": -5, "medical_risk": 3, "fatigue_relief": 0, "worsen_condition": true },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "Somehow you make it through another day. The condition holds. The sailors look at you with new respect — or maybe just surprise that you're still standing.",
+            "outcome_failure": "The motion of the ship, the salt air, the cramped quarters — all of it conspires against you. By nightfall you're worse. Much worse. The surgeon shakes his head when they finally bring you to him.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_condition_worsening_sea_opt_delay_text",
+            "resultTextId": "ll_evt_condition_worsening_sea_opt_delay_outcome"
+          }
+        ]
+      }
+    },
+    {
       "id": "untreated_condition_worsening",
       "category": "medical",
       "metadata": {
@@ -533,7 +927,8 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "has_untreated_condition"
+          "has_untreated_condition",
+          "not_maritime_illness"
         ],
         "any": [],
         "time_of_day": [

@@ -1593,6 +1593,8 @@
     <string id="cond_injury_arrow_wound" text="Arrow Wound" />
     <string id="cond_illness_camp_fever" text="Camp Fever" />
     <string id="cond_illness_flux" text="Flux" />
+    <string id="cond_illness_ship_fever" text="Ship Fever" />
+    <string id="cond_illness_scurvy" text="Scurvy" />
 
     <!-- Enlisted status notifications -->
     <string id="enlisted_joining_siege_assault" text="Joining siege assault..." />

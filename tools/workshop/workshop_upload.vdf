@@ -100,35 +100,78 @@ Full documentation in mod folder. Contributions welcome!"
 		"1"		"Singleplayer"
 		"2"		"Overhaul"
     }
-	"changenote"		"v0.9.0.1 - Critical Bug Fixes & XP System Overhaul
+	"changenote"		"v0.9.1 - Major Content Update
 
-[b]CRITICAL XP FIXES[/b]
+[b]NEW: BAGGAGE TRAIN SYSTEM[/b]
 [list]
-[*] [b]Fixed 0 XP in muster reports[/b] - All activities now properly award enlistment XP for rank progression
-[*] [b]Fixed combat XP not tracked[/b] - Killing enemies now awards tier-scaled XP (higher tier = more XP)
-[*] [b]Added missing XP rewards[/b] - All 85 order events across 11 order types now grant proper XP
-[*] Order events: 10-32 XP per event (scales with difficulty and skill checks)
-[*] Camp activities: 8-25 XP (training, self-treatment, muster interactions)
-[*] Combat kills: Tier-scaled using native formula (T5 elite = 3.5x more XP than T1 recruit)
-[*] Failed skill checks award 50% XP (learn from mistakes)
-[*] All XP sources tracked and displayed in muster period summary breakdown
+[*] World-state-aware baggage: accessible in towns/camps when stationary
+[*] Unavailable during combat, sieges, pursuits, or traveling at speed
+[*] Quartermaster dialogue for checking status and accessing stored equipment
+[*] Baggage status shown in Camp Hub and Company Reports
+[*] 'Check Baggage' event triggers when baggage becomes available
+[*] Baggage decisions separate from daily opportunity limit
+[*] Fixed inventory bugs when checking baggage
 [/list]
 
-[b]QUARTERMASTER FIXES[/b]
+[b]NEW: CONTENT ORCHESTRATOR[/b]
 [list]
-[*] [b]Fixed Quartermaster showing vanilla companion recruitment dialogue[/b] - QM now uses Soldier occupation
-[*] [b]Fixed Quartermaster dialogue breaking[/b] - Added fallback system that ensures QM always works
-[*] [b]Fixed supply inquiry closing conversation[/b] - Supply status now properly returns to QM hub
+[*] AI-driven content delivery that adapts to your playstyle
+[*] Background simulation tracks morale, supplies, and needs
+[*] Smart event selection based on world situation and activity
+[*] Forecast system predicts upcoming events and company needs
+[*] 85 new order events across all 16 order types
 [/list]
 
-[b]DIAGNOSTICS & VALIDATION[/b]
+[b]NEW: QUARTERMASTER'S DEAL[/b]
 [list]
-[*] Enhanced conflict detection to verify mod installation integrity
-[*] Module health check detects missing/corrupt JSON and XML files at startup
-[*] Runtime catalog verification confirms content loaded successfully
-[*] Validation tool checks for missing XP in order events
-[*] Better error logging for bug reports with installation path detection
+[*] Risk/reward pay option: trade pay for lottery chance at equipment
+[*] 70% base success rate modified by QM reputation
+[*] Equipment weighted by your skills (cavalry get horses, archers get bows)
+[*] Items received exempt from contraband checking
+[*] Dynamic success tooltip based on Charm skill
+[*] Bribe success rate adjusted to 35-55% (Charm matters more)
 [/list]
 
-[i]Resolves widespread reports of '0 XP in muster reports' and Quartermaster dialogue errors.[/i]"
+[b]NEW: COMBAT LOG[/b]
+[list]
+[*] Comprehensive combat log in encyclopedia
+[*] Links to unit entries for detailed information
+[*] Filtered conversation view for combat events
+[*] Tracks injuries, kills, and battle outcomes
+[/list]
+
+[b]CAMP & MUSTER IMPROVEMENTS[/b]
+[list]
+[*] Recap section showing recent events and status changes
+[*] Forecast section with upcoming events and predictions
+[*] Camp routine events with injury system
+[*] Streamlined muster from 8 to 6 stages (removed Recruit/Inspection)
+[*] Fixed muster counter showing days served instead of campaign days
+[*] Improved pay menu tooltips with accurate descriptions
+[/list]
+
+[b]FORMATION FIX[/b]
+[list]
+[*] Fixed formation assignment detecting player equipment tier (T1-T6)
+[*] T7+ commanders now correctly control their own party
+[*] System reads actual equipped gear instead of fallback logic
+[/list]
+
+[b]QUALITY OF LIFE[/b]
+[list]
+[*] Time pauses during equipment/upgrade/provisions screens
+[*] Time set to normal speed on initial enlistment
+[*] Fixed leave of absence not releasing player from lord's party
+[*] Fixed quartermaster dialogue flow issues
+[*] Fixed upgrade screen closing immediately after conversation
+[/list]
+
+[b]TECHNICAL[/b]
+[list]
+[*] Major code quality improvements (500+ issues resolved)
+[*] Comprehensive tooltip system with factual descriptions
+[*] Enhanced logging for diagnostics
+[*] Improved save/load persistence
+[*] Documentation reorganization
+[/list]"
 }

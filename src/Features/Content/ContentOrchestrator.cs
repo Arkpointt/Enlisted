@@ -620,23 +620,37 @@ namespace Enlisted.Features.Content
                 return; // No illness today
             }
 
-            // Select event based on medical risk severity
-            string eventToQueue;
+            // Determine context for maritime vs land illness events
+            var isAtSea = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            var contextSuffix = isAtSea ? "_sea" : "";
+
+            // Select event based on medical risk severity and context
+            string baseEventId;
             if (pressure.MedicalRisk >= 5)
             {
-                eventToQueue = "illness_onset_severe";
+                baseEventId = "illness_onset_severe";
             }
             else if (pressure.MedicalRisk >= 4)
             {
-                eventToQueue = "illness_onset_moderate";
+                baseEventId = "illness_onset_moderate";
             }
             else
             {
-                eventToQueue = "illness_onset_minor";
+                baseEventId = "illness_onset_minor";
+            }
+
+            // Try context-specific variant first, then fall back to base event
+            var eventToQueue = baseEventId + contextSuffix;
+            var eventDef = EventCatalog.GetEvent(eventToQueue);
+            if (eventDef == null && !string.IsNullOrEmpty(contextSuffix))
+            {
+                // Fall back to base event if sea variant doesn't exist
+                eventToQueue = baseEventId;
+                eventDef = EventCatalog.GetEvent(eventToQueue);
+                ModLogger.Debug(LogCategory, $"Sea variant not found, using base event: {eventToQueue}");
             }
 
             // Queue the illness onset event
-            var eventDef = EventCatalog.GetEvent(eventToQueue);
             if (eventDef == null)
             {
                 ModLogger.Warn(LogCategory, $"Illness onset event '{eventToQueue}' not found in catalog");

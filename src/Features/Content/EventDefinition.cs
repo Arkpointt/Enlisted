@@ -686,6 +686,33 @@ namespace Enlisted.Features.Content
         /// Used by the first-enlistment bag check event to handle the player's personal gear.
         /// </summary>
         public string BagCheckChoice { get; set; }
+
+        /// <summary>
+        /// Applies an illness to the player with specified severity.
+        /// Valid values: "minor", "mild", "moderate", "severe", "critical".
+        /// Used by illness onset events and worsening condition events.
+        /// </summary>
+        public string IllnessOnset { get; set; }
+
+        /// <summary>
+        /// Applies an injury to the player with specified severity.
+        /// Valid values: "minor", "moderate", "severe", "critical".
+        /// Used by injury events and combat outcomes.
+        /// </summary>
+        public string InjuryOnset { get; set; }
+
+        /// <summary>
+        /// Begins medical treatment for the player's current condition.
+        /// When true, marks player as under medical care and applies recovery rate modifier.
+        /// Used by treatment decisions and surgeon events.
+        /// </summary>
+        public bool? BeginTreatment { get; set; }
+
+        /// <summary>
+        /// Worsens the player's current condition by one severity level.
+        /// Used by untreated condition events and failure outcomes.
+        /// </summary>
+        public bool? WorsenCondition { get; set; }
     }
 }
 

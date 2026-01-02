@@ -304,6 +304,122 @@ Map incident contexts are used by `MapIncidentManager` to filter incidents based
 
 ---
 
+### Maritime Context (At Sea / On Land)
+
+Events and decisions can be restricted to maritime (sea travel) or land-based contexts using the `atSea` and `notAtSea` requirement fields. This enables context-appropriate content when the player's party is traveling by ship.
+
+**Requirements:**
+```json
+{
+  "requirements": {
+    "atSea": true        // Only available during sea travel
+  }
+}
+```
+
+```json
+{
+  "requirements": {
+    "notAtSea": true     // Only available on land (not during sea travel)
+  }
+}
+```
+
+**Trigger Conditions:**
+
+In the `triggers.all` or `triggers.any` arrays, you can also use string conditions:
+```json
+{
+  "triggers": {
+    "all": ["is_enlisted", "at_sea"]    // Fires only at sea
+  }
+}
+```
+
+```json
+{
+  "triggers": {
+    "all": ["is_enlisted", "not_at_sea"] // Fires only on land
+  }
+}
+```
+
+**Illness-Type Conditions:**
+
+For events that should match the illness type (not current location), use:
+```json
+{
+  "triggers": {
+    "all": ["has_untreated_condition", "has_maritime_illness"]  // Ship fever or scurvy
+  }
+}
+```
+
+```json
+{
+  "triggers": {
+    "all": ["has_untreated_condition", "not_maritime_illness"]  // Land illness or injury
+  }
+}
+```
+
+| Condition | Description |
+|-----------|-------------|
+| `has_maritime_illness` | Player has ship_fever or scurvy |
+| `has_land_illness` | Player has camp_fever or flux |
+| `not_maritime_illness` | Player does NOT have ship_fever/scurvy (includes injuries, land illnesses, or healthy) |
+
+This enables worsening events to show nautical flavor text when the player has ship fever, even if they've already landed.
+
+**Maritime Event Naming Convention:**
+
+Events with maritime variants use the `_sea` suffix:
+- `illness_onset_minor` → `illness_onset_minor_sea`
+- `dec_medical_surgeon` → `dec_medical_surgeon_sea`
+- `untreated_condition_worsening` → `untreated_condition_worsening_sea`
+
+The Content Orchestrator automatically selects context-appropriate variants when queuing events. If a sea variant doesn't exist, it falls back to the base event.
+
+**Maritime Illness Types:**
+
+When at sea, the medical system applies maritime-appropriate illnesses:
+| Context | Mild/Moderate | Severe/Critical |
+|---------|---------------|-----------------|
+| At Sea | Ship Fever | Scurvy |
+| On Land | Camp Fever | Flux |
+
+**Example - Maritime Medical Decision:**
+```json
+{
+  "id": "dec_medical_surgeon_sea",
+  "category": "decision",
+  "title": "Ship's Surgeon",
+  "setup": "The ship's surgeon works in a cramped space near the waterline...",
+  "requirements": {
+    "tier": { "min": 1, "max": 999 },
+    "hasAnyCondition": true,
+    "atSea": true
+  },
+  "options": [
+    {
+      "id": "surgeon_treat_sea",
+      "text": "\"I need your help, surgeon.\"",
+      "effects_success": { "hpChange": 20, "medicalRisk": -5, "beginTreatment": true },
+      "resultText": "He examines you by lantern-light, steady hands despite the ship's roll..."
+    }
+  ]
+}
+```
+
+**Implementation:**
+- `WorldStateAnalyzer.DetectTravelContext()` uses native `party.IsCurrentlyAtSea` property
+- `EventRequirementChecker` validates `atSea`/`notAtSea` requirements
+- `DecisionManager` filters decisions based on sea context
+- `ContentOrchestrator.CheckIllnessOnsetTriggers()` selects `_sea` event variants when at sea
+- `EventDeliveryManager.ApplyIllnessOnset()` applies context-appropriate illness types
+
+---
+
 ### Context Mapping (Orchestrator Integration)
 
 The Content Orchestrator uses internal world state keys for frequency calculation but maps them to event context strings for filtering. This ensures events fire with appropriate frequency AND appear in appropriate situations.
@@ -1196,6 +1312,10 @@ State changes when option is selected. Can be positive or negative.
 | Chain Event | `chainEventId` | string | - | Immediate follow-up |
 | Discharge | `triggersDischarge` | string | - | dishonorable/washout/deserter |
 | Renown | `renown` | int | delta | Clan renown |
+| Illness Onset | `illnessOnset` or `illness_onset` | string | - | Apply illness: `"mild"`, `"moderate"`, `"severe"`, `"critical"` |
+| Injury Onset | `injuryOnset` or `injury_onset` | string | - | Apply injury: `"minor"`, `"moderate"`, `"severe"`, `"critical"` |
+| Begin Treatment | `beginTreatment` or `begin_treatment` | bool | - | Start medical care, apply recovery multiplier |
+| Worsen Condition | `worsenCondition` or `worsen_condition` | bool | - | Increase severity by one level |
 
 **⚠️ COMMON MISTAKES:**
 - Use `hpChange`, not `hp`

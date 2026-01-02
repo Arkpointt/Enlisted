@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Company;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -764,6 +765,27 @@ namespace Enlisted.Features.Content
                 ApplyBagCheckChoice(effects.BagCheckChoice);
             }
 
+            // Apply medical effects (illness, injury, treatment, worsening)
+            if (!string.IsNullOrEmpty(effects.IllnessOnset))
+            {
+                ApplyIllnessOnset(effects.IllnessOnset);
+            }
+
+            if (!string.IsNullOrEmpty(effects.InjuryOnset))
+            {
+                ApplyInjuryOnset(effects.InjuryOnset);
+            }
+
+            if (effects.BeginTreatment == true)
+            {
+                ApplyBeginTreatment();
+            }
+
+            if (effects.WorsenCondition == true)
+            {
+                ApplyWorsenCondition();
+            }
+
             // Apply fatigue change
             if (effects.Fatigue.HasValue && effects.Fatigue.Value != 0)
             {
@@ -1172,6 +1194,169 @@ namespace Enlisted.Features.Content
 
             enlistment.ModifyFatigue(delta);
             ModLogger.Debug(LogCategory, $"ApplyFatigueChange: Modified fatigue by {delta}");
+        }
+
+        /// <summary>
+        /// Applies an illness to the player based on the specified severity.
+        /// Used by illness onset events and medical risk escalation.
+        /// Context-aware: applies ship_fever/scurvy at sea, camp_fever/flux on land.
+        /// </summary>
+        private void ApplyIllnessOnset(string severityStr)
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                ModLogger.Debug(LogCategory, "ApplyIllnessOnset: Condition system disabled");
+                return;
+            }
+
+            // Parse severity (support both "mild" and "minor" for flexibility)
+            var severity = severityStr.ToLowerInvariant() switch
+            {
+                "mild" or "minor" => IllnessSeverity.Mild,
+                "moderate" => IllnessSeverity.Moderate,
+                "severe" => IllnessSeverity.Severe,
+                "critical" => IllnessSeverity.Critical,
+                _ => IllnessSeverity.None
+            };
+
+            if (severity == IllnessSeverity.None)
+            {
+                ModLogger.Warn(LogCategory, $"ApplyIllnessOnset: Invalid severity '{severityStr}'");
+                return;
+            }
+
+            // Select illness type based on travel context (maritime vs land)
+            var isAtSea = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            string illnessType;
+            
+            if (isAtSea)
+            {
+                // Maritime illnesses: ship_fever (more common) or scurvy (prolonged voyages)
+                // Scurvy appears at severe+ levels, ship_fever otherwise
+                illnessType = severity >= IllnessSeverity.Severe ? "scurvy" : "ship_fever";
+            }
+            else
+            {
+                // Land illnesses: camp_fever (more common) or flux (camp conditions)
+                // Flux appears at severe+ levels, camp_fever otherwise
+                illnessType = severity >= IllnessSeverity.Severe ? "flux" : "camp_fever";
+            }
+
+            var baseDays = conditions.GetBaseRecoveryDaysForIllness(illnessType, severity);
+            conditions.TryApplyIllness(illnessType, severity, baseDays, "event");
+            
+            var contextStr = isAtSea ? "at sea" : "on land";
+            ModLogger.Info(LogCategory, $"ApplyIllnessOnset: Applied {severity} {illnessType} ({baseDays} days) [{contextStr}]");
+        }
+
+        /// <summary>
+        /// Applies an injury to the player based on the specified severity.
+        /// Used by injury events and combat outcomes.
+        /// </summary>
+        private void ApplyInjuryOnset(string severityStr)
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                ModLogger.Debug(LogCategory, "ApplyInjuryOnset: Condition system disabled");
+                return;
+            }
+
+            var severity = severityStr.ToLowerInvariant() switch
+            {
+                "minor" => InjurySeverity.Minor,
+                "moderate" => InjurySeverity.Moderate,
+                "severe" => InjurySeverity.Severe,
+                "critical" => InjurySeverity.Critical,
+                _ => InjurySeverity.None
+            };
+
+            if (severity == InjurySeverity.None)
+            {
+                ModLogger.Warn(LogCategory, $"ApplyInjuryOnset: Invalid severity '{severityStr}'");
+                return;
+            }
+
+            // Default to blade_cut for now (can be made configurable later)
+            var injuryType = "blade_cut";
+            var baseDays = conditions.GetBaseRecoveryDaysForInjury(injuryType, severity);
+
+            conditions.TryApplyInjury(injuryType, severity, baseDays, "event");
+            ModLogger.Info(LogCategory, $"ApplyInjuryOnset: Applied {severity} {injuryType} ({baseDays} days)");
+        }
+
+        /// <summary>
+        /// Begins medical treatment for the player's current condition.
+        /// Marks player as under medical care and sets recovery rate modifier.
+        /// </summary>
+        private void ApplyBeginTreatment()
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                ModLogger.Debug(LogCategory, "ApplyBeginTreatment: Condition system disabled");
+                return;
+            }
+
+            if (!conditions.State.HasAnyCondition)
+            {
+                ModLogger.Debug(LogCategory, "ApplyBeginTreatment: No condition to treat");
+                return;
+            }
+
+            // Use default treatment multiplier from config (1.5x recovery speed)
+            var config = Enlisted.Mod.Core.Config.ConfigurationManager.LoadPlayerConditionsConfig();
+            var multiplier = config?.BasicTreatmentMultiplier ?? 1.5f;
+
+            conditions.ApplyTreatment(multiplier, "surgeon_treatment");
+            ModLogger.Info(LogCategory, $"ApplyBeginTreatment: Started treatment (recovery {multiplier}x)");
+        }
+
+        /// <summary>
+        /// Worsens the player's current condition by one severity level.
+        /// Used by untreated condition events and failure outcomes.
+        /// </summary>
+        private void ApplyWorsenCondition()
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                ModLogger.Debug(LogCategory, "ApplyWorsenCondition: Condition system disabled");
+                return;
+            }
+
+            var state = conditions.State;
+            if (!state.HasAnyCondition)
+            {
+                ModLogger.Debug(LogCategory, "ApplyWorsenCondition: No condition to worsen");
+                return;
+            }
+
+            // Worsen illness if present
+            if (state.HasIllness && state.CurrentIllness < IllnessSeverity.Critical)
+            {
+                var newSeverity = state.CurrentIllness + 1;
+                var illnessType = state.IllnessType;
+                var baseDays = conditions.GetBaseRecoveryDaysForIllness(illnessType, newSeverity);
+
+                conditions.TryApplyIllness(illnessType, newSeverity, baseDays, "condition_worsened");
+                ModLogger.Info(LogCategory, $"ApplyWorsenCondition: Illness worsened to {newSeverity}");
+            }
+            // Otherwise worsen injury if present
+            else if (state.HasInjury && state.CurrentInjury < InjurySeverity.Critical)
+            {
+                var newSeverity = state.CurrentInjury + 1;
+                var injuryType = state.InjuryType;
+                var baseDays = conditions.GetBaseRecoveryDaysForInjury(injuryType, newSeverity);
+
+                conditions.TryApplyInjury(injuryType, newSeverity, baseDays, "condition_worsened");
+                ModLogger.Info(LogCategory, $"ApplyWorsenCondition: Injury worsened to {newSeverity}");
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, "ApplyWorsenCondition: Condition already at maximum severity");
+            }
         }
 
         /// <summary>

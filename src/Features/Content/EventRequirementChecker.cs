@@ -610,6 +610,12 @@ namespace Enlisted.Features.Content
                 "ai_safe" => CheckAiSafe(),
                 "camp_established" => CheckCampEstablished(),
                 
+                // Medical conditions
+                "has_untreated_condition" => CheckHasUntreatedCondition(),
+                "has_maritime_illness" => CheckHasMaritimeIllness(),
+                "has_land_illness" => CheckHasLandIllness(),
+                "not_maritime_illness" => !CheckHasMaritimeIllness(),
+                
                 // Retinue conditions
                 "retinue_below_capacity" => CheckRetinueBelowCapacity(),
                 "last_battle_won" => CheckLastBattleWon(),
@@ -637,6 +643,72 @@ namespace Enlisted.Features.Content
             
             var lordParty = enlistment.CurrentLord.PartyBelongedTo;
             return lordParty.IsCurrentlyAtSea;
+        }
+
+        /// <summary>
+        /// Checks if the player has an untreated condition (injury or illness without medical care).
+        /// Used by condition worsening events that trigger when player neglects treatment.
+        /// </summary>
+        private static bool CheckHasUntreatedCondition()
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return false;
+            }
+
+            var state = conditions.State;
+            if (state == null || !state.HasAnyCondition)
+            {
+                return false;
+            }
+
+            // Has condition but is NOT under medical care = untreated
+            return !state.UnderMedicalCare;
+        }
+
+        /// <summary>
+        /// Checks if the player has a maritime illness (ship_fever or scurvy).
+        /// Used to select nautical-themed worsening events regardless of current location.
+        /// </summary>
+        private static bool CheckHasMaritimeIllness()
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return false;
+            }
+
+            var state = conditions.State;
+            if (state == null || !state.HasIllness)
+            {
+                return false;
+            }
+
+            var illnessType = state.IllnessType?.ToLowerInvariant() ?? string.Empty;
+            return illnessType is "ship_fever" or "scurvy";
+        }
+
+        /// <summary>
+        /// Checks if the player has a land-based illness (camp_fever or flux).
+        /// Used to select camp-themed worsening events regardless of current location.
+        /// </summary>
+        private static bool CheckHasLandIllness()
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return false;
+            }
+
+            var state = conditions.State;
+            if (state == null || !state.HasIllness)
+            {
+                return false;
+            }
+
+            var illnessType = state.IllnessType?.ToLowerInvariant() ?? string.Empty;
+            return illnessType is "camp_fever" or "flux";
         }
         
         /// <summary>

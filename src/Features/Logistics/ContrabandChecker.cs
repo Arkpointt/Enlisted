@@ -437,24 +437,36 @@ namespace Enlisted.Features.Logistics
         /// <returns>True if successfully removed.</returns>
         public static bool ConfiscateItem(ItemObject item)
         {
+            if (item == null)
+            {
+                ModLogger.Warn(LogCategory, "Attempted to confiscate null item");
+                return false;
+            }
+
             try
             {
                 var party = MobileParty.MainParty;
                 if (party?.ItemRoster == null)
                 {
+                    ModLogger.Warn(LogCategory, $"Cannot confiscate {item.Name} - party or ItemRoster is null");
                     return false;
                 }
 
                 int currentCount = party.ItemRoster.GetItemNumber(item);
                 if (currentCount <= 0)
                 {
+                    ModLogger.Warn(LogCategory, $"Cannot confiscate {item.Name} - item not in inventory (count: {currentCount})");
                     return false;
                 }
+
+                ModLogger.Debug(LogCategory, $"Confiscating {item.Name} (current count: {currentCount})");
 
                 // Remove one copy of the item
                 party.ItemRoster.AddToCounts(item, -1);
 
-                ModLogger.Info(LogCategory, $"Confiscated item: {item.Name}");
+                // Verify removal succeeded
+                int newCount = party.ItemRoster.GetItemNumber(item);
+                ModLogger.Info(LogCategory, $"Confiscated item: {item.Name} (count changed from {currentCount} to {newCount})");
                 return true;
             }
             catch (Exception ex)

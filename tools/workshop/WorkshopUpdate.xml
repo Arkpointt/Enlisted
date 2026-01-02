@@ -7,7 +7,78 @@
     <UpdateItem>
         <ModuleFolder Value="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"/>
         <!-- A direct path of your module -->   
-        <ChangeNotes Value="v0.9.0.1 - Critical Bug Fixes: Fixed Quartermaster dialogue issues, added fallback system, enhanced diagnostics" />
+        <ChangeNotes Value="v0.9.1 - Major Content Update
+
+[NEW: BAGGAGE TRAIN SYSTEM]
+- World-state-aware baggage system: accessible in towns/camps when stationary
+- Unavailable during combat, sieges, pursuits, or when traveling at speed
+- Quartermaster dialogue for checking baggage status and accessing stored equipment
+- Baggage status shown in Camp Hub and Company Reports
+- 'Check Baggage' event triggers when baggage becomes available after travel
+- Baggage decisions moved to Decisions accordion (separate from daily opportunity limit)
+- Fixed inventory bugs when checking baggage
+
+[NEW: CONTENT ORCHESTRATOR]
+- Advanced AI-driven content delivery system that adapts to your playstyle
+- Background simulation tracks company morale, supplies, and upcoming needs
+- Smart event selection based on world situation and activity level
+- Forecast system predicts upcoming events and predicted company needs
+- 85 new order events across all 16 order types with varied outcomes
+
+[NEW: QUARTERMASTER'S DEAL]
+- Risk/reward pay option: trade guaranteed pay for lottery chance at equipment
+- 70% base success rate modified by Quartermaster reputation
+- Equipment selection weighted by your skills (cavalry get horse gear, archers get bows, etc.)
+- Items received are exempt from contraband checking
+- Dynamic success chance shown in tooltip based on Charm skill
+- Bribe success rate adjusted to 35-55% range (Charm skill matters more)
+
+[NEW: COMBAT LOG]
+- Comprehensive combat log accessible from encyclopedia
+- Links to unit entries for detailed information
+- Filtered conversation view for combat-specific events
+- Tracks injuries, kills, and battle outcomes
+
+[NEW: RANK PROGRESSION XP]
+- Combat XP now tracked for enlistment rank progression
+- XP rewards integrated into order events
+- Muster reports show XP earned during service period
+- Validation checks ensure all events properly award XP
+
+[CAMP SYSTEM IMPROVEMENTS]
+- Added Recap section showing recent events and status changes
+- Added Forecast section with upcoming events and predictions
+- Camp routine events with injury system and varied outcomes
+- Enhanced Camp Hub with better organization and status indicators
+
+[MUSTER SYSTEM REFINEMENTS]
+- Streamlined muster flow from 8 to 6 stages (removed Recruit and Inspection stages)
+- Fixed muster day counter showing days served instead of campaign days
+- Baggage inspection properly exempts Quartermaster's Deal items
+- Accept Payment in Arrears only shows when lord can't afford to pay
+- Improved pay menu tooltips with accurate descriptions
+
+[FORMATION ASSIGNMENT FIX]
+- Fixed formation assignment to properly detect player equipment tier (T1-T6)
+- T7+ commanders (Master at Arms and above) now correctly control their own party
+- System reads actual equipped gear instead of using fallback logic
+
+[QUALITY OF LIFE]
+- Time pauses while equipment/upgrade/provisions screens are open
+- Time set to normal speed on initial enlistment (not fast forward)
+- Fixed leave of absence not properly releasing player from lord's party
+- Fixed quartermaster dialogue flow issues
+- Fixed upgrade screen closing immediately after conversation
+- Fixed contraband checking bugs
+
+[TECHNICAL]
+- Major code quality improvements (500+ Qodana issues resolved)
+- Comprehensive tooltip system with factual descriptions
+- Enhanced logging for error catching and diagnostics
+- Improved save/load persistence for new features
+- Documentation reorganization and updates
+
+This major update adds deep content systems, intelligent event delivery, and numerous quality improvements for a more immersive enlisted experience." />
         <!-- Insert patch notes -->
         <Tags> 
             <!-- You can use the following tags: -->
