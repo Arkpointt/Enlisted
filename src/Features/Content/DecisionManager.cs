@@ -115,6 +115,7 @@ namespace Enlisted.Features.Content
                         TitleFallback = !string.IsNullOrEmpty(opportunity.TitleFallback) ? opportunity.TitleFallback : targetDecision.TitleFallback,
                         SetupId = !string.IsNullOrEmpty(opportunity.DescriptionId) ? opportunity.DescriptionId : targetDecision.SetupId,
                         SetupFallback = !string.IsNullOrEmpty(opportunity.DescriptionFallback) ? opportunity.DescriptionFallback : targetDecision.SetupFallback,
+                        Category = targetDecision.Category,
                         MenuSection = "opportunities",
                         IsPlayerInitiated = false,
                         Options = targetDecision.Options,
@@ -173,6 +174,7 @@ namespace Enlisted.Features.Content
                 TitleFallback = opportunity.TitleFallback,
                 SetupId = opportunity.DescriptionId,
                 SetupFallback = opportunity.DescriptionFallback,
+                Category = "decision",
                 MenuSection = "opportunities",
                 IsPlayerInitiated = false
             };

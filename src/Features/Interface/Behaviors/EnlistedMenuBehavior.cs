@@ -2154,14 +2154,44 @@ namespace Enlisted.Features.Interface.Behaviors
                     // Check for injuries (custom system)
                     if (playerCondition?.HasInjury == true)
                     {
+                        var severity = playerCondition.CurrentInjury;
                         var daysRemaining = playerCondition.InjuryDaysRemaining;
-                        parts.Add($"<span style=\"Alert\">Injured.</span> {daysRemaining} days recovery. Training restricted.");
+                        var dayText = daysRemaining == 1 ? "day" : "days";
+                        
+                        var severityLabel = severity switch
+                        {
+                            Conditions.InjurySeverity.Critical => "Critical injury",
+                            Conditions.InjurySeverity.Severe => "Severe injury",
+                            Conditions.InjurySeverity.Moderate => "Injured",
+                            _ => "Injured"
+                        };
+                        
+                        var urgentNote = severity >= Conditions.InjurySeverity.Severe 
+                            ? " Urgent care recommended." 
+                            : " Training restricted.";
+                        
+                        parts.Add($"<span style=\"Alert\">{severityLabel}.</span> {daysRemaining} {dayText} recovery.{urgentNote}");
                     }
                     // Check for illness (custom system)
                     else if (playerCondition?.HasIllness == true)
                     {
+                        var severity = playerCondition.CurrentIllness;
                         var daysRemaining = playerCondition.IllnessDaysRemaining;
-                        parts.Add($"<span style=\"Alert\">Ill.</span> {daysRemaining} days recovery. Seek treatment if worsening.");
+                        var dayText = daysRemaining == 1 ? "day" : "days";
+                        
+                        var severityLabel = severity switch
+                        {
+                            Conditions.IllnessSeverity.Critical => "Critical illness",
+                            Conditions.IllnessSeverity.Severe => "Severe illness",
+                            Conditions.IllnessSeverity.Moderate => "Ill",
+                            _ => "Ill"
+                        };
+                        
+                        var urgentNote = severity >= Conditions.IllnessSeverity.Severe 
+                            ? " Urgent care recommended." 
+                            : " Seek treatment if worsening.";
+                        
+                        parts.Add($"<span style=\"Alert\">{severityLabel}.</span> {daysRemaining} {dayText} recovery.{urgentNote}");
                     }
                     // Check for native wounds
                     else if (mainHero.IsWounded)
@@ -2954,32 +2984,35 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
                 
-                // Check world state for activity level hints
+                // Check world state for activity level hints - factual military context
                 var worldState = Content.WorldStateAnalyzer.AnalyzeSituation();
                 if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Intense)
                 {
-                    return "<span style=\"Warning\">The captain's tent is busy. Orders will come.</span>";
+                    var text = new TextObject("{=forecast_activity_intense}The captain's tent is busy. Expect orders soon.").ToString();
+                    return $"<span style=\"Warning\">{text}</span>";
                 }
                 else if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Active)
                 {
-                    return "<span style=\"Link\">Something's in the air. Best stay close to camp.</span>";
+                    var text = new TextObject("{=forecast_activity_active}The company is on the move. Stay sharp for duty calls.").ToString();
+                    return $"<span style=\"Link\">{text}</span>";
                 }
                 else if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Routine)
                 {
-                    // Get next phase context
+                    // Get next phase context - factual descriptions of camp routine
                     var nextPhaseText = worldState.CurrentDayPhase switch
                     {
-                        Content.Models.DayPhase.Dawn => "Training grounds call this afternoon",
-                        Content.Models.DayPhase.Midday => "Evening brings time for cards and rest",
-                        Content.Models.DayPhase.Dusk => "Night watch or bedroll — one or the other",
-                        Content.Models.DayPhase.Night => "Dawn will bring the morning drill",
+                        Content.Models.DayPhase.Dawn => new TextObject("{=forecast_phase_dawn}One task at a time, and the duty will be done").ToString(),
+                        Content.Models.DayPhase.Midday => new TextObject("{=forecast_phase_midday}Afternoon stretches ahead. Make use of it").ToString(),
+                        Content.Models.DayPhase.Dusk => new TextObject("{=forecast_phase_dusk}Evening comes. Rest while you can").ToString(),
+                        Content.Models.DayPhase.Night => new TextObject("{=forecast_phase_night}Night settles in. Tomorrow brings new orders").ToString(),
                         _ => "The routine continues"
                     };
                     return $"<span style=\"Default\">{nextPhaseText}.</span>";
                 }
                 
                 // Quiet period fallback
-                return "<span style=\"Default\">Garrison duty. Nothing stirs.</span>";
+                var quietText = new TextObject("{=forecast_activity_quiet}Garrison duty. Nothing pressing.").ToString();
+                return $"<span style=\"Default\">{quietText}</span>";
             }
             catch
             {
@@ -3071,11 +3104,11 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             return type switch
             {
-                Camp.Models.OpportunityType.Training => "Veterans drilling by the wagons.",
-                Camp.Models.OpportunityType.Social => "Card game forming by the fire.",
-                Camp.Models.OpportunityType.Economic => "Trading happening in camp.",
-                Camp.Models.OpportunityType.Recovery => "Soldiers resting in the shade.",
-                Camp.Models.OpportunityType.Special => "Something interesting happening.",
+                Camp.Models.OpportunityType.Training => new TextObject("{=opp_type_training}Veterans drilling by the wagons.").ToString(),
+                Camp.Models.OpportunityType.Social => new TextObject("{=opp_type_social}Card game forming by the fire.").ToString(),
+                Camp.Models.OpportunityType.Economic => new TextObject("{=opp_type_economic}Trading happening in camp.").ToString(),
+                Camp.Models.OpportunityType.Recovery => new TextObject("{=opp_type_recovery}Soldiers resting in the shade.").ToString(),
+                Camp.Models.OpportunityType.Special => new TextObject("{=opp_type_special}The quartermaster is open for business.").ToString(),
                 _ => string.Empty
             };
         }

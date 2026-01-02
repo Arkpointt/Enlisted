@@ -429,9 +429,12 @@ namespace Enlisted.Features.Content
                 return false;
             }
             
-            // Check for severe or critical injury/illness
-            return state.CurrentInjury >= InjurySeverity.Severe ||
-                   state.CurrentIllness >= IllnessSeverity.Severe;
+            // Check for severe or critical injury/illness that is ACTIVE (days remaining > 0).
+            // This matches the definition of HasInjury/HasIllness used in status display.
+            var hasSevereInjury = state.CurrentInjury >= InjurySeverity.Severe && state.InjuryDaysRemaining > 0;
+            var hasSevereIllness = state.CurrentIllness >= IllnessSeverity.Severe && state.IllnessDaysRemaining > 0;
+            
+            return hasSevereInjury || hasSevereIllness;
         }
 
         /// <summary>

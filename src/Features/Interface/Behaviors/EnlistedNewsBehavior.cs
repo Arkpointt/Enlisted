@@ -4009,15 +4009,15 @@ namespace Enlisted.Features.Interface.Behaviors
                     if (medRisk >= 4)
                     {
                         // Serious/Critical - urgent
-                        return new TextObject("{=brief_medrisk_serious}Fever won't break. Surgeon's tent calls.").ToString();
+                        return new TextObject("{=brief_medrisk_serious}Fever won't break. See the surgeon before it worsens.").ToString();
                     }
                     if (medRisk >= 3)
                     {
                         // Concerning - getting worse
-                        return new TextObject("{=brief_medrisk_concerning}The ache is constant now. Rest or surgeon.").ToString();
+                        return new TextObject("{=brief_medrisk_concerning}Chills and aches. Illness brewing. Rest or surgeon.").ToString();
                     }
                     // Med Risk 2 - early warning
-                    return new TextObject("{=brief_medrisk_mild}Something's off. Tired. Aching. Watch it.").ToString();
+                    return new TextObject("{=brief_medrisk_mild}Feeling run down. Could be coming down with something.").ToString();
                 }
 
                 // Priority 3: Fatigue

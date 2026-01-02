@@ -123,17 +123,31 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Calculates medical pressure analysis for orchestrator integration.
-        /// Stub implementation for Phase 6H - returns default values until fully implemented.
+        /// Integrates with PlayerConditionBehavior to detect active injuries and illnesses.
         /// </summary>
         public static (MedicalPressureAnalysis Analysis, MedicalPressureLevel Level) GetMedicalPressure()
         {
             var escalation = EscalationManager.Instance?.State;
             var hero = CampaignSafetyGuard.SafeMainHero;
+            var conditions = Conditions.PlayerConditionBehavior.Instance;
+            var state = conditions?.State;
+
+            // Check for active conditions (must have days remaining > 0)
+            var hasCondition = state?.HasAnyCondition == true;
+            var hasSevereCondition = false;
+            
+            if (hasCondition && state != null)
+            {
+                // Severe condition = Severe or Critical severity WITH days remaining
+                var hasSevereInjury = state.CurrentInjury >= Conditions.InjurySeverity.Severe && state.InjuryDaysRemaining > 0;
+                var hasSevereIllness = state.CurrentIllness >= Conditions.IllnessSeverity.Severe && state.IllnessDaysRemaining > 0;
+                hasSevereCondition = hasSevereInjury || hasSevereIllness;
+            }
 
             var analysis = new MedicalPressureAnalysis
             {
-                HasCondition = false, // Will be set from condition manager when implemented
-                HasSevereCondition = false,
+                HasCondition = hasCondition,
+                HasSevereCondition = hasSevereCondition,
                 MedicalRisk = escalation?.MedicalRisk ?? 0,
                 HealthPercent = hero != null ? (float)hero.HitPoints / hero.MaxHitPoints * 100f : 100f,
                 DaysSinceLastTreatment = 0

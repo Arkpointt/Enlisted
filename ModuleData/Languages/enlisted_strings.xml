@@ -180,6 +180,29 @@
     <string id="status_on_patrol" text="On patrol in the field" />
     <string id="status_part_of_army" text="Part of {LORD}'s army" />
     
+    <!-- Medical Risk Warnings (brewing illness, not yet full condition) -->
+    <string id="brief_medrisk_mild" text="Feeling run down. Could be coming down with something." />
+    <string id="brief_medrisk_concerning" text="Chills and aches. Illness brewing. Rest or surgeon." />
+    <string id="brief_medrisk_serious" text="Fever won't break. See the surgeon before it worsens." />
+    
+    <!-- Activity Level Forecast (military activity hints) -->
+    <string id="forecast_activity_intense" text="The captain's tent is busy. Expect orders soon." />
+    <string id="forecast_activity_active" text="The company is on the move. Stay sharp for duty calls." />
+    <string id="forecast_activity_quiet" text="Garrison duty. Nothing pressing." />
+    
+    <!-- Day Phase Routine Text (camp routine expectations) -->
+    <string id="forecast_phase_dawn" text="One task at a time, and the duty will be done" />
+    <string id="forecast_phase_midday" text="Afternoon stretches ahead. Make use of it" />
+    <string id="forecast_phase_dusk" text="Evening comes. Rest while you can" />
+    <string id="forecast_phase_night" text="Night settles in. Tomorrow brings new orders" />
+    
+    <!-- Opportunity Type Flavor Text -->
+    <string id="opp_type_training" text="Veterans drilling by the wagons." />
+    <string id="opp_type_social" text="Card game forming by the fire." />
+    <string id="opp_type_economic" text="Trading happening in camp." />
+    <string id="opp_type_recovery" text="Soldiers resting in the shade." />
+    <string id="opp_type_special" text="The quartermaster is open for business." />
+    
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- CAMP MENU - Squad roster and interactions -->
     <!-- ═══════════════════════════════════════════════════════════════ -->

@@ -94,23 +94,47 @@ namespace Enlisted.Features.Conditions
                     _state.UnderMedicalCare = underCare;
                     _state.RecoveryRateModifier = Math.Max(0.1f, recoveryMult);
 
+                    // Detect stale condition data (severity without days) before normalization
+                    if ((_state.CurrentInjury != InjurySeverity.None && _state.InjuryDaysRemaining <= 0) ||
+                        (_state.CurrentIllness != IllnessSeverity.None && _state.IllnessDaysRemaining <= 0))
+                    {
+                        ModLogger.Warn(LogCategory, 
+                            $"Detected stale condition data on load: Injury={_state.CurrentInjury}({_state.InjuryDaysRemaining}d), " +
+                            $"Illness={_state.CurrentIllness}({_state.IllnessDaysRemaining}d). Normalizing...");
+                    }
+
                     NormalizeState();
+                    
+                    // Log loaded state for diagnostics
+                    if (_state.HasAnyCondition)
+                    {
+                        ModLogger.Info(LogCategory, 
+                            $"Loaded active conditions: Injury={_state.CurrentInjury}({_state.InjuryDaysRemaining}d), " +
+                            $"Illness={_state.CurrentIllness}({_state.IllnessDaysRemaining}d)");
+                    }
                 }
             });
         }
 
+        /// <summary>
+        /// Ensures condition state is consistent. Clears any severity values 
+        /// when days remaining is 0 or negative, preventing stale data from 
+        /// triggering decision requirements or displaying incorrect status.
+        /// </summary>
         private void NormalizeState()
         {
             if (_state.InjuryDaysRemaining <= 0)
             {
                 _state.CurrentInjury = InjurySeverity.None;
                 _state.InjuryType = string.Empty;
+                _state.InjuryDaysRemaining = 0; // Ensure no negative values
             }
 
             if (_state.IllnessDaysRemaining <= 0)
             {
                 _state.CurrentIllness = IllnessSeverity.None;
                 _state.IllnessType = string.Empty;
+                _state.IllnessDaysRemaining = 0; // Ensure no negative values
             }
 
             if (!_state.HasAnyCondition)
