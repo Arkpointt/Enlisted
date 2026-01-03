@@ -71,6 +71,8 @@ namespace Enlisted.Features.Combat.Behaviors
                 // Reset static state from previous session to prevent stale flag issues
                 // If player quit while in reserve mode, flag would persist across save loads
                 IsWaitingInReserve = false;
+                _postBattleCleanupScheduled = false;
+                _lastCleanupScheduledTime = CampaignTime.Never;
 
                 AddEnlistedEncounterOptions(campaignStarter);
                 ModLogger.LogOnce("encounter_behavior_init", "Combat",
@@ -242,7 +244,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
                 else
                 {
-                    ModLogger.Info("EncounterGuard", $"WAIT_IN_RESERVE: Not available - hasFieldBattle={hasFieldBattle}, hasPreAssaultSiege={hasPreAssaultSiege}");
+                    ModLogger.Info("EncounterGuard", "WAIT_IN_RESERVE: Not available - no valid battle or siege context");
                 }
                 return false;
             }
@@ -262,15 +264,105 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
+        ///     Tracks whether a deferred cleanup is already scheduled to prevent duplicate cleanups.
+        /// </summary>
+        private static bool _postBattleCleanupScheduled;
+        
+        /// <summary>
+        ///     Timestamp when cleanup was last scheduled (for race condition detection).
+        /// </summary>
+        private static CampaignTime _lastCleanupScheduledTime = CampaignTime.Never;
+        
+        /// <summary>
         ///     Triggers cleanup of a stale encounter after the battle has already ended.
         ///     This handles the case where auto-resolve completes but the encounter menu stays open.
         ///     Called when Wait in Reserve detects the battle is already won.
+        ///     
+        ///     CRITICAL: Cleanup is DEFERRED to the next frame because this method is called during
+        ///     menu condition evaluation. Modifying encounter state synchronously during menu rendering
+        ///     causes native code crashes in MenuHelper.CheckEnemyAttackableHonorably when it tries
+        ///     to evaluate other menu options with corrupted state.
+        ///     
+        ///     DEBUGGING: If crash occurs in MenuHelper.CheckEnemyAttackableHonorably, look for:
+        ///     1. "AUTO-CLEANUP: Scheduling deferred cleanup" log line (should appear)
+        ///     2. "AUTO-CLEANUP: Executing deferred cleanup" with delay &lt; 0.001s (indicates NextFrameDispatcher failed to defer)
+        ///     3. Multiple cleanup attempts with same mapEventId (indicates duplicate cleanup race)
+        ///     4. OnMapEventEnded logs interleaved with AUTO-CLEANUP logs (indicates both paths running simultaneously)
         /// </summary>
         private void TriggerPostBattleCleanup()
         {
+            // DIAGNOSTIC: Capture context for debugging race conditions
+            var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId ?? "none";
+            var hasEncounter = PlayerEncounter.Current != null;
+            var mapEventId = MobileParty.MainParty?.Party?.MapEvent?.GetHashCode().ToString() ?? "none";
+            
+            // Guard against duplicate cleanup scheduling
+            if (_postBattleCleanupScheduled)
+            {
+                var timeSinceLastSchedule = CampaignTime.Now - _lastCleanupScheduledTime;
+                ModLogger.Debug("EncounterGuard", 
+                    $"AUTO-CLEANUP: Already scheduled {timeSinceLastSchedule.ToSeconds:F2}s ago, skipping duplicate (menu={currentMenu}, mapEvent={mapEventId})");
+                return;
+            }
+            
+            _postBattleCleanupScheduled = true;
+            _lastCleanupScheduledTime = CampaignTime.Now;
+            
+            // DIAGNOSTIC: Log that we're deferring cleanup during menu rendering to prevent crash
+            ModLogger.Info("EncounterGuard", 
+                $"AUTO-CLEANUP: Scheduling deferred cleanup for next frame (currentMenu={currentMenu}, hasEncounter={hasEncounter}, mapEventId={mapEventId})");
+            
+            // CRITICAL: Defer to next frame to avoid modifying state during menu condition evaluation
+            // The crash occurs because we're called from GetConditionsHold() during menu rendering,
+            // and modifying encounter state corrupts the menu refresh loop.
+            // 
+            // If this log appears immediately before a crash, it indicates cleanup is somehow
+            // executing synchronously instead of being deferred (NextFrameDispatcher bug).
+            NextFrameDispatcher.RunNextFrame(() =>
+            {
+                _postBattleCleanupScheduled = false;
+                ExecutePostBattleCleanup(currentMenu, mapEventId);
+            });
+        }
+        
+        /// <summary>
+        ///     Executes the actual post-battle cleanup logic. Called from next frame dispatch.
+        /// </summary>
+        /// <param name="originalMenu">The menu ID when cleanup was triggered (for diagnostics).</param>
+        /// <param name="originalMapEventId">The map event ID when cleanup was triggered (for race detection).</param>
+        private void ExecutePostBattleCleanup(string originalMenu, string originalMapEventId)
+        {
             try
             {
-                ModLogger.Info("EncounterGuard", "AUTO-CLEANUP: Cleaning up stale post-battle encounter");
+                // DIAGNOSTIC: Capture current state to detect if things changed during the defer
+                var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId ?? "none";
+                var currentMapEventId = MobileParty.MainParty?.Party?.MapEvent?.GetHashCode().ToString() ?? "none";
+                var hasEncounter = PlayerEncounter.Current != null;
+                var timeSinceScheduled = CampaignTime.Now - _lastCleanupScheduledTime;
+                
+                ModLogger.Info("EncounterGuard", 
+                    $"AUTO-CLEANUP: Executing deferred cleanup (delay={timeSinceScheduled.ToSeconds:F3}s, originalMenu={originalMenu}, currentMenu={currentMenu}, hasEncounter={hasEncounter})");
+                
+                // DIAGNOSTIC: Detect if map event changed during defer (indicates OnMapEventEnded already ran)
+                if (originalMapEventId != "none" && currentMapEventId != originalMapEventId)
+                {
+                    ModLogger.Info("EncounterGuard", 
+                        $"AUTO-CLEANUP: MapEvent changed during defer (was={originalMapEventId}, now={currentMapEventId}) - OnMapEventEnded likely already handled cleanup");
+                }
+                
+                // Check if cleanup is still needed - OnMapEventEnded may have already handled it
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    ModLogger.Debug("EncounterGuard", "AUTO-CLEANUP: No longer enlisted, skipping (OnMapEventEnded likely handled it)");
+                    return;
+                }
+                
+                // DIAGNOSTIC: Warn if encounter already cleaned up
+                if (!hasEncounter)
+                {
+                    ModLogger.Debug("EncounterGuard", "AUTO-CLEANUP: No PlayerEncounter exists (OnMapEventEnded likely already cleaned it up)");
+                }
                 
                 // Clean up the encounter state
                 if (PlayerEncounter.Current != null)
@@ -286,8 +378,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 
                 // Deactivate player party to prevent further stale encounters
                 var mainParty = MobileParty.MainParty;
-                var enlistment = EnlistmentBehavior.Instance;
-                if (mainParty != null && enlistment?.IsEnlisted == true)
+                if (mainParty != null && enlistment.IsEnlisted)
                 {
                     mainParty.IsActive = false;
                     mainParty.IsVisible = false;
@@ -311,7 +402,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("EncounterGuard", $"AUTO-CLEANUP failed: {ex.Message}");
+                ModLogger.Error("EncounterGuard", $"AUTO-CLEANUP failed: {ex.Message}\nStack trace: {ex.StackTrace}");
                 // Fallback - try to at least switch menu
                 try
                 {

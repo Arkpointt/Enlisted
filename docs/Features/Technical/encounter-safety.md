@@ -3,7 +3,7 @@
 **Summary:** Prevents enlisted players from triggering unwanted map encounters while hidden, ensures automatic battle participation when lord enters combat, provides reliable cleanup on discharge, and integrates with native menu system to yield when appropriate (e.g., siege menus).
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-03 (Added auto-cleanup for stale post-victory encounters)  
+**Last Updated:** 2026-01-03 (Fixed race condition crash in MenuHelper.CheckEnemyAttackableHonorably)  
 **Related Docs:** [enlistment.md](../Core/enlistment.md), [formation-assignment.md](../Combat/formation-assignment.md), [battle-system-complete-analysis.md](../../Reference/battle-system-complete-analysis.md)
 
 ---
@@ -820,9 +820,30 @@ if (mapEvent != null && (mapEvent.HasWinner || mapEvent.IsFinalized))
 
 **The TriggerPostBattleCleanup() Method:**
 
-New method that properly cleans up stale encounters:
+**CRITICAL FIX (2026-01-03):** Cleanup is now **DEFERRED to the next frame** to prevent race condition crashes:
+
 ```csharp
 private void TriggerPostBattleCleanup()
+{
+    // Guard against duplicate cleanup scheduling
+    if (_postBattleCleanupScheduled)
+    {
+        return;
+    }
+    
+    _postBattleCleanupScheduled = true;
+    
+    // CRITICAL: Defer to next frame to avoid modifying state during menu condition evaluation
+    // The crash occurs because we're called from GetConditionsHold() during menu rendering,
+    // and modifying encounter state corrupts the menu refresh loop.
+    NextFrameDispatcher.RunNextFrame(() =>
+    {
+        _postBattleCleanupScheduled = false;
+        ExecutePostBattleCleanup();
+    });
+}
+
+private void ExecutePostBattleCleanup()
 {
     // 1. Finish the PlayerEncounter if it exists
     if (PlayerEncounter.Current != null)
@@ -845,7 +866,7 @@ private void TriggerPostBattleCleanup()
     
     // 4. Return to appropriate menu
     if (mainParty?.Army != null && mainParty.Army.LeaderParty != mainParty)
-        GameMenu.SwitchToMenu("army_wait");  // Will be overridden to enlisted_status
+        GameMenu.SwitchToMenu("army_wait");
     else
         GameMenu.SwitchToMenu("enlisted_status");
 }
@@ -855,27 +876,67 @@ private void TriggerPostBattleCleanup()
 ```
 1. Army engages enemy → PlayerEncounter created → encounter menu opens
 2. Battle auto-resolves → MapEvent.HasWinner = true (battle over)
-3. IsWaitInReserveAvailable() checks: mapEvent.HasWinner? YES → triggers auto-cleanup
-4. TriggerPostBattleCleanup() runs → PlayerEncounter finished → party deactivated
-5. Menu switches to enlisted_status automatically → player never sees stale menu
+3. IsWaitInReserveAvailable() checks: mapEvent.HasWinner? YES → schedules cleanup for next frame
+4. Menu rendering completes safely → next frame → TriggerPostBattleCleanup() executes
+5. ExecutePostBattleCleanup() runs → PlayerEncounter finished → party deactivated
+6. Menu switches to enlisted_status automatically → player never sees stale menu
 ```
 
 **Log Pattern (successful auto-cleanup):**
 ```
 [EncounterGuard] WAIT_IN_RESERVE: Battle already ended (HasWinner=True, IsFinalized=False, WinningSide=Attacker) - triggering auto-cleanup
-[EncounterGuard] AUTO-CLEANUP: Cleaning up stale post-battle encounter
+[EncounterGuard] AUTO-CLEANUP: Scheduling deferred cleanup for next frame (currentMenu=encounter, hasEncounter=True, mapEventId=12345678)
+[EncounterGuard] AUTO-CLEANUP: Executing deferred cleanup (delay=0.016s, originalMenu=encounter, currentMenu=encounter, hasEncounter=True)
 [EncounterGuard] AUTO-CLEANUP: PlayerEncounter finished
 [EncounterGuard] AUTO-CLEANUP: Deactivated party
 [EncounterGuard] AUTO-CLEANUP: Switched to enlisted_status menu
 ```
 
-**Why This Is The Correct Fix:**
+**Why Deferring Is Critical:**
 
-1. **Detection at the right time:** The check runs when the menu option condition is evaluated, which happens every frame while the encounter menu is open
-2. **Proactive cleanup:** Instead of waiting for user action, the system detects the stale state and cleans up immediately
-3. **No user intervention required:** Player doesn't have to click anything - the transition happens automatically
-4. **Consistent with other cleanup:** Uses the same cleanup pattern as other encounter-ending code paths
-5. **End-user friendly logging:** Info-level logs explain exactly what happened for debugging
+The original synchronous cleanup caused a **race condition crash** in native code:
+
+**Crash Stack Trace:**
+```
+MenuHelper.CheckEnemyAttackableHonorably ← CRASH (NullReferenceException)
+game_menu_encounter_attack_on_condition ← Evaluating "Attack" option
+GameMenuOption.GetConditionsHold ← Checking all option conditions
+GameMenuVM.Refresh ← Refreshing menu during render
+MapScreen.OnActivate ← Returning from battle
+```
+
+**The Race Condition:**
+1. Menu rendering begins, evaluating option conditions
+2. "Wait in Reserve" condition check detects battle ended
+3. `TriggerPostBattleCleanup()` called **SYNCHRONOUSLY** during condition evaluation
+4. `PlayerEncounter.Finish()` modifies encounter state
+5. Menu continues evaluating other options ("Attack", "Send Troops")
+6. `CheckEnemyAttackableHonorably()` tries to access now-corrupted encounter state
+7. **CRASH** - NullReferenceException in native code
+
+**The Fix:**
+Deferring cleanup to the next frame ensures:
+- Menu condition evaluation completes with stable state
+- All menu options are evaluated with consistent encounter data
+- State modification happens AFTER rendering completes
+- No corruption during the menu refresh loop
+
+**Diagnostic Logging:**
+
+Added comprehensive diagnostics to detect future race conditions:
+
+```
+[EncounterGuard] AUTO-CLEANUP: Scheduling deferred cleanup (currentMenu=X, mapEventId=Y)
+[EncounterGuard] AUTO-CLEANUP: Executing deferred cleanup (delay=Xs)
+[EncounterGuard] AUTO-CLEANUP: MapEvent changed during defer (was=X, now=Y)
+```
+
+**What to Look For If Crash Happens Again:**
+
+1. ✅ **Should see**: `"AUTO-CLEANUP: Scheduling deferred cleanup"` 
+2. ❌ **Should NOT see**: `"Executing deferred cleanup"` with delay < 0.001s (would mean NextFrameDispatcher bug)
+3. ❌ **Should NOT see**: Multiple schedules with same mapEventId within < 0.1s (race condition)
+4. ❌ **Should NOT see**: OnMapEventEnded logs interleaved without time gap (simultaneous execution)
 
 **Key Insight - Encounter Creation Path:**
 
@@ -1380,8 +1441,30 @@ ModLogger.Warn("SiegeIntegration", $"Integration may be broken - player not in B
 - If NOT appearing, the `IsWaitInReserveAvailable` check isn't detecting the ended battle
 - Check `mapEvent.HasWinner` and `mapEvent.IsFinalized` values in logs
 - If auto-cleanup fails, look for: `AUTO-CLEANUP failed:` error message
-- Common cause: Trying to clean up during a menu transition race condition
 - The stale encounter is NOT created through `EncounterManager.StartPartyEncounter` - it persists from the original battle
+
+**Crash in MenuHelper.CheckEnemyAttackableHonorably (NullReferenceException):**
+- Crash occurs during menu rendering after battle ends
+- **Root cause:** Race condition between cleanup and menu condition evaluation
+- **Stack trace pattern:**
+  ```
+  MenuHelper.CheckEnemyAttackableHonorably ← CRASH
+  game_menu_encounter_attack_on_condition
+  GameMenuOption.GetConditionsHold ← During menu refresh
+  GameMenuVM.Refresh
+  MapScreen.OnActivate ← Returning from battle
+  ```
+- **Fix:** Cleanup is now deferred to next frame via `NextFrameDispatcher.RunNextFrame()`
+- **Log pattern (healthy):**
+  ```
+  [EncounterGuard] AUTO-CLEANUP: Scheduling deferred cleanup for next frame
+  [EncounterGuard] AUTO-CLEANUP: Executing deferred cleanup (delay=0.016s)
+  ```
+- **Red flags to look for:**
+  - Delay < 0.001s means NextFrameDispatcher failed to defer (framework bug)
+  - Multiple schedules with same mapEventId within < 0.1s (duplicate cleanup race)
+  - OnMapEventEnded logs interleaved with AUTO-CLEANUP without time gap (simultaneous execution)
+- **If crash persists:** Check if `TriggerPostBattleCleanup()` is being called from a different code path synchronously
 
 **Reserve mode menu stutter (flickering between menus):**
 - `GenericStateMenuPatch` should intercept `GetGenericStateMenu()` calls

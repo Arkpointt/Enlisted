@@ -100,79 +100,14 @@ Full documentation in mod folder. Contributions welcome!"
 		"1"		"Singleplayer"
 		"2"		"Overhaul"
     }
-	"changenote"		"v0.9.1 Hotfix - Content Validation & Data Integrity
+	"changenote"		"v0.9.1.1 - Critical Crash Fix
 
-[b]CRITICAL FIXES[/b]
+[b]CRITICAL FIX[/b]
 [list]
-[*] [b]Fixed promotion state resetting on re-enlistment[/b] - Promotions now persist correctly between service periods
-[*] [b]Fixed item confiscation crash[/b] - Added comprehensive null safety during baggage checks
-[*] [b]Fixed ghost condition bug[/b] - Medical conditions now properly clear when expired
-[*] [b]Fixed baggage check inventory bugs[/b] - Items now properly removed when stowed/sold
-[*] [b]Multi-factor promotion requirements display[/b] - Muster now shows progress indicators with actionable blockers
+[*] [b]Fixed crash on first battle completion[/b] - MenuHelper.CheckEnemyAttackableHonorably race condition resolved
+[*] [b]Battle cleanup now properly deferred[/b] - Prevents menu rendering corruption during post-battle menu transitions
+[*] [b]Enhanced diagnostic logging[/b] - Added comprehensive diagnostics to detect future race conditions and stability issues
 [/list]
 
-[b]NEW: SKILL-BASED BAGGAGE STOWAGE[/b]
-[list]
-[*] Contraband system removed - Replaced with skill-based first-time storage event
-[*] 4 diplomatic options: Charm (free), Trade (-50% fee), Roguery (intimidate, -25% fee)
-[*] Sell All option (60% liquidation) or Abort (cancel enlistment)
-[*] All options result in standard baggage storage with varying costs/reputation
-[*] Simpler, more player-friendly approach to starting gear
-[/list]
-
-[b]BAGGAGE TRAIN OVERHAUL[/b]
-[list]
-[*] World-state-aware simulation: event probabilities adapt to campaign situation
-[*] Dynamic decision system: baggage access appears in Decisions accordion when available
-[*] Intelligent availability: accessible in towns/camps when stationary, locked during combat/sieges/pursuits
-[*] Adaptive event chances: 40% catch-up in garrison vs 10% during intense combat ops
-[*] War stance affects raids: +12% raid chance when lord is desperate
-[*] Terrain affects delays: +10% mountains, +15% snow
-[*] Baggage status integrated into Camp Hub and Main Menu Company Reports
-[*] Separate from 3-opportunity daily limit - Logistics decisions shown independently
-[/list]
-
-[b]COMPANY NEEDS CONSOLIDATION[/b]
-[list]
-[*] Merged Equipment metric into Supplies (5 metrics → 4 metrics)
-[*] New unified Supplies covers food, ammunition, maintenance, and logistics
-[*] Simplified company status tracking with clearer cause/effect relationships
-[*] All documentation updated to reflect 4-metric system
-[/list]
-
-[b]ENCOUNTER SAFETY IMPROVEMENTS[/b]
-[list]
-[*] Added captivity conversation suppression - Prevents native capture dialogues from interfering
-[*] Added encounter capture suppression - Blocks unwanted prisoner management screens
-[*] Added naval navigation capability patch for sea travel
-[*] Improved encounter guard with better state detection and auto-cleanup
-[*] Enhanced logging for encounter decisions and menu transitions
-[/list]
-
-[b]STATUS TEXT CLARITY[/b]
-[list]
-[*] Replaced vague hints with clear military context descriptions
-[*] Medical warnings now explicitly mention brewing illness with severity levels
-[*] Day phase routine text converted to factual descriptions
-[*] Added 15 new localization strings for activity forecasts
-[/list]
-
-[b]MENU STRUCTURE CLEANUP[/b]
-[list]
-[*] Removed dead code: obsolete Reports menu functions (186 lines removed)
-[*] Increased decision slots from 3 to 5 to accommodate opportunities + logistics
-[*] Streamlined menu transitions and state management
-[/list]
-
-[b]TECHNICAL IMPROVEMENTS[/b]
-[list]
-[*] Major code quality improvements (500+ Qodana issues resolved)
-[*] Enhanced diagnostic logging with level guidelines (Info/Debug/Warn/Error)
-[*] New logging categories: Naval, SiegeIntegration, BattleIntegration, CaptivityStatus
-[*] Improved item comparison using StringId instead of reference equality
-[*] Comprehensive documentation updates (BLUEPRINT.md, reference guides)
-[*] New reference docs for battle system, captivity & raids, menu analysis
-[/list]
-
-This major update streamlines core systems, removes player frustration points (contraband), consolidates company metrics for clarity, and significantly improves encounter safety and menu flow."
+This hotfix resolves a critical crash that occurred immediately after winning your first battle when returning from the combat screen to the campaign map."
 }
