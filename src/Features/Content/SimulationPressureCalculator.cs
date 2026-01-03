@@ -4,8 +4,12 @@ using Enlisted.Features.Company;
 using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
+using Enlisted.Features.Ranks.Behaviors;
 using Enlisted.Mod.Core;
+using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
+
+// MedicalPressureLevel and MedicalPressureAnalysis are in Models namespace
 
 namespace Enlisted.Features.Content
 {
@@ -15,6 +19,8 @@ namespace Enlisted.Features.Content
     /// </summary>
     public static class SimulationPressureCalculator
     {
+        private const string LogCategory = "Pressure";
+
         /// <summary>
         /// Calculates the current simulation pressure based on company needs,
         /// escalation state, player health, and location.
@@ -98,11 +104,114 @@ namespace Enlisted.Features.Content
                 sources.Add("Enemy Territory");
             }
 
+            // Check if promotion is blocked by reputation (creates urgency for rep-building)
+            var (needsRep, repGap) = CheckPromotionReputationNeed();
+            if (needsRep && repGap > 0)
+            {
+                // Modest pressure increase when promotion is reputation-blocked
+                // This surfaces the need without overwhelming other pressures
+                pressure += Math.Min(15, repGap);
+                sources.Add($"Needs +{repGap} Rep for Promotion");
+            }
+
             return new SimulationPressure
             {
                 Value = Math.Min(100, pressure),
                 Sources = sources
             };
+        }
+
+        /// <summary>
+        /// Calculates medical pressure analysis for orchestrator integration.
+        /// Integrates with PlayerConditionBehavior to detect active injuries and illnesses.
+        /// </summary>
+        public static (MedicalPressureAnalysis Analysis, MedicalPressureLevel Level) GetMedicalPressure()
+        {
+            var escalation = EscalationManager.Instance?.State;
+            var hero = CampaignSafetyGuard.SafeMainHero;
+            var conditions = Conditions.PlayerConditionBehavior.Instance;
+            var state = conditions?.State;
+
+            // Check for active conditions (must have days remaining > 0)
+            var hasCondition = state?.HasAnyCondition == true;
+            var hasSevereCondition = false;
+            
+            if (hasCondition && state != null)
+            {
+                // Severe condition = Severe or Critical severity WITH days remaining
+                var hasSevereInjury = state.CurrentInjury >= Conditions.InjurySeverity.Severe && state.InjuryDaysRemaining > 0;
+                var hasSevereIllness = state.CurrentIllness >= Conditions.IllnessSeverity.Severe && state.IllnessDaysRemaining > 0;
+                hasSevereCondition = hasSevereInjury || hasSevereIllness;
+            }
+
+            var analysis = new MedicalPressureAnalysis
+            {
+                HasCondition = hasCondition,
+                HasSevereCondition = hasSevereCondition,
+                MedicalRisk = escalation?.MedicalRisk ?? 0,
+                HealthPercent = hero != null ? (float)hero.HitPoints / hero.MaxHitPoints * 100f : 100f,
+                DaysSinceLastTreatment = 0
+            };
+
+            return (analysis, analysis.PressureLevel);
+        }
+
+        /// <summary>
+        /// Checks if player is close to promotion but lacks sufficient soldier reputation.
+        /// Returns the reputation gap (how much more is needed) or 0 if not applicable.
+        /// </summary>
+        public static (bool NeedsReputation, int ReputationGap) CheckPromotionReputationNeed()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var promotion = PromotionBehavior.Instance;
+
+            if (enlistment?.IsEnlisted != true || promotion == null)
+            {
+                return (false, 0);
+            }
+
+            // Check if player can promote (gets failure reasons if not)
+            var (canPromote, failureReasons) = promotion.CanPromote();
+
+            if (canPromote || failureReasons.Count == 0)
+            {
+                return (false, 0); // Already can promote or not enlisted
+            }
+
+            // Check if soldier reputation is a blocking factor
+            bool soldierRepBlocking = false;
+            foreach (var reason in failureReasons)
+            {
+                if (reason.StartsWith("Soldier reputation:"))
+                {
+                    soldierRepBlocking = true;
+                    break;
+                }
+            }
+
+            if (!soldierRepBlocking)
+            {
+                return (false, 0); // Not blocked by reputation
+            }
+
+            // Calculate how much reputation is needed
+            var currentTier = enlistment.EnlistmentTier;
+            var targetTier = currentTier + 1;
+            var requirements = Features.Ranks.Behaviors.PromotionRequirements.GetForTier(targetTier);
+            
+            var escalation = EscalationManager.Instance?.State;
+            var currentRep = escalation?.SoldierReputation ?? 0;
+            var requiredRep = requirements.MinSoldierReputation;
+            var repGap = requiredRep - currentRep;
+
+            if (repGap > 0)
+            {
+                ModLogger.Debug(LogCategory, 
+                    $"Promotion reputation need detected: T{currentTier}→T{targetTier} requires {requiredRep} rep, player has {currentRep} (gap: {repGap})");
+                return (true, repGap);
+            }
+
+            return (false, 0);
         }
     }
 }

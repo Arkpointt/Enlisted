@@ -2262,7 +2262,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Quartermaster", "Error building quartermaster display", ex);
-                MBTextManager.SetTextVariable("QUARTERMASTER_TEXT", "Equipment information unavailable.");
+                var unavailableText = new TextObject("{=qm_equipment_unavailable}Equipment information unavailable").ToString();
+                MBTextManager.SetTextVariable("QUARTERMASTER_TEXT", $"{unavailableText}.");
             }
         }
 
@@ -2767,8 +2768,10 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 if (variants == null || variants.Count <= 1)
                 {
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject($"No {equipmentType} variants available.").ToString()));
+                    var noVariantsText = new TextObject("{=qm_no_variants_available}No {EQUIPMENT_TYPE} variants available")
+                        .SetTextVariable("EQUIPMENT_TYPE", equipmentType ?? "equipment")
+                        .ToString();
+                    InformationManager.DisplayMessage(new InformationMessage(noVariantsText + "."));
                     return;
                 }
 
@@ -2948,8 +2951,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
                 else
                 {
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject($"No affordable {equipmentType} variants available. You need more gold.").ToString()));
+                    var noAffordableText = new TextObject("{=qm_no_affordable_variants}No affordable {EQUIPMENT_TYPE} variants available. You need more gold.")
+                        .SetTextVariable("EQUIPMENT_TYPE", equipmentType ?? "equipment")
+                        .ToString();
+                    InformationManager.DisplayMessage(new InformationMessage(noAffordableText));
                 }
             }
             catch (Exception ex)

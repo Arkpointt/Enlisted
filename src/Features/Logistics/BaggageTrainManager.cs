@@ -6,6 +6,7 @@ using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.Core;
 
 namespace Enlisted.Features.Logistics
 {
@@ -635,50 +636,202 @@ namespace Enlisted.Features.Logistics
         /// <summary>
         /// Attempts to update baggage status during march.
         /// Updates state directly - no popup events. Players see status in Daily Brief flavor text.
+        /// Now uses world-state-aware probabilities from ContentOrchestrator.
         /// </summary>
         private void TryTriggerBaggageEvent()
         {
+            // Get world-state-aware probabilities
+            var worldState = Content.ContentOrchestrator.Instance?.GetCurrentWorldSituation();
+            var probs = worldState != null 
+                ? CalculateEventProbabilities(worldState)
+                : GetDefaultProbabilities();
+
             var random = new Random();
             var roll = random.Next(100);
             
-            // Check for positive "baggage caught up" event (most common)
-            var caughtUpChance = _config?.Timing?.CaughtUpChancePercent ?? 25;
-            if (roll < caughtUpChance)
+            // Check for positive "baggage caught up" event
+            if (roll < probs.CaughtUpChance)
             {
                 // Grant temporary access - wagons caught up
                 GrantTemporaryAccess(4); // 4 hours of access
                 _lastArrivalDay = (int)CampaignTime.Now.ToDays;
-                ModLogger.Info(LogCategory, "Baggage wagons caught up with the column");
+                ModLogger.Info(LogCategory, $"Baggage wagons caught up (probability: {probs.CaughtUpChance}%)");
                 return;
             }
             
-            // Check for delay event (weather/terrain based - simplified for now)
-            var delayChance = _config?.Events?.DelayEventChanceBadWeather ?? 15;
-            if (roll < caughtUpChance + delayChance)
+            // Check for delay event (context-aware)
+            if (roll < probs.CaughtUpChance + probs.DelayChance)
             {
                 // Apply delay - wagons stuck or delayed
                 var delayDays = random.Next(1, 3); // 1-2 days delay
                 ApplyBaggageDelay(delayDays);
-                ModLogger.Info(LogCategory, $"Baggage wagons delayed by {delayDays} days");
+                ModLogger.Info(LogCategory, $"Baggage delayed {delayDays} days (probability: {probs.DelayChance}%)");
                 return;
             }
             
-            // Check for raid event (enemy territory - simplified check)
-            var raidChance = _config?.Events?.RaidEventChanceEnemyTerritory ?? 8;
-            var enlistment = EnlistmentBehavior.Instance;
-            var isEnemyTerritory = enlistment?.CurrentLord?.MapFaction?.IsAtWarWith(
-                MobileParty.MainParty?.CurrentSettlement?.MapFaction) ?? false;
-            
-            if (isEnemyTerritory && roll < caughtUpChance + delayChance + raidChance)
+            // Check for raid event (context-aware)
+            if (roll < probs.CaughtUpChance + probs.DelayChance + probs.RaidChance)
             {
                 // Apply raid - mark raid day and optionally add delay
                 _lastRaidDay = (int)CampaignTime.Now.ToDays;
                 ApplyBaggageDelay(1); // Raiders cause a 1-day delay
-                ModLogger.Info(LogCategory, "Baggage train was raided");
+                ModLogger.Info(LogCategory, $"Baggage train raided (probability: {probs.RaidChance}%)");
             }
             
             // Theft now happens passively (items may go missing over time)
             // No popup events - the player discovers losses when accessing baggage
+        }
+
+        /// <summary>
+        /// Calculates contextual baggage event probabilities based on world state.
+        /// Makes baggage simulation responsive to campaign situation (siege, retreat, peace, etc.).
+        /// </summary>
+        public BaggageEventProbabilities CalculateEventProbabilities(Content.Models.WorldSituation worldState)
+        {
+            // Start with config-based defaults
+            var baseCaughtUp = _config?.Timing?.CaughtUpChancePercent ?? 25;
+            var baseDelay = _config?.Events?.DelayEventChanceBadWeather ?? 15;
+            var baseRaid = _config?.Events?.RaidEventChanceEnemyTerritory ?? 8;
+
+            var probs = new BaggageEventProbabilities
+            {
+                CaughtUpChance = baseCaughtUp,
+                DelayChance = baseDelay,
+                RaidChance = baseRaid
+            };
+
+            var lordParty = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo;
+            if (lordParty == null) return probs;
+
+            // ACTIVITY LEVEL: Affects wagon mobility and security
+            switch (worldState.ExpectedActivity)
+            {
+                case Content.Models.ActivityLevel.Intense:
+                    // Desperate retreat/siege - wagons fall behind
+                    probs.CaughtUpChance = 10;   // Rarely catch up
+                    probs.DelayChance = 35;      // Frequently delayed
+                    probs.RaidChance = 20;       // High vulnerability
+                    break;
+
+                case Content.Models.ActivityLevel.Active:
+                    // Active campaign - moderate pressure
+                    probs.CaughtUpChance = 20;
+                    probs.DelayChance = 20;
+                    probs.RaidChance = 12;
+                    break;
+
+                case Content.Models.ActivityLevel.Routine:
+                    // Normal march - use config base values (already set above)
+                    break;
+
+                case Content.Models.ActivityLevel.Quiet:
+                    // Garrison/peacetime - wagons keep up easily
+                    probs.CaughtUpChance = 40;   // Frequently catch up
+                    probs.DelayChance = 5;       // Rarely delayed
+                    probs.RaidChance = 2;        // Safe
+                    break;
+            }
+
+            // LORD SITUATION: Specific tactical context
+            switch (worldState.LordIs)
+            {
+                case Content.Models.LordSituation.Defeated:
+                    // Routed - baggage scattered
+                    probs.DelayChance += 20;
+                    probs.RaidChance += 15;
+                    break;
+
+                case Content.Models.LordSituation.SiegeAttacking:
+                case Content.Models.LordSituation.SiegeDefending:
+                    // Siege - wagons stationary but vulnerable
+                    probs.CaughtUpChance += 10;  // Easier to access
+                    probs.RaidChance += 5;       // Target for raids
+                    break;
+
+                case Content.Models.LordSituation.PeacetimeGarrison:
+                    // Safe - wagons well-managed
+                    probs.DelayChance = (int)(probs.DelayChance * 0.5f);
+                    probs.RaidChance = (int)(probs.RaidChance * 0.3f);
+                    break;
+            }
+
+            // WAR STANCE: Strategic pressure affects raid risk
+            switch (worldState.KingdomStance)
+            {
+                case Content.Models.WarStance.Desperate:
+                    // Losing badly - enemy raids frequent
+                    probs.RaidChance += 12;
+                    break;
+
+                case Content.Models.WarStance.Defensive:
+                    // Under pressure - increased raids
+                    probs.RaidChance += 6;
+                    break;
+
+                case Content.Models.WarStance.Offensive:
+                    // Attacking - wagons in friendly territory
+                    probs.RaidChance -= 3;
+                    break;
+
+                case Content.Models.WarStance.Peace:
+                    // Peacetime - minimal raids
+                    probs.RaidChance = 1;
+                    break;
+            }
+
+            // TERRAIN: Physical environment affects wagon mobility
+            try
+            {
+                if (lordParty.CurrentNavigationFace.IsValid() && Campaign.Current?.MapSceneWrapper != null)
+                {
+                    var terrain = Campaign.Current.MapSceneWrapper.GetFaceTerrainType(lordParty.CurrentNavigationFace);
+                    switch (terrain)
+                    {
+                        case TerrainType.Mountain:
+                            probs.DelayChance += 10;  // Rough terrain
+                            break;
+                        case TerrainType.Snow:
+                            probs.DelayChance += 15;  // Snow slows wagons
+                            break;
+                        case TerrainType.Desert:
+                            probs.DelayChance += 8;   // Sand is difficult
+                            break;
+                        case TerrainType.Fording:
+                        case TerrainType.Water:
+                            probs.DelayChance += 12;  // River crossings
+                            break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error checking terrain for baggage: {ex.Message}");
+            }
+
+            // Clamp all values to reasonable ranges
+            probs.CaughtUpChance = Math.Max(5, Math.Min(60, probs.CaughtUpChance));
+            probs.DelayChance = Math.Max(2, Math.Min(50, probs.DelayChance));
+            probs.RaidChance = Math.Max(0, Math.Min(35, probs.RaidChance));
+
+            ModLogger.Debug(LogCategory, 
+                $"Baggage probabilities: CatchUp={probs.CaughtUpChance}%, Delay={probs.DelayChance}%, " +
+                $"Raid={probs.RaidChance}% (Activity={worldState.ExpectedActivity}, " +
+                $"Lord={worldState.LordIs}, War={worldState.KingdomStance})");
+
+            return probs;
+        }
+
+        /// <summary>
+        /// Returns default probabilities when orchestrator is unavailable.
+        /// </summary>
+        private BaggageEventProbabilities GetDefaultProbabilities()
+        {
+            return new BaggageEventProbabilities
+            {
+                CaughtUpChance = _config?.Timing?.CaughtUpChancePercent ?? 25,
+                DelayChance = _config?.Events?.DelayEventChanceBadWeather ?? 15,
+                RaidChance = _config?.Events?.RaidEventChanceEnemyTerritory ?? 8
+            };
         }
     }
     
@@ -740,6 +893,22 @@ namespace Enlisted.Features.Logistics
         public int DelayEventChanceMountains { get; set; } = 10;
         public int RaidEventChanceEnemyTerritory { get; set; } = 8;
         public int TheftEventChanceLowRep { get; set; } = 5;
+    }
+    
+    /// <summary>
+    /// World-state-aware baggage event probabilities.
+    /// Calculated dynamically based on activity level, lord situation, war stance, and terrain.
+    /// </summary>
+    public class BaggageEventProbabilities
+    {
+        /// <summary>Probability that wagons catch up with the column (grants temporary access).</summary>
+        public int CaughtUpChance { get; set; }
+        
+        /// <summary>Probability that wagons are delayed (terrain, weather, retreat).</summary>
+        public int DelayChance { get; set; }
+        
+        /// <summary>Probability that wagons are raided by enemy forces.</summary>
+        public int RaidChance { get; set; }
     }
 }
 

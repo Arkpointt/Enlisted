@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameComponents;
@@ -51,6 +52,43 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     return;
                 }
+                
+                // DIAGNOSTIC: Log what menu the native system wants to show
+                var originalResult = __result;
+                var mainParty = TaleWorlds.CampaignSystem.Party.MobileParty.MainParty;
+                var partyActive = mainParty?.IsActive ?? false;
+                var partyVisible = mainParty?.IsVisible ?? false;
+                var inMapEvent = mainParty?.Party?.MapEvent != null;
+                var hasEncounter = PlayerEncounter.Current != null;
+                
+                // Only log when result is meaningful (not null/empty)
+                if (!string.IsNullOrEmpty(__result))
+                {
+                    ModLogger.Info("MenuGuard", 
+                        $"NATIVE MENU REQUEST: '{__result}' | Active={partyActive}, Visible={partyVisible}, " +
+                        $"InMapEvent={inMapEvent}, HasEncounter={hasEncounter}");
+                }
+
+                // If native wants to push the encounter menu after the battle is already over, suppress it.
+                // This prevents post-victory encounter loops (e.g. "Wait in reserve" flashing repeatedly).
+                var mainMapEvent = mainParty?.MapEvent;
+                var mainBattleOver = mainMapEvent != null && (mainMapEvent.HasWinner || mainMapEvent.IsFinalized);
+                var suppressBattleOverEncounter = __result == "encounter" && mainBattleOver;
+
+                // If native wants to push siege strategy menus, only suppress them when the siege state is stale.
+                // During a real active siege, the player must be able to open these menus to engage with the siege.
+                var isSiegeMenu = __result == "menu_siege_strategies" || __result == "encounter_interrupted_siege_preparations";
+                var camp = mainParty?.BesiegerCamp;
+                var siegeEvent = camp?.SiegeEvent;
+                var settlement = siegeEvent?.BesiegedSettlement;
+                var isStaleSiege =
+                    camp != null &&
+                    (siegeEvent == null ||
+                     siegeEvent.ReadyToBeRemoved ||
+                     settlement == null ||
+                     settlement.Party?.SiegeEvent != siegeEvent ||
+                     (camp.MapFaction != null && settlement.MapFaction == camp.MapFaction) ||
+                     (siegeEvent.BesiegerCamp != null && siegeEvent.BesiegerCamp != camp));
 
                 // If player is waiting in reserve during battle, use the battle wait menu
                 if (EnlistedEncounterBehavior.IsWaitingInReserve)
@@ -66,14 +104,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
                         // Battle is ongoing - use battle wait menu
                         if (__result == "army_wait" || __result == "army_wait_at_settlement" || __result == "encounter")
                         {
-                            ModLogger.Debug("Battle", $"Menu override: {__result} -> enlisted_battle_wait (player in reserve)");
+                            ModLogger.Info("MenuGuard", $"MENU OVERRIDE: '{__result}' -> 'enlisted_battle_wait' (player in reserve, battle ongoing)");
                             __result = "enlisted_battle_wait";
                         }
                         return;
                     }
 
                     // Battle is over - clear stale reserve flag and continue to normal enlisted menu logic
-                    ModLogger.Debug("GenericStateMenuPatch", "Clearing stale reserve flag - battle is over");
+                    ModLogger.Info("MenuGuard", "Clearing stale reserve flag - battle is over");
                     EnlistedEncounterBehavior.ClearReserveState();
                 }
 
@@ -86,7 +124,30 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 if (hasExplicitlyVisited)
                 {
                     // Player has explicitly clicked "Visit Settlement" - don't override
-                    ModLogger.Debug("Menu", $"GenericStateMenuPatch: Not overriding {__result} - player explicitly visited settlement");
+                    ModLogger.Info("MenuGuard", $"ALLOWING native menu '{__result}' - player explicitly visited settlement");
+                    return;
+                }
+
+                // Siege menus: Allow native siege menu to show for army members during active sieges.
+                // The native menu will show appropriate options based on role (army member vs commander).
+                // Only suppress siege menus when the siege is stale (after victory, etc.) to prevent menu loops.
+                if (isSiegeMenu && isStaleSiege)
+                {
+                    var original = __result;
+                    __result = "enlisted_status";
+                    ModLogger.Info("Menu", $"GenericStateMenuPatch: {original} -> {__result} (stale siege - cleaning up)");
+                    enlistment?.CleanupPostEncounterStateFromPatch($"GenericStateMenuPatch({original})");
+                    return;
+                }
+
+                if (suppressBattleOverEncounter)
+                {
+                    var original = __result;
+                    __result = "enlisted_status";
+                    ModLogger.Info("Menu", $"GenericStateMenuPatch: {original} -> {__result} (suppressing native menu for enlisted)");
+
+                    // Best-effort cleanup so the engine stops reselecting these menus on subsequent ticks.
+                    enlistment?.CleanupPostEncounterStateFromPatch($"GenericStateMenuPatch({original})");
                     return;
                 }
 
@@ -97,11 +158,33 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // Check if lord is in a battle or siege - if so, don't override combat-related menus
                 var lordPartyCheck = enlistment?.CurrentLord?.PartyBelongedTo;
                 var lordInBattle = lordPartyCheck?.Party?.MapEvent != null;
+                
+                // Check siege status - need to check BOTH the lord AND the army leader (if in army)
+                var lordInSiege = lordPartyCheck?.SiegeEvent != null || 
+                                  lordPartyCheck?.BesiegerCamp != null || 
+                                  lordPartyCheck?.BesiegedSettlement != null;
+                
+                // If lord is in an army, also check if the army leader is besieging
+                var lordArmy = lordPartyCheck?.Army;
+                if (!lordInSiege && lordArmy != null)
+                {
+                    var armyLeader = lordArmy.LeaderParty;
+                    lordInSiege = armyLeader?.BesiegerCamp != null || 
+                                  armyLeader?.BesiegedSettlement != null ||
+                                  armyLeader?.SiegeEvent != null;
+                }
 
                 if (lordInBattle && __result == "encounter")
                 {
                     // Lord is in battle and native wants to show encounter menu - don't override
-                    // This will be handled by EnlistedMenuBehavior's battle activation logic
+                    ModLogger.Info("MenuGuard", $"ALLOWING 'encounter' menu - lord is in battle");
+                    return;
+                }
+
+                // During sieges, let ALL native menus flow (army_wait, menu_siege_strategies, etc.)
+                if (lordInSiege)
+                {
+                    ModLogger.Info("MenuGuard", $"ALLOWING native menu '{__result}' - during siege");
                     return;
                 }
 
@@ -117,7 +200,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     __result == "castle_outside" ||
                     __result == "village")
                 {
-                    ModLogger.Info("Menu", $"GenericStateMenuPatch: {__result} -> enlisted_status (keeping enlisted menu)");
+                    ModLogger.Info("MenuGuard", $"MENU OVERRIDE: '{__result}' -> 'enlisted_status' (keeping enlisted menu)");
                     __result = "enlisted_status";
                 }
             }

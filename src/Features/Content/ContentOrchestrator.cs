@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Enlisted.Features.Company;
@@ -43,6 +43,13 @@ namespace Enlisted.Features.Content
         private OrchestratorOverride _currentOverride;
         private DayPhase _currentOverridePhase = DayPhase.Night;
 
+        // Medical orchestration tracking (Phase 6H)
+        private int _lastMedicalCheckDay = -1;
+        private int _consecutiveHighMedicalPressureDays;
+        private bool _medicalOpportunityQueuedToday;
+        private bool _emergencyOpportunityForced;
+        private int _lastIllnessOnsetDay = -10;
+
         public ContentOrchestrator()
         {
             Instance = this;
@@ -67,6 +74,13 @@ namespace Enlisted.Features.Content
                 int lastPhaseInt = (int)_lastPhase;
                 dataStore.SyncData("orchestrator_lastPhase", ref lastPhaseInt);
                 _lastPhase = (DayPhase)lastPhaseInt;
+
+                // Medical orchestration tracking (Phase 6H)
+                dataStore.SyncData("orchestrator_lastMedicalCheckDay", ref _lastMedicalCheckDay);
+                dataStore.SyncData("orchestrator_consecutiveHighMedicalDays", ref _consecutiveHighMedicalPressureDays);
+                dataStore.SyncData("orchestrator_medicalOpportunityQueued", ref _medicalOpportunityQueuedToday);
+                dataStore.SyncData("orchestrator_emergencyForced", ref _emergencyOpportunityForced);
+                dataStore.SyncData("orchestrator_lastIllnessDay", ref _lastIllnessOnsetDay);
 
                 // After loading, restore PlayerBehaviorTracker state
                 if (dataStore.IsLoading)
@@ -156,6 +170,12 @@ namespace Enlisted.Features.Content
 
                 // Update camp opportunities availability
                 RefreshCampOpportunities(worldSituation);
+
+                // Update baggage simulation context (world-state-aware probabilities)
+                RefreshBaggageSimulation(worldSituation);
+
+                // Check medical pressure and trigger illness events / opportunities (Phase 6H)
+                CheckMedicalPressure(worldSituation);
 
                 // Debug logging (only appears when Debug level is enabled for this category)
                 ModLogger.Debug(LogCategory, $"Orchestrator active: Activity={activityLevel}, Phase={worldSituation.CurrentPhase}");
@@ -262,6 +282,37 @@ namespace Enlisted.Features.Content
                 // Opportunities are generated on-demand when player opens DECISIONS menu
                 // CampOpportunityGenerator.GenerateCampLife() uses current world state
                 ModLogger.Debug(LogCategory, "Camp opportunity system active");
+            }
+        }
+
+        /// <summary>
+        /// Updates baggage simulation with world-state-aware probabilities.
+        /// Makes baggage events (delays, raids, arrivals) responsive to campaign situation.
+        /// </summary>
+        private void RefreshBaggageSimulation(WorldSituation worldSituation)
+        {
+            var baggageManager = Logistics.BaggageTrainManager.Instance;
+            if (baggageManager == null)
+            {
+                return;
+            }
+
+            try
+            {
+                // Calculate current probabilities for diagnostics
+                var probs = baggageManager.CalculateEventProbabilities(worldSituation);
+                
+                // The probabilities will be used automatically when BaggageTrainManager
+                // checks for events - no need to pass them explicitly
+                
+                ModLogger.Debug(LogCategory, 
+                    $"Baggage simulation updated: CatchUp={probs.CaughtUpChance}%, " +
+                    $"Delay={probs.DelayChance}%, Raid={probs.RaidChance}% " +
+                    $"(Activity={worldSituation.ExpectedActivity})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error refreshing baggage simulation", ex);
             }
         }
 
@@ -402,6 +453,221 @@ namespace Enlisted.Features.Content
                 ModLogger.Warn(LogCategory, "EventDeliveryManager not available for crisis event delivery");
             }
         }
+
+        #region Medical Pressure System
+
+        /// <summary>
+        /// Checks medical pressure and triggers appropriate responses.
+        /// Called from OnDailyTick when orchestrator is active.
+        /// Triggers illness onset events based on medical risk levels and queues medical opportunities.
+        /// </summary>
+        private void CheckMedicalPressure(WorldSituation worldSituation)
+        {
+            var currentDay = (int)CampaignTime.Now.ToDays;
+
+            // Only check once per day
+            if (currentDay == _lastMedicalCheckDay)
+            {
+                return;
+            }
+            _lastMedicalCheckDay = currentDay;
+            _medicalOpportunityQueuedToday = false;
+
+            // Get medical pressure analysis
+            var (medicalAnalysis, pressureLevel) = SimulationPressureCalculator.GetMedicalPressure();
+
+            // Track consecutive high pressure days for escalation
+            if (pressureLevel >= MedicalPressureLevel.High)
+            {
+                _consecutiveHighMedicalPressureDays++;
+            }
+            else
+            {
+                _consecutiveHighMedicalPressureDays = 0;
+            }
+
+            // Log current medical state for diagnostics
+            ModLogger.Debug(LogCategory,
+                $"Medical pressure check: Level={pressureLevel}, MedRisk={medicalAnalysis.MedicalRisk}, " +
+                $"HasCondition={medicalAnalysis.HasCondition}, Untreated={medicalAnalysis.IsUntreated}, " +
+                $"ConsecHighDays={_consecutiveHighMedicalPressureDays}");
+
+            // Queue medical opportunities based on pressure level
+            QueueMedicalOpportunities(medicalAnalysis, pressureLevel);
+
+            // Check for illness onset event triggers
+            CheckIllnessOnsetTriggers(medicalAnalysis, pressureLevel);
+        }
+
+        /// <summary>
+        /// Queues appropriate medical opportunities based on current pressure.
+        /// Higher pressure = higher priority opportunities appear in camp menu.
+        /// </summary>
+        private void QueueMedicalOpportunities(MedicalPressureAnalysis pressure, MedicalPressureLevel level)
+        {
+            var opportunityGen = Camp.CampOpportunityGenerator.Instance;
+            if (opportunityGen == null)
+            {
+                return;
+            }
+
+            // Critical: Force emergency opportunity (once per critical episode)
+            if (level == MedicalPressureLevel.Critical && !_emergencyOpportunityForced)
+            {
+                ModLogger.Info(LogCategory, "Critical medical pressure - emergency opportunity forced");
+                opportunityGen.QueueMedicalOpportunity("opp_urgent_medical");
+                _emergencyOpportunityForced = true;
+                _medicalOpportunityQueuedToday = true;
+                return;
+            }
+
+            // Reset flag when no longer critical
+            if (level < MedicalPressureLevel.Critical)
+            {
+                _emergencyOpportunityForced = false;
+            }
+
+            // Don't queue multiple opportunities per day
+            if (_medicalOpportunityQueuedToday)
+            {
+                return;
+            }
+
+            // Only queue opportunities if player has condition or high medical risk
+            if (!pressure.HasCondition && pressure.MedicalRisk < 3)
+            {
+                return;
+            }
+
+            // Has untreated condition: queue standard medical care opportunity
+            if (pressure.HasCondition && pressure.IsUntreated)
+            {
+                ModLogger.Debug(LogCategory, "Untreated condition - medical care opportunity queued");
+                opportunityGen.QueueMedicalOpportunity("opp_seek_medical_care");
+                _medicalOpportunityQueuedToday = true;
+                return;
+            }
+
+            // High medical risk but no condition yet: queue preventive rest
+            if (level >= MedicalPressureLevel.Moderate && !pressure.HasCondition)
+            {
+                ModLogger.Debug(LogCategory, "High medical risk - preventive rest opportunity queued");
+                opportunityGen.QueueMedicalOpportunity("opp_preventive_rest");
+                _medicalOpportunityQueuedToday = true;
+            }
+        }
+
+        /// <summary>
+        /// Checks if medical risk warrants triggering an illness onset event.
+        /// Events are triggered through EventDeliveryManager for popup delivery.
+        /// Includes 7-day cooldown and sophisticated probability calculation.
+        /// </summary>
+        private void CheckIllnessOnsetTriggers(MedicalPressureAnalysis pressure, MedicalPressureLevel level)
+        {
+            // Don't trigger illness onset if player already has condition
+            if (pressure.HasCondition)
+            {
+                return;
+            }
+
+            // Only check if Medical Risk >= 3
+            if (pressure.MedicalRisk < 3)
+            {
+                return;
+            }
+
+            // 7-day cooldown between illness triggers
+            var currentDay = (int)CampaignTime.Now.ToDays;
+            if (currentDay - _lastIllnessOnsetDay < 7)
+            {
+                return;
+            }
+
+            // Calculate probability with modifiers
+            var baseChance = pressure.MedicalRisk * 0.05f; // 5% per risk level (15-25% base)
+            
+            // Fatigue modifier
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment != null && enlistment.FatigueCurrent <= 8)
+            {
+                baseChance += 0.10f; // +10% if exhausted
+            }
+
+            // Season modifier - winter increases illness risk
+            var worldSituation = WorldStateAnalyzer.AnalyzeSituation();
+            // TODO: Add season detection when WorldStateAnalyzer has GetSeason()
+            // For now, skip season modifier
+            
+            // Siege modifier - cramped conditions increase illness
+            if (worldSituation.LordIs == LordSituation.SiegeAttacking || 
+                worldSituation.LordIs == LordSituation.SiegeDefending)
+            {
+                baseChance += 0.12f; // +12% during siege
+            }
+
+            // Consecutive high pressure day modifier
+            baseChance += _consecutiveHighMedicalPressureDays * 0.05f; // +5% per consecutive day
+
+            // Cap probability at 50%
+            baseChance = Math.Min(baseChance, 0.50f);
+
+            ModLogger.Debug(LogCategory, 
+                $"Illness onset chance: {baseChance * 100:F1}% (Risk={pressure.MedicalRisk}, ConsecDays={_consecutiveHighMedicalPressureDays})");
+
+            // Roll for illness onset
+            if (TaleWorlds.Core.MBRandom.RandomFloat >= baseChance)
+            {
+                return; // No illness today
+            }
+
+            // Determine context for maritime vs land illness events
+            var isAtSea = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            var contextSuffix = isAtSea ? "_sea" : "";
+
+            // Select event based on medical risk severity and context
+            string baseEventId;
+            if (pressure.MedicalRisk >= 5)
+            {
+                baseEventId = "illness_onset_severe";
+            }
+            else if (pressure.MedicalRisk >= 4)
+            {
+                baseEventId = "illness_onset_moderate";
+            }
+            else
+            {
+                baseEventId = "illness_onset_minor";
+            }
+
+            // Try context-specific variant first, then fall back to base event
+            var eventToQueue = baseEventId + contextSuffix;
+            var eventDef = EventCatalog.GetEvent(eventToQueue);
+            if (eventDef == null && !string.IsNullOrEmpty(contextSuffix))
+            {
+                // Fall back to base event if sea variant doesn't exist
+                eventToQueue = baseEventId;
+                eventDef = EventCatalog.GetEvent(eventToQueue);
+                ModLogger.Debug(LogCategory, $"Sea variant not found, using base event: {eventToQueue}");
+            }
+
+            // Queue the illness onset event
+            if (eventDef == null)
+            {
+                ModLogger.Warn(LogCategory, $"Illness onset event '{eventToQueue}' not found in catalog");
+                return;
+            }
+
+            var deliveryManager = EventDeliveryManager.Instance;
+            if (deliveryManager != null)
+            {
+                deliveryManager.QueueEvent(eventDef);
+                _lastIllnessOnsetDay = currentDay;
+                ModLogger.Info(LogCategory, 
+                    $"Illness onset event queued: {eventToQueue} (MedRisk={pressure.MedicalRisk}, chance={baseChance * 100:F1}%)");
+            }
+        }
+
+        #endregion
 
         #region Schedule Override System
 
@@ -576,7 +842,6 @@ namespace Enlisted.Features.Content
                 "rest" => needs.Rest,
                 "morale" => needs.Morale,
                 "readiness" => needs.Readiness,
-                "equipment" => needs.Equipment,
                 _ => 100
             };
         }

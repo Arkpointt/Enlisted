@@ -857,6 +857,14 @@ foreach (var child in messageWidget.Children)
 
 ## Changelog
 
+**2026-01-03 (MapConversationEndPatch Fix):**
+- 🐛 **Fixed `MapConversationEndPatch` failing to apply** - Harmony patch was returning null during initialization
+- Root cause: `Type.GetType("SandBox.View.Map.MapScreen, SandBox.View")` doesn't search all loaded assemblies
+- Solution: Changed to `AccessTools.TypeByName("SandBox.View.Map.MapScreen")` which searches globally
+- Patch now successfully hooks into `IMapStateHandler.OnMapConversationOver` to resume the combat log layer
+- Error previously logged: `[ERROR] [Bootstrap] Failed to find MapScreen type for MapConversationEndPatch`
+- This fix ensures the combat log properly resumes after map conversations end
+
 **2025-01-01 (Evening - Conversation/Mission Visibility):**
 - ✅ **Proper visibility management during conversations and missions**
 - Created `CombatLogConversationPatch` to hook into MapScreen's conversation lifecycle

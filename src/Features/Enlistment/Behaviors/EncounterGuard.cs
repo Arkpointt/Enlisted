@@ -1,8 +1,8 @@
 using System;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
+using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Entry;
 using Enlisted.Mod.Core.Logging;
 
@@ -62,13 +62,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					}
 					});
 
-					// Defer menu activation to the next frame after encounter exit completes
-					// This ensures the menu activates cleanly after state transitions
-					NextFrameDispatcher.RunNextFrame(() =>
-					{
-						ModLogger.Debug("EncounterGuard", "Activating enlisted_status menu after encounter exit");
-						GameMenu.ActivateGameMenu("enlisted_status");
-					}, true);
+				// Defer menu activation to the next frame after encounter exit completes
+				// This ensures the menu activates cleanly after state transitions
+				NextFrameDispatcher.RunNextFrame(() =>
+				{
+					ModLogger.Debug("EncounterGuard", "Activating enlisted menu after encounter exit (via SafeActivate)");
+					// Use SafeActivateEnlistedMenu to respect siege detection
+					EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+				}, true);
 				}
 			}
 			catch (Exception ex)

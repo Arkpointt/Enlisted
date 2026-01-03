@@ -251,6 +251,68 @@
             text="Fair enough." />
     <string id="qm_gate_right"
             text="Right..." />
+
+    <!-- ========== RESUPPLY CONTEXT (HOURLY IN SETTLEMENTS) ========== -->
+    
+    <!-- Veteran Archetype -->
+    <string id="qm_resupply_veteran_standard"
+            text=" We're resupplying while we're here." />
+    <string id="qm_resupply_veteran_wealthy"
+            text=" Good town for resupply. Decent workshops." />
+    <string id="qm_resupply_veteran_owned"
+            text=" Friendly territory. We're stocking up." />
+    <string id="qm_resupply_veteran_wealthy_owned"
+            text=" This is our town. Best resupply we'll get." />
+    
+    <!-- Merchant Archetype -->
+    <string id="qm_resupply_merchant_standard"
+            text=" I'm negotiating with the local merchants." />
+    <string id="qm_resupply_merchant_wealthy"
+            text=" Wealthy town. Good prices, good stock." />
+    <string id="qm_resupply_merchant_owned"
+            text=" Our settlement. I'm getting excellent deals." />
+    <string id="qm_resupply_merchant_wealthy_owned"
+            text=" Our wealthiest town. The merchants know me well." />
+    
+    <!-- Bookkeeper Archetype -->
+    <string id="qm_resupply_bookkeeper_standard"
+            text=" I'm processing requisitions from the local stores." />
+    <string id="qm_resupply_bookkeeper_wealthy"
+            text=" Prosperous settlement. Inventory levels are favorable." />
+    <string id="qm_resupply_bookkeeper_owned"
+            text=" Home garrison. Requisition forms are expedited." />
+    <string id="qm_resupply_bookkeeper_wealthy_owned"
+            text=" Our primary depot. Maximum resupply efficiency." />
+    
+    <!-- Scoundrel Archetype -->
+    <string id="qm_resupply_scoundrel_standard"
+            text=" I'm... acquiring supplies. Don't ask." />
+    <string id="qm_resupply_scoundrel_wealthy"
+            text=" Rich town. Lots of opportunities, if you catch my meaning." />
+    <string id="qm_resupply_scoundrel_owned"
+            text=" Our turf. I've got connections here." />
+    <string id="qm_resupply_scoundrel_wealthy_owned"
+            text=" Our best town. The quartermaster network runs deep here." />
+    
+    <!-- Believer Archetype -->
+    <string id="qm_resupply_believer_standard"
+            text=" The Lord provides. We're gathering what we need." />
+    <string id="qm_resupply_believer_wealthy"
+            text=" A blessed town. Prosperity flows from faith." />
+    <string id="qm_resupply_believer_owned"
+            text=" Our faithful hold this place. Supplies come freely." />
+    <string id="qm_resupply_believer_wealthy_owned"
+            text=" The Lord's bounty is greatest in our own lands." />
+    
+    <!-- Eccentric Archetype -->
+    <string id="qm_resupply_eccentric_standard"
+            text=" The stars favor resupply today. Good omens." />
+    <string id="qm_resupply_eccentric_wealthy"
+            text=" Wealthy town. The moon waxes over their storehouses." />
+    <string id="qm_resupply_eccentric_owned"
+            text=" Our settlement. The spirits guide supplies to us." />
+    <string id="qm_resupply_eccentric_wealthy_owned"
+            text=" Our richest town. The constellations align perfectly." />
   </strings>
 </base>
 

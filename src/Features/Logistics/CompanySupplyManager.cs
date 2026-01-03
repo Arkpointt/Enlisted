@@ -34,6 +34,16 @@ namespace Enlisted.Features.Logistics
         private Hero _enlistedLord;
 
         /// <summary>
+        /// Supply level when lord entered a settlement. Used to calculate gains for departure message.
+        /// </summary>
+        private float _supplyOnSettlementEntry;
+
+        /// <summary>
+        /// The settlement the lord last entered. Used for resupply departure message.
+        /// </summary>
+        private Settlement _currentResupplySettlement;
+
+        /// <summary>
         /// Total supply percentage (0-100). Gates equipment access and reflects overall logistics state.
         /// </summary>
         public int TotalSupply
@@ -141,6 +151,126 @@ namespace Enlisted.Features.Logistics
             {
                 ModLogger.Error(LogCategory, "Error in DailyUpdate", ex);
             }
+        }
+
+        /// <summary>
+        /// Processes hourly supply resupply when in settlements.
+        /// Called from EnlistmentBehavior's hourly tick while enlisted.
+        /// This allows partial-day settlement visits to provide meaningful supply gains.
+        /// Consumption remains daily (not hourly) to avoid excessive drain.
+        /// </summary>
+        public void HourlyUpdate()
+        {
+            try
+            {
+                float oldSupply = _totalSupply;
+
+                // Only process resupply hourly; consumption stays daily to avoid over-draining
+                float hourlyResupply = CalculateHourlyResupply();
+
+                if (hourlyResupply > 0f)
+                {
+                    _totalSupply = MathF.Clamp(_totalSupply + hourlyResupply, 0f, 100f);
+
+                    float supplyChange = _totalSupply - oldSupply;
+                    int totalSupply = TotalSupply;
+
+                    // Log hourly gains when they occur
+                    if (supplyChange > 0.1f)
+                    {
+                        ModLogger.Debug(LogCategory,
+                            $"Hourly supply gain: {oldSupply:F1}% -> {_totalSupply:F1}% (+{supplyChange:F2}%), Total={totalSupply}%");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in HourlyUpdate", ex);
+            }
+        }
+
+        /// <summary>
+        /// Called when the lord enters a settlement. Tracks supply level for departure comparison.
+        /// </summary>
+        public void OnSettlementEntered(Settlement settlement)
+        {
+            if (settlement == null || (!settlement.IsTown && !settlement.IsCastle))
+            {
+                return;
+            }
+
+            _supplyOnSettlementEntry = _totalSupply;
+            _currentResupplySettlement = settlement;
+
+            ModLogger.Debug(LogCategory, $"Lord entered {settlement.Name} - tracking supply at {_totalSupply:F1}%");
+        }
+
+        /// <summary>
+        /// Called when the lord leaves a settlement. Displays flavor message about resupply if meaningful gain occurred.
+        /// </summary>
+        public void OnSettlementLeft(Settlement settlement)
+        {
+            try
+            {
+                // Only show message for the settlement we were tracking
+                if (settlement == null || _currentResupplySettlement != settlement)
+                {
+                    return;
+                }
+
+                float supplyGained = _totalSupply - _supplyOnSettlementEntry;
+
+                // Only show message if meaningful supply was gained (at least 5%)
+                if (supplyGained >= 5f)
+                {
+                    string message = GetResupplyDepartureMessage(settlement, supplyGained);
+                    if (!string.IsNullOrEmpty(message))
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(message, Colors.Green));
+                        ModLogger.Info(LogCategory, $"Resupply message: gained {supplyGained:F1}% in {settlement.Name}");
+                    }
+                }
+                else
+                {
+                    ModLogger.Debug(LogCategory, $"Left {settlement.Name} - supply gain {supplyGained:F1}% too small for message");
+                }
+
+                // Clear tracking
+                _currentResupplySettlement = null;
+                _supplyOnSettlementEntry = 0f;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnSettlementLeft", ex);
+            }
+        }
+
+        /// <summary>
+        /// Generates a flavor message for resupply based on how much was gained.
+        /// Uses RP-appropriate language without percentages.
+        /// </summary>
+        private string GetResupplyDepartureMessage(Settlement settlement, float supplyGained)
+        {
+            string settlementName = settlement?.Name?.ToString() ?? "the settlement";
+
+            // Choose message based on how much was gained
+            if (supplyGained >= 30f)
+            {
+                // Major resupply
+                return $"The company restocked well in {settlementName}. Stores are replenished.";
+            }
+            else if (supplyGained >= 15f)
+            {
+                // Good resupply
+                return $"Supplies replenished in {settlementName}.";
+            }
+            else if (supplyGained >= 5f)
+            {
+                // Minor resupply
+                return $"Took on some supplies in {settlementName}.";
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -279,7 +409,7 @@ namespace Enlisted.Features.Logistics
 
         /// <summary>
         /// Calculates daily resupply when in a settlement.
-        /// Base rate is +40% per day in towns/castles so a single day in settlement can restore access.
+        /// Base rate is +50% per day in towns/castles. Lords rarely stay a full day, so hourly ticks ensure partial visits are rewarded.
         /// Bonuses for prosperity and ownership provide additional recovery.
         /// </summary>
         private float CalculateSupplyResupply()
@@ -298,27 +428,71 @@ namespace Enlisted.Features.Logistics
                 return 0f;
             }
 
-            // Base resupply: +40% per day (fast recovery so 1 day in settlement is meaningful)
-            float resupply = 40.0f;
+            // Base resupply: +50% per day (lords rarely stay 24h, so hourly ticks ensure meaningful gains)
+            float resupply = 50.0f;
 
-            // Wealthy settlement bonus: +5% if prosperity > 5000
+            // Wealthy settlement bonus: +10% if prosperity > 5000
             float prosperity = settlement.Town?.Prosperity ?? 0f;
             if (prosperity > 5000)
             {
-                resupply += 5.0f;
+                resupply += 10.0f;
             }
 
-            // Owned settlement bonus: +5% if lord owns the settlement
+            // Owned settlement bonus: +10% if lord owns the settlement
             if (settlement.OwnerClan == lordParty.LeaderHero?.Clan)
             {
-                resupply += 5.0f;
+                resupply += 10.0f;
             }
 
             ModLogger.Debug(LogCategory,
-                $"Resupply in {settlement.Name}: base=40, prosperity={prosperity:F0} ({(prosperity > 5000 ? "+5" : "0")}), " +
+                $"Resupply in {settlement.Name}: base=50, prosperity={prosperity:F0} ({(prosperity > 5000 ? "+10" : "0")}), " +
                 $"owned={settlement.OwnerClan == lordParty.LeaderHero?.Clan} => {resupply:F1}%");
 
             return resupply;
+        }
+
+        /// <summary>
+        /// Calculates hourly resupply when in a settlement.
+        /// Base rate is ~2.08% per hour (50% / 24 hours) in towns/castles.
+        /// Bonuses for prosperity and ownership provide additional recovery.
+        /// This allows partial-day settlement visits to provide meaningful supply gains since lords rarely stay 24 hours.
+        /// </summary>
+        private float CalculateHourlyResupply()
+        {
+            MobileParty lordParty = GetLordParty();
+            if (lordParty?.CurrentSettlement == null)
+            {
+                return 0f;
+            }
+
+            Settlement settlement = lordParty.CurrentSettlement;
+
+            // Only resupply in towns and castles (not villages)
+            if (!settlement.IsTown && !settlement.IsCastle)
+            {
+                return 0f;
+            }
+
+            // Base resupply: +50% per day = ~2.08% per hour (50/24)
+            float dailyResupply = 50.0f;
+
+            // Wealthy settlement bonus: +10% per day = ~0.42% per hour (10/24)
+            float prosperity = settlement.Town?.Prosperity ?? 0f;
+            if (prosperity > 5000)
+            {
+                dailyResupply += 10.0f;
+            }
+
+            // Owned settlement bonus: +10% per day = ~0.42% per hour (10/24)
+            if (settlement.OwnerClan == lordParty.LeaderHero?.Clan)
+            {
+                dailyResupply += 10.0f;
+            }
+
+            // Convert daily rate to hourly rate
+            float hourlyResupply = dailyResupply / 24.0f;
+
+            return hourlyResupply;
         }
 
         /// <summary>

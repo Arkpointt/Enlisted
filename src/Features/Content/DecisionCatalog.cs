@@ -295,7 +295,7 @@ namespace Enlisted.Features.Content
                 decision.MenuSection = "camp_life";
             }
             else if (id.Contains("quarter") || id.Contains("supply") || id.Contains("qm") ||
-                     id.Contains("logistics") || id.Contains("audit"))
+                     id.Contains("logistics") || id.Contains("audit") || id.Contains("baggage"))
             {
                 decision.MenuSection = "logistics";
             }

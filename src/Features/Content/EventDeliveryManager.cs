@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Enlisted.Features.Camp;
+using Enlisted.Features.Camp.Models;
 using Enlisted.Features.Company;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -85,11 +88,13 @@ namespace Enlisted.Features.Content
         {
             if (_isShowingEvent)
             {
+                ModLogger.Debug(LogCategory, $"Event delivery blocked: currently showing {_currentEvent?.Id ?? "unknown"}");
                 return;
             }
 
             if (_pendingEvents.Count == 0)
             {
+                ModLogger.Debug(LogCategory, "Event delivery: queue is empty");
                 return;
             }
 
@@ -105,7 +110,8 @@ namespace Enlisted.Features.Content
             _currentEvent = _pendingEvents.Dequeue();
             _isShowingEvent = true;
 
-            ModLogger.Info(LogCategory, $"Delivering event: {_currentEvent.Id}");
+            var category = _currentEvent.Category ?? "event";
+            ModLogger.Info(LogCategory, $"Delivering {category}: {_currentEvent.Id} (queue remaining: {_pendingEvents.Count})");
 
             ShowEventPopup(_currentEvent);
         }
@@ -349,16 +355,35 @@ namespace Enlisted.Features.Content
 
                 if (!isCancelOption)
                 {
-                    // Player committed to an action - record cooldown
+                    ModLogger.Info(LogCategory, $"Non-cancel option selected: {option.Id} - recording cooldown");
+                    
+                    // Player committed to an action - record decision cooldown
                     DecisionManager.Instance?.RecordDecisionSelected(_currentEvent.Id);
                     ModLogger.Info(LogCategory, $"Decision cooldown recorded for: {_currentEvent.Id}");
+
+                    // Also record opportunity engagement if this decision was triggered by a camp opportunity
+                    // This ensures non-immediate opportunities get their cooldown tracked properly
+                    if (!string.IsNullOrEmpty(_currentEvent.OriginatingOpportunityId) &&
+                        !string.IsNullOrEmpty(_currentEvent.OriginatingOpportunityType))
+                    {
+                        ModLogger.Debug(LogCategory, $"Recording opportunity engagement: {_currentEvent.OriginatingOpportunityId}");
+                        var generator = CampOpportunityGenerator.Instance;
+                        if (generator != null)
+                        {
+                            if (System.Enum.TryParse<OpportunityType>(_currentEvent.OriginatingOpportunityType, out var oppType))
+                            {
+                                generator.RecordEngagement(_currentEvent.OriginatingOpportunityId, oppType);
+                                ModLogger.Info(LogCategory, $"Opportunity engagement recorded for: {_currentEvent.OriginatingOpportunityId}");
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    ModLogger.Debug(LogCategory, $"Cancel option selected - no cooldown recorded");
+                    ModLogger.Info(LogCategory, $"Cancel option selected: {option.Id} - no cooldown recorded for {_currentEvent?.Id}");
                 }
             }
-
+            
             // Track declined promotions (player chose "not ready" or "decline" in proving event)
             if (_currentEvent != null && _currentEvent.Id.StartsWith("promotion_", StringComparison.OrdinalIgnoreCase))
             {
@@ -385,9 +410,23 @@ namespace Enlisted.Features.Content
 
             if (isRisky)
             {
+                // Calculate actual chance, including skill modifier if specified
+                var actualChance = CalculateSkillModifiedChance(option);
                 var roll = MBRandom.RandomInt(100);
-                success = roll < option.RiskChance.Value;
-                ModLogger.Info(LogCategory, $"Risky option roll: {roll} vs {option.RiskChance.Value}% -> {(success ? "SUCCESS" : "FAILURE")}");
+                success = roll < actualChance;
+                
+                if (!string.IsNullOrEmpty(option.SkillCheck))
+                {
+                    ModLogger.Info(LogCategory, $"Skill-modified roll: {roll} vs {actualChance}% ({option.SkillCheck} check, base {option.RiskChance.Value}%) -> {(success ? "SUCCESS" : "FAILURE")}");
+                }
+                else
+                {
+                    ModLogger.Info(LogCategory, $"Risky option roll: {roll} vs {actualChance}% -> {(success ? "SUCCESS" : "FAILURE")}");
+                }
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, $"Non-risky option selected: {option.Id}");
             }
 
             // Apply base effects first (always applied)
@@ -752,6 +791,27 @@ namespace Enlisted.Features.Content
             if (!string.IsNullOrEmpty(effects.BagCheckChoice))
             {
                 ApplyBagCheckChoice(effects.BagCheckChoice);
+            }
+
+            // Apply medical effects (illness, injury, treatment, worsening)
+            if (!string.IsNullOrEmpty(effects.IllnessOnset))
+            {
+                ApplyIllnessOnset(effects.IllnessOnset);
+            }
+
+            if (!string.IsNullOrEmpty(effects.InjuryOnset))
+            {
+                ApplyInjuryOnset(effects.InjuryOnset);
+            }
+
+            if (effects.BeginTreatment == true)
+            {
+                ApplyBeginTreatment();
+            }
+
+            if (effects.WorsenCondition == true)
+            {
+                ApplyWorsenCondition();
             }
 
             // Apply fatigue change
@@ -1165,6 +1225,169 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
+        /// Applies an illness to the player based on the specified severity.
+        /// Used by illness onset events and medical risk escalation.
+        /// Context-aware: applies ship_fever/scurvy at sea, camp_fever/flux on land.
+        /// </summary>
+        private void ApplyIllnessOnset(string severityStr)
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                ModLogger.Debug(LogCategory, "ApplyIllnessOnset: Condition system disabled");
+                return;
+            }
+
+            // Parse severity (support both "mild" and "minor" for flexibility)
+            var severity = severityStr.ToLowerInvariant() switch
+            {
+                "mild" or "minor" => IllnessSeverity.Mild,
+                "moderate" => IllnessSeverity.Moderate,
+                "severe" => IllnessSeverity.Severe,
+                "critical" => IllnessSeverity.Critical,
+                _ => IllnessSeverity.None
+            };
+
+            if (severity == IllnessSeverity.None)
+            {
+                ModLogger.Warn(LogCategory, $"ApplyIllnessOnset: Invalid severity '{severityStr}'");
+                return;
+            }
+
+            // Select illness type based on travel context (maritime vs land)
+            var isAtSea = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            string illnessType;
+            
+            if (isAtSea)
+            {
+                // Maritime illnesses: ship_fever (more common) or scurvy (prolonged voyages)
+                // Scurvy appears at severe+ levels, ship_fever otherwise
+                illnessType = severity >= IllnessSeverity.Severe ? "scurvy" : "ship_fever";
+            }
+            else
+            {
+                // Land illnesses: camp_fever (more common) or flux (camp conditions)
+                // Flux appears at severe+ levels, camp_fever otherwise
+                illnessType = severity >= IllnessSeverity.Severe ? "flux" : "camp_fever";
+            }
+
+            var baseDays = conditions.GetBaseRecoveryDaysForIllness(illnessType, severity);
+            conditions.TryApplyIllness(illnessType, severity, baseDays, "event");
+            
+            var contextStr = isAtSea ? "at sea" : "on land";
+            ModLogger.Info(LogCategory, $"ApplyIllnessOnset: Applied {severity} {illnessType} ({baseDays} days) [{contextStr}]");
+        }
+
+        /// <summary>
+        /// Applies an injury to the player based on the specified severity.
+        /// Used by injury events and combat outcomes.
+        /// </summary>
+        private void ApplyInjuryOnset(string severityStr)
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                ModLogger.Debug(LogCategory, "ApplyInjuryOnset: Condition system disabled");
+                return;
+            }
+
+            var severity = severityStr.ToLowerInvariant() switch
+            {
+                "minor" => InjurySeverity.Minor,
+                "moderate" => InjurySeverity.Moderate,
+                "severe" => InjurySeverity.Severe,
+                "critical" => InjurySeverity.Critical,
+                _ => InjurySeverity.None
+            };
+
+            if (severity == InjurySeverity.None)
+            {
+                ModLogger.Warn(LogCategory, $"ApplyInjuryOnset: Invalid severity '{severityStr}'");
+                return;
+            }
+
+            // Default to blade_cut for now (can be made configurable later)
+            var injuryType = "blade_cut";
+            var baseDays = conditions.GetBaseRecoveryDaysForInjury(injuryType, severity);
+
+            conditions.TryApplyInjury(injuryType, severity, baseDays, "event");
+            ModLogger.Info(LogCategory, $"ApplyInjuryOnset: Applied {severity} {injuryType} ({baseDays} days)");
+        }
+
+        /// <summary>
+        /// Begins medical treatment for the player's current condition.
+        /// Marks player as under medical care and sets recovery rate modifier.
+        /// </summary>
+        private void ApplyBeginTreatment()
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                ModLogger.Debug(LogCategory, "ApplyBeginTreatment: Condition system disabled");
+                return;
+            }
+
+            if (!conditions.State.HasAnyCondition)
+            {
+                ModLogger.Debug(LogCategory, "ApplyBeginTreatment: No condition to treat");
+                return;
+            }
+
+            // Use default treatment multiplier from config (1.5x recovery speed)
+            var config = Enlisted.Mod.Core.Config.ConfigurationManager.LoadPlayerConditionsConfig();
+            var multiplier = config?.BasicTreatmentMultiplier ?? 1.5f;
+
+            conditions.ApplyTreatment(multiplier, "surgeon_treatment");
+            ModLogger.Info(LogCategory, $"ApplyBeginTreatment: Started treatment (recovery {multiplier}x)");
+        }
+
+        /// <summary>
+        /// Worsens the player's current condition by one severity level.
+        /// Used by untreated condition events and failure outcomes.
+        /// </summary>
+        private void ApplyWorsenCondition()
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                ModLogger.Debug(LogCategory, "ApplyWorsenCondition: Condition system disabled");
+                return;
+            }
+
+            var state = conditions.State;
+            if (!state.HasAnyCondition)
+            {
+                ModLogger.Debug(LogCategory, "ApplyWorsenCondition: No condition to worsen");
+                return;
+            }
+
+            // Worsen illness if present
+            if (state.HasIllness && state.CurrentIllness < IllnessSeverity.Critical)
+            {
+                var newSeverity = state.CurrentIllness + 1;
+                var illnessType = state.IllnessType;
+                var baseDays = conditions.GetBaseRecoveryDaysForIllness(illnessType, newSeverity);
+
+                conditions.TryApplyIllness(illnessType, newSeverity, baseDays, "condition_worsened");
+                ModLogger.Info(LogCategory, $"ApplyWorsenCondition: Illness worsened to {newSeverity}");
+            }
+            // Otherwise worsen injury if present
+            else if (state.HasInjury && state.CurrentInjury < InjurySeverity.Critical)
+            {
+                var newSeverity = state.CurrentInjury + 1;
+                var injuryType = state.InjuryType;
+                var baseDays = conditions.GetBaseRecoveryDaysForInjury(injuryType, newSeverity);
+
+                conditions.TryApplyInjury(injuryType, newSeverity, baseDays, "condition_worsened");
+                ModLogger.Info(LogCategory, $"ApplyWorsenCondition: Injury worsened to {newSeverity}");
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, "ApplyWorsenCondition: Condition already at maximum severity");
+            }
+        }
+
+        /// <summary>
         /// Applies a promotion effect, advancing the player to the specified tier.
         /// This is called when an event option with promotes is selected (proving events).
         /// Triggers retinue grant for T7/T8/T9 promotions via SetTier().
@@ -1484,6 +1707,78 @@ namespace Enlisted.Features.Content
 
             EnlistedNewsBehavior.Instance.AddEventOutcome(outcome);
             ModLogger.Debug(LogCategory, $"Reported training to news: {summary}");
+        }
+
+        /// <summary>
+        /// Calculates the actual success chance for an option, including skill modifiers.
+        /// Formula: actualChance = baseChance + ((playerSkill - skillBase) / 5)
+        /// Result is clamped to 5-95% to prevent guaranteed outcomes.
+        /// </summary>
+        private static int CalculateSkillModifiedChance(EventOption option)
+        {
+            if (!option.RiskChance.HasValue)
+            {
+                return 100; // Non-risky option always succeeds
+            }
+
+            var baseChance = option.RiskChance.Value;
+
+            // Apply skill modifier if a skill check is specified
+            if (!string.IsNullOrEmpty(option.SkillCheck))
+            {
+                var hero = Hero.MainHero;
+                if (hero != null)
+                {
+                    var skill = SkillCheckHelper.GetSkillByName(option.SkillCheck);
+                    if (skill != null)
+                    {
+                        var playerSkillValue = hero.GetSkillValue(skill);
+                        var skillBase = option.SkillBase > 0 ? option.SkillBase : 50;
+                        
+                        // Each 5 points above/below skill base adds/subtracts 1% chance
+                        var skillModifier = (playerSkillValue - skillBase) / 5;
+                        baseChance += skillModifier;
+                    }
+                }
+            }
+
+            // Clamp to 5-95% to prevent guaranteed outcomes
+            return Math.Max(5, Math.Min(95, baseChance));
+        }
+
+        /// <summary>
+        /// Generates a dynamic tooltip for an option using its template.
+        /// Replaces placeholders: {CHANCE}, {SKILL}, {SKILL_NAME}.
+        /// </summary>
+        public static string GenerateDynamicTooltip(EventOption option)
+        {
+            if (string.IsNullOrEmpty(option.TooltipTemplate))
+            {
+                return option.Tooltip ?? string.Empty;
+            }
+
+            var tooltip = option.TooltipTemplate;
+            var chance = CalculateSkillModifiedChance(option);
+            
+            tooltip = tooltip.Replace("{CHANCE}", chance.ToString());
+
+            if (!string.IsNullOrEmpty(option.SkillCheck))
+            {
+                var skill = SkillCheckHelper.GetSkillByName(option.SkillCheck);
+                var skillValue = 0;
+                var skillName = option.SkillCheck;
+                
+                if (skill != null && Hero.MainHero != null)
+                {
+                    skillValue = Hero.MainHero.GetSkillValue(skill);
+                    skillName = skill.Name?.ToString() ?? option.SkillCheck;
+                }
+                
+                tooltip = tooltip.Replace("{SKILL}", skillValue.ToString());
+                tooltip = tooltip.Replace("{SKILL_NAME}", skillName);
+            }
+
+            return tooltip;
         }
 
         /// <summary>
@@ -2265,23 +2560,34 @@ namespace Enlisted.Features.Content
         {
             try
             {
-                // Switch back to the decisions menu to trigger a refresh
-                // This forces OnDecisionsMenuInit to run again, rebuilding the cached entries
+                // Refresh whichever menu the player is currently on
+                // This forces the menu to rebuild, showing updated cooldowns and removing completed decisions
                 var currentMenuId = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId;
-                if (currentMenuId != null && currentMenuId == "enlisted_decisions")
+                
+                ModLogger.Info(LogCategory, $"Requesting decision menu refresh (current menu: {currentMenuId})");
+                
+                if (currentMenuId != null && 
+                    (currentMenuId == "enlisted_decisions" || currentMenuId == "enlisted_status"))
                 {
-                    // We're already on the decisions menu, so force a refresh by switching away and back
+                    // Force a refresh by switching to the same menu on next frame
+                    // This rebuilds the cached entries and updates availability states
                     NextFrameDispatcher.RunNextFrame(() =>
                     {
                         try
                         {
-                            GameMenu.SwitchToMenu("enlisted_decisions");
+                            ModLogger.Info(LogCategory, $"Refreshing menu (next frame): {currentMenuId}");
+                            GameMenu.SwitchToMenu(currentMenuId);
+                            ModLogger.Debug(LogCategory, $"Menu refresh completed: {currentMenuId}");
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error(LogCategory, "Error refreshing decisions menu after decision", ex);
+                            ModLogger.Error(LogCategory, $"Error refreshing {currentMenuId} after decision", ex);
                         }
                     });
+                }
+                else
+                {
+                    ModLogger.Debug(LogCategory, $"Menu refresh skipped - not on enlisted menu (current: {currentMenuId})");
                 }
             }
             catch (Exception ex)
@@ -2317,11 +2623,14 @@ namespace Enlisted.Features.Content
 
             var resolved = textObject.ToString();
 
-            // If resolution returned the raw {=...} pattern, the lookup failed - use fallback directly
+            // If resolution returned the raw {=...} pattern, the lookup failed - use fallback with variable substitution
             if (resolved.StartsWith("{="))
             {
                 ModLogger.Debug(LogCategory, $"XML lookup failed for '{textId}', using fallback");
-                return effectiveFallback ?? string.Empty;
+                // Create new TextObject from fallback and substitute variables
+                var fallbackTextObject = new TextObject(effectiveFallback ?? string.Empty);
+                SetEventTextVariables(fallbackTextObject);
+                return fallbackTextObject.ToString();
             }
 
             return resolved;

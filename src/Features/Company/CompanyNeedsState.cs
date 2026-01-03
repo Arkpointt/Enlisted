@@ -5,7 +5,7 @@ using TaleWorlds.Library;
 namespace Enlisted.Features.Company
 {
     /// <summary>
-    /// Tracks the current state of all five company needs for the enlisted lord's party.
+    /// Tracks the current state of all four company needs for the enlisted lord's party.
     /// Degrades daily based on activities and recovers through appropriate assignments.
     /// NOTE: Serialization is handled manually in ScheduleBehavior.SyncData()
     /// Supplies uses CompanySupplyManager for unified logistics calculation including rations.
@@ -14,9 +14,6 @@ namespace Enlisted.Features.Company
     {
         /// <summary>Combat readiness (0-100)</summary>
         public int Readiness { get; set; } = 60;
-        
-        /// <summary>Equipment condition (0-100)</summary>
-        public int Equipment { get; set; } = 60;
         
         /// <summary>Morale level (0-100)</summary>
         public int Morale { get; set; } = 60;
@@ -55,7 +52,6 @@ namespace Enlisted.Features.Company
             return need switch
             {
                 CompanyNeed.Readiness => Readiness,
-                CompanyNeed.Equipment => Equipment,
                 CompanyNeed.Morale => Morale,
                 CompanyNeed.Rest => Rest,
                 CompanyNeed.Supplies => Supplies,
@@ -74,9 +70,6 @@ namespace Enlisted.Features.Company
             {
                 case CompanyNeed.Readiness:
                     Readiness = value;
-                    break;
-                case CompanyNeed.Equipment:
-                    Equipment = value;
                     break;
                 case CompanyNeed.Morale:
                     Morale = value;
@@ -131,7 +124,6 @@ namespace Enlisted.Features.Company
         public bool HasCriticalNeeds()
         {
             return Readiness < CriticalThreshold ||
-                   Equipment < CriticalThreshold ||
                    Morale < CriticalThreshold ||
                    Rest < CriticalThreshold ||
                    Supplies < CriticalThreshold;
@@ -163,7 +155,7 @@ namespace Enlisted.Features.Company
         /// </summary>
         public int GetOverallHealth()
         {
-            return (Readiness + Equipment + Morale + Rest + Supplies) / 5;
+            return (Readiness + Morale + Rest + Supplies) / 4;
         }
     }
 }

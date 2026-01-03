@@ -2,8 +2,8 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2026-01-01 (Event frequency rebalance, routine flavor text, native API migration)
-**Total Documents:** 50
+**Last Updated:** 2026-01-02 (Added captivity and village raid analysis)
+**Total Documents:** 53
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
 
@@ -43,9 +43,8 @@
 1. [Root Documentation](#root-documentation)
 2. [Feature Lookup Quick Reference](#feature-lookup-quick-reference)
 3. [Features](#features)
-4. [Active Feature Development (AFEATURE)](#active-feature-development-afeature)
-5. [Content & Narrative](#content--narrative)
-6. [Research & Reference](#research--reference)
+4. [Content & Narrative](#content--narrative)
+5. [Research & Reference](#research--reference)
 
 ---
 
@@ -58,8 +57,8 @@
 | **Baggage Checks/Inspections** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Baggage Checks |
 | **Buyback System** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Buyback System |
 | **Company Needs** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 5 transparent metrics (Readiness/Morale/etc) |
-| **Injuries** | [injury-system.md](Features/Content/injury-system.md) | Percentage-based HP loss with narrative |
-| **Camp Hub Decisions** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 34 player-initiated decisions |
+| **Injuries & Illnesses** | [injury-system.md](Features/Content/injury-system.md) | Unified condition tracking, maritime context awareness |
+| **Camp Hub Decisions** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 33 player-initiated decisions |
 | **Orchestrator Camp Simulation** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Background + Opportunities layers |
 | **Camp Opportunities** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | 29 contextual activities with learning |
 | **Camp Background** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Autonomous roster tracking, incidents |
@@ -87,7 +86,7 @@
 | **Muster System (Pay Day Ceremony)** | [muster-system.md](Features/Core/muster-system.md) | Menu Flow, All 8 Stages |
 | **Officers Armory** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Officers Armory |
 | **Onboarding** | [onboarding-discharge-system.md](Features/Core/onboarding-discharge-system.md) | Onboarding |
-| **Orders (Chain of Command)** | [order-progression-system.md](AFEATURE/order-progression-system.md) | — |
+| **Orders (Chain of Command)** | [order-progression-system.md](Features/Core/order-progression-system.md) | — |
 | **Pay & Wages** | [pay-system.md](Features/Core/pay-system.md) | — |
 | **Progression System** | [event-system-schemas.md](Features/Content/event-system-schemas.md#progression-system-schema-future-foundation) | Generic probabilistic daily rolls for escalation tracks |
 | **Promotion & Rank Progression** | [promotion-system.md](Features/Core/promotion-system.md) | — |
@@ -101,7 +100,6 @@
 | **Town Access** | [town-access-system.md](Features/Campaign/town-access-system.md) | — |
 | **Training & XP** | [training-system.md](Features/Combat/training-system.md) | — |
 | **Traits & Identity** | [identity-system.md](Features/Identity/identity-system.md) | — |
-| **Native Trait Mapping** | [content-orchestrator-prompts.md](AFEATURE/content-orchestrator-prompts.md) | Phase 4.5 - Soldier→Valor, Officer→Calculating, Lord→Honor |
 
 ## Root Documentation
 
@@ -125,11 +123,11 @@
 | [index.md](Features/Core/index.md) | Core features index | ✅ Current |
 | [core-gameplay.md](Features/Core/core-gameplay.md) | Complete gameplay overview covering all major systems and how they interact | ✅ Current |
 | [enlistment.md](Features/Core/enlistment.md) | Enlistment system: joining process, lord selection, initial rank assignment, contract terms | ✅ Current |
-| [orders-system.md](Features/Core/orders-system.md) | ⚠️ **LEGACY** - Replaced by [Order Progression System](AFEATURE/order-progression-system.md) | 🗄️ Deprecated |
-| [order-progression-system.md](AFEATURE/order-progression-system.md) | **NEW** - Multi-day order execution: FORECAST → SCHEDULED → PENDING → ACTIVE → COMPLETE flow, 4 phases per day (6am/12pm/6pm/12am), slot events during duty (15-35% chance), consequence accumulation, orchestrator-coordinated timing. 16 orders with 85 order events active. | ✅ Implemented |
+| [orders-system.md](Features/Core/orders-system.md) | ⚠️ **LEGACY** - Replaced by [Order Progression System](order-progression-system.md) | 🗄️ Deprecated |
+| [order-progression-system.md](Features/Core/order-progression-system.md) | Multi-day order execution: phase progression (4/day), slot events during duty, consequence accumulation, order forecasting with imminent warnings. 17 orders with 330 order events active. | ✅ Implemented |
 | [promotion-system.md](Features/Core/promotion-system.md) | Rank progression T1-T9: XP sources (combat, orders, training), multi-factor requirements (service days, battles fought, reputation thresholds, discipline score), proving events (rank-up challenges), culture-specific rank titles, equipment tier unlocks, officer privileges (T7+) | ✅ Current |
 | [pay-system.md](Features/Core/pay-system.md) | Wages and payment: 12-day muster cycle, rank-based pay scales, wage modifiers (performance, reputation, lord wealth), pay tension (mutiny risk), deductions (fines, missing gear) | ✅ Current |
-| [muster-system.md](Features/Core/muster-system.md) | Muster System: 8-stage GameMenu sequence for pay day ceremonies, rank progression display, period summary (12-day recap), event integration (baggage/inspection/recruit), comprehensive reporting (combat/training/orders/XP breakdown), pay options, promotion recap, retinue muster (T7+), direct Quartermaster access | ✅ Current |
+| [muster-system.md](Features/Core/muster-system.md) | Muster System: 6-stage GameMenu sequence for pay day ceremonies, rank progression display, period summary (12-day recap), event integration (recruit), comprehensive reporting (combat/training/orders/XP breakdown), pay options, promotion recap, retinue muster (T7+), direct Quartermaster access | ✅ Current |
 | [company-events.md](Features/Core/company-events.md) | Company-wide events: march events, camp life events, morale events, supply events | ✅ Current |
 | [retinue-system.md](Features/Core/retinue-system.md) | Commander's retinue (T7+ officers): formation selection (player chooses retinue troops), context-aware trickle (1-3 troops per battle), relation-based reinforcements, loyalty tracking, 11 narrative events (character development), 6 post-battle incidents (heroism/casualties), 4 camp decisions (discipline/rewards), named veterans (persistent characters) | ✅ Current |
 | [companion-management.md](Features/Core/companion-management.md) | Companion integration: how companions work with enlisted systems, role assignments, special interactions | ✅ Current |
@@ -144,7 +142,7 @@
 | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Complete quartermaster system with 10+ subsystems: equipment purchasing (category browsing, reputation discounts 0-30%), quality modifiers (6 tiers affecting stats/prices), upgrade system (Gauntlet grid UI, sequential quality improvements with real stat bonuses, native ItemModifier system), buyback service (sell QM gear back at 30-65%), provisions/rations (T1-T6 issued, T7+ shop with Gauntlet grid UI), baggage inspections (contraband checks, rep-based outcomes), Officers Armory (T7+, elite gear), tier gates (rank-based access control), supply integration (equipment blocked <30%), first-meeting intro, contextual dialogue (150+ dynamic responses) | ✅ Current |
 | [provisions-rations-system.md](Features/Equipment/provisions-rations-system.md) | Food and rations: T1-T6 issued rations (12-day cycle, reclaimed at muster, quality by rep), T7+ provisions shop (premium prices 2.0-3.2x town markets, stock by supply level, Gauntlet grid UI with rank-based button gating), provision bundles (morale/fatigue boosts) | ✅ Current |
 | [company-supply-simulation.md](Features/Equipment/company-supply-simulation.md) | Company supply tracking (0-100% scale, includes rations, ammo, repairs, camp supplies), supply effects (equipment access gates, ration availability, QM greeting tone, stock levels), supply-based messaging | ⚠️ Mixed |
-| [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md) | Baggage train access gating based on march state, rank, and context | 📋 Specification |
+| [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md) | Baggage train access gating: world-state-aware simulation (probabilities adapt to campaign situation), dynamic decision system (appears only when accessible), orchestrator integration, rank-based privileges, emergency access, 5 baggage events | ✅ Current |
 
 ### Identity & Traits
 **Location:** `Features/Identity/`
@@ -185,8 +183,8 @@
 | [content-system-architecture.md](Features/Content/content-system-architecture.md) | Complete content system architecture: world-state-driven orchestration (ContentOrchestrator, WorldStateAnalyzer, SimulationPressureCalculator, PlayerBehaviorTracker), activity level system, native Bannerlord effect integration (IncidentEffectTranslator, trait mapping), JSON-driven content delivery, requirement checking, localization. Phases 1-6F implemented. | ✅ Current |
 | [event-system-schemas.md](Features/Content/event-system-schemas.md) | Event system JSON schemas: event structure (triggers, conditions, options, outcomes), decision schemas, order schemas, dialogue schemas, **Progression System Schema** (generic probabilistic daily rolls for escalation tracks), camp opportunities schema, validation rules | ✅ Current |
 | [event-reward-choices.md](Features/Content/event-reward-choices.md) | Event reward system: player choice outcomes, reward types (gold, items, reputation, XP), branching consequences. Code implemented but no JSON content uses it yet. | ⚠️ Coded, Not Content-Implemented |
-| [injury-system.md](Features/Content/injury-system.md) | Injury system: percentage-based HP loss (15-55%), narrative descriptions, severity levels (Minor to Critical), 15 injury types, contextual application through orders/events, RP-appropriate medieval military flavor. Replaces flat HP loss with immersive consequences. | ✅ Implemented |
-| [medical-progression-system.md](Features/Content/medical-progression-system.md) | First implementation of Progression System: CK3-style probabilistic daily rolls for Medical Risk track, treatment decisions, context/skill modifiers, threshold events. Uses generic [Progression System Schema](Features/Content/event-system-schemas.md#progression-system-schema-future-foundation) | 📋 Specification |
+| [injury-system.md](Features/Content/injury-system.md) | Injury & illness system: unified condition tracking for injuries (twisted knee, blade cut, arrow wound) and illnesses (camp fever, flux, ship fever, scurvy). Context-aware treatment (camp vs ship surgeon), maritime illness types automatically applied at sea, illness-type-aware worsening events, recovery tracking, treatment system. Severity levels (Minor/Mild to Critical), narrative descriptions with Bannerlord RP flavor. | ✅ Implemented |
+| [medical-progression-system.md](Features/Content/medical-progression-system.md) | Medical risk & illness system: orchestrator-driven medical risk tracking (0-5 escalation), illness onset probability calculation with modifiers (fatigue, siege, consecutive days), context-aware illness types (maritime vs land), treatment system (resets risk, begins recovery), condition worsening for untreated illnesses/injuries, medical opportunities queuing. Fully integrated with ContentOrchestrator. | ✅ Implemented |
 
 ### Technical Systems
 **Location:** `Features/Technical/`
@@ -211,55 +209,13 @@
 
 ---
 
-## Active Feature Development (AFEATURE)
-
-**Location:** `AFEATURE/`
-
-Active feature specifications for ongoing development. Phases 1-6F of Content Orchestrator are COMPLETE and documented in [Content System Architecture](Features/Content/content-system-architecture.md). This section tracks remaining work and future enhancements.
-
-### Completed & Documented
-
-| Document | Topic | Status | Documentation |
-|----------|-------|--------|---------------|
-| Content Orchestrator (Phases 1-6F) | World-state-driven orchestration, activity levels, native effects, UI integration | ✅ Implemented | [Content System Architecture](Features/Content/content-system-architecture.md) |
-| Camp Simulation System | Two-layer system: Background Simulation (autonomous company life) + Camp Opportunities (player-facing activities). 29 opportunities, learning system, pressure tracking, news feed integration. | ✅ Implemented | [Camp Simulation System](Features/Campaign/camp-simulation-system.md) |
-
-### Remaining Work
-
-| Document | Topic | Priority | Status |
-|----------|-------|----------|--------|
-| [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | Orchestrator implementation tracker. Phases 1-6F COMPLETE. Remaining: Phase 6G (missing decisions), 9 (decision scheduling), 10 (order warnings) | ⏸️ Future Enhancement | Reference |
-| [content-orchestrator-prompts.md](AFEATURE/content-orchestrator-prompts.md) | Implementation prompts for remaining phases (6G, 7, 8, 9, 10) | 📋 Reference | Copy-paste ready |
-| [order-progression-system.md](AFEATURE/order-progression-system.md) | Multi-day order execution system | ✅ Implemented | Specification |
-| [orders-content.md](AFEATURE/orders-content.md) | Order content definitions (16 orders) | ✅ Implemented | Reference |
-| [order-events-master.md](AFEATURE/order-events-master.md) | Order event catalog (85 events across 16 orders) | ✅ Implemented | Reference |
-
-### Archived Documents
-
-| Document | Topic | Status |
-|----------|-------|--------|
-| [ORDER-SYSTEM-MIGRATION.md](Archive/ORDER-SYSTEM-MIGRATION.md) | Migration guide for order system changes | 📦 Archived (migration complete) |
-| [phase7-playtesting-guide.md](Archive/phase7-playtesting-guide.md) | Integration testing and balance tuning guide | 📦 Archived (phase complete) |
-
-### Optional Future Enhancements
-
-1. **Phase 6G** (⏸️ Optional) - Create 26 additional camp decisions (beyond current 38)
-2. **Phase 10** (⏸️ Optional) - Order forecasting & warnings (improve >> speed UX)
-3. **Phase 9** (⏸️ Optional) - Decision scheduling system
-4. **Phase 7** (⏸️ Optional) - Content variants (JSON-only)
-5. **Phase 8** (⏸️ Optional) - Progression System framework
-
-**Core systems are complete.** Remaining phases are enhancements and polish.
-
----
-
 ## Content & Narrative
 
 **Location:** `Features/Content/`
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| [README.md](Features/Content/README.md) | Content catalog overview: 200+ content pieces (16 orders, 38 decisions, 80+ events, 51 map incidents, 85 order events, 23 retinue pieces) | ✅ Current |
+| [README.md](Features/Content/README.md) | Content catalog overview: 520 content pieces (17 orders, 33 decisions, 72 events, 51 map incidents, 330 order events, 17 retinue events) | ✅ Current |
 | [content-index.md](Features/Content/content-index.md) | Complete content catalog: all events with IDs, titles, descriptions, requirements, effects, skill checks, organized by category (Orders, Decisions, Events, Map Incidents, Retinue Content) | ✅ Current |
 | [event-catalog-by-system.md](Features/Content/event-catalog-by-system.md) | Events organized by system: lists every event ID with title, trigger conditions, outcomes, reputation effects, organized by feature area (Core/Equipment/Combat/Retinue/etc) for easy lookup | ✅ Current |
 
@@ -277,9 +233,11 @@ Active feature specifications for ongoing development. Phases 1-6F of Content Or
 | [native-map-incidents.md](Reference/native-map-incidents.md) | Native game incidents: all vanilla map incidents (bandits, prisoners, travelers), trigger conditions, outcomes, loot tables - use to avoid conflicts with native content | 📚 Reference |
 | [map-incidents-warsails.md](Reference/map-incidents-warsails.md) | Naval DLC map incidents: Warsails expansion content, naval encounters, coastal events - use to avoid DLC conflicts | 📚 Reference |
 | [ai-behavior-analysis.md](Reference/ai-behavior-analysis.md) | AI behavior analysis: native AI decision-making patterns, party movement logic, combat AI, lord behavior - use for AI-aware feature design | 📚 Reference |
+| [battle-system-complete-analysis.md](Reference/battle-system-complete-analysis.md) | Complete battle and encounter system analysis: all 68 battle/encounter/captivity/raid menus, UpdateInternal() state machine (12 states), complete battle lifecycles (manual attack, autosim, siege assault), captivity flow (13 menus), village raid flow (10 menus), menu transition flows with exact code references - use to understand native battle handling and verify enlisted mod coverage | 📚 Reference |
+| [complete-menu-analysis.md](Reference/complete-menu-analysis.md) | Complete native menu system analysis: tick-based menu refresh system, GetGenericStateMenu() priority order, siege menu flow (join_siege_event vs menu_siege_strategies), BesiegerCamp mechanics, race condition timeline documentation, captivity and village raid menus cataloged - use to understand menu transitions and timing issues | 📚 Reference |
+| [captivity-and-raid-analysis.md](Reference/captivity-and-raid-analysis.md) | Captivity and village raid systems deep dive: complete captivity flow (capture → 13 menu paths → release), army removal during captivity, village raid system (lord raiding while enlisted), enlisted mod gaps and recommendations - use to understand captivity handling and plan enlisted captivity features | 📚 Reference |
 | [opportunities-system-spec.md](Reference/opportunities-system-spec.md) | ⚠️ **LEGACY** - Replaced by [Camp Simulation System](Features/Campaign/camp-simulation-system.md) | 🗄️ Deprecated |
-| [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Two-layer camp system: Background Simulation (autonomous company life) + Camp Opportunities (29 player activities with learning). Complete implementation documentation. | ✅ Implemented |
-| [content-orchestrator-plan.md](AFEATURE/content-orchestrator-plan.md) | Remaining orchestrator work: Phase 6G (missing decisions), Phase 9 (decision scheduling), Phase 10 (order warnings). Phases 1-6F documented in [Content System Architecture](Features/Content/content-system-architecture.md). | ⚠️ In Progress |
+| [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Two-layer camp system: Background Simulation (autonomous company life) + Camp Opportunities (29 player activities with learning), Decision Scheduling (Phase 9). Complete implementation documentation. | ✅ Implemented |
 
 ---
 
@@ -295,6 +253,6 @@ Active feature specifications for ongoing development. Phases 1-6F of Content Or
 
 ---
 
-**Last reorganization:** 2026-01-01 (Event frequency rebalance, routine flavor text everywhere, native API migration for sea travel)
+**Last reorganization:** 2026-01-01 (Baggage train orchestrator integration, world-state-aware simulation)
 
 

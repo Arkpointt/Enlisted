@@ -1045,7 +1045,7 @@ namespace Enlisted.Features.Interface.Behaviors
         /// recent raids, or recent arrivals. Does not show FullAccess in settlements (normal state).
         /// Uses sea-specific text when party is at sea.
         /// </summary>
-        private static string BuildBaggageStatusLine()
+        public static string BuildBaggageStatusLine()
         {
             try
             {
@@ -3247,12 +3247,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Build headline from outcome
                 string headline = outcome.GetNewsSummary();
                 
-                // Add override context if applicable
-                if (outcome.WasOverride && !string.IsNullOrEmpty(outcome.OverrideReason))
-                {
-                    headline = $"{headline} ({outcome.OverrideReason})";
-                }
-
                 var dayNumber = (int)CampaignTime.Now.ToDays;
                 var storyKey = $"routine:{outcome.Phase}:{outcome.ActivityCategory}:{dayNumber}";
 
@@ -4015,15 +4009,15 @@ namespace Enlisted.Features.Interface.Behaviors
                     if (medRisk >= 4)
                     {
                         // Serious/Critical - urgent
-                        return new TextObject("{=brief_medrisk_serious}Fever won't break. Surgeon's tent calls.").ToString();
+                        return new TextObject("{=brief_medrisk_serious}Fever won't break. See the surgeon before it worsens.").ToString();
                     }
                     if (medRisk >= 3)
                     {
                         // Concerning - getting worse
-                        return new TextObject("{=brief_medrisk_concerning}The ache is constant now. Rest or surgeon.").ToString();
+                        return new TextObject("{=brief_medrisk_concerning}Chills and aches. Illness brewing. Rest or surgeon.").ToString();
                     }
                     // Med Risk 2 - early warning
-                    return new TextObject("{=brief_medrisk_mild}Something's off. Tired. Aching. Watch it.").ToString();
+                    return new TextObject("{=brief_medrisk_mild}Feeling run down. Could be coming down with something.").ToString();
                 }
 
                 // Priority 3: Fatigue

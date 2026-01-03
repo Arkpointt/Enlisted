@@ -94,23 +94,47 @@ namespace Enlisted.Features.Conditions
                     _state.UnderMedicalCare = underCare;
                     _state.RecoveryRateModifier = Math.Max(0.1f, recoveryMult);
 
+                    // Detect stale condition data (severity without days) before normalization
+                    if ((_state.CurrentInjury != InjurySeverity.None && _state.InjuryDaysRemaining <= 0) ||
+                        (_state.CurrentIllness != IllnessSeverity.None && _state.IllnessDaysRemaining <= 0))
+                    {
+                        ModLogger.Warn(LogCategory, 
+                            $"Detected stale condition data on load: Injury={_state.CurrentInjury}({_state.InjuryDaysRemaining}d), " +
+                            $"Illness={_state.CurrentIllness}({_state.IllnessDaysRemaining}d). Normalizing...");
+                    }
+
                     NormalizeState();
+                    
+                    // Log loaded state for diagnostics
+                    if (_state.HasAnyCondition)
+                    {
+                        ModLogger.Info(LogCategory, 
+                            $"Loaded active conditions: Injury={_state.CurrentInjury}({_state.InjuryDaysRemaining}d), " +
+                            $"Illness={_state.CurrentIllness}({_state.IllnessDaysRemaining}d)");
+                    }
                 }
             });
         }
 
+        /// <summary>
+        /// Ensures condition state is consistent. Clears any severity values 
+        /// when days remaining is 0 or negative, preventing stale data from 
+        /// triggering decision requirements or displaying incorrect status.
+        /// </summary>
         private void NormalizeState()
         {
             if (_state.InjuryDaysRemaining <= 0)
             {
                 _state.CurrentInjury = InjurySeverity.None;
                 _state.InjuryType = string.Empty;
+                _state.InjuryDaysRemaining = 0; // Ensure no negative values
             }
 
             if (_state.IllnessDaysRemaining <= 0)
             {
                 _state.CurrentIllness = IllnessSeverity.None;
                 _state.IllnessType = string.Empty;
+                _state.IllnessDaysRemaining = 0; // Ensure no negative values
             }
 
             if (!_state.HasAnyCondition)
@@ -159,6 +183,10 @@ namespace Enlisted.Features.Conditions
             var recoveryMult = Math.Max(0.1f, _state.RecoveryRateModifier);
             var recoveryTicks = _state.UnderMedicalCare ? Math.Max(1, (int)Math.Round(recoveryMult)) : 1;
 
+            // Track if illness is about to heal
+            var hadIllness = _state.HasIllness;
+            var illnessSeverity = _state.CurrentIllness;
+
             if (_state.HasInjury)
             {
                 _state.InjuryDaysRemaining = Math.Max(0, _state.InjuryDaysRemaining - recoveryTicks);
@@ -176,6 +204,8 @@ namespace Enlisted.Features.Conditions
             }
 
             var recoveredAny = false;
+            var recoveredFromIllness = false;
+            
             if (_state.InjuryDaysRemaining <= 0 && _state.CurrentInjury != InjurySeverity.None)
             {
                 recoveredAny = true;
@@ -183,15 +213,106 @@ namespace Enlisted.Features.Conditions
             if (_state.IllnessDaysRemaining <= 0 && _state.CurrentIllness != IllnessSeverity.None)
             {
                 recoveredAny = true;
+                recoveredFromIllness = hadIllness;
             }
 
             NormalizeState();
 
+            // Restore HP when illness heals (Phase 6G)
+            if (recoveredFromIllness && !_state.HasIllness)
+            {
+                RestoreHpOnIllnessRecovery(illnessSeverity);
+            }
+
             if (recoveredAny)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("{=cond_recovered}You’ve recovered.").ToString(),
+                    new TextObject("{=cond_recovered}You've recovered.").ToString(),
                     Colors.Green));
+            }
+            else
+            {
+                // Daily illness status messaging (Phase 6G)
+                DisplayDailyConditionStatus();
+            }
+        }
+
+        /// <summary>
+        /// Restores HP when the player recovers from illness.
+        /// </summary>
+        private void RestoreHpOnIllnessRecovery(IllnessSeverity previousSeverity)
+        {
+            var hero = Hero.MainHero;
+            if (hero == null)
+            {
+                return;
+            }
+
+            var maxHp = hero.CharacterObject.MaxHitPoints();
+            
+            // Restore a portion of max HP based on previous severity
+            var restoration = previousSeverity switch
+            {
+                IllnessSeverity.Mild => (int)(maxHp * 0.05f),
+                IllnessSeverity.Moderate => (int)(maxHp * 0.10f),
+                IllnessSeverity.Severe => (int)(maxHp * 0.15f),
+                IllnessSeverity.Critical => (int)(maxHp * 0.20f),
+                _ => 0
+            };
+
+            if (restoration > 0)
+            {
+                hero.HitPoints = Math.Min(maxHp, hero.HitPoints + restoration);
+                ModLogger.Info(LogCategory, $"Illness recovery HP restored: +{restoration} HP, new HP: {hero.HitPoints}");
+            }
+        }
+
+        /// <summary>
+        /// Displays daily combat log messages about current condition status.
+        /// </summary>
+        private void DisplayDailyConditionStatus()
+        {
+            if (!_state.HasAnyCondition)
+            {
+                return;
+            }
+
+            // Display illness status
+            if (_state.HasIllness)
+            {
+                var color = _state.CurrentIllness switch
+                {
+                    IllnessSeverity.Mild => Color.FromUint(0xFFCCCC88), // Pale yellow
+                    IllnessSeverity.Moderate => Color.FromUint(0xFFCC9944), // Orange
+                    IllnessSeverity.Severe => Color.FromUint(0xFFCC4444), // Red
+                    IllnessSeverity.Critical => Color.FromUint(0xFFFF2222), // Bright red
+                    _ => Colors.White
+                };
+
+                var severityText = GetIllnessSeverityLabel(_state.CurrentIllness).ToString();
+                var daysText = _state.IllnessDaysRemaining == 1 ? "day" : "days";
+                var msg = $"Illness ({severityText}): {_state.IllnessDaysRemaining} {daysText} remaining.";
+                
+                InformationManager.DisplayMessage(new InformationMessage(msg, color));
+            }
+
+            // Display injury status
+            if (_state.HasInjury)
+            {
+                var color = _state.CurrentInjury switch
+                {
+                    InjurySeverity.Minor => Color.FromUint(0xFFCCCC88),
+                    InjurySeverity.Moderate => Color.FromUint(0xFFCC9944),
+                    InjurySeverity.Severe => Color.FromUint(0xFFCC4444),
+                    InjurySeverity.Critical => Color.FromUint(0xFFFF2222),
+                    _ => Colors.White
+                };
+
+                var severityText = GetInjurySeverityLabel(_state.CurrentInjury).ToString();
+                var daysText = _state.InjuryDaysRemaining == 1 ? "day" : "days";
+                var msg = $"Injury ({severityText}): {_state.InjuryDaysRemaining} {daysText} remaining.";
+                
+                InformationManager.DisplayMessage(new InformationMessage(msg, color));
             }
         }
 
@@ -301,6 +422,9 @@ namespace Enlisted.Features.Conditions
                 return;
             }
 
+            var wasIll = _state.HasIllness;
+            var previousSeverity = _state.CurrentIllness;
+
             if (_state.HasIllness)
             {
                 if (severity > _state.CurrentIllness)
@@ -323,6 +447,13 @@ namespace Enlisted.Features.Conditions
 
             _state.ClearTreatment();
 
+            // Apply HP reduction based on illness severity (Phase 6G)
+            // HP floor is 30% of max HP - illness can weaken but not kill
+            if (!wasIll || severity > previousSeverity)
+            {
+                ApplyIllnessHpReduction(severity);
+            }
+
             var label = GetIllnessLabel(_state.IllnessType);
             var severityText = GetIllnessSeverityLabel(severity);
             var msg = new TextObject("{=cond_illness_gained}You fell ill ({SEVERITY}): {ILLNESS}.");
@@ -330,6 +461,42 @@ namespace Enlisted.Features.Conditions
             msg.SetTextVariable("ILLNESS", label);
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Red));
             ModLogger.Info(LogCategory, $"Illness applied ({severity} {illnessType}, days={days}, why={reason})");
+        }
+
+        /// <summary>
+        /// Applies HP reduction based on illness severity.
+        /// HP floor is 30% of max HP - illness can weaken but not kill.
+        /// </summary>
+        private void ApplyIllnessHpReduction(IllnessSeverity severity)
+        {
+            var hero = Hero.MainHero;
+            if (hero == null)
+            {
+                return;
+            }
+
+            var maxHp = hero.CharacterObject.MaxHitPoints();
+            var hpFloor = (int)(maxHp * 0.30f);
+
+            // HP reduction by severity
+            var reduction = severity switch
+            {
+                IllnessSeverity.Mild => 0,
+                IllnessSeverity.Moderate => (int)(maxHp * 0.10f),
+                IllnessSeverity.Severe => (int)(maxHp * 0.25f),
+                IllnessSeverity.Critical => (int)(maxHp * 0.40f),
+                _ => 0
+            };
+
+            if (reduction <= 0)
+            {
+                return;
+            }
+
+            var newHp = hero.HitPoints - reduction;
+            hero.HitPoints = Math.Max(hpFloor, newHp);
+            
+            ModLogger.Info(LogCategory, $"Illness HP reduction: -{reduction} HP (floor: {hpFloor}), new HP: {hero.HitPoints}");
         }
 
         internal PlayerConditionDefinitionsJson LoadDefinitions()

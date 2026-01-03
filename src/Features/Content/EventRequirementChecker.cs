@@ -1,4 +1,5 @@
 using System;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Context;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -95,6 +96,24 @@ namespace Enlisted.Features.Content
                 
                 // Check at sea (for maritime events like ship's hold)
                 if (!MeetsAtSeaRequirement(requirements))
+                {
+                    return false;
+                }
+                
+                // Check hasAnyCondition (for medical decisions that require being injured/ill)
+                if (!MeetsHasAnyConditionRequirement(requirements))
+                {
+                    return false;
+                }
+                
+                // Check hasSevereCondition (for emergency medical decisions)
+                if (!MeetsHasSevereConditionRequirement(requirements))
+                {
+                    return false;
+                }
+                
+                // Check maxIllness (blocks training/labor when too ill)
+                if (!MeetsMaxIllnessRequirement(requirements))
                 {
                     return false;
                 }
@@ -368,6 +387,90 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
+        /// Checks if the player has any condition (injury, illness, or exhaustion).
+        /// Used by medical decisions that only appear when the player needs treatment.
+        /// </summary>
+        private static bool MeetsHasAnyConditionRequirement(EventRequirements requirements)
+        {
+            if (requirements.HasAnyCondition != true)
+            {
+                return true; // No condition requirement
+            }
+            
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return false; // Condition system disabled
+            }
+            
+            return conditions.State?.HasAnyCondition == true;
+        }
+
+        /// <summary>
+        /// Checks if the player has a severe or critical condition.
+        /// Used by emergency medical decisions that only appear for urgent cases.
+        /// </summary>
+        private static bool MeetsHasSevereConditionRequirement(EventRequirements requirements)
+        {
+            if (requirements.HasSevereCondition != true)
+            {
+                return true; // No severe condition requirement
+            }
+            
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return false;
+            }
+            
+            var state = conditions.State;
+            if (state == null)
+            {
+                return false;
+            }
+            
+            // Check for severe or critical injury/illness that is ACTIVE (days remaining > 0).
+            // This matches the definition of HasInjury/HasIllness used in status display.
+            var hasSevereInjury = state.CurrentInjury >= InjurySeverity.Severe && state.InjuryDaysRemaining > 0;
+            var hasSevereIllness = state.CurrentIllness >= IllnessSeverity.Severe && state.IllnessDaysRemaining > 0;
+            
+            return hasSevereInjury || hasSevereIllness;
+        }
+
+        /// <summary>
+        /// Checks if the player's illness severity is at or below the maximum allowed.
+        /// Used by training/labor decisions to block strenuous activity when too ill.
+        /// Valid maxIllness values: "None", "Mild", "Moderate", "Severe" (null = no restriction)
+        /// </summary>
+        private static bool MeetsMaxIllnessRequirement(EventRequirements requirements)
+        {
+            if (string.IsNullOrEmpty(requirements.MaxIllness))
+            {
+                return true; // No illness restriction
+            }
+            
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return true; // Condition system disabled, allow the event
+            }
+            
+            var currentIllness = conditions.State?.CurrentIllness ?? IllnessSeverity.None;
+            
+            // Parse the max allowed severity
+            var maxAllowed = requirements.MaxIllness.ToLowerInvariant() switch
+            {
+                "none" => IllnessSeverity.None,
+                "mild" => IllnessSeverity.Mild,
+                "moderate" => IllnessSeverity.Moderate,
+                "severe" => IllnessSeverity.Severe,
+                _ => IllnessSeverity.Critical // Unknown value = allow all
+            };
+            
+            return currentIllness <= maxAllowed;
+        }
+
+        /// <summary>
         /// Gets the player's current enlistment tier.
         /// </summary>
         public static int GetPlayerTier()
@@ -510,6 +613,12 @@ namespace Enlisted.Features.Content
                 "ai_safe" => CheckAiSafe(),
                 "camp_established" => CheckCampEstablished(),
                 
+                // Medical conditions
+                "has_untreated_condition" => CheckHasUntreatedCondition(),
+                "has_maritime_illness" => CheckHasMaritimeIllness(),
+                "has_land_illness" => CheckHasLandIllness(),
+                "not_maritime_illness" => !CheckHasMaritimeIllness(),
+                
                 // Retinue conditions
                 "retinue_below_capacity" => CheckRetinueBelowCapacity(),
                 "last_battle_won" => CheckLastBattleWon(),
@@ -537,6 +646,72 @@ namespace Enlisted.Features.Content
             
             var lordParty = enlistment.CurrentLord.PartyBelongedTo;
             return lordParty.IsCurrentlyAtSea;
+        }
+
+        /// <summary>
+        /// Checks if the player has an untreated condition (injury or illness without medical care).
+        /// Used by condition worsening events that trigger when player neglects treatment.
+        /// </summary>
+        private static bool CheckHasUntreatedCondition()
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return false;
+            }
+
+            var state = conditions.State;
+            if (state == null || !state.HasAnyCondition)
+            {
+                return false;
+            }
+
+            // Has condition but is NOT under medical care = untreated
+            return !state.UnderMedicalCare;
+        }
+
+        /// <summary>
+        /// Checks if the player has a maritime illness (ship_fever or scurvy).
+        /// Used to select nautical-themed worsening events regardless of current location.
+        /// </summary>
+        private static bool CheckHasMaritimeIllness()
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return false;
+            }
+
+            var state = conditions.State;
+            if (state == null || !state.HasIllness)
+            {
+                return false;
+            }
+
+            var illnessType = state.IllnessType?.ToLowerInvariant() ?? string.Empty;
+            return illnessType is "ship_fever" or "scurvy";
+        }
+
+        /// <summary>
+        /// Checks if the player has a land-based illness (camp_fever or flux).
+        /// Used to select camp-themed worsening events regardless of current location.
+        /// </summary>
+        private static bool CheckHasLandIllness()
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                return false;
+            }
+
+            var state = conditions.State;
+            if (state == null || !state.HasIllness)
+            {
+                return false;
+            }
+
+            var illnessType = state.IllnessType?.ToLowerInvariant() ?? string.Empty;
+            return illnessType is "camp_fever" or "flux";
         }
         
         /// <summary>

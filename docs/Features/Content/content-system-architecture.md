@@ -2,10 +2,10 @@
 
 **Summary:** The unified content system manages all narrative content (events, decisions, orders, map incidents) through a world-state driven orchestration pipeline. The Content Orchestrator analyzes your lord's situation and coordinates content delivery to match military reality: garrison duty is quiet, campaigns are busy, sieges are intense. All content uses JSON definitions, XML localization, requirement checking, and native Bannerlord effect integration.
 
-**Status:** ✅ **IMPLEMENTED** - ContentOrchestrator, OrderProgressionBehavior, 85 order events active  
-**Last Updated:** 2026-01-01 (Native API usage for travel context detection)  
+**Status:** ✅ **IMPLEMENTED** - ContentOrchestrator, OrderProgressionBehavior, 330 order events active  
+**Last Updated:** 2026-01-01 (Cleaned up orchestrator docs, updated event counts)  
 **Implementation:** `src/Features/Content/ContentOrchestrator.cs`, `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`, `src/Features/Content/WorldStateAnalyzer.cs`  
-**Related Docs:** [Event Catalog](../../Content/event-catalog-by-system.md), [Training System](../Combat/training-system.md), [Order Progression System](../../AFEATURE/order-progression-system.md), [Content Orchestrator Plan](../../AFEATURE/content-orchestrator-plan.md)
+**Related Docs:** [Content Index](content-index.md), [Training System](../Combat/training-system.md), [Order Progression System](../Core/order-progression-system.md), [Camp Simulation System](../Campaign/camp-simulation-system.md), [Event System Schemas](event-system-schemas.md)
 
 **RECENT CHANGES (2026-01-01):**
 - **Travel context detection** now uses native `party.IsCurrentlyAtSea` property directly (removed reflection overhead)
@@ -30,10 +30,43 @@ The content system uses **world-state driven orchestration** instead of schedule
 **Implementation Benefits:**
 - Content frequency matches simulation reality (not arbitrary timers)
 - Activity levels drive order event frequency (quiet/routine/active/intense)
-- 85 order events fire contextually during 16 different order types
+- 330 order events fire contextually during 17 different order types
 - Player behavior learning improves content selection
 - Native Bannerlord effects integrated (traits, skills, morale, health)
 - Camp opportunities dynamically generated based on context
+- Baggage train simulation responds to campaign conditions
+
+---
+
+## Baggage Train Integration
+
+The baggage train logistics system integrates with the Content Orchestrator to provide world-state-aware event probabilities. Instead of fixed chance values, baggage delays/raids/arrivals occur based on campaign situation.
+
+**Integration Point:** `ContentOrchestrator.RefreshBaggageSimulation()`
+
+Called daily during orchestrator tick, provides `WorldSituation` to BaggageTrainManager for probability calculation.
+
+**Probability Calculation:** `BaggageTrainManager.CalculateEventProbabilities(WorldSituation)`
+
+Analyzes four dimensions to determine baggage event likelihood:
+- **Activity Level** - Intense: 10% catch-up / 35% delay / 20% raid vs. Quiet: 40% / 5% / 2%
+- **Lord Situation** - Defeated armies have scattered baggage, garrison duty is safe
+- **War Stance** - Desperate defensive war increases raids, peacetime is safe
+- **Terrain** - Mountains/snow/rivers slow wagon movement
+
+**Example:**
+```
+Intense siege + Defensive war + Mountain terrain
+= 20% catch-up, 45% delay, 31% raid
+vs.
+Quiet garrison + Peace + Plains
+= 40% catch-up, 2.5% delay, 1% raid
+```
+
+**Configuration Baseline:**
+The "Routine" activity level uses values from `baggage_config.json`, allowing gameplay tuning without code changes.
+
+**Related Documentation:** [Baggage Train Availability](../Equipment/baggage-train-availability.md#world-state-aware-simulation)
 
 ---
 
@@ -119,6 +152,13 @@ The Content Orchestrator replaced schedule-driven event pacing with intelligent 
 - Informs content selection to deliver what player engages with
 - Saves/loads with campaign data
 
+**Promotion Reputation Pressure** (`SimulationPressureCalculator.CheckPromotionReputationNeed()`)
+- Detects when player has enough XP but lacks soldier reputation for promotion
+- Calculates reputation gap (how much more is needed)
+- Boosts fitness of reputation-granting opportunities (+15 to +35 depending on gap size)
+- Ensures players always have intelligent path to meet promotion requirements
+- See [Promotion System - Orchestrator Assistance](../Core/promotion-system.md#orchestrator-promotion-assistance) for details
+
 ### Activity Level System
 
 The orchestrator provides activity levels that modify order event frequency:
@@ -138,7 +178,7 @@ The orchestrator coordinates three content tracks:
 
 **1. Order Events (Automatic, During Duty)**
 - Fire during order execution based on activity level
-- 85 order events across 16 order types
+- 330 order events across 17 order types (defined in `ModuleData/Enlisted/Orders/order_events/`)
 - Weighted by world_state requirements (siege_attacking, war_marching, etc.)
 - Frequency controlled by activity modifiers (Quiet = rare, Intense = frequent)
 
@@ -498,110 +538,6 @@ All automatic events are coordinated through `GlobalEventPacer` to prevent spam.
 - Hardcoded in EventPacingManager and MapIncidentManager
 
 See [Event System Schemas - Global Event Pacing](event-system-schemas.md#global-event-pacing-enlisted_configjson) for full config reference.
-
----
-
-## Future: Content Orchestrator Architecture
-
-**Status:** 📋 Specification - See [Content Orchestrator Plan](content-orchestrator-plan.md)
-
-The orchestrator will replace schedule-driven pacing with **world-state driven simulation:**
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│          Content Orchestrator (Sandbox Life Simulator)       │
-│     Matches frequency to lord's situation, not timers        │
-└─────────────────────────────────────────────────────────────┘
-                              │
-            ┌─────────────────┼─────────────────────────┐
-            ▼                 ▼                         ▼
-    ┌──────────────┐  ┌──────────────────┐  ┌──────────────────┐
-    │   World      │  │   Simulation     │  │   Player         │
-    │   State      │  │   Pressure       │  │   Behavior       │
-    │   Analyzer   │  │   Calculator     │  │   Tracker        │
-    └──────────────┘  └──────────────────┘  └──────────────────┘
-            │                 │                         │
-            └─────────────────┼─────────────────────────┘
-                              ▼
-                    ┌──────────────────────┐
-                    │ Realistic Frequency  │
-                    │ & Content Selection  │
-                    └──────────────────────┘
-                              ▼
-                    ┌────────────────────────┐
-                    │   GlobalEventPacer     │
-                    │   (Safety Limits Only) │
-                    └────────────────────────┘
-                              ▼
-                    ┌──────────────────┐
-                    │ EventDelivery    │
-                    │ Manager (queue)  │
-                    └──────────────────┘
-```
-
-### Key Changes
-
-**Replaces:**
-- `EventPacingManager` schedule logic (event windows, evaluation hours)
-- Random quiet day rolls (15% chance)
-- Fixed 3-5 day event cycles
-
-**Adds:**
-- **WorldStateAnalyzer** - Determines lord's situation (garrison, campaign, siege)
-- **SimulationPressureCalculator** - Tracks realistic pressure sources
-- **PlayerBehaviorTracker** - Learns player preferences
-
-**Keeps:**
-- `EventSelector` (content selection logic)
-- `EventDeliveryManager` (queue and display)
-- `EventRequirementChecker` (validation)
-- `MapIncidentManager` (already context-driven)
-- `GlobalEventPacer` (safety limits only - max/day, min hours between)
-
-### World-State Driven Frequency
-
-| Lord Situation | Realistic Frequency | Why |
-|----------------|---------------------|-----|
-| Peacetime Garrison | 1 event/week | Boring is realistic |
-| War Marching | 3.5 events/week | Normal tempo |
-| Active Campaign | 5 events/week | High tempo |
-| Siege Defense | 7 events/week | Crisis situation |
-| Lord Captured | 0.5 events/week | Special state |
-
-**Philosophy:** Garrison duty IS boring. Campaigns ARE busy. The simulation doesn't manufacture drama—it reflects reality.
-
-**See:** [Content Orchestrator Plan](content-orchestrator-plan.md) for complete architecture and 5-week implementation timeline.
-
-### Data Flow
-
-```
-1. Content Loading (Startup)
-   ├── Load JSON files from ModuleData/Enlisted/Events/
-   ├── Parse event/decision/order definitions
-   ├── Validate structure and IDs
-   └── Register in catalogs
-
-2. Content Delivery (Runtime)
-   ├── Context trigger (camp menu, daily tick, battle end, etc.)
-   ├── Query available content for context
-   ├── Check requirements for each candidate
-   ├── Select content (weighted random or player choice)
-   └── Present to player
-
-3. Player Response
-   ├── Player selects option
-   ├── Apply immediate effects (gold, rep, XP, etc.)
-   ├── Apply delayed effects (orders, flags, timers)
-   └── Display feedback (combat log messages with color coding)
-
-4. Effect Resolution
-   ├── Update escalation state (Scrutiny, Discipline, Medical)
-   ├── Update reputation (Officer, Soldier, QM, Lord)
-   ├── Award XP and trait progress
-   ├── Modify resources (gold, supplies, food)
-   ├── Set flags for follow-up events
-   └── Display consolidated effect summary in combat log
-```
 
 ---
 
@@ -1066,7 +1002,7 @@ Tracks when native traits cross level thresholds and displays milestone notifica
 |---------|------|----------------|
 | `"camp"` | In camp, daily | Gambling, storytelling, brawls |
 | `"march"` | Party moving | Patrol encounters, terrain challenges |
-| `"muster"` | Every 12 days | Pay events, inspections, promotions |
+| `"muster"` | Every 12 days | Pay events, promotions |
 | `"leaving_battle"` | After player battle ends | Looting, wounded comrades, battlefield finds |
 | `"during_siege"` | Hourly while besieging | Water rationing, desertion, disease |
 | `"entering_town"` | Opening town/castle menu | Tavern encounters, merchants, old friends |

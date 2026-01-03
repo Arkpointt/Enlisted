@@ -1073,6 +1073,19 @@ namespace Enlisted.Features.Escalation
             }
         }
 
+        /// <summary>
+        /// Clears all declined promotion flags. Called when starting a new enlistment
+        /// to give the player a fresh start with promotion eligibility.
+        /// </summary>
+        public void ClearAllDeclinedPromotions()
+        {
+            if (_declinedPromotions.Count > 0)
+            {
+                ModLogger.Info(LogCategory, $"Cleared {_declinedPromotions.Count} declined promotion flags for new enlistment");
+                _declinedPromotions.Clear();
+            }
+        }
+
         #endregion
 
         private static int Clamp(int value, int min, int max)

@@ -2,10 +2,10 @@
 
 **Summary:** Orders are multi-day duty assignments that progress through phases automatically. Events fire contextually during orders based on world state and order type. Players experience being a soldier through the rhythm of assigned duties, occasional events, and accumulated consequences like fatigue and injury. XP progression is now exclusively through orders (no passive daily/battle XP). Narrative recaps replace mechanical XP displays.
 
-**Status:** ✅ **IMPLEMENTED** - OrderProgressionBehavior, 16 orders, 85 order events active  
-**Last Updated:** 2026-01-01 (Event frequency rebalance, RP fallback text, sea/land context fixes)  
+**Status:** ✅ **IMPLEMENTED** - OrderProgressionBehavior, 17 orders, 330 order events active  
+**Last Updated:** 2026-01-01 (Updated counts to match reality, added Phase 10 forecasting)  
 **Implementation:** `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`, `ModuleData/Enlisted/Orders/`  
-**Related Docs:** [Orders System](../Features/Core/orders-system.md), [Content Orchestrator](content-orchestrator-plan.md), [Order Events Master](order-events-master.md), [Event System Schemas](../Features/Content/event-system-schemas.md), [Injury System](../Features/Content/injury-system.md)
+**Related Docs:** [Orders System](orders-system.md), [Orders Content](../Content/orders-content.md), [Event System Schemas](../Content/event-system-schemas.md), [Injury System](../Content/injury-system.md), [Content System Architecture](../Content/content-system-architecture.md)
 
 **RECENT CHANGES (2026-01-01):**
 - **Event frequency drastically reduced**: `SlotBaseChance` 15%→8%, `HighSlotBaseChance` 35%→15%, Routine multiplier 0.6→0.5
@@ -859,14 +859,97 @@ Day 2, Dawn: Morning muster complete. Nothing to report.
 Day 2, Midday: Routine duties. All in order.
 ```
 
-### Order Forecasting
+### Order Forecasting & Warnings (Phase 10)
 
-Players see upcoming commitments and order status in the Camp Hub "UPCOMING" section.
+**Status:** ✅ Implemented (2025-12-31)  
+**Implementation:** `src/Features/Orders/Behaviors/OrderManager.cs`, `src/Features/Orders/Models/Order.cs`
+
+**Purpose:** Provide advance warnings before orders issue so players have time to react at fast-forward speeds (>>) without missing duties.
+
+**Problem Solved:**  
+At fast-forward speed, orders appeared instantly with no time to prepare. Players missed the chance to complete activities, adjust equipment, or use QM before duty started.
+
+**Solution: Imminent Warning System**
+
+Orders now transition through warning states before becoming mandatory:
+
+```
+IMMINENT (4-8h warning)
+  ↓
+  "Sergeant will call for you soon"
+  Shows in AHEAD forecast with countdown
+  
+PENDING (issued)
+  ↓
+  Appears in Orders menu
+  Player can accept/decline
+  
+ACTIVE (accepted)
+  ↓
+  Order progresses through phases
+  Events fire during execution
+  
+COMPLETE (finished)
+  ↓
+  Results in Recent Activity feed
+```
+
+**Implementation Details:**
+
+```csharp
+// Order.cs
+public enum OrderState
+{
+    Imminent,  // 4-8h warning before issue
+    Pending,   // Issued, awaiting player response
+    Active,    // Accepted, progressing
+    Complete   // Finished
+}
+
+public class Order
+{
+    public OrderState State { get; set; }
+    public CampaignTime ImminentTime { get; set; }  // When warning began
+    public CampaignTime IssueTime { get; set; }     // When order will be issued
+    public CampaignTime ExpirationTime { get; set; }
+}
+
+// OrderManager.cs
+public void CreateImminentOrder(Order order)
+{
+    var hoursUntilIssue = MBRandom.RandomFloatRanged(4f, 8f);
+    order.State = OrderState.Imminent;
+    order.ImminentTime = CampaignTime.Now;
+    order.IssueTime = CampaignTime.HoursFromNow(hoursUntilIssue);
+    order.ExpirationTime = CampaignTime.HoursFromNow(hoursUntilIssue + 72f);
+}
+
+public string GetImminentWarningText() { ... }
+public float GetHoursUntilIssue() { ... }
+public bool IsOrderImminent() { ... }
+```
+
+**UI Integration:**
+- **AHEAD section:** Shows imminent warnings with countdown
+- **ORDERS menu:** Displays "Order Assignment: Guard Duty (in 6 hours)"
+- **Hourly tick:** `OrderManager.UpdateOrderState()` transitions Imminent → Pending when IssueTime arrives
+
+**Time Speed Support:**
+- **Play (1x):** 4-8h = 13-26 real seconds warning
+- **FastForward (>>):** 4-8h = 3.3-6.6 real seconds warning
+- Critical for playability at high speeds
+
+**Benefits:**
+- Players can prepare before duty starts
+- Natural tension builds ("Something's coming")
+- Time to finish current activities
+- Immersive command structure (orders aren't instant surprises)
 
 **Forecast Elements:**
 
 | Element | Example | Data Source |
 |---------|---------|-------------|
+| Imminent order | "Guard Duty in 6 hours" | OrderManager.GetImminentWarningText() |
 | Next commitment | "Training this evening (3h)" | CampOpportunityGenerator |
 | Order status | "Guard Duty - Day 2 of 3" | OrderManager.GetCurrentOrder() |
 | Schedule forecast | "Dusk: Downtime, Evening meal" | CampScheduleManager |
@@ -875,7 +958,8 @@ Players see upcoming commitments and order status in the Camp Hub "UPCOMING" sec
 ```
 _____ UPCOMING _____
 
-Current Order: Guard Duty - Day 2 of 3
+Imminent: Guard Duty in 6 hours
+Current Order: None (between duties)
 Next Activity: Training drill this evening (3h)
 
 Tomorrow's Schedule:
@@ -884,6 +968,10 @@ Tomorrow's Schedule:
   Dusk: Downtime, Evening meal
   Night: Open (rest recommended)
 ```
+
+**See Also:**  
+- [Event System Schemas - Order State Enum](../Features/Content/event-system-schemas.md#order-state-enum-c-model) - Complete order state model  
+- [Content System Architecture](../Features/Content/content-system-architecture.md) - Orchestrator integration
 
 ---
 

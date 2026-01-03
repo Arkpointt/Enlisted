@@ -42,6 +42,8 @@ namespace Enlisted.Features.Conversations.Data
 
         // Baggage access context
         public string BaggageRequestType { get; set; } // emergency/locked/none
+        public string BaggageAccess { get; set; } // no_access/full_access/temporary_access/locked
+        public bool? BaggageDelayed { get; set; } // true if baggage train is delayed
 
         /// <summary>
         /// Checks if this context matches an actual game context.
@@ -158,6 +160,16 @@ namespace Enlisted.Features.Conversations.Data
                 return false;
             }
 
+            if (BaggageAccess != null && !BaggageAccess.Equals(actual.BaggageAccess, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (BaggageDelayed.HasValue && BaggageDelayed.Value != actual.BaggageDelayed.GetValueOrDefault())
+            {
+                return false;
+            }
+
             // All checks passed
             return true;
         }
@@ -247,6 +259,14 @@ namespace Enlisted.Features.Conversations.Data
                 count++;
             }
             if (BaggageRequestType != null)
+            {
+                count++;
+            }
+            if (BaggageAccess != null)
+            {
+                count++;
+            }
+            if (BaggageDelayed.HasValue)
             {
                 count++;
             }

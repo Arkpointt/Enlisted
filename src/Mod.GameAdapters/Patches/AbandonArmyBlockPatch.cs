@@ -9,7 +9,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
     /// Prevents enlisted soldiers from seeing the native "Abandon army" options
-    /// in the army_wait and raiding_village menus. Applied during normal patching.
+    /// in the army_wait, raiding_village, and siege menus. Applied during normal patching.
     /// 
     /// Note: EncounterGameMenuBehavior patches are in a separate deferred class
     /// because that class has static fields that cause TypeInitializationException
@@ -43,6 +43,22 @@ namespace Enlisted.Mod.GameAdapters.Patches
             {
                 __result = false;
                 ModLogger.Debug("Encounter", "Hid raid abandon army for enlisted player");
+                return false;
+            }
+
+            return true;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(SiegeEventCampaignBehavior),
+            "menu_siege_strategies_passive_wait_leave_on_condition")]
+        [UsedImplicitly]
+        private static bool HideSiegeAbandon(ref bool __result)
+        {
+            if (IsPlayerEnlisted())
+            {
+                __result = false;
+                ModLogger.Debug("Encounter", "Hid siege menu abandon army for enlisted player");
                 return false;
             }
 

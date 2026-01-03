@@ -631,7 +631,6 @@ When multiple systems want to modify the same state, these rules determine prior
 - Morale (0-100)
 - Supply (0-100)
 - Rest (0-100)
-- Equipment (0-100)
 
 **Priority Order:**
 

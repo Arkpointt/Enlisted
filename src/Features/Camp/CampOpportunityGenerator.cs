@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Enlisted.Features.Camp.Models;
 using Enlisted.Features.Company;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Content;
 using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
@@ -46,6 +47,11 @@ namespace Enlisted.Features.Camp
         // Cached opportunities for current phase
         private List<CampOpportunity> _cachedOpportunities;
         private DayPhase _cachePhase = DayPhase.Night;
+        
+        // Promotion reputation pressure (cached per generation cycle for performance)
+        private bool _cachedNeedsReputation = false;
+        private int _cachedReputationGap = 0;
+        private bool _hasShownPromotionRepNotice = false;
         
         // Track previous phase for routine processing
         private DayPhase _previousPhase = DayPhase.Night;
@@ -292,6 +298,14 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
+        /// Gets a specific commitment by opportunity ID.
+        /// </summary>
+        public ScheduledCommitment GetCommitment(string opportunityId)
+        {
+            return _commitments.GetCommitment(opportunityId);
+        }
+
+        /// <summary>
         /// Gets hours until a commitment fires.
         /// </summary>
         public float GetHoursUntilCommitment(ScheduledCommitment commitment)
@@ -455,6 +469,7 @@ namespace Enlisted.Features.Camp
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment?.IsEnlisted != true)
             {
+                ModLogger.Info(LogCategory, $"GenerateCampLife: Not enlisted (enlistment={enlistment != null}, IsEnlisted={enlistment?.IsEnlisted ?? false})");
                 return new List<CampOpportunity>();
             }
 
@@ -464,13 +479,14 @@ namespace Enlisted.Features.Camp
             // Check for edge cases that block opportunities entirely
             if (ShouldBlockAllOpportunities(campContext, out string blockReason))
             {
-                ModLogger.Debug(LogCategory, $"Opportunities blocked: {blockReason}");
+                ModLogger.Info(LogCategory, $"Opportunities blocked: {blockReason}");
                 return new List<CampOpportunity>();
             }
 
             // Check cache validity
             if (_cachedOpportunities != null && _cachePhase == campContext.DayPhase)
             {
+                ModLogger.Debug(LogCategory, $"Returning cached {_cachedOpportunities.Count} opportunities");
                 return _cachedOpportunities;
             }
 
@@ -483,10 +499,11 @@ namespace Enlisted.Features.Camp
 
             // Determine opportunity budget
             int budget = DetermineOpportunityBudget(worldSituation, campContext);
-            ModLogger.Debug(LogCategory, $"Opportunity budget: {budget} (phase: {campContext.DayPhase}, activity: {campContext.ActivityLevel})");
+            ModLogger.Info(LogCategory, $"Opportunity budget: {budget} (LordIs={worldSituation.LordIs}, phase={campContext.DayPhase}, activity={campContext.ActivityLevel})");
 
             if (budget <= 0)
             {
+                ModLogger.Info(LogCategory, "Budget is 0 - no opportunities available");
                 _cachedOpportunities = new List<CampOpportunity>();
                 _cachePhase = campContext.DayPhase;
                 return _cachedOpportunities;
@@ -494,7 +511,16 @@ namespace Enlisted.Features.Camp
 
             // Generate candidates
             var candidates = GenerateCandidates(worldSituation, campContext, playerPrefs);
-            ModLogger.Debug(LogCategory, $"Generated {candidates.Count} candidates");
+            ModLogger.Info(LogCategory, $"Generated {candidates.Count} candidates from {_opportunityDefinitions.Count} total definitions");
+
+            // Cache promotion reputation need (calculated once, used for all fitness calculations)
+            (_cachedNeedsReputation, _cachedReputationGap) = SimulationPressureCalculator.CheckPromotionReputationNeed();
+            if (_cachedNeedsReputation && _cachedReputationGap > 0 && !_hasShownPromotionRepNotice)
+            {
+                _hasShownPromotionRepNotice = true;
+                ModLogger.Info(LogCategory, 
+                    $"Promotion reputation pressure: boosting rep-granting opportunities (need {_cachedReputationGap} more soldier rep)");
+            }
 
             // Score each candidate
             foreach (var candidate in candidates)
@@ -502,8 +528,22 @@ namespace Enlisted.Features.Camp
                 candidate.FitnessScore = CalculateFitness(candidate, worldSituation, campContext, playerPrefs, _history);
             }
 
-            // Select best fitting opportunities
-            var selected = SelectTopN(candidates, budget);
+            // Separate guaranteed opportunities (immediate=true, like baggage access) from normal candidates
+            var guaranteed = candidates.Where(c => c.Immediate).ToList();
+            var normalCandidates = candidates.Where(c => !c.Immediate).ToList();
+
+            // Select best fitting normal opportunities (within budget)
+            var selected = SelectTopN(normalCandidates, budget);
+
+            // Add guaranteed opportunities (always show when available, don't count against budget)
+            foreach (var guaranteedOpp in guaranteed)
+            {
+                if (!selected.Any(s => s.Id == guaranteedOpp.Id))
+                {
+                    selected.Add(guaranteedOpp);
+                    ModLogger.Debug(LogCategory, $"Guaranteed opportunity added: {guaranteedOpp.Id}");
+                }
+            }
 
             // Record presentations for history and learning system
             foreach (var opp in selected)
@@ -516,7 +556,7 @@ namespace Enlisted.Features.Camp
             _cachedOpportunities = selected;
             _cachePhase = campContext.DayPhase;
 
-            ModLogger.Info(LogCategory, $"Selected {selected.Count} opportunities: [{string.Join(", ", selected.Select(o => o.Id))}]");
+            ModLogger.Info(LogCategory, $"Selected {selected.Count} opportunities ({guaranteed.Count} guaranteed): [{string.Join(", ", selected.Select(o => o.Id))}]");
             return selected;
         }
 
@@ -543,6 +583,34 @@ namespace Enlisted.Features.Camp
             CampScheduleManager.Instance?.OnPhaseChanged(newPhase);
             
             ModLogger.Debug(LogCategory, $"Phase changed to {newPhase}, cache invalidated");
+        }
+
+        /// <summary>
+        /// Invalidates the opportunity cache, forcing a fresh generation on next access.
+        /// Called when major state changes occur (like muster completion) that affect opportunity availability.
+        /// </summary>
+        public void InvalidateCache()
+        {
+            _cachedOpportunities = null;
+            
+            // Reset promotion reputation pressure cache (will recalculate on next generation)
+            _cachedNeedsReputation = false;
+            _cachedReputationGap = 0;
+            _hasShownPromotionRepNotice = false;
+            
+            ModLogger.Debug(LogCategory, "Opportunity cache manually invalidated");
+        }
+
+        /// <summary>
+        /// Queues a medical opportunity for high-priority display.
+        /// Stub implementation for Phase 6H medical orchestration.
+        /// </summary>
+        public void QueueMedicalOpportunity(string opportunityType)
+        {
+            // Phase 6H stub: Medical opportunities are prioritized through normal fitness scoring
+            // with medical-related opportunities boosted when medical pressure is high
+            ModLogger.Debug(LogCategory, $"Medical opportunity queued: {opportunityType} (stub - using fitness boost instead)");
+            InvalidateCache(); // Force regeneration to pick up new medical context
         }
 
         /// <summary>
@@ -593,9 +661,21 @@ namespace Enlisted.Features.Camp
 
             // Muster cycle position: calculate from LastMusterDay
             int currentDay = (int)CampaignTime.Now.ToDays;
-            int lastMusterDay = enlistment?.LastMusterDay ?? currentDay;
+            int lastMusterDay = enlistment?.LastMusterDay ?? 0;
+            
+            // If lastMusterDay is 0 (uninitialized), treat as if muster just happened
+            if (lastMusterDay == 0)
+            {
+                lastMusterDay = currentDay;
+            }
+            
             context.DaysSinceLastMuster = currentDay - lastMusterDay;
-            context.IsMusterDay = context.DaysSinceLastMuster >= 12; // Muster every ~12 days
+            
+            // IsMusterDay should only be true when the MUSTER MENU is actively being shown,
+            // not just because it's been 12 days. The muster system handles its own timing.
+            // Block opportunities only during active muster sequence (detected by menu state).
+            var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId ?? "";
+            context.IsMusterDay = currentMenu.StartsWith("enlisted_muster_");
 
             // Camp mood derived from recent events
             context.CurrentMood = DeriveCampMood(simulation);
@@ -630,10 +710,10 @@ namespace Enlisted.Features.Camp
                 return true;
             }
 
-            // Muster day
+            // Active muster sequence (player is in muster menu)
             if (context.IsMusterDay)
             {
-                reason = "Muster day - structured sequence takes over";
+                reason = "Active muster sequence - structured menu takes over";
                 return true;
             }
 
@@ -719,29 +799,34 @@ namespace Enlisted.Features.Camp
         {
             var candidates = new List<CampOpportunity>();
             var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            var filterCounts = new Dictionary<string, int>();
 
             foreach (var opp in _opportunityDefinitions)
             {
                 // Tier check
                 if (tier < opp.MinTier)
                 {
+                    IncrementFilterCount(filterCounts, "tier_too_low");
                     continue;
                 }
 
                 if (opp.MaxTier > 0 && tier > opp.MaxTier)
                 {
+                    IncrementFilterCount(filterCounts, "tier_too_high");
                     continue;
                 }
 
                 // Cooldown check
                 if (_history.WasRecentlyShown(opp.Id, opp.CooldownHours))
                 {
+                    IncrementFilterCount(filterCounts, "cooldown");
                     continue;
                 }
 
                 // Day phase check
                 if (opp.ValidPhases.Count > 0 && !opp.ValidPhases.Contains(camp.DayPhase.ToString()))
                 {
+                    IncrementFilterCount(filterCounts, "wrong_phase");
                     continue;
                 }
 
@@ -751,11 +836,13 @@ namespace Enlisted.Features.Camp
                 
                 if (opp.NotAtSea && isAtSea)
                 {
+                    IncrementFilterCount(filterCounts, "at_sea");
                     continue; // Land-only opportunity but party is at sea
                 }
                 
                 if (opp.AtSea && !isAtSea)
                 {
+                    IncrementFilterCount(filterCounts, "on_land");
                     continue; // Sea-only opportunity but party is on land
                 }
 
@@ -766,6 +853,7 @@ namespace Enlisted.Features.Camp
                     var compat = opp.GetOrderCompatibility(currentOrderType);
                     if (compat == "blocked")
                     {
+                        IncrementFilterCount(filterCounts, "order_blocked");
                         continue;
                     }
                 }
@@ -773,13 +861,46 @@ namespace Enlisted.Features.Camp
                 // Injury filter: no training if injured
                 if (camp.PlayerInjured && opp.Type == OpportunityType.Training)
                 {
+                    IncrementFilterCount(filterCounts, "injured");
                     continue;
                 }
 
                 // Gold filter: no gambling if broke
                 if (camp.PlayerGold < 20 && opp.Type == OpportunityType.Economic && opp.Id.Contains("gambl"))
                 {
+                    IncrementFilterCount(filterCounts, "no_gold");
                     continue;
+                }
+
+                // Condition state filter: check player condition requirements
+                if (opp.ConditionStates != null && opp.ConditionStates.Count > 0)
+                {
+                    if (!MeetsConditionStateRequirements(opp.ConditionStates))
+                    {
+                        IncrementFilterCount(filterCounts, "condition_state");
+                        continue;
+                    }
+                }
+
+                // Medical pressure filter: check medical risk level requirements
+                if (opp.MedicalPressure != null && opp.MedicalPressure.Count > 0)
+                {
+                    if (!MeetsMedicalPressureRequirements(opp.MedicalPressure))
+                    {
+                        IncrementFilterCount(filterCounts, "medical_pressure");
+                        continue;
+                    }
+                }
+
+                // Suppress when treated: hide medical opportunities if player is already under care
+                if (opp.SuppressWhenTreated)
+                {
+                    var conditions = PlayerConditionBehavior.Instance;
+                    if (conditions?.IsEnabled() == true && conditions.State?.UnderMedicalCare == true)
+                    {
+                        IncrementFilterCount(filterCounts, "under_treatment");
+                        continue;
+                    }
                 }
 
                 // Create a copy with instance-specific data
@@ -787,7 +908,37 @@ namespace Enlisted.Features.Camp
                 candidates.Add(candidate);
             }
 
+            // Log filter statistics
+            if (filterCounts.Count > 0)
+            {
+                var filterSummary = string.Join(", ", filterCounts.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+                ModLogger.Info(LogCategory, $"Candidate filters (tier={tier}, phase={camp.DayPhase}, onDuty={camp.PlayerOnDuty}): {filterSummary}");
+            }
+
+            // Log filter summary
+            if (filterCounts.Count > 0)
+            {
+                var filterSummary = string.Join(", ", filterCounts.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+                ModLogger.Debug(LogCategory, $"Opportunity filtering: {candidates.Count} passed, rejected: {filterSummary}");
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, $"Opportunity filtering: {candidates.Count} passed, none rejected");
+            }
+
             return candidates;
+        }
+
+        private static void IncrementFilterCount(Dictionary<string, int> counts, string key)
+        {
+            if (counts.ContainsKey(key))
+            {
+                counts[key]++;
+            }
+            else
+            {
+                counts[key] = 1;
+            }
         }
 
         /// <summary>
@@ -956,7 +1107,157 @@ namespace Enlisted.Features.Camp
                 mod += 10f;
             }
 
+            // PROMOTION REPUTATION PRESSURE: Boost reputation-gaining opportunities when player needs reputation for promotion
+            // Uses cached values calculated once per generation cycle (not per-opportunity)
+            if (_cachedNeedsReputation && _cachedReputationGap > 0)
+            {
+                // Identify opportunities that grant soldier reputation
+                bool grantsReputation = IsReputationGrantingOpportunity(opp.TargetDecisionId);
+                
+                if (grantsReputation)
+                {
+                    // Scale boost based on reputation gap
+                    // Small gap (1-5): +15 fitness
+                    // Medium gap (6-15): +25 fitness
+                    // Large gap (16+): +35 fitness
+                    float repBoost = 15f;
+                    if (_cachedReputationGap >= 16)
+                    {
+                        repBoost = 35f;
+                    }
+                    else if (_cachedReputationGap >= 6)
+                    {
+                        repBoost = 25f;
+                    }
+
+                    // Apply PHASE-AWARE boosting: boost MORE for phase-appropriate activities
+                    // This respects the existing schedule system (training at dawn, social at dusk)
+                    repBoost = ApplyPromotionPhaseBoost(opp, camp.DayPhase, repBoost);
+
+                    mod += repBoost;
+                    ModLogger.Debug(LogCategory, 
+                        $"Promotion reputation boost: +{repBoost:F0} for {opp.Id} (target: {opp.TargetDecisionId}, gap: {_cachedReputationGap}, phase: {camp.DayPhase})");
+                }
+            }
+
             return mod;
+        }
+
+        /// <summary>
+        /// Applies phase-aware boosting to promotion reputation fitness.
+        /// Boosts opportunities that are phase-appropriate higher, respecting the camp schedule.
+        /// </summary>
+        private float ApplyPromotionPhaseBoost(CampOpportunity opp, DayPhase phase, float baseBoost)
+        {
+            // Phase-appropriate activities get a 40% bonus to the rep boost
+            // This ensures we boost activities that fit the schedule (training at dawn, social at dusk)
+            
+            switch (phase)
+            {
+                case DayPhase.Dawn:
+                    // Dawn favors training activities
+                    if (opp.Type == OpportunityType.Training)
+                    {
+                        return baseBoost * 1.4f;
+                    }
+                    // Helping wounded/mentoring also fits dawn routine
+                    if (opp.TargetDecisionId == "dec_help_wounded" || 
+                        opp.TargetDecisionId == "dec_mentor_recruit")
+                    {
+                        return baseBoost * 1.3f;
+                    }
+                    break;
+
+                case DayPhase.Midday:
+                    // Midday favors training and work details
+                    if (opp.Type == OpportunityType.Training)
+                    {
+                        return baseBoost * 1.3f;
+                    }
+                    if (opp.TargetDecisionId == "dec_help_wounded" ||
+                        opp.TargetDecisionId == "dec_volunteer_extra")
+                    {
+                        return baseBoost * 1.2f;
+                    }
+                    break;
+
+                case DayPhase.Dusk:
+                    // Dusk is prime social time - boost social opportunities significantly
+                    if (opp.Type == OpportunityType.Social)
+                    {
+                        return baseBoost * 1.5f;
+                    }
+                    // Economic/gambling also fits dusk schedule
+                    if (opp.Type == OpportunityType.Economic)
+                    {
+                        return baseBoost * 1.2f;
+                    }
+                    break;
+
+                case DayPhase.Night:
+                    // Night has limited opportunities - modest boost for quiet social
+                    if (opp.TargetDecisionId == "dec_social_stories" ||
+                        opp.TargetDecisionId == "dec_social_storytelling")
+                    {
+                        return baseBoost * 1.2f;
+                    }
+                    // Cards/dice can happen at night around fires
+                    if (opp.TargetDecisionId == "dec_gamble_cards" ||
+                        opp.TargetDecisionId == "dec_gamble_dice")
+                    {
+                        return baseBoost * 1.1f;
+                    }
+                    break;
+            }
+
+            // Default: no phase bonus
+            return baseBoost;
+        }
+
+        /// <summary>
+        /// Checks if an opportunity grants soldier reputation by examining its target decision.
+        /// These opportunities help players gain reputation needed for promotions.
+        /// </summary>
+        private bool IsReputationGrantingOpportunity(string targetDecisionId)
+        {
+            if (string.IsNullOrEmpty(targetDecisionId))
+            {
+                return false;
+            }
+
+            // Decisions that grant soldier reputation (based on Phase 6G decisions content)
+            // Training decisions: grant +3 soldierRep on success
+            if (targetDecisionId.StartsWith("dec_training_"))
+            {
+                return true;
+            }
+
+            // Social decisions: grant +1 to +4 soldierRep
+            if (targetDecisionId == "dec_social_stories" ||        // +2 soldierRep
+                targetDecisionId == "dec_social_storytelling" ||   // +1 soldierRep  
+                targetDecisionId == "dec_social_singing" ||        // +2 soldierRep
+                targetDecisionId == "dec_tavern_drink" ||          // +1 soldierRep (moderate)
+                targetDecisionId == "dec_arm_wrestling" ||         // +2 soldierRep on success
+                targetDecisionId == "dec_drinking_contest")        // +4 soldierRep on success
+            {
+                return true;
+            }
+
+            // Helping/mentoring decisions: grant +2 soldierRep
+            if (targetDecisionId == "dec_help_wounded" ||          // +2 soldierRep
+                targetDecisionId == "dec_mentor_recruit")          // +2 soldierRep + +1 officerRep
+            {
+                return true;
+            }
+
+            // Special decisions
+            if (targetDecisionId == "dec_gamble_cards" ||          // +1 soldierRep
+                targetDecisionId == "dec_gamble_high")             // +3 soldierRep on big wins
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private float CalculateHistoryModifier(CampOpportunity opp, OpportunityHistory history)
@@ -1022,6 +1323,7 @@ namespace Enlisted.Features.Camp
 
         /// <summary>
         /// Records that the player engaged with an opportunity.
+        /// Invalidates the cache so the opportunity immediately disappears from the menu.
         /// </summary>
         public void RecordEngagement(string opportunityId, OpportunityType type)
         {
@@ -1032,7 +1334,10 @@ namespace Enlisted.Features.Camp
             PlayerBehaviorTracker.RecordOpportunityEngagement(typeKey, true);
             PlayerBehaviorTracker.RecordChoice(typeKey.ToLower());
 
-            ModLogger.Debug(LogCategory, $"Recorded engagement: {opportunityId} ({typeKey})");
+            // Invalidate cache to immediately remove the completed opportunity from the menu
+            InvalidateCache();
+
+            ModLogger.Info(LogCategory, $"Recorded engagement: {opportunityId} (type={typeKey}), cache invalidated to remove from menu");
         }
 
         /// <summary>
@@ -1293,7 +1598,14 @@ namespace Enlisted.Features.Camp
                 TooltipRiskyFallback = source.TooltipRiskyFallback,
                 RequiredFlags = source.RequiredFlags,
                 BlockedByFlags = source.BlockedByFlags,
-                ScheduledTime = source.ScheduledTime
+                ScheduledTime = source.ScheduledTime,
+                ConditionStates = source.ConditionStates,
+                MedicalPressure = source.MedicalPressure,
+                SuppressWhenTreated = source.SuppressWhenTreated,
+                ScheduledPhase = source.ScheduledPhase,
+                Immediate = source.Immediate,
+                NotAtSea = source.NotAtSea,
+                AtSea = source.AtSea
             };
         }
 
@@ -1363,6 +1675,8 @@ namespace Enlisted.Features.Camp
                     CooldownHours = item["cooldownHours"]?.Value<int>() ?? 12,
                     BaseFitness = item["baseFitness"]?.Value<int>() ?? 50,
                     ScheduledTime = item["scheduledTime"]?.Value<string>(),
+                    ScheduledPhase = item["scheduledPhase"]?.Value<string>(),
+                    Immediate = item["immediate"]?.Value<bool>() ?? false,
                     NotAtSea = item["notAtSea"]?.Value<bool>() ?? false,
                     AtSea = item["atSea"]?.Value<bool>() ?? false
                 };
@@ -1425,6 +1739,26 @@ namespace Enlisted.Features.Camp
                     opp.BlockedByFlags = blockedFlags.Select(f => f.Value<string>()).ToList();
                 }
 
+                // Requirements (from requirements object)
+                var requirements = item["requirements"] as JObject;
+                if (requirements != null)
+                {
+                    var conditionStates = requirements["conditionStates"] as JArray;
+                    if (conditionStates != null)
+                    {
+                        opp.ConditionStates = conditionStates.Select(c => c.Value<string>()).ToList();
+                    }
+
+                    var medicalPressure = requirements["medicalPressure"] as JArray;
+                    if (medicalPressure != null)
+                    {
+                        opp.MedicalPressure = medicalPressure.Select(m => m.Value<string>()).ToList();
+                    }
+                }
+
+                // Suppress when treated flag
+                opp.SuppressWhenTreated = item["suppressWhenTreated"]?.Value<bool>() ?? false;
+
                 if (string.IsNullOrEmpty(opp.Id))
                 {
                     return null;
@@ -1450,6 +1784,129 @@ namespace Enlisted.Features.Camp
                 "special" => OpportunityType.Special,
                 _ => OpportunityType.Social
             };
+        }
+
+        /// <summary>
+        /// Checks if the player meets all required condition states for an opportunity.
+        /// Returns true if all requirements are met, false otherwise.
+        /// </summary>
+        private static bool MeetsConditionStateRequirements(List<string> conditionStates)
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                // If condition system is disabled, treat as not meeting condition requirements
+                return false;
+            }
+
+            var state = conditions.State;
+            if (state == null)
+            {
+                return false;
+            }
+
+            foreach (var requirement in conditionStates)
+            {
+                switch (requirement)
+                {
+                    case "HasAnyCondition":
+                    case "HasCondition":
+                        // Both variants mean the same thing: player has any active condition
+                        if (!state.HasAnyCondition)
+                        {
+                            return false;
+                        }
+                        break;
+
+                    case "HasSevereCondition":
+                        // Check for severe or critical injury/illness that is ACTIVE (days remaining > 0)
+                        var hasSevereInjury = state.CurrentInjury >= InjurySeverity.Severe && state.InjuryDaysRemaining > 0;
+                        var hasSevereIllness = state.CurrentIllness >= IllnessSeverity.Severe && state.IllnessDaysRemaining > 0;
+                        if (!hasSevereInjury && !hasSevereIllness)
+                        {
+                            return false;
+                        }
+                        break;
+
+                    case "HasInjury":
+                        if (!state.HasInjury)
+                        {
+                            return false;
+                        }
+                        break;
+
+                    case "HasIllness":
+                        if (!state.HasIllness)
+                        {
+                            return false;
+                        }
+                        break;
+
+                    default:
+                        // Unknown requirement type - fail safe by rejecting
+                        ModLogger.Warn(LogCategory, $"Unknown condition state requirement: {requirement}");
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if the player's medical risk level meets the required pressure levels.
+        /// Returns true if medical risk matches any of the specified pressure levels.
+        /// </summary>
+        private static bool MeetsMedicalPressureRequirements(List<string> pressureLevels)
+        {
+            var escalation = EscalationManager.Instance;
+            if (escalation?.State == null)
+            {
+                return false;
+            }
+
+            var medicalRisk = escalation.State.MedicalRisk;
+
+            // Map medical risk (0-5) to pressure levels
+            // 0-1: None/Low, 2: Moderate, 3: High, 4-5: Critical
+            foreach (var level in pressureLevels)
+            {
+                switch (level)
+                {
+                    case "Moderate":
+                        if (medicalRisk >= 2)
+                        {
+                            return true;
+                        }
+                        break;
+
+                    case "High":
+                        if (medicalRisk >= 3)
+                        {
+                            return true;
+                        }
+                        break;
+
+                    case "Critical":
+                        if (medicalRisk >= 4)
+                        {
+                            return true;
+                        }
+                        break;
+
+                    case "Low":
+                        if (medicalRisk >= 1)
+                        {
+                            return true;
+                        }
+                        break;
+
+                    default:
+                        ModLogger.Warn(LogCategory, $"Unknown medical pressure level: {level}");
+                        break;
+                }
+            }
+
+            return false;
         }
 
         #endregion

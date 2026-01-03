@@ -87,6 +87,44 @@ namespace Enlisted.Features.Ranks.Behaviors
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
             CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
+
+            // Subscribe to enlistment events to reset promotion state when enlistment changes.
+            // This fixes a bug where _pendingPromotionTier persisted across enlistments,
+            // blocking promotions if the previous lord was defeated while a proving event was pending.
+            EnlistmentBehavior.OnEnlisted += OnNewEnlistmentStarted;
+            EnlistmentBehavior.OnDischarged += OnEnlistmentEnded;
+        }
+
+        /// <summary>
+        /// Resets promotion tracking state when a new enlistment starts.
+        /// Clears pending promotion tier and declined promotion flags to give the player
+        /// a fresh start with the new lord. This fixes the bug where promotion could be
+        /// permanently blocked if the previous lord was defeated while a proving event was pending.
+        /// </summary>
+        private void OnNewEnlistmentStarted(Hero lord)
+        {
+            if (_pendingPromotionTier > 0)
+            {
+                ModLogger.Info("Promotion", $"Clearing pending promotion tier {_pendingPromotionTier} on new enlistment with {lord?.Name}");
+            }
+            _pendingPromotionTier = 0;
+            _formationSelectionPending = false;
+
+            // Also clear declined promotions so player gets a fresh start with the new lord
+            EscalationManager.Instance?.ClearAllDeclinedPromotions();
+        }
+
+        /// <summary>
+        /// Resets promotion tracking state when enlistment ends.
+        /// Clears pending promotion tier since any in-progress promotion event is now cancelled.
+        /// </summary>
+        private void OnEnlistmentEnded(string reason)
+        {
+            if (_pendingPromotionTier > 0)
+            {
+                ModLogger.Info("Promotion", $"Clearing pending promotion tier {_pendingPromotionTier} on enlistment end ({reason})");
+            }
+            _pendingPromotionTier = 0;
         }
 
         public override void SyncData(IDataStore dataStore)

@@ -27,6 +27,16 @@
       "displayNameId": "cond_illness_flux",
       "displayNameFallback": "Flux",
       "baseRecoveryDays": { "mild": 4, "moderate": 8, "severe": 14, "critical": 21 }
+    },
+    "ship_fever": {
+      "displayNameId": "cond_illness_ship_fever",
+      "displayNameFallback": "Ship Fever",
+      "baseRecoveryDays": { "mild": 4, "moderate": 8, "severe": 15, "critical": 22 }
+    },
+    "scurvy": {
+      "displayNameId": "cond_illness_scurvy",
+      "displayNameFallback": "Scurvy",
+      "baseRecoveryDays": { "mild": 5, "moderate": 10, "severe": 18, "critical": 25 }
     }
   }
 }

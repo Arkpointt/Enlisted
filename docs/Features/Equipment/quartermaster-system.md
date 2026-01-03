@@ -288,9 +288,7 @@ QM: "Supplies are holding well. What do you require?"
 
 Player: "How are we looking? Supply-wise, I mean."
 
-QM: "Supplies are at 65%. Adequate for now, but we're watching it. 
-     Equipment condition is a bit rough - lot of worn pieces - but 
-     serviceable."
+QM: "Supplies are at 65%. Adequate for now, but we're watching it."
 
 Player: "That's all for now."
 
@@ -888,80 +886,45 @@ The quartermaster rummages through the supply wagon...
 - **QM Reputation Impact:** Better reputation = better odds
 - **Formation Matters:** Infantry get infantry equipment, cavalry get cavalry equipment
 - **Skill Weighting:** Respects player build (sword users get swords, archers get bows)
-- **Contraband Exemption:** Items are official quartermaster issue, not flagged
 - **No Resale:** Like all QM purchases, items can be sold back through buyback system
 
 ---
 
-## Baggage Checks
+## Baggage Stowage
 
-### Muster Inspections
+### First-Time Stowage (Onboarding)
 
-Every pay muster has a **30% chance** of triggering a baggage inspection. This occurs during the [Baggage Check stage](../Core/muster-system.md#3-baggage-check) of the muster system sequence (stage 3, after the Pay Line).
+When a player first enlists, they must decide what to do with their civilian belongings. The quartermaster's clerk handles this process.
 
-**Important:** This is a **security inspection** for contraband items, separate from the logistics-based baggage access system (see [Baggage Train Availability](baggage-train-availability.md)). All soldiers have full baggage access during muster regardless of inspection outcome. The inspection only determines if contraband is discovered and confiscated.
+**Event:** `evt_baggage_stowage_first_enlistment` (one-time onboarding event)
 
-```
-⚠️  CONTRABAND DISCOVERED  ⚠️
+**Options:**
 
-The quartermaster's hand stops in your pack. He pulls out an item
-and raises an eyebrow.
+| Option | Skill | Effect |
+|--------|-------|--------|
+| **Pay storage fee** | None | Pay 200g + 5%. Official storage, secure against raids. |
+| **Talk your way out** | Charm | Free official storage. +2 QM rep on success. Pay fee on fail. |
+| **Negotiate price** | Trade | 100g flat rate on success. Standard fee on fail. |
+| **Smuggle under cover** | Roguery | Free but unmarked storage. Vulnerable to raids (2x loss chance). Fail: 250g, +2 Scrutiny, -3 QM rep. |
+| **Sell everything** | None | 60% value. No storage, clean break. |
+| **Changed my mind** | None | Abort enlistment. -10 Lord reputation. |
 
-Found: Noble Armor (value 1200 denars)
+**Skill Check System:**
+- All skill options are available to any player
+- Better skills = higher success chance (base 50%, +1% per 5 points above 50)
+- Dynamic tooltips show player's current skill and calculated chance
 
-"This doesn't belong to a soldier of your rank," he says quietly.
-"I can overlook it... for a price. Or we can do this by the book."
+**Baggage Marked Status:**
+- **Official** (paid/charmed/traded): Normal protection, logged in ledger
+- **Unmarked** (smuggled): 2x raid vulnerability, no official record
 
-[QM Reputation: 45 - Neutral]
-```
+This status integrates with the [Baggage Train Availability](baggage-train-availability.md) system's raid mechanics.
 
-### Contraband Detection
+### Muster Baggage Access
 
-The quartermaster scans for:
-- Illegal goods (smuggled items)
-- Stolen gear (high-value civilian goods)
-- Flagged contraband items
-- Items inappropriate for player's rank
+**Removed:** The muster contraband inspection system was removed. Players now have full baggage access during muster without security inspections.
 
-### Outcomes by Reputation
-
-| Scenario | QM Rep | Event ID | Outcome |
-|----------|--------|----------|---------|
-| No contraband | Any | — | Skip to next stage |
-| Contraband + Trusted | 65+ | `evt_baggage_lookaway` | QM looks away, auto-pass, no penalty |
-| Contraband + Friendly | 35-64 | `evt_baggage_bribe` | Bribe option (Charm check, 50% success) or smuggle (Roguery 40+) |
-| Contraband + Neutral | < 35 | `evt_baggage_confiscate` | Confiscation only, fine + 2 Scrutiny |
-| Contraband + Hostile | < -25 | `evt_baggage_report` | Severe penalties, discipline increase |
-
-**Integration with Muster Menu:**
-- Baggage check appears as stage 3 in the muster flow
-- Player sees contraband details and QM reputation before choosing
-- Options presented based on current reputation tier
-- Skip conditions apply (no contraband, high rep, 70% no-trigger chance)
-- See [Muster System - Baggage Check](../Core/muster-system.md#3-baggage-check) for complete flow
-
-**Example: High Rep Outcome**
-```
-QM: [Glances at your pack, sees valuable contraband]
-    [Looks around]
-    [Looks back at you]
-    
-    "I didn't see anything. But be more careful."
-
-[Looks the other way - no penalty]
-```
-
-**Example: Low Rep Outcome**
-```
-QM: "Caught you. This is going in my report."
-
-[Confiscates item]
-[+10 Scrutiny]
-[Fine of 150g]
-[-5 QM Rep]
-
-QM: "Don't let me catch you again."
-```
+Baggage access during muster is handled by the logistics-based [Baggage Train Availability](baggage-train-availability.md) system, which grants full access during muster and settlement stays.
 
 ---
 
@@ -1196,8 +1159,8 @@ The Quartermaster system is tightly integrated with company supply (0-100%):
 **Supply Sources:**
 - Rations provided as part of enlisted service
 - Ammunition, repairs, and camp supplies consumed during operations
-- Resupply in settlements (+3-5% per day)
-- Consumption based on movement, combat, and terrain
+- Resupply in settlements (~2.08-2.92% per hour, 50-70% per full day)
+- Consumption based on movement, combat, and terrain (calculated daily)
 
 **Supply Effects on Quartermaster:**
 

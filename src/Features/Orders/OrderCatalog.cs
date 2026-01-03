@@ -561,7 +561,8 @@ namespace Enlisted.Features.Orders
                 Tags = ParseStringList(orderJson["tags"]),
                 Mandatory = orderJson["mandatory"]?.Value<bool>() ?? false,
                 Requirements = ParseRequirements(orderJson["requirements"] as JObject),
-                Consequences = ParseConsequences(orderJson["consequences"] as JObject)
+                Consequences = ParseConsequences(orderJson["consequences"] as JObject),
+                ContextVariants = ParseContextVariants(orderJson["context_variants"] as JObject)
             };
 
             return order;
@@ -731,6 +732,41 @@ namespace Enlisted.Features.Orders
             }
 
             return outcome;
+        }
+
+        /// <summary>
+        /// Parses context variants from JSON (sea/land title and description overrides).
+        /// </summary>
+        private static Dictionary<string, OrderTextVariant> ParseContextVariants(JObject variantsJson)
+        {
+            var variants = new Dictionary<string, OrderTextVariant>();
+
+            if (variantsJson == null)
+            {
+                return variants;
+            }
+
+            // Parse each context key (e.g., "sea", "land")
+            foreach (var contextKey in variantsJson.Properties())
+            {
+                var variantData = contextKey.Value as JObject;
+                if (variantData == null)
+                {
+                    continue;
+                }
+
+                var variant = new OrderTextVariant
+                {
+                    Title = variantData["title"]?.ToString() ?? string.Empty,
+                    TitleId = variantData["title_id"]?.ToString(),
+                    Description = variantData["description"]?.ToString() ?? string.Empty,
+                    DescriptionId = variantData["description_id"]?.ToString()
+                };
+
+                variants[contextKey.Name] = variant;
+            }
+
+            return variants;
         }
 
         /// <summary>

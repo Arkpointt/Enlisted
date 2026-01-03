@@ -3,7 +3,7 @@
 **Summary:** The company supply system tracks logistical health of the military unit including rations, equipment maintenance materials, ammunition/consumables, and fodder/animal care supplies. Supply levels are consumed through time and combat, and replenished through quartermaster purchases and settlement resupply, creating realistic military logistics gameplay.
 
 **Status:** ⚠️ Mixed (Core implemented, enhancements planned)  
-**Last Updated:** 2025-12-31  
+**Last Updated:** 2026-01-03  
 **Related Docs:** [Quartermaster System](quartermaster-system.md), [Provisions & Rations](provisions-rations-system.md)
 
 ---
@@ -37,7 +37,10 @@ Company Supply is scoped to the **Company you are enlisted in** (i.e., the **enl
 
 - The player receives rations and supplies as part of their enlisted service directly
 - Supply tracking uses party size and activity from the enlisted lord's party for consumption calculations
+- **Battle casualties** are counted ONLY from the lord's party, not from all army parties
 - If the enlisted lord is attached to an army, supply calculations still use the enlisted lord's party metrics (not army-wide values)
+
+**Bug Fix (Jan 2026):** Previously, battle casualties were incorrectly counted from all army parties, causing supply to drop from 86% to 0% in large battles with 1000+ army-wide casualties. Now correctly scoped to only the lord's party.
 
 ---
 
@@ -104,6 +107,9 @@ Supply reduces by:
 ```csharp
 public int CalculateBattleSupplyLoss(int troopsLost, bool playerVictory)
 {
+    // IMPORTANT: troopsLost is ONLY casualties from the lord's party, not army-wide
+    // Bug fix (Jan 2026): Previously counted all army casualties, causing excessive losses
+    
     // Base loss from casualties
     int casualtyLoss = troopsLost / 10; // 10 casualties = -1% supply
     
@@ -118,10 +124,12 @@ public int CalculateBattleSupplyLoss(int troopsLost, bool playerVictory)
 ```
 
 **Examples:**
-- Victory with 10 casualties: -1% supply
-- Victory with 30 casualties: -3% supply
-- Defeat with 20 casualties: -7% supply (2% + 5% abandoned)
+- Victory with 10 casualties (lord's party): -1% supply
+- Victory with 30 casualties (lord's party): -3% supply
+- Defeat with 20 casualties (lord's party): -7% supply (2% + 5% abandoned)
 - Siege assault victory: -8% supply (5% casualties + 3% siege equipment)
+
+**Note:** Casualties are counted ONLY from the enlisted lord's party, not from the entire army. This ensures supply losses are scoped to the Company you're serving in, not the broader military coalition.
 
 ### **Special Events (Planned - Not Yet Implemented):**
 
@@ -144,38 +152,62 @@ These events are designed but not yet created in the content system:
 
 When the player is with the enlisted lord and the Company is in a settlement:
 
+**Hourly Resupply (New):**
+- Resupply now happens **every in-game hour** instead of once per day
+- Allows partial-day settlement visits to provide meaningful supply gains (lords rarely stay 24 hours)
+- Base rate: ~2.08% per hour (50% / 24 hours) in towns/castles
+- With bonuses: ~2.92% per hour (70% / 24 hours) maximum
+
+**Player Messaging:**
+- When the lord **leaves** a settlement after a meaningful resupply (≥5% gained), a flavor message appears
+- Messages are RP-appropriate with no percentages shown:
+  - Minor (5-15%): "Took on some supplies in {settlement}."
+  - Good (15-30%): "Supplies replenished in {settlement}."
+  - Major (30%+): "The company restocked well in {settlement}. Stores are replenished."
+- Quartermaster dialogue also mentions active resupply when asked about supplies while in a settlement
+
 ```csharp
-public void DailyResupply()
+public void HourlyResupply()
 {
     // Resupply is computed for the Company (enlisted lord's party),
     // regardless of whether the lord is currently attached to an army.
     if (IsWithEnlistedLordPartyInSettlement())
     {
-        // Settlement resupply: +3% supplies per day in town/castle
-        int resupply = 3;
+        // Settlement resupply: +50% per day = ~2.08% per hour in town/castle
+        float dailyResupply = 50.0f;
         
         // Wealthy settlements give more (better workshops/smiths)
         if (CurrentSettlement.Prosperity > 5000)
-            resupply += 1;
+            dailyResupply += 10.0f;  // +10% per day = ~0.42% per hour
         
         // Modifier based on settlement relation
         if (CurrentSettlement.OwnerClan == PlayerLord.Clan)
-            resupply += 1; // Friendly territory has better access
+            dailyResupply += 10.0f;  // +10% per day = ~0.42% per hour (friendly territory)
+        
+        // Convert to hourly rate
+        float hourlyResupply = dailyResupply / 24.0f;
         
         // Replenish supplies (max 100%)
-        int currentSupply = GetTotalSupply();
-        if (currentSupply < 100)
-        {
-            AddSupplies(resupply);
-        }
+        AddSupplies(hourlyResupply);
     }
 }
 ```
 
-**Settlement Resupply:**
-- In friendly town/castle: +3% per day
-- In wealthy settlement: +4% per day  
-- In owned settlement: +5% per day
+**Settlement Resupply Rates:**
+
+| Settlement Type | Per Hour | Per Full Day (24h) | Notes |
+|-----------------|----------|-------------------|-------|
+| **Standard town/castle** | ~2.08% | 50% | Base resupply rate |
+| **Wealthy settlement** (Prosperity > 5000) | ~2.50% | 60% | Better workshops/smiths |
+| **Owned settlement** (Your lord's clan) | ~2.50% | 60% | Friendly territory access |
+| **Wealthy + Owned** | ~2.92% | 70% | Maximum resupply rate |
+
+**Examples:**
+- **3 hours in town:** ~6.2% supply gained (50%/24 × 3 = 6.25%)
+- **6 hours in wealthy town:** ~15% supply gained (60%/24 × 6 = 15%)
+- **12 hours in owned castle:** ~30% supply gained (60%/24 × 12 = 30%)
+- **24 hours (full day) in standard town:** 50% supply gained
+- **24 hours (full day) in wealthy owned town:** 70% supply gained
 
 ### **2. Quartermaster Duties (Planned - Not Yet Connected)**
 

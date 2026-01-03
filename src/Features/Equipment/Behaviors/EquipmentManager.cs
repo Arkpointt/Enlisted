@@ -26,12 +26,6 @@ namespace Enlisted.Features.Equipment.Behaviors
     {
         public static EquipmentManager Instance { get; private set; }
         
-        // Equipment backup for retirement system
-        private TaleWorlds.Core.Equipment _personalBattleEquipment;
-        private TaleWorlds.Core.Equipment _personalCivilianEquipment;
-        private ItemRoster _personalInventory = new ItemRoster();
-        private bool _hasBackedUpEquipment;
-        
         // Equipment pricing configuration
         private Dictionary<FormationType, float> _formationPriceMultipliers;
         private Dictionary<string, float> _culturePriceMultipliers;
@@ -49,13 +43,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         public override void SyncData(IDataStore dataStore)
         {
-            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
-            {
-                dataStore.SyncData("_personalBattleEquipment", ref _personalBattleEquipment);
-                dataStore.SyncData("_personalCivilianEquipment", ref _personalCivilianEquipment);
-                dataStore.SyncData("_personalInventory", ref _personalInventory);
-                dataStore.SyncData("_hasBackedUpEquipment", ref _hasBackedUpEquipment);
-            });
+            // No save data needed - we track QM-issued equipment via item modifiers
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -115,59 +103,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Called when enlisting to preserve personal gear.
         /// PROTECTS QUEST ITEMS: Quest items in equipment slots are preserved and not stowed.
         /// </summary>
-        public void BackupPersonalEquipment()
-        {
-            try
-            {
-                if (_hasBackedUpEquipment)
-                {
-                    return; // Already backed up
-                }
-                
-                var hero = Hero.MainHero;
-                
-                // Backup equipment using verified APIs
-                _personalBattleEquipment = hero.BattleEquipment.Clone(); // Default cloneWithoutWeapons=false is sufficient
-                _personalCivilianEquipment = hero.CivilianEquipment.Clone(); // Default cloneWithoutWeapons=false is sufficient
-                
-                // CRITICAL: Quest-safe inventory backup (prevents quest item loss)
-                var itemsToBackup = new List<ItemRosterElement>();
-                foreach (var elem in MobileParty.MainParty.ItemRoster)
-                {
-                    // GUARD: Skip quest items - they must stay with player
-                    if (elem.EquipmentElement.IsQuestItem)
-                    {
-                        continue;
-                    }
-                    
-                    var item = elem.EquipmentElement.Item;
-                    // GUARD: Skip special items
-                    if (item == null)
-                    {
-                        continue;
-                    }
-                        
-                    // Safe to backup this item
-                    itemsToBackup.Add(elem);
-                }
-                
-                // Backup safe items only (quest items remain with player)
-                _personalInventory.Clear();
-                foreach (var elem in itemsToBackup)
-                {
-                    _personalInventory.AddToCounts(elem.EquipmentElement, elem.Amount);
-                    MobileParty.MainParty.ItemRoster.AddToCounts(elem.EquipmentElement, -elem.Amount);
-                }
-                
-                _hasBackedUpEquipment = true;
-                ModLogger.Info("Equipment", "Personal equipment backed up for military service (quest items protected)");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Equipment", "E-EQUIP-001", "Error backing up personal equipment", ex);
-                throw;
-            }
-        }
+        // Equipment backup system removed - we track QM-issued gear via item modifiers instead.
+        // Discharge works by: reclaim QM gear + return baggage stash items.
         
         /// <summary>
         /// Preserve quest items from equipped slots before equipment replacement.
@@ -258,162 +195,6 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 ModLogger.Error("Equipment", "Error restoring equipped quest items", ex);
             }
-        }
-        
-        /// <summary>
-        /// Restore personal equipment from backup.
-        /// Called when discharged (not retirement) - replaces current equipment with original.
-        /// </summary>
-        public void RestorePersonalEquipment()
-        {
-            try
-            {
-                if (!_hasBackedUpEquipment)
-                {
-                    ModLogger.Info("Equipment", "No personal equipment to restore");
-                    return;
-                }
-                
-                var hero = Hero.MainHero;
-                
-                if (_personalBattleEquipment != null)
-                {
-                    EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, _personalBattleEquipment);
-                }
-                if (_personalCivilianEquipment != null)
-                {
-                    hero.CivilianEquipment.FillFrom(_personalCivilianEquipment, false);
-                }
-                
-                // Restore safe inventory items
-                foreach (var item in _personalInventory)
-                {
-                    MobileParty.MainParty.ItemRoster.AddToCounts(item.EquipmentElement, item.Amount);
-                }
-                
-                // Clear backup data
-                _personalInventory.Clear();
-                _personalBattleEquipment = null;
-                _personalCivilianEquipment = null;
-                _hasBackedUpEquipment = false;
-                
-                ModLogger.Info("Equipment", "Personal equipment restored successfully");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Equipment", "E-EQUIP-002", "Error restoring personal equipment", ex);
-            }
-        }
-        
-        /// <summary>
-        /// Restore personal equipment to INVENTORY (not equipped) for retirement.
-        /// Player keeps their current military gear AND gets their old stuff back in inventory.
-        /// This is a reward for completing service honorably.
-        /// </summary>
-        public void RestorePersonalEquipmentToInventory()
-        {
-            try
-            {
-                if (!_hasBackedUpEquipment)
-                {
-                    ModLogger.Info("Equipment", "No personal equipment to restore to inventory");
-                    return;
-                }
-                
-                var itemRoster = MobileParty.MainParty.ItemRoster;
-                var itemsRestored = 0;
-                
-                // Add backed up BATTLE equipment to inventory (player keeps what they're wearing)
-                if (_personalBattleEquipment != null)
-                {
-                    for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
-                    {
-                        var item = _personalBattleEquipment[slot].Item;
-                        if (item != null)
-                        {
-                            itemRoster.AddToCounts(new EquipmentElement(item), 1);
-                            itemsRestored++;
-                        }
-                    }
-                }
-                
-                // Add backed up CIVILIAN equipment to inventory
-                if (_personalCivilianEquipment != null)
-                {
-                    for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
-                    {
-                        var item = _personalCivilianEquipment[slot].Item;
-                        if (item != null)
-                        {
-                            itemRoster.AddToCounts(new EquipmentElement(item), 1);
-                            itemsRestored++;
-                        }
-                    }
-                }
-                
-                // Restore backed up inventory items
-                foreach (var item in _personalInventory)
-                {
-                    itemRoster.AddToCounts(item.EquipmentElement, item.Amount);
-                    itemsRestored += item.Amount;
-                }
-                
-                // Clear backup data
-                _personalInventory.Clear();
-                _personalBattleEquipment = null;
-                _personalCivilianEquipment = null;
-                _hasBackedUpEquipment = false;
-                
-                ModLogger.Info("Equipment", $"Retirement reward: {itemsRestored} items restored to inventory (player keeps military gear)");
-                
-                // Notify player
-                var message = new TextObject("{=qm_retirement_gear}Your personal belongings have been returned. You may keep your military equipment as thanks for your service.");
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Equipment", "E-EQUIP-003", "Error restoring equipment to inventory for retirement", ex);
-            }
-        }
-        
-        /// <summary>
-        /// Check if personal equipment has been backed up.
-        /// </summary>
-        public bool HasBackedUpEquipment => _hasBackedUpEquipment;
-
-        /// <summary>
-        /// Snapshot of the backed up personal inventory (items removed from the party roster during enlistment).
-        /// Used by the enlistment bag-check ("stowage") process so it can operate on
-        /// the pre-service belongings even after military equipment has been issued.
-        /// </summary>
-        public ItemRoster GetBackedUpPersonalInventorySnapshot()
-        {
-            var snapshot = new ItemRoster();
-            if (_personalInventory == null)
-            {
-                return snapshot;
-            }
-
-            foreach (var element in _personalInventory)
-            {
-                if (element.EquipmentElement.Item == null || element.Amount <= 0)
-                {
-                    continue;
-                }
-
-                snapshot.AddToCounts(element.EquipmentElement, element.Amount);
-            }
-
-            return snapshot;
-        }
-
-        /// <summary>
-        /// Clear the backed up personal inventory only.
-        /// This does NOT clear the backed up equipment sets (battle/civilian) which are still needed for discharge restoration.
-        /// </summary>
-        public void ClearBackedUpPersonalInventory()
-        {
-            _personalInventory?.Clear();
         }
         
         /// <summary>

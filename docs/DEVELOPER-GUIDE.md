@@ -312,6 +312,43 @@ for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
 }
 ```
 
+### Item Comparison and Confiscation
+Use `StringId` comparison (NOT reference equality):
+
+```csharp
+// ❌ WRONG: Reference equality can fail if items are different instances
+if (element.Item == itemToRemove) { ... }
+
+// ✅ CORRECT: Use StringId comparison for reliable item matching
+if (element.Item != null && element.Item.StringId == itemToRemove.StringId) { ... }
+```
+
+When removing items from inventory, especially equipped items:
+```csharp
+// 1. Check if equipped using StringId comparison
+bool isEquipped = false;
+for (int i = 0; i < 12; i++)
+{
+    var element = equipment.GetEquipmentFromSlot((EquipmentIndex)i);
+    if (element.Item != null && element.Item.StringId == itemToRemove.StringId)
+    {
+        isEquipped = true;
+        break;
+    }
+}
+
+// 2. Unequip before removing from inventory
+if (isEquipped)
+{
+    var newEquipment = equipment.Clone();
+    // ... remove from newEquipment ...
+    equipment.FillFrom(newEquipment);
+}
+
+// 3. Remove from inventory
+party.ItemRoster.AddToCounts(itemToRemove, -1);
+```
+
 ### Reputation & Needs
 Always use centralized managers (they handle clamping and logging):
 ```csharp
@@ -449,6 +486,7 @@ if (eb?.IsEnlisted == true)
 7. Not validating inputs for dynamic dialogue (null checks, archetype validation, value clamping)
 8. Using `GetLocalizedText()` without fallback handling (use `GetLocalizedTextSafe()` wrapper instead)
 9. Assuming localized strings exist (always provide fallbacks for missing XML strings)
+10. Using `==` reference equality to compare `ItemObject` instances (use `StringId` comparison instead to avoid crashes when comparing inventory items to equipped items)
 
 ---
 

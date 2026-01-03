@@ -10,6 +10,7 @@ using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -442,11 +443,12 @@ namespace Enlisted.Features.Camp
         {
             try
             {
-                var enlistment = EnlistmentBehavior.Instance;
-                var party = enlistment?.CurrentLord?.PartyBelongedTo;
-                if (party != null)
+                // Check the main party (player's party) for sea travel status
+                // This is consistent with other parts of the codebase
+                var mainParty = MobileParty.MainParty;
+                if (mainParty != null)
                 {
-                    return party.IsCurrentlyAtSea;
+                    return mainParty.IsCurrentlyAtSea;
                 }
             }
             catch (Exception ex)

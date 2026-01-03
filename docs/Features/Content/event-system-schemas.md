@@ -3,7 +3,7 @@
 **Summary:** Authoritative JSON schema definitions for events, decisions, orders, and camp routine configs. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-31 (Added camp routine config schemas: routine_outcomes.json, orchestrator_overrides.json)  
+**Last Updated:** 2026-01-01 (Phase 6G: Added skillCheck/skillBase/tooltipTemplate for dynamic skill checks, hasAnyCondition/hasSevereCondition/maxIllness for medical system)  
 **Related Docs:** [Content System Architecture](content-system-architecture.md), [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md), [Event Catalog](../../Content/event-catalog-by-system.md), [Quartermaster System](../Equipment/quartermaster-system.md)
 
 ---
@@ -60,7 +60,7 @@
 | Map Incidents | `ModuleData/Enlisted/Events/incidents_*.json` | `mi_*` | Popup inquiry |
 | **Muster Menu Stages** | *See note below* | `evt_muster_*` | **GameMenu stage** |
 
-**Note on Muster Events:** Some events (`evt_muster_inspection`, `evt_muster_new_recruit`, `evt_baggage_*`) are delivered as GameMenu stages during the muster sequence rather than popup inquiries. The JSON definitions remain in `events_*.json` files, but `MusterMenuHandler` converts them to menu text instead of using `MultiSelectionInquiryData`. Effects still apply via `EventDeliveryManager.ApplyEffects()`. See [Muster Menu System](../Core/muster-menu-revamp.md).
+**Note on Muster Events:** The `evt_muster_new_recruit` event is delivered as a GameMenu stage during the muster sequence rather than a popup inquiry. The JSON definition remains in `events_*.json` files, but `MusterMenuHandler` converts it to menu text instead of using `MultiSelectionInquiryData`. Effects still apply via `EventDeliveryManager.ApplyEffects()`. See [Muster Menu System](../Core/muster-menu-revamp.md).
 
 ---
 
@@ -141,6 +141,14 @@
 "all": [
   "is_enlisted",                   // Player is currently enlisted
   "LeavingBattle"                  // Map incident context (battle ended)
+]
+```
+
+**Medical Conditions:**
+```json
+"all": [
+  "has_any_condition",             // Player has active injury or illness
+  "has_untreated_injury"           // Player has injury without treatment
 ]
 ```
 
@@ -253,6 +261,27 @@ All fields are optional. If omitted, no restriction applies.
 | Onboarding Track | `onboarding_track` | string | - | green/seasoned/veteran |
 | Not At Sea | `notAtSea` | bool | - | Only appears on land (not at sea) |
 | At Sea | `atSea` | bool | - | Only appears at sea (not on land) |
+| Has Condition | `hasAnyCondition` | bool | - | Requires active injury or illness |
+| Has Severe Condition | `hasSevereCondition` | bool | - | Requires Severe/Critical condition |
+| Max Illness | `maxIllness` | string | See list | Max illness severity allowed |
+
+**Max Illness Values:**
+- `"None"` - Only if completely healthy (no illness)
+- `"Mild"` - Allows Mild only, blocks Moderate+
+- `"Moderate"` - Allows Mild/Moderate, blocks Severe+
+- `"Severe"` - Allows Mild/Moderate/Severe, blocks Critical
+- Omitted - No restriction (always available)
+
+**Example:**
+```json
+{
+  "id": "dec_training_drill",
+  "requirements": {
+    "tier": { "min": 1 },
+    "maxIllness": "Mild"
+  }
+}
+```
 
 ### Valid Context Values
 
@@ -272,6 +301,122 @@ Map incident contexts are used by `MapIncidentManager` to filter incidents based
   }
 }
 ```
+
+---
+
+### Maritime Context (At Sea / On Land)
+
+Events and decisions can be restricted to maritime (sea travel) or land-based contexts using the `atSea` and `notAtSea` requirement fields. This enables context-appropriate content when the player's party is traveling by ship.
+
+**Requirements:**
+```json
+{
+  "requirements": {
+    "atSea": true        // Only available during sea travel
+  }
+}
+```
+
+```json
+{
+  "requirements": {
+    "notAtSea": true     // Only available on land (not during sea travel)
+  }
+}
+```
+
+**Trigger Conditions:**
+
+In the `triggers.all` or `triggers.any` arrays, you can also use string conditions:
+```json
+{
+  "triggers": {
+    "all": ["is_enlisted", "at_sea"]    // Fires only at sea
+  }
+}
+```
+
+```json
+{
+  "triggers": {
+    "all": ["is_enlisted", "not_at_sea"] // Fires only on land
+  }
+}
+```
+
+**Illness-Type Conditions:**
+
+For events that should match the illness type (not current location), use:
+```json
+{
+  "triggers": {
+    "all": ["has_untreated_condition", "has_maritime_illness"]  // Ship fever or scurvy
+  }
+}
+```
+
+```json
+{
+  "triggers": {
+    "all": ["has_untreated_condition", "not_maritime_illness"]  // Land illness or injury
+  }
+}
+```
+
+| Condition | Description |
+|-----------|-------------|
+| `has_maritime_illness` | Player has ship_fever or scurvy |
+| `has_land_illness` | Player has camp_fever or flux |
+| `not_maritime_illness` | Player does NOT have ship_fever/scurvy (includes injuries, land illnesses, or healthy) |
+
+This enables worsening events to show nautical flavor text when the player has ship fever, even if they've already landed.
+
+**Maritime Event Naming Convention:**
+
+Events with maritime variants use the `_sea` suffix:
+- `illness_onset_minor` → `illness_onset_minor_sea`
+- `dec_medical_surgeon` → `dec_medical_surgeon_sea`
+- `untreated_condition_worsening` → `untreated_condition_worsening_sea`
+
+The Content Orchestrator automatically selects context-appropriate variants when queuing events. If a sea variant doesn't exist, it falls back to the base event.
+
+**Maritime Illness Types:**
+
+When at sea, the medical system applies maritime-appropriate illnesses:
+| Context | Mild/Moderate | Severe/Critical |
+|---------|---------------|-----------------|
+| At Sea | Ship Fever | Scurvy |
+| On Land | Camp Fever | Flux |
+
+**Example - Maritime Medical Decision:**
+```json
+{
+  "id": "dec_medical_surgeon_sea",
+  "category": "decision",
+  "title": "Ship's Surgeon",
+  "setup": "The ship's surgeon works in a cramped space near the waterline...",
+  "requirements": {
+    "tier": { "min": 1, "max": 999 },
+    "hasAnyCondition": true,
+    "atSea": true
+  },
+  "options": [
+    {
+      "id": "surgeon_treat_sea",
+      "text": "\"I need your help, surgeon.\"",
+      "effects_success": { "hpChange": 20, "medicalRisk": -5, "beginTreatment": true },
+      "resultText": "He examines you by lantern-light, steady hands despite the ship's roll..."
+    }
+  ]
+}
+```
+
+**Implementation:**
+- `WorldStateAnalyzer.DetectTravelContext()` uses native `party.IsCurrentlyAtSea` property
+- `EventRequirementChecker` validates `atSea`/`notAtSea` requirements
+- `DecisionManager` filters decisions based on sea context
+- `ContentOrchestrator.CheckIllnessOnsetTriggers()` selects `_sea` event variants when at sea
+- `EventDeliveryManager.ApplyIllnessOnset()` applies context-appropriate illness types
 
 ---
 
@@ -329,7 +474,7 @@ var eligible = events.Where(e =>
 );
 ```
 
-**See Also:** [Content Orchestrator Plan](../../AFEATURE/content-orchestrator-plan.md) for complete world state analysis specification.
+**See Also:** [Content System Architecture](content-system-architecture.md) for world state analysis specification.
 
 ---
 
@@ -374,7 +519,7 @@ var eligible = events.Where(e =>
 - **Order events** need granular weighting (peacetime vs active war vs desperate siege)
 - Both are driven by the same underlying `WorldSituation` analysis
 
-**See:** [Order Events Master](../../AFEATURE/order-events-master.md) for order event examples, [Order Progression System](../../AFEATURE/order-progression-system.md) for execution flow.
+**See:** [Order Progression System](../Core/order-progression-system.md) for execution flow, `ModuleData/Enlisted/Orders/order_events/*.json` for 330 event definitions.
 
 ---
 
@@ -677,7 +822,7 @@ Player sees: Normal rest option
 3. Role-specific content (add depth)
 4. Tier-specific content (progression feel)
 
-**See:** [Content Orchestrator Plan - Phase 7](../../AFEATURE/content-orchestrator-plan.md#phase-7-content-variants-post-launch-incremental) for variant strategy.
+**See:** [Content System Architecture](content-system-architecture.md) for variant strategy implementation.
 
 ---
 
@@ -882,33 +1027,68 @@ Each option represents a player choice.
 | ID | `id` | string | ✅ | Unique within event |
 | Text ID | `textId` | string | ✅ | XML localization key |
 | Text Fallback | `text` | string | ❌ | Button text if loc missing |
-| Tooltip | `tooltip` | string | ✅ | Cannot be null. Factual, brief description |
+| Tooltip | `tooltip` | string | ✅* | Static tooltip. Required if no `tooltipTemplate` |
+| Tooltip Template | `tooltipTemplate` | string | ✅* | Dynamic tooltip with `{CHANCE}`, `{SKILL}`, `{SKILL_NAME}` |
 | Costs | `costs` | object | ❌ | Resources deducted |
 | Rewards | `rewards` | object | ❌ | Resources gained |
 | Effects | `effects` | object | ❌ | State changes |
 | Result Text ID | `resultTextId` | string | ❌ | XML key for outcome narrative |
 | Result Text | `resultText` | string or array | ❌ | Outcome narrative (string or array for random selection) |
 | Risk | `risk` | string | ❌ | safe/moderate/risky/dangerous |
-| Risk Chance | `risk_chance` or `riskChance` | int | ❌ | 0-100, success % |
+| Risk Chance | `risk_chance` or `riskChance` | int | ❌ | Base success % (0-100), modified by skill |
+| Skill Check | `skillCheck` | string | ❌ | Skill that modifies riskChance (e.g., "Scouting") |
+| Skill Base | `skillBase` | int | ❌ | Skill level where riskChance applies (default 50) |
+| Effects Failure | `effectsFailure` | object | ❌ | Effects applied on failed skill check |
 | Set Flags | `set_flags` or `setFlags` | array | ❌ | Flags to set |
 | Clear Flags | `clear_flags` or `clearFlags` | array | ❌ | Flags to clear |
 | Chains To | `chains_to` or `chainsTo` | string | ❌ | Follow-up event ID |
 | Chain Delay | `chain_delay_hours` or `chainDelayHours` | int | ❌ | Hours before chain fires |
 
+*Either `tooltip` OR `tooltipTemplate` is required (one must be present, cannot both be null).
+
 ---
 
 ## Tooltip Guidelines
 
-**Tooltips cannot be null.** Every option must have a factual, concise, brief description.
+**Tooltips cannot be null.** Every option must have either `tooltip` (static) or `tooltipTemplate` (dynamic).
 
-**Format:** Action + consequences + restrictions (under 80 characters)
+### Dynamic Tooltips (Skill Checks)
 
-**Examples:**
+For options with `skillCheck`, use `tooltipTemplate` with placeholders:
+
+```json
+{
+  "riskChance": 50,
+  "skillCheck": "Scouting",
+  "skillBase": 50,
+  "tooltipTemplate": "{CHANCE}% (Scouting {SKILL}). +15 Supplies. Fail: -5 Supplies."
+}
+```
+
+**Placeholders:**
+- `{CHANCE}` - Calculated success chance based on player skill
+- `{SKILL}` - Player's current skill value
+- `{SKILL_NAME}` - Name of the skill being checked
+
+**Calculation:** `actualChance = riskChance + (playerSkill - skillBase) × 0.5`, clamped 15-95%
+
+**Runtime Display (player has Scouting 72):**
+```
+"61% (Scouting 72). +15 Supplies. Fail: -5 Supplies."
+```
+
+### Static Tooltips (No Skill Check)
+
+For guaranteed options or non-skill-based outcomes, use `tooltip`:
 
 ```json
 // Simple actions
-{"tooltip": "Trains equipped weapon"}
-{"tooltip": "Build stamina and footwork"}
+{"tooltip": "Trains equipped weapon. +3 One-Handed XP."}
+{"tooltip": "Build stamina and footwork. +3 Athletics XP."}
+
+// Guaranteed outcomes
+{"tooltip": "Guaranteed. +25 Supplies. -3 Morale. +3 Scrutiny."}
+{"tooltip": "No action taken."}
 
 // Stat/reputation changes
 {"tooltip": "Harsh welcome. +5 Officer rep. -3 Retinue Loyalty."}
@@ -917,11 +1097,9 @@ Each option represents a player choice.
 // Consequences
 {"tooltip": "Accept discharge. 90-day re-enlistment block applies."}
 {"tooltip": "Desert immediately. Criminal record and faction hostility."}
-
-// Requirements
-{"tooltip": "Requires Leadership 50+ to attempt."}
-{"tooltip": "Greyed out: Company Morale must be below 50"}
 ```
+
+**Format:** Action + effects + costs (under 100 characters)
 
 ---
 
@@ -1134,6 +1312,10 @@ State changes when option is selected. Can be positive or negative.
 | Chain Event | `chainEventId` | string | - | Immediate follow-up |
 | Discharge | `triggersDischarge` | string | - | dishonorable/washout/deserter |
 | Renown | `renown` | int | delta | Clan renown |
+| Illness Onset | `illnessOnset` or `illness_onset` | string | - | Apply illness: `"mild"`, `"moderate"`, `"severe"`, `"critical"` |
+| Injury Onset | `injuryOnset` or `injury_onset` | string | - | Apply injury: `"minor"`, `"moderate"`, `"severe"`, `"critical"` |
+| Begin Treatment | `beginTreatment` or `begin_treatment` | bool | - | Start medical care, apply recovery multiplier |
+| Worsen Condition | `worsenCondition` or `worsen_condition` | bool | - | Increase severity by one level |
 
 **⚠️ COMMON MISTAKES:**
 - Use `hpChange`, not `hp`
@@ -1583,8 +1765,104 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
 | `immediate` | bool | ❌ | **Phase 9** - If true, fires immediately (ignores scheduledPhase). Default: false. |
 | `requiredFlags` | array | ❌ | Flags that must be set to appear |
 | `blockedByFlags` | array | ❌ | Flags that prevent appearance |
+| `requirements` | object | ❌ | Requirement conditions (see Requirements Object section below) |
 | `notAtSea` | bool | ❌ | Only appears on land (not at sea) |
 | `atSea` | bool | ❌ | Only appears at sea (not on land) |
+
+### Requirements Object
+
+Opportunities can have a `requirements` object that filters when they appear:
+
+```json
+{
+  "id": "opp_urgent_medical",
+  "type": "recovery",
+  "requirements": {
+    "conditionStates": ["HasSevereCondition"]
+  }
+}
+```
+
+**Supported Requirement Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `conditionStates` | array | Required player condition states (see below) |
+| `medicalPressure` | array | Required medical pressure levels (see below) |
+
+**Additional Medical Filtering:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `suppressWhenTreated` | bool | If true, hides opportunity while player is under medical care |
+
+**Valid Condition States:**
+
+| State | Description | When True |
+|-------|-------------|-----------|
+| `HasAnyCondition` | Player has any active condition | Any injury, illness, or exhaustion with days remaining > 0 |
+| `HasCondition` | Same as `HasAnyCondition` | Alias for compatibility |
+| `HasSevereCondition` | Player has severe/critical condition | Injury or illness severity >= Severe AND days remaining > 0 |
+| `HasInjury` | Player has active injury | Injury with days remaining > 0 |
+| `HasIllness` | Player has active illness | Illness with days remaining > 0 |
+
+**Valid Medical Pressure Levels:**
+
+| Level | Medical Risk Range | Description |
+|-------|-------------------|-------------|
+| `Low` | 1+ | Any medical risk present |
+| `Moderate` | 2+ | Moderate medical risk (warning level) |
+| `High` | 3+ | High medical risk (concerning) |
+| `Critical` | 4-5 | Critical medical risk (emergency) |
+
+**Example - Medical Opportunities:**
+
+```json
+{
+  "id": "opp_seek_medical_care",
+  "type": "recovery",
+  "title": "Seek Medical Care",
+  "requirements": {
+    "conditionStates": ["HasCondition"]
+  },
+  "comment": "Only appears when player has any active condition"
+}
+```
+
+```json
+{
+  "id": "opp_urgent_medical",
+  "type": "recovery",
+  "title": "Urgent Medical Care",
+  "immediate": true,
+  "requirements": {
+    "conditionStates": ["HasSevereCondition"]
+  },
+  "comment": "Only appears when player has severe/critical injury or illness"
+}
+```
+
+```json
+{
+  "id": "opp_preventive_rest",
+  "type": "recovery",
+  "title": "Preventive Rest",
+  "requirements": {
+    "medicalPressure": ["Moderate", "High"]
+  },
+  "comment": "Only appears when medical risk is 2+ but no condition yet"
+}
+```
+
+**How It Works:**
+- Requirements are checked during candidate generation (before fitness scoring)
+- Opportunities that don't meet requirements are filtered out immediately
+- Multiple condition states in the array work as AND logic (all must be true)
+- Multiple medical pressure levels in the array work as OR logic (any can match)
+- If condition system is disabled, condition-dependent opportunities won't appear
+- Medical pressure checks escalation manager's MedicalRisk track (0-5 scale)
+
+---
 
 ### Fitness Scoring
 
@@ -2336,7 +2614,6 @@ For reference when reviewing event master document:
 - `C.MOR` = Morale (`companyNeeds.Morale`)
 - `C.RDY` = Readiness (`companyNeeds.Readiness`)
 - `C.SUP` = Supplies (`companyNeeds.Supplies`)
-- `C.EQ` = Equipment (`companyNeeds.Equipment`)
 - `C.MEN` = Troop Loss (`troopLoss`)
 - `C.FOOD` = Food (`foodLoss` for loss, `companyNeeds.Supplies` for gain)
 
@@ -2344,7 +2621,7 @@ For reference when reviewing event master document:
 - `XP.{Skill}` = Skill XP (`skillXp.{Skill}`)
 - **REQUIRED:** All order event options must include at least one skill XP reward in `effects`
 
-**See Also:** [Order Events Master](../../AFEATURE/order-events-master.md) for complete event catalog.
+**See Also:** [Orders Content](orders-content.md) for order definitions, event files at `ModuleData/Enlisted/Orders/order_events/`.
 
 ---
 

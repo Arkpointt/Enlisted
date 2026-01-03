@@ -14,7 +14,6 @@
 - [Daily Wage Calculation](#daily-wage-calculation)
 - [Pay Muster](#pay-muster)
 - [Pay Tension](#pay-tension)
-- [Free Desertion](#free-desertion)
 - [Battle Loot Share](#battle-loot-share)
 - [Tier-Gated Loot](#tier-gated-loot)
 - [News Integration](#news-integration)
@@ -116,20 +115,13 @@ When muster arrives, players proceed to the Pay Line stage where they choose fro
 If the player has a pending discharge, additional options appear:
 
 **5. Process Final Discharge**
-- Receive final pay settlement
-- Service ends, pension activated
-- Equipment reclaimed (see [Discharge System](onboarding-discharge-system.md))
-
-**6. Smuggle Out (Deserter)**
-- Keep all gear, lose pension
-- Deserter penalties applied
-- Criminal record and faction hostility
-
-**5. Process Final Discharge**
 - **Only available if pending discharge requested**
+- **Confirmation popup:** Shows detailed breakdown of what player will receive (severance pay, pension with days served calculation, relation changes, gear handling) based on discharge band
 - Ends service honorably
 - Pays final wages + severance based on service band
 - Activates pension system
+- Equipment reclaimed (see [Discharge System](onboarding-discharge-system.md))
+- Player must confirm in popup before discharge processes
 
 **6. Smuggle Out (Deserter)**
 - **Only available if pending discharge requested**
@@ -181,25 +173,7 @@ Tracks soldier dissatisfaction when pay is delayed or irregular.
 
 When tension reaches 80+, NPC soldiers may desert from the lord's party. The player can check tension in the Camp Hub menu.
 
----
-
-## Free Desertion
-
-When **Pay Tension ≥ 60**, the player can leave service without standard desertion penalties:
-
-**Standard Desertion Consequences**
-- Major lord relation penalty
-- Crime rating increase
-- Gear may be stripped
-- Pension forfeited
-
-**Free Desertion (High Pay Tension)**
-- Minimal lord relation hit
-- No crime rating penalty
-- Keep all current equipment
-- Pension still forfeited
-
-The lord understands if soldiers leave when wages aren't being paid.
+**Note:** Desertion for the player is determined at muster as a discharge outcome, not through a player action. High pay tension affects NPC morale and lord party stability, but players must go through the muster discharge process.
 
 ---
 

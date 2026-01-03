@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Core.ImageIdentifiers; // 1.3.4 API: ImageIdentifier moved here
 using TaleWorlds.Library;
@@ -589,6 +590,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                     var equipmentManager = EquipmentManager.Instance;
                     var questItems = equipmentManager?.PreserveEquippedQuestItems() ?? new Dictionary<EquipmentIndex, EquipmentElement>();
 
+                    // CRITICAL: Move civilian equipment to inventory BEFORE replacing
+                    // This ensures the bag check (1 hour after enlistment) will find and stash these items
+                    StashCivilianEquipmentToInventory(hero, questItems);
+
                     // Replace all equipment with new troop's gear
                     EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, troopEquipment);
 
@@ -620,6 +625,90 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-012",
                     $"Failed to apply selected troop equipment for {selectedTroop?.Name?.ToString() ?? "null"}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Moves civilian (pre-enlistment) equipment from hero's equipped slots to party inventory.
+        /// This allows the bag check event to find and properly stash these items.
+        /// Quest items are excluded as they are handled separately.
+        /// </summary>
+        private void StashCivilianEquipmentToInventory(Hero hero, Dictionary<EquipmentIndex, EquipmentElement> questItems)
+        {
+            try
+            {
+                var partyRoster = MobileParty.MainParty?.ItemRoster;
+                if (partyRoster == null || hero?.BattleEquipment == null)
+                {
+                    return;
+                }
+
+                var stashedCount = 0;
+
+                // Stash battle equipment
+                for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
+                {
+                    var slot = (EquipmentIndex)i;
+                    var element = hero.BattleEquipment[slot];
+
+                    if (element.IsEmpty || element.Item == null)
+                    {
+                        continue;
+                    }
+
+                    // Skip quest items - they're preserved separately
+                    if (questItems.ContainsKey(slot) || element.IsQuestItem)
+                    {
+                        continue;
+                    }
+
+                    // Move to inventory
+                    partyRoster.AddToCounts(element, 1);
+                    stashedCount++;
+                    ModLogger.Debug("TroopSelection", $"Moved to inventory: {element.Item.Name}");
+                }
+
+                // Stash civilian equipment (if different from battle equipment)
+                if (hero.CivilianEquipment != null)
+                {
+                    for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
+                    {
+                        var slot = (EquipmentIndex)i;
+                        var element = hero.CivilianEquipment[slot];
+
+                        if (element.IsEmpty || element.Item == null)
+                        {
+                            continue;
+                        }
+
+                        // Skip if same as battle equipment (already stashed)
+                        if (hero.BattleEquipment[slot].Item?.StringId == element.Item.StringId)
+                        {
+                            continue;
+                        }
+
+                        // Skip quest items
+                        var civilianSlot = (EquipmentIndex)((int)slot + 100);
+                        if (questItems.ContainsKey(civilianSlot) || element.IsQuestItem)
+                        {
+                            continue;
+                        }
+
+                        // Move to inventory
+                        partyRoster.AddToCounts(element, 1);
+                        stashedCount++;
+                        ModLogger.Debug("TroopSelection", $"Moved civilian item to inventory: {element.Item.Name}");
+                    }
+                }
+
+                if (stashedCount > 0)
+                {
+                    ModLogger.Info("TroopSelection", $"Stashed {stashedCount} civilian items to inventory for bag check");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("TroopSelection", $"Error stashing civilian equipment: {ex.Message}");
             }
         }
 

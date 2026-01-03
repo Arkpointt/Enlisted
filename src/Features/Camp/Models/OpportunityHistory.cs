@@ -68,6 +68,7 @@ namespace Enlisted.Features.Camp.Models
 
         /// <summary>
         /// Records that the player engaged with an opportunity.
+        /// Updates last presented time to start cooldown from engagement.
         /// </summary>
         public void RecordEngaged(string opportunityId, string opportunityType)
         {
@@ -76,6 +77,12 @@ namespace Enlisted.Features.Camp.Models
                 TimesEngaged[opportunityType] = 0;
             }
             TimesEngaged[opportunityType]++;
+
+            // Update last presented time to start the cooldown from engagement
+            // This prevents the opportunity from reappearing immediately
+            float currentHour = (float)CampaignTime.Now.ToHours;
+            LastPresentedHours[opportunityType] = currentHour;
+            LastPresentedHours[opportunityId] = currentHour;
         }
 
         /// <summary>

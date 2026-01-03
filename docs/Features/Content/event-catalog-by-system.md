@@ -98,7 +98,6 @@ The Quartermaster is a specific NPC with a personal relationship (`Hero.GetRelat
 | **Morale** | Men's will to serve |
 | **Supplies** | Food, consumables |
 | **Rest** | Recovery from fatigue |
-| **Equipment** | Gear condition |
 
 Orders affect Company Needs. Low needs trigger warnings and affect gameplay.
 
@@ -382,7 +381,7 @@ Player-initiated choices from the Camp Hub menu. These have costs, cooldowns, an
 
 | Decision | Cost | Cooldown | Gate | Outcomes |
 |----------|------|----------|------|----------|
-| **Maintain Gear** | 2 hrs, -5 Rest | 3 days | — | +Equipment condition |
+| **Maintain Gear** | 2 hrs, -5 Rest | 3 days | — | Maintain gear |
 | **Visit Quartermaster** | 1 hr, variable gold | None | — | Request/buy gear |
 
 ### Risk-Taking Decisions
@@ -477,13 +476,20 @@ Situations that arise based on context and state. Player responds.
 | Disc 8 | Disciplinary Hearing | Face the captain |
 | Disc 10 | Court Martial | Trial |
 
-**Escalation: Medical**
-| Threshold | Event | Stakes |
-|-----------|-------|--------|
-| Med 2 | Feeling Unwell (`medical_onset`) | Minor symptoms |
-| Med 3 | Worsening (`medical_worsening`) | Performance impact |
-| Med 4 | Complication (`medical_complication`) | Serious complications |
-| Med 5 | Emergency (`medical_emergency`) | Life-threatening |
+**Escalation: Medical** (Phase 6H - Orchestrator Integration)
+| Medical Risk | Event | Description |
+|--------------|-------|-------------|
+| Risk 3+ | Feeling Unwell (`illness_onset_minor`) | Minor illness onset, choice to rest or push through |
+| Risk 4+ | Fever Sets In (`illness_onset_moderate`) | Moderate illness, treatment urgently recommended |
+| Risk 5+ | Collapse (`illness_onset_severe`) | Severe illness, automatic treatment begins |
+| 3+ days untreated | Condition Worsening (`untreated_condition_worsening`) | Existing condition deteriorating without care |
+
+**Notes:**
+- Events fired by `ContentOrchestrator.CheckIllnessOnsetTriggers()` based on daily pressure analysis
+- Probability: 5% per Medical Risk level + modifiers (fatigue +10%, siege +12%, consecutive days +5% each)
+- 7-day cooldown between illness triggers to prevent spam
+- Blocked if player already has active condition
+- See [Medical Progression System](medical-progression-system.md) for full specification
 
 **Reputation Milestones** (First time crossing threshold)
 | Track | Thresholds | Effect |
@@ -511,10 +517,9 @@ Camp life, moral dilemmas, social situations. Not skill-gated but may have skill
 
 | Event | Cooldown | Trigger | Options |
 |-------|----------|---------|---------|
-| Equipment Inspection (`evt_muster_inspection`) | 12 days | Muster day (automatic) | Perfect Attention (OneHanded 30+), Basic Requirements, Not Ready |
 | Green Recruit (`evt_muster_new_recruit`) | 10 days | Muster day if T3+ | Train Him (Leadership 25+), Ignore, Haze |
 
-**Note:** These events fire as menu stages during the muster sequence (see [Muster Menu System](../Core/muster-menu-revamp.md)). They are filtered out of random camp event selection to prevent duplication.
+**Note:** This event fires as a menu stage during the muster sequence (see [Muster Menu System](../Core/muster-menu-revamp.md)). It is filtered out of random camp event selection to prevent duplication.
 
 ---
 

@@ -1,6 +1,6 @@
 # Muster System
 
-**Summary:** The Muster System is a multi-stage GameMenu sequence that occurs every 12 days, guiding players through pay day ceremonies, rank progression displays, equipment inspections, and comprehensive period summaries. Replaces the simple pay inquiry popup with an immersive muster experience that integrates pay, rations, baggage checks, equipment inspections, and promotion acknowledgments.
+**Summary:** The Muster System is a multi-stage GameMenu sequence that occurs every 12 days, guiding players through pay day ceremonies, rank progression displays, and comprehensive period summaries. Replaces the simple pay inquiry popup with an immersive muster experience that integrates pay, rations, and promotion acknowledgments.
 
 **Status:** ✅ Current  
 **Last Updated:** 2026-01-01  
@@ -23,12 +23,12 @@
 
 ## Overview
 
-The pay muster occurs every 12 days (configurable via `payday_interval_days`) and serves as the primary checkpoint for wages, rations, equipment availability, inspections, and rank progression. When the muster day arrives, players enter a multi-stage menu sequence that:
+The pay muster occurs every 12 days (configurable via `payday_interval_days`) and serves as the primary checkpoint for wages, rations, equipment availability, and rank progression. When the muster day arrives, players enter a multi-stage menu sequence that:
 
 1. **Summarizes the 12-day period** - Shows events, battles, gold earned, XP gained
 2. **Displays service progression** - Current rank, XP to next rank, unlocks coming
-3. **Guides through muster stages** - Pay → Inspections → Events → Summary
-4. **Integrates key events** - Baggage checks, equipment inspections, recruit interactions
+3. **Guides through muster stages** - Pay → Events → Summary
+4. **Integrates key events** - Recruit interactions
 5. **Provides context for decisions** - Shows pay status, supply levels, unit condition
 6. **Creates natural transitions** - Direct links to Quartermaster, Service Records
 7. **Generates comprehensive reports** - Final summary saved to news feed
@@ -43,8 +43,6 @@ The pay muster occurs every 12 days (configurable via `payday_interval_days`) an
 
 **Player Choices:**
 - Select pay option (accept, recount, side deal, IOU if tension high)
-- Handle contraband if discovered (30% chance)
-- Respond to equipment inspection (if cooldown ready)
 - Mentor/ignore/haze green recruits (T3+, if cooldown ready)
 - Acknowledge promotions (if tier increased during period)
 - Review retinue status (T7+ commanders)
@@ -78,33 +76,23 @@ The pay muster occurs every 12 days (configurable via `payday_interval_days`) an
    • Low supply (<30%): No ration issued, warning in summary
    • Note: First ration is issued at initial enlistment, not at first muster
    ↓
-[3. BAGGAGE CHECK] (30% chance, skip if not triggered)
-   • Contraband detection (if found and rep <65)
-   • Options: Bribe | Smuggle | Surrender | Protest
-   • QM Rep 65+: Auto-pass (QM looks away)
-   ↓
-[4. EQUIPMENT INSPECTION] (12-day cooldown)
-   • Company forms ranks for inspection
-   • Options: Perfect Attention | Meet Requirements | Unprepared
-   • Skipped if cooldown active or critically wounded
-   ↓
-[5. GREEN RECRUIT] (10-day cooldown, T3+)
+[3. GREEN RECRUIT] (10-day cooldown, T3+)
    • Nervous recruit joins formation
    • Options: Mentor | Ignore | Haze
    • Skipped if T1-T2 or cooldown active
    ↓
-[6. PROMOTION RECAP] (only if tier increased during period)
+[4. PROMOTION RECAP] (only if tier increased during period)
    • Formal acknowledgment of promotion
    • Shows benefits unlocked, new abilities, date promoted
    • Options: Continue | Visit QM Now
    ↓
-[7. RETINUE MUSTER] (T7+ only)
+[5. RETINUE MUSTER] (T7+ only)
    • Retinue strength, casualties, morale
    • Fallen soldiers memorial
    • Options: Continue | Recruit After Muster
    ↓
-[8. MUSTER COMPLETE]
-   • All outcomes (pay, ration, inspections)
+[6. MUSTER COMPLETE]
+   • All outcomes (pay, ration)
    • XP sources breakdown
    • Period summary (gold, skills, items, unit status)
    • Options: Dismiss | Visit QM | Review Records | Request Leave
@@ -116,11 +104,11 @@ The pay muster occurs every 12 days (configurable via `payday_interval_days`) an
 
 | Tier | Typical Stages | Notes |
 |------|----------------|-------|
-| T1-T2 | 4-6 stages | Intro → Pay → Baggage? → Inspection? → Complete |
-| T3-T6 | 5-7 stages | + Green Recruit? → Promotion? |
-| T7-T9 | 6-8 stages | + Retinue Muster |
+| T1-T2 | 2-3 stages | Intro → Pay → Complete |
+| T3-T6 | 3-4 stages | + Green Recruit? → Promotion? |
+| T7-T9 | 4-5 stages | + Retinue Muster |
 
-**Note:** Stages marked with "?" are conditional (only appear if triggered by cooldowns, contraband, tier increases, etc.)
+**Note:** Stages marked with "?" are conditional (only appear if triggered by cooldowns, tier increases, etc.)
 
 ---
 
@@ -222,7 +210,7 @@ The intro text varies based on the army's current situation (detected via `ArmyC
 | Full health | "Health Status: Fit for duty" |
 | Wounded 50-99% | "Health Status: Wounded (X%) - Light duties" |
 | Wounded 30-49% | "Health Status: Badly Wounded (X%) - Limited duties" |
-| Wounded <30% | "Health Status: Critically Wounded (X%) - Excused from inspection" |
+| Wounded <30% | "Health Status: Critically Wounded (X%)" |
 
 **Supply Crisis Warning:**
 
@@ -270,6 +258,16 @@ Lord's Treasury:      Comfortable
 | 🏴 Leave | Process Final Discharge | Process discharge. Receive final pay + pension. Service ends. | Pending discharge |
 | ⚠ Leave | Smuggle Out (Deserter) | Desert with your gear. Forfeit pension. Hunted as deserter. | Pending discharge |
 
+**Discharge Confirmation:**
+
+When selecting "Process Final Discharge", a confirmation popup appears showing exactly what the player will receive based on their discharge band:
+
+- **Veteran/Heroic Discharge:** Shows 3000 denars severance, pension details with days served, +30 relation, and gear handling (keep armor, weapons to inventory)
+- **Honorable Discharge:** Shows 3000 denars severance, pension details with days served, +10 relation, and gear handling
+- **Washout Discharge:** Shows no severance, no pension, -10 relation, and all equipment confiscated
+
+The popup uses the native game's `InquiryData` system with Yes/No buttons. The player must confirm before the discharge is processed.
+
 **Payment Outcomes:**
 
 The "Accept Your Pay" option resolves based on the lord's financial status:
@@ -282,85 +280,7 @@ See [Pay System](pay-system.md) for complete details on wage calculation and pay
 
 ---
 
-### 3. Baggage Check
-
-**Menu ID:** `enlisted_muster_baggage`
-
-**Trigger:** 30% random chance, only if contraband found
-
-**Purpose:** Security inspection for contraband items. Separate from the logistics-based baggage access system (see [Baggage Train Availability](../Equipment/baggage-train-availability.md)). All soldiers have full baggage access during muster regardless of inspection outcome.
-
-**Display (Contraband Found):**
-
-```
-⚠️  CONTRABAND DISCOVERED  ⚠️
-
-The quartermaster's hand stops in your pack. He pulls out an item
-and raises an eyebrow.
-
-Found: Noble Armor (value 1200 denars)
-
-"This doesn't belong to a soldier of your rank," he says quietly.
-"I can overlook it... for a price. Or we can do this by the book."
-
-[QM Reputation: 45 - Neutral]
-```
-
-**Options (QM Rep 35-64):**
-
-| Icon | Option | Description |
-|------|--------|-------------|
-| 💰 Trade | Pay Him Off | Charm check. 50% success. Failure increases scrutiny. |
-| 🤐 TakeQuest | [Roguery 40+] Smuggle It Past | Sleight of hand. 70% success. Risky. |
-| ✋ Manage | Hand It Over | Accept confiscation. Fine + 2 Scrutiny. |
-
-**Options (QM Rep <35):**
-
-| Icon | Option | Description |
-|------|--------|-------------|
-| ✋ Manage | Accept Confiscation | Item confiscated. Fine + 2 Scrutiny. |
-| ⚠ TakeQuest | Protest the Seizure | 20% success. Failure adds scrutiny and discipline. |
-
-**Skip Conditions:**
-- No contraband found → Skip to next stage
-- QM Rep 65+ → QM looks away (auto-pass) → Skip to next stage
-- Baggage check not triggered (70% chance) → Skip to next stage
-
----
-
-### 4. Equipment Inspection
-
-**Menu ID:** `enlisted_muster_inspection`
-
-**Trigger:** 12-day cooldown, skipped if on cooldown or player critically wounded
-
-**Display:**
-
-```
-⚔️  EQUIPMENT INSPECTION  ⚔️
-
-The company forms ranks for morning inspection. The captain walks
-the line, inspecting each soldier's equipment and bearing.
-
-He stops in front of you, looking you up and down with a critical eye.
-```
-
-**Options:**
-
-| Icon | Option | Requirements | Outcome |
-|------|--------|--------------|---------|
-| ⚔ OrderTroopsToAttack | [OneHanded 30+] Stand at Perfect Attention | OneHanded 30+ | +10 OneHanded XP, +6 Officer Rep, +3 Soldier Rep |
-| ✅ Manage | Meet the Basic Requirements | Always available | +5 OneHanded XP, +2 Officer Rep |
-| ❌ Leave | You're Not Ready | Always available | -8 Officer, -4 Soldier, +8 Scrutiny, +5 Discipline |
-
-**Behavior:**
-- Integrates `evt_muster_inspection` event as menu stage
-- Cooldown prevents this from appearing at every muster
-- Critically wounded players (<30% health) are excused automatically
-
----
-
-### 5. Green Recruit
+### 3. Green Recruit
 
 **Menu ID:** `enlisted_muster_recruit`
 
@@ -394,7 +314,7 @@ step in—or let him learn the hard way.
 
 ---
 
-### 6. Promotion Recap
+### 4. Promotion Recap
 
 **Menu ID:** `enlisted_muster_promotion_recap`
 
@@ -453,7 +373,7 @@ formal acknowledgment for your service record.
 
 ---
 
-### 7. Retinue Muster (T7+ Only)
+### 5. Retinue Muster (T7+ Only)
 
 **Menu ID:** `enlisted_muster_retinue`
 
@@ -503,7 +423,7 @@ _____ FALLEN THIS PERIOD _____
 
 ---
 
-### 8. Muster Complete
+### 6. Muster Complete
 
 **Menu ID:** `enlisted_muster_complete`
 
@@ -520,8 +440,6 @@ _____ MUSTER OUTCOMES _____
 
 Pay Received:         156 denars (Full Payment)
 Ration Issued:        Field Ration (replaces old Hardtack)
-Baggage Check:        Passed - No contraband found
-Equipment Inspection: Passed with distinction (+6 Officer Rep)
 Supply Status:        78% - Adequate condition
 
 _____ RANK & PROGRESSION _____
@@ -536,7 +454,7 @@ XP Sources This Period:
 • Battles won: +50 XP (3 engagements)
 • Orders completed: +20 XP (patrol duty)
 • Training: +20 XP (extra drill session)
-• Officer reputation gains: +10 XP (inspection bonus)
+• Officer reputation gains: +10 XP (order bonus)
 
 _____ PERIOD SUMMARY (12 Days) _____
 
@@ -590,10 +508,11 @@ Two separate buttons appear at Muster Complete:
 - **Tooltip:** Shows expected discharge band outcome based on current service record:
   - **Veteran/Heroic (200+ days, T4+):** "Honorable discharge. Receive severance (3000g) and pension. +30 relation with lord."
   - **Honorable (100-199 days):** "Honorable discharge. Receive severance (3000g) and pension. +10 relation with lord."
-  - **Washout (<100 days or negative lord relation):** "Early discharge (washout). No severance or pension. -10 relation. Gear confiscated."
-- **Outcome:** Processes immediately based on actual discharge band calculation
+  - **Washout (<100 days or negative lord relation):** "Early discharge (washout). No severance or pension. -10 relation. QM-issued items reclaimed from baggage."
+- **Confirmation Popup:** When clicked, a confirmation popup appears showing the full breakdown of what the player will receive (severance, pension, relation changes, gear handling) based on the calculated discharge band. The player must confirm before discharge is processed.
+- **Outcome:** Processes immediately upon confirmation based on actual discharge band calculation
 
-Both options process the discharge immediately during the muster sequence (no pending flag or waiting for next muster).
+Both options process the discharge immediately during the muster sequence (no pending flag or waiting for next muster). Both discharge options now show confirmation popups using the native game's `InquiryData` system, allowing the player to review the consequences and cancel if desired.
 
 ---
 
@@ -628,7 +547,7 @@ XP Sources This Period:
 • Battles won: +50 XP (3 engagements)
 • Orders completed: +20 XP (patrol duty)
 • Training: +20 XP (extra drill session)
-• Officer reputation gains: +10 XP (inspection bonus)
+• Officer reputation gains: +10 XP (order bonus)
 ```
 
 **Tracking:**
@@ -653,21 +572,17 @@ The muster system integrates several events that previously fired randomly:
 
 | Event ID | Previous Trigger | New Trigger | Menu Stage |
 |----------|------------------|-------------|------------|
-| `evt_baggage_lookaway` | 30% at muster, rep 65+ | Same | Baggage Check (auto-pass) |
-| `evt_baggage_bribe` | 30% at muster, rep 35-64 | Same | Baggage Check |
-| `evt_baggage_confiscate` | 30% at muster, rep <35 | Same | Baggage Check |
-| `evt_muster_inspection` | Random camp, 12-day CD | **During muster**, 12-day CD | Equipment Inspection |
 | `evt_muster_new_recruit` | Random camp, 10-day CD | **During muster**, 10-day CD | Green Recruit |
 
 **Benefits of Integration:**
-- Events occur at appropriate time (muster ceremonies)
+- Event occurs at appropriate time (muster ceremony)
 - Player has context (just saw service record, pay status, supply level)
-- Events feel part of muster ritual rather than random interruptions
-- Cooldowns prevent repetition every muster
+- Event feels part of muster ritual rather than random interruption
+- Cooldown prevents repetition every muster
 
 **Event Filtering:**
-- `EventPacingManager` filters `evt_muster_inspection` and `evt_muster_new_recruit` from random camp events
-- These events only trigger during muster menu sequence now
+- `EventPacingManager` filters `evt_muster_new_recruit` from random camp events
+- This event only triggers during the muster menu sequence
 - Effects still applied via `EventDeliveryManager.ApplyEffects()`
 
 ---
@@ -694,7 +609,6 @@ The muster system integrates with numerous systems across the mod:
 - Ration exchange for T1-T6 (old ration reclaimed, new ration issued based on QM reputation)
   - First ration is issued at initial enlistment
   - Subsequent musters: exchange old ration for new one
-- Baggage checks (contraband detection with reputation-based outcomes)
 - QM reputation affects baggage inspection options
 - Newly unlocked items marked via `UpdateNewlyUnlockedItems()` after tier-up
 - Supply <15% blocks QM access entirely (critical supply gate)
@@ -762,7 +676,6 @@ The muster system integrates with numerous systems across the mod:
 | **Supply <20% at muster** | Baggage locked (Priority 3 overrides muster access). Banner: "⚠️ CRITICAL SUPPLY - Quartermaster has locked all baggage." |
 | **Supply <15% at muster** | QM visit disabled. Tooltip: "Quartermaster unavailable - supplies critically low." |
 | **Supply drops <20% mid-muster** | Baggage becomes Locked immediately. Warning if player tries to access. |
-| **Contraband check vs access** | Separate systems. Inspection checks for illegal items; access system determines availability. Both operate independently. |
 
 ### Baggage Access Window
 
@@ -790,7 +703,7 @@ The muster system integrates with numerous systems across the mod:
 |----------|----------|
 | **Fatigue already at max** | Show "Fatigue: Already well-rested" instead of "Restored to full." |
 | **Fatigue was critical (0-4)** | Show "Fatigue: Restored from exhaustion (was 3/24)." |
-| **Player critically wounded** | Show "Health Status: Critically Wounded - Excused from inspection." Skip inspection stage. |
+| **Player critically wounded** | Show "Health Status: Critically Wounded (X%)." |
 | **FatigueManager unavailable** | Skip fatigue display. Log warning. |
 
 ### Quartermaster Integration
@@ -881,16 +794,11 @@ Controls whether game time pauses during muster (true = pause, false = preserve 
 
 ### Event Cooldowns
 
-Inspection and recruit events have cooldowns to prevent repetition:
+Recruit events have cooldowns to prevent repetition:
 
 | Event | Cooldown | Requirement |
 |-------|----------|-------------|
-| Equipment Inspection | 12 days | Any tier |
 | Green Recruit | 10 days | Tier 3+ |
-
-### Baggage Check Probability
-
-30% chance of baggage check triggering each muster (if contraband present).
 
 ---
 
@@ -903,7 +811,7 @@ Inspection and recruit events have cooldowns to prevent repetition:
 
 **Content Files:**
 - `ModuleData/Languages/enlisted_strings.xml` - All `muster_*` localization strings
-- `ModuleData/Enlisted/Events/muster_events.json` - Inspection, recruit, baggage check events
+- `ModuleData/Enlisted/Events/muster_events.json` - Recruit events
 - `ModuleData/Enlisted/enlisted_config.json` - Muster interval configuration
 - `ModuleData/Enlisted/settings.json` - Time control behavior setting
 

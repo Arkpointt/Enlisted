@@ -121,7 +121,7 @@ All submenus (Orders, Decisions, Reports, etc.) remain as native GameMenu implem
 
 ### Design Note
 
-This document describes the **Camp Hub** - the deep interaction menu accessed via [CAMP] from the Main Menu. For the Main Menu (Quick Decision Center) design, see `docs/AFEATURE/camp-life-simulation.md`.
+This document describes the **Camp Hub** - the deep interaction menu accessed via [CAMP] from the Main Menu. For the camp simulation system, see [Camp Simulation System](../Campaign/camp-simulation-system.md).
 
 ### Complete Hub Structure
 
@@ -1180,13 +1180,6 @@ public class EnlistedCampHubVM : ViewModel
     {
         // Navigate to Decisions menu
         GameMenu.SwitchToMenu("enlisted_decisions");
-        _onClose?.Invoke();
-    }
-    
-    public void ExecuteReports()
-    {
-        // Navigate to Reports menu
-        GameMenu.SwitchToMenu("enlisted_reports");
         _onClose?.Invoke();
     }
     

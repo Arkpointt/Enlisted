@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Enlisted.Features.Context;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
+using Enlisted.Features.Ranks.Behaviors;
 using Enlisted.Features.Identity;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Logistics;
@@ -36,11 +37,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
     {
         private const string LogCategory = "Muster";
 
-        // Menu IDs for the 8 muster stages
+        // Menu IDs for the 6 muster stages
         private const string MusterIntroMenuId = "enlisted_muster_intro";
         private const string MusterPayMenuId = "enlisted_muster_pay";
-        private const string MusterBaggageMenuId = "enlisted_muster_baggage";
-        private const string MusterInspectionMenuId = "enlisted_muster_inspection";
         private const string MusterRecruitMenuId = "enlisted_muster_recruit";
         private const string MusterPromotionRecapMenuId = "enlisted_muster_promotion_recap";
         private const string MusterRetinueMenuId = "enlisted_muster_retinue";
@@ -110,15 +109,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             /// <summary>Pay outcome type: "full", "partial", "iou", "corruption", "qm_deal".</summary>
             public string PayOutcome { get; set; }
 
-            /// <summary>Item StringId from Quartermaster's Deal (for contraband exemption).</summary>
-            public string QMDealItemId { get; set; }
-
             /// <summary>Ration outcome: "issued", "none", "officer_exempt".</summary>
             public string RationOutcome { get; set; }
-
-            // Event stage outcomes
-            /// <summary>Baggage check outcome: "passed", "confiscated", "bribed", "skipped".</summary>
-            public string BaggageOutcome { get; set; }
 
             // Promotion tracking (promotion occurs via PromotionBehavior, recap shows at muster)
             /// <summary>True if tier changed since last muster.</summary>
@@ -132,13 +124,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             /// <summary>Campaign day when promotion occurred.</summary>
             public int PromotionDay { get; set; }
-
-            // Contraband (needed for baggage stage display)
-            /// <summary>Contraband found during baggage check.</summary>
-            public bool ContrabandFound { get; set; }
-
-            /// <summary>Current quartermaster reputation.</summary>
-            public int QMRep { get; set; }
 
             // Retinue (T7+ only)
             /// <summary>Current retinue soldier count.</summary>
@@ -199,7 +184,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     if (EnlistmentBehavior.Instance?.IsEnlisted == true)
                     {
-                        GameMenu.ActivateGameMenu("enlisted_status");
+                        // Use SafeActivateEnlistedMenu to respect siege detection
+                        EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                     }
                 });
             }
@@ -226,8 +212,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var strategicContext = _currentMuster.StrategicContext ?? "";
                     var payReceived = _currentMuster.PayReceived;
                     var payOutcome = _currentMuster.PayOutcome ?? "";
-                    var qmDealItemId = _currentMuster.QMDealItemId ?? "";
-                    var baggageOutcome = _currentMuster.BaggageOutcome ?? "";
                     var promotionOccurred = _currentMuster.PromotionOccurredThisPeriod;
                     var previousTier = _currentMuster.PreviousTier;
                     var currentTier = _currentMuster.CurrentTier;
@@ -240,8 +224,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     dataStore.SyncData("_muster_strategicContext", ref strategicContext);
                     dataStore.SyncData("_muster_payReceived", ref payReceived);
                     dataStore.SyncData("_muster_payOutcome", ref payOutcome);
-                    dataStore.SyncData("_muster_qmDealItemId", ref qmDealItemId);
-                    dataStore.SyncData("_muster_baggageOutcome", ref baggageOutcome);
                     dataStore.SyncData("_muster_promotionOccurred", ref promotionOccurred);
                     dataStore.SyncData("_muster_previousTier", ref previousTier);
                     dataStore.SyncData("_muster_currentTier", ref currentTier);
@@ -264,8 +246,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var strategicContext = "";
                         var payReceived = 0;
                         var payOutcome = "";
-                        var qmDealItemId = "";
-                        var baggageOutcome = "";
                         var promotionOccurred = false;
                         var previousTier = 0;
                         var currentTier = 0;
@@ -278,8 +258,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         dataStore.SyncData("_muster_strategicContext", ref strategicContext);
                         dataStore.SyncData("_muster_payReceived", ref payReceived);
                         dataStore.SyncData("_muster_payOutcome", ref payOutcome);
-                        dataStore.SyncData("_muster_qmDealItemId", ref qmDealItemId);
-                        dataStore.SyncData("_muster_baggageOutcome", ref baggageOutcome);
                         dataStore.SyncData("_muster_promotionOccurred", ref promotionOccurred);
                         dataStore.SyncData("_muster_previousTier", ref previousTier);
                         dataStore.SyncData("_muster_currentTier", ref currentTier);
@@ -305,8 +283,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 StrategicContext = strategicContext,
                                 PayReceived = payReceived,
                                 PayOutcome = payOutcome,
-                                QMDealItemId = qmDealItemId,
-                                BaggageOutcome = baggageOutcome,
                                 PromotionOccurredThisPeriod = promotionOccurred,
                                 PreviousTier = previousTier,
                                 CurrentTier = currentTier,
@@ -337,7 +313,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             return stageId == MusterIntroMenuId ||
                    stageId == MusterPayMenuId ||
-                   stageId == MusterBaggageMenuId ||
                    stageId == MusterPromotionRecapMenuId ||
                    stageId == MusterRetinueMenuId ||
                    stageId == MusterCompleteMenuId;
@@ -471,7 +446,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var enlistment = EnlistmentBehavior.Instance;
                     return enlistment != null && enlistment.IsPendingDischarge;
                 },
-                _ => FinalizePendingDischarge(),
+                _ => ShowFinalPayDischargeConfirmation(),
                 false, 5);
 
             // Pay option 6: Slip Away in the Night (deserter)
@@ -487,189 +462,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _ => ResolveSmuggleDischarge(),
                 false, 6);
 
-            // 3. Baggage Check Menu
-            starter.AddWaitGameMenu(MusterBaggageMenuId,
-                "{=muster_baggage_title}BAGGAGE CHECK\n{MUSTER_BAGGAGE_TEXT}",
-                OnBaggageCheckInit,
-                OnMusterMenuCondition,
-                null,
-                OnMusterMenuTick,
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
-
-            // Continue option (shown when no contraband confrontation, or after resolution)
-            starter.AddGameMenuOption(MusterBaggageMenuId, "muster_baggage_continue",
-                "{=muster_baggage_continue}Continue",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-                    args.Tooltip = new TextObject("{=muster_baggage_continue_tt}Proceed to next stage.");
-                    // Only show if no active contraband confrontation
-                    return _currentMuster != null && !IsContrabandConfrontationActive();
-                },
-                _ => ProceedToNextStageFromBaggage(),
-                false, 1);
-
-            // Bribe option (Rep 35-64)
-            starter.AddGameMenuOption(MusterBaggageMenuId, "muster_baggage_bribe",
-                "{=muster_baggage_bribe}Pay Him Off",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-
-                    if (_currentMuster == null || !_currentMuster.ContrabandFound)
-                    {
-                        return false;
-                    }
-
-                    var qmRep = _currentMuster.QMRep;
-                    if (qmRep < 35 || qmRep >= 65)
-                    {
-                        return false;
-                    }
-
-                    var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment == null)
-                    {
-                        return false;
-                    }
-
-                    var playerTier = enlistment.EnlistmentTier;
-                    var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
-                    var contrabandResult = ContrabandChecker.ScanInventory(playerTier, playerRole);
-
-                    if (!contrabandResult.HasContraband)
-                    {
-                        return false;
-                    }
-
-                    var bribeAmount = ContrabandChecker.CalculateBribeAmount(contrabandResult.MostValuable.Value);
-                    var playerGold = Hero.MainHero?.Gold ?? 0;
-
-                    if (playerGold < bribeAmount)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject($"{{=muster_bribe_blocked}}Requires {bribeAmount} denars.");
-                    }
-                    else
-                    {
-                        // Calculate success chance based on Charm skill (35% base + 20% at Charm 100)
-                        var charm = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm) ?? 0;
-                        var successChance = (int)((0.35f + (charm / 500f)) * 100f);
-                        args.Tooltip = new TextObject($"Pay {bribeAmount} denars. {successChance}% chance. Failure: item lost + fine + scrutiny.");
-                    }
-
-                    return true;
-                },
-                _ => HandleBribe(),
-                false, 2);
-
-            // Smuggle option (Rep 35-64, Roguery 40+)
-            starter.AddGameMenuOption(MusterBaggageMenuId, "muster_baggage_smuggle",
-                "{=muster_baggage_smuggle}[Roguery 40+] Smuggle It Past",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
-
-                    if (_currentMuster == null || !_currentMuster.ContrabandFound)
-                    {
-                        return false;
-                    }
-
-                    var qmRep = _currentMuster.QMRep;
-                    if (qmRep < 35 || qmRep >= 65)
-                    {
-                        return false;
-                    }
-
-                    var roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
-                    if (roguery < 40)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject($"{{=muster_smuggle_blocked}}Requires Roguery 40.");
-                    }
-                    else
-                    {
-                        args.Tooltip = new TextObject("{=muster_smuggle_tt}Sleight of hand while distracted. 70% success. Risky.");
-                    }
-
-                    return true;
-                },
-                _ => HandleSmuggle(),
-                false, 3);
-
-            // Hand over option (Rep 35-64)
-            starter.AddGameMenuOption(MusterBaggageMenuId, "muster_baggage_handover",
-                "{=muster_baggage_handover}Hand It Over",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-
-                    if (_currentMuster == null || !_currentMuster.ContrabandFound)
-                    {
-                        return false;
-                    }
-
-                    var qmRep = _currentMuster.QMRep;
-                    if (qmRep < 35 || qmRep >= 65)
-                    {
-                        return false;
-                    }
-
-                    args.Tooltip = new TextObject("{=muster_handover_tt}Accept confiscation. Fine + 2 Scrutiny. Keep dignity.");
-                    return true;
-                },
-                _ => HandleConfiscation(),
-                false, 4);
-
-            // Accept confiscation option (Rep <35)
-            starter.AddGameMenuOption(MusterBaggageMenuId, "muster_baggage_accept",
-                "{=muster_baggage_accept}Accept Confiscation",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-
-                    if (_currentMuster == null || !_currentMuster.ContrabandFound)
-                    {
-                        return false;
-                    }
-
-                    var qmRep = _currentMuster.QMRep;
-                    if (qmRep >= 35)
-                    {
-                        return false;
-                    }
-
-                    args.Tooltip = new TextObject("{=muster_accept_tt}Item confiscated. Fine + 2 Scrutiny.");
-                    return true;
-                },
-                _ => HandleConfiscation(),
-                false, 5);
-
-            // Protest option (Rep <35)
-            starter.AddGameMenuOption(MusterBaggageMenuId, "muster_baggage_protest",
-                "{=muster_baggage_protest}Protest the Seizure",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
-
-                    if (_currentMuster == null || !_currentMuster.ContrabandFound)
-                    {
-                        return false;
-                    }
-
-                    var qmRep = _currentMuster.QMRep;
-                    if (qmRep >= 35)
-                    {
-                        return false;
-                    }
-
-                    args.Tooltip = new TextObject("{=muster_protest_tt}20% success. Failure adds scrutiny and discipline.");
-                    return true;
-                },
-                _ => HandleProtest(),
-                false, 6);
-
-            // 4. Promotion Recap Menu
+            // 3. Promotion Recap Menu
             starter.AddWaitGameMenu(MusterPromotionRecapMenuId,
                 "{=muster_promotion_title}PROMOTION ACKNOWLEDGED\n{MUSTER_PROMOTION_TEXT}",
                 OnPromotionInit,
@@ -931,14 +724,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var enlistment = EnlistmentBehavior.Instance;
                     if (enlistment != null && enlistment.IsEnlisted)
                     {
-                        enlistment.RequestDischarge();
-                        
-                        if (_currentMuster != null)
-                        {
-                            _currentMuster.PayOutcome = "final_discharge";
-                        }
-                        
-                        FinalizePendingDischarge();
+                        ShowDischargeConfirmation();
                     }
                     else
                     {
@@ -1051,16 +837,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Debug(LogCategory, $"Deferred muster still blocked: {reason}");
             }
-        }
-
-        /// <summary>
-        /// Gets the exempted item ID from the current muster session (e.g., Quartermaster's Deal item).
-        /// Returns null if no muster is in progress or no exempted item exists.
-        /// Used by contraband checking to exempt legitimately acquired items.
-        /// </summary>
-        public string GetExemptedItemId()
-        {
-            return _currentMuster?.QMDealItemId;
         }
 
         /// <summary>
@@ -1471,7 +1247,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (enlistment == null)
                 {
                     ModLogger.Warn(LogCategory, "OnMusterPayInit: EnlistmentBehavior null");
-                    MBTextManager.SetTextVariable("MUSTER_PAY_TEXT", "Pay records unavailable.");
+                    var payUnavailable = new TextObject("{=muster_pay_unavailable}Pay records unavailable").ToString();
+                    MBTextManager.SetTextVariable("MUSTER_PAY_TEXT", $"{payUnavailable}.");
                     MBTextManager.SetTextVariable("PAY_AMOUNT", "0");
                     return;
                 }
@@ -1483,7 +1260,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-MUSTER-002", "OnMusterPayInit failed", ex);
-                MBTextManager.SetTextVariable("MUSTER_PAY_TEXT", "Pay records unavailable. Contact paymaster.");
+                var payContactPaymaster = new TextObject("{=muster_pay_contact_paymaster}Pay records unavailable. Contact paymaster.").ToString();
+                MBTextManager.SetTextVariable("MUSTER_PAY_TEXT", payContactPaymaster);
                 MBTextManager.SetTextVariable("PAY_AMOUNT", "0");
             }
         }
@@ -1538,43 +1316,29 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _currentMuster?.EncounteredErrors.Add("Pay text generation failed");
 
                 var sb = new StringBuilder();
-                sb.AppendLine("You step forward to the paymaster's table. He opens his ledger.");
+                var payIntro = new TextObject("{=muster_pay_intro}You step forward to the paymaster's table. He opens his ledger.").ToString();
+                var payStatusHeader = new TextObject("{=muster_pay_status_header}PAY STATUS").ToString();
+                var wagesOwedLabel = new TextObject("{=muster_wages_owed}WAGES OWED").ToString();
+                var denarsText = new TextObject("{=muster_denars}denars").ToString();
+                var payUnavailable = new TextObject("{=muster_pay_unavailable}Pay records unavailable").ToString();
+                
+                sb.AppendLine(payIntro);
                 sb.AppendLine();
-                sb.AppendLine("_____ PAY STATUS _____");
+                sb.AppendLine($"_____ {payStatusHeader} _____");
                 sb.AppendLine();
 
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment != null)
                 {
-                    sb.AppendLine($"Wages Owed: {enlistment.PendingMusterPay} denars");
+                    sb.AppendLine($"{wagesOwedLabel}: {enlistment.PendingMusterPay} {denarsText}");
                 }
                 else
                 {
-                    sb.AppendLine("Pay records unavailable.");
+                    sb.AppendLine($"{payUnavailable}.");
                 }
 
                 return sb.ToString();
             }
-        }
-
-        private void OnBaggageCheckInit(MenuCallbackArgs args)
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-            _currentMuster.CurrentStage = MusterBaggageMenuId;
-
-            // Perform the baggage check (30% chance, only if contraband found)
-            ProcessBaggageCheck();
-
-            // Set title based on whether contraband was found
-            if (_currentMuster.ContrabandFound && _currentMuster.QMRep < 65)
-            {
-                MBTextManager.SetTextVariable("muster_baggage_title", "CONTRABAND DISCOVERED");
-            }
-
-            MBTextManager.SetTextVariable("MUSTER_BAGGAGE_TEXT", BuildBaggageText());
         }
 
         private void OnPromotionInit(MenuCallbackArgs args)
@@ -1677,12 +1441,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 if (_currentMuster != null)
                 {
-                    sb.AppendLine($"Pay: {_currentMuster.PayOutcome ?? "unknown"}");
-                    sb.AppendLine($"Baggage: {_currentMuster.BaggageOutcome ?? "not checked"}");
+                    var payLabel = new TextObject("{=muster_status_pay}Pay").ToString();
+                    sb.AppendLine($"{payLabel}: {_currentMuster.PayOutcome ?? "unknown"}");
                 }
                 else
                 {
-                    sb.AppendLine("Details unavailable.");
+                    var detailsUnavailable = new TextObject("{=muster_details_unavailable}Details unavailable").ToString();
+                    sb.AppendLine($"{detailsUnavailable}.");
                 }
 
                 return sb.ToString();
@@ -1826,16 +1591,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     _currentMuster.PayOutcome = outcome;
 
-                    // Extract item ID from outcome if successful (format: "qm_deal_success:payout:itemId")
-                    if (outcome != null && outcome.StartsWith("qm_deal_success:"))
-                    {
-                        var parts = outcome.Split(':');
-                        if (parts.Length >= 3)
-                        {
-                            _currentMuster.QMDealItemId = parts[2];
-                            ModLogger.Info(LogCategory, $"QM Deal item tracked for contraband exemption: {parts[2]}");
-                        }
-                    }
                 }
 
                 ModLogger.Debug(LogCategory, $"Quartermaster's Deal resolved: {outcome}");
@@ -1963,9 +1718,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     _currentMuster.PayOutcome = "smuggle_desertion";
                 }
 
-                // DesertArmy keeps equipped gear and applies desertion penalties
-                // Player forfeits pension but keeps all current equipment
-                enlistment.DesertArmy();
+                // StopEnlist with desertion status - player forfeits pension but keeps equipped gear
+                enlistment.StopEnlist("Desertion via smuggle", isHonorableDischarge: false);
 
                 ModLogger.Info(LogCategory, "Smuggle discharge complete, service ended as deserter");
 
@@ -1984,22 +1738,218 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
+        /// Shows a confirmation dialog before processing discharge from the Request Discharge option.
+        /// </summary>
+        private void ShowDischargeConfirmation()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null || !enlistment.IsEnlisted)
+                {
+                    return;
+                }
+
+                // Calculate discharge details
+                var daysServed = (int)enlistment.DaysServed;
+                var lord = enlistment.CurrentLord;
+                var negativeRelation = lord != null && Hero.MainHero.GetRelation(lord) < 0;
+
+                // Determine discharge band
+                string band;
+                if (negativeRelation)
+                {
+                    band = "washout";
+                }
+                else if (daysServed >= 200)
+                {
+                    band = enlistment.EnlistmentTier >= 4 ? "heroic" : "veteran";
+                }
+                else if (daysServed >= 100)
+                {
+                    band = "honorable";
+                }
+                else
+                {
+                    band = "washout";
+                }
+
+                // Build description based on discharge band
+                var title = new TextObject("{=muster_discharge_confirm_title}Confirm Discharge").ToString();
+                string description;
+
+                switch (band)
+                {
+                    case "heroic":
+                    case "veteran":
+                        description = new TextObject(
+                            "{=muster_discharge_confirm_veteran}You will receive:\n\n" +
+                            "• Severance Pay: 3000 denars\n" +
+                            "• Pension: Daily payment for service rendered\n" +
+                            "• Relation: +30 with your lord\n" +
+                            "• Gear: Keep armor, weapons returned to inventory\n\n" +
+                            "Your service has been exemplary. Proceed with discharge?").ToString();
+                        break;
+
+                    case "honorable":
+                        description = new TextObject(
+                            "{=muster_discharge_confirm_honorable}You will receive:\n\n" +
+                            "• Severance Pay: 3000 denars\n" +
+                            "• Pension: Daily payment for service rendered\n" +
+                            "• Relation: +10 with your lord\n" +
+                            "• Gear: Keep armor, weapons returned to inventory\n\n" +
+                            "Your service has been satisfactory. Proceed with discharge?").ToString();
+                        break;
+
+                    default: // washout
+                        description = new TextObject(
+                            "{=muster_discharge_confirm_washout}Early discharge (washout):\n\n" +
+                            "• Severance Pay: None\n" +
+                            "• Pension: None\n" +
+                            "• Relation: -10 with your lord\n" +
+                            "• Gear: All equipment confiscated\n\n" +
+                            "This is not an honorable discharge. Proceed?").ToString();
+                        break;
+                }
+
+                var confirmData = new InquiryData(
+                    title,
+                    description,
+                    isAffirmativeOptionShown: true,
+                    isNegativeOptionShown: true,
+                    affirmativeText: new TextObject("{=muster_discharge_confirm_yes}Confirm Discharge").ToString(),
+                    negativeText: new TextObject("{=muster_discharge_confirm_no}Cancel").ToString(),
+                    affirmativeAction: () =>
+                    {
+                        try
+                        {
+                            enlistment.RequestDischarge();
+
+                            if (_currentMuster != null)
+                            {
+                                _currentMuster.PayOutcome = "final_discharge";
+                            }
+
+                            FinalizePendingDischarge();
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.ErrorCode(LogCategory, "E-MUSTER-005", "Error processing discharge confirmation", ex);
+                        }
+                    },
+                    negativeAction: () =>
+                    {
+                        // Cancel - just close the popup, remain on the menu
+                    });
+
+                InformationManager.ShowInquiry(confirmData);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode(LogCategory, "E-MUSTER-006", "Error showing discharge confirmation", ex);
+            }
+        }
+
+        /// <summary>
+        /// Shows a confirmation dialog before processing final pay discharge.
+        /// </summary>
+        private void ShowFinalPayDischargeConfirmation()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null || !enlistment.IsPendingDischarge)
+                {
+                    return;
+                }
+
+                // Get discharge band from enlistment (should already be calculated when RequestDischarge was called)
+                var band = enlistment.LastDischargeBand;
+                var daysServed = (int)enlistment.DaysServed;
+
+                // Build description based on discharge band
+                var title = new TextObject("{=muster_final_pay_confirm_title}Take Your Final Pay").ToString();
+                string description;
+
+                switch (band)
+                {
+                    case "heroic":
+                    case "veteran":
+                        description = new TextObject(
+                            "{=muster_final_pay_confirm_veteran}Collecting your final pay and pension.\n\n" +
+                            "• Severance Pay: 3000 denars\n" +
+                            "• Pension: Daily payment for {DAYS} days of service\n" +
+                            "• Relation: +30 with your lord\n" +
+                            "• Gear: Keep armor, weapons returned to inventory\n\n" +
+                            "Your exemplary service is complete. Proceed?")
+                            .SetTextVariable("DAYS", daysServed)
+                            .ToString();
+                        break;
+
+                    case "honorable":
+                        description = new TextObject(
+                            "{=muster_final_pay_confirm_honorable}Collecting your final pay and pension.\n\n" +
+                            "• Severance Pay: 3000 denars\n" +
+                            "• Pension: Daily payment for {DAYS} days of service\n" +
+                            "• Relation: +10 with your lord\n" +
+                            "• Gear: Keep armor, weapons returned to inventory\n\n" +
+                            "Your service is complete. Proceed?")
+                            .SetTextVariable("DAYS", daysServed)
+                            .ToString();
+                        break;
+
+                    default: // washout or other
+                        description = new TextObject(
+                            "{=muster_final_pay_confirm_washout}Processing discharge.\n\n" +
+                            "• Severance Pay: None\n" +
+                            "• Pension: None\n" +
+                            "• Relation: -10 with your lord\n" +
+                            "• Gear: All equipment confiscated\n\n" +
+                            "This discharge is not honorable. Proceed?").ToString();
+                        break;
+                }
+
+                var confirmData = new InquiryData(
+                    title,
+                    description,
+                    isAffirmativeOptionShown: true,
+                    isNegativeOptionShown: true,
+                    affirmativeText: new TextObject("{=muster_final_pay_yes}Take Final Pay").ToString(),
+                    negativeText: new TextObject("{=muster_final_pay_no}Cancel").ToString(),
+                    affirmativeAction: () =>
+                    {
+                        try
+                        {
+                            FinalizePendingDischarge();
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.ErrorCode(LogCategory, "E-MUSTER-007", "Error processing final pay discharge", ex);
+                        }
+                    },
+                    negativeAction: () =>
+                    {
+                        // Cancel - just close the popup, remain on the pay menu
+                    });
+
+                InformationManager.ShowInquiry(confirmData);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode(LogCategory, "E-MUSTER-008", "Error showing final pay confirmation", ex);
+            }
+        }
+
+        /// <summary>
         /// Proceeds to next stage after pay resolution.
         /// After pay, automatically processes ration exchange (handled by OnMusterCycleComplete),
-        /// then moves to baggage check stage. Baggage check will determine if contraband inspection occurs.
+        /// then moves to the next stage (inspection or promotion recap).
         /// </summary>
         private void ProceedToNextStageFromPay()
         {
             // Ration exchange happens automatically in OnMusterCycleComplete (called by payment resolution)
             // No menu stage for ration exchange - it's automatic
 
-            // Move to baggage check stage
-            // The baggage check stage will handle 30% trigger and contraband detection in OnBaggageCheckInit
-            GameMenu.SwitchToMenu(MusterBaggageMenuId);
-        }
-
-        private void ProceedToNextStageFromBaggage()
-        {
             if (_currentMuster == null)
             {
                 GameMenu.SwitchToMenu(MusterCompleteMenuId);
@@ -2072,6 +2022,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Mark muster complete (updates tier/XP tracking, resets XP sources)
                     SafeApplyEffect("MusterComplete", () => enlistment.OnMusterComplete());
 
+                    // Invalidate opportunity cache so IsMusterDay recalculates
+                    SafeApplyEffect("InvalidateOpportunityCache", () =>
+                    {
+                        Camp.CampOpportunityGenerator.Instance?.InvalidateCache();
+                        ModLogger.Debug(LogCategory, "Opportunity cache invalidated after muster");
+                    });
+
                     // Refresh quartermaster stock (with null safety)
                     SafeApplyEffect("QMStockRefresh", () =>
                     {
@@ -2100,7 +2057,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         if (EnlistmentBehavior.Instance?.IsEnlisted == true)
                         {
-                            GameMenu.ActivateGameMenu("enlisted_status");
+                            // Use SafeActivateEnlistedMenu to respect siege detection
+                            EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                         }
                     });
                 }
@@ -2248,13 +2206,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     PayAmount = _currentMuster.PayReceived,
                     RationOutcome = _currentMuster.RationOutcome ?? "unknown",
                     RationItemId = string.Empty, // Not tracked in current muster state
-                    QmReputation = _currentMuster.QMRep,
+                    QmReputation = 0, // Not tracked in current muster state
                     SupplyLevel = EnlistmentBehavior.Instance?.CompanyNeeds?.Supplies ?? 60,
                     LostSinceLast = 0, // Not tracked in current muster state
                     SickSinceLast = 0, // Not tracked in current muster state
                     OrdersCompleted = ordersCompleted,
                     OrdersFailed = ordersFailed,
-                    BaggageOutcome = _currentMuster.BaggageOutcome ?? "not_conducted",
+                    BaggageOutcome = "not_conducted", // Baggage check removed
                     PromotionTier = _currentMuster.PromotionOccurredThisPeriod ? _currentMuster.CurrentTier : 0,
                     RetinueStrength = _currentMuster.RetinueStrength,
                     RetinueCasualties = _currentMuster.RetinueCasualties,
@@ -2357,7 +2315,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
             {
-                return "Enlistment data unavailable.";
+                return new TextObject("{=muster_enlistment_unavailable}Enlistment data unavailable").ToString() + ".";
             }
 
             // Strategic context flavor text
@@ -2517,7 +2475,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var feedItems = newsBehavior.GetPersonalFeedSince(lastMusterDay);
             if (feedItems == null || feedItems.Count == 0)
             {
-                return "A quiet period. Nothing of note occurred.";
+                return new TextObject("{=muster_quiet_period}A quiet period. Nothing of note occurred.").ToString();
             }
 
             var sb = new StringBuilder();
@@ -2547,7 +2505,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             if (count == 0)
             {
-                return "A quiet period. Nothing of note occurred.";
+                return new TextObject("{=muster_quiet_period}A quiet period. Nothing of note occurred.").ToString();
             }
 
             return sb.ToString();
@@ -2567,7 +2525,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Unit status (simplified for now - could be enhanced with actual casualty tracking)
             var battles = CountBattlesThisPeriod();
 
-            return $"[Pay: {pay:N0} denars | Supply: {supply}% | Battles: {battles}]";
+            var payLabel = new TextObject("{=muster_status_pay}Pay").ToString();
+            var supplyLabel = new TextObject("{=muster_status_supply}Supply").ToString();
+            var battlesLabel = new TextObject("{=muster_status_battles}Battles").ToString();
+            var denarsText = new TextObject("{=muster_denars}denars").ToString();
+            
+            return $"[{payLabel}: {pay:N0} {denarsText} | {supplyLabel}: {supply}% | {battlesLabel}: {battles}]";
         }
 
         private string BuildPayText()
@@ -2575,38 +2538,46 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
             {
-                return "Enlistment data unavailable.";
+                return new TextObject("{=muster_enlistment_unavailable}Enlistment data unavailable").ToString() + ".";
             }
 
             var sb = new StringBuilder();
-            sb.AppendLine(new TextObject("{=muster_pay_intro}You step forward to the paymaster's table. He opens his ledger.").ToString());
+            var payIntro = new TextObject("{=muster_pay_intro}You step forward to the paymaster's table. He opens his ledger.").ToString();
+            var payStatusHeader = new TextObject("{=muster_pay_status_header}PAY STATUS").ToString();
+            var wagesOwedLabel = new TextObject("{=muster_wages_owed}WAGES OWED").ToString();
+            var backpayLabel = new TextObject("{=muster_backpay_outstanding}BACKPAY OUTSTANDING").ToString();
+            var lordTreasuryLabel = new TextObject("{=muster_lord_treasury}LORD'S TREASURY").ToString();
+            var denarsText = new TextObject("{=muster_denars}denars").ToString();
+            
+            sb.AppendLine(payIntro);
             sb.AppendLine();
-            sb.AppendLine("<span style=\"Header\">_____ PAY STATUS _____</span>");
+            sb.AppendLine($"<span style=\"Header\">_____ {payStatusHeader} _____</span>");
             sb.AppendLine();
 
             // Wages owed
             var wages = enlistment.PendingMusterPay;
             var wagesColor = wages > 0 ? "Success" : "Default";
-            sb.AppendLine($"<span style=\"Label\">WAGES OWED:</span>           <span style=\"{wagesColor}\">{wages:N0} denars</span>");
+            sb.AppendLine($"<span style=\"Label\">{wagesOwedLabel}:</span>           <span style=\"{wagesColor}\">{wages:N0} {denarsText}</span>");
 
             // Backpay outstanding
             var backpay = enlistment.OwedBackpay;
             if (backpay > 0)
             {
-                sb.AppendLine($"<span style=\"Label\">BACKPAY OUTSTANDING:</span>  <span style=\"Warning\">{backpay:N0} denars</span>");
+                sb.AppendLine($"<span style=\"Label\">{backpayLabel}:</span>  <span style=\"Warning\">{backpay:N0} {denarsText}</span>");
             }
 
             // Lord's treasury status
             var lordGold = enlistment.EnlistedLord?.Gold ?? 0;
             var wealthStatus = GetLordWealthStatus(lordGold);
             var wealthColor = lordGold > 20000 ? "Success" : lordGold > 5000 ? "Warning" : "Alert";
-            sb.AppendLine($"<span style=\"Label\">LORD'S TREASURY:</span>      <span style=\"{wealthColor}\">{wealthStatus}</span>");
+            sb.AppendLine($"<span style=\"Label\">{lordTreasuryLabel}:</span>      <span style=\"{wealthColor}\">{wealthStatus}</span>");
 
             // Special status indicators
             if (enlistment.IsOnProbation)
             {
+                var probationText = new TextObject("{=muster_probation_rate}[Probation Rate] - Wages reduced 50%").ToString();
                 sb.AppendLine();
-                sb.AppendLine("<span style=\"Warning\">[Probation Rate] - Wages reduced 50%</span>");
+                sb.AppendLine($"<span style=\"Warning\">{probationText}</span>");
             }
 
             if (enlistment.EnlistedLord?.PartyBelongedTo?.Army != null)
@@ -2662,187 +2633,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             return "Broke";
         }
 
-        /// <summary>
-        /// Processes the baggage check during muster init.
-        /// 30% chance to trigger. If contraband found and QM rep &lt; 65, shows options.
-        /// Otherwise skips to next stage automatically.
-        /// </summary>
-        private void ProcessBaggageCheck()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                _currentMuster.BaggageOutcome = "skipped";
-                return;
-            }
-
-            // 30% chance to trigger check
-            if (MBRandom.RandomFloat > 0.30f)
-            {
-                _currentMuster.BaggageOutcome = "not_conducted";
-                ModLogger.Debug(LogCategory, "Baggage check not triggered (70% roll)");
-                return;
-            }
-
-            // Scan inventory for contraband
-            var playerTier = enlistment.EnlistmentTier;
-            var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
-
-            var contrabandResult = ContrabandChecker.ScanInventory(playerTier, playerRole);
-
-            if (!contrabandResult.HasContraband)
-            {
-                _currentMuster.BaggageOutcome = "clean";
-                _currentMuster.ContrabandFound = false;
-                ModLogger.Debug(LogCategory, "Baggage check triggered but no contraband found");
-                return;
-            }
-
-            // Contraband found - check QM reputation
-            var qmRep = enlistment.GetQMReputation();
-            _currentMuster.QMRep = qmRep;
-            _currentMuster.ContrabandFound = true;
-
-            // QM rep 65+ auto-passes (looks away)
-            if (qmRep >= 65)
-            {
-                _currentMuster.BaggageOutcome = "qm_favor";
-                ModLogger.Info(LogCategory, $"Contraband found but QM rep {qmRep} >= 65, auto-pass");
-                return;
-            }
-
-            // Contraband found and QM will confront - store for display
-            ModLogger.Info(LogCategory, $"Contraband found: {contrabandResult.MostValuable.Item.Name}, QM rep: {qmRep}");
-        }
-
-        private string BuildBaggageText()
-        {
-            if (_currentMuster == null)
-            {
-                return "[No baggage check data]";
-            }
-
-            var sb = new StringBuilder();
-
-            // Handle skip conditions
-            if (_currentMuster.BaggageOutcome == "not_conducted")
-            {
-                sb.AppendLine("The quartermaster waves you through without inspection.");
-                sb.AppendLine();
-                sb.AppendLine("'Move along, soldier. We haven't got all day.'");
-                sb.AppendLine();
-                sb.AppendLine("You're free to proceed.");
-                return sb.ToString();
-            }
-
-            if (_currentMuster.BaggageOutcome == "clean")
-            {
-                sb.AppendLine("The quartermaster checks your kit methodically.");
-                sb.AppendLine();
-                sb.AppendLine("He nods curtly. 'Everything in order. Carry on.'");
-                sb.AppendLine();
-                sb.AppendLine("Your belongings are returned.");
-                return sb.ToString();
-            }
-
-            if (_currentMuster.BaggageOutcome == "qm_favor")
-            {
-                sb.AppendLine("The quartermaster's hand pauses over something in your pack.");
-                sb.AppendLine();
-                sb.AppendLine("He meets your eye for a moment, then pushes your kit back across the table.");
-                sb.AppendLine();
-                sb.AppendLine("'I didn't see anything. Next!'");
-                sb.AppendLine();
-                sb.AppendLine($"[QM Reputation: {_currentMuster.QMRep} - Trusted]");
-                return sb.ToString();
-            }
-
-            // Contraband found - build confrontation text
-            if (_currentMuster.ContrabandFound)
-            {
-                var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment == null)
-                {
-                    return "Enlistment data unavailable.";
-                }
-
-                var playerTier = enlistment.EnlistmentTier;
-                var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
-                var contrabandResult = ContrabandChecker.ScanInventory(playerTier, playerRole);
-
-                if (contrabandResult.HasContraband)
-                {
-                    var contraband = contrabandResult.MostValuable;
-
-                    sb.AppendLine("The quartermaster's hand stops in your pack. He pulls out an item");
-                    sb.AppendLine("and raises an eyebrow.");
-                    sb.AppendLine();
-                    sb.AppendLine($"Found: {contraband.Item.Name} (value {contraband.Value} denars)");
-                    sb.AppendLine();
-
-                    if (_currentMuster.QMRep >= 35)
-                    {
-                        sb.AppendLine("\"This doesn't belong to a soldier of your rank,\" he says quietly.");
-                        sb.AppendLine("\"I can overlook it... for a price. Or we can do this by the book.\"");
-                    }
-                    else
-                    {
-                        sb.AppendLine("\"Contraband,\" he says flatly. \"You know the rules.\"");
-                        sb.AppendLine("\"Hand it over. Now.\"");
-                    }
-
-                    sb.AppendLine();
-                    sb.AppendLine($"[QM Reputation: {_currentMuster.QMRep} - {GetReputationLabel(_currentMuster.QMRep)}]");
-
-                    return sb.ToString();
-                }
-            }
-
-            // Outcomes from previous choices
-            if (!string.IsNullOrEmpty(_currentMuster.BaggageOutcome))
-            {
-                return GetBaggageOutcomeText(_currentMuster.BaggageOutcome);
-            }
-
-            return "Baggage inspection in progress...";
-        }
-
-        private string GetReputationLabel(int rep)
-        {
-            if (rep >= 65)
-            {
-                return "Trusted";
-            }
-            if (rep >= 35)
-            {
-                return "Neutral";
-            }
-            if (rep >= 0)
-            {
-                return "Wary";
-            }
-            return "Hostile";
-        }
-
-        private string GetBaggageOutcomeText(string outcome)
-        {
-            return outcome switch
-            {
-                "bribed" => "The quartermaster pockets the coin and pushes your pack back.\n\n\"I didn't see anything. Move along.\"",
-                "smuggled" => "While he's distracted, you palm the item and slip it back into your pack.\n\nHe finishes his inspection without noticing. Close call.",
-                "confiscated" => "He takes the item and drops it into a chest behind him.\n\n\"Don't let it happen again.\"",
-                "protested" => "You argued your case. He wasn't impressed.",
-                "bribe_failed" => "He takes your gold... then confiscates the item anyway.\n\n\"Nice try. Next!\"",
-                "smuggle_failed" => "His hand shoots out and catches yours.\n\n\"Did you think I wouldn't notice? Confiscated. And you just earned yourself extra scrutiny.\"",
-                _ => "Baggage check complete."
-            };
-        }
-
         private string BuildPromotionText()
         {
             if (_currentMuster == null)
@@ -2853,7 +2643,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
             {
-                return "[Enlistment data unavailable]";
+                var unavailable = new TextObject("{=muster_enlistment_unavailable}Enlistment data unavailable").ToString();
+                return $"[{unavailable}]";
             }
 
             var sb = new StringBuilder();
@@ -3401,21 +3192,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var rationColor = _currentMuster.RationOutcome == "issued" ? "Success" : _currentMuster.RationOutcome == "none" ? "Alert" : "Default";
             sb.AppendLine($"<span style=\"Label\">RATION ISSUED:</span>        <span style=\"{rationColor}\">{rationText}</span>");
 
-            // Baggage Check
-            var baggageText = _currentMuster.BaggageOutcome switch
-            {
-                "passed" => "Passed - No contraband found",
-                "clean" => "Passed - Inventory clean",
-                "qm_favor" => "Passed (QM favor)",
-                "confiscated" => "Failed - Contraband confiscated",
-                "bribed" => "Passed (bribe paid)",
-                "skipped" => "Not conducted",
-                "empty_inventory" => "Nothing to inspect",
-                _ => "Not triggered"
-            };
-            var baggageColor = _currentMuster.BaggageOutcome == "confiscated" ? "Alert" : _currentMuster.BaggageOutcome == "bribed" ? "Warning" : "Success";
-            sb.AppendLine($"<span style=\"Label\">BAGGAGE CHECK:</span>        <span style=\"{baggageColor}\">{baggageText}</span>");
-
             // Supply Status - use CompanyNeeds for proper fallback handling
             var supplyPct = EnlistmentBehavior.Instance?.CompanyNeeds?.Supplies ?? 60;
             var supplyStatus = supplyPct >= 50 ? "Adequate" : supplyPct >= 20 ? "Low" : "Critical";
@@ -3458,11 +3234,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var progressColor = progressPercent >= 75 ? "Success" : progressPercent >= 40 ? "Warning" : "Default";
                 sb.AppendLine($"<span style=\"Label\">TOTAL EXPERIENCE:</span>     <span style=\"{progressColor}\">{currentXP} / {xpForNextRank} XP to {nextRankName} ({progressPercent}%)</span>");
 
-                // Estimate days to promotion
+                // Estimate days to promotion based on XP rate
                 var periodDays = Math.Max(1, _currentMuster.MusterDay - _currentMuster.LastMusterDay);
                 var dailyRate = xpThisPeriod / (float)periodDays;
                 var estimatedDays = dailyRate > 0 ? (int)(xpNeeded / dailyRate) : 999;
-                sb.AppendLine($"<span style=\"Label\">STATUS:</span>               {xpNeeded} XP needed (~{estimatedDays} days at current pace)");
+
+                // Add multi-factor requirements check
+                BuildPromotionRequirementsCheck(sb, enlistment, currentTier, nextRankName, estimatedDays);
             }
 
             // XP Sources breakdown
@@ -3483,6 +3261,125 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 // Fallback: all XP from daily service
                 sb.AppendLine($"• Daily service: <span style=\"Success\">+{xpThisPeriod} XP</span>");
+            }
+        }
+
+        /// <summary>
+        /// Builds the multi-factor promotion requirements checklist.
+        /// Shows players exactly what requirements they've met and what's blocking promotion.
+        /// </summary>
+        private void BuildPromotionRequirementsCheck(StringBuilder sb, EnlistmentBehavior enlistment, int currentTier, string nextRankName, int estimatedDays)
+        {
+            var targetTier = currentTier + 1;
+            var req = PromotionRequirements.GetForTier(targetTier);
+            var escalation = EscalationManager.Instance;
+
+            // Get current values for each requirement
+            var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
+            var requiredXp = currentTier < tierXp.Length ? tierXp[currentTier] : tierXp[tierXp.Length - 1];
+            var currentXp = enlistment.EnlistmentXP;
+            var daysInRank = enlistment.DaysInRank;
+            var battles = enlistment.BattlesSurvived;
+            var soldierRep = escalation?.State?.SoldierReputation ?? 0;
+            var discipline = escalation?.State?.Discipline ?? 0;
+            var leaderRelation = enlistment.EnlistedLord?.GetRelationWithPlayer() ?? 0;
+
+            // Check each requirement
+            var xpReady = currentXp >= requiredXp;
+            var daysReady = daysInRank >= req.DaysInRank;
+            var battlesReady = battles >= req.BattlesRequired;
+            var soldierRepReady = soldierRep >= req.MinSoldierReputation;
+            var leaderRelReady = leaderRelation >= req.MinLeaderRelation;
+            var disciplineReady = discipline < req.MaxDiscipline;
+
+            var allReady = xpReady && daysReady && battlesReady && soldierRepReady && leaderRelReady && disciplineReady;
+
+            // Build the section
+            sb.AppendLine();
+            sb.AppendLine($"<span style=\"Header\">_____ NEXT RANK: {nextRankName.ToUpperInvariant()} (T{targetTier}) _____</span>");
+            sb.AppendLine();
+
+            // Estimate display
+            if (allReady)
+            {
+                sb.AppendLine($"<span style=\"Label\">STATUS:</span>               <span style=\"Success\">All requirements met - promotion imminent!</span>");
+            }
+            else
+            {
+                sb.AppendLine($"<span style=\"Label\">ESTIMATED:</span>            ~{estimatedDays} days at current pace");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("<span style=\"Label\">REQUIREMENTS:</span>");
+
+            // Experience
+            var xpIcon = xpReady ? "✓" : "✗";
+            var xpColor = xpReady ? "Success" : "Alert";
+            var xpStatus = xpReady ? "(Ready)" : $"(Need +{requiredXp - currentXp})";
+            sb.AppendLine($"  <span style=\"{xpColor}\">{xpIcon}</span> Experience:      {currentXp:N0}/{requiredXp:N0} XP {xpStatus}");
+
+            // Days in Rank
+            var daysIcon = daysReady ? "✓" : "✗";
+            var daysColor = daysReady ? "Success" : "Alert";
+            var daysStatus = daysReady ? "(Ready)" : $"(Need +{req.DaysInRank - daysInRank} days)";
+            sb.AppendLine($"  <span style=\"{daysColor}\">{daysIcon}</span> Time in Rank:    {daysInRank}/{req.DaysInRank} days {daysStatus}");
+
+            // Battles
+            var battlesIcon = battlesReady ? "✓" : "✗";
+            var battlesColor = battlesReady ? "Success" : "Alert";
+            var battlesStatus = battlesReady ? "(Ready)" : $"(Need +{req.BattlesRequired - battles})";
+            sb.AppendLine($"  <span style=\"{battlesColor}\">{battlesIcon}</span> Battles Fought:  {battles}/{req.BattlesRequired} battles {battlesStatus}");
+
+            // Soldier Reputation
+            var soldierIcon = soldierRepReady ? "✓" : "✗";
+            var soldierColor = soldierRepReady ? "Success" : "Alert";
+            var soldierStatus = soldierRepReady ? "(Ready)" : $"(Need +{req.MinSoldierReputation - soldierRep})";
+            sb.AppendLine($"  <span style=\"{soldierColor}\">{soldierIcon}</span> Soldier Rep:     {soldierRep}/{req.MinSoldierReputation} {soldierStatus}");
+
+            // Leader Relation
+            var leaderIcon = leaderRelReady ? "✓" : "✗";
+            var leaderColor = leaderRelReady ? "Success" : "Alert";
+            var leaderStatus = leaderRelReady ? "(Ready)" : $"(Need +{req.MinLeaderRelation - leaderRelation})";
+            sb.AppendLine($"  <span style=\"{leaderColor}\">{leaderIcon}</span> Leader Relation: {leaderRelation}/{req.MinLeaderRelation} {leaderStatus}");
+
+            // Discipline (lower is better)
+            var discIcon = disciplineReady ? "✓" : "✗";
+            var discColor = disciplineReady ? "Success" : "Alert";
+            var discStatus = disciplineReady ? "(Safe)" : "(Too high!)";
+            sb.AppendLine($"  <span style=\"{discColor}\">{discIcon}</span> Discipline:      {discipline}/{req.MaxDiscipline} max {discStatus}");
+
+            // Show blocker advice if not ready
+            if (!allReady)
+            {
+                sb.AppendLine();
+                var blockers = new List<string>();
+
+                if (!xpReady)
+                {
+                    blockers.Add("Gain more XP from orders, combat, and training");
+                }
+                if (!daysReady)
+                {
+                    blockers.Add("Continue serving to accumulate time in rank");
+                }
+                if (!battlesReady)
+                {
+                    blockers.Add("Participate in more battles (not reserve duty)");
+                }
+                if (!soldierRepReady)
+                {
+                    blockers.Add("Improve soldier reputation via orders and events");
+                }
+                if (!leaderRelReady)
+                {
+                    blockers.Add("Build relation with your lord via successful orders");
+                }
+                if (!disciplineReady)
+                {
+                    blockers.Add("Reduce discipline through good behavior");
+                }
+
+                sb.AppendLine($"<span style=\"Warning\">BLOCKERS:</span> {string.Join("; ", blockers)}.");
             }
         }
 
@@ -3584,388 +3481,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         #endregion
 
         #region Baggage Check Handlers
-
-        /// <summary>
-        /// Returns true if contraband confrontation is currently active (not yet resolved).
-        /// </summary>
-        private bool IsContrabandConfrontationActive()
-        {
-            if (_currentMuster == null || !_currentMuster.ContrabandFound)
-            {
-                return false;
-            }
-
-            // If outcome is already set, confrontation is resolved
-            if (!string.IsNullOrEmpty(_currentMuster.BaggageOutcome) &&
-                _currentMuster.BaggageOutcome != "not_conducted" &&
-                _currentMuster.BaggageOutcome != "clean" &&
-                _currentMuster.BaggageOutcome != "qm_favor")
-            {
-                return false;
-            }
-
-            // Check if we have active contraband and QM rep is in confrontation range
-            return _currentMuster.QMRep < 65;
-        }
-
-        /// <summary>
-        /// Handles bribe attempt. 50% success based on Charm check.
-        /// Success: Keep item, pay bribe, no scrutiny.
-        /// Failure: Lose gold AND item, +3 scrutiny.
-        /// </summary>
-        private void HandleBribe()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            var playerTier = enlistment.EnlistmentTier;
-            var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
-            var contrabandResult = ContrabandChecker.ScanInventory(playerTier, playerRole);
-
-            if (!contrabandResult.HasContraband)
-            {
-                _currentMuster.BaggageOutcome = "clean";
-                GameMenu.SwitchToMenu(MusterInspectionMenuId);
-                return;
-            }
-
-            var contraband = contrabandResult.MostValuable;
-            if (contraband.Item == null)
-            {
-                _currentMuster.BaggageOutcome = "clean";
-                GameMenu.SwitchToMenu(MusterInspectionMenuId);
-                return;
-            }
-
-            var bribeAmount = ContrabandChecker.CalculateBribeAmount(contraband.Value);
-
-            // Deduct bribe cost
-            Hero.MainHero.ChangeHeroGold(-bribeAmount);
-
-            // 35-55% success chance, modified by Charm (35% base + 20% at Charm 100)
-            var charm = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm) ?? 0;
-            var successChance = 0.35f + (charm / 500f); // 35% base, 55% at Charm 100
-            var success = MBRandom.RandomFloat < successChance;
-
-            if (success)
-            {
-                _currentMuster.BaggageOutcome = "bribed";
-                ModLogger.Info(LogCategory, $"Bribe successful: {bribeAmount} denars paid, item kept");
-
-                // Give Charm XP and enlistment XP for rank progression
-                if (Hero.MainHero != null)
-                {
-                    Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 10);
-                    EnlistmentBehavior.Instance?.AddEnlistmentXP(10, "Successful Bribe");
-                }
-            }
-            else
-            {
-                _currentMuster.BaggageOutcome = "bribe_failed";
-
-                // Confiscate item
-                ContrabandChecker.ConfiscateItem(contraband.Item);
-
-                // Apply scrutiny and fine
-                EscalationManager.Instance?.ModifyScrutiny(3, "Failed bribe attempt");
-                var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-                if (Hero.MainHero != null)
-                {
-                    Hero.MainHero.ChangeHeroGold(-fine);
-                }
-
-                ModLogger.Warn(LogCategory, $"Bribe failed: lost {bribeAmount} denars + {contraband.Item.Name} + {fine} denars fine");
-            }
-
-            // Refresh display with outcome
-            MBTextManager.SetTextVariable("MUSTER_BAGGAGE_TEXT", BuildBaggageText());
-            GameMenu.SwitchToMenu(MusterInspectionMenuId);
-        }
-
-        /// <summary>
-        /// Handles smuggle attempt. 70% success based on Roguery check.
-        /// Success: Keep item, +5 Roguery XP.
-        /// Failure: Lose item, +5 scrutiny, +3 discipline.
-        /// </summary>
-        private void HandleSmuggle()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            var playerTier = enlistment.EnlistmentTier;
-            var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
-            var contrabandResult = ContrabandChecker.ScanInventory(playerTier, playerRole);
-
-            if (!contrabandResult.HasContraband)
-            {
-                _currentMuster.BaggageOutcome = "clean";
-                GameMenu.SwitchToMenu(MusterInspectionMenuId);
-                return;
-            }
-
-            var contraband = contrabandResult.MostValuable;
-            if (contraband.Item == null)
-            {
-                _currentMuster.BaggageOutcome = "clean";
-                GameMenu.SwitchToMenu(MusterInspectionMenuId);
-                return;
-            }
-
-            // 70% success chance, modified by Roguery
-            var roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
-            var successChance = 0.70f + (roguery / 2000f); // +0.05 at Roguery 100
-            var success = MBRandom.RandomFloat < successChance;
-
-            if (success)
-            {
-                _currentMuster.BaggageOutcome = "smuggled";
-                ModLogger.Info(LogCategory, $"Smuggle successful: kept {contraband.Item.Name}");
-
-                // Give Roguery XP and enlistment XP for rank progression
-                if (Hero.MainHero != null)
-                {
-                    Hero.MainHero.AddSkillXp(DefaultSkills.Roguery, 15);
-                    EnlistmentBehavior.Instance?.AddEnlistmentXP(15, "Successful Smuggle");
-                }
-            }
-            else
-            {
-                _currentMuster.BaggageOutcome = "smuggle_failed";
-
-                // Confiscate item
-                ContrabandChecker.ConfiscateItem(contraband.Item);
-
-                // Heavy penalties for getting caught
-                EscalationManager.Instance?.ModifyScrutiny(5, "Caught smuggling contraband");
-                EscalationManager.Instance?.ModifyDiscipline(3, "Attempted smuggling at muster");
-
-                var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-                if (Hero.MainHero != null)
-                {
-                    Hero.MainHero.ChangeHeroGold(-fine);
-                }
-
-                ModLogger.Warn(LogCategory, $"Smuggle failed: lost {contraband.Item.Name}, +5 scrutiny, +3 discipline");
-            }
-
-            // Refresh display with outcome
-            MBTextManager.SetTextVariable("MUSTER_BAGGAGE_TEXT", BuildBaggageText());
-            GameMenu.SwitchToMenu(MusterInspectionMenuId);
-        }
-
-        /// <summary>
-        /// Handles voluntary confiscation or forced acceptance.
-        /// Item confiscated, fine applied, +2 scrutiny.
-        /// </summary>
-        private void HandleConfiscation()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            var playerTier = enlistment.EnlistmentTier;
-            var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
-            var contrabandResult = ContrabandChecker.ScanInventory(playerTier, playerRole);
-
-            if (!contrabandResult.HasContraband)
-            {
-                _currentMuster.BaggageOutcome = "clean";
-                GameMenu.SwitchToMenu(MusterInspectionMenuId);
-                return;
-            }
-
-            var contraband = contrabandResult.MostValuable;
-            if (contraband.Item == null)
-            {
-                _currentMuster.BaggageOutcome = "clean";
-                GameMenu.SwitchToMenu(MusterInspectionMenuId);
-                return;
-            }
-
-            // Check if item is equipped and unequip if needed
-            var isEquipped = IsItemEquipped(contraband.Item);
-            if (isEquipped)
-            {
-                UnequipItem(contraband.Item);
-                ModLogger.Debug(LogCategory, $"Unequipped {contraband.Item.Name} before confiscation");
-            }
-
-            // Confiscate item
-            ContrabandChecker.ConfiscateItem(contraband.Item);
-
-            // Apply scrutiny and fine
-            EscalationManager.Instance?.ModifyScrutiny(2, "Contraband confiscated at muster");
-            var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-            Hero.MainHero.ChangeHeroGold(-fine);
-
-            _currentMuster.BaggageOutcome = "confiscated";
-
-            ModLogger.Info(LogCategory, $"Confiscation: lost {contraband.Item.Name}, {fine} denars fine, +2 scrutiny");
-
-            // Refresh display with outcome
-            MBTextManager.SetTextVariable("MUSTER_BAGGAGE_TEXT", BuildBaggageText());
-            GameMenu.SwitchToMenu(MusterInspectionMenuId);
-        }
-
-        /// <summary>
-        /// Handles protest attempt. 20% success based on Charm.
-        /// Success: Keep item, no penalties.
-        /// Failure: Confiscate item, +4 scrutiny, +2 discipline.
-        /// </summary>
-        private void HandleProtest()
-        {
-            if (_currentMuster == null)
-            {
-                return;
-            }
-
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                return;
-            }
-
-            var playerTier = enlistment.EnlistmentTier;
-            var playerRole = EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
-            var contrabandResult = ContrabandChecker.ScanInventory(playerTier, playerRole);
-
-            if (!contrabandResult.HasContraband)
-            {
-                _currentMuster.BaggageOutcome = "clean";
-                GameMenu.SwitchToMenu(MusterInspectionMenuId);
-                return;
-            }
-
-            var contraband = contrabandResult.MostValuable;
-            if (contraband.Item == null)
-            {
-                _currentMuster.BaggageOutcome = "clean";
-                GameMenu.SwitchToMenu(MusterInspectionMenuId);
-                return;
-            }
-
-            // 20% success chance, slightly modified by Charm
-            var charm = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm) ?? 0;
-            var successChance = 0.20f + (charm / 2000f); // +0.05 at Charm 100
-            var success = MBRandom.RandomFloat < successChance;
-
-            if (success)
-            {
-                _currentMuster.BaggageOutcome = "protested";
-                ModLogger.Info(LogCategory, $"Protest successful: kept {contraband.Item.Name}");
-
-                // Give Charm XP and enlistment XP for rank progression
-                if (Hero.MainHero != null)
-                {
-                    Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 20);
-                    EnlistmentBehavior.Instance?.AddEnlistmentXP(20, "Successful Protest");
-                }
-            }
-            else
-            {
-                _currentMuster.BaggageOutcome = "protested";
-
-                // Check if equipped and unequip if needed
-                var isEquipped = IsItemEquipped(contraband.Item);
-                if (isEquipped)
-                {
-                    UnequipItem(contraband.Item);
-                }
-
-                // Confiscate item
-                ContrabandChecker.ConfiscateItem(contraband.Item);
-
-                // Heavy penalties for failed protest
-                EscalationManager.Instance?.ModifyScrutiny(4, "Failed protest at muster");
-                EscalationManager.Instance?.ModifyDiscipline(2, "Insubordination at muster");
-
-                var fine = ContrabandChecker.CalculateFineAmount(contraband.Value);
-                if (Hero.MainHero != null)
-                {
-                    Hero.MainHero.ChangeHeroGold(-fine);
-                }
-
-                ModLogger.Warn(LogCategory, $"Protest failed: lost {contraband.Item.Name}, +4 scrutiny, +2 discipline");
-            }
-
-            // Refresh display with outcome
-            MBTextManager.SetTextVariable("MUSTER_BAGGAGE_TEXT", BuildBaggageText());
-            GameMenu.SwitchToMenu(MusterInspectionMenuId);
-        }
-
-        /// <summary>
-        /// Checks if an item is currently equipped by the player.
-        /// </summary>
-        private bool IsItemEquipped(ItemObject item)
-        {
-            var hero = Hero.MainHero;
-            if (hero == null)
-            {
-                return false;
-            }
-
-            var equipment = hero.BattleEquipment;
-            for (int i = 0; i < 12; i++) // 12 equipment slots
-            {
-                var slot = (EquipmentIndex)i;
-                var element = equipment.GetEquipmentFromSlot(slot);
-                if (element.Item == item)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Unequips an item from the player's equipment.
-        /// </summary>
-        private void UnequipItem(ItemObject item)
-        {
-            var hero = Hero.MainHero;
-            if (hero == null)
-            {
-                return;
-            }
-
-            var equipment = hero.BattleEquipment.Clone();
-            for (int i = 0; i < 12; i++)
-            {
-                var slot = (EquipmentIndex)i;
-                var element = equipment.GetEquipmentFromSlot(slot);
-                if (element.Item == item)
-                {
-                    equipment[slot] = EquipmentElement.Invalid;
-                    hero.BattleEquipment.FillFrom(equipment);
-                    ModLogger.Debug(LogCategory, $"Unequipped {item.Name} from slot {slot}");
-                    return;
-                }
-            }
-        }
 
         #endregion
 

@@ -305,8 +305,8 @@
     <string id="Enlisted_Menu_VisitSettlementNamed" text="Visit {SETTLEMENT}" />
 
     <!-- Menu Symbols & Duties -->
-    <string id="Enlisted_Symbol_Selected" text="âœ“ {NAME}" />
-    <string id="Enlisted_Symbol_Unselected" text="â—‹ {NAME}" />
+    <string id="Enlisted_Symbol_Selected" text="[X] {NAME}" />
+    <string id="Enlisted_Symbol_Unselected" text="[ ] {NAME}" />
     <string id="Enlisted_Duty_Name_Enlisted" text="Enlisted" />
     <string id="Enlisted_Duty_Name_Forager" text="Forager" />
     <string id="Enlisted_Duty_Name_Sentry" text="Sentry" />

@@ -6,9 +6,11 @@
 
 **2026-01-01 UPDATE:** Routine activity outcomes now display full flavor text from `routine_outcomes.json` in all contexts (combat log, news feed, Recent Activity). Replaces generic summaries like "Combat Training: Completed" with immersive text like "Sharp focus today. Movements feel natural."
 
+**2026-01-03 BUG FIX:** Supply status reporting now requires BOTH logistics strain AND low supplies to show "Supply lines stretched thin" warning. Previously showed warning when logistics was high even if supplies were at 86%.
+
 **Status:** ✅ Current - Comprehensive Integration Complete  
-**Last Updated:** 2026-01-01 (Routine flavor text, fallback improvements)  
-**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Events Master](../../AFEATURE/order-events-master.md), [Order Progression System](../../AFEATURE/order-progression-system.md), [Injury System](../Content/injury-system.md), [Camp Routine Schedule](../Campaign/camp-routine-schedule-spec.md)
+**Last Updated:** 2026-01-03 (Supply status logic fix)  
+**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Progression System](../Core/order-progression-system.md), [Orders Content](../Content/orders-content.md), [Injury System](../Content/injury-system.md), [Camp Routine Schedule](../Campaign/camp-routine-schedule-spec.md)
 
 ---
 
@@ -41,7 +43,7 @@ The news system operates as a read-only observer of campaign events. It listens 
 
 **Two Report Types:**
 1. **Daily Brief** - Once-per-day narrative paragraph combining company situation, player status, and kingdom news
-2. **Company Status Report** - Five company needs with context-aware descriptions
+2. **Company Status Report** - Four company needs with context-aware descriptions
 
 **Key Behavior:**
 - All feeds use `DispatchItem` struct (primitives only for save compatibility)
@@ -69,7 +71,7 @@ EnlistedNewsBehavior (singleton CampaignBehaviorBase)
 │   └── BuildDailyBriefSection()                   - Assembles flowing paragraph
 │
 ├── Company Status (generated on-demand)
-│   └── BuildCompanyStatusReport()                 - Five needs with context
+│   └── BuildCompanyStatusReport()                 - Four needs with context
 │
 ├── Tracking Records (for detailed reports)
 │   ├── _orderOutcomes (List<OrderOutcomeRecord>)
@@ -180,10 +182,15 @@ BuildMainMenuNarrative()
 
 **CampLifeBehavior Pressure Integration:**
 ```csharp
-// Supply warnings enhanced by LogisticsStrain
-if (companyNeeds.Supplies < 20 || campLife?.LogisticsStrain > 60)
+// Supply warnings: Only show "stretched thin" when BOTH conditions are true
+// Bug fix (Jan 2026): Previously showed "stretched thin" when only logistics was high
+if (logisticsHigh && suppliesLow)  // LogisticsStrain > 60 AND Supplies < 50
 {
-    // "Supply lines stretched thin" vs "Supplies low"
+    // "Supply lines stretched thin" (combined warning)
+}
+else
+{
+    // Show actual supply level: "Well-stocked" / "Adequate" / "Low" / "Critical"
 }
 
 // Morale context from MoraleShock + PayTension
@@ -399,7 +406,7 @@ EnlistedNewsBehavior.Instance.AddEventOutcome(
 );
 ```
 
-**See Also:** [Order Events Master](../../AFEATURE/order-events-master.md) for order event definitions and result text variants.
+**See Also:** [Orders Content](../Content/orders-content.md) for order definitions, event files at `ModuleData/Enlisted/Orders/order_events/`.
 
 ---
 
@@ -702,17 +709,24 @@ Updated in `CheckPlayerBattleParticipation()` called from `OnMapEventEnded()`.
 
 ---
 
-## Company Status Report
+## Company Status Reporting
 
-Generated on-demand when Reports menu opens. Does NOT cache.
+Company status information appears in two locations, both generated on-demand:
 
-**Display Location:** Reports menu only (accessed via "Service Records" → "Company Reports")
+**Display Locations:**
+1. **Main enlisted_status menu** → "COMPANY REPORTS" section (via `BuildCampNarrativeParagraph()`)
+   - Atmospheric narrative paragraph blending world state, company needs, baggage status, and location context
+   - Uses world-state-aware generation with activity levels and lord situation
+   - Includes baggage train status when notable (raids, delays, arrivals)
+   
+2. **Camp Hub menu** → "COMPANY STATUS" summary (via `BuildCompanyStatusSummary()`)
+   - Flowing prose combining atmosphere, troop strength/composition, company needs, and location
+   - Includes baggage train status when notable
+   - More detailed than main menu version
 
-**NOT shown on main menu** - The main enlisted menu only shows the Daily Brief and Recent Actions.
+### Specialized Builders
 
-### BuildCompanyStatusReport()
-
-Entry point that calls five specialized builders:
+Context-aware narrative builders used across both displays:
 
 ```csharp
 BuildReadinessLine(value, isMarching, isInCombat, lowMorale)
@@ -721,6 +735,8 @@ BuildSuppliesLine(value, isMarching, isInSiege)
 BuildEquipmentLine(value, isInCombat, isMarching, party)
 BuildRestLine(value, isMarching, isInSettlement, isInArmy)
 ```
+
+These are used by the Camp Hub's detailed status summary.
 
 ### Context Detection
 

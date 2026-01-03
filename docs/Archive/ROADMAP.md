@@ -93,19 +93,19 @@ After: "Scout approaches to Pravend - Lord planning offensive.
 Replace the single-popup pay muster with a multi-stage GameMenu sequence that creates a comprehensive muster experience with period reporting, rank progression display, and integrated events.
 
 **Core Implementation** (20 hours)
-- Create `MusterMenuHandler.cs` with 8-stage menu flow
+- Create `MusterMenuHandler.cs` with 6-stage menu flow
 - Implement `MusterSessionState` for tracking outcomes
-- Convert baggage/inspection/recruit events to menu stages
+- Convert recruit event to menu stage
 - Build promotion recap system (acknowledges promotions that occurred during period)
 - Integrate strategic context, orders summary, health/fatigue status
 - Add T7+ retinue muster stage with casualties report
 - Generate comprehensive muster reports for news feed
 
 **Key Features:**
-- **8-Stage Flow:** Intro → Pay → Baggage → Inspection → Recruit → Promotion Recap → Retinue (T7+) → Complete
+- **6-Stage Flow:** Intro → Pay → Recruit → Promotion Recap → Retinue (T7+) → Complete
 - **Period Summary:** Shows events, battles, XP sources, orders completed since last muster
 - **Rank Progression:** Current rank, XP progress, next rank requirements, promotion acknowledgment
-- **Event Integration:** Baggage checks, equipment inspections, recruit mentoring as menu stages (not popups)
+- **Event Integration:** Recruit mentoring as menu stage (not popup)
 - **Post-Muster Actions:** Visit Quartermaster, Review Records, Request Temporary Leave
 - **News Recording:** Full muster outcomes saved to personal feed for historical review
 
