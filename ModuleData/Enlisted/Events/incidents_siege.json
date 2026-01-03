@@ -449,14 +449,11 @@
           "id": "exploit",
           "textId": "mi_siege_opportunity_exploit",
           "text": "Lead a small party to exploit it",
-          "requirements": {
-            "minSkills": {
-              "Tactics": 50
-            }
-          },
+          "skillCheck": "Tactics",
+          "skillBase": 50,
           "resultTextId": "mi_siege_opportunity_exploit_result",
           "resultText": "You gather a handful of volunteers and slip forward in the night. The weak point crumbles under your assault, and you're the first through the gap.",
-          "tooltip": "Requires Tactics 50. 60% success chance. Train Tactics. +15 Lord rep, +12 Officer rep, +10 Soldier rep. Failure causes 35 damage and troop loss.",
+          "tooltipTemplate": "{CHANCE}% (Tactics {SKILL}). +30 Tactics XP, +15 Lord/+12 Officer/+10 Soldier rep. Fail: -35 HP, -2 troops.",
           "risk": "dangerous",
           "risk_chance": 60,
           "effects": {
@@ -601,7 +598,7 @@
           },
           "resultTextId": "mi_siege_supply_theft_investigate_result",
           "resultText": "You watch and wait. When the thief makes his move, you catch him red-handed. The quartermaster is grateful for your vigilance.",
-          "tooltip": "Requires Scouting 35. Moderate risk. Train Scouting. +10 Officer rep. Boosts company supplies. Reduces discipline issues.",
+          "tooltip": "Requires Scouting 35. +15 Scouting XP, +10 Officer rep, +5 Supplies, -2 discipline.",
           "risk": "moderate",
           "effects": {
             "skillXp": {
@@ -679,14 +676,11 @@
           "id": "quarantine_strict",
           "textId": "mi_siege_disease_quarantine",
           "text": "Enforce strict quarantine",
-          "requirements": {
-            "minSkills": {
-              "Medicine": 60
-            }
-          },
+          "skillCheck": "Medicine",
+          "skillBase": 60,
           "resultTextId": "mi_siege_disease_quarantine_result",
           "resultText": "Working with the surgeon, you isolate the sick and burn the infected bedding. It's brutal, but the spread slows. Lives are saved.",
-          "tooltip": "Requires Medicine 60. 70% success chance. Train Medicine. +15 Officer rep. Failure adds 3 medical risk and higher troop loss.",
+          "tooltipTemplate": "{CHANCE}% (Medicine {SKILL}). +30 Medicine XP, +15 Officer rep, -5 medical risk. Fail: +3 medical risk, -5 troops.",
           "risk": "risky",
           "risk_chance": 70,
           "effects": {
@@ -783,14 +777,11 @@
           "id": "forage_siege",
           "textId": "mi_siege_spoiled_forage",
           "text": "Lead a foraging party",
-          "requirements": {
-            "minSkills": {
-              "Scouting": 45
-            }
-          },
+          "skillCheck": "Scouting",
+          "skillBase": 45,
           "resultTextId": "mi_siege_spoiled_forage_result",
           "resultText": "You slip out of camp and scour the countryside. A village, overlooked by other foragers, provides enough food to supplement the rotting stores.",
-          "tooltip": "Requires Scouting 45. 65% success chance. Train Scouting. +10 Officer rep. Boosts company supplies. Failure causes 20 damage.",
+          "tooltipTemplate": "{CHANCE}% (Scouting {SKILL}). +25 Scouting XP, +10 Officer rep, +10 Supplies. Fail: -20 HP, -5 Supplies.",
           "risk": "risky",
           "risk_chance": 65,
           "effects": {

@@ -70,14 +70,14 @@ Run this before large refactors or feature branches to catch code-quality regres
 After building and validating, deploy updates to Steam Workshop (ID: 3621116083):
 
 ```powershell path=null start=null
-# Update changelog in tools/workshop/workshop_upload.vdf first
+# Update changelog in Tools/Steam/workshop_upload.vdf first
 
 # Method 1: Using upload script (RECOMMENDED - opens interactive window)
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Dev\Enlisted\Enlisted\tools\workshop'; .\upload.ps1" -Wait
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Dev\Enlisted\Enlisted\Tools\Steam'; .\upload.ps1" -Wait
 
 # Method 2: Direct steamcmd command (requires cached credentials)
 cd C:\Dev\steamcmd
-.\steamcmd.exe +login YOUR_USERNAME +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit
+.\steamcmd.exe +login YOUR_USERNAME +workshop_build_item "C:\Dev\Enlisted\Enlisted\Tools\Steam\workshop_upload.vdf" +quit
 ```
 
 **Important**: The `upload.ps1` script must run in an interactive PowerShell window to handle Steam Guard authentication. The `Start-Process` command opens a new window automatically. See `docs/BLUEPRINT.md` Steam Workshop Upload section for full details.
@@ -129,7 +129,7 @@ The primary project is `Enlisted.csproj` (targeting .NET Framework 4.7.2). Sourc
     - **Company** – Company-wide needs (Readiness, Morale, Supplies, Equipment, Rest) and their managers.
     - **Context** – Strategic context and war stance analysis (Grand Campaign, Last Stand, Winter Camp, etc.).
   - **Interface** – Native `GameMenu`-based UI hub (Camp Hub with accordion-style decision sections, 8-stage muster system every 12 days, reports, news/daily brief).
-    - **Equipment** – Quartermaster, equipment management, baggage/contraband checks, provisions and pricing.
+    - **Equipment** – Quartermaster, equipment management, baggage access, provisions and pricing.
     - **Ranks** – Promotion logic and culture-specific rank naming.
     - **Conversations** – Dynamic, data-driven dialogs (e.g., quartermaster conversations).
     - **Combat** – Formation assignment, battle participation hooks, training XP hooks.

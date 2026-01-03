@@ -3,7 +3,7 @@
 **Summary:** The Muster System is a multi-stage GameMenu sequence that occurs every 12 days, guiding players through pay day ceremonies, rank progression displays, and comprehensive period summaries. Replaces the simple pay inquiry popup with an immersive muster experience that integrates pay, rations, and promotion acknowledgments.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-01  
+**Last Updated:** 2026-01-03 (Quartermaster stock refresh now uses cross-formation equipment discovery)  
 **Related Docs:** [Pay System](pay-system.md), [Enlistment](enlistment.md), [Promotion System](promotion-system.md), [Quartermaster System](../Equipment/quartermaster-system.md), [News & Reporting](../UI/news-reporting-system.md)
 
 ---
@@ -605,7 +605,8 @@ The muster system integrates with numerous systems across the mod:
 - Discharge processing for pending discharge players
 
 ### Quartermaster System
-- Stock refresh via `QuartermasterManager.RollStockAvailability()` at muster completion
+- Stock refresh via `QuartermasterManager.RollStockAvailability()` and `RefreshInventoryAtMuster()` at muster completion
+- Uses cross-formation equipment discovery (`GetAvailableEquipmentAllFormations()`) to populate inventory with gear from all formations (infantry, archer, cavalry, horse archer)
 - Ration exchange for T1-T6 (old ration reclaimed, new ration issued based on QM reputation)
   - First ration is issued at initial enlistment
   - Subsequent musters: exchange old ration for new one

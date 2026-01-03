@@ -1292,7 +1292,7 @@ if (!BaggageTrainAvailability.CanAccessBaggage(out string reason))
 
 **When debugging conflicts:**
 1. Check `Conflicts-A_*.log` for mod conflicts
-2. Check `enlisted.log` for state change sources
+2. Check `Session-A_*.log` for state change sources
 3. Review integration matrix for affected systems
 4. Test edge cases (battle, discharge, capture)
 
@@ -1344,6 +1344,6 @@ Errors are logged via `ModLogger.ErrorCode()` which includes:
 - [Event System Schemas](../Content/event-system-schemas.md) - JSON field definitions
 - [Encounter Safety](encounter-safety.md) - Party state conflicts and edge cases
 - [Content System Architecture](../Content/content-system-architecture.md) - Event delivery pipeline
-- [Event Catalog](../../Content/event-catalog-by-system.md) - All events organized by system
+- [Content Index](../Content/content-index.md) - All content organized by category
 - [BLUEPRINT.md](../../BLUEPRINT.md) - Core patterns and standards
 

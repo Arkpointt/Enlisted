@@ -64,7 +64,7 @@
             "discipline": 2
           },
           "failure_resultText": "The night goes too far. You wake in an alley, beaten and robbed, with no memory of how you got there. The sergeant finds you before muster, and his expression promises consequences.",
-          "tooltip": "80% success chance. +12 Soldier rep, +8 Morale. Failure adds 4 scrutiny and 2 discipline issues, loses 50 gold and 10 HP."
+          "tooltip": "80% chance. +12 Soldier rep, +8 Morale. Fail: -50 gold, -10 HP, +4 scrutiny, +2 discipline."
         },
         {
           "id": "stay_sober",
@@ -452,6 +452,8 @@
           "id": "fight",
           "textId": "mi_town_brawl_fight",
           "text": "Fight back",
+          "skillCheck": "OneHanded",
+          "skillBase": 40,
           "resultTextId": "mi_town_brawl_fight_result",
           "resultText": "Fists fly and furniture breaks. You take some hits but give better than you get. When it's over, you're bloody but standing.",
           "risk": "risky",
@@ -469,7 +471,7 @@
             "gold": -15
           },
           "failure_resultText": "The locals are tougher than they looked. You're beaten badly and robbed of your coin before the watch arrives.",
-          "tooltip": "65% success chance. +8 Soldier rep. Valor trait XP. Failure causes 25 damage, adds 2 scrutiny, loses 15 gold."
+          "tooltipTemplate": "{CHANCE}% (OneHanded {SKILL}). +8 Soldier rep, -10 HP. Fail: -25 HP, +2 scrutiny, -15 gold."
         },
         {
           "id": "defuse",

@@ -708,7 +708,7 @@ private void ClearProbation(string reason)
 
 **Log Category:** "Fatigue"  
 **Log Events:** "Consumed", "Restored"  
-**Output Location:** `<BannerlordInstall>/Modules/Enlisted/Debugging/enlisted.log`
+**Output Location:** `<BannerlordInstall>/Modules/Enlisted/Debugging/Session-A_*.log`
 
 **Example Log Entries:**
 ```

@@ -41,9 +41,15 @@ def xml_escape(text: str) -> str:
 
 
 def extract_strings_from_event(event: dict) -> Dict[str, str]:
-    """Extract all localizable strings from an event definition"""
+    """Extract all localizable strings from an event definition
+    
+    Supports both schema v1 (with 'content' wrapper) and schema v2 (flattened).
+    """
     strings = {}
-    content = event.get("content", {})
+    
+    # Schema v1: has 'content' wrapper
+    # Schema v2: flattened (titleId/setupId at top level)
+    content = event.get("content", event)
     
     # Title and setup
     if content.get("titleId") and content.get("title"):
@@ -55,14 +61,23 @@ def extract_strings_from_event(event: dict) -> Dict[str, str]:
     for opt in content.get("options", []):
         if opt.get("textId") and opt.get("text"):
             strings[opt["textId"]] = opt["text"]
+        # Schema v2: resultText
         if opt.get("resultTextId") and opt.get("resultText"):
             strings[opt["resultTextId"]] = opt["resultText"]
+        # Schema v1: outcome (fallback)
         elif opt.get("resultTextId") and opt.get("outcome"):
             strings[opt["resultTextId"]] = opt["outcome"]
-        if opt.get("resultFailureTextId") and opt.get("outcome_failure"):
+        # Schema v2: failure_resultText
+        if opt.get("resultFailureTextId") and opt.get("failure_resultText"):
+            strings[opt["resultFailureTextId"]] = opt["failure_resultText"]
+        # Schema v1: outcome_failure (fallback)
+        elif opt.get("resultFailureTextId") and opt.get("outcome_failure"):
             strings[opt["resultFailureTextId"]] = opt["outcome_failure"]
+        # Order events: failResultText (alternate field name)
+        elif opt.get("failResultTextId") and opt.get("failResultText"):
+            strings[opt["failResultTextId"]] = opt["failResultText"]
     
-    # Variants
+    # Variants (custom extension in some events)
     for variant in event.get("variants", {}).values():
         if isinstance(variant, dict):
             if variant.get("setupId") and variant.get("setup"):
@@ -201,6 +216,14 @@ def main():
     decision_strings, decision_fallbacks = scan_event_files(decisions_dir, args.verbose)
     all_strings.update(decision_strings)
     missing_fallbacks.extend(decision_fallbacks)
+    
+    # Scan order event files
+    order_events_dir = Path("ModuleData/Enlisted/Orders/order_events")
+    if order_events_dir.exists():
+        print("Scanning order event files...")
+        order_strings, order_fallbacks = scan_event_files(order_events_dir, args.verbose)
+        all_strings.update(order_strings)
+        missing_fallbacks.extend(order_fallbacks)
     
     # Count total strings
     total_string_count = sum(len(strings) for strings in all_strings.values())

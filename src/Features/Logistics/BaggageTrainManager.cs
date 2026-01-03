@@ -154,10 +154,10 @@ namespace Enlisted.Features.Logistics
                 return BaggageAccessState.NoAccess;
             }
             
-            // Priority 3: Locked - supply crisis or contraband investigation overrides other states
+            // Priority 3: Locked - supply crisis overrides other states
             if (ShouldLockBaggage())
             {
-                ModLogger.Debug(LogCategory, "GetCurrentAccess: Locked due to supply crisis or investigation");
+                ModLogger.Debug(LogCategory, "GetCurrentAccess: Locked due to supply crisis");
                 return BaggageAccessState.Locked;
             }
             
@@ -246,7 +246,7 @@ namespace Enlisted.Features.Logistics
         }
         
         /// <summary>
-        /// Checks if baggage should be locked due to supply crisis or contraband investigation.
+        /// Checks if baggage should be locked due to supply crisis.
         /// </summary>
         private bool ShouldLockBaggage()
         {
@@ -260,9 +260,6 @@ namespace Enlisted.Features.Logistics
                     return true;
                 }
             }
-            
-            // Check for contraband investigation (future: add _bagCheckInProgress flag)
-            // For now, this is a placeholder for future implementation
             
             return false;
         }
@@ -884,7 +881,6 @@ namespace Enlisted.Features.Logistics
     public class LockdownConfig
     {
         public int SupplyThresholdPercent { get; set; } = 20;
-        public bool ContrabandInvestigationBlocks { get; set; } = true;
     }
     
     public class EventsConfig

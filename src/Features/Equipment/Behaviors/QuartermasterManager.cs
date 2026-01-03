@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,8 +35,6 @@ namespace Enlisted.Features.Equipment.Behaviors
     {
         public static QuartermasterManager Instance { get; private set; }
 
-        // Equipment variant cache for performance
-        private Dictionary<string, Dictionary<EquipmentIndex, List<ItemObject>>> _troopEquipmentVariants;
         private static readonly HashSet<string> NonReturnableQuestItemIds =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -335,11 +333,10 @@ namespace Enlisted.Features.Equipment.Behaviors
 
 
         /// <summary>
-        /// Initialize equipment variant caching system for performance.
+        /// Initialize equipment variant state for UI operations.
         /// </summary>
         private void InitializeVariantCache()
         {
-            _troopEquipmentVariants = new Dictionary<string, Dictionary<EquipmentIndex, List<ItemObject>>>();
             _availableVariants = new Dictionary<EquipmentIndex, List<EquipmentVariantOption>>();
         }
 
@@ -373,8 +370,297 @@ namespace Enlisted.Features.Equipment.Behaviors
         private int _lastPromotionTier;
 
         /// <summary>
-        /// Get all equipment available for a formation+tier+culture combination.
-        /// This replaces the single-troop approach with a comprehensive scan of all matching troops.
+        /// Get ALL equipment available for a given tier and culture, across ALL formations.
+        /// Players should see infantry, archer, cavalry, and horse archer equipment for their tier.
+        /// For example, a T3 player sees T1-T3 infantry weapons, T1-T3 archer bows, T1-T3 cavalry lances/horses, etc.
+        /// </summary>
+        /// <param name="tierCap">Maximum tier to include (player's current tier)</param>
+        /// <param name="culture">Player's enlisted lord's culture</param>
+        /// <returns>Dictionary of equipment slots to available items</returns>
+        public Dictionary<EquipmentIndex, List<ItemObject>> GetAvailableEquipmentAllFormations(
+            int tierCap,
+            BasicCultureObject culture)
+        {
+            try
+            {
+                if (culture == null)
+                {
+                    return new Dictionary<EquipmentIndex, List<ItemObject>>();
+                }
+
+                var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
+                var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
+
+                // Scan ALL non-hero troops of the player's culture that are at or below tier
+                // This includes infantry, archers, cavalry, and horse archers
+                foreach (var troop in allTroops)
+                {
+                    if (troop.IsHero || troop.Culture != culture)
+                    {
+                        continue;
+                    }
+
+                    var troopTier = SafeGetTier(troop);
+                    if (troopTier < 1 || troopTier > tierCap)
+                    {
+                        continue;
+                    }
+
+                    if (!troop.BattleEquipments.Any())
+                    {
+                        continue;
+                    }
+
+                    // Collect all equipment from this troop across all formations
+                    foreach (var equipment in troop.BattleEquipments)
+                    {
+                        for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                        {
+                            var item = equipment[slot].Item;
+                            if (item == null)
+                            {
+                                continue;
+                            }
+
+                            // Culture filter: if item has a culture, it must match
+                            if (item.Culture != null && item.Culture != culture)
+                            {
+                                continue;
+                            }
+
+                            if (!variants.ContainsKey(slot))
+                            {
+                                variants[slot] = new List<ItemObject>();
+                            }
+
+                            if (!variants[slot].Contains(item))
+                            {
+                                variants[slot].Add(item);
+                            }
+                        }
+                    }
+                }
+
+                var total = variants.Sum(kvp => kvp.Value.Count);
+                ModLogger.Info("Quartermaster",
+                    $"Cross-formation equipment scan: ALL formations T1-T{tierCap} {culture.Name} -> {total} items");
+
+                return variants;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error in GetAvailableEquipmentAllFormations", ex);
+                return new Dictionary<EquipmentIndex, List<ItemObject>>();
+            }
+        }
+
+        /// <summary>
+        /// Get mount variants for the UI browser, using cross-formation discovery.
+        /// Returns EquipmentVariantOption list with proper pricing, quality, and stock status.
+        /// This is the public API for mount browsing - use this instead of reflection.
+        /// </summary>
+        public List<EquipmentVariantOption> GetMountVariantsForBrowsing()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    return new List<EquipmentVariantOption>();
+                }
+
+                var tier = enlistment.EnlistmentTier;
+                var culture = enlistment.EnlistedLord?.Culture;
+                if (culture == null)
+                {
+                    return new List<EquipmentVariantOption>();
+                }
+
+                var hero = Hero.MainHero;
+                if (hero == null)
+                {
+                    return new List<EquipmentVariantOption>();
+                }
+
+                // Get all equipment across all formations
+                var allEquipment = GetAvailableEquipmentAllFormations(tier, culture);
+
+                var mountOptions = new List<EquipmentVariantOption>();
+
+                // Get horse items
+                if (allEquipment.TryGetValue(EquipmentIndex.Horse, out var horses))
+                {
+                    var currentHorse = hero.CharacterObject?.Equipment?[EquipmentIndex.Horse].Item;
+
+                    foreach (var item in horses)
+                    {
+                        if (item == null)
+                        {
+                            continue;
+                        }
+
+                        var isCurrent = item == currentHorse;
+                        var isAtLimit = GetPlayerItemCount(hero, item.StringId) >= 1;
+
+                        // Roll quality based on reputation
+                        var rolledQuality = RollItemQualityByReputation();
+                        var (modifier, actualQuality) = GetRandomModifierForQuality(item, rolledQuality);
+
+                        // Calculate price
+                        var basePrice = item.Value;
+                        if (modifier != null)
+                        {
+                            basePrice = (int)(basePrice * modifier.PriceMultiplier);
+                        }
+                        var price = CalculateQuartermasterPriceFromBase(basePrice);
+                        var canAfford = hero.Gold >= price;
+                        var isInStock = IsItemInStock(item);
+                        var quantityAvailable = _inventoryState?.GetAvailableQuantity(item.StringId) ?? 999;
+                        var isAvailable = quantityAvailable > 0;
+
+                        string modifiedName = null;
+                        if (modifier != null)
+                        {
+                            modifiedName = $"{modifier.Name} {item.Name}";
+                        }
+
+                        mountOptions.Add(new EquipmentVariantOption
+                        {
+                            Item = item,
+                            Cost = price,
+                            IsCurrent = isCurrent,
+                            CanAfford = canAfford,
+                            Slot = EquipmentIndex.Horse,
+                            IsOfficerExclusive = false,
+                            AllowsDuplicatePurchase = false,
+                            IsAtLimit = isAtLimit,
+                            IsNewlyUnlocked = IsNewlyUnlockedItem(item),
+                            IsInStock = isInStock && isAvailable,
+                            QuantityAvailable = quantityAvailable,
+                            Modifier = modifier,
+                            Quality = actualQuality,
+                            ModifiedName = modifiedName
+                        });
+                    }
+                }
+
+                // Sort: current first, then by name
+                return mountOptions.OrderBy(o => o.IsCurrent ? 0 : 1)
+                                   .ThenBy(o => o.Item.Name.ToString()).ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error in GetMountVariantsForBrowsing", ex);
+                return new List<EquipmentVariantOption>();
+            }
+        }
+
+        /// <summary>
+        /// Get harness variants for the UI browser, using cross-formation discovery.
+        /// Returns EquipmentVariantOption list with proper pricing, quality, and stock status.
+        /// </summary>
+        public List<EquipmentVariantOption> GetHarnessVariantsForBrowsing()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    return new List<EquipmentVariantOption>();
+                }
+
+                var tier = enlistment.EnlistmentTier;
+                var culture = enlistment.EnlistedLord?.Culture;
+                if (culture == null)
+                {
+                    return new List<EquipmentVariantOption>();
+                }
+
+                var hero = Hero.MainHero;
+                if (hero == null)
+                {
+                    return new List<EquipmentVariantOption>();
+                }
+
+                // Get all equipment across all formations
+                var allEquipment = GetAvailableEquipmentAllFormations(tier, culture);
+
+                var harnessOptions = new List<EquipmentVariantOption>();
+
+                // Get harness items
+                if (allEquipment.TryGetValue(EquipmentIndex.HorseHarness, out var harnesses))
+                {
+                    var currentHarness = hero.CharacterObject?.Equipment?[EquipmentIndex.HorseHarness].Item;
+
+                    foreach (var item in harnesses)
+                    {
+                        if (item == null)
+                        {
+                            continue;
+                        }
+
+                        var isCurrent = item == currentHarness;
+                        var isAtLimit = GetPlayerItemCount(hero, item.StringId) >= 1;
+
+                        // Roll quality based on reputation
+                        var rolledQuality = RollItemQualityByReputation();
+                        var (modifier, actualQuality) = GetRandomModifierForQuality(item, rolledQuality);
+
+                        // Calculate price
+                        var basePrice = item.Value;
+                        if (modifier != null)
+                        {
+                            basePrice = (int)(basePrice * modifier.PriceMultiplier);
+                        }
+                        var price = CalculateQuartermasterPriceFromBase(basePrice);
+                        var canAfford = hero.Gold >= price;
+                        var isInStock = IsItemInStock(item);
+                        var quantityAvailable = _inventoryState?.GetAvailableQuantity(item.StringId) ?? 999;
+                        var isAvailable = quantityAvailable > 0;
+
+                        string modifiedName = null;
+                        if (modifier != null)
+                        {
+                            modifiedName = $"{modifier.Name} {item.Name}";
+                        }
+
+                        harnessOptions.Add(new EquipmentVariantOption
+                        {
+                            Item = item,
+                            Cost = price,
+                            IsCurrent = isCurrent,
+                            CanAfford = canAfford,
+                            Slot = EquipmentIndex.HorseHarness,
+                            IsOfficerExclusive = false,
+                            AllowsDuplicatePurchase = false,
+                            IsAtLimit = isAtLimit,
+                            IsNewlyUnlocked = IsNewlyUnlockedItem(item),
+                            IsInStock = isInStock && isAvailable,
+                            QuantityAvailable = quantityAvailable,
+                            Modifier = modifier,
+                            Quality = actualQuality,
+                            ModifiedName = modifiedName
+                        });
+                    }
+                }
+
+                // Sort: current first, then by name
+                return harnessOptions.OrderBy(o => o.IsCurrent ? 0 : 1)
+                                     .ThenBy(o => o.Item.Name.ToString()).ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error in GetHarnessVariantsForBrowsing", ex);
+                return new List<EquipmentVariantOption>();
+            }
+        }
+
+        /// <summary>
+        /// Get equipment available for a specific formation+tier+culture combination.
+        /// This is the formation-filtered version for cases where you need only one formation's equipment.
+        /// 
+        /// For Quartermaster inventory stock (where players see ALL formations), use GetAvailableEquipmentAllFormations().
+        /// For "newly unlocked items" tracking after promotion, this formation-specific method is appropriate.
         /// </summary>
         /// <param name="formation">Player's formation (infantry, archer, cavalry, horsearcher)</param>
         /// <param name="tierCap">Maximum tier to include (player's current tier)</param>
@@ -549,74 +835,6 @@ namespace Enlisted.Features.Equipment.Behaviors
         public void ClearNewlyUnlockedMarkers()
         {
             _newlyUnlockedItems.Clear();
-        }
-
-        /// <summary>
-        /// Get equipment variants available to a specific troop type.
-        /// Uses runtime discovery from actual game data.
-        ///
-        /// Note: This method is retained for backward compatibility, but GetAvailableEquipmentByFormation() is the
-        /// preferred approach.
-        /// </summary>
-        public Dictionary<EquipmentIndex, List<ItemObject>> GetTroopEquipmentVariants(CharacterObject selectedTroop)
-        {
-            try
-            {
-                if (selectedTroop == null)
-                {
-                    return new Dictionary<EquipmentIndex, List<ItemObject>>();
-                }
-
-                // Check cache first for performance
-                var cacheKey = selectedTroop.StringId;
-                if (_troopEquipmentVariants.TryGetValue(cacheKey, out var cachedVariants))
-                {
-                    return cachedVariants;
-                }
-
-                var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
-                var troopCulture = selectedTroop.Culture;
-
-                // RUNTIME DISCOVERY: Extract all equipment variants from this troop's BattleEquipments
-                foreach (var equipment in selectedTroop.BattleEquipments)
-                {
-                    for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
-                    {
-                        var item = equipment[slot].Item;
-                        if (item != null)
-                        {
-                            // Culture-strict: if item declares a culture, it must match the selected troop's culture
-                            if (troopCulture != null && item.Culture != null && item.Culture != troopCulture)
-                            {
-                                continue;
-                            }
-                            if (!variants.ContainsKey(slot))
-                            {
-                                variants[slot] = new List<ItemObject>();
-                            }
-
-                            if (!variants[slot].Contains(item))
-                            {
-                                variants[slot].Add(item);
-                            }
-                        }
-                    }
-                }
-
-                // Cache result for performance
-                _troopEquipmentVariants[cacheKey] = variants;
-
-                // Avoid log spam: only log discovery once per troop type per session.
-                var total = variants.Sum(kvp => kvp.Value.Count);
-                ModLogger.LogOnce($"qm_variants_discovered_{cacheKey}", "Quartermaster",
-                    $"Discovered {total} equipment variants for {selectedTroop.Name}");
-                return variants;
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Quartermaster", "Error getting troop equipment variants", ex);
-                return new Dictionary<EquipmentIndex, List<ItemObject>>();
-            }
         }
 
         /// <summary>
@@ -3977,26 +4195,34 @@ namespace Enlisted.Features.Equipment.Behaviors
 
             var outOfStockChance = supplyLevel >= 40 ? 0.20f : 0.50f;
 
-            // Roll for each item in the variant cache (regular tier equipment)
+            // Roll for each item using cross-formation equipment discovery
             var itemsRolled = 0;
             var itemsOutOfStock = 0;
 
-            foreach (var troopEntry in _troopEquipmentVariants)
+            // Get all available equipment across ALL formations (infantry, archer, cavalry, horse archer)
+            if (enlistment?.IsEnlisted == true)
             {
-                foreach (var slotEntry in troopEntry.Value)
-                {
-                    foreach (var item in slotEntry.Value)
-                    {
-                        if (item == null)
-                        {
-                            continue;
-                        }
+                var tier = enlistment.EnlistmentTier;
+                var culture = enlistment.EnlistedLord?.Culture;
 
-                        itemsRolled++;
-                        if (MBRandom.RandomFloat < outOfStockChance)
+                if (culture != null)
+                {
+                    var allEquipment = GetAvailableEquipmentAllFormations(tier, culture);
+                    foreach (var slotEntry in allEquipment.Values)
+                    {
+                        foreach (var item in slotEntry)
                         {
-                            _outOfStockItems.Add(item.StringId);
-                            itemsOutOfStock++;
+                            if (item == null)
+                            {
+                                continue;
+                            }
+
+                            itemsRolled++;
+                            if (MBRandom.RandomFloat < outOfStockChance)
+                            {
+                                _outOfStockItems.Add(item.StringId);
+                                itemsOutOfStock++;
+                            }
                         }
                     }
                 }
@@ -4047,44 +4273,42 @@ namespace Enlisted.Features.Equipment.Behaviors
                 EquipmentIndex.Horse
             };
 
-            foreach (var slot in slotsToCheck)
+            // Stock floor: ensure at least 1 item per major slot using cross-formation equipment
+            if (enlistment?.IsEnlisted == true)
             {
-                // Check if all items in this slot are out of stock
-                var slotHasAvailableItem = false;
-                foreach (var troopEntry in _troopEquipmentVariants)
+                var tier = enlistment.EnlistmentTier;
+                var culture = enlistment.EnlistedLord?.Culture;
+
+                if (culture != null)
                 {
-                    if (troopEntry.Value.TryGetValue(slot, out var items))
+                    var allEquipment = GetAvailableEquipmentAllFormations(tier, culture);
+
+                    foreach (var slot in slotsToCheck)
                     {
-                        foreach (var item in items)
+                        // Check if all items in this slot are out of stock
+                        var slotHasAvailableItem = false;
+                        if (allEquipment.TryGetValue(slot, out var items))
                         {
-                            if (item != null && !_outOfStockItems.Contains(item.StringId))
+                            foreach (var item in items)
                             {
-                                slotHasAvailableItem = true;
-                                break;
+                                if (item != null && !_outOfStockItems.Contains(item.StringId))
+                                {
+                                    slotHasAvailableItem = true;
+                                    break;
+                                }
                             }
                         }
-                    }
-                    if (slotHasAvailableItem)
-                    {
-                        break;
-                    }
-                }
 
-                // If all items in this slot are out of stock, mark the first one as available
-                if (!slotHasAvailableItem)
-                {
-                    foreach (var troopEntry in _troopEquipmentVariants)
-                    {
-                        if (troopEntry.Value.TryGetValue(slot, out var items) && items.Count > 0)
+                        // If all items in this slot are out of stock, mark the first one as available
+                        if (!slotHasAvailableItem && allEquipment.TryGetValue(slot, out var slotItems) && slotItems.Count > 0)
                         {
-                            var firstItem = items.FirstOrDefault(i => i != null);
+                            var firstItem = slotItems.FirstOrDefault(i => i != null);
                             if (firstItem != null)
                             {
                                 _outOfStockItems.Remove(firstItem.StringId);
                                 itemsOutOfStock = Math.Max(0, itemsOutOfStock - 1);
                                 ModLogger.Debug("Quartermaster",
                                     $"Stock floor: Guaranteed {firstItem.Name} available in slot {slot}");
-                                break;
                             }
                         }
                     }
@@ -4191,33 +4415,45 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                // Collect all available items from variant cache
+                // Collect all available items across ALL formations (infantry, archer, cavalry, horse archer).
+                // Players should see all equipment for their tier, not just their current formation's equipment.
                 var availableItems = new List<ItemObject>();
+                var enlistment = EnlistmentBehavior.Instance;
 
-                foreach (var troopEntry in _troopEquipmentVariants)
+                if (enlistment?.IsEnlisted == true)
                 {
-                    foreach (var slotEntry in troopEntry.Value)
+                    var tier = enlistment.EnlistmentTier;
+                    var culture = enlistment.EnlistedLord?.Culture;
+
+                    if (culture != null)
                     {
-                        foreach (var item in slotEntry.Value)
+                        // Get equipment across ALL formations for this tier
+                        var allEquipment = GetAvailableEquipmentAllFormations(tier, culture);
+                        foreach (var slotEntry in allEquipment.Values)
                         {
-                            if (item != null && !availableItems.Contains(item))
+                            foreach (var item in slotEntry)
                             {
-                                availableItems.Add(item);
+                                if (item != null && !availableItems.Contains(item))
+                                {
+                                    availableItems.Add(item);
+                                }
                             }
                         }
+
+                        ModLogger.Debug("Quartermaster",
+                            $"Cross-formation inventory: ALL formations T1-T{tier} {culture.Name} -> {availableItems.Count} items");
                     }
                 }
 
                 // Also include Officers' Armory items if player is T7+
-                var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment is { IsEnlisted: true, EnlistmentTier: >= 7 })
                 {
-                    var culture = enlistment.EnlistedLord?.Culture;
+                    var officerCulture = enlistment.EnlistedLord?.Culture;
                     var playerTier = enlistment.EnlistmentTier;
 
-                    if (culture != null)
+                    if (officerCulture != null)
                     {
-                        var officerItems = GetOfficerTierEquipmentForStockRoll(culture, playerTier);
+                        var officerItems = GetOfficerTierEquipmentForStockRoll(officerCulture, playerTier);
                         foreach (var item in officerItems)
                         {
                             if (item != null && !availableItems.Contains(item))

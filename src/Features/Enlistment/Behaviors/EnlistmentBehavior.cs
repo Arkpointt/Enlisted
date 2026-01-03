@@ -1610,6 +1610,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_bagCheckEverCompleted", ref _bagCheckEverCompleted);
             SyncKey(dataStore, "_bagCheckScheduled", ref _bagCheckScheduled);
             SyncKey(dataStore, "_bagCheckDueTime", ref _bagCheckDueTime);
+            SyncKey(dataStore, "_bagCheckInProgress", ref _bagCheckInProgress);
             SyncKey(dataStore, "_pendingBagCheckLord", ref _pendingBagCheckLord);
 
             // Cross-faction baggage courier tracking
@@ -3341,11 +3342,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var graceXP = _savedGraceXP;
                 var graceTroopId = _savedGraceTroopId;
 
-            if (!_bagCheckEverCompleted)
-            {
-                _bagCheckCompleted = false;
-            }
-
                 // Protect player's ships from damage during enlistment
                 // Ships remain with the player but cannot take damage while serving under a lord
                 SetPlayerShipsInvulnerable();
@@ -3717,15 +3713,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Set guard flag to prevent OnClanChangedKingdom from treating the upcoming
                 // kingdom removal as desertion. This is an intentional discharge, not abandonment.
                 _isProcessingDischarge = true;
-                _bagCheckCompleted = false;
                 _bagCheckInProgress = false;
                 // Allow re-prompt on next enlistment if this was retirement or desertion
                 var reasonLower = reason?.ToLowerInvariant() ?? string.Empty;
                 if (isHonorableDischarge || reasonLower.Contains("desert"))
                 {
+                    _bagCheckCompleted = false;
                     _bagCheckEverCompleted = false;
                 }
-                // Otherwise keep the ever-completed flag so normal re-enlists skip the prompt
+                // Otherwise keep the completed flags so normal re-enlists skip the prompt
 
                 // Clear reserve state immediately when enlistment ends for ANY reason
                 // This prevents player getting stuck invisible if lord's party disbands while in reserve
@@ -4964,9 +4960,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Warn("News", $"Failed to reset muster counters: {ex.Message}");
             }
-            
-            // Note: Baggage/contraband checks are now handled by MusterMenuHandler during the
-            // muster menu sequence (enlisted_muster_baggage stage), not as a post-muster event.
         }
 
         /// <summary>
@@ -5605,9 +5598,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         // Add item to inventory
                         Hero.MainHero.PartyBelongedTo?.ItemRoster?.AddToCounts(selectedItem, 1);
-
-                        // Track item for contraband exemption
-                        TrackQuartermasterDealItem(selectedItem);
 
                         outcome = $"qm_deal_success:{payout}:{selectedItem.StringId}";
                         ModLogger.Info("Pay", $"QM Deal successful - awarded {selectedItem.Name} (T{equipmentTier})");
@@ -6462,19 +6452,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             return baseWeight;
         }
 
-        /// <summary>
-        /// Track an item from Quartermaster's Deal for contraband exemption.
-        /// Item ID is stored in MusterSessionState.QMDealItemId and checked during baggage inspection.
-        /// </summary>
-        private void TrackQuartermasterDealItem(ItemObject item)
-        {
-            if (item == null) return;
-
-            // Item ID is extracted from outcome string in MusterMenuHandler and stored in _currentMuster.QMDealItemId
-            // The baggage check logic reads this field via BuildContrabandExemptionList() and exempts the item
-            ModLogger.Info("Pay", $"QM Deal item will be tracked for contraband exemption: {item.StringId}");
-        }
-
         #endregion
 
         #region Battle Loot Share
@@ -6824,7 +6801,27 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _pendingCourierBaggage = null;
             }
 
-            _bagCheckInProgress = false;
+            // If bag check was in progress when the game was saved, re-queue the event.
+            // The event queue is transient (not saved), so we need to restore it.
+            if (_bagCheckInProgress && !_bagCheckCompleted)
+            {
+                try
+                {
+                    var bagCheckEvent = EventCatalog.GetEvent("evt_baggage_stowage_first_enlistment");
+                    var eventDelivery = EventDeliveryManager.Instance;
+                    if (bagCheckEvent != null && eventDelivery != null)
+                    {
+                        ModLogger.Info("SaveLoad", "Restoring bag check event after load");
+                        eventDelivery.QueueEvent(bagCheckEvent);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.Warn("SaveLoad", $"Failed to restore bag check event: {ex.Message}");
+                    // Reset flags to allow retry via hourly tick
+                    _bagCheckInProgress = false;
+                }
+            }
 
             // Ensure XP progression is valid
             if (_enlistmentTier < 1)
@@ -9608,24 +9605,58 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void OnClanChangedKingdom(Clan clan, Kingdom oldKingdom, Kingdom newKingdom,
             ChangeKingdomAction.ChangeKingdomActionDetail detail, bool showNotification)
         {
-            // EDGE CASE: Lord's clan (minor faction) joins a Kingdom as mercenary
-            // When enlisted with a minor faction lord, the player isn't joined to any faction.
-            // If the lord's clan joins a Kingdom, we should auto-join the player too so
-            // battle participation works correctly (CanPartyJoinBattle requires faction alignment).
-            if (IsEnlisted && !_isOnLeave && clan == _enlistedLord?.Clan && clan != Clan.PlayerClan)
+            // EDGE CASE: Lord's clan changes kingdom affiliation
+            // When enlisted as a soldier, the player's faction status must follow the lord's clan.
+            // This mirrors native Bannerlord mercenary behavior where soldiers follow their employer.
+            // Without this sync, the player could be counted as a participant in battles for a kingdom
+            // they're no longer affiliated with (e.g., mercenary band ends contract mid-campaign).
+            //
+            // IMPORTANT: This applies whether actively enlisted OR on leave - the player is still
+            // committed to the lord's service and their faction must stay in sync.
+            bool hasEnlistmentCommitment = (IsEnlisted || _isOnLeave) && _enlistedLord != null;
+            if (hasEnlistmentCommitment && clan == _enlistedLord.Clan && clan != Clan.PlayerClan)
             {
+                var playerClan = Clan.PlayerClan;
+                if (playerClan == null)
+                {
+                    return;
+                }
+
+                // EDGE CASE: Don't change faction if player is currently a prisoner
+                // The native captivity system manages prisoner state, and changing kingdoms
+                // mid-captivity could cause issues with ransom/release logic.
+                if (Hero.MainHero?.IsPrisoner == true)
+                {
+                    ModLogger.Info("Enlistment",
+                        $"Lord's clan changed kingdoms but player is prisoner - deferring faction sync until release");
+                    return;
+                }
+
+                // EDGE CASE: Don't change faction if player is currently in an active battle
+                // Changing factions mid-battle could cause the player to switch sides or be
+                // counted incorrectly. The faction sync will happen naturally after battle ends.
+                var mainParty = MobileParty.MainParty;
+                if (mainParty?.Party?.MapEvent != null)
+                {
+                    ModLogger.Warn("Enlistment",
+                        $"Lord's clan changed kingdoms during active battle - faction may be desynced until battle ends");
+                    // Don't return here - try to sync anyway, but log the warning
+                    // The battle participation was already determined when battle started
+                }
+
+                string leaveNote = _isOnLeave ? " (on leave)" : "";
+
+                // Case 1: Lord's clan joined a Kingdom (was independent, now has contract)
                 if (newKingdom != null && oldKingdom == null)
                 {
-                    // Lord's clan joined a Kingdom - auto-join player as mercenary
-                    var playerClan = Clan.PlayerClan;
-                    if (playerClan != null && playerClan.Kingdom != newKingdom)
+                    if (playerClan.Kingdom != newKingdom)
                     {
                         try
                         {
                             ChangeKingdomAction.ApplyByJoinFactionAsMercenary(playerClan, newKingdom,
                                 default(CampaignTime), 0, false);
                             ModLogger.Info("Enlistment",
-                                $"Lord's clan joined {newKingdom.Name} - auto-joined player as mercenary to maintain battle eligibility");
+                                $"Lord's clan joined {newKingdom.Name}{leaveNote} - auto-joined player as mercenary to maintain battle eligibility");
                         }
                         catch (Exception ex)
                         {
@@ -9634,6 +9665,81 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                     }
                 }
+                // Case 2: Lord's clan left a Kingdom (had contract, now independent)
+                // Player follows their lord - this is NOT desertion, just following orders
+                else if (oldKingdom != null && newKingdom == null)
+                {
+                    if (playerClan.Kingdom == oldKingdom)
+                    {
+                        try
+                        {
+                            // Set discharge flag to prevent this being treated as desertion
+                            // The player is loyally following their lord, not abandoning service
+                            _isProcessingDischarge = true;
+                            ChangeKingdomAction.ApplyByLeaveKingdomAsMercenary(playerClan, false);
+                            ModLogger.Info("Enlistment",
+                                $"Lord's clan left {oldKingdom.Name}{leaveNote} - removed player from kingdom (following lord)");
+
+                            // Notify the player of the change
+                            var message = new TextObject(
+                                "{=Enlisted_Message_LordLeftKingdom}Your company has ended its contract with {KINGDOM}. You march on with your lord.");
+                            message.SetTextVariable("KINGDOM", oldKingdom.Name);
+                            InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error("Enlistment",
+                                $"Failed to remove player from kingdom when lord's clan left {oldKingdom.Name}: {ex.Message}");
+                        }
+                        finally
+                        {
+                            _isProcessingDischarge = false;
+                        }
+                    }
+                }
+                // Case 3: Lord's clan switched kingdoms (ended one contract, started another)
+                // Player follows their lord to the new kingdom
+                else if (oldKingdom != null && newKingdom != null && oldKingdom != newKingdom)
+                {
+                    try
+                    {
+                        // Set discharge flag to prevent intermediate state being treated as desertion
+                        _isProcessingDischarge = true;
+
+                        // First leave old kingdom if player is in it
+                        if (playerClan.Kingdom == oldKingdom)
+                        {
+                            ChangeKingdomAction.ApplyByLeaveKingdomAsMercenary(playerClan, false);
+                            ModLogger.Info("Enlistment",
+                                $"Lord's clan switching kingdoms{leaveNote} - removed player from {oldKingdom.Name}");
+                        }
+
+                        // Then join new kingdom
+                        if (playerClan.Kingdom != newKingdom)
+                        {
+                            ChangeKingdomAction.ApplyByJoinFactionAsMercenary(playerClan, newKingdom,
+                                default(CampaignTime), 0, false);
+                            ModLogger.Info("Enlistment",
+                                $"Lord's clan switched to {newKingdom.Name}{leaveNote} - auto-joined player as mercenary");
+                        }
+
+                        // Notify the player of the change
+                        var message = new TextObject(
+                            "{=Enlisted_Message_LordSwitchedKingdom}Your company has signed a new contract with {KINGDOM}. The campaign continues.");
+                        message.SetTextVariable("KINGDOM", newKingdom.Name);
+                        InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Error("Enlistment",
+                            $"Failed to switch player's kingdom from {oldKingdom.Name} to {newKingdom.Name}: {ex.Message}");
+                    }
+                    finally
+                    {
+                        _isProcessingDischarge = false;
+                    }
+                }
+
                 return; // Don't process further - this was the lord's clan, not player's
             }
 

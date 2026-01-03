@@ -741,7 +741,7 @@ Contains needs prediction templates for each strategic context. Used by `Company
 
 **Content Delivery:**
 - `DecisionManager.cs`: Manages decision availability and cooldowns
-- `DecisionCatalog.cs`: Loads and organizes all 33 decisions
+- `DecisionCatalog.cs`: Loads and organizes all 37 decisions
 - `EventPacingManager.cs`: Controls camp event firing
 - `EventDeliveryManager.cs`: Handles event popups and effects
 
@@ -811,6 +811,6 @@ SetDecisionCooldown(decision.Id, cooldownDays);
 
 **Decision Filtering:**
 - Runs only when player opens Camp Hub menu
-- Filters ~33 decisions against requirements
+- Filters ~37 decisions against requirements
 - Results cached until next menu open
 - No performance impact during normal gameplay

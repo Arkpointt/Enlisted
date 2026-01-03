@@ -1,0 +1,657 @@
+{
+  "schemaVersion": 1,
+  "packId": "pay_loyal",
+  "category": "pay",
+  "events": [
+    {
+      "id": "mission_collect_debts",
+      "category": "pay",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 9
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "player_initiated",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": "enlisted_activities",
+        "menu_section": "help_lord"
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted"
+        ],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {
+          "pay_tension_min": 40
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 9
+        }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 1,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_mission_debts_title",
+        "setupId": "ll_evt_mission_debts_setup",
+        "title": "Collect Debts",
+        "setup": "The lord is owed money. Merchants, minor nobles, old debts gathering dust. Someone needs to collect.\n\n{SERGEANT} mentions they're looking for volunteers. \"Delicate work. Requires... persuasion.\"\n\nDo this right, and the lord remembers. Maybe pay comes faster.",
+        "options": [
+          {
+            "id": "collect_polite",
+            "textId": "ll_evt_mission_debts_opt_polite",
+            "text": "Collect politely",
+            "tooltip": "Use diplomacy and patience",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "Charm": 15
+              },
+              "gold": 0,
+              "relation": {
+                "lord": 10
+              },
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0,
+              "pay_tension_change": -10
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_debts_opt_polite_outcome",
+            "outcome": "You knock on doors. Remind them of obligations. Most pay — eventually. The lord gets their coin, and you get noticed."
+          },
+          {
+            "id": "collect_aggressive",
+            "textId": "ll_evt_mission_debts_opt_aggressive",
+            "text": "Collect aggressively",
+            "tooltip": "Use intimidation",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.1,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "Roguery": 20
+              },
+              "gold": 0,
+              "relation": {
+                "lord": 15
+              },
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 2,
+              "discipline": 0,
+              "soldierRep": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0,
+              "pay_tension_change": -15
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_debts_opt_aggressive_outcome",
+            "outcome": "You don't ask twice. A firm grip, a hard stare, a mention of consequences. They pay. Quickly.",
+            "outcome_failure": "One debtor had friends. You leave with bruises and empty hands."
+          },
+          {
+            "id": "collect_skim",
+            "textId": "ll_evt_mission_debts_opt_skim",
+            "text": "Skim some for yourself",
+            "tooltip": "Take a cut before handing it over",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.15,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "Roguery": 25
+              },
+              "gold": 30,
+              "relation": {
+                "lord": 5
+              },
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 3,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0,
+              "pay_tension_change": -5
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_debts_opt_skim_outcome",
+            "outcome": "You collect the debts. Most of it goes to the lord. A portion finds its way into your pocket. No one's counting that closely.",
+            "outcome_failure": "The lord's accountant is sharper than you thought. The numbers don't add up. Questions are being asked."
+          },
+          {
+            "id": "decline",
+            "textId": "ll_evt_mission_debts_opt_decline",
+            "text": "Decline",
+            "tooltip": "Not interested",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_debts_opt_decline_outcome",
+            "outcome": "You shake your head. Someone else will do it."
+          }
+        ]
+      }
+    },
+    {
+      "id": "mission_escort_merchant",
+      "category": "pay",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 9
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "player_initiated",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": "enlisted_activities",
+        "menu_section": "help_lord"
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted"
+        ],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {
+          "pay_tension_min": 50
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 9
+        }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_mission_escort_title",
+        "setupId": "ll_evt_mission_escort_setup",
+        "title": "Escort Merchant",
+        "setup": "A merchant owes the lord goods, not gold. Cloth, iron, supplies. They're willing to deliver — but the roads are dangerous.\n\n\"Need an escort,\" {SERGEANT} says. \"Three days, maybe five. Volunteer, and the lord owes you a favor.\"",
+        "options": [
+          {
+            "id": "volunteer",
+            "textId": "ll_evt_mission_escort_opt_volunteer",
+            "text": "Volunteer for the escort",
+            "tooltip": "3-5 days travel, possible combat",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.4,
+            "costs": {
+              "fatigue": 5,
+              "gold": 0,
+              "time_hours": 72
+            },
+            "rewards": {
+              "xp": {
+                "Scouting": 20
+              },
+              "gold": 25,
+              "relation": {
+                "lord": 15
+              },
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 5,
+              "medical_risk": 0.1,
+              "fatigue_relief": 0,
+              "pay_tension_change": -15
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_escort_opt_volunteer_outcome",
+            "outcome": "The merchant arrives safely. Goods delivered. The lord nods when they hear your name.\n\n\"Good work. I won't forget.\"",
+            "outcome_failure": "Bandits. Too many of them. You fight hard, but the merchant's wagon is looted. At least you're alive."
+          },
+          {
+            "id": "decline",
+            "textId": "ll_evt_mission_escort_opt_decline",
+            "text": "Decline",
+            "tooltip": "Too busy",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_escort_opt_decline_outcome",
+            "outcome": "You have other duties. Someone else takes the job."
+          }
+        ]
+      }
+    },
+    {
+      "id": "mission_negotiate_loan",
+      "category": "pay",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 9
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "player_initiated",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": "enlisted_activities",
+        "menu_section": "help_lord"
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted"
+        ],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {
+          "pay_tension_min": 60
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 9
+        },
+        "skill_requirements": {
+          "any": [
+            {
+              "skill": "charm",
+              "min": 80
+            },
+            {
+              "skill": "trade",
+              "min": 60
+            }
+          ]
+        }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "normal",
+        "one_time": true,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_mission_loan_title",
+        "setupId": "ll_evt_mission_loan_setup",
+        "title": "Negotiate a Loan",
+        "setup": "The lord needs coin. Badly. A moneylender in town might help — but they need convincing.\n\n\"Your reputation precedes you,\" {SERGEANT} says. \"The lord thinks you could tip the scales. Interested?\"",
+        "options": [
+          {
+            "id": "use_charm",
+            "textId": "ll_evt_mission_loan_opt_charm",
+            "text": "Use charm and persuasion",
+            "tooltip": "Charm skill check",
+            "condition": "charm >= 80",
+            "risk": "risky",
+            "risk_chance": 0.2,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "Charm": 25
+              },
+              "gold": 0,
+              "relation": {
+                "lord": 20
+              },
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0,
+              "pay_tension_change": -20
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_loan_opt_charm_outcome",
+            "outcome": "Words flow. You paint pictures of future profits, of stability, of opportunity. The moneylender hesitates... then nods.\n\n\"Very well. Tell your lord they have their loan.\"",
+            "outcome_failure": "The moneylender isn't buying it. They've heard promises before. No loan."
+          },
+          {
+            "id": "use_intimidation",
+            "textId": "ll_evt_mission_loan_opt_intimidate",
+            "text": "Use intimidation",
+            "tooltip": "Roguery check, +2 Scrutiny",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.3,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "Roguery": 25
+              },
+              "gold": 0,
+              "relation": {
+                "lord": 15
+              },
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 2,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0,
+              "pay_tension_change": -15
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_loan_opt_intimidate_outcome",
+            "outcome": "You lean close. Mention certain... consequences. The moneylender's face goes pale.\n\n\"Fine. Fine! Take the money. Just... leave.\"",
+            "outcome_failure": "The moneylender has guards. Big ones. You leave empty-handed with a warning not to return."
+          },
+          {
+            "id": "offer_savings",
+            "textId": "ll_evt_mission_loan_opt_savings",
+            "text": "Offer your own savings",
+            "tooltip": "Pay 100 gold to the lord",
+            "condition": "gold >= 100",
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 100,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "Leadership": 20
+              },
+              "gold": 0,
+              "relation": {
+                "lord": 25
+              },
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 10,
+              "medical_risk": 0,
+              "fatigue_relief": 0,
+              "pay_tension_change": -25
+            },
+            "flags_set": [
+              "loaned_to_lord"
+            ],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_loan_opt_savings_outcome",
+            "outcome": "You hand over your coin. Every denar you've saved. The lord stares.\n\n\"I... will not forget this. You have my word.\""
+          },
+          {
+            "id": "decline",
+            "textId": "ll_evt_mission_loan_opt_decline",
+            "text": "Decline",
+            "tooltip": "Not my problem",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_loan_opt_decline_outcome",
+            "outcome": "The lord's finances aren't your problem. You walk away."
+          }
+        ]
+      }
+    },
+    {
+      "id": "mission_raid_enemy",
+      "category": "pay",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 9
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "player_initiated",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": "enlisted_activities",
+        "menu_section": "help_lord"
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "faction_at_war"
+        ],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {
+          "pay_tension_min": 70
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 9
+        }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_mission_raid_title",
+        "setupId": "ll_evt_mission_raid_setup",
+        "title": "Volunteer for Raid",
+        "setup": "The lord's broke. But the enemy isn't.\n\n\"Supply convoy,\" {SERGEANT} says quietly. \"Poorly guarded. We hit it fast, take what we can, disappear before their army responds.\"\n\nDangerous. But profitable. And the lord would owe you.",
+        "options": [
+          {
+            "id": "volunteer",
+            "textId": "ll_evt_mission_raid_opt_volunteer",
+            "text": "Volunteer for the raid",
+            "tooltip": "Combat encounter, high reward",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.35,
+            "costs": {
+              "fatigue": 5,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "Tactics": 25,
+                "OneHanded": 15
+              },
+              "gold": 75,
+              "relation": {
+                "lord": 20
+              },
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 10,
+              "medical_risk": 0.2,
+              "fatigue_relief": 0,
+              "pay_tension_change": -25
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_raid_opt_volunteer_outcome",
+            "outcome": "The convoy never saw you coming. By the time they reacted, it was over.\n\nWagons full of supplies. Coin. Weapons. Enough to pay the army for a month.\n\nThe lord claps you on the shoulder. \"This changes things. Well done.\"",
+            "outcome_failure": "The convoy had more guards than expected. You fight hard but have to retreat. Some of the raid party didn't make it back.",
+            "injury_risk": {
+              "chance": 0.3,
+              "severity": "moderate"
+            }
+          },
+          {
+            "id": "decline",
+            "textId": "ll_evt_mission_raid_opt_decline",
+            "text": "Decline",
+            "tooltip": "Too dangerous",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_mission_raid_opt_decline_outcome",
+            "outcome": "You've seen enough battles. This one isn't worth the risk. Let someone else play hero."
+          }
+        ]
+      }
+    }
+  ]
+}

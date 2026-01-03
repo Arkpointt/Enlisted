@@ -828,10 +828,12 @@ namespace Enlisted.Features.Content
             }
 
             // Apply promotion if specified. Used by proving events to grant tier advancement.
-            if (effects.Promotes.HasValue && effects.Promotes.Value > 0)
+            // Note: "promotes": true in JSON is parsed as -1 (sentinel for "promote to next tier").
+            // We must check != 0, not > 0, to handle both explicit tiers (e.g., 3) and the -1 sentinel.
+            if (effects.Promotes.HasValue && effects.Promotes.Value != 0)
             {
                 ApplyPromotesEffect(effects.Promotes.Value);
-                feedbackMessages.Add($"Promoted to Tier {effects.Promotes.Value}");
+                // Don't show raw tier number in feedback - ApplyPromotesEffect handles culture-specific notifications
             }
 
             // Display feedback to player if any effects were applied
@@ -1255,7 +1257,12 @@ namespace Enlisted.Features.Content
             }
 
             // Select illness type based on travel context (maritime vs land)
-            var isAtSea = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            var party = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo;
+            // BUGFIX: If party is in a settlement or besieging, they are on land regardless of IsCurrentlyAtSea
+            var isAtSea = party != null && 
+                          party.CurrentSettlement == null && 
+                          party.BesiegedSettlement == null && 
+                          party.IsCurrentlyAtSea;
             string illnessType;
             
             if (isAtSea)

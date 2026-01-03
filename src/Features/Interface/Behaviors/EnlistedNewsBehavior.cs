@@ -5,6 +5,7 @@ using System.Text;
 using Enlisted.Features.Camp;
 using Enlisted.Features.Camp.Models;
 using Enlisted.Features.Conditions;
+using Enlisted.Features.Content;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Interface.News.Generation;
@@ -578,6 +579,13 @@ namespace Enlisted.Features.Interface.Behaviors
                     companyParts.Add(baggageStatus);
                 }
 
+                // Add camp rumors (social activities others are doing that player can join)
+                var campRumors = BuildCampRumorsLine();
+                if (!string.IsNullOrWhiteSpace(campRumors))
+                {
+                    companyParts.Add(campRumors);
+                }
+
                 // Your Status (player)
                 // Add forecast line first if player has imminent duty
                 var playerForecast = BuildPlayerForecastLine();
@@ -589,6 +597,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (!string.IsNullOrWhiteSpace(_dailyBriefUnit))
                 {
                     playerParts.Add(_dailyBriefUnit);
+                }
+
+                // Add personal hints (player-specific opportunities like medical care, rest)
+                var personalHints = BuildPersonalHintsLine();
+                if (!string.IsNullOrWhiteSpace(personalHints))
+                {
+                    playerParts.Add(personalHints);
                 }
 
                 // Build final output with three section headers
@@ -1058,7 +1073,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 var currentAccess = baggageManager.GetCurrentAccess();
                 var enlistment = EnlistmentBehavior.Instance;
                 var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
-                var isAtSea = lordParty?.IsCurrentlyAtSea ?? false;
+                
+                // BUGFIX: IsCurrentlyAtSea can incorrectly return true when docked at coastal settlements
+                // Only consider at-sea if not in a settlement and not besieging
+                var isAtSea = lordParty != null &&
+                              lordParty.CurrentSettlement == null &&
+                              lordParty.BesiegedSettlement == null &&
+                              lordParty.IsCurrentlyAtSea;
 
                 // Priority 1: Check for recent raid (within last 3 days) - most urgent
                 var daysSinceRaid = baggageManager.GetDaysSinceLastRaid();
@@ -1178,6 +1199,213 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Debug(LogCategory, $"Error building baggage status: {ex.Message}");
                 return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds camp rumor hints for Company Reports.
+        /// Social activities others are doing (card games, dice, drinking, etc.) that the player can join.
+        /// Uses Rumor styling (muted lavender) to distinguish from alerts/warnings.
+        /// </summary>
+        private static string BuildCampRumorsLine()
+        {
+            try
+            {
+                // Use Orchestrator's pre-scheduled hints for stability (won't disappear mid-session)
+                var orchestrator = ContentOrchestrator.Instance;
+                IEnumerable<string> hints = null;
+
+                if (orchestrator != null)
+                {
+                    hints = orchestrator.GetUpcomingHints()?.ToList();
+                }
+
+                // Fall back to generator if orchestrator not available
+                if (hints == null || !hints.Any())
+                {
+                    var generator = CampOpportunityGenerator.Instance;
+                    if (generator == null)
+                    {
+                        return string.Empty;
+                    }
+                    hints = generator.GetUpcomingHints()?.ToList();
+                }
+
+                if (hints == null || !hints.Any())
+                {
+                    return string.Empty;
+                }
+
+                // Filter for camp rumors (social activities - hints about others, not "Your...")
+                var campRumors = hints
+                    .Select(h => ResolveHintTokens(h))
+                    .Where(h => !string.IsNullOrWhiteSpace(h) && !IsPersonalHint(h))
+                    .Take(2)
+                    .ToList();
+
+                if (campRumors.Count == 0)
+                {
+                    ModLogger.Debug(LogCategory, "BuildCampRumorsLine: No camp rumors to display (all personal hints)");
+                    return string.Empty;
+                }
+
+                ModLogger.Debug(LogCategory, $"BuildCampRumorsLine: {campRumors.Count} camp rumors displayed");
+
+                // Apply Rumor styling to camp chatter
+                return $"<span style=\"Rumor\">{string.Join(" ", campRumors)}</span>";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building camp rumors: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds personal opportunity hints for Your Status section.
+        /// Player-specific hints (medical care, rest, personal activities).
+        /// </summary>
+        private static string BuildPersonalHintsLine()
+        {
+            try
+            {
+                // Use Orchestrator's pre-scheduled hints for stability (won't disappear mid-session)
+                var orchestrator = ContentOrchestrator.Instance;
+                IEnumerable<string> hints = null;
+
+                if (orchestrator != null)
+                {
+                    hints = orchestrator.GetUpcomingHints()?.ToList();
+                }
+
+                // Fall back to generator if orchestrator not available
+                if (hints == null || !hints.Any())
+                {
+                    var generator = CampOpportunityGenerator.Instance;
+                    if (generator == null)
+                    {
+                        return string.Empty;
+                    }
+                    hints = generator.GetUpcomingHints()?.ToList();
+                }
+
+                if (hints == null || !hints.Any())
+                {
+                    return string.Empty;
+                }
+
+                // Filter for personal hints (things about the player)
+                var personalHints = hints
+                    .Select(h => ResolveHintTokens(h))
+                    .Where(h => !string.IsNullOrWhiteSpace(h) && IsPersonalHint(h))
+                    .Take(2)
+                    .ToList();
+
+                if (personalHints.Count == 0)
+                {
+                    ModLogger.Debug(LogCategory, "BuildPersonalHintsLine: No personal hints to display (all camp rumors)");
+                    return string.Empty;
+                }
+
+                ModLogger.Debug(LogCategory, $"BuildPersonalHintsLine: {personalHints.Count} personal hints displayed");
+
+                return string.Join(" ", personalHints);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building personal hints: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Determines if a hint is personal (about the player) vs. a camp rumor (about others).
+        /// Personal hints start with "Your" or contain player-specific language.
+        /// </summary>
+        private static bool IsPersonalHint(string hint)
+        {
+            if (string.IsNullOrWhiteSpace(hint))
+            {
+                return false;
+            }
+
+            var lower = hint.ToLowerInvariant();
+            
+            // Personal hints typically start with "Your" or "You"
+            if (lower.StartsWith("your ") || lower.StartsWith("you ") || lower.StartsWith("you'"))
+            {
+                return true;
+            }
+
+            // Medical/health-related hints are personal
+            if (lower.Contains("condition") || lower.Contains("wound") || lower.Contains("injury") ||
+                lower.Contains("pushing yourself") || lower.Contains("worsening"))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Resolves placeholder tokens in hint text (e.g., {SOLDIER_NAME}, {COMRADE_NAME}).
+        /// Uses the same token resolution system as events via TextObject.
+        /// </summary>
+        private static string ResolveHintTokens(string hint)
+        {
+            if (string.IsNullOrWhiteSpace(hint))
+            {
+                return hint;
+            }
+
+            try
+            {
+                // Create TextObject and set all common variables
+                var textObject = new TextObject(hint);
+                
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted == true)
+                {
+                    // NCO names
+                    var ncoFullName = enlistment.NcoFullName ?? "the Sergeant";
+                    textObject.SetTextVariable("SERGEANT", ncoFullName);
+                    textObject.SetTextVariable("SERGEANT_NAME", ncoFullName);
+                    textObject.SetTextVariable("NCO_NAME", ncoFullName);
+                    
+                    // Soldier names (randomized for variety)
+                    textObject.SetTextVariable("SOLDIER_NAME", enlistment.GetRandomSoldierName());
+                    textObject.SetTextVariable("COMRADE_NAME", enlistment.GetRandomSoldierName());
+                    textObject.SetTextVariable("VETERAN_1_NAME", enlistment.GetRandomSoldierName());
+                    textObject.SetTextVariable("VETERAN_2_NAME", enlistment.GetRandomSoldierName());
+                    textObject.SetTextVariable("RECRUIT_NAME", enlistment.GetRandomSoldierName());
+                    
+                    // Officer names
+                    textObject.SetTextVariable("OFFICER_NAME", ncoFullName);
+                    
+                    // Lord info
+                    if (enlistment.EnlistedLord != null)
+                    {
+                        textObject.SetTextVariable("LORD_NAME", enlistment.EnlistedLord.Name?.ToString() ?? "the Lord");
+                    }
+                    
+                    // Settlement info
+                    var party = enlistment.EnlistedLord?.PartyBelongedTo;
+                    if (party?.CurrentSettlement != null)
+                    {
+                        textObject.SetTextVariable("SETTLEMENT_NAME", party.CurrentSettlement.Name?.ToString() ?? "a settlement");
+                    }
+                    else
+                    {
+                        textObject.SetTextVariable("SETTLEMENT_NAME", "home");
+                    }
+                }
+                
+                return textObject.ToString();
+            }
+            catch
+            {
+                // Fallback: return hint as-is if token resolution fails
+                return hint;
             }
         }
 
@@ -5856,7 +6084,7 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>Number of orders failed since last muster.</summary>
         public int OrdersFailed { get; set; }
 
-        /// <summary>Baggage check outcome (e.g., "passed", "contraband_found", "skipped").</summary>
+        /// <summary>Baggage check outcome (e.g., "passed", "skipped").</summary>
         public string BaggageOutcome { get; set; } = string.Empty;
 
         /// <summary>Inspection outcome (e.g., "passed", "failed", "skipped").</summary>

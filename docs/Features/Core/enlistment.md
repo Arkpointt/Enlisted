@@ -3,7 +3,7 @@
 **Summary:** The enlistment system manages how players join a lord's service, progress through 9 military ranks (T1-T9), and leave through discharge or desertion. Covers deep technical details of enlistment mechanics, invisible party management, XP progression, wage calculation, baggage handling, grace periods, and service records for re-enlistment.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-02  
+**Last Updated:** 2026-01-03 (Bug Fix: Baggage stowage dialog no longer fires multiple times during service)
 **Related Docs:** [Core Gameplay](core-gameplay.md), [Onboarding & Discharge](onboarding-discharge-system.md), [Pay System](pay-system.md), [Promotion System](promotion-system.md)
 
 > **Note:** For high-level gameplay overview, see `core-gameplay.md`. This document provides technical implementation details.
@@ -26,7 +26,7 @@
 ---
 
 ## Overview
-Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and advance through a 9-tier rank progression system (T1-T9). The player's party becomes invisible on the map while escorting the lord's party. Military progression is driven by orders from the chain of command, battle participation, and reputation with Lords, Officers, and Soldiers.
+Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and advance through a 9-tier rank progression system (T1-T9). The player's party becomes invisible on the map while escorting the lord's party. Military progression is driven by orders from the chain of command, battle participation, and reputation with Lord, Officer, and Soldier factions.
 
 ## Purpose
 Provide the foundation for military service: enlist with a lord, follow their movements automatically, participate in battles, progress through 9 tiers, and earn wages paid every ~12 days at muster. Promotion is gated by multi-factor requirements (XP, days in rank, battles, reputation, discipline). Re-enlistment benefits depend on discharge type (veteran/honorable/washout/dishonorable/deserter/grace).
@@ -87,9 +87,9 @@ Related systems (shipping):
 - **Strategic Context Awareness**: Experience changes based on faction position (Desperate to Offensive) and 8 distinct strategic contexts (e.g., Grand Campaign, Winter Camp).
 - Receive **Orders** every 3-5 days from the chain of command (configurable: `event_window_min_days: 3`, `event_window_max_days: 5`), filtered by strategic tags.
 - Manage **Company Needs** (Readiness, Morale, Supplies, Equipment, Rest) through choices and activities.
-- Participate in battles when lord fights; battle XP awarded once per battle.
+- Participate in battles when lord fights; battles increment the promotion requirement counter.
 - Wages accrue daily into muster ledger; paid every ~12 days.
-- **XP Sources**: +25 daily base, +25 per battle, +2 per enemy killed (from `progression_config.json`).
+- **XP Sources**: Earned exclusively through gameplay - order completion, order events (duty execution, battle phases), and combat performance (skill XP converted to enlistment XP via SkillSuppressionPatch). No automatic daily/battle XP grants.
 
 **Wage Breakdown (muster ledger):**
 
@@ -125,11 +125,16 @@ Rank progression is gated by multi-factor requirements: XP threshold, days in ra
 | T9 | 65,000 | Marshal | Legate | Senior commander; Retinue (40 troops) |
 
 **Culture-Specific Ranks:**
-Rank names are determined by the enlisted lord's culture:
-- Empire: Tiro -> Miles -> Immunes -> Principalis -> Evocatus -> Centurion
-- Vlandia: Peasant -> Levy -> Footman -> Man-at-Arms -> Sergeant -> Knight Bachelor
-- Sturgia: Thrall -> Ceorl -> Fyrdman -> Drengr -> Huskarl -> Varangian
-- (See `RankHelper.cs` for all cultures)
+Rank names are determined by the enlisted lord's culture (all 9 tiers):
+- **Empire**: Tiro -> Miles -> Immunes -> Principalis -> Evocatus -> Centurion -> Primus Pilus -> Tribune -> Legate
+- **Vlandia**: Peasant -> Levy -> Footman -> Man-at-Arms -> Sergeant -> Knight Bachelor -> Cavalier -> Banneret -> Castellan
+- **Sturgia**: Thrall -> Ceorl -> Fyrdman -> Drengr -> Huskarl -> Varangian -> Champion -> Thane -> High Warlord
+- **Khuzait**: Outsider -> Nomad -> Noker -> Warrior -> Veteran -> Bahadur -> Arban -> Zuun -> Noyan
+- **Battania**: Woodrunner -> Clan Warrior -> Skirmisher -> Raider -> Oathsworn -> Fian -> Highland Champion -> Clan Chief -> High King's Guard
+- **Aserai**: Tribesman -> Skirmisher -> Footman -> Veteran -> Guard -> Faris -> Emir's Chosen -> Sheikh -> Grand Vizier
+- **Mercenary/Generic**: Follower -> Recruit -> Free Sword -> Veteran -> Blade -> Chosen -> Captain -> Commander -> Marshal
+
+(Source: `progression_config.json` → `culture_ranks` section)
 
 **Reputation System:**
 Identity is tracked via three reputation scales (-50 to +100):
@@ -144,7 +149,7 @@ Instead of passive assignments, players receive explicit orders from the chain o
 - **T7-T9**: Strategic directives (command squads, strategic planning)
 Success improves reputation and company needs; failure or declining orders carries heavy penalties.
 
-**See:** [Orders System](orders-system.md) for complete documentation.
+**See:** [Order Progression System](order-progression-system.md) for complete documentation.
 
 **Promotion Requirements:**
 
@@ -269,18 +274,19 @@ Level 10 Player, Returning (Deserter):
 ## Technical Implementation
 
 **Core Files:**
-- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`: Core service state, lord tracking, party following, bag check, grace period
-- `src/Features/Ranks/Behaviors/PromotionBehavior.cs`: Multi-factor promotion requirements, proving events
+- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`: Core service state, lord tracking, party following, bag check, grace period, wage calculation
+- `src/Features/Ranks/Behaviors/PromotionBehavior.cs`: Multi-factor promotion requirements (T1-T9), proving events
 - `src/Features/Orders/Behaviors/OrderManager.cs`: Chain of command orders, pacing, rewards
 - `src/Features/Escalation/EscalationManager.cs`: Triple reputation system (Lord, Officer, Soldier), discipline, scrutiny
 - `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`: Native game menu implementation (Camp Hub, Reports)
 - `src/Features/Company/CompanyNeedsManager.cs`: Company needs simulation (Readiness, Morale, Supplies, Equipment, Rest)
 - `src/Features/Retinue/Core/ServiceRecordManager.cs`: Per-faction service records, discharge bands, reservist bonuses
-- `src/Features/Content/ExperienceTrackHelper.cs`: Experience track calculation, starting tier logic
+- `src/Features/Content/ExperienceTrackHelper.cs`: Experience track calculation, starting tier logic (T1-T3 base)
 
 **Configuration Files:**
 - `ModuleData/Enlisted/enlisted_config.json`: Core gameplay config (grace period, wages, pacing, probation)
 - `ModuleData/Enlisted/progression_config.json`: Tier XP thresholds, culture-specific ranks, promotion benefits
+  - **Note**: `xp_sources` section (daily_base, battle_participation, xp_per_kill) is legacy; XP is now awarded through order system and combat skill conversion
 - `ModuleData/Enlisted/Orders/*.json`: Order definitions (17 total orders across T1-T9)
 - `ModuleData/Languages/enlisted_strings.xml`: All localized strings
 
@@ -308,6 +314,18 @@ Level 10 Player, Returning (Deserter):
 - Bag check fires 1 hour after enlistment (never blocks enlistment flow)
 - T7+ commanders skip bag check entirely (assumed baggage authority)
 - Smuggle attempt failed: item confiscated, no reputation penalty (expected risk)
+- **Save/Load During Bag Check:** If player saves while the bag check popup is visible, the event is properly restored on load (prevents duplicate events)
+- **One-Time Trigger:** Baggage check only fires on first enlistment or after retirement/desertion; normal re-enlistments (lord defeated, etc.) skip it
+- **Bug Fix (2026-01-03):** Fixed issue where baggage dialog was incorrectly firing multiple times during active service due to improper flag resets
+
+**Mercenary Faction Sync:**
+- **Lord's Clan Joins Kingdom:** Player automatically joins as mercenary (maintains battle eligibility)
+- **Lord's Clan Leaves Kingdom:** Player automatically leaves kingdom (follows lord, not desertion)
+- **Lord's Clan Switches Kingdoms:** Player leaves old kingdom and joins new kingdom (seamless transfer)
+- **On Leave:** Faction sync applies even while on leave (commitment to lord's service persists)
+- **During Captivity:** Faction sync deferred until release (prevents captivity system conflicts)
+- **Mid-Battle:** Faction change logged with warning but attempted (participation already determined)
+- This mirrors native Bannerlord behavior where soldiers follow their employer's allegiances
 
 ## Acceptance Criteria
 
@@ -319,10 +337,10 @@ Level 10 Player, Returning (Deserter):
 - [x] Army leaders blocked from enlisting until army disbanded
 
 **Progression:**
-- [x] XP awarded correctly: +25 daily, +25 battle, +2 per kill
+- [x] XP awarded through gameplay: order completion, order events, and combat skill conversion
 - [x] Promotion requirements enforced (XP, days, battles, rep, discipline)
 - [x] All 9 tiers (T1-T9) achievable with correct XP thresholds
-- [x] Culture-specific rank names display correctly
+- [x] Culture-specific rank names display correctly (all 6 cultures + mercenary)
 
 **Wages:**
 - [x] Wages accrue daily using correct formula (base + level + tier + XP/200 × modifiers)

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Enlisted.Features.Camp;
 using Enlisted.Features.Camp.Models;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -63,122 +62,10 @@ namespace Enlisted.Features.Content
             return result;
         }
 
-        /// <summary>
-        /// Gets all automatic decisions that should trigger based on current context.
-        /// These appear in the Opportunities section, powered by the CampOpportunityGenerator.
-        /// </summary>
-        public IReadOnlyList<DecisionAvailability> GetAvailableOpportunities()
-        {
-            var result = new List<DecisionAvailability>();
-
-            try
-            {
-                var generator = CampOpportunityGenerator.Instance;
-                if (generator == null)
-                {
-                    return result;
-                }
-
-                var opportunities = generator.GenerateCampLife();
-                foreach (var opp in opportunities)
-                {
-                    result.Add(ConvertToDecisionAvailability(opp));
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error(LogCategory, "Failed to get camp opportunities", ex);
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Converts a CampOpportunity to a DecisionAvailability for menu display.
-        /// If the opportunity has a TargetDecisionId, uses that decision's definition.
-        /// </summary>
-        private DecisionAvailability ConvertToDecisionAvailability(CampOpportunity opportunity)
-        {
-            DecisionDefinition decision;
-
-            // Check if opportunity targets an existing decision
-            if (!string.IsNullOrEmpty(opportunity.TargetDecisionId))
-            {
-                var targetDecision = DecisionCatalog.GetDecision(opportunity.TargetDecisionId);
-                if (targetDecision != null)
-                {
-                    // Use the target decision but keep opportunity's display text
-                    decision = new DecisionDefinition
-                    {
-                        Id = targetDecision.Id,
-                        TitleId = !string.IsNullOrEmpty(opportunity.TitleId) ? opportunity.TitleId : targetDecision.TitleId,
-                        TitleFallback = !string.IsNullOrEmpty(opportunity.TitleFallback) ? opportunity.TitleFallback : targetDecision.TitleFallback,
-                        SetupId = !string.IsNullOrEmpty(opportunity.DescriptionId) ? opportunity.DescriptionId : targetDecision.SetupId,
-                        SetupFallback = !string.IsNullOrEmpty(opportunity.DescriptionFallback) ? opportunity.DescriptionFallback : targetDecision.SetupFallback,
-                        Category = targetDecision.Category,
-                        MenuSection = "opportunities",
-                        IsPlayerInitiated = false,
-                        Options = targetDecision.Options,
-                        Timing = targetDecision.Timing,
-                        Requirements = targetDecision.Requirements
-                    };
-                    ModLogger.Debug(LogCategory, $"Opportunity {opportunity.Id} targets decision {opportunity.TargetDecisionId}");
-                }
-                else
-                {
-                    ModLogger.Warn(LogCategory, $"Opportunity {opportunity.Id} targets unknown decision {opportunity.TargetDecisionId}");
-                    decision = CreateSyntheticDecision(opportunity);
-                }
-            }
-            else
-            {
-                decision = CreateSyntheticDecision(opportunity);
-            }
-
-            // Check if this is risky (player on duty and order compatibility)
-            bool isRisky = false;
-            string riskyTooltip = null;
-            var context = CampOpportunityGenerator.Instance?.AnalyzeCampContext();
-
-            if (context?.PlayerOnDuty == true)
-            {
-                var compat = opportunity.GetOrderCompatibility("");
-                isRisky = compat == "risky";
-                if (isRisky)
-                {
-                    riskyTooltip = opportunity.TooltipRiskyFallback;
-                }
-            }
-
-            return new DecisionAvailability
-            {
-                Decision = decision,
-                IsAvailable = true,
-                IsVisible = true,
-                UnavailableReason = null,
-                IsRisky = isRisky,
-                RiskyTooltip = riskyTooltip,
-                CampOpportunity = opportunity
-            };
-        }
-
-        /// <summary>
-        /// Creates a synthetic decision definition from an opportunity when no target decision exists.
-        /// </summary>
-        private static DecisionDefinition CreateSyntheticDecision(CampOpportunity opportunity)
-        {
-            return new DecisionDefinition
-            {
-                Id = opportunity.Id,
-                TitleId = opportunity.TitleId,
-                TitleFallback = opportunity.TitleFallback,
-                SetupId = opportunity.DescriptionId,
-                SetupFallback = opportunity.DescriptionFallback,
-                Category = "decision",
-                MenuSection = "opportunities",
-                IsPlayerInitiated = false
-            };
-        }
+        // NOTE: GetAvailableOpportunities() has been removed.
+        // Use ContentOrchestrator.GetCurrentPhaseOpportunities() instead.
+        // The Orchestrator pre-schedules opportunities 24 hours ahead to prevent them
+        // from disappearing when context changes mid-session.
 
         /// <summary>
         /// Checks all availability gates for a decision and returns detailed status.
@@ -320,7 +207,12 @@ namespace Enlisted.Features.Content
             // Gate 8: Sea/land context check
             if (decision.Requirements != null)
             {
-                var isAtSea = enlistment?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+                var party = enlistment?.CurrentLord?.PartyBelongedTo;
+                // BUGFIX: If party is in a settlement or besieging, they are on land regardless of IsCurrentlyAtSea
+                var isAtSea = party != null && 
+                              party.CurrentSettlement == null && 
+                              party.BesiegedSettlement == null && 
+                              party.IsCurrentlyAtSea;
 
                 // Check if decision requires being NOT at sea (land-only)
                 if (decision.Requirements.NotAtSea == true && isAtSea)
@@ -440,7 +332,9 @@ namespace Enlisted.Features.Content
                 counts[section] = available;
             }
 
-            counts["opportunities"] = GetAvailableOpportunities().Count;
+            // Use Orchestrator for opportunities count (Orchestrator owns the schedule)
+            var orchestrator = ContentOrchestrator.Instance;
+            counts["opportunities"] = orchestrator?.GetCurrentPhaseOpportunities().Count ?? 0;
 
             return counts;
         }

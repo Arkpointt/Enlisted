@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 2,
   "order_type": "order_latrine_duty",
   "events": [
@@ -12,7 +12,9 @@
       "setupId": "latrine_overheard_rumor_setup",
       "setup": "Two officers pass nearby, deep in conversation. They don't notice you working. Something about troop movements.",
       "requirements": {
-        "world_state": ["peacetime_garrison"]
+        "world_state": [
+          "peacetime_garrison"
+        ]
       },
       "options": [
         {
@@ -34,7 +36,11 @@
           "id": "ignore",
           "textId": "latrine_overheard_rumor_ignore",
           "text": "Mind your own business.",
-          "effects": {},
+          "effects": {
+            "skillXp": {
+              "Stewardship": 11
+            }
+          },
           "resultTextId": "latrine_overheard_rumor_ignore_result",
           "resultText": "You focus on your work. Whatever they're discussing isn't your concern."
         },
@@ -42,7 +48,12 @@
           "id": "cough",
           "textId": "latrine_overheard_rumor_cough",
           "text": "Cough loudly to alert them.",
-          "effects": {},
+          "effects": {
+            "skillXp": {
+              "Stewardship": 11,
+              "Athletics": 6
+            }
+          },
           "resultTextId": "latrine_overheard_rumor_cough_result",
           "resultText": "They glance your way and lower their voices. Conversation moves elsewhere."
         }
@@ -58,7 +69,9 @@
       "setupId": "latrine_officer_complains_setup",
       "setup": "An officer wrinkles his nose. 'This is unacceptable, soldier. Do it again. Properly this time.'",
       "requirements": {
-        "world_state": ["peacetime_garrison"]
+        "world_state": [
+          "peacetime_garrison"
+        ]
       },
       "options": [
         {
@@ -67,7 +80,11 @@
           "text": "Yes sir. Redo the work.",
           "effects": {
             "officerRep": 2,
-            "fatigue": 5
+            "fatigue": 5,
+            "skillXp": {
+              "Stewardship": 11,
+              "Athletics": 6
+            }
           },
           "resultTextId": "latrine_officer_complains_redo_result",
           "resultText": "You scrub until it meets his standards. He nods curtly and leaves."
@@ -77,7 +94,11 @@
           "textId": "latrine_officer_complains_argue",
           "text": "It's a latrine, sir. How clean can it be?",
           "effects": {
-            "officerRep": -5
+            "officerRep": -5,
+            "skillXp": {
+              "Stewardship": 11,
+              "Athletics": 6
+            }
           },
           "resultTextId": "latrine_officer_complains_argue_result",
           "resultText": "His eyes narrow. 'You just earned another day of this duty, soldier.'"
@@ -86,7 +107,12 @@
           "id": "apologize",
           "textId": "latrine_officer_complains_apologize",
           "text": "Apologize and promise to do better.",
-          "effects": {},
+          "effects": {
+            "skillXp": {
+              "Stewardship": 11,
+              "Athletics": 6
+            }
+          },
           "resultTextId": "latrine_officer_complains_apologize_result",
           "resultText": "He grunts and walks away. You continue as before."
         }
@@ -102,7 +128,14 @@
       "setupId": "latrine_soldier_gratitude_setup",
       "setup": "A soldier stops by. 'Someone's got to do it. Thanks for keeping things decent around here.'",
       "requirements": {
-        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+        "world_state": [
+          "peacetime_garrison",
+          "peacetime_recruiting",
+          "war_marching",
+          "war_active_campaign",
+          "siege_attacking",
+          "siege_defending"
+        ]
       },
       "options": [
         {
@@ -110,7 +143,11 @@
           "textId": "latrine_soldier_gratitude_accept",
           "text": "Accept the thanks graciously.",
           "effects": {
-            "soldierRep": 2
+            "soldierRep": 2,
+            "skillXp": {
+              "Stewardship": 11,
+              "Athletics": 6
+            }
           },
           "resultTextId": "latrine_soldier_gratitude_accept_result",
           "resultText": "He claps you on the shoulder and moves on. Small kindnesses matter."
@@ -119,7 +156,12 @@
           "id": "brush_off",
           "textId": "latrine_soldier_gratitude_brush_off",
           "text": "Brush it off. Just doing your duty.",
-          "effects": {},
+          "effects": {
+            "skillXp": {
+              "Stewardship": 11,
+              "Athletics": 6
+            }
+          },
           "resultTextId": "latrine_soldier_gratitude_brush_off_result",
           "resultText": "He nods and leaves. Back to work."
         }

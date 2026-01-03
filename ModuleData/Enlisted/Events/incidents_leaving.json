@@ -251,14 +251,11 @@
           "id": "scout_yourself",
           "textId": "mi_leave_intel_scout",
           "text": "Scout the road yourself",
-          "requirements": {
-            "minSkills": {
-              "Scouting": 45
-            }
-          },
+          "skillCheck": "Scouting",
+          "skillBase": 45,
           "resultTextId": "mi_leave_intel_scout_result",
           "resultText": "You ride ahead of the column and see what you need to see. It takes time, but you don't have to trust a stranger's word—or pay for it.",
-          "tooltip": "Requires Scouting 45. 75% success chance. Train Scouting. +8 Officer rep. Failure causes 15 damage, adds 1 scrutiny.",
+          "tooltipTemplate": "{CHANCE}% (Scouting {SKILL}). +20 Scouting XP, +8 Officer rep. Fail: -15 HP, +1 scrutiny.",
           "risk": "risky",
           "risk_chance": 75,
           "effects": {

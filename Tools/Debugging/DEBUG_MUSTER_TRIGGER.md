@@ -69,7 +69,7 @@ Enlisted.Debugging.Behaviors.DebugToolsBehavior.TriggerMuster();
 
 All debug muster triggers are logged to:
 ```
-C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\enlisted.log
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\Session-A_*.log
 ```
 
 Search for `[Debug] TriggerMuster` to find debug trigger events.

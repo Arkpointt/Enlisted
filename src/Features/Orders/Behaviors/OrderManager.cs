@@ -113,7 +113,12 @@ namespace Enlisted.Features.Orders.Behaviors
 
             // Check if party is now at sea
             var enlistment = EnlistmentBehavior.Instance;
-            var isAtSea = enlistment?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            var party = enlistment?.CurrentLord?.PartyBelongedTo;
+            // BUGFIX: If party is in a settlement or besieging, they are on land regardless of IsCurrentlyAtSea
+            var isAtSea = party != null && 
+                          party.CurrentSettlement == null && 
+                          party.BesiegedSettlement == null && 
+                          party.IsCurrentlyAtSea;
             if (!isAtSea)
             {
                 return;
@@ -168,7 +173,12 @@ namespace Enlisted.Features.Orders.Behaviors
 
             // Get current sea state
             var enlistment = EnlistmentBehavior.Instance;
-            var currentlyAtSea = enlistment?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            var party = enlistment?.CurrentLord?.PartyBelongedTo;
+            // BUGFIX: If party is in a settlement or besieging, they are on land regardless of IsCurrentlyAtSea
+            var currentlyAtSea = party != null && 
+                                 party.CurrentSettlement == null && 
+                                 party.BesiegedSettlement == null && 
+                                 party.IsCurrentlyAtSea;
 
             // Detect transition
             if (currentlyAtSea != _lastKnownSeaState)
@@ -283,7 +293,12 @@ namespace Enlisted.Features.Orders.Behaviors
 
             // Initialize sea state tracking for context variant transitions
             var enlistment = EnlistmentBehavior.Instance;
-            _lastKnownSeaState = enlistment?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            var party = enlistment?.CurrentLord?.PartyBelongedTo;
+            // BUGFIX: If party is in a settlement or besieging, they are on land regardless of IsCurrentlyAtSea
+            _lastKnownSeaState = party != null && 
+                                 party.CurrentSettlement == null && 
+                                 party.BesiegedSettlement == null && 
+                                 party.IsCurrentlyAtSea;
 
             ModLogger.Info(LogCategory, 
                 $"Order imminent: {order.Title} from {order.Issuer} (will issue in {hoursUntilIssue:F1} hours)");

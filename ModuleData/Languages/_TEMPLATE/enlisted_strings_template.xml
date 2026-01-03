@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="string">
   <tags>
     <tag language="English" />
@@ -50,10 +50,6 @@
     <string id="promo_title_default" text="Promotion!" />
     <string id="promo_msg_default" text="You have been promoted to {RANK}. Report to the quartermaster for new equipment befitting your station." />
 
-    <!-- Formation Selection -->
-    <string id="formation_select_msg" text="The serjeant surveys the recruits. 'Time to find your place in the line, soldier. What are you trained for?'" />
-    <string id="formation_assigned" text="Formation assigned: {FORMATION}. Your training and equipment will reflect your role." />
-    
     <!-- Squad Selection -->
     <string id="Squad_Select_Title" text="Select a Squad in need of recruits" />
     <string id="Squad_Select_Body" text="Choose a Squad to formally join at Tier 2." />
@@ -1167,7 +1163,7 @@
     <string id="dm_skim_tooltip" text="Divert some supplies for personal gain. Gain 30 gold worth of goods." />
     <string id="dm_wrong_duty" text="Only available for Quartermaster or Armorer duties." />
     <string id="dm_black_market" text="Find the Black Market" />
-    <string id="dm_black_market_tooltip" text="Seek out illicit traders. Buy or sell contraband for profit." />
+    <string id="dm_black_market_tooltip" text="Seek out illicit traders for buying and selling goods." />
     <string id="dm_sell_gear" text="Sell Your Issued Equipment" />
     <string id="dm_sell_gear_tooltip" text="Sell equipment you were issued. Risky - you'll need to replace it or face punishment." />
     <string id="dm_desertion_talk" text="Listen to Desertion Talk" />
@@ -1592,7 +1588,7 @@
 
     <!-- Event: gen_dusk_veteran_story â€” Gambling Circle -->
 
-    <!-- Event: gen_dusk_supply_arrival â€” Contraband Run -->
+    <!-- Event: gen_dusk_supply_arrival -->
 
     <!-- Event: gen_night_disturbance â€” Night Watch -->
 
@@ -1841,7 +1837,7 @@
 
     <!-- Event: squad_bonded — Bonded -->
     <string id="ll_evt_squad_bonded_title" text="Bonded" />
-    <string id="ll_evt_squad_bonded_setup" text="{SERGEANT_NAME} pulls you aside after weapons inspection. Their voice is barely above a whisper.\n\n&quot;The sergeant&#x27;s planning a kit inspection tomorrow. The captain&#x27;s hound â€” looking for contraband, extra rations, anything they can nail someone for.&quot;\n\nThey meet your eyes.\n\n&quot;Thought you should know. In case you&#x27;ve got anything that needs... relocating.&quot;\n\nThis is a warning. The kind you don&#x27;t give to just anyone. The kind that could get {SERGEANT_NAME} in serious trouble if anyone found out.\n\nYou&#x27;re family now. {COMPANY_NAME} protects its own." />
+    <string id="ll_evt_squad_bonded_setup" text="{SERGEANT_NAME} pulls you aside after weapons inspection. Their voice is barely above a whisper.\n\n&quot;The sergeant&#x27;s planning a kit inspection tomorrow. The captain&#x27;s hound â€” looking for extra rations, misplaced gear, anything they can nail someone for.&quot;\n\nThey meet your eyes.\n\n&quot;Thought you should know. In case you&#x27;ve got anything that needs... tidying up.&quot;\n\nThis is a warning. The kind you don&#x27;t give to just anyone. The kind that could get {SERGEANT_NAME} in serious trouble if anyone found out.\n\nYou&#x27;re family now. {COMPANY_NAME} protects its own." />
     <string id="ll_evt_squad_bonded_opt_grateful_text" text="&quot;I appreciate this. More than you know.&quot;" />
     <string id="ll_evt_squad_bonded_opt_grateful_outcome" text="{SERGEANT_NAME} nods. &quot;Just don&#x27;t make me regret it.&quot; You won&#x27;t. This is what a squad is supposed to be â€” watching each other&#x27;s backs. Even when the enemy wears the same uniform." />
     <string id="ll_evt_squad_bonded_opt_clean_text" text="&quot;I&#x27;m clean. But thanks for the warning.&quot;" />

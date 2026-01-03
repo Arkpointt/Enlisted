@@ -40,6 +40,16 @@ csharp_style_expression_bodied_accessors = true:silent
 csharp_style_pattern_local_over_anonymous_function = true:suggestion
 csharp_style_prefer_switch_expression = true:suggestion
 
+# Code Quality Rules (Blueprint Standards)
+# Enforce "no unused code" and "no redundant qualifiers" from Blueprint
+dotnet_diagnostic.IDE0005.severity = warning  # Remove unnecessary using directives
+dotnet_diagnostic.IDE0001.severity = warning  # Simplify name (remove redundant qualifiers)
+dotnet_diagnostic.IDE0002.severity = warning  # Simplify member access (remove redundant this/base)
+dotnet_diagnostic.CS8019.severity = warning   # Unnecessary using directive
+dotnet_diagnostic.IDE0079.severity = warning  # Remove unnecessary suppression
+csharp_style_unused_value_expression_statement_preference = discard_variable:suggestion
+csharp_style_unused_value_assignment_preference = discard_variable:suggestion
+
 # Organize usings
 dotnet_sort_system_directives_first = true
 
@@ -114,3 +124,17 @@ dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
 # XML/Props
 [*.{csproj,props,targets}]
 indent_size = 2
+
+# JSON Files (Blueprint Standards)
+# Enforce consistent formatting for event/decision/order JSON files
+[*.json]
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# XML Localization Files
+# Enforce consistent formatting for enlisted_strings.xml
+[*.xml]
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true

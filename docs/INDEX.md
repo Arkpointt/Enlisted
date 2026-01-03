@@ -2,8 +2,8 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2026-01-02 (Added captivity and village raid analysis)
-**Total Documents:** 53
+**Last Updated:** 2026-01-03 (UI fix: Variety assignments now display immersive FlavorText in Player Status)
+**Total Documents:** 54
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
 
@@ -21,12 +21,12 @@
 
 | I need to... | Go to... |
 |--------------|----------|
-| Understand the project scope | [BLUEPRINT.md](BLUEPRINT.md) → "For AI Assistants" |
+| Understand the project scope | [BLUEPRINT.md](BLUEPRINT.md) → "Quick Orientation" |
 | Learn core game mechanics | [Features/Core/core-gameplay.md](Features/Core/core-gameplay.md) |
 | Understand rank progression | [Features/Core/promotion-system.md](Features/Core/promotion-system.md) |
 | Find a specific feature quickly | [Feature Lookup Quick Reference](#feature-lookup-quick-reference) ⭐ NEW |
 | Find how a feature works | Search this INDEX, check [Features/Core/](#core-systems) |
-| See all events/decisions/orders | [Content/event-catalog-by-system.md](Content/event-catalog-by-system.md) |
+| See all events/decisions/orders | [Features/Content/content-index.md](Features/Content/content-index.md) |
 | Verify Bannerlord APIs | [Reference/native-apis.md](Reference/native-apis.md) |
 | Build/deploy the mod | [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md) |
 | Create new documentation | [BLUEPRINT.md](BLUEPRINT.md) → "Creating New Documentation" |
@@ -54,20 +54,23 @@
 
 | Feature / System | Found In Document | Section |
 |------------------|-------------------|---------|
-| **Baggage Checks/Inspections** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Baggage Checks |
+| **Baggage Stowage (First Enlistment)** | [enlistment.md](Features/Core/enlistment.md) | First-Enlistment Bag Check (section 8) |
+| **Baggage Train Access** | [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md) | World-state-aware access gating |
 | **Buyback System** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Buyback System |
 | **Company Needs** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 5 transparent metrics (Readiness/Morale/etc) |
+| **ContentOrchestrator (System)** | [content-system-architecture.md](Features/Content/content-system-architecture.md) | World-state-driven content coordination: opportunity pre-scheduling, activity levels, schedule overrides, illness triggers |
 | **Injuries & Illnesses** | [injury-system.md](Features/Content/injury-system.md) | Unified condition tracking, maritime context awareness |
 | **Camp Hub Decisions** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 33 player-initiated decisions |
 | **Orchestrator Camp Simulation** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Background + Opportunities layers |
 | **Camp Opportunities** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | 29 contextual activities with learning |
+| **Camp Opportunity Hints** | [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) | Narrative foreshadowing in Daily Brief (camp rumors + personal hints) |
+| **Opportunity Pre-Scheduling** | [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) | 24h ahead locking, prevents disappearance on context changes |
 | **Camp Background** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Autonomous roster tracking, incidents |
 | **Camp Routine Schedule** | [camp-routine-schedule-spec.md](Features/Campaign/camp-routine-schedule-spec.md) | Baseline daily routine with deviations |
 | **Camp Hub (Custom Gauntlet)** | [camp-hub-custom-gauntlet.md](Features/UI/camp-hub-custom-gauntlet.md) | — |
 | **Combat Log (Enlisted)** | [enlisted-combat-log.md](Features/UI/enlisted-combat-log.md) | ✅ Native-styled scrollable feed with faction-colored encyclopedia links |
 | **Company Events** | [company-events.md](Features/Core/company-events.md) | — |
 | **Companion Integration** | [companion-management.md](Features/Core/companion-management.md) | — |
-| **Contraband Detection** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Baggage Checks |
 | **Contextual Dialogue** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Contextual Dialogue System |
 | **Discharge Process** | [onboarding-discharge-system.md](Features/Core/onboarding-discharge-system.md) | Discharge |
 | **Discounts (QM)** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Reputation System |
@@ -76,6 +79,7 @@
 | **Equipment Quality/Tiers** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Equipment Quality System |
 | **Equipment Upgrades** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Equipment Upgrade System |
 | **Event System (JSON)** | [event-system-schemas.md](Features/Content/event-system-schemas.md) | — |
+| **Writing RP Text (Style)** | [writing-style-guide.md](Features/Content/writing-style-guide.md) | Voice, tone, vocabulary, opportunity hints for Bannerlord flavor |
 | **Fatigue System** | [camp-fatigue.md](Features/Core/camp-fatigue.md) | — |
 | **First Meeting (QM)** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Quartermaster NPC |
 | **Food & Rations** | [provisions-rations-system.md](Features/Equipment/provisions-rations-system.md) | — |
@@ -109,7 +113,8 @@
 |----------|---------|--------|
 | [README.md](README.md) | Main entry point and mod overview | ✅ Current |
 | [BLUEPRINT.md](BLUEPRINT.md) | Project architecture and coding standards | ✅ Current |
-| [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md) | Build guide and development patterns | ✅ Current |
+| [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md) | Build guide, development patterns, validation (Phase 7 project structure checks) | ✅ Current |
+| [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) | Orchestrator scheduling unification: pre-schedules opportunities 24h ahead, locks schedule to prevent disappearance on context changes, narrative hint integration, removes menu cache for single source of truth | ✅ Implemented |
 
 ---
 
@@ -124,7 +129,7 @@
 | [core-gameplay.md](Features/Core/core-gameplay.md) | Complete gameplay overview covering all major systems and how they interact | ✅ Current |
 | [enlistment.md](Features/Core/enlistment.md) | Enlistment system: joining process, lord selection, initial rank assignment, contract terms | ✅ Current |
 | [orders-system.md](Features/Core/orders-system.md) | ⚠️ **LEGACY** - Replaced by [Order Progression System](order-progression-system.md) | 🗄️ Deprecated |
-| [order-progression-system.md](Features/Core/order-progression-system.md) | Multi-day order execution: phase progression (4/day), slot events during duty, consequence accumulation, order forecasting with imminent warnings. 17 orders with 330 order events active. | ✅ Implemented |
+| [order-progression-system.md](Features/Core/order-progression-system.md) | Multi-day order execution: phase progression (4/day), slot events during duty, consequence accumulation, order forecasting with imminent warnings. 17 orders with 84 order events active. | ✅ Implemented |
 | [promotion-system.md](Features/Core/promotion-system.md) | Rank progression T1-T9: XP sources (combat, orders, training), multi-factor requirements (service days, battles fought, reputation thresholds, discipline score), proving events (rank-up challenges), culture-specific rank titles, equipment tier unlocks, officer privileges (T7+) | ✅ Current |
 | [pay-system.md](Features/Core/pay-system.md) | Wages and payment: 12-day muster cycle, rank-based pay scales, wage modifiers (performance, reputation, lord wealth), pay tension (mutiny risk), deductions (fines, missing gear) | ✅ Current |
 | [muster-system.md](Features/Core/muster-system.md) | Muster System: 6-stage GameMenu sequence for pay day ceremonies, rank progression display, period summary (12-day recap), event integration (recruit), comprehensive reporting (combat/training/orders/XP breakdown), pay options, promotion recap, retinue muster (T7+), direct Quartermaster access | ✅ Current |
@@ -139,7 +144,7 @@
 
 | Document | Topic | Status |
 |----------|-------|--------|
-| [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Complete quartermaster system with 10+ subsystems: equipment purchasing (category browsing, reputation discounts 0-30%), quality modifiers (6 tiers affecting stats/prices), upgrade system (Gauntlet grid UI, sequential quality improvements with real stat bonuses, native ItemModifier system), buyback service (sell QM gear back at 30-65%), provisions/rations (T1-T6 issued, T7+ shop with Gauntlet grid UI), baggage inspections (contraband checks, rep-based outcomes), Officers Armory (T7+, elite gear), tier gates (rank-based access control), supply integration (equipment blocked <30%), first-meeting intro, contextual dialogue (150+ dynamic responses) | ✅ Current |
+| [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Complete quartermaster system with 10+ subsystems: equipment purchasing (category browsing, reputation discounts 0-30%), quality modifiers (6 tiers affecting stats/prices), upgrade system (Gauntlet grid UI, sequential quality improvements with real stat bonuses, native ItemModifier system), buyback service (sell QM gear back at 30-65%), provisions/rations (T1-T6 issued, T7+ shop with Gauntlet grid UI), Officers Armory (T7+, elite gear), tier gates (rank-based access control), supply integration (equipment blocked <30%), first-meeting intro, contextual dialogue (150+ dynamic responses) | ✅ Current |
 | [provisions-rations-system.md](Features/Equipment/provisions-rations-system.md) | Food and rations: T1-T6 issued rations (12-day cycle, reclaimed at muster, quality by rep), T7+ provisions shop (premium prices 2.0-3.2x town markets, stock by supply level, Gauntlet grid UI with rank-based button gating), provision bundles (morale/fatigue boosts) | ✅ Current |
 | [company-supply-simulation.md](Features/Equipment/company-supply-simulation.md) | Company supply tracking (0-100% scale, includes rations, ammo, repairs, camp supplies), supply effects (equipment access gates, ration availability, QM greeting tone, stock levels), supply-based messaging | ⚠️ Mixed |
 | [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md) | Baggage train access gating: world-state-aware simulation (probabilities adapt to campaign situation), dynamic decision system (appears only when accessible), orchestrator integration, rank-based privileges, emergency access, 5 baggage events | ✅ Current |
@@ -180,11 +185,10 @@
 | Document | Topic | Status |
 |----------|-------|--------|
 | [README.md](Features/Content/README.md) | Content folder overview | ✅ Current |
-| [content-system-architecture.md](Features/Content/content-system-architecture.md) | Complete content system architecture: world-state-driven orchestration (ContentOrchestrator, WorldStateAnalyzer, SimulationPressureCalculator, PlayerBehaviorTracker), activity level system, native Bannerlord effect integration (IncidentEffectTranslator, trait mapping), JSON-driven content delivery, requirement checking, localization. Phases 1-6F implemented. | ✅ Current |
-| [event-system-schemas.md](Features/Content/event-system-schemas.md) | Event system JSON schemas: event structure (triggers, conditions, options, outcomes), decision schemas, order schemas, dialogue schemas, **Progression System Schema** (generic probabilistic daily rolls for escalation tracks), camp opportunities schema, validation rules | ✅ Current |
-| [event-reward-choices.md](Features/Content/event-reward-choices.md) | Event reward system: player choice outcomes, reward types (gold, items, reputation, XP), branching consequences. Code implemented but no JSON content uses it yet. | ⚠️ Coded, Not Content-Implemented |
-| [injury-system.md](Features/Content/injury-system.md) | Injury & illness system: unified condition tracking for injuries (twisted knee, blade cut, arrow wound) and illnesses (camp fever, flux, ship fever, scurvy). Context-aware treatment (camp vs ship surgeon), maritime illness types automatically applied at sea, illness-type-aware worsening events, recovery tracking, treatment system. Severity levels (Minor/Mild to Critical), narrative descriptions with Bannerlord RP flavor. | ✅ Implemented |
-| [medical-progression-system.md](Features/Content/medical-progression-system.md) | Medical risk & illness system: orchestrator-driven medical risk tracking (0-5 escalation), illness onset probability calculation with modifiers (fatigue, siege, consecutive days), context-aware illness types (maritime vs land), treatment system (resets risk, begins recovery), condition worsening for untreated illnesses/injuries, medical opportunities queuing. Fully integrated with ContentOrchestrator. | ✅ Implemented |
+| [content-system-architecture.md](Features/Content/content-system-architecture.md) | Complete content system architecture: world-state-driven orchestration (ContentOrchestrator owns opportunity lifecycle with 24h pre-scheduling, WorldStateAnalyzer, SimulationPressureCalculator, PlayerBehaviorTracker), activity level system, native Bannerlord effect integration (IncidentEffectTranslator, trait mapping), JSON-driven content delivery, requirement checking, localization. Orchestrator Unification complete. | ✅ Current |
+| [event-system-schemas.md](Features/Content/event-system-schemas.md) | Event system JSON schemas: event structure (triggers, conditions, options, outcomes), decision schemas, order schemas, dialogue schemas, **Progression System Schema** (generic probabilistic daily rolls for escalation tracks), camp opportunities schema (with hint/hintId fields for Daily Brief foreshadowing), validation rules | ✅ Current |
+| [injury-system.md](Features/Content/injury-system.md) | Unified medical condition system: injuries (3 types), illnesses (4 types), medical risk escalation (0-5), context-aware treatment (land vs sea), illness onset triggers, recovery tracking, maritime illness variants, condition worsening mechanics. Fully integrated with ContentOrchestrator. | ✅ Implemented |
+| [writing-style-guide.md](Features/Content/writing-style-guide.md) | Bannerlord RP writing guide: voice and tone (terse military prose), tense/perspective rules, vocabulary (medieval military register, avoid anachronisms), setup/option/result text patterns, tooltip formatting, **opportunity hints** (camp rumors vs personal hints, placeholder usage, categorization), dialogue patterns by rank, common mistakes to avoid, examples and checklists | ✅ Current |
 
 ### Technical Systems
 **Location:** `Features/Technical/`
@@ -215,9 +219,9 @@
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| [README.md](Features/Content/README.md) | Content catalog overview: 520 content pieces (17 orders, 33 decisions, 72 events, 51 map incidents, 330 order events, 17 retinue events) | ✅ Current |
-| [content-index.md](Features/Content/content-index.md) | Complete content catalog: all events with IDs, titles, descriptions, requirements, effects, skill checks, organized by category (Orders, Decisions, Events, Map Incidents, Retinue Content) | ✅ Current |
-| [event-catalog-by-system.md](Features/Content/event-catalog-by-system.md) | Events organized by system: lists every event ID with title, trigger conditions, outcomes, reputation effects, organized by feature area (Core/Equipment/Combat/Retinue/etc) for easy lookup | ✅ Current |
+| [README.md](Features/Content/README.md) | Content system overview: 275 content pieces (17 orders, 84 order events, 37 decisions, 29 camp opportunities, 57 context events, 51 map incidents) | ✅ Current |
+| [content-index.md](Features/Content/content-index.md) | Master catalog: all content with IDs, titles, descriptions, requirements, effects, skill checks organized by category | ✅ Current |
+| [content-organization-map.md](Features/Content/content-organization-map.md) | Visual hierarchy: parent-child relationships, file locations, workflows for adding new content | ✅ Current |
 
 ---
 

@@ -1,7 +1,7 @@
 # Baggage Stowage System - Implementation Guide
 
-**Date:** 2026-01-02  
-**Status:** Events and localization complete, minimal code changes needed
+**Date:** 2026-01-03  
+**Status:** ✅ Complete and bug-fixed
 
 ---
 
@@ -93,19 +93,44 @@ if (effects.ContainsKey("scrutiny"))
 ## Summary
 
 ✅ **Complete:**
-- New event JSON with 4 skill check options
+- New event JSON with 4 skill check options + pay + abort
 - XML localization strings
 - Tooltip templates with dynamic success chances
 - Skill-based risk/reward balance
-
-⚠️ **Verify:**
-- Existing effect handlers work for gold, qmRep, scrutiny
-- bagCheckChoice properly triggers stash/sell logic
+- Event triggers correctly on first enlistment only
+- All effect handlers implemented and working
 
 ---
 
-**Next Steps:**
-1. Build and test the event in-game
-2. Verify all 6 options work correctly
-3. Check skill check calculations display properly
-4. Confirm baggage is stored/sold as expected
+## Bug Fixes (2026-01-03)
+
+**Issue:** Baggage stowage dialog was firing multiple times during a single enlistment period, even though it should only appear on first enlistment or after retirement/desertion.
+
+**Root Causes:**
+1. **Line 3721 in EnlistmentBehavior.cs**: `_bagCheckCompleted` was being reset on EVERY discharge, even normal re-enlistments (e.g., when lord's army is defeated)
+2. **Lines 3345-3348 in EnlistmentBehavior.cs**: `_bagCheckCompleted` was being reset every time `EnlistPlayer()` was called (including during saves/loads)
+
+**Fixes Applied:**
+1. Moved `_bagCheckCompleted = false` inside the retirement/desertion conditional check (line 3726) - now only resets when player actually retires or deserts
+2. Removed the redundant reset block (lines 3345-3348) that was clearing the flag on every EnlistPlayer call
+
+**Result:**
+- ✅ Baggage dialog fires ONCE on first enlistment
+- ✅ Baggage dialog fires again only after retirement or desertion (starting fresh)
+- ✅ Baggage dialog does NOT fire on normal re-enlistments (lord defeated, etc.)
+- ✅ Save/load no longer causes the dialog to re-appear
+
+---
+
+## Testing Results
+
+- ✅ Event triggers on first enlistment (T1-T6 only)
+- ✅ Event skipped for commanders (T7+)
+- ✅ Event does NOT re-trigger during active service
+- ✅ Event does NOT re-trigger after save/load
+- ✅ Event correctly resets after retirement/desertion
+- ✅ All 6 options display with correct tooltips
+- ✅ Skill check tooltips show dynamic success chances
+- ✅ All effect handlers working correctly (gold, qmRep, scrutiny, lordRep)
+- ✅ Items correctly transferred to baggage stash on stow
+- ✅ Items correctly sold on liquidation

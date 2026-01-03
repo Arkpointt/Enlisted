@@ -64,19 +64,12 @@ The mod already has a baggage stash system (`_baggageStash` in `EnlistmentBehavi
 
 **Problem:** The baggage stash is always accessible via the Camp Hub menu whenever the player isn't fatigued. This doesn't reflect realistic military logistics and misses gameplay opportunities.
 
-### Important Distinction: Access System vs. Muster Inspection
-
-This baggage access system is **separate from** the contraband inspection that occurs during pay muster (see [Muster Menu System](../Core/muster-menu-revamp.md)):
+### Important Distinction: Access System
 
 **Baggage Access System (this document):**
 - Controls **when** the player can access their stored belongings
 - Based on logistics: Is the baggage train caught up? Are we in settlement?
-- All soldiers get FullAccess during muster regardless of inspection outcome
-
-**Muster Contraband Inspection (Muster Menu):**
-- Security check for prohibited items in player inventory (not stash)
-- 30% chance during muster to trigger
-- Can result in confiscation, fines, or scrutiny penalties
+- All soldiers get FullAccess during muster
 - Does not affect baggage access state
 
 Both systems grant access during muster, but serve different purposes: one is logistics-based (availability), the other is security-based (compliance).
@@ -131,7 +124,7 @@ public enum BaggageAccessState
     /// <summary>No access - baggage train is behind the column.</summary>
     NoAccess,
     
-    /// <summary>Locked by QM - supply crisis or contraband lockdown.</summary>
+    /// <summary>Locked by QM - supply crisis lockdown.</summary>
     Locked
 }
 ```
@@ -163,7 +156,7 @@ public enum BaggageAccessState
 
 Special override:
 ┌─────────────────┐
-│     Locked      │ ← Supply < 20% OR contraband investigation
+│     Locked      │ ← Supply < 20%
 │ (QM authority)  │
 └─────────────────┘
 ```
@@ -197,7 +190,6 @@ Special override:
 | Condition | Detection Method | Notes |
 |-----------|------------------|-------|
 | **Critical Supply** | `CompanyNeeds.Supplies < 20` | QM has locked down all storage |
-| **Contraband Investigation** | `_bagCheckInProgress == true` | Ongoing inspection |
 | **Lord's Orders** | Future: Order flag blocking access | Mission requires travel light |
 
 ### Temporary Access Windows
@@ -994,7 +986,6 @@ namespace Enlisted.Features.Logistics
   },
   "lockdown": {
     "supply_threshold_percent": 20,
-    "contraband_investigation_blocks": true
   },
   "events": {
     "delay_event_chance_bad_weather": 15,
@@ -2352,7 +2343,7 @@ These phases will add:
 | `RetinueRecruitmentGrant.cs` | Queue formation selection if baggage delayed |
 | `Enlisted.csproj` | Add new file entries |
 | `enlisted_strings.xml` | Add dialogue localization entries |
-| `Content/event-catalog-by-system.md` | Document new events |
+| `Features/Content/content-index.md` | Document new events/content |
 
 ### Estimated Total Effort
 

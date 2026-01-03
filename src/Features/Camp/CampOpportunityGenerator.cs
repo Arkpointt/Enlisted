@@ -464,6 +464,13 @@ namespace Enlisted.Features.Camp
         /// Main entry point: generates camp life opportunities for the current context.
         /// Returns 0-3 opportunities based on world state, budget, and player state.
         /// </summary>
+        /// <remarks>
+        /// DEPRECATED: Use ContentOrchestrator.GetCurrentPhaseOpportunities() instead.
+        /// The Orchestrator pre-schedules opportunities 24 hours ahead to prevent them
+        /// from disappearing when context changes mid-session. This method is kept
+        /// for backward compatibility and internal use by the scheduling system.
+        /// </remarks>
+        [Obsolete("Use ContentOrchestrator.GetCurrentPhaseOpportunities() for stable, pre-scheduled opportunities.")]
         public List<CampOpportunity> GenerateCampLife()
         {
             var enlistment = EnlistmentBehavior.Instance;
@@ -558,6 +565,38 @@ namespace Enlisted.Features.Camp
 
             ModLogger.Info(LogCategory, $"Selected {selected.Count} opportunities ({guaranteed.Count} guaranteed): [{string.Join(", ", selected.Select(o => o.Id))}]");
             return selected;
+        }
+
+        /// <summary>
+        /// Returns narrative hints for upcoming opportunities (for Company Reports).
+        /// Hints are brief, immersive text that foreshadow available activities.
+        /// Returns up to 2 hints from currently available opportunities.
+        /// </summary>
+        public IEnumerable<string> GetUpcomingHints()
+        {
+            // Ensure we have current opportunities
+            var opportunities = _cachedOpportunities ?? GenerateCampLife();
+            
+            if (opportunities == null || opportunities.Count == 0)
+            {
+                yield break;
+            }
+
+            // Return up to 2 hints from available opportunities
+            int hintCount = 0;
+            foreach (var opp in opportunities)
+            {
+                var hint = opp.GetHint();
+                if (!string.IsNullOrWhiteSpace(hint))
+                {
+                    yield return hint;
+                    hintCount++;
+                    if (hintCount >= 2)
+                    {
+                        yield break;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -832,7 +871,12 @@ namespace Enlisted.Features.Camp
 
                 // Sea/land context check
                 var enlistment = EnlistmentBehavior.Instance;
-                var isAtSea = enlistment?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+                var party = enlistment?.CurrentLord?.PartyBelongedTo;
+                // BUGFIX: If party is in a settlement or besieging, they are on land regardless of IsCurrentlyAtSea
+                var isAtSea = party != null && 
+                              party.CurrentSettlement == null && 
+                              party.BesiegedSettlement == null && 
+                              party.IsCurrentlyAtSea;
                 
                 if (opp.NotAtSea && isAtSea)
                 {
@@ -1667,6 +1711,8 @@ namespace Enlisted.Features.Camp
                     TitleFallback = item["title"]?.Value<string>(),
                     DescriptionId = item["descriptionId"]?.Value<string>(),
                     DescriptionFallback = item["description"]?.Value<string>(),
+                    HintId = item["hintId"]?.Value<string>(),
+                    HintFallback = item["hint"]?.Value<string>(),
                     ActionId = item["actionId"]?.Value<string>(),
                     ActionFallback = item["action"]?.Value<string>(),
                     TargetDecisionId = item["targetDecision"]?.Value<string>(),

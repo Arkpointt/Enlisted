@@ -738,14 +738,11 @@
           "id": "rally",
           "textId": "mi_ambush_losses_rally",
           "text": "Rally the men",
-          "requirements": {
-            "minSkills": {
-              "Tactics": 50
-            }
-          },
+          "skillCheck": "Tactics",
+          "skillBase": 50,
           "resultTextId": "mi_ambush_losses_rally_result",
           "resultText": "'Form up! Shields together!' Your voice cuts through the chaos. Men respond, forming a defensive line. The ambush falters against organized resistance.",
-          "tooltip": "Requires Tactics 50. 70% success chance. Train Tactics and Leadership. +15 Officer rep, +10 Soldier rep. Failure causes 25 damage and troop loss.",
+          "tooltipTemplate": "{CHANCE}% (Tactics {SKILL}). +30 Tactics XP, +20 Leadership XP, +15 Officer/+10 Soldier rep. Fail: -25 HP, -2 troops.",
           "risk": "risky",
           "risk_chance": 70,
           "effects": {
@@ -788,6 +785,8 @@
           "id": "hold",
           "textId": "mi_ambush_losses_hold",
           "text": "Hold position and fight",
+          "skillCheck": "OneHanded",
+          "skillBase": 50,
           "resultTextId": "mi_ambush_losses_hold_result",
           "resultText": "You plant your feet and fight whoever comes at you. The ambushers break when they realize you're not running. Your blade is slick with blood, but you're still standing.",
           "risk": "dangerous",
@@ -808,7 +807,7 @@
             "troopLoss": 2
           },
           "failure_resultText": "You're overwhelmed. A blade finds your side, and you go down. When you wake, the fighting is over, and the cost was high.",
-          "tooltip": "50% success chance. Train OneHanded. +8 Soldier rep. Valor trait XP. Failure causes 40 damage and 2 troop loss."
+          "tooltipTemplate": "{CHANCE}% (OneHanded {SKILL}). +20 OneHanded XP, +8 Soldier rep. Fail: -40 HP, -2 troops."
         }
       ]
     }

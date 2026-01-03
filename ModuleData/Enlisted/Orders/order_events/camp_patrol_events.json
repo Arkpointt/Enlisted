@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 2,
   "order_type": "order_camp_patrol",
   "events": [
@@ -12,7 +12,8 @@
       "setupId": "patrol_soldier_fight_setup",
       "setup": "Two soldiers are throwing punches behind the supply tents. Blood's already been drawn.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "war_marching", "war_active_campaign"]
+        "world_state": ["peacetime_garrison", "war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -74,7 +75,8 @@
       "setupId": "patrol_gambling_ring_setup",
       "setup": "Behind the tents, a group of soldiers are rolling dice. Coins glint in the firelight. They freeze when they see you.",
       "requirements": {
-        "world_state": ["peacetime_garrison"]
+        "world_state": ["peacetime_garrison"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -132,7 +134,8 @@
       "setupId": "patrol_suspicious_activity_setup",
       "setup": "A figure moves between tents at the edge of camp. Something's not right about the way they're moving.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -249,9 +252,10 @@
       "titleId": "patrol_lost_item_title",
       "title": "Lost Item",
       "setupId": "patrol_lost_item_setup",
-      "setup": "A soldier approaches you, worried. He's lost something valuable—a ring from his wife. Asks if you've seen it.",
+      "setup": "{SOLDIER_NAME} approaches you, worried. He's lost something valuable—a ring from his wife. Asks if you've seen it.",
       "requirements": {
-        "world_state": ["peacetime_garrison"]
+        "world_state": ["peacetime_garrison"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -271,7 +275,7 @@
             "skillXp": { "Scouting": 8 }
           },
           "resultTextId": "patrol_lost_item_help_find_result",
-          "resultText": "You spot it glinting near the fire pit. His gratitude is genuine.",
+          "resultText": "You spot it glinting in the mud near his bedroll. His gratitude is genuine.",
           "failResultTextId": "patrol_lost_item_help_find_fail",
           "failResultText": "No luck, but he appreciates the effort."
         },

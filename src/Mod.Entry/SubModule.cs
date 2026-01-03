@@ -256,7 +256,7 @@ namespace Enlisted.Mod.Entry
                     ModLogger.Debug("Bootstrap", $"Patched method: {method.DeclaringType?.Name}.{method.Name}");
                 }
 
-                // Run mod conflict diagnostics and write to Debugging/conflicts.log
+                // Run mod conflict diagnostics and write to Debugging/Conflicts-A_*.log
                 // This helps users identify when other mods interfere with Enlisted
                 ModConflictDiagnostics.RunStartupDiagnostics(_harmony);
 
@@ -619,7 +619,7 @@ namespace Enlisted.Mod.Entry
                     ModLogger.Info("Bootstrap", "Deferred patches applied (campaign ready)");
 
                     // Update conflict diagnostics with deferred patch info
-                    // This appends to the existing conflicts.log so users can see all patches
+                    // This appends to the existing conflict log so users can see all patches
                     ModConflictDiagnostics.RefreshDeferredPatches(harmony);
                 }
                 catch (Exception ex)

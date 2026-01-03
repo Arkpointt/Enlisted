@@ -643,8 +643,16 @@ namespace Enlisted.Features.Content
             {
                 return false;
             }
-            
+
             var lordParty = enlistment.CurrentLord.PartyBelongedTo;
+            
+            // BUGFIX: If party is in a settlement or besieging, they cannot be at sea
+            // This prevents sea events from appearing when on land in settlements
+            if (lordParty.CurrentSettlement != null || lordParty.BesiegedSettlement != null)
+            {
+                return false;
+            }
+
             return lordParty.IsCurrentlyAtSea;
         }
 

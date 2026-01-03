@@ -1,4 +1,4 @@
-﻿#-------------------------------------------------------------------------------#
+#-------------------------------------------------------------------------------#
 #               Qodana analysis is configured by qodana.yaml file               #
 #             https://www.jetbrains.com/help/qodana/qodana-yaml.html            #
 #-------------------------------------------------------------------------------#
@@ -20,11 +20,23 @@ profile:
 #include:
 #  - name: <SomeEnabledInspectionId>
 
+#Enable inspections
+# Blueprint Standards: "Follow ReSharper recommendations (never suppress without documented reason)"
+# Enforce code quality rules from Blueprint
+include:
+  - name: RedundantUsingDirective  # Blueprint: No unused code
+  - name: RedundantNameQualifier  # Blueprint: No redundant namespace qualifiers
+  - name: UnusedMember.Local  # Blueprint: Remove unused methods/variables
+  - name: UnusedParameter.Local  # Blueprint: No unused code
+  - name: ConvertToConstant.Local  # Code quality improvement
+
 #Disable inspections
 exclude:
   - name: All
     paths:
       - "**/*.md"  # Disable all inspections for Markdown files
+      - "**/Tools/**"  # Development scripts, not production code
+      - "**/Debugging/**"  # Debug utilities, not production code
   - name: MarkdownIncorrectTableFormatting
     paths:
       - "**/*.md"  # Explicitly disable table formatting warnings for Markdown

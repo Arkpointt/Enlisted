@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -2511,7 +2511,7 @@ namespace Enlisted.Features.Camp
                         return false;
                     }
 
-                    args.Tooltip = new TextObject("{=dm_black_market_tooltip}Seek out illicit traders. Buy or sell contraband for profit.");
+                    args.Tooltip = new TextObject("{=dm_black_market_tooltip}Seek out illicit traders for buying and selling goods.");
                     return true;
                 },
                 _ => OnFindBlackMarket(),

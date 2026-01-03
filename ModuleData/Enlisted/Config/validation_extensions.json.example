@@ -1,0 +1,29 @@
+{
+  "description": "Extend content validation with custom skills, roles, and categories without modifying validator code",
+  "note": "Rename this file to validation_extensions.json to activate",
+  
+  "valid_skills": [
+    "CustomSkill1",
+    "CustomSkill2"
+  ],
+  
+  "valid_roles": [
+    "CustomRole1",
+    "CustomRole2"
+  ],
+  
+  "valid_categories": [
+    "custom_category"
+  ],
+  
+  "valid_contexts": [
+    "CustomContext"
+  ],
+  
+  "comments": {
+    "valid_skills": "Additional Bannerlord skills beyond the standard 18. Use exact casing.",
+    "valid_roles": "Custom player roles beyond Scout/Medic/Engineer/Officer/etc.",
+    "valid_categories": "Custom event categories beyond decision/escalation/role/universal.",
+    "valid_contexts": "Custom event contexts beyond Any/War/Peace/Siege/Battle/Town/Camp."
+  }
+}
