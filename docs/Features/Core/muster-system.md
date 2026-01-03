@@ -258,6 +258,16 @@ Lord's Treasury:      Comfortable
 | 🏴 Leave | Process Final Discharge | Process discharge. Receive final pay + pension. Service ends. | Pending discharge |
 | ⚠ Leave | Smuggle Out (Deserter) | Desert with your gear. Forfeit pension. Hunted as deserter. | Pending discharge |
 
+**Discharge Confirmation:**
+
+When selecting "Process Final Discharge", a confirmation popup appears showing exactly what the player will receive based on their discharge band:
+
+- **Veteran/Heroic Discharge:** Shows 3000 denars severance, pension details with days served, +30 relation, and gear handling (keep armor, weapons to inventory)
+- **Honorable Discharge:** Shows 3000 denars severance, pension details with days served, +10 relation, and gear handling
+- **Washout Discharge:** Shows no severance, no pension, -10 relation, and all equipment confiscated
+
+The popup uses the native game's `InquiryData` system with Yes/No buttons. The player must confirm before the discharge is processed.
+
 **Payment Outcomes:**
 
 The "Accept Your Pay" option resolves based on the lord's financial status:
@@ -499,9 +509,10 @@ Two separate buttons appear at Muster Complete:
   - **Veteran/Heroic (200+ days, T4+):** "Honorable discharge. Receive severance (3000g) and pension. +30 relation with lord."
   - **Honorable (100-199 days):** "Honorable discharge. Receive severance (3000g) and pension. +10 relation with lord."
   - **Washout (<100 days or negative lord relation):** "Early discharge (washout). No severance or pension. -10 relation. QM-issued items reclaimed from baggage."
-- **Outcome:** Processes immediately based on actual discharge band calculation
+- **Confirmation Popup:** When clicked, a confirmation popup appears showing the full breakdown of what the player will receive (severance, pension, relation changes, gear handling) based on the calculated discharge band. The player must confirm before discharge is processed.
+- **Outcome:** Processes immediately upon confirmation based on actual discharge band calculation
 
-Both options process the discharge immediately during the muster sequence (no pending flag or waiting for next muster).
+Both options process the discharge immediately during the muster sequence (no pending flag or waiting for next muster). Both discharge options now show confirmation popups using the native game's `InquiryData` system, allowing the player to review the consequences and cancel if desired.
 
 ---
 
@@ -789,9 +800,6 @@ Recruit events have cooldowns to prevent repetition:
 |-------|----------|-------------|
 | Green Recruit | 10 days | Tier 3+ |
 
-### Baggage Check Probability
-
-
 ---
 
 **Implementation Files:**
@@ -803,7 +811,7 @@ Recruit events have cooldowns to prevent repetition:
 
 **Content Files:**
 - `ModuleData/Languages/enlisted_strings.xml` - All `muster_*` localization strings
-- `ModuleData/Enlisted/Events/muster_events.json` - Recruit, baggage check events
+- `ModuleData/Enlisted/Events/muster_events.json` - Recruit events
 - `ModuleData/Enlisted/enlisted_config.json` - Muster interval configuration
 - `ModuleData/Enlisted/settings.json` - Time control behavior setting
 

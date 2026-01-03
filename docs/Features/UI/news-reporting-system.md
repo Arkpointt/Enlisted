@@ -6,8 +6,10 @@
 
 **2026-01-01 UPDATE:** Routine activity outcomes now display full flavor text from `routine_outcomes.json` in all contexts (combat log, news feed, Recent Activity). Replaces generic summaries like "Combat Training: Completed" with immersive text like "Sharp focus today. Movements feel natural."
 
+**2026-01-03 BUG FIX:** Supply status reporting now requires BOTH logistics strain AND low supplies to show "Supply lines stretched thin" warning. Previously showed warning when logistics was high even if supplies were at 86%.
+
 **Status:** ✅ Current - Comprehensive Integration Complete  
-**Last Updated:** 2026-01-01 (Routine flavor text, fallback improvements)  
+**Last Updated:** 2026-01-03 (Supply status logic fix)  
 **Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Progression System](../Core/order-progression-system.md), [Orders Content](../Content/orders-content.md), [Injury System](../Content/injury-system.md), [Camp Routine Schedule](../Campaign/camp-routine-schedule-spec.md)
 
 ---
@@ -41,7 +43,7 @@ The news system operates as a read-only observer of campaign events. It listens 
 
 **Two Report Types:**
 1. **Daily Brief** - Once-per-day narrative paragraph combining company situation, player status, and kingdom news
-2. **Company Status Report** - Five company needs with context-aware descriptions
+2. **Company Status Report** - Four company needs with context-aware descriptions
 
 **Key Behavior:**
 - All feeds use `DispatchItem` struct (primitives only for save compatibility)
@@ -69,7 +71,7 @@ EnlistedNewsBehavior (singleton CampaignBehaviorBase)
 │   └── BuildDailyBriefSection()                   - Assembles flowing paragraph
 │
 ├── Company Status (generated on-demand)
-│   └── BuildCompanyStatusReport()                 - Five needs with context
+│   └── BuildCompanyStatusReport()                 - Four needs with context
 │
 ├── Tracking Records (for detailed reports)
 │   ├── _orderOutcomes (List<OrderOutcomeRecord>)
@@ -180,10 +182,15 @@ BuildMainMenuNarrative()
 
 **CampLifeBehavior Pressure Integration:**
 ```csharp
-// Supply warnings enhanced by LogisticsStrain
-if (companyNeeds.Supplies < 20 || campLife?.LogisticsStrain > 60)
+// Supply warnings: Only show "stretched thin" when BOTH conditions are true
+// Bug fix (Jan 2026): Previously showed "stretched thin" when only logistics was high
+if (logisticsHigh && suppliesLow)  // LogisticsStrain > 60 AND Supplies < 50
 {
-    // "Supply lines stretched thin" vs "Supplies low"
+    // "Supply lines stretched thin" (combined warning)
+}
+else
+{
+    // Show actual supply level: "Well-stocked" / "Adequate" / "Low" / "Critical"
 }
 
 // Morale context from MoraleShock + PayTension

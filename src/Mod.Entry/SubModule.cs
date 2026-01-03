@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -168,7 +168,6 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(InfluenceMessageSuppressionPatch);
                     _ = typeof(InformationManagerDisplayMessagePatch);
                     _ = typeof(JoinEncounterAutoSelectPatch);
-                    _ = typeof(JoinSiegeEventAutoSelectPatch);
                     _ = typeof(LootBlockPatch);
                     _ = typeof(LootBlockPatch.ItemLootPatch);
                     _ = typeof(LootBlockPatch.MemberLootPatch);
@@ -176,6 +175,7 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(LootBlockPatch.LootScreenPatch);
                     _ = typeof(NavalBattleArmyWaitCrashFix);
                     _ = typeof(NavalBattleShipAssignmentPatch);
+                    _ = typeof(NavalNavigationCapabilityPatch);
                     _ = typeof(NavalShipDamageProtectionPatch);
                     _ = typeof(OrderOfBattleSuppressionPatch);
                     _ = typeof(PlayerIsAtSeaTagCrashFix);
@@ -198,7 +198,6 @@ namespace Enlisted.Mod.Entry
                         "CheckFortificationAttackablePatch",      // Target: EncounterGameMenuBehavior (deferred)
                         "SettlementOutsideLeaveButtonPatch",      // Target: EncounterGameMenuBehavior
                         "JoinEncounterAutoSelectPatch",           // Target: EncounterGameMenuBehavior
-                        "JoinSiegeEventAutoSelectPatch",          // Target: EncounterGameMenuBehavior
                         "EncounterAbandonArmyBlockPatch",         // Target: EncounterGameMenuBehavior (deferred)
                         "EncounterAbandonArmyBlockPatch2",        // Target: EncounterGameMenuBehavior (deferred)
                         "EncounterLeaveSuppressionPatch",         // Target: EncounterGameMenuBehavior (deferred)
@@ -602,10 +601,13 @@ namespace Enlisted.Mod.Entry
                     ApplyDeferredPatch(harmony, typeof(CheckFortificationAttackablePatch));
                     ApplyDeferredPatch(harmony, typeof(SettlementOutsideLeaveButtonPatch));
                     ApplyDeferredPatch(harmony, typeof(JoinEncounterAutoSelectPatch));
-                    ApplyDeferredPatch(harmony, typeof(JoinSiegeEventAutoSelectPatch));
                     ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch));
                     ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch2));
                     ApplyDeferredPatch(harmony, typeof(EncounterLeaveSuppressionPatch));
+                    ApplyDeferredPatch(harmony, typeof(EncounterCaptureEnemySuppressionPatch));
+                    // EncounterVictoryAutoClosePatch REMOVED - it was intercepting ALL menu activations
+                    // including native siege menus. GenericStateMenuPatch already handles battle-over
+                    // encounter suppression, and CleanupPostEncounterState clears stale state.
                     ApplyDeferredPatch(harmony, typeof(CombatLogConversationPatch.MapConversationEndPatch));
 
                     // Apply Naval DLC patches that use reflection to find types.

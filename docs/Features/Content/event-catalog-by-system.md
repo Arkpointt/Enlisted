@@ -98,7 +98,6 @@ The Quartermaster is a specific NPC with a personal relationship (`Hero.GetRelat
 | **Morale** | Men's will to serve |
 | **Supplies** | Food, consumables |
 | **Rest** | Recovery from fatigue |
-| **Equipment** | Gear condition |
 
 Orders affect Company Needs. Low needs trigger warnings and affect gameplay.
 
@@ -382,7 +381,7 @@ Player-initiated choices from the Camp Hub menu. These have costs, cooldowns, an
 
 | Decision | Cost | Cooldown | Gate | Outcomes |
 |----------|------|----------|------|----------|
-| **Maintain Gear** | 2 hrs, -5 Rest | 3 days | — | +Equipment condition |
+| **Maintain Gear** | 2 hrs, -5 Rest | 3 days | — | Maintain gear |
 | **Visit Quartermaster** | 1 hr, variable gold | None | — | Request/buy gear |
 
 ### Risk-Taking Decisions

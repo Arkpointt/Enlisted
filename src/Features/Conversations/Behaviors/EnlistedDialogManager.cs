@@ -1737,7 +1737,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                 SupplyLevel = GetSupplyLevelCategory(),
                 Archetype = EnlistmentBehavior.Instance?.QuartermasterArchetype ?? "veteran",
                 ReputationTier = GetReputationTierCategory(qmReputation),
-                BaggageRequestType = _baggageRequestType
+                BaggageRequestType = _baggageRequestType,
+                BaggageAccess = GetBaggageAccessCategory(),
+                BaggageDelayed = IsBaggageDelayed()
             };
             return context;
         }
@@ -1821,6 +1823,42 @@ namespace Enlisted.Features.Conversations.Behaviors
 
             // Has horse equipped = cavalry
             return !equipment[EquipmentIndex.Horse].IsEmpty;
+        }
+
+        /// <summary>
+        ///     Gets the current baggage access state as a string category for dialogue matching.
+        /// </summary>
+        private string GetBaggageAccessCategory()
+        {
+            var baggageManager = Logistics.BaggageTrainManager.Instance;
+            if (baggageManager == null)
+            {
+                return "no_access";
+            }
+
+            var accessState = baggageManager.GetCurrentAccess();
+            return accessState switch
+            {
+                Logistics.BaggageAccessState.FullAccess => "full_access",
+                Logistics.BaggageAccessState.TemporaryAccess => "temporary_access",
+                Logistics.BaggageAccessState.Locked => "locked",
+                Logistics.BaggageAccessState.NoAccess => "no_access",
+                _ => "no_access"
+            };
+        }
+
+        /// <summary>
+        ///     Checks if the baggage train is currently delayed (stuck, separated, etc).
+        /// </summary>
+        private bool IsBaggageDelayed()
+        {
+            var baggageManager = Logistics.BaggageTrainManager.Instance;
+            if (baggageManager == null)
+            {
+                return false;
+            }
+
+            return baggageManager.GetBaggageDelayDaysRemaining() > 0;
         }
 
         /// <summary>
@@ -2291,7 +2329,6 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
 
                 var supplies = companyNeeds.Supplies;
-                var equipment = companyNeeds.Equipment;
                 var morale = companyNeeds.Morale;
                 var archetype = enlistment.QuartermasterArchetype;
                 var reputation = enlistment.QuartermasterRelationship;
@@ -2314,7 +2351,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
 
                 // Build contextual supply report with archetype flavor
-                string statusText = GetSupplyReportWithArchetypeFlavor(supplies, equipment, morale,
+                string statusText = GetSupplyReportWithArchetypeFlavor(supplies, morale,
                     archetype, reputation, strategicContext, lordSettlement);
 
                 MBTextManager.SetTextVariable("SUPPLY_STATUS", statusText);
@@ -2333,7 +2370,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         ///     Includes strategic context awareness (winter, battle prep, etc.) and resupply status when in settlements.
         ///     Fully bulletproof with null checks, validation, and fallbacks.
         /// </summary>
-        private string GetSupplyReportWithArchetypeFlavor(int supplies, int equipment, int morale,
+        private string GetSupplyReportWithArchetypeFlavor(int supplies, int morale,
             string archetype, int reputation, string strategicContext, Settlement lordSettlement = null)
         {
             // Validate and normalize inputs
@@ -2342,7 +2379,6 @@ namespace Enlisted.Features.Conversations.Behaviors
 
             // Clamp values to safe ranges
             supplies = Clamp(supplies, 0, 100);
-            equipment = Clamp(equipment, 0, 100);
             morale = Clamp(morale, 0, 100);
 
             // Determine supply level category
@@ -2390,15 +2426,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             // Build string ID and load from XML with fallback
             string stringId = BuildSupplyStringId(archetype, supplyLevel, repTone);
             string baseReport = GetLocalizedTextSafe(stringId,
-                $"Supplies are at {supplies}%. Equipment at {equipment}%.");
-
-            // Add equipment context if significantly different from supplies
-            if (equipment < supplies - 20)
-            {
-                string equipStringId = $"qm_equip_note_{archetype}";
-                string equipNote = GetLocalizedTextSafe(equipStringId, " Equipment needs attention.");
-                baseReport += equipNote;
-            }
+                $"Supplies are at {supplies}%.");
 
             // Add morale context if critically low or exceptionally high
             if (morale < 30)
@@ -2569,7 +2597,6 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                 var companyNeeds = enlistment.CompanyNeeds;
                 var supplies = companyNeeds?.Supplies ?? 60;
-                var equipment = companyNeeds?.Equipment ?? 60;
                 var archetype = enlistment.QuartermasterArchetype;
                 var reputation = enlistment.QuartermasterRelationship;
                 var tier = enlistment.EnlistmentTier;
@@ -2579,7 +2606,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 var discountPct = GetReputationDiscount(reputation);
 
                 // Generate contextual browse response with rank, supply, rep, and price hints
-                string response = GetBrowseResponse(supplies, equipment, reputation, tier, rankTitle, discountPct);
+                string response = GetBrowseResponse(supplies, reputation, tier, rankTitle, discountPct);
 
                 MBTextManager.SetTextVariable("BROWSE_RESPONSE", response);
                 return true;
@@ -2686,10 +2713,10 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
-        ///     Generates a contextual browse response based on supply/equipment levels, archetype, and reputation.
+        ///     Generates a contextual browse response based on supply levels, archetype, and reputation.
         ///     Uses XML localization strings with full validation and fallback handling.
         /// </summary>
-        private string GetBrowseResponse(int suppliesParam, int equipmentParam, int reputation, int tier = 1, string rankTitle = "Soldier", int discountPct = 0)
+        private string GetBrowseResponse(int suppliesParam, int reputation, int tier = 1, string rankTitle = "Soldier", int discountPct = 0)
         {
             // Validate and normalize inputs
             int supplies = Clamp(suppliesParam, 0, 100);
@@ -4018,6 +4045,9 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                     // Small relationship bonus for using proper channels
                     EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
+                    
+                    // Open the baggage stash now that access is granted
+                    EnlistmentBehavior.Instance?.TryOpenBaggageTrain();
                 }
                 else
                 {
@@ -4086,6 +4116,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=baggage_column_halt}The column halts. Wagons are brought forward and the baggage train is made accessible.").ToString(),
                     Colors.Green));
+                
+                // Open the baggage stash now that the column is halted
+                EnlistmentBehavior.Instance?.TryOpenBaggageTrain();
             }
             catch (Exception ex)
             {

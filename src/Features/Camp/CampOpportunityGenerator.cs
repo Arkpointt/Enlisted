@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Enlisted.Features.Camp.Models;
 using Enlisted.Features.Company;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Content;
 using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
@@ -294,6 +295,14 @@ namespace Enlisted.Features.Camp
         public ScheduledCommitment GetNextCommitment()
         {
             return _commitments.GetNextCommitment();
+        }
+
+        /// <summary>
+        /// Gets a specific commitment by opportunity ID.
+        /// </summary>
+        public ScheduledCommitment GetCommitment(string opportunityId)
+        {
+            return _commitments.GetCommitment(opportunityId);
         }
 
         /// <summary>
@@ -652,9 +661,21 @@ namespace Enlisted.Features.Camp
 
             // Muster cycle position: calculate from LastMusterDay
             int currentDay = (int)CampaignTime.Now.ToDays;
-            int lastMusterDay = enlistment?.LastMusterDay ?? currentDay;
+            int lastMusterDay = enlistment?.LastMusterDay ?? 0;
+            
+            // If lastMusterDay is 0 (uninitialized), treat as if muster just happened
+            if (lastMusterDay == 0)
+            {
+                lastMusterDay = currentDay;
+            }
+            
             context.DaysSinceLastMuster = currentDay - lastMusterDay;
-            context.IsMusterDay = context.DaysSinceLastMuster >= 12; // Muster every ~12 days
+            
+            // IsMusterDay should only be true when the MUSTER MENU is actively being shown,
+            // not just because it's been 12 days. The muster system handles its own timing.
+            // Block opportunities only during active muster sequence (detected by menu state).
+            var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId ?? "";
+            context.IsMusterDay = currentMenu.StartsWith("enlisted_muster_");
 
             // Camp mood derived from recent events
             context.CurrentMood = DeriveCampMood(simulation);
@@ -689,10 +710,10 @@ namespace Enlisted.Features.Camp
                 return true;
             }
 
-            // Muster day
+            // Active muster sequence (player is in muster menu)
             if (context.IsMusterDay)
             {
-                reason = "Muster day - structured sequence takes over";
+                reason = "Active muster sequence - structured menu takes over";
                 return true;
             }
 
@@ -851,6 +872,37 @@ namespace Enlisted.Features.Camp
                     continue;
                 }
 
+                // Condition state filter: check player condition requirements
+                if (opp.ConditionStates != null && opp.ConditionStates.Count > 0)
+                {
+                    if (!MeetsConditionStateRequirements(opp.ConditionStates))
+                    {
+                        IncrementFilterCount(filterCounts, "condition_state");
+                        continue;
+                    }
+                }
+
+                // Medical pressure filter: check medical risk level requirements
+                if (opp.MedicalPressure != null && opp.MedicalPressure.Count > 0)
+                {
+                    if (!MeetsMedicalPressureRequirements(opp.MedicalPressure))
+                    {
+                        IncrementFilterCount(filterCounts, "medical_pressure");
+                        continue;
+                    }
+                }
+
+                // Suppress when treated: hide medical opportunities if player is already under care
+                if (opp.SuppressWhenTreated)
+                {
+                    var conditions = PlayerConditionBehavior.Instance;
+                    if (conditions?.IsEnabled() == true && conditions.State?.UnderMedicalCare == true)
+                    {
+                        IncrementFilterCount(filterCounts, "under_treatment");
+                        continue;
+                    }
+                }
+
                 // Create a copy with instance-specific data
                 var candidate = CloneOpportunity(opp);
                 candidates.Add(candidate);
@@ -861,6 +913,17 @@ namespace Enlisted.Features.Camp
             {
                 var filterSummary = string.Join(", ", filterCounts.Select(kvp => $"{kvp.Key}={kvp.Value}"));
                 ModLogger.Info(LogCategory, $"Candidate filters (tier={tier}, phase={camp.DayPhase}, onDuty={camp.PlayerOnDuty}): {filterSummary}");
+            }
+
+            // Log filter summary
+            if (filterCounts.Count > 0)
+            {
+                var filterSummary = string.Join(", ", filterCounts.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+                ModLogger.Debug(LogCategory, $"Opportunity filtering: {candidates.Count} passed, rejected: {filterSummary}");
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, $"Opportunity filtering: {candidates.Count} passed, none rejected");
             }
 
             return candidates;
@@ -1260,6 +1323,7 @@ namespace Enlisted.Features.Camp
 
         /// <summary>
         /// Records that the player engaged with an opportunity.
+        /// Invalidates the cache so the opportunity immediately disappears from the menu.
         /// </summary>
         public void RecordEngagement(string opportunityId, OpportunityType type)
         {
@@ -1270,7 +1334,10 @@ namespace Enlisted.Features.Camp
             PlayerBehaviorTracker.RecordOpportunityEngagement(typeKey, true);
             PlayerBehaviorTracker.RecordChoice(typeKey.ToLower());
 
-            ModLogger.Debug(LogCategory, $"Recorded engagement: {opportunityId} ({typeKey})");
+            // Invalidate cache to immediately remove the completed opportunity from the menu
+            InvalidateCache();
+
+            ModLogger.Info(LogCategory, $"Recorded engagement: {opportunityId} (type={typeKey}), cache invalidated to remove from menu");
         }
 
         /// <summary>
@@ -1531,7 +1598,14 @@ namespace Enlisted.Features.Camp
                 TooltipRiskyFallback = source.TooltipRiskyFallback,
                 RequiredFlags = source.RequiredFlags,
                 BlockedByFlags = source.BlockedByFlags,
-                ScheduledTime = source.ScheduledTime
+                ScheduledTime = source.ScheduledTime,
+                ConditionStates = source.ConditionStates,
+                MedicalPressure = source.MedicalPressure,
+                SuppressWhenTreated = source.SuppressWhenTreated,
+                ScheduledPhase = source.ScheduledPhase,
+                Immediate = source.Immediate,
+                NotAtSea = source.NotAtSea,
+                AtSea = source.AtSea
             };
         }
 
@@ -1601,6 +1675,8 @@ namespace Enlisted.Features.Camp
                     CooldownHours = item["cooldownHours"]?.Value<int>() ?? 12,
                     BaseFitness = item["baseFitness"]?.Value<int>() ?? 50,
                     ScheduledTime = item["scheduledTime"]?.Value<string>(),
+                    ScheduledPhase = item["scheduledPhase"]?.Value<string>(),
+                    Immediate = item["immediate"]?.Value<bool>() ?? false,
                     NotAtSea = item["notAtSea"]?.Value<bool>() ?? false,
                     AtSea = item["atSea"]?.Value<bool>() ?? false
                 };
@@ -1663,6 +1739,26 @@ namespace Enlisted.Features.Camp
                     opp.BlockedByFlags = blockedFlags.Select(f => f.Value<string>()).ToList();
                 }
 
+                // Requirements (from requirements object)
+                var requirements = item["requirements"] as JObject;
+                if (requirements != null)
+                {
+                    var conditionStates = requirements["conditionStates"] as JArray;
+                    if (conditionStates != null)
+                    {
+                        opp.ConditionStates = conditionStates.Select(c => c.Value<string>()).ToList();
+                    }
+
+                    var medicalPressure = requirements["medicalPressure"] as JArray;
+                    if (medicalPressure != null)
+                    {
+                        opp.MedicalPressure = medicalPressure.Select(m => m.Value<string>()).ToList();
+                    }
+                }
+
+                // Suppress when treated flag
+                opp.SuppressWhenTreated = item["suppressWhenTreated"]?.Value<bool>() ?? false;
+
                 if (string.IsNullOrEmpty(opp.Id))
                 {
                     return null;
@@ -1688,6 +1784,129 @@ namespace Enlisted.Features.Camp
                 "special" => OpportunityType.Special,
                 _ => OpportunityType.Social
             };
+        }
+
+        /// <summary>
+        /// Checks if the player meets all required condition states for an opportunity.
+        /// Returns true if all requirements are met, false otherwise.
+        /// </summary>
+        private static bool MeetsConditionStateRequirements(List<string> conditionStates)
+        {
+            var conditions = PlayerConditionBehavior.Instance;
+            if (conditions?.IsEnabled() != true)
+            {
+                // If condition system is disabled, treat as not meeting condition requirements
+                return false;
+            }
+
+            var state = conditions.State;
+            if (state == null)
+            {
+                return false;
+            }
+
+            foreach (var requirement in conditionStates)
+            {
+                switch (requirement)
+                {
+                    case "HasAnyCondition":
+                    case "HasCondition":
+                        // Both variants mean the same thing: player has any active condition
+                        if (!state.HasAnyCondition)
+                        {
+                            return false;
+                        }
+                        break;
+
+                    case "HasSevereCondition":
+                        // Check for severe or critical injury/illness that is ACTIVE (days remaining > 0)
+                        var hasSevereInjury = state.CurrentInjury >= InjurySeverity.Severe && state.InjuryDaysRemaining > 0;
+                        var hasSevereIllness = state.CurrentIllness >= IllnessSeverity.Severe && state.IllnessDaysRemaining > 0;
+                        if (!hasSevereInjury && !hasSevereIllness)
+                        {
+                            return false;
+                        }
+                        break;
+
+                    case "HasInjury":
+                        if (!state.HasInjury)
+                        {
+                            return false;
+                        }
+                        break;
+
+                    case "HasIllness":
+                        if (!state.HasIllness)
+                        {
+                            return false;
+                        }
+                        break;
+
+                    default:
+                        // Unknown requirement type - fail safe by rejecting
+                        ModLogger.Warn(LogCategory, $"Unknown condition state requirement: {requirement}");
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if the player's medical risk level meets the required pressure levels.
+        /// Returns true if medical risk matches any of the specified pressure levels.
+        /// </summary>
+        private static bool MeetsMedicalPressureRequirements(List<string> pressureLevels)
+        {
+            var escalation = EscalationManager.Instance;
+            if (escalation?.State == null)
+            {
+                return false;
+            }
+
+            var medicalRisk = escalation.State.MedicalRisk;
+
+            // Map medical risk (0-5) to pressure levels
+            // 0-1: None/Low, 2: Moderate, 3: High, 4-5: Critical
+            foreach (var level in pressureLevels)
+            {
+                switch (level)
+                {
+                    case "Moderate":
+                        if (medicalRisk >= 2)
+                        {
+                            return true;
+                        }
+                        break;
+
+                    case "High":
+                        if (medicalRisk >= 3)
+                        {
+                            return true;
+                        }
+                        break;
+
+                    case "Critical":
+                        if (medicalRisk >= 4)
+                        {
+                            return true;
+                        }
+                        break;
+
+                    case "Low":
+                        if (medicalRisk >= 1)
+                        {
+                            return true;
+                        }
+                        break;
+
+                    default:
+                        ModLogger.Warn(LogCategory, $"Unknown medical pressure level: {level}");
+                        break;
+                }
+            }
+
+            return false;
         }
 
         #endregion

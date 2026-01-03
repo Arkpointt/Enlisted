@@ -592,12 +592,6 @@ namespace Enlisted.Features.Camp
                             needs.SetNeed(CompanyNeed.Supplies, needs.Supplies + effect.Value);
                         }
                         break;
-                    case "equipment":
-                        if (needs != null)
-                        {
-                            needs.SetNeed(CompanyNeed.Equipment, needs.Equipment + effect.Value);
-                        }
-                        break;
                     case "discipline":
                         escalation?.ModifyDiscipline(effect.Value, "camp incident");
                         break;

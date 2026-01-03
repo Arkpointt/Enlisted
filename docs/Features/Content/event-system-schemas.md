@@ -1765,8 +1765,104 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
 | `immediate` | bool | ❌ | **Phase 9** - If true, fires immediately (ignores scheduledPhase). Default: false. |
 | `requiredFlags` | array | ❌ | Flags that must be set to appear |
 | `blockedByFlags` | array | ❌ | Flags that prevent appearance |
+| `requirements` | object | ❌ | Requirement conditions (see Requirements Object section below) |
 | `notAtSea` | bool | ❌ | Only appears on land (not at sea) |
 | `atSea` | bool | ❌ | Only appears at sea (not on land) |
+
+### Requirements Object
+
+Opportunities can have a `requirements` object that filters when they appear:
+
+```json
+{
+  "id": "opp_urgent_medical",
+  "type": "recovery",
+  "requirements": {
+    "conditionStates": ["HasSevereCondition"]
+  }
+}
+```
+
+**Supported Requirement Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `conditionStates` | array | Required player condition states (see below) |
+| `medicalPressure` | array | Required medical pressure levels (see below) |
+
+**Additional Medical Filtering:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `suppressWhenTreated` | bool | If true, hides opportunity while player is under medical care |
+
+**Valid Condition States:**
+
+| State | Description | When True |
+|-------|-------------|-----------|
+| `HasAnyCondition` | Player has any active condition | Any injury, illness, or exhaustion with days remaining > 0 |
+| `HasCondition` | Same as `HasAnyCondition` | Alias for compatibility |
+| `HasSevereCondition` | Player has severe/critical condition | Injury or illness severity >= Severe AND days remaining > 0 |
+| `HasInjury` | Player has active injury | Injury with days remaining > 0 |
+| `HasIllness` | Player has active illness | Illness with days remaining > 0 |
+
+**Valid Medical Pressure Levels:**
+
+| Level | Medical Risk Range | Description |
+|-------|-------------------|-------------|
+| `Low` | 1+ | Any medical risk present |
+| `Moderate` | 2+ | Moderate medical risk (warning level) |
+| `High` | 3+ | High medical risk (concerning) |
+| `Critical` | 4-5 | Critical medical risk (emergency) |
+
+**Example - Medical Opportunities:**
+
+```json
+{
+  "id": "opp_seek_medical_care",
+  "type": "recovery",
+  "title": "Seek Medical Care",
+  "requirements": {
+    "conditionStates": ["HasCondition"]
+  },
+  "comment": "Only appears when player has any active condition"
+}
+```
+
+```json
+{
+  "id": "opp_urgent_medical",
+  "type": "recovery",
+  "title": "Urgent Medical Care",
+  "immediate": true,
+  "requirements": {
+    "conditionStates": ["HasSevereCondition"]
+  },
+  "comment": "Only appears when player has severe/critical injury or illness"
+}
+```
+
+```json
+{
+  "id": "opp_preventive_rest",
+  "type": "recovery",
+  "title": "Preventive Rest",
+  "requirements": {
+    "medicalPressure": ["Moderate", "High"]
+  },
+  "comment": "Only appears when medical risk is 2+ but no condition yet"
+}
+```
+
+**How It Works:**
+- Requirements are checked during candidate generation (before fitness scoring)
+- Opportunities that don't meet requirements are filtered out immediately
+- Multiple condition states in the array work as AND logic (all must be true)
+- Multiple medical pressure levels in the array work as OR logic (any can match)
+- If condition system is disabled, condition-dependent opportunities won't appear
+- Medical pressure checks escalation manager's MedicalRisk track (0-5 scale)
+
+---
 
 ### Fitness Scoring
 
@@ -2518,7 +2614,6 @@ For reference when reviewing event master document:
 - `C.MOR` = Morale (`companyNeeds.Morale`)
 - `C.RDY` = Readiness (`companyNeeds.Readiness`)
 - `C.SUP` = Supplies (`companyNeeds.Supplies`)
-- `C.EQ` = Equipment (`companyNeeds.Equipment`)
 - `C.MEN` = Troop Loss (`troopLoss`)
 - `C.FOOD` = Food (`foodLoss` for loss, `companyNeeds.Supplies` for gain)
 

@@ -38,7 +38,6 @@ namespace Enlisted.Features.Company
             // Initial base degradation rates are hard-coded while the configuration system is being expanded.
             // NOTE: Supplies degradation is handled by CompanySupplyManager (unified logistics tracking).
             var readinessDegradation = 2;
-            var equipmentDegradation = 3;
             var moraleDegradation = 1;
             var restDegradation = 4;
 
@@ -46,13 +45,6 @@ namespace Enlisted.Features.Company
             bool isInCombat = army?.MapEvent != null;
             bool isOnLongMarch = army is { IsMoving: true, CurrentSettlement: null };
             var lowMorale = needs.Morale < 40;
-
-            // Accelerated degradation from combat
-            if (isInCombat)
-            {
-                equipmentDegradation += 10;
-                ModLogger.Debug(LogCategory, "Army in combat: accelerated Equipment degradation");
-            }
 
             // Accelerated degradation from long marches
             if (isOnLongMarch)
@@ -71,18 +63,15 @@ namespace Enlisted.Features.Company
 
             // Apply degradation (Supplies handled separately by CompanySupplyManager)
             var oldReadiness = needs.Readiness;
-            var oldEquipment = needs.Equipment;
             var oldMorale = needs.Morale;
             var oldRest = needs.Rest;
 
             needs.SetNeed(CompanyNeed.Readiness, needs.Readiness - readinessDegradation);
-            needs.SetNeed(CompanyNeed.Equipment, needs.Equipment - equipmentDegradation);
             needs.SetNeed(CompanyNeed.Morale, needs.Morale - moraleDegradation);
             needs.SetNeed(CompanyNeed.Rest, needs.Rest - restDegradation);
 
             // Log changes
             ModLogger.Debug(LogCategory, $"Readiness: {oldReadiness} -> {needs.Readiness} (-{readinessDegradation})");
-            ModLogger.Debug(LogCategory, $"Equipment: {oldEquipment} -> {needs.Equipment} (-{equipmentDegradation})");
             ModLogger.Debug(LogCategory, $"Morale: {oldMorale} -> {needs.Morale} (-{moraleDegradation})");
             ModLogger.Debug(LogCategory, $"Rest: {oldRest} -> {needs.Rest} (-{restDegradation})");
 
@@ -111,7 +100,6 @@ namespace Enlisted.Features.Company
 
             // Check each need against thresholds
             CheckNeedThreshold(needs.Readiness, CompanyNeed.Readiness, criticalThresholdHigh, criticalThresholdLow, warnings);
-            CheckNeedThreshold(needs.Equipment, CompanyNeed.Equipment, criticalThresholdHigh, criticalThresholdLow, warnings);
             CheckNeedThreshold(needs.Morale, CompanyNeed.Morale, criticalThresholdHigh, criticalThresholdLow, warnings);
             CheckNeedThreshold(needs.Rest, CompanyNeed.Rest, criticalThresholdHigh, criticalThresholdLow, warnings);
             CheckNeedThreshold(needs.Supplies, CompanyNeed.Supplies, criticalThresholdHigh, criticalThresholdLow, warnings);
@@ -164,7 +152,6 @@ namespace Enlisted.Features.Company
                 // Return default moderate predictions
                 predictions[CompanyNeed.Readiness] = 60;
                 predictions[CompanyNeed.Supplies] = 60;
-                predictions[CompanyNeed.Equipment] = 60;
                 predictions[CompanyNeed.Morale] = 60;
                 predictions[CompanyNeed.Rest] = 60;
                 return predictions;
@@ -183,14 +170,12 @@ namespace Enlisted.Features.Company
                 {
                     predictions[CompanyNeed.Readiness] = needsPrediction["Readiness"]?.Value<int>() ?? 60;
                     predictions[CompanyNeed.Supplies] = needsPrediction["Supplies"]?.Value<int>() ?? 60;
-                    predictions[CompanyNeed.Equipment] = needsPrediction["Equipment"]?.Value<int>() ?? 60;
                     predictions[CompanyNeed.Morale] = needsPrediction["Morale"]?.Value<int>() ?? 60;
                     predictions[CompanyNeed.Rest] = needsPrediction["Rest"]?.Value<int>() ?? 60;
 
                     ModLogger.Debug(LogCategory, $"Predicted needs for context '{context}': " +
                         $"Readiness={predictions[CompanyNeed.Readiness]}, " +
                         $"Supplies={predictions[CompanyNeed.Supplies]}, " +
-                        $"Equipment={predictions[CompanyNeed.Equipment]}, " +
                         $"Morale={predictions[CompanyNeed.Morale]}, " +
                         $"Rest={predictions[CompanyNeed.Rest]}");
                 }
@@ -199,7 +184,6 @@ namespace Enlisted.Features.Company
                     // Fallback to default predictions
                     predictions[CompanyNeed.Readiness] = 60;
                     predictions[CompanyNeed.Supplies] = 60;
-                    predictions[CompanyNeed.Equipment] = 60;
                     predictions[CompanyNeed.Morale] = 60;
                     predictions[CompanyNeed.Rest] = 60;
 
@@ -213,7 +197,6 @@ namespace Enlisted.Features.Company
                 // Return default predictions on error
                 predictions[CompanyNeed.Readiness] = 60;
                 predictions[CompanyNeed.Supplies] = 60;
-                predictions[CompanyNeed.Equipment] = 60;
                 predictions[CompanyNeed.Morale] = 60;
                 predictions[CompanyNeed.Rest] = 60;
             }
@@ -282,7 +265,6 @@ namespace Enlisted.Features.Company
             return need switch
             {
                 CompanyNeed.Readiness => needs.Readiness,
-                CompanyNeed.Equipment => needs.Equipment,
                 CompanyNeed.Morale => needs.Morale,
                 CompanyNeed.Rest => needs.Rest,
                 CompanyNeed.Supplies => needs.Supplies,

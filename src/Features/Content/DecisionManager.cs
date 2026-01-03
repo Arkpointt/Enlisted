@@ -197,9 +197,12 @@ namespace Enlisted.Features.Content
             {
                 result.IsAvailable = false;
                 result.IsVisible = false;
+                ModLogger.Debug(LogCategory, "CheckAvailability: Decision is null");
                 return result;
             }
 
+            ModLogger.Debug(LogCategory, $"CheckAvailability: {decision.Id}");
+            
             var enlistment = EnlistmentBehavior.Instance;
             var escalation = EscalationManager.Instance;
 
@@ -339,6 +342,15 @@ namespace Enlisted.Features.Content
             // Gate 9: Baggage access decision - only show when baggage is accessible
             if (decision.Id.Equals("dec_baggage_access", StringComparison.OrdinalIgnoreCase))
             {
+                // Gate 9a: Block baggage access if bag check is still pending (onboarding not complete)
+                if (enlistment?.IsBagCheckPending == true)
+                {
+                    result.IsAvailable = false;
+                    result.UnavailableReason = "Sort out storage arrangements with the quartermaster first";
+                    ModLogger.Debug(LogCategory, "Baggage access blocked: bag check pending");
+                    return result;
+                }
+                
                 var baggageManager = Logistics.BaggageTrainManager.Instance;
                 if (baggageManager != null)
                 {
@@ -352,11 +364,15 @@ namespace Enlisted.Features.Content
                         result.IsAvailable = false;
                         result.IsVisible = false;
                         result.UnavailableReason = "Baggage not currently accessible";
+                        ModLogger.Debug(LogCategory, $"Baggage access blocked: state={accessState}");
                         return result;
                     }
+                    
+                    ModLogger.Debug(LogCategory, $"Baggage access available: state={accessState}");
                 }
             }
 
+            ModLogger.Debug(LogCategory, $"CheckAvailability result: {decision.Id} - Available={result.IsAvailable}, Visible={result.IsVisible}");
             return result;
         }
 

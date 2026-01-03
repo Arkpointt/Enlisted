@@ -114,6 +114,25 @@ namespace Enlisted.Features.Camp.Models
         public bool AtSea { get; set; }
 
         /// <summary>
+        /// Required condition states for this opportunity to appear.
+        /// Examples: "HasAnyCondition", "HasSevereCondition"
+        /// </summary>
+        public List<string> ConditionStates { get; set; } = new List<string>();
+
+        /// <summary>
+        /// Required medical pressure levels for this opportunity to appear.
+        /// Examples: "Moderate", "High", "Critical"
+        /// Maps to medical risk escalation track values.
+        /// </summary>
+        public List<string> MedicalPressure { get; set; } = new List<string>();
+
+        /// <summary>
+        /// If true, opportunity is hidden while player is under medical care.
+        /// Used for "Seek Medical Care" to hide once treatment has begun.
+        /// </summary>
+        public bool SuppressWhenTreated { get; set; }
+
+        /// <summary>
         /// True if this opportunity matches the current camp routine schedule.
         /// Set during fitness calculation when the opportunity's type matches a scheduled activity category.
         /// Used for UI display to indicate "[Scheduled]" activities.

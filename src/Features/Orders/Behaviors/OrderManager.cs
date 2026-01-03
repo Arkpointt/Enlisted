@@ -1349,8 +1349,6 @@ namespace Enlisted.Features.Orders.Behaviors
                         return "Morale breaking - Risk of desertion";
                     case CompanyNeed.Rest:
                         return "Men exhausted - Need rest urgently";
-                    case CompanyNeed.Equipment:
-                        return "Equipment in poor condition - Combat capability compromised";
                     default:
                         return $"{needStr} is critically low";
                 }
@@ -1369,8 +1367,6 @@ namespace Enlisted.Features.Orders.Behaviors
                         return "Morale lifted significantly";
                     case CompanyNeed.Rest:
                         return "Men well-rested and ready";
-                    case CompanyNeed.Equipment:
-                        return "Equipment in good condition";
                     default:
                         return $"{needStr} significantly improved";
                 }
@@ -1387,8 +1383,6 @@ namespace Enlisted.Features.Orders.Behaviors
                         return "Morale improving";
                     case CompanyNeed.Rest:
                         return "Men recovering from fatigue";
-                    case CompanyNeed.Equipment:
-                        return "Equipment condition improved";
                     default:
                         return $"{needStr} improved";
                 }
@@ -1407,8 +1401,6 @@ namespace Enlisted.Features.Orders.Behaviors
                         return "Morale declining";
                     case CompanyNeed.Rest:
                         return "Men growing exhausted";
-                    case CompanyNeed.Equipment:
-                        return "Equipment wearing down";
                     default:
                         return $"{needStr} declined significantly";
                 }
@@ -1425,8 +1417,6 @@ namespace Enlisted.Features.Orders.Behaviors
                         return "Morale slipping";
                     case CompanyNeed.Rest:
                         return "Men growing tired";
-                    case CompanyNeed.Equipment:
-                        return "Equipment condition declining";
                     default:
                         return $"{needStr} declined";
                 }

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Enlisted.Features.Camp;
+using Enlisted.Features.Camp.Models;
 using Enlisted.Features.Company;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
@@ -86,11 +88,13 @@ namespace Enlisted.Features.Content
         {
             if (_isShowingEvent)
             {
+                ModLogger.Debug(LogCategory, $"Event delivery blocked: currently showing {_currentEvent?.Id ?? "unknown"}");
                 return;
             }
 
             if (_pendingEvents.Count == 0)
             {
+                ModLogger.Debug(LogCategory, "Event delivery: queue is empty");
                 return;
             }
 
@@ -106,7 +110,8 @@ namespace Enlisted.Features.Content
             _currentEvent = _pendingEvents.Dequeue();
             _isShowingEvent = true;
 
-            ModLogger.Info(LogCategory, $"Delivering event: {_currentEvent.Id}");
+            var category = _currentEvent.Category ?? "event";
+            ModLogger.Info(LogCategory, $"Delivering {category}: {_currentEvent.Id} (queue remaining: {_pendingEvents.Count})");
 
             ShowEventPopup(_currentEvent);
         }
@@ -350,16 +355,35 @@ namespace Enlisted.Features.Content
 
                 if (!isCancelOption)
                 {
-                    // Player committed to an action - record cooldown
+                    ModLogger.Info(LogCategory, $"Non-cancel option selected: {option.Id} - recording cooldown");
+                    
+                    // Player committed to an action - record decision cooldown
                     DecisionManager.Instance?.RecordDecisionSelected(_currentEvent.Id);
                     ModLogger.Info(LogCategory, $"Decision cooldown recorded for: {_currentEvent.Id}");
+
+                    // Also record opportunity engagement if this decision was triggered by a camp opportunity
+                    // This ensures non-immediate opportunities get their cooldown tracked properly
+                    if (!string.IsNullOrEmpty(_currentEvent.OriginatingOpportunityId) &&
+                        !string.IsNullOrEmpty(_currentEvent.OriginatingOpportunityType))
+                    {
+                        ModLogger.Debug(LogCategory, $"Recording opportunity engagement: {_currentEvent.OriginatingOpportunityId}");
+                        var generator = CampOpportunityGenerator.Instance;
+                        if (generator != null)
+                        {
+                            if (System.Enum.TryParse<OpportunityType>(_currentEvent.OriginatingOpportunityType, out var oppType))
+                            {
+                                generator.RecordEngagement(_currentEvent.OriginatingOpportunityId, oppType);
+                                ModLogger.Info(LogCategory, $"Opportunity engagement recorded for: {_currentEvent.OriginatingOpportunityId}");
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    ModLogger.Debug(LogCategory, $"Cancel option selected - no cooldown recorded");
+                    ModLogger.Info(LogCategory, $"Cancel option selected: {option.Id} - no cooldown recorded for {_currentEvent?.Id}");
                 }
             }
-
+            
             // Track declined promotions (player chose "not ready" or "decline" in proving event)
             if (_currentEvent != null && _currentEvent.Id.StartsWith("promotion_", StringComparison.OrdinalIgnoreCase))
             {
@@ -399,6 +423,10 @@ namespace Enlisted.Features.Content
                 {
                     ModLogger.Info(LogCategory, $"Risky option roll: {roll} vs {actualChance}% -> {(success ? "SUCCESS" : "FAILURE")}");
                 }
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, $"Non-risky option selected: {option.Id}");
             }
 
             // Apply base effects first (always applied)
@@ -2532,23 +2560,34 @@ namespace Enlisted.Features.Content
         {
             try
             {
-                // Switch back to the decisions menu to trigger a refresh
-                // This forces OnDecisionsMenuInit to run again, rebuilding the cached entries
+                // Refresh whichever menu the player is currently on
+                // This forces the menu to rebuild, showing updated cooldowns and removing completed decisions
                 var currentMenuId = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId;
-                if (currentMenuId != null && currentMenuId == "enlisted_decisions")
+                
+                ModLogger.Info(LogCategory, $"Requesting decision menu refresh (current menu: {currentMenuId})");
+                
+                if (currentMenuId != null && 
+                    (currentMenuId == "enlisted_decisions" || currentMenuId == "enlisted_status"))
                 {
-                    // We're already on the decisions menu, so force a refresh by switching away and back
+                    // Force a refresh by switching to the same menu on next frame
+                    // This rebuilds the cached entries and updates availability states
                     NextFrameDispatcher.RunNextFrame(() =>
                     {
                         try
                         {
-                            GameMenu.SwitchToMenu("enlisted_decisions");
+                            ModLogger.Info(LogCategory, $"Refreshing menu (next frame): {currentMenuId}");
+                            GameMenu.SwitchToMenu(currentMenuId);
+                            ModLogger.Debug(LogCategory, $"Menu refresh completed: {currentMenuId}");
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error(LogCategory, "Error refreshing decisions menu after decision", ex);
+                            ModLogger.Error(LogCategory, $"Error refreshing {currentMenuId} after decision", ex);
                         }
                     });
+                }
+                else
+                {
+                    ModLogger.Debug(LogCategory, $"Menu refresh skipped - not on enlisted menu (current: {currentMenuId})");
                 }
             }
             catch (Exception ex)
@@ -2584,11 +2623,14 @@ namespace Enlisted.Features.Content
 
             var resolved = textObject.ToString();
 
-            // If resolution returned the raw {=...} pattern, the lookup failed - use fallback directly
+            // If resolution returned the raw {=...} pattern, the lookup failed - use fallback with variable substitution
             if (resolved.StartsWith("{="))
             {
                 ModLogger.Debug(LogCategory, $"XML lookup failed for '{textId}', using fallback");
-                return effectiveFallback ?? string.Empty;
+                // Create new TextObject from fallback and substitute variables
+                var fallbackTextObject = new TextObject(effectiveFallback ?? string.Empty);
+                SetEventTextVariables(fallbackTextObject);
+                return fallbackTextObject.ToString();
             }
 
             return resolved;

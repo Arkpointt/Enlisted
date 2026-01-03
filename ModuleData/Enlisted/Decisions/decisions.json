@@ -26,12 +26,11 @@
           "text": "Spend time maintaining your equipment.",
           "effects": {
             "fatigue": 1,
-            "equipment_condition": 10,
             "discipline": -1
           },
           "resultTextId": "dec_maintain_gear_result",
           "resultText": "You work methodically - cleaning rust, sharpening edges, oiling leather. Your gear is ready for whatever comes.",
-          "tooltip": "Improves equipment condition. Costs 1 fatigue."
+          "tooltip": "Maintain your gear. Costs 1 fatigue."
         },
         {
           "id": "cancel",

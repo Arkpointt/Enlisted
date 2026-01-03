@@ -320,7 +320,9 @@ namespace Enlisted.Features.Conversations.Data
                 DaysEnlisted = contextJson["days_enlisted"]?.Value<int?>(),
                 RecentlyPromoted = contextJson["recently_promoted"]?.Value<bool?>(),
                 LastPurchaseCategory = contextJson["last_purchase_category"]?.ToString(),
-                BaggageRequestType = contextJson["baggage_request_type"]?.ToString()
+                BaggageRequestType = contextJson["baggage_request_type"]?.ToString(),
+                BaggageAccess = contextJson["baggage_access"]?.ToString(),
+                BaggageDelayed = contextJson["baggage_delayed"]?.Value<bool?>()
             };
 
             return context;

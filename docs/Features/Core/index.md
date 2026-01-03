@@ -54,7 +54,7 @@ The unit's experience is now strategically aware. Your orders and events reflect
 - Doc: **[Core Gameplay](core-gameplay.md)** (Strategic Context section)
 
 ### 6) Monitor Company Status
-The unit's effectiveness is tracked via five core needs: Readiness, Morale, Supplies, Equipment, and Rest. The **Company Status Report** provides immersive descriptions of each need with contextual explanations.
+The unit's effectiveness is tracked via four core needs: Readiness, Morale, Supplies, and Rest. The **Company Status Report** provides immersive descriptions of each need with contextual explanations.
 - Doc: **[News & Reporting System](../UI/news-reporting-system.md)** (Company Status section)
 
 ### 7) Read the Daily Brief

@@ -47,14 +47,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
             {
                 // Resolve the explicit interface implementation:
                 // void IMapStateHandler.OnMapConversationOver() in SandBox.View.Map.MapScreen
-                var mapScreenType = System.Type.GetType("SandBox.View.Map.MapScreen, SandBox.View");
+                // Use AccessTools.TypeByName which searches all loaded assemblies (more reliable than Type.GetType)
+                var mapScreenType = AccessTools.TypeByName("SandBox.View.Map.MapScreen");
                 if (mapScreenType == null)
                 {
                     ModLogger.Error("Bootstrap", "Failed to find MapScreen type for MapConversationEndPatch");
                     return null;
                 }
                 
-                var interfaceType = System.Type.GetType("TaleWorlds.CampaignSystem.GameState.IMapStateHandler, TaleWorlds.CampaignSystem");
+                var interfaceType = AccessTools.TypeByName("TaleWorlds.CampaignSystem.GameState.IMapStateHandler");
                 if (interfaceType == null)
                 {
                     ModLogger.Error("Bootstrap", "Failed to find IMapStateHandler interface for MapConversationEndPatch");
@@ -67,6 +68,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     if (interfaceMap.InterfaceMethods[i].Name == "OnMapConversationOver")
                     {
+                        ModLogger.Debug("Bootstrap", "MapConversationEndPatch: Found OnMapConversationOver method");
                         return interfaceMap.TargetMethods[i];
                     }
                 }

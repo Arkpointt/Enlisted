@@ -11,7 +11,7 @@
 ## Index
 - [Overview](#overview)
 - [Architecture](#architecture)
-- [The Five Company Needs](#the-five-company-needs)
+- [The Four Company Needs](#the-four-company-needs)
 - [Camp Activities System](#camp-activities-system)
 - [CampLifeBehavior (Backend Layer)](#camplifebehavior-backend-layer)
 - [Fatigue System Integration](#fatigue-system-integration)
@@ -47,8 +47,7 @@ Camp life simulation consists of four integrated systems:
 │  Company Needs (0-100)                              │
 │  ├─ Readiness: Combat preparation                   │
 │  ├─ Morale: Unit psychological state                │
-│  ├─ Supplies: Food & consumables                    │
-│  ├─ Equipment: Gear condition                       │
+│  ├─ Supplies: Food & logistics                      │
 │  └─ Rest: Fatigue recovery                          │
 │                                                      │
 │  Fatigue (0-24)                                     │
@@ -87,7 +86,7 @@ These layers interact:
 
 ---
 
-## The Five Company Needs
+## The Four Company Needs
 
 The player-facing simulation layer tracks five transparent metrics (0-100) representing your company's operational status. These are visible in the main Enlisted Status menu (COMPANY REPORTS section) and Camp Hub (COMPANY STATUS summary) with narrative descriptions.
 
@@ -138,21 +137,7 @@ The player-facing simulation layer tracks five transparent metrics (0-100) repre
 - Risk of food shortage events
 - Morale penalties
 
-### 4. Equipment (Gear Condition)
-**Range:** 0-100  
-**What it represents:** Weapon and armor maintenance, gear availability
-
-**Affected by:**
-- Equipment check decisions (+5 to +10)
-- Combat wear (-10 per battle, -15 if intense)
-- Daily degradation (-3 base, -10 if in combat)
-
-**Impact when low (<30):**
-- Increased maintenance costs
-- Risk of equipment failure events
-- Combat effectiveness penalties
-
-### 5. Rest (Fatigue Recovery)
+### 4. Rest (Fatigue Recovery)
 **Range:** 0-100  
 **What it represents:** Physical recovery, sleep quality, exhaustion levels
 
@@ -188,13 +173,11 @@ The system forecasts upcoming requirements based on **Strategic Context** (loade
 **Grand Campaign (Offensive):**
 - Readiness: 85 (high combat demands)
 - Supplies: 80 (long operations)
-- Equipment: 75 (heavy wear)
 - Morale: 70 (sustained effort)
 - Rest: 50 (intense tempo)
 
 **Last Stand (Desperate Defense):**
 - Readiness: 90 (critical preparation)
-- Equipment: 85 (heavy combat)
 - Morale: 65 (stress and fear)
 - Supplies: 60 (disrupted logistics)
 - Rest: 40 (emergency operations)
@@ -262,7 +245,7 @@ Accessed via **Camp Hub (C key)** → Category navigation. Decisions are filtere
 - `dec_check_supplies`: Audit company stocks (reveals needs)
 
 **EQUIPMENT (2 decisions):**
-- `dec_maintain_gear`: Perform maintenance (+Equipment need)
+- `dec_maintain_gear`: Perform maintenance (roleplay flavor)
 - `dec_visit_quartermaster`: Open quartermaster shop
 
 **RISK_TAKING (3 decisions):**
@@ -605,7 +588,7 @@ Orders have `CompanyNeeds` effects defined in JSON:
 - Recent changes noted ("Rest has declined significantly")
 
 **Company Status Report:**
-- Full breakdown of all five needs
+- Full breakdown of all four needs
 - Status level text (Excellent/Good/Fair/Poor/Critical)
 - Contextual explanations (why each need is changing)
 - Upcoming predictions based on strategic context

@@ -3,7 +3,7 @@
 **Summary:** The company supply system tracks logistical health of the military unit including rations, equipment maintenance materials, ammunition/consumables, and fodder/animal care supplies. Supply levels are consumed through time and combat, and replenished through quartermaster purchases and settlement resupply, creating realistic military logistics gameplay.
 
 **Status:** ⚠️ Mixed (Core implemented, enhancements planned)  
-**Last Updated:** 2025-12-31  
+**Last Updated:** 2026-01-03  
 **Related Docs:** [Quartermaster System](quartermaster-system.md), [Provisions & Rations](provisions-rations-system.md)
 
 ---
@@ -37,7 +37,10 @@ Company Supply is scoped to the **Company you are enlisted in** (i.e., the **enl
 
 - The player receives rations and supplies as part of their enlisted service directly
 - Supply tracking uses party size and activity from the enlisted lord's party for consumption calculations
+- **Battle casualties** are counted ONLY from the lord's party, not from all army parties
 - If the enlisted lord is attached to an army, supply calculations still use the enlisted lord's party metrics (not army-wide values)
+
+**Bug Fix (Jan 2026):** Previously, battle casualties were incorrectly counted from all army parties, causing supply to drop from 86% to 0% in large battles with 1000+ army-wide casualties. Now correctly scoped to only the lord's party.
 
 ---
 
@@ -104,6 +107,9 @@ Supply reduces by:
 ```csharp
 public int CalculateBattleSupplyLoss(int troopsLost, bool playerVictory)
 {
+    // IMPORTANT: troopsLost is ONLY casualties from the lord's party, not army-wide
+    // Bug fix (Jan 2026): Previously counted all army casualties, causing excessive losses
+    
     // Base loss from casualties
     int casualtyLoss = troopsLost / 10; // 10 casualties = -1% supply
     
@@ -118,10 +124,12 @@ public int CalculateBattleSupplyLoss(int troopsLost, bool playerVictory)
 ```
 
 **Examples:**
-- Victory with 10 casualties: -1% supply
-- Victory with 30 casualties: -3% supply
-- Defeat with 20 casualties: -7% supply (2% + 5% abandoned)
+- Victory with 10 casualties (lord's party): -1% supply
+- Victory with 30 casualties (lord's party): -3% supply
+- Defeat with 20 casualties (lord's party): -7% supply (2% + 5% abandoned)
 - Siege assault victory: -8% supply (5% casualties + 3% siege equipment)
+
+**Note:** Casualties are counted ONLY from the enlisted lord's party, not from the entire army. This ensures supply losses are scoped to the Company you're serving in, not the broader military coalition.
 
 ### **Special Events (Planned - Not Yet Implemented):**
 

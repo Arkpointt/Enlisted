@@ -468,7 +468,6 @@
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterLeaveSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\JoinEncounterAutoSelectPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\JoinSiegeEventAutoSelectPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PlayerEncounterFinishSafetyPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs"/>
@@ -484,6 +483,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\NavalShipExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleShipAssignmentPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleArmyWaitCrashFix.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\NavalNavigationCapabilityPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalMobilePartyVisualUpdateEntityPositionCrashGuardPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\RaftStateSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PlayerIsAtSeaTagCrashFix.cs"/>
@@ -505,6 +505,8 @@
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\CompanionCaptainBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PrisonerActionBlockPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\CapturedLordConversationSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\EncounterCaptureEnemySuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EndCaptivityCleanupPatch.cs"/>
   </ItemGroup>
   <!-- ========================================================================

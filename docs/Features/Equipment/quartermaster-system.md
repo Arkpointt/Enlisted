@@ -288,9 +288,7 @@ QM: "Supplies are holding well. What do you require?"
 
 Player: "How are we looking? Supply-wise, I mean."
 
-QM: "Supplies are at 65%. Adequate for now, but we're watching it. 
-     Equipment condition is a bit rough - lot of worn pieces - but 
-     serviceable."
+QM: "Supplies are at 65%. Adequate for now, but we're watching it."
 
 Player: "That's all for now."
 

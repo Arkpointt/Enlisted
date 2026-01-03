@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Enlisted.Features.Company;
@@ -842,7 +842,6 @@ namespace Enlisted.Features.Content
                 "rest" => needs.Rest,
                 "morale" => needs.Morale,
                 "readiness" => needs.Readiness,
-                "equipment" => needs.Equipment,
                 _ => 100
             };
         }

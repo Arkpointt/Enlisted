@@ -115,20 +115,13 @@ When muster arrives, players proceed to the Pay Line stage where they choose fro
 If the player has a pending discharge, additional options appear:
 
 **5. Process Final Discharge**
-- Receive final pay settlement
-- Service ends, pension activated
-- Equipment reclaimed (see [Discharge System](onboarding-discharge-system.md))
-
-**6. Smuggle Out (Deserter)**
-- Keep all gear, lose pension
-- Deserter penalties applied
-- Criminal record and faction hostility
-
-**5. Process Final Discharge**
 - **Only available if pending discharge requested**
+- **Confirmation popup:** Shows detailed breakdown of what player will receive (severance pay, pension with days served calculation, relation changes, gear handling) based on discharge band
 - Ends service honorably
 - Pays final wages + severance based on service band
 - Activates pension system
+- Equipment reclaimed (see [Discharge System](onboarding-discharge-system.md))
+- Player must confirm in popup before discharge processes
 
 **6. Smuggle Out (Deserter)**
 - **Only available if pending discharge requested**

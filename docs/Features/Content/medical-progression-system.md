@@ -272,14 +272,14 @@ When medical pressure is detected, the orchestrator queues contextual opportunit
 **Opportunity Types:**
 | Pressure Level | Condition | Opportunity Queued |
 |----------------|-----------|-------------------|
-| Critical | Severe+ condition | `opp_urgent_medical_care` |
+| Critical | Severe+ condition | `opp_urgent_medical` |
 | High | Untreated condition | `opp_seek_medical_care` |
 | Moderate+ | High risk, no condition yet | `opp_preventive_rest` |
 
 **Opportunity Behavior:**
 - Opportunities appear in DECISIONS menu as player-initiated actions
 - One medical opportunity queued per day (prevents spam)
-- Opportunities persist until chosen or overridden
+- Opportunities are filtered by condition state requirements (automatically disappear when player recovers)
 - Integrate with existing Camp Opportunity system
 
 **Example Flow:**

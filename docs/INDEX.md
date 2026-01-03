@@ -2,8 +2,8 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2026-01-01 (Promotion state reset fix, maritime medical system)
-**Total Documents:** 50
+**Last Updated:** 2026-01-02 (Added captivity and village raid analysis)
+**Total Documents:** 53
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
 
@@ -233,6 +233,9 @@
 | [native-map-incidents.md](Reference/native-map-incidents.md) | Native game incidents: all vanilla map incidents (bandits, prisoners, travelers), trigger conditions, outcomes, loot tables - use to avoid conflicts with native content | 📚 Reference |
 | [map-incidents-warsails.md](Reference/map-incidents-warsails.md) | Naval DLC map incidents: Warsails expansion content, naval encounters, coastal events - use to avoid DLC conflicts | 📚 Reference |
 | [ai-behavior-analysis.md](Reference/ai-behavior-analysis.md) | AI behavior analysis: native AI decision-making patterns, party movement logic, combat AI, lord behavior - use for AI-aware feature design | 📚 Reference |
+| [battle-system-complete-analysis.md](Reference/battle-system-complete-analysis.md) | Complete battle and encounter system analysis: all 68 battle/encounter/captivity/raid menus, UpdateInternal() state machine (12 states), complete battle lifecycles (manual attack, autosim, siege assault), captivity flow (13 menus), village raid flow (10 menus), menu transition flows with exact code references - use to understand native battle handling and verify enlisted mod coverage | 📚 Reference |
+| [complete-menu-analysis.md](Reference/complete-menu-analysis.md) | Complete native menu system analysis: tick-based menu refresh system, GetGenericStateMenu() priority order, siege menu flow (join_siege_event vs menu_siege_strategies), BesiegerCamp mechanics, race condition timeline documentation, captivity and village raid menus cataloged - use to understand menu transitions and timing issues | 📚 Reference |
+| [captivity-and-raid-analysis.md](Reference/captivity-and-raid-analysis.md) | Captivity and village raid systems deep dive: complete captivity flow (capture → 13 menu paths → release), army removal during captivity, village raid system (lord raiding while enlisted), enlisted mod gaps and recommendations - use to understand captivity handling and plan enlisted captivity features | 📚 Reference |
 | [opportunities-system-spec.md](Reference/opportunities-system-spec.md) | ⚠️ **LEGACY** - Replaced by [Camp Simulation System](Features/Campaign/camp-simulation-system.md) | 🗄️ Deprecated |
 | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Two-layer camp system: Background Simulation (autonomous company life) + Camp Opportunities (29 player activities with learning), Decision Scheduling (Phase 9). Complete implementation documentation. | ✅ Implemented |
 

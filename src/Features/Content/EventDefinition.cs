@@ -83,6 +83,18 @@ namespace Enlisted.Features.Content
         /// Available options the player can choose from when this event fires.
         /// </summary>
         public List<EventOption> Options { get; set; } = [];
+
+        /// <summary>
+        /// Opportunity ID that triggered this event, if any.
+        /// Used to track engagement and cooldown for camp opportunities.
+        /// </summary>
+        public string OriginatingOpportunityId { get; set; }
+
+        /// <summary>
+        /// Opportunity type that triggered this event, if any.
+        /// Used for engagement tracking and learning system integration.
+        /// </summary>
+        public string OriginatingOpportunityType { get; set; }
     }
 
     /// <summary>

@@ -218,11 +218,10 @@ enlisted transforms bannerlord into a deep soldier career simulator with **270 n
 - schedule forecast ui shows what's happening
 - routine flavor text for immersion
 
-**company needs (5 metrics)**
+**company needs (4 metrics)**
 - readiness: combat effectiveness and preparation
 - morale: the unit's will to fight
-- supplies: food and basic consumables
-- equipment: maintenance and quality of gear
+- supplies: food, ammunition, maintenance materials, and logistics
 - rest: recovery from fatigue
 - all metrics (0-100%) affect available options and event outcomes
 - transparent system with clear cause and effect

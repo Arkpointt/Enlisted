@@ -184,7 +184,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     if (EnlistmentBehavior.Instance?.IsEnlisted == true)
                     {
-                        GameMenu.ActivateGameMenu("enlisted_status");
+                        // Use SafeActivateEnlistedMenu to respect siege detection
+                        EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                     }
                 });
             }
@@ -445,7 +446,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var enlistment = EnlistmentBehavior.Instance;
                     return enlistment != null && enlistment.IsPendingDischarge;
                 },
-                _ => FinalizePendingDischarge(),
+                _ => ShowFinalPayDischargeConfirmation(),
                 false, 5);
 
             // Pay option 6: Slip Away in the Night (deserter)
@@ -723,14 +724,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var enlistment = EnlistmentBehavior.Instance;
                     if (enlistment != null && enlistment.IsEnlisted)
                     {
-                        enlistment.RequestDischarge();
-                        
-                        if (_currentMuster != null)
-                        {
-                            _currentMuster.PayOutcome = "final_discharge";
-                        }
-                        
-                        FinalizePendingDischarge();
+                        ShowDischargeConfirmation();
                     }
                     else
                     {
@@ -1744,6 +1738,209 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
+        /// Shows a confirmation dialog before processing discharge from the Request Discharge option.
+        /// </summary>
+        private void ShowDischargeConfirmation()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null || !enlistment.IsEnlisted)
+                {
+                    return;
+                }
+
+                // Calculate discharge details
+                var daysServed = (int)enlistment.DaysServed;
+                var lord = enlistment.CurrentLord;
+                var negativeRelation = lord != null && Hero.MainHero.GetRelation(lord) < 0;
+
+                // Determine discharge band
+                string band;
+                if (negativeRelation)
+                {
+                    band = "washout";
+                }
+                else if (daysServed >= 200)
+                {
+                    band = enlistment.EnlistmentTier >= 4 ? "heroic" : "veteran";
+                }
+                else if (daysServed >= 100)
+                {
+                    band = "honorable";
+                }
+                else
+                {
+                    band = "washout";
+                }
+
+                // Build description based on discharge band
+                var title = new TextObject("{=muster_discharge_confirm_title}Confirm Discharge").ToString();
+                string description;
+
+                switch (band)
+                {
+                    case "heroic":
+                    case "veteran":
+                        description = new TextObject(
+                            "{=muster_discharge_confirm_veteran}You will receive:\n\n" +
+                            "• Severance Pay: 3000 denars\n" +
+                            "• Pension: Daily payment for service rendered\n" +
+                            "• Relation: +30 with your lord\n" +
+                            "• Gear: Keep armor, weapons returned to inventory\n\n" +
+                            "Your service has been exemplary. Proceed with discharge?").ToString();
+                        break;
+
+                    case "honorable":
+                        description = new TextObject(
+                            "{=muster_discharge_confirm_honorable}You will receive:\n\n" +
+                            "• Severance Pay: 3000 denars\n" +
+                            "• Pension: Daily payment for service rendered\n" +
+                            "• Relation: +10 with your lord\n" +
+                            "• Gear: Keep armor, weapons returned to inventory\n\n" +
+                            "Your service has been satisfactory. Proceed with discharge?").ToString();
+                        break;
+
+                    default: // washout
+                        description = new TextObject(
+                            "{=muster_discharge_confirm_washout}Early discharge (washout):\n\n" +
+                            "• Severance Pay: None\n" +
+                            "• Pension: None\n" +
+                            "• Relation: -10 with your lord\n" +
+                            "• Gear: All equipment confiscated\n\n" +
+                            "This is not an honorable discharge. Proceed?").ToString();
+                        break;
+                }
+
+                var confirmData = new InquiryData(
+                    title,
+                    description,
+                    isAffirmativeOptionShown: true,
+                    isNegativeOptionShown: true,
+                    affirmativeText: new TextObject("{=muster_discharge_confirm_yes}Confirm Discharge").ToString(),
+                    negativeText: new TextObject("{=muster_discharge_confirm_no}Cancel").ToString(),
+                    affirmativeAction: () =>
+                    {
+                        try
+                        {
+                            enlistment.RequestDischarge();
+
+                            if (_currentMuster != null)
+                            {
+                                _currentMuster.PayOutcome = "final_discharge";
+                            }
+
+                            FinalizePendingDischarge();
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.ErrorCode(LogCategory, "E-MUSTER-005", "Error processing discharge confirmation", ex);
+                        }
+                    },
+                    negativeAction: () =>
+                    {
+                        // Cancel - just close the popup, remain on the menu
+                    });
+
+                InformationManager.ShowInquiry(confirmData);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode(LogCategory, "E-MUSTER-006", "Error showing discharge confirmation", ex);
+            }
+        }
+
+        /// <summary>
+        /// Shows a confirmation dialog before processing final pay discharge.
+        /// </summary>
+        private void ShowFinalPayDischargeConfirmation()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null || !enlistment.IsPendingDischarge)
+                {
+                    return;
+                }
+
+                // Get discharge band from enlistment (should already be calculated when RequestDischarge was called)
+                var band = enlistment.LastDischargeBand;
+                var daysServed = (int)enlistment.DaysServed;
+
+                // Build description based on discharge band
+                var title = new TextObject("{=muster_final_pay_confirm_title}Take Your Final Pay").ToString();
+                string description;
+
+                switch (band)
+                {
+                    case "heroic":
+                    case "veteran":
+                        description = new TextObject(
+                            "{=muster_final_pay_confirm_veteran}Collecting your final pay and pension.\n\n" +
+                            "• Severance Pay: 3000 denars\n" +
+                            "• Pension: Daily payment for {DAYS} days of service\n" +
+                            "• Relation: +30 with your lord\n" +
+                            "• Gear: Keep armor, weapons returned to inventory\n\n" +
+                            "Your exemplary service is complete. Proceed?")
+                            .SetTextVariable("DAYS", daysServed)
+                            .ToString();
+                        break;
+
+                    case "honorable":
+                        description = new TextObject(
+                            "{=muster_final_pay_confirm_honorable}Collecting your final pay and pension.\n\n" +
+                            "• Severance Pay: 3000 denars\n" +
+                            "• Pension: Daily payment for {DAYS} days of service\n" +
+                            "• Relation: +10 with your lord\n" +
+                            "• Gear: Keep armor, weapons returned to inventory\n\n" +
+                            "Your service is complete. Proceed?")
+                            .SetTextVariable("DAYS", daysServed)
+                            .ToString();
+                        break;
+
+                    default: // washout or other
+                        description = new TextObject(
+                            "{=muster_final_pay_confirm_washout}Processing discharge.\n\n" +
+                            "• Severance Pay: None\n" +
+                            "• Pension: None\n" +
+                            "• Relation: -10 with your lord\n" +
+                            "• Gear: All equipment confiscated\n\n" +
+                            "This discharge is not honorable. Proceed?").ToString();
+                        break;
+                }
+
+                var confirmData = new InquiryData(
+                    title,
+                    description,
+                    isAffirmativeOptionShown: true,
+                    isNegativeOptionShown: true,
+                    affirmativeText: new TextObject("{=muster_final_pay_yes}Take Final Pay").ToString(),
+                    negativeText: new TextObject("{=muster_final_pay_no}Cancel").ToString(),
+                    affirmativeAction: () =>
+                    {
+                        try
+                        {
+                            FinalizePendingDischarge();
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.ErrorCode(LogCategory, "E-MUSTER-007", "Error processing final pay discharge", ex);
+                        }
+                    },
+                    negativeAction: () =>
+                    {
+                        // Cancel - just close the popup, remain on the pay menu
+                    });
+
+                InformationManager.ShowInquiry(confirmData);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode(LogCategory, "E-MUSTER-008", "Error showing final pay confirmation", ex);
+            }
+        }
+
+        /// <summary>
         /// Proceeds to next stage after pay resolution.
         /// After pay, automatically processes ration exchange (handled by OnMusterCycleComplete),
         /// then moves to the next stage (inspection or promotion recap).
@@ -1860,7 +2057,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         if (EnlistmentBehavior.Instance?.IsEnlisted == true)
                         {
-                            GameMenu.ActivateGameMenu("enlisted_status");
+                            // Use SafeActivateEnlistedMenu to respect siege detection
+                            EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                         }
                     });
                 }

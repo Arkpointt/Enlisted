@@ -1,10 +1,10 @@
 # Encounter Safety System
 
-**Summary:** Prevents enlisted players from triggering unwanted map encounters while hidden, ensures automatic battle participation when lord enters combat, and provides reliable cleanup on discharge.
+**Summary:** Prevents enlisted players from triggering unwanted map encounters while hidden, ensures automatic battle participation when lord enters combat, provides reliable cleanup on discharge, and integrates with native menu system to yield when appropriate (e.g., siege menus).
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23  
-**Related Docs:** [enlistment.md](../Core/enlistment.md), [formation-assignment.md](../Combat/formation-assignment.md)
+**Last Updated:** 2026-01-03 (Added auto-cleanup for stale post-victory encounters)  
+**Related Docs:** [enlistment.md](../Core/enlistment.md), [formation-assignment.md](../Combat/formation-assignment.md), [battle-system-complete-analysis.md](../../Reference/battle-system-complete-analysis.md)
 
 ---
 
@@ -44,17 +44,19 @@ Prevents the player from triggering map encounters while enlisted by using the g
 - Smooth transitions between peace and battle states
 - Reliable cleanup when returning to normal campaign play
 - Hides native "Abandon army" and "Leave..." menu options while enlisted (join_encounter, encounter, army_wait, raiding_village)
+- Automatic cleanup of stale encounters after auto-resolve victories (prevents stuck encounter menus)
 
 **Purpose:**
 Keep enlisted players from accidentally entering encounters that would break military service or cause pathfinding crashes, while ensuring they correctly join their Lord's battles without engine conflicts.
 
 **Files:**
 - `src/Features/Enlistment/Behaviors/EncounterGuard.cs` - Static utility class for encounter state management
-- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` - Active battle monitoring and participation logic
-- `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs` - Wait in Reserve menu and battle wait handling
+- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` - Active battle monitoring, siege sync, and participation logic
+- `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs` - enlisted_status menu with native-yielding tick handler
+- `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs` - Wait in Reserve menu, battle wait handling, and stale encounter auto-cleanup (`TriggerPostBattleCleanup`)
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs` - UI suppression
-- `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battle
-- `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs` - Prevents menu stutter during reserve mode
+- `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battles
+- `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs` - Controls menu override logic, allows native menus when appropriate (sieges, battles)
 - `src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs` - Removes "Abandon army" options while enlisted; applied as a deferred patch on first campaign tick to avoid EncounterGameMenuBehavior static init issues
 - `src/Mod.GameAdapters/Patches/EncounterLeaveSuppressionPatch.cs` - Hides "Leave..." option from encounter menu while enlisted; applied as a deferred patch
 - `src/Mod.GameAdapters/Patches/EncounterSuppressionPatch.cs` - Blocks unwanted encounters, clears stale reserve flags
@@ -63,10 +65,243 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - `src/Mod.GameAdapters/Patches/NavalBattleShipAssignmentPatch.cs` - Fixes naval battle crash (assigns ship from lord's fleet)
 - `src/Mod.GameAdapters/Patches/PlayerEncounterFinishSafetyPatch.cs` - Crash protection for siege battle cleanup race condition
 - `src/Mod.GameAdapters/Patches/RaftStateSuppressionPatch.cs` - Prevents "stranded at sea" menu when lord has ships
+- `src/Mod.GameAdapters/Patches/NavalNavigationCapabilityPatch.cs` - Makes player inherit naval capability from lord/army to prevent army kick when traveling by sea
 
 ---
 
 ## How It Works
+
+### Native Menu Transition System
+
+Before understanding the enlisted mod's encounter handling, you must understand how the native game manages menu transitions and state changes.
+
+#### The Tick-Based Refresh System
+
+The native game uses a **tick handler** on every menu to automatically update state every frame:
+
+**Example:** `menu_siege_strategies` tick handler (`SiegeEventCampaignBehavior.cs:249-264`)
+
+```csharp
+private void game_menu_siege_strategies_on_tick(MenuCallbackArgs args, CampaignTime dt)
+{
+  // Check if this is still the correct menu to show
+  string genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
+  
+  if (genericStateMenu != "menu_siege_strategies")
+  {
+    // Wrong menu! Switch to correct one
+    if (!string.IsNullOrEmpty(genericStateMenu))
+      GameMenu.SwitchToMenu(genericStateMenu);
+    else
+      GameMenu.ExitToLast();
+  }
+  else
+  {
+    // Correct menu - refresh options based on current state
+    Campaign.Current.GameMenuManager.RefreshMenuOptionConditions(args.MenuContext);
+  }
+}
+```
+
+**Similar tick handlers exist for:**
+- `army_wait` → checks if player is still in army
+- `army_wait_at_settlement` → checks if army still at settlement
+- `encounter` → checks if battle still active
+- ALL settlement menus → check if player still at that location
+
+#### How Menus Decide What to Show
+
+The game uses two key methods:
+
+1. **`GetEncounterMenu()`** - When creating a NEW encounter (approaching enemy, arriving at siege)
+2. **`GetGenericStateMenu()`** - When checking CURRENT state (every tick while menu is open)
+
+**Example flow when approaching a siege:**
+
+```
+Frame N:   Player approaches siege camp
+           EncounterManager checks GetEncounterMenu()
+           Sees: mainParty.AttachedTo == null (not in army yet)
+           Opens: "join_siege_event" menu
+           
+Frame N+1: EnlistmentBehavior.OnRealtimeTick() runs
+           Joins player to lord's army: mainParty.Army = lordParty.Army
+           Sets: mainParty.AttachedTo = lordParty
+           
+Frame N+2: menu tick handler runs
+           Calls GetGenericStateMenu()
+           Sees: mainParty.AttachedTo != null (in army!)
+           Sees: army at siege location
+           Returns: "menu_siege_strategies"
+           Switches to that menu
+           
+Frame N+3: menu_siege_strategies tick handler runs
+           Calls RefreshMenuOptionConditions()
+           Updates available buttons based on:
+           - mainParty.BesiegerCamp (null = not commander)
+           - mainParty.Army (not null = army member)
+           Shows only: "Leave Army" option
+```
+
+#### The Race Condition Timeline
+
+| Frame | What Happens | Menu | Army State | Why |
+|-------|--------------|------|------------|-----|
+| N | Encounter check | - | Not in army | Native checks before tick |
+| N | Opens menu | `join_siege_event` | Not in army | Based on `AttachedTo == null` |
+| N+1 | Tick runs | `join_siege_event` | **Joined!** | `EnlistmentBehavior` processed |
+| N+2 | Tick handler checks | Switching... | In army | `GetGenericStateMenu()` returns different menu |
+| N+3 | New menu active | `menu_siege_strategies` | In army | Correct state |
+
+**Result:** For 1-2 frames, the wrong menu flashes before auto-correcting.
+
+#### Why This Matters for Enlisted Mod
+
+The enlisted mod must work WITH this system, not against it:
+
+1. **Respect tick timing** - State changes happen over multiple frames
+2. **Don't fight auto-correction** - Native will switch menus automatically
+3. **Use menu patches carefully** - Blocking wrong menus can break the flow
+4. **Sync army joining** - If possible, join army BEFORE encounter is created
+
+**Key files that handle this:**
+- `JoinEncounterAutoSelectPatch.cs` - Handles joining battles
+- `GenericStateMenuPatch.cs` - Keeps player in enlisted menus, allows native menus when appropriate
+- `EncounterSuppressionPatch.cs` - Blocks unwanted encounters entirely
+- `EnlistmentBehavior.cs` - State management via IsActive for siege waiting
+- `EnlistedMenuBehavior.cs` - enlisted_status tick handler that yields to native menus
+
+#### How enlisted_status Menu Integrates with Native System
+
+The `enlisted_status` menu is a **wait menu** (like `army_wait` or `menu_siege_strategies`) that keeps the player in their enlisted state while displaying information and options. However, there are times when native menus MUST take over:
+
+- **Sieges:** When lord's army starts besieging, `menu_siege_strategies` should appear
+- **Battles:** When lord enters combat, `encounter` menu should appear
+- **Settlements:** When explicitly visiting a town/castle (via "Visit Settlement" option)
+
+**The Two-Part Integration System:**
+
+**Part 1: GenericStateMenuPatch (Postfix on GetGenericStateMenu)**
+
+```csharp
+// File: GenericStateMenuPatch.cs
+public static void Postfix(ref string __result)
+{
+    // Check if lord is in siege
+    var lordInSiege = lordParty?.SiegeEvent != null || 
+                      lordParty?.BesiegerCamp != null || 
+                      lordParty?.BesiegedSettlement != null;
+    
+    // If at siege, allow native menu to flow through
+    if (lordInSiege)
+    {
+        ModLogger.Debug("Menu", $"Allowing native menu '{__result}' during siege");
+        return;  // Don't override - let native siege menu show
+    }
+    
+    // Otherwise, override to enlisted_status
+    if (__result == "army_wait" || __result == "army_wait_at_settlement")
+    {
+        __result = "enlisted_status";
+    }
+}
+```
+
+This patch controls WHAT menu native systems WANT to show. When at a siege, it returns early and lets native's result (`menu_siege_strategies` or `army_wait`) flow through unchanged.
+
+**Part 2: enlisted_status Tick Handler (OnEnlistedStatusTick)**
+
+```csharp
+// File: EnlistedMenuBehavior.cs
+private void OnEnlistedStatusTick(MenuCallbackArgs args, CampaignTime dt)
+{
+    // Check if native wants a different menu
+    var desiredMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
+    
+    // If native wants a different menu, yield to it
+    if (!string.IsNullOrEmpty(desiredMenu) && 
+        desiredMenu != "enlisted_status" && 
+        desiredMenu != "enlisted_battle_wait")
+    {
+        ModLogger.Info("Menu", 
+            $"OnEnlistedStatusTick: Native wants '{desiredMenu}' - yielding to native menu system");
+        GameMenu.SwitchToMenu(desiredMenu);
+        return;
+    }
+    
+    // Otherwise, stay in enlisted_status and refresh display
+    RefreshEnlistedStatusDisplay(args);
+}
+```
+
+This tick handler runs **every frame** while `enlisted_status` is open. It actively checks if native wants a different menu and yields when appropriate.
+
+**The Complete Flow When Siege Starts:**
+
+```
+Frame N:   Lord's army arrives at enemy castle
+           Player in enlisted_status menu (open for hours)
+           
+Frame N+1: BesiegerCamp created, lord.BesiegerCamp set
+           enlisted_status tick handler runs
+           Calls GetGenericStateMenu()
+           
+           → GenericStateMenuPatch.Postfix runs
+           → Detects lordInSiege = true
+           → Returns early, allowing native result
+           → Native returns "menu_siege_strategies"
+           
+           → OnEnlistedStatusTick receives "menu_siege_strategies"
+           → Logs: "Native wants 'menu_siege_strategies' - yielding to native menu system"
+           → Calls GameMenu.SwitchToMenu("menu_siege_strategies")
+           
+Frame N+2: menu_siege_strategies now active
+           Shows army member options ("Leave Army")
+           Player can now interact with siege
+```
+
+**Why This Design Works:**
+
+1. **No race conditions:** Tick handlers run every frame, catching state changes immediately
+2. **Native-friendly:** Mirrors exactly how native menus work (they all check GetGenericStateMenu)
+3. **Two-way coordination:** Patch controls what menu is desired, tick handler acts on it
+4. **Graceful transition:** Player sees smooth menu switch without flashing or loops
+
+**What Happens When Muster Fires Mid-Siege:**
+
+This explains why catching a muster during siege building caused the correct menu to appear:
+
+```
+Frame N:   enlisted_status open (hasn't checked GetGenericStateMenu yet this frame)
+Frame N+1: Muster sequence completes
+           Calls EnlistedMenuBehavior.SafeActivateEnlistedMenu()
+           
+           → SafeActivateEnlistedMenu checks lordInSiege
+           → Detects lord.BesiegerCamp != null
+           → Skips activation, logs: "Lord/army at siege - allowing native menu flow"
+           → Returns early without activating enlisted_status
+           
+           → Native menu system takes over
+           → GetGenericStateMenu() returns "menu_siege_strategies"
+           → menu_siege_strategies opens
+           → Correct menu appears!
+```
+
+The muster callback essentially "kicked" the menu system into re-evaluating what menu should be shown, which triggered the siege detection logic.
+
+**Before This Fix:**
+
+The `enlisted_status` menu would stay open indefinitely during sieges because:
+- It never called `GetGenericStateMenu()` to check if native wanted a different menu
+- Native's tick system only runs for the CURRENT menu - it couldn't switch away from `enlisted_status`
+- Player was stuck until something (like muster) caused a menu re-evaluation
+
+**After This Fix:**
+
+The `enlisted_status` menu actively participates in the native tick system:
+- Checks `GetGenericStateMenu()` every frame like native menus do
+- Yields immediately when native wants to show siege/battle/settlement menus
+- Returns to `enlisted_status` when those situations end (via the same mechanism in reverse)
 
 ### During Enlistment (Peace/Travel)
 
@@ -112,12 +347,16 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - Player always resolves outcome through standard encounter UI
 
 **Wait in Reserve:**
-- Available for field battles (not sieges)
+- Available for field battles, sally out battles, and siege preparation (not siege assaults)
 - Player sits out the battle while the army fights
 - `IsWaitingInReserve` flag tracks reserve state
 - Player stays in `enlisted_battle_wait` menu until army finishes or player rejoins
 - `GenericStateMenuPatch` intercepts `GetGenericStateMenu()` to return `enlisted_battle_wait` when in reserve, preventing native menu systems from switching to `army_wait` (which would cause visual stutter)
+- Available on three menus: `encounter` (field battles), `join_siege_event` (sally outs), and `menu_siege_strategies` (siege preparation)
+- Blocked only during active siege assaults (`mapEvent.IsSiegeAssault == true`) when attacking walls
+- Sally out battles (defenders attacking) are treated as optional battles, not siege assaults
 - Rejoin removes player from reserve, re-adds them to the MapEvent on lord's side, then activates encounter menu
+- **Auto-cleanup:** If the battle has already ended (`mapEvent.HasWinner` or `mapEvent.IsFinalized`), the option won't show - instead, `TriggerPostBattleCleanup()` runs and returns player to `enlisted_status` automatically
 - Handled by `EnlistedEncounterBehavior` and `GenericStateMenuPatch`
 
 **Result:**
@@ -251,7 +490,242 @@ EncounterGuard.ShowPlayerPartyVisual();  // Sets IsVisible = true
 
   **Why Patch 5 is critical:** After battle ends, `OnEndMission()` removes all ships, which triggers `OnShipRemoved` for each ship. The original code assumes all agents are still valid, but during enlisted naval battles, agents may be in transitional states. The `DequeueReservedTroop` method has multiple overloads - must use `AccessTools.Method(type, "DequeueReservedTroop", new[] { navalShipAgentsType })` to avoid "Ambiguous match" exception.
 
-  **Patch 6 - Raft State Suppression (stranded UI):** Prevents the Naval DLC `player_raft_state`/“stranded at sea” menu from firing when the enlisted player’s lord (or army leader) still has ships. Deactivates the raft state and resyncs the player to the lord at sea; allows the raft menu only when the lord truly has no naval capability.
+  **Patch 6 - Raft State Suppression (stranded UI):** Prevents the Naval DLC `player_raft_state`/"stranded at sea" menu from firing when the enlisted player's lord (or army leader) still has ships. Deactivates the raft state and resyncs the player to the lord at sea; allows the raft menu only when the lord truly has no naval capability.
+
+### Siege Encounters
+
+**Overview:**
+Sieges present special challenges because the native game uses multiple menus depending on the player's role (commander vs. army member) and the presence of active battles.
+
+#### Siege Menu Types
+
+**1. `join_siege_event`** - Initial arrival at siege location
+- Shows when approaching a siege camp for the first time
+- Appears when `mainParty.AttachedTo == null` (not in army yet)
+- Has "Attack!" button that sets `BesiegerCamp` and makes player the commander
+- **Enlisted players should NOT see this** - they should be in army already
+
+**2. `menu_siege_strategies`** - Commander or army member at siege
+- Shows based on two conditions:
+  - `mainParty.BesiegerCamp != null` (player is commander), OR
+  - `mainParty.AttachedTo != null && army at siege location` (player is army member)
+- Options depend on role:
+  - **Commander:** "Lead assault", "Send troops", "Leave"
+  - **Army member:** "Leave Army" only
+- **This is what enlisted players SHOULD see** at sieges
+
+**3. `encounter`** - Active battle at siege
+- Shows when `settlement.Party.MapEvent != null` (battle in progress)
+- Standard battle menu: "Attack", "Send Troops", "Wait in Reserve"
+- Used for sally outs and active assaults
+
+#### The Join Siege Event Flow
+
+**When clicking "Attack!" in `join_siege_event`:**
+
+**File:** `EncounterGameMenuBehavior.cs:738-762`
+
+```csharp
+private void game_menu_join_siege_event_on_consequence(MenuCallbackArgs args)
+{
+  if (Settlement.CurrentSettlement.Party.MapEvent != null)
+  {
+    // Active battle exists - join it
+    PlayerEncounter.JoinBattle(...);
+    GameMenu.SwitchToMenu("encounter");
+  }
+  else
+  {
+    // No battle - enter siege preparation mode
+    PlayerEncounter.Finish();
+    MobileParty.MainParty.BesiegerCamp = settlement.SiegeEvent.BesiegerCamp;  // ← CRITICAL
+    PlayerSiege.StartPlayerSiege(BattleSideEnum.Attacker, settlement);
+    PlayerSiege.StartSiegePreparation();  // Opens menu_siege_strategies
+  }
+}
+```
+
+**The Problem Line:** `MobileParty.MainParty.BesiegerCamp = settlement.SiegeEvent.BesiegerCamp`
+
+Once this is set:
+- Player becomes the siege commander
+- `GetGenericStateMenu()` ALWAYS returns `"menu_siege_strategies"` (commander view)
+- Player sees commander options, not army member options
+- Conflicts with enlisted role
+
+**The Mod's Prevention:**
+
+**File:** `EnlistmentBehavior.cs:7917-7931`
+
+```csharp
+// Do not copy BesiegerCamp onto it. Native GetGenericStateMenu() returns menu_siege_strategies
+// whenever MainParty.BesiegerCamp != null, which forces commander-level siege menus.
+if (mainParty != null && IsEnlisted && !_isOnLeave)
+{
+    if (mainParty.BesiegerCamp != null)
+    {
+        mainParty.BesiegerCamp = null;  // Clear it immediately
+    }
+    return;
+}
+```
+
+Enlisted players' `BesiegerCamp` is forcibly cleared every tick. This prevents them from becoming siege commanders.
+
+#### The Race Condition at Siege Arrival
+
+**Timeline:**
+
+| Frame | Event | Menu | Army State | BesiegerCamp |
+|-------|-------|------|------------|--------------|
+| N | Approach siege | - | Not joined | null |
+| N | Encounter check | - | Not joined | null |
+| N | `GetEncounterMenu()` | - | `AttachedTo == null` | null |
+| N | Menu opens | `join_siege_event` | Not joined | null |
+| N+1 | Player clicks "Attack!" | Processing | Not joined | null |
+| N+1 | Consequence runs | - | Not joined | **SET!** |
+| N+1 | `StartSiegePreparation()` | - | Not joined | SET (mod clears) |
+| N+1 | Menu opens | `menu_siege_strategies` | Not joined | null (cleared) |
+| N+2 | `EnlistmentBehavior` tick | `menu_siege_strategies` | **Joined!** | null |
+| N+3 | Menu tick handler | `menu_siege_strategies` | In army | null |
+| N+3 | `RefreshMenuOptionConditions()` | `menu_siege_strategies` | In army | null |
+| N+3 | Options update | Shows "Leave Army" | ✅ Correct | ✅ Correct |
+
+**The Issue:** 
+For frames N to N+1, the wrong menu (`join_siege_event`) is visible with a non-functional "Attack!" button.
+
+**Why "Attack!" Doesn't Work:**
+1. Player clicks it
+2. Sets `BesiegerCamp` (making player commander)
+3. Mod immediately clears `BesiegerCamp` on next tick
+4. Menu opens but player is NOT actually a commander
+5. Menu shows commander options, but they fail because `BesiegerCamp == null`
+
+#### Current Implementation (Tick-Based Yielding)
+
+**The enlisted_status menu now participates in the native tick system:**
+
+1. Player arrives at siege location while `enlisted_status` is open
+2. Every frame, `OnEnlistedStatusTick` calls `GetGenericStateMenu()`
+3. `GenericStateMenuPatch` detects `lordInSiege=true` and allows native result to flow through
+4. Native returns `"menu_siege_strategies"` (army member at siege)
+5. `OnEnlistedStatusTick` sees different menu desired → switches immediately
+6. Player sees `menu_siege_strategies` with correct army member options
+
+**Log Pattern:**
+```
+[Menu] OnEnlistedStatusTick: Native wants 'menu_siege_strategies' - yielding to native menu system
+[Menu] GenericStateMenuPatch: Allowing native menu 'menu_siege_strategies' during siege
+```
+
+**Advantages:**
+- ✅ **Zero race conditions:** Tick handler catches state changes every frame
+- ✅ **Native-compatible:** Mirrors exactly how native menus work
+- ✅ **Smooth transitions:** No menu flashing or loops
+- ✅ **Works for all scenarios:** Sieges, battles, settlements
+- ✅ **Minimal code:** Simple tick check, no complex synchronization logic
+
+**Why This Is Better Than Force-Join Approaches:**
+
+Previous approaches tried to prevent the wrong menu from opening. The tick-based approach instead:
+- Lets enlisted_status stay open most of the time (correct behavior)
+- Yields immediately when native needs to take over (sieges, battles)
+- Returns to enlisted_status when those situations end
+- No fighting with native's encounter system
+- No duplicating army-join logic with potential timing conflicts
+
+**Integration Points:**
+
+1. **GenericStateMenuPatch.Postfix** - Controls what menu native WANTS to show
+2. **OnEnlistedStatusTick** - Acts on what native wants, switching when needed
+3. **SafeActivateEnlistedMenu** - Prevents activating enlisted_status when at siege/battle
+4. **TrySyncBesiegerCamp** - Correctly sets `mainParty.BesiegerCamp` for army members
+
+**The Complete Siege Integration System:**
+
+```
+Component                    | Responsibility
+-----------------------------|------------------------------------------------------
+TrySyncBesiegerCamp         | Sets mainParty.BesiegerCamp = lordCamp (for siege participation)
+GenericStateMenuPatch       | When lordInSiege: allows native "menu_siege_strategies" result
+OnEnlistedStatusTick        | Calls GetGenericStateMenu() every frame, switches when needed
+SafeActivateEnlistedMenu    | Checks lordInSiege before activating, skips if true
+menu_siege_strategies       | Native menu filters options based on role (commander vs army)
+```
+
+All components work together to ensure seamless siege integration.
+
+### Complete Menu Flow: Siege Arrival Example
+
+This section shows the complete interaction between all components when the player's lord starts a siege.
+
+**Timeline: Lord's Army Arrives at Enemy Castle**
+
+| Frame | Component | Action | Result |
+|-------|-----------|--------|--------|
+| N | EnlistmentBehavior.OnRealtimeTick | Detects lord at siege location | - |
+| N | TrySyncBesiegerCamp | Checks if siege camp exists | Found: Hvalvik siege |
+| N | TrySyncBesiegerCamp | Sets `mainParty.BesiegerCamp = lordCamp` | Player now in `_besiegerParties` |
+| N | TrySyncBesiegerCamp | Logs integration status | ✅ InArmyParties, ✅ InBesiegerParties |
+| N | Player | Currently viewing `enlisted_status` menu | Menu open for hours |
+| N+1 | OnEnlistedStatusTick | Tick handler runs (every frame) | Check state |
+| N+1 | OnEnlistedStatusTick | Calls `GetGenericStateMenu()` | Query native |
+| N+1 | GenericStateMenuPatch.Postfix | Intercepts call | Evaluate state |
+| N+1 | GenericStateMenuPatch | Checks `lordInSiege` | TRUE - lord.BesiegerCamp != null |
+| N+1 | GenericStateMenuPatch | Returns early (allows native result) | No override |
+| N+1 | Native GetGenericStateMenu | Checks `mainParty.BesiegerCamp != null` | TRUE |
+| N+1 | Native GetGenericStateMenu | Returns `"menu_siege_strategies"` | Native menu desired |
+| N+1 | OnEnlistedStatusTick | Receives `"menu_siege_strategies"` | Different from current! |
+| N+1 | OnEnlistedStatusTick | Compares to current menu | enlisted_status != menu_siege_strategies |
+| N+1 | OnEnlistedStatusTick | Logs: "Native wants 'menu_siege_strategies' - yielding" | Info message |
+| N+1 | OnEnlistedStatusTick | Calls `GameMenu.SwitchToMenu("menu_siege_strategies")` | Switch menu |
+| N+2 | menu_siege_strategies | Menu opens, init handler runs | Setup |
+| N+2 | menu_siege_strategies | Calls `RefreshMenuOptionConditions()` | Evaluate options |
+| N+2 | Native siege logic | Checks if player is commander | `BesiegerCamp` != null? |
+| N+2 | Native siege logic | Checks if player is army member | `Army` != null? TRUE |
+| N+2 | Native siege logic | Filters options for role | Army member options |
+| N+2 | Player UI | Shows "Leave Army" option only | ✅ Correct role |
+| N+3+ | menu_siege_strategies tick | Runs every frame | Updates display |
+| N+3+ | menu_siege_strategies tick | Calls `GetGenericStateMenu()` | Still "menu_siege_strategies"? |
+| N+3+ | GenericStateMenuPatch | Still `lordInSiege=true` | Allows native result |
+| N+3+ | Native | Returns "menu_siege_strategies" | Same menu |
+| N+3+ | menu_siege_strategies tick | No change needed | Stay on current menu |
+
+**What Changed vs. Before:**
+
+**Before Fix:**
+- `enlisted_status` never called `GetGenericStateMenu()`
+- Menu stayed open indefinitely during sieges
+- Only switched when something (like muster) caused a re-evaluation
+- Player couldn't interact with siege mechanics
+
+**After Fix:**
+- `enlisted_status` checks `GetGenericStateMenu()` every frame
+- Detects siege within 1-2 frames (< 100ms)
+- Yields immediately to native siege menu
+- Player sees correct menu and can interact with siege
+
+**Integration Verification:**
+
+The system includes diagnostic logging to verify siege integration is working:
+
+```csharp
+LogSiegeIntegrationStatus(mainParty, lordParty, camp, "TrySyncBesiegerCamp");
+```
+
+**Log Output:**
+```
+[SiegeIntegration] === Siege Integration Status (TrySyncBesiegerCamp) ===
+[SiegeIntegration] Settlement: Hvalvik
+[SiegeIntegration] Player Status:
+[SiegeIntegration]   - InArmyParties: True (1/14 parties)
+[SiegeIntegration]   - InBesiegerParties: True (1/14 parties)
+[SiegeIntegration]   - AttachedToLeader: True
+[SiegeIntegration]   - InMapEvent: N/A (no battle yet)
+[SiegeIntegration] Integration: ✅ COMPLETE
+```
+
+This confirms the player is correctly integrated into the siege before the menu switch occurs.
 
 ### Activation Gating (Inactive Mode)
 
@@ -285,14 +759,129 @@ EncounterGuard.ShowPlayerPartyVisual();  // Sets IsVisible = true
 - Recover automatically on next tick
 - No crashes or state corruption
 
-### Siege Menu Loop
+### Post-Victory Menu Loop (Field Battles and Sieges)
 
-**Scenario:** Player stuck in siege "waiting" phase
+**Scenario:** After winning a battle via auto-resolve, the encounter menu reopens instead of closing
+
+**Root Cause:** 
+- After clicking "Done" on the scoreboard, the native game calls `GameMenu.ActivateGameMenu("encounter")`
+- This is normal behavior for ongoing battles, but incorrect when the battle is actually over
+- For enlisted players, this causes either the encounter menu or siege menu to reopen in a loop
 
 **Handling:**
-- Fixed by suppressing `IsActive` during siege "waiting" phase
-- Only active during actual assault (`MapEvent`)
-- Prevents menu loop issues
+- For SIEGE battles: Native handles post-victory flow completely (menu_settlement_taken_*, etc.)
+- For FIELD battles: `OnMapEventEnded` defers cleanup and returns player to enlisted menu
+- Native victory menus are allowed to flow naturally
+- Works for both field battles and siege battles
+- Prevents "You have arrived at X to lay siege" loops after siege victories
+
+**Related Fix - Save Load:**
+- When loading a save during a siege, `MobileParty.MainParty.BesiegerCamp` is restored from the save
+- This causes `GetGenericStateMenu()` to return `menu_siege_strategies` on the first campaign tick
+- Fixed by clearing `BesiegerCamp` in `SyncData()` immediately during load
+- Enlisted soldiers don't command sieges - only the lord does
+
+### Stale Encounter After Auto-Resolve Victory
+
+**Scenario:** After army wins a battle via auto-resolve, the encounter menu stays open with only "Wait in Reserve" as an option, forcing the player to click it to proceed.
+
+**Root Cause:**
+- The native game creates an encounter when the battle starts
+- When the battle auto-resolves (victory), the MapEvent ends but the PlayerEncounter may persist
+- The encounter menu stays open because PlayerEncounter.Current != null
+- The "Wait in Reserve" option was available because it only checked for MapEvent existence, not whether the battle was already over
+- Player was forced to click "Wait in Reserve" to trigger cleanup, even though there was no battle to wait for
+
+**The Problem Code Path:**
+```
+1. Army engages enemy → PlayerEncounter created → encounter menu opens
+2. Battle auto-resolves → MapEvent.HasWinner = true (battle over)
+3. BUT PlayerEncounter still exists → encounter menu stays open
+4. IsWaitInReserveAvailable() checks: mapEvent != null? YES → shows option
+5. Player clicks Wait in Reserve → triggers cleanup → returns to enlisted_status
+```
+
+**The Fix (EnlistedEncounterBehavior.IsWaitInReserveAvailable):**
+
+Added early detection for already-ended battles:
+```csharp
+// CRITICAL: Check if battle is already over (auto-resolved)
+if (mapEvent != null && (mapEvent.HasWinner || mapEvent.IsFinalized))
+{
+    ModLogger.Info("EncounterGuard", 
+        $"WAIT_IN_RESERVE: Battle already ended (HasWinner={mapEvent.HasWinner}, " +
+        $"IsFinalized={mapEvent.IsFinalized}) - triggering auto-cleanup");
+    
+    // Auto-cleanup instead of showing stale option
+    TriggerPostBattleCleanup();
+    return false;
+}
+```
+
+**The TriggerPostBattleCleanup() Method:**
+
+New method that properly cleans up stale encounters:
+```csharp
+private void TriggerPostBattleCleanup()
+{
+    // 1. Finish the PlayerEncounter if it exists
+    if (PlayerEncounter.Current != null)
+    {
+        PlayerEncounter.LeaveEncounter = true;
+        if (PlayerEncounter.InsideSettlement)
+            PlayerEncounter.LeaveSettlement();
+        PlayerEncounter.Finish();
+    }
+    
+    // 2. Deactivate player party (prevent further stale encounters)
+    if (mainParty != null && enlistment?.IsEnlisted == true)
+    {
+        mainParty.IsActive = false;
+        mainParty.IsVisible = false;
+    }
+    
+    // 3. Clear reserve state flag
+    ClearReserveState();
+    
+    // 4. Return to appropriate menu
+    if (mainParty?.Army != null && mainParty.Army.LeaderParty != mainParty)
+        GameMenu.SwitchToMenu("army_wait");  // Will be overridden to enlisted_status
+    else
+        GameMenu.SwitchToMenu("enlisted_status");
+}
+```
+
+**Fixed Code Path:**
+```
+1. Army engages enemy → PlayerEncounter created → encounter menu opens
+2. Battle auto-resolves → MapEvent.HasWinner = true (battle over)
+3. IsWaitInReserveAvailable() checks: mapEvent.HasWinner? YES → triggers auto-cleanup
+4. TriggerPostBattleCleanup() runs → PlayerEncounter finished → party deactivated
+5. Menu switches to enlisted_status automatically → player never sees stale menu
+```
+
+**Log Pattern (successful auto-cleanup):**
+```
+[EncounterGuard] WAIT_IN_RESERVE: Battle already ended (HasWinner=True, IsFinalized=False, WinningSide=Attacker) - triggering auto-cleanup
+[EncounterGuard] AUTO-CLEANUP: Cleaning up stale post-battle encounter
+[EncounterGuard] AUTO-CLEANUP: PlayerEncounter finished
+[EncounterGuard] AUTO-CLEANUP: Deactivated party
+[EncounterGuard] AUTO-CLEANUP: Switched to enlisted_status menu
+```
+
+**Why This Is The Correct Fix:**
+
+1. **Detection at the right time:** The check runs when the menu option condition is evaluated, which happens every frame while the encounter menu is open
+2. **Proactive cleanup:** Instead of waiting for user action, the system detects the stale state and cleans up immediately
+3. **No user intervention required:** Player doesn't have to click anything - the transition happens automatically
+4. **Consistent with other cleanup:** Uses the same cleanup pattern as other encounter-ending code paths
+5. **End-user friendly logging:** Info-level logs explain exactly what happened for debugging
+
+**Key Insight - Encounter Creation Path:**
+
+This fix also revealed an important technical detail: **stale encounters after auto-resolve are NOT created through `EncounterManager.StartPartyEncounter`**. The `EncounterSuppressionPatch` (which patches `StartPartyEncounter`) never logged any `ENCOUNTER ATTEMPT` messages for these stale encounters. Instead, the encounter persists from the original battle creation and simply isn't cleaned up properly by native code.
+
+This is why the fix is in `IsWaitInReserveAvailable()` (detection) rather than `EncounterSuppressionPatch` (prevention) - there's no new encounter being created to block.
 
 ### Consecutive Battles While in Reserve
 
@@ -304,6 +893,7 @@ EncounterGuard.ShowPlayerPartyVisual();  // Sets IsVisible = true
 - `GenericStateMenuPatch` ensures native menu calls return `enlisted_battle_wait` instead of `army_wait`
 - Player remains in `enlisted_battle_wait` menu until army finishes fighting
 - Prevents duplicate XP awards and menu flickering during rapid consecutive battles
+- During sieges: sally out battles won't kick player out of reserve (only actual assaults do)
 
 ### Rejoining Battle from Reserve
 
@@ -315,6 +905,63 @@ EncounterGuard.ShowPlayerPartyVisual();  // Sets IsVisible = true
 - Encounter menu activated via `GameMenu.ActivateGameMenu("encounter")`
 - Player can then choose to Attack, Send Troops, or Leave
 - If battle ended while waiting, player exits to appropriate post-battle menu
+
+### Arriving at Siege Location Without Active Battle
+
+**Scenario:** Enlisted player arrives at a siege location where their lord is besieging, but no battle is currently happening (just the siege camp)
+
+**Handling:**
+- Player party kept `IsActive = false` during siege waiting phase
+- Native game doesn't create encounters for inactive parties
+- Player INITIALLY sees `enlisted_status` menu
+- **Tick system detects siege:** `OnEnlistedStatusTick` calls `GetGenericStateMenu()` every frame
+- `GenericStateMenuPatch` detects `lordInSiege=true` → allows native `"menu_siege_strategies"` to return
+- `OnEnlistedStatusTick` sees native wants different menu → switches immediately
+- Player now sees `menu_siege_strategies` with army member options ("Leave Army")
+- When assault starts, `OnMapEventStarted` detects battle → activates party → player auto-joins
+
+**Expected Flow:**
+1. Lord's army arrives at enemy castle → siege camp established
+2. Enlisted player party remains `IsActive = false` 
+3. Player initially sees `enlisted_status` menu (default state)
+4. **Within 1-2 frames:** Tick handler detects siege → switches to `menu_siege_strategies`
+5. Player can interact with siege (see progress, leave army if desired)
+6. Lord initiates assault → `MapEvent` created → `IsActive = true` → player auto-joins
+7. Menu switches to `encounter` (Attack/Send Troops/Wait in Reserve)
+
+**Log Pattern:**
+```
+[SiegeIntegration] Synced player besieger camp with lord's siege at Hvalvik
+[Menu] OnEnlistedStatusTick: Native wants 'menu_siege_strategies' - yielding to native menu system
+[Menu] GenericStateMenuPatch: Allowing native menu 'menu_siege_strategies' during siege
+```
+
+**Why This Is Correct:**
+
+Army members at sieges should see `menu_siege_strategies`, not `enlisted_status`. The native menu:
+- Shows siege progress (construction, bombardment, etc.)
+- Displays correct army member options
+- Integrates with native siege system
+- Updates in real-time as siege progresses
+
+The mod no longer "keeps them in enlisted_status" during sieges - it yields to the native siege menu system.
+
+### Sally Out Battle Menu Switching During Reserve
+
+**Scenario:** Player clicks "Wait in Reserve" during a sally out battle (defenders attacking), but is immediately kicked out and sees the siege preparation menu
+
+**Root Cause:**
+- Sally out battles occur when defenders leave the castle to attack besiegers
+- These battles have both `SiegeEvent` (ongoing siege) and `MapEvent` (the sally out battle)
+- Original detection logic treated ANY battle during a siege as a "siege assault"
+- This incorrectly forced players out of reserve during optional sally out battles
+
+**Handling:**
+- `EnlistedEncounterBehavior` tick handler now checks `mapEvent.IsSiegeAssault` specifically
+- Sally out battles: `IsSiegeAssault == false` → player stays in reserve ✅
+- Actual siege assaults (attacking walls): `IsSiegeAssault == true` → player forced to participate ✅
+- This allows players to sit out defensive battles while still participating in wall assaults
+- Log pattern when working correctly: "Siege preparation detected - staying in reserve menu"
 
 ### Lingering PlayerEncounter After Discharge
 
@@ -428,6 +1075,114 @@ EncounterGuard.ShowPlayerPartyVisual();  // Sets IsVisible = true
 
 ---
 
+## Special Scenarios: Captivity & Village Raids
+
+### Player Captured During Battle
+
+**Scenario:** Enlisted player is defeated in battle and captured by enemy
+
+**Native Game Behavior:**
+1. `TakePrisonerAction.Apply()` called on player hero
+2. `PlayerCaptivity.StartCaptivity()` executes:
+   - Exits encounter (`PlayerEncounter.LeaveEncounter = true`)
+   - Disables main party (`MobileParty.MainParty.IsActive = false`)
+   - **Removes from army** (`MobileParty.MainParty.Army = null`)
+   - Camera follows captor party
+3. Player travels with captors until released
+
+**Enlisted Mod Impact:**
+- ✅ Party already hidden via encounter safety (no conflict)
+- ❌ **Enlistment automatically ended** (army membership removed)
+- ❌ **No tracking of pre-captivity enlistment state**
+- ❌ **No auto-return to lord after release**
+
+**Current State:**
+- System works, but player loses enlistment
+- After captivity ends, player is independent again
+- Must manually re-enlist if desired
+- No special enlisted captivity events
+
+**Potential Improvements:**
+1. **Track enlistment before capture** - Save lord and rank to mod state
+2. **Post-release dialog** - Offer choice: "Return to lord?" vs "Go independent"
+3. **Lord ransom attempts** - Friendly lord may pay ransom sooner
+4. **Enlisted captivity events** - Special decisions/consequences during captivity
+
+**Captivity Flow (13 menus):**
+```
+Captured → menu_captivity_castle_taken_prisoner
+   ↓
+[Multiple paths to release:]
+- Wilderness escape
+- Ransom offer (wilderness or prison)
+- Transfer to settlement dungeon
+- Prison escape
+- Captor defeated/destroyed
+- Ally pays ransom
+- Prisoner exchange
+- Escape during captor's battle
+- Released after battle
+- (Rare) Execution if relation < -30
+   ↓
+Released → EndCaptivityInternal()
+   - Party reactivated (IsActive = true)
+   - Camera returns to player
+   - Army membership NOT restored
+```
+
+See: `docs/Reference/battle-system-complete-analysis.md` Part 6B for complete captivity flow.
+
+---
+
+### Lord Raids Village While Player Enlisted
+
+**Scenario:** Army lord initiates village raid with enlisted player in army
+
+**Native Game Behavior:**
+1. Lord approaches village and starts raid
+2. Creates `RaidEventComponent` on settlement
+3. Opens `raiding_village` menu (wait menu) for all army members
+4. Raid progresses via tick handler (village HP decreases)
+5. On completion:
+   - If player is raid leader → `village_player_raid_ended`
+   - If player is army member → `village_raid_ended_leaded_by_someone_else`
+6. Loot distributed via army system
+
+**Enlisted Mod Handling:**
+- ✅ Works correctly with current patches
+- ✅ `AbandonArmyBlockPatch` hides "Abandon army" button on `raiding_village`
+- ✅ Player participates passively as army member
+- ✅ Correct post-raid menu appears
+- ✅ Returns to normal army operations after
+
+**Menu Options During Raid:**
+- "End Raiding" → Hidden (not raid leader)
+- "Leave Army" → Available (player can abandon mission)
+- "Abandon Army" → **Blocked by enlisted mod**
+
+**No changes needed** - Village raid system works as designed.
+
+**Village Raid Flow (10 menus):**
+```
+Village Menu → "Take a hostile action"
+   ↓
+village_hostile_action (choose type)
+   ├─ Raid village
+   │  ├─ If at peace → raid_village_no_resist_warn_player
+   │  └─ raiding_village (wait menu, progress bar)
+   │     └─ Completes → village_player_raid_ended OR village_raid_ended_leaded_by_someone_else
+   │
+   ├─ Force supplies
+   │  └─ force_supplies_village_resist_warn_player → force_supplies_village
+   │
+   └─ Force volunteers
+      └─ force_troops_village_resist_warn_player → force_volunteers_village
+```
+
+See: `docs/Reference/battle-system-complete-analysis.md` Part 6C for complete raid flow.
+
+---
+
 ## API Reference
 
 ### EncounterGuard Methods
@@ -528,6 +1283,8 @@ void DeactivateAfterBattle()
 - `"Enlistment"` - Service state changes that affect encounters
 - `"Battle"` - Battle join logic and vanilla encounter coordination
 - `"EventSafety"` - Capture/prisoner handling and map event skipping
+- `"Menu"` - Menu transitions and native menu system integration
+- `"SiegeIntegration"` - Siege-specific state sync and participation
 
 **Key Log Points:**
 ```csharp
@@ -543,12 +1300,30 @@ ModLogger.Debug("Battle", $"Player party activated for battle participation");
 ModLogger.Warn("EncounterGuard", $"Unexpected IsActive state: {isActive}, expected: {expected}");
 ModLogger.Debug("EncounterGuard", $"State reset to expected value");
 
+// Stale encounter auto-cleanup (post-victory)
+ModLogger.Info("EncounterGuard", $"WAIT_IN_RESERVE: Battle already ended (HasWinner=..., IsFinalized=...) - triggering auto-cleanup");
+ModLogger.Info("EncounterGuard", $"AUTO-CLEANUP: Cleaning up stale post-battle encounter");
+ModLogger.Info("EncounterGuard", $"AUTO-CLEANUP: PlayerEncounter finished");
+ModLogger.Info("EncounterGuard", $"AUTO-CLEANUP: Deactivated party");
+ModLogger.Info("EncounterGuard", $"AUTO-CLEANUP: Switched to enlisted_status/army_wait menu");
+
 // Capture/prisoner handling
 ModLogger.Info("EventSafety", $"Lord {name} captured - starting grace period");
 ModLogger.Info("EventSafety", $"Player captured - deferring enlistment teardown until encounter closes");
 ModLogger.Info("EventSafety", $"Skipping MapEventEnded - player prisoner or cleanup pending");
 ModLogger.Info("EventSafety", $"Finalizing deferred capture cleanup for player");
 ModLogger.Info("Battle", $"Encounter active during lord capture - letting native surrender capture handle the player.");
+
+// Menu transitions and native integration
+ModLogger.Info("Menu", $"OnEnlistedStatusTick: Native wants '{desiredMenu}' - yielding to native menu system");
+ModLogger.Debug("Menu", $"GenericStateMenuPatch: Allowing native menu '{menuName}' during siege");
+ModLogger.Info("Menu", $"GenericStateMenuPatch: {originalMenu} -> {newMenu} (keeping enlisted menu)");
+ModLogger.Debug("Menu", $"GenericStateMenuPatch: Not overriding {menu} - player explicitly visited settlement");
+
+// Siege integration
+ModLogger.Info("SiegeIntegration", $"Synced player besieger camp with lord's siege at {settlement}");
+ModLogger.Warn("SiegeIntegration", $"Integration may be broken - player not in Army.Parties");
+ModLogger.Warn("SiegeIntegration", $"Integration may be broken - player not in BesiegerCamp._besiegerParties");
 ```
 
 **Common Issues:**
@@ -577,6 +1352,37 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 - Matches native behavior
 - Not a bug - working as designed
 
+**enlisted_status menu stays open during siege (doesn't switch to siege menu):**
+- **Cause:** `OnEnlistedStatusTick` not calling `GetGenericStateMenu()` to check for menu changes
+- **Fix:** Tick handler now checks every frame and yields to native when appropriate
+- **Expected log:** `OnEnlistedStatusTick: Native wants 'menu_siege_strategies' - yielding to native menu system`
+- **If not switching:** Check if `GenericStateMenuPatch` is detecting `lordInSiege` correctly
+- **Debug:** Enable Debug level for "Menu" category in settings.json
+- **Note:** Muster callbacks can "kick" the menu system into re-evaluating, which is why catching a muster mid-siege would show the correct menu
+
+**Siege menu appearing when it shouldn't (not at siege):**
+- Check if `lordInSiege` detection is too broad in `GenericStateMenuPatch`
+- Verify `lordParty.BesiegerCamp`, `SiegeEvent`, and army leader are actually at a siege
+- Should only appear when lord/army is ACTIVELY besieging
+- Log should show: `Allowing native menu 'menu_siege_strategies' during siege`
+
+**Post-victory menu loop (encounter/siege menu reopening):**
+- After clicking "Done" on scoreboard, the encounter or siege menu reopens
+- For SIEGES: Native now handles post-victory flow completely - mod doesn't interfere
+- For FIELD BATTLES: `OnMapEventEnded` defers cleanup to next frame and returns to enlisted menu
+- If still happening, check if `CleanupPostEncounterState` is being called inappropriately
+- For save-load loops, check if `BesiegerCamp` is being cleared in `SyncData()`
+
+**Stale encounter after auto-resolve (stuck on encounter menu with only Wait in Reserve):**
+- After army wins via auto-resolve, encounter menu stays open instead of closing
+- Look for: `WAIT_IN_RESERVE: Battle already ended (HasWinner=True) - triggering auto-cleanup`
+- If this log appears, auto-cleanup should handle it and switch to `enlisted_status`
+- If NOT appearing, the `IsWaitInReserveAvailable` check isn't detecting the ended battle
+- Check `mapEvent.HasWinner` and `mapEvent.IsFinalized` values in logs
+- If auto-cleanup fails, look for: `AUTO-CLEANUP failed:` error message
+- Common cause: Trying to clean up during a menu transition race condition
+- The stale encounter is NOT created through `EncounterManager.StartPartyEncounter` - it persists from the original battle
+
 **Reserve mode menu stutter (flickering between menus):**
 - `GenericStateMenuPatch` should intercept `GetGenericStateMenu()` calls
 - Verify patch is registered in `conflicts.log`
@@ -588,6 +1394,14 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 - Player must be re-added to MapEvent before encounter menu activates
 - Check `lordParty.Party.MapEventSide` is not null
 - Verify `GameMenu.ActivateGameMenu("encounter")` is called
+
+**Wait in Reserve kicks player out during sally out battles:**
+- Sally out battles are when defenders leave the castle to attack besiegers
+- These should be treated as optional field battles, not siege assaults
+- Check log for: "Siege assault started - cleared reserve state"
+- If appearing during sally out, the detection logic is too broad
+- Fix: Only exit reserve when `mapEvent.IsSiegeAssault == true` (actual wall assault)
+- Sally outs have `MapEvent` but `IsSiegeAssault == false`
 
 **Party state not persisting:**
 - Check state enforcement in `OnTick()`
@@ -673,19 +1487,22 @@ If mission cleanup crash persists (crash after battle ends):
 - `Modules/Enlisted/Debugging/enlisted.log`
 
 **Related Files:**
-- `src/Features/Enlistment/Behaviors/EncounterGuard.cs`
-- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
-- `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs`
-- `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs`
-- `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs`
-- `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs`
-- `src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs`
-- `src/Mod.GameAdapters/Patches/EncounterLeaveSuppressionPatch.cs`
-- `src/Mod.GameAdapters/Patches/EncounterSuppressionPatch.cs`
-- `src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs`
-- `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs`
-- `src/Mod.GameAdapters/Patches/NavalBattleShipAssignmentPatch.cs`
-- `src/Mod.GameAdapters/Patches/PlayerEncounterFinishSafetyPatch.cs`
+- `src/Features/Enlistment/Behaviors/EncounterGuard.cs` - Static utility for encounter state management
+- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` - Service state, battle detection, siege sync
+- `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs` - enlisted_status menu with native-yielding tick handler
+- `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs` - Wait in Reserve menu, battle wait handling, and stale encounter auto-cleanup
+- `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs` - UI suppression for party nameplate
+- `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battles
+- `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs` - Controls menu override logic, allows native menus when appropriate
+- `src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs` - Removes "Abandon army" options while enlisted
+- `src/Mod.GameAdapters/Patches/EncounterLeaveSuppressionPatch.cs` - Hides "Leave..." option from encounter menu
+- `src/Mod.GameAdapters/Patches/EncounterSuppressionPatch.cs` - Blocks unwanted encounters, clears stale flags
+- `src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs` - Prevents activation in vulnerable states
+- `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs` - Controls party visibility
+- `src/Mod.GameAdapters/Patches/NavalBattleShipAssignmentPatch.cs` - Fixes naval battle crashes
+- `src/Mod.GameAdapters/Patches/PlayerEncounterFinishSafetyPatch.cs` - Crash protection for siege cleanup
+- `src/Mod.GameAdapters/Patches/RaftStateSuppressionPatch.cs` - Prevents "stranded at sea" menu
+- `src/Mod.GameAdapters/Patches/NavalNavigationCapabilityPatch.cs` - Inherits naval capability from lord/army to allow sea travel
 
 ---
 
