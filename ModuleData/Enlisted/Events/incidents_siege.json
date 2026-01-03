@@ -724,6 +724,7 @@
           "text": "Stay as far from the sick as possible",
           "resultTextId": "mi_siege_disease_flee_result",
           "resultText": "You keep your distance, sleeping far from the infected tents. Cowardly, perhaps, but you remain healthy while others fall.",
+          "tooltip": "Avoid the sick. -8 Soldier rep, +4 troop loss.",
           "risk": "moderate",
           "effects": {
             "soldierRep": -8,
@@ -763,16 +764,16 @@
           "text": "Ration the remaining good food carefully",
           "requirements": {
             "minSkills": {
-              "Steward": 40
+              "Stewardship": 40
             }
           },
           "resultTextId": "mi_siege_spoiled_ration_result",
           "resultText": "You help the quartermaster sort through the stores, separating the edible from the rotten. Portions are small, but at least they're safe.",
-          "tooltip": "Requires Steward 40. Train Steward. +8 Officer rep.",
+          "tooltip": "Requires Stewardship 40. Train Stewardship. +8 Officer rep.",
           "risk": "safe",
           "effects": {
             "skillXp": {
-              "Steward": 20
+              "Stewardship": 20
             },
             "officerRep": 8,
             "foodLoss": 3
