@@ -7,7 +7,16 @@
     <UpdateItem>
         <ModuleFolder Value="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"/>
         <!-- A direct path of your module -->   
-        <ChangeNotes Value="v0.9.1 - Major Content Update
+        <ChangeNotes Value="v0.9.1.1 - Critical Crash Fix
+
+[CRITICAL FIX]
+- Fixed crash on first battle completion (MenuHelper.CheckEnemyAttackableHonorably race condition)
+- Battle cleanup now properly deferred to prevent menu rendering corruption
+- Enhanced diagnostic logging for future stability tracking
+
+---
+
+v0.9.1 - Major Content Update
 
 [CRITICAL FIXES]
 - Fixed promotion state resetting on re-enlistment - Promotions now persist correctly between service periods
