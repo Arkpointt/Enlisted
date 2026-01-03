@@ -5,61 +5,94 @@
 	"contentfolder"		"C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted"
 	"previewfile" "C:\Dev\Enlisted\Enlisted\tools\workshop\preview.png"
 	"title"		"Enlisted - Military Service Mod"
-	"description"		"Enlist with any lord, follow orders, climb the ranks, and retire with honor. Lightweight, open-source, and built to play nicely with other mods and UI overhauls. Work in progress: features are still being tuned and expanded. Nexus page: https://www.nexusmods.com/mountandblade2bannerlord/mods/9193?tab=description
+	"description"		"Enlist with any lord. Follow orders. Climb the ranks. Retire with honor.
 
-[h1]What is this mod?[/h1]
-Live the early game as a soldier instead of running an empire. Earn wages, follow your lord's orders, and let the world unfold around you. Contributions are welcome on GitHub.
+Enlisted transforms Bannerlord into a deep soldier career simulator. Instead of managing an empire, you serve one. Features [b]275+ narrative content pieces[/b] spanning [b]9 military ranks[/b] from fresh recruit to senior commander.
+
+[b]Open Source:[/b] [url=https://github.com/Arkpointt/Enlisted]GitHub[/url] | [b]Nexus:[/b] [url=https://www.nexusmods.com/mountandblade2bannerlord/mods/9193]Nexus Mods[/url]
 
 [h1]Main Features[/h1]
+
+[b]The Life of a Soldier[/b]
+Simple enlistment with any lord. You march, eat, and get paid by your commander. Companions stay with you. Temporary leave system. Built-in crash guards for sieges and encounters.
+
+[b]Chain of Command[/b]
 [list]
-[*] [b]The life of a soldier[/b] - Ask any lord to enlist. You march, eat, and get paid by your lord; personal loot/prisoner micromanagement is suppressed. Crash guards keep you from getting stuck in edge states.
-[*] [b]Chain of command[/b] - Auto-deploy into your assigned formation; Order of Battle suppressed. F1-F9 commanding disabled. Pick your troop line/formation as you rise (culture-aware, with cooldowns).
-[*] [b]Rank & progression[/b] - Advance through Levy ??? Footman ??? Serjeant ??? Man-at-Arms ??? Banner Serjeant ??? Household Guard for better wages, gear, and discounts.
-[*] [b]Camp life & duties[/b] - Daily duties like Guard, Sentry, Forager, Cook, Messenger, Quartermaster Hand, Field Medic. Passive training per formation (e.g., Athletics for Infantry, Riding for Cavalry). Quartermaster sells culture-appropriate kits that unlock as you rank.
-[*] [b]Command & freedom[/b] - Camp (Tier 2+) to review records and manage companions safely. Personal Retinue (Tier 4+) with upkeep. Recon Missions (Tier 4+) for intel and rewards. Temporary Leave up to 14 days (don't desert).
-[*] [b]Naval support[/b] - Parties follow lords onto ships. Your ships are protected while enlisted; lords cannot commandeer them.
+[*] Automatic deployment (T1-T6) based on equipped weapons
+[*] [b]16 Military Orders:[/b] Basic Duties (T1-T3) auto-assigned, Advancement Orders (T4+) optional
+[*] [b]85 Order Events[/b] with dynamic triggers during duty periods
+[*] F1-F9 commanding disabled - you follow orders, not give them
 [/list]
 
-[h1]Retirement[/h1]
+[b]Rank & Progression[/b]
+Climb through [b]9 tiers[/b] based on battle XP, service time, battles fought, reputation, and discipline. Culture-specific rank titles, narrative proving events, equipment unlocks, and officer privileges.
+
+[b]Pay & Muster System[/b]
+12-day muster cycle with ceremonial pay events. 8-stage muster ceremonies including pay line, baggage check, inspection, and promotion. Period summaries track your combat, training, and XP.
+
+[b]Camp Life[/b]
 [list]
-[*] Standard term: 252 days (3 years)
-[*] Honorable discharge: gold bonus + relation boost
-[*] Re-enlistment: signing bonus
-[*] Desertion: crime rating + relation loss
+[*] Background simulation (soldiers get sick, injured, desert; equipment breaks)
+[*] [b]38 player-initiated decisions:[/b] Training, social, economic, career activities
+[*] Fatigue system affecting performance
+[*] Medical care with 15 injury types and treatment chains
 [/list]
+
+[b]Equipment & Quartermaster[/b]
+[list]
+[*] [b]6 quality tiers[/b] (Shoddy to Legendary) with upgrade system
+[*] Reputation-based discounts (0-30%)
+[*] Officers Armory for T7+ commanders
+[*] Baggage Train system for inventory management
+[*] Provisions shop (T7+)
+[/list]
+
+[b]Identity & Reputation[/b]
+Emergent identity from traits and choices (Officer, Scout, Medic, Engineer, Operative, NCO, Soldier). Three reputation tracks: Lord, Officer, and Soldier reputation affecting event outcomes and promotions.
+
+[b]Commander's Retinue (T7+)[/b]
+Personal military force with 1-3 reinforcements per battle. 23 narrative events including character development, post-battle incidents, and camp decisions. Named veterans with loyalty tracking.
+
+[b]UI & Reporting[/b]
+Native game menu integration. Enlisted Status Hub for rank, orders, and activities. Custom combat log with encyclopedia links. Daily Brief with narrative summaries.
+
+[b]Battle AI (Optional)[/b]
+Can be disabled in Bannerlord launcher with no performance cost. Field battles only, AI improvements through better decisions.
+
+[b]Naval Support[/b]
+Fully compatible with War Sails DLC. Parties follow lords onto ships. Your ships are protected while enlisted.
 
 [h1]Requirements[/h1]
 [list]
 [*] Mount & Blade II: Bannerlord v1.3.13
-[*] Bannerlord.Harmony v2.4.2+
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2859232415]Bannerlord.Harmony[/url] v2.4.2+
 [/list]
 
 [h1]Installation[/h1]
-[list]
-[*] Extract to <Bannerlord>\Modules\Enlisted\
-[*] Enable Harmony then Enlisted; load order: Harmony ??? Native ??? ... ??? Enlisted
-[*] Optional tuning: edit JSON in Modules\Enlisted\ModuleData\Enlisted\
-[/list]
+Subscribe to this mod and Harmony. Enable in launcher: Harmony ??? Native ??? SandBoxCore ??? SandBox ??? StoryMode ??? CustomBattle ??? Enlisted
 
 [h1]Troubleshooting[/h1]
+[b]Check for mod conflicts:[/b] The mod automatically detects conflicts with other mods at startup. Check [i]Conflicts-A_*.log[/i] in the Debugging folder.
+
+Logs: [i]<Bannerlord>\Modules\Enlisted\Debugging\[/i]
+Share Session-A_*.log and Conflicts-A_*.log when reporting issues.
+
+[b]Installation Locations:[/b]
 [list]
-[*] Logs: Modules\Enlisted\Debugging\enlisted.log (core), conflicts.log (Harmony/load order)
-[*] If you crash, check logs and list other mods/versions before reporting
+[*] [b]Steam Workshop:[/b] [i]<Steam>\steamapps\workshop\content\261550\3621116083\[/i]
+[*] [b]Manual/Nexus:[/b] [i]<Bannerlord>\Modules\Enlisted\[/i]
 [/list]
 
-[h1]How to report issues[/h1]
+If you have both installed, you'll see duplicates in the launcher. Unsubscribe from Workshop if installing manually.
+
+Common issues:
 [list]
-[*] Share links (Drive/Dropbox/Gist/Pastebin) - you can also email the logs if needed. Email is on Nexus.
-[*] Include newest logs from Modules\Enlisted\Debugging\: Session-A_{timestamp}.log and Conflicts-A_{timestamp}.log (A = newest). Legacy aliases exist, but rotating files are canonical.
-[*] For crashes, add the crash folder from C:\ProgramData\Mount and Blade II Bannerlord\crashes\ (zip it).
-[*] Include what you were doing when it crashed.
+[*] Mod options don't show: Confirm Harmony is loaded before Enlisted
+[*] War Sails features don't work: Check if DLC is enabled
+[*] Events don't fire: Check enlisted_config.json
 [/list]
 
-[h1]Open Source[/h1]
-[list]
-[*] PRs welcome for fixes, features, and balance on GitHub
-[*] https://github.com/Arkpointt/Enlisted
-[/list]"
+Full documentation in mod folder. Contributions welcome!"
 	"visibility"		"0"
     "tags"
     {
@@ -67,20 +100,80 @@ Live the early game as a soldier instead of running an empire. Earn wages, follo
 		"1"		"Singleplayer"
 		"2"		"Overhaul"
     }
-	"changenote"		"v0.9.0 - Major Content Update
+	"changenote"		"v0.9.1 Hotfix - Content Validation & Data Integrity
+
+[b]CRITICAL FIXES[/b]
 [list]
-[*] Added Commander's Retinue system for T7+ officers with 23 narrative events
-[*] Added Baggage Train system for inventory management during enlistment
-[*] Fixed formation assignment to properly detect player equipment (T1-T6)
-[*] Added comprehensive tooltip system for all events, decisions, and orders
-[*] Expanded content library to 275+ pieces across 9 military ranks
-[*] Added 85 Order Events with dynamic triggers during duty periods
-[*] Added 16 Military Orders spanning Basic Duties (T1-T3) and Advancement Orders (T4+)
-[*] Added 38 Camp Decisions including training, social, economic, and career activities
-[*] Added Quartermaster equipment system with 6 quality tiers and upgrade paths
-[*] Improved content validation tools and localization system
-[*] Updated for Bannerlord v1.3.13
-[*] Performance improvements and crash guards for sieges and naval integration
-[/list]"
+[*] [b]Fixed promotion state resetting on re-enlistment[/b] - Promotions now persist correctly between service periods
+[*] [b]Fixed item confiscation crash[/b] - Added comprehensive null safety during baggage checks
+[*] [b]Fixed ghost condition bug[/b] - Medical conditions now properly clear when expired
+[*] [b]Fixed baggage check inventory bugs[/b] - Items now properly removed when stowed/sold
+[*] [b]Multi-factor promotion requirements display[/b] - Muster now shows progress indicators with actionable blockers
+[/list]
+
+[b]NEW: SKILL-BASED BAGGAGE STOWAGE[/b]
+[list]
+[*] Contraband system removed - Replaced with skill-based first-time storage event
+[*] 4 diplomatic options: Charm (free), Trade (-50% fee), Roguery (intimidate, -25% fee)
+[*] Sell All option (60% liquidation) or Abort (cancel enlistment)
+[*] All options result in standard baggage storage with varying costs/reputation
+[*] Simpler, more player-friendly approach to starting gear
+[/list]
+
+[b]BAGGAGE TRAIN OVERHAUL[/b]
+[list]
+[*] World-state-aware simulation: event probabilities adapt to campaign situation
+[*] Dynamic decision system: baggage access appears in Decisions accordion when available
+[*] Intelligent availability: accessible in towns/camps when stationary, locked during combat/sieges/pursuits
+[*] Adaptive event chances: 40% catch-up in garrison vs 10% during intense combat ops
+[*] War stance affects raids: +12% raid chance when lord is desperate
+[*] Terrain affects delays: +10% mountains, +15% snow
+[*] Baggage status integrated into Camp Hub and Main Menu Company Reports
+[*] Separate from 3-opportunity daily limit - Logistics decisions shown independently
+[/list]
+
+[b]COMPANY NEEDS CONSOLIDATION[/b]
+[list]
+[*] Merged Equipment metric into Supplies (5 metrics ??? 4 metrics)
+[*] New unified Supplies covers food, ammunition, maintenance, and logistics
+[*] Simplified company status tracking with clearer cause/effect relationships
+[*] All documentation updated to reflect 4-metric system
+[/list]
+
+[b]ENCOUNTER SAFETY IMPROVEMENTS[/b]
+[list]
+[*] Added captivity conversation suppression - Prevents native capture dialogues from interfering
+[*] Added encounter capture suppression - Blocks unwanted prisoner management screens
+[*] Added naval navigation capability patch for sea travel
+[*] Improved encounter guard with better state detection and auto-cleanup
+[*] Enhanced logging for encounter decisions and menu transitions
+[/list]
+
+[b]STATUS TEXT CLARITY[/b]
+[list]
+[*] Replaced vague hints with clear military context descriptions
+[*] Medical warnings now explicitly mention brewing illness with severity levels
+[*] Day phase routine text converted to factual descriptions
+[*] Added 15 new localization strings for activity forecasts
+[/list]
+
+[b]MENU STRUCTURE CLEANUP[/b]
+[list]
+[*] Removed dead code: obsolete Reports menu functions (186 lines removed)
+[*] Increased decision slots from 3 to 5 to accommodate opportunities + logistics
+[*] Streamlined menu transitions and state management
+[/list]
+
+[b]TECHNICAL IMPROVEMENTS[/b]
+[list]
+[*] Major code quality improvements (500+ Qodana issues resolved)
+[*] Enhanced diagnostic logging with level guidelines (Info/Debug/Warn/Error)
+[*] New logging categories: Naval, SiegeIntegration, BattleIntegration, CaptivityStatus
+[*] Improved item comparison using StringId instead of reference equality
+[*] Comprehensive documentation updates (BLUEPRINT.md, reference guides)
+[*] New reference docs for battle system, captivity & raids, menu analysis
+[/list]
+
+This major update streamlines core systems, removes player frustration points (contraband), consolidates company metrics for clarity, and significantly improves encounter safety and menu flow."
 }
 

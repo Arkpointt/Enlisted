@@ -153,6 +153,7 @@
   
   <ItemGroup>
     <!-- GUI Color Brushes -->
+    <Content Include="Enlisted.sln.DotSettings" />
     <Content Include="GUI\Brushes\EnlistedColors.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -298,7 +299,6 @@
     
     <!-- Logistics & Supply -->
     <Compile Include="src\Features\Logistics\CompanySupplyManager.cs"/>
-    <Compile Include="src\Features\Logistics\ContrabandChecker.cs"/>
     <Compile Include="src\Features\Logistics\BaggageAccessState.cs"/>
     <Compile Include="src\Features\Logistics\BaggageTrainManager.cs"/>
     
@@ -384,7 +384,6 @@
          ==================================================================== -->
     <Compile Include="src\Features\Conditions\PlayerConditionModels.cs"/>
     <Compile Include="src\Features\Conditions\PlayerConditionBehavior.cs"/>
-    <Compile Include="src\Features\Conditions\EnlistedMedicalMenuBehavior.cs"/>
     
     <!-- ====================================================================
          ESCALATION & REPUTATION SYSTEM
@@ -407,6 +406,7 @@
     <Compile Include="src\Features\Content\Models\OrchestratorEnums.cs" />
     <Compile Include="src\Features\Content\Models\WorldSituation.cs" />
     <Compile Include="src\Features\Content\Models\SimulationPressure.cs" />
+    <Compile Include="src\Features\Content\Models\MedicalPressureAnalysis.cs" />
     <Compile Include="src\Features\Content\Models\PlayerPreferences.cs" />
     
     <!-- Event System -->
@@ -468,7 +468,6 @@
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterLeaveSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\JoinEncounterAutoSelectPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\JoinSiegeEventAutoSelectPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PlayerEncounterFinishSafetyPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs"/>
@@ -484,6 +483,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\NavalShipExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleShipAssignmentPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleArmyWaitCrashFix.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\NavalNavigationCapabilityPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalMobilePartyVisualUpdateEntityPositionCrashGuardPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\RaftStateSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PlayerIsAtSeaTagCrashFix.cs"/>
@@ -505,6 +505,8 @@
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\CompanionCaptainBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PrisonerActionBlockPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\CapturedLordConversationSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\EncounterCaptureEnemySuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EndCaptivityCleanupPatch.cs"/>
   </ItemGroup>
   <!-- ========================================================================
@@ -575,6 +577,11 @@
     <OrdersData Include="ModuleData\Enlisted\Orders\*.json"/>
   </ItemGroup>
   
+  <ItemGroup>
+    <!-- Content (Injuries and other dynamic content) -->
+    <ContentData Include="ModuleData\Enlisted\Content\*.json"/>
+  </ItemGroup>
+  
   <!-- ========================================================================
        DOCUMENTATION & PROJECT FILES
        ======================================================================== -->
@@ -614,6 +621,7 @@
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Decisions"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Orders"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Content"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
     
     <!-- COPY MODULE CONFIGURATION -->
@@ -626,6 +634,7 @@
     <Copy SourceFiles="@(DecisionsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Decisions\"/>
     <Copy SourceFiles="@(OrdersData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Orders\"/>
     <Copy SourceFiles="@(DialogueData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Dialogue\"/>
+    <Copy SourceFiles="@(ContentData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Content\"/>
     
     <!-- COPY LOCALIZATION FILES (XML) -->
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>

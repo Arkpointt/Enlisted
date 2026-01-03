@@ -49,7 +49,7 @@ VALID_CONTEXTS = {
 # Valid categories
 VALID_CATEGORIES = {
     "decision", "escalation", "role", "universal", "muster", "crisis", "general",
-    "onboarding", "pay", "promotion", "retinue", "training"
+    "onboarding", "pay", "promotion", "retinue", "training", "threshold"
 }
 
 # Valid time of day
@@ -149,21 +149,21 @@ class ValidationContext:
         print("=" * 80)
         
         if errors:
-            print(f"\n❌ ERRORS ({len(errors)}):")
+            print(f"\n[X] ERRORS ({len(errors)}):")
             for issue in errors[:50]:  # Limit to first 50
                 print(f"  {issue}")
             if len(errors) > 50:
                 print(f"  ... and {len(errors) - 50} more errors")
         
         if warnings:
-            print(f"\n⚠️  WARNINGS ({len(warnings)}):")
+            print(f"\n[!] WARNINGS ({len(warnings)}):")
             for issue in warnings[:50]:
                 print(f"  {issue}")
             if len(warnings) > 50:
                 print(f"  ... and {len(warnings) - 50} more warnings")
         
         if infos:
-            print(f"\nℹ️  INFO ({len(infos)}):")
+            print(f"\n[i] INFO ({len(infos)}):")
             for issue in infos[:20]:
                 print(f"  {issue}")
             if len(infos) > 20:
@@ -241,20 +241,37 @@ def validate_structure(event: Dict, file_path: str, ctx: ValidationContext) -> b
         ctx.add_issue("warning", "structure", f"Unknown category: '{category}'", file_path, event_id)
     
     # Title and setup (check both new and legacy locations)
-    title_id = event.get("titleId") or (event.get("content", {}).get("titleId"))
-    setup_id = event.get("setupId") or (event.get("content", {}).get("setupId"))
+    # Schema v1: uses content.title/setup directly
+    # Schema v2: uses titleId/setupId with fallback title/setup
+    content = event.get("content", {})
+    title_id = event.get("titleId") or content.get("titleId")
+    setup_id = event.get("setupId") or content.get("setupId")
+    title = event.get("title") or content.get("title")
+    setup = event.get("setup") or content.get("setup")
     
-    if not title_id:
-        ctx.add_issue("error", "structure", "Missing 'titleId' field", file_path, event_id)
-    if not setup_id:
-        ctx.add_issue("error", "structure", "Missing 'setupId' field", file_path, event_id)
+    # Either titleId or title must be present
+    if not title_id and not title:
+        ctx.add_issue("error", "structure", "Missing 'titleId' or 'title' field", file_path, event_id)
+    if not setup_id and not setup:
+        ctx.add_issue("error", "structure", "Missing 'setupId' or 'setup' field", file_path, event_id)
     
     # Options (check both locations)
     options = event.get("options", []) or event.get("content", {}).get("options", [])
     if not options:
-        ctx.add_issue("error", "structure", "Missing or empty 'options' array", file_path, event_id)
-    elif not (2 <= len(options) <= 4):
-        ctx.add_issue("error", "structure", f"Invalid option count: {len(options)} (must be 2-4)", file_path, event_id)
+        # Allow empty options for baggage access decision (dynamically generated)
+        if event_id != "dec_baggage_access":
+            ctx.add_issue("error", "structure", "Missing or empty 'options' array", file_path, event_id)
+    else:
+        # Allow up to 6 options for onboarding/critical events with abort option
+        has_abort = any(opt.get("abortsEnlistment") for opt in options)
+        is_onboarding = category == "onboarding" or event.get("timing", {}).get("oneTime")
+        
+        if len(options) == 1:
+            ctx.add_issue("error", "structure", f"Invalid option count: {len(options)} (must be 0 or 2-6)", file_path, event_id)
+        elif len(options) > 6:
+            ctx.add_issue("error", "structure", f"Invalid option count: {len(options)} (must be 2-6)", file_path, event_id)
+        elif len(options) > 4 and not (is_onboarding or has_abort):
+            ctx.add_issue("warning", "structure", f"5-6 options only recommended for onboarding/abort events", file_path, event_id)
     
     # Validate option structure
     for i, option in enumerate(options):
@@ -262,10 +279,11 @@ def validate_structure(event: Dict, file_path: str, ctx: ValidationContext) -> b
         if not option.get("textId") and not option.get("text"):
             ctx.add_issue("error", "structure", f"Option '{opt_id}' missing textId and fallback text", file_path, event_id)
         
-        # Tooltip check (tooltips cannot be null)
-        if not option.get("tooltip"):
-            ctx.add_issue("error", "structure", f"Option '{opt_id}' missing tooltip (tooltips cannot be null)", file_path, event_id)
-        elif len(option.get("tooltip", "")) > 80:
+        # Tooltip check (tooltips cannot be null, but tooltipTemplate is acceptable)
+        has_tooltip = option.get("tooltip") or option.get("tooltipTemplate")
+        if not has_tooltip:
+            ctx.add_issue("error", "structure", f"Option '{opt_id}' missing tooltip or tooltipTemplate", file_path, event_id)
+        elif option.get("tooltip") and len(option.get("tooltip", "")) > 80:
             ctx.add_issue("warning", "structure", f"Option '{opt_id}' tooltip exceeds 80 chars ({len(option['tooltip'])})", file_path, event_id)
     
     return True
@@ -308,12 +326,30 @@ def validate_references(event: Dict, file_path: str, ctx: ValidationContext, loc
     
     # Check skill XP rewards and effects
     for option in options:
-        # Check rewards.skillXp (for sub-choices)
+        # Check rewards.xp and rewards.skillXp (for sub-choices)
         rewards = option.get("rewards", {})
-        xp_rewards = rewards.get("xp", {}) or rewards.get("skillXp", {})
+        xp_rewards = rewards.get("xp", {})
+        skill_xp_rewards = rewards.get("skillXp", {})
+        
+        # Check rewards.xp
         for skill_name in xp_rewards.keys():
             if skill_name not in VALID_SKILLS:
-                ctx.add_issue("error", "reference", f"Invalid skill name in rewards: '{skill_name}'", file_path, event_id)
+                # Try to suggest proper casing
+                skill_lower = skill_name.lower().replace("_", "")
+                suggestion = next((s for s in VALID_SKILLS if s.lower() == skill_lower), None)
+                if suggestion:
+                    ctx.add_issue("error", "reference", 
+                        f"Invalid skill name in rewards.xp: '{skill_name}' (did you mean '{suggestion}'?)", 
+                        file_path, event_id)
+                else:
+                    ctx.add_issue("error", "reference", 
+                        f"Invalid skill name in rewards.xp: '{skill_name}'", 
+                        file_path, event_id)
+        
+        # Check rewards.skillXp
+        for skill_name in skill_xp_rewards.keys():
+            if skill_name not in VALID_SKILLS:
+                ctx.add_issue("error", "reference", f"Invalid skill name in rewards.skillXp: '{skill_name}'", file_path, event_id)
         
         # Check effects.skillXp (for main choices)
         effects = option.get("effects", {})
@@ -496,7 +532,8 @@ def validate_flag_consistency(ctx: ValidationContext):
 def validate_event_file(file_path: str, ctx: ValidationContext, localization_ids: Set[str]):
     """Validate a single event JSON file."""
     try:
-        with open(file_path, encoding="utf-8") as f:
+        # Try utf-8-sig first to handle BOM, fallback to utf-8
+        with open(file_path, encoding="utf-8-sig") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
         ctx.add_issue("error", "structure", f"Invalid JSON: {e}", file_path)
@@ -574,13 +611,13 @@ def main():
     
     # Determine exit code
     if ctx.has_critical_issues():
-        print("❌ VALIDATION FAILED - Critical issues found")
+        print("[X] VALIDATION FAILED - Critical issues found")
         return 1
     elif ctx.has_warnings():
-        print("⚠️  VALIDATION PASSED WITH WARNINGS")
+        print("[!] VALIDATION PASSED WITH WARNINGS")
         return 0
     else:
-        print("✅ VALIDATION PASSED")
+        print("[OK] VALIDATION PASSED")
         return 0
 
 

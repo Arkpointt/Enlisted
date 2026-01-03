@@ -61,9 +61,18 @@ def main() -> int:
 
             # Check option-level fallback fields
             opts = e.get("options") or []
-            # Allow 0 options for threshold/info events, but warn if it's not 0, 2, 3, or 4
-            if len(opts) == 1 or len(opts) > 4:
+            # Allow 0 options for threshold/info events
+            # Allow up to 6 options for onboarding/critical events with abort option
+            category = e.get("category", "")
+            has_abort = any(opt.get("abortsEnlistment") for opt in opts)
+            is_onboarding = category == "onboarding" or e.get("timing", {}).get("oneTime")
+            
+            if len(opts) == 1:
                 bad.append(("BAD_OPT_COUNT", eid, len(opts), f))
+            elif len(opts) > 6:
+                bad.append(("BAD_OPT_COUNT", eid, len(opts), f))
+            elif len(opts) > 4 and not (is_onboarding or has_abort):
+                bad.append(("BAD_OPT_COUNT", eid, len(opts), f"(5-6 options only allowed for onboarding/abort events)"))
 
             for opt in opts:
                 opt_id = opt.get("id", "unknown")
