@@ -118,7 +118,10 @@ dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 **Upload to Steam Workshop:**
 1. Update `"changenote"` in `tools/workshop/workshop_upload.vdf` with version and changes
 2. Build if code changed: `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
-3. Run upload: `cd C:\Dev\steamcmd; .\steamcmd.exe +login milkyway12 +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit`
+3. Run upload script (opens interactive window):
+   ```powershell
+   Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Dev\Enlisted\Enlisted\tools\workshop'; .\upload.ps1" -Wait
+   ```
 4. See [Steam Workshop Upload](#steam-workshop-upload) section for full details
 
 ---
@@ -814,14 +817,38 @@ Battle AI files must be added to the .csproj (they use `#if BATTLE_AI` internall
    - Edit the `"changenote"` field with version and changes
    - Use Steam BBCode formatting: `[b]bold[/b]`, `[list][*]item[/list]`, etc.
 
-3. **Upload to Steam Workshop**:
+3. **Upload to Steam Workshop** (choose one method):
+
+   **Method A: Using upload.ps1 script (RECOMMENDED)**
+   
+   Open PowerShell and run:
+   ```powershell
+   cd C:\Dev\Enlisted\Enlisted\tools\workshop
+   .\upload.ps1
+   ```
+   
+   The script will:
+   - Check SteamCMD is installed
+   - Verify workshop_upload.vdf exists
+   - Check for preview.png
+   - Prompt for Steam username
+   - Automatically run SteamCMD with correct parameters
+   - Handle Steam Guard authentication
+   
+   **IMPORTANT**: Must be run in an **interactive PowerShell window** (not Cursor/IDE terminal). If running from Cursor, use:
+   ```powershell
+   Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Dev\Enlisted\Enlisted\tools\workshop'; .\upload.ps1" -Wait
+   ```
+
+   **Method B: Manual SteamCMD command**
+   
    ```powershell
    cd C:\Dev\steamcmd
-   .\steamcmd.exe +login milkyway12 +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit
+   .\steamcmd.exe +login YOUR_USERNAME +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit
    ```
    - **IMPORTANT**: All commands (`+login`, `+workshop_build_item`, `+quit`) must be in ONE command
    - SteamCMD uses cached credentials (no password needed if recently logged in)
-   - Enter password/Steam Guard code if prompted (requires manual run in regular PowerShell if credentials expired)
+   - Enter password/Steam Guard code if prompted
    - Find cached username: Check `C:\Dev\steamcmd\config\config.vdf` under `"Accounts"` section
 
 ### Workshop Files
@@ -859,10 +886,16 @@ Edit the `"description"` field in `workshop_upload.vdf` using Steam BBCode:
 - Users may need to unsubscribe/resubscribe to force update
 
 **"Read-Host: Windows PowerShell is in NonInteractive mode" error:**
-- The Cursor IDE terminal is non-interactive and cannot prompt for passwords
-- Use cached credentials: `.\steamcmd.exe +login username` (no password parameter)
-- If credentials expired, run the command manually in a regular PowerShell window
-- Alternative: Use `upload.ps1` script in a regular terminal (not Cursor terminal)
+- The Cursor/IDE terminal is non-interactive and cannot prompt for user input
+- **Solution 1**: Open a new interactive PowerShell window from Cursor:
+  ```powershell
+  Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Dev\Enlisted\Enlisted\tools\workshop'; .\upload.ps1" -Wait
+  ```
+- **Solution 2**: Run `upload.ps1` directly in Windows PowerShell (not through IDE)
+- **Solution 3**: Use manual steamcmd command with cached credentials (no password prompt):
+  ```powershell
+  .\steamcmd.exe +login username +workshop_build_item "path/to/workshop_upload.vdf" +quit
+  ```
 
 ---
 

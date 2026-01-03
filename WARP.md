@@ -65,6 +65,23 @@ qodana scan --show-report
 
 Run this before large refactors or feature branches to catch code-quality regressions alongside ReSharper/Rider warnings.
 
+### Deploy to Steam Workshop
+
+After building and validating, deploy updates to Steam Workshop (ID: 3621116083):
+
+```powershell path=null start=null
+# Update changelog in tools/workshop/workshop_upload.vdf first
+
+# Method 1: Using upload script (RECOMMENDED - opens interactive window)
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Dev\Enlisted\Enlisted\tools\workshop'; .\upload.ps1" -Wait
+
+# Method 2: Direct steamcmd command (requires cached credentials)
+cd C:\Dev\steamcmd
+.\steamcmd.exe +login YOUR_USERNAME +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit
+```
+
+**Important**: The `upload.ps1` script must run in an interactive PowerShell window to handle Steam Guard authentication. The `Start-Process` command opens a new window automatically. See `docs/BLUEPRINT.md` Steam Workshop Upload section for full details.
+
 ## Logs and diagnostics
 
 The mod has its own logging pipeline; this is the primary place to look when debugging behavior.
