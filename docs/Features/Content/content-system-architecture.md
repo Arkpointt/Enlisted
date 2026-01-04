@@ -2,10 +2,10 @@
 
 **Summary:** The unified content system manages all narrative content (events, decisions, orders, map incidents) through a world-state driven orchestration pipeline. The Content Orchestrator analyzes your lord's situation and coordinates content delivery to match military reality: garrison duty is quiet, campaigns are busy, sieges are intense. All content uses JSON definitions, XML localization, requirement checking, and native Bannerlord effect integration.
 
-**Status:** ✅ **IMPLEMENTED** - ContentOrchestrator, OrderProgressionBehavior, 84 order events active  
-**Last Updated:** 2026-01-03 (Corrected file listings to match actual implementation, verified counts: 245 total content pieces)  
-**Implementation:** `src/Features/Content/ContentOrchestrator.cs`, `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`, `src/Features/Content/WorldStateAnalyzer.cs`  
-**Related Docs:** [Content Index](content-index.md), [Training System](../Combat/training-system.md), [Order Progression System](../Core/order-progression-system.md), [Camp Simulation System](../Campaign/camp-simulation-system.md), [Event System Schemas](event-system-schemas.md)
+**Status:** ✅ **IMPLEMENTED** - ContentOrchestrator with phase-aware scheduling, commitment model, OrderProgressionBehavior, 84 order events active  
+**Last Updated:** 2026-01-04 (Phase-aware scheduling, duplicate prevention, commitment model, baggage filtering)  
+**Implementation:** `src/Features/Content/ContentOrchestrator.cs`, `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`, `src/Features/Content/WorldStateAnalyzer.cs`, `src/Features/Camp/CampOpportunityGenerator.cs`  
+**Related Docs:** [Content Index](content-index.md), [Training System](../Combat/training-system.md), [Order Progression System](../Core/order-progression-system.md), [Camp Simulation System](../Campaign/camp-simulation-system.md), [Event System Schemas](event-system-schemas.md), [Orchestrator Spec](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
 
 **RECENT CHANGES (2026-01-01):**
 - **Travel context detection** now uses native `party.IsCurrentlyAtSea` property directly (removed reflection overhead)
@@ -128,15 +128,25 @@ The Content Orchestrator provides intelligent world-state analysis that coordina
 **ContentOrchestrator** (`src/Features/Content/ContentOrchestrator.cs`)
 - CampaignBehaviorBase that receives daily tick at 6am
 - Analyzes world state and calculates activity level
-- **Pre-schedules opportunities** for all phases (Dawn/Midday/Dusk/Night) at daily tick
+- **Pre-schedules opportunities** for all phases (Dawn/Midday/Dusk/Night) at daily tick using phase-aware generation
+  - Calls `CampOpportunityGenerator.GenerateCandidatesForPhase(phase)` for each phase
+  - Generator overrides context to target phase (ensures correct phase filtering)
+  - Prevents duplicates via `alreadyScheduledIds` tracking (each opportunity appears once per day)
 - **Locks schedule** once generated - opportunities won't disappear when context changes
+- **Commitment model (2026-01-03):** Players can schedule future-phase opportunities
+  - `CommitToOpportunity()` marks opportunity as player-committed
+  - `GetAllTodaysOpportunities()` returns all phases (not just current)
+  - `GetOpportunitiesToFireNow()` returns committed opportunities for current phase
+  - `FireCommittedOpportunities()` auto-fires at phase transition
+  - `CleanupMissedOpportunities()` removes uncommitted when phase passes
+  - `IsPhaseFuture()` helper distinguishes past/current/future phases for commit vs immediate fire
 - Provides narrative hints to Daily Brief (Company Reports and Your Status sections)
 - Provides world situation to EventPacingManager for narrative event selection
 - Provides activity levels to OrderProgressionBehavior for order event frequency
 - Coordinates forecast generation for player information
 - Triggers illness onset events based on medical pressure
 
-**Logging:** All scheduling operations log at Info level. Daily schedule shows context, budget calculations, fitness selection, and guaranteed opportunities. Enable Debug logging for detailed phase-by-phase breakdown.
+**Logging:** All scheduling and commitment operations log at Info level. Shows commitment actions, phase transitions, auto-firing, and cleanup. Enable Debug logging for detailed phase-by-phase breakdown.
 
 **WorldStateAnalyzer** (`src/Features/Content/WorldStateAnalyzer.cs`)
 - Static class that analyzes current game state
@@ -508,7 +518,8 @@ Content System
 ├── EventCatalog         (JSON loader, content registry)
 ├── EventDeliveryManager (Pipeline, effects, feedback)
 ├── EventRequirementChecker (Validation, gating)
-├── EventSelector        (Weighted event selection)
+├── EventSelector        (Weighted event selection, category filtering)
+│                        Filters out: "decision", "onboarding", specific muster events
 ├── EventPacingManager   (3-5 day paced narrative events)
 ├── MapIncidentManager   (Context-based incidents: battles, settlements)
 ├── GlobalEventPacer     (Enforces max_per_day, min_hours_between limits)
@@ -1358,6 +1369,112 @@ InformationManager.DisplayMessage(new InformationMessage(message, Colors.Green))
 ```
 
 This ensures players always know exactly what happened when they make a choice.
+
+---
+
+## Error Codes & Diagnostics
+
+The content system includes searchable error codes for user support and troubleshooting.
+
+### Phase-Aware Scheduling & Commitment Model (2026-01-03/04)
+
+**Phase-Aware Generation (2026-01-04):**
+- `CampOpportunityGenerator.GenerateCandidatesForPhase(DayPhase targetPhase)` - Generates candidates for a specific phase
+  - Overrides `CampContext.DayPhase` to target phase (not current phase)
+  - Ensures opportunities are filtered by their target phase's requirements
+  - Returns ALL candidates (no budget limiting - orchestrator handles selection)
+- `ContentOrchestrator.SchedulePhaseOpportunities()` - Schedules opportunities for a specific phase
+  - Calls generator's phase-specific method for each phase (Dawn/Midday/Dusk/Night)
+  - Tracks `alreadyScheduledIds` across phases to prevent duplicates
+  - Each opportunity appears only once per day in its first valid phase
+- **Fixed:** Opportunities with `validPhases: ["Dusk", "Night"]` no longer appear in both phases
+
+**Commitment Model (2026-01-03):**
+- `CommitToOpportunity(string opportunityId)` - Player schedules future opportunity
+- `GetAllTodaysOpportunities()` - Returns all scheduled opportunities across phases
+- `GetOpportunitiesToFireNow()` - Returns committed opportunities ready to fire
+- `FireCommittedOpportunities(DayPhase)` - Auto-fires committed opportunities at phase transition
+- `CleanupMissedOpportunities(DayPhase)` - Removes uncommitted opportunities when phase passes
+
+**ScheduledOpportunity Properties:**
+- `PlayerCommitted` - True if player clicked to schedule this opportunity
+- `IsAvailableToCommit` - True if can be clicked (not consumed, not committed)
+- `IsScheduledToFire` - True if committed but not yet fired
+
+**UI Integration:**
+- `EnlistedMenuBehavior.IsPhaseFuture(scheduledPhase, currentPhase)` - Proper phase comparison
+  - Past phases (Dawn during Midday) fire immediately
+  - Current phase fires immediately
+  - Future phases allow commitment (greys out, auto-fires at phase)
+
+**Baggage Access Filtering:**
+- `CampOpportunityGenerator.GenerateCandidates()` checks `BaggageTrainManager.GetCurrentAccess()` before showing baggage opportunities
+- Only shows baggage access when state is `FullAccess` or `TemporaryAccess`
+- Prevents frustrating UX of clicking access only to be denied
+
+### Content System Error Codes
+
+| Code | System | Severity | Meaning | User Action |
+|------|--------|----------|---------|-------------|
+| **W-ORCH-001** | Orchestrator | Warning | CampOpportunityGenerator not available | Decisions won't appear in accordion - check if game loaded properly |
+| **W-ORCH-002** | Orchestrator | Warning | ConsumeOpportunity called with null ID | Decision may not disappear from menu - report if decisions stuck |
+| **W-ORCH-003** | Orchestrator | Warning | Opportunity not found in schedule | Decision may reappear after phase change - normal if already selected |
+| **W-CAMP-001** | CampLife | Warning | Definitions loaded via lazy init | Normal on first access after load - informational |
+| **W-CAMP-002** | CampLife | Warning | No definitions after loading | Check camp_opportunities.json exists and has content |
+| **W-CAMP-003** | CampLife | Warning | No candidates passed filtering | Check tier/context requirements in JSON match current state |
+| **E-CAMP-001** | CampLife | Error | camp_opportunities.json not found | Verify mod installation is complete |
+| **E-CAMP-002** | CampLife | Error | No 'opportunities' array in JSON | File corrupt or invalid - reinstall mod |
+| **E-CAMP-003** | CampLife | Error | Failed to parse JSON | Check JSON syntax - decisions won't appear |
+| **W-EVT-001** | EventDelivery | Warning | Attempted to queue null event | Event won't fire - check event ID and catalog loading |
+| **W-EVT-002** | EventDelivery | Warning | Event has no valid options | Event popup empty - check requirements in JSON |
+| **E-EVT-001** | EventDelivery | Error | Selected option not an EventOption | Internal error - report with log |
+| **W-MAP-001** | MapIncidents | Warning | EventDeliveryManager not available | Map incidents won't fire - check system initialization |
+| **E-MAP-001** | MapIncidents | Error | Error delivering map incident | Map incident failed - report with log |
+
+**Other System Error Codes:**
+- **E-DIAG-002/003/004**: Diagnostics system failures (see `ModConflictDiagnostics.cs`)
+- **E-UI-046/047**: Menu/accordion failures (see `EnlistedMenuBehavior.cs`)
+- **E-*-*****: 40+ additional codes across enlistment, combat, equipment, retinue systems
+
+### Diagnostic Features
+
+**Session Logs:**
+```
+Modules/Enlisted/Debugging/
+├── Session-A_*.log  (current session)
+├── Session-B_*.log  (previous session)
+├── Session-C_*.log  (oldest kept)
+├── Conflicts-A_*.log  (Harmony conflicts)
+└── Current_Session_README.txt  (pointer + support instructions)
+```
+
+**Anti-Spam Features:**
+- **Throttling**: Duplicate messages suppressed (5s window), shows count: `"message (repeated 12x)"`
+- **LogOnce()**: One-time messages per session (init messages, startup diagnostics)
+- **Exception de-duplication**: Full stack trace logged once per unique exception
+- **Keyed throttling**: Same event type, changing details (e.g., "Party moved (repeated 50x)")
+
+**Log Levels (per-category):**
+```
+Off < Error < Warn < Info (default) < Debug < Trace
+```
+
+Configure in `ModuleData/Enlisted/Config/settings.json`:
+```json
+{
+  "log_levels": {
+    "default": "Info",
+    "Orchestrator": "Debug",
+    "EventDelivery": "Debug"
+  }
+}
+```
+
+**Support Process:**
+1. User reports issue with error code (e.g., "W-ORCH-001")
+2. Search logs for code to find context
+3. Full exception details included automatically (first occurrence only)
+4. Session rotation keeps 3 most recent logs for comparison
 
 ---
 

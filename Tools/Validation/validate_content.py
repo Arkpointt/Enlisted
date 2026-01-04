@@ -14,6 +14,7 @@ Validation Phases:
     Phase 3: Logical validation (impossible combinations, reasonable values)
     Phase 4: Consistency checks (flags, multi-stage events, priorities)
     Phase 5: Orphan detection (unused XML strings)
+    Phase 5.5: Opportunity validation (hints, deprecated 'immediate' field)
     Phase 6: Config validation (baggage_config.json, etc.)
     Phase 7: Project structure validation (.csproj, file organization)
     Phase 8: Code quality validation (sea context detection, anti-patterns)
@@ -739,6 +740,12 @@ def validate_opportunities(file_path: str, ctx: ValidationContext, localization_
                 ctx.add_issue("warning", "structure",
                     f"Unknown day phase: '{phase}' (expected: {VALID_DAY_PHASES})",
                     file_path, opp_id)
+        
+        # Check for deprecated 'immediate' field (removed 2026-01-04)
+        if "immediate" in opp:
+            ctx.add_issue("error", "deprecated",
+                f"Field 'immediate' is deprecated (removed 2026-01-04). All opportunities now compete on fitness through orchestrator. Remove this field.",
+                file_path, opp_id)
 
         # ==================== HINT VALIDATION ====================
 

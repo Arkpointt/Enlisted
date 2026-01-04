@@ -3,7 +3,7 @@
 **Summary:** Authoritative JSON schema definitions for events, decisions, orders, and camp routine configs. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-03 (Added all modern fields: promotes, character_tag, loyalty_tag, retinue effects, medical effects, sea/land context)  
+**Last Updated:** 2026-01-03 (Bug fix: Documented EventSelector category filtering behavior; Added all modern fields)  
 **Related Docs:** [Writing Style Guide](writing-style-guide.md), [Content System Architecture](content-system-architecture.md), [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md), [Content Index](content-index.md), [Quartermaster System](../Equipment/quartermaster-system.md)
 
 ---
@@ -12,9 +12,11 @@
 
 1. **Root array must be named `"events"`** - Even for decisions, the parser expects the array to be called `"events"`, not `"decisions"`.
 
-2. **Category determines content type:**
-   - `"category": "decision"` → Camp Hub decisions (required for dec_* prefixed items)
-   - Other categories → Automatic events
+2. **Category determines content type and selection behavior:**
+   - `"category": "decision"` → Camp Hub decisions (required for dec_* prefixed items), **excluded from EventSelector**
+   - `"category": "onboarding"` → Explicit enlistment events (e.g., baggage stowage), **excluded from EventSelector**
+   - Other categories → Automatic events (selected by EventSelector during event windows)
+   - **Note:** "decision" and "onboarding" events are never randomly selected; they fire only when explicitly triggered by code
 
 3. **ID prefixes determine delivery mechanism:**
    - `dec_*` → Player-initiated Camp Hub menu items
@@ -1782,8 +1784,8 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
 | `tooltipRiskyId` | string | ❌ | Localization key for risk tooltip |
 | `tooltipRisky` | string | ❌ | Fallback risk tooltip |
 | `scheduledTime` | string | ❌ | **DEPRECATED** - Use `scheduledPhase` instead |
-| `scheduledPhase` | string | ❌ | **Phase 9** - When activity fires: `"Dawn"`, `"Midday"`, `"Dusk"`, `"Night"`. If omitted, fires immediately (backwards compat). |
-| `immediate` | bool | ❌ | **Phase 9** - If true, fires immediately (ignores scheduledPhase). Default: false. |
+| `scheduledPhase` | string | ❌ | When activity typically fires: `"Dawn"`, `"Midday"`, `"Dusk"`, `"Night"`. Used for fitness scoring hint, not strict scheduling. |
+| `immediate` | bool | ❌ | **REMOVED 2026-01-04** - All opportunities now compete on fitness through orchestrator. This flag no longer has any effect. |
 | `requiredFlags` | array | ❌ | Flags that must be set to appear |
 | `blockedByFlags` | array | ❌ | Flags that prevent appearance |
 | `requirements` | object | ❌ | Requirement conditions (see Requirements Object section below) |
@@ -1855,11 +1857,11 @@ Opportunities can have a `requirements` object that filters when they appear:
   "id": "opp_urgent_medical",
   "type": "recovery",
   "title": "Urgent Medical Care",
-  "immediate": true,
+  "validPhases": ["Dawn", "Midday", "Dusk", "Night"],
   "requirements": {
     "conditionStates": ["HasSevereCondition"]
   },
-  "comment": "Only appears when player has severe/critical injury or illness"
+  "comment": "Available in all phases when player has severe/critical injury or illness"
 }
 ```
 

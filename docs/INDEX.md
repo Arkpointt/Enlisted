@@ -3,7 +3,7 @@
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
 **Last Updated:** 2026-01-03 (UI fix: Variety assignments now display immersive FlavorText in Player Status)
-**Total Documents:** 54
+**Total Documents:** 55
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
 
@@ -233,7 +233,9 @@
 |----------|---------|--------|
 | [README.md](Reference/README.md) | Reference overview and how to use reference docs | ✅ Current |
 | [native-apis.md](Reference/native-apis.md) | Campaign System API reference: Bannerlord API patterns, CampaignBehavior structure, common APIs (Hero, Party, Clan, Settlement), event hooks, save/load patterns - use for API verification against decompiled source | 📚 Reference |
-| [native-skill-xp.md](Reference/native-skill-xp.md) | Skill progression reference: native XP rates per skill, skill learning caps, focus point effects, XP calculation formulas - use when implementing training/skill systems | 📚 Reference |
+| [native-skill-xp.md](Reference/native-skill-xp.md) | Skill progression reference: attribute/skill hierarchy, focus points, learning rates, XP calculation formulas, thematic aliases - use when implementing training/skill systems | 📚 Reference |
+| [content-effects-reference.md](Reference/content-effects-reference.md) | Complete effects reference: all effect types (skill XP, gold, HP, reputation, escalation, company needs, party, narrative), native API integration, processing flow - use when writing content JSON | 📚 Reference |
+| [content-skill-integration-plan.md](Reference/content-skill-integration-plan.md) | Strategic plan: thematic skill aliases, attribute coverage analysis, content improvement roadmap, implementation checklist - use for planning content improvements | 📋 Planning |
 | [native-map-incidents.md](Reference/native-map-incidents.md) | Native game incidents: all vanilla map incidents (bandits, prisoners, travelers), trigger conditions, outcomes, loot tables - use to avoid conflicts with native content | 📚 Reference |
 | [map-incidents-warsails.md](Reference/map-incidents-warsails.md) | Naval DLC map incidents: Warsails expansion content, naval encounters, coastal events - use to avoid DLC conflicts | 📚 Reference |
 | [ai-behavior-analysis.md](Reference/ai-behavior-analysis.md) | AI behavior analysis: native AI decision-making patterns, party movement logic, combat AI, lord behavior - use for AI-aware feature design | 📚 Reference |
@@ -257,6 +259,6 @@
 
 ---
 
-**Last reorganization:** 2026-01-01 (Baggage train orchestrator integration, world-state-aware simulation)
+**Last reorganization:** 2026-01-03 (Added systems-integration-analysis.md)
 
 

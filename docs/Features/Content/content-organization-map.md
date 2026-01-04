@@ -2,8 +2,8 @@
 
 **Summary:** Visual hierarchy showing how all content types relate to each other and where to add new content. Use this as a quick reference when creating new events, orders, or decisions.
 
-**Status:** ✅ Current  
-**Last Updated:** 2026-01-03  
+**Status:** ✅ Current
+**Last Updated:** 2026-01-04 (Phase-aware scheduling, duplicate prevention)
 **Related Docs:** [Content Index](content-index.md), [Content System Architecture](content-system-architecture.md)
 
 ---

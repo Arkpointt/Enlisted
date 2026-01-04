@@ -38,14 +38,30 @@ namespace Enlisted.Features.Content
         /// <summary>Narrative hint for Daily Brief (e.g., "A card game is forming").</summary>
         public string NarrativeHint { get; set; }
 
-        /// <summary>True if player has engaged with this opportunity.</summary>
+        /// <summary>True if player has engaged with this opportunity (event fired).</summary>
         public bool Consumed { get; set; }
+
+        /// <summary>
+        /// True if player has committed to this opportunity (clicked to schedule).
+        /// Committed opportunities are greyed out in menu and will fire when their phase arrives.
+        /// </summary>
+        public bool PlayerCommitted { get; set; }
 
         /// <summary>Fitness score when generated (for debugging).</summary>
         public float FitnessScore { get; set; }
 
         /// <summary>The underlying CampOpportunity for menu display conversion.</summary>
         public CampOpportunity SourceOpportunity { get; set; }
+
+        /// <summary>
+        /// Returns true if this opportunity is available to click (not consumed, not committed).
+        /// </summary>
+        public bool IsAvailableToCommit => !Consumed && !PlayerCommitted;
+
+        /// <summary>
+        /// Returns true if this opportunity is waiting to fire (committed but not consumed).
+        /// </summary>
+        public bool IsScheduledToFire => PlayerCommitted && !Consumed;
     }
 
     /// <summary>
@@ -180,17 +196,104 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Fires when military day phase changes (4x per day).
-        /// Logs the transition and notifies dependent systems.
+        /// Fires committed opportunities and cleans up missed ones.
         /// </summary>
         private void OnDayPhaseChanged(DayPhase newPhase)
         {
-            ModLogger.Debug(LogCategory, $"Day phase changed to {newPhase}");
+            ModLogger.Info(LogCategory, $"Day phase changed to {newPhase}");
+
+            // Clean up uncommitted opportunities from the previous phase (they were missed)
+            var previousPhase = GetPreviousPhase(newPhase);
+            CleanupMissedOpportunities(previousPhase);
+
+            // Fire committed opportunities for the new phase
+            FireCommittedOpportunities(newPhase);
 
             // Notify camp life systems to refresh for new phase
             Camp.CampOpportunityGenerator.Instance?.OnPhaseChanged(newPhase);
+        }
 
-            // TODO: Notify other dependent systems when implemented:
-            // OrderProgressionBehavior.Instance?.OnPhaseChanged(newPhase);
+        /// <summary>
+        /// Gets the phase that came before the given phase.
+        /// </summary>
+        private static DayPhase GetPreviousPhase(DayPhase phase)
+        {
+            return phase switch
+            {
+                DayPhase.Dawn => DayPhase.Night,
+                DayPhase.Midday => DayPhase.Dawn,
+                DayPhase.Dusk => DayPhase.Midday,
+                DayPhase.Night => DayPhase.Dusk,
+                _ => DayPhase.Night
+            };
+        }
+
+        /// <summary>
+        /// Fires all committed opportunities for the given phase.
+        /// Called when a phase boundary is crossed.
+        /// </summary>
+        private void FireCommittedOpportunities(DayPhase phase)
+        {
+            var toFire = GetOpportunitiesToFireNow();
+
+            foreach (var opp in toFire)
+            {
+                try
+                {
+                    ModLogger.Info(LogCategory, $"⚡ Auto-firing committed opportunity: {opp.OpportunityId}");
+
+                    // Mark as consumed
+                    opp.Consumed = true;
+
+                    // Fire the decision event
+                    if (!string.IsNullOrEmpty(opp.TargetDecisionId))
+                    {
+                        var decision = DecisionCatalog.GetDecision(opp.TargetDecisionId);
+                        if (decision != null)
+                        {
+                            // Convert to event and queue for delivery
+                            var eventDef = new EventDefinition
+                            {
+                                Id = decision.Id,
+                                TitleId = decision.TitleId,
+                                TitleFallback = decision.TitleFallback,
+                                SetupId = decision.SetupId,
+                                SetupFallback = decision.SetupFallback,
+                                Category = decision.Category,
+                                Requirements = decision.Requirements,
+                                Timing = decision.Timing,
+                                Options = decision.Options
+                            };
+                            EventDeliveryManager.Instance?.QueueEvent(eventDef);
+                            ModLogger.Info(LogCategory, $"  ✓ Queued decision event: {opp.TargetDecisionId}");
+                        }
+                        else
+                        {
+                            ModLogger.Warn(LogCategory, $"  Decision not found: {opp.TargetDecisionId}");
+                        }
+                    }
+                    else
+                    {
+                        ModLogger.Warn(LogCategory, $"  No target decision for: {opp.OpportunityId}");
+                    }
+
+                    // Record engagement
+                    if (opp.SourceOpportunity != null)
+                    {
+                        Camp.CampOpportunityGenerator.Instance?.RecordEngagement(
+                            opp.OpportunityId, opp.SourceOpportunity.Type);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.Error(LogCategory, $"Failed to fire opportunity {opp.OpportunityId}", ex);
+                }
+            }
+
+            if (toFire.Count > 0)
+            {
+                ModLogger.Info(LogCategory, $"Phase {phase}: Fired {toFire.Count} committed opportunities");
+            }
         }
 
         /// <summary>
@@ -342,8 +445,8 @@ namespace Enlisted.Features.Content
             var opportunityGen = Camp.CampOpportunityGenerator.Instance;
             if (opportunityGen != null)
             {
-                // Opportunities are generated on-demand when player opens DECISIONS menu
-                // CampOpportunityGenerator.GenerateCampLife() uses current world state
+                // Opportunities are pre-scheduled by the Orchestrator at daily tick
+                // CampOpportunityGenerator provides candidate generation logic
                 ModLogger.Debug(LogCategory, "Camp opportunity system active");
             }
         }
@@ -771,12 +874,16 @@ namespace Enlisted.Features.Content
             ModLogger.Info(LogCategory, 
                 $"Context: {worldSituation.LordIs}, Activity={worldSituation.ExpectedActivity}, Phase={worldSituation.CurrentDayPhase}");
 
+            // Track ALL scheduled opportunities across phases to prevent duplicates
+            // Each opportunity should only appear ONCE per day (in one phase)
+            var alreadyScheduledIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             // Schedule for each phase
             int totalScheduled = 0;
             int totalGuaranteed = 0;
             foreach (DayPhase phase in Enum.GetValues(typeof(DayPhase)))
             {
-                var scheduled = SchedulePhaseOpportunities(phase, worldSituation);
+                var scheduled = SchedulePhaseOpportunities(phase, worldSituation, alreadyScheduledIds);
                 _scheduledOpportunities[phase] = scheduled;
 
                 if (scheduled.Count > 0)
@@ -805,37 +912,42 @@ namespace Enlisted.Features.Content
         /// <summary>
         /// Schedules opportunities for a specific phase using the CampOpportunityGenerator.
         /// </summary>
+        /// <param name="phase">The day phase to schedule for.</param>
+        /// <param name="worldSituation">Current world state for budget calculation.</param>
+        /// <param name="alreadyScheduledIds">IDs of opportunities already scheduled for other phases (to prevent duplicates).</param>
         private List<ScheduledOpportunity> SchedulePhaseOpportunities(
             DayPhase phase,
-            WorldSituation worldSituation)
+            WorldSituation worldSituation,
+            HashSet<string> alreadyScheduledIds)
         {
             var generator = CampOpportunityGenerator.Instance;
             if (generator == null)
             {
-                ModLogger.Warn(LogCategory, $"SchedulePhaseOpportunities({phase}): Generator not available");
+                ModLogger.WarnCode(LogCategory, "W-ORCH-001", $"SchedulePhaseOpportunities({phase}): CampOpportunityGenerator not available - decisions won't appear");
                 return new List<ScheduledOpportunity>();
             }
 
             // Generate candidates using existing generator logic
             var candidates = GenerateCandidatesForPhase(phase, generator);
 
-            // Separate guaranteed opportunities (immediate=true, like baggage access) from normal candidates
-            // These always appear when available, regardless of budget
-            var guaranteed = candidates.Where(c => c.Immediate).ToList();
-            var normalCandidates = candidates.Where(c => !c.Immediate).ToList();
+            // Filter out any opportunities already scheduled for an earlier phase
+            // This prevents the same opportunity (like "War Stories") from appearing in Dusk AND Night
+            var availableCandidates = candidates
+                .Where(c => !alreadyScheduledIds.Contains(c.Id))
+                .ToList();
 
             ModLogger.Debug(LogCategory, 
-                $"  {phase} candidates: {normalCandidates.Count} normal + {guaranteed.Count} guaranteed");
+                $"  {phase} candidates: {availableCandidates.Count} available ({candidates.Count - availableCandidates.Count} already scheduled)");
 
             // Get budget for this phase based on world situation
             int budget = DetermineOpportunityBudget(worldSituation, phase);
 
-            // Select top N normal candidates by fitness score (within budget)
+            // Select top N candidates by fitness score (within budget)
             var selected = new List<ScheduledOpportunity>();
 
-            if (budget > 0 && normalCandidates.Count > 0)
+            if (budget > 0 && availableCandidates.Count > 0)
             {
-                var topCandidates = normalCandidates
+                var topCandidates = availableCandidates
                     .OrderByDescending(c => c.FitnessScore)
                     .Take(budget)
                     .ToList();
@@ -857,31 +969,14 @@ namespace Enlisted.Features.Content
                         SourceOpportunity = c,
                         Consumed = false
                     });
+                    
+                    // Track this opportunity to prevent duplicates in later phases
+                    alreadyScheduledIds.Add(c.Id);
                 }
             }
             else if (budget == 0)
             {
-                ModLogger.Debug(LogCategory, $"  {phase} budget=0 (no normal opportunities)");
-            }
-
-            // Add guaranteed opportunities (always show when available, don't count against budget)
-            foreach (var g in guaranteed)
-            {
-                if (!selected.Any(s => s.OpportunityId == g.Id))
-                {
-                    selected.Add(new ScheduledOpportunity
-                    {
-                        OpportunityId = g.Id,
-                        TargetDecisionId = g.TargetDecisionId,
-                        Phase = phase,
-                        DisplayName = g.GetTitle(),
-                        NarrativeHint = g.GetHint(),
-                        FitnessScore = g.FitnessScore,
-                        SourceOpportunity = g,
-                        Consumed = false
-                    });
-                    ModLogger.Debug(LogCategory, $"  {phase} guaranteed added: {g.Id}");
-                }
+                ModLogger.Debug(LogCategory, $"  {phase} budget=0 (no opportunities)");
             }
 
             return selected;
@@ -889,21 +984,13 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Generates candidate opportunities for a specific phase.
-        /// Leverages existing CampOpportunityGenerator logic.
+        /// Uses CampOpportunityGenerator.GenerateCandidatesForPhase() which properly filters for the target phase.
         /// </summary>
         private List<CampOpportunity> GenerateCandidatesForPhase(DayPhase phase, CampOpportunityGenerator generator)
         {
-            // For now, use the existing GenerateCampLife() which already handles phase filtering
-            // The generator's cache is keyed by phase, so calling this will get phase-appropriate opportunities
-            // We'll need to ensure the generator can handle phase prediction in Phase 4 enhancements
-#pragma warning disable CS0618 // Intentional: Orchestrator owns the lifecycle, uses deprecated method internally
-            var opportunities = generator.GenerateCampLife();
-#pragma warning restore CS0618
-            
-            // Filter to only opportunities valid for the target phase
-            return opportunities
-                .Where(o => IsOpportunityValidForPhase(o, phase))
-                .ToList();
+            // Use the generator's phase-specific method which generates candidates AS IF it were the target phase
+            // This is critical: GenerateCampLife() uses the CURRENT phase, but we need candidates for ALL phases
+            return generator.GenerateCandidatesForPhase(phase);
         }
 
         /// <summary>
@@ -1010,12 +1097,22 @@ namespace Enlisted.Features.Content
             ScheduleOpportunities();
 
             var currentPhase = WorldStateAnalyzer.GetCurrentDayPhase();
+            
+            // Diagnostic: log what phases we have scheduled
+            if (_scheduledOpportunities != null)
+            {
+                var phaseInfo = string.Join(", ", _scheduledOpportunities.Select(kvp => 
+                    $"{kvp.Key}:{kvp.Value.Count(o => !o.Consumed)}"));
+                ModLogger.Info(LogCategory, 
+                    $"GetCurrentPhaseOpportunities: Looking for {currentPhase}, available phases: [{phaseInfo}]");
+            }
 
             if (_scheduledOpportunities == null ||
                 !_scheduledOpportunities.TryGetValue(currentPhase, out var opportunities))
             {
-                ModLogger.Debug(LogCategory, 
-                    $"GetCurrentPhaseOpportunities: No schedule for {currentPhase}");
+                ModLogger.WarnCode(LogCategory, "W-ORCH-004",
+                    $"GetCurrentPhaseOpportunities: No schedule exists for {currentPhase} " +
+                    $"(_scheduledOpportunities={_scheduledOpportunities != null}, _scheduledDay={_scheduledDay})");
                 return new List<ScheduledOpportunity>();
             }
 
@@ -1054,12 +1151,13 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Marks an opportunity as consumed (player interacted with it).
+        /// Consumes ALL instances across all phases to ensure it disappears completely.
         /// </summary>
         public void ConsumeOpportunity(string opportunityId)
         {
             if (string.IsNullOrEmpty(opportunityId))
             {
-                ModLogger.Warn(LogCategory, "ConsumeOpportunity called with null/empty ID");
+                ModLogger.WarnCode(LogCategory, "W-ORCH-002", "ConsumeOpportunity called with null/empty ID - decision may not disappear from menu");
                 return;
             }
 
@@ -1069,20 +1167,75 @@ namespace Enlisted.Features.Content
                 return;
             }
 
+            bool found = false;
+            bool engagementRecorded = false;
+
+            // Consume ALL instances across all phases (safety net in case duplicates exist)
             foreach (var phaseEntry in _scheduledOpportunities)
             {
                 var opp = phaseEntry.Value.FirstOrDefault(o => o.OpportunityId == opportunityId);
+                if (opp != null && !opp.Consumed)
+                {
+                    opp.Consumed = true;
+                    found = true;
+                    ModLogger.Info(LogCategory,
+                        $"✓ Opportunity consumed: {opportunityId} (phase={phaseEntry.Key}, fitness={opp.FitnessScore:F1})");
+
+                    // Record engagement only once (first instance)
+                    if (!engagementRecorded)
+                    {
+                        var generator = CampOpportunityGenerator.Instance;
+                        if (generator != null && opp.SourceOpportunity != null)
+                        {
+                            generator.RecordEngagement(opportunityId, opp.SourceOpportunity.Type);
+                            ModLogger.Debug(LogCategory,
+                                $"  Recorded engagement for learning system (type={opp.SourceOpportunity.Type})");
+                            engagementRecorded = true;
+                        }
+                    }
+                }
+            }
+
+            if (!found)
+            {
+                ModLogger.WarnCode(LogCategory, "W-ORCH-003",
+                    $"ConsumeOpportunity({opportunityId}): Not found in schedule - decision may reappear after phase change");
+            }
+        }
+
+        /// <summary>
+        /// Consumes an opportunity by its target decision ID (fallback when opportunity ID is unknown).
+        /// Used when CampOpportunity is null but we still need to mark the scheduled opportunity as consumed.
+        /// </summary>
+        public void ConsumeOpportunityByDecisionId(string decisionId)
+        {
+            if (string.IsNullOrEmpty(decisionId))
+            {
+                return;
+            }
+
+            if (_scheduledOpportunities == null)
+            {
+                ModLogger.Debug(LogCategory, $"ConsumeOpportunityByDecisionId({decisionId}): No schedule exists");
+                return;
+            }
+
+            foreach (var phaseEntry in _scheduledOpportunities)
+            {
+                var opp = phaseEntry.Value.FirstOrDefault(o => 
+                    o.TargetDecisionId != null && 
+                    o.TargetDecisionId.Equals(decisionId, StringComparison.OrdinalIgnoreCase));
                 if (opp != null)
                 {
                     opp.Consumed = true;
                     ModLogger.Info(LogCategory, 
-                        $"✓ Opportunity consumed: {opportunityId} (phase={phaseEntry.Key}, fitness={opp.FitnessScore:F1})");
+                        $"✓ Opportunity consumed by decisionId: {decisionId} (opportunityId={opp.OpportunityId}, phase={phaseEntry.Key})");
 
                     // Also record in CampOpportunityGenerator for history tracking
                     var generator = CampOpportunityGenerator.Instance;
                     if (generator != null && opp.SourceOpportunity != null)
                     {
-                        generator.RecordEngagement(opportunityId, opp.SourceOpportunity.Type);
+                        generator.RecordEngagement(opp.OpportunityId, opp.SourceOpportunity.Type);
                         ModLogger.Debug(LogCategory, 
                             $"  Recorded engagement for learning system (type={opp.SourceOpportunity.Type})");
                     }
@@ -1091,8 +1244,148 @@ namespace Enlisted.Features.Content
                 }
             }
 
-            ModLogger.Warn(LogCategory, 
-                $"ConsumeOpportunity({opportunityId}): Not found in schedule (already consumed or invalid ID)");
+            // Not found - this is expected for non-opportunity decisions (logistics, etc.)
+            ModLogger.Debug(LogCategory, 
+                $"ConsumeOpportunityByDecisionId({decisionId}): No matching opportunity in schedule (may be non-opportunity decision)");
+        }
+
+        /// <summary>
+        /// Player commits to an opportunity (schedules it to fire at its designated phase).
+        /// The opportunity will grey out in the menu and fire automatically when its phase arrives.
+        /// </summary>
+        /// <returns>True if successfully committed, false if not found or already committed/consumed.</returns>
+        public bool CommitToOpportunity(string opportunityId)
+        {
+            if (string.IsNullOrEmpty(opportunityId))
+            {
+                ModLogger.Warn(LogCategory, "CommitToOpportunity called with null/empty ID");
+                return false;
+            }
+
+            if (_scheduledOpportunities == null)
+            {
+                ModLogger.Warn(LogCategory, $"CommitToOpportunity({opportunityId}): No schedule exists");
+                return false;
+            }
+
+            foreach (var phaseEntry in _scheduledOpportunities)
+            {
+                var opp = phaseEntry.Value.FirstOrDefault(o => o.OpportunityId == opportunityId);
+                if (opp != null)
+                {
+                    if (opp.Consumed)
+                    {
+                        ModLogger.Debug(LogCategory, $"CommitToOpportunity({opportunityId}): Already consumed");
+                        return false;
+                    }
+
+                    if (opp.PlayerCommitted)
+                    {
+                        ModLogger.Debug(LogCategory, $"CommitToOpportunity({opportunityId}): Already committed");
+                        return false;
+                    }
+
+                    opp.PlayerCommitted = true;
+                    ModLogger.Info(LogCategory,
+                        $"✓ Player committed to: {opportunityId} (will fire at {phaseEntry.Key})");
+                    return true;
+                }
+            }
+
+            ModLogger.Warn(LogCategory, $"CommitToOpportunity({opportunityId}): Not found in schedule");
+            return false;
+        }
+
+        /// <summary>
+        /// Gets ALL opportunities scheduled for today (across all phases), not just current phase.
+        /// Used by menu to show upcoming opportunities with their availability state.
+        /// </summary>
+        public List<ScheduledOpportunity> GetAllTodaysOpportunities()
+        {
+            var allOpps = new List<ScheduledOpportunity>();
+
+            if (_scheduledOpportunities == null)
+            {
+                return allOpps;
+            }
+
+            var currentPhase = WorldStateAnalyzer.GetCurrentDayPhase();
+
+            foreach (var phase in Enum.GetValues(typeof(DayPhase)).Cast<DayPhase>())
+            {
+                if (_scheduledOpportunities.TryGetValue(phase, out var opportunities))
+                {
+                    foreach (var opp in opportunities.Where(o => !o.Consumed))
+                    {
+                        allOpps.Add(opp);
+                    }
+                }
+            }
+
+            ModLogger.Debug(LogCategory,
+                $"GetAllTodaysOpportunities: {allOpps.Count} opportunities " +
+                $"(committed={allOpps.Count(o => o.PlayerCommitted)}, available={allOpps.Count(o => o.IsAvailableToCommit)})");
+
+            return allOpps;
+        }
+
+        /// <summary>
+        /// Fires all committed opportunities for the current phase.
+        /// Called when a phase boundary is crossed.
+        /// Returns the opportunities that should fire now.
+        /// </summary>
+        public List<ScheduledOpportunity> GetOpportunitiesToFireNow()
+        {
+            var toFire = new List<ScheduledOpportunity>();
+
+            if (_scheduledOpportunities == null)
+            {
+                return toFire;
+            }
+
+            var currentPhase = WorldStateAnalyzer.GetCurrentDayPhase();
+
+            if (_scheduledOpportunities.TryGetValue(currentPhase, out var opportunities))
+            {
+                // Get opportunities that are committed but not yet consumed
+                toFire = opportunities.Where(o => o.IsScheduledToFire).ToList();
+
+                if (toFire.Count > 0)
+                {
+                    ModLogger.Info(LogCategory,
+                        $"Phase {currentPhase}: {toFire.Count} committed opportunities ready to fire: " +
+                        $"[{string.Join(", ", toFire.Select(o => o.OpportunityId))}]");
+                }
+            }
+
+            return toFire;
+        }
+
+        /// <summary>
+        /// Cleans up opportunities that were not committed when their phase passed.
+        /// Called after phase transitions.
+        /// </summary>
+        public void CleanupMissedOpportunities(DayPhase pastPhase)
+        {
+            if (_scheduledOpportunities == null)
+            {
+                return;
+            }
+
+            if (_scheduledOpportunities.TryGetValue(pastPhase, out var opportunities))
+            {
+                var missed = opportunities.Where(o => o.IsAvailableToCommit).ToList();
+                foreach (var opp in missed)
+                {
+                    opp.Consumed = true; // Mark as consumed so they don't show anymore
+                    ModLogger.Debug(LogCategory, $"Opportunity missed (not committed): {opp.OpportunityId} for {pastPhase}");
+                }
+
+                if (missed.Count > 0)
+                {
+                    ModLogger.Info(LogCategory, $"Phase {pastPhase} passed: {missed.Count} uncommitted opportunities expired");
+                }
+            }
         }
 
         /// <summary>

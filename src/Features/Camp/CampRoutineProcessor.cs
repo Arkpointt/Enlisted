@@ -580,7 +580,8 @@ namespace Enlisted.Features.Camp
                 "steward" => DefaultSkills.Steward,
                 "medicine" => DefaultSkills.Medicine,
                 "engineering" => DefaultSkills.Engineering,
-                "discipline" => DefaultSkills.Leadership, // Map discipline to leadership
+                "perception" => DefaultSkills.Scouting, // Map perception checks to Scouting skill
+                // Note: "Discipline" is NOT a skill - it's an escalation track. Use valid skill names in configs.
                 _ => DefaultSkills.Athletics
             };
         }

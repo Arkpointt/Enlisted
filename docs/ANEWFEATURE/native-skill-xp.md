@@ -2,8 +2,8 @@
 
 **Summary:** Research notes documenting how Bannerlord awards skill XP, converts XP into skill levels, and advances hero level (attributes/focus points). This reference helps design Enlisted training, decisions, and schedule rewards that integrate with native progression mechanics.
 
-**Status:** 📚 Reference  
-**Last Updated:** 2025-12-22  
+**Status:** Reference  
+**Last Updated:** 2026-01-03 (expanded with native decompile details, attribute-skill hierarchy, content aliases)  
 **Related Docs:** [Training System](../Features/Combat/training-system.md), [Content System Architecture](../Features/Content/content-system-architecture.md)
 
 ---
@@ -16,8 +16,8 @@ Bannerlord has **two related but distinct progression tracks**:
   - XP is stored per skill and can increase the **skill value** when thresholds are crossed.
   - XP gain is affected by **learning rate** (focus + attributes + learning limit) and a small **global XP multiplier** model.
 
-- **Hero “level” progression** (character level):
-  - Driven by the hero’s **total accumulated raw XP** (tracked in the hero developer).
+- **Hero "level" progression** (character level):
+  - Driven by the hero's **total accumulated raw XP** (tracked in the hero developer).
   - Level-ups grant **focus points** (every level) and **attribute points** (every N levels).
 
 For Enlisted, the actionable takeaway is:
@@ -26,9 +26,166 @@ For Enlisted, the actionable takeaway is:
 
 ---
 
+## Bannerlord Character Progression System
+
+Bannerlord uses a **two-tier progression system**:
+
+### Tier 1: Attributes (6 total)
+
+**Attributes** are the broad character capabilities. Heroes invest **attribute points** (gained every 4 levels) into these. Each attribute governs 3 skills.
+
+| Attribute | StringId | Description (from native) |
+|-----------|----------|---------------------------|
+| **Vigor** | `vigor` | Ability to move with speed and force. Important for melee combat. |
+| **Control** | `control` | Ability to use strength without sacrificing precision. Necessary for ranged weapons. |
+| **Endurance** | `endurance` | Ability to perform taxing physical activity for a long time. |
+| **Cunning** | `cunning` | Ability to predict what other people will do, and outwit their plans. |
+| **Social** | `social` | Ability to understand people's motivations and sway them. |
+| **Intelligence** | `intelligence` | Aptitude for reading and theoretical learning. |
+
+**Native Source:** `TaleWorlds.Core/DefaultCharacterAttributes.cs`
+
+### Tier 2: Skills (18 total, 3 per attribute)
+
+**Skills** are specific competencies. Heroes invest **focus points** (gained every level) and earn **skill XP** through activities. Higher attribute + focus = faster skill learning.
+
+| Attribute | Skills | Internal StringId | Display Name |
+|-----------|--------|-------------------|--------------|
+| **Vigor** | OneHanded, TwoHanded, Polearm | `OneHanded`, `TwoHanded`, `Polearm` | One Handed, Two Handed, Polearm |
+| **Control** | Bow, Crossbow, Throwing | `Bow`, `Crossbow`, `Throwing` | Bow, Crossbow, Throwing |
+| **Endurance** | Riding, Athletics, Crafting | `Riding`, `Athletics`, `Crafting` | Riding, Athletics, **Smithing*** |
+| **Cunning** | Scouting, Tactics, Roguery | `Scouting`, `Tactics`, `Roguery` | Scouting, Tactics, Roguery |
+| **Social** | Charm, Leadership, Trade | `Charm`, `Leadership`, `Trade` | Charm, Leadership, Trade |
+| **Intelligence** | Steward, Medicine, Engineering | `Steward`, `Medicine`, `Engineering` | Steward, Medicine, Engineering |
+
+*\*Note: The Crafting skill's internal StringId is `Crafting` but displays as "Smithing" in-game (`{=smithingskill}Smithing`)*
+
+**Native Source:** `TaleWorlds.Core/DefaultSkills.cs`
+
+### Skill → Attribute Relationship
+
+From `DefaultSkills.InitializeAll()`, each skill explicitly declares its parent attribute:
+
+```csharp
+// Example from native decompile
+this._skillScouting.Initialize(
+    new TextObject("{=LJ6Krlbr}Scouting"),
+    new TextObject("{=kmBxaJZd}Knowledge of how to scan the wilderness..."),
+    new CharacterAttribute[1] { DefaultCharacterAttributes.Cunning }  // Parent attribute
+);
+```
+
+The `SkillObject.Attributes` property is an array, but in vanilla Bannerlord each skill has exactly one parent attribute.
+
+---
+
+## Content Aliases (Thematic Skill Names)
+
+Content authors can use **thematic terms** in JSON instead of Bannerlord's internal skill names. The code automatically maps them to the real skill.
+
+### Why Use Aliases?
+
+1. **Immersive content** - "Perception" sounds better than "Scouting" in narrative text
+2. **Attribute tracking** - know which attribute your content benefits
+3. **Future-proof** - if we change mappings, content doesn't need updating
+
+### Current Alias Mappings
+
+| Thematic Alias | Maps To Skill | Parent Attribute | Use In Content For |
+|----------------|---------------|------------------|-------------------|
+| `Perception` | Scouting | Cunning | Guard duty, sentry, spotting, observation |
+| `Smithing` | Crafting | Endurance | Equipment repair, maintenance, forging |
+
+### Using Aliases in JSON
+
+Aliases work in **both** `skillCheck` and `skillXp` fields:
+
+```json
+{
+  "skillCheck": {
+    "skill": "Perception",
+    "difficulty": 40
+  },
+  "effects": {
+    "skillXp": {
+      "Perception": 20
+    }
+  }
+}
+```
+
+The code maps `"Perception"` → `Scouting` → awards XP to `DefaultSkills.Scouting` → benefits `Cunning` attribute.
+
+### Code Implementation
+
+Mappings are handled in:
+- `SkillCheckHelper.GetSkillByName()` - for skill checks and XP effects
+- `CampRoutineProcessor.GetSkillFromName()` - for routine outcomes
+
+Both use the same switch expression pattern:
+
+```csharp
+var mappedSkill = normalizedName switch
+{
+    "perception" => DefaultSkills.Scouting,
+    "smithing" => DefaultSkills.Crafting,
+    _ => null
+};
+```
+
+---
+
+## Full Skill Reference
+
+| Skill | Attribute | API | Enlisted Activities |
+|-------|-----------|-----|---------------------|
+| OneHanded | Vigor | `DefaultSkills.OneHanded` | Sword drills, sparring |
+| TwoHanded | Vigor | `DefaultSkills.TwoHanded` | Heavy weapon training |
+| Polearm | Vigor | `DefaultSkills.Polearm` | Pike drills, formation |
+| Bow | Control | `DefaultSkills.Bow` | Archery practice |
+| Crossbow | Control | `DefaultSkills.Crossbow` | Crossbow drills |
+| Throwing | Control | `DefaultSkills.Throwing` | Javelin practice |
+| Riding | Endurance | `DefaultSkills.Riding` | Mounted patrol, cavalry |
+| Athletics | Endurance | `DefaultSkills.Athletics` | Formation, marching, labor |
+| Crafting | Endurance | `DefaultSkills.Crafting` | Equipment repair (displays as "Smithing") |
+| Scouting | Cunning | `DefaultSkills.Scouting` | Patrol, sentry, recon |
+| Tactics | Cunning | `DefaultSkills.Tactics` | Battle planning, drills |
+| Roguery | Cunning | `DefaultSkills.Roguery` | Stealth, night ops |
+| Charm | Social | `DefaultSkills.Charm` | Social events, morale |
+| Leadership | Social | `DefaultSkills.Leadership` | Command, NCO duties |
+| Trade | Social | `DefaultSkills.Trade` | Quartermaster, logistics |
+| Steward | Intelligence | `DefaultSkills.Steward` | Camp management |
+| Medicine | Intelligence | `DefaultSkills.Medicine` | Treating wounded |
+| Engineering | Intelligence | `DefaultSkills.Engineering` | Fortifications, siege |
+
+### Native API
+
+```csharp
+// Get a skill's parent attribute (SkillObject.Attributes is an array)
+var skill = DefaultSkills.Scouting;
+var attribute = skill.Attributes[0];  // Returns DefaultCharacterAttributes.Cunning
+
+// Get attribute for any skill name (including aliases)
+public static CharacterAttribute GetAttributeForSkill(string skillName)
+{
+    var skill = SkillCheckHelper.GetSkillByName(skillName);
+    return skill?.Attributes?.Length > 0 ? skill.Attributes[0] : null;
+}
+
+// Example: "Perception" → Scouting → Cunning
+var attr = GetAttributeForSkill("Perception");
+// attr.StringId == "cunning"
+```
+
+**Native Source:** `TaleWorlds.Core/SkillObject.cs`
+- `SkillObject.Attributes` - array of parent attributes (always length 1 in vanilla)
+- `SkillObject.HowToLearnSkillText` - localized hint text via `GameTexts.FindText("str_how_to_learn_skill", stringId)`
+
+---
+
 ## Primary Native Reference Files (Local Decompile)
 
-Use the local decompile as the authority (paths below are in this repo’s decompile workspace):
+Use the local decompile as the authority (paths below are in this repo's decompile workspace):
 
 - **Skills list and attributes**
   - `Decompile/TaleWorlds.Core/DefaultSkills.cs`
@@ -99,7 +256,7 @@ Key parameters:
 The XP calculation formula (simplified):
 
 ```
-baseXP = 0.4 × (attackerPower + 0.5) × (victimPower + 0.5) × (min(damage, victimMaxHP) + (isFatal ? victimMaxHP : 0)) × missionTypeMultiplier
+baseXP = 0.4 * (attackerPower + 0.5) * (victimPower + 0.5) * (min(damage, victimMaxHP) + (isFatal ? victimMaxHP : 0)) * missionTypeMultiplier
 ```
 
 **Components**:
@@ -129,15 +286,15 @@ baseXP = 0.4 × (attackerPower + 0.5) × (victimPower + 0.5) × (min(damage, vic
 
 The XP is awarded to the skill matching the weapon used:
 
-- Siege engine hits → `Engineering`
+- Siege engine hits -> `Engineering`
 - Weapon-specific:
-  - One-handed weapons → `OneHanded`
-  - Two-handed weapons → `TwoHanded`
-  - Polearms → `Polearm`
-  - Bows → `Bow`
-  - Crossbows → `Crossbow`
-  - Thrown weapons → `Throwing`
-  - No weapon/unarmed → `Athletics`
+  - One-handed weapons -> `OneHanded`
+  - Two-handed weapons -> `TwoHanded`
+  - Polearms -> `Polearm`
+  - Bows -> `Bow`
+  - Crossbows -> `Crossbow`
+  - Thrown weapons -> `Throwing`
+  - No weapon/unarmed -> `Athletics`
 
 **Source**: `weapon.RelevantSkill` property determines the skill.
 
@@ -220,52 +377,18 @@ For the Enlisted mod:
 
 ---
 
-## Skills Available (DefaultSkills)
-
-Bannerlord’s default skill set (from `DefaultSkills`) includes:
-
-**Combat**
-- `DefaultSkills.OneHanded` (Attribute: Vigor)
-- `DefaultSkills.TwoHanded` (Vigor)
-- `DefaultSkills.Polearm` (Vigor)
-- `DefaultSkills.Bow` (Control)
-- `DefaultSkills.Crossbow` (Control)
-- `DefaultSkills.Throwing` (Control)
-
-**Movement / Physical**
-- `DefaultSkills.Riding` (Endurance)
-- `DefaultSkills.Athletics` (Endurance)
-- `DefaultSkills.Crafting` (Endurance) *(Smithing)*
-
-**Party / Map / Social**
-- `DefaultSkills.Tactics` (Cunning)
-- `DefaultSkills.Scouting` (Cunning)
-- `DefaultSkills.Roguery` (Cunning)
-- `DefaultSkills.Charm` (Social)
-- `DefaultSkills.Leadership` (Social)
-- `DefaultSkills.Trade` (Social)
-- `DefaultSkills.Steward` (Intelligence)
-- `DefaultSkills.Medicine` (Intelligence)
-- `DefaultSkills.Engineering` (Intelligence)
-
-Notes:
-- A `SkillObject` includes its owning **attributes** (`SkillObject.Attributes`).
-- Skill “how to learn” helper text exists via `SkillObject.HowToLearnSkillText` (GameTexts lookup).
-
----
-
 ## How Skill XP is Stored + Converted into Skill Levels
 
 Native stores per-skill XP on `HeroDeveloper`:
 
 - `HeroDeveloper._skillXps`: dictionary keyed by `SkillObject`
-- `HeroDeveloper._totalXp`: “raw XP” used for hero level progression
+- `HeroDeveloper._totalXp`: "raw XP" used for hero level progression
 
 When XP is awarded:
 
 1. **Call path** (typical):
    - `Hero.AddSkillXp(skill, xp)` (Hero convenience)  
-   - → `HeroDeveloper.AddSkillXp(skill, rawXp, isAffectedByFocusFactor: true, shouldNotify: true)`
+   - -> `HeroDeveloper.AddSkillXp(skill, rawXp, isAffectedByFocusFactor: true, shouldNotify: true)`
 
 2. **Multipliers applied**
    - **Generic XP multiplier**: `Campaign.Current.Models.GenericXpModel.GetXpMultiplier(hero)`
@@ -286,7 +409,7 @@ When XP is awarded:
 ### Skill XP thresholds
 The XP required per skill level is generated once in `DefaultCharacterDevelopmentModel.InitializeXpRequiredForSkillLevel()` and stored in an internal table up to 1024.
 
-**Important quirk:** If the campaign is in **AccelerationMode.Fast**, the XP requirements are scaled down (multiplied by ~0.3). This changes “how fast skills grow” in accelerated campaigns.
+**Important quirk:** If the campaign is in **AccelerationMode.Fast**, the XP requirements are scaled down (multiplied by ~0.3). This changes "how fast skills grow" in accelerated campaigns.
 
 ---
 
@@ -301,17 +424,37 @@ Hero level is driven by `HeroDeveloper._totalXp`, which increments when skill XP
 
 This is what `HeroDeveloper.CheckLevel(...)` uses to determine level-ups.
 
-### Points gained
-From `DefaultCharacterDevelopmentModel` constants:
+### Points Gained (from native constants)
 
-- **Focus points per level**: 1
-- **Attribute points every N levels**: 1 per 4 levels
-- **Starting focus points**: 5
-- **Starting attribute points**: 15
+From `DefaultCharacterDevelopmentModel` (verified in decompile):
+
+```csharp
+// Character Limits
+private const int MaxCharacterLevels = 62;           // Max hero level
+public override int MaxAttribute => 10;              // Max attribute value
+public override int MaxFocusPerSkill => 5;           // Max focus per skill
+
+// Starting Points
+public override int AttributePointsAtStart => 15;    // Total at level 1
+public override int FocusPointsAtStart => 5;         // Total at level 1
+
+// Points Per Level
+public override int FocusPointsPerLevel => 1;        // Every level
+public override int LevelsPerAttributePoint => 4;    // 1 attribute point every 4 levels
+```
+
+**Summary:**
+| Resource | Starting | Per Level | Maximum |
+|----------|----------|-----------|---------|
+| Focus Points | 5 | +1 every level | 5 per skill |
+| Attribute Points | 15 | +1 every 4 levels | 10 per attribute |
+| Hero Level | 1 | — | 62 |
+
+**Native Source:** `TaleWorlds.CampaignSystem/GameComponents/DefaultCharacterDevelopmentModel.cs`
 
 ---
 
-## Practical Guidance for Enlisted “Training / Decisions” Rewards
+## Practical Guidance for Enlisted "Training / Decisions" Rewards
 
 ### Preferred API for granting skill progression
 Use:
@@ -327,7 +470,7 @@ This ensures:
 Avoid directly setting skill values or bypassing native learning unless you have a very specific reason (e.g., save migration, one-off debug).
 
 ### Tuning note for Enlisted
-If Enlisted adds expensive “Free Time” training (4–6 fatigue), it should grant XP in a way that feels consistent with:
+If Enlisted adds expensive "Free Time" training (4-6 fatigue), it should grant XP in a way that feels consistent with:
 - combat hits (native `DefaultSkillLevelingManager` calls `hero.AddSkillXp(...)`)
 - party/map actions (trade profits, scouting, etc. also route through skill XP)
 
@@ -340,9 +483,7 @@ So: prefer fewer, higher-cost actions that award XP to **the skills that match c
 - We award skill XP via `Hero.AddSkillXp(...)` (not direct level edits) except for migrations/debug.
 - We do not bypass native learning rate unless intentional and documented.
 - We keep rewards stable under different campaign acceleration settings.
-- We can trace any “skill gained” behavior back to one of the native model layers:
+- We can trace any "skill gained" behavior back to one of the native model layers:
   - GenericXpModel multiplier
   - CharacterDevelopmentModel learning rate / limit
   - Skill XP threshold table
-
-

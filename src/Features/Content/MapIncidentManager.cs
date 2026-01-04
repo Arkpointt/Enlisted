@@ -317,6 +317,19 @@ namespace Enlisted.Features.Content
                     return false;
                 }
 
+                // Filter out decisions and onboarding events - these are handled by the accordion/menu system
+                // Decisions with context="Any" would otherwise match every map incident context
+                candidates = candidates
+                    .Where(e => !e.Category.Equals("decision", StringComparison.OrdinalIgnoreCase) &&
+                                !e.Category.Equals("onboarding", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (candidates.Count == 0)
+                {
+                    ModLogger.Debug(LogCategory, $"No map_incident events for context: {context} (excluded decisions/onboarding)");
+                    return false;
+                }
+
                 ModLogger.Debug(LogCategory, $"Found {candidates.Count} candidate events for context: {context}");
 
                 // Filter by requirements and cooldowns
@@ -341,7 +354,7 @@ namespace Enlisted.Features.Content
                 var deliveryManager = EventDeliveryManager.Instance;
                 if (deliveryManager == null)
                 {
-                    ModLogger.Warn(LogCategory, "EventDeliveryManager not available, cannot deliver incident");
+                    ModLogger.WarnCode(LogCategory, "W-MAP-001", "EventDeliveryManager not available - map incidents won't fire");
                     return false;
                 }
 
@@ -366,7 +379,7 @@ namespace Enlisted.Features.Content
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error delivering incident for context: {context}", ex);
+                ModLogger.ErrorCode(LogCategory, "E-MAP-001", $"Error delivering incident for context: {context}", ex);
                 return false;
             }
         }

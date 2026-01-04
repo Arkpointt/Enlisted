@@ -84,7 +84,10 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Filters events to those meeting all requirements and not on cooldown.
-        /// Excludes events with category "decision" since those are handled separately by DecisionManager.
+        /// Excludes special-purpose events that should never be randomly selected:
+        /// - "decision" category: Handled by DecisionManager (Camp Hub menu)
+        /// - "onboarding" category: Triggered explicitly during enlistment (e.g., baggage stowage)
+        /// - Specific muster events: Fire as muster menu stages, not random events
         /// </summary>
         private static List<EventDefinition> GetEligibleCandidates(
             IReadOnlyList<EventDefinition> allEvents,
@@ -97,6 +100,14 @@ namespace Enlisted.Features.Content
                 // Skip decision events - these are handled by DecisionManager, not the event pacing system
                 if (!string.IsNullOrEmpty(evt.Category) &&
                     evt.Category.Equals("decision", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // Skip onboarding events - these are triggered explicitly during enlistment, not via random selection
+                // Example: evt_baggage_stowage_first_enlistment fires 1 hour after first enlistment only
+                if (!string.IsNullOrEmpty(evt.Category) &&
+                    evt.Category.Equals("onboarding", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

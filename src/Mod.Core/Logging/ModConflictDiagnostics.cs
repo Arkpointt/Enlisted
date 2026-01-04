@@ -576,6 +576,11 @@ namespace Enlisted.Mod.Core.Logging
         /// <summary>
         ///     Verifies that critical mod files and systems are properly installed.
         ///     Helps diagnose installation problems vs actual bugs when users report issues.
+        ///
+        ///     2026-01-03 UPDATE: Added checks for orchestrator systems:
+        ///       - camp_schedule.json, orchestrator_overrides.json, routine_outcomes.json
+        ///       - simulation_config.json, strategic_context_config.json
+        ///       - camp_opportunities.json (in Decisions folder)
         /// </summary>
         private static void WriteModuleHealthCheck()
         {
@@ -646,10 +651,26 @@ namespace Enlisted.Mod.Core.Logging
                 if (Directory.Exists(decisionsPath))
                 {
                     var decisionFiles = Directory.GetFiles(decisionsPath, "*.json").Length;
-                    WriteLine($"    Decision Files: {decisionFiles}");
+                    var expectedDecisionFiles = new[] { 
+                        "decisions.json", "camp_decisions.json", "camp_opportunities.json", 
+                        "medical_decisions.json" 
+                    };
+                    var foundCount = 0;
+                    foreach (var expectedFile in expectedDecisionFiles)
+                    {
+                        if (File.Exists(Path.Combine(decisionsPath, expectedFile)))
+                        {
+                            foundCount++;
+                        }
+                    }
+                    WriteLine($"    Decision Files: {decisionFiles} total ({foundCount}/{expectedDecisionFiles.Length} core files)");
                     if (decisionFiles == 0)
                     {
                         warnings.Add("No decision files found");
+                    }
+                    else if (foundCount < expectedDecisionFiles.Length)
+                    {
+                        warnings.Add($"Some core decision files missing (found {foundCount}/{expectedDecisionFiles.Length})");
                     }
                 }
                 else
@@ -683,7 +704,9 @@ namespace Enlisted.Mod.Core.Logging
                 {
                     var expectedConfigs = new[] { 
                         "settings.json", "progression_config.json", "enlisted_config.json", 
-                        "equipment_pricing.json", "retinue_config.json", "baggage_config.json" 
+                        "equipment_pricing.json", "retinue_config.json", "baggage_config.json",
+                        "camp_schedule.json", "orchestrator_overrides.json", "routine_outcomes.json",
+                        "simulation_config.json", "strategic_context_config.json"
                     };
                     var foundCount = 0;
                     foreach (var expectedFile in expectedConfigs)

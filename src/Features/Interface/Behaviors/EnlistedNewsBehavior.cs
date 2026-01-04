@@ -2564,41 +2564,56 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Gets a flavor sentence about camp activities from the CampOpportunityGenerator.
+        /// Gets a flavor sentence about camp activities from the ContentOrchestrator's scheduled opportunities.
         /// </summary>
         private string GetCampActivityFlavor()
         {
             try
             {
-                var generator = Camp.CampOpportunityGenerator.Instance;
-                if (generator == null)
+                // Use Orchestrator's pre-scheduled opportunities (the source of truth)
+                var orchestrator = Content.ContentOrchestrator.Instance;
+                if (orchestrator == null)
                 {
                     return string.Empty;
                 }
 
-                // Get current opportunities from the generator
-                var opportunities = generator.GenerateCampLife();
-                if (opportunities == null || opportunities.Count == 0)
+                // Get current phase opportunities from the Orchestrator
+                var scheduledOpps = orchestrator.GetCurrentPhaseOpportunities();
+                if (scheduledOpps == null || scheduledOpps.Count == 0)
                 {
                     return string.Empty;
                 }
 
-                // Return the first opportunity's description as camp flavor
-                var firstOpp = opportunities[0];
-                if (!string.IsNullOrEmpty(firstOpp.DescriptionFallback))
+                // Return the first opportunity's hint or description as camp flavor
+                var firstOpp = scheduledOpps[0];
+                
+                // Prefer the narrative hint if available
+                if (!string.IsNullOrEmpty(firstOpp.NarrativeHint))
                 {
-                    return firstOpp.DescriptionFallback;
+                    return firstOpp.NarrativeHint;
                 }
 
-                // Fallback: describe by type
-                return firstOpp.Type switch
+                // Fall back to display name
+                if (!string.IsNullOrEmpty(firstOpp.DisplayName))
                 {
-                    Camp.Models.OpportunityType.Training => new TextObject("{=menu_camp_drilling}Veterans drilling by the wagons.").ToString(),
-                    Camp.Models.OpportunityType.Social => new TextObject("{=menu_camp_cards}Card game forming tonight by the fire.").ToString(),
-                    Camp.Models.OpportunityType.Economic => new TextObject("{=menu_camp_trading}Some trading happening in camp.").ToString(),
-                    Camp.Models.OpportunityType.Recovery => new TextObject("{=menu_camp_rest}A quiet moment in camp.").ToString(),
-                    _ => string.Empty
-                };
+                    return firstOpp.DisplayName;
+                }
+
+                // Final fallback: describe by source opportunity type
+                var sourceOpp = firstOpp.SourceOpportunity;
+                if (sourceOpp != null)
+                {
+                    return sourceOpp.Type switch
+                    {
+                        Camp.Models.OpportunityType.Training => new TextObject("{=menu_camp_drilling}Veterans drilling by the wagons.").ToString(),
+                        Camp.Models.OpportunityType.Social => new TextObject("{=menu_camp_cards}Card game forming tonight by the fire.").ToString(),
+                        Camp.Models.OpportunityType.Economic => new TextObject("{=menu_camp_trading}Some trading happening in camp.").ToString(),
+                        Camp.Models.OpportunityType.Recovery => new TextObject("{=menu_camp_rest}A quiet moment in camp.").ToString(),
+                        _ => string.Empty
+                    };
+                }
+
+                return string.Empty;
             }
             catch (Exception ex)
             {

@@ -66,7 +66,7 @@ namespace Enlisted.Features.Content
         {
             if (evt == null)
             {
-                ModLogger.Warn(LogCategory, "Attempted to queue null event");
+                ModLogger.WarnCode(LogCategory, "W-EVT-001", "Attempted to queue null event - check event ID and catalog loading");
                 return;
             }
 
@@ -125,7 +125,7 @@ namespace Enlisted.Features.Content
 
             if (options.Count == 0)
             {
-                ModLogger.Warn(LogCategory, $"Event {evt.Id} has no valid options");
+                ModLogger.WarnCode(LogCategory, "W-EVT-002", $"Event {evt.Id} has no valid options - check requirements in JSON");
                 OnEventClosed();
                 return;
             }
@@ -334,7 +334,7 @@ namespace Enlisted.Features.Content
 
             if (option == null)
             {
-                ModLogger.Error(LogCategory, "Selected option identifier is not an EventOption");
+                ModLogger.ErrorCode(LogCategory, "E-EVT-001", "Selected option identifier is not an EventOption - internal error");
                 OnEventClosed();
                 return;
             }
@@ -2573,8 +2573,7 @@ namespace Enlisted.Features.Content
                 
                 ModLogger.Info(LogCategory, $"Requesting decision menu refresh (current menu: {currentMenuId})");
                 
-                if (currentMenuId != null && 
-                    (currentMenuId == "enlisted_decisions" || currentMenuId == "enlisted_status"))
+                if (currentMenuId != null && currentMenuId.StartsWith("enlisted_"))
                 {
                     // Force a refresh by switching to the same menu on next frame
                     // This rebuilds the cached entries and updates availability states

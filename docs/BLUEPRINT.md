@@ -2,7 +2,7 @@
 
 **Summary:** Complete guide to the Enlisted mod's architecture, coding standards, and development practices. This is the single source of truth for understanding how this project works.
 
-**Last Updated:** 2026-01-03 (UI fix: Variety assignments now display immersive FlavorText in Player Status instead of internal "Variety assignment" label)
+**Last Updated:** 2026-01-04 (Phase-aware scheduling, duplicate prevention, commitment model, baggage filtering)  
 **Target Game:** Bannerlord v1.3.13
 
 ---
@@ -25,8 +25,9 @@ These rules must always be followed:
 | 2 | **API Verification** | ALWAYS use local decompile at `C:\Dev\Enlisted\Decompile\` (not online docs) |
 | 3 | **Manual File Includes** | Must manually add new files to `Enlisted.csproj` with `<Compile Include="..."/>` → Validator enforces this |
 | 4 | **Build Command** | `dotnet build -c "Enlisted RETAIL" /p:Platform=x64` |
-| 5 | **Logging** | Use `ModLogger` → outputs to `Modules\Enlisted\Debugging\` |
-| 6 | **Code Quality** | Follow ReSharper recommendations (never suppress without documented reason) |
+| 5 | **Logging** | Use `ModLogger` with searchable error codes (`ErrorCode("E-SYS-001", ...")`) → outputs to `Modules\Enlisted\Debugging\` |
+| 6 | **Phase-Aware Scheduling** | Each opportunity appears ONCE per day; phase-specific generation prevents duplicates; commitment model: click future-phase to schedule (greys out) → auto-fires at phase; current/past-phase fires immediately; uncommitted disappear when phase passes |
+| 7 | **Code Quality** | Follow ReSharper recommendations (never suppress without documented reason) |
 
 ---
 

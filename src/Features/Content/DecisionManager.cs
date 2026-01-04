@@ -390,6 +390,12 @@ namespace Enlisted.Features.Content
         /// The source CampOpportunity if this came from the generator.
         /// </summary>
         public CampOpportunity CampOpportunity { get; set; }
+
+        /// <summary>
+        /// The scheduled opportunity from the Orchestrator.
+        /// Used for the commitment model (scheduling future activities).
+        /// </summary>
+        public ScheduledOpportunity ScheduledOpportunity { get; set; }
     }
 }
 

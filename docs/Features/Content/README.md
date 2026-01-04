@@ -20,7 +20,7 @@
 
 | Document | Topic | Status |
 |----------|-------|--------|
-| [content-system-architecture.md](content-system-architecture.md) | World-state driven orchestration, ContentOrchestrator pipeline, JSON/XML architecture, native Bannerlord integration | ✅ Implemented |
+| [content-system-architecture.md](content-system-architecture.md) | World-state driven orchestration, ContentOrchestrator pipeline, JSON/XML architecture, native Bannerlord integration, **error codes & diagnostics** | ✅ Implemented |
 | [event-system-schemas.md](event-system-schemas.md) | Authoritative JSON schemas for events, decisions, orders, camp routines with parsing rules and validation | ✅ Current |
 | [writing-style-guide.md](writing-style-guide.md) | Writing standards: military voice/tone, vocabulary, text structure, dynamic tokens, tooltip formatting | ✅ Current |
 | [injury-system.md](injury-system.md) | Unified medical condition system: injuries, illnesses, medical risk escalation, context-aware treatment, recovery | ✅ Implemented |

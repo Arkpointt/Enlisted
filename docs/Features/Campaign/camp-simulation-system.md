@@ -3,9 +3,9 @@
 **Summary:** The Camp Simulation System creates a living, breathing military company through two integrated layers: Background Simulation (autonomous company life that runs automatically) and Camp Opportunities (player-facing activities generated contextually). Together they make the camp feel real - things happen whether you engage or not, and you can choose when and how to participate in camp life.
 
 **Status:** ✅ Implemented  
-**Last Updated:** 2026-01-03 (Bug Fix: Scheduled opportunities now grey out correctly when committed)  
+**Last Updated:** 2026-01-03 (Bug fixes: opportunities persist when lord leaves, decisions correctly disappear after selection)  
 **Implementation:** `src/Features/Camp/CompanySimulationBehavior.cs`, `src/Features/Camp/CampOpportunityGenerator.cs`  
-**Related Docs:** [Content System Architecture](../Content/content-system-architecture.md), [News Reporting System](../UI/news-reporting-system.md), [Company Needs](../Core/company-needs.md), [Camp Routine Schedule](camp-routine-schedule-spec.md)
+**Related Docs:** [Content System Architecture](../Content/content-system-architecture.md), [News Reporting System](../UI/news-reporting-system.md), [Company Needs](../Core/company-needs.md), [Camp Routine Schedule](camp-routine-schedule-spec.md), [Orchestrator Spec](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
 
 ---
 
@@ -918,18 +918,26 @@ public float GetHoursUntilCommitment(ScheduledCommitment c) { ... }
   "id": "opp_card_game",
   "scheduledPhase": "Dusk",
   "validPhases": ["Dusk", "Night"],
-  "immediate": false
+  "baseFitness": 50
 }
 ```
 
-- `immediate: false` → Player commits, fires at scheduled phase (24h ahead)
-- `immediate: true` → Fires now (urgent/time-sensitive activities)
+**Phase-Aware Scheduling (2026-01-04):**
+- Orchestrator generates candidates for each phase independently using `GenerateCandidatesForPhase(phase)`
+- Each opportunity appears only ONCE per day in its first valid phase
+- Opportunities with multiple valid phases (e.g., `["Dusk", "Night"]`) scheduled for earliest phase only
+- All opportunities compete on fitness score (no "immediate" bypass)
+
+**Commitment Model:**
+- Future-phase opportunities: Click to commit → greys out → auto-fires at phase
+- Current/past-phase opportunities: Click to fire immediately
+- Uncommitted opportunities: Disappear when phase passes (missed window)
 
 **Benefits:**
 - Immersive time awareness (anticipation of scheduled activities)
 - Players can plan around duties and obligations
 - Natural pacing (activities happen when contextually appropriate)
-- Consequences for broken commitments (reputation/discipline)
+- No duplicates across phases
 
 **See Also:**  
 - [Camp Routine Schedule](camp-routine-schedule-spec.md) - Daily schedule baseline  

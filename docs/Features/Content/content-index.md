@@ -3,8 +3,10 @@
 **Summary:** Master list of all narrative content with IDs, titles, descriptions, requirements, effects, and skill checks. This index provides quick reference for all events, decisions, orders, map incidents, and orchestrated opportunities in the mod.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-03 (Complete audit: 245 total pieces including camp opportunities)  
-**Related Docs:** [Content Organization Map](content-organization-map.md), [Content System Architecture](content-system-architecture.md), [Orders Content](orders-content.md), [Event System Schemas](event-system-schemas.md)
+**Last Updated:** 2026-01-04 (Phase-aware scheduling, duplicate prevention, commitment model, baggage access filtering)  
+**Related Docs:** [Content Organization Map](content-organization-map.md), [Content System Architecture](content-system-architecture.md), [Orders Content](orders-content.md), [Event System Schemas](event-system-schemas.md), [Orchestrator Spec](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
+
+**Diagnostics:** All content systems now include searchable error codes for user support. See [Content System Architecture - Error Codes](content-system-architecture.md#error-codes--diagnostics) for complete code reference and logging features.
 
 ---
 
@@ -200,23 +202,38 @@ Some orders have severe failure penalties beyond reputation loss:
 
 **File:** `ModuleData/Enlisted/Decisions/camp_opportunities.json`  
 **System:** Pre-scheduled by ContentOrchestrator 24 hours ahead  
-**Delivery:** Appear in DECISIONS accordion on main menu (locked until phase arrives)  
+**Delivery:** All today's opportunities visible in menu (commitment model)  
 **Integration:** Each opportunity links to a decision via `targetDecision` field
 
-**How It Works (Orchestrator Unification):**
-1. **Daily at 6am:** ContentOrchestrator analyzes world state
-2. **Candidate generation:** For each phase (Dawn/Midday/Dusk/Night), generates candidates via CampOpportunityGenerator
-3. **Fitness scoring:** Scores each by fitness (context, player needs, history, schedule awareness)
-4. **Schedule locking:** Locks top N opportunities for that phase (won't disappear if lord leaves, context changes)
-5. **Hint generation:** Extracts narrative hints for Daily Brief display
-6. **Menu integration:** EnlistedMenuBehavior queries `ContentOrchestrator.GetCurrentPhaseOpportunities()` directly (no menu cache)
-7. **Consumption tracking:** When player selects, `ConsumeOpportunity()` marks as used
+**How It Works (Phase-Aware Scheduling & Commitment Model - 2026-01-04):**
+1. **Daily at 6am:** ContentOrchestrator analyzes world state and pre-schedules opportunities
+2. **Phase-aware generation:** For each phase (Dawn/Midday/Dusk/Night):
+   - Calls `CampOpportunityGenerator.GenerateCandidatesForPhase(phase)` 
+   - Generator overrides context to target phase (not current phase)
+   - Ensures candidates are filtered by their target phase's `validPhases`
+   - Tracks `alreadyScheduledIds` to prevent same opportunity in multiple phases
+3. **Fitness scoring:** All opportunities compete on fitness (context, player needs, history, schedule awareness)
+4. **Budget selection:** Top N opportunities per phase selected based on activity level budget
+5. **Duplicate prevention:** Each opportunity appears only ONCE per day in its first valid phase
+6. **Schedule locking:** Locked once generated (won't change when context shifts)
+7. **Menu displays ALL phases:** `GetAllTodaysOpportunities()` shows opportunities for entire day
+8. **Player commitment:**
+   - **Future-phase opportunities:** Click to schedule → greys out with "[SCHEDULED - {Phase}]"
+   - **Current/past-phase opportunities:** Click to fire immediately (no commit for past phases)
+   - **Phase transition:** Auto-fires all committed opportunities as popups
+   - **Missed opportunities:** Uncommitted opportunities disappear when phase passes
+9. **Baggage filtering:** Only shows baggage access when player actually has access (prevents "access denied" frustration)
 
 **Key Benefits:**
-- Opportunities persist when lord leaves settlement (fixes main bug)
-- Opportunities persist when phase changes mid-view
-- Menu always shows stable, pre-scheduled content (single source of truth)
-- Hints provide immersive foreshadowing in Company Reports and Your Status sections
+- ✅ Players can see and plan for entire day's opportunities
+- ✅ Click future opportunities to schedule them (commit)
+- ✅ Committed opportunities auto-fire at designated phase
+- ✅ Visual feedback (grey out) shows scheduled state
+- ✅ Missed opportunities just disappear (no popup spam)
+- ✅ Baggage access only appears when accessible
+- ✅ Opportunities persist when lord leaves or context changes
+
+**See:** [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) for complete architecture and commitment model details.
 
 ### Training Opportunities (6)
 

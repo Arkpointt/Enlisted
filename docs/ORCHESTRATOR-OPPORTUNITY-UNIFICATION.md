@@ -2,10 +2,95 @@
 
 **Summary:** Architectural redesign to unify the ContentOrchestrator and CampOpportunityGenerator into a single coherent system where the Orchestrator owns opportunity scheduling. Opportunities are pre-scheduled 24 hours ahead, locked once generated, and hinted through narrative text.
 
-**Status:** ✅ **IMPLEMENTED**  
+**Status:** ✅ **IMPLEMENTED & BUG FIXES APPLIED**  
 **Created:** 2026-01-03  
 **Implemented:** 2026-01-03  
+**Bug Fixes:** 2026-01-03, 2026-01-04, 2026-01-03 (Commitment Model)  
 **Related Docs:** [Content System Architecture](Features/Content/content-system-architecture.md), [Camp Simulation System](Features/Campaign/camp-simulation-system.md)
+
+---
+
+## Recent Bug Fixes
+
+### 2026-01-04: Phase-Aware Scheduling & Duplicate Prevention
+
+**Change:** Fixed opportunity scheduling to properly generate candidates for each phase and prevent duplicates.
+
+**Issues Fixed:**
+1. **Wrong phase candidates** - Orchestrator was calling `GenerateCampLife()` which filtered by CURRENT phase, not target phase. Result: Only current phase got candidates, all other phases got zero.
+2. **Duplicate opportunities** - Opportunities with `validPhases: ["Dusk", "Night"]` were scheduled for BOTH phases, showing "War Stories" and "War Stories (Night)" simultaneously.
+3. **Past-phase commits** - Clicking a Dawn opportunity during Midday would "commit" it for future firing (wrong - Dawn is PAST, not future).
+
+**Changes Made:**
+- `CampOpportunityGenerator.cs`: Added `GenerateCandidatesForPhase(DayPhase targetPhase)` that overrides context phase to target phase
+- `ContentOrchestrator.cs`: Updated `GenerateCandidatesForPhase()` to use new generator method
+- `ContentOrchestrator.cs`: Changed `scheduledGuaranteedIds` → `alreadyScheduledIds` to track ALL opportunities, preventing any opportunity from appearing in multiple phases
+- `ContentOrchestrator.cs`: Removed "guaranteed opportunity" special logic (now all opportunities compete on fitness)
+- `EnlistedMenuBehavior.cs`: Added `IsPhaseFuture(scheduledPhase, currentPhase)` helper for proper phase comparison
+- `EnlistedMenuBehavior.cs`: Updated commit logic to only commit if `!isCurrentPhase && isFuturePhase` (not past phases)
+- `camp_opportunities.json`: Removed all `"immediate": true` flags
+
+**Result:** 
+- ✅ Each opportunity appears only once per day in its first valid phase
+- ✅ All phases get proper candidates (not just current phase)
+- ✅ Past-phase opportunities fire immediately (no commit)
+- ✅ Build succeeded with 0 warnings, 0 errors
+
+---
+
+### 2026-01-03: Commitment Model Implementation
+
+**Change:** Implemented player commitment model for forecasted opportunities.
+
+**How It Works:**
+1. **All today's opportunities visible** - Menu shows opportunities for all phases, not just current
+2. **Click to commit** - Clicking a future-phase opportunity schedules it (greys out)
+3. **Auto-fire on phase** - When the phase arrives, committed opportunities fire automatically
+4. **Immediate for current/past phase** - Current or past-phase opportunities fire immediately when clicked
+5. **Missed opportunities disappear** - Uncommitted opportunities vanish when their phase passes
+
+**User Experience:**
+- See "Card Game (Dusk)" in menu during Dawn
+- Click to schedule → Shows "Scheduled for Dusk" message, option greys out
+- At Dusk phase transition → Event popup fires automatically
+- If not clicked by Dusk → Opportunity just disappears (missed it)
+- Click Dawn opportunity during Midday → Fires immediately (Dawn was past)
+
+**Changes Made:**
+- `ContentOrchestrator.cs`: Added `PlayerCommitted` to `ScheduledOpportunity`, added `CommitToOpportunity()`, `GetAllTodaysOpportunities()`, `GetOpportunitiesToFireNow()`, `CleanupMissedOpportunities()`, `FireCommittedOpportunities()`
+- `EnlistedMenuBehavior.cs`: Updated `GetCurrentDecisions()` to show all today's opportunities, `OnMainMenuDecisionSlotSelected()` to commit vs fire based on phase
+- `DecisionManager.cs`: Added `ScheduledOpportunity` property to `DecisionAvailability`
+- `CampOpportunityGenerator.cs`: Added baggage access filter (only show when access available)
+
+**Result:** Players can now plan ahead, see what's coming, and commit to activities. All opportunities compete fairly through the orchestrator. Build succeeded with 0 warnings, 0 errors.
+
+---
+
+### 2026-01-04: Decision/Accordion Integration & Deprecation Cleanup
+
+**Issues Fixed:**
+1. **Decisions firing as popups instead of appearing in accordion** - `MapIncidentManager` was selecting decision-category events because they had `context="Any"` (default). Fixed by filtering out "decision" and "onboarding" category events in `TryDeliverIncident()`.
+2. **Deprecation warnings for `GenerateCampLife()` calls** - Two call sites were still using the deprecated method directly instead of going through the Orchestrator.
+
+**Changes Made:**
+- `MapIncidentManager.cs`: Added filter to exclude "decision" and "onboarding" category events from map incidents
+- `CampOpportunityGenerator.cs`: `GetUpcomingHints()` now uses only cached opportunities (no regeneration)
+- `EnlistedNewsBehavior.cs`: `GetCampActivityFlavor()` now uses `ContentOrchestrator.GetCurrentPhaseOpportunities()`
+
+**Result:** Build succeeded with 0 warnings, 0 errors.
+
+### 2026-01-03: Initial Bug Fixes
+
+**Issues Fixed:**
+1. **Decision tree changing when lord leaves castle** - Menu was calling deprecated `GenerateCampLife()` which used current context instead of locked schedule
+2. **Decisions not disappearing after selection** - Consumption failing for logistics decisions, menu refresh too narrow
+
+**Changes Made:**
+- `EnlistedMenuBehavior.cs`: Replaced direct generator calls with Orchestrator queries, added decision ID fallback consumption
+- `ContentOrchestrator.cs`: Added `ConsumeOpportunityByDecisionId()` method for fallback consumption
+- `EventDeliveryManager.cs`: Expanded menu refresh scope to all `enlisted_*` menus
+
+**Result:** Build succeeded with 0 errors. All testing checklist items verified.
 
 ---
 
@@ -363,8 +448,8 @@ public List<CampOpportunity> GenerateCandidatesForPhase(
     // Returns scored candidates, Orchestrator decides what to schedule
 }
 
-// DEPRECATE: GenerateCampLife() with its internal caching
-// The Orchestrator now owns the opportunity lifecycle
+// GenerateCampLife() is now `internal` - only Orchestrator calls it
+// The Orchestrator owns the opportunity lifecycle
 ```
 
 ---
@@ -389,22 +474,24 @@ Hints are phase-appropriate and immersive, using dynamic placeholders for person
 
 ## Migration Path
 
-### Phase 1: Add Orchestrator Scheduling (Non-Breaking)
-1. Add `_scheduledOpportunities` and scheduling methods to ContentOrchestrator
-2. Add `GetCurrentPhaseOpportunities()` method
-3. Add narrative hint generation (reads from `hint`/`hintId` JSON fields)
-4. Update opportunity JSON schema to include `hint`/`hintId` fields (see [event-system-schemas.md](Features/Content/event-system-schemas.md#narrative-hints-orchestrator-pre-scheduling))
-5. Keep existing `GenerateCampLife()` working for backward compatibility
+### Phase 1: Add Orchestrator Scheduling (Non-Breaking) ✅ COMPLETE
+1. ✅ Add `_scheduledOpportunities` and scheduling methods to ContentOrchestrator
+2. ✅ Add `GetCurrentPhaseOpportunities()` method
+3. ✅ Add narrative hint generation (reads from `hint`/`hintId` JSON fields)
+4. ✅ Update opportunity JSON schema to include `hint`/`hintId` fields (see [event-system-schemas.md](Features/Content/event-system-schemas.md#narrative-hints-orchestrator-pre-scheduling))
+5. ✅ Keep existing `GenerateCampLife()` working for backward compatibility
 
-### Phase 2: Wire Menu to Orchestrator
-1. Change menu to call `ContentOrchestrator.GetCurrentPhaseOpportunities()`
-2. Remove menu's own cache (`_cachedMainMenuDecisions`)
-3. Add `ConsumeOpportunity()` call when player selects an opportunity
+### Phase 2: Wire Menu to Orchestrator ✅ COMPLETE
+1. ✅ Change menu to call `ContentOrchestrator.GetCurrentPhaseOpportunities()`
+2. ✅ Remove menu's own cache (`_cachedMainMenuDecisions`)
+3. ✅ Add `ConsumeOpportunity()` call when player selects an opportunity
 
-### Phase 3: Deprecate Old Flow
-1. Mark `CampOpportunityGenerator.GenerateCampLife()` as deprecated
-2. Remove `DecisionManager.GetAvailableOpportunities()` (replaced by Orchestrator)
-3. Update docs to reflect new architecture
+### Phase 3: Deprecate Old Flow ✅ COMPLETE
+1. ✅ Make `CampOpportunityGenerator.GenerateCampLife()` internal (only Orchestrator calls it)
+2. ✅ Remove `DecisionManager.GetAvailableOpportunities()` (replaced by Orchestrator)
+3. ✅ Update docs to reflect new architecture
+4. ✅ Migrate remaining callers: `GetUpcomingHints()` and `GetCampActivityFlavor()` now use Orchestrator
+5. ✅ Filter decisions/onboarding from MapIncidentManager to prevent accordion bypass
 
 ### Phase 4: Enhance Scheduling
 1. Add weather/event awareness to scheduling

@@ -109,16 +109,19 @@ if (effects.ContainsKey("scrutiny"))
 **Root Causes:**
 1. **Line 3721 in EnlistmentBehavior.cs**: `_bagCheckCompleted` was being reset on EVERY discharge, even normal re-enlistments (e.g., when lord's army is defeated)
 2. **Lines 3345-3348 in EnlistmentBehavior.cs**: `_bagCheckCompleted` was being reset every time `EnlistPlayer()` was called (including during saves/loads)
+3. **EventSelector.cs**: Missing filter for "onboarding" category events - the EventSelector was picking up `evt_baggage_stowage_first_enlistment` as a regular selectable event during daily camp opportunity scheduling
 
 **Fixes Applied:**
 1. Moved `_bagCheckCompleted = false` inside the retirement/desertion conditional check (line 3726) - now only resets when player actually retires or deserts
 2. Removed the redundant reset block (lines 3345-3348) that was clearing the flag on every EnlistPlayer call
+3. Added "onboarding" category filter to EventSelector.cs (lines 104-109) - onboarding events are now excluded from normal event selection, just like "decision" and muster events
 
 **Result:**
 - ✅ Baggage dialog fires ONCE on first enlistment
 - ✅ Baggage dialog fires again only after retirement or desertion (starting fresh)
 - ✅ Baggage dialog does NOT fire on normal re-enlistments (lord defeated, etc.)
 - ✅ Save/load no longer causes the dialog to re-appear
+- ✅ EventSelector no longer picks baggage stowage as a random camp event
 
 ---
 

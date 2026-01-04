@@ -29,11 +29,17 @@ Content and project validation ensures everything follows schema rules and proje
 |-------|----------------|
 | 1-4 | JSON structure, localization references, logic, consistency |
 | 5 | Orphan detection (unused XML strings) |
+| 5.5 | **Opportunity validation** (hints, deprecated 'immediate' field) |
 | 6 | Config file validation (baggage_config.json, etc.) |
 | 7 | **Project structure** (.csproj completeness, file organization) |
 | 8 | **Code quality** (IsCurrentlyAtSea pattern detection) |
 | 9 | **C# TextObject localization** (string IDs in code → XML) |
 | 9.5 | **Camp schedule descriptions** (meaningful phase descriptions) |
+
+**Phase 5.5 (Opportunity Validation)** validates:
+- Hint fields (completeness, length, style)
+- Deprecated `immediate` field (removed 2026-01-04)
+- Phase definitions (`validPhases` correctness)
 
 **Phase 7 (Project Structure)** validates:
 - All `.cs` files in `src/` are in `.csproj`

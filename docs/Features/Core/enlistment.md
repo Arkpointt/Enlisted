@@ -316,7 +316,7 @@ Level 10 Player, Returning (Deserter):
 - Smuggle attempt failed: item confiscated, no reputation penalty (expected risk)
 - **Save/Load During Bag Check:** If player saves while the bag check popup is visible, the event is properly restored on load (prevents duplicate events)
 - **One-Time Trigger:** Baggage check only fires on first enlistment or after retirement/desertion; normal re-enlistments (lord defeated, etc.) skip it
-- **Bug Fix (2026-01-03):** Fixed issue where baggage dialog was incorrectly firing multiple times during active service due to improper flag resets
+- **Bug Fix (2026-01-03):** Fixed issue where baggage dialog was incorrectly firing multiple times during active service due to (1) improper flag resets in EnlistmentBehavior and (2) EventSelector picking onboarding events as regular camp events
 
 **Mercenary Faction Sync:**
 - **Lord's Clan Joins Kingdom:** Player automatically joins as mercenary (maintains battle eligibility)
