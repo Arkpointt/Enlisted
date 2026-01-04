@@ -255,10 +255,15 @@ namespace Enlisted.Features.Interface.Behaviors
             
             if (args == null || args.Length == 0) return;
             
-            // The RichTextWidget passes the href value (already stripped of "event:" prefix) as the first argument
-            string encyclopediaLink = args[0] as string;
+            string linkHref = args[0] as string;
             
-            if (string.IsNullOrEmpty(encyclopediaLink)) return;
+            if (string.IsNullOrEmpty(linkHref)) return;
+            
+            // Strip "event:" prefix if present - EncyclopediaManager.GoToLink expects format like "Hero:lord_1_1"
+            // but the href in RichTextWidget links includes the "event:" prefix like "event:Hero:lord_1_1"
+            string encyclopediaLink = linkHref.StartsWith("event:") 
+                ? linkHref.Substring(6) 
+                : linkHref;
             
             try
             {
@@ -268,7 +273,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Reset inactivity timer on interaction
                 _dataSource?.OnUserInteraction();
                 
-                ModLogger.Debug("Interface", $"Opened encyclopedia link from combat log: {encyclopediaLink}");
+                ModLogger.Debug("Interface", $"Opened encyclopedia link from combat log: {encyclopediaLink} (original href: {linkHref})");
             }
             catch (System.Exception ex)
             {

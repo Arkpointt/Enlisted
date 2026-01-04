@@ -1,12 +1,15 @@
 {
   "packId": "enlisted_retinue_events",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "events": [
     {
       "id": "evt_ret_post_battle_volunteers",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -15,81 +18,100 @@
         "incident_trigger": "leaving_battle"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue", "LeavingBattle"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue",
+          "LeavingBattle"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 },
-        "custom": ["retinue_below_capacity", "last_battle_won"]
+        "tier": {
+          "min": 7,
+          "max": 9
+        },
+        "custom": [
+          "retinue_below_capacity",
+          "last_battle_won"
+        ]
       },
       "timing": {
         "cooldown_days": 5,
         "priority": "normal",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_volunteers_title",
-        "title": "After the Battle",
-        "setupId": "evt_ret_volunteers_setup",
-        "setup": "A corporal approaches. \"Sir, some soldiers want to join your retinue. What should I tell them?\"",
-        "options": [
-          {
-            "id": "accept_volunteers",
-            "textId": "evt_ret_volunteers_opt_accept",
-            "text": "\"Volunteers step forward.\"",
-            "tooltip": "Add 2-4 soldiers to retinue. Leadership skill check for bonus.",
-            "risk": "safe",
-            "costs": {},
-            "effects": {
-              "skillXp": { "Leadership": 10 }
-            ,
+      "titleId": "evt_ret_volunteers_title",
+      "title": "After the Battle",
+      "setupId": "evt_ret_volunteers_setup",
+      "setup": "A corporal approaches. \"Sir, some soldiers want to join your retinue. What should I tell them?\"",
+      "options": [
+        {
+          "id": "accept_volunteers",
+          "textId": "evt_ret_volunteers_opt_accept",
+          "text": "\"Volunteers step forward.\"",
+          "tooltip": "Add 2-4 soldiers to retinue. Leadership skill check for bonus.",
+          "risk": "safe",
+          "costs": {},
+          "effects": {
+            "skillXp": {
+              "Leadership": 10
+            },
+            "retinueGain": 2
+          },
+          "condition": {
+            "min_skill": {
+              "Leadership": 50
+            },
+            "bonus_effects": {
               "retinueGain": 2
-            },
-            "condition": {
-              "min_skill": { "Leadership": 50 },
-              "bonus_effects": { "retinueGain": 2 }
-            },
-            "resultTextId": "evt_ret_volunteers_opt_accept_result",
-            "resultText": "Fresh faces join your ranks. They look to you with respect."
+            }
           },
-          {
-            "id": "request_transfers",
-            "textId": "evt_ret_volunteers_opt_request",
-            "text": "\"Request formal transfers from the captain.\"",
-            "tooltip": "Add 4 soldiers to retinue. -5 Lord rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueGain": 4,
-              "lordRep": -5
-            },
-            "resultTextId": "evt_ret_volunteers_opt_request_result",
-            "resultText": "The captain scowls but complies. More soldiers report for duty, though your lord may not appreciate the request."
+          "resultTextId": "evt_ret_volunteers_opt_accept_result",
+          "resultText": "Fresh faces join your ranks. They look to you with respect."
+        },
+        {
+          "id": "request_transfers",
+          "textId": "evt_ret_volunteers_opt_request",
+          "text": "\"Request formal transfers from the captain.\"",
+          "tooltip": "Add 4 soldiers to retinue. -5 Lord rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueGain": 4,
+            "lordRep": -5
           },
-          {
-            "id": "decline",
-            "textId": "evt_ret_volunteers_opt_decline",
-            "text": "\"We have enough. Tell them to return to their units.\"",
-            "tooltip": "No new soldiers. +5 Soldier rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "soldierRep": 5
-            },
-            "resultTextId": "evt_ret_volunteers_opt_decline_result",
-            "resultText": "Your men appreciate that you will not over-extend. They know you value quality over numbers."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_volunteers_opt_request_result",
+          "resultText": "The captain scowls but complies. More soldiers report for duty, though your lord may not appreciate the request."
+        },
+        {
+          "id": "decline",
+          "textId": "evt_ret_volunteers_opt_decline",
+          "text": "\"We have enough. Tell them to return to their units.\"",
+          "tooltip": "No new soldiers. +5 Soldier rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "soldierRep": 5
+          },
+          "resultTextId": "evt_ret_volunteers_opt_decline_result",
+          "resultText": "Your men appreciate that you will not over-extend. They know you value quality over numbers."
+        }
+      ]
     },
     {
       "id": "evt_ret_victory_recognition",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -98,76 +120,88 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 },
-        "custom": ["last_battle_won"]
+        "tier": {
+          "min": 7,
+          "max": 9
+        },
+        "custom": [
+          "last_battle_won"
+        ]
       },
       "timing": {
         "cooldown_days": 10,
         "priority": "low",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_recognition_title",
-        "title": "Recognition in the Ranks",
-        "setupId": "evt_ret_recognition_setup",
-        "setup": "{LORD_NAME} approaches. \"Your men fought well, Commander. The army could use more leaders like you.\"",
-        "options": [
-          {
-            "id": "humble",
-            "textId": "evt_ret_recognition_opt_humble",
-            "text": "\"The credit belongs to the men, my lord.\"",
-            "tooltip": "Accept recognition humbly. +10 Soldier rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "soldierRep": 10
-            },
-            "resultTextId": "evt_ret_recognition_opt_humble_result",
-            "resultText": "Your lord nods approvingly. The soldiers nearby exchange pleased glances - their commander remembers who does the fighting."
+      "titleId": "evt_ret_recognition_title",
+      "title": "Recognition in the Ranks",
+      "setupId": "evt_ret_recognition_setup",
+      "setup": "{LORD_NAME} approaches. \"Your men fought well, Commander. The army could use more leaders like you.\"",
+      "options": [
+        {
+          "id": "humble",
+          "textId": "evt_ret_recognition_opt_humble",
+          "text": "\"The credit belongs to the men, my lord.\"",
+          "tooltip": "Accept recognition humbly. +10 Soldier rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "soldierRep": 10
           },
-          {
-            "id": "confident",
-            "textId": "evt_ret_recognition_opt_confident",
-            "text": "\"I trained them well, my lord.\"",
-            "tooltip": "Accept recognition confidently. +10 Lord rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "lordRep": 10
-            },
-            "resultTextId": "evt_ret_recognition_opt_confident_result",
-            "resultText": "\"Confidence is good in a commander,\" your lord replies. \"I shall remember this.\""
+          "resultTextId": "evt_ret_recognition_opt_humble_result",
+          "resultText": "Your lord nods approvingly. The soldiers nearby exchange pleased glances - their commander remembers who does the fighting."
+        },
+        {
+          "id": "confident",
+          "textId": "evt_ret_recognition_opt_confident",
+          "text": "\"I trained them well, my lord.\"",
+          "tooltip": "Accept recognition confidently. +10 Lord rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "lordRep": 10
           },
-          {
-            "id": "request_more",
-            "textId": "evt_ret_recognition_opt_request",
-            "text": "\"With more men, I could do even better, my lord.\"",
-            "tooltip": "Add 2 soldiers to retinue. -3 Lord rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueGain": 2,
-              "lordRep": -3
-            },
-            "resultTextId": "evt_ret_recognition_opt_request_result",
-            "resultText": "Your lord's eyes narrow slightly, but he nods. \"Very well. I shall assign a few more to your command.\" You may have pushed too hard."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_recognition_opt_confident_result",
+          "resultText": "\"Confidence is good in a commander,\" your lord replies. \"I shall remember this.\""
+        },
+        {
+          "id": "request_more",
+          "textId": "evt_ret_recognition_opt_request",
+          "text": "\"With more men, I could do even better, my lord.\"",
+          "tooltip": "Add 2 soldiers to retinue. -3 Lord rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueGain": 2,
+            "lordRep": -3
+          },
+          "resultTextId": "evt_ret_recognition_opt_request_result",
+          "resultText": "Your lord's eyes narrow slightly, but he nods. \"Very well. I shall assign a few more to your command.\" You may have pushed too hard."
+        }
+      ]
     },
     {
       "id": "evt_ret_loyalty_low",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -176,76 +210,86 @@
         "incident_trigger": "threshold"
       },
       "triggers": {
-        "all": ["is_enlisted", "has_retinue", "ai_safe"],
+        "all": [
+          "is_enlisted",
+          "has_retinue",
+          "ai_safe"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 7,
         "priority": "high",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_loyalty_low_title",
-        "title": "Discontent in the Ranks",
-        "setupId": "evt_ret_loyalty_low_setup",
-        "setup": "Your men have grown restless. You hear grumbling during the evening meal, and discipline is slipping. Something needs to be done before morale deteriorates further.",
-        "options": [
-          {
-            "id": "address_morale",
-            "textId": "evt_ret_loyalty_low_address",
-            "text": "\"Gather the men. We need to talk.\"",
-            "tooltip": "Address concerns. +10 Retinue Loyalty. Costs 50 gold.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 10,
-              "gold": -50
-            },
-            "resultTextId": "evt_ret_loyalty_low_address_result",
-            "resultText": "You gather your men and hear their grievances. With a few small gestures and promises, spirits lift. Your soldiers know you care about their wellbeing."
+      "titleId": "evt_ret_loyalty_low_title",
+      "title": "Discontent in the Ranks",
+      "setupId": "evt_ret_loyalty_low_setup",
+      "setup": "Your men have grown restless. You hear grumbling during the evening meal, and discipline is slipping. Something needs to be done before morale deteriorates further.",
+      "options": [
+        {
+          "id": "address_morale",
+          "textId": "evt_ret_loyalty_low_address",
+          "text": "\"Gather the men. We need to talk.\"",
+          "tooltip": "Address concerns. +10 Retinue Loyalty. Costs 50 gold.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 10,
+            "gold": -50
           },
-          {
-            "id": "strict_discipline",
-            "textId": "evt_ret_loyalty_low_strict",
-            "text": "\"They will obey or face consequences.\"",
-            "tooltip": "Enforce order. +5 Retinue Loyalty. Adds 3 scrutiny.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 5,
-              "scrutiny": 3
-            },
-            "resultTextId": "evt_ret_loyalty_low_strict_result",
-            "resultText": "You crack down hard. The grumbling stops, but your men obey out of fear rather than respect. Officers take notice of the harsh methods."
+          "resultTextId": "evt_ret_loyalty_low_address_result",
+          "resultText": "You gather your men and hear their grievances. With a few small gestures and promises, spirits lift. Your soldiers know you care about their wellbeing."
+        },
+        {
+          "id": "strict_discipline",
+          "textId": "evt_ret_loyalty_low_strict",
+          "text": "\"They will obey or face consequences.\"",
+          "tooltip": "Enforce order. +5 Retinue Loyalty. Adds 3 scrutiny.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 5,
+            "scrutiny": 3
           },
-          {
-            "id": "ignore",
-            "textId": "evt_ret_loyalty_low_ignore",
-            "text": "\"They will settle down on their own.\"",
-            "tooltip": "Ignore problem. -5 Retinue Loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": -5
-            },
-            "resultTextId": "evt_ret_loyalty_low_ignore_result",
-            "resultText": "You do nothing. The discontent festers. Your soldiers notice your indifference, and morale sinks further."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_loyalty_low_strict_result",
+          "resultText": "You crack down hard. The grumbling stops, but your men obey out of fear rather than respect. Officers take notice of the harsh methods."
+        },
+        {
+          "id": "ignore",
+          "textId": "evt_ret_loyalty_low_ignore",
+          "text": "\"They will settle down on their own.\"",
+          "tooltip": "Ignore problem. -5 Retinue Loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": -5
+          },
+          "resultTextId": "evt_ret_loyalty_low_ignore_result",
+          "resultText": "You do nothing. The discontent festers. Your soldiers notice your indifference, and morale sinks further."
+        }
+      ]
     },
     {
       "id": "evt_ret_loyalty_critical",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -254,94 +298,110 @@
         "incident_trigger": "threshold"
       },
       "triggers": {
-        "all": ["is_enlisted", "has_retinue", "ai_safe"],
+        "all": [
+          "is_enlisted",
+          "has_retinue",
+          "ai_safe"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 7,
         "priority": "urgent",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_loyalty_critical_title",
-        "title": "Desertion Risk",
-        "setupId": "evt_ret_loyalty_critical_setup",
-        "setup": "Your corporal approaches with grave news. \"Commander, the men are talking about deserting. They say you have failed them. If you do not act now, we will lose soldiers.\"",
-        "options": [
-          {
-            "id": "pay_bonus",
-            "textId": "evt_ret_loyalty_critical_pay",
-            "text": "\"I will pay them from my own purse.\"",
-            "tooltip": "Distribute gold. +15 Retinue Loyalty. Costs 150 gold.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 15,
-              "gold": -150
-            },
-            "resultTextId": "evt_ret_loyalty_critical_pay_result",
-            "resultText": "You distribute coin to your soldiers. They are surprised and grateful. Word spreads that you value their service enough to pay from your own pocket."
+      "titleId": "evt_ret_loyalty_critical_title",
+      "title": "Desertion Risk",
+      "setupId": "evt_ret_loyalty_critical_setup",
+      "setup": "Your corporal approaches with grave news. \"Commander, the men are talking about deserting. They say you have failed them. If you do not act now, we will lose soldiers.\"",
+      "options": [
+        {
+          "id": "pay_bonus",
+          "textId": "evt_ret_loyalty_critical_pay",
+          "text": "\"I will pay them from my own purse.\"",
+          "tooltip": "Distribute gold. +15 Retinue Loyalty. Costs 150 gold.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 15,
+            "gold": -150
           },
-          {
-            "id": "inspire",
-            "textId": "evt_ret_loyalty_critical_inspire",
-            "text": "\"I will remind them why they follow me.\"",
-            "tooltip": "Requires Leadership 75+. Restores +20 loyalty. Below 75: only +8 loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "requirements": {
-              "minSkills": { "Leadership": 75 }
-            },
-            "effects": {
-              "retinueLoyalty": 20,
-              "skillXp": { "Leadership": 15 }
-            },
-            "resultTextId": "evt_ret_loyalty_critical_inspire_result",
-            "resultText": "You address your men with passion and conviction. Your words stir their hearts. They remember why they chose to follow you into battle."
+          "resultTextId": "evt_ret_loyalty_critical_pay_result",
+          "resultText": "You distribute coin to your soldiers. They are surprised and grateful. Word spreads that you value their service enough to pay from your own pocket."
+        },
+        {
+          "id": "inspire",
+          "textId": "evt_ret_loyalty_critical_inspire",
+          "text": "\"I will remind them why they follow me.\"",
+          "tooltip": "Requires Leadership 75+. Restores +20 loyalty. Below 75: only +8 loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "requirements": {
+            "minSkills": {
+              "Leadership": 75
+            }
           },
-          {
-            "id": "inspire_low_skill",
-            "textId": "evt_ret_loyalty_critical_inspire",
-            "text": "\"I will remind them why they follow me.\"",
-            "tooltip": "Requires Leadership 75+. Restores +20 loyalty. Below 75: only +8 loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 8,
-              "skillXp": { "Leadership": 10 }
-            },
-            "resultTextId": "evt_ret_loyalty_critical_inspire_low_result",
-            "resultText": "You try to rally your men, but your words ring hollow. You lack the presence to truly inspire them. Still, some appreciate the effort."
+          "effects": {
+            "retinueLoyalty": 20,
+            "skillXp": {
+              "Leadership": 15
+            }
           },
-          {
-            "id": "let_them_go",
-            "textId": "evt_ret_loyalty_critical_let_go",
-            "text": "\"If they wish to leave, let them.\"",
-            "tooltip": "Lose 3 soldiers from retinue. No Loyalty change.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoss": 3
-            },
-            "resultTextId": "evt_ret_loyalty_critical_let_go_result",
-            "resultText": "Three of your soldiers desert in the night. The remaining men are shaken but realize you will not beg them to stay."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_loyalty_critical_inspire_result",
+          "resultText": "You address your men with passion and conviction. Your words stir their hearts. They remember why they chose to follow you into battle."
+        },
+        {
+          "id": "inspire_low_skill",
+          "textId": "evt_ret_loyalty_critical_inspire",
+          "text": "\"I will remind them why they follow me.\"",
+          "tooltip": "Requires Leadership 75+. Restores +20 loyalty. Below 75: only +8 loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 8,
+            "skillXp": {
+              "Leadership": 10
+            }
+          },
+          "resultTextId": "evt_ret_loyalty_critical_inspire_low_result",
+          "resultText": "You try to rally your men, but your words ring hollow. You lack the presence to truly inspire them. Still, some appreciate the effort."
+        },
+        {
+          "id": "let_them_go",
+          "textId": "evt_ret_loyalty_critical_let_go",
+          "text": "\"If they wish to leave, let them.\"",
+          "tooltip": "Lose 3 soldiers from retinue. No Loyalty change.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoss": 3
+          },
+          "resultTextId": "evt_ret_loyalty_critical_let_go_result",
+          "resultText": "Three of your soldiers desert in the night. The remaining men are shaken but realize you will not beg them to stay."
+        }
+      ]
     },
     {
       "id": "evt_ret_loyalty_mutiny",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -350,91 +410,101 @@
         "incident_trigger": "threshold"
       },
       "triggers": {
-        "all": ["is_enlisted", "has_retinue", "ai_safe"],
+        "all": [
+          "is_enlisted",
+          "has_retinue",
+          "ai_safe"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 7,
         "priority": "critical",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_loyalty_mutiny_title",
-        "title": "On the Brink of Mutiny",
-        "setupId": "evt_ret_loyalty_mutiny_setup",
-        "setup": "Your retinue is in crisis. Men refuse orders. Some have drawn weapons. Your corporal warns you: \"Commander, they are ready to mutiny. You must act NOW or we lose everything.\"",
-        "options": [
-          {
-            "id": "emergency_payment",
-            "textId": "evt_ret_loyalty_mutiny_pay",
-            "text": "\"Pay them triple wages. Whatever it takes.\"",
-            "tooltip": "Emergency payment. +30 Retinue Loyalty. Costs 250 gold.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 30,
-              "gold": -250
-            },
-            "resultTextId": "evt_ret_loyalty_mutiny_pay_result",
-            "resultText": "You empty your purse. Your soldiers are stunned by the gesture. The crisis passes. They will follow you again, though trust must still be rebuilt."
+      "titleId": "evt_ret_loyalty_mutiny_title",
+      "title": "On the Brink of Mutiny",
+      "setupId": "evt_ret_loyalty_mutiny_setup",
+      "setup": "Your retinue is in crisis. Men refuse orders. Some have drawn weapons. Your corporal warns you: \"Commander, they are ready to mutiny. You must act NOW or we lose everything.\"",
+      "options": [
+        {
+          "id": "emergency_payment",
+          "textId": "evt_ret_loyalty_mutiny_pay",
+          "text": "\"Pay them triple wages. Whatever it takes.\"",
+          "tooltip": "Emergency payment. +30 Retinue Loyalty. Costs 250 gold.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 30,
+            "gold": -250
           },
-          {
-            "id": "appeal_lord",
-            "textId": "evt_ret_loyalty_mutiny_appeal",
-            "text": "\"I will appeal to our lord for assistance.\"",
-            "tooltip": "Ask Lord for help. +15 Retinue Loyalty. -15 Lord rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 15,
-              "lordRep": -15
-            },
-            "resultTextId": "evt_ret_loyalty_mutiny_appeal_result",
-            "resultText": "Your lord intervenes, addressing your men personally. The crisis is averted, but your lord now questions your ability to command."
+          "resultTextId": "evt_ret_loyalty_mutiny_pay_result",
+          "resultText": "You empty your purse. Your soldiers are stunned by the gesture. The crisis passes. They will follow you again, though trust must still be rebuilt."
+        },
+        {
+          "id": "appeal_lord",
+          "textId": "evt_ret_loyalty_mutiny_appeal",
+          "text": "\"I will appeal to our lord for assistance.\"",
+          "tooltip": "Ask Lord for help. +15 Retinue Loyalty. -15 Lord rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 15,
+            "lordRep": -15
           },
-          {
-            "id": "dismiss_ringleaders",
-            "textId": "evt_ret_loyalty_mutiny_dismiss",
-            "text": "\"Dismiss the troublemakers and rebuild.\"",
-            "tooltip": "Remove 5 soldiers. +25 Retinue Loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoss": 5,
-              "retinueLoyalty": 25
-            },
-            "resultTextId": "evt_ret_loyalty_mutiny_dismiss_result",
-            "resultText": "You dismiss the ringleaders without mercy. Five men are sent away. The remaining soldiers see you will tolerate no insubordination."
+          "resultTextId": "evt_ret_loyalty_mutiny_appeal_result",
+          "resultText": "Your lord intervenes, addressing your men personally. The crisis is averted, but your lord now questions your ability to command."
+        },
+        {
+          "id": "dismiss_ringleaders",
+          "textId": "evt_ret_loyalty_mutiny_dismiss",
+          "text": "\"Dismiss the troublemakers and rebuild.\"",
+          "tooltip": "Remove 5 soldiers. +25 Retinue Loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoss": 5,
+            "retinueLoyalty": 25
           },
-          {
-            "id": "do_nothing",
-            "textId": "evt_ret_loyalty_mutiny_nothing",
-            "text": "\"I will not negotiate with mutineers.\"",
-            "tooltip": "Lose 8 soldiers from retinue. Loyalty remains critical.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoss": 8
-            },
-            "resultTextId": "evt_ret_loyalty_mutiny_nothing_result",
-            "resultText": "You stand your ground. Eight soldiers desert in the night. Those who remain are loyal, but your retinue is crippled."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_loyalty_mutiny_dismiss_result",
+          "resultText": "You dismiss the ringleaders without mercy. Five men are sent away. The remaining soldiers see you will tolerate no insubordination."
+        },
+        {
+          "id": "do_nothing",
+          "textId": "evt_ret_loyalty_mutiny_nothing",
+          "text": "\"I will not negotiate with mutineers.\"",
+          "tooltip": "Lose 8 soldiers from retinue. Loyalty remains critical.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoss": 8
+          },
+          "resultTextId": "evt_ret_loyalty_mutiny_nothing_result",
+          "resultText": "You stand your ground. Eight soldiers desert in the night. Those who remain are loyal, but your retinue is crippled."
+        }
+      ]
     },
     {
       "id": "evt_ret_loyalty_high",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -443,76 +513,88 @@
         "incident_trigger": "threshold"
       },
       "triggers": {
-        "all": ["is_enlisted", "has_retinue", "ai_safe"],
+        "all": [
+          "is_enlisted",
+          "has_retinue",
+          "ai_safe"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 7,
         "priority": "normal",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_loyalty_high_title",
-        "title": "Devoted Soldiers",
-        "setupId": "evt_ret_loyalty_high_setup",
-        "setup": "Your retinue gathers around the campfire after evening muster. One of your veterans stands. \"Commander, we wanted you to know: we would follow you to the gates of hell. You have our loyalty.\"",
-        "options": [
-          {
-            "id": "thank_them",
-            "textId": "evt_ret_loyalty_high_thank",
-            "text": "\"I am honored to lead such men.\"",
-            "tooltip": "Accept devotion. +5 Soldier rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "soldierRep": 5
-            },
-            "resultTextId": "evt_ret_loyalty_high_thank_result",
-            "resultText": "Your soldiers nod in respect. The bond between you and your men grows stronger. They would die for you without hesitation."
+      "titleId": "evt_ret_loyalty_high_title",
+      "title": "Devoted Soldiers",
+      "setupId": "evt_ret_loyalty_high_setup",
+      "setup": "Your retinue gathers around the campfire after evening muster. One of your veterans stands. \"Commander, we wanted you to know: we would follow you to the gates of hell. You have our loyalty.\"",
+      "options": [
+        {
+          "id": "thank_them",
+          "textId": "evt_ret_loyalty_high_thank",
+          "text": "\"I am honored to lead such men.\"",
+          "tooltip": "Accept devotion. +5 Soldier rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "soldierRep": 5
           },
-          {
-            "id": "share_spoils",
-            "textId": "evt_ret_loyalty_high_share",
-            "text": "\"Then let us celebrate. Drinks are on me.\"",
-            "tooltip": "Buy rounds. +10 Soldier rep. Costs 100 gold.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "gold": -100,
-              "soldierRep": 10
-            },
-            "resultTextId": "evt_ret_loyalty_high_share_result",
-            "resultText": "You buy a round for your soldiers. Laughter and song fill the camp. Your men are grateful to serve under a commander who values them."
+          "resultTextId": "evt_ret_loyalty_high_thank_result",
+          "resultText": "Your soldiers nod in respect. The bond between you and your men grows stronger. They would die for you without hesitation."
+        },
+        {
+          "id": "share_spoils",
+          "textId": "evt_ret_loyalty_high_share",
+          "text": "\"Then let us celebrate. Drinks are on me.\"",
+          "tooltip": "Buy rounds. +10 Soldier rep. Costs 100 gold.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "gold": -100,
+            "soldierRep": 10
           },
-          {
-            "id": "push_training",
-            "textId": "evt_ret_loyalty_high_train",
-            "text": "\"Good. Then you are ready for harder training.\"",
-            "tooltip": "Push training. Train Leadership. +3 Retinue Loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 3,
-              "skillXp": { "Leadership": 25 }
-            },
-            "resultTextId": "evt_ret_loyalty_high_train_result",
-            "resultText": "Your soldiers grin at the challenge. They trust you to make them better warriors. Training begins at dawn."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_loyalty_high_share_result",
+          "resultText": "You buy a round for your soldiers. Laughter and song fill the camp. Your men are grateful to serve under a commander who values them."
+        },
+        {
+          "id": "push_training",
+          "textId": "evt_ret_loyalty_high_train",
+          "text": "\"Good. Then you are ready for harder training.\"",
+          "tooltip": "Push training. Train Leadership. +3 Retinue Loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 3,
+            "skillXp": {
+              "Leadership": 25
+            }
+          },
+          "resultTextId": "evt_ret_loyalty_high_train_result",
+          "resultText": "Your soldiers grin at the challenge. They trust you to make them better warriors. Training begins at dawn."
+        }
+      ]
     },
     {
       "id": "evt_ret_soldier_dispute",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -521,98 +603,109 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 12,
         "priority": "normal",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_dispute_title",
-        "title": "Trouble in the Ranks",
-        "setupId": "evt_ret_dispute_setup",
-        "setup": "Two of your soldiers are at each other's throats. \"He cheated at dice!\" one shouts. Your men watch, waiting.",
-        "options": [
-          {
-            "id": "discipline_both",
-            "textId": "evt_ret_dispute_discipline",
-            "text": "\"Both of you. Extra watch duty. Tonight. Now get out of my sight.\"",
-            "tooltip": "Harsh discipline. +5 Officer rep. -3 Retinue Loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": -3,
-              "officerRep": 5
-            },
-            "resultTextId": "evt_ret_dispute_discipline_result",
-            "resultText": "Neither man is happy, but they separate. Order is maintained. Your officers approve of the swift discipline."
+      "titleId": "evt_ret_dispute_title",
+      "title": "Trouble in the Ranks",
+      "setupId": "evt_ret_dispute_setup",
+      "setup": "Two of your soldiers are at each other's throats. \"He cheated at dice!\" one shouts. Your men watch, waiting.",
+      "options": [
+        {
+          "id": "discipline_both",
+          "textId": "evt_ret_dispute_discipline",
+          "text": "\"Both of you. Extra watch duty. Tonight. Now get out of my sight.\"",
+          "tooltip": "Harsh discipline. +5 Officer rep. -3 Retinue Loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": -3,
+            "officerRep": 5
           },
-          {
-            "id": "investigate",
-            "textId": "evt_ret_dispute_investigate",
-            "text": "\"What happened? You first. Then you.\"",
-            "tooltip": "Hear both sides. Train Leadership. +8 Retinue Loyalty. +5 Soldier rep.",
-            "risk": "safe",
-            "costs": {},
-            "effects": {
-              "skillXp": { "Leadership": 15 }
-            ,
-              "retinueLoyalty": 8,
-              "soldierRep": 5
+          "resultTextId": "evt_ret_dispute_discipline_result",
+          "resultText": "Neither man is happy, but they separate. Order is maintained. Your officers approve of the swift discipline."
+        },
+        {
+          "id": "investigate",
+          "textId": "evt_ret_dispute_investigate",
+          "text": "\"What happened? You first. Then you.\"",
+          "tooltip": "Hear both sides. Train Leadership. +8 Retinue Loyalty. +5 Soldier rep.",
+          "risk": "safe",
+          "costs": {},
+          "effects": {
+            "skillXp": {
+              "Leadership": 15
             },
-            "resultTextId": "evt_ret_dispute_investigate_result",
-            "resultText": "You listen. Turns out it was a misunderstanding. You make them shake hands. The men respect that you bothered to hear them out."
+            "retinueLoyalty": 8,
+            "soldierRep": 5
           },
-          {
-            "id": "let_fight",
-            "textId": "evt_ret_dispute_fight",
-            "text": "\"Settle it. Fists only. First blood ends it.\"",
-            "tooltip": "70% success chance. Risk of retinue injury. +3 Retinue Loyalty.",
-            "risk": "moderate",
-            "risk_chance": 70,
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 3,
-              "officerRep": -3
-            },
-            "effects_failure": {
-              "retinueWounded": 1
-            },
-            "resultTextId": "evt_ret_dispute_fight_result",
-            "resultText": "Fists fly. It's over quickly. Both men shake hands afterward, the matter settled the old way.",
-            "failure_resultText": "The fight gets out of hand. One man takes a bad hit and is down. You call for the surgeon."
+          "resultTextId": "evt_ret_dispute_investigate_result",
+          "resultText": "You listen. Turns out it was a misunderstanding. You make them shake hands. The men respect that you bothered to hear them out."
+        },
+        {
+          "id": "let_fight",
+          "textId": "evt_ret_dispute_fight",
+          "text": "\"Settle it. Fists only. First blood ends it.\"",
+          "tooltip": "70% success chance. Risk of retinue injury. +3 Retinue Loyalty.",
+          "risk": "moderate",
+          "risk_chance": 70,
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 3,
+            "officerRep": -3
           },
-          {
-            "id": "dismiss",
-            "textId": "evt_ret_dispute_dismiss",
-            "text": "\"Handle it yourselves. I have better things to do.\"",
-            "tooltip": "Avoid involvement. -6 Retinue Loyalty. -5 Soldier rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": -6,
-              "soldierRep": -5
-            },
-            "resultTextId": "evt_ret_dispute_dismiss_result",
-            "resultText": "You walk away. The men exchange looks. Their commander does not care. The tension will fester."
-          }
-        ]
-      }
+          "effects_failure": {
+            "retinueWounded": 1
+          },
+          "resultTextId": "evt_ret_dispute_fight_result",
+          "resultText": "Fists fly. It's over quickly. Both men shake hands afterward, the matter settled the old way.",
+          "failure_resultText": "The fight gets out of hand. One man takes a bad hit and is down. You call for the surgeon."
+        },
+        {
+          "id": "dismiss",
+          "textId": "evt_ret_dispute_dismiss",
+          "text": "\"Handle it yourselves. I have better things to do.\"",
+          "tooltip": "Avoid involvement. -6 Retinue Loyalty. -5 Soldier rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": -6,
+            "soldierRep": -5
+          },
+          "resultTextId": "evt_ret_dispute_dismiss_result",
+          "resultText": "You walk away. The men exchange looks. Their commander does not care. The tension will fester."
+        }
+      ]
     },
     {
       "id": "evt_ret_leave_request",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -621,78 +714,88 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 15,
         "priority": "normal",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_leave_title",
-        "title": "A Soldier's Plea",
-        "setupId": "evt_ret_leave_setup",
-        "setup": "A reliable soldier approaches. \"Commander... my wife sent word. The baby's coming. Please, let me go to her. Just for a week.\"",
-        "options": [
-          {
-            "id": "grant_leave",
-            "textId": "evt_ret_leave_grant",
-            "text": "\"Go. Family comes first. Be back in seven days.\"",
-            "tooltip": "Grant leave. Temporary retinue loss. +10 Loyalty. +8 Soldier rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 10,
-              "soldierRep": 8
-            },
-            "resultTextId": "evt_ret_leave_grant_result",
-            "resultText": "The man's face lights up. He grabs your hand, thanking you over and over. The other soldiers see this. They know you are not heartless."
+      "titleId": "evt_ret_leave_title",
+      "title": "A Soldier's Plea",
+      "setupId": "evt_ret_leave_setup",
+      "setup": "A reliable soldier approaches. \"Commander... my wife sent word. The baby's coming. Please, let me go to her. Just for a week.\"",
+      "options": [
+        {
+          "id": "grant_leave",
+          "textId": "evt_ret_leave_grant",
+          "text": "\"Go. Family comes first. Be back in seven days.\"",
+          "tooltip": "Grant leave. Temporary retinue loss. +10 Loyalty. +8 Soldier rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 10,
+            "soldierRep": 8
           },
-          {
-            "id": "deny_leave",
-            "textId": "evt_ret_leave_deny",
-            "text": "\"I am sorry. We may see battle any day. I cannot spare you.\"",
-            "tooltip": "Deny leave. -8 Retinue Loyalty. +3 Officer rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": -8,
-              "officerRep": 3
-            },
-            "resultTextId": "evt_ret_leave_deny_result",
-            "resultText": "His face falls. He nods slowly, knowing your words are true but hating you for them. The men mutter among themselves. Some things matter more than war."
+          "resultTextId": "evt_ret_leave_grant_result",
+          "resultText": "The man's face lights up. He grabs your hand, thanking you over and over. The other soldiers see this. They know you are not heartless."
+        },
+        {
+          "id": "deny_leave",
+          "textId": "evt_ret_leave_deny",
+          "text": "\"I am sorry. We may see battle any day. I cannot spare you.\"",
+          "tooltip": "Deny leave. -8 Retinue Loyalty. +3 Officer rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": -8,
+            "officerRep": 3
           },
-          {
-            "id": "pay_messenger",
-            "textId": "evt_ret_leave_messenger",
-            "text": "\"You cannot go. But take this gold and send a fast rider with gifts for your wife.\"",
-            "tooltip": "Compromise. +4 Loyalty. +3 Soldier rep. Costs 30 gold.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "gold": -30,
-              "retinueLoyalty": 4,
-              "soldierRep": 3
-            },
-            "resultTextId": "evt_ret_leave_messenger_result",
-            "resultText": "He hesitates, then accepts the coin. It's not what he wanted, but it's something. The men see you tried to help. That counts for something."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_leave_deny_result",
+          "resultText": "His face falls. He nods slowly, knowing your words are true but hating you for them. The men mutter among themselves. Some things matter more than war."
+        },
+        {
+          "id": "pay_messenger",
+          "textId": "evt_ret_leave_messenger",
+          "text": "\"You cannot go. But take this gold and send a fast rider with gifts for your wife.\"",
+          "tooltip": "Compromise. +4 Loyalty. +3 Soldier rep. Costs 30 gold.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "gold": -30,
+            "retinueLoyalty": 4,
+            "soldierRep": 3
+          },
+          "resultTextId": "evt_ret_leave_messenger_result",
+          "resultText": "He hesitates, then accepts the coin. It's not what he wanted, but it's something. The men see you tried to help. That counts for something."
+        }
+      ]
     },
     {
       "id": "evt_ret_theft",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -701,92 +804,103 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 14,
         "priority": "normal",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_theft_title",
-        "title": "Missing Rations",
-        "setupId": "evt_ret_theft_setup",
-        "setup": "Your corporal reports rations missing from the supply cart. \"Could be one of ours. What do you want to do?\"",
-        "options": [
-          {
-            "id": "investigate",
-            "textId": "evt_ret_theft_investigate",
-            "text": "\"Question everyone. Search the tents. I want answers.\"",
-            "tooltip": "Thorough search. Train Roguery. +2 Retinue Loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "effects": {
-              "skillXp": { "Roguery": 10 }
-            ,
-              "retinueLoyalty": 2
+      "titleId": "evt_ret_theft_title",
+      "title": "Missing Rations",
+      "setupId": "evt_ret_theft_setup",
+      "setup": "Your corporal reports rations missing from the supply cart. \"Could be one of ours. What do you want to do?\"",
+      "options": [
+        {
+          "id": "investigate",
+          "textId": "evt_ret_theft_investigate",
+          "text": "\"Question everyone. Search the tents. I want answers.\"",
+          "tooltip": "Thorough search. Train Roguery. +2 Retinue Loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "effects": {
+            "skillXp": {
+              "Roguery": 10
             },
-            "resultTextId": "evt_ret_theft_investigate_result",
-            "resultText": "After hours of questioning, you find the culprit - a soldier feeding a starving family in the village. You recover what remains. The men see you are thorough but fair."
+            "retinueLoyalty": 2
           },
-          {
-            "id": "punish_collectively",
-            "textId": "evt_ret_theft_punish",
-            "text": "\"Half rations for everyone until the thief confesses.\"",
-            "tooltip": "Collective punishment. +5 Officer rep. -10 Retinue Loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": -10,
-              "officerRep": 5
-            },
-            "resultTextId": "evt_ret_theft_punish_result",
-            "resultText": "Hunger breeds resentment. By nightfall, the men drag the thief before you. The rations are found. But now everyone is angry - at you as much as the thief."
+          "resultTextId": "evt_ret_theft_investigate_result",
+          "resultText": "After hours of questioning, you find the culprit - a soldier feeding a starving family in the village. You recover what remains. The men see you are thorough but fair."
+        },
+        {
+          "id": "punish_collectively",
+          "textId": "evt_ret_theft_punish",
+          "text": "\"Half rations for everyone until the thief confesses.\"",
+          "tooltip": "Collective punishment. +5 Officer rep. -10 Retinue Loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": -10,
+            "officerRep": 5
           },
-          {
-            "id": "replace_from_pocket",
-            "textId": "evt_ret_theft_replace",
-            "text": "\"Buy replacement rations from my own coin. Let it go.\"",
-            "tooltip": "Replace supplies. +5 Retinue Loyalty. Costs 40 gold.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "gold": -40,
-              "retinueLoyalty": 5
-            },
-            "resultTextId": "evt_ret_theft_replace_result",
-            "resultText": "You pay for new supplies without fuss. The men appreciate that you didn't make a scene. The thief, whoever they are, owes you."
+          "resultTextId": "evt_ret_theft_punish_result",
+          "resultText": "Hunger breeds resentment. By nightfall, the men drag the thief before you. The rations are found. But now everyone is angry - at you as much as the thief."
+        },
+        {
+          "id": "replace_from_pocket",
+          "textId": "evt_ret_theft_replace",
+          "text": "\"Buy replacement rations from my own coin. Let it go.\"",
+          "tooltip": "Replace supplies. +5 Retinue Loyalty. Costs 40 gold.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "gold": -40,
+            "retinueLoyalty": 5
           },
-          {
-            "id": "ignore",
-            "textId": "evt_ret_theft_ignore",
-            "text": "\"We will manage. Forget about it.\"",
-            "tooltip": "Ignore theft. -4 Retinue Loyalty. Adds 2 scrutiny.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": -4,
-              "scrutiny": 2
-            },
-            "resultTextId": "evt_ret_theft_ignore_result",
-            "resultText": "You let it slide. A week later, more rations vanish. Then some coin. Weakness invites predators. Even your own men start taking liberties."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_theft_replace_result",
+          "resultText": "You pay for new supplies without fuss. The men appreciate that you didn't make a scene. The thief, whoever they are, owes you."
+        },
+        {
+          "id": "ignore",
+          "textId": "evt_ret_theft_ignore",
+          "text": "\"We will manage. Forget about it.\"",
+          "tooltip": "Ignore theft. -4 Retinue Loyalty. Adds 2 scrutiny.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": -4,
+            "scrutiny": 2
+          },
+          "resultTextId": "evt_ret_theft_ignore_result",
+          "resultText": "You let it slide. A week later, more rations vanish. Then some coin. Weakness invites predators. Even your own men start taking liberties."
+        }
+      ]
     },
     {
       "id": "evt_ret_veteran_questions",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -795,79 +909,91 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 18,
         "priority": "normal",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_veteran_title",
-        "title": "The Old Hand",
-        "setupId": "evt_ret_veteran_setup",
-        "setup": "Your veteran pulls you aside. \"Commander... that patrol route. With respect, it's a bad call. The ravine bottlenecks. Perfect for ambush.\"",
-        "options": [
-          {
-            "id": "listen",
-            "textId": "evt_ret_veteran_listen",
-            "text": "\"You know these lands better than I do. What do you suggest?\"",
-            "tooltip": "Listen to veteran. Train Leadership. +8 Loyalty. +5 Soldier rep.",
-            "risk": "safe",
-            "costs": {},
-            "effects": {
-              "skillXp": { "Leadership": 20 }
-            ,
-              "retinueLoyalty": 8,
-              "soldierRep": 5
+      "titleId": "evt_ret_veteran_title",
+      "title": "The Old Hand",
+      "setupId": "evt_ret_veteran_setup",
+      "setup": "Your veteran pulls you aside. \"Commander... that patrol route. With respect, it's a bad call. The ravine bottlenecks. Perfect for ambush.\"",
+      "options": [
+        {
+          "id": "listen",
+          "textId": "evt_ret_veteran_listen",
+          "text": "\"You know these lands better than I do. What do you suggest?\"",
+          "tooltip": "Listen to veteran. Train Leadership. +8 Loyalty. +5 Soldier rep.",
+          "risk": "safe",
+          "costs": {},
+          "effects": {
+            "skillXp": {
+              "Leadership": 20
             },
-            "resultTextId": "evt_ret_veteran_listen_result",
-            "resultText": "The veteran lays out an alternative. It's better - you can see that immediately. You change the orders. The men notice their commander listens. That matters."
+            "retinueLoyalty": 8,
+            "soldierRep": 5
           },
-          {
-            "id": "override",
-            "textId": "evt_ret_veteran_override",
-            "text": "\"I have my reasons. The order stands.\"",
-            "tooltip": "Override advice. +5 Officer rep. -5 Retinue Loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": -5,
-              "officerRep": 5
-            },
-            "resultTextId": "evt_ret_veteran_override_result",
-            "resultText": "The veteran's jaw tightens. \"As you say, Commander.\" He walks off. The order stands. You hope you're right - because if you're wrong, men will die."
+          "resultTextId": "evt_ret_veteran_listen_result",
+          "resultText": "The veteran lays out an alternative. It's better - you can see that immediately. You change the orders. The men notice their commander listens. That matters."
+        },
+        {
+          "id": "override",
+          "textId": "evt_ret_veteran_override",
+          "text": "\"I have my reasons. The order stands.\"",
+          "tooltip": "Override advice. +5 Officer rep. -5 Retinue Loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": -5,
+            "officerRep": 5
           },
-          {
-            "id": "compromise",
-            "textId": "evt_ret_veteran_compromise",
-            "text": "\"Send scouts ahead. If the ravine is clear, we proceed as planned.\"",
-            "tooltip": "Partial reconnaissance. Train Tactics. +3 Loyalty and Officer rep.",
-            "risk": "safe",
-            "costs": {},
-            "effects": {
-              "skillXp": { "Tactics": 10 }
-            ,
-              "retinueLoyalty": 3,
-              "officerRep": 3
+          "resultTextId": "evt_ret_veteran_override_result",
+          "resultText": "The veteran's jaw tightens. \"As you say, Commander.\" He walks off. The order stands. You hope you're right - because if you're wrong, men will die."
+        },
+        {
+          "id": "compromise",
+          "textId": "evt_ret_veteran_compromise",
+          "text": "\"Send scouts ahead. If the ravine is clear, we proceed as planned.\"",
+          "tooltip": "Partial reconnaissance. Train Tactics. +3 Loyalty and Officer rep.",
+          "risk": "safe",
+          "costs": {},
+          "effects": {
+            "skillXp": {
+              "Tactics": 10
             },
-            "resultTextId": "evt_ret_veteran_compromise_result",
-            "resultText": "The veteran nods. \"Fair enough, Commander. At least you're thinking.\" The scouts report back - he was right. You adjust the plan. Everyone saves face."
-          }
-        ]
-      }
+            "retinueLoyalty": 3,
+            "officerRep": 3
+          },
+          "resultTextId": "evt_ret_veteran_compromise_result",
+          "resultText": "The veteran nods. \"Fair enough, Commander. At least you're thinking.\" The scouts report back - he was right. You adjust the plan. Everyone saves face."
+        }
+      ]
     },
     {
       "id": "evt_ret_new_recruits",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -876,82 +1002,95 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 },
-        "custom": ["retinue_below_capacity"]
+        "tier": {
+          "min": 7,
+          "max": 9
+        },
+        "custom": [
+          "retinue_below_capacity"
+        ]
       },
       "timing": {
         "cooldown_days": 20,
         "priority": "normal",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_recruits_title",
-        "title": "Raw Meat",
-        "setupId": "evt_ret_recruits_setup",
-        "setup": "Three new soldiers report for duty, fresh from training. Your veterans eye them with amusement. How do you welcome them?",
-        "options": [
-          {
-            "id": "harsh",
-            "textId": "evt_ret_recruits_harsh",
-            "text": "\"War is not what the songs say. You will learn or you will die. Fall in.\"",
-            "tooltip": "Harsh welcome. +5 Officer rep. -3 Retinue Loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueGain": 3,
-              "retinueLoyalty": -3,
-              "officerRep": 5
-            },
-            "resultTextId": "evt_ret_recruits_harsh_result",
-            "resultText": "The recruits pale. Good. Fear keeps men alive. Your veterans nod approvingly - you don't coddle greenhorns. These three will learn fast or die trying."
+      "titleId": "evt_ret_recruits_title",
+      "title": "Raw Meat",
+      "setupId": "evt_ret_recruits_setup",
+      "setup": "Three new soldiers report for duty, fresh from training. Your veterans eye them with amusement. How do you welcome them?",
+      "options": [
+        {
+          "id": "harsh",
+          "textId": "evt_ret_recruits_harsh",
+          "text": "\"War is not what the songs say. You will learn or you will die. Fall in.\"",
+          "tooltip": "Harsh welcome. +5 Officer rep. -3 Retinue Loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueGain": 3,
+            "retinueLoyalty": -3,
+            "officerRep": 5
           },
-          {
-            "id": "welcoming",
-            "textId": "evt_ret_recruits_welcome",
-            "text": "\"Welcome to the company. Stay close to the veterans - they will keep you alive.\"",
-            "tooltip": "Warm welcome. +5 Retinue Loyalty. +3 Soldier rep.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueGain": 3,
-              "retinueLoyalty": 5,
-              "soldierRep": 3
-            },
-            "resultTextId": "evt_ret_recruits_welcome_result",
-            "resultText": "The recruits relax slightly. One of your veterans claps the nearest on the shoulder. \"Don't worry, lad. Commander's decent. Just do what you're told.\" Integration begins."
+          "resultTextId": "evt_ret_recruits_harsh_result",
+          "resultText": "The recruits pale. Good. Fear keeps men alive. Your veterans nod approvingly - you don't coddle greenhorns. These three will learn fast or die trying."
+        },
+        {
+          "id": "welcoming",
+          "textId": "evt_ret_recruits_welcome",
+          "text": "\"Welcome to the company. Stay close to the veterans - they will keep you alive.\"",
+          "tooltip": "Warm welcome. +5 Retinue Loyalty. +3 Soldier rep.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueGain": 3,
+            "retinueLoyalty": 5,
+            "soldierRep": 3
           },
-          {
-            "id": "test_immediately",
-            "textId": "evt_ret_recruits_test",
-            "text": "\"Show me what you can do. Draw your weapons. Now.\"",
-            "tooltip": "Combat drill. Train Leadership. +3 Officer rep. +2 Loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "effects": {
-              "skillXp": { "Leadership": 10 }
-            ,
-              "retinueGain": 3,
-              "retinueLoyalty": 2,
-              "officerRep": 3
+          "resultTextId": "evt_ret_recruits_welcome_result",
+          "resultText": "The recruits relax slightly. One of your veterans claps the nearest on the shoulder. \"Don't worry, lad. Commander's decent. Just do what you're told.\" Integration begins."
+        },
+        {
+          "id": "test_immediately",
+          "textId": "evt_ret_recruits_test",
+          "text": "\"Show me what you can do. Draw your weapons. Now.\"",
+          "tooltip": "Combat drill. Train Leadership. +3 Officer rep. +2 Loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "effects": {
+            "skillXp": {
+              "Leadership": 10
             },
-            "resultTextId": "evt_ret_recruits_test_result",
-            "resultText": "You run them through drills. Two are clumsy but eager. One shows promise. You assign each to a veteran mentor. They'll learn the company's ways soon enough."
-          }
-        ]
-      }
+            "retinueGain": 3,
+            "retinueLoyalty": 2,
+            "officerRep": 3
+          },
+          "resultTextId": "evt_ret_recruits_test_result",
+          "resultText": "You run them through drills. Two are clumsy but eager. One shows promise. You assign each to a veteran mentor. They'll learn the company's ways soon enough."
+        }
+      ]
     },
     {
       "id": "evt_ret_loyalty_test",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -960,79 +1099,89 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 25,
         "priority": "high",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_test_title",
-        "title": "Expendable",
-        "setupId": "evt_ret_test_setup",
-        "setup": "Your lord calls you to his tent. \"I need your retinue to hold the rear while the army withdraws. It's dangerous, but someone must buy us time.\"",
-        "options": [
-          {
-            "id": "obey",
-            "textId": "evt_ret_test_obey",
-            "text": "\"As you command, my lord. We will hold.\"",
-            "tooltip": "Obey order. +15 Lord rep. -8 Retinue Loyalty. Risk of retinue casualties.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "lordRep": 15,
-              "retinueLoyalty": -8,
-              "retinueWounded": 2
-            },
-            "resultTextId": "evt_ret_test_obey_result",
-            "resultText": "Your lord nods approvingly. Your men hold the line. Some fall, but the army escapes. Your lord remembers your sacrifice. Your soldiers remember being sacrificed."
+      "titleId": "evt_ret_test_title",
+      "title": "Expendable",
+      "setupId": "evt_ret_test_setup",
+      "setup": "Your lord calls you to his tent. \"I need your retinue to hold the rear while the army withdraws. It's dangerous, but someone must buy us time.\"",
+      "options": [
+        {
+          "id": "obey",
+          "textId": "evt_ret_test_obey",
+          "text": "\"As you command, my lord. We will hold.\"",
+          "tooltip": "Obey order. +15 Lord rep. -8 Retinue Loyalty. Risk of retinue casualties.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "lordRep": 15,
+            "retinueLoyalty": -8,
+            "retinueWounded": 2
           },
-          {
-            "id": "negotiate",
-            "textId": "evt_ret_test_negotiate",
-            "text": "\"We will hold, my lord - but I want reinforcements to cover our withdrawal.\"",
-            "tooltip": "Obey but negotiate for support. Balanced approach.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "lordRep": 5,
-              "retinueLoyalty": 3
-            },
-            "resultTextId": "evt_ret_test_negotiate_result",
-            "resultText": "Your lord hesitates, then agrees. You get a handful of archers for cover. Your men see you negotiated for their lives. They appreciate the effort."
+          "resultTextId": "evt_ret_test_obey_result",
+          "resultText": "Your lord nods approvingly. Your men hold the line. Some fall, but the army escapes. Your lord remembers your sacrifice. Your soldiers remember being sacrificed."
+        },
+        {
+          "id": "negotiate",
+          "textId": "evt_ret_test_negotiate",
+          "text": "\"We will hold, my lord - but I want reinforcements to cover our withdrawal.\"",
+          "tooltip": "Obey but negotiate for support. Balanced approach.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "lordRep": 5,
+            "retinueLoyalty": 3
           },
-          {
-            "id": "refuse",
-            "textId": "evt_ret_test_refuse",
-            "text": "\"My men are not fodder, my lord. Find another way.\"",
-            "tooltip": "Refuse the order. Protects your men but damages your standing.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "lordRep": -20,
-              "retinueLoyalty": 15,
-              "scrutiny": 5
-            },
-            "resultTextId": "evt_ret_test_refuse_result",
-            "resultText": "Your lord's face hardens. \"Remember who commands here.\" He finds another unit for the task. Your men love you for standing up for them. Your lord will not forget this defiance."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_test_negotiate_result",
+          "resultText": "Your lord hesitates, then agrees. You get a handful of archers for cover. Your men see you negotiated for their lives. They appreciate the effort."
+        },
+        {
+          "id": "refuse",
+          "textId": "evt_ret_test_refuse",
+          "text": "\"My men are not fodder, my lord. Find another way.\"",
+          "tooltip": "Refuse the order. Protects your men but damages your standing.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "lordRep": -20,
+            "retinueLoyalty": 15,
+            "scrutiny": 5
+          },
+          "resultTextId": "evt_ret_test_refuse_result",
+          "resultText": "Your lord's face hardens. \"Remember who commands here.\" He finds another unit for the task. Your men love you for standing up for them. Your lord will not forget this defiance."
+        }
+      ]
     },
     {
       "id": "evt_ret_morale_low",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -1041,79 +1190,92 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 },
-        "custom": ["retinue_loyalty_low"]
+        "tier": {
+          "min": 7,
+          "max": 9
+        },
+        "custom": [
+          "retinue_loyalty_low"
+        ]
       },
       "timing": {
         "cooldown_days": 10,
         "priority": "high",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_morale_title",
-        "title": "Grumbling",
-        "setupId": "evt_ret_morale_setup",
-        "setup": "Morale is dangerously low. You hear grumbling around the cookfires. Something must be done.",
-        "options": [
-          {
-            "id": "share_rations",
-            "textId": "evt_ret_morale_share",
-            "text": "\"Break out the good wine. Tonight, we feast.\"",
-            "tooltip": "Share your personal supplies. Costs 60 gold but boosts spirits.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "gold": -60,
-              "retinueLoyalty": 12,
-              "soldierRep": 5
-            },
-            "resultTextId": "evt_ret_morale_share_result",
-            "resultText": "You break open your personal stores. Wine flows, stories are told, laughter returns. Your men see you share their hardship. That means more than any speech."
+      "titleId": "evt_ret_morale_title",
+      "title": "Grumbling",
+      "setupId": "evt_ret_morale_setup",
+      "setup": "Morale is dangerously low. You hear grumbling around the cookfires. Something must be done.",
+      "options": [
+        {
+          "id": "share_rations",
+          "textId": "evt_ret_morale_share",
+          "text": "\"Break out the good wine. Tonight, we feast.\"",
+          "tooltip": "Share your personal supplies. Costs 60 gold but boosts spirits.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "gold": -60,
+            "retinueLoyalty": 12,
+            "soldierRep": 5
           },
-          {
-            "id": "speech",
-            "textId": "evt_ret_morale_speech",
-            "text": "\"Gather round. We need to talk about why we fight.\"",
-            "tooltip": "Inspirational speech. Free but requires Leadership skill.",
-            "risk": "safe",
-            "costs": {},
-            "effects": {
-              "skillXp": { "Leadership": 20 }
-            ,
-              "retinueLoyalty": 8
+          "resultTextId": "evt_ret_morale_share_result",
+          "resultText": "You break open your personal stores. Wine flows, stories are told, laughter returns. Your men see you share their hardship. That means more than any speech."
+        },
+        {
+          "id": "speech",
+          "textId": "evt_ret_morale_speech",
+          "text": "\"Gather round. We need to talk about why we fight.\"",
+          "tooltip": "Inspirational speech. Free but requires Leadership skill.",
+          "risk": "safe",
+          "costs": {},
+          "effects": {
+            "skillXp": {
+              "Leadership": 20
             },
-            "resultTextId": "evt_ret_morale_speech_result",
-            "resultText": "You speak of duty, of honor, of the bonds forged in battle. Some men are moved. Others remain skeptical. Words alone cannot fill empty bellies, but they help."
+            "retinueLoyalty": 8
           },
-          {
-            "id": "discipline",
-            "textId": "evt_ret_morale_discipline",
-            "text": "\"I will not tolerate grumbling. The next man who complains pulls double duty.\"",
-            "tooltip": "Crack down on dissent. Stops grumbling but breeds resentment.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": -5,
-              "officerRep": 5
-            },
-            "resultTextId": "evt_ret_morale_discipline_result",
-            "resultText": "The muttering stops. The resentment doesn't. Your men obey, but their eyes are cold. Fear keeps order, but it makes enemies of friends."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_morale_speech_result",
+          "resultText": "You speak of duty, of honor, of the bonds forged in battle. Some men are moved. Others remain skeptical. Words alone cannot fill empty bellies, but they help."
+        },
+        {
+          "id": "discipline",
+          "textId": "evt_ret_morale_discipline",
+          "text": "\"I will not tolerate grumbling. The next man who complains pulls double duty.\"",
+          "tooltip": "Crack down on dissent. Stops grumbling but breeds resentment.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": -5,
+            "officerRep": 5
+          },
+          "resultTextId": "evt_ret_morale_discipline_result",
+          "resultText": "The muttering stops. The resentment doesn't. Your men obey, but their eyes are cold. Fear keeps order, but it makes enemies of friends."
+        }
+      ]
     },
     {
       "id": "evt_ret_desertion",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -1122,79 +1284,89 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 20,
         "priority": "normal",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_desertion_title",
-        "title": "The Runner",
-        "setupId": "evt_ret_desertion_setup",
-        "setup": "Night watch caught a soldier trying to desert. He stands before you, trembling. \"Commander... my nerve broke. I just wanted to go home.\"",
-        "options": [
-          {
-            "id": "punish",
-            "textId": "evt_ret_desertion_punish",
-            "text": "\"Desertion is punishable by death. Report to the provost.\"",
-            "tooltip": "Full punishment. Deters others but you lose a soldier.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoss": 1,
-              "retinueLoyalty": -3,
-              "officerRep": 10
-            },
-            "resultTextId": "evt_ret_desertion_punish_result",
-            "resultText": "The man is dragged away. In the morning, the army's justice is carried out. Your men stand silently. No one else will try to run. But they won't forget what you did."
+      "titleId": "evt_ret_desertion_title",
+      "title": "The Runner",
+      "setupId": "evt_ret_desertion_setup",
+      "setup": "Night watch caught a soldier trying to desert. He stands before you, trembling. \"Commander... my nerve broke. I just wanted to go home.\"",
+      "options": [
+        {
+          "id": "punish",
+          "textId": "evt_ret_desertion_punish",
+          "text": "\"Desertion is punishable by death. Report to the provost.\"",
+          "tooltip": "Full punishment. Deters others but you lose a soldier.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoss": 1,
+            "retinueLoyalty": -3,
+            "officerRep": 10
           },
-          {
-            "id": "beat",
-            "textId": "evt_ret_desertion_beat",
-            "text": "\"Ten lashes. Then back to duty. This never happened.\"",
-            "tooltip": "Corporal punishment within the retinue. Keeps the soldier but harsh.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": -5,
-              "officerRep": 3
-            },
-            "resultTextId": "evt_ret_desertion_beat_result",
-            "resultText": "The lashes are administered. The man takes his punishment without a word. He returns to his tent, bloodied but still one of yours. Some think you were merciful. Others think you were cruel."
+          "resultTextId": "evt_ret_desertion_punish_result",
+          "resultText": "The man is dragged away. In the morning, the army's justice is carried out. Your men stand silently. No one else will try to run. But they won't forget what you did."
+        },
+        {
+          "id": "beat",
+          "textId": "evt_ret_desertion_beat",
+          "text": "\"Ten lashes. Then back to duty. This never happened.\"",
+          "tooltip": "Corporal punishment within the retinue. Keeps the soldier but harsh.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": -5,
+            "officerRep": 3
           },
-          {
-            "id": "forgive",
-            "textId": "evt_ret_desertion_forgive",
-            "text": "\"We've all felt fear. Return to your post. Do not make me regret this mercy.\"",
-            "tooltip": "Show mercy. Keeps the soldier and might inspire loyalty - or invite weakness.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 5,
-              "officerRep": -8,
-              "soldierRep": 5
-            },
-            "resultTextId": "evt_ret_desertion_forgive_result",
-            "resultText": "The man's eyes widen. He nods, returns to his tent. Your officers disapprove, but your soldiers see a commander with a heart. Whether that's wisdom or weakness remains to be seen."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_desertion_beat_result",
+          "resultText": "The lashes are administered. The man takes his punishment without a word. He returns to his tent, bloodied but still one of yours. Some think you were merciful. Others think you were cruel."
+        },
+        {
+          "id": "forgive",
+          "textId": "evt_ret_desertion_forgive",
+          "text": "\"We've all felt fear. Return to your post. Do not make me regret this mercy.\"",
+          "tooltip": "Show mercy. Keeps the soldier and might inspire loyalty - or invite weakness.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 5,
+            "officerRep": -8,
+            "soldierRep": 5
+          },
+          "resultTextId": "evt_ret_desertion_forgive_result",
+          "resultText": "The man's eyes widen. He nods, returns to his tent. Your officers disapprove, but your soldiers see a commander with a heart. Whether that's wisdom or weakness remains to be seen."
+        }
+      ]
     },
     {
       "id": "evt_ret_promotion",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -1203,79 +1375,91 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 25,
         "priority": "low",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_promotion_title",
-        "title": "From the Ranks",
-        "setupId": "evt_ret_promotion_setup",
-        "setup": "One of your soldiers distinguished himself in the last skirmish, holding a breach single-handed. How do you reward such bravery?",
-        "options": [
-          {
-            "id": "promote_publicly",
-            "textId": "evt_ret_promotion_public",
-            "text": "\"Form up! This man is now corporal. Learn from his example.\"",
-            "tooltip": "Public promotion. Inspires all but may breed jealousy.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 8,
-              "soldierRep": 5,
-              "skillXp": { "Leadership": 10 }
-            },
-            "resultTextId": "evt_ret_promotion_public_result",
-            "resultText": "The men cheer as you pin the rank on his shoulder. He stands taller. Some are inspired. Others are jealous. Such is the nature of advancement."
+      "titleId": "evt_ret_promotion_title",
+      "title": "From the Ranks",
+      "setupId": "evt_ret_promotion_setup",
+      "setup": "One of your soldiers distinguished himself in the last skirmish, holding a breach single-handed. How do you reward such bravery?",
+      "options": [
+        {
+          "id": "promote_publicly",
+          "textId": "evt_ret_promotion_public",
+          "text": "\"Form up! This man is now corporal. Learn from his example.\"",
+          "tooltip": "Public promotion. Inspires all but may breed jealousy.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 8,
+            "soldierRep": 5,
+            "skillXp": {
+              "Leadership": 10
+            }
           },
-          {
-            "id": "promote_privately",
-            "textId": "evt_ret_promotion_private",
-            "text": "\"Come to my tent. We should talk about your future.\"",
-            "tooltip": "Private promotion. Less spectacle but no jealousy.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 5,
-              "soldierRep": 3
-            },
-            "resultTextId": "evt_ret_promotion_private_result",
-            "resultText": "You promote him quietly, explaining your expectations. He accepts with dignity. Word spreads naturally. Those who deserved to know, know."
+          "resultTextId": "evt_ret_promotion_public_result",
+          "resultText": "The men cheer as you pin the rank on his shoulder. He stands taller. Some are inspired. Others are jealous. Such is the nature of advancement."
+        },
+        {
+          "id": "promote_privately",
+          "textId": "evt_ret_promotion_private",
+          "text": "\"Come to my tent. We should talk about your future.\"",
+          "tooltip": "Private promotion. Less spectacle but no jealousy.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 5,
+            "soldierRep": 3
           },
-          {
-            "id": "reward_gold",
-            "textId": "evt_ret_promotion_gold",
-            "text": "\"No rank, but take this purse. You've earned it.\"",
-            "tooltip": "Gold reward instead of rank. Pay 50 gold. Simple and appreciated.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "gold": -50,
-              "retinueLoyalty": 6,
-              "soldierRep": 3
-            },
-            "resultTextId": "evt_ret_promotion_gold_result",
-            "resultText": "You press coins into his hand. He grins. \"Thank you, Commander.\" Sometimes gold speaks louder than titles. He'll remember this generosity."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_promotion_private_result",
+          "resultText": "You promote him quietly, explaining your expectations. He accepts with dignity. Word spreads naturally. Those who deserved to know, know."
+        },
+        {
+          "id": "reward_gold",
+          "textId": "evt_ret_promotion_gold",
+          "text": "\"No rank, but take this purse. You've earned it.\"",
+          "tooltip": "Gold reward instead of rank. Pay 50 gold. Simple and appreciated.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "gold": -50,
+            "retinueLoyalty": 6,
+            "soldierRep": 3
+          },
+          "resultTextId": "evt_ret_promotion_gold_result",
+          "resultText": "You press coins into his hand. He grins. \"Thank you, Commander.\" Sometimes gold speaks louder than titles. He'll remember this generosity."
+        }
+      ]
     },
     {
       "id": "evt_ret_illness",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -1284,83 +1468,93 @@
         "incident_trigger": "camp_daily"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 20,
         "priority": "high",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_illness_title",
-        "title": "Fever in Camp",
-        "setupId": "evt_ret_illness_setup",
-        "setup": "Three soldiers are down with fever. The camp surgeon warns it could spread if not isolated.",
-        "options": [
-          {
-            "id": "quarantine",
-            "textId": "evt_ret_illness_quarantine",
-            "text": "\"Set up a quarantine tent. We'll catch up when they're better.\"",
-            "tooltip": "Proper quarantine. Lose 3 soldiers temporarily but prevent spread.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 10,
-              "soldierRep": 5
-            },
-            "resultTextId": "evt_ret_illness_quarantine_result",
-            "resultText": "You set up a sick tent and assign the surgeon to watch them. The army marches ahead. In a week, your men recover. They remember you didn't leave them to die."
+      "titleId": "evt_ret_illness_title",
+      "title": "Fever in Camp",
+      "setupId": "evt_ret_illness_setup",
+      "setup": "Three soldiers are down with fever. The camp surgeon warns it could spread if not isolated.",
+      "options": [
+        {
+          "id": "quarantine",
+          "textId": "evt_ret_illness_quarantine",
+          "text": "\"Set up a quarantine tent. We'll catch up when they're better.\"",
+          "tooltip": "Proper quarantine. Lose 3 soldiers temporarily but prevent spread.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 10,
+            "soldierRep": 5
           },
-          {
-            "id": "march_anyway",
-            "textId": "evt_ret_illness_march",
-            "text": "\"They march or they get left behind. We cannot slow down.\"",
-            "tooltip": "Force them to march. Keeps pace but risks spread and worsening.",
-            "risk": "moderate",
-            "risk_chance": 50,
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "officerRep": 5
-            },
-            "effects_failure": {
-              "retinueWounded": 2,
-              "retinueLoyalty": -8
-            },
-            "resultTextId": "evt_ret_illness_march_result",
-            "resultText": "You push them hard. Two recover on the road through sheer willpower. The third keeps up through grit and fear.",
-            "failure_resultText": "One collapses on the road. Another infects two more. Soon you have five sick soldiers and a retinue that hates you for your callousness."
+          "resultTextId": "evt_ret_illness_quarantine_result",
+          "resultText": "You set up a sick tent and assign the surgeon to watch them. The army marches ahead. In a week, your men recover. They remember you didn't leave them to die."
+        },
+        {
+          "id": "march_anyway",
+          "textId": "evt_ret_illness_march",
+          "text": "\"They march or they get left behind. We cannot slow down.\"",
+          "tooltip": "Force them to march. Keeps pace but risks spread and worsening.",
+          "risk": "moderate",
+          "risk_chance": 50,
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "officerRep": 5
           },
-          {
-            "id": "pay_surgeon",
-            "textId": "evt_ret_illness_surgeon",
-            "text": "\"Pay for a proper healer. Spare no expense.\"",
-            "tooltip": "Hire a skilled healer. Costs 80 gold but best recovery chance.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "gold": -80,
-              "retinueLoyalty": 8,
-              "soldierRep": 5
-            },
-            "resultTextId": "evt_ret_illness_surgeon_result",
-            "resultText": "You pay for proper medicine and skilled care. Within days, your soldiers recover fully. Word spreads - your commander pays for healing. That means something to men who face death."
-          }
-        ]
-      }
+          "effects_failure": {
+            "retinueWounded": 2,
+            "retinueLoyalty": -8
+          },
+          "resultTextId": "evt_ret_illness_march_result",
+          "resultText": "You push them hard. Two recover on the road through sheer willpower. The third keeps up through grit and fear.",
+          "failure_resultText": "One collapses on the road. Another infects two more. Soon you have five sick soldiers and a retinue that hates you for your callousness."
+        },
+        {
+          "id": "pay_surgeon",
+          "textId": "evt_ret_illness_surgeon",
+          "text": "\"Pay for a proper healer. Spare no expense.\"",
+          "tooltip": "Hire a skilled healer. Costs 80 gold but best recovery chance.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "gold": -80,
+            "retinueLoyalty": 8,
+            "soldierRep": 5
+          },
+          "resultTextId": "evt_ret_illness_surgeon_result",
+          "resultText": "You pay for proper medicine and skilled care. Within days, your soldiers recover fully. Word spreads - your commander pays for healing. That means something to men who face death."
+        }
+      ]
     },
     {
       "id": "evt_ret_veteran_memorial",
       "category": "retinue",
       "metadata": {
-        "tier_range": { "min": 7, "max": 9 },
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
         "content_doc": "docs/Features/Core/retinue-content-expansion.md"
       },
       "delivery": {
@@ -1369,85 +1563,92 @@
         "incident_trigger": "leaving_battle"
       },
       "triggers": {
-        "all": ["is_enlisted", "ai_safe", "has_retinue"],
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_retinue"
+        ],
         "any": [],
-        "time_of_day": ["any"]
+        "time_of_day": [
+          "any"
+        ]
       },
       "requirements": {
-        "tier": { "min": 7, "max": 9 }
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
       },
       "timing": {
         "cooldown_days": 0,
         "priority": "urgent",
         "one_time": false
       },
-      "content": {
-        "titleId": "evt_ret_memorial_title",
-        "title": "A Soldier Remembered",
-        "setupId": "evt_ret_memorial_setup",
-        "setup": "One of your named veterans has fallen in battle. Your men gather in somber silence. How do you honor the fallen?",
-        "options": [
-          {
-            "id": "hold_memorial",
-            "textId": "evt_ret_memorial_honor",
-            "text": "\"Gather the men. We will give them a proper farewell.\"",
-            "tooltip": "Hold a memorial ceremony. +10 retinue loyalty, costs 50 gold for wine and offerings.",
-            "risk": "safe",
-            "costs": {},
-            "effects": {
-              "skillXp": { "Leadership": 15 }
-            ,
-              "retinueLoyalty": 10,
-              "gold": -50
+      "titleId": "evt_ret_memorial_title",
+      "title": "A Soldier Remembered",
+      "setupId": "evt_ret_memorial_setup",
+      "setup": "One of your named veterans has fallen in battle. Your men gather in somber silence. How do you honor the fallen?",
+      "options": [
+        {
+          "id": "hold_memorial",
+          "textId": "evt_ret_memorial_honor",
+          "text": "\"Gather the men. We will give them a proper farewell.\"",
+          "tooltip": "Hold a memorial ceremony. +10 retinue loyalty, costs 50 gold for wine and offerings.",
+          "risk": "safe",
+          "costs": {},
+          "effects": {
+            "skillXp": {
+              "Leadership": 15
             },
-            "resultTextId": "evt_ret_memorial_honor_result",
-            "resultText": "You speak of the fallen soldier's deeds, their courage, the battles they survived. Wine is poured. Stories are shared. Your men see that you remember those who die under your command. That matters more than gold."
+            "retinueLoyalty": 10,
+            "gold": -50
           },
-          {
-            "id": "move_on",
-            "textId": "evt_ret_memorial_pragmatic",
-            "text": "\"We have no time for ceremony. Bury them and prepare to march.\"",
-            "tooltip": "Move on quickly. No cost, no loyalty change.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {},
-            "resultTextId": "evt_ret_memorial_pragmatic_result",
-            "resultText": "War does not wait for grief. The body is buried without ceremony. Your men understand - but some wonder if they, too, will be forgotten when their time comes."
+          "resultTextId": "evt_ret_memorial_honor_result",
+          "resultText": "You speak of the fallen soldier's deeds, their courage, the battles they survived. Wine is poured. Stories are shared. Your men see that you remember those who die under your command. That matters more than gold."
+        },
+        {
+          "id": "move_on",
+          "textId": "evt_ret_memorial_pragmatic",
+          "text": "\"We have no time for ceremony. Bury them and prepare to march.\"",
+          "tooltip": "Move on quickly. No cost, no loyalty change.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {},
+          "resultTextId": "evt_ret_memorial_pragmatic_result",
+          "resultText": "War does not wait for grief. The body is buried without ceremony. Your men understand - but some wonder if they, too, will be forgotten when their time comes."
+        },
+        {
+          "id": "harsh_truth",
+          "textId": "evt_ret_memorial_harsh",
+          "text": "\"They knew the risks. We all do. Death is part of the soldier's trade.\"",
+          "tooltip": "Remind them of harsh reality. -5 retinue loyalty but +3 officer reputation.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": -5,
+            "officerRep": 3
           },
-          {
-            "id": "harsh_truth",
-            "textId": "evt_ret_memorial_harsh",
-            "text": "\"They knew the risks. We all do. Death is part of the soldier's trade.\"",
-            "tooltip": "Remind them of harsh reality. -5 retinue loyalty but +3 officer reputation.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": -5,
-              "officerRep": 3
-            },
-            "resultTextId": "evt_ret_memorial_harsh_result",
-            "resultText": "Your words are cold but true. Some men nod grimly. Others look away. You are not a sentimental commander. That may save lives in the long run - or cost you their hearts."
+          "resultTextId": "evt_ret_memorial_harsh_result",
+          "resultText": "Your words are cold but true. Some men nod grimly. Others look away. You are not a sentimental commander. That may save lives in the long run - or cost you their hearts."
+        },
+        {
+          "id": "personal_tribute",
+          "textId": "evt_ret_memorial_personal",
+          "text": "\"They died fighting at my side. I will carry their memory.\"",
+          "tooltip": "Personal acknowledgment. +8 soldier reputation, +5 retinue loyalty.",
+          "risk": "safe",
+          "costs": {},
+          "rewards": {},
+          "effects": {
+            "retinueLoyalty": 5,
+            "soldierRep": 8
           },
-          {
-            "id": "personal_tribute",
-            "textId": "evt_ret_memorial_personal",
-            "text": "\"They died fighting at my side. I will carry their memory.\"",
-            "tooltip": "Personal acknowledgment. +8 soldier reputation, +5 retinue loyalty.",
-            "risk": "safe",
-            "costs": {},
-            "rewards": {},
-            "effects": {
-              "retinueLoyalty": 5,
-              "soldierRep": 8
-            },
-            "resultTextId": "evt_ret_memorial_personal_result",
-            "resultText": "You take a moment of silence. The soldiers see their commander's grief is genuine. It is a small thing, but it makes them feel that you fight alongside them, not just command them from behind."
-          }
-        ]
-      }
+          "resultTextId": "evt_ret_memorial_personal_result",
+          "resultText": "You take a moment of silence. The soldiers see their commander's grief is genuine. It is a small thing, but it makes them feel that you fight alongside them, not just command them from behind."
+        }
+      ]
     }
   ]
 }
-

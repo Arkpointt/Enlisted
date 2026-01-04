@@ -12,7 +12,10 @@
       "setupId": "inspect_found_weakness_setup",
       "setup": "The palisade looks solid until you press on it. The post gives. Rotten at the base. This section would collapse under assault.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "siege_defending"]
+        "world_state": [
+          "peacetime_garrison",
+          "siege_defending"
+        ]
       },
       "options": [
         {
@@ -22,7 +25,10 @@
           "tooltip": "+3 Lord Rep, +2 Officer Rep. Proper procedure.",
           "effects": {
             "lordRep": 3,
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": {
+              "Engineering": 18
+            }
           },
           "resultTextId": "inspect_found_weakness_report_captain_result",
           "resultText": "{OFFICER_NAME} sends a work crew within the hour. 'Good eye, soldier.'"
@@ -41,6 +47,10 @@
             "officerRep": 4,
             "companyNeeds": {
               "Equipment": 3
+            },
+            "skillXp": {
+              "Engineering": 18,
+              "Tactics": 12
             }
           },
           "failEffects": {
@@ -48,6 +58,10 @@
             "officerRep": 2,
             "companyNeeds": {
               "Equipment": 1
+            },
+            "skillXp": {
+              "Engineering": 9,
+              "Tactics": 6
             }
           },
           "resultTextId": "inspect_found_weakness_fix_yourself_result",
@@ -65,6 +79,10 @@
             "officerRep": 2,
             "companyNeeds": {
               "Equipment": 2
+            },
+            "skillXp": {
+              "Engineering": 18,
+              "Tactics": 12
             }
           },
           "resultTextId": "inspect_found_weakness_delegate_repair_result",
@@ -82,7 +100,9 @@
       "setupId": "inspect_officer_dispute_setup",
       "setup": "Two officers are arguing over repair priorities. The senior wants the gate reinforced; the junior insists the walls are more critical. They turn to you.",
       "requirements": {
-        "world_state": ["peacetime_garrison"]
+        "world_state": [
+          "peacetime_garrison"
+        ]
       },
       "options": [
         {
@@ -92,7 +112,11 @@
           "tooltip": "+1 Officer Rep, +2 Lord Rep. Safe choice.",
           "effects": {
             "officerRep": 1,
-            "lordRep": 2
+            "lordRep": 2,
+            "skillXp": {
+              "Engineering": 18,
+              "Tactics": 12
+            }
           },
           "resultTextId": "inspect_officer_dispute_support_senior_result",
           "resultText": "You back the senior. Chain of command. The junior fumes but accepts it."
@@ -103,7 +127,11 @@
           "text": "Support the junior's assessment.",
           "tooltip": "-1 Lord Rep. Risky.",
           "effects": {
-            "lordRep": -1
+            "lordRep": -1,
+            "skillXp": {
+              "Engineering": 18,
+              "Tactics": 12
+            }
           },
           "resultTextId": "inspect_officer_dispute_support_junior_result",
           "resultText": "You side with the junior. The senior glares, but the walls do need work."
@@ -119,11 +147,19 @@
           },
           "effects": {
             "officerRep": 3,
-            "lordRep": 3
+            "lordRep": 3,
+            "skillXp": {
+              "Engineering": 18,
+              "Tactics": 12
+            }
           },
           "failEffects": {
             "officerRep": 1,
-            "lordRep": 1
+            "lordRep": 1,
+            "skillXp": {
+              "Engineering": 9,
+              "Tactics": 6
+            }
           },
           "resultTextId": "inspect_officer_dispute_offer_solution_result",
           "resultText": "You suggest splitting the work crew. Both officers nod. Diplomacy wins.",
@@ -142,7 +178,9 @@
       "setupId": "inspect_sabotage_signs_setup",
       "setup": "The damage here isn't from weather or age. Someone cut these ropes. Deliberately. Recently.",
       "requirements": {
-        "world_state": ["siege_defending"]
+        "world_state": [
+          "siege_defending"
+        ]
       },
       "options": [
         {
@@ -158,10 +196,18 @@
             "escalation": {
               "scrutiny": 15
             },
-            "officerRep": 4
+            "officerRep": 4,
+            "skillXp": {
+              "Engineering": 18,
+              "Tactics": 12
+            }
           },
           "failEffects": {
-            "hpChange": -10
+            "hpChange": -10,
+            "skillXp": {
+              "Engineering": 9,
+              "Tactics": 6
+            }
           },
           "resultTextId": "inspect_sabotage_signs_investigate_result",
           "resultText": "You follow the trail. It leads to footprints near the postern gate. Someone's getting in and out.",
@@ -174,7 +220,10 @@
           "text": "Report to {OFFICER_NAME} immediately.",
           "tooltip": "+2 Officer Rep. Let command handle it.",
           "effects": {
-            "officerRep": 2
+            "officerRep": 2,
+            "skillXp": {
+              "Engineering": 18
+            }
           },
           "resultTextId": "inspect_sabotage_signs_report_immediately_result",
           "resultText": "The officer takes charge. Guards are doubled. The investigation begins."
@@ -188,7 +237,11 @@
             "escalation": {
               "scrutiny": 5
             },
-            "officerRep": 3
+            "officerRep": 3,
+            "skillXp": {
+              "Engineering": 18,
+              "Tactics": 12
+            }
           },
           "resultTextId": "inspect_sabotage_signs_set_watch_result",
           "resultText": "You position watchers and wait. If they come back, you'll be ready."
@@ -205,7 +258,10 @@
       "setupId": "inspect_improvement_idea_setup",
       "setup": "Looking at the fortifications, you see a way to improve them. A simple change that would double the defensive strength of this section.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "siege_defending"]
+        "world_state": [
+          "peacetime_garrison",
+          "siege_defending"
+        ]
       },
       "options": [
         {
@@ -255,7 +311,12 @@
           "textId": "inspect_improvement_idea_keep_silent",
           "text": "Keep it to yourself. Not your place to suggest.",
           "tooltip": "No reward. Safe.",
-          "effects": {},
+          "effects": {
+            "skillXp": {
+              "Engineering": 18,
+              "Tactics": 12
+            }
+          },
           "resultTextId": "inspect_improvement_idea_keep_silent_result",
           "resultText": "You note it and move on. Maybe someone else will see it too."
         }

@@ -66,7 +66,7 @@ namespace Enlisted.Features.Content
         {
             if (evt == null)
             {
-                ModLogger.Warn(LogCategory, "Attempted to queue null event");
+                ModLogger.WarnCode(LogCategory, "W-EVT-001", "Attempted to queue null event - check event ID and catalog loading");
                 return;
             }
 
@@ -125,7 +125,7 @@ namespace Enlisted.Features.Content
 
             if (options.Count == 0)
             {
-                ModLogger.Warn(LogCategory, $"Event {evt.Id} has no valid options");
+                ModLogger.WarnCode(LogCategory, "W-EVT-002", $"Event {evt.Id} has no valid options - check requirements in JSON");
                 OnEventClosed();
                 return;
             }
@@ -334,7 +334,7 @@ namespace Enlisted.Features.Content
 
             if (option == null)
             {
-                ModLogger.Error(LogCategory, "Selected option identifier is not an EventOption");
+                ModLogger.ErrorCode(LogCategory, "E-EVT-001", "Selected option identifier is not an EventOption - internal error");
                 OnEventClosed();
                 return;
             }
@@ -828,10 +828,12 @@ namespace Enlisted.Features.Content
             }
 
             // Apply promotion if specified. Used by proving events to grant tier advancement.
-            if (effects.Promotes.HasValue && effects.Promotes.Value > 0)
+            // Note: "promotes": true in JSON is parsed as -1 (sentinel for "promote to next tier").
+            // We must check != 0, not > 0, to handle both explicit tiers (e.g., 3) and the -1 sentinel.
+            if (effects.Promotes.HasValue && effects.Promotes.Value != 0)
             {
                 ApplyPromotesEffect(effects.Promotes.Value);
-                feedbackMessages.Add($"Promoted to Tier {effects.Promotes.Value}");
+                // Don't show raw tier number in feedback - ApplyPromotesEffect handles culture-specific notifications
             }
 
             // Display feedback to player if any effects were applied
@@ -1255,7 +1257,12 @@ namespace Enlisted.Features.Content
             }
 
             // Select illness type based on travel context (maritime vs land)
-            var isAtSea = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            var party = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo;
+            // BUGFIX: If party is in a settlement or besieging, they are on land regardless of IsCurrentlyAtSea
+            var isAtSea = party != null && 
+                          party.CurrentSettlement == null && 
+                          party.BesiegedSettlement == null && 
+                          party.IsCurrentlyAtSea;
             string illnessType;
             
             if (isAtSea)
@@ -2566,8 +2573,7 @@ namespace Enlisted.Features.Content
                 
                 ModLogger.Info(LogCategory, $"Requesting decision menu refresh (current menu: {currentMenuId})");
                 
-                if (currentMenuId != null && 
-                    (currentMenuId == "enlisted_decisions" || currentMenuId == "enlisted_status"))
+                if (currentMenuId != null && currentMenuId.StartsWith("enlisted_"))
                 {
                     // Force a refresh by switching to the same menu on next frame
                     // This rebuilds the cached entries and updates availability states

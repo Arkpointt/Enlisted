@@ -51,5 +51,15 @@ coverage/
 # Temporary prompt files (not for repo)
 docs/Content/content-orchestrator-prompts.md
 
+# Validation reports (regenerate as needed)
+Tools/Debugging/validation*.txt
+Tools/Debugging/_missing_strings.txt
+validation*.txt
+
+# Qodana reports (regenerate as needed)
+qodana_*.txt
+redundant_qualifiers.txt
+Tools/Debugging/qodana_*.txt
+
 # Keep module manifest tracked (needed for deployment)
 # SubModule.xml is intentionally NOT ignored

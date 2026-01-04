@@ -2,11 +2,11 @@
 
 **Summary:** Complete catalog of all 16 implemented orders for the Order Progression System. Each order includes duration, skills, fatigue, injury risk, phase blocks, and event pool references. This document serves as both specification and implementation reference.
 
-**Status:** ✅ **IMPLEMENTED** - All 17 orders defined in JSON with 330 order events across 16 event pools  
-**Last Updated:** 2026-01-01 (Updated counts to match reality)  
+**Status:** ✅ **IMPLEMENTED** - All 17 orders defined in JSON with 84 order events across 16 event pools  
+**Last Updated:** 2026-01-03 (Added order event sea/land filtering section)  
 **Files:** 
 - Orders: `ModuleData/Enlisted/Orders/orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json`
-- Events: `ModuleData/Enlisted/Orders/order_events/*.json` (16 files, 330 total events)
+- Events: `ModuleData/Enlisted/Orders/order_events/*.json` (16 files, 84 total events)
 
 **Related Docs:** [Order Progression System](../Core/order-progression-system.md), [Content System Architecture](content-system-architecture.md), [Event System Schemas](event-system-schemas.md#order-context-variants-sealand-awareness)
 
@@ -37,7 +37,7 @@ Orders are multi-day duty assignments that progress through phases (4 per day). 
 |------------|-------------|-------------|-------|
 | T1-T3 | 8 orders | ~150 events | Menial, physical, routine |
 | T4-T6 | 9 orders | ~180 events | Specialist, skilled, leadership |
-| **Total** | **17 orders** | **330 events** | Events defined in `order_events/*.json` |
+| **Total** | **17 orders** | **84 events** | Events defined in `order_events/*.json` |
 
 ---
 
@@ -273,7 +273,6 @@ Day 1: [routine] [slot] [routine] [resolve]
 - `cleaning_found_damage` - Crafting check, report or fix
 - `cleaning_helped_comrade` - Social event
 - `cleaning_officer_inspection` - Discipline check
-- `cleaning_contraband_found` - Decision, report or ignore
 
 **Resolution:**
 - Success: +6 Officer Rep, +5 Equipment, +15 Crafting XP
@@ -713,6 +712,41 @@ If the party boards a ship while a land-only order is active, the order is autom
 
 **Example:** Player is on "Lead a Patrol" duty. Lord's army embarks on ships. The order is cancelled with the message "Lead a Patrol stood down - boarding ship" and the player returns to regular duty until a new sea-compatible order is issued.
 
+### 4. Order Event Sea/Land Filtering
+
+**Order events** themselves can use `notAtSea: true` to prevent land-specific events from firing at sea, even if the parent order can run at sea.
+
+**Example:** Guard Duty becomes "Deck Watch" at sea (via `context_variants`), but the event about a noble demanding gate entry should not fire at sea:
+
+```json
+{
+  "id": "guard_noble_demands",
+  "order_type": "order_guard_post",
+  "setup": "A well-dressed noble demands entry without proper authorization...",
+  "requirements": {
+    "world_state": ["peacetime_garrison"],
+    "notAtSea": true  // Gate entry doesn't happen at sea
+  }
+}
+```
+
+**When order events use `notAtSea: true`:**
+- Event contains land-specific references (tents, fires, walls, gates, forests)
+- Event involves land-specific activities (chopping wood, boar hunting, gate control)
+- Event describes garrison/fortification contexts (wall infiltrators, perimeter patrols)
+
+**Generic events still fire at sea:**
+- Equipment inspection/cleaning (works on ships)
+- Interpersonal conflicts (soldiers fight anywhere)
+- Relief schedules and exhaustion (universal)
+- Officer inspections and tests (work on deck)
+
+This allows orders like "Firewood Collection" → "Deck Scrubbing" to use the same order definition with sea variants, while preventing the "axe slip while chopping wood" event from firing at sea.
+
+**Implementation:** `OrderProgressionBehavior.FilterByWorldState()` checks both `world_state` and `notAtSea`/`atSea` requirements before selecting events. Uses `WorldStateAnalyzer.DetectTravelContext()` to determine current location.
+
+**See:** [Event System Schemas - Order Event Requirements](event-system-schemas.md#order-event-requirements) for complete documentation on order event filtering.
+
 ---
 
 ## Implementation Notes
@@ -742,7 +776,7 @@ ModuleData/Enlisted/Orders/
     └── defenses_events.json    (order_inspect_defenses)
 ```
 
-See JSON files in `ModuleData/Enlisted/Orders/order_events/` for complete event definitions (330 total events across 16 files).
+See JSON files in `ModuleData/Enlisted/Orders/order_events/` for complete event definitions (84 total events across 16 files).
 
 ### Localization
 

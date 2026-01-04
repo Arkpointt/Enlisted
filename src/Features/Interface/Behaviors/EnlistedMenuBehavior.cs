@@ -105,10 +105,14 @@ namespace Enlisted.Features.Interface.Behaviors
 
         // Decisions accordion state for the main menu.
         // Auto-expands when new decisions are available, collapses when empty.
-        // Cache is cleared when user interacts with a decision, forcing a refresh on next menu open.
         private bool _decisionsMainMenuCollapsed = true;
         private HashSet<string> _decisionsMainMenuLastSeenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private List<DecisionAvailability> _cachedMainMenuDecisions = new List<DecisionAvailability>();
+        
+        // CACHED decisions list - populated when menu renders, used for click handling.
+        // This prevents the "phase changed between render and click" bug where decisions
+        // disappear mid-interaction because the game phase advanced.
+        private List<DecisionAvailability> _cachedDecisionsForCurrentMenu = new List<DecisionAvailability>();
+        private CampaignTime _cachedDecisionsTime = CampaignTime.Zero;
 
         // Cached narrative text to prevent flickering from frequent rebuilds.
         // Only updates when the underlying data changes.
@@ -1072,45 +1076,19 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.WaitQuest;
 
-                    // Check if we need to refresh the cached decisions
-                    // Only refresh when cache is empty (first load or after user interacts with a decision)
-                    // Phase changes are handled by the generator's own cache - we don't need to track phase here
-                    // This prevents decisions from flickering when time is running
-                    bool needsRefresh = _cachedMainMenuDecisions.Count == 0;
-
-                    // Fetch available decisions from all sources (up to 3 opportunities + logistics)
-                    if (needsRefresh)
-                    {
-                        ModLogger.Debug("Interface", "Main menu decisions cache refresh triggered");
-                        var decisionManager = DecisionManager.Instance;
-                        var allDecisions = new List<DecisionAvailability>();
-                        if (decisionManager != null)
-                        {
-                            // Collect orchestrated camp opportunities (limit 3)
-                            var opportunities = decisionManager.GetAvailableOpportunities().Where(d => d.IsVisible && d.IsAvailable).Take(3).ToList();
-                            allDecisions.AddRange(opportunities);
-                            ModLogger.Debug("Interface", $"Main menu: {opportunities.Count} opportunities available");
-                            
-                            // Add logistics decisions (baggage access, etc.) - these don't count against the 3-opportunity limit
-                            var logistics = decisionManager.GetAvailableDecisionsForSection("logistics").Where(d => d.IsVisible && d.IsAvailable).ToList();
-                            allDecisions.AddRange(logistics);
-                            ModLogger.Debug("Interface", $"Main menu: {logistics.Count} logistics decisions available");
-                        }
-                        _cachedMainMenuDecisions = allDecisions;
-                        ModLogger.Info("Interface", $"Main menu decisions cache populated: {_cachedMainMenuDecisions.Count} total");
-                    }
+                    // Get decisions directly from Orchestrator (no caching - Orchestrator owns the schedule)
+                    var decisions = GetCurrentDecisions();
 
                     // Check for new decisions
-                    var currentIds = new HashSet<string>(_cachedMainMenuDecisions.Select(d => d.Decision?.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
+                    var currentIds = new HashSet<string>(decisions.Select(d => d.Decision?.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
                     var hasNew = currentIds.Any(id => !_decisionsMainMenuLastSeenIds.Contains(id));
-                    if (hasNew && _cachedMainMenuDecisions.Count > 0)
+                    if (hasNew && decisions.Count > 0)
                     {
                         _decisionsMainMenuCollapsed = false; // Auto-expand when new decisions arrive
                     }
-                    // Note: _decisionsMainMenuLastSeenIds is updated when user actually expands the accordion, not here
 
                     // Collapse if no decisions
-                    if (_cachedMainMenuDecisions.Count == 0)
+                    if (decisions.Count == 0)
                     {
                         _decisionsMainMenuCollapsed = true;
                     }
@@ -1119,9 +1097,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     RefreshMainMenuDecisionSlots();
 
                     var headerText = $"<span style=\"Link\">DECISIONS</span>";
-                    if (_cachedMainMenuDecisions.Count > 0)
+                    if (decisions.Count > 0)
                     {
-                        headerText += $" ({_cachedMainMenuDecisions.Count})";
+                        headerText += $" ({decisions.Count})";
                         if (hasNew)
                         {
                             headerText += " <span style=\"Link\">[NEW]</span>";
@@ -2388,7 +2366,30 @@ namespace Enlisted.Features.Interface.Behaviors
                         var nextText = new TextObject("{=status_next}Next").ToString();
                         if (schedule.HasDeviation)
                         {
-                            parts.Add($"<span style=\"Warning\">{phaseName}:</span> {schedule.Slot1Description} ({schedule.DeviationReason}).");
+                            // Check if this is a variety assignment
+                            var isVarietyAssignment = schedule.DeviationReason?.Contains("Variety") == true ||
+                                                     schedule.DeviationReason?.Contains("variety") == true ||
+                                                     schedule.DeviationReason?.Contains("Special assignment") == true;
+                            
+                            if (isVarietyAssignment)
+                            {
+                                // Use FlavorText for immersive text if available
+                                // e.g., "Assigned to patrol duty this morning."
+                                if (!string.IsNullOrEmpty(schedule.FlavorText))
+                                {
+                                    parts.Add($"<span style=\"Link\">{schedule.FlavorText}</span>");
+                                }
+                                else
+                                {
+                                    // Fallback: show activity without internal reason
+                                    parts.Add($"<span style=\"Link\">{phaseName}:</span> {schedule.Slot1Description}.");
+                                }
+                            }
+                            else
+                            {
+                                // Need-based deviation: show reason for context
+                                parts.Add($"<span style=\"Warning\">{phaseName}:</span> {schedule.Slot1Description} ({schedule.DeviationReason}).");
+                            }
                         }
                         else
                         {
@@ -2926,16 +2927,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
                 else if (worldState.ExpectedActivity == Content.Models.ActivityLevel.Routine)
                 {
-                    // Get next phase context - factual descriptions of camp routine
-                    var nextPhaseText = worldState.CurrentDayPhase switch
+                    // Show actual schedule instead of generic phase text
+                    var scheduleText = BuildScheduleForecast(worldState.CurrentDayPhase);
+                    if (!string.IsNullOrWhiteSpace(scheduleText))
                     {
-                        Content.Models.DayPhase.Dawn => new TextObject("{=forecast_phase_dawn}One task at a time, and the duty will be done").ToString(),
-                        Content.Models.DayPhase.Midday => new TextObject("{=forecast_phase_midday}Afternoon stretches ahead. Make use of it").ToString(),
-                        Content.Models.DayPhase.Dusk => new TextObject("{=forecast_phase_dusk}Evening comes. Rest while you can").ToString(),
-                        Content.Models.DayPhase.Night => new TextObject("{=forecast_phase_night}Night settles in. Tomorrow brings new orders").ToString(),
-                        _ => "The routine continues"
-                    };
-                    return $"<span style=\"Default\">{nextPhaseText}.</span>";
+                        return scheduleText;
+                    }
+                    
+                    // Fallback if schedule unavailable
+                    var fallbackText = new TextObject("{=forecast_routine_fallback}Routine duty. Nothing unusual.").ToString();
+                    return $"<span style=\"Default\">{fallbackText}</span>";
                 }
                 
                 // Quiet period fallback
@@ -2945,6 +2946,90 @@ namespace Enlisted.Features.Interface.Behaviors
             catch
             {
                 return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds a schedule-based forecast showing actual planned activities for the current phase.
+        /// Shows what's scheduled (formations, training, etc.) and any deviations from routine.
+        /// </summary>
+        private static string BuildScheduleForecast(Content.Models.DayPhase currentPhase)
+        {
+            try
+            {
+                var scheduleManager = Camp.CampScheduleManager.Instance;
+                if (scheduleManager == null)
+                {
+                    return null;
+                }
+
+                var schedule = scheduleManager.GetScheduleForPhase(currentPhase);
+                if (schedule == null)
+                {
+                    return null;
+                }
+
+                // Build factual description from schedule slots
+                var parts = new List<string>();
+
+                // Check for deviation first - this overrides normal schedule text
+                if (schedule.HasDeviation && !string.IsNullOrEmpty(schedule.DeviationReason))
+                {
+                    // Check if this is a variety/special assignment
+                    var isVarietyAssignment = schedule.DeviationReason?.Contains("Variety") == true ||
+                                             schedule.DeviationReason?.Contains("variety") == true;
+                    
+                    if (isVarietyAssignment)
+                    {
+                        // Use FlavorText (activationText) for immersive narrative
+                        // e.g., "Assigned to patrol duty this morning." or "Selected for a scouting mission."
+                        if (!string.IsNullOrEmpty(schedule.FlavorText))
+                        {
+                            return $"<span style=\"Link\">{schedule.FlavorText}</span>";
+                        }
+                        
+                        // Fallback to activity name if no flavor text
+                        var activityName = schedule.Slot1Description ?? "Special duty";
+                        return $"<span style=\"Link\">{activityName} assigned.</span>";
+                    }
+                    
+                    // Need-based deviation: show activity + reason (e.g., "Foraging detail. Supplies critical.")
+                    var deviationText = schedule.Slot1Description ?? schedule.DeviationReason;
+                    return $"<span style=\"Warning\">{deviationText}. {schedule.DeviationReason}.</span>";
+                }
+
+                // Player commitment overrides schedule display
+                if (schedule.HasPlayerCommitment && !string.IsNullOrEmpty(schedule.PlayerCommitmentTitle))
+                {
+                    var suffix = new TextObject("{=forecast_commitment_suffix}scheduled.").ToString();
+                    return $"<span style=\"Link\">{schedule.PlayerCommitmentTitle} {suffix}</span>";
+                }
+
+                // Normal schedule: show slot descriptions
+                if (!schedule.Slot1Skipped && !string.IsNullOrEmpty(schedule.Slot1Description))
+                {
+                    parts.Add(schedule.Slot1Description);
+                }
+
+                if (!schedule.Slot2Skipped && !string.IsNullOrEmpty(schedule.Slot2Description))
+                {
+                    parts.Add(schedule.Slot2Description);
+                }
+
+                if (parts.Count == 0)
+                {
+                    // Both slots skipped or empty
+                    var emptyText = new TextObject("{=forecast_schedule_empty}Light duty. Nothing scheduled.").ToString();
+                    return $"<span style=\"Default\">{emptyText}</span>";
+                }
+
+                // Join with period separator: "Morning formation. Early drill."
+                var scheduleText = string.Join(". ", parts) + ".";
+                return $"<span style=\"Default\">{scheduleText}</span>";
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -3482,11 +3567,9 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                ModLogger.Debug("Interface", "OnEnlistedStatusInit: Menu opened, clearing decisions cache");
+                ModLogger.Debug("Interface", "OnEnlistedStatusInit: Menu opened");
                 
-                // Clear the decisions cache when menu opens so we fetch fresh decisions
-                // This ensures decisions update when the player reopens the menu after time passes
-                _cachedMainMenuDecisions = new List<DecisionAvailability>();
+                // No cache to clear - Orchestrator owns the schedule, we query it directly
                 
                 // Time state is captured by calling code BEFORE menu activation
                 // (not here - vanilla has already set Stop by the time init runs)
@@ -5170,6 +5253,21 @@ namespace Enlisted.Features.Interface.Behaviors
 
 
         /// <summary>
+        /// Checks if a scheduled phase is in the future relative to the current phase.
+        /// Phase order: Dawn (0) -> Midday (1) -> Dusk (2) -> Night (3)
+        /// </summary>
+        private static bool IsPhaseFuture(DayPhase scheduledPhase, DayPhase currentPhase)
+        {
+            // Phase values: Dawn=0, Midday=1, Dusk=2, Night=3
+            int scheduled = (int)scheduledPhase;
+            int current = (int)currentPhase;
+            
+            // Simple comparison - scheduled is future if it's greater than current
+            // This works because the day cycle is Dawn -> Midday -> Dusk -> Night
+            return scheduled > current;
+        }
+
+        /// <summary>
         /// Gets a human-readable display name for a decision.
         /// Uses the title from XML or falls back to formatted ID.
         /// </summary>
@@ -5305,13 +5403,16 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // Check if this is a camp opportunity by looking it up from the generator
+                // Look up the opportunity from the Orchestrator's locked schedule (not the generator)
+                // This ensures we use the pre-scheduled opportunities that won't change when context changes
                 CampOpportunity opportunity = null;
+                var orchestrator = ContentOrchestrator.Instance;
                 var generator = CampOpportunityGenerator.Instance;
-                if (generator != null)
+                if (orchestrator != null)
                 {
-                    var allOpportunities = generator.GenerateCampLife();
-                    opportunity = allOpportunities.FirstOrDefault(o => o.TargetDecisionId == decision.Id);
+                    var scheduled = orchestrator.GetCurrentPhaseOpportunities()
+                        .FirstOrDefault(s => s.TargetDecisionId == decision.Id);
+                    opportunity = scheduled?.SourceOpportunity;
                 }
 
                 if (opportunity != null)
@@ -6046,7 +6147,9 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                if (_cachedMainMenuDecisions.Count == 0)
+                var decisions = GetCurrentDecisions();
+                
+                if (decisions.Count == 0)
                 {
                     _decisionsMainMenuCollapsed = true;
                     return;
@@ -6057,7 +6160,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // When user expands the accordion, mark all current decisions as "seen" to clear the [NEW] badge
                 if (!_decisionsMainMenuCollapsed)
                 {
-                    var currentIds = new HashSet<string>(_cachedMainMenuDecisions.Select(d => d.Decision?.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
+                    var currentIds = new HashSet<string>(decisions.Select(d => d.Decision?.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
                     _decisionsMainMenuLastSeenIds = currentIds;
                 }
 
@@ -6081,29 +6184,249 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private void RefreshMainMenuDecisionSlots()
         {
+            var decisions = GetCurrentDecisions();
+            
+            ModLogger.Debug("Interface", $"RefreshMainMenuDecisionSlots: {decisions.Count} decisions to display");
+
             for (var i = 0; i < 5; i++)
             {
                 var slotText = string.Empty;
-                if (i < _cachedMainMenuDecisions.Count)
+                if (i < decisions.Count)
                 {
-                    var availability = _cachedMainMenuDecisions[i];
+                    var availability = decisions[i];
                     if (availability.Decision != null)
                     {
-                        slotText = $"    {GetDecisionDisplayName(availability.Decision)}";
+                        var displayName = GetDecisionDisplayName(availability.Decision);
+
+                        // Show scheduled status if unavailable due to commitment
+                        if (!availability.IsAvailable && !string.IsNullOrEmpty(availability.UnavailableReason) &&
+                            availability.UnavailableReason.Contains("SCHEDULED"))
+                        {
+                            slotText = $"    <span style=\"LightGray\">{displayName}</span> {availability.UnavailableReason}";
+                            ModLogger.Info("Interface", $"Slot {i}: GREYED OUT - {displayName} ({availability.UnavailableReason})");
+                        }
+                        else
+                        {
+                            slotText = $"    {displayName}";
+                        }
                     }
                 }
                 MBTextManager.SetTextVariable($"MAIN_DECISION_SLOT_{i}_TEXT", slotText);
             }
         }
 
+        /// <summary>
+        /// Gets current decisions directly from the Orchestrator (no caching).
+        /// Shows ALL today's opportunities - available ones are clickable, committed ones are greyed.
+        /// The Orchestrator owns the schedule - menu just reads from it.
+        /// </summary>
+        private List<DecisionAvailability> GetCurrentDecisions()
+        {
+            var allDecisions = new List<DecisionAvailability>();
+
+            try
+            {
+                // Get ALL today's opportunities from Orchestrator (not just current phase)
+                // This allows players to see and commit to upcoming activities
+                var orchestrator = ContentOrchestrator.Instance;
+                if (orchestrator != null)
+                {
+                    var allTodaysOpps = orchestrator.GetAllTodaysOpportunities();
+                    var currentPhase = WorldStateAnalyzer.GetCurrentDayPhase();
+
+                    // INFO level logging to diagnose decision display issues
+                    ModLogger.Info("Interface",
+                        $"GetCurrentDecisions: Orchestrator returned {allTodaysOpps.Count} opportunities for today " +
+                        $"(committed={allTodaysOpps.Count(o => o.PlayerCommitted)}, available={allTodaysOpps.Count(o => o.IsAvailableToCommit)})");
+
+                    // Show up to 5 opportunities (3 regular + overflow for visibility)
+                    foreach (var scheduled in allTodaysOpps.Take(5))
+                    {
+                        var availability = ConvertScheduledToDecisionAvailability(scheduled, currentPhase);
+                        if (availability != null)
+                        {
+                            allDecisions.Add(availability);
+                            ModLogger.Debug("Interface",
+                                $"  {scheduled.OpportunityId}: phase={scheduled.Phase}, committed={scheduled.PlayerCommitted}, available={availability.IsAvailable}");
+                        }
+                        else
+                        {
+                            ModLogger.Warn("Interface", $"  Failed to convert opportunity: {scheduled.OpportunityId} (SourceOpportunity={scheduled.SourceOpportunity != null})");
+                        }
+                    }
+                }
+                else
+                {
+                    ModLogger.Warn("Interface", "GetCurrentDecisions: ContentOrchestrator.Instance is null!");
+                }
+
+                // Add logistics decisions (baggage access, etc.) - these don't count against the opportunity limit
+                var decisionManager = DecisionManager.Instance;
+                if (decisionManager != null)
+                {
+                    var logistics = decisionManager.GetAvailableDecisionsForSection("logistics")
+                        .Where(d => d.IsVisible && d.IsAvailable)
+                        .ToList();
+
+                    if (logistics.Count > 0)
+                    {
+                        ModLogger.Debug("Interface", $"Menu: {logistics.Count} logistics decisions available");
+                    }
+
+                    allDecisions.AddRange(logistics);
+                }
+
+                // INFO level so we can diagnose issues
+                if (allDecisions.Count == 0)
+                {
+                    ModLogger.WarnCode("Interface", "W-UI-001",
+                        "GetCurrentDecisions: 0 decisions available - check Orchestrator schedule and phase");
+                }
+                else
+                {
+                    ModLogger.Info("Interface",
+                        $"GetCurrentDecisions: {allDecisions.Count} total decisions ready for menu");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", "Failed to get current decisions from Orchestrator", ex);
+            }
+
+            return allDecisions;
+        }
+
+        /// <summary>
+        /// Converts a ScheduledOpportunity from the Orchestrator to a DecisionAvailability for menu display.
+        /// This bridges the new Orchestrator scheduling system with the existing menu infrastructure.
+        /// </summary>
+        /// <param name="scheduled">The scheduled opportunity from the Orchestrator.</param>
+        /// <param name="currentPhase">The current day phase, used to determine if the opportunity is ready to fire.</param>
+        private DecisionAvailability ConvertScheduledToDecisionAvailability(ScheduledOpportunity scheduled, DayPhase currentPhase = DayPhase.Dawn)
+        {
+            if (scheduled?.SourceOpportunity == null)
+            {
+                return null;
+            }
+
+            var opp = scheduled.SourceOpportunity;
+
+            // Check if opportunity targets an existing decision
+            DecisionDefinition decision;
+            if (!string.IsNullOrEmpty(opp.TargetDecisionId))
+            {
+                var targetDecision = DecisionCatalog.GetDecision(opp.TargetDecisionId);
+                if (targetDecision != null)
+                {
+                    decision = new DecisionDefinition
+                    {
+                        Id = targetDecision.Id,
+                        TitleId = !string.IsNullOrEmpty(opp.TitleId) ? opp.TitleId : targetDecision.TitleId,
+                        TitleFallback = !string.IsNullOrEmpty(opp.TitleFallback) ? opp.TitleFallback : targetDecision.TitleFallback,
+                        SetupId = !string.IsNullOrEmpty(opp.DescriptionId) ? opp.DescriptionId : targetDecision.SetupId,
+                        SetupFallback = !string.IsNullOrEmpty(opp.DescriptionFallback) ? opp.DescriptionFallback : targetDecision.SetupFallback,
+                        Category = targetDecision.Category,
+                        MenuSection = "opportunities",
+                        IsPlayerInitiated = false,
+                        Options = targetDecision.Options,
+                        Timing = targetDecision.Timing,
+                        Requirements = targetDecision.Requirements
+                    };
+                }
+                else
+                {
+                    decision = CreateSyntheticDecisionFromOpportunity(opp);
+                }
+            }
+            else
+            {
+                decision = CreateSyntheticDecisionFromOpportunity(opp);
+            }
+
+            // Determine availability based on commitment state and phase
+            bool isAvailable = true;
+            string unavailableReason = null;
+            bool isCurrentPhase = scheduled.Phase == currentPhase;
+            bool isFuturePhase = IsPhaseFuture(scheduled.Phase, currentPhase);
+
+            if (scheduled.PlayerCommitted)
+            {
+                // Player already committed - greyed out, waiting to fire
+                isAvailable = false;
+                if (isCurrentPhase)
+                {
+                    unavailableReason = "[FIRING NOW]";
+                }
+                else
+                {
+                    unavailableReason = $"[SCHEDULED - {scheduled.Phase}]";
+                }
+            }
+            else if (!isCurrentPhase && isFuturePhase)
+            {
+                // Future phase opportunity - clickable to commit
+                // Append phase info to the title so player knows when it fires
+                decision.TitleFallback = $"{decision.TitleFallback ?? decision.TitleId} ({scheduled.Phase})";
+            }
+            // else: current phase or past phase - fire immediately when clicked, no suffix
+            // else: current phase, not committed - fully available to click and fire immediately
+
+            // Check if this is risky (player on duty)
+            bool isRisky = false;
+            string riskyTooltip = null;
+            var context = CampOpportunityGenerator.Instance?.AnalyzeCampContext();
+
+            if (context?.PlayerOnDuty == true && isAvailable)
+            {
+                var compat = opp.GetOrderCompatibility("");
+                isRisky = compat == "risky";
+                if (isRisky)
+                {
+                    riskyTooltip = opp.TooltipRiskyFallback;
+                }
+            }
+
+            return new DecisionAvailability
+            {
+                Decision = decision,
+                IsAvailable = isAvailable,
+                IsVisible = true,
+                UnavailableReason = unavailableReason,
+                IsRisky = isRisky,
+                RiskyTooltip = riskyTooltip,
+                CampOpportunity = opp,
+                ScheduledOpportunity = scheduled
+            };
+        }
+
+        /// <summary>
+        /// Creates a synthetic decision definition from an opportunity when no target decision exists.
+        /// </summary>
+        private static DecisionDefinition CreateSyntheticDecisionFromOpportunity(CampOpportunity opportunity)
+        {
+            return new DecisionDefinition
+            {
+                Id = opportunity.Id,
+                TitleId = opportunity.TitleId,
+                TitleFallback = opportunity.TitleFallback,
+                SetupId = opportunity.DescriptionId,
+                SetupFallback = opportunity.DescriptionFallback,
+                Category = "decision",
+                MenuSection = "opportunities",
+                IsPlayerInitiated = false
+            };
+        }
+
         private bool IsMainMenuDecisionSlotAvailable(MenuCallbackArgs args, int slotIndex)
         {
-            if (_decisionsMainMenuCollapsed || slotIndex >= _cachedMainMenuDecisions.Count)
+            var decisions = GetCurrentDecisions();
+            
+            if (_decisionsMainMenuCollapsed || slotIndex >= decisions.Count)
             {
                 return false;
             }
 
-            var availability = _cachedMainMenuDecisions[slotIndex];
+            var availability = decisions[slotIndex];
             if (availability.Decision == null)
             {
                 return false;
@@ -6119,33 +6442,109 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                ModLogger.Info("Interface", $"Main menu decision slot {slotIndex} clicked (cache size: {_cachedMainMenuDecisions.Count})");
-                
-                if (slotIndex >= _cachedMainMenuDecisions.Count)
+                var decisions = GetCurrentDecisions();
+
+                ModLogger.Info("Interface", $"Main menu decision slot {slotIndex} clicked (decisions count: {decisions.Count})");
+
+                if (slotIndex >= decisions.Count)
                 {
-                    ModLogger.Warn("Interface", $"Decision slot {slotIndex} out of range! Cache has {_cachedMainMenuDecisions.Count} items - user clicked stale UI?");
+                    ModLogger.Warn("Interface", $"Decision slot {slotIndex} out of range! Have {decisions.Count} decisions");
                     return;
                 }
 
-                var availability = _cachedMainMenuDecisions[slotIndex];
-                if (availability.Decision != null)
+                var availability = decisions[slotIndex];
+                if (availability.Decision == null)
                 {
-                    ModLogger.Info("Interface", $"Processing main menu decision: {availability.Decision.Id}");
-                    
-                    // Mark all current decisions as "seen" since user is now interacting with them
-                    var currentIds = new HashSet<string>(_cachedMainMenuDecisions.Select(d => d.Decision?.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
-                    _decisionsMainMenuLastSeenIds = currentIds;
+                    ModLogger.Warn("Interface", $"Decision slot {slotIndex} has null Decision object");
+                    return;
+                }
 
-                    // Invalidate the cache so it refreshes after this decision is processed
-                    ModLogger.Debug("Interface", $"Invalidating decision cache after user selected: {availability.Decision.Id}");
-                    _cachedMainMenuDecisions = new List<DecisionAvailability>();
+                ModLogger.Info("Interface", $"Processing main menu decision: {availability.Decision.Id}");
 
-                    OnDecisionSelected(availability.Decision);
+                // Mark all current decisions as "seen" since user is now interacting with them
+                var currentIds = new HashSet<string>(decisions.Select(d => d.Decision?.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
+                _decisionsMainMenuLastSeenIds = currentIds;
+
+                // Check if this is a scheduled opportunity with commitment model
+                var scheduled = availability.ScheduledOpportunity;
+                var currentPhase = WorldStateAnalyzer.GetCurrentDayPhase();
+
+                if (scheduled != null)
+                {
+                    // Already committed - shouldn't be clickable, but handle gracefully
+                    if (scheduled.PlayerCommitted)
+                    {
+                        ModLogger.Debug("Interface", $"Opportunity {scheduled.OpportunityId} already committed, ignoring click");
+                        return;
+                    }
+
+                    bool isCurrentPhase = scheduled.Phase == currentPhase;
+                    bool isFuturePhase = IsPhaseFuture(scheduled.Phase, currentPhase);
+
+                    if (!isCurrentPhase && isFuturePhase)
+                    {
+                        // FUTURE PHASE: Commit to this opportunity (schedule it)
+                        // It will fire automatically when that phase arrives
+                        var committed = ContentOrchestrator.Instance?.CommitToOpportunity(scheduled.OpportunityId) ?? false;
+
+                        if (committed)
+                        {
+                            ModLogger.Info("Interface",
+                                $"✓ Player committed to {scheduled.OpportunityId} (will fire at {scheduled.Phase})");
+
+                            // Show confirmation to player
+                            var phaseName = scheduled.Phase.ToString();
+                            var message = new TextObject("{=commitment_scheduled}Scheduled for {PHASE}.")
+                                .SetTextVariable("PHASE", phaseName)
+                                .ToString();
+                            InformationManager.DisplayMessage(new InformationMessage(message, Colors.Green));
+                        }
+                        else
+                        {
+                            ModLogger.Warn("Interface", $"Failed to commit to {scheduled.OpportunityId}");
+                        }
+
+                        // Refresh menu to show greyed-out state
+                        ModLogger.Info("Interface", $"Refreshing menu after commitment...");
+                        RefreshMainMenuDecisionSlots();
+                        var menuContext = args?.MenuContext ?? Campaign.Current?.CurrentMenuContext;
+                        if (Campaign.Current != null && menuContext?.GameMenu != null)
+                        {
+                            Campaign.Current.GameMenuManager.RefreshMenuOptions(menuContext);
+                            ModLogger.Info("Interface", $"Menu refresh completed - committed options should now be greyed out");
+                        }
+                        else
+                        {
+                            ModLogger.Warn("Interface", $"Could not refresh menu (context={menuContext != null}, gameMenu={menuContext?.GameMenu != null})");
+                        }
+                        return;
+                    }
+
+                    // CURRENT PHASE: Fire immediately (old behavior)
+                    // Mark as consumed so it disappears
+                    ContentOrchestrator.Instance?.ConsumeOpportunity(scheduled.OpportunityId);
+                }
+                else if (availability.CampOpportunity != null)
+                {
+                    // Non-scheduled opportunity (e.g., baggage access) - consume immediately
+                    ContentOrchestrator.Instance?.ConsumeOpportunity(availability.CampOpportunity.Id);
                 }
                 else
                 {
-                    ModLogger.Warn("Interface", $"Decision slot {slotIndex} has null Decision object");
+                    // Fallback: Try to consume by decision ID
+                    ContentOrchestrator.Instance?.ConsumeOpportunityByDecisionId(availability.Decision.Id);
                 }
+
+                // IMMEDIATE MENU REFRESH: Refresh slots NOW so consumed decision disappears
+                RefreshMainMenuDecisionSlots();
+                var ctx = args?.MenuContext ?? Campaign.Current?.CurrentMenuContext;
+                if (Campaign.Current != null && ctx?.GameMenu != null)
+                {
+                    Campaign.Current.GameMenuManager.RefreshMenuOptions(ctx);
+                }
+
+                // Fire the decision event
+                OnDecisionSelected(availability.Decision);
             }
             catch (Exception ex)
             {

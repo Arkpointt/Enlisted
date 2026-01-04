@@ -1,10 +1,9 @@
 # Enlisted - Project Blueprint
 
-**Summary:** Complete guide to the Enlisted mod's architecture, coding standards, and development practices. This is the single source of truth for understanding how this project works and how we write code.
+**Summary:** Complete guide to the Enlisted mod's architecture, coding standards, and development practices. This is the single source of truth for understanding how this project works.
 
-**Last Updated:** 2026-01-01
+**Last Updated:** 2026-01-04 (Phase-aware scheduling, duplicate prevention, commitment model, baggage filtering)  
 **Target Game:** Bannerlord v1.3.13
-**Related Docs:** [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md), [Reference/native-apis.md](Reference/native-apis.md)
 
 ---
 
@@ -14,1088 +13,302 @@
 
 This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.13** that transforms the game into a soldier career simulator. Players enlist with lords, follow orders, manage reputation, and progress through military ranks.
 
-**Critical Project Constraints:**
-1. **Target:** Bannerlord v1.3.13 specifically (not latest version)
-2. **API Verification:** ALWAYS use local decompile at `C:\Dev\Enlisted\Decompile\` (not online docs)
-3. **Old-style .csproj:** Must manually add new files to `Enlisted.csproj` with `<Compile Include="..."/>`
-4. **Build:** Use `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
-5. **Logging:** Use `ModLogger` in `Modules\Enlisted\Debugging\` folder
-6. **ReSharper:** Follow ReSharper recommendations (never suppress without documented reason)
+---
 
-### Understanding the Project
+## Critical Constraints
 
-**Scope:** The mod focuses on the **enlisted lord's party** (the Company). If the Company is part of a larger Army, acknowledge that as context only. Deep army-wide simulation is future work.
+These rules must always be followed:
 
-**Key Nuances:**
-- Player uses an **invisible party** while enlisted (see `Features/Core/enlistment.md`)
-- **Native integration** preferred over custom UI (use game menus, trait system, etc.)
-- **Data-driven content** via JSON events/orders + XML localization
-- **Emergent identity** from player choices (not menu selections)
-- Comments describe **current behavior** (no changelog-style "Phase X added..." framing)
-
-### Finding Documentation
-
-1. **[INDEX.md](INDEX.md)** - Complete catalog of all docs organized by category
-2. **[Features/Core/core-gameplay.md](Features/Core/core-gameplay.md)** - Best overview of how everything works
-3. **[Content/event-catalog-by-system.md](Content/event-catalog-by-system.md)** - All events/decisions/orders
-4. **[Features/Technical/conflict-detection-system.md](Features/Technical/conflict-detection-system.md)** - System interactions and validation rules
-5. **[Reference/native-apis.md](Reference/native-apis.md)** - Bannerlord API snippets
-
-### Creating New Documentation
-
-**Format Requirements:**
-```markdown
-# Title
-
-**Summary:** 2-3 sentences explaining what this covers and when to reference it
-
-**Status:** ✅ Current | ⚠️ In Progress | 📋 Specification | 📚 Reference
-**Last Updated:** YYYY-MM-DD
-**Related Docs:** [Link 1], [Link 2]
+| # | Constraint | Details |
+|---|------------|---------|
+| 1 | **Target Version** | Bannerlord v1.3.13 specifically (not latest) |
+| 2 | **API Verification** | ALWAYS use local decompile at `C:\Dev\Enlisted\Decompile\` (not online docs) |
+| 3 | **Manual File Includes** | Must manually add new files to `Enlisted.csproj` with `<Compile Include="..."/>` → Validator enforces this |
+| 4 | **Build Command** | `dotnet build -c "Enlisted RETAIL" /p:Platform=x64` |
+| 5 | **Logging** | Use `ModLogger` with searchable error codes (`ErrorCode("E-SYS-001", ...")`) → outputs to `Modules\Enlisted\Debugging\` |
+| 6 | **Phase-Aware Scheduling** | Each opportunity appears ONCE per day; phase-specific generation prevents duplicates; commitment model: click future-phase to schedule (greys out) → auto-fires at phase; current/past-phase fires immediately; uncommitted disappear when phase passes |
+| 7 | **Code Quality** | Follow ReSharper recommendations (never suppress without documented reason) |
 
 ---
 
-## Index
-1. [Section 1](#section-1)
-2. [Section 2](#section-2)
+## Project Map
+
+| What You Need | Where To Find It |
+|---------------|------------------|
+| Complete documentation catalog | [INDEX.md](INDEX.md) |
+| How systems work together | [Features/Core/core-gameplay.md](Features/Core/core-gameplay.md) |
+| All events/decisions/orders | [Features/Content/content-index.md](Features/Content/content-index.md) |
+| Writing RP text (voice/tone) | [Features/Content/writing-style-guide.md](Features/Content/writing-style-guide.md) |
+| JSON schema rules | [Features/Content/event-system-schemas.md](Features/Content/event-system-schemas.md) |
+| Orchestrator & opportunity scheduling | [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) |
+| Validation & development tools | [Tools/README.md](../Tools/README.md) |
+| Technical patterns & logging | [Tools/TECHNICAL-REFERENCE.md](../Tools/TECHNICAL-REFERENCE.md) |
+| **Code quality configuration** | **[.editorconfig](../.editorconfig)**, **[Enlisted.sln.DotSettings](../Enlisted.sln.DotSettings)**, **[qodana.yaml](../qodana.yaml)** |
+| Native API reference | `C:\Dev\Enlisted\Decompile\` (local files) |
+| Build configurations | [BUILD-CONFIGURATIONS.md](BUILD-CONFIGURATIONS.md) |
+| Steam Workshop upload | [Tools/Steam/WORKSHOP_UPLOAD.md](../Tools/Steam/WORKSHOP_UPLOAD.md) |
 
 ---
 
-## Section 1
-[Content describing CURRENT behavior, not planning/changelog language]
+## Directory Structure
+
+```
+Enlisted/
+├── src/                    C# source code
+│   ├── Mod.Entry/          SubModule + Harmony init
+│   ├── Mod.Core/           Logging, config, save system, helpers
+│   ├── Mod.GameAdapters/   Harmony patches
+│   └── Features/           All gameplay features
+│       ├── Enlistment/     Core service state, retirement
+│       ├── Orders/         Mission-driven directives
+│       ├── Content/        Events, Decisions, narrative delivery
+│       ├── Combat/         Battle participation, formation, Battle AI
+│       ├── Equipment/      Quartermaster and gear management
+│       └── ...             (see full list below)
+│
+├── ModuleData/             Game data files
+│   ├── Enlisted/           JSON config, events, orders, decisions
+│   └── Languages/          XML localization (enlisted_strings.xml)
+│
+├── Tools/                  Development utilities
+│   ├── Validation/         Content + project structure validators
+│   ├── Debugging/          Reports and debug scripts (safe to delete)
+│   ├── Steam/              Workshop upload scripts
+│   └── Research/           Native extraction, analysis utilities
+│
+├── docs/                   All documentation
+│   ├── Features/           Feature specifications by category
+│   ├── Reference/          API research and analysis
+│   └── INDEX.md            Master documentation catalog
+│
+└── GUI/                    Gauntlet UI prefabs
 ```
 
-**File Naming:** Use kebab-case (`my-new-feature.md`)
+### Feature Folders (src/Features/)
 
-**Documentation Location Guide:**
-- Core systems → `Features/Core/`
-- Equipment/logistics → `Features/Equipment/`
-- Combat mechanics → `Features/Combat/`
-- Events/content → `Features/Content/`
-- Campaign/world → `Features/Campaign/`
-- UI systems → `Features/UI/`
-- Technical specs → `Features/Technical/`
-- Content catalog → `Content/`
-- API/research → `Reference/`
+| Folder | Purpose |
+|--------|---------|
+| Enlistment | Core service state, retirement |
+| Orders | Mission-driven directives (Chain of Command) |
+| Content | Events, Decisions, narrative delivery |
+| Identity | Role detection (Traits), Reputation helpers |
+| Escalation | Lord/Officer/Soldier reputation, Scrutiny/Discipline |
+| Company | Company-wide Needs (Readiness, Morale, Supply) |
+| Context | Army context and objective analysis |
+| Interface | Camp Hub menu, News/Reports |
+| Equipment | Quartermaster and gear management |
+| Ranks | Promotions and culture-specific titles |
+| Conversations | Dialog management |
+| Combat | Battle participation, formation assignment |
+| Conditions | Player medical status (injury/illness) |
+| Retinue | Commander's Retinue (T7+), Service Records |
+| Camp | Camp activities and rest logic |
+
+---
+
+## Quick Commands
+
+```powershell
+# Build the mod
+dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+
+# Validate content and project structure (run before committing)
+python Tools/Validation/validate_content.py
+
+# Get prioritized issue summary
+python Tools/Validation/validate_content.py > Tools/Debugging/validation_report.txt
+python Tools/Validation/analyze_validation.py
+
+# Sync localization strings
+python Tools/Validation/sync_event_strings.py
+
+# Upload to Steam Workshop
+.\Tools\Steam\upload.ps1
+```
 
 ---
 
 ## Common Tasks
 
-**Add a new C# file:**
+### Add a New C# File
+
 1. Create file in appropriate `src/Features/` subfolder
-2. Add `<Compile Include="path/to/file.cs"/>` to `Enlisted.csproj`
-3. Build to verify
+2. **Manually add to `Enlisted.csproj`:**
+   ```xml
+   <Compile Include="src\Features\MyFeature\MyNewClass.cs"/>
+   ```
+3. Run validation to verify: `python Tools/Validation/validate_content.py`
+4. Build to confirm compilation
 
-**Add new event/decision/order:**
-1. Add JSON definition to `ModuleData/Enlisted/Events/` or `Decisions/`
-2. Add XML localization entries to `ModuleData/Languages/enlisted_strings.xml`
-   - Place in appropriate section (Events, Decisions, Orders)
+### Add New Event/Decision/Order
+
+1. **Read the [Writing Style Guide](Features/Content/writing-style-guide.md)** first for voice/tone/vocabulary
+2. Add JSON definition to `ModuleData/Enlisted/Events/` or `Decisions/`
+3. Add XML localization entries to `ModuleData/Languages/enlisted_strings.xml`
    - Use `&#xA;` for newlines in XML attributes
-   - Escape special characters: `&` → `&amp;`, `'` → `&apos;`, `"` → `&quot;`
-3. Use placeholder variables in text (e.g., `{PLAYER_NAME}`, `{SERGEANT}`, `{LORD_NAME}`)
-4. **Run validation:** `python tools/events/validate_events.py` to check for missing fallback fields
-5. Run `python tools/events/sync_event_strings.py --check` to verify all strings present
-6. Update `Content/event-catalog-by-system.md`
+   - Escape: `&` → `&amp;`, `'` → `&apos;`, `"` → `&quot;`
+4. Use placeholder variables (e.g., `{PLAYER_NAME}`, `{SERGEANT}`, `{LORD_NAME}`)
+5. **For opportunities:** Add `hintId`/`hint` fields for Daily Brief foreshadowing (see [Opportunity Hints](Features/Content/writing-style-guide.md#opportunity-hints))
+5. Run validation: `python Tools/Validation/validate_content.py`
+6. Sync strings: `python Tools/Validation/sync_event_strings.py --check`
+7. Update [content-index.md](Features/Content/content-index.md) if adding new content type
 
-**Placeholder variables:** See [Event Catalog - Placeholder Variables](Content/event-catalog-by-system.md#placeholder-variables) for complete list
+### Check If Feature Exists
 
-**Check if feature exists:**
-1. Search INDEX.md for topic
-2. Check `Features/Core/core-gameplay.md` for mentions
-3. Use grep to search `src/` for implementation
+1. Search [INDEX.md](INDEX.md) for topic
+2. Check [core-gameplay.md](Features/Core/core-gameplay.md) for mentions
+3. Search `src/` for implementation
 
-**Before committing:**
+### Before Committing
+
 ```powershell
-# Validate all events have proper structure, references, logic, and consistency
-python tools/events/validate_content.py
+# 1. Validate content
+python Tools/Validation/validate_content.py
 
-# Build and check for errors
-cd C:\Dev\Enlisted\Enlisted
+# 2. Build
 dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+
+# 3. Fix any errors/warnings
 ```
 
-**Upload to Steam Workshop:**
-1. Update `"changenote"` in `tools/workshop/workshop_upload.vdf` with version and changes
-2. Build if code changed: `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
-3. Run upload script (opens interactive window):
-   ```powershell
-   Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Dev\Enlisted\Enlisted\tools\workshop'; .\upload.ps1" -Wait
-   ```
-4. See [Steam Workshop Upload](#steam-workshop-upload) section for full details
+---
+
+## Code Standards
+
+### Configuration Files (READ THESE)
+
+**Before making code changes, read these files to understand our quality standards:**
+
+1. **[.editorconfig](../.editorconfig)** - Formatting rules, naming conventions, indentation
+   - Enforces 4-space indentation for C#, 2-space for JSON/XML
+   - **Warns on unused `using` directives** (IDE0005, CS8019)
+   - **Warns on redundant namespace qualifiers** (IDE0001, IDE0002)
+   - **Warns on unnecessary suppressions** (IDE0079)
+   - Naming conventions: private fields use `_camelCase`
+
+2. **[Enlisted.sln.DotSettings](../Enlisted.sln.DotSettings)** - ReSharper inspection settings and suppressions
+   - Disables markdown linting (docs are excluded from code analysis)
+
+3. **[qodana.yaml](../qodana.yaml)** - Qodana static analysis configuration
+   - **Actively enforces**: RedundantUsingDirective, RedundantNameQualifier, UnusedMember.Local, UnusedParameter.Local
+   - Excludes: Markdown files, `Tools/` scripts, `Debugging/` reports
+   - Documents all inspection suppressions with reasons (Harmony patches, Gauntlet bindings, singletons)
+
+### General Rules
+
+- **Braces required** on all `if`, `for`, `while`, `foreach` (even single-line)
+- **No unused code** - remove unused imports, variables, methods
+- **Comments describe current behavior** (no "Phase X added..." framing)
+- **Follow ReSharper/Qodana** - fix warnings, don't suppress without reason
+
+### JSON Content Rules
+
+**1. Fallback fields must immediately follow their ID fields:**
+
+```json
+✅ Correct:
+{
+  "titleId": "event_title_key",
+  "title": "Fallback Title",
+  "setupId": "event_setup_key",
+  "setup": "Fallback setup text..."
+}
+
+❌ Wrong:
+{
+  "titleId": "event_title_key",
+  "setupId": "event_setup_key",
+  "title": "Fallback Title",
+  "setup": "Fallback setup text..."
+}
+```
+
+**2. Always include fallback text** - never empty strings
+
+**3. Tooltips cannot be null** - every option must have a tooltip
+
+### Tooltip Guidelines
+
+- One sentence, under 80 characters
+- Factual description of what happens
+- Format: action + side effects + cooldown
+
+```json
+{"tooltip": "Trains equipped weapon. Causes fatigue. 3 day cooldown."}
+{"tooltip": "Harsh welcome. +5 Officer rep. -3 Retinue Loyalty."}
+{"tooltip": "Accept discharge. 90-day re-enlistment block applies."}
+```
+
+### Comment Style
+
+```csharp
+// ✅ Good: Describes current behavior
+// Checks if the player can re-enlist based on cooldown and discharge history.
+private bool CanReenlistWithFaction(Kingdom faction)
+
+// ❌ Bad: Changelog framing
+// Phase 2: Added re-enlistment check. Changed from using days to CampaignTime.
+private bool CanReenlistWithFaction(Kingdom faction)
+```
+
+---
+
+## API Verification
+
+**Always verify against the local native decompile FIRST**
+
+- **Location:** `C:\Dev\Enlisted\Decompile\`
+- **Target Version:** v1.3.13
+
+**Key Assemblies:**
+| Assembly | Contains |
+|----------|----------|
+| `TaleWorlds.CampaignSystem` | Party, Settlement, Campaign behaviors |
+| `TaleWorlds.Core` | CharacterObject, ItemObject |
+| `TaleWorlds.Library` | Vec2, MBList, utility classes |
+| `TaleWorlds.MountAndBlade` | Mission, Agent, combat |
+| `SandBox.View` | Menu views, map handlers |
+
+**Process:**
+1. Check decompile for actual API (authoritative)
+2. Use official docs only for quick lookups (secondary)
+3. Don't rely on external docs or assumptions
+4. Verify method signatures, property types, enum values
 
 ---
 
 ## Code Review Checklist
 
-Before committing code, verify:
-
-**Code Quality:**
+### Code Quality
+- [ ] Read [.editorconfig](../.editorconfig), [Enlisted.sln.DotSettings](../Enlisted.sln.DotSettings), [qodana.yaml](../qodana.yaml)
 - [ ] All ReSharper/Rider warnings addressed
-- [ ] No unused `using` directives
-- [ ] Braces used for all single-line control statements
+- [ ] No unused imports, variables, or methods
+- [ ] Braces used for all control statements
 - [ ] No redundant namespace qualifiers
-- [ ] No unused variables, parameters, or methods
-- [ ] No redundant default parameter values in method calls
 
-**Functionality:**
+### Functionality
 - [ ] Code builds without errors
-- [ ] Relevant tests pass (if applicable)
 - [ ] Logging added for significant actions/errors
-- [ ] Null checks added where needed
+- [ ] Null checks where needed
 
-**Documentation:**
-- [ ] Comments describe current behavior (not changelog)
+### Documentation
+- [ ] Comments describe current behavior
 - [ ] XML localization strings added for new events
 - [ ] Tooltips provided for all event options
 - [ ] New files added to `Enlisted.csproj`
 
-**Data Files:**
+### Data Files & Project Structure
 - [ ] JSON fallback fields immediately follow ID fields
-- [ ] Order events include skillXp in effects (tooltips cannot be null, XP cannot be missing)
-- [ ] Event validation passes: `python tools/events/validate_content.py`
-
----
-
-## Index
-
-1. [Overview & Philosophy](#overview--philosophy)
-2. [Engineering Standards](#engineering-standards)
-   - [Code Quality](#code-quality)
-   - [API Verification](#api-verification)
-   - [Data File Conventions](#data-file-conventions)
-   - [Tooltip Best Practices](#tooltip-best-practices)
-   - [Logging Standards](#logging-standards)
-3. [Build & Deployment](#build--deployment)
-   - [Dual Build Configuration](#dual-build-configuration)
-   - [Build Commands](#build-commands)
-   - [Conditional Compilation](#conditional-compilation)
-   - [Battle AI File Organization](#battle-ai-file-organization)
-   - [Critical Battle AI Rules](#critical-battle-ai-rules)
-4. [Steam Workshop Upload](#steam-workshop-upload)
-5. [Dependencies](#dependencies)
-6. [Native Reference (Decompile)](#native-reference-decompile)
-7. [File Structure](#file-structure)
-8. [Adding New Files](#adding-new-files)
-9. [Key Patterns](#key-patterns)
-10. [Configuration](#configuration)
-11. [Menu System](#menu-system)
-12. [Common Pitfalls](#common-pitfalls)
-
----
-
-## Overview & Philosophy
-
-Enlisted transforms Bannerlord into a soldier career simulator. Players enlist with a lord, follow orders, manage reputation, and progress through ranks from recruit to commander.
-
-**Design Principles:**
-- Emergent identity from choices, not menus
-- Native Bannerlord integration (traits, skills, game menus)
-- Minimal custom UI (use game's native systems)
-- Choice-driven narrative progression
-- Realistic military hierarchy and consequences
-
----
-
-## Engineering Standards
-
-### Code Quality
-
-#### ReSharper Linter
-- **Always follow ReSharper recommendations** (available in Rider or Visual Studio)
-- **Fix all warnings before committing** - don't suppress with pragmas unless truly necessary
-- **Run Qodana analysis** before major commits to catch code quality issues
-- Exception: Only suppress if there's a specific compatibility reason with a comment explaining why
-
-**Handling False Positives:**
-
-When Qodana/ReSharper reports a warning that cannot be fixed without breaking compilation, use `[SuppressMessage]` attributes with clear justification:
-
-```csharp
-[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "RedundantNameQualifier",
-    Justification = "ConfigurationManager conflicts with TaleWorlds.Library.ConfigurationManager")]
-private void MyMethod()
-{
-    var config = Enlisted.Mod.Core.Config.ConfigurationManager.LoadConfig();
-}
-```
-
-**Common False Positive Scenarios:**
-- **Namespace conflicts:** When two types share the same name (e.g., `ConfigurationManager` in both `Enlisted.Mod.Core.Config` and `TaleWorlds.Library`), the fully qualified name is required
-- **Harmony patches:** Parameters marked as unused but required by Harmony's signature matching
-- **Reflection-called members:** Properties/methods called via Bannerlord's reflection system (save/load, UI binding)
-
-**Verification Process:**
-1. Try to fix the warning normally (add `using`, remove qualifier, etc.)
-2. Build the project - if compilation fails, it's a false positive
-3. Add `[SuppressMessage]` with clear `Justification` explaining why
-4. Document the pattern in BLUEPRINT.md if it's a recurring issue
-
-**Pre-commit checklist:**
-```powershell
-# Run Qodana analysis (if available)
-qodana scan --show-report
-
-# Build and check for errors
-dotnet build -c "Enlisted RETAIL" /p:Platform=x64
-
-# Validate events
-python tools/events/validate_events.py
-```
-
-#### Comment Style
-Comments should be factual descriptions of current behavior, written as a human developer would—professional and natural.
-
-✅ **Good:**
-```csharp
-// Checks if the player can re-enlist with this faction based on cooldown and discharge history.
-private bool CanReenlistWithFaction(Kingdom faction)
-```
-
-❌ **Bad:**
-```csharp
-// Phase 2: Added re-enlistment check. Previously used FactionVeteranRecord, now uses FactionServiceRecord.
-// Changed from using days to using CampaignTime for better accuracy.
-private bool CanReenlistWithFaction(Kingdom faction)
-```
-
-**Rules:**
-- Describe WHAT the code does NOW, not what it used to do or when it changed
-- No "Phase X" references in code comments
-- No changelog-style framing ("Added X", "Changed from Y")
-- No "legacy" or "migration" mentions in doc comments
-- Write professionally and naturally
-
-#### Code Organization
-- Reuse existing patterns (e.g., copy OrderCatalog structure for new catalogs)
-- Keep related functionality together
-- Use clear, descriptive names
-- Group related fields/properties/methods
-
-#### Code Quality Standards
-
-**Braces:**
-- Always use braces for single-line `if`, `for`, `while`, and `foreach` statements
-- Exception: Single-line property getters/setters
-
-✅ **Good:**
-```csharp
-if (condition)
-{
-    return value;
-}
-```
-
-❌ **Bad:**
-```csharp
-if (condition)
-    return value;
-```
-
-**Redundant Code:**
-- Remove unused `using` directives
-- Remove redundant namespace qualifiers (use `using` statements instead)
-- Remove redundant default parameter values in method calls
-- Remove unused local variables, parameters, and private methods
-- Remove unused property accessors (getters/setters that are never called)
-
-**Null Safety:**
-- Address `PossibleNullReferenceException` warnings with null checks or null-conditional operators
-- Use `?.` and `??` operators where appropriate
-
-**Variable Initialization:**
-- Remove redundant default member initializers (e.g., `= null`, `= 0`, `= false` for fields)
-- Combine declaration and assignment when possible
-
----
-
-### API Verification
-
-**ALWAYS verify against the local native decompile FIRST**
-
-- **Location:** `C:\Dev\Enlisted\Decompile\`
-- **Target Version:** v1.3.13
-- **Key Assemblies:**
-  - `TaleWorlds.CampaignSystem` - Party, Settlement, Campaign behaviors
-  - `TaleWorlds.Core` - CharacterObject, ItemObject
-  - `TaleWorlds.Library` - Vec2, MBList, utility classes
-  - `TaleWorlds.MountAndBlade` - Mission, Agent, combat
-  - `SandBox.View` - Menu views, map handlers
-
-**Process:**
-1. Check decompile for actual API (authoritative)
-2. Use official docs only for quick lookups (secondary)
-3. Don't rely on external docs or AI assumptions
-4. Verify method signatures, property types, enum values
-
-**Example:**
-```
-Need: Party position
-Check: C:\Dev\Enlisted\Decompile\TaleWorlds.CampaignSystem\TaleWorlds\CampaignSystem\Party\MobileParty.cs
-Find: GetPosition2D() → Vec2 (NOT Position2D property)
-```
-
----
-
-### Data File Conventions
-
-#### XML for Player-Facing Text
-- **Localization:** `ModuleData/Languages/enlisted_strings.xml`
-- **Gauntlet UI:** `GUI/Prefabs/**.xml`
-- **In Code:** Use `TextObject("{=stringId}Fallback text")`
-- Add string keys to enlisted_strings.xml even if only using English
-
-**Dynamic Dialogue Pattern (Data-Driven Approach):**
-For context-sensitive dialogue that varies by game state (like quartermaster responses), we use a JSON-driven catalog with dynamic runtime evaluation:
-1. **Define in JSON:** Store dialogue nodes with context conditions (`supply_level`, `reputation`, etc.).
-2. **Dynamic Registration:** At startup, register dialogue lines for every contextual variant of a node ID.
-3. **Runtime Evaluation:** Use Bannerlord `OnConditionDelegate` to call `GetCurrentDialogueContext()` every time a line is considered for display.
-4. **Specificity Matching:** The system selects the most specific matching variant (highest specificity count).
-5. **XML Support:** Use standard `textId` fields for localization, with JSON `text` fields as fallbacks.
-
-**Example Implementation:**
-```csharp
-// Condition delegate evaluated every time dialogue navigates to this node
-ConversationSentence.OnConditionDelegate condition = () => {
-    var currentContext = GetCurrentDialogueContext();
-    return nodeContext.Matches(currentContext);
-};
-
-// Register with Bannerlord system
-starter.AddDialogLine(id, inputToken, outputToken, text, condition, consequence, priority);
-```
-
-**Manual Registration for Dynamic Text Variables:**
-When a dialogue node needs to generate text dynamically (not just select from pre-defined variants), manually register both the NPC line and player responses:
-```csharp
-// Register NPC line with text variable setter
-starter.AddDialogLine(
-    "qm_supply_response_dynamic",
-    "qm_supply_response",
-    "qm_supply_response",
-    "{=qm_supply_report}{SUPPLY_STATUS}",
-    () => IsQuartermasterConversation() && SetSupplyStatusText(),  // Sets {SUPPLY_STATUS}
-    null,
-    200);
-
-// Register player options that would normally come from JSON
-starter.AddPlayerLine(
-    "qm_supply_continue",
-    "qm_supply_response",
-    "qm_hub",
-    "{=qm_continue}[Continue]",
-    IsQuartermasterConversation,
-    null,
-    100);
-```
-**Why:** The JSON dialogue loader won't register player options for manually-registered NPC lines. You must register the complete conversation flow manually when using dynamic text generation.
-
-**Benefits:** Full localization support, real-time reaction to game state changes during a single conversation session, and decoupling of content from C# code.
-
-#### JSON for Content/Config
-- **Content:** `ModuleData/Enlisted/Events/*.json` (events, automatic decisions)
-- **Config:** `ModuleData/Enlisted/*.json`
-- **Orders:** `ModuleData/Enlisted/Orders/orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json` (17 total)
-- **Decisions:** `ModuleData/Enlisted/Decisions/*.json` (34 player-initiated Camp Hub decisions)
-
-#### Critical JSON Rules
-
-**1. Fallback fields must immediately follow their ID fields:**
-
-✅ **Correct:**
-```json
-{
-  "titleId": "event_title_key",
-  "title": "Fallback Title",
-  "setupId": "event_setup_key",
-  "setup": "Fallback setup text..."
-}
-```
-
-❌ **Wrong:**
-```json
-{
-  "titleId": "event_title_key",
-  "setupId": "event_setup_key",
-  "title": "Fallback Title",
-  "setup": "Fallback setup text..."
-}
-```
-
-**2. Always include fallback text, even with XML localization:**
-
-The fallback text in JSON serves two purposes:
-- Displays if XML localization is missing (dev safety net)
-- Source of truth for what the string should say
-
-Never use empty fallback text (`"title": ""`). Always provide the actual text.
-
----
-
-### Tooltip Best Practices
-
-**Tooltips cannot be null.** Every event option, decision, order, and UI element that can have a tooltip must include one.
-
-#### Guidelines:
-- Factual, concise, brief description of what it does
-- One sentence, under 80 characters
-- Format: action + side effects + cooldown/restrictions
-- Example: "Trains equipped weapon. Causes fatigue. Chance of injury. 3 day cooldown."
-
-#### Examples:
-
-**Training/Actions:**
-```json
-{"tooltip": "Trains equipped weapon"}
-{"tooltip": "Build stamina and footwork"}
-{"tooltip": "Maintain gear to prevent degradation"}
-```
-
-**Stat/Reputation Changes:**
-```json
-{"tooltip": "Harsh welcome. +5 Officer rep. -3 Retinue Loyalty."}
-{"tooltip": "Risky move. +10 Courage. -5 Discipline. Injury chance."}
-{"tooltip": "Show respect. +3 Lord rep. +2 Morale."}
-```
-
-**Consequences:**
-```json
-{"tooltip": "Accept discharge. 90-day re-enlistment block applies."}
-{"tooltip": "Desert immediately. Criminal record and faction hostility."}
-```
-
-**Skill checks:**
-```json
-{"tooltip": "Charm check determines outcome."}
-{"tooltip": "Requires Leadership 50+ to attempt."}
-```
-
-**Requirements/Restrictions:**
-```json
-{"tooltip": "Requires Tier 7+ to unlock"}
-{"tooltip": "Greyed out: Company Morale must be below 50"}
-```
-
----
-
-### Logging Standards
-
-**ALL MOD LOGS OUTPUT TO:** `<BannerlordInstall>\Modules\Enlisted\Debugging\`
-
-Example full path: `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
-
-The mod writes session logs directly to the `Debugging` folder inside the Enlisted module directory. This is NOT the game's crash logs folder and NOT Documents.
-
-**Installation Locations:**
-- **Steam Workshop:** `C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\3621116083\`
-- **Manual/Nexus:** `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\`
-
-Note: Having both versions installed creates duplicate entries in the launcher and can cause conflicts. The mod includes automatic conflict detection at startup - check `Conflicts-A_{timestamp}.log` for mod compatibility issues.
-
-#### Session Rotation System
-
-The logger uses a **three-session rotation** to keep logs organized and manageable:
-
-- **Session-A** - Current/newest session (e.g., `Session-A_2025-12-31_14-30-00.log`)
-- **Session-B** - Previous session (renamed from old Session-A)
-- **Session-C** - Oldest session (renamed from old Session-B)
-- **Current_Session_README.txt** - Points to the active session file
-
-When you start a new game session:
-1. Old Session-B → Session-C (oldest is deleted)
-2. Old Session-A → Session-B
-3. New Session-A is created with current timestamp
-
-**Where to look for logs:**
-- **Game Install:** `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
-  - Check **Session-A** for your current/most recent gameplay
-  - Check **Session-B** if you need the previous session
-  - Check **Session-C** for the oldest kept session
-  - Read **Current_Session_README.txt** to see which file is active
-- **Workspace:** `C:\Dev\Enlisted\Enlisted\Debugging\`
-  - Contains development scripts and build placeholders only
-  - NOT where runtime logs are written
-
-#### Usage:
-```csharp
-ModLogger.Info("Category", "message");
-ModLogger.Debug("Category", "detailed info");
-ModLogger.Warn("Category", "warning");
-ModLogger.Error("Category", "error details");
-ModLogger.LogOnce("UniqueKey", "Category", "message"); // Only logs once per session
-```
-
-#### Categories:
-- Enlistment, Combat, Equipment, Events, Orders, Reputation
-- Identity, Company, Context, Interface, Ranks, Conversations
-- Retinue, Camp, Conditions, Supply, Logistics, Naval
-- **Diagnostics:** SiegeIntegration, BattleIntegration, EncounterGuard, CaptivityStatus
-  - `EncounterGuard` - Encounter suppression, battle participation, menu transitions, and stale encounter cleanup
-
-#### What to Log:
-- Actions (enlistment, promotions, discharges)
-- Errors and warnings
-- State changes (reputation, needs, orders)
-- Event triggers and outcomes
-- Supply changes (when significant, >10%)
-- **Encounter decisions:** All encounter blocking/allowing with context (party states, battle involvement, army status)
-- **Menu transitions:** When switching between enlisted and native menus, with reasons
-
-Configure levels in `settings.json`:
-```json
-{
-  "LogLevels": {
-    "Default": "Info",
-    "Battle": "Debug",
-    "Equipment": "Warn"
-  }
-}
-```
-
-#### Performance-Friendly Logging
-All features include logging for error catching and diagnostics to help troubleshoot issues, game updates, or mod conflicts in production. The logger includes throttling and de-duplication to prevent log spam.
-
-#### Logging Level Guidelines
-
-**Use `Info` for:**
-- Key decisions that affect gameplay (encounter blocking/allowing, menu switches, state transitions)
-- Actions the user needs to understand (enlistment, promotion, battle participation)
-- Diagnostic information for troubleshooting production issues
-- Auto-cleanup and recovery operations
-
-**Use `Debug` for:**
-- Internal state validation
-- Tick/update loop details (unless significant state change occurs)
-- Detailed calculations or intermediate values
-- Information useful during development but noisy in production
-
-**Use `Warn` for:**
-- Unexpected but recoverable situations
-- Deprecated code paths
-- Configuration issues that don't prevent functionality
-
-**Use `Error` for:**
-- Exceptions and failures
-- Operations that couldn't complete
-- Data corruption or invalid state
-
-**Example - Encounter Safety:**
-```csharp
-// Info - key decision the user needs to see
-ModLogger.Info("EncounterGuard", "BLOCKED: Enlisted player, no valid battle context");
-
-// Info - auto-recovery that fixes an issue
-ModLogger.Info("EncounterGuard", "AUTO-CLEANUP: Cleaning up stale post-battle encounter");
-
-// Error - something failed
-ModLogger.Error("EncounterGuard", $"AUTO-CLEANUP failed: {ex.Message}");
-```
-
-This ensures logs are useful for end-user troubleshooting while keeping performance optimal.
-
----
-
-## Build & Deployment
-
-### Single Build with Optional Battle AI SubModule
-
-The project uses a **single build configuration** that includes all features, including Battle AI. Users can **disable Battle AI via checkbox** in the Bannerlord launcher without redownloading or switching mods.
-
-**Key Benefits:**
-- ✅ Single download for all users
-- ✅ Battle AI can be toggled in Bannerlord launcher (native UI)
-- ✅ No performance cost when disabled (SubModule never initializes)
-- ✅ Simple build process
-- ✅ Easy distribution (one Steam Workshop item)
-
-### Build Commands
-
-**Command Line (PowerShell):**
-```powershell
-cd C:\Dev\Enlisted\Enlisted; dotnet build -c "Enlisted RETAIL" /p:Platform=x64
-```
-
-**Visual Studio/Rider:**
-- Select configuration: **"Enlisted RETAIL"**
-- Platform: **x64**
-- Build
-
-### Output Location
-
-```
-C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_Client\
-```
-
-### How Battle AI Optional SubModule Works
-
-**SubModule.xml contains two SubModule entries:**
-```xml
-<Module>
-    <Name value="Enlisted"/>
-    <Id value="Enlisted"/>
-    <Version value="v0.9.0"/>
-    <SubModules>
-        <!-- Core SubModule (Required) -->
-        <SubModule>
-            <Name value="Enlisted Core"/>
-            <DLLName value="Enlisted.dll"/>
-            <SubModuleClassType value="Enlisted.Mod.Entry.SubModule"/>
-        </SubModule>
-        
-        <!-- Battle AI SubModule (Optional - can be disabled in launcher) -->
-        <SubModule>
-            <Name value="Enlisted Battle AI"/>
-            <DLLName value="Enlisted.dll"/>
-            <SubModuleClassType value="Enlisted.Features.Combat.BattleAI.BattleAISubModule"/>
-        </SubModule>
-    </SubModules>
-</Module>
-```
-
-**In Bannerlord Launcher, users see:**
-- ☑️ **Enlisted Core** (keep enabled)
-- ☑️ **Enlisted Battle AI** (can uncheck to disable)
-
-When "Enlisted Battle AI" is unchecked, the `BattleAISubModule` class never initializes, so there's **zero performance cost**.
-
-### Conditional Compilation
-
-Battle AI code uses `#if BATTLE_AI` preprocessor directives. The `BATTLE_AI` constant is **always defined** in the build, so all Battle AI code is always compiled into the DLL.
-
-**Project Configuration (.csproj):**
-```xml
-<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Enlisted RETAIL|x64'">
-  <OutputPath>...\Modules\Enlisted\bin\Win64_Shipping_Client\</OutputPath>
-  <DefineConstants>TRACE;BATTLE_AI</DefineConstants>
-  <!-- BATTLE_AI always defined -->
-</PropertyGroup>
-```
-
-**Battle AI SubModule Entry Point:**
-```csharp
-#if BATTLE_AI
-using TaleWorlds.MountAndBlade;
-
-namespace Enlisted.Features.Combat.BattleAI
-{
-    /// <summary>
-    /// Optional SubModule for Battle AI systems.
-    /// Users can disable this in the Bannerlord launcher.
-    /// </summary>
-    public class BattleAISubModule : MBSubModuleBase
-    {
-        protected override void OnSubModuleLoad()
-        {
-            base.OnSubModuleLoad();
-            ModLogger.Info("BattleAI", "Battle AI SubModule loaded");
-        }
-        
-        protected override void OnBeforeInitialModuleScreenSetAsRoot()
-        {
-            base.OnBeforeInitialModuleScreenSetAsRoot();
-            // Register Battle AI behaviors here
-        }
-    }
-}
-#endif
-```
-
-### Battle AI File Organization
-
-All Battle AI code must be organized in dedicated folders and wrapped in conditional compilation:
-
-```
-src/Features/Combat/BattleAI/
-├── BattleAISubModule.cs                # SubModule entry point
-├── Behaviors/
-│   └── EnlistedBattleAIBehavior.cs     # Main mission behavior
-├── Orchestration/
-│   ├── BattleOrchestrator.cs           # Strategic coordinator
-│   └── BattleContext.cs                # Battle state tracking
-├── Formation/
-│   ├── FormationController.cs          # Formation AI enhancements
-│   └── FormationRoleAssigner.cs        # Role assignment logic
-└── Agent/
-    ├── AgentCombatEnhancer.cs          # Agent-level improvements
-    └── TargetingLogic.cs               # Smart targeting
-
-ModuleData/Enlisted/Config/
-└── battle_ai_config.json               # AI tuning parameters (if needed)
-```
-
-**File Template:**
-```csharp
-#if BATTLE_AI
-using TaleWorlds.Core;
-using TaleWorlds.MountAndBlade;
-using Enlisted.Mod.Core.Logging;
-
-namespace Enlisted.Features.Combat.BattleAI.Orchestration
-{
-    /// <summary>
-    /// Battle AI component - part of optional Battle AI SubModule.
-    /// </summary>
-    public class MyBattleAIClass
-    {
-        // Implementation here
-        
-        private void LogSomething()
-        {
-            ModLogger.Debug("BattleAI", "Your message here");
-        }
-    }
-}
-#endif
-```
-
-### Critical Battle AI Rules
-
-**⚠️ CRITICAL: Keeping Battle AI Toggle-able**
-
-To ensure users can disable Battle AI via the Bannerlord launcher checkbox:
-
-1. **NEVER initialize Battle AI from Core SubModule**
-   - Core SubModule (`Enlisted.Mod.Entry.SubModule`) must NOT reference Battle AI
-   - Core SubModule must NOT register Battle AI behaviors
-   - Core SubModule must NOT call Battle AI initialization code
-
-2. **ALL Battle AI initialization MUST happen in BattleAISubModule**
-   - Entry point: `Enlisted.Features.Combat.BattleAI.BattleAISubModule`
-   - Mission behaviors registered ONLY through BattleAISubModule
-   - No Battle AI code runs if BattleAISubModule isn't enabled
-
-3. **Verify separation:**
-   - If Battle AI checkbox is unchecked, BattleAISubModule never loads
-   - Zero Battle AI code should execute when disabled
-   - Core mod must function completely without Battle AI
-
-**Other Rules:**
-
-1. **Enlisted-Only Activation:** Battle AI ONLY runs when player is enlisted. If not enlisted, native AI runs unmodified.
-2. **Field Battles Only:** Battle AI is for field battles only. Siege and naval combat use native AI.
-3. **No Cheating:** AI improvements come from better decision-making, not stat buffs or information cheating.
-4. **Performance First:** All Battle AI systems must be performance-conscious (appropriate update intervals, early bailouts).
-
-### Adding Battle AI Files to .csproj
-
-Battle AI files must be added to the .csproj (they use `#if BATTLE_AI` internally):
-
-```xml
-<ItemGroup>
-  <!-- Base combat features -->
-  <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>
-  <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs"/>
-  <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs"/>
-</ItemGroup>
-
-<ItemGroup>
-  <!-- Battle AI SubModule (optional, users can disable in launcher) -->
-  <Compile Include="src\Features\Combat\BattleAI\BattleAISubModule.cs"/>
-  <Compile Include="src\Features\Combat\BattleAI\Behaviors\EnlistedBattleAIBehavior.cs"/>
-  <Compile Include="src\Features\Combat\BattleAI\Orchestration\BattleOrchestrator.cs"/>
-  <Compile Include="src\Features\Combat\BattleAI\Orchestration\BattleContext.cs"/>
-  <!-- Add more Battle AI files here as they're created -->
-</ItemGroup>
-```
-
----
-
-## Steam Workshop Upload
-
-**Workshop ID**: `3621116083`
-**Location**: https://steamcommunity.com/sharedfiles/filedetails/?id=3621116083
-
-### Quick Upload Process
-
-1. **Build the mod** (if code changed):
-   ```powershell
-   cd C:\Dev\Enlisted\Enlisted
-   dotnet build -c "Enlisted RETAIL" /p:Platform=x64
-   ```
-
-2. **Update changelog** in `tools/workshop/workshop_upload.vdf`:
-   - Edit the `"changenote"` field with version and changes
-   - Use Steam BBCode formatting: `[b]bold[/b]`, `[list][*]item[/list]`, etc.
-
-3. **Upload to Steam Workshop** (choose one method):
-
-   **Method A: Using upload.ps1 script (RECOMMENDED)**
-   
-   Open PowerShell and run:
-   ```powershell
-   cd C:\Dev\Enlisted\Enlisted\tools\workshop
-   .\upload.ps1
-   ```
-   
-   The script will:
-   - Check SteamCMD is installed
-   - Verify workshop_upload.vdf exists
-   - Check for preview.png
-   - Prompt for Steam username
-   - Automatically run SteamCMD with correct parameters
-   - Handle Steam Guard authentication
-   
-   **IMPORTANT**: Must be run in an **interactive PowerShell window** (not Cursor/IDE terminal). If running from Cursor, use:
-   ```powershell
-   Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Dev\Enlisted\Enlisted\tools\workshop'; .\upload.ps1" -Wait
-   ```
-
-   **Method B: Manual SteamCMD command**
-   
-   ```powershell
-   cd C:\Dev\steamcmd
-   .\steamcmd.exe +login YOUR_USERNAME +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit
-   ```
-   - **IMPORTANT**: All commands (`+login`, `+workshop_build_item`, `+quit`) must be in ONE command
-   - SteamCMD uses cached credentials (no password needed if recently logged in)
-   - Enter password/Steam Guard code if prompted
-   - Find cached username: Check `C:\Dev\steamcmd\config\config.vdf` under `"Accounts"` section
-
-### Workshop Files
-
-- `tools/workshop/workshop_upload.vdf` - Main upload config (changenote, description, tags)
-- `tools/workshop/WorkshopUpdate.xml` - TaleWorlds official uploader config (alternative method)
-- `tools/workshop/preview.png` - Workshop thumbnail (512x512 or 1024x1024)
-- `tools/workshop/upload.ps1` - Helper script (requires interactive terminal)
-
-### Updating Description
-
-Edit the `"description"` field in `workshop_upload.vdf` using Steam BBCode:
-- Headings: `[h1]Title[/h1]`, `[h2]Subtitle[/h2]`
-- Lists: `[list][*]Item 1[*]Item 2[/list]`
-- Bold/Italic: `[b]bold[/b]`, `[i]italic[/i]`
-- Links: `[url=https://example.com]Link Text[/url]`
-- Character limit: ~8000 characters
-
-### Common Issues
-
-**"File Not Found" error:**
-- Check `"previewfile"` path is absolute: `C:\Dev\Enlisted\Enlisted\tools\workshop\preview.png`
-- Verify `"contentfolder"` points to: `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted`
-
-**"Not logged on" error:**
-- **CRITICAL**: SteamCMD sessions don't persist between separate command invocations
-- **MUST** include `+login username` in the same command as `+workshop_build_item`
-- **WRONG**: `.\steamcmd.exe +login milkyway12 +quit` then `.\steamcmd.exe +workshop_build_item ...` (login is lost)
-- **CORRECT**: `.\steamcmd.exe +login milkyway12 +workshop_build_item "path/to/file.vdf" +quit` (all in one command)
-- Cached credentials expire after ~2 weeks, then password/Steam Guard required
-- Username is stored in `C:\Dev\steamcmd\config\config.vdf` under `"Accounts"` section
-
-**Upload succeeds but mod doesn't update:**
-- Workshop may take 5-10 minutes to propagate changes
-- Users may need to unsubscribe/resubscribe to force update
-
-**"Read-Host: Windows PowerShell is in NonInteractive mode" error:**
-- The Cursor/IDE terminal is non-interactive and cannot prompt for user input
-- **Solution 1**: Open a new interactive PowerShell window from Cursor:
-  ```powershell
-  Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Dev\Enlisted\Enlisted\tools\workshop'; .\upload.ps1" -Wait
-  ```
-- **Solution 2**: Run `upload.ps1` directly in Windows PowerShell (not through IDE)
-- **Solution 3**: Use manual steamcmd command with cached credentials (no password prompt):
-  ```powershell
-  .\steamcmd.exe +login username +workshop_build_item "path/to/workshop_upload.vdf" +quit
-  ```
-
----
-
-## Dependencies
-
-```xml
-<DependedModules>
-  <DependedModule Id="Bannerlord.Harmony" />
-</DependedModules>
-```
-
----
-
-## Native Reference (Decompile)
-
-Decompiled Bannerlord source for API reference:
-`C:\Dev\Enlisted\Decompile\` (Targeting v1.3.13)
-
-This is the authoritative source for verifying Bannerlord API usage. See [API Verification](#api-verification) section above.
-
----
-
-## File Structure
-
-```
-src/
-|- Mod.Entry/              # SubModule + Harmony init
-|- Mod.Core/               # Logging, config, save system, helpers
-|- Mod.GameAdapters/       # Harmony patches
-|- Features/
-  - Enlistment/           # Core service state, retirement
-  - Orders/               # Mission-driven directives (Chain of Command)
-  - Content/              # Events, Decisions, and narrative delivery system
-  - Identity/             # Role detection (Traits) and Reputation helpers
-  - Escalation/           # Lord/Officer/Soldier reputation and Scrutiny/Discipline
-  - Company/              # Company-wide Needs (Readiness, Morale, Supply)
-  - Context/              # Army context and objective analysis
-  - Interface/            # Camp Hub menu, News/Reports
-  - Equipment/            # Quartermaster and gear management
-  - Ranks/                # Promotions and culture-specific titles
-  - Conversations/        # Dialog management
-  - Combat/               # Battle participation and formation assignment
-  - Conditions/           # Player medical status (injury/illness)
-  - Retinue/              # Commander's Retinue (T7+), Service Records, trickle/requisition
-  - Camp/                 # Camp activities and rest logic
-```
-
-```
-ModuleData/
-|- Enlisted/               # JSON config + content (Orders, Events, etc.)
-|- Languages/              # XML localization (enlisted_strings.xml)
-```
-
----
-
-## Adding New Files
-
-**CRITICAL**: This project uses an old-style `.csproj` with explicit file includes. New `.cs` files are NOT automatically compiled.
-
-1. Create the `.cs` file
-2. **Manually add it to `Enlisted.csproj`** in the `<Compile Include="..."/>` ItemGroup
-3. Build and verify
-
-Example:
-```xml
-<Compile Include="src\Features\MyFeature\MyNewClass.cs"/>
-```
-
----
-
-## Key Patterns
-
-### UI Architecture
-- **GameMenus:** Main navigation and status displays via `CampaignGameStarter.AddGameMenu()` and `AddGameMenuOption()`
-- **Popups:** Event delivery via `MultiSelectionInquiryData` for narrative choices
-- **Gauntlet:** Quartermaster equipment grid (limited custom UI for complex selection interfaces)
-- **Localization:** Dual-field pattern in JSON (`titleId` + `title`) ensures fallback text always displays
-
-### Party Following & Visibility
-```csharp
-party.SetMoveEscortParty(lordParty, NavigationType.Default, false);
-party.IsVisible = false;  // Hide on map
-```
-
-### Gold Transactions
-Always use `GiveGoldAction` to ensure the party treasury is updated correctly in the UI.
-```csharp
-GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);
-```
-
-### Reputation & Needs
-Always use the centralized managers (`EscalationManager`, `CompanyNeedsManager`) to modify state, as they handle clamping and logging.
-
-### Deferred Operations
-Use for encounter transitions:
-```csharp
-NextFrameDispatcher.RunNextFrame(() => GameMenu.ActivateGameMenu("menu_id"));
-```
-
-### Safe Hero Access
-Null-safe during character creation:
-```csharp
-var hero = CampaignSafetyGuard.SafeMainHero;
-```
-
-### Equipment Slot Iteration
-Use numeric loop (not `Enum.GetValues`):
-```csharp
-// ❌ WRONG: Includes invalid count values, causes IndexOutOfRangeException
-foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex))) { ... }
-
-// ✅ CORRECT: Iterate valid indices only (0-11)
-for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
-{
-    var slot = (EquipmentIndex)i;
-}
-```
-
-### Save System & Serialization
-Bannerlord's save system requires explicit registration of custom types. All mod-specific serializable types are registered in `EnlistedSaveDefiner` (`src/Mod.Core/SaveSystem/`).
-
-**Adding new serializable types:**
-1. Add the class/enum to `EnlistedSaveDefiner.DefineClassTypes()` or `DefineEnumTypes()` with a unique save ID
-2. If using `Dictionary<T1,T2>` or `List<T>` with custom types, add container definition in `DefineContainerDefinitions()`
-3. Implement `SyncData()` in the behavior that owns the state, using `SaveLoadDiagnostics.SafeSyncData()` wrapper
-
-```csharp
-// In behavior's SyncData:
-public override void SyncData(IDataStore dataStore)
-{
-    SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
-    {
-        dataStore.SyncData("myKey", ref _myField);
-    });
-}
-```
-
-**Key rules:**
-- Custom classes need `AddClassDefinition(typeof(MyClass), saveId)` in the definer
-- Container types like `Dictionary<string, int>` need `ConstructContainerDefinition(typeof(...))`
-- Use primitive types in SyncData when possible (serialize dictionaries element-by-element)
-- Enums can be cast to/from int for serialization
-
----
-
-## Configuration
-
-| File | Purpose |
-|------|---------|
-| `enlisted_config.json` | Feature flags and core balancing. |
-| `progression_config.json` | Tier XP thresholds and culture-specific rank titles. |
-| `Orders/*.json` | Mission definitions for the Orders system (order_* prefix). |
-| `Events/*.json` | Role-based narrative events, automatic decisions, player event popups. |
-| `Decisions/*.json` | Player-initiated Camp Hub decisions (dec_* prefix, 34 total). |
-
----
-
-## Menu System
-
-**Primary Documentation:** See [UI Systems Master Reference](Features/UI/ui-systems-master.md)
-
-| Menu ID | Purpose |
-|---------|---------|
-| `enlisted_camp_hub` | Central navigation hub with accordion-style decision sections. |
-| `enlisted_medical` | Medical care and treatment (when player has active condition). |
-| `enlisted_muster_*` | Multi-stage muster system sequence (6 stages, every 12 days). See [Muster System](Features/Core/muster-system.md). |
-
-**Decision Sections (within Camp Hub):**
-- TRAINING - Training-related player decisions (dec_weapon_drill, dec_spar, etc.)
-- SOCIAL - Social interaction decisions (dec_join_men, dec_write_letter, etc.)
-- ECONOMIC - Economic decisions (dec_gamble_low, dec_side_work, etc.)
-- CAREER - Career advancement decisions (dec_request_audience, dec_volunteer_duty, etc.)
-- INFORMATION - Intelligence gathering (dec_listen_rumors, dec_scout_area, etc.)
-- EQUIPMENT - Gear management (dec_maintain_gear, dec_visit_quartermaster)
-- RISK_TAKING - High-risk actions (dec_dangerous_wager, dec_prove_courage, etc.)
-- CAMP_LIFE - Self-care and rest (dec_rest, dec_seek_treatment)
-- LOGISTICS - Quartermaster-related (from events_player_decisions.json)
-
-**Muster System (Pay Day Ceremony):**
-- Multi-stage GameMenu sequence (6 stages) occurring every 12 days
-- Replaces simple pay inquiry popup with comprehensive muster experience
-- Stages: Intro → Pay Line → Recruit → Promotion Recap → Retinue → Complete
-- Integrates pay, rations, rank progression
-- Configurable time pause behavior (default: paused during muster)
-- See [Muster System](Features/Core/muster-system.md) for complete flow
-
-**Event Delivery:**
-- Uses `MultiSelectionInquiryData` popups for narrative events
-- Triggered by: EventPacingManager, EscalationManager, DecisionManager
-- Muster-specific event (recruit) integrated as menu stage
-- See [Event Delivery System](Features/UI/ui-systems-master.md#event-delivery-system)
-
-**Localization:**
-- JSON files use dual fields (`titleId` + `title`) for robust fallback text
-- XML strings in `ModuleData/Languages/enlisted_strings.xml`
-- See [Localization System](Features/UI/ui-systems-master.md#localization-system) for troubleshooting
+- [ ] Order events include skillXp in effects
+- [ ] New C# files added to .csproj (validator will catch this)
+- [ ] No rogue files in root directory
+- [ ] Validation passes: `python Tools/Validation/validate_content.py`
 
 ---
 
 ## Common Pitfalls
+
+These mistakes cause real problems. Avoid them.
 
 ### 1. Using `ChangeHeroGold` Instead of `GiveGoldAction`
 **Problem:** `ChangeHeroGold` modifies internal gold not visible in party UI
@@ -1110,8 +323,8 @@ public override void SyncData(IDataStore dataStore)
 **Solution:** Always use managers (EscalationManager, CompanyNeedsManager)
 
 ### 4. Not Adding New Files to .csproj
-**Problem:** New .cs files exist but aren't compiled
-**Solution:** Manually add `<Compile Include="..."/>` entries
+**Problem:** New .cs files exist but won't compile
+**Solution:** Manually add `<Compile Include="..."/>` entries (validator will detect missing files)
 
 ### 5. Relying on External API Documentation
 **Problem:** Outdated or incorrect API references
@@ -1122,51 +335,165 @@ public override void SyncData(IDataStore dataStore)
 **Solution:** Fix warnings, don't suppress unless absolutely necessary
 
 ### 7. Forgetting Tooltips in Events
-**Problem:** Tooltips set to null or missing, players don't understand consequences
-**Solution:** Tooltips cannot be null. Every option must have a factual, concise tooltip
+**Problem:** Tooltips null or missing, players don't understand consequences
+**Solution:** Tooltips cannot be null. Every option must have a factual tooltip
 
 ### 8. Mixing JSON Field Order
 **Problem:** Localization breaks when ID/fallback fields are separated
 **Solution:** Always put fallback field immediately after ID field
 
 ### 9. Missing XML Localization Strings
-**Problem:** Events show raw string IDs (e.g., `ll_evt_example_opt_text`) instead of actual text
+**Problem:** Events show raw string IDs instead of text
 **Solution:**
-1. Run `python tools/events/sync_event_strings.py` to automatically extract missing strings from JSON event files and append them to `enlisted_strings.xml`
-2. The script extracts all string IDs (`titleId`, `setupId`, `textId`, `resultTextId`, `resultFailureTextId`) and their fallback texts from JSON, properly escaping special characters (`&#xA;` for newlines, `&apos;` for apostrophes, `&quot;` for quotes)
-3. All existing events now have complete localization (504 strings added Dec 2025 covering escalation thresholds, training events, and general content)
-4. **Validation:** Run `python tools/events/validate_content.py` before committing to catch missing fallback fields, invalid skill names, missing XP, and logic errors. This enforces the Critical JSON Rules above.
+1. Run `python Tools/Validation/sync_event_strings.py`
+2. Run `python Tools/Validation/validate_content.py` before committing
 
 ### 10. Missing SaveableTypeDefiner Registration
 **Problem:** "Cannot Create Save" error when serializing custom types
-**Solution:** Register new classes/enums in `EnlistedSaveDefiner`, add container definitions for `Dictionary<T1,T2>` or `List<T>` with custom types
+**Solution:** Register new classes/enums in `EnlistedSaveDefiner`
 
 ### 11. Single-Line Statements Without Braces
-**Problem:** Reduces readability and increases risk of logic errors when modifying code
-**Solution:** Always use braces for `if`, `for`, `while`, `foreach` statements, even for single lines
+**Problem:** Reduces readability, risk of logic errors
+**Solution:** Always use braces for control statements
 
 ### 12. Redundant Namespace Qualifiers
-**Problem:** Makes code verbose and harder to read (e.g., `TaleWorlds.CampaignSystem.Hero` when `using TaleWorlds.CampaignSystem;` exists)
-**Solution:** Add proper `using` statements and remove full namespace paths in code
+**Problem:** Verbose, hard to read
+**Solution:** Add proper `using` statements, remove full namespace paths
 
 ### 13. Unused Code
-**Problem:** Clutters codebase, confuses developers, increases maintenance burden
-**Solution:** Remove unused using directives, variables, parameters, methods, and property accessors
+**Problem:** Clutters codebase, confuses developers
+**Solution:** Remove unused imports, variables, methods
 
 ### 14. Redundant Default Parameters
-**Problem:** Passing default parameter values explicitly is redundant and verbose
-**Solution:** Omit parameters that match the method's default value (e.g., `Finish()` instead of `Finish(true)` if `true` is the default)
+**Problem:** Passing default values explicitly is redundant
+**Solution:** Omit parameters that match method defaults
 
 ### 15. Missing XP Rewards in Order Events
-**Problem:** Order events only grant reputation without skill XP, causing "0 XP in muster reports" complaints
+**Problem:** Order events only grant reputation without skill XP
 **Solution:**
-1. **All order event options must grant XP** - Use `effects.skillXp` (not `rewards.skillXp`)
-2. Match XP to activity type:
-   - Guard/Sentry duty → Athletics (10-20), Tactics (12-18)
-   - Patrol → Scouting (15-24), Athletics (10-18)
-   - Medical → Medicine (12-32)
-   - Equipment → Crafting (10-25)
-   - Leadership → Leadership (14-30), Tactics (18-32)
-3. Failed skill checks should still grant reduced XP (50% of success)
-4. **Validation:** Run `python tools/events/validate_content.py` - warns if order events lack XP rewards
-5. XP flow: `Hero.AddSkillXp()` (skill progression) + `EnlistmentBehavior.AddEnlistmentXP()` (rank progression)
+1. All order event options must include `effects.skillXp`
+2. Match XP to activity type (see [event-system-schemas.md](Features/Content/event-system-schemas.md))
+3. Failed skill checks should grant reduced XP (50% of success)
+
+### 16. Not Persisting In-Progress State Flags
+**Problem:** UI state flags (like `_bagCheckInProgress`) are reset on load, causing duplicate events or lost progress
+**Solution:**
+1. Persist all workflow state flags in `SyncData()`, not just completed/scheduled flags
+2. When transient data (like event queues) needs restoration after load, check in-progress flags in `ValidateLoadedState()` and re-queue
+3. Example: The bag check event can be saved mid-popup; on load, `_bagCheckInProgress` must be persisted to prevent duplicate queueing
+
+---
+
+## Dependencies
+
+The mod requires Harmony for Bannerlord:
+
+```xml
+<DependedModules>
+  <DependedModule Id="Bannerlord.Harmony" />
+</DependedModules>
+```
+
+Users must enable Harmony in the Bannerlord launcher before activating Enlisted.
+
+---
+
+## Understanding the Project
+
+### Scope
+
+The mod focuses on the **enlisted lord's party** (the Company). If the Company is part of a larger Army, acknowledge that as context only. Deep army-wide simulation is future work.
+
+### Key Concepts
+
+- Player uses an **invisible party** while enlisted (see [enlistment.md](Features/Core/enlistment.md))
+- **Native integration** preferred over custom UI (use game menus, trait system, etc.)
+- **Data-driven content** via JSON events/orders + XML localization
+- **Emergent identity** from player choices (not menu selections)
+
+### Design Principles
+
+- Emergent identity from choices, not menus
+- Native Bannerlord integration (traits, skills, game menus)
+- Minimal custom UI (use game's native systems)
+- Choice-driven narrative progression
+- Realistic military hierarchy and consequences
+
+---
+
+## Steam Workshop
+
+**Workshop ID:** `3621116083`  
+**URL:** https://steamcommunity.com/sharedfiles/filedetails/?id=3621116083
+
+For deployment instructions, see [Tools/Steam/WORKSHOP_UPLOAD.md](../Tools/Steam/WORKSHOP_UPLOAD.md).
+
+---
+
+## Battle AI (Optional SubModule)
+
+Battle AI is an **optional SubModule** that users can disable in the Bannerlord launcher.
+
+### Key Rules
+
+1. **Never initialize Battle AI from Core SubModule** - Core must not reference Battle AI
+2. **All Battle AI initialization happens in BattleAISubModule** only
+3. **Enlisted-Only Activation** - Battle AI only runs when player is enlisted
+4. **Field Battles Only** - Siege and naval use native AI
+5. **No Cheating** - Improvements come from better decisions, not stat buffs
+
+### File Organization
+
+All Battle AI code in `src/Features/Combat/BattleAI/` wrapped in `#if BATTLE_AI`.
+
+**Full documentation:** [Features/Combat/BATTLE-AI-IMPLEMENTATION-SPEC.md](Features/Combat/BATTLE-AI-IMPLEMENTATION-SPEC.md)
+
+---
+
+## Documentation Standards
+
+### Format Requirements
+
+```markdown
+# Title
+
+**Summary:** 2-3 sentences explaining what this covers
+
+**Status:** ✅ Current | ⚠️ In Progress | 📋 Specification | 📚 Reference
+**Last Updated:** YYYY-MM-DD
+**Related Docs:** [Link 1], [Link 2]
+
+---
+
+## Content
+```
+
+### File Naming
+
+Use kebab-case: `my-new-feature.md`
+
+### Location Guide
+
+| Content Type | Location |
+|--------------|----------|
+| Core systems | `Features/Core/` |
+| Equipment/logistics | `Features/Equipment/` |
+| Combat mechanics | `Features/Combat/` |
+| Events/content | `Features/Content/` |
+| Campaign/world | `Features/Campaign/` |
+| UI systems | `Features/UI/` |
+| Technical specs | `Features/Technical/` |
+| API/research | `Reference/` |
+
+---
+
+## Detailed References
+
+For comprehensive technical details:
+
+- **Logging, Save System, Patterns:** [Tools/TECHNICAL-REFERENCE.md](../Tools/TECHNICAL-REFERENCE.md)
+- **Build Configurations:** [BUILD-CONFIGURATIONS.md](BUILD-CONFIGURATIONS.md)
+- **Steam Workshop:** [Tools/Steam/WORKSHOP_UPLOAD.md](../Tools/Steam/WORKSHOP_UPLOAD.md)
+- **Validation Tools:** [Tools/README.md](../Tools/README.md)
+- **UI Systems:** [Features/UI/ui-systems-master.md](Features/UI/ui-systems-master.md)
+- **Native APIs:** [Reference/native-apis.md](Reference/native-apis.md)

@@ -1,0 +1,465 @@
+{
+  "packId": "enlisted_promotion_proving",
+  "schemaVersion": 1,
+  "events": [
+    {
+      "id": "promotion_t1_t2_finding_your_place",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": [
+          "ai_safe"
+        ]
+      },
+      "requirements": {
+        "tier": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Finding Your Place",
+        "setup": "{SERGEANT} looks you over after the morning drill. 'You've proven yourself, {PLAYER_NAME}. Time to find your place in the line. What are you trained for?'",
+        "options": [
+          {
+            "id": "choose_infantry",
+            "text": "\"The shield wall. I'll hold the line.\"",
+            "tooltip": "Join Infantry. Promotes to Tier 2. Train Sword, Shield, and Polearm.",
+            "effects": {
+              "formation": "infantry",
+              "promotes": true
+            },
+            "outcome": "The sergeant nods. 'Good. Infantry is the backbone of any army. Report to the Quartermaster for your kit.'"
+          },
+          {
+            "id": "choose_archer",
+            "text": "\"Give me a bow. I'll strike from distance.\"",
+            "tooltip": "Join Archer. Promotes to Tier 2. Train Bow, Crossbow, and Skirmish.",
+            "effects": {
+              "formation": "archer",
+              "promotes": true
+            },
+            "outcome": "The sergeant studies your hands. 'Steady grip. Good. Archers win battles before they start. Report to the Quartermaster for your kit.'"
+          },
+          {
+            "id": "choose_cavalry",
+            "text": "\"Put me on a horse. I'll ride with the lancers.\"",
+            "tooltip": "Join Cavalry. Promotes to Tier 2. Train Lance, Sword, and Riding.",
+            "effects": {
+              "formation": "cavalry",
+              "promotes": true
+            },
+            "outcome": "The sergeant grins. 'A horseman, eh? The cavalry always needs more riders. Report to the Quartermaster for your kit.'"
+          },
+          {
+            "id": "choose_horse_archer",
+            "text": "\"I can shoot from the saddle.\"",
+            "tooltip": "Join Horse Archer. Promotes to Tier 2. Train Mounted Archery.",
+            "condition": "faction_has_horse_archers",
+            "effects": {
+              "formation": "horsearcher",
+              "promotes": true
+            },
+            "outcome": "The sergeant raises an eyebrow. 'A rare skill. We need riders who can fight without stopping. Report to the Quartermaster for your kit.'"
+          }
+        ]
+      }
+    },
+    {
+      "id": "promotion_t2_t3_sergeants_test",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": [
+          "ai_safe"
+        ]
+      },
+      "requirements": {
+        "tier": {
+          "min": 2,
+          "max": 2
+        }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "The Sergeant's Test",
+        "setup": "{SERGEANT} pulls you aside after camp is set. 'The men look up to you now, {PLAYER_NAME}. But leading isn't just about fighting. Tell me — a recruit loses his rations gambling. What do you do?'",
+        "options": [
+          {
+            "id": "discipline_hard",
+            "text": "\"Discipline him publicly. The men need to see consequences.\"",
+            "tooltip": "Hardline approach. Adds 1 discipline. Disciplinarian tag.",
+            "effects": {
+              "discipline": 1,
+              "character_tag": "disciplinarian",
+              "promotes": true
+            },
+            "outcome": "{SERGEANT} nods slowly. 'Hard but fair. The men will respect that. You're ready for the next rank, {NEXT_RANK}.'"
+          },
+          {
+            "id": "mercy",
+            "text": "\"Give him a chance to earn it back. One mistake shouldn't define a man.\"",
+            "tooltip": "Merciful approach. +5 Soldier rep. Merciful tag.",
+            "effects": {
+              "soldierRep": 5,
+              "character_tag": "merciful",
+              "promotes": true
+            },
+            "outcome": "{SERGEANT} smiles faintly. 'Compassion has its place. The men will remember your kindness. Welcome to {NEXT_RANK}.'"
+          },
+          {
+            "id": "practical",
+            "text": "\"Make him work extra duties until the debt is paid. Idle hands cause trouble.\"",
+            "tooltip": "A practical, work-based solution.",
+            "effects": {
+              "promotes": true
+            },
+            "outcome": "{SERGEANT} chuckles. 'Practical. I like it. You think like a soldier should. Congratulations, {NEXT_RANK}.'"
+          }
+        ]
+      }
+    },
+    {
+      "id": "promotion_t3_t4_crisis_of_command",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": [
+          "ai_safe"
+        ]
+      },
+      "requirements": {
+        "tier": {
+          "min": 3,
+          "max": 3
+        }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Crisis of Command",
+        "setup": "The battle was chaos. {SERGEANT} went down with an arrow to the shoulder, and the line wavered. For a moment, all eyes turned to you. Now, in the aftermath, {LORD_NAME} summons you.\n\n'I heard what happened out there,' the lord says. 'The men say you held them together. Tell me what you did.'",
+        "options": [
+          {
+            "id": "aggressive",
+            "text": "\"I led the charge. We couldn't let them regroup.\"",
+            "tooltip": "Aggressive leadership. Aggressive tag. Promotes to Tier 4.",
+            "effects": {
+              "character_tag": "aggressive",
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} nods approvingly. 'Bold action wins wars. You've earned your place among the {NEXT_RANK}s. Don't let me down.'"
+          },
+          {
+            "id": "defensive",
+            "text": "\"I held the line and protected the wounded. We couldn't abandon our own.\"",
+            "tooltip": "Protective leadership. +5 Soldier rep. Defender tag. Promotes to Tier 4.",
+            "effects": {
+              "character_tag": "defender",
+              "soldierRep": 5,
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} regards you thoughtfully. 'Loyalty to your comrades is rare these days. The rank of {NEXT_RANK} suits you. Lead them well.'"
+          },
+          {
+            "id": "tactical",
+            "text": "\"I read the battlefield and ordered a tactical withdrawal to better ground.\"",
+            "tooltip": "Calculating leadership. Tactician tag. Promotes to Tier 4.",
+            "effects": {
+              "character_tag": "tactician",
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME}'s eyes narrow with respect. 'A thinking soldier. We need more of those. You're {NEXT_RANK} now. Use that head of yours.'"
+          }
+        ]
+      }
+    },
+    {
+      "id": "promotion_t4_t5_squad_vote",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": [
+          "ai_safe"
+        ]
+      },
+      "requirements": {
+        "tier": {
+          "min": 4,
+          "max": 4
+        }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "The Squad's Vote",
+        "setup": "The veterans of your squad gather around the fire. {SERGEANT} stands and clears his throat.\n\n'We've been watching you, {PLAYER_NAME}. Some of us think you're ready to wear the stripes of {NEXT_RANK}. But rank isn't given — it's earned by the trust of those you lead.'\n\nThe men look to you expectantly. This is your moment to speak.",
+        "options": [
+          {
+            "id": "humble",
+            "text": "\"I'm nothing without this squad. Whatever you decide, I'll accept.\"",
+            "tooltip": "Defer to the squad. +10 Soldier rep. Promotes to Tier 5.",
+            "effects": {
+              "soldierRep": 10,
+              "promotes": true
+            },
+            "outcome": "The men exchange glances and nod. {SERGEANT} claps you on the shoulder. 'That's the right answer. Welcome to {NEXT_RANK}, soldier. The squad has spoken.'"
+          },
+          {
+            "id": "confident",
+            "text": "\"I've bled with you. Fought beside you. I'm ready to lead you.\"",
+            "tooltip": "Assert your readiness with confidence.",
+            "effects": {
+              "discipline": -1,
+              "promotes": true
+            },
+            "outcome": "{SERGEANT} grins. 'Confidence. Good. A {NEXT_RANK} needs that.' The veterans raise their cups. 'To {PLAYER_NAME}!'"
+          },
+          {
+            "id": "promise",
+            "text": "\"Give me the chance, and I swear no one in this squad goes hungry or forgotten.\"",
+            "tooltip": "Promise care. +5 Soldier rep. Protector tag. Promotes to Tier 5.",
+            "effects": {
+              "character_tag": "protector",
+              "soldierRep": 5,
+              "promotes": true
+            },
+            "outcome": "Silence falls. Then {SECOND_SHORT} stands. 'I believe him.' One by one, the others nod. {SERGEANT} smiles. 'Then it's decided. {NEXT_RANK} {PLAYER_NAME}.'"
+          }
+        ]
+      }
+    },
+    {
+      "id": "promotion_t5_t6_lord_audience",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": [
+          "ai_safe"
+        ]
+      },
+      "requirements": {
+        "tier": {
+          "min": 5,
+          "max": 5
+        }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Audience with the Lord",
+        "setup": "{LORD_NAME} summons you to the pavilion. The banner of {FACTION_NAME} hangs behind the campaign table where the lord sits reviewing dispatches.\n\n'You've served well, {PLAYER_NAME}. Your name comes up often in the reports. The rank of {NEXT_RANK} is mine to give — but first, I must know where your loyalty lies.'",
+        "options": [
+          {
+            "id": "loyal_to_lord",
+            "text": "\"My sword belongs to you, my lord. Command, and I obey.\"",
+            "tooltip": "Personal loyalty. Lord Sworn tag. Promotes to Tier 6.",
+            "effects": {
+              "loyalty_tag": "lord_sworn",
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} rises and draws a blade, touching it to your shoulder. 'Then rise, {NEXT_RANK}. Your oath is accepted. Serve me well, and glory shall be yours.'"
+          },
+          {
+            "id": "loyal_to_kingdom",
+            "text": "\"My loyalty is to {KINGDOM_NAME} and its people. I serve the realm.\"",
+            "tooltip": "Kingdom loyalty. Realm Loyal tag. Promotes to Tier 6.",
+            "effects": {
+              "loyalty_tag": "realm_loyal",
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} pauses, then nods slowly. 'A principled answer. The realm needs soldiers like you. You are {NEXT_RANK} now. May you serve the kingdom with honor.'"
+          },
+          {
+            "id": "loyal_to_soldiers",
+            "text": "\"My loyalty is to the soldiers beside me. They're why I fight.\"",
+            "tooltip": "Camaraderie. +10 Soldier rep. Lance Bound tag. Promotes to Tier 6.",
+            "effects": {
+              "loyalty_tag": "lance_bound",
+              "soldierRep": 10,
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} studies you for a long moment. 'Rare, to find such devotion to the common soldier. Very well, {NEXT_RANK}. Lead your men. I suspect they'd follow you anywhere.'"
+          }
+        ]
+      }
+    },
+    {
+      "id": "promotion_t6_t7_commanders_commission",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": [
+          "ai_safe"
+        ]
+      },
+      "requirements": {
+        "tier": {
+          "min": 6,
+          "max": 6
+        }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Commander's Commission",
+        "setup": "{LORD_NAME} summons you. Maps are spread across the table, markers showing troop positions.\n\n'You've proven yourself, {PLAYER_NAME}. The rank of {NEXT_RANK} comes with command — twenty soldiers, yours to lead. This is no small responsibility. Are you ready?'",
+        "options": [
+          {
+            "id": "accept_command",
+            "text": "\"I'm ready, my lord. Give me the command.\"",
+            "tooltip": "Accept command of 20 soldiers. Promotes to Tier 7.",
+            "effects": {
+              "character_tag": "leader",
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} nods with satisfaction. 'Good. I've assigned twenty recruits to your command. Train them well — they're green, but they're yours. Make them into soldiers worthy of {FACTION_NAME}.'"
+          },
+          {
+            "id": "not_ready",
+            "text": "\"I'm honored, but I'm not ready to lead men yet.\"",
+            "tooltip": "Decline promotion. Cautious tag. Re-apply later via dialogue.",
+            "effects": {
+              "character_tag": "cautious"
+            },
+            "outcome": "{LORD_NAME} studies you carefully. 'An honest answer. Command isn't for everyone, and it's better to know that now than in battle. The offer stands — when you're ready, speak to me.'"
+          }
+        ]
+      }
+    },
+    {
+      "id": "promotion_t7_t8_expanded_command",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": [
+          "ai_safe"
+        ]
+      },
+      "requirements": {
+        "tier": {
+          "min": 7,
+          "max": 7
+        }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Expanded Command",
+        "setup": "{LORD_NAME} finds you after the morning drills. Your retinue has performed well.\n\n'Your soldiers fight like veterans, {PLAYER_NAME}. I'm impressed. The rank of {NEXT_RANK} comes with expanded command — ten more soldiers to add to your retinue. You've earned this.'",
+        "options": [
+          {
+            "id": "accept_expansion",
+            "text": "\"Thank you, my lord. I'll put them to good use.\"",
+            "tooltip": "Add 10 soldiers to retinue (30 total). Promotes to Tier 8.",
+            "effects": {
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} clasps your shoulder. 'Good. Ten more recruits have been assigned to your command. You've proven you can lead — now prove you can lead more.'"
+          },
+          {
+            "id": "defer_promotion",
+            "text": "\"I'd prefer to master what I have before taking on more.\"",
+            "tooltip": "Decline expansion for now. You can request promotion later.",
+            "effects": {},
+            "outcome": "{LORD_NAME} nods slowly. 'Wisdom, perhaps. The offer stands when you're ready. Your current retinue is strong — keep it that way.'"
+          }
+        ]
+      }
+    },
+    {
+      "id": "promotion_t8_t9_elite_commander",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": [
+          "ai_safe"
+        ]
+      },
+      "requirements": {
+        "tier": {
+          "min": 8,
+          "max": 8
+        }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Elite Commander",
+        "setup": "{LORD_NAME} calls you to the command tent. The other officers regard you with respect.\n\n'{PLAYER_NAME}, you've become one of my most capable commanders. The rank of {NEXT_RANK} is the highest a soldier can achieve in my service. Forty soldiers will answer to your command — an elite force within my army. Are you prepared for this responsibility?'",
+        "options": [
+          {
+            "id": "accept_elite",
+            "text": "\"I've trained for this moment. I'm ready.\"",
+            "tooltip": "Add 10 soldiers to retinue (40 total). Promotes to Tier 9.",
+            "effects": {
+              "character_tag": "elite_commander",
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} stands and extends their hand. 'Welcome to the highest ranks, Commander. Ten more soldiers join your retinue. Lead them well — your legend is just beginning.'"
+          },
+          {
+            "id": "humble_acceptance",
+            "text": "\"The honor is mine. I'll make you proud, my lord.\"",
+            "tooltip": "+5 Lord rep. Add 10 soldiers to retinue (40 total). Promotes to Tier 9.",
+            "effects": {
+              "lordRep": 5,
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} smiles approvingly. 'Humility in a commander is rare. The men will respect you for it. Ten more soldiers are yours — lead them as you've led the rest.'"
+          },
+          {
+            "id": "decline_elite",
+            "text": "\"I'm content with what I have. Perhaps another time.\"",
+            "tooltip": "Decline elite rank for now. You can request promotion later.",
+            "effects": {},
+            "outcome": "{LORD_NAME} raises an eyebrow but accepts your decision. 'Very well. The offer remains when you change your mind. Few turn down such an honor, but I respect your judgment.'"
+          }
+        ]
+      }
+    }
+  ]
+}

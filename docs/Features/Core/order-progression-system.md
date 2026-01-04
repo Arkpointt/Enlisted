@@ -2,7 +2,7 @@
 
 **Summary:** Orders are multi-day duty assignments that progress through phases automatically. Events fire contextually during orders based on world state and order type. Players experience being a soldier through the rhythm of assigned duties, occasional events, and accumulated consequences like fatigue and injury. XP progression is now exclusively through orders (no passive daily/battle XP). Narrative recaps replace mechanical XP displays.
 
-**Status:** ✅ **IMPLEMENTED** - OrderProgressionBehavior, 17 orders, 330 order events active  
+**Status:** ✅ **IMPLEMENTED** - OrderProgressionBehavior, 17 orders, 84 order events active  
 **Last Updated:** 2026-01-01 (Updated counts to match reality, added Phase 10 forecasting)  
 **Implementation:** `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`, `ModuleData/Enlisted/Orders/`  
 **Related Docs:** [Orders System](orders-system.md), [Orders Content](../Content/orders-content.md), [Event System Schemas](../Content/event-system-schemas.md), [Injury System](../Content/injury-system.md), [Content System Architecture](../Content/content-system-architecture.md)
@@ -263,7 +263,6 @@ Event Pool:
   - cleaning_found_damage (Crafting check - report or fix)
   - cleaning_helped_comrade (Social event)
   - cleaning_officer_inspection (Discipline check)
-  - cleaning_contraband_found (Decision - report or ignore)
 ```
 
 #### Muster Inspection
@@ -1444,12 +1443,14 @@ When player has no active order, they're "off duty" and can:
 
 **Narrative Events During Off-Duty:**
 
-The Content Orchestrator can fire **camp life events** during non-order time:
+EventPacingManager fires **camp life events** during non-order time:
 - Social interactions with soldiers
 - Camp incidents (arguments, visitors, rumors)
 - Personal opportunities
 
-These use the orchestrator's standard narrative event frequency:
+Event selection uses world state from ContentOrchestrator for context-appropriate content. Daily event attempts respect global pacing limits (max 1/day, 4/week, 12+ hours apart).
+
+**Expected frequency varies by activity level:**
 - Quiet: ~1/week, Routine: ~3/week, Active: ~5/week, Intense: ~7/week
 
 **The Rhythm:**

@@ -82,6 +82,7 @@ src/
 1. Create the `.cs` file in the appropriate location
 2. **Manually add it to `Enlisted.csproj`** in the `<ItemGroup>` with `<Compile Include="..."/>` entries
 3. Build and verify the file is included
+4. Run validation to confirm: `python Tools/Validation/validate_content.py`
 
 ### Example:
 Adding a new patch at `src\Mod.GameAdapters\Patches\YourNewPatch.cs`:
@@ -90,13 +91,17 @@ Adding a new patch at `src\Mod.GameAdapters\Patches\YourNewPatch.cs`:
 <Compile Include="src\Mod.GameAdapters\Patches\YourNewPatch.cs"/>
 ```
 
-**If you forget this step, the file will exist but won't be compiled, and your code won't run.**
+**If you forget this step:**
+- The file will exist but won't be compiled, and your code won't run
+- The validator will catch this in Phase 7 and report it as a [CRITICAL] error
 
 ---
 
 ## Configuration Files
 
-All configuration files are in `ModuleData/Enlisted/`:
+### Game Configuration Files
+
+All gameplay configuration files are in `ModuleData/Enlisted/`:
 
 | File | Purpose |
 |------|---------|
@@ -108,6 +113,25 @@ All configuration files are in `ModuleData/Enlisted/`:
 | `Decisions/*.json` | Decision definitions for Camp Hub |
 | `equipment_kits.json` | Culture-specific equipment loadouts |
 | `equipment_pricing.json` | Quartermaster costs |
+
+### Code Quality Configuration Files
+
+**Read these before modifying code:**
+
+| File | Purpose | Key Rules |
+|------|---------|-----------|
+| [.editorconfig](../.editorconfig) | Formatting and style | 4-space C# indent, warns on unused `using`, warns on redundant qualifiers |
+| [qodana.yaml](../qodana.yaml) | Static analysis (CI) | Enforces: unused code detection, redundant qualifier removal, documented suppressions only |
+| [Enlisted.sln.DotSettings](../Enlisted.sln.DotSettings) | ReSharper settings | Excludes markdown from inspections |
+
+**What these enforce (from Blueprint):**
+- ✅ No unused `using` directives (warns in IDE)
+- ✅ No redundant namespace qualifiers like `System.String.Empty` (warns in IDE)
+- ✅ No unused methods, variables, or parameters (Qodana CI check)
+- ✅ JSON/XML files use 2-space indentation
+- ✅ All suppressions must be documented with reasons
+
+See [Tools/TECHNICAL-REFERENCE.md](../Tools/TECHNICAL-REFERENCE.md#code-quality-configuration) for complete configuration details.
 
 ---
 
@@ -136,8 +160,6 @@ C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Module
 - `Conflicts-B_{yyyy-MM-dd_HH-mm-ss}.log` - Previous conflicts
 - `Conflicts-C_{yyyy-MM-dd_HH-mm-ss}.log` - Oldest kept conflicts
 - `Current_Session_README.txt` - Active log summary and sharing instructions
-
-**Note:** The mod no longer creates `enlisted.log` or `conflicts.log` (legacy filenames). All logs use timestamped Session/Conflicts rotation.
 
 **Session logs contain:**
 - Main activity log with category-based verbosity
@@ -447,9 +469,11 @@ if (eb?.IsEnlisted == true)
 ## Guidelines
 
 ### Code Quality
-- **ReSharper is the linter**: Follow ReSharper warnings/recommendations (Rider/VS)
-- Fix issues; do not suppress them
-- **No blanket suppression**: Don't disable warnings with pragmas unless there's a specific compatibility reason with a comment explaining why
+- **Read the configuration files first**: [.editorconfig](../.editorconfig), [qodana.yaml](../qodana.yaml), [Enlisted.sln.DotSettings](../Enlisted.sln.DotSettings)
+- **ReSharper/Rider is the linter**: Follow warnings and recommendations
+- **Fix issues, don't suppress**: Only suppress with documented justification (see `qodana.yaml` for examples)
+- **Enforced by CI**: Unused code, redundant qualifiers, and missing documentation are flagged by Qodana
+- **Blueprint Constraint #6**: "Follow ReSharper recommendations (never suppress without documented reason)"
 
 ### Comments
 - Comments explain *why*, not *what*
@@ -477,15 +501,15 @@ if (eb?.IsEnlisted == true)
 - Reuse existing patterns (copy OrderCatalog structure for new catalogs)
 
 ### Common Mistakes to Avoid
-1. Not adding new files to .csproj
+1. Not adding new files to .csproj ✅ **Validator catches this automatically**
 2. Using `ChangeHeroGold` instead of `GiveGoldAction`
 3. Iterating equipment with `Enum.GetValues`
 4. Modifying reputation/needs directly instead of using managers
 5. Relying on external API docs instead of local decompile
-6. Tooltips set to null or missing (tooltips cannot be null, every option must have one)
+6. Tooltips set to null or missing (tooltips cannot be null, every option must have one) ✅ **Validator checks this**
 7. Not validating inputs for dynamic dialogue (null checks, archetype validation, value clamping)
 8. Using `GetLocalizedText()` without fallback handling (use `GetLocalizedTextSafe()` wrapper instead)
-9. Assuming localized strings exist (always provide fallbacks for missing XML strings)
+9. Assuming localized strings exist (always provide fallbacks for missing XML strings) ✅ **Validator reports missing strings**
 10. Using `==` reference equality to compare `ItemObject` instances (use `StringId` comparison instead to avoid crashes when comparing inventory items to equipped items)
 
 ---

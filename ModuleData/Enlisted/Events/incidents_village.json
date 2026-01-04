@@ -79,7 +79,7 @@
               "Supplies": 8
             }
           },
-          "tooltip": "Dangerous choice. -12 Soldier rep, -5 Officer rep. Adds 4 scrutiny. +35 gold. Mercy and Honor trait XP loss."
+          "tooltip": "Guaranteed. +35 gold, +8 Supplies. -12 Soldier/-5 Officer rep, +4 scrutiny. Mercy/Honor XP loss."
         }
       ]
     },
@@ -286,14 +286,11 @@
           "id": "investigate_rumor",
           "textId": "mi_village_rumor_investigate",
           "text": "Investigate the area they described",
-          "requirements": {
-            "minSkills": {
-              "Scouting": 40
-            }
-          },
+          "skillCheck": "Scouting",
+          "skillBase": 40,
           "resultTextId": "mi_village_rumor_investigate_result",
           "resultText": "You slip away and scout the eastern road. Fresh tracks, many horses, heading north. The rumors were true. You report back with valuable information.",
-          "tooltip": "Requires Scouting 40. 75% success chance. Train Scouting. +10 Officer rep, +8 Lord rep. Failure causes 15 damage, adds 1 scrutiny.",
+          "tooltipTemplate": "{CHANCE}% (Scouting {SKILL}). +25 Scouting XP, +10 Officer/+8 Lord rep. Fail: -15 HP, +1 scrutiny.",
           "risk": "risky",
           "risk_chance": 75,
           "effects": {

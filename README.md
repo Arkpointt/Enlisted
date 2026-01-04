@@ -54,7 +54,7 @@ serve as a soldier in any lord's warband. follow orders, earn wages, climb ranks
 
 ### features overview
 
-enlisted transforms bannerlord into a deep soldier career simulator with **270 narrative content pieces** across 9 military ranks spanning your entire career from fresh recruit to senior commander.
+enlisted transforms bannerlord into a deep soldier career simulator with **245 narrative content pieces** across 9 military ranks spanning your entire career from fresh recruit to senior commander.
 
 #### core military career
 
@@ -145,7 +145,6 @@ enlisted transforms bannerlord into a deep soldier career simulator with **270 n
 - 5 baggage events: wagons arrive, delays (weather/terrain), raids, theft
 - rank-based access: higher ranks can request emergency access or halt column
 - baggage checks during muster ceremonies
-- contraband detection with reputation-based outcomes
 - early enlistment inventory handling (prevents "walk in with endgame kit")
 - reclamation of personal gear upon discharge
 
@@ -242,7 +241,7 @@ enlisted transforms bannerlord into a deep soldier career simulator with **270 n
 
 #### story & narrative
 
-**270 narrative content pieces**
+**245 narrative content pieces**
 - 16 military orders across all tiers
 - 85 order events that fire during order execution
 - 33 player-initiated camp decisions (Phase 6G: deleted 35 old, kept 3, added 30 new)
@@ -487,8 +486,6 @@ This comprehensive diagnostic log helps quickly identify whether issues are due 
 - `Session-A_{timestamp}.log` (latest session)
 - `Conflicts-A_{timestamp}.log` (latest conflicts report)
 - `Current_Session_README.txt` (points to the current files and explains what to share)
-
-**note:** The mod no longer creates `enlisted.log` or `conflicts.log` (legacy filenames). All logs use timestamped Session-A/B/C and Conflicts-A/B/C rotation.
 
 **fallback location (only if the mod can't write to the module folder):**
 - `%userprofile%\Documents\Mount and Blade II Bannerlord\Logs\Enlisted\`

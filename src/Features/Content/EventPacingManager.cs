@@ -2,10 +2,8 @@ using System;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Interface.Behaviors;
-using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.Core;
 
 namespace Enlisted.Features.Content
 {
@@ -23,17 +21,12 @@ namespace Enlisted.Features.Content
         // Track the last day we ran the tick to avoid double-processing
         private int _lastTickDayNumber = -1;
 
-        // Cached config for pacing window
-        private static EventPacingConfig _cachedConfig;
-
         public static EventPacingManager Instance { get; private set; }
 
         public EventPacingManager()
         {
             Instance = this;
         }
-
-        private static EventPacingConfig Config => _cachedConfig ??= ConfigurationManager.LoadEventPacingConfig();
 
         public override void RegisterEvents()
         {
@@ -49,19 +42,13 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Called once per in-game day. Checks if it's time to fire a narrative event.
+        /// Chain events (scheduled follow-ups) have highest priority and fire first.
+        /// Then paced narrative events are attempted based on timing windows.
         /// </summary>
         private void OnDailyTick()
         {
             try
             {
-                // New: Check if orchestrator is handling events
-                var orchestratorConfig = ConfigurationManager.LoadOrchestratorConfig();
-                if (orchestratorConfig?.Enabled == true)
-                {
-                    // Orchestrator handles everything - skip old logic
-                    return;
-                }
-
                 // Only run when enlisted
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
@@ -101,6 +88,10 @@ namespace Enlisted.Features.Content
 
                 // Check for pending chain events first (highest priority)
                 CheckPendingChainEvents(escalationState);
+
+                // Attempt to fire a paced narrative event
+                // Uses global pacing limits (max_per_day, min_hours_between, etc.)
+                TryFireEvent(escalationState);
             }
             catch (Exception ex)
             {
@@ -150,6 +141,7 @@ namespace Enlisted.Features.Content
         /// <summary>
         /// Attempts to select and fire a narrative event.
         /// Checks GlobalEventPacer limits before firing to prevent event spam.
+        /// When orchestrator is enabled, uses world situation for fitness-scored event selection.
         /// </summary>
         private void TryFireEvent(EscalationState escalationState)
         {
@@ -163,7 +155,9 @@ namespace Enlisted.Features.Content
                 return;
             }
 
-            var selectedEvent = EventSelector.SelectEvent();
+            // Get world situation from orchestrator for fitness scoring (if available)
+            var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
+            var selectedEvent = EventSelector.SelectEvent(worldSituation);
 
             if (selectedEvent == null)
             {

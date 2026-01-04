@@ -3,9 +3,9 @@
 **Summary:** The Camp Simulation System creates a living, breathing military company through two integrated layers: Background Simulation (autonomous company life that runs automatically) and Camp Opportunities (player-facing activities generated contextually). Together they make the camp feel real - things happen whether you engage or not, and you can choose when and how to participate in camp life.
 
 **Status:** ✅ Implemented  
-**Last Updated:** 2025-12-31  
+**Last Updated:** 2026-01-03 (Bug fixes: opportunities persist when lord leaves, decisions correctly disappear after selection)  
 **Implementation:** `src/Features/Camp/CompanySimulationBehavior.cs`, `src/Features/Camp/CampOpportunityGenerator.cs`  
-**Related Docs:** [Content System Architecture](../Content/content-system-architecture.md), [News Reporting System](../UI/news-reporting-system.md), [Company Needs](../Core/company-needs.md), [Camp Routine Schedule](camp-routine-schedule-spec.md)
+**Related Docs:** [Content System Architecture](../Content/content-system-architecture.md), [News Reporting System](../UI/news-reporting-system.md), [Company Needs](../Core/company-needs.md), [Camp Routine Schedule](camp-routine-schedule-spec.md), [Orchestrator Spec](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
 
 ---
 
@@ -48,12 +48,12 @@ The Camp Simulation System consists of two complementary layers that work togeth
 | Layer | Purpose | Player Interaction | Implementation |
 |-------|---------|-------------------|----------------|
 | **Background Simulation** | Autonomous company life - soldiers get sick, equipment degrades, morale shifts | Observe via news feed | CompanySimulationBehavior |
-| **Camp Opportunities** | Contextual activities player can engage with | Choose to participate or ignore | CampOpportunityGenerator |
+| **Camp Opportunities** | Pre-scheduled activities player can engage with | Choose to participate or ignore | ContentOrchestrator + CampOpportunityGenerator |
 
 **How They Work Together:**
 
 ```
-Daily Tick (Dawn)
+Daily Tick (6am)
     ↓
 ┌─────────────────────────────────────┐
 │   BACKGROUND SIMULATION             │
@@ -70,22 +70,35 @@ Daily Tick (Dawn)
          ┌────────────────────────────┐
          │  CONTENT ORCHESTRATOR      │
          │  • Reads world state       │
-         │  • Analyzes camp context   │
-         │  • Calculates activity     │
+         │  • PRE-SCHEDULES opportunities │
+         │    for next 24 hours       │
+         │  • LOCKS schedule (stable) │
+         │  • Generates narrative hints │
          └───────────┬────────────────┘
                      ↓
          ┌────────────────────────────┐
          │  CAMP OPPORTUNITY GEN      │
-         │  • Generates 0-3 options   │
+         │  (Candidate Generator)     │
+         │  • Provides candidates     │
          │  • Scores fitness          │
-         │  • Learns preferences      │
+         │  • Orchestrator selects    │
          └───────────┬────────────────┘
                      ↓
-              Player opens DECISIONS menu
+         _scheduledOpportunities[phase] = LOCKED
                      ↓
-         Shows contextual opportunities
-         (training, social, recovery, etc.)
+         Daily Brief shows hints:
+         Camp Rumors: "Torgan mentioned a card game tonight." (lavender)
+         Your Status: "Your condition needs attention." (default)
+                     ↓
+         Player opens DECISIONS menu
+                     ↓
+         Shows LOCKED opportunities for current phase
+         (persist until consumed or phase ends)
 ```
+
+**Key Design Principle:** Opportunities are scheduled once at daily tick and **locked**. Context changes (lord leaving castle, phase transitions) do NOT regenerate opportunities. This prevents jarring disappearance of content the player was about to interact with.
+
+**Architecture Reference:** See [Orchestrator Opportunity Unification Spec](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) for full details.
 
 ---
 
@@ -273,7 +286,6 @@ Random camp events that don't require player input:
 - Serious fight requiring intervention
 - Equipment theft discovered
 - Soldier found drunk on duty
-- Contraband discovered in baggage
 - Desertion attempt foiled
 
 **0-2 incidents roll per day based on company size and stress level.**
@@ -429,43 +441,59 @@ When generating camp opportunities, the system analyzes four layers:
 - Variety maintenance (don't repeat too much)
 - Novelty injection (introduce new things periodically)
 
-### Generation Algorithm
+### Scheduling Algorithm (Orchestrator-Owned)
+
+Opportunities are scheduled once per day by the ContentOrchestrator, not generated on-demand:
 
 ```csharp
-public List<CampOpportunity> GenerateCampLife()
+// ContentOrchestrator.ScheduleOpportunities() - called at 6am daily tick
+private void ScheduleOpportunities()
 {
-    // Step 0: Check if player can receive opportunities
-    if (IsPlayerOnDuty())
-        return new List<CampOpportunity>(); // On duty = no opportunities
+    var currentDay = (int)CampaignTime.Now.ToDays;
+    if (_scheduledDay == currentDay) return; // Once per day
     
-    // Step 1: Analyze all context layers
-    var worldState = ContentOrchestrator.Instance.GetCurrentWorldSituation();
-    var campContext = AnalyzeCampContext();
-    var playerState = AnalyzePlayerState();
-    var history = GetOpportunityHistory();
+    _scheduledDay = currentDay;
+    _scheduledOpportunities = new Dictionary<DayPhase, List<ScheduledOpportunity>>();
     
-    // Step 2: Determine opportunity budget (0-3)
-    int maxOpportunities = DetermineOpportunityBudget(worldState, campContext);
+    var worldSituation = WorldStateAnalyzer.AnalyzeSituation();
     
-    // Step 3: Generate candidates
-    var candidates = GenerateCandidates(worldState, campContext, playerState);
-    
-    // Step 4: Score each candidate for fitness
-    foreach (var candidate in candidates)
+    // Schedule for each phase in next 24 hours
+    foreach (DayPhase phase in Enum.GetValues(typeof(DayPhase)))
     {
-        candidate.Score = CalculateFitness(candidate, worldState, 
-                                          campContext, playerState, history);
+        // Step 1: Predict context for this phase
+        var predictedContext = PredictContextForPhase(phase, worldSituation);
+        
+        // Step 2: Get budget for this phase
+        int budget = generator.DetermineOpportunityBudget(worldSituation, predictedContext);
+        if (budget <= 0) continue;
+        
+        // Step 3: Generate candidates (via CampOpportunityGenerator)
+        var candidates = generator.GenerateCandidatesForPhase(phase, worldSituation, predictedContext);
+        
+        // Step 4: Score and select
+        var selected = candidates
+            .OrderByDescending(c => c.FitnessScore)
+            .Take(budget)
+            .Select(c => new ScheduledOpportunity { ... })
+            .ToList();
+        
+        // Step 5: LOCK - stored until consumed or day ends
+        _scheduledOpportunities[phase] = selected;
     }
     
-    // Step 5: Select top N by score
-    var selected = SelectTopN(candidates, maxOpportunities);
-    
-    // Step 6: Record presentation for learning
-    RecordOpportunityPresentation(selected);
-    
-    return selected;
+    // Step 6: Generate narrative hints for Company Reports
+    BuildNarrativeHints();
+}
+
+// Menu just displays locked opportunities - no regeneration
+public IReadOnlyList<ScheduledOpportunity> GetCurrentPhaseOpportunities()
+{
+    var currentPhase = WorldStateAnalyzer.GetCurrentDayPhase();
+    return _scheduledOpportunities[currentPhase].Where(o => !o.Consumed).ToList();
 }
 ```
+
+**Key Change:** `CampOpportunityGenerator.GenerateCampLife()` is deprecated. The generator now provides candidates via `GenerateCandidatesForPhase()`, but the **Orchestrator owns the lifecycle** (scheduling, locking, consumption tracking).
 
 ---
 
@@ -692,7 +720,24 @@ Over time, the system learns patterns:
 
 ## Orchestrator Integration
 
-### Content Orchestrator Provides
+### Orchestrator Owns Opportunity Lifecycle
+
+The ContentOrchestrator now **owns** the opportunity lifecycle, using CampOpportunityGenerator as a candidate provider:
+
+**Orchestrator Responsibilities:**
+- Schedules opportunities once per day (6am tick)
+- Locks schedule - no regeneration on context changes
+- Tracks consumption (player interacted)
+- Provides narrative hints for Company Reports
+- Exposes `GetCurrentPhaseOpportunities()` to menu
+
+**CampOpportunityGenerator Responsibilities:**
+- Provides `GenerateCandidatesForPhase()` for candidate generation
+- Performs fitness scoring
+- Tracks engagement history for learning
+- Does NOT own the cached state (Orchestrator does)
+
+### Analysis Components
 
 **WorldStateAnalyzer:**
 - LordSituation (garrison/campaign/siege)
@@ -710,36 +755,28 @@ Over time, the system learns patterns:
 - Recent behavior patterns
 - Engagement history
 
-### Opportunity Generator Uses
+### Scheduling Flow
 
 ```csharp
-// In CampOpportunityGenerator.GenerateCampLife()
+// ContentOrchestrator.ScheduleOpportunities() - called at 6am
 
-var orchestrator = ContentOrchestrator.Instance;
-
-// Get world state
-var worldState = orchestrator.GetCurrentWorldSituation();
-var activityLevel = worldState.ActivityLevel;
-var lordSituation = worldState.LordSituation;
-
-// Determine opportunity budget based on activity
-int maxOpportunities = activityLevel switch
+// Determine budget per phase based on predicted context
+int budget = (worldState.LordIs, phase) switch
 {
-    ActivityLevel.Quiet => 3,      // Garrison = lots of time
-    ActivityLevel.Routine => 2,    // Normal operations
-    ActivityLevel.Active => 1,     // Campaign = busy
-    ActivityLevel.Intense => 0     // Siege = no opportunities
+    (LordSituation.PeacetimeGarrison, DayPhase.Dawn) => 3,
+    (LordSituation.PeacetimeGarrison, DayPhase.Dusk) => 3,
+    (LordSituation.WarMarching, DayPhase.Dusk) => 2,
+    (LordSituation.WarMarching, DayPhase.Night) => 0,  // Quiet time
+    (LordSituation.SiegeDefending, _) => 0,            // No opportunities
+    _ => 2
 };
 
-// Get company pressure
-var pressure = orchestrator.GetSimulationPressure();
-bool companyStressed = pressure.TotalPressure > 60;
+// Get candidates from generator
+var candidates = CampOpportunityGenerator.Instance
+    .GenerateCandidatesForPhase(phase, worldState, predictedContext);
 
-// Adjust for stress
-if (companyStressed)
-    maxOpportunities = Math.Max(0, maxOpportunities - 1);
-
-// Generate candidates with world state context
+// Score, select, and LOCK
+_scheduledOpportunities[phase] = SelectAndLock(candidates, budget);
 var candidates = GenerateCandidates(worldState, pressure);
 ```
 
@@ -881,18 +918,26 @@ public float GetHoursUntilCommitment(ScheduledCommitment c) { ... }
   "id": "opp_card_game",
   "scheduledPhase": "Dusk",
   "validPhases": ["Dusk", "Night"],
-  "immediate": false
+  "baseFitness": 50
 }
 ```
 
-- `immediate: false` → Player commits, fires at scheduled phase (24h ahead)
-- `immediate: true` → Fires now (urgent/time-sensitive activities)
+**Phase-Aware Scheduling (2026-01-04):**
+- Orchestrator generates candidates for each phase independently using `GenerateCandidatesForPhase(phase)`
+- Each opportunity appears only ONCE per day in its first valid phase
+- Opportunities with multiple valid phases (e.g., `["Dusk", "Night"]`) scheduled for earliest phase only
+- All opportunities compete on fitness score (no "immediate" bypass)
+
+**Commitment Model:**
+- Future-phase opportunities: Click to commit → greys out → auto-fires at phase
+- Current/past-phase opportunities: Click to fire immediately
+- Uncommitted opportunities: Disappear when phase passes (missed window)
 
 **Benefits:**
 - Immersive time awareness (anticipation of scheduled activities)
 - Players can plan around duties and obligations
 - Natural pacing (activities happen when contextually appropriate)
-- Consequences for broken commitments (reputation/discipline)
+- No duplicates across phases
 
 **See Also:**  
 - [Camp Routine Schedule](camp-routine-schedule-spec.md) - Daily schedule baseline  

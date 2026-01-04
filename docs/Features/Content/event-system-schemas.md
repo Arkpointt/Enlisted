@@ -3,8 +3,8 @@
 **Summary:** Authoritative JSON schema definitions for events, decisions, orders, and camp routine configs. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-01 (Phase 6G: Added skillCheck/skillBase/tooltipTemplate for dynamic skill checks, hasAnyCondition/hasSevereCondition/maxIllness for medical system)  
-**Related Docs:** [Content System Architecture](content-system-architecture.md), [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md), [Event Catalog](../../Content/event-catalog-by-system.md), [Quartermaster System](../Equipment/quartermaster-system.md)
+**Last Updated:** 2026-01-03 (Bug fix: Documented EventSelector category filtering behavior; Added all modern fields)  
+**Related Docs:** [Writing Style Guide](writing-style-guide.md), [Content System Architecture](content-system-architecture.md), [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md), [Content Index](content-index.md), [Quartermaster System](../Equipment/quartermaster-system.md)
 
 ---
 
@@ -12,9 +12,11 @@
 
 1. **Root array must be named `"events"`** - Even for decisions, the parser expects the array to be called `"events"`, not `"decisions"`.
 
-2. **Category determines content type:**
-   - `"category": "decision"` → Camp Hub decisions (required for dec_* prefixed items)
-   - Other categories → Automatic events
+2. **Category determines content type and selection behavior:**
+   - `"category": "decision"` → Camp Hub decisions (required for dec_* prefixed items), **excluded from EventSelector**
+   - `"category": "onboarding"` → Explicit enlistment events (e.g., baggage stowage), **excluded from EventSelector**
+   - Other categories → Automatic events (selected by EventSelector during event windows)
+   - **Note:** "decision" and "onboarding" events are never randomly selected; they fire only when explicitly triggered by code
 
 3. **ID prefixes determine delivery mechanism:**
    - `dec_*` → Player-initiated Camp Hub menu items
@@ -88,10 +90,10 @@
 | ID | `id` | string | ✅ | Must be unique. Prefix determines delivery. |
 | Category | `category` | string | ✅ | Must be `"decision"` for Camp Hub decisions |
 | Severity | `severity` | string | ❌ | News priority/color: `"normal"`, `"positive"`, `"attention"`, `"urgent"`, `"critical"` (defaults to `"normal"`) |
-| Title ID | `titleId` | string | ✅ | XML localization key |
-| Title Fallback | `title` | string | ❌ | Shown if localization missing |
-| Setup ID | `setupId` | string | ✅ | XML localization key for description |
-| Setup Fallback | `setup` | string | ❌ | Shown if localization missing |
+| Title ID | `titleId` | string | ✅* | XML localization key. *Either titleId OR title required (both recommended) |
+| Title Fallback | `title` | string | ✅* | Fallback text if localization missing. *Either titleId OR title required |
+| Setup ID | `setupId` | string | ✅* | XML localization key for description. *Either setupId OR setup required (both recommended) |
+| Setup Fallback | `setup` | string | ✅* | Fallback text if localization missing. *Either setupId OR setup required |
 
 ---
 
@@ -519,7 +521,7 @@ var eligible = events.Where(e =>
 - **Order events** need granular weighting (peacetime vs active war vs desperate siege)
 - Both are driven by the same underlying `WorldSituation` analysis
 
-**See:** [Order Progression System](../Core/order-progression-system.md) for execution flow, `ModuleData/Enlisted/Orders/order_events/*.json` for 330 event definitions.
+**See:** [Order Progression System](../Core/order-progression-system.md) for execution flow, `ModuleData/Enlisted/Orders/order_events/*.json` for 84 event definitions.
 
 ---
 
@@ -1025,8 +1027,8 @@ Each option represents a player choice.
 | Field | JSON Name | Type | Required | Notes |
 |-------|-----------|------|----------|-------|
 | ID | `id` | string | ✅ | Unique within event |
-| Text ID | `textId` | string | ✅ | XML localization key |
-| Text Fallback | `text` | string | ❌ | Button text if loc missing |
+| Text ID | `textId` | string | ✅* | XML localization key. *Either textId OR text required (both recommended) |
+| Text Fallback | `text` | string | ✅* | Button text. *Either textId OR text required |
 | Tooltip | `tooltip` | string | ✅* | Static tooltip. Required if no `tooltipTemplate` |
 | Tooltip Template | `tooltipTemplate` | string | ✅* | Dynamic tooltip with `{CHANCE}`, `{SKILL}`, `{SKILL_NAME}` |
 | Costs | `costs` | object | ❌ | Resources deducted |
@@ -1316,12 +1318,28 @@ State changes when option is selected. Can be positive or negative.
 | Injury Onset | `injuryOnset` or `injury_onset` | string | - | Apply injury: `"minor"`, `"moderate"`, `"severe"`, `"critical"` |
 | Begin Treatment | `beginTreatment` or `begin_treatment` | bool | - | Start medical care, apply recovery multiplier |
 | Worsen Condition | `worsenCondition` or `worsen_condition` | bool | - | Increase severity by one level |
+| **Promotion** | `promotes` | bool or int | - | **Grants tier promotion.** Use `true` for next tier, or specific tier number (e.g., `5` for tier 5). See promotion notes below. |
+| Character Tag | `character_tag` | string | - | ⚠️ **Reserved for future use.** Apply personality tag (e.g., "disciplinarian", "merciful", "aggressive"). Currently in JSON but not implemented. |
+| Loyalty Tag | `loyalty_tag` | string | - | ⚠️ **Reserved for future use.** Apply loyalty alignment (e.g., "lord_sworn", "realm_loyal", "lance_bound"). Currently in JSON but not implemented. |
+| Retinue Gain | `retinueGain` or `retinue_gain` | int | - | Add soldiers to retinue (T7+ only) |
+| Retinue Loss | `retinueLoss` or `retinue_loss` | int | - | Remove soldiers from retinue (T7+ only) |
+| Retinue Wounded | `retinueWounded` or `retinue_wounded` | int | - | Wound soldiers in retinue (T7+ only) |
+| Retinue Loyalty | `retinueLoyalty` or `retinue_loyalty` | int | - | Modify retinue loyalty (-100 to +100) |
+
+**PROMOTION EFFECT (`promotes`):**
+Used in proving events (`events_promotion.json`) to grant rank promotions:
+- `"promotes": true` - Promotes player to next tier (T2→T3, T5→T6, etc.)
+- `"promotes": 5` - Promotes player to specific tier (explicit tier 5)
+- **Technical:** The value `true` is converted to `-1` internally (sentinel value) and resolved to `currentTier + 1` at runtime
+- **Usage:** Typically all options in a proving event have `"promotes": true` to ensure promotion regardless of choice
+- **Example:** See `events_promotion.json` for correct usage
 
 **⚠️ COMMON MISTAKES:**
 - Use `hpChange`, not `hp`
 - Use `skillXp` in `effects` for main options, NOT in `rewards`
 - Use `fatigueRelief` in `rewards` (sub-choices only)
 - Use `soldierRep` (camelCase), parser also accepts `soldier_rep`
+- Don't forget `"promotes": true` in all proving event options (or promotion won't happen!)
 
 **✅ PLAYER FEEDBACK:**
 - All effects, costs, and rewards are automatically shown to the player in combat log
@@ -1443,7 +1461,7 @@ All text fields (`title`, `setup`, `text`, `resultText`, etc.) support placehold
 }
 ```
 
-All variables use fallback values if data is unavailable (e.g., "the Sergeant" if no NCO name is set). See [Event Catalog - Placeholder Variables](../../Content/event-catalog-by-system.md#placeholder-variables) for the complete list.
+All variables use fallback values if data is unavailable (e.g., "the Sergeant" if no NCO name is set). See [Writing Style Guide - Dynamic Tokens](writing-style-guide.md#dynamic-tokens) for the complete list.
 
 ---
 
@@ -1690,16 +1708,19 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
 {
   "id": "opp_card_game",
   "type": "social",
-  
+
   "titleId": "opp_card_game_title",
   "title": "Card Game",
-  
+
   "descriptionId": "opp_card_game_desc",
   "description": "A card game is forming by the fire. Stakes look good.",
   
+  "hintId": "opp_card_game_hint",
+  "hint": "{SOLDIER_NAME} mentioned a card game tonight.",
+
   "actionId": "opp_card_game_action",
   "action": "Sit in",
-  
+
   "targetDecision": "dec_gambling",
   
   "minTier": 1,
@@ -1747,6 +1768,8 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
 | `title` | string | ❌ | Fallback if localization missing |
 | `descriptionId` | string | ✅ | XML localization key for flavor text |
 | `description` | string | ❌ | Fallback |
+| `hintId` | string | ❌ | XML localization key for narrative hint (shown in Daily Brief before availability). Use dynamic placeholders like `{SOLDIER_NAME}`, `{COMRADE_NAME}`, `{SETTLEMENT_NAME}` for personalization. |
+| `hint` | string | ❌ | Fallback hint text. Auto-categorized: camp rumors (social activities) appear in Company Reports with Rumor styling (lavender), personal hints (player needs) appear in Your Status with default styling. |
 | `actionId` | string | ✅ | XML localization key for button text |
 | `action` | string | ❌ | Fallback (e.g., "Join", "Sit in") |
 | `targetDecision` | string | ❌ | Decision to trigger when engaged |
@@ -1761,8 +1784,8 @@ Camp Opportunities are dynamically generated activities that appear in the Main 
 | `tooltipRiskyId` | string | ❌ | Localization key for risk tooltip |
 | `tooltipRisky` | string | ❌ | Fallback risk tooltip |
 | `scheduledTime` | string | ❌ | **DEPRECATED** - Use `scheduledPhase` instead |
-| `scheduledPhase` | string | ❌ | **Phase 9** - When activity fires: `"Dawn"`, `"Midday"`, `"Dusk"`, `"Night"`. If omitted, fires immediately (backwards compat). |
-| `immediate` | bool | ❌ | **Phase 9** - If true, fires immediately (ignores scheduledPhase). Default: false. |
+| `scheduledPhase` | string | ❌ | When activity typically fires: `"Dawn"`, `"Midday"`, `"Dusk"`, `"Night"`. Used for fitness scoring hint, not strict scheduling. |
+| `immediate` | bool | ❌ | **REMOVED 2026-01-04** - All opportunities now compete on fitness through orchestrator. This flag no longer has any effect. |
 | `requiredFlags` | array | ❌ | Flags that must be set to appear |
 | `blockedByFlags` | array | ❌ | Flags that prevent appearance |
 | `requirements` | object | ❌ | Requirement conditions (see Requirements Object section below) |
@@ -1834,11 +1857,11 @@ Opportunities can have a `requirements` object that filters when they appear:
   "id": "opp_urgent_medical",
   "type": "recovery",
   "title": "Urgent Medical Care",
-  "immediate": true,
+  "validPhases": ["Dawn", "Midday", "Dusk", "Night"],
   "requirements": {
     "conditionStates": ["HasSevereCondition"]
   },
-  "comment": "Only appears when player has severe/critical injury or illness"
+  "comment": "Available in all phases when player has severe/critical injury or illness"
 }
 ```
 
@@ -1878,6 +1901,73 @@ Fitness determines which opportunities appear. The `baseFitness` field sets the 
 Opportunities with final score < 40 are filtered out. Top N (based on budget) are displayed.
 
 **Why code-computed modifiers?** This approach keeps JSON simple while allowing nuanced, interconnected scoring that responds to game state. The modifiers are transparent in `CampOpportunityGenerator.cs`.
+
+---
+
+### Narrative Hints (Orchestrator Pre-Scheduling)
+
+**Purpose:** Hints are short, immersive text snippets that foreshadow upcoming opportunities. They're part of the [Orchestrator Opportunity Unification](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) system where opportunities are pre-scheduled 24 hours ahead.
+
+**How It Works:**
+1. At 6am daily tick, `ContentOrchestrator.ScheduleOpportunities()` generates opportunities for each phase (Dawn/Midday/Dusk/Night)
+2. Scheduled opportunities are **locked** - they won't disappear due to context changes (lord leaving castle, phase transitions)
+3. Hints from current and next phase are categorized and displayed in Daily Brief sections
+4. Player sees hints before the opportunity becomes available
+5. When the player opens the menu during that phase, the opportunity is available as promised
+
+**Hint Categories & Display:**
+
+Hints are automatically categorized by content:
+
+| **Category** | **Display Section** | **Styling** | **Examples** |
+|--------------|---------------------|-------------|--------------|
+| **Camp Rumors** | Company Reports | `<span style="Rumor">` (muted lavender #B8A8D8) | "Torgan mentioned a card game tonight." |
+| **Personal Hints** | Your Status | Default text | "Your condition needs attention." |
+
+**Categorization Logic:**
+- **Personal hints** start with "Your" or "You", or contain medical language (condition, wound, injury, worsening)
+- **Camp rumors** are everything else (social activities, things others are doing)
+
+**Hint Authoring Guidelines:**
+- **Phase-appropriate:** "Veterans are gathering for morning drill" (Dawn), "A card game is forming this evening" (Dusk)
+- **Immersive:** Write as camp gossip or observation, not UI text
+- **Brief:** 1 sentence, max 10 words preferred
+- **Use placeholders:** Include `{SOLDIER_NAME}`, `{COMRADE_NAME}`, `{SERGEANT}`, `{SETTLEMENT_NAME}` etc. for dynamic text
+- **Optional:** If no hint provided, opportunity appears without foreshadowing (still works fine)
+
+**Examples:**
+
+```json
+{
+  "id": "opp_weapon_drill",
+  "type": "training",
+  "hintId": "opp_weapon_drill_hint",
+  "hint": "{VETERAN_1_NAME} mentioned morning drill.",
+  "targetDecision": "dec_training_weapon_drill"
+}
+```
+
+```json
+{
+  "id": "opp_seek_medical_care",
+  "type": "recovery",
+  "hintId": "opp_medical_care_hint",
+  "hint": "Your condition needs attention.",
+  "targetDecision": "dec_medical_care"
+}
+```
+
+**Display Behavior:**
+- Camp rumors appear in **Company Reports** with lavender styling for visual distinction
+- Personal hints appear in **Your Status** with default text color
+- Max 2 hints per section (4 total)
+- Only shows hints for non-consumed opportunities in current and next phases
+- If opportunity is consumed (player engaged), hint disappears
+- Placeholders like `{SOLDIER_NAME}` are resolved at runtime with actual game data
+
+**Why This Matters:** Before this system, opportunities could vanish mid-session (e.g., lord leaving castle triggers context change → 0 budget). Now they're stable and telegraphed, creating immersive anticipation and player agency. The split display helps players scan quickly: lavender text = social activities (optional), plain text = personal needs (might want to address).
+
+---
 
 ### Order Compatibility Values
 
@@ -2500,6 +2590,34 @@ Different from narrative events. Uses `world_state` instead of `context`:
 - `war_active_campaign` - Active campaign operations
 - `siege_attacking` - Attacking in siege
 - `siege_defending` - Defending in siege
+
+**Sea/Land Filtering:**
+
+Order events can also use `notAtSea` or `atSea` to prevent land-specific events from firing at sea:
+
+```json
+{
+  "id": "patrol_gambling_ring",
+  "requirements": {
+    "world_state": ["peacetime_garrison"],
+    "notAtSea": true  // "tents" and "fire" don't exist at sea
+  },
+  "setup": "Behind the tents, a group of soldiers are rolling dice. Coins glint in the firelight."
+}
+```
+
+**When to use `notAtSea: true` for order events:**
+- Event mentions land-specific objects (tents, fires, walls, gates, forests, fields)
+- Event involves land-specific activities (chopping wood, boar hunting, noble entry)
+- Event describes garrison/fortification contexts (walls, perimeters, infiltrators)
+
+**Generic events work at sea:**
+- Equipment inspection/cleaning (works on ships)
+- Interpersonal conflicts (soldiers fight anywhere)
+- Relief schedules and exhaustion (universal)
+- Officer inspections and tests (work on deck)
+
+Orders with `context_variants.sea` (like Guard Duty → Deck Watch) can still fire events, but land-specific events within that order should use `notAtSea: true` to avoid immersion breaks.
 
 ### Order Event Skill Check
 

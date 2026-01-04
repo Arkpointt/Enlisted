@@ -35,11 +35,11 @@ namespace Enlisted.Mod.Core.Config
 		[DataMember(Name = "RunTroopDiscoveryValidation")]
 		public bool RunTroopDiscoveryValidation { get; set; }
 
-		/// <summary>
-		/// Whether to run mod conflict diagnostics at startup and write to conflicts.log.
-		/// Useful for diagnosing issues caused by other mods patching the same game methods.
-		/// When disabled, the conflicts.log file will not be generated.
-		/// </summary>
+	/// <summary>
+	/// Whether to run mod conflict diagnostics at startup and write to Conflicts-A_*.log.
+	/// Useful for diagnosing issues caused by other mods patching the same game methods.
+	/// When disabled, the conflict log file will not be generated.
+	/// </summary>
 		[DataMember(Name = "LogModConflicts")]
 		public bool LogModConflicts { get; set; } = true;
 

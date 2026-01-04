@@ -121,7 +121,7 @@ src/Features/Escalation/
 ```
 
 **Tracks:**
-- Scrutiny (0-10): Camp crime, contraband
+- Scrutiny (0-10): Camp crime, rule-breaking
 - Discipline (0-10): Rule-breaking, insubordination
 - Soldier Reputation (-50 to +50): Peer standing
 - Lord Reputation (-50 to +50): Trust, loyalty, competence in lord's eyes
@@ -195,7 +195,7 @@ DefaultTraits.ScoutSkills           // Scouting/reconnaissance
 DefaultTraits.Trader                // Trade/barter skill
 DefaultTraits.Blacksmith            // Crafting skill
 DefaultTraits.Thug                  // Gang enforcement specialty
-DefaultTraits.Smuggler              // Contraband specialty
+DefaultTraits.Smuggler              // Black market specialty
 ```
 
 **Political Traits** (Background, 0-20):
@@ -374,7 +374,7 @@ private TraitObject GetTraitFromId(string traitId)
 | **Rogue** | Hidden Skill | 0-20 | Criminal/stealth | Native trait |
 | **Scout** | Hidden Skill | 0-20 | Reconnaissance | Native trait |
 | **Trader** | Hidden Skill | 0-20 | Commerce | Native trait |
-| **Smuggler** | Hidden Skill | 0-20 | Contraband specialty | Native trait |
+| **Smuggler** | Hidden Skill | 0-20 | Black market specialty | Native trait |
 | **Thug** | Hidden Skill | 0-20 | Enforcement specialty | Native trait |
 | **Soldier Rep** | Social | -50 to +50 | Peer respect | Escalation (renamed) |
 | **Lord Rep** | Social | -50 to +50 | Trust/loyalty with lord | Escalation (new) |
@@ -1246,32 +1246,8 @@ private void ValidateFormation() { }
 ```
 
 **3.3: Remove Formation Choice Event**
-```json
-// File: ModuleData/Enlisted/Events/events_promotion.json
-// DELETE: promotion_t1_t2_finding_your_place event
-// REPLACE with simple narrative promotion event
 
-{
-  "id": "promotion_t1_t2_recognition",
-  "category": "promotion",
-  "content": {
-    "title": "Recognition",
-    "setup": "The sergeant nods at you after morning formation. 'You've proven yourself. Welcome to the company, soldier.'",
-    "options": [
-      {
-        "id": "accept",
-        "text": "Thank you, sergeant.",
-        "effects": {
-          "promotes": true,
-          "traits": {
-            "valor": 20  // Small boost for surviving to T2
-          }
-        }
-      }
-    ]
-  }
-}
-```
+Formation is now determined automatically by equipped weapons at battle start. T1→T2 promotion happens automatically when requirements are met, with no proving event needed.
 
 **3.4: Update Schedule Activities**
 ```csharp

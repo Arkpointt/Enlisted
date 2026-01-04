@@ -98,7 +98,7 @@ When muster arrives, players proceed to the Pay Line stage where they choose fro
   - 90% chance: Current tier equipment
   - 10% chance: Tier +1 equipment (capped at T9)
   - Weighted by player skills (OneHanded → swords, Bow → bows, etc.)
-  - Item added directly to inventory, exempt from contraband checks
+  - Item added directly to inventory
 - On failure: Still receive 40% pay
 - Costs 6 fatigue
 - Always available

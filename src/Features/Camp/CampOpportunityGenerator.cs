@@ -37,6 +37,7 @@ namespace Enlisted.Features.Camp
 
         // Opportunity definitions loaded from JSON
         private List<CampOpportunity> _opportunityDefinitions = new List<CampOpportunity>();
+        private bool _definitionsLoaded;
 
         // History tracking
         private OpportunityHistory _history = new OpportunityHistory();
@@ -461,11 +462,35 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Main entry point: generates camp life opportunities for the current context.
+        /// Generates camp life opportunities for the current context.
         /// Returns 0-3 opportunities based on world state, budget, and player state.
         /// </summary>
-        public List<CampOpportunity> GenerateCampLife()
+        /// <remarks>
+        /// INTERNAL USE ONLY: Called by ContentOrchestrator during daily scheduling.
+        /// External code should use ContentOrchestrator.GetCurrentPhaseOpportunities()
+        /// which provides stable, pre-scheduled opportunities that won't disappear
+        /// when context changes mid-session.
+        /// </remarks>
+        internal List<CampOpportunity> GenerateCampLife()
         {
+            // Lazy initialization: ensure definitions are loaded before first use
+            // This handles the timing issue where Orchestrator may request opportunities
+            // before OnSessionLaunched fires on this behavior
+            if (!_definitionsLoaded)
+            {
+                ModLogger.WarnCode(LogCategory, "W-CAMP-001", 
+                    "Opportunity definitions not yet loaded - loading now (this is normal on first access after load)");
+                LoadOpportunityDefinitions();
+                
+                // Diagnostic: warn if still no definitions after loading
+                if (_opportunityDefinitions.Count == 0)
+                {
+                    ModLogger.WarnCode(LogCategory, "W-CAMP-002", 
+                        "No opportunity definitions found - check camp_opportunities.json exists and has valid content. " +
+                        "Decisions won't appear in the accordion menu.");
+                }
+            }
+
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment?.IsEnlisted != true)
             {
@@ -513,6 +538,15 @@ namespace Enlisted.Features.Camp
             var candidates = GenerateCandidates(worldSituation, campContext, playerPrefs);
             ModLogger.Info(LogCategory, $"Generated {candidates.Count} candidates from {_opportunityDefinitions.Count} total definitions");
 
+            // Diagnostic: warn if no candidates despite having definitions and budget
+            if (candidates.Count == 0 && _opportunityDefinitions.Count > 0 && budget > 0)
+            {
+                ModLogger.WarnCode(LogCategory, "W-CAMP-003", 
+                    $"No candidates passed filtering (definitions={_opportunityDefinitions.Count}, budget={budget}). " +
+                    $"Check tier/context requirements in camp_opportunities.json match current state " +
+                    $"(tier={EnlistmentBehavior.Instance?.EnlistmentTier}, lordIs={campContext.LordSituation})");
+            }
+
             // Cache promotion reputation need (calculated once, used for all fitness calculations)
             (_cachedNeedsReputation, _cachedReputationGap) = SimulationPressureCalculator.CheckPromotionReputationNeed();
             if (_cachedNeedsReputation && _cachedReputationGap > 0 && !_hasShownPromotionRepNotice)
@@ -558,6 +592,42 @@ namespace Enlisted.Features.Camp
 
             ModLogger.Info(LogCategory, $"Selected {selected.Count} opportunities ({guaranteed.Count} guaranteed): [{string.Join(", ", selected.Select(o => o.Id))}]");
             return selected;
+        }
+
+        /// <summary>
+        /// Returns narrative hints for upcoming opportunities (for Company Reports).
+        /// Hints are brief, immersive text that foreshadow available activities.
+        /// Returns up to 2 hints from currently cached opportunities.
+        /// </summary>
+        /// <remarks>
+        /// This method only uses cached opportunities - it does NOT regenerate them.
+        /// The ContentOrchestrator owns the opportunity schedule and should be the
+        /// primary source for hints via GetUpcomingHints().
+        /// </remarks>
+        public IEnumerable<string> GetUpcomingHints()
+        {
+            // Use cached opportunities only - do NOT regenerate
+            // The Orchestrator owns the schedule; this is just a fallback for cached data
+            if (_cachedOpportunities == null || _cachedOpportunities.Count == 0)
+            {
+                yield break;
+            }
+
+            // Return up to 2 hints from cached opportunities
+            int hintCount = 0;
+            foreach (var opp in _cachedOpportunities)
+            {
+                var hint = opp.GetHint();
+                if (!string.IsNullOrWhiteSpace(hint))
+                {
+                    yield return hint;
+                    hintCount++;
+                    if (hintCount >= 2)
+                    {
+                        yield break;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -793,6 +863,53 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
+        /// Generates candidates for a SPECIFIC target phase (used by ContentOrchestrator for daily scheduling).
+        /// Unlike GenerateCampLife() which uses the current phase, this generates candidates AS IF it were the target phase.
+        /// </summary>
+        /// <param name="targetPhase">The day phase to generate candidates for.</param>
+        /// <returns>Unselected candidates (not budget-limited) for the orchestrator to score and select.</returns>
+        internal List<CampOpportunity> GenerateCandidatesForPhase(DayPhase targetPhase)
+        {
+            // Ensure definitions are loaded
+            if (!_definitionsLoaded)
+            {
+                LoadOpportunityDefinitions();
+            }
+
+            if (_opportunityDefinitions.Count == 0)
+            {
+                ModLogger.Debug(LogCategory, $"GenerateCandidatesForPhase({targetPhase}): No definitions loaded");
+                return new List<CampOpportunity>();
+            }
+
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return new List<CampOpportunity>();
+            }
+
+            // Build context but OVERRIDE the phase to the target phase
+            var campContext = AnalyzeCampContext();
+            var actualPhase = campContext.DayPhase;
+            campContext.DayPhase = targetPhase; // Override to target phase
+
+            // Get world situation
+            var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation()
+                ?? WorldStateAnalyzer.AnalyzeSituation();
+
+            // Get player preferences
+            var playerPrefs = PlayerBehaviorTracker.GetPreferences();
+
+            // Generate candidates for the target phase (no budget limiting - orchestrator handles that)
+            var candidates = GenerateCandidates(worldSituation, campContext, playerPrefs);
+            
+            ModLogger.Debug(LogCategory, 
+                $"GenerateCandidatesForPhase({targetPhase}): {candidates.Count} candidates (actual phase was {actualPhase})");
+            
+            return candidates;
+        }
+
+        /// <summary>
         /// Generates candidate opportunities based on current context.
         /// </summary>
         private List<CampOpportunity> GenerateCandidates(WorldSituation world, CampContext camp, PlayerPreferences prefs)
@@ -832,7 +949,12 @@ namespace Enlisted.Features.Camp
 
                 // Sea/land context check
                 var enlistment = EnlistmentBehavior.Instance;
-                var isAtSea = enlistment?.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+                var party = enlistment?.CurrentLord?.PartyBelongedTo;
+                // BUGFIX: If party is in a settlement or besieging, they are on land regardless of IsCurrentlyAtSea
+                var isAtSea = party != null && 
+                              party.CurrentSettlement == null && 
+                              party.BesiegedSettlement == null && 
+                              party.IsCurrentlyAtSea;
                 
                 if (opp.NotAtSea && isAtSea)
                 {
@@ -900,6 +1022,23 @@ namespace Enlisted.Features.Camp
                     {
                         IncrementFilterCount(filterCounts, "under_treatment");
                         continue;
+                    }
+                }
+
+                // BAGGAGE ACCESS FILTER: Only show baggage access if player actually has access
+                // This prevents the frustrating UX of clicking "Baggage Access" and getting "access denied"
+                if (opp.Id == "opp_baggage_access")
+                {
+                    var baggageManager = Logistics.BaggageTrainManager.Instance;
+                    if (baggageManager != null)
+                    {
+                        var accessState = baggageManager.GetCurrentAccess();
+                        if (accessState != Logistics.BaggageAccessState.FullAccess && 
+                            accessState != Logistics.BaggageAccessState.TemporaryAccess)
+                        {
+                            IncrementFilterCount(filterCounts, "no_baggage_access");
+                            continue;
+                        }
                     }
                 }
 
@@ -1615,13 +1754,22 @@ namespace Enlisted.Features.Camp
 
         private void LoadOpportunityDefinitions()
         {
+            // Prevent double-loading (OnSessionLaunched + lazy init may both call this)
+            if (_definitionsLoaded)
+            {
+                return;
+            }
+
             try
             {
                 var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "Decisions", "camp_opportunities.json");
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Warn(LogCategory, "camp_opportunities.json not found, using empty definitions");
+                    ModLogger.ErrorCode(LogCategory, "E-CAMP-001", 
+                        $"camp_opportunities.json not found at {configPath} - decisions won't appear in menu. " +
+                        "Verify mod installation is complete.");
                     _opportunityDefinitions = new List<CampOpportunity>();
+                    _definitionsLoaded = true;
                     return;
                 }
 
@@ -1631,7 +1779,10 @@ namespace Enlisted.Features.Camp
 
                 if (opportunities == null)
                 {
-                    ModLogger.Warn(LogCategory, "No 'opportunities' array found in camp_opportunities.json");
+                    ModLogger.ErrorCode(LogCategory, "E-CAMP-002", 
+                        "No 'opportunities' array found in camp_opportunities.json - file may be corrupt or invalid. " +
+                        "Decisions won't appear in menu.");
+                    _definitionsLoaded = true;
                     return;
                 }
 
@@ -1646,12 +1797,15 @@ namespace Enlisted.Features.Camp
                     }
                 }
 
+                _definitionsLoaded = true;
                 ModLogger.Info(LogCategory, $"Loaded {_opportunityDefinitions.Count} opportunity definitions");
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, "Failed to load camp_opportunities.json", ex);
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-003", 
+                    "Failed to parse camp_opportunities.json - decisions won't appear in menu. Check JSON syntax.", ex);
                 _opportunityDefinitions = new List<CampOpportunity>();
+                _definitionsLoaded = true; // Mark as loaded even on error to prevent retry loops
             }
         }
 
@@ -1667,6 +1821,8 @@ namespace Enlisted.Features.Camp
                     TitleFallback = item["title"]?.Value<string>(),
                     DescriptionId = item["descriptionId"]?.Value<string>(),
                     DescriptionFallback = item["description"]?.Value<string>(),
+                    HintId = item["hintId"]?.Value<string>(),
+                    HintFallback = item["hint"]?.Value<string>(),
                     ActionId = item["actionId"]?.Value<string>(),
                     ActionFallback = item["action"]?.Value<string>(),
                     TargetDecisionId = item["targetDecision"]?.Value<string>(),

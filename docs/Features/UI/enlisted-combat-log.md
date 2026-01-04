@@ -853,9 +853,33 @@ foreach (var child in messageWidget.Children)
 3. Suspending is cleaner than removing (preserves state, avoids screen reference issues)
 4. Combining Harmony patches (conversations) + tick detection (missions) provides complete coverage
 
+### Bug #15: Encyclopedia Links Not Working (Missing event: Prefix Stripping)
+
+**Root Cause:** The `OnRichTextWidgetEvent` handler assumed the `event:` prefix was already stripped from the href value. However, `RichTextWidget.EventFire` passes the full href including the prefix (e.g., `event:Hero:lord_1_1`), while `EncyclopediaManager.GoToLink()` expects the link without the prefix (e.g., `Hero:lord_1_1`).
+
+**Resolution:** Added prefix stripping logic before calling `GoToLink()`:
+
+```csharp
+// Wrong assumption
+string encyclopediaLink = args[0] as string;  // Contains "event:Hero:lord_1_1"
+
+// Correct approach - strip prefix
+string linkHref = args[0] as string;
+string encyclopediaLink = linkHref.StartsWith("event:") 
+    ? linkHref.Substring(6) 
+    : linkHref;
+```
+
 ---
 
 ## Changelog
+
+**2026-01-03 (Encyclopedia Link Click Fix):**
+- 🐛 **Fixed encyclopedia links not opening when clicked** - Links in combat log were unresponsive
+- Root cause: `OnRichTextWidgetEvent` handler assumed the `event:` prefix was already stripped from href
+- RichTextWidget passes full href like `event:Hero:lord_1_1`, but `EncyclopediaManager.GoToLink()` expects `Hero:lord_1_1`
+- Solution: Added prefix stripping logic: `linkHref.StartsWith("event:") ? linkHref.Substring(6) : linkHref`
+- Encyclopedia links now properly open hero/settlement/kingdom pages when clicked
 
 **2026-01-03 (MapConversationEndPatch Fix):**
 - 🐛 **Fixed `MapConversationEndPatch` failing to apply** - Harmony patch was returning null during initialization

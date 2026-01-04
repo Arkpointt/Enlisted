@@ -117,7 +117,13 @@ namespace Enlisted.Features.Orders
             }
 
             // Filter by sea state - exclude land-only orders when at sea
-            var isAtSea = enlistment.CurrentLord?.PartyBelongedTo?.IsCurrentlyAtSea ?? false;
+            var party = enlistment.CurrentLord?.PartyBelongedTo;
+            // BUGFIX: If party is in a settlement or besieging, they are on land regardless of IsCurrentlyAtSea
+            var isAtSea = party != null && 
+                          party.CurrentSettlement == null && 
+                          party.BesiegedSettlement == null && 
+                          party.IsCurrentlyAtSea;
+            
             if (isAtSea)
             {
                 eligibleOrders = eligibleOrders
@@ -282,8 +288,24 @@ namespace Enlisted.Features.Orders
             var enlistment = Enlistment.Behaviors.EnlistmentBehavior.Instance;
             var party = enlistment?.CurrentLord?.PartyBelongedTo;
             
-            if (party != null && party.IsCurrentlyAtSea && order.ContextVariants.ContainsKey("sea"))
+            if (party == null || !order.ContextVariants.ContainsKey("sea"))
             {
+                return "land";
+            }
+
+            // BUGFIX: If party is in a settlement or besieging, they cannot be at sea
+            // This prevents "Rigging Check" from appearing when on land
+            if (party.CurrentSettlement != null || party.BesiegedSettlement != null)
+            {
+                ModLogger.Debug(LogCategory, 
+                    $"Party in settlement or siege - forcing land context (IsCurrentlyAtSea={party.IsCurrentlyAtSea})");
+                return "land";
+            }
+
+            // Check IsCurrentlyAtSea (Warsails DLC property)
+            if (party.IsCurrentlyAtSea)
+            {
+                ModLogger.Debug(LogCategory, $"Party at sea - using sea variant for order {order.Id}");
                 return "sea";
             }
 

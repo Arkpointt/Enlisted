@@ -26,6 +26,12 @@ namespace Enlisted.Features.Camp.Models
         /// <summary>Fallback description text (the scene-setting natural language).</summary>
         public string DescriptionFallback { get; set; }
 
+        /// <summary>Localization key for the narrative hint (shown in Company Reports before availability).</summary>
+        public string HintId { get; set; }
+
+        /// <summary>Fallback hint text for Company Reports (e.g., "A card game is forming this evening.").</summary>
+        public string HintFallback { get; set; }
+
         /// <summary>Localization key for the action button text.</summary>
         public string ActionId { get; set; }
 
@@ -156,6 +162,13 @@ namespace Enlisted.Features.Camp.Models
         public string GetDescription()
         {
             return DescriptionFallback ?? "";
+        }
+
+        /// <summary>Gets the resolved hint text for Company Reports (or null if no hint).</summary>
+        public string GetHint()
+        {
+            // TODO: Integrate with localization system using HintId
+            return HintFallback;
         }
 
         /// <summary>Gets the resolved action text.</summary>

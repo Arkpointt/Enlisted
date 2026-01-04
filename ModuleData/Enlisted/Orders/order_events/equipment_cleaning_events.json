@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 2,
   "order_type": "order_equipment_cleaning",
   "events": [
@@ -145,57 +145,17 @@
           "resultText": "He examines a blade, nods. 'Fine work, soldier.'",
           "failResultTextId": "cleaning_officer_inspection_present_work_fail",
           "failResultText": "He finds a spot you missed. 'Sloppy. Do it again.'"
-        }
-      ]
-    },
-    {
-      "id": "cleaning_contraband_found",
-      "order_type": "order_equipment_cleaning",
-      "category": "order_event",
-      "severity": "attention",
-      "titleId": "cleaning_contraband_found_title",
-      "title": "Hidden Contraband",
-      "setupId": "cleaning_contraband_found_setup",
-      "setup": "Inside a saddlebag, you find a small pouch. Coins. Someone's been skimming.",
-      "requirements": {
-        "world_state": ["peacetime_garrison"]
-      },
-      "options": [
-        {
-          "id": "report",
-          "textId": "cleaning_contraband_found_report",
-          "text": "Report it to {SERGEANT}.",
-          "effects": {
-            "officerRep": 3,
-            "skillXp": { "Tactics": 14 }
-          },
-          "resultTextId": "cleaning_contraband_found_report_result",
-          "resultText": "{SERGEANT} takes it. Someone's in trouble, but not you."
         },
         {
-          "id": "ignore",
-          "textId": "cleaning_contraband_found_ignore",
-          "text": "Put it back. You saw nothing.",
+          "id": "acknowledge_flaws",
+          "textId": "cleaning_officer_inspection_acknowledge_flaws",
+          "text": "Point out the work you struggled with.",
           "effects": {
-            "skillXp": { "Crafting": 8 }
+            "officerRep": 1,
+            "skillXp": { "Crafting": 15 }
           },
-          "resultTextId": "cleaning_contraband_found_ignore_result",
-          "resultText": "You close the bag. Whatever's going on, you're not part of it."
-        },
-        {
-          "id": "take_it",
-          "textId": "cleaning_contraband_found_take_it",
-          "text": "Pocket the coins.",
-          "effects": {
-            "officerRep": -3,
-            "gold": 15,
-            "escalation": {
-              "scrutiny": 10
-            },
-            "skillXp": { "Roguery": 16 }
-          },
-          "resultTextId": "cleaning_contraband_found_take_it_result",
-          "resultText": "The coins disappear into your pocket. No one saw."
+          "resultTextId": "cleaning_officer_inspection_acknowledge_flaws_result",
+          "resultText": "He nods. 'Honesty is good. Keep working on it.'"
         }
       ]
     }

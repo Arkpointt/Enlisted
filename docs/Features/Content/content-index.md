@@ -1,10 +1,12 @@
 # Enlisted Content Index
 
-**Summary:** Master list of all narrative content with IDs, titles, descriptions, requirements, effects, and skill checks. This index provides quick reference for all events, decisions, orders, and map incidents in the mod.
+**Summary:** Master list of all narrative content with IDs, titles, descriptions, requirements, effects, and skill checks. This index provides quick reference for all events, decisions, orders, map incidents, and orchestrated opportunities in the mod.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-01 (Updated order event counts to match reality: 330 events)  
-**Related Docs:** [Event Catalog](event-catalog-by-system.md), [Content System Architecture](content-system-architecture.md), [Orders Content](orders-content.md)
+**Last Updated:** 2026-01-04 (Phase-aware scheduling, duplicate prevention, commitment model, baggage access filtering)  
+**Related Docs:** [Content Organization Map](content-organization-map.md), [Content System Architecture](content-system-architecture.md), [Orders Content](orders-content.md), [Event System Schemas](event-system-schemas.md), [Orchestrator Spec](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
+
+**Diagnostics:** All content systems now include searchable error codes for user support. See [Content System Architecture - Error Codes](content-system-architecture.md#error-codes--diagnostics) for complete code reference and logging features.
 
 ---
 
@@ -21,13 +23,11 @@
 | Category | Count | Description |
 |----------|-------|-------------|
 | **Orders** | 17 | Military directives from chain of command (see [Orders Content](orders-content.md)) |
-| **Order Events** | 330 | Events that fire during order execution (16 event pools in `ModuleData/Enlisted/Orders/order_events/`) |
-| **Decisions** | 33 | Player-initiated choices from Camp Hub (3 core + 26 camp + 4 medical) |
-| **Events** | 72 | Context-triggered situations (14 escalation + 4 medical orchestration + 5 crisis + 49 role/universal) |
-| **Map Incidents** | 45 | Triggered by map actions (battle, siege, settlement entry/exit, waiting) |
-| **Retinue Map Incidents** | 6 | Post-battle incidents for T7+ commanders with retinue |
-| **Retinue Events** | 17 | Narrative events for retinue management (T7+) |
-| **Total** | **520** | Full content catalog including order events |
+| **Order Events** | 84 | Events that fire during order execution (17 order types in `ModuleData/Enlisted/Orders/order_events/`) |
+| **Decisions** | 37 | Player-initiated choices from Camp Hub (3 core + 26 camp + 8 medical with sea variants) |
+| **Context Events** | 56 | Context-triggered situations (escalation, pay, promotion, retinue, illness, baggage) |
+| **Map Incidents** | 51 | Triggered by map actions (battle, siege, settlement entry/exit, waiting) - includes retinue incidents |
+| **Total** | **245** | Full content catalog including all systems (verified by Tools/count_content.py) |
 
 **Training Decisions**: 3 weapon-aware training decisions using dynamic skill XP. Uses `reward_choices` and `dynamic_skill_xp` for equipped weapon training. See [Training System](../Features/Combat/training-system.md) for implementation details.
 
@@ -40,11 +40,10 @@
 | Section | Contents |
 |---------|----------|
 | [Orders](#orders-17-total) | T1-T3 Basic, T4-T6 Specialist, T7-T9 Leadership |
-| [Decisions](#decisions-33-total) | Core, Training, Social, Economic, Recovery, Special, Medical |
-| [Events](#events-72-total) | Escalation (Scrutiny, Discipline), Medical Orchestration (Illness Onset), Role (Scout, Medic, Engineer, Officer, Operative, NCO), Universal |
-| [Map Incidents](#map-incidents-45-total) | LeavingBattle, DuringSiege, EnteringTown, EnteringVillage, LeavingSettlement, WaitingInSettlement |
-| [Retinue Content](#retinue-content-t7-only-23-total) | Retinue Events (17), Map Incidents (6) for T7+ commanders |
-| [Coverage Summary](#content-coverage-summary) | Counts and next steps |
+| [Decisions](#decisions-37-total) | Core, Training, Social, Economic, Recovery, Special, Medical (Land + Sea) |
+| [Events](#events-56-total) | Escalation, Pay, Promotion, Retinue, Illness, Baggage |
+| [Map Incidents](#map-incidents-51-total) | LeavingBattle, DuringSiege, EnteringTown, EnteringVillage, LeavingSettlement, WaitingInSettlement (includes retinue incidents) |
+| [Coverage Summary](#content-coverage-summary) | Complete counts and file organization |
 
 ---
 
@@ -96,12 +95,12 @@ Some orders have severe failure penalties beyond reputation loss:
 
 ---
 
-## Decisions (33 total)
+## Decisions (37 total)
 
 **Files:**
 - `ModuleData/Enlisted/Decisions/decisions.json` (3 core decisions)
 - `ModuleData/Enlisted/Decisions/camp_decisions.json` (26 camp decisions)
-- `ModuleData/Enlisted/Decisions/medical_decisions.json` (4 medical decisions)
+- `ModuleData/Enlisted/Decisions/medical_decisions.json` (8 medical decisions: 4 land + 4 sea variants)
 
 **Delivery:** Player-initiated from Camp Hub menu (inline selection, not popup)  
 **ID Prefix:** `dec_*` (e.g., `dec_training_drill`, `dec_medical_surgeon`, `dec_gamble_high`)  
@@ -111,7 +110,7 @@ Some orders have severe failure penalties beyond reputation loss:
 - **DELETED:** 35 old static decisions (pre-orchestrator)
 - **KEPT:** 3 essential decisions (dec_maintain_gear, dec_write_letter, dec_gamble_high)
 - **ADDED:** 30 new decisions (26 camp + 4 medical)
-- **NET CHANGE:** 38 → 33 decisions (-5 total)
+- **NET CHANGE:** 38 → 37 decisions (net -1 after Phase 6G cleanup and additions)
 - **Features:** Dynamic skill checks (success modified by player skill), illness restrictions (`maxIllness`), Medical Tent menu system replaced
 
 ### Core Decisions (3 - Kept from original 38)
@@ -199,9 +198,144 @@ Some orders have severe failure penalties beyond reputation loss:
 
 ---
 
-## Events (72 total)
+## Camp Opportunities (29 total)
 
-### Escalation: Scrutiny (5)
+**File:** `ModuleData/Enlisted/Decisions/camp_opportunities.json`  
+**System:** Pre-scheduled by ContentOrchestrator 24 hours ahead  
+**Delivery:** All today's opportunities visible in menu (commitment model)  
+**Integration:** Each opportunity links to a decision via `targetDecision` field
+
+**How It Works (Phase-Aware Scheduling & Commitment Model - 2026-01-04):**
+1. **Daily at 6am:** ContentOrchestrator analyzes world state and pre-schedules opportunities
+2. **Phase-aware generation:** For each phase (Dawn/Midday/Dusk/Night):
+   - Calls `CampOpportunityGenerator.GenerateCandidatesForPhase(phase)` 
+   - Generator overrides context to target phase (not current phase)
+   - Ensures candidates are filtered by their target phase's `validPhases`
+   - Tracks `alreadyScheduledIds` to prevent same opportunity in multiple phases
+3. **Fitness scoring:** All opportunities compete on fitness (context, player needs, history, schedule awareness)
+4. **Budget selection:** Top N opportunities per phase selected based on activity level budget
+5. **Duplicate prevention:** Each opportunity appears only ONCE per day in its first valid phase
+6. **Schedule locking:** Locked once generated (won't change when context shifts)
+7. **Menu displays ALL phases:** `GetAllTodaysOpportunities()` shows opportunities for entire day
+8. **Player commitment:**
+   - **Future-phase opportunities:** Click to schedule → greys out with "[SCHEDULED - {Phase}]"
+   - **Current/past-phase opportunities:** Click to fire immediately (no commit for past phases)
+   - **Phase transition:** Auto-fires all committed opportunities as popups
+   - **Missed opportunities:** Uncommitted opportunities disappear when phase passes
+9. **Baggage filtering:** Only shows baggage access when player actually has access (prevents "access denied" frustration)
+
+**Key Benefits:**
+- ✅ Players can see and plan for entire day's opportunities
+- ✅ Click future opportunities to schedule them (commit)
+- ✅ Committed opportunities auto-fire at designated phase
+- ✅ Visual feedback (grey out) shows scheduled state
+- ✅ Missed opportunities just disappear (no popup spam)
+- ✅ Baggage access only appears when accessible
+- ✅ Opportunities persist when lord leaves or context changes
+
+**See:** [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) for complete architecture and commitment model details.
+
+### Training Opportunities (6)
+
+| ID | Target Decision | Description | Phase | Order Compatibility |
+|----|-----------------|-------------|-------|---------------------|
+| `opp_weapon_drill` | `dec_training_drill` | Sergeant running drills | Dawn, Midday | Risky on guard, blocked fatigue duty |
+| `opp_sparring_match` | `dec_training_spar` | Practice swords, crowd gathering | Dawn, Midday | Risky on guard, blocked fatigue duty |
+| `opp_formation_practice` | `dec_training_formation` | Formation drills, shield walls | Dawn, Midday | Blocked on guard/fatigue duty |
+| `opp_veteran_spar` | `dec_training_veteran` | Veteran offering harsh lessons | Dawn, Midday | Risky on guard, blocked fatigue duty |
+| `opp_archery_range` | `dec_training_archery` | Straw targets, archery practice | Dawn, Midday | Risky on guard |
+| `opp_equipment_maintenance` | `dec_maintain_gear` | Oil blade, check gear | Dawn, Midday, Dusk | Available on all orders |
+
+### Social Opportunities (9)
+
+| ID | Target Decision | Description | Phase | Order Compatibility |
+|----|-----------------|-------------|-------|---------------------|
+| `opp_card_game` | `dec_gamble_cards` | Modest card game near fires | Dusk, Night | Risky on guard/patrol |
+| `opp_dice_game` | `dec_gamble_dice` | Higher stakes behind wagons | Dusk, Night | Risky on guard, blocked patrol |
+| `opp_war_stories` | `dec_social_stories` | Veterans sharing battle tales | Dusk, Night | Risky on guard |
+| `opp_storytelling_circle` | `dec_social_storytelling` | Tale-teller with audience | Dusk, Night | Risky on guard |
+| `opp_tavern_visit` | `dec_tavern_drink` | Sutler's tent busy | Dusk, Night | Risky on guard, blocked patrol |
+| `opp_drinking_heavy` | `dec_drinking_contest` | Serious drinking contest | Night | Blocked on guard/patrol/fatigue duty |
+| `opp_arm_wrestling` | `dec_arm_wrestling` | Strength test, coins wagered | Midday, Dusk | Risky on guard |
+| `opp_campfire_song` | `dec_social_singing` | Lute found, singing | Dusk, Night | Risky on guard |
+| `opp_letter_writing` | `dec_write_letter` | Scribe offering letters | Midday, Dusk | Available on all orders |
+
+### Economic Opportunities (4)
+
+| ID | Target Decision | Description | Phase | Order Compatibility |
+|----|-----------------|-------------|-------|---------------------|
+| `opp_foraging` | `dec_forage` | Party supplementing rations | Dawn, Midday | Blocked on guard/patrol/fatigue |
+| `opp_repair_work` | `dec_work_repairs` | QM needs paid hands | Dawn, Midday, Dusk | Available on fatigue duty |
+| `opp_trade_goods` | `dec_trade_browse` | Merchant caravan arrived | Dawn, Midday, Dusk | Risky on guard |
+| `opp_high_stakes_cards` | `dec_gamble_high` | Well-dressed merchants, serious money | Dusk, Night | Blocked on guard/patrol (T3+) |
+
+### Recovery Opportunities (7)
+
+| ID | Target Decision | Description | Phase | Context |
+|----|-----------------|-------------|-------|---------|
+| `opp_rest_tent` | `dec_rest_sleep` | Bedroll inviting | Night | Land |
+| `opp_rest_shade` | `dec_rest_short` | Oak shade | Midday | Land |
+| `opp_rest_hammock` | `dec_rest_sleep` | Hammock sways | Night | Sea |
+| `opp_meditation` | `dec_meditate` | Quiet spot for reflection | Dawn, Dusk | Any |
+| `opp_prayer_service` | `dec_prayer` | Priest holding service | Dawn, Dusk | Any |
+| `opp_help_wounded` | `dec_help_wounded` | Surgeon needs hands | Dawn, Midday, Dusk | Any |
+| `opp_preventive_rest` | `dec_rest_medical` | Medical pressure building | Dusk, Night | Any (requires medical pressure) |
+
+### Special Opportunities (6)
+
+| ID | Target Decision | Description | Phase | Tier |
+|----|-----------------|-------------|-------|------|
+| `opp_officer_audience` | `dec_officer_audience` | Captain receiving requests | Midday | 2+ |
+| `opp_mentor_recruit` | `dec_mentor_recruit` | Recruit struggling with drills | Dawn, Midday | 3+ |
+| `opp_volunteer_duty` | `dec_volunteer_extra` | Extra watch volunteers needed | Dawn, Dusk | 1+ |
+| `opp_night_patrol` | `dec_night_patrol` | Unofficial perimeter check | Night | 2+ |
+| `opp_baggage_access` | `dec_baggage_access` | Baggage train accessible | Dawn, Midday, Dusk | 1+ |
+| `opp_seek_medical_care` | Medical decisions | Surgeon available (has condition) | Dawn, Midday, Dusk | 1+ |
+| `opp_urgent_medical` | Medical decisions | Immediate care (severe condition) | All phases | 1+ |
+
+### Sea Variant Opportunities (3)
+
+| ID | Target Decision | Description | Phase | Context |
+|----|-----------------|-------------|-------|---------|
+| `opp_below_deck_drinking` | `dec_tavern_drink` | Crew passing bottles below deck | Dusk, Night | At sea |
+| `opp_ship_maintenance` | `dec_work_repairs` | Rope/sail work needed | Dawn, Midday, Dusk | At sea |
+| `opp_sea_shanty` | `dec_social_singing` | Sailors singing on deck | Dusk, Night | At sea |
+
+**Order Compatibility:**
+- **Available:** Can do while on this order
+- **Risky:** Can attempt, risk getting caught (Officer rep loss, +Discipline, order failure chance)
+- **Blocked:** Cannot do while on duty
+
+**Detection System (for risky opportunities):**
+- Base chance 15-40% depending on activity
+- Night modifier reduces detection (-10 to -20%)
+- High reputation reduces detection (-5 to -15%)
+- Consequences vary: -5 to -20 Officer rep, +1-3 Discipline, 5-30% order failure risk
+
+**See:** [Content Organization Map](content-organization-map.md) for complete opportunity details.
+
+---
+
+## Events (56 total)
+
+**⚠️ WARNING:** The detailed event listings below may contain outdated IDs and descriptions. This section needs reconciliation with actual JSON files in `ModuleData/Enlisted/Events/`. Use `python Tools/count_content.py` for accurate counts.
+
+**Actual Event Files (57 events total):**
+- `events_escalation_thresholds.json` - Scrutiny (5) + Discipline (5) threshold events = 10
+- `events_pay_tension.json` - Pay complaints and tension events
+- `events_pay_loyal.json` - Pay loyalty and wage satisfaction events
+- `events_pay_mutiny.json` - Pay crisis and mutiny events
+- (Pay events total: 12 across 3 files)
+- `events_promotion.json` - Tier promotion proving events (6)
+- `events_retinue.json` - Retinue narrative events for T7-T9 commanders (17)
+- `events_baggage_stowage.json` - Baggage onboarding event (1)
+- `illness_onset.json` - Medical system illness onset events (4)
+- `events_camp_life.json` - Universal camp events (7)
+- `incidents_*.json` - Map-triggered incidents (6 files, counted separately as Map Incidents below)
+
+**For detailed event listings with actual IDs and content, run:** `python Tools/list_events.py`
+
+**This section previously contained outdated event listings. The actual events are in the JSON files.**
 
 | ID | Threshold | Name | Premise | Options |
 |----|-----------|------|---------|---------|
@@ -221,6 +355,18 @@ Some orders have severe failure penalties beyond reputation loss:
 | `evt_disc_8` | 8 | Disciplinary Hearing | Stand before the captain. Explain yourself. | Honest defense / Eloquent excuse / Accept punishment |
 | `evt_disc_10` | 10 | Court Martial | This is a trial. The lord himself presides. | Plead mercy / Defend your actions / Demand trial by combat |
 
+### Onboarding: Baggage Stowage (1)
+
+**File:** `ModuleData/Enlisted/Events/events_baggage_stowage.json`  
+**Trigger:** First enlistment only (one-time)  
+**Requirements:** T1-T6 (not offered to T7+ who keep their gear)
+
+|| ID | Name | Premise | Options |
+||----|------|---------|---------|
+|| `evt_baggage_stowage_first_enlistment` | Stowing Your Belongings | QM clerk demands storage fee or liquidation. | Pay standard fee (200g + 5%) / Charm waiver (Charm 50%: free, +2 QM rep) / Negotiate price (Trade 50%: 100g flat) / Smuggle items (Roguery 50%: free or 250g + +2 Scrutiny) / Sell all (60% value, clean break) / Abort enlistment (-10 Lord rep) |
+
+**Purpose:** Establishes baggage system, QM relationship, and player agency at enlistment.
+
 ### Medical Orchestration: Illness Onset (4) **Phase 6H**
 
 Triggered by `ContentOrchestrator` based on Medical Risk escalation track. Probability: 5% per Medical Risk level + modifiers (fatigue +10%, siege +12%, consecutive high pressure days +5% each). 7-day cooldown, blocked if player already has condition.
@@ -232,8 +378,8 @@ Triggered by `ContentOrchestrator` based on Medical Risk escalation track. Proba
 | `illness_onset_severe` | 5+ | Collapse | You don't remember falling. One moment standing at muster, the next on the ground. "Get the surgeon!" someone shouts. | "Submit to the surgeon's care." (20 gold, Moderate illness + treatment begins) / "I just need... to rest. I'll be fine." (Severe illness, no treatment, high risk) |
 | `untreated_condition_worsening` | 3+ days untreated | Condition Worsening | The pain is getting worse. What started manageable is now constant, stealing sleep and strength. | "You're right. I'll go to the surgeon." (25 gold, begins treatment) / "Just a bit longer. I'll manage." (60% → condition worsens by one level) |
 
-**File:** `ModuleData/Enlisted/Events/illness_onset.json`  
-**See:** [Medical Progression System](medical-progression-system.md) for full specification
+**File:** `ModuleData/Enlisted/Events/illness_onset.json`
+**See:** [Injury & Illness System](injury-system.md) for full medical system specification
 
 ### Muster Events (6)
 
@@ -244,9 +390,6 @@ Triggered during the 12-day muster cycle. See `quartermaster-dialogue-implementa
 | `evt_muster_ration_issued` | Muster + T1-T6 | Ration Issue | — | +1 Food (quality by QM Rep) |
 | `evt_muster_ration_denied` | Muster + Supply <50% | No Ration | — | Player keeps old ration, warning |
 | `evt_baggage_clear` | Muster + 30% chance | Baggage Clear | — | Pass inspection |
-| `evt_baggage_lookaway` | Contraband + QM 65+ | QM Looks Away | — | No penalty (favor used) |
-| `evt_baggage_bribe` | Contraband + QM 35-65 | Bribe Opportunity | **Charm** (negotiate) | Pay 50-75% value or confiscate |
-| `evt_baggage_confiscate` | Contraband + QM <35 | Confiscation | — | Item lost, fine, +Scrutiny |
 
 ### Party Crisis Events (Rare)
 
@@ -405,7 +548,7 @@ Events triggered by personal food inventory or company supply status. See `playe
 
 ---
 
-## Map Incidents (45 total)
+## Map Incidents (51 total) [Already Listed Above - Delete This Duplicate]
 
 **Implementation Status**: ✅ **Content Complete** - MapIncidentManager delivers incidents during battle end, settlement entry/exit, siege operations, and waiting in settlement. All 45 incidents implemented across 6 files matching spec exactly.
 
@@ -528,26 +671,33 @@ Retinue events focus on managing your personal command at T7+. Events cover loya
 | Category | Count | JSON File | Status |
 |----------|-------|-----------|--------|
 | Orders | 17 | `orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json` | ✅ Implemented |
-| Decisions | 38 | `Decisions/decisions.json` (34 core + 4 retinue) | ✅ Implemented |
-| Events - Escalation | 14 | `events_escalation.json` | Indexed |
-| Events - Crisis | 5 | `events_crisis.json` | Indexed |
-| Events - Role | 41 | `events_role_*.json` | Indexed |
+| **Order Events** | 84 | `order_events/*.json` (16 files) | ✅ Implemented |
+| **Core Decisions** | 3 | `decisions.json` | ✅ Implemented |
+| **Camp Decisions** | 26 | `camp_decisions.json` | ✅ Implemented |
+| **Medical Decisions** | 8 | `medical_decisions.json` (4 land + 4 sea) | ✅ Implemented |
+| **Camp Opportunities** | 29 | `camp_opportunities.json` | ✅ Implemented |
+| **Escalation Events** | 10 | `events_escalation_thresholds.json` | ✅ Implemented |
 | Events - Universal | 8 | `events_camp_life.json` | Indexed |
 | Events - Food/Supply | 10 | `events_food_supply.json` | Indexed |
 | Events - Muster | 6 | `events_muster.json` | Indexed |
 | Map Incidents | 45 | `incidents_battle/siege/town/village/leaving/waiting.json` | ✅ Implemented |
-| Retinue Events | 17 | `events_retinue.json` | ✅ Implemented |
-| Retinue Map Incidents | 6 | `incidents_retinue.json` | ✅ Implemented |
-| **Total** | **207** | — | — |
+| **Retinue Events** | 17 | `events_retinue.json` | ✅ Implemented |
+| **Retinue Incidents** | 6 | `incidents_retinue.json` | ✅ Implemented |
+| **TOTAL** | **275** | **38 JSON files** | ✅ Complete |
 
 ### By Trigger
 
 | Trigger | Count | When |
 |---------|-------|------|
 | System-assigned | 17 | Orders from chain of command |
-| Player-initiated | 38 | Camp Hub menu (34 core + 4 retinue) |
-| State threshold | 14 | Escalation crossed |
-| Context/role match | 49 | Daily check |
+| Duty-based | 84 | Order events during duty execution |
+| Player-initiated | 37 | Camp Hub menu decisions (direct choice) |
+| Orchestrated | 29 | Camp opportunities (pre-scheduled 24hrs ahead) |
+| State threshold | 10 | Escalation crossed (Scrutiny/Discipline) |
+| Medical pressure | 4 | Illness onset triggers |
+| Onboarding | 1 | Baggage stowage (first enlistment) |
+| Pay/Promotion/Retinue | 35 | Pay events (12), promotion (6), retinue (17) |
+| Universal | 7 | Camp life events available to all |
 | LeavingBattle | 11 + 6 retinue | After field battle (17 total) |
 | DuringSiege | 10 | Hourly while besieging |
 | EnteringTown | 8 | Opening town menu |
@@ -557,21 +707,23 @@ Retinue events focus on managing your personal command at T7+. Events cover loya
 
 ### Systems Touched
 
-| System | Content Pieces |
-|--------|----------------|
-| Soldier Rep | 70 |
-| Officer Rep | 47 |
-| Lord Rep | 34 |
-| **Retinue Loyalty** | 27 (T7+ content) |
-| Gold | 32 |
-| Scrutiny | 28 |
-| Discipline | 20 |
-| HP/Injury | 24 |
-| Skills (various) | 95 |
-| **Troop Loss** | 10 |
-| **Troop XP** | 15 |
-| **Food Loss** | 12 |
-| **QM Rep** | 8 |
+| System | Content Pieces | Notes |
+|--------|----------------|-------|
+| Soldier Rep | 95+ | Social decisions, camp opportunities, order outcomes, interactions |
+| Officer Rep | 75+ | Orders, duty performance, volunteer opportunities, discipline |
+| Lord Rep | 45+ | High-tier orders, strategic decisions, loyalty events |
+| **Retinue Loyalty** | 27 | T7+ content only (17 events + 6 incidents + opportunities) |
+| Gold | 60+ | Gambling opportunities, work, rewards, costs, risky actions |
+| Scrutiny | 35+ | Escalation track, risky decisions, smuggling, baggage event |
+| Discipline | 30+ | Escalation track, rule-breaking, detection, order failures |
+| Medical Risk | 25+ | Injury/illness system, treatment decisions, medical events |
+| HP/Injury | 45+ | Combat, sparring, medical events, risky actions, treatment |
+| Skills (various) | 180+ | Training opportunities, skill checks, order events, XP rewards |
+| Fatigue | 100+ | Activity costs, rest opportunities, recovery decisions |
+| **Troop Loss** | 10 | Order critical failures, crisis events (rare, dramatic) |
+| **Troop XP** | 15 | NCO training, mentoring opportunities |
+| **Food Loss** | 12 | Spoilage, theft, crisis events |
+| **QM Rep** | 12+ | Baggage stowage, quartermaster interactions, equipment access |
 
 ### Implementation Status
 
@@ -579,11 +731,13 @@ Retinue events focus on managing your personal command at T7+. Events cover loya
 - **Advanced Content Features**: Flags, chain events, and reward choices implemented.
 - **Map Incidents**: Dynamic delivery during map actions.
 - **Ration Exchange**: Automated muster-based logistics.
-- **Baggage Check**: Contraband inspection system.
+- **Baggage Check**: Baggage access gating system.
 - **News Integration**: Event outcomes reflected in company reports.
 
 | Component | File | Status |
 |-----------|------|--------|
+| **Opportunity Scheduling** | `ContentOrchestrator.cs` | ✅ Pre-schedules 24h ahead, locks schedule, provides hints |
+| **Menu Integration** | `EnlistedMenuBehavior.cs` | ✅ Queries Orchestrator directly, no cache, stable opportunities |
 | Event Catalog | `EventCatalog.cs` | ✅ Loads events from JSON, context filtering |
 | Event Delivery | `EventDeliveryManager.cs` | ✅ UI popups, sub-choice popups, effect application |
 | Requirement Checking | `EventRequirementChecker.cs` | ✅ Tier/role/context/skills/traits/escalation/flags |

@@ -4,7 +4,7 @@
 
 **Status:** 📚 Reference  
 **Last Updated:** 2025-12-22  
-**Related Docs:** [Event Catalog](event-catalog-by-system.md), [Content System Architecture](../Features/Content/content-system-architecture.md)
+**Related Docs:** [Content Index](../Features/Content/content-index.md), [Content System Architecture](../Features/Content/content-system-architecture.md)
 
 > **Note**: Written against local decompile in `C:\Dev\Enlisted\Decompile\` (see `docs/blueprint.md` → Native Reference).
 
