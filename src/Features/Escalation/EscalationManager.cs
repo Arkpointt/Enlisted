@@ -95,23 +95,35 @@ namespace Enlisted.Features.Escalation
                 dataStore.SyncData("esc_scrutiny", ref scrutiny);
                 dataStore.SyncData("esc_discipline", ref discipline);
 
-                // Migration: Load old LanceReputation into SoldierReputation
+                // Save/load reputation fields
+                dataStore.SyncData("esc_soldierRep", ref soldierRep);
+                dataStore.SyncData("esc_lordRep", ref lordRep);
+                dataStore.SyncData("esc_officerRep", ref officerRep);
+
+                // Migration: If loading an old save that only has esc_rep (pre-rename), use that value
                 if (dataStore.IsLoading)
                 {
-                    int oldLanceRep = 0;
-                    dataStore.SyncData("esc_rep", ref oldLanceRep);
-                    soldierRep = oldLanceRep;
+                    // Check if soldierRep is still default (0) - might be an old save with esc_rep instead
+                    if (soldierRep == 0)
+                    {
+                        int oldLanceRep = 0;
+                        dataStore.SyncData("esc_rep", ref oldLanceRep);
+                        if (oldLanceRep != 0)
+                        {
+                            soldierRep = oldLanceRep;
+                            ModLogger.Info(LogCategory, $"Migrated old esc_rep ({oldLanceRep}) to esc_soldierRep");
+                        }
+                    }
 
-                    // Initialize new reputation fields at neutral
-                    lordRep = 50;
-                    officerRep = 50;
-                }
-                else
-                {
-                    // Save new reputation system
-                    dataStore.SyncData("esc_soldierRep", ref soldierRep);
-                    dataStore.SyncData("esc_lordRep", ref lordRep);
-                    dataStore.SyncData("esc_officerRep", ref officerRep);
+                    // Initialize lord/officer rep to neutral if they weren't saved (very old saves)
+                    if (lordRep == 0)
+                    {
+                        lordRep = 50;
+                    }
+                    if (officerRep == 0)
+                    {
+                        officerRep = 50;
+                    }
                 }
 
                 dataStore.SyncData("esc_medical", ref medical);

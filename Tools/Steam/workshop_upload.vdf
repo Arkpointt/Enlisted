@@ -73,7 +73,7 @@ Built-in diagnostics run on startup and log to the Debugging folder inside your 
 [h2]Links[/h2]
 [b]GitHub:[/b] [url=https://github.com/Arkpointt/Enlisted]Open Source - Contributions Welcome[/url]
 [b]Documentation:[/b] Full docs included in mod folder
-[b]Version:[/b] v0.9.x"
+[b]Version:[/b] v0.9.1.3"
 	"visibility"		"0"
     "tags"
     {
@@ -81,23 +81,15 @@ Built-in diagnostics run on startup and log to the Debugging folder inside your 
 		"1"		"Singleplayer"
 		"2"		"Overhaul"
     }
-	"changenote"		"v0.9.1.2 - Commitment Model & Content Orchestration
+	"changenote"		"v0.9.1.3 - Stability & Performance Improvements
 
-NEW FEATURES:
-- Commitment-based opportunity scheduling: Click future-phase opportunities to schedule (greyed out until phase), click current/past to fire immediately
-- Each opportunity appears once per day maximum with phase-specific generation
-- Uncommitted opportunities disappear when their phase passes
-- Enhanced duplicate prevention across all content types
-
-CONTENT SYSTEM:
-- Improved event delivery management and pacing logic
-- Enhanced decision system integration with phase-aware scheduling
-- Smarter world-state analysis for adaptive event selection
-- Refined camp opportunity generation with better filtering
+FIXES:
+- Fixed major bugs and stability issues
+- Improved system performance and responsiveness
+- Enhanced compatibility with various game configurations
 
 TECHNICAL:
-- Enhanced conflict detection system for mod compatibility diagnostics
-- Improved content orchestration architecture with better state management
-- Updated logging infrastructure with more diagnostic information
-- Repository modernization: reorganized project structure for better maintainability"
+- Code cleanup and optimization passes
+- Better error handling and logging
+- Minor improvements to content delivery systems"
 }
