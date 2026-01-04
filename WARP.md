@@ -112,17 +112,121 @@ python Tools/Validation/validate_content.py
 dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 ```
 
-## ⚠️ Common Pitfalls
+## ⚠️ Common Pitfalls (WILL BREAK THE MOD)
 
-| Problem | Solution |
-|---------|----------|
-| Gold not showing in UI | Use `GiveGoldAction.ApplyBetweenCharacters()`, not `ChangeHeroGold()` |
-| Crash iterating equipment | Use numeric loop to `NumEquipmentSetSlots`, not `Enum.GetValues()` |
-| New file not compiling | Add to `Enlisted.csproj` `<Compile Include="..."/>` |
-| API doesn't exist | Verify against local decompile, not online docs |
-| Tooltips null | Every option must have a tooltip — validator catches this |
-| JSON validation fails | Check field ordering (fallback immediately after ID) |
-| Reputation/needs wrong | Use centralized managers (EscalationManager, CompanyNeedsManager) |
+| Problem | Solution | Impact |
+|---------|----------|--------|
+| Gold not showing in UI | Use `GiveGoldAction.ApplyBetweenCharacters()`, not `ChangeHeroGold()` | Players lose money silently |
+| Crash iterating equipment | Use numeric loop to `NumEquipmentSetSlots`, not `Enum.GetValues()` | **Crashes game** |
+| New file not compiling | Add to `Enlisted.csproj` `<Compile Include="..."/>` | Code doesn't run, validator catches |
+| "Cannot Create Save" crash | Register new types in `EnlistedSaveDefiner` | **Blocks saving** |
+| Order events without XP | All order event options MUST have `effects.skillXp` | Validator error, breaks progression |
+| In-progress flags not persisted | Persist ALL workflow flags in `SyncData()` (not just completed/scheduled) | Duplicate events on load |
+| Encounter finished in settlement | Check `PlayerEncounter.InsideSettlement` before finishing | Menus disappear unexpectedly |
+| Dead hero tracking | Check `Hero.IsAlive` before `VisualTrackerManager` calls | **Crashes game** |
+| Item comparison by reference | Use `item.StringId` comparison, not `==` | Equipment confiscation fails |
+| Hardcoded strings | Use `TextObject("{=key}Fallback")` + XML | Missing localization |
+| API doesn't exist | Verify against local decompile at `C:\Dev\Enlisted\Decompile\` | Wrong API usage |
+| Tooltips null | Every option must have a tooltip (<80 chars, factual) | Validator error |
+| JSON validation fails | Fallback fields immediately after ID fields | Content won't load |
+| Reputation/needs modified directly | Use `EscalationManager`, `CompanyNeedsManager` | Bypasses clamping/logging |
+
+## 🔑 Critical Code Patterns
+
+### Localization (TextObject)
+```csharp
+// ✅ CORRECT: Localized with fallback
+new TextObject("{=my_string_id}Fallback text here")
+// Add to ModuleData/Languages/enlisted_strings.xml:
+// <string id="my_string_id" text="Localized text" />
+
+// ❌ WRONG: Hardcoded string
+new TextObject("Hardcoded text")
+```
+
+### Save System (New Types)
+```csharp
+// When adding new serializable class/enum:
+// 1. Register in EnlistedSaveDefiner.DefineClassTypes() or DefineEnumTypes()
+// 2. Persist ALL state flags in SyncData(), including in-progress flags:
+SyncData(dataStore, "_eventScheduled", ref _scheduled);
+SyncData(dataStore, "_eventCompleted", ref _completed);
+SyncData(dataStore, "_eventInProgress", ref _inProgress);  // Don't forget!
+```
+
+### Item Comparison
+```csharp
+// ✅ CORRECT: StringId comparison
+if (element.Item != null && element.Item.StringId == targetItem.StringId) { }
+
+// ❌ WRONG: Reference equality (fails for equipped items)
+if (element.Item == targetItem) { }
+```
+
+### Encounter Transitions
+```csharp
+// ✅ CORRECT: Deferred menu activation
+NextFrameDispatcher.RunNextFrame(() => GameMenu.ActivateGameMenu("menu_id"));
+
+// ❌ WRONG: Immediate activation during encounter
+GameMenu.ActivateGameMenu("menu_id");
+```
+
+### Hero Safety
+```csharp
+// ✅ CORRECT: Null-safe during character creation
+var hero = CampaignSafetyGuard.SafeMainHero;
+if (hero == null) return;
+
+// ❌ WRONG: Direct access
+var hero = Hero.MainHero;  // Can be null during creation
+```
+
+### Hero Tracking
+```csharp
+// ✅ CORRECT: Check if alive before tracking
+if (hero.IsAlive)
+{
+    VisualTrackerManager.RegisterObject(hero);
+}
+
+// ❌ WRONG: No alive check
+VisualTrackerManager.RegisterObject(hero);  // Crashes if dead
+```
+
+### Gold Transactions
+```csharp
+// ✅ CORRECT: Updates party treasury (visible in UI)
+GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);  // Grant
+GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, amount);  // Deduct
+
+// ❌ WRONG: Modifies internal gold not visible in party UI
+Hero.MainHero.ChangeHeroGold(amount);
+```
+
+### Equipment Iteration
+```csharp
+// ✅ CORRECT: Iterate valid equipment slots (0-11)
+for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
+{
+    var slot = (EquipmentIndex)i;
+    var element = equipment[slot];
+    // ...
+}
+
+// ❌ WRONG: Includes invalid count enum values, causes crashes
+foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex))) { }
+```
+
+### Reputation/Needs Changes
+```csharp
+// ✅ CORRECT: Use centralized managers (handles clamping, logging)
+EscalationManager.Instance.ModifyReputation(ReputationType.Soldier, 5, "reason");
+CompanyNeedsManager.Instance.ModifyNeed(NeedType.Morale, -10, "reason");
+
+// ❌ WRONG: Direct modification bypasses validation
+_soldierReputation += 5;
+```
 
 ## 🎯 Project Overview
 
