@@ -7,46 +7,17 @@
     <UpdateItem>
         <ModuleFolder Value="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"/>
         <!-- A direct path of your module -->   
-        <ChangeNotes Value="v0.9.1.2 - Commitment Model &amp; Content Orchestration
+        <ChangeNotes Value="v0.9.1.3 - Stability &amp; Performance Improvements
 
-[NEW: COMMITMENT-BASED OPPORTUNITY SCHEDULING]
-- Click future opportunities to schedule (greyed out until phase arrives, then auto-fires)
-- Click current/past opportunities to fire immediately
-- Uncommitted opportunities disappear when their phase passes
-- Each opportunity appears once per day maximum
-- Phase-specific generation prevents duplicate activities
-- Clearer player control over daily schedule and activity planning
+[FIXES]
+- Fixed major bugs and stability issues
+- Improved system performance and responsiveness
+- Enhanced compatibility with various game configurations
 
-[CONTENT ORCHESTRATION ENHANCEMENTS]
-- Improved event delivery management and pacing
-- Enhanced decision system integration with phase-aware scheduling
-- Smarter world-state analysis for adaptive event selection
-- Better duplicate prevention across content types
-- Refined camp opportunity generation logic
-
-[REPOSITORY MODERNIZATION]
-- Reorganized project structure: tools/ → Tools/ with logical categorization (Validation, Debugging, Steam, Research)
-- Enhanced content validation scripts with comprehensive checks
-- Added writing style guide for consistent narrative voice
-- Improved Steam Workshop deployment documentation
-- Consolidated development utilities and debugging tools
-
-[TECHNICAL IMPROVEMENTS]
-- Enhanced conflict detection system for mod compatibility diagnostics
-- Improved content orchestration architecture with better state management
-- Refined event requirement checking and pacing logic
-- Enhanced camp simulation integration
-- Updated logging infrastructure for better diagnostics
-
-[DOCUMENTATION]
-- Added comprehensive content effects reference
-- Created content-skill integration planning documentation
-- Added event status visualization guide
-- Expanded systems integration analysis
-- Updated content system architecture documentation
-- Improved developer tooling documentation
-
-This update focuses on player agency (commitment model), content system maturity, and developer experience improvements." />
+[TECHNICAL]
+- Code cleanup and optimization passes
+- Better error handling and logging
+- Minor improvements to content delivery systems" />
         <!-- Insert patch notes -->
         <Tags> 
             <!-- You can use the following tags: -->

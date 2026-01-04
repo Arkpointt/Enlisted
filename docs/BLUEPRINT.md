@@ -1,6 +1,6 @@
 # Enlisted - Project Blueprint
 
-**Bannerlord v1.3.13 soldier career mod** | **Last Updated:** 2026-01-04
+**Bannerlord v1.3.13 soldier career mod** | **Last Updated:** 2026-01-04 (Bug fix: Grace period crash when lord dies)
 
 ---
 
@@ -8,6 +8,7 @@
 
 | Task | READ THIS FILE | Key Info |
 |------|----------------|----------|
+| **Runtime debug logs** | `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging` | ModLogger output, error codes, save diagnostics |
 | **Steam Workshop upload** | `Tools/Steam/WORKSHOP_UPLOAD.md` | VDF char limits, run `.\Tools\Steam\upload.ps1` in interactive PS |
 | **Add/edit events/orders** | `docs/Features/Content/writing-style-guide.md` | Voice, tone, JSON schema |
 | **Understand a feature** | `docs/Features/Core/enlistment.md` or relevant feature doc | Check docs/INDEX.md for full catalog |
@@ -38,11 +39,13 @@ python Tools/Validation/sync_event_strings.py         # Sync localization
 
 | Path | Purpose |
 |------|---------|
+| `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging` | **Runtime mod logs** (ModLogger output, error codes) |
 | `src/Features/` | All gameplay code (Enlistment, Orders, Content, Combat, Equipment, etc.) |
 | `ModuleData/Enlisted/` | JSON config, events, orders, decisions |
 | `ModuleData/Languages/enlisted_strings.xml` | All localized strings |
 | `Tools/Steam/` | Workshop upload scripts and VDF |
 | `Tools/Validation/` | Content validators |
+| `Tools/Debugging/` | Validation reports and analysis scripts |
 | `docs/` | All documentation |
 | `C:\Dev\Enlisted\Decompile\` | Native API reference (v1.3.13) |
 
@@ -394,6 +397,23 @@ These mistakes cause real problems. Avoid them.
 1. Persist all workflow state flags in `SyncData()`, not just completed/scheduled flags
 2. When transient data (like event queues) needs restoration after load, check in-progress flags in `ValidateLoadedState()` and re-queue
 3. Example: The bag check event can be saved mid-popup; on load, `_bagCheckInProgress` must be persisted to prevent duplicate queueing
+
+### 17. Finishing PlayerEncounter During Settlement Activity
+**Problem:** Clicking "Wait here for some time" or other settlement menus causes the town menu to disappear when unrelated battles end elsewhere on the map
+**Root Cause:** `CleanupPostEncounterState()` was finishing `PlayerEncounter` even when the player was still inside a settlement
+**Solution:**
+1. Always check if player is inside settlement before finishing encounters: `PlayerEncounter.InsideSettlement || HasExplicitlyVisitedSettlement`
+2. Settlement encounters should only be finished when the player actually leaves the settlement, not during internal menu navigation
+3. See `encounter-safety.md` for full details on the fix (2026-01-04)
+
+### 18. Registering Dead Heroes with VisualTrackerManager
+**Problem:** Attempting to register or unregister dead heroes with `VisualTrackerManager` causes crashes
+**Root Cause:** When a lord dies, the grace period system tried to register the dead hero for map tracking, causing crashes when the player later tried to re-enlist
+**Solution:**
+1. Always check `Hero.IsAlive` before calling `VisualTrackerManager.RegisterObject()` or `RemoveTrackedObject()`
+2. Wrap tracker operations in try-catch for defensive programming
+3. Example from grace period system: Only register lord for tracking if `_enlistedLord.IsAlive` is true
+4. Dead heroes cannot be displayed on the map tracker, so skipping them is correct behavior
 
 ---
 

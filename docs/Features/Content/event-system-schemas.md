@@ -3,7 +3,7 @@
 **Summary:** Authoritative JSON schema definitions for events, decisions, orders, and camp routine configs. This document specifies the exact field names the parser expects. When in doubt, **this document is the source of truth**.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-03 (Bug fix: Documented EventSelector category filtering behavior; Added all modern fields)  
+**Last Updated:** 2026-01-03 (Bug fixes: EventSelector category filtering, Order context variant mutation)  
 **Related Docs:** [Writing Style Guide](writing-style-guide.md), [Content System Architecture](content-system-architecture.md), [Camp Routine Schedule](../../Campaign/camp-routine-schedule-spec.md), [Content Index](content-index.md), [Quartermaster System](../Equipment/quartermaster-system.md)
 
 ---
@@ -2643,7 +2643,7 @@ Optional skill check that modifies option outcomes:
 ### Order Context Variants (Sea/Land Awareness)
 
 **Added:** 2025-12-31  
-**Updated:** 2025-12-31 - Dynamic display system
+**Updated:** 2026-01-03 - Bug fix: Order.Title mutation causing wrong variant display on land
 
 Orders support context-variant text to adapt flavor text for sea vs land travel. When at sea (Warsails DLC), orders can display nautical-themed titles and descriptions.
 
@@ -2672,6 +2672,7 @@ Orders support context-variant text to adapt flavor text for sea vs land travel.
 - If party goes to sea after an order was issued on land, all UI elements automatically show the sea variant
 - Checks `WorldStateAnalyzer.DetectTravelContext()` which uses `MobileParty.IsCurrentlyAtSea` (Warsails DLC)
 - Falls back to default Title/Description if no variant exists for current context
+- **Important:** Order objects are **never mutated** - the base title/description remains unchanged, and variants are applied only during display rendering
 - Works without Warsails DLC installed (defaults to "land" context)
 
 **Applied Throughout UI:**

@@ -3,7 +3,7 @@
 **Summary:** The enlistment system manages how players join a lord's service, progress through 9 military ranks (T1-T9), and leave through discharge or desertion. Covers deep technical details of enlistment mechanics, invisible party management, XP progression, wage calculation, baggage handling, grace periods, and service records for re-enlistment.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-03 (Bug Fix: Baggage stowage dialog no longer fires multiple times during service)
+**Last Updated:** 2026-01-04 (Bug Fix: Grace period crash when lord dies - visual tracker now checks IsAlive before registration)
 **Related Docs:** [Core Gameplay](core-gameplay.md), [Onboarding & Discharge](onboarding-discharge-system.md), [Pay System](pay-system.md), [Promotion System](promotion-system.md)
 
 > **Note:** For high-level gameplay overview, see `core-gameplay.md`. This document provides technical implementation details.
@@ -304,6 +304,7 @@ Level 10 Player, Returning (Deserter):
 - Courier baggage arrival during grace period: deferred until re-enlistment
 - Player captured during grace period: grace timer continues
 - Grace expires during player captivity: deserter penalties applied on release
+- **Lord dies (not captured)**: Visual tracker only registers lord if alive, preventing crash when attempting to re-enlist
 
 **Promotion Edge Cases:**
 - Declining a promotion requires manual request from NCO to receive it later

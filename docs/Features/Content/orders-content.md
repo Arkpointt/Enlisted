@@ -685,7 +685,9 @@ Basic soldier orders have nautical text variants that display when the party is 
 
 **Dynamic Display:** Context variants are applied dynamically whenever an order is displayed to the player using `OrderCatalog.GetDisplayTitle()` and `OrderCatalog.GetDisplayDescription()`. This means if a party goes to sea after an order was issued on land, the order will automatically show its sea variant ("Hull Inspection" instead of "Camp Patrol") throughout all UI elements.
 
-**Detection:** Uses `MobileParty.IsCurrentlyAtSea == true` via `WorldStateAnalyzer.DetectTravelContext()` to determine current context at display time.
+**Detection:** Uses `MobileParty.IsCurrentlyAtSea == true` via `OrderCatalog.GetCurrentTravelContextKey()` to determine current context at display time.
+
+**Implementation Note (2026-01-03):** The Order object itself is never mutated - `order.Title` and `order.Description` always retain their base values. Context variants are applied only during display rendering, ensuring the same order shows the correct variant regardless of how many times the party transitions between sea and land.
 
 ### 2. Land-Only Orders (T4-T6)
 
