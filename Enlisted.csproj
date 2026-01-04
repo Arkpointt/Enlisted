@@ -578,6 +578,11 @@
   </ItemGroup>
   
   <ItemGroup>
+    <!-- Order Events (Phase events during order execution) -->
+    <OrderEventsData Include="ModuleData\Enlisted\Orders\order_events\*.json"/>
+  </ItemGroup>
+  
+  <ItemGroup>
     <!-- Content (Injuries and other dynamic content) -->
     <ContentData Include="ModuleData\Enlisted\Content\*.json"/>
   </ItemGroup>
@@ -641,6 +646,7 @@
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Decisions"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Orders"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Orders\order_events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Content"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
     
@@ -653,6 +659,7 @@
     <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>
     <Copy SourceFiles="@(DecisionsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Decisions\"/>
     <Copy SourceFiles="@(OrdersData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Orders\"/>
+    <Copy SourceFiles="@(OrderEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Orders\order_events\"/>
     <Copy SourceFiles="@(DialogueData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Dialogue\"/>
     <Copy SourceFiles="@(ContentData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Content\"/>
     

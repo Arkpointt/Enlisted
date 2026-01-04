@@ -870,9 +870,151 @@ string encyclopediaLink = linkHref.StartsWith("event:")
     : linkHref;
 ```
 
+### Bug #16: Encyclopedia Close Button Not Clickable
+
+**Root Cause:** The combat log layer (priority 1000) is rendered on top of the encyclopedia layer (priority 310). Even though the combat log calls `SetInputRestrictions(false)`, its widgets still have `DoNotAcceptEvents="false"` to enable scrolling and link clicks, which means they can capture mouse events. When the encyclopedia opens, the combat log layer remains active and blocks mouse input to the encyclopedia's close button.
+
+**Resolution:** Added encyclopedia detection to `ManageLayerVisibility()` to suspend the combat log layer when the encyclopedia is open:
+
+```csharp
+// Check if encyclopedia is open
+bool isEncyclopediaOpen = IsEncyclopediaOpen();
+
+// Suspend if: not enlisted, in a mission, in a conversation, or encyclopedia is open
+bool shouldSuspend = !isEnlisted || isInMission || _wasInConversation || isEncyclopediaOpen;
+```
+
+The `IsEncyclopediaOpen()` method uses reflection to access the native `MapEncyclopediaView` and check its `IsEncyclopediaOpen` property:
+
+```csharp
+private bool IsEncyclopediaOpen()
+{
+    var mapScreen = ScreenManager.TopScreen;
+    var getMapViewMethod = mapScreen.GetType().GetMethod("GetMapView");
+    var mapEncyclopediaViewType = Type.GetType("SandBox.View.Map.MapEncyclopediaView, SandBox.View");
+    var genericMethod = getMapViewMethod.MakeGenericMethod(mapEncyclopediaViewType);
+    var encyclopediaView = genericMethod.Invoke(mapScreen, null);
+    var isOpenProperty = encyclopediaView.GetType().GetProperty("IsEncyclopediaOpen");
+    return (bool)isOpenProperty.GetValue(encyclopediaView);
+}
+```
+
+**Key Insight:** Higher layer priority means rendered on top. Combat log (1000) is above encyclopedia (310). When the encyclopedia opens, the combat log needs to be suspended to avoid blocking UI interactions, just like it's suspended during conversations and missions.
+
+### Bug #17: Combat Log Not Repositioning for Army Management Panel
+
+**Root Cause:** The combat log only checked for `PartyState` to detect when to reposition upward, but didn't check if the army management panel was expanded. When the player expands the army toolbar in the bottom-right, it overlaps the combat log position.
+
+**Resolution:** Added army management detection to the positioning logic in `OnTick()`:
+
+```csharp
+// Check if party screen is open by checking active game state
+bool isPartyScreenOpen = Game.Current?.GameStateManager?.ActiveState is PartyState;
+
+// Check if army management panel is open
+bool isArmyManagementOpen = IsArmyManagementOpen();
+
+// Update positioning if either panel is open
+UpdatePositioning(isPartyScreenOpen || isArmyManagementOpen);
+```
+
+The `IsArmyManagementOpen()` method uses reflection to check the `MapScreen.IsInArmyManagement` property:
+
+```csharp
+private bool IsArmyManagementOpen()
+{
+    var mapScreen = ScreenManager.TopScreen;
+    var isInArmyManagementProperty = mapScreen.GetType().GetProperty("IsInArmyManagement");
+    return (bool)isInArmyManagementProperty.GetValue(mapScreen);
+}
+```
+
+**Key Insight:** Multiple bottom panels can obstruct the combat log. The positioning system now checks for both party screen and army management panel, moving the log up 180px when either is open.
+
+### Bug #18: Combat Log Not Repositioning for Army Overlay Panel
+
+**Root Cause:** The combat log checked for party screen and army management (bottom bar), but didn't detect when the army overlay panel (right side, shows party portraits and food/cohesion) was visible. This caused overlap when player is in an army with the overlay showing.
+
+**Resolution:** Added army overlay detection alongside other panel checks:
+
+```csharp
+// Check if party bar is extended
+bool isBarExtended = IsBarExtended();
+
+// Check if army overlay roster panel is visible
+bool isArmyOverlayExtended = IsArmyOverlayExtended();
+
+// Combine both checks
+bool anyBarExtended = isBarExtended || isArmyOverlayExtended;
+
+// Update positioning if either panel is open
+bool shouldRepositionUp = isPartyScreenOpen || anyBarExtended;
+```
+
+The `IsArmyOverlayExtended()` method uses reflection to find the `_armyOverlay` field on MapScreen and check if it has a valid ViewModel:
+
+```csharp
+private bool IsArmyOverlayExtended()
+{
+    var mapScreen = ScreenManager.TopScreen;
+    if (mapScreen == null) return false;
+    
+    // Get the _armyOverlay MapView field - search up inheritance chain
+    FieldInfo armyOverlayField = null;
+    var type = mapScreen.GetType();
+    int searchDepth = 0;
+    while (type != null && armyOverlayField == null && searchDepth < 10)
+    {
+        armyOverlayField = type.GetField("_armyOverlay", BindingFlags.NonPublic | BindingFlags.Instance);
+        type = type.BaseType;
+        searchDepth++;
+    }
+    
+    if (armyOverlayField == null) return false;
+    
+    var armyOverlay = armyOverlayField.GetValue(mapScreen);
+    if (armyOverlay == null) return false; // Not in army
+    
+    // Check if the ViewModel exists (indicates overlay is active)
+    var dataSourceField = armyOverlay.GetType().GetField("_overlayDataSource", BindingFlags.NonPublic | BindingFlags.Instance);
+    if (dataSourceField == null) return false;
+    
+    var viewModel = dataSourceField.GetValue(armyOverlay);
+    
+    // The army overlay is visible when both armyOverlay and viewModel exist
+    return viewModel != null;
+}
+```
+
+**Key Insight:** The army overlay is always visible when player is in an army (not just when expanded). If `_armyOverlay` exists with a valid `_overlayDataSource` ViewModel, the panel is taking up screen space and the combat log should reposition upward to avoid overlap.
+
 ---
 
 ## Changelog
+
+**2026-01-04 (Army Overlay Repositioning Fix):**
+- 🐛 **Fixed combat log not repositioning when army overlay panel is visible** - Log overlapped right-side army panel showing party portraits and food/cohesion
+- Root cause: Only checked for bottom bar (`IsBarExtended`) but not the army overlay panel itself
+- Solution: Added `IsArmyOverlayExtended()` check that detects when `_armyOverlay` exists with valid `_overlayDataSource` ViewModel
+- Combat log now moves up 180px when army overlay is visible (player is in army and overlay is active)
+- Uses reflection to find `_armyOverlay` field on MapScreen and check for ViewModel existence
+- Simplified detection: overlay visibility = armyOverlay + viewModel both exist (no complex property checks needed)
+
+**2026-01-03 (Army Management Repositioning Fix):**
+- 🐛 **Fixed combat log not repositioning when army management panel opens/closes** - Log remained in same position, overlapping the army toolbar
+- Root cause: Only checked for `PartyState` but not `MapScreen.IsInArmyManagement` property
+- Solution: Added `IsArmyManagementOpen()` check alongside party screen detection
+- Combat log now moves up 180px when either party screen OR army management panel is open
+- Uses reflection to check `MapScreen.IsInArmyManagement` property every tick
+- Provides smooth repositioning when expanding/collapsing army toolbar in bottom-right
+
+**2026-01-03 (Encyclopedia Close Button Fix):**
+- 🐛 **Fixed encyclopedia X button not clickable after opening from combat log** - Encyclopedia close button was blocked by combat log layer
+- Root cause: Combat log layer (priority 1000) rendered on top of encyclopedia (priority 310), blocking mouse input even with `SetInputRestrictions(false)`
+- Solution: Added encyclopedia detection to suspend combat log layer when encyclopedia is open
+- Uses reflection to check `MapEncyclopediaView.IsEncyclopediaOpen` property every tick
+- Combat log now properly suspends during encyclopedia, conversations, missions, and non-enlisted states
+- Encyclopedia UI is now fully functional when opened from combat log links
 
 **2026-01-03 (Encyclopedia Link Click Fix):**
 - 🐛 **Fixed encyclopedia links not opening when clicked** - Links in combat log were unresponsive

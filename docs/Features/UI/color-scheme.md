@@ -168,6 +168,23 @@ Supplies uses green for good status because it's a critical resource players act
 | 40-59 | Warning (Gold) | Needs improvement |
 | 0-39 | Alert (Red) | Dangerous territory |
 
+### News Feed Severity Levels
+
+Used by the news reporting system for event outcomes, routine activities, and order results:
+
+| Severity | Color | Meaning | Examples |
+|----------|-------|---------|----------|
+| 0 | Default (Cream) | Normal events | Routine activities completed normally |
+| 1 | Success (Green) | Positive outcomes | Excellent performance, successful orders, skill gains |
+| 2 | Warning (Gold) | Needs attention | Poor performance, failed options, minor mishaps, sickness |
+| 3 | Alert (Red) | Urgent issues | Severe conditions, critical failures, injuries |
+| 4 | Critical (Bright Red) | Extreme danger | Life-threatening situations, catastrophic events |
+
+**Routine Activity Outcome Mapping:**
+- `Excellent` → Severity 1 (Green)
+- `Good/Normal` → Severity 0 (Cream)
+- `Poor/Mishap` → Severity 2 (Yellow)
+
 ---
 
 ## Design Rationale
@@ -234,6 +251,11 @@ The brush XML is auto-loaded from `GUI/Brushes/` by the game engine. No explicit
 ---
 
 ## Version History
+
+**January 3, 2026:**
+- Added News Feed Severity Levels section documenting the 0-4 severity scale
+- Documented routine activity outcome mapping to severity levels
+- Clarified how severity levels translate to visual colors in news feed display
 
 **December 31, 2025:**
 - Updated menu references to match current implementation:

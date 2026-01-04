@@ -1,6 +1,6 @@
 # Enlisted - Project Blueprint
 
-**Bannerlord v1.3.13 soldier career mod** | **Last Updated:** 2026-01-04 (Bug fix: Grace period crash when lord dies)
+**Bannerlord v1.3.13 soldier career mod** | **Last Updated:** 2026-01-04 (Battle side army race conditions fixed. 3-day grace period removed.)
 
 ---
 

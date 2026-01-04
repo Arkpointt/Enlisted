@@ -3,7 +3,7 @@
 **Summary:** Prevents enlisted players from triggering unwanted map encounters while hidden, ensures automatic battle participation when lord enters combat, provides reliable cleanup on discharge, and integrates with native menu system to yield when appropriate (e.g., siege menus).
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-04 (Fixed settlement wait menu disappearing due to unrelated battles)  
+**Last Updated:** 2026-01-04 (Fixed battle side determination when lord is in army)  
 **Related Docs:** [enlistment.md](../Core/enlistment.md), [formation-assignment.md](../Combat/formation-assignment.md), [battle-system-complete-analysis.md](../../Reference/battle-system-complete-analysis.md)
 
 ---
@@ -446,6 +446,90 @@ EncounterGuard.ShowPlayerPartyVisual();  // Sets IsVisible = true
 - Automatically selects lord's side
 - Bypasses "Help or Leave" choice menu
 - Routes to standard encounter menu (Attack/Send Troops/Wait)
+
+**Battle Side Determination:**
+
+When determining which side the player should join in battle, the code must handle **two race conditions** related to army membership timing:
+
+---
+
+**Race Condition #1: Lord in army but not in MapEvent parties yet**
+
+**Problem:** Only the army leader's party may be listed in `mapEvent.AttackerSide.Parties` initially - the enlisted lord's individual party isn't added until later. Checking only for the lord's party would incorrectly default to Defender side.
+
+**Example Scenario:**
+```
+Player enlisted with Lord Hecard
+Hecard is in King Derthert's army
+Derthert attacks Lamcard
+mapEvent.AttackerSide.Parties contains: [Derthert] (not Hecard yet!)
+lordIsAttacker check fails → defaults to Defender → player joins Lamcard's side ❌
+```
+
+**Fix #1 in `ForceImmediateBattleJoin` (EnlistmentBehavior.cs ~1477):**
+
+```csharp
+// ARMY FIX #1: Check lord's army leader when lord isn't in parties list yet
+if (!lordIsAttacker && lordParty.Army != null)
+{
+    var armyLeaderParty = lordParty.Army.LeaderParty?.Party;
+    if (armyLeaderParty != null)
+    {
+        lordIsAttacker = attackerSide?.Parties?.Any(p => p?.Party == armyLeaderParty) == true;
+    }
+}
+```
+
+---
+
+**Race Condition #2: Player auto-collected into army BEFORE lord joins**
+
+**Problem:** When the lord is approaching an army to join, the native game may auto-collect the player's party into the army (within proximity radius) before the lord has physically merged. If a battle starts during this window, `lordParty.Army` is `null` but `mainParty.Army` is not null.
+
+**Example Scenario:**
+```
+Lord Hecard approaching King Derthert's army
+Player party collected into army (proximity-based) before Hecard merges
+Battle starts while Hecard is still "in transit"
+lordParty.Army == null (lord not in army yet!)
+mainParty.Army == Derthert's army (player IS in army)
+lordIsAttacker check fails → defaults to Defender → player joins wrong side ❌
+```
+
+**Fix #2 in `ForceImmediateBattleJoin` (EnlistmentBehavior.cs ~1493):**
+
+```csharp
+// ARMY FIX #2: Player in army before lord - use player's army leader
+if (!lordIsAttacker && lordParty.Army == null && main.Army != null)
+{
+    var playerArmyLeaderParty = main.Army.LeaderParty?.Party;
+    if (playerArmyLeaderParty != null)
+    {
+        lordIsAttacker = attackerSide?.Parties?.Any(p => p?.Party == playerArmyLeaderParty) == true;
+    }
+}
+```
+
+---
+
+**Complete implementation in `JoinEncounterAutoSelectPatch.cs` (~88-131):**
+
+The patch implements a comprehensive check that handles both scenarios:
+- Checks if lord's party is directly in battle
+- Checks if ANY army member is in battle (handles both race conditions)
+- Determines side based on either lord or army member presence
+
+**Log Patterns:**
+
+```
+# Fix #1 - Lord in army but not in parties:
+[Battle] Lord's army leader (Derthert) is attacker - joining attacker side
+
+# Fix #2 - Player in army before lord:
+[Battle] Player in army before lord - using player's army leader (Derthert) to determine attacker side
+```
+
+**Related:** Line 7667 in `EnlistmentBehavior.cs` (lord with no army path) doesn't need these checks because it's specifically for cases where neither party is in an army.
 
 **Menu Routing:**
 - Ensures "Encounter" menu instead of "Help or Leave"

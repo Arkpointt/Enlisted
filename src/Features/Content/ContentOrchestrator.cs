@@ -111,6 +111,13 @@ namespace Enlisted.Features.Content
         private Dictionary<DayPhase, List<ScheduledOpportunity>> _scheduledOpportunities;
 
         /// <summary>
+        /// Pre-scheduled opportunities for TOMORROW (cross-day forecasting).
+        /// When it's late in the day (Dusk/Night), we also schedule tomorrow's early phases
+        /// to maintain a rolling 24-hour visibility window per the design spec.
+        /// </summary>
+        private Dictionary<DayPhase, List<ScheduledOpportunity>> _scheduledTomorrowOpportunities;
+
+        /// <summary>
         /// Day the current schedule was generated. Used to detect new day.
         /// </summary>
         private int _scheduledDay = -1;
@@ -845,6 +852,7 @@ namespace Enlisted.Features.Content
         /// <summary>
         /// Called on daily tick. Schedules opportunities for next 24 hours.
         /// Opportunities are locked once scheduled and won't disappear when context changes.
+        /// Implements cross-day scheduling: when late in day, also schedules tomorrow's early phases.
         /// </summary>
         private void ScheduleOpportunities()
         {
@@ -852,6 +860,7 @@ namespace Enlisted.Features.Content
             if (EnlistmentBehavior.Instance?.IsEnlisted != true)
             {
                 _scheduledOpportunities = null;
+                _scheduledTomorrowOpportunities = null;
                 ModLogger.Debug(LogCategory, "Opportunity scheduling skipped: not enlisted");
                 return;
             }
@@ -866,8 +875,20 @@ namespace Enlisted.Features.Content
 
             ModLogger.Info(LogCategory, "═══ Daily Opportunity Schedule ═══");
 
+            // Day transition: move yesterday's "tomorrow" to today's schedule
+            // This ensures opportunities pre-scheduled for tomorrow become available when tomorrow arrives
+            if (_scheduledTomorrowOpportunities != null && _scheduledTomorrowOpportunities.Count > 0)
+            {
+                _scheduledOpportunities = _scheduledTomorrowOpportunities;
+                ModLogger.Info(LogCategory, "  (Promoted tomorrow's pre-scheduled opportunities to today)");
+            }
+            else
+            {
+                _scheduledOpportunities = new Dictionary<DayPhase, List<ScheduledOpportunity>>();
+            }
+            
+            _scheduledTomorrowOpportunities = new Dictionary<DayPhase, List<ScheduledOpportunity>>();
             _scheduledDay = currentDay;
-            _scheduledOpportunities = new Dictionary<DayPhase, List<ScheduledOpportunity>>();
 
             // Get current world situation for prediction
             var worldSituation = WorldStateAnalyzer.AnalyzeSituation();
@@ -877,16 +898,59 @@ namespace Enlisted.Features.Content
             // Track ALL scheduled opportunities across phases to prevent duplicates
             // Each opportunity should only appear ONCE per day (in one phase)
             var alreadyScheduledIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            
+            // Include IDs from promoted tomorrow schedule in already-scheduled set
+            foreach (var kvp in _scheduledOpportunities)
+            {
+                foreach (var opp in kvp.Value)
+                {
+                    alreadyScheduledIds.Add(opp.OpportunityId);
+                }
+            }
 
-            // Schedule for each phase
+            // Get current phase to determine which phases have already passed
+            // This prevents past-phase opportunities from appearing when schedule is generated mid-day
+            var currentPhase = worldSituation.CurrentDayPhase;
+            
+            // Schedule for each phase (today)
             int totalScheduled = 0;
             int totalGuaranteed = 0;
+            int skippedPastPhase = 0;
             foreach (DayPhase phase in Enum.GetValues(typeof(DayPhase)))
             {
+                // Skip phases that were already promoted from yesterday's "tomorrow" schedule
+                if (_scheduledOpportunities.ContainsKey(phase) && _scheduledOpportunities[phase].Count > 0)
+                {
+                    var promotedCount = _scheduledOpportunities[phase].Count(o => !o.Consumed);
+                    if (promotedCount > 0)
+                    {
+                        totalScheduled += promotedCount;
+                        var oppList = string.Join(", ", _scheduledOpportunities[phase].Where(o => !o.Consumed).Select(o => o.OpportunityId));
+                        ModLogger.Info(LogCategory, $"  {phase}: {promotedCount} opportunities (promoted) → [{oppList}]");
+                        continue;
+                    }
+                }
+                
                 var scheduled = SchedulePhaseOpportunities(phase, worldSituation, alreadyScheduledIds);
+                
+                // If this phase has already passed today, mark all opportunities as consumed immediately
+                // This handles mid-day schedule regeneration (e.g., after save/load)
+                // Phase order: Dawn(0) -> Midday(1) -> Dusk(2) -> Night(3)
+                bool isPastPhase = (int)phase < (int)currentPhase;
+                if (isPastPhase && scheduled.Count > 0)
+                {
+                    foreach (var opp in scheduled)
+                    {
+                        opp.Consumed = true;
+                    }
+                    skippedPastPhase += scheduled.Count;
+                    ModLogger.Debug(LogCategory, 
+                        $"  {phase}: {scheduled.Count} opportunities marked consumed (phase already passed)");
+                }
+                
                 _scheduledOpportunities[phase] = scheduled;
 
-                if (scheduled.Count > 0)
+                if (scheduled.Count > 0 && !isPastPhase)
                 {
                     var guaranteed = scheduled.Count(s => s.SourceOpportunity?.Immediate == true);
                     totalScheduled += scheduled.Count;
@@ -898,15 +962,92 @@ namespace Enlisted.Features.Content
                     ModLogger.Info(LogCategory, 
                         $"  {phase}: {scheduled.Count} opportunities ({guaranteed} guaranteed) → [{oppList}]");
                 }
-                else
+                else if (!isPastPhase)
                 {
                     ModLogger.Debug(LogCategory, $"  {phase}: 0 opportunities (budget=0 or no candidates)");
                 }
             }
+            
+            if (skippedPastPhase > 0)
+            {
+                ModLogger.Info(LogCategory, 
+                    $"  (Skipped {skippedPastPhase} past-phase opportunities - schedule generated at {currentPhase})");
+            }
+
+            // Cross-day scheduling: When late in the day (Dusk or Night), also schedule tomorrow's 
+            // earlier phases to maintain a rolling 24-hour visibility window per design spec.
+            int tomorrowScheduled = ScheduleTomorrowOpportunities(currentPhase, worldSituation, alreadyScheduledIds);
 
             ModLogger.Info(LogCategory, 
-                $"Schedule complete: {totalScheduled} total ({totalGuaranteed} guaranteed, {totalScheduled - totalGuaranteed} fitness-selected)");
+                $"Schedule complete: {totalScheduled} today + {tomorrowScheduled} tomorrow ({totalGuaranteed} guaranteed)");
             ModLogger.Info(LogCategory, "══════════════════════════════════");
+        }
+
+        /// <summary>
+        /// Schedules tomorrow's early phases when it's late in the day.
+        /// This maintains a rolling 24-hour visibility window as per design spec.
+        /// </summary>
+        /// <param name="currentPhase">Current day phase.</param>
+        /// <param name="worldSituation">Current world state for budget calculation.</param>
+        /// <param name="alreadyScheduledIds">IDs to exclude (prevents duplicates).</param>
+        /// <returns>Number of opportunities scheduled for tomorrow.</returns>
+        private int ScheduleTomorrowOpportunities(DayPhase currentPhase, WorldSituation worldSituation, HashSet<string> alreadyScheduledIds)
+        {
+            // Only schedule tomorrow if we're late in the day
+            // Dusk (2): schedule tomorrow's Dawn, Midday
+            // Night (3): schedule tomorrow's Dawn, Midday, Dusk
+            if ((int)currentPhase < (int)DayPhase.Dusk)
+            {
+                ModLogger.Debug(LogCategory, $"  (Skipping tomorrow scheduling - too early in day, currentPhase={currentPhase})");
+                return 0; // Early in day, no need for tomorrow yet
+            }
+
+            var phasesToSchedule = new List<DayPhase>();
+            switch (currentPhase)
+            {
+                case DayPhase.Dusk:
+                    phasesToSchedule.Add(DayPhase.Dawn);
+                    phasesToSchedule.Add(DayPhase.Midday);
+                    break;
+                case DayPhase.Night:
+                    phasesToSchedule.Add(DayPhase.Dawn);
+                    phasesToSchedule.Add(DayPhase.Midday);
+                    phasesToSchedule.Add(DayPhase.Dusk);
+                    break;
+            }
+
+            if (phasesToSchedule.Count == 0)
+            {
+                return 0;
+            }
+
+            ModLogger.Info(LogCategory, $"  --- Tomorrow's Forecast ({string.Join(", ", phasesToSchedule)}) ---");
+
+            int tomorrowScheduled = 0;
+            foreach (var phase in phasesToSchedule)
+            {
+                var scheduled = SchedulePhaseOpportunities(phase, worldSituation, alreadyScheduledIds);
+                _scheduledTomorrowOpportunities[phase] = scheduled;
+
+                if (scheduled.Count > 0)
+                {
+                    tomorrowScheduled += scheduled.Count;
+                    var oppList = string.Join(", ", scheduled.Select(o => $"{o.OpportunityId}"));
+                    ModLogger.Info(LogCategory, $"  Tomorrow {phase}: {scheduled.Count} opportunities → [{oppList}]");
+                }
+                else
+                {
+                    ModLogger.Debug(LogCategory, $"  Tomorrow {phase}: 0 opportunities (budget=0 or no candidates)");
+                }
+            }
+
+            if (tomorrowScheduled == 0)
+            {
+                ModLogger.Warn(LogCategory, 
+                    $"[W-ORCH-005] Tomorrow scheduling returned 0 opportunities at {currentPhase} - check budget/candidates");
+            }
+
+            return tomorrowScheduled;
         }
 
         /// <summary>
@@ -1027,11 +1168,11 @@ namespace Enlisted.Features.Content
                 (LordSituation.SiegeAttacking, _) => 1,
                 (LordSituation.SiegeDefending, _) => 0,
 
-                // Campaign: moderate, mostly evening
+                // Campaign: always at least 1 opportunity per phase (lords rarely stop moving)
                 (LordSituation.WarMarching, DayPhase.Dawn) => 1,
-                (LordSituation.WarMarching, DayPhase.Midday) => 0,
+                (LordSituation.WarMarching, DayPhase.Midday) => 1,
                 (LordSituation.WarMarching, DayPhase.Dusk) => 2,
-                (LordSituation.WarMarching, DayPhase.Night) => 0,
+                (LordSituation.WarMarching, DayPhase.Night) => 1,
 
                 (LordSituation.WarActiveCampaign, DayPhase.Dusk) => 2,
                 (LordSituation.WarActiveCampaign, _) => 1,
@@ -1196,6 +1337,22 @@ namespace Enlisted.Features.Content
                 }
             }
 
+            // Also check tomorrow's schedule (24-hour rolling window)
+            if (_scheduledTomorrowOpportunities != null)
+            {
+                foreach (var phaseEntry in _scheduledTomorrowOpportunities)
+                {
+                    var opp = phaseEntry.Value.FirstOrDefault(o => o.OpportunityId == opportunityId);
+                    if (opp != null && !opp.Consumed)
+                    {
+                        opp.Consumed = true;
+                        found = true;
+                        ModLogger.Info(LogCategory,
+                            $"✓ Opportunity consumed: {opportunityId} (tomorrow {phaseEntry.Key}, fitness={opp.FitnessScore:F1})");
+                    }
+                }
+            }
+
             if (!found)
             {
                 ModLogger.WarnCode(LogCategory, "W-ORCH-003",
@@ -1220,6 +1377,7 @@ namespace Enlisted.Features.Content
                 return;
             }
 
+            // Search today's schedule
             foreach (var phaseEntry in _scheduledOpportunities)
             {
                 var opp = phaseEntry.Value.FirstOrDefault(o => 
@@ -1241,6 +1399,24 @@ namespace Enlisted.Features.Content
                     }
 
                     return;
+                }
+            }
+
+            // Search tomorrow's schedule (24-hour rolling window)
+            if (_scheduledTomorrowOpportunities != null)
+            {
+                foreach (var phaseEntry in _scheduledTomorrowOpportunities)
+                {
+                    var opp = phaseEntry.Value.FirstOrDefault(o => 
+                        o.TargetDecisionId != null && 
+                        o.TargetDecisionId.Equals(decisionId, StringComparison.OrdinalIgnoreCase));
+                    if (opp != null)
+                    {
+                        opp.Consumed = true;
+                        ModLogger.Info(LogCategory, 
+                            $"✓ Opportunity consumed by decisionId: {decisionId} (tomorrow, opportunityId={opp.OpportunityId}, phase={phaseEntry.Key})");
+                        return;
+                    }
                 }
             }
 
@@ -1268,6 +1444,7 @@ namespace Enlisted.Features.Content
                 return false;
             }
 
+            // Search today's schedule
             foreach (var phaseEntry in _scheduledOpportunities)
             {
                 var opp = phaseEntry.Value.FirstOrDefault(o => o.OpportunityId == opportunityId);
@@ -1292,13 +1469,42 @@ namespace Enlisted.Features.Content
                 }
             }
 
+            // Search tomorrow's schedule (24-hour rolling window)
+            if (_scheduledTomorrowOpportunities != null)
+            {
+                foreach (var phaseEntry in _scheduledTomorrowOpportunities)
+                {
+                    var opp = phaseEntry.Value.FirstOrDefault(o => o.OpportunityId == opportunityId);
+                    if (opp != null)
+                    {
+                        if (opp.Consumed)
+                        {
+                            ModLogger.Debug(LogCategory, $"CommitToOpportunity({opportunityId}): Already consumed (tomorrow)");
+                            return false;
+                        }
+
+                        if (opp.PlayerCommitted)
+                        {
+                            ModLogger.Debug(LogCategory, $"CommitToOpportunity({opportunityId}): Already committed (tomorrow)");
+                            return false;
+                        }
+
+                        opp.PlayerCommitted = true;
+                        ModLogger.Info(LogCategory,
+                            $"✓ Player committed to: {opportunityId} (will fire tomorrow at {phaseEntry.Key})");
+                        return true;
+                    }
+                }
+            }
+
             ModLogger.Warn(LogCategory, $"CommitToOpportunity({opportunityId}): Not found in schedule");
             return false;
         }
 
         /// <summary>
-        /// Gets ALL opportunities scheduled for today (across all phases), not just current phase.
+        /// Gets ALL opportunities scheduled for the next 24 hours (today + tomorrow's early phases).
         /// Used by menu to show upcoming opportunities with their availability state.
+        /// Implements rolling 24-hour visibility per design spec.
         /// </summary>
         public List<ScheduledOpportunity> GetAllTodaysOpportunities()
         {
@@ -1311,6 +1517,7 @@ namespace Enlisted.Features.Content
 
             var currentPhase = WorldStateAnalyzer.GetCurrentDayPhase();
 
+            // Add today's remaining opportunities
             foreach (var phase in Enum.GetValues(typeof(DayPhase)).Cast<DayPhase>())
             {
                 if (_scheduledOpportunities.TryGetValue(phase, out var opportunities))
@@ -1322,8 +1529,23 @@ namespace Enlisted.Features.Content
                 }
             }
 
+            // Add tomorrow's pre-scheduled opportunities (24-hour rolling window)
+            if (_scheduledTomorrowOpportunities != null)
+            {
+                foreach (var phase in Enum.GetValues(typeof(DayPhase)).Cast<DayPhase>())
+                {
+                    if (_scheduledTomorrowOpportunities.TryGetValue(phase, out var opportunities))
+                    {
+                        foreach (var opp in opportunities.Where(o => !o.Consumed))
+                        {
+                            allOpps.Add(opp);
+                        }
+                    }
+                }
+            }
+
             ModLogger.Debug(LogCategory,
-                $"GetAllTodaysOpportunities: {allOpps.Count} opportunities " +
+                $"GetAllTodaysOpportunities: {allOpps.Count} opportunities (24h window) " +
                 $"(committed={allOpps.Count(o => o.PlayerCommitted)}, available={allOpps.Count(o => o.IsAvailableToCommit)})");
 
             return allOpps;
@@ -1479,6 +1701,7 @@ namespace Enlisted.Features.Content
         {
             _scheduledDay = -1;
             _scheduledOpportunities = null;
+            _scheduledTomorrowOpportunities = null;
             ModLogger.Info(LogCategory, "Opportunity schedule invalidated, will regenerate on next access");
         }
 

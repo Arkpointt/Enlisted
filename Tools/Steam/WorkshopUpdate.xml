@@ -7,17 +7,13 @@
     <UpdateItem>
         <ModuleFolder Value="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"/>
         <!-- A direct path of your module -->   
-        <ChangeNotes Value="v0.9.1.3 - Stability &amp; Performance Improvements
+        <ChangeNotes Value="v0.9.1.4 - [Development Build]
 
-[FIXES]
-- Fixed major bugs and stability issues
-- Improved system performance and responsiveness
-- Enhanced compatibility with various game configurations
+[CHANGES]
+- TBD
 
-[TECHNICAL]
-- Code cleanup and optimization passes
-- Better error handling and logging
-- Minor improvements to content delivery systems" />
+[DETAILS]
+- Development version in progress" />
         <!-- Insert patch notes -->
         <Tags> 
             <!-- You can use the following tags: -->

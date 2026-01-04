@@ -1084,6 +1084,41 @@ def validate_csproj(ctx: ValidationContext):
                     "Tools/README.md missing - tools folder should have documentation",
                     "Enlisted.csproj")
         
+        # --- Check 6: Content subdirectories are deployed ---
+        # Verify that all content subdirectories in ModuleData have corresponding
+        # ItemGroup entries and AfterBuild copy commands in .csproj
+        content_dirs_to_check = [
+            ("ModuleData/Enlisted/Orders/order_events", "OrderEventsData", "order_events/*.json"),
+            # Add other content subdirectories here as needed
+        ]
+        
+        csproj_content = csproj_path.read_text(encoding='utf-8')
+        
+        for source_dir, item_group_name, pattern in content_dirs_to_check:
+            source_path = Path(source_dir.replace("/", os.sep))
+            if source_path.exists():
+                # Directory exists in source - check if .csproj will deploy it
+                has_itemgroup = item_group_name in csproj_content
+                has_copy = f"@({item_group_name})" in csproj_content
+                has_makedir = "order_events" in csproj_content  # Check for MakeDir
+                
+                if not has_itemgroup:
+                    ctx.add_issue("error", "project",
+                        f"Content directory '{source_dir}' exists but no ItemGroup '{item_group_name}' in .csproj. "
+                        f"Add: <{item_group_name} Include=\"{pattern}\"/>",
+                        "Enlisted.csproj")
+                elif not has_copy:
+                    ctx.add_issue("error", "project",
+                        f"ItemGroup '{item_group_name}' exists but no Copy command. "
+                        f"Add: <Copy SourceFiles=\"@({item_group_name})\" DestinationFolder=\"...\"/>",
+                        "Enlisted.csproj")
+                else:
+                    # Count files that will be deployed
+                    json_files = list(source_path.glob("*.json"))
+                    ctx.add_issue("info", "project",
+                        f"Content directory '{source_dir}' ({len(json_files)} files) configured for deployment",
+                        "Enlisted.csproj")
+        
         # --- Summary ---
         total_cs = len(compile_includes)
         total_content = len(content_includes)

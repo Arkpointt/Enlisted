@@ -2,7 +2,7 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2026-01-04 (Bug fix: Soldier reputation save/load - now persists correctly across saves)
+**Last Updated:** 2026-01-04 (Bug fixes: Battle side determination for army race conditions. Removed 3-day grace period - content flows immediately.)
 **Total Documents:** 55
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
@@ -185,7 +185,7 @@
 | Document | Topic | Status |
 |----------|-------|--------|
 | [README.md](Features/Content/README.md) | Content folder overview | ✅ Current |
-| [content-system-architecture.md](Features/Content/content-system-architecture.md) | Complete content system architecture: world-state-driven orchestration (ContentOrchestrator owns opportunity lifecycle with 24h pre-scheduling, WorldStateAnalyzer, SimulationPressureCalculator, PlayerBehaviorTracker), activity level system, native Bannerlord effect integration (IncidentEffectTranslator, trait mapping), JSON-driven content delivery, requirement checking, localization. Orchestrator Unification complete. | ✅ Current |
+| [content-system-architecture.md](Features/Content/content-system-architecture.md) | Complete content system architecture: world-state-driven orchestration (ContentOrchestrator owns opportunity lifecycle with 24h pre-scheduling, WorldStateAnalyzer, SimulationPressureCalculator, PlayerBehaviorTracker), activity level system, native Bannerlord effect integration (IncidentEffectTranslator, trait mapping), JSON-driven content delivery, requirement checking, localization. No grace period - content fires immediately upon enlistment. Orchestrator Unification complete. | ✅ Current |
 | [event-system-schemas.md](Features/Content/event-system-schemas.md) | Event system JSON schemas: event structure (triggers, conditions, options, outcomes), decision schemas, order schemas, dialogue schemas, **Progression System Schema** (generic probabilistic daily rolls for escalation tracks), camp opportunities schema (with hint/hintId fields for Daily Brief foreshadowing), validation rules | ✅ Current |
 | [injury-system.md](Features/Content/injury-system.md) | Unified medical condition system: injuries (3 types), illnesses (4 types), medical risk escalation (0-5), context-aware treatment (land vs sea), illness onset triggers, recovery tracking, maritime illness variants, condition worsening mechanics. Fully integrated with ContentOrchestrator. | ✅ Implemented |
 | [writing-style-guide.md](Features/Content/writing-style-guide.md) | Bannerlord RP writing guide: voice and tone (terse military prose), tense/perspective rules, vocabulary (medieval military register, avoid anachronisms), setup/option/result text patterns, tooltip formatting, **opportunity hints** (camp rumors vs personal hints, placeholder usage, categorization), dialogue patterns by rank, common mistakes to avoid, examples and checklists | ✅ Current |
@@ -197,7 +197,7 @@
 |----------|-------|--------|
 | [conflict-detection-system.md](Features/Technical/conflict-detection-system.md) | Conflict detection and prevention: event cooldown tracking, mutually exclusive events, resource conflicts (gold/items), state validation, anti-spam protections | ✅ Current |
 | [commander-track-schema.md](Features/Technical/commander-track-schema.md) | Commander tracking schema: save data structure for player progress, persistence patterns, serialization rules | 📋 Specification |
-| [encounter-safety.md](Features/Technical/encounter-safety.md) | Encounter safety patterns: null checks, save/load safety, state validation, edge case handling, external interruptions (battles, captures) | ✅ Current |
+| [encounter-safety.md](Features/Technical/encounter-safety.md) | Encounter safety patterns: battle side determination (handles 2 army race conditions), null checks, save/load safety, state validation, edge case handling, external interruptions (battles, captures) | ✅ Current |
 
 ### UI Systems
 **Location:** `Features/UI/`
@@ -243,7 +243,7 @@
 | [complete-menu-analysis.md](Reference/complete-menu-analysis.md) | Complete native menu system analysis: tick-based menu refresh system, GetGenericStateMenu() priority order, siege menu flow (join_siege_event vs menu_siege_strategies), BesiegerCamp mechanics, race condition timeline documentation, captivity and village raid menus cataloged - use to understand menu transitions and timing issues | 📚 Reference |
 | [captivity-and-raid-analysis.md](Reference/captivity-and-raid-analysis.md) | Captivity and village raid systems deep dive: complete captivity flow (capture → 13 menu paths → release), army removal during captivity, village raid system (lord raiding while enlisted), enlisted mod gaps and recommendations - use to understand captivity handling and plan enlisted captivity features | 📚 Reference |
 | [opportunities-system-spec.md](Reference/opportunities-system-spec.md) | ⚠️ **LEGACY** - Replaced by [Camp Simulation System](Features/Campaign/camp-simulation-system.md) | 🗄️ Deprecated |
-| [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Two-layer camp system: Background Simulation (autonomous company life) + Camp Opportunities (29 player activities with learning), Decision Scheduling (Phase 9). Complete implementation documentation. | ✅ Implemented |
+| [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Two-layer camp system: Background Simulation (autonomous company life) + Camp Opportunities (29 player activities with learning), Decision Scheduling (Phase 9). Content flows immediately on enlistment (no grace period). Complete implementation documentation. | ✅ Implemented |
 
 ---
 

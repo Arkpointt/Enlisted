@@ -194,7 +194,8 @@
       "setupId": "patrol_twisted_ankle_setup",
       "setup": "The ground here is uneven and dark. Your ankle twists on a hidden rut. Pain shoots up your leg.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign", "siege_attacking"]
+        "world_state": ["war_marching", "war_active_campaign", "siege_attacking"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -316,7 +317,8 @@
       "setupId": "patrol_shortcut_setup",
       "setup": "You know a shortcut that would skip two checkpoints. No one would know. Your feet ache.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"],
+        "notAtSea": true
       },
       "options": [
         {

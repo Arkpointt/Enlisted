@@ -1,0 +1,96 @@
+"workshopitem"
+{
+	"appid"		"261550"
+	"publishedfileid"		"3621116083"
+	"contentfolder"		"C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted"
+	"previewfile" "C:\Dev\Enlisted\Enlisted\Tools\Steam\preview.png"
+	"title"		"Enlisted - Military Service Mod"
+	"description"		"[h1]Enlisted - Military Service Mod[/h1]
+
+[i]Enlist with any lord. Follow orders. Climb the ranks. Retire with honor.[/i]
+
+Transform Bannerlord from a conquest simulator into a deep soldier career experience. Instead of managing an empire, you serve one. Features [b]245 narrative content pieces[/b] spanning [b]9 military ranks[/b] from fresh recruit to senior commander.
+
+[h2]Key Features[/h2]
+[list]
+[*][b]9 Military Ranks:[/b] Progress from recruit to marshal with culture-specific titles (Empire, Vlandia, Sturgia, Khuzait, Battania, Aserai)
+[*][b]Multi-Factor Promotions:[/b] XP, service time, battles fought, reputation, and discipline all matter
+[*][b]Chain of Command:[/b] 16 military orders with 85 dynamic events during duty execution
+[*][b]Pay & Muster System:[/b] 12-day pay cycles with ceremonial payouts, performance bonuses, and tension mechanics
+[*][b]Quartermaster System:[/b] 6 equipment quality tiers with upgrades and reputation-based discounts
+[*][b]Camp Life Simulation:[/b] 33 player decisions, fatigue system, medical care, background events
+[*][b]Commander's Retinue:[/b] Lead 20-40 hand-picked troops at senior ranks (T7-T9) with narrative events
+[*][b]Identity & Reputation:[/b] Three reputation tracks (Lord, Officer, Soldier) and emergent specialization through traits
+[*][b]Grace Period System:[/b] 14 days to transfer service if your lord dies or is captured
+[*][b]Reservist Benefits:[/b] Re-enlist with same faction for tier bonuses and reputation restoration
+[*][b]Optional Battle AI:[/b] Enhanced tactical decisions (disable anytime in launcher, field battles only)
+[/list]
+
+[h2]Requirements[/h2]
+[list]
+[*][b]Bannerlord v1.3.13[/b] (this specific version)
+[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2859232415]Bannerlord.Harmony v2.4.2+[/url][/b] (required dependency)
+[/list]
+
+[h2]Clean Install for Major Updates[/h2]
+When the changelog says CLEAN INSTALL RECOMMENDED, follow these steps:
+[list=1]
+[*]Unsubscribe from Enlisted in Steam Workshop
+[*]Navigate to: [i]C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\[/i]
+[*]Delete the [b]3621116083[/b] folder
+[*]Resubscribe to the mod
+[/list]
+Why? Steam doesn't auto-delete removed files. Old content files can cause conflicts.
+
+[h2]Automatic Conflict Detection[/h2]
+Built-in diagnostics run on startup and log to the Debugging folder inside your mod installation.
+
+[b]Log Location (Workshop Install):[/b]
+[i]C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\3621116083\Debugging\[/i]
+
+[b]What It Detects:[/b]
+[list]
+[*]Harmony patch conflicts with other mods
+[*]Missing or corrupt content files
+[*]Catalog loading errors
+[*]Installation issues
+[/list]
+
+[b]Key Log Files:[/b]
+[list]
+[*][i]Conflicts-A_*.log[/i] - Startup diagnostics. Check if game crashes on launch or other mods cause issues
+[*][i]Session-A_*.log[/i] - Runtime errors with searchable codes. Check when events don't fire or gameplay breaks
+[/list]
+
+[b]When to Check:[/b]
+[list]
+[*]Game crashes on startup ??? Check Conflicts log for patch conflicts
+[*]Events don't fire or content missing ??? Check Conflicts log for file errors
+[*]Weird gameplay issues ??? Check Session log for error codes
+[*]After installing other mods ??? Compare Conflicts logs before/after
+[/list]
+
+[h2]Links[/h2]
+[b]GitHub:[/b] [url=https://github.com/Arkpointt/Enlisted]Open Source - Contributions Welcome[/url]
+[b]Documentation:[/b] Full docs included in mod folder
+[b]Version:[/b] v0.9.1.3"
+	"visibility"		"0"
+    "tags"
+    {
+		"0"		"Gameplay"
+		"1"		"Singleplayer"
+		"2"		"Overhaul"
+    }
+	"changenote"		"v0.9.1.3 - Stability & Performance Improvements
+
+FIXES:
+- Fixed major bugs and stability issues
+- Improved system performance and responsiveness
+- Enhanced compatibility with various game configurations
+
+TECHNICAL:
+- Code cleanup and optimization passes
+- Better error handling and logging
+- Minor improvements to content delivery systems"
+}
+

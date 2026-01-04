@@ -80,7 +80,7 @@ namespace Enlisted.Features.Content
             }
             else
             {
-                ModLogger.Debug(LogCategory, $"Order events directory not found: {orderEventsPath}");
+                ModLogger.Warn(LogCategory, $"Order events directory not found: {orderEventsPath} - order phase events will not fire");
             }
 
             _initialized = true;

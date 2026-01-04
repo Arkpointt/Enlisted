@@ -745,7 +745,7 @@ If the party boards a ship while a land-only order is active, the order is autom
 
 This allows orders like "Firewood Collection" → "Deck Scrubbing" to use the same order definition with sea variants, while preventing the "axe slip while chopping wood" event from firing at sea.
 
-**Implementation:** `OrderProgressionBehavior.FilterByWorldState()` checks both `world_state` and `notAtSea`/`atSea` requirements before selecting events. Uses `WorldStateAnalyzer.DetectTravelContext()` to determine current location.
+**Implementation:** `OrderProgressionBehavior.SelectOrderEvent()` uses `EventRequirementChecker.MeetsRequirements()` to validate all requirement fields including `notAtSea`/`atSea`, tier, role, and other constraints. After filtering by `world_state` (via `FilterByWorldState()`), all remaining requirements are checked comprehensively.
 
 **See:** [Event System Schemas - Order Event Requirements](event-system-schemas.md#order-event-requirements) for complete documentation on order event filtering.
 

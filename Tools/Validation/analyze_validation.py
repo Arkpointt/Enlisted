@@ -130,6 +130,10 @@ def parse_validation_report(report_path: str):
                 issues['project']['missing_from_csproj'].append((file, event_id, message))
             elif 'does not exist' in message_lower:
                 issues['project']['orphaned_in_csproj'].append((file, event_id, message))
+            elif 'content directory' in message_lower and 'no itemgroup' in message_lower:
+                issues['project']['content_not_deployed'].append((file, event_id, message))
+            elif 'itemgroup' in message_lower and 'no copy command' in message_lower:
+                issues['project']['content_not_deployed'].append((file, event_id, message))
             elif 'rogue file' in message_lower:
                 issues['project']['rogue_files'].append((file, event_id, message))
             elif 'unexpected directory' in message_lower:
@@ -473,6 +477,20 @@ def print_analysis(data):
                 print(f"  - {msg}")
             print("\nFIX: Review and relocate or delete these directories")
         
+        content_not_deployed = project_issues.get('content_not_deployed', [])
+        if content_not_deployed:
+            print(f"\n[CRITICAL] Content Directories Not Deployed ({len(content_not_deployed)}):")
+            print("These content folders exist in source but WON'T be copied to the game folder!")
+            print("Players will experience missing content (events won't fire, etc.)")
+            for file, event_id, msg in content_not_deployed[:10]:
+                print(f"  - {msg}")
+            print("\nFIX: Add three things to Enlisted.csproj:")
+            print("  1. ItemGroup: <YourDataName Include=\"path\\\\to\\\\*.json\"/>")
+            print("  2. MakeDir:   <MakeDir Directories=\"$(OutputPath)..\\\\..\\\\path\\\\to\\\\\"/>")
+            print("  3. Copy:      <Copy SourceFiles=\"@(YourDataName)\" DestinationFolder=\"...\"/>")
+            print("\nExample for order_events:")
+            print("  <OrderEventsData Include=\"ModuleData\\\\Enlisted\\\\Orders\\\\order_events\\\\*.json\"/>")
+        
         gui_missing = project_issues.get('gui_missing', [])
         if gui_missing:
             print(f"\n[LOW] GUI Assets Not in .csproj ({len(gui_missing)}):")
@@ -486,18 +504,19 @@ def print_analysis(data):
     print("\n" + "=" * 80)
     print("PRIORITY FIX ORDER")
     print("=" * 80)
-    print("\n1. [CRITICAL] Fix C# files missing from .csproj (won't compile)")
-    print("2. [CRITICAL] Remove orphaned .csproj entries (build errors)")
-    print("3. [CRITICAL] Fix single-option events (blocks validation)")
-    print("4. [HIGH] Add C# TextObject localization strings (user-facing fallback text)")
-    print("5. [HIGH] Add missing order XP (player-facing issue)")
-    print("6. [HIGH] Fix long tooltips (UX issue)")
-    print("7. [HIGH] Fix UI-style hints (immersion issue)")
-    print("8. [MEDIUM] Clean up rogue root files (organization)")
-    print("9. [MEDIUM] Migrate schema v1 files to v2 (maintenance)")
-    print("10. [MEDIUM] Shorten long hints (readability)")
-    print("11. [LOW] Add JSON event localization strings (as content is completed)")
-    print("12. [LOW] Add placeholders to hints (personalization)")
+    print("\n1. [CRITICAL] Fix content directories not deployed (players get missing content!)")
+    print("2. [CRITICAL] Fix C# files missing from .csproj (won't compile)")
+    print("3. [CRITICAL] Remove orphaned .csproj entries (build errors)")
+    print("4. [CRITICAL] Fix single-option events (blocks validation)")
+    print("5. [HIGH] Add C# TextObject localization strings (user-facing fallback text)")
+    print("6. [HIGH] Add missing order XP (player-facing issue)")
+    print("7. [HIGH] Fix long tooltips (UX issue)")
+    print("8. [HIGH] Fix UI-style hints (immersion issue)")
+    print("9. [MEDIUM] Clean up rogue root files (organization)")
+    print("10. [MEDIUM] Migrate schema v1 files to v2 (maintenance)")
+    print("11. [MEDIUM] Shorten long hints (readability)")
+    print("12. [LOW] Add JSON event localization strings (as content is completed)")
+    print("13. [LOW] Add placeholders to hints (personalization)")
     print("\n" + "=" * 80)
     print("DISCOVERED ISSUES")
     print("=" * 80)

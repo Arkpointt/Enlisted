@@ -15,7 +15,8 @@
         "world_state": [
           "war_marching",
           "war_active_campaign"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -89,7 +90,8 @@
           "war_marching",
           "war_active_campaign",
           "siege_attacking"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -158,7 +160,8 @@
         "world_state": [
           "war_marching",
           "war_active_campaign"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -236,7 +239,8 @@
           "war_marching",
           "war_active_campaign",
           "siege_attacking"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -309,7 +313,8 @@
         "world_state": [
           "war_marching",
           "war_active_campaign"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -383,7 +388,8 @@
         "world_state": [
           "war_marching",
           "war_active_campaign"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -446,7 +452,8 @@
         "world_state": [
           "war_marching",
           "war_active_campaign"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -520,7 +527,8 @@
         "world_state": [
           "war_marching",
           "war_active_campaign"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {

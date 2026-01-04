@@ -12,7 +12,8 @@
       "setupId": "lead_soldier_behind_setup",
       "setup": "One of your men is struggling. He's limping, falling behind the group. The patrol can't wait forever.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -65,7 +66,8 @@
       "setupId": "lead_route_dispute_setup",
       "setup": "Your scout disagrees on the direction. 'That way leads into rough ground. I know a better path.'",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -130,7 +132,8 @@
       "setupId": "lead_enemy_contact_setup",
       "setup": "Enemy patrol spotted ahead. Eight men. They haven't seen you yet. Your call.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign", "siege_attacking"]
+        "world_state": ["war_marching", "war_active_campaign", "siege_attacking"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -209,7 +212,8 @@
       "setupId": "lead_morale_drop_setup",
       "setup": "The men are tired and starting to complain. 'Another patrol. What's the point?' Morale is slipping.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -282,7 +286,8 @@
       "setupId": "lead_terrain_hazard_setup",
       "setup": "A river crossing ahead. The current looks strong, the bridge half-rotted.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -344,7 +349,8 @@
       "setupId": "lead_man_injured_setup",
       "setup": "{SOLDIER_NAME} twisted his ankle badly. He can barely walk. You're still deep in enemy territory.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -408,7 +414,8 @@
       "setupId": "lead_ambush_sprung_setup",
       "setup": "Arrows from the treeline! You've walked right into an ambush. Men are falling.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -477,7 +484,8 @@
       "setupId": "lead_good_find_setup",
       "setup": "Your patrol spots something—an abandoned supply cache. Enemy markings on the crates.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {

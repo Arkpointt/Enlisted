@@ -3,11 +3,15 @@
 **Summary:** Orders are multi-day duty assignments that progress through phases automatically. Events fire contextually during orders based on world state and order type. Players experience being a soldier through the rhythm of assigned duties, occasional events, and accumulated consequences like fatigue and injury. XP progression is now exclusively through orders (no passive daily/battle XP). Narrative recaps replace mechanical XP displays.
 
 **Status:** ✅ **IMPLEMENTED** - OrderProgressionBehavior, 17 orders, 84 order events active  
-**Last Updated:** 2026-01-01 (Updated counts to match reality, added Phase 10 forecasting)  
+**Last Updated:** 2026-01-04 (Bug fix: Order events now properly check notAtSea requirements)  
 **Implementation:** `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`, `ModuleData/Enlisted/Orders/`  
 **Related Docs:** [Orders System](orders-system.md), [Orders Content](../Content/orders-content.md), [Event System Schemas](../Content/event-system-schemas.md), [Injury System](../Content/injury-system.md), [Content System Architecture](../Content/content-system-architecture.md)
 
-**RECENT CHANGES (2026-01-01):**
+**RECENT CHANGES (2026-01-04):**
+- **Bug fix: notAtSea filtering**: `SelectOrderEvent()` now uses `EventRequirementChecker.MeetsRequirements()` to properly filter order events by all requirement fields (notAtSea, tier, role, etc.). Previously only checked `world_state`. Added `notAtSea: true` to 35 land-based events across 6 files (escort duty, forage, scout, patrol, march, inspect defenses, camp patrol).
+- **Debugging note**: Investigation of debug logs (`Session-A_2026-01-04_04-20-21.log`) revealed the old build was running when "Shortcut" event fired at sea. No `OrderProgressionBehavior` logs were present - instead `EventSelector` (regular narrative system) was firing order events. **Game restart required** after build to load new DLL with fixes.
+
+**PREVIOUS CHANGES (2026-01-01):**
 - **Event frequency drastically reduced**: `SlotBaseChance` 15%→8%, `HighSlotBaseChance` 35%→15%, Routine multiplier 0.6→0.5
 - **Result**: Routine duty now ~12% daily event chance (1 event every 8 days) instead of ~28% (1 every 3-4 days)
 - **Order outcome fallback text**: Added RP-appropriate contextual text when JSON `text` is null ("Watch ended, all in order" vs generic "Order completed")
