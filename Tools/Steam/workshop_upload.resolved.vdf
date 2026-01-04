@@ -102,7 +102,7 @@ Built-in diagnostics run on startup and log to the Debugging folder inside your 
 [h2]Links[/h2]
 [b]GitHub:[/b] [url=https://github.com/Arkpointt/Enlisted]Open Source - Contributions Welcome[/url]
 [b]Documentation:[/b] Full docs included in mod folder
-[b]Version:[/b] v0.9.1.4"
+[b]Version:[/b] v0.9.1.5"
 	"visibility"		"0"
     "tags"
     {
@@ -110,21 +110,19 @@ Built-in diagnostics run on startup and log to the Debugging folder inside your 
 		"1"		"Singleplayer"
 		"2"		"Overhaul"
     }
-	"changenote"		"v0.9.1.4 - Content Orchestration & Combat Log (2026-01-04)
+	"changenote"		"v0.9.1.5 - CRITICAL HOTFIX: Steam Workshop Path Resolution (2026-01-04)
 
-CONTENT:
-- Enhanced ContentOrchestrator with 24-hour cross-day opportunity scheduling
-- Updated all order event files with improved content and formatting
-- Expanded combat log with comprehensive battle event tracking
+CRITICAL BUG FIX:
+- Fixed Steam Workshop installs not loading orders, events, or decisions
+- Workshop users reported 'no orders' because mod was looking for content files in wrong location
+- Nexus/manual installs worked fine (this is why some users found that workaround)
+- Now uses correct Bannerlord API that works for both Workshop and manual installs
 
-SYSTEMS:
-- Enhanced menu behaviors for better narrative flow
-- Improved news reporting systems
-- Better event pacing and distribution
+TECHNICAL:
+- Added ModulePaths utility using ModuleHelper.GetModuleFullPath()
+- Updated 13 source files to use centralized path resolution
+- Added validator check to prevent this bug from happening again
 
-TOOLS:
-- Added debug logging toggle tool for development
-- Improved validation tools with better analysis and error reporting
-- Updated documentation (combat log, encounter safety, orchestrator)"
+If you were affected: Simply update the mod via Steam and it will work!"
 }
 
