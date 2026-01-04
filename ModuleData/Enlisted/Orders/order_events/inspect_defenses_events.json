@@ -15,7 +15,8 @@
         "world_state": [
           "peacetime_garrison",
           "siege_defending"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -102,7 +103,8 @@
       "requirements": {
         "world_state": [
           "peacetime_garrison"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -180,7 +182,8 @@
       "requirements": {
         "world_state": [
           "siege_defending"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -261,7 +264,8 @@
         "world_state": [
           "peacetime_garrison",
           "siege_defending"
-        ]
+        ],
+        "notAtSea": true
       },
       "options": [
         {

@@ -13,6 +13,7 @@ using Enlisted.Features.Orders.Behaviors;
 using Enlisted.Features.Ranks;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.SaveSystem;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
@@ -761,7 +762,8 @@ namespace Enlisted.Features.Camp
             context.SupplyLevel = needs?.Supplies ?? 50;
 
             // Edge case flags
-            context.IsNewEnlistmentGrace = enlistment != null && enlistment.DaysServed < 3;
+            // NOTE: New enlistment grace period removed - let content flow immediately
+            context.IsNewEnlistmentGrace = false;
             context.IsOnProbation = enlistment?.IsOnProbation ?? false;
             context.InBaggageWindow = IsBaggageWindowActive(enlistment);
 
@@ -824,11 +826,11 @@ namespace Enlisted.Features.Camp
                 (LordSituation.SiegeAttacking, _) => 1,
                 (LordSituation.SiegeDefending, _) => 0,
 
-                // Campaign: moderate, mostly evening
+                // Campaign: always at least 1 opportunity per phase (lords rarely stop moving)
                 (LordSituation.WarMarching, DayPhase.Dawn) => 1,
-                (LordSituation.WarMarching, DayPhase.Midday) => 0,
+                (LordSituation.WarMarching, DayPhase.Midday) => 1,
                 (LordSituation.WarMarching, DayPhase.Dusk) => 2,
-                (LordSituation.WarMarching, DayPhase.Night) => 0,
+                (LordSituation.WarMarching, DayPhase.Night) => 1,
 
                 (LordSituation.WarActiveCampaign, DayPhase.Dusk) => 2,
                 (LordSituation.WarActiveCampaign, _) => 1,
@@ -1762,7 +1764,7 @@ namespace Enlisted.Features.Camp
 
             try
             {
-                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "Decisions", "camp_opportunities.json");
+                var configPath = Path.Combine(ModulePaths.GetContentPath("Decisions"), "camp_opportunities.json");
                 if (!File.Exists(configPath))
                 {
                     ModLogger.ErrorCode(LogCategory, "E-CAMP-001", 

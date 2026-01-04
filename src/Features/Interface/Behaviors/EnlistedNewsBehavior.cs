@@ -3479,11 +3479,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Determine severity based on outcome type
                 int severityInt = outcome.Outcome switch
                 {
-                    OutcomeType.Excellent => 1,  // Positive
-                    OutcomeType.Good => 0,       // Normal
-                    OutcomeType.Normal => 0,     // Normal
-                    OutcomeType.Poor => 1,       // Attention (but mild)
-                    OutcomeType.Mishap => 2,     // Attention (something went wrong)
+                    OutcomeType.Excellent => 1,  // Positive (green)
+                    OutcomeType.Good => 0,       // Normal (default)
+                    OutcomeType.Normal => 0,     // Normal (default)
+                    OutcomeType.Poor => 2,       // Attention (yellow warning)
+                    OutcomeType.Mishap => 2,     // Attention (yellow warning)
                     _ => 0
                 };
 

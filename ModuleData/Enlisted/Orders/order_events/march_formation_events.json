@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 2,
   "order_type": "order_march_formation",
   "events": [
@@ -12,7 +12,8 @@
       "setupId": "march_fell_behind_setup",
       "setup": "Your legs burn. The column pulls ahead. You're falling behind.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -73,7 +74,8 @@
       "setupId": "march_helped_comrade_setup",
       "setup": "{COMRADE_NAME} stumbles beside you. He's pale, breathing hard. Won't make it at this pace.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -122,7 +124,8 @@
       "setupId": "march_equipment_problem_setup",
       "setup": "Your boot strap snaps. The column keeps moving. No time to stop.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -180,7 +183,8 @@
       "setupId": "march_terrain_hazard_setup",
       "setup": "The path ahead is treacherous—loose rocks, hidden holes. The column presses on.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -238,7 +242,8 @@
       "setupId": "march_foraging_opportunity_setup",
       "setup": "You spot a berry bush just off the path. Ripe fruit. The column keeps moving.",
       "requirements": {
-        "world_state": ["peacetime_recruiting"]
+        "world_state": ["peacetime_recruiting"],
+        "notAtSea": true
       },
       "options": [
         {

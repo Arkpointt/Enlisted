@@ -17,7 +17,7 @@ Validation Phases:
     Phase 5.5: Opportunity validation (hints, deprecated 'immediate' field)
     Phase 6: Config validation (baggage_config.json, etc.)
     Phase 7: Project structure validation (.csproj, file organization)
-    Phase 8: Code quality validation (sea context detection, anti-patterns)
+    Phase 8: Code quality validation (hardcoded paths, sea context detection)
     Phase 9: C# TextObject localization (string IDs in code → XML)
     Phase 9.5: Camp schedule descriptions (meaningful phase text)
 """
@@ -1084,6 +1084,41 @@ def validate_csproj(ctx: ValidationContext):
                     "Tools/README.md missing - tools folder should have documentation",
                     "Enlisted.csproj")
         
+        # --- Check 6: Content subdirectories are deployed ---
+        # Verify that all content subdirectories in ModuleData have corresponding
+        # ItemGroup entries and AfterBuild copy commands in .csproj
+        content_dirs_to_check = [
+            ("ModuleData/Enlisted/Orders/order_events", "OrderEventsData", "order_events/*.json"),
+            # Add other content subdirectories here as needed
+        ]
+        
+        csproj_content = csproj_path.read_text(encoding='utf-8')
+        
+        for source_dir, item_group_name, pattern in content_dirs_to_check:
+            source_path = Path(source_dir.replace("/", os.sep))
+            if source_path.exists():
+                # Directory exists in source - check if .csproj will deploy it
+                has_itemgroup = item_group_name in csproj_content
+                has_copy = f"@({item_group_name})" in csproj_content
+                has_makedir = "order_events" in csproj_content  # Check for MakeDir
+                
+                if not has_itemgroup:
+                    ctx.add_issue("error", "project",
+                        f"Content directory '{source_dir}' exists but no ItemGroup '{item_group_name}' in .csproj. "
+                        f"Add: <{item_group_name} Include=\"{pattern}\"/>",
+                        "Enlisted.csproj")
+                elif not has_copy:
+                    ctx.add_issue("error", "project",
+                        f"ItemGroup '{item_group_name}' exists but no Copy command. "
+                        f"Add: <Copy SourceFiles=\"@({item_group_name})\" DestinationFolder=\"...\"/>",
+                        "Enlisted.csproj")
+                else:
+                    # Count files that will be deployed
+                    json_files = list(source_path.glob("*.json"))
+                    ctx.add_issue("info", "project",
+                        f"Content directory '{source_dir}' ({len(json_files)} files) configured for deployment",
+                        "Enlisted.csproj")
+        
         # --- Summary ---
         total_cs = len(compile_includes)
         total_content = len(content_includes)
@@ -1109,6 +1144,8 @@ def validate_code_quality(ctx: ValidationContext):
     Currently checks:
     1. IsCurrentlyAtSea usage without proper settlement/siege guards
        (prevents "Rigging Check" appearing when on land in settlements)
+    2. Hardcoded module paths that break Steam Workshop installs
+       (must use ModulePaths utility instead of hardcoded "Modules", "Enlisted" paths)
     
     Guard patterns recognized:
     - Direct: party.CurrentSettlement == null && party.BesiegedSettlement == null && party.IsCurrentlyAtSea
@@ -1120,6 +1157,9 @@ def validate_code_quality(ctx: ValidationContext):
     - Harmony patches that report raw values for debugging
     """
     print("[Phase 8] Validating code quality patterns...")
+    
+    # Check 1: Hardcoded module paths (breaks Steam Workshop)
+    _validate_no_hardcoded_paths(ctx)
     
     src_path = Path("src")
     if not src_path.exists():
@@ -1233,6 +1273,90 @@ def validate_code_quality(ctx: ValidationContext):
         ctx.add_issue("info", "code_quality",
             f"Sea context detection: {issues_found} issue(s) in {len(files_with_issues)} file(s). "
             f"See: docs/Features/Content/event-system-schemas.md for the canonical pattern.",
+            "src/")
+
+
+def _validate_no_hardcoded_paths(ctx: ValidationContext):
+    """
+    Check for hardcoded module paths that break Steam Workshop installs.
+    
+    CRITICAL BUG PREVENTION:
+    Steam Workshop installs to: steamapps/workshop/content/261550/3621116083/
+    Manual/Nexus installs to:   steamapps/common/Mount & Blade II Bannerlord/Modules/Enlisted/
+    
+    Code using hardcoded "Modules", "Enlisted" paths will ONLY work for manual installs!
+    Must use ModulePaths utility (which calls ModuleHelper.GetModuleFullPath).
+    
+    Whitelisted:
+    - ModulePaths.cs itself (the utility that provides correct paths)
+    - Comments and string literals in documentation/logging
+    - Test files
+    """
+    src_path = Path("src")
+    if not src_path.exists():
+        return
+    
+    # Files that are allowed to have the hardcoded patterns (they ARE the fix)
+    WHITELISTED_FILES = {
+        'ModulePaths.cs',  # The utility itself uses these as fallbacks
+    }
+    
+    # Patterns that indicate hardcoded module paths (BREAKS WORKSHOP!)
+    HARDCODED_PATH_PATTERNS = [
+        # Path.Combine with "Modules" and "Enlisted" strings
+        (r'Path\.Combine\s*\([^)]*"Modules"[^)]*"Enlisted"', 
+         'Path.Combine with hardcoded "Modules", "Enlisted" - use ModulePaths.GetContentPath() or ModulePaths.ModuleRoot'),
+        
+        # BasePath.Name combined with Modules/Enlisted
+        (r'BasePath\.Name[^;]*"Modules"[^;]*"Enlisted"',
+         'BasePath.Name with "Modules/Enlisted" - use ModulePaths utility instead'),
+        
+        # Direct string paths with Modules/Enlisted
+        (r'"[^"]*\\\\Modules\\\\Enlisted[^"]*"',
+         'Hardcoded path string with Modules\\Enlisted - use ModulePaths utility'),
+        (r'"[^"]*/Modules/Enlisted[^"]*"',
+         'Hardcoded path string with Modules/Enlisted - use ModulePaths utility'),
+    ]
+    
+    cs_files = list(src_path.rglob("*.cs"))
+    issues_found = 0
+    
+    for cs_file in cs_files:
+        # Skip whitelisted files
+        if cs_file.name in WHITELISTED_FILES:
+            continue
+        
+        try:
+            content = cs_file.read_text(encoding='utf-8')
+            lines = content.split('\n')
+        except Exception:
+            continue
+        
+        for i, line in enumerate(lines):
+            # Skip pure comments
+            stripped = line.strip()
+            if stripped.startswith('//') or stripped.startswith('*') or stripped.startswith('///'):
+                continue
+            
+            # Check each pattern
+            for pattern, message in HARDCODED_PATH_PATTERNS:
+                if re.search(pattern, line, re.IGNORECASE):
+                    issues_found += 1
+                    ctx.add_issue("error", "code_quality",
+                        f"Line {i+1}: HARDCODED MODULE PATH - {message}. "
+                        f"This breaks Steam Workshop installs! "
+                        f"Workshop users get files in steamapps/workshop/content/, not Modules/.",
+                        str(cs_file), None)
+                    break  # Only report first match per line
+    
+    if issues_found == 0:
+        ctx.add_issue("info", "code_quality",
+            f"All {len(cs_files)} C# files use ModulePaths utility correctly (no hardcoded paths)",
+            "src/")
+    else:
+        ctx.add_issue("error", "code_quality",
+            f"CRITICAL: {issues_found} hardcoded module path(s) found! "
+            f"These BREAK Steam Workshop installs. Use ModulePaths.GetContentPath() or ModulePaths.ModuleRoot instead.",
             "src/")
 
 

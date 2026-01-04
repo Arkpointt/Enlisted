@@ -1076,8 +1076,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.WaitQuest;
 
-                    // Get decisions directly from Orchestrator (no caching - Orchestrator owns the schedule)
+                    // Get decisions and CACHE them - click handlers will use this same list
+                    // to prevent race conditions when phase changes between render and click
                     var decisions = GetCurrentDecisions();
+                    _cachedDecisionsForCurrentMenu = decisions;
+                    _cachedDecisionsTime = CampaignTime.Now;
 
                     // Check for new decisions
                     var currentIds = new HashSet<string>(decisions.Select(d => d.Decision?.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
@@ -1093,7 +1096,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         _decisionsMainMenuCollapsed = true;
                     }
 
-                    // Set decision slot text variables so they display correctly when expanded
+                    // Set decision slot text variables using the already-cached decisions
                     RefreshMainMenuDecisionSlots();
 
                     var headerText = $"<span style=\"Link\">DECISIONS</span>";
@@ -6147,7 +6150,10 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // Fetch and cache decisions - click handlers will use this same list
                 var decisions = GetCurrentDecisions();
+                _cachedDecisionsForCurrentMenu = decisions;
+                _cachedDecisionsTime = CampaignTime.Now;
                 
                 if (decisions.Count == 0)
                 {
@@ -6164,7 +6170,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     _decisionsMainMenuLastSeenIds = currentIds;
                 }
 
-                // Update slot text variables
+                // Update slot text variables using already-cached decisions
                 RefreshMainMenuDecisionSlots();
 
                 // Re-render and refresh menu options
@@ -6184,9 +6190,26 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private void RefreshMainMenuDecisionSlots()
         {
-            var decisions = GetCurrentDecisions();
+            // Use already-cached decisions if available and fresh (within 1 game hour)
+            // Otherwise fetch and cache new decisions
+            var decisions = _cachedDecisionsForCurrentMenu;
+            var isFresh = _cachedDecisionsTime.ElapsedHoursUntilNow < 1.0f;
             
-            ModLogger.Debug("Interface", $"RefreshMainMenuDecisionSlots: {decisions.Count} decisions to display");
+            if (decisions == null || decisions.Count == 0 || !isFresh)
+            {
+                decisions = GetCurrentDecisions();
+                
+                // CACHE the decisions list - used by click handlers to prevent race condition
+                // where phase changes between render and click cause index mismatch
+                _cachedDecisionsForCurrentMenu = decisions;
+                _cachedDecisionsTime = CampaignTime.Now;
+                
+                ModLogger.Debug("Interface", $"RefreshMainMenuDecisionSlots: {decisions.Count} decisions FETCHED and cached");
+            }
+            else
+            {
+                ModLogger.Debug("Interface", $"RefreshMainMenuDecisionSlots: {decisions.Count} decisions from cache");
+            }
 
             for (var i = 0; i < 5; i++)
             {
@@ -6348,6 +6371,7 @@ namespace Enlisted.Features.Interface.Behaviors
             string unavailableReason = null;
             bool isCurrentPhase = scheduled.Phase == currentPhase;
             bool isFuturePhase = IsPhaseFuture(scheduled.Phase, currentPhase);
+            bool isPastPhase = !isCurrentPhase && !isFuturePhase;
 
             if (scheduled.PlayerCommitted)
             {
@@ -6362,13 +6386,21 @@ namespace Enlisted.Features.Interface.Behaviors
                     unavailableReason = $"[SCHEDULED - {scheduled.Phase}]";
                 }
             }
+            else if (isPastPhase)
+            {
+                // Past phase opportunity - shouldn't normally appear (filtered out by Orchestrator)
+                // But if it does, still make it clickable so player can fire it (better UX than doing nothing)
+                // Mark with phase suffix to indicate it was from earlier
+                decision.TitleFallback = $"{decision.TitleFallback ?? decision.TitleId} ({scheduled.Phase})";
+                ModLogger.Debug("Interface",
+                    $"Past-phase opportunity displayed: {scheduled.OpportunityId} (was for {scheduled.Phase}, now {currentPhase})");
+            }
             else if (!isCurrentPhase && isFuturePhase)
             {
                 // Future phase opportunity - clickable to commit
                 // Append phase info to the title so player knows when it fires
                 decision.TitleFallback = $"{decision.TitleFallback ?? decision.TitleId} ({scheduled.Phase})";
             }
-            // else: current phase or past phase - fire immediately when clicked, no suffix
             // else: current phase, not committed - fully available to click and fire immediately
 
             // Check if this is risky (player on duty)
@@ -6419,7 +6451,8 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private bool IsMainMenuDecisionSlotAvailable(MenuCallbackArgs args, int slotIndex)
         {
-            var decisions = GetCurrentDecisions();
+            // Use CACHED decisions to prevent race condition between render and click
+            var decisions = _cachedDecisionsForCurrentMenu ?? new List<DecisionAvailability>();
             
             if (_decisionsMainMenuCollapsed || slotIndex >= decisions.Count)
             {
@@ -6442,13 +6475,21 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                var decisions = GetCurrentDecisions();
+                // Use CACHED decisions to prevent race condition where phase changes
+                // between menu render and user click cause index mismatch
+                var decisions = _cachedDecisionsForCurrentMenu ?? new List<DecisionAvailability>();
 
-                ModLogger.Info("Interface", $"Main menu decision slot {slotIndex} clicked (decisions count: {decisions.Count})");
+                // Log what was clicked and what we have cached for debugging
+                var cachedIds = decisions.Select(d => d.Decision?.Id ?? "null").ToList();
+                ModLogger.Info("Interface", 
+                    $"Decision slot {slotIndex} clicked - cached: [{string.Join(", ", cachedIds)}] " +
+                    $"(count={decisions.Count}, age={_cachedDecisionsTime.ElapsedHoursUntilNow:F2}h)");
 
                 if (slotIndex >= decisions.Count)
                 {
-                    ModLogger.Warn("Interface", $"Decision slot {slotIndex} out of range! Have {decisions.Count} decisions");
+                    ModLogger.Warn("Interface", 
+                        $"Decision slot {slotIndex} out of range! Have {decisions.Count} cached decisions. " +
+                        $"Cache may be stale - will refresh on next menu render.");
                     return;
                 }
 
@@ -6458,8 +6499,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     ModLogger.Warn("Interface", $"Decision slot {slotIndex} has null Decision object");
                     return;
                 }
-
-                ModLogger.Info("Interface", $"Processing main menu decision: {availability.Decision.Id}");
+                
+                ModLogger.Info("Interface", $"Processing decision from slot {slotIndex}: {availability.Decision.Id}");
 
                 // Mark all current decisions as "seen" since user is now interacting with them
                 var currentIds = new HashSet<string>(decisions.Select(d => d.Decision?.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
@@ -6480,6 +6521,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                     bool isCurrentPhase = scheduled.Phase == currentPhase;
                     bool isFuturePhase = IsPhaseFuture(scheduled.Phase, currentPhase);
+                    bool isPastPhase = !isCurrentPhase && !isFuturePhase;
 
                     if (!isCurrentPhase && isFuturePhase)
                     {
@@ -6520,7 +6562,15 @@ namespace Enlisted.Features.Interface.Behaviors
                         return;
                     }
 
-                    // CURRENT PHASE: Fire immediately (old behavior)
+                    // PAST PHASE: Log this edge case and consume immediately
+                    // This can happen if the menu wasn't refreshed after a phase transition
+                    if (isPastPhase)
+                    {
+                        ModLogger.Info("Interface",
+                            $"Past-phase opportunity clicked: {scheduled.OpportunityId} (was for {scheduled.Phase}, now {currentPhase}) - firing immediately");
+                    }
+
+                    // CURRENT OR PAST PHASE: Fire immediately
                     // Mark as consumed so it disappears
                     ContentOrchestrator.Instance?.ConsumeOpportunity(scheduled.OpportunityId);
                 }

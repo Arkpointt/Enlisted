@@ -8,9 +8,9 @@ using Enlisted.Features.Content;
 using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.Library;
 
 namespace Enlisted.Features.Camp
 {
@@ -609,8 +609,7 @@ namespace Enlisted.Features.Camp
         {
             try
             {
-                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", 
-                    "Enlisted", "Config", "camp_schedule.json");
+                var configPath = ModulePaths.GetConfigPath("camp_schedule.json");
 
                 if (!File.Exists(configPath))
                 {

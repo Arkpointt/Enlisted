@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Enlisted.Features.Conditions;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
@@ -20,7 +21,7 @@ namespace Enlisted.Features.Content
     public static class InjurySystem
     {
         private const string LogCategory = "InjurySystem";
-        private static readonly string InjuriesPath = Path.Combine(BasePath.Name, "ModuleData", "Enlisted", "Content", "injuries.json");
+        private static string InjuriesPath => Path.Combine(ModulePaths.GetContentPath("Content"), "injuries.json");
         
         private static List<InjuryDefinition> _injuries;
         private static bool _loaded;

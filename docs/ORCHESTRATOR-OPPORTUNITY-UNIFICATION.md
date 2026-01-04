@@ -5,12 +5,91 @@
 **Status:** ✅ **IMPLEMENTED & BUG FIXES APPLIED**  
 **Created:** 2026-01-03  
 **Implemented:** 2026-01-03  
-**Bug Fixes:** 2026-01-03, 2026-01-04, 2026-01-03 (Commitment Model)  
+**Bug Fixes:** 2026-01-03, 2026-01-04 (x4), 2026-01-03 (Commitment Model)  
 **Related Docs:** [Content System Architecture](Features/Content/content-system-architecture.md), [Camp Simulation System](Features/Campaign/camp-simulation-system.md)
 
 ---
 
 ## Recent Bug Fixes
+
+### 2026-01-04: Cross-Day 24-Hour Forecasting
+
+**Issue:** The design spec promised "opportunities pre-scheduled 24 hours ahead" but implementation only scheduled for the current calendar day. When schedule regenerated late in the day (Dusk/Night), only 1-2 opportunities showed instead of a full 24-hour forecast window.
+
+**Example:** At Night phase, log showed:
+```
+[Orchestrator]   Night: 1 opportunities (0 guaranteed) → [opp_storytelling_circle]
+[Orchestrator]   (Skipped 4 past-phase opportunities - schedule generated at Night)
+```
+
+Player expected to see tomorrow's Dawn/Midday/Dusk opportunities as well.
+
+**Root Cause:** `ScheduleOpportunities()` only scheduled for "today's" phases. When called at Night, only 1 phase remained. The 24-hour window wasn't actually a rolling window.
+
+**Fix:** Implemented true cross-day scheduling:
+1. Added `_scheduledTomorrowOpportunities` field to store tomorrow's early phases
+2. `ScheduleOpportunities()` now:
+   - Promotes yesterday's "tomorrow" to today on day transition
+   - When at Dusk: also schedules tomorrow's Dawn, Midday
+   - When at Night: also schedules tomorrow's Dawn, Midday, Dusk
+3. `GetAllTodaysOpportunities()` now returns today + tomorrow's opportunities
+4. `CommitToOpportunity()`, `ConsumeOpportunity()`, `ConsumeOpportunityByDecisionId()` all updated to search both today and tomorrow schedules
+5. `ForceReschedule()` clears both today and tomorrow schedules
+
+**Files Changed:**
+- `ContentOrchestrator.cs`: Added `_scheduledTomorrowOpportunities`, `ScheduleTomorrowOpportunities()`, updated all opportunity access methods
+
+**Result:** Players now see a true rolling 24-hour window of opportunities. At Night, they'll see tonight's opportunities PLUS tomorrow's Dawn/Midday/Dusk, maintaining the promised 5+ decisions forecast.
+
+---
+
+### 2026-01-04: WarMarching Budget Fix
+
+**Issue:** Players reported seeing no decisions/opportunities at Midday and Night phases during most gameplay. Debug logs showed "0 decisions available" warnings repeatedly.
+
+**Root Cause:** When in `WarMarching` state (the most common state since lords rarely stop moving), the opportunity budget for Midday and Night was set to 0. This was intended to simulate "on the march" constraints, but lords are ALWAYS marching in Bannerlord, making these phases permanently empty.
+
+**Budget Before Fix:**
+```
+WarMarching:
+  Dawn: 1 opportunity
+  Midday: 0 (no opportunities)
+  Dusk: 2 opportunities  
+  Night: 0 (no opportunities)
+```
+
+**Fix:** Increased Midday and Night budgets to 1, ensuring at least one opportunity per phase:
+```
+WarMarching:
+  Dawn: 1 opportunity
+  Midday: 1 opportunity ✓
+  Dusk: 2 opportunities
+  Night: 1 opportunity ✓
+```
+
+**Files Changed:**
+- `ContentOrchestrator.cs`: `DetermineOpportunityBudget()` - Updated WarMarching budgets
+- `CampOpportunityGenerator.cs`: `DetermineOpportunityBudget()` - Updated matching logic
+- Comment changed from "moderate, mostly evening" to "always at least 1 opportunity per phase (lords rarely stop moving)"
+
+**Result:** Players now always have at least 1 decision/opportunity available in every phase, even when marching.
+
+---
+
+### 2026-01-04: Past-Phase Opportunity Display Bug
+
+**Issue:** When schedule regenerates mid-day (e.g., after save/load at Night phase), opportunities for already-passed phases (Dawn, Midday, Dusk) were appearing in the menu but couldn't be interacted with. Player would see "Hull Inspection (Dawn)" at Night phase - clicking it did nothing because Dawn had already passed.
+
+**Root Cause:** `ScheduleOpportunities()` generates opportunities for ALL phases without checking if they've already passed. When called at Night, it still created opportunities for Dawn/Midday/Dusk which then appeared in the menu as non-functional items.
+
+**Fix:**
+- `ContentOrchestrator.cs`: During `ScheduleOpportunities()`, detect past phases and immediately mark their opportunities as `Consumed = true`
+- `EnlistedMenuBehavior.cs`: Added safety check in `OnMainMenuDecisionSlotSelected()` to detect and log past-phase clicks
+- `EnlistedMenuBehavior.cs`: Updated `ConvertScheduledToDecisionAvailability()` to detect past-phase opportunities and log when they appear
+
+**Result:** Past-phase opportunities are filtered out during scheduling and won't appear in the menu. If a player somehow clicks one (edge case), it fires immediately rather than doing nothing.
+
+---
 
 ### 2026-01-04: Phase-Aware Scheduling & Duplicate Prevention
 
@@ -352,6 +431,55 @@ public void ConsumeOpportunity(string opportunityId)
     }
 }
 ```
+
+### Opportunity Budget System
+
+The opportunity budget determines how many opportunities are scheduled for each phase based on lord situation and day phase. Budget values reflect realistic military life: garrison has more free time, siege is restrictive, marching has limited breaks.
+
+**Budget by Lord Situation:**
+
+```
+PeacetimeGarrison (High Activity):
+  Dawn:   3 opportunities
+  Midday: 2 opportunities
+  Dusk:   3 opportunities
+  Night:  1 opportunity
+
+WarMarching (Always at least 1):
+  Dawn:   1 opportunity
+  Midday: 1 opportunity
+  Dusk:   2 opportunities
+  Night:  1 opportunity
+
+WarActiveCampaign:
+  Dusk:   2 opportunities
+  All:    1 opportunity (default)
+
+SiegeAttacking:
+  All:    1 opportunity (very limited)
+
+SiegeDefending:
+  All:    0 opportunities (no free time)
+
+Defeated:
+  All:    1 opportunity (recovery time)
+
+Captured:
+  All:    0 opportunities (imprisoned)
+```
+
+**Budget Modifiers:**
+
+Budget can be reduced by:
+- **Probation**: -1 (first 12 days of service)
+- **Low supplies** (<30%): -1 (focus on survival)
+- **High discipline** (>75): -1 (strict oversight)
+
+**Note:** WarMarching is the most common state since lords rarely stop moving. Budget was increased from 0→1 for Midday/Night (2026-01-04) to ensure players always have at least one opportunity per phase.
+
+**Implementation:** `DetermineOpportunityBudget()` in both `ContentOrchestrator.cs` and `CampOpportunityGenerator.cs`
+
+---
 
 ### Narrative Hint Integration
 

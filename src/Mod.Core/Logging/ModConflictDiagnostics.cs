@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Enlisted.Mod.Core.Util;
 using HarmonyLib;
 
 namespace Enlisted.Mod.Core.Logging
@@ -593,8 +594,7 @@ namespace Enlisted.Mod.Core.Logging
 
             try
             {
-                var gameRoot = TaleWorlds.Library.BasePath.Name;
-                var enlistedModulePath = Path.Combine(gameRoot, "Modules", "Enlisted");
+                var enlistedModulePath = ModulePaths.ModuleRoot;
 
                 // Show installation location for user reference
                 WriteLine($"  Installation Type: {(IsWorkshopInstall(enlistedModulePath) ? "Steam Workshop" : "Manual")}");
@@ -603,7 +603,7 @@ namespace Enlisted.Mod.Core.Logging
 
                 // Check Dialogue JSON files
                 WriteLine("  [Dialogue System]");
-                var dialoguePath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted", "Dialogue");
+                var dialoguePath = ModulePaths.GetContentPath("Dialogue");
                 if (Directory.Exists(dialoguePath))
                 {
                     var expectedFiles = new[] { "qm_intro.json", "qm_dialogue.json", "qm_gates.json", "qm_baggage.json" };
@@ -629,7 +629,7 @@ namespace Enlisted.Mod.Core.Logging
 
                 // Check Events JSON files  
                 WriteLine("  [Event System]");
-                var eventsPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted", "Events");
+                var eventsPath = ModulePaths.GetContentPath("Events");
                 if (Directory.Exists(eventsPath))
                 {
                     var eventFiles = Directory.GetFiles(eventsPath, "*.json").Length;
@@ -647,7 +647,7 @@ namespace Enlisted.Mod.Core.Logging
 
                 // Check Decisions JSON files
                 WriteLine("  [Decision System]");
-                var decisionsPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted", "Decisions");
+                var decisionsPath = ModulePaths.GetContentPath("Decisions");
                 if (Directory.Exists(decisionsPath))
                 {
                     var decisionFiles = Directory.GetFiles(decisionsPath, "*.json").Length;
@@ -681,7 +681,7 @@ namespace Enlisted.Mod.Core.Logging
 
                 // Check Orders JSON files
                 WriteLine("  [Order System]");
-                var ordersPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted", "Orders");
+                var ordersPath = ModulePaths.GetContentPath("Orders");
                 if (Directory.Exists(ordersPath))
                 {
                     var orderFiles = Directory.GetFiles(ordersPath, "*.json").Length;
@@ -699,7 +699,7 @@ namespace Enlisted.Mod.Core.Logging
 
                 // Check Config JSON files
                 WriteLine("  [Configuration System]");
-                var configPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted", "Config");
+                var configPath = ModulePaths.GetContentPath("Config");
                 if (Directory.Exists(configPath))
                 {
                     var expectedConfigs = new[] { 
@@ -730,7 +730,7 @@ namespace Enlisted.Mod.Core.Logging
 
                 // Check Localization XML files
                 WriteLine("  [Localization System]");
-                var languagesPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Languages");
+                var languagesPath = Path.Combine(ModulePaths.ModuleRoot, "ModuleData", "Languages");
                 if (Directory.Exists(languagesPath))
                 {
                     var xmlFiles = new[] { "enlisted_strings.xml", "enlisted_qm_dialogue.xml", "language_data.xml" };

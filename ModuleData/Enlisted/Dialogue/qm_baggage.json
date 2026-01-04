@@ -816,6 +816,136 @@
           "next_node": "qm_hub"
         }
       ]
+    },
+    {
+      "_comment": "Baggage Status Query - FullAccess - Veteran",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_full_veteran",
+      "text": "The wagons are right there. Help yourself.",
+      "context": {
+        "baggage_access": "full_access",
+        "archetype": "veteran"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - FullAccess - Merchant",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_full_merchant",
+      "text": "We're in camp. Wagons are right there. Take your time—no rush.",
+      "context": {
+        "baggage_access": "full_access",
+        "archetype": "merchant"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - FullAccess - Noble",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_full_noble",
+      "text": "The wagons are at your disposal. We are in camp. Access them at your convenience.",
+      "context": {
+        "baggage_access": "full_access",
+        "archetype": "noble"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - FullAccess - Scoundrel",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_full_scoundrel",
+      "text": "Wagons are right over there. We're camped, so rummage all you like.",
+      "context": {
+        "baggage_access": "full_access",
+        "archetype": "scoundrel"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - FullAccess - Believer",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_full_believer",
+      "text": "The Lord has granted us rest. The wagons are here. Take what you need.",
+      "context": {
+        "baggage_access": "full_access",
+        "archetype": "believer"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - FullAccess - Gruff",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_full_gruff",
+      "text": "Wagons are here. Full access. Go.",
+      "context": {
+        "baggage_access": "full_access",
+        "archetype": "gruff"
+      },
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
+    },
+    {
+      "_comment": "Baggage Status Query - Default fallback (no specific context)",
+      "id": "qm_baggage_status_response",
+      "speaker": "quartermaster",
+      "textId": "qm_baggage_status_default",
+      "text": "The wagons are where they should be. Anything else?",
+      "context": {},
+      "options": [
+        {
+          "id": "understood",
+          "textId": "qm_player_understood",
+          "text": "Understood.",
+          "next_node": "qm_hub"
+        }
+      ]
     }
   ]
 }
