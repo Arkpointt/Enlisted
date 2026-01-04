@@ -850,6 +850,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
+            // Safety check: ensure menus are registered before attempting to trigger
+            if (!_menusRegisteredSuccessfully)
+            {
+                ModLogger.Debug(LogCategory, "Deferred muster skipped: menus not registered");
+                _musterPendingAfterCombat = false;
+                _musterPendingAfterMenu = false;
+                EnlistmentBehavior.Instance?.DeferPayMuster();
+                return;
+            }
+
             var (canTrigger, reason) = CanTriggerMuster();
             if (canTrigger)
             {
@@ -1079,6 +1089,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // This prevents native rendering crashes by allowing all state transitions to complete
                 ModLogger.Debug(LogCategory, $"Scheduling deferred muster intro menu activation (context: {_currentMuster.StrategicContext})");
 
+                // Capture time state NOW before any frame delays, so we restore properly after muster.
+                // This handles the case where muster triggers while player is fast-forwarding.
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+
                 // First frame: ensure we're on the map with no active menus
                 NextFrameDispatcher.RunNextFrame(() =>
                 {
@@ -1124,17 +1138,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        /// Aborts the current muster sequence and defers to next cycle.
-        /// Ensures player is never stuck.
+        /// Aborts the current muster sequence and schedules hourly retry.
+        /// Ensures player is never stuck, especially during multi-day sieges.
         /// </summary>
         private void AbortMusterWithFallback(string reason)
         {
-            ModLogger.ErrorCode(LogCategory, "E-MUSTER-005", $"Aborting muster: {reason}");
+            ModLogger.Warn(LogCategory, $"Muster aborted: {reason} - will retry hourly");
 
-            // Clear state
+            // Clear muster session state but keep retry flags
             _currentMuster = null;
+            
+            // Set deferred flag for hourly retry instead of daily retry.
+            // This is critical for multi-day sieges where daily retry keeps failing.
+            _musterPendingAfterMenu = true;
             _musterPendingAfterCombat = false;
-            _musterPendingAfterMenu = false;
 
             // Restore time control if locked
             try
@@ -1159,12 +1176,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Ignore - might not be in a menu
             }
 
-            // Defer muster to next cycle
+            // Don't call DeferPayMuster() - let hourly tick handle retry via _musterPendingAfterMenu.
+            // This prevents the daily retry loop that fails during sieges.
+            // Note: _payMusterPending remains true in EnlistmentBehavior, which is correct -
+            // it prevents daily tick from re-triggering while we're doing hourly retries.
             try
             {
-                EnlistmentBehavior.Instance?.DeferPayMuster();
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "Muster system error. Will retry next cycle.", Colors.Yellow));
+                // Only show message once per abort, not repeatedly
+                ModLogger.Debug(LogCategory, "Muster will retry automatically when conditions allow");
             }
             catch (Exception ex)
             {
