@@ -2,7 +2,7 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2026-01-03 (UI fix: Variety assignments now display immersive FlavorText in Player Status)
+**Last Updated:** 2026-01-04 (Bug fix: Soldier reputation save/load - now persists correctly across saves)
 **Total Documents:** 55
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.

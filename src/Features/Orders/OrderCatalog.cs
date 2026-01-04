@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Enlisted.Features.Content;
-using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Identity;
 using Enlisted.Features.Orders.Models;
@@ -172,44 +170,17 @@ namespace Enlisted.Features.Orders
         }
 
         /// <summary>
-        /// Applies context-variant text (sea/land) to the selected order if available.
-        /// Replaces Title and Description with context-appropriate variants.
+        /// Returns the order unchanged. Context-variant display (sea/land titles) is handled
+        /// dynamically by GetDisplayTitle() and GetDisplayDescription() at render time.
+        /// 
+        /// Previously this method mutated order.Title/Description at selection time, which
+        /// caused a bug: if an order was selected at sea, the title was permanently changed
+        /// to the sea variant (e.g., "Deck Muster") even after returning to land. Now the
+        /// Order object retains its base title, and variants are applied only at display time.
         /// </summary>
         private static Order ApplyContextVariant(Order order)
         {
-            if (order == null || order.ContextVariants == null || order.ContextVariants.Count == 0)
-            {
-                return order;
-            }
-
-            // Get current travel context from orchestrator
-            var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
-            if (worldSituation == null)
-            {
-                return order;
-            }
-
-            var contextKey = WorldStateAnalyzer.GetTravelContextKey(worldSituation);
-
-            // Check if we have a variant for this context
-            if (!order.ContextVariants.TryGetValue(contextKey, out var variant))
-            {
-                return order;
-            }
-
-            // Apply variant text
-            if (!string.IsNullOrEmpty(variant.Title))
-            {
-                order.Title = variant.Title;
-                ModLogger.Debug(LogCategory, $"Applied {contextKey} variant title: {variant.Title}");
-            }
-
-            if (!string.IsNullOrEmpty(variant.Description))
-            {
-                order.Description = variant.Description;
-                ModLogger.Debug(LogCategory, $"Applied {contextKey} variant description for {order.Id}");
-            }
-
+            // No mutation - GetDisplayTitle()/GetDisplayDescription() handle variants dynamically
             return order;
         }
 
@@ -283,9 +254,8 @@ namespace Enlisted.Features.Orders
         /// </summary>
         private static string GetCurrentTravelContextKey(Order order)
         {
-            // Directly check party's current sea travel status
-            // This is more accurate than cached WorldSituation
-            var enlistment = Enlistment.Behaviors.EnlistmentBehavior.Instance;
+            // Directly check party's current sea travel status for real-time accuracy
+            var enlistment = EnlistmentBehavior.Instance;
             var party = enlistment?.CurrentLord?.PartyBelongedTo;
             
             if (party == null || !order.ContextVariants.ContainsKey("sea"))

@@ -3990,11 +3990,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     if (retainKingdomDuringGrace)
                     {
                         _savedGraceLord = _enlistedLord;
-                        Campaign.Current.VisualTrackerManager.RegisterObject(_enlistedLord);
-                        var trackerMsg =
-                            new TextObject("{=Enlisted_Message_LordTracked}Your lord has been marked on the map.");
-                        InformationManager.DisplayMessage(new InformationMessage(trackerMsg.ToString()));
-                        ModLogger.Debug("Enlistment", "Added map tracker for grace period");
+                        // BUG FIX: Only register living lords with the visual tracker
+                        // Dead heroes cause crashes when the tracker tries to display them
+                        if (_enlistedLord.IsAlive)
+                        {
+                            Campaign.Current.VisualTrackerManager.RegisterObject(_enlistedLord);
+                            var trackerMsg =
+                                new TextObject("{=Enlisted_Message_LordTracked}Your lord has been marked on the map.");
+                            InformationManager.DisplayMessage(new InformationMessage(trackerMsg.ToString()));
+                            ModLogger.Debug("Enlistment", "Added map tracker for grace period");
+                        }
+                        else
+                        {
+                            ModLogger.Debug("Enlistment", "Skipped map tracker - lord is deceased");
+                        }
                     }
                     else
                     {
@@ -4224,9 +4233,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _pendingDesertionKingdom = null;
             _desertionGracePeriodEnd = CampaignTime.Zero;
 
-            if (_savedGraceLord != null)
+            // BUG FIX: Only unregister living lords from the visual tracker
+            // Dead heroes may cause crashes when the tracker tries to access them
+            if (_savedGraceLord != null && _savedGraceLord.IsAlive)
             {
-                Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_savedGraceLord);
+                try
+                {
+                    Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_savedGraceLord);
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.Warn("Enlistment", $"Failed to remove grace lord from tracker: {ex.Message}");
+                }
             }
 
             _savedGraceLord = null;
@@ -13324,7 +13342,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var encounterBattle = PlayerEncounter.Battle;
                     var encounterHasWinner = encounterBattle?.HasWinner == true;
 
-                    if (encounter != null && (encounterBattle == null || encounterHasWinner))
+                    // CRITICAL FIX: Do NOT finish the encounter if the player is inside a settlement
+                    // and has explicitly visited it (clicked "Visit Settlement"). Finishing the encounter
+                    // while the player is in the town wait menu (or any other settlement submenu) would
+                    // kick them out of the settlement unexpectedly.
+                    // This fixes the bug where clicking "Wait here for some time" in town would cause
+                    // the town menu to disappear when an unrelated battle ends elsewhere on the map.
+                    var isPlayerInSettlement = PlayerEncounter.InsideSettlement ||
+                                               Features.Interface.Behaviors.EnlistedMenuBehavior.HasExplicitlyVisitedSettlement;
+
+                    if (encounter != null && (encounterBattle == null || encounterHasWinner) && !isPlayerInSettlement)
                     {
                         PlayerEncounter.LeaveEncounter = true;
                         if (PlayerEncounter.InsideSettlement)
@@ -13343,6 +13370,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             ModLogger.Warn("EncounterCleanup",
                                 $"CleanupPostEncounterState({context}): Finish failed (safety patch may handle): {ex.Message}");
                         }
+                    }
+                    else if (encounter != null && isPlayerInSettlement)
+                    {
+                        ModLogger.Debug("EncounterCleanup",
+                            $"CleanupPostEncounterState({context}): Skipped finishing encounter - player is inside settlement");
                     }
                 }
 

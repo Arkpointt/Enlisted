@@ -3,10 +3,12 @@
 **Summary:** The identity system replaces manual identity selection with native Bannerlord trait integration, allowing player personality to emerge from in-game choices. The system uses `EnlistedStatusManager` and `TraitHelper` to manage traits, integrating with Bannerlord's native trait system for consistent character development across all game systems.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22  
+**Last Updated:** 2026-01-04 (Fixed: Soldier reputation reset on save/load)  
 **Related Docs:** [Content System](../Content/content-system-architecture.md), [Event System Schemas](../Content/event-system-schemas.md)
 
 > **Note**: This document describes the implemented identity system. The `EnlistedStatusManager` and `TraitHelper` are live.
+
+> **Bug Fix (2026-01-04):** Fixed critical bug where Soldier Reputation was reset to 0 on every save load, blocking promotion progression. The save/load migration logic was incorrectly structured - it saved the new field name (`esc_soldierRep`) but only loaded the old migration field (`esc_rep`), causing saved reputation values to be lost. Fixed by syncing the current field names first, then falling back to migration only if needed.
 
 ---
 

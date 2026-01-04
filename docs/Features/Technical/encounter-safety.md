@@ -3,7 +3,7 @@
 **Summary:** Prevents enlisted players from triggering unwanted map encounters while hidden, ensures automatic battle participation when lord enters combat, provides reliable cleanup on discharge, and integrates with native menu system to yield when appropriate (e.g., siege menus).
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-03 (Fixed race condition crash in MenuHelper.CheckEnemyAttackableHonorably)  
+**Last Updated:** 2026-01-04 (Fixed settlement wait menu disappearing due to unrelated battles)  
 **Related Docs:** [enlistment.md](../Core/enlistment.md), [formation-assignment.md](../Combat/formation-assignment.md), [battle-system-complete-analysis.md](../../Reference/battle-system-complete-analysis.md)
 
 ---
@@ -1559,6 +1559,30 @@ If mission cleanup crash persists (crash after battle ends):
 - Check if cleanup completes: `OnShipRemoved: Cleanup complete`
 - Common cause: agent with null Team being passed to FadeOut
 - If falling back to original: "OnShipRemoved error" will show the exception
+
+**Settlement wait menu disappears when clicking "Wait here for some time":**
+- After clicking "Wait here for some time" in a town/castle, the menu disappears and kicks player out
+- **Root cause:** Clicking the native wait option fires `OnSettlementLeftEvent`, and when an **unrelated battle ends** elsewhere on the map, `CleanupPostEncounterState("OnMapEventEnded-Unrelated")` finishes the `PlayerEncounter` even though the player is still inside the settlement
+- **Log pattern:**
+  ```
+  [MenuGuard] NATIVE MENU REQUEST: 'town_wait_menus' | ...
+  [MenuGuard] ALLOWING native menu 'town_wait_menus' - player explicitly visited settlement
+  [Settlement] Player left Ostican (town_V8)
+  [EncounterCleanup] CleanupPostEncounterState(OnMapEventEnded-Unrelated): Finished PlayerEncounter
+  ```
+- **Fix (2026-01-04):** `CleanupPostEncounterState` now checks if player is inside a settlement before finishing the encounter:
+  ```csharp
+  var isPlayerInSettlement = PlayerEncounter.InsideSettlement ||
+                             Features.Interface.Behaviors.EnlistedMenuBehavior.HasExplicitlyVisitedSettlement;
+  
+  if (encounter != null && (encounterBattle == null || encounterHasWinner) && !isPlayerInSettlement)
+  {
+      // Only finish encounter if player is NOT in a settlement
+      PlayerEncounter.Finish();
+  }
+  ```
+- **Location:** `EnlistmentBehavior.cs` line ~13327 in `CleanupPostEncounterState()`
+- This prevents the cleanup from kicking players out of settlements when they're using native wait menus, browsing shops, or engaging in any other settlement activity
 
 **Key Technical Details:**
 
