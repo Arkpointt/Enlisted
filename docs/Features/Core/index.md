@@ -26,7 +26,7 @@
 | What You Need | Where To Go |
 |---------------|-------------|
 | **Understand the core gameplay** | [Core Gameplay (Consolidated)](core-gameplay.md) |
-| **Browse content** | [Content Catalog](../../Content/event-catalog-by-system.md) |
+| **Browse content** | [Content Index](../Content/content-index.md) |
 
 ---
 
@@ -110,4 +110,4 @@ Enlisted uses the native Bannerlord Game Menu system for all interactions.
 ## Story Content & Events
 
 - **[Content System Architecture](../Content/content-system-architecture.md)** - Single source of truth for all story systems and event schemas.
-- **[Event Catalog](../../Content/event-catalog-by-system.md)** - Complete catalog of all events, decisions, and orders.
+- **[Content Index](../Content/content-index.md)** - Complete catalog of all events, decisions, orders, and opportunities.

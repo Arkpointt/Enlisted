@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -65,8 +65,6 @@ namespace Enlisted.Features.Ranks.Behaviors
     /// </summary>
     public sealed class PromotionBehavior : CampaignBehaviorBase
     {
-        private bool _formationSelectionPending;
-
         // Promotion tracking
         private CampaignTime _lastPromotionCheck = CampaignTime.Zero;
 
@@ -108,7 +106,6 @@ namespace Enlisted.Features.Ranks.Behaviors
                 ModLogger.Info("Promotion", $"Clearing pending promotion tier {_pendingPromotionTier} on new enlistment with {lord?.Name}");
             }
             _pendingPromotionTier = 0;
-            _formationSelectionPending = false;
 
             // Also clear declined promotions so player gets a fresh start with the new lord
             EscalationManager.Instance?.ClearAllDeclinedPromotions();
@@ -132,7 +129,6 @@ namespace Enlisted.Features.Ranks.Behaviors
             SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
                 dataStore.SyncData("_lastPromotionCheck", ref _lastPromotionCheck);
-                dataStore.SyncData("_formationSelectionPending", ref _formationSelectionPending);
                 dataStore.SyncData("_pendingPromotionTier", ref _pendingPromotionTier);
             });
         }
@@ -143,9 +139,9 @@ namespace Enlisted.Features.Ranks.Behaviors
         private static string GetProvingEventId(int fromTier, int toTier)
         {
             // Event IDs follow the pattern: promotion_t{from}_t{to}_*
+            // T1→T2 has no proving event; uses direct promotion (formation is equipment-based now)
             return fromTier switch
             {
-                1 => "promotion_t1_t2_finding_your_place",
                 2 => "promotion_t2_t3_sergeants_test",
                 3 => "promotion_t3_t4_crisis_of_command",
                 4 => "promotion_t4_t5_veterans_vote",
@@ -519,81 +515,6 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
-        ///     Show formation selection options (simplified approach).
-        ///     Can be enhanced with custom UI later.
-        /// </summary>
-        private void ShowFormationSelectionOptions()
-        {
-            try
-            {
-                // For now, auto-detect formation from current equipment
-                // This can be enhanced with an interactive selection menu later
-                var currentFormation = DetectPlayerFormation();
-
-                var formationName = GetFormationDisplayName(currentFormation);
-                var message = new TextObject("{=formation_assigned}Formation assigned: {FORMATION}. Your training and equipment will reflect your role.");
-                message.SetTextVariable("FORMATION", formationName);
-
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Cyan));
-
-                // Prompt to visit the Quartermaster for formation-specific gear.
-                var qmPrompt = new TextObject("{=formation_qm_prompt}Report to the Quartermaster for your {FORMATION} kit.");
-                qmPrompt.SetTextVariable("FORMATION", formationName);
-                InformationManager.DisplayMessage(new InformationMessage(qmPrompt.ToString(), Colors.Cyan));
-
-                _formationSelectionPending = false;
-
-                // Now trigger regular promotion for Tier 2
-                TriggerPromotionNotification(2);
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Promotion", "Error in formation selection", ex);
-                _formationSelectionPending = false;
-            }
-        }
-
-        /// <summary>
-        ///     Detect player's current formation from equipment.
-        /// </summary>
-        private FormationType DetectPlayerFormation()
-        {
-            try
-            {
-                var hero = Hero.MainHero;
-                var characterObject = hero?.CharacterObject;
-
-                if (characterObject == null)
-                {
-                    return FormationType.Infantry; // Default fallback
-                }
-
-                // Detect military formation based on equipment characteristics. We treat ranged+mounted as horse
-                // archer, mounted as cavalry, ranged as archer, and everything else as infantry.
-                if (characterObject.IsRanged && characterObject.IsMounted)
-                {
-                    return FormationType.HorseArcher;
-                }
-
-                if (characterObject.IsMounted)
-                {
-                    return FormationType.Cavalry;
-                }
-
-                if (characterObject.IsRanged)
-                {
-                    return FormationType.Archer;
-                }
-
-                return FormationType.Infantry;
-            }
-            catch
-            {
-                return FormationType.Infantry; // Safe fallback
-            }
-        }
-
-        /// <summary>
         ///     Get culture-specific rank name for tier.
         /// </summary>
         private string GetRankName(int tier)
@@ -601,73 +522,6 @@ namespace Enlisted.Features.Ranks.Behaviors
             // Use culture-specific ranks from RankHelper
             var enlistment = EnlistmentBehavior.Instance;
             return RankHelper.GetRankTitle(tier, enlistment?.EnlistedLord?.Culture?.StringId ?? "mercenary");
-        }
-
-        /// <summary>
-        ///     Get culture-specific formation display name.
-        /// </summary>
-        private string GetFormationDisplayName(FormationType formation)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            var culture = enlistment?.CurrentLord?.Culture?.StringId ?? "empire";
-
-            var formationNames = new Dictionary<string, Dictionary<FormationType, string>>
-            {
-                ["empire"] =
-                    new()
-                    {
-                        [FormationType.Infantry] = "Imperial Legionary",
-                        [FormationType.Archer] = "Imperial Sagittarius",
-                        [FormationType.Cavalry] = "Imperial Equites",
-                        [FormationType.HorseArcher] = "Imperial Equites Sagittarii"
-                    },
-                ["aserai"] =
-                    new()
-                    {
-                        [FormationType.Infantry] = "Aserai Footman",
-                        [FormationType.Archer] = "Aserai Marksman",
-                        [FormationType.Cavalry] = "Aserai Mameluke",
-                        [FormationType.HorseArcher] = "Aserai Desert Horse Archer"
-                    },
-                ["khuzait"] =
-                    new()
-                    {
-                        [FormationType.Infantry] = "Khuzait Spearman",
-                        [FormationType.Archer] = "Khuzait Hunter",
-                        [FormationType.Cavalry] = "Khuzait Lancer",
-                        [FormationType.HorseArcher] = "Khuzait Horse Archer"
-                    },
-                ["vlandia"] =
-                    new()
-                    {
-                        [FormationType.Infantry] = "Vlandian Man-at-Arms",
-                        [FormationType.Archer] = "Vlandian Crossbowman",
-                        [FormationType.Cavalry] = "Vlandian Knight",
-                        [FormationType.HorseArcher] = "Vlandian Mounted Crossbowman"
-                    },
-                ["sturgia"] =
-                    new()
-                    {
-                        [FormationType.Infantry] = "Sturgian Warrior",
-                        [FormationType.Archer] = "Sturgian Bowman",
-                        [FormationType.Cavalry] = "Sturgian Druzhnik",
-                        [FormationType.HorseArcher] = "Sturgian Mounted Archer"
-                    },
-                ["battania"] = new()
-                {
-                    [FormationType.Infantry] = "Battanian Clansman",
-                    [FormationType.Archer] = "Battanian Skirmisher",
-                    [FormationType.Cavalry] = "Battanian Mounted Warrior",
-                    [FormationType.HorseArcher] = "Battanian Mounted Skirmisher"
-                }
-            };
-
-            if (formationNames.ContainsKey(culture) && formationNames[culture].ContainsKey(formation))
-            {
-                return formationNames[culture][formation];
-            }
-
-            return formation.ToString(); // Fallback to enum name
         }
     }
 }

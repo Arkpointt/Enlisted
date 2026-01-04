@@ -3715,46 +3715,14 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         ///     Gets mount variants from QuartermasterManager.
+        ///     Uses direct public API instead of reflection for better maintainability.
         /// </summary>
         private List<EquipmentVariantOption> GetMountVariants(QuartermasterManager qm)
         {
             try
             {
-                // Get troop equipment variants to find mounts
-                var troopMethod = typeof(QuartermasterManager).GetMethod("GetPlayerSelectedTroop",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                var buildMethod = typeof(QuartermasterManager).GetMethod("BuildVariantOptions",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var equipMethod = typeof(QuartermasterManager).GetMethod("GetTroopEquipmentVariants",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-
-                if (troopMethod == null || buildMethod == null || equipMethod == null)
-                {
-                    return new List<EquipmentVariantOption>();
-                }
-
-                var troop = troopMethod.Invoke(qm, null) as CharacterObject;
-                if (troop == null)
-                {
-                    return new List<EquipmentVariantOption>();
-                }
-
-                var equipVariants = equipMethod.Invoke(qm, new object[] { troop })
-                    as Dictionary<EquipmentIndex, List<ItemObject>>;
-                if (equipVariants == null)
-                {
-                    return new List<EquipmentVariantOption>();
-                }
-
-                var allVariants = buildMethod.Invoke(qm, new object[] { equipVariants })
-                    as Dictionary<EquipmentIndex, List<EquipmentVariantOption>>;
-
-                if (allVariants?.TryGetValue(EquipmentIndex.Horse, out var mounts) == true)
-                {
-                    return mounts;
-                }
-
-                return new List<EquipmentVariantOption>();
+                // Direct call to the public method - no reflection needed
+                return qm.GetMountVariantsForBrowsing();
             }
             catch (Exception ex)
             {

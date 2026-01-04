@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -119,6 +119,15 @@ namespace Enlisted.Features.Content
                 (LordSituation.Captured, _) => "lord_captured",
                 _ => "peacetime_garrison"  // Default to safest/quietest
             };
+        }
+
+        /// <summary>
+        /// Gets the current day phase based on the current campaign time.
+        /// Convenience method that wraps GetDayPhaseFromHour.
+        /// </summary>
+        public static DayPhase GetCurrentDayPhase()
+        {
+            return GetDayPhaseFromHour(CampaignTime.Now.GetHourOfDay);
         }
 
         /// <summary>
@@ -329,6 +338,15 @@ namespace Enlisted.Features.Content
         {
             if (party == null)
             {
+                return TravelContext.Land;
+            }
+
+            // BUGFIX: If party is in a settlement or besieging, they cannot be at sea
+            // This prevents sea events/decisions from appearing when on land in settlements
+            if (party.CurrentSettlement != null || party.BesiegedSettlement != null)
+            {
+                ModLogger.Debug(LogCategory, 
+                    $"Party in settlement or siege - land context (IsCurrentlyAtSea={party.IsCurrentlyAtSea})");
                 return TravelContext.Land;
             }
 

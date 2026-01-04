@@ -180,7 +180,7 @@
           },
           "resultTextId": "mi_wait_trouble_prevent_result",
           "resultText": "You step in before fists fly. A firm voice, a steady presence—the situation defuses. Some will thank you; others will call you a busybody.",
-          "tooltip": "Requires Leadership 40. Moderate risk. Train Leadership. +8 Officer rep, -3 Soldier rep. Reduces discipline issues.",
+          "tooltip": "Requires Leadership 40. +15 Leadership XP, +8 Officer/-3 Soldier rep, -2 discipline.",
           "risk": "moderate",
           "effects": {
             "skillXp": {

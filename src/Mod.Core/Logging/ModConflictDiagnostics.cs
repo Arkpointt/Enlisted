@@ -11,7 +11,7 @@ namespace Enlisted.Mod.Core.Logging
 {
     /// <summary>
     ///     Centralized diagnostics for detecting mod conflicts and logging environment info.
-    ///     Writes to a dedicated conflicts.log file in the Debugging folder for easy user access.
+    ///     Writes to a dedicated Conflicts-A_*.log file in the Debugging folder for easy user access.
     ///
     ///     This system is designed to be lightweight - it only runs at startup and when
     ///     deferred patches are applied. No per-frame or per-tick overhead.
@@ -34,7 +34,7 @@ namespace Enlisted.Mod.Core.Logging
 		private static readonly string[] ConflictSlots = { "Conflicts-A", "Conflicts-B", "Conflicts-C" };
 
         /// <summary>
-        ///     Runs initial startup diagnostics and writes to Debugging/conflicts.log.
+        ///     Runs initial startup diagnostics and writes to Debugging/Conflicts-A_*.log.
         ///     Call this once from OnSubModuleLoad after the main Harmony.PatchAll() completes.
         ///
         ///     NOTE: This runs before deferred patches are applied, so those won't appear yet.
@@ -104,7 +104,7 @@ namespace Enlisted.Mod.Core.Logging
                 WriteCombinedConflictSummary();
                 WriteFooter(isPartial: false);
 
-                ModLogger.Info("Diagnostics", "Deferred patch diagnostics appended to conflicts.log");
+                ModLogger.Info("Diagnostics", "Deferred patch diagnostics appended to conflict log");
             }
             catch (Exception ex)
             {
@@ -253,7 +253,7 @@ namespace Enlisted.Mod.Core.Logging
         #region Path Management
 
         /// <summary>
-        ///     Resolves the path to conflicts.log in the Debugging folder alongside the module.
+        ///     Resolves the path to the conflict log (Conflicts-A_*.log) in the Debugging folder alongside the module.
         /// </summary>
         private static void InitializeLogPath()
         {
@@ -335,18 +335,12 @@ namespace Enlisted.Mod.Core.Logging
 
 				var utcNow = DateTime.UtcNow;
 
-				var files = Directory.GetFiles(logDir, $"{ConflictPrefix}*.log", SearchOption.TopDirectoryOnly)
-					.Select(path => new FileInfo(path))
-					.OrderByDescending(f => f.CreationTimeUtc)
-					.ToList();
+			var files = Directory.GetFiles(logDir, $"{ConflictPrefix}*.log", SearchOption.TopDirectoryOnly)
+				.Select(path => new FileInfo(path))
+				.OrderByDescending(f => f.CreationTimeUtc)
+				.ToList();
 
-				var legacy = Path.Combine(logDir, "conflicts.log");
-				if (File.Exists(legacy))
-				{
-					files.Insert(0, new FileInfo(legacy));
-				}
-
-				var toShift = files.Take(ConflictSlots.Length - 1).ToList();
+			var toShift = files.Take(ConflictSlots.Length - 1).ToList();
 				var toDelete = files.Skip(ConflictSlots.Length - 1).ToList();
 				foreach (var old in toDelete)
 				{
@@ -371,15 +365,15 @@ namespace Enlisted.Mod.Core.Logging
 
 				return newPath;
 			}
- 		catch
- 		{
- 			// Fallback: use a placeholder filename - no longer create legacy "conflicts.log"
- 			return Path.Combine(logDir ?? "Debugging", "_.log");
- 		}
+	catch
+	{
+		// Fallback: use a placeholder filename
+		return Path.Combine(logDir ?? "Debugging", "_.log");
+	}
 		}
 
         /// <summary>
-        ///     Writes a line to the conflicts.log file.
+        ///     Writes a line to the conflict log file.
         /// </summary>
         private static void WriteLine(string text = "")
         {
@@ -582,6 +576,11 @@ namespace Enlisted.Mod.Core.Logging
         /// <summary>
         ///     Verifies that critical mod files and systems are properly installed.
         ///     Helps diagnose installation problems vs actual bugs when users report issues.
+        ///
+        ///     2026-01-03 UPDATE: Added checks for orchestrator systems:
+        ///       - camp_schedule.json, orchestrator_overrides.json, routine_outcomes.json
+        ///       - simulation_config.json, strategic_context_config.json
+        ///       - camp_opportunities.json (in Decisions folder)
         /// </summary>
         private static void WriteModuleHealthCheck()
         {
@@ -652,10 +651,26 @@ namespace Enlisted.Mod.Core.Logging
                 if (Directory.Exists(decisionsPath))
                 {
                     var decisionFiles = Directory.GetFiles(decisionsPath, "*.json").Length;
-                    WriteLine($"    Decision Files: {decisionFiles}");
+                    var expectedDecisionFiles = new[] { 
+                        "decisions.json", "camp_decisions.json", "camp_opportunities.json", 
+                        "medical_decisions.json" 
+                    };
+                    var foundCount = 0;
+                    foreach (var expectedFile in expectedDecisionFiles)
+                    {
+                        if (File.Exists(Path.Combine(decisionsPath, expectedFile)))
+                        {
+                            foundCount++;
+                        }
+                    }
+                    WriteLine($"    Decision Files: {decisionFiles} total ({foundCount}/{expectedDecisionFiles.Length} core files)");
                     if (decisionFiles == 0)
                     {
                         warnings.Add("No decision files found");
+                    }
+                    else if (foundCount < expectedDecisionFiles.Length)
+                    {
+                        warnings.Add($"Some core decision files missing (found {foundCount}/{expectedDecisionFiles.Length})");
                     }
                 }
                 else
@@ -689,7 +704,9 @@ namespace Enlisted.Mod.Core.Logging
                 {
                     var expectedConfigs = new[] { 
                         "settings.json", "progression_config.json", "enlisted_config.json", 
-                        "equipment_pricing.json", "retinue_config.json", "baggage_config.json" 
+                        "equipment_pricing.json", "retinue_config.json", "baggage_config.json",
+                        "camp_schedule.json", "orchestrator_overrides.json", "routine_outcomes.json",
+                        "simulation_config.json", "strategic_context_config.json"
                     };
                     var foundCount = 0;
                     foreach (var expectedFile in expectedConfigs)

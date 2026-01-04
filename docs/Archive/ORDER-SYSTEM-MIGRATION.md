@@ -280,7 +280,7 @@ This is an entirely NEW behavior class that handles:
 - **Current System:** [Orders System (Legacy)](../Features/Core/orders-system.md)
 - **New System:** [Order Progression System](order-progression-system.md)
 - **Integration:** [Content Orchestrator Plan - Phase 4](content-orchestrator-plan.md#phase-4-orders-integration-week-4)
-- **Content:** [Orders Content](../Features/Content/orders-content.md) (330 order events across 17 orders)
+- **Content:** [Orders Content](../Features/Content/orders-content.md) (84 order events across 17 orders)
 
 ---
 

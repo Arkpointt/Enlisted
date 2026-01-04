@@ -2,9 +2,13 @@
 
 **Summary:** The Quartermaster manages all military logistics for the player's company including equipment purchases with quality modifiers, provisions/rations, buyback services, baggage inspections, and the Officers Armory. The system uses a data-driven dialogue engine with dynamic runtime context evaluation, allowing the Quartermaster to react to supply levels, reputation, and company events in real-time.
 
-**Status:** ✅ Current  
-**Last Updated:** 2025-12-29 (Provisions: T7+ gate, 2.0-3.2x pricing; Upgrade Screen: grid layout, sequential upgrades, real stats; Armor: removed slot picker, opens Gauntlet directly)  
+**Status:** ✅ Current
+**Last Updated:** 2026-01-03 (Fixed baggage stowage trigger logic; Fixed stock refresh to use cross-formation equipment discovery)
 **Related Docs:** [Company Supply Simulation](company-supply-simulation.md), [Provisions & Rations System](provisions-rations-system.md)
+
+**RECENT FIXES:**
+- **(2026-01-03)** Fixed critical bug where Quartermaster stock was not updating after initial enlistment. The `RefreshInventoryAtMuster()` and `RollStockAvailability()` methods relied on a deprecated `_troopEquipmentVariants` cache that was no longer being populated by the UI. Implemented new cross-formation equipment discovery via `GetAvailableEquipmentAllFormations()`, which scans all troop types (infantry, archer, cavalry, horse archer) for the player's culture and tier. Players now see equipment from all formations, not just their specific formation type. This resolves the reported issue where equipment "gets a preset once you Enlist and then never updates again."
+- **(2025-12-29)** Provisions system updated: T7+ gate enforced, pricing scaled to 2.0-3.2x market rates based on reputation. Upgrade screen redesigned with grid layout and sequential upgrade paths. Armor browsing simplified to open Gauntlet UI directly without slot picker.
 
 **System Overview:**
 The Quartermaster system uses a conversation-driven interface where face-to-face dialogue opens visual equipment browsers. The QM provides dynamic contextual responses that inform the player about supply status, their rank, reputation standing, and discount percentages before showing equipment categories. Equipment has quality modifiers affecting stats and prices. Players can purchase gear, upgrade equipped items, sell equipment back, and buy provisions. The system integrates deeply with company supply levels and reputation mechanics through a context-aware dialogue catalog.
@@ -41,7 +45,6 @@ The Quartermaster is the central logistics hub for enlisted soldiers, managing:
 - **Buyback Services** - Sell QM-purchased equipment back at 30-65% of value (quality-aware)
 - **Food Rations (T1-T6)** - Issued rations every 12 days, automatic at muster
 - **Officer Provisions (T7+)** - Premium food shop at 150-200% of town prices
-- **Baggage Inspections** - Muster contraband checks with reputation-based outcomes
 - **Officers Armory** - Elite equipment with quality modifiers (T7+, high reputation)
 - **Supply Gating** - Company supply < 30% blocks equipment changes
 - **Context-Aware Dialogue** - Real-time reaction to supply levels and events during conversation
@@ -309,18 +312,20 @@ Each purchase option opens the Master at Arms UI with category filtering:
 ```
 === BUY ARMOR ===
 
-Available Troops (filtered by your rank and formation):
+Available Equipment (filtered by your rank and culture):
+  All tiers T1-T3 shown across all formations (infantry, archer, cavalry, horse archer)
+  
   [Vlandian Squire] - Cost: 280g (20% discount)
   [Vlandian Sergeant] - Cost: 520g (20% discount)
-  [Vlandian Knight] - Cost: 1240g (20% discount) ← Requires T5+
+  [Vlandian Archer Vest] - Cost: 190g (20% discount)
+  [Vlandian Cavalry Hauberk] - Cost: 380g (20% discount)
   
 Current Equipment: Vlandian Recruit (T1)
 Current Loadout Value: 150g
 
-Filters:
-  [Show: Armor Only]
-  [Your Formation: Infantry]
-  [Your Rank: T3 - Available up to Sergeant]
+Note: Cross-Formation Discovery
+  Players see ALL equipment for their tier, regardless of their chosen formation.
+  An infantry soldier can purchase cavalry armor or horse archer bows.
 ```
 
 ### Pricing Structure
@@ -834,7 +839,7 @@ At pay muster, soldiers can trade reduced wages for a chance at surplus equipmen
    - 10% chance: Tier +1 equipment (capped at T9)
 
 2. **Equipment Selection:**
-   - Items selected from player's formation and culture
+   - Items selected from ALL formations (infantry, archer, cavalry, horse archer) for player's culture and tier
    - Weighted by player skills:
      - OneHanded skill → One-handed weapons
      - TwoHanded skill → Two-handed weapons
@@ -847,7 +852,6 @@ At pay muster, soldiers can trade reduced wages for a chance at surplus equipmen
 
 3. **Item Delivery:**
    - Item added directly to inventory
-   - **Exempt from contraband checks** during baggage inspection
    - Tracked in muster outcome record
 
 ### Example Outcomes
@@ -884,7 +888,7 @@ The quartermaster rummages through the supply wagon...
 ### Integration Notes
 
 - **QM Reputation Impact:** Better reputation = better odds
-- **Formation Matters:** Infantry get infantry equipment, cavalry get cavalry equipment
+- **Cross-Formation Discovery:** Items drawn from all formations (infantry, archer, cavalry, horse archer) for variety
 - **Skill Weighting:** Respects player build (sword users get swords, archers get bows)
 - **No Resale:** Like all QM purchases, items can be sold back through buyback system
 
@@ -894,9 +898,15 @@ The quartermaster rummages through the supply wagon...
 
 ### First-Time Stowage (Onboarding)
 
-When a player first enlists, they must decide what to do with their civilian belongings. The quartermaster's clerk handles this process.
+When a player first enlists (or re-enlists after retirement/desertion), they must decide what to do with their civilian belongings. The quartermaster's clerk handles this process.
 
-**Event:** `evt_baggage_stowage_first_enlistment` (one-time onboarding event)
+**Event:** `evt_baggage_stowage_first_enlistment`
+
+**Triggers:**
+- First enlistment ever (T1-T6 only, commanders skip)
+- After honorable retirement (starting fresh)
+- After desertion (starting fresh)
+- **Does NOT trigger** on normal re-enlistments (e.g., after lord's army defeated)
 
 **Options:**
 
@@ -919,6 +929,8 @@ When a player first enlists, they must decide what to do with their civilian bel
 - **Unmarked** (smuggled): 2x raid vulnerability, no official record
 
 This status integrates with the [Baggage Train Availability](baggage-train-availability.md) system's raid mechanics.
+
+**Bug Fix (2026-01-03):** Fixed issue where baggage stowage dialog was incorrectly firing multiple times during active service. Root causes: (1) flag resets in EnlistmentBehavior, (2) EventSelector selecting onboarding events as regular camp events. Event now properly triggers only on first enlistment or after retirement/desertion. See [enlistment.md](../Core/enlistment.md) for complete behavior documentation.
 
 ### Muster Baggage Access
 
@@ -1122,7 +1134,6 @@ I'll need the military equipment back, but..."
 - Buying provisions regularly (+1 per transaction)
 
 **Negative Losses:**
-- Caught with contraband (-5 to -10)
 - Missing equipment at discharge (-10)
 - Complaints about pricing (-2)
 - Refusing reasonable requests (-5)
@@ -1139,7 +1150,7 @@ QM: "You're proving yourself to be reliable. Keep it up."
 ```
 QM: "I've got to say, you're one of the best soldiers I've worked with.
     If you need anything, just ask. Within reason, of course."
-[Unlocks: Looks other way on contraband]
+[Unlocks: Additional privileges]
 ```
 
 **Dropping Below -25 (Hostile):**
@@ -1278,13 +1289,46 @@ Using non-existent brush names (like `Popup.Background.Medium`) causes UI to ren
 - **[Company Supply Simulation](company-supply-simulation.md)** - How company supply is calculated and affects quartermaster access
 - **[Provisions & Rations System](provisions-rations-system.md)** - Detailed food mechanics for T1-T4 issued rations and T5+ officer provisions
 
+### Key Methods
+
+**Cross-Formation Equipment Discovery (2026-01-03 fix):**
+```csharp
+// QuartermasterManager.GetAvailableEquipmentAllFormations(tierCap, culture)
+// Scans ALL non-hero troops of the player's culture across all formations
+// Returns: Dictionary<EquipmentIndex, List<ItemObject>> with all available items
+```
+
+**Stock Refresh at Muster:**
+```csharp
+// QuartermasterManager.RefreshInventoryAtMuster(supplyLevel)
+// Called by MusterMenuHandler.CompleteMusterSequence()
+// Uses GetAvailableEquipmentAllFormations() to populate inventory
+// Applies quality modifiers and stock quantities based on supply level
+```
+
+**Out-of-Stock Rolling:**
+```csharp
+// QuartermasterManager.RollStockAvailability()
+// Rolls out-of-stock chances for each item based on supply level
+// Uses GetAvailableEquipmentAllFormations() for both rolling and stock floor guarantees
+// Ensures at least 1 item per major slot (Weapon0, Head, Body, Leg, Horse) remains available
+```
+
+**Mount/Harness Browsing (Direct API, no reflection):**
+```csharp
+// QuartermasterManager.GetMountVariantsForBrowsing()
+// QuartermasterManager.GetHarnessVariantsForBrowsing()
+// Returns EquipmentVariantOption lists with pricing, quality, and stock status
+// Uses cross-formation discovery internally
+```
+
 ### Source Files
 
 | File | Purpose |
 |------|---------|
 | `src/Features/Conversations/Behaviors/EnlistedDialogManager.cs` | Dialogue registration and action handling |
 | `src/Features/Conversations/Data/QMDialogueCatalog.cs` | JSON dialogue loader and context matching |
-| `src/Features/Equipment/Behaviors/QuartermasterManager.cs` | Core quartermaster logic |
+| `src/Features/Equipment/Behaviors/QuartermasterManager.cs` | Core quartermaster logic, cross-formation equipment discovery |
 | `src/Features/Equipment/Behaviors/TroopSelectionManager.cs` | Equipment selection integration |
 | `src/Features/Equipment/Managers/QMInventoryState.cs` | Inventory tracking and muster refresh |
 | `src/Features/Equipment/UI/QuartermasterEquipmentSelectorBehavior.cs` | Gauntlet layer management for QM screens |

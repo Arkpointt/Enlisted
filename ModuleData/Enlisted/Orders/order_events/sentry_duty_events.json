@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 2,
   "order_type": "order_sentry_duty",
   "events": [
@@ -12,7 +12,11 @@
       "setupId": "sentry_movement_spotted_setup",
       "setup": "You spot movement in the darkness beyond your position. Could be an animal. Could be an enemy scout.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign", "siege_defending"]
+        "world_state": [
+          "war_marching",
+          "war_active_campaign",
+          "siege_defending"
+        ]
       },
       "options": [
         {
@@ -20,7 +24,11 @@
           "textId": "sentry_movement_spotted_raise_alarm",
           "text": "Raise the alarm immediately.",
           "effects": {
-            "officerRep": 1
+            "officerRep": 1,
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 14
+            }
           },
           "resultTextId": "sentry_movement_spotted_raise_alarm_result",
           "resultText": "The camp responds. It was just a deer, but better safe than sorry."
@@ -31,7 +39,9 @@
           "text": "Watch carefully before deciding.",
           "effects": {
             "officerRep": 2,
-            "skillXp": { "Scouting": 15 }
+            "skillXp": {
+              "Scouting": 15
+            }
           },
           "resultTextId": "sentry_movement_spotted_watch_result",
           "resultText": "You identify it as an animal. No need to wake the camp."
@@ -46,12 +56,16 @@
           },
           "effects": {
             "officerRep": 2,
-            "skillXp": { "Scouting": 22 }
+            "skillXp": {
+              "Scouting": 22
+            }
           },
           "failEffects": {
             "hpChange": -8,
             "officerRep": 1,
-            "skillXp": { "Scouting": 10 }
+            "skillXp": {
+              "Scouting": 10
+            }
           },
           "resultTextId": "sentry_movement_spotted_challenge_result",
           "resultText": "Your challenge reveals nothing. You stay alert.",
@@ -70,7 +84,14 @@
       "setupId": "sentry_fell_asleep_setup",
       "setup": "Your eyelids are heavy. You catch yourself nodding off at your post. This is dangerous.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+        "world_state": [
+          "peacetime_garrison",
+          "peacetime_recruiting",
+          "war_marching",
+          "war_active_campaign",
+          "siege_attacking",
+          "siege_defending"
+        ]
       },
       "options": [
         {
@@ -79,7 +100,9 @@
           "text": "Shake it off and stay alert.",
           "effects": {
             "fatigue": 3,
-            "skillXp": { "Athletics": 18 }
+            "skillXp": {
+              "Athletics": 18
+            }
           },
           "resultTextId": "sentry_fell_asleep_shake_off_result",
           "resultText": "You force yourself awake. The rest of the watch is torture."
@@ -90,7 +113,9 @@
           "text": "Report yourself to {SERGEANT}.",
           "effects": {
             "officerRep": 1,
-            "skillXp": { "Tactics": 10 }
+            "skillXp": {
+              "Tactics": 10
+            }
           },
           "resultTextId": "sentry_fell_asleep_report_self_result",
           "resultText": "{SERGEANT} replaces you. He respects your honesty."
@@ -100,7 +125,11 @@
           "textId": "sentry_fell_asleep_hope",
           "text": "Hope no one notices.",
           "effects": {
-            "officerRep": -5
+            "officerRep": -5,
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 14
+            }
           },
           "resultTextId": "sentry_fell_asleep_hope_result",
           "resultText": "{SERGEANT} finds you asleep. You're in serious trouble."
@@ -117,7 +146,10 @@
       "setupId": "sentry_challenged_approach_setup",
       "setup": "A figure approaches your position in the darkness. Friend or foe?",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": [
+          "war_marching",
+          "war_active_campaign"
+        ]
       },
       "options": [
         {
@@ -126,7 +158,9 @@
           "text": "Challenge them properly.",
           "effects": {
             "officerRep": 1,
-            "skillXp": { "Tactics": 14 }
+            "skillXp": {
+              "Tactics": 14
+            }
           },
           "resultTextId": "sentry_challenged_approach_challenge_result",
           "resultText": "It's {COMRADE_NAME} returning from patrol. Good protocol."
@@ -137,7 +171,9 @@
           "text": "Wait to see who it is.",
           "effects": {
             "officerRep": 0,
-            "skillXp": { "Scouting": 8 }
+            "skillXp": {
+              "Scouting": 8
+            }
           },
           "resultTextId": "sentry_challenged_approach_wait_result",
           "resultText": "It's one of ours. You should have challenged them."
@@ -152,12 +188,16 @@
           },
           "effects": {
             "officerRep": 2,
-            "skillXp": { "Bow": 25 }
+            "skillXp": {
+              "Bow": 25
+            }
           },
           "failEffects": {
             "officerRep": -5,
             "soldierRep": -5,
-            "skillXp": { "Bow": 8 }
+            "skillXp": {
+              "Bow": 8
+            }
           },
           "resultTextId": "sentry_challenged_approach_shoot_result",
           "resultText": "You drop an enemy scout. {SERGEANT} commends your vigilance.",
@@ -176,7 +216,10 @@
       "setupId": "sentry_infiltrator_setup",
       "setup": "You spot someone climbing the wall near your position. An infiltrator!",
       "requirements": {
-        "world_state": ["siege_defending"]
+        "world_state": [
+          "siege_defending"
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -185,7 +228,9 @@
           "text": "Raise the alarm immediately.",
           "effects": {
             "officerRep": 1,
-            "skillXp": { "Tactics": 16 }
+            "skillXp": {
+              "Tactics": 16
+            }
           },
           "resultTextId": "sentry_infiltrator_raise_alarm_result",
           "resultText": "The camp responds. The infiltrator escapes but the breach is sealed."
@@ -200,12 +245,16 @@
           },
           "effects": {
             "officerRep": 2,
-            "skillXp": { "OneHanded": 24 }
+            "skillXp": {
+              "OneHanded": 24
+            }
           },
           "failEffects": {
             "hpChange": -8,
             "officerRep": 1,
-            "skillXp": { "OneHanded": 12 }
+            "skillXp": {
+              "OneHanded": 12
+            }
           },
           "resultTextId": "sentry_infiltrator_challenge_result",
           "resultText": "You confront them. They flee. You prevented a breach.",
@@ -218,7 +267,9 @@
           "text": "Shoot them down.",
           "effects": {
             "officerRep": 2,
-            "skillXp": { "Bow": 22 }
+            "skillXp": {
+              "Bow": 22
+            }
           },
           "resultTextId": "sentry_infiltrator_shoot_result",
           "resultText": "Your arrow finds its mark. The infiltrator falls."
@@ -235,7 +286,14 @@
       "setupId": "sentry_relief_late_setup",
       "setup": "Your relief is late. You're cold, tired, and your shift ended thirty minutes ago.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+        "world_state": [
+          "peacetime_garrison",
+          "peacetime_recruiting",
+          "war_marching",
+          "war_active_campaign",
+          "siege_attacking",
+          "siege_defending"
+        ]
       },
       "options": [
         {
@@ -245,7 +303,9 @@
           "effects": {
             "fatigue": 5,
             "officerRep": 2,
-            "skillXp": { "Athletics": 20 }
+            "skillXp": {
+              "Athletics": 20
+            }
           },
           "resultTextId": "sentry_relief_late_stay_result",
           "resultText": "{COMRADE_NAME} finally arrives, apologizing. You held your post."
@@ -259,6 +319,10 @@
             "officerRep": -1,
             "escalation": {
               "discipline": 5
+            },
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 14
             }
           },
           "resultTextId": "sentry_relief_late_complain_result",
@@ -273,6 +337,10 @@
             "officerRep": -8,
             "escalation": {
               "discipline": 15
+            },
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 14
             }
           },
           "resultTextId": "sentry_relief_late_leave_result",

@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 2,
   "order_type": "order_guard_post",
   "events": [
@@ -12,7 +12,10 @@
       "setupId": "guard_drunk_soldier_setup",
       "setup": "A drunk soldier stumbles toward your post, demanding to pass. {SERGEANT} told you no one passes without authorization.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "war_active_campaign"]
+        "world_state": [
+          "peacetime_garrison",
+          "war_active_campaign"
+        ]
       },
       "options": [
         {
@@ -21,7 +24,11 @@
           "text": "Let him through. Not worth the trouble.",
           "effects": {
             "officerRep": -1,
-            "soldierRep": 1
+            "soldierRep": 1,
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 10
+            }
           },
           "resultTextId": "guard_drunk_soldier_let_pass_result",
           "resultText": "He staggers past. You hope {SERGEANT} doesn't find out."
@@ -33,7 +40,9 @@
           "effects": {
             "officerRep": 1,
             "soldierRep": -1,
-            "skillXp": { "Athletics": 12 }
+            "skillXp": {
+              "Athletics": 12
+            }
           },
           "resultTextId": "guard_drunk_soldier_turn_away_result",
           "resultText": "He curses you but stumbles off. You held your post."
@@ -45,7 +54,9 @@
           "effects": {
             "officerRep": 2,
             "soldierRep": -2,
-            "skillXp": { "Tactics": 10 }
+            "skillXp": {
+              "Tactics": 10
+            }
           },
           "resultTextId": "guard_drunk_soldier_report_result",
           "resultText": "{SERGEANT} hauls him away. The other soldiers give you cold looks."
@@ -62,7 +73,11 @@
       "setupId": "guard_strange_noise_setup",
       "setup": "You hear a strange noise in the darkness beyond your post. Could be nothing. Could be trouble.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign", "siege_defending"]
+        "world_state": [
+          "war_marching",
+          "war_active_campaign",
+          "siege_defending"
+        ]
       },
       "options": [
         {
@@ -75,12 +90,16 @@
           },
           "effects": {
             "officerRep": 2,
-            "skillXp": { "Scouting": 20 }
+            "skillXp": {
+              "Scouting": 20
+            }
           },
           "failEffects": {
             "hpChange": -5,
             "officerRep": 1,
-            "skillXp": { "Scouting": 8 }
+            "skillXp": {
+              "Scouting": 8
+            }
           },
           "resultTextId": "guard_strange_noise_investigate_result",
           "resultText": "You find a stray dog. Better safe than sorry.",
@@ -93,7 +112,9 @@
           "text": "Hold your post and watch.",
           "effects": {
             "officerRep": 1,
-            "skillXp": { "Tactics": 12 }
+            "skillXp": {
+              "Tactics": 12
+            }
           },
           "resultTextId": "guard_strange_noise_hold_post_result",
           "resultText": "The noise fades. You stay alert."
@@ -103,7 +124,11 @@
           "textId": "guard_strange_noise_raise_alarm",
           "text": "Raise the alarm.",
           "effects": {
-            "officerRep": -1
+            "officerRep": -1,
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 10
+            }
           },
           "resultTextId": "guard_strange_noise_raise_alarm_result",
           "resultText": "The camp wakes. Nothing found. {SERGEANT} is not pleased."
@@ -120,7 +145,11 @@
       "setupId": "guard_officer_inspection_setup",
       "setup": "An officer approaches your post in the night. He's not wearing his insignia. This could be a test.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "war_marching", "war_active_campaign"]
+        "world_state": [
+          "peacetime_garrison",
+          "war_marching",
+          "war_active_campaign"
+        ]
       },
       "options": [
         {
@@ -129,7 +158,9 @@
           "text": "Challenge him properly.",
           "effects": {
             "officerRep": 4,
-            "skillXp": { "Tactics": 18 }
+            "skillXp": {
+              "Tactics": 18
+            }
           },
           "resultTextId": "guard_officer_inspection_challenge_result",
           "resultText": "He smiles. 'Good work, {PLAYER_RANK}. You know your duty.'"
@@ -139,7 +170,11 @@
           "textId": "guard_officer_inspection_let_pass",
           "text": "Let him pass without challenge.",
           "effects": {
-            "officerRep": -3
+            "officerRep": -3,
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 10
+            }
           },
           "resultTextId": "guard_officer_inspection_let_pass_result",
           "resultText": "He stops. 'You failed the test, soldier. Challenge everyone.'"
@@ -149,7 +184,11 @@
           "textId": "guard_officer_inspection_hesitate",
           "text": "Hesitate, unsure what to do.",
           "effects": {
-            "officerRep": -1
+            "officerRep": -1,
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 10
+            }
           },
           "resultTextId": "guard_officer_inspection_hesitate_result",
           "resultText": "Your hesitation shows. He walks past shaking his head."
@@ -166,7 +205,10 @@
       "setupId": "guard_noble_demands_setup",
       "setup": "A well-dressed noble demands entry without proper authorization. He's clearly used to getting his way.",
       "requirements": {
-        "world_state": ["peacetime_garrison"]
+        "world_state": [
+          "peacetime_garrison"
+        ],
+        "notAtSea": true
       },
       "options": [
         {
@@ -174,7 +216,11 @@
           "textId": "guard_noble_demands_obey",
           "text": "Let him through. He's a noble.",
           "effects": {
-            "officerRep": -1
+            "officerRep": -1,
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 10
+            }
           },
           "resultTextId": "guard_noble_demands_obey_result",
           "resultText": "He passes. {SERGEANT} later asks why you broke protocol."
@@ -189,14 +235,18 @@
           },
           "effects": {
             "officerRep": 2,
-            "skillXp": { "Charm": 20 }
+            "skillXp": {
+              "Charm": 20
+            }
           },
           "failEffects": {
             "officerRep": 1,
             "escalation": {
               "scrutiny": 5
             },
-            "skillXp": { "Charm": 8 }
+            "skillXp": {
+              "Charm": 8
+            }
           },
           "resultTextId": "guard_noble_demands_challenge_result",
           "resultText": "He's annoyed but respects your duty. {SERGEANT} approves.",
@@ -209,7 +259,9 @@
           "text": "Fetch {OFFICER_NAME} to handle this.",
           "effects": {
             "officerRep": 1,
-            "skillXp": { "Tactics": 10 }
+            "skillXp": {
+              "Tactics": 10
+            }
           },
           "resultTextId": "guard_noble_demands_fetch_officer_result",
           "resultText": "{OFFICER_NAME} handles it. You followed procedure."
@@ -226,7 +278,14 @@
       "setupId": "guard_relieved_early_setup",
       "setup": "Your relief arrives an hour early. {COMRADE_NAME} says {SERGEANT} changed the schedule.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+        "world_state": [
+          "peacetime_garrison",
+          "peacetime_recruiting",
+          "war_marching",
+          "war_active_campaign",
+          "siege_attacking",
+          "siege_defending"
+        ]
       },
       "options": [
         {
@@ -234,7 +293,11 @@
           "textId": "guard_relieved_early_accept",
           "text": "Accept the relief and rest.",
           "effects": {
-            "fatigue": -5
+            "fatigue": -5,
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 10
+            }
           },
           "resultTextId": "guard_relieved_early_accept_result",
           "resultText": "You head back to your tent. A welcome break."
@@ -246,7 +309,9 @@
           "effects": {
             "fatigue": 3,
             "soldierRep": 2,
-            "skillXp": { "Athletics": 15 }
+            "skillXp": {
+              "Athletics": 15
+            }
           },
           "resultTextId": "guard_relieved_early_offer_stay_result",
           "resultText": "{COMRADE_NAME} appreciates it. You finish your full shift."
@@ -263,7 +328,14 @@
       "setupId": "guard_double_shift_setup",
       "setup": "Your shift ended an hour ago. No relief has arrived. You're exhausted.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+        "world_state": [
+          "peacetime_garrison",
+          "peacetime_recruiting",
+          "war_marching",
+          "war_active_campaign",
+          "siege_attacking",
+          "siege_defending"
+        ]
       },
       "options": [
         {
@@ -273,7 +345,9 @@
           "effects": {
             "fatigue": 8,
             "officerRep": 2,
-            "skillXp": { "Athletics": 20 }
+            "skillXp": {
+              "Athletics": 20
+            }
           },
           "resultTextId": "guard_double_shift_stay_result",
           "resultText": "Two more hours pass before {COMRADE_NAME} arrives. {SERGEANT} notes your dedication."
@@ -284,7 +358,9 @@
           "text": "Go find your relief.",
           "effects": {
             "fatigue": 3,
-            "skillXp": { "Athletics": 10 }
+            "skillXp": {
+              "Athletics": 10
+            }
           },
           "resultTextId": "guard_double_shift_find_them_result",
           "resultText": "You find {COMRADE_NAME} asleep. He rushes to the post."
@@ -295,7 +371,11 @@
           "text": "Leave your post. You've done your time.",
           "effects": {
             "fatigue": -2,
-            "officerRep": -10
+            "officerRep": -10,
+            "skillXp": {
+              "Athletics": 14,
+              "Tactics": 10
+            }
           },
           "resultTextId": "guard_double_shift_leave_post_result",
           "resultText": "{SERGEANT} finds the post unmanned. You're in serious trouble."

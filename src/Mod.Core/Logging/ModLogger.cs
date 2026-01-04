@@ -769,19 +769,13 @@ namespace Enlisted.Mod.Core.Logging
  			EnsureDirectoryExists(logDir);
  			var utcNow = DateTime.UtcNow;
 
- 			// Collect existing session logs and legacy enlisted.log
- 			var sessionFiles = Directory.GetFiles(logDir, $"{SessionPrefix}*.log", SearchOption.TopDirectoryOnly)
-					.Select(path => new FileInfo(path))
-					.OrderByDescending(f => f.CreationTimeUtc)
-					.ToList();
+		// Collect existing session logs
+		var sessionFiles = Directory.GetFiles(logDir, $"{SessionPrefix}*.log", SearchOption.TopDirectoryOnly)
+				.Select(path => new FileInfo(path))
+				.OrderByDescending(f => f.CreationTimeUtc)
+				.ToList();
 
-				var legacyLog = Path.Combine(logDir, "enlisted.log");
-				if (File.Exists(legacyLog))
-				{
-					sessionFiles.Insert(0, new FileInfo(legacyLog));
-				}
-
-				// Keep at most the two newest existing sessions (B and C after shifting)
+			// Keep at most the two newest existing sessions (B and C after shifting)
 				var toShift = sessionFiles.Take(SessionSlots.Length - 1).ToList();
 				var toDelete = sessionFiles.Skip(SessionSlots.Length - 1).ToList();
 				foreach (var old in toDelete)

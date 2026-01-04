@@ -3,10 +3,11 @@
 **Summary:** Complete guide to military rank progression from T1 (Follower) to T9 (Marshal). Covers XP requirements, multi-factor promotion criteria, proving events, culture-specific rank titles, and the mechanics of advancement. This system rewards consistent service, combat performance, and maintaining good standing with superiors and comrades.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-01 (Promotion state reset fix - declined/pending promotions now clear on re-enlistment)  
+**Last Updated:** 2026-01-03 (Fixed promotion effect processing bug - proving events now correctly grant promotions)  
 **Related Docs:** [Enlistment System](enlistment.md), [Training System](../Combat/training-system.md), [Pay System](pay-system.md), [Order Progression System](order-progression-system.md)
 
 **RECENT FIXES:**
+- **(2026-01-03)** Fixed critical bug in `EventDeliveryManager` where promotion effects from proving events were never applied. The condition `effects.Promotes.Value > 0` failed for the sentinel value `-1` (which represents `"promotes": true` in JSON). Changed to `!= 0` to properly handle both explicit tier promotions and the `-1` sentinel. This resolves the reported issue where players remained at T1 despite meeting all promotion requirements.
 - **(2026-01-01)** Fixed bug where promotions were permanently blocked after re-enlistment if the previous lord was defeated while a proving event was pending. Declined promotions and pending promotion events now properly reset when starting new service with a different lord.
 - **(2026-01-01)** Fixed XP tracking bug where skill XP was awarded but enlistment XP (used for rank progression) was not. All XP-granting activities now properly update both systems. See [XP Sources](#xp-sources) for details.
 
@@ -408,26 +409,9 @@ This ensures the core progression system never breaks even if content files are 
 
 ## Proving Events
 
-Each tier transition includes a unique narrative event that tests your character and leadership philosophy. These events shape your emergent identity through your choices.
+Each tier transition (T2→T9) includes a unique narrative event that tests your character and leadership philosophy. These events shape your emergent identity through your choices.
 
-### T1→T2: Finding Your Place
-
-**Theme:** Battle formation selection and specialization  
-**Situation:** The sergeant asks what role you're trained for  
-
-**Choices:**
-- **Infantry** → Shield wall, sword & shield, hold the line
-- **Archer** → Ranged combat, bow/crossbow, strike from distance
-- **Cavalry** → Mounted warfare, lance and sword, ride with lancers
-- **Horse Archer** → Mounted archery, mobile skirmisher (if faction supports)
-
-**Effect:** This choice provides narrative flavor and affects:
-- Equipment the Quartermaster offers (category filtering)
-- Training events available (skill-based content)
-
-**Note:** Your actual **battle formation assignment** (T1-T6 only) is detected dynamically from your equipped weapons at battle start: bow → Ranged, horse → Cavalry, both → Horse Archer, melee → Infantry. This T2 choice represents your "stated specialty" for equipment and training purposes, but doesn't lock you into a formation. At T7+ you control your own party and formation assignment is skipped entirely.
-
-**Location:** `ModuleData/Enlisted/Events/events_promotion.json` → `promotion_t1_t2_finding_your_place`
+**Note:** T1→T2 promotion has no proving event. Formation is now determined automatically by equipped weapons (bow→Ranged, horse→Cavalry, etc.), so the player simply advances to T2 when requirements are met.
 
 ---
 

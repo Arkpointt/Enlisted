@@ -84,11 +84,52 @@ The `PlayerConditionBehavior` manages a single condition state that tracks:
 
 Illnesses develop from medical risk escalation, not direct damage events. The ContentOrchestrator monitors medical risk and triggers illness onset events when risk reaches thresholds.
 
+### Medical Risk Escalation
+
+Medical risk is an escalation track (0-5) that accumulates from various sources and triggers illness onset when thresholds are reached.
+
+**Risk Sources:**
+- Injuries (each injury adds risk based on severity)
+- Low HP (risk increases as HP drops)
+- Exhaustion (low fatigue adds risk)
+- Harsh conditions (siege, harsh terrain)
+- Failed orders with injury risk
+- Untreated existing conditions
+
+**Risk Levels:**
+| Risk Level | Status | Illness Trigger Chance |
+|------------|--------|------------------------|
+| 0 | Healthy | 0% |
+| 1-2 | At Risk | 5-10% |
+| 3 | Minor Illness Threshold | 15% |
+| 4 | Moderate Illness Threshold | 20% |
+| 5+ | Severe Illness Threshold | 25%+ |
+
+**Risk Reduction:**
+- Medical treatment (immediate -2 to -5 risk)
+- Rest and recovery (gradual reduction)
+- Successful rest decisions (-1 risk)
+- Time passing while healthy
+
+### Orchestrator Integration
+
+**Daily Check:** ContentOrchestrator calls `CheckMedicalPressure()` at 6am each day during world-state tick.
+
+**Probability Calculation:**
+```
+Base chance = 5% per Medical Risk level
++ Fatigue modifier (+10% if exhausted)
++ Context modifier (+12% during siege)
++ Consecutive high-pressure days (+5% each day)
+```
+
+**Cooldown:** 7-day cooldown between illness onset events to prevent illness spam.
+
 **Illness Onset Triggers:**
 - Medical Risk 3+ with consecutive high-pressure days
-- Probability calculation: 5% per risk level, modified by fatigue/season/siege
-- 7-day cooldown between illness triggers
+- Probability calculation as above
 - Maritime vs land context determines illness type
+- Blocked if player already has an illness
 
 **Illness Progression:**
 - Minor illness (3-5 day recovery)

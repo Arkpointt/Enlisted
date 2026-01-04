@@ -27,7 +27,7 @@ namespace Enlisted.Features.Logistics
         
         /// <summary>
         /// Locked by quartermaster authority.
-        /// Occurs during supply crisis (supply less than 20%) or contraband investigation.
+        /// Occurs during supply crisis (supply less than 20%).
         /// </summary>
         Locked
     }

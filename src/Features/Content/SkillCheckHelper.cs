@@ -119,6 +119,20 @@ namespace Enlisted.Features.Content
                 return null;
             }
 
+            // Handle common aliases/misspellings before searching Skills.All
+            var normalizedName = skillName.Trim().ToLowerInvariant();
+            var mappedSkill = normalizedName switch
+            {
+                "perception" => DefaultSkills.Scouting,  // Perception checks map to Scouting
+                "smithing" => DefaultSkills.Crafting,    // Smithing is Crafting in Bannerlord
+                _ => null
+            };
+
+            if (mappedSkill != null)
+            {
+                return mappedSkill;
+            }
+
             return Skills.All.FirstOrDefault(s =>
                 s.StringId.Equals(skillName, StringComparison.OrdinalIgnoreCase) ||
                 s.Name.ToString().Equals(skillName, StringComparison.OrdinalIgnoreCase));

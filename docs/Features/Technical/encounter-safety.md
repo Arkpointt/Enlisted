@@ -1468,7 +1468,7 @@ ModLogger.Warn("SiegeIntegration", $"Integration may be broken - player not in B
 
 **Reserve mode menu stutter (flickering between menus):**
 - `GenericStateMenuPatch` should intercept `GetGenericStateMenu()` calls
-- Verify patch is registered in `conflicts.log`
+- Verify patch is registered in `Conflicts-A_*.log`
 - Check `IsWaitingInReserve` is true when in reserve
 - If stutter persists, the patch may be missing from `Enlisted.csproj`
 
@@ -1567,7 +1567,7 @@ If mission cleanup crash persists (crash after battle ends):
 *Method overload ambiguity:* When using `AccessTools.Method` for Naval DLC internals, always specify parameter types. `DequeueReservedTroop` has 2 overloads - use `AccessTools.Method(type, "DequeueReservedTroop", new[] { navalShipAgentsType })` to avoid "Ambiguous match" exceptions that silently break patches.
 
 **Debug Output Location:**
-- `Modules/Enlisted/Debugging/enlisted.log`
+- `Modules/Enlisted/Debugging/Session-A_*.log`
 
 **Related Files:**
 - `src/Features/Enlistment/Behaviors/EncounterGuard.cs` - Static utility for encounter state management

@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 2,
   "order_type": "order_firewood_detail",
   "events": [
@@ -12,7 +12,8 @@
       "setupId": "firewood_axe_slip_setup",
       "setup": "The axe slips. Blood wells from your hand. Not deep, but it stings.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -73,7 +74,8 @@
       "setupId": "firewood_found_something_setup",
       "setup": "Digging out a stump, your shovel hits something metal. A small chest, half-buried.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -123,7 +125,8 @@
       "setupId": "firewood_wildlife_setup",
       "setup": "A boar crashes through the underbrush. It's big, angry, and between you and camp.",
       "requirements": {
-        "world_state": ["war_marching", "war_active_campaign"]
+        "world_state": ["war_marching", "war_active_campaign"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -181,7 +184,8 @@
       "setupId": "firewood_work_song_setup",
       "setup": "{COMRADE_NAME} starts a work song. The rhythm helps the axes fall in time.",
       "requirements": {
-        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"]
+        "world_state": ["peacetime_garrison", "peacetime_recruiting", "war_marching", "war_active_campaign", "siege_attacking", "siege_defending"],
+        "notAtSea": true
       },
       "options": [
         {
@@ -234,7 +238,8 @@
       "setupId": "firewood_competition_setup",
       "setup": "{COMRADE_NAME} challenges you to a chopping contest. First to split ten logs wins.",
       "requirements": {
-        "world_state": ["peacetime_garrison"]
+        "world_state": ["peacetime_garrison"],
+        "notAtSea": true
       },
       "options": [
         {

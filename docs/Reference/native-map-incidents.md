@@ -4,7 +4,7 @@
 
 **Status:** 📚 Reference  
 **Last Updated:** 2025-12-22  
-**Related Docs:** [Map Incidents (War Sails)](../Content/map-incidents-warsails.md), [Event Catalog](../Content/event-catalog-by-system.md)
+**Related Docs:** [Map Incidents (War Sails)](map-incidents-warsails.md), [Content Index](../Features/Content/content-index.md)
 
 ---
 

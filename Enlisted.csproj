@@ -589,6 +589,7 @@
   <ItemGroup>
     <!-- Project README -->
     <None Include="README.md"/>
+    <None Include="WARP.md"/>
     
     <!-- Documentation (all markdown files in docs/) -->
     <None Include="docs\**\*.md"/>
@@ -598,6 +599,25 @@
     
     <!-- Module Data README -->
     <None Include="ModuleData\Enlisted\README.md"/>
+    
+    <!-- Development Tools -->
+    <None Include="tools\**\*.py"/>
+    <None Include="tools\**\*.ps1"/>
+    <None Include="tools\**\*.md"/>
+    <None Include="Tools\**\*.py"/>
+    <None Include="Tools\**\*.ps1"/>
+    <None Include="Tools\**\*.md"/>
+    <None Include="Tools\**\*.txt"/>
+    
+    
+    <!-- Debugging & Validation Files -->
+    <None Include="*.txt"/>
+    
+    <!-- Configuration Files -->
+    <None Include=".editorconfig"/>
+    <None Include=".gitignore"/>
+    <None Include="qodana.yaml"/>
+    <None Include="qodana-fix.yml"/>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
   
@@ -656,12 +676,8 @@
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterUpgradeCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     
     <!-- COPY WORKSHOP FILES (for Steam Workshop uploads) -->
-    <Copy SourceFiles="tools\workshop\WorkshopUpdate.xml" DestinationFolder="$(OutputPath)..\..\"/>
-    <Copy SourceFiles="tools\workshop\preview.png" DestinationFolder="$(OutputPath)..\..\" Condition="Exists('tools\workshop\preview.png')"/>
-    
-    <!-- CREATE DEBUG LOG FILES -->
-    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false"/>
-    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\conflicts.log" Lines="[Init] Precreated by build" Overwrite="false"/>
+    <Copy SourceFiles="Tools\Steam\WorkshopUpdate.xml" DestinationFolder="$(OutputPath)..\..\"/>
+    <Copy SourceFiles="Tools\Steam\preview.png" DestinationFolder="$(OutputPath)..\..\"/>
   </Target>
   <Import Project="packages\Microsoft.NETFramework.ReferenceAssemblies.net472.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net472.targets" Condition="Exists('packages\Microsoft.NETFramework.ReferenceAssemblies.net472.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net472.targets')"/>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

@@ -396,6 +396,13 @@ Events use a standardized JSON schema. Each event has:
 - `renown` - Renown reward/penalty
 - `hpChange` - Player HP damage (negative values)
 - `troopLoss` - Troop casualties (e.g., `{"min": 1, "max": 3}`)
+- `promotes` - Grants promotion (use `true` for next tier, or specific tier number like `3`)
+
+**Promotion Effect Details:**
+The `promotes` field is used in proving events (`events_promotion.json`) to grant tier promotions:
+- `"promotes": true` - Promotes player to next tier (e.g., T2→T3, T5→T6)
+- `"promotes": 5` - Promotes player to specific tier (explicit tier 5)
+- **Technical Note:** The value `true` is converted to `-1` internally (sentinel value) and resolved to `currentTier + 1` at runtime. This ensures promotions always advance by one tier regardless of player's current rank.
 
 **Text placeholders you can use:**
 - Player: `{PLAYER_NAME}`, `{PLAYER_RANK}`
@@ -530,6 +537,6 @@ Complete inventory of all JSON configuration and content files.
 
 ---
 
-**Last Updated:** 2025-12-23  
+**Last Updated:** 2026-01-03 (Added promotion effect documentation)  
 **Mod Version:** 0.9.0  
 **For full documentation, see:** `docs/index.md`

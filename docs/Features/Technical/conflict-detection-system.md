@@ -3,8 +3,8 @@
 **Summary:** Documents the `ModConflictDiagnostics` runtime system that automatically detects Harmony patch conflicts with other mods, verifies mod installation integrity, and validates content catalog loading. Also covers internal system integration points and state management priorities for development.
 
 **Status:** ✅ Current  
-**Last Updated:** 2026-01-01  
-**Related Docs:** [Event System Schemas](../Content/event-system-schemas.md), [Encounter Safety](encounter-safety.md), [Content System Architecture](../Content/content-system-architecture.md)
+**Last Updated:** 2026-01-03  
+**Related Docs:** [Event System Schemas](../Content/event-system-schemas.md), [Encounter Safety](encounter-safety.md), [Content System Architecture](../Content/content-system-architecture.md), [Orchestrator Opportunity Unification](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md), [Systems Integration Analysis](../../ANEWFEATURE/systems-integration-analysis.md)
 
 ---
 
@@ -337,6 +337,59 @@ Patches are auto-categorized by type name:
 
 **Note:** The sections below are for internal development use. They document how our systems interact and provide guidelines for avoiding conflicts when adding new features.
 
+---
+
+## Recent Architectural Changes (2026-01-03)
+
+### Orchestrator Opportunity Unification
+
+**Problem Solved:** Opportunities would disappear from the Camp Hub when the lord left a settlement mid-session, creating a jarring UX where content the player was about to interact with vanished.
+
+**Root Cause:** Menu was regenerating opportunities on-demand based on current context, rather than using a locked schedule.
+
+**Solution Implemented:**
+- **ContentOrchestrator** now owns the opportunity lifecycle
+- Opportunities pre-scheduled at 6am daily tick for all 4 phases (Dawn/Midday/Dusk/Night)
+- Schedule **locked** for 24 hours once generated
+- Menu queries `ContentOrchestrator.GetCurrentPhaseOpportunities()` (no cache, no regeneration)
+- **CampOpportunityGenerator** role changed to candidate provider only
+- Narrative hints generated from locked schedule for Daily Brief
+
+**Impact on Development:**
+- ✅ Opportunities persist when context changes (lord leaves, phase changes)
+- ✅ Menu has no cache - single source of truth in Orchestrator
+- ✅ Player can see hints about upcoming opportunities
+- ✅ Quiet phases are intentional and communicated via hints
+- ⚠️ **Breaking Change:** `CampOpportunityGenerator.GenerateCampLife()` now internal, only Orchestrator calls it
+- ⚠️ **Deprecated:** `DecisionManager.GetAvailableOpportunities()` replaced by Orchestrator queries
+
+**Related Documentation:** [Orchestrator Opportunity Unification Spec](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
+
+### Bug Fixes Applied
+
+**2026-01-03:**
+- Decision tree now persists when lord leaves castle (uses locked schedule instead of regenerating)
+- Decisions correctly disappear after selection (added fallback consumption by decision ID)
+
+**2026-01-04:**
+- Decisions no longer fire as popups (MapIncidentManager filters "decision" and "onboarding" categories)
+- Deprecation warnings eliminated (GetUpcomingHints and GetCampActivityFlavor now use Orchestrator)
+
+### New Systems Added
+
+| System | Purpose | Integration Points |
+|--------|---------|-------------------|
+| **ContentOrchestrator** | Pre-schedules opportunities, provides world state analysis | Daily tick, menu queries, narrative hints |
+| **CampOpportunityGenerator** | Generates opportunity candidates (no longer owns state) | Called by Orchestrator only |
+| **WorldStateAnalyzer** | Analyzes lord situation, war stance, activity level | Used by Orchestrator, EventPacingManager, OrderProgressionBehavior |
+| **BaggageTrainAvailability** | World-state-aware baggage access simulation | Integrated with Quartermaster, Orchestrator provides context |
+| **RetinueManager** | Commander's retinue management (T7+) | Pay system, formation assignment, baggage access |
+| **CompanySimulationBehavior** | Background camp life simulation | Daily tick, news feed integration |
+
+**For Full System Analysis:** See [Systems Integration Analysis](../../ANEWFEATURE/systems-integration-analysis.md) for comprehensive analysis of all tracking systems (Supply, Morale, Reputation, Escalation) and how they integrate with ContentOrchestrator.
+
+---
+
 ## System Integration Points
 
 **Purpose:** Documents where our systems interact and potential conflict points during development.
@@ -403,12 +456,14 @@ foreach (var evt in allEvents)
 
 **When It Runs:**
 - Called by `EventSelector` during candidate filtering
-- Called by `DecisionManager` when building Camp Hub sections
+- Called by `CampOpportunityGenerator` during candidate generation (for Orchestrator)
+- **DEPRECATED:** Previously called by `DecisionManager` - now Orchestrator provides pre-filtered opportunities
 
 **What To Do:**
 - Use specific requirements to prevent overlapping events
 - Avoid impossible combinations (e.g., MinTier=1, Role=Officer)
 - Document requirement logic in event JSON comments
+- **NEW:** Requirements checked once at daily scheduling time (6am), then locked for 24h
 
 ### Centralized State Managers
 
@@ -480,11 +535,13 @@ if (Hero.MainHero.IsPrisoner) return false;
 - Checks cooldown reasonableness
 - Tracks flag usage consistency
 - Validates escalation thresholds
+- **NEW (2026-01-03):** Validates opportunity hints (`hint`/`hintId` fields for narrative foreshadowing)
 
 **What To Do:**
 - Run before committing content changes: `python tools/events/validate_content.py`
 - Use `--strict` mode for pre-merge validation: `python tools/events/validate_content.py --strict`
 - See `tools/events/README.md` for complete usage guide
+- **NEW:** Add `hint` or `hintId` to camp opportunities for Daily Brief integration (see [Event System Schemas](../Content/event-system-schemas.md#narrative-hints-orchestrator-pre-scheduling))
 
 **Legacy Tool:** `tools/events/validate_events.py` (basic ID/option count checks, use enhanced tool instead)
 
@@ -493,6 +550,23 @@ if (Hero.MainHero.IsPrisoner) return false;
 ## System Integration Points
 
 This matrix shows where systems interact and potential conflict points.
+
+### ContentOrchestrator × Content Systems
+
+**MAJOR CHANGE (2026-01-03):** The ContentOrchestrator now **owns the opportunity lifecycle**. Opportunities are pre-scheduled 24 hours ahead, locked once generated, and provided via `GetCurrentPhaseOpportunities()`. This prevents jarring content disappearance when context changes mid-day.
+
+| System | Integration Point | Conflict Risk | Resolution |
+|--------|------------------|---------------|------------|
+| ContentOrchestrator | Opportunity scheduling | Opportunities disappear when lord leaves castle | **FIXED:** Pre-schedule at 6am daily tick, lock schedule for 24h |
+| ContentOrchestrator | Camp decisions menu | Stale opportunities shown | Menu queries Orchestrator directly, no cache |
+| ContentOrchestrator | Daily Brief hints | Hints mismatch visible opportunities | Hints generated from same locked schedule |
+| CampOpportunityGenerator | Candidate generation | Generator owns state vs Orchestrator owns state | **FIXED:** Generator is now candidate provider only |
+| EventDeliveryManager | Decision/Event separation | Decisions firing as popups | Decisions filtered from automatic event selection |
+| MapIncidentManager | Decision/Event separation | Decisions appearing in map incidents | **FIXED:** Filter "decision" and "onboarding" categories |
+
+**Key Rule:** ContentOrchestrator owns all opportunity state. CampOpportunityGenerator only generates candidates on request.
+
+**Related Documentation:** [Orchestrator Opportunity Unification Spec](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
 
 ### Enlistment × Equipment
 
@@ -527,6 +601,10 @@ This matrix shows where systems interact and potential conflict points.
 
 **Key Rule:** Quartermaster systems respect baggage train availability gates.
 
+**World-State Integration (NEW 2026-01-03):** `ContentOrchestrator.RefreshBaggageSimulation()` provides world situation to `BaggageTrainManager` for dynamic probability calculation. Activity level, lord situation, war stance, and terrain all affect baggage catch-up/delay/raid chances.
+
+**Related Documentation:** [Baggage Train Availability](../Equipment/baggage-train-availability.md)
+
 ### Events × State Systems
 
 | System | Integration Point | Conflict Risk | Resolution |
@@ -550,6 +628,15 @@ This matrix shows where systems interact and potential conflict points.
 
 **Key Rule:** Player-initiated decisions take priority over automatic events. Event popups wait for menu closure.
 
+**Orchestrator Integration (NEW 2026-01-03):** ContentOrchestrator pre-schedules opportunities at daily tick (6am), locks them for 24 hours, and provides them via `GetCurrentPhaseOpportunities()`. Menu queries Orchestrator directly with no cache. Consumed opportunities are marked and removed from display. This prevents opportunities from disappearing when context changes (e.g., lord leaves castle).
+
+**Bug Fixes Applied:**
+- 2026-01-03: Decision tree now persists when lord leaves castle (uses locked schedule)
+- 2026-01-03: Decisions correctly disappear after selection (improved consumption)
+- 2026-01-04: Decisions no longer fire as popups (filtered from MapIncidentManager)
+
+**Related Documentation:** [Orchestrator Opportunity Unification](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
+
 ### Orders × Other Systems
 
 | System | Integration Point | Conflict Risk | Resolution |
@@ -566,18 +653,22 @@ This matrix shows where systems interact and potential conflict points.
 These systems all run on `Campaign.Tick()` - order matters:
 
 1. **EnlistmentBehavior.OnTick()** - Updates enlistment state, detects battles, handles encounter safety
-2. **OrdersManager.OnDailyTick()** - Checks order progress, handles expiration
-3. **CompanyNeedsManager.OnDailyTick()** - Updates Readiness/Morale/Supply decay
-4. **FatigueManager.OnDailyTick()** - Updates fatigue from marching
-5. **PayManager.OnWeeklyTick()** - Processes wage payments (weekly, not daily)
-6. **RetinueManager.OnDailyTick()** - Processes retinue trickle, loyalty changes
-7. **EventPacingManager.OnDailyTick()** - Considers delivering automatic events
+2. **ContentOrchestrator.OnDailyTick()** - **NEW (2026-01-03):** Pre-schedules opportunities for next 24 hours, locks schedule, generates narrative hints
+3. **OrdersManager.OnDailyTick()** - Checks order progress, handles expiration
+4. **CompanyNeedsManager.OnDailyTick()** - Updates Readiness/Morale/Supply decay
+5. **FatigueManager.OnDailyTick()** - Updates fatigue from marching
+6. **PayManager.OnWeeklyTick()** - Processes wage payments (weekly, not daily)
+7. **RetinueManager.OnDailyTick()** - Processes retinue trickle, loyalty changes
+8. **EventPacingManager.OnDailyTick()** - Considers delivering automatic events
+9. **CompanySimulationBehavior.OnDailyTick()** - **NEW:** Background camp simulation, incidents
 
 **Why Order Matters:**
 - Enlistment check must run first (other systems check `IsEnlisted`)
+- **Orchestrator schedules early** (provides world state to other systems)
 - Order progress before events (events can reference order state)
 - Company needs before events (events check need thresholds)
 - Pay before retinue (retinue costs deducted from wages)
+- **Orchestrator provides context** to baggage simulation, event pacing, order event frequency
 
 ---
 
@@ -659,6 +750,12 @@ When multiple systems want to modify the same state, these rules determine prior
 - All changes accumulate within same tick
 - Final value clamped to 0-100
 - Critical thresholds (below 30) trigger warning events
+
+**Orchestrator Integration (NEW 2026-01-03):**
+- `WorldStateAnalyzer` reads Company Needs to determine `LifePhase` (Routine/Strained/Crisis)
+- `SimulationPressureCalculator` tracks sustained pressure (days below threshold)
+- Activity level affects opportunity budget (fewer opportunities when stressed)
+- **Future Enhancement:** Gradient need influence on opportunity fitness scoring (see [Systems Integration Analysis](../../ANEWFEATURE/systems-integration-analysis.md))
 
 ### Gold (Player Treasury)
 
@@ -1125,6 +1222,15 @@ When adding a new feature or modifying existing systems, test these integration 
 - [ ] Event popups don't fire during battles
 - [ ] Camp Hub decisions respect section visibility
 
+**Orchestrator Integration (NEW):**
+- [ ] Opportunities scheduled at daily tick (6am)
+- [ ] Schedule locked for 24 hours
+- [ ] Opportunities persist when context changes
+- [ ] Consumed opportunities removed correctly
+- [ ] Narrative hints appear in Daily Brief
+- [ ] Decision-category events filtered from map incidents
+- [ ] Menu queries Orchestrator directly (no cache)
+
 **Encounter Safety:**
 - [ ] Menus blocked during active battles
 - [ ] Party state locked during encounters
@@ -1170,6 +1276,27 @@ When adding a new feature or modifying existing systems, test these integration 
 3. Have flags set from events
 4. Discharge from service
 5. **Expected:** Retinue cleared, order cancelled, flags cleared, baggage/QM access blocked
+
+**Scenario 6: Orchestrator Opportunity Persistence (NEW 2026-01-03)**
+1. Wait for daily tick (6am) when opportunities are scheduled
+2. Note opportunities visible in Camp Hub
+3. Lord leaves castle (context change)
+4. **Expected:** Same opportunities still visible (locked schedule)
+5. Select and complete an opportunity
+6. **Expected:** Opportunity disappears, others remain
+7. Wait for phase change (e.g., Dawn → Midday)
+8. **Expected:** New phase opportunities appear, old phase opportunities cleared
+9. Check Daily Brief
+10. **Expected:** Hints about upcoming opportunities visible in Company Reports
+
+**Scenario 7: Decision/Event Category Separation (NEW 2026-01-04)**
+1. Add test decision with `"category": "decision"` and `"context": "Any"`
+2. Open Camp Hub
+3. **Expected:** Decision appears in accordion
+4. Wait for map incident trigger
+5. **Expected:** Decision does NOT fire as popup (filtered from MapIncidentManager)
+6. Check logs
+7. **Expected:** No "Selected decision as incident" messages for decision-category events
 
 ---
 
@@ -1281,7 +1408,8 @@ if (!BaggageTrainAvailability.CanAccessBaggage(out string reason))
 3. Add appropriate cooldowns
 4. Use flags for multi-stage events
 5. Add localization strings
-6. Test with existing events
+6. **NEW:** Add `hint`/`hintId` for camp opportunities (narrative foreshadowing)
+7. Test with existing events
 
 **When adding features:**
 1. Document integration points
@@ -1289,10 +1417,18 @@ if (!BaggageTrainAvailability.CanAccessBaggage(out string reason))
 3. Add test scenarios
 4. Check for Harmony conflicts
 5. Update this document
+6. **NEW:** Consider orchestrator integration (does it need pre-scheduling?)
+
+**Orchestrator Rules (NEW 2026-01-03):**
+1. Opportunities scheduled at 6am daily tick
+2. Never regenerate opportunities during the day
+3. Query `ContentOrchestrator.GetCurrentPhaseOpportunities()` (no cache)
+4. Mark consumed with `ConsumeOpportunity()` or `ConsumeOpportunityByDecisionId()`
+5. Decision-category events must NOT appear in MapIncidentManager
 
 **When debugging conflicts:**
 1. Check `Conflicts-A_*.log` for mod conflicts
-2. Check `enlisted.log` for state change sources
+2. Check `Session-A_*.log` for state change sources
 3. Review integration matrix for affected systems
 4. Test edge cases (battle, discharge, capture)
 
@@ -1325,6 +1461,23 @@ Error codes are used throughout the mod for structured logging and debugging. Ea
 |------|-------------|----------|
 | `E-INCIDENT-005` | Pay muster inquiry failed | Defers muster to next cycle |
 
+### Content Orchestrator (E-ORCHESTRATOR-xxx, NEW 2026-01-03)
+
+| Code | Description | Recovery |
+|------|-------------|----------|
+| `E-ORCHESTRATOR-001` | Opportunity scheduling failed | Logs error, continues with empty schedule |
+| `E-ORCHESTRATOR-002` | Hint generation failed | Logs error, continues without hints |
+| `E-ORCHESTRATOR-003` | Consumption failed | Logs error, attempts fallback by decision ID |
+| `E-ORCHESTRATOR-004` | World state analysis failed | Logs error, uses default activity level |
+
+### Event Delivery (E-EVENT-xxx, E-DECISION-xxx, NEW 2026-01-03)
+
+| Code | Description | Recovery |
+|------|-------------|----------|
+| `E-EVENT-001` | Event effect application failed | Logs error, continues without effects |
+| `E-EVENT-002` | Localization string missing | Logs error, shows fallback text |
+| `E-DECISION-001` | Decision consumption failed | Logs error, attempts cleanup |
+
 ### General Patterns
 
 All error codes follow the format `E-SYSTEM-NNN` where:
@@ -1341,9 +1494,18 @@ Errors are logged via `ModLogger.ErrorCode()` which includes:
 
 ## Related Documentation
 
-- [Event System Schemas](../Content/event-system-schemas.md) - JSON field definitions
-- [Encounter Safety](encounter-safety.md) - Party state conflicts and edge cases
-- [Content System Architecture](../Content/content-system-architecture.md) - Event delivery pipeline
-- [Event Catalog](../../Content/event-catalog-by-system.md) - All events organized by system
+### Core Architecture
 - [BLUEPRINT.md](../../BLUEPRINT.md) - Core patterns and standards
+- [Content System Architecture](../Content/content-system-architecture.md) - Event delivery pipeline
+- [Orchestrator Opportunity Unification](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) - **NEW:** Opportunity scheduling system
+- [Systems Integration Analysis](../../ANEWFEATURE/systems-integration-analysis.md) - **NEW:** How all tracking systems integrate
+
+### Content & Events
+- [Event System Schemas](../Content/event-system-schemas.md) - JSON field definitions, narrative hints
+- [Content Index](../Content/content-index.md) - All content organized by category
+- [Camp Simulation System](../Campaign/camp-simulation-system.md) - Background simulation + opportunities
+
+### Safety & Validation
+- [Encounter Safety](encounter-safety.md) - Party state conflicts and edge cases
+- [Content Validation Tools](../../Tools/README.md) - Validation scripts and usage
 

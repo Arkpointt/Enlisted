@@ -34,7 +34,7 @@
   "activities": {
     "formation": {
       "name": "Formation",
-      "skill": "Discipline",
+      "skill": "Athletics",
       "xpRanges": {
         "excellent": { "min": 15, "max": 22 },
         "good": { "min": 10, "max": 15 },
