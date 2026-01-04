@@ -7,12 +7,12 @@ using Enlisted.Features.Identity;
 using Enlisted.Features.Orders.Models;
 using Enlisted.Features.Ranks;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Extensions;
 using TaleWorlds.Core;
-using TaleWorlds.Library;
 
 namespace Enlisted.Features.Orders
 {
@@ -475,32 +475,11 @@ namespace Enlisted.Features.Orders
 
         /// <summary>
         /// Gets the base path for order JSON files.
+        /// Uses ModulePaths utility for correct resolution with both manual and Workshop installs.
         /// </summary>
         private static string GetOrdersBasePath()
         {
-            try
-            {
-                var gameRoot = BasePath.Name;
-                var modulePath = Path.Combine(gameRoot, "Modules", "Enlisted");
-
-                if (Directory.Exists(modulePath))
-                {
-                    return Path.Combine(modulePath, "ModuleData", "Enlisted", "Orders");
-                }
-
-                // Fallback for development environment
-                var devPath = Path.Combine(gameRoot, "..", "..", "Enlisted");
-                if (Directory.Exists(devPath))
-                {
-                    return Path.Combine(Path.GetFullPath(devPath), "ModuleData", "Enlisted", "Orders");
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error(LogCategory, "Failed to determine orders path", ex);
-            }
-
-            return string.Empty;
+            return ModulePaths.GetContentPath("Orders");
         }
 
         /// <summary>

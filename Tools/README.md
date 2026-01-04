@@ -4,6 +4,43 @@ Development tools, utilities, and diagnostics for the Enlisted mod.
 
 ---
 
+## Multi-Agent Workflow
+
+**See [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md)** for the single-conversation multi-agent system.
+
+Quick commands:
+- `[ANALYZE]` — Investigation only, no changes
+- `[IMPLEMENT]` — Go straight to making changes
+- `[VALIDATE]` — Run QA checks only
+
+---
+
+## Quick Debug Logging Toggle
+
+**`toggle_debug_logging.ps1`** - Easily enable/disable debug logging for specific categories without manually editing JSON.
+
+```powershell
+# Show current log levels
+.\Tools\toggle_debug_logging.ps1 -ShowCurrent
+
+# Enable Debug logging for Interface (combat log, UI issues)
+.\Tools\toggle_debug_logging.ps1 -Category Interface -Level Debug
+
+# Enable Debug logging for Battle (combat issues)
+.\Tools\toggle_debug_logging.ps1 -Category Battle -Level Debug
+
+# Reset Interface to normal Info level
+.\Tools\toggle_debug_logging.ps1 -Category Interface -Level Info
+```
+
+**Available log levels:** `Off`, `Error`, `Warn`, `Info` (default), `Debug`, `Trace`
+
+**Common categories:** `Interface`, `Battle`, `Enlistment`, `Orders`, `Content`, `Equipment`, `Orchestrator`
+
+⚠️ **Restart the game** after changing log levels.
+
+---
+
 ## Folder Structure
 
 ```

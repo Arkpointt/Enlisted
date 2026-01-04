@@ -1,5 +1,7 @@
 using System;
+using System.Reflection;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Engine.GauntletUI;
 using TaleWorlds.Engine.Screens;
@@ -31,6 +33,8 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool _isInitialized;
         private bool _isLayerActive;
         private bool _wasInConversation;
+        private bool _wasArmyManagementOpen;
+        private bool _wasRepositionedUp;
         private float _lastScrollPosition;
         private float _timeSinceLastManualScroll;
         private bool _shouldAutoScroll = true;
@@ -62,11 +66,16 @@ namespace Enlisted.Features.Interface.Behaviors
         
         private void OnTick(float dt)
         {
+            // Log once per session to confirm OnTick is being called
+            ModLogger.LogOnce("combat_log_ontick_called", "Interface", "EnlistedCombatLogBehavior.OnTick is being called", LogLevel.Info);
+            
             // Initialize UI on first tick when MapScreen is available
             if (!_isInitialized && Campaign.Current != null)
             {
+                ModLogger.Info("Interface", "Combat log initializing...");
                 InitializeUI();
                 _isInitialized = true;
+                ModLogger.Info("Interface", $"Combat log initialized: _dataSource={(_dataSource != null ? "OK" : "NULL")}, _layer={(_layer != null ? "OK" : "NULL")}");
             }
             
             // Manage layer visibility based on conversation state
@@ -79,7 +88,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 _dataSource.UpdateVisibility();
             }
             
-            // Detect if party screen or inventory is open and adjust positioning
+            // Detect if party screen, army management, or inventory is open and adjust positioning
             // Only reposition for Gauntlet UI screens that have panels at the bottom,
             // not for text-based GameMenus (like enlisted_status) which don't obstruct the log
             if (_dataSource != null)
@@ -87,7 +96,34 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Check if party screen is open by checking active game state
                 bool isPartyScreenOpen = Game.Current?.GameStateManager?.ActiveState is TaleWorlds.CampaignSystem.GameState.PartyState;
                 
-                UpdatePositioning(isPartyScreenOpen);
+                // Check if party bar is extended
+                bool isBarExtended = IsBarExtended();
+                
+                // Check if army overlay roster panel is expanded
+                bool isArmyOverlayExtended = IsArmyOverlayExtended();
+                
+                // Combine both checks
+                bool anyBarExtended = isBarExtended || isArmyOverlayExtended;
+                
+                // Info log when bar state changes
+                if (anyBarExtended != _wasArmyManagementOpen)
+                {
+                    ModLogger.Info("Interface", $"Bottom bar extended state changed: {_wasArmyManagementOpen} -> {anyBarExtended} (party bar={isBarExtended}, armyOverlay={isArmyOverlayExtended})");
+                    _wasArmyManagementOpen = anyBarExtended;
+                }
+                
+                // Update positioning if either panel is open
+                bool shouldRepositionUp = isPartyScreenOpen || anyBarExtended;
+                if (shouldRepositionUp != _wasRepositionedUp)
+                {
+                    ModLogger.Info("Interface", $"Combat log repositioning: {_wasRepositionedUp} -> {shouldRepositionUp} (party={isPartyScreenOpen}, bars={anyBarExtended})");
+                    _wasRepositionedUp = shouldRepositionUp;
+                }
+                UpdatePositioning(shouldRepositionUp);
+            }
+            else
+            {
+                ModLogger.LogOnce("combat_log_null_datasource", "Interface", "_dataSource is null - repositioning code not running", LogLevel.Debug);
             }
             
             // Handle manual scroll detection and auto-scroll behavior
@@ -404,23 +440,147 @@ namespace Enlisted.Features.Interface.Behaviors
             // Check if player is in a mission/scene (battles, taverns, halls, arenas, etc.)
             bool isInMission = TaleWorlds.MountAndBlade.Mission.Current != null;
             
+            // Check if encyclopedia is open
+            bool isEncyclopediaOpen = IsEncyclopediaOpen();
+            
             // Should the layer be suspended?
-            // Suspend if: not enlisted, in a mission, or in a conversation (set by Harmony patch)
-            bool shouldSuspend = !isEnlisted || isInMission || _wasInConversation;
+            // Suspend if: not enlisted, in a mission, in a conversation (set by Harmony patch), or encyclopedia is open
+            bool shouldSuspend = !isEnlisted || isInMission || _wasInConversation || isEncyclopediaOpen;
             
             // Suspend/resume layer as needed
             if (shouldSuspend && _isLayerActive)
             {
                 ScreenManager.SetSuspendLayer(_layer, true);
                 _isLayerActive = false;
-                ModLogger.Debug("Interface", $"Combat log suspended (enlisted={isEnlisted}, mission={isInMission}, conversation={_wasInConversation})");
+                ModLogger.Debug("Interface", $"Combat log suspended (enlisted={isEnlisted}, mission={isInMission}, conversation={_wasInConversation}, encyclopedia={isEncyclopediaOpen})");
             }
             else if (!shouldSuspend && !_isLayerActive)
             {
                 ScreenManager.SetSuspendLayer(_layer, false);
                 _isLayerActive = true;
                 _dataSource?.UpdateVisibility();
-                ModLogger.Debug("Interface", $"Combat log resumed (enlisted={isEnlisted}, mission={isInMission}, conversation={_wasInConversation})");
+                ModLogger.Debug("Interface", $"Combat log resumed (enlisted={isEnlisted}, mission={isInMission}, conversation={_wasInConversation}, encyclopedia={isEncyclopediaOpen})");
+            }
+        }
+        
+        /// <summary>
+        /// Checks if the encyclopedia screen is currently open.
+        /// The combat log needs to be suspended when encyclopedia is open to avoid blocking its close button.
+        /// </summary>
+        private bool IsEncyclopediaOpen()
+        {
+            try
+            {
+                // Get the MapScreen
+                var mapScreen = ScreenManager.TopScreen;
+                if (mapScreen == null)
+                {
+                    return false;
+                }
+                
+                // Use reflection to call GetMapView<MapEncyclopediaView>() since we don't have direct access to MapScreen type
+                var getMapViewMethod = mapScreen.GetType().GetMethod("GetMapView");
+                if (getMapViewMethod == null)
+                {
+                    return false;
+                }
+                
+                // Make it generic for MapEncyclopediaView
+                var mapEncyclopediaViewType = Type.GetType("SandBox.View.Map.MapEncyclopediaView, SandBox.View");
+                if (mapEncyclopediaViewType == null)
+                {
+                    return false;
+                }
+                
+                var genericMethod = getMapViewMethod.MakeGenericMethod(mapEncyclopediaViewType);
+                var encyclopediaView = genericMethod.Invoke(mapScreen, null);
+                
+                if (encyclopediaView == null)
+                {
+                    return false;
+                }
+                
+                // Get the IsEncyclopediaOpen property
+                var isOpenProperty = encyclopediaView.GetType().GetProperty("IsEncyclopediaOpen");
+                if (isOpenProperty == null)
+                {
+                    return false;
+                }
+                
+                return (bool)isOpenProperty.GetValue(encyclopediaView);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug("Interface", $"Failed to check encyclopedia state: {ex.Message}");
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// Checks if the party bar (bottom-left/right panel) is currently extended.
+        /// This tracks the expand/collapse state of bottom UI panels.
+        /// </summary>
+        private bool IsBarExtended()
+        {
+            try
+            {
+                var mapScreen = ScreenManager.TopScreen;
+                if (mapScreen == null) return false;
+                
+                var prop = mapScreen.GetType().GetProperty("IsBarExtended");
+                if (prop == null) return false;
+                
+                return (bool)prop.GetValue(mapScreen);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Failed to check bar extended state: {ex.Message}", ex);
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// Checks if the army overlay panel is currently visible on screen.
+        /// The overlay shows when player is in an army and displays party portraits,
+        /// food, cohesion, and troop counts on the right side of the map screen.
+        /// Returns true if the overlay exists and has a valid ViewModel.
+        /// </summary>
+        private bool IsArmyOverlayExtended()
+        {
+            try
+            {
+                var mapScreen = ScreenManager.TopScreen;
+                if (mapScreen == null) return false;
+                
+                // Get the _armyOverlay MapView field - search up the inheritance chain
+                FieldInfo armyOverlayField = null;
+                var type = mapScreen.GetType();
+                int searchDepth = 0;
+                while (type != null && armyOverlayField == null && searchDepth < 10)
+                {
+                    armyOverlayField = type.GetField("_armyOverlay", BindingFlags.NonPublic | BindingFlags.Instance);
+                    type = type.BaseType;
+                    searchDepth++;
+                }
+                
+                if (armyOverlayField == null) return false;
+                
+                var armyOverlay = armyOverlayField.GetValue(mapScreen);
+                if (armyOverlay == null) return false; // Not in army
+                
+                // Check if the ViewModel exists (indicates overlay is active)
+                var dataSourceField = armyOverlay.GetType().GetField("_overlayDataSource", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (dataSourceField == null) return false;
+                
+                var viewModel = dataSourceField.GetValue(armyOverlay);
+                
+                // The army overlay is visible when both armyOverlay and viewModel exist
+                return viewModel != null;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Failed to check army overlay state: {ex.Message}", ex);
+                return false;
             }
         }
         

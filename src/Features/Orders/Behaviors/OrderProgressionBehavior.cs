@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Content;
@@ -220,6 +220,11 @@ namespace Enlisted.Features.Orders.Behaviors
 
             // Filter by world state requirements
             var eligibleEvents = FilterByWorldState(orderEvents, worldSituation);
+
+            // Filter by full requirements (includes NotAtSea, tier, role, etc.)
+            eligibleEvents = eligibleEvents
+                .Where(e => EventRequirementChecker.MeetsRequirements(e.Requirements))
+                .ToList();
 
             // Exclude recently fired events
             eligibleEvents = eligibleEvents.Where(e => !_recentlyFiredEvents.Contains(e.Id)).ToList();

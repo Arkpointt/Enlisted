@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
@@ -161,7 +162,7 @@ namespace Enlisted.Features.Context
 
             try
             {
-                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "Config", "strategic_context_config.json");
+                var configPath = ModulePaths.GetConfigPath("strategic_context_config.json");
                 
                 if (!File.Exists(configPath))
                 {

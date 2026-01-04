@@ -8,6 +8,7 @@ using Enlisted.Features.Content.Models;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
@@ -679,8 +680,7 @@ namespace Enlisted.Features.Camp
 
             try
             {
-                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData",
-                    "Enlisted", "Config", "routine_outcomes.json");
+                var configPath = ModulePaths.GetConfigPath("routine_outcomes.json");
 
                 if (!File.Exists(configPath))
                 {

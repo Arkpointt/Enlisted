@@ -3,11 +3,16 @@
 **Summary:** The unified content system manages all narrative content (events, decisions, orders, map incidents) through a world-state driven orchestration pipeline. The Content Orchestrator analyzes your lord's situation and coordinates content delivery to match military reality: garrison duty is quiet, campaigns are busy, sieges are intense. All content uses JSON definitions, XML localization, requirement checking, and native Bannerlord effect integration.
 
 **Status:** ✅ **IMPLEMENTED** - ContentOrchestrator with phase-aware scheduling, commitment model, OrderProgressionBehavior, 84 order events active  
-**Last Updated:** 2026-01-04 (Phase-aware scheduling, duplicate prevention, commitment model, baggage filtering)  
+**Last Updated:** 2026-01-04 (Bug fix: Order events now check notAtSea requirements)  
 **Implementation:** `src/Features/Content/ContentOrchestrator.cs`, `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs`, `src/Features/Content/WorldStateAnalyzer.cs`, `src/Features/Camp/CampOpportunityGenerator.cs`  
 **Related Docs:** [Content Index](content-index.md), [Training System](../Combat/training-system.md), [Order Progression System](../Core/order-progression-system.md), [Camp Simulation System](../Campaign/camp-simulation-system.md), [Event System Schemas](event-system-schemas.md), [Orchestrator Spec](../../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
 
-**RECENT CHANGES (2026-01-01):**
+**RECENT CHANGES (2026-01-04):**
+- **Fix: WarMarching opportunity budget** - Increased Midday and Night budgets from 0 to 1 during `WarMarching` state. Lords rarely stop moving in Bannerlord, so 0-budget phases meant players almost never saw opportunities. Now always at least 1 opportunity per phase.
+- **Bug fix: Order event filtering** - `OrderProgressionBehavior.SelectOrderEvent()` now uses `EventRequirementChecker.MeetsRequirements()` to properly filter events by all requirement fields (notAtSea, tier, role, etc.). Previously only checked `world_state`, causing land-specific events like "Stuck Wagon" and "Shortcut" to fire at sea. Added `notAtSea: true` to 35 land-based events across 6 files.
+- **Debugging diagnosis**: Debug log analysis (`Session-A_2026-01-04_04-20-21.log`) showed old build was running - EventSelector fired order events instead of OrderProgressionBehavior. Build timestamp (22:20:21) preceded fix implementation. Confirms **game restart is mandatory** after code changes to load new DLL.
+
+**PREVIOUS CHANGES (2026-01-01):**
 - **Travel context detection** now uses native `party.IsCurrentlyAtSea` property directly (removed reflection overhead)
 - **WorldStateAnalyzer** simplified - no more reflection-based Warsails DLC detection
 - **OrderCatalog** uses direct property access for sea/land context variant selection

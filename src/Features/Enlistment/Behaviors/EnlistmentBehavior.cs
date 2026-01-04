@@ -1473,6 +1473,42 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var attackerSide = mapEvent.AttackerSide;
                 var defenderSide = mapEvent.DefenderSide;
                 bool lordIsAttacker = attackerSide?.Parties?.Any(p => p?.Party == lordParty.Party) == true;
+
+                // ARMY FIX #1: When lord is in an army, the lord's party might not be in the MapEvent
+                // parties list yet - only the army leader is listed initially. Check if the army
+                // leader is on the attacker side to determine the correct side for the player.
+                if (!lordIsAttacker && lordParty.Army != null)
+                {
+                    var armyLeaderParty = lordParty.Army.LeaderParty?.Party;
+                    if (armyLeaderParty != null)
+                    {
+                        lordIsAttacker = attackerSide?.Parties?.Any(p => p?.Party == armyLeaderParty) == true;
+                        if (lordIsAttacker)
+                        {
+                            ModLogger.Debug("Battle",
+                                $"Lord's army leader ({lordParty.Army.LeaderParty?.LeaderHero?.Name}) is attacker - joining attacker side");
+                        }
+                    }
+                }
+
+                // ARMY FIX #2: Player might be auto-collected into an army BEFORE the lord joins.
+                // If the player is in an army but the lord isn't yet, use the PLAYER'S army leader
+                // to determine the correct side. This handles the race condition where native game
+                // collects the player party into an army while the lord is still approaching.
+                if (!lordIsAttacker && lordParty.Army == null && main.Army != null)
+                {
+                    var playerArmyLeaderParty = main.Army.LeaderParty?.Party;
+                    if (playerArmyLeaderParty != null)
+                    {
+                        lordIsAttacker = attackerSide?.Parties?.Any(p => p?.Party == playerArmyLeaderParty) == true;
+                        if (lordIsAttacker)
+                        {
+                            ModLogger.Info("Battle",
+                                $"Player in army before lord - using player's army leader ({main.Army.LeaderParty?.LeaderHero?.Name}) to determine attacker side");
+                        }
+                    }
+                }
+
                 var targetSide = lordIsAttacker ? attackerSide : defenderSide;
 
                 if (targetSide == null)

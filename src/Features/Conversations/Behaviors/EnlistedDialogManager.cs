@@ -1185,6 +1185,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_explain", "qm_baggage_request_emergency", 145);
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_explain_lockdown", "qm_baggage_request_locked", 145);
                         RegisterJsonQuartermasterLines(starter, "qm_baggage_cooldown_active", "qm_baggage_request_emergency", 145);
+                        RegisterJsonQuartermasterLines(starter, "qm_baggage_column_halt_response", "qm_baggage_column_halt_response", 145);
 
                         // Then register player options for each node
                         RegisterJsonDialogueNode(starter, "qm_intro_greeting", 152);
@@ -1210,6 +1211,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         RegisterJsonDialogueNode(starter, "qm_baggage_explain", 144);
                         RegisterJsonDialogueNode(starter, "qm_baggage_explain_lockdown", 144);
                         RegisterJsonDialogueNode(starter, "qm_baggage_cooldown_active", 144);
+                        RegisterJsonDialogueNode(starter, "qm_baggage_column_halt_response", 144);
                     }
                     else
                     {

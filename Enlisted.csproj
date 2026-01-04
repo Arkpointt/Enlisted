@@ -78,6 +78,10 @@
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.Library.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="TaleWorlds.ModuleManager">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.ModuleManager.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="TaleWorlds.MountAndBlade">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.MountAndBlade.dll</HintPath>
       <Private>False</Private>
@@ -209,6 +213,7 @@
     <Compile Include="src\Mod.Core\CampaignSafetyGuard.cs"/>
     <Compile Include="src\Mod.Core\Triggers\CampaignTriggerTokens.cs"/>
     <Compile Include="src\Mod.Core\Triggers\CampaignTriggerTrackerBehavior.cs"/>
+    <Compile Include="src\Mod.Core\Util\ModulePaths.cs"/>
     <Compile Include="src\Mod.Core\Util\PlayerContext.cs"/>
     <Compile Include="src\Mod.Core\Util\UiTextSanitizer.cs"/>
     <Compile Include="src\Mod.Core\Util\UsedImplicitlyAttribute.cs"/>
@@ -578,6 +583,11 @@
   </ItemGroup>
   
   <ItemGroup>
+    <!-- Order Events (Phase events during order execution) -->
+    <OrderEventsData Include="ModuleData\Enlisted\Orders\order_events\*.json"/>
+  </ItemGroup>
+  
+  <ItemGroup>
     <!-- Content (Injuries and other dynamic content) -->
     <ContentData Include="ModuleData\Enlisted\Content\*.json"/>
   </ItemGroup>
@@ -641,6 +651,7 @@
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Decisions"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Orders"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Orders\order_events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Content"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
     
@@ -653,6 +664,7 @@
     <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>
     <Copy SourceFiles="@(DecisionsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Decisions\"/>
     <Copy SourceFiles="@(OrdersData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Orders\"/>
+    <Copy SourceFiles="@(OrderEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Orders\order_events\"/>
     <Copy SourceFiles="@(DialogueData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Dialogue\"/>
     <Copy SourceFiles="@(ContentData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Content\"/>
     

@@ -331,6 +331,15 @@ namespace Enlisted.Mod.Core.Config
 				var levels = LogLevels?.ToDictionary() ?? new Dictionary<string, LogLevel>();
 				var defaultLevel = LogLevels?.GetDefaultLevel() ?? LogLevel.Info;
 				ModLogger.ConfigureLevels(levels, defaultLevel, LogThrottleSeconds);
+				
+				// Log levels that are set to Debug or higher verbosity for diagnostics
+				foreach (var kvp in levels)
+				{
+					if (kvp.Value >= LogLevel.Debug)
+					{
+						ModLogger.Info("Config", $"Category '{kvp.Key}' set to {kvp.Value}");
+					}
+				}
 			}
 			catch
 			{

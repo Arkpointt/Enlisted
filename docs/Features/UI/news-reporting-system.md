@@ -8,8 +8,10 @@
 
 **2026-01-03 BUG FIX:** Supply status reporting now requires BOTH logistics strain AND low supplies to show "Supply lines stretched thin" warning. Previously showed warning when logistics was high even if supplies were at 86%.
 
+**2026-01-03 BUG FIX:** Routine activity "Poor" outcomes now correctly display in yellow (Attention) instead of green (Positive). Previously, negative events like "A soldier reports fever this morning" appeared in green alongside "Excellent performance today" due to incorrect severity mapping. Fixed severity assignment: Poor → 2 (Attention/Yellow), Mishap → 2 (Attention/Yellow).
+
 **Status:** ✅ Current - Comprehensive Integration Complete  
-**Last Updated:** 2026-01-03 (Supply status logic fix)  
+**Last Updated:** 2026-01-03 (Routine outcome severity fix)  
 **Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [UI Systems Master](ui-systems-master.md), [Color Scheme](color-scheme.md), [Order Progression System](../Core/order-progression-system.md), [Orders Content](../Content/orders-content.md), [Injury System](../Content/injury-system.md), [Camp Routine Schedule](../Campaign/camp-routine-schedule-spec.md)
 
 ---
@@ -475,7 +477,12 @@ Extended Rest: Good recovery (Men exhausted)
 
 **Characteristics:**
 - Category: `"routine_activity"`
-- Severity: Based on outcome type (Excellent = Positive, Good/Normal = Normal, Poor/Mishap = Attention)
+- Severity: Based on outcome type
+  - `Excellent` → Severity 1 (Positive/Green "Success")
+  - `Good` → Severity 0 (Normal/Cream "Default")
+  - `Normal` → Severity 0 (Normal/Cream "Default")
+  - `Poor` → Severity 2 (Attention/Yellow "Warning")
+  - `Mishap` → Severity 2 (Attention/Yellow "Warning")
 - Minimum display: 1 day
 - Override context shown in parentheses if applicable
 

@@ -2478,6 +2478,7 @@
     
     
     <string id="enlisted_commitment_scheduled" text="You've made plans for {ACTIVITY} at {PHASE}." />
+    <string id="commitment_scheduled" text="Scheduled for {PHASE}." />
     <string id="enlisted_commitment_cancelled" text="Commitment cancelled. You feel restless from changing plans." />
     <string id="enlisted_commitment_tooltip" text="Scheduled for {PHASE} in {HOURS} hours. Click to cancel." />
     <string id="enlisted_commitment_firing" text="It's {PHASE}. Time for {ACTIVITY}." />
