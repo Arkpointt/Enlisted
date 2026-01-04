@@ -7,82 +7,46 @@
     <UpdateItem>
         <ModuleFolder Value="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"/>
         <!-- A direct path of your module -->   
-        <ChangeNotes Value="v0.9.1.1 - Critical Crash Fix
+        <ChangeNotes Value="v0.9.1.2 - Commitment Model &amp; Content Orchestration
 
-[CRITICAL FIX]
-- Fixed crash on first battle completion (MenuHelper.CheckEnemyAttackableHonorably race condition)
-- Battle cleanup now properly deferred to prevent menu rendering corruption
-- Enhanced diagnostic logging for future stability tracking
+[NEW: COMMITMENT-BASED OPPORTUNITY SCHEDULING]
+- Click future opportunities to schedule (greyed out until phase arrives, then auto-fires)
+- Click current/past opportunities to fire immediately
+- Uncommitted opportunities disappear when their phase passes
+- Each opportunity appears once per day maximum
+- Phase-specific generation prevents duplicate activities
+- Clearer player control over daily schedule and activity planning
 
----
+[CONTENT ORCHESTRATION ENHANCEMENTS]
+- Improved event delivery management and pacing
+- Enhanced decision system integration with phase-aware scheduling
+- Smarter world-state analysis for adaptive event selection
+- Better duplicate prevention across content types
+- Refined camp opportunity generation logic
 
-v0.9.1 - Major Systems Overhaul &amp; Critical Fixes
-
-[CRITICAL FIXES]
-- Fixed promotion state resetting on re-enlistment - Promotions now persist correctly between service periods
-- Fixed item confiscation crash during baggage checks - Added comprehensive null safety
-- Fixed ghost condition bug - Medical conditions now properly clear when expired
-- Fixed baggage check inventory bugs - Items now properly removed when stowed/sold
-- Multi-factor promotion requirements display in muster with progress indicators
-
-[NEW: SKILL-BASED BAGGAGE STOWAGE]
-- Contraband system removed - Replaced with skill-based first-time storage event
-- 4 diplomatic options: Charm (free), Trade (-50% fee), Roguery (intimidate, -25% fee)
-- Sell All option (60% liquidation) or Abort (cancel enlistment)
-- All options result in standard baggage storage with varying costs/reputation effects
-- Simpler, more player-friendly approach to starting gear
-
-[BAGGAGE TRAIN OVERHAUL]
-- World-state-aware simulation: event probabilities adapt to campaign situation
-- Dynamic decision system: baggage access appears in Decisions accordion when available
-- Intelligent availability: accessible in towns/camps when stationary, locked during combat/sieges/pursuits
-- Adaptive event chances: 40% catch-up in garrison vs 10% during intense combat operations
-- War stance affects raids: +12% raid chance when lord is desperate
-- Terrain affects delays: +10% mountains, +15% snow
-- Baggage status integrated into Camp Hub Company Status and Main Menu Company Reports
-- Separate from 3-opportunity daily limit - Logistics decisions shown independently
-
-[COMPANY NEEDS CONSOLIDATION]
-- Merged Equipment metric into Supplies (5 metrics → 4 metrics)
-- New unified Supplies metric covers food, ammunition, maintenance materials, and logistics
-- Simplified company status tracking with clearer cause/effect relationships
-- All documentation updated to reflect 4-metric system
-
-[ENCOUNTER SAFETY IMPROVEMENTS]
-- Added captivity conversation suppression - Prevents native capture dialogues from interfering
-- Added encounter capture suppression - Blocks unwanted prisoner management screens
-- Added naval navigation capability patch for sea travel
-- Improved encounter guard with better state detection and auto-cleanup
-- Enhanced logging for encounter decisions and menu transitions
-
-[STATUS TEXT CLARITY]
-- Replaced vague activity hints with clear military context descriptions
-- &quot;Something's in the air&quot; → &quot;The company is on the move. Stay sharp for duty calls&quot;
-- Medical warnings now explicitly mention brewing illness with severity levels
-- Day phase routine text converted to factual descriptions
-- Added 15 new localization strings for activity forecasts and medical warnings
-
-[MENU STRUCTURE CLEANUP]
-- Removed dead code: obsolete Reports menu functions (186 lines removed)
-- Increased decision slots from 3 to 5 to accommodate opportunities + logistics
-- Streamlined menu transitions and state management
-- Updated all documentation to reflect current menu structure
+[REPOSITORY MODERNIZATION]
+- Reorganized project structure: tools/ → Tools/ with logical categorization (Validation, Debugging, Steam, Research)
+- Enhanced content validation scripts with comprehensive checks
+- Added writing style guide for consistent narrative voice
+- Improved Steam Workshop deployment documentation
+- Consolidated development utilities and debugging tools
 
 [TECHNICAL IMPROVEMENTS]
-- Major code quality improvements (500+ Qodana issues resolved)
-- Enhanced diagnostic logging with level guidelines (Info/Debug/Warn/Error)
-- Added new logging categories: Naval, SiegeIntegration, BattleIntegration, CaptivityStatus
-- Improved item comparison using StringId instead of reference equality
-- Comprehensive documentation updates (BLUEPRINT.md, reference guides)
-- Added reference docs for battle, captivity, menu, and party attachment systems
+- Enhanced conflict detection system for mod compatibility diagnostics
+- Improved content orchestration architecture with better state management
+- Refined event requirement checking and pacing logic
+- Enhanced camp simulation integration
+- Updated logging infrastructure for better diagnostics
 
 [DOCUMENTATION]
-- Complete camp life simulation documentation update
-- New reference guides: battle system analysis, captivity &amp; raids, complete menu analysis
-- Updated logging guidelines with real-world examples
-- Comprehensive baggage train integration documentation
+- Added comprehensive content effects reference
+- Created content-skill integration planning documentation
+- Added event status visualization guide
+- Expanded systems integration analysis
+- Updated content system architecture documentation
+- Improved developer tooling documentation
 
-This major update streamlines core systems, removes player frustration points (contraband), consolidates company metrics for clarity, and significantly improves encounter safety and menu flow." />
+This update focuses on player agency (commitment model), content system maturity, and developer experience improvements." />
         <!-- Insert patch notes -->
         <Tags> 
             <!-- You can use the following tags: -->

@@ -1,52 +1,65 @@
 # Enlisted - Project Blueprint
 
-**Summary:** Complete guide to the Enlisted mod's architecture, coding standards, and development practices. This is the single source of truth for understanding how this project works.
-
-**Last Updated:** 2026-01-04 (Phase-aware scheduling, duplicate prevention, commitment model, baggage filtering)  
-**Target Game:** Bannerlord v1.3.13
+**Bannerlord v1.3.13 soldier career mod** | **Last Updated:** 2026-01-04
 
 ---
 
-## Quick Orientation
+## 📋 TASK LOOKUP - Read the right doc for your task
 
-**New to this project? Read this section first.**
+| Task | READ THIS FILE | Key Info |
+|------|----------------|----------|
+| **Steam Workshop upload** | `Tools/Steam/WORKSHOP_UPLOAD.md` | VDF char limits, run `.\Tools\Steam\upload.ps1` in interactive PS |
+| **Add/edit events/orders** | `docs/Features/Content/writing-style-guide.md` | Voice, tone, JSON schema |
+| **Understand a feature** | `docs/Features/Core/enlistment.md` or relevant feature doc | Check docs/INDEX.md for full catalog |
+| **Code quality issues** | `.editorconfig`, `qodana.yaml` | ReSharper settings in .sln.DotSettings |
+| **Validation errors** | `Tools/README.md` | Run `python Tools/Validation/validate_content.py` |
+| **API questions** | Local decompile at `C:\Dev\Enlisted\Decompile\` | v1.3.13 specific, don't use online docs |
+| **Opportunity/orchestration** | `docs/ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md` | Commitment model, phase scheduling |
 
-This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.13** that transforms the game into a soldier career simulator. Players enlist with lords, follow orders, manage reputation, and progress through military ranks.
+## ⚡ QUICK COMMANDS
 
----
+```powershell
+dotnet build -c "Enlisted RETAIL" /p:Platform=x64     # Build mod
+python Tools/Validation/validate_content.py           # Validate content
+.\Tools\Steam\upload.ps1                              # Upload to Workshop (interactive PS only!)
+python Tools/Validation/sync_event_strings.py         # Sync localization
+```
 
-## Critical Constraints
+## 🚨 CRITICAL RULES
 
-These rules must always be followed:
+1. **Target Version:** Bannerlord v1.3.13 (not latest)
+2. **API Verification:** Use `C:\Dev\Enlisted\Decompile\` (never online docs)
+3. **New C# Files:** Manually add to `Enlisted.csproj` → run validator
+4. **Logging:** Use `ModLogger` with error codes (`E-SYS-001`)
+5. **Opportunity Model:** Each opportunity once/day, commitment = click future to schedule, click current to fire
+6. **Code Quality:** Follow ReSharper, don't suppress without reason
 
-| # | Constraint | Details |
-|---|------------|---------|
-| 1 | **Target Version** | Bannerlord v1.3.13 specifically (not latest) |
-| 2 | **API Verification** | ALWAYS use local decompile at `C:\Dev\Enlisted\Decompile\` (not online docs) |
-| 3 | **Manual File Includes** | Must manually add new files to `Enlisted.csproj` with `<Compile Include="..."/>` → Validator enforces this |
-| 4 | **Build Command** | `dotnet build -c "Enlisted RETAIL" /p:Platform=x64` |
-| 5 | **Logging** | Use `ModLogger` with searchable error codes (`ErrorCode("E-SYS-001", ...")`) → outputs to `Modules\Enlisted\Debugging\` |
-| 6 | **Phase-Aware Scheduling** | Each opportunity appears ONCE per day; phase-specific generation prevents duplicates; commitment model: click future-phase to schedule (greys out) → auto-fires at phase; current/past-phase fires immediately; uncommitted disappear when phase passes |
-| 7 | **Code Quality** | Follow ReSharper recommendations (never suppress without documented reason) |
+## 📁 KEY PATHS
 
----
+| Path | Purpose |
+|------|---------|
+| `src/Features/` | All gameplay code (Enlistment, Orders, Content, Combat, Equipment, etc.) |
+| `ModuleData/Enlisted/` | JSON config, events, orders, decisions |
+| `ModuleData/Languages/enlisted_strings.xml` | All localized strings |
+| `Tools/Steam/` | Workshop upload scripts and VDF |
+| `Tools/Validation/` | Content validators |
+| `docs/` | All documentation |
+| `C:\Dev\Enlisted\Decompile\` | Native API reference (v1.3.13) |
 
-## Project Map
+## 📚 DOCUMENTATION INDEX
 
-| What You Need | Where To Find It |
-|---------------|------------------|
-| Complete documentation catalog | [INDEX.md](INDEX.md) |
-| How systems work together | [Features/Core/core-gameplay.md](Features/Core/core-gameplay.md) |
-| All events/decisions/orders | [Features/Content/content-index.md](Features/Content/content-index.md) |
-| Writing RP text (voice/tone) | [Features/Content/writing-style-guide.md](Features/Content/writing-style-guide.md) |
-| JSON schema rules | [Features/Content/event-system-schemas.md](Features/Content/event-system-schemas.md) |
-| Orchestrator & opportunity scheduling | [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) |
-| Validation & development tools | [Tools/README.md](../Tools/README.md) |
-| Technical patterns & logging | [Tools/TECHNICAL-REFERENCE.md](../Tools/TECHNICAL-REFERENCE.md) |
-| **Code quality configuration** | **[.editorconfig](../.editorconfig)**, **[Enlisted.sln.DotSettings](../Enlisted.sln.DotSettings)**, **[qodana.yaml](../qodana.yaml)** |
-| Native API reference | `C:\Dev\Enlisted\Decompile\` (local files) |
-| Build configurations | [BUILD-CONFIGURATIONS.md](BUILD-CONFIGURATIONS.md) |
-| Steam Workshop upload | [Tools/Steam/WORKSHOP_UPLOAD.md](../Tools/Steam/WORKSHOP_UPLOAD.md) |
+| Topic | File |
+|-------|------|
+| Full doc catalog | [docs/INDEX.md](INDEX.md) |
+| Core gameplay | [docs/Features/Core/core-gameplay.md](Features/Core/core-gameplay.md) |
+| Enlistment system | [docs/Features/Core/enlistment.md](Features/Core/enlistment.md) |
+| All content files | [docs/Features/Content/content-index.md](Features/Content/content-index.md) |
+| Writing style | [docs/Features/Content/writing-style-guide.md](Features/Content/writing-style-guide.md) |
+| JSON schemas | [docs/Features/Content/event-system-schemas.md](Features/Content/event-system-schemas.md) |
+| Orchestrator | [docs/ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) |
+| Steam upload | [Tools/Steam/WORKSHOP_UPLOAD.md](../Tools/Steam/WORKSHOP_UPLOAD.md) |
+| Tooling guide | [Tools/README.md](../Tools/README.md) |
+| Technical patterns | [Tools/TECHNICAL-REFERENCE.md](../Tools/TECHNICAL-REFERENCE.md) |
 
 ---
 

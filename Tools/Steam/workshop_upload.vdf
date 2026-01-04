@@ -11,204 +11,69 @@
 
 Transform Bannerlord from a conquest simulator into a deep soldier career experience. Instead of managing an empire, you serve one. Features [b]245 narrative content pieces[/b] spanning [b]9 military ranks[/b] from fresh recruit to senior commander.
 
-[b]Links:[/b] [url=https://github.com/Arkpointt/Enlisted]GitHub (Open Source)[/url] | [url=https://discord.gg/your-discord]Discord[/url]
-
-════════════════════════════════════════════════
-
-[h1]Key Features[/h1]
-
-[h2]Military Career Progression[/h2]
+[h2]Key Features[/h2]
 [list]
-[*][b]9 Military Ranks (T1-T9):[/b] Climb from recruit to marshal with culture-specific titles (Empire, Vlandia, Sturgia, Khuzait, Battania, Aserai)
+[*][b]9 Military Ranks:[/b] Progress from recruit to marshal with culture-specific titles (Empire, Vlandia, Sturgia, Khuzait, Battania, Aserai)
 [*][b]Multi-Factor Promotions:[/b] XP, service time, battles fought, reputation, and discipline all matter
-[*][b]Narrative Proving Events:[/b] Key promotions trigger story moments that define your character
-[*][b]Formation Choice:[/b] Pick your battlefield role (Infantry, Archer, Cavalry, Horse Archer)
+[*][b]Chain of Command:[/b] 16 military orders with 85 dynamic events during duty execution
+[*][b]Pay & Muster System:[/b] 12-day pay cycles with ceremonial payouts, performance bonuses, and tension mechanics
+[*][b]Quartermaster System:[/b] 6 equipment quality tiers with upgrades and reputation-based discounts
+[*][b]Camp Life Simulation:[/b] 33 player decisions, fatigue system, medical care, background events
+[*][b]Commander's Retinue:[/b] Lead 20-40 hand-picked troops at senior ranks (T7-T9) with narrative events
+[*][b]Identity & Reputation:[/b] Three reputation tracks (Lord, Officer, Soldier) and emergent specialization through traits
+[*][b]Grace Period System:[/b] 14 days to transfer service if your lord dies or is captured
+[*][b]Reservist Benefits:[/b] Re-enlist with same faction for tier bonuses and reputation restoration
+[*][b]Optional Battle AI:[/b] Enhanced tactical decisions (disable anytime in launcher, field battles only)
 [/list]
-
-[h2]Chain of Command[/h2]
-[list]
-[*][b]16 Military Orders:[/b] Receive explicit directives from sergeants, lieutenants, and your lord
-[*][b]85 Order Events:[/b] Dynamic encounters during duty execution (15-35% trigger chance per phase)
-[*][b]Tiered Duties:[/b] T1-T3 auto-assigned basics, T4+ optional advancement missions
-[*][b]Real Consequences:[/b] Success builds reputation, failure damages it. Decline too many orders = discharge
-[/list]
-
-[h2]Pay & Muster System[/h2]
-[list]
-[*][b]12-Day Pay Cycle:[/b] Wages accrue daily in muster ledger, paid ceremonially
-[*][b]8-Stage Muster Ceremonies:[/b] Immersive pay events with baggage checks, inspections, promotions
-[*][b]Pay Tension:[/b] When pay is late, tension rises and unlocks special choices
-[*][b]Performance Modifiers:[/b] Bonuses for excellence, deductions for infractions
-[/list]
-
-[h2]Equipment & Quartermaster[/h2]
-[list]
-[*][b]6 Quality Tiers:[/b] Shoddy to Standard to Serviceable to Fine to Masterwork to Legendary
-[*][b]Equipment Upgrades:[/b] Sequential quality improvements with real stat bonuses
-[*][b]Reputation Discounts:[/b] 0-30% price reduction based on Soldier reputation
-[*][b]Officers Armory (T7+):[/b] Elite gear catalog for commanders
-[*][b]Provisions Shop (T7+):[/b] Premium rations with morale/fatigue boosts
-[/list]
-
-[h2]Camp Life Simulation[/h2]
-[list]
-[*][b]Background Simulation:[/b] Soldiers get sick, injured, desert. Equipment breaks. Morale shifts
-[*][b]33 Player Decisions:[/b] Training, social, economic, recovery, medical, career activities
-[*][b]Fatigue System:[/b] Actions accumulate fatigue, affecting performance and outcomes
-[*][b]Medical Care:[/b] 15 injury types with 4 treatment options (surgeon, herbal, rest, emergency)
-[/list]
-
-[h2]Commander's Retinue (T7-T9)[/h2]
-[list]
-[*][b]Personal Military Force:[/b] Lead 20-40 hand-picked troops (scales with rank)
-[*][b]Battle Reinforcements:[/b] 1-3 retinue troops join each battle
-[*][b]23 Narrative Events:[/b] Character development, post-battle incidents, camp decisions
-[*][b]Named Veterans:[/b] Persistent characters with loyalty tracking
-[/list]
-
-[h2]Identity & Reputation[/h2]
-[list]
-[*][b]Emergent Specialization:[/b] Develop roles through native Bannerlord traits (Officer, Scout, Medic, Engineer, Operative, NCO, Soldier)
-[*][b]Three Reputation Tracks:[/b] Lord, Officer, and Soldier reputation affect events and promotions
-[*][b]Discipline System:[/b] Infractions tracked, escalation events at thresholds
-[*][b]No Class Menus:[/b] Your identity emerges from choices, not character creation
-[/list]
-
-[h2]Quality of Life[/h2]
-[list]
-[*][b]Native Menu Integration:[/b] Fast, keyboard-friendly, zero custom UI lag
-[*][b]Custom Combat Log:[/b] Scrollable feed with encyclopedia links and faction colors
-[*][b]Daily Brief:[/b] Immersive narrative summary of company status
-[*][b]Temporary Leave:[/b] Suspend service, visit family, conduct trade, return before AWOL
-[*][b]Encounter Safety:[/b] Built-in crash guards for sieges, battles, and captivity
-[*][b]Companion Support:[/b] Companions stay with you, toggle who fights vs stays safe
-[/list]
-
-[h2]Optional Battle AI SubModule[/h2]
-[list]
-[*][b]Disable Anytime:[/b] Toggle in Bannerlord launcher, zero performance cost when off
-[*][b]Field Battles Only:[/b] Sieges use native AI
-[*][b]No Cheating:[/b] Improvements through better decisions, not stat buffs
-[/list]
-
-[h2]DLC Support[/h2]
-[list]
-[*][b]War Sails Compatible:[/b] Parties follow lords onto ships, your ships protected while enlisted
-[/list]
-
-════════════════════════════════════════════════
-
-[h1]Installation[/h1]
 
 [h2]Requirements[/h2]
 [list]
-[*][b]Mount & Blade II: Bannerlord v1.3.13[/b]
-[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2859232415]Bannerlord.Harmony[/url] v2.4.2+[/b] (Required dependency)
+[*][b]Bannerlord v1.3.13[/b] (this specific version)
+[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2859232415]Bannerlord.Harmony v2.4.2+[/url][/b] (required dependency)
 [/list]
 
-[h2]Quick Start[/h2]
+[h2]Clean Install for Major Updates[/h2]
+When the changelog says CLEAN INSTALL RECOMMENDED, follow these steps:
 [list=1]
-[*]Subscribe to this mod and Bannerlord.Harmony
-[*]Enable in launcher: [b]Harmony, Native, SandBoxCore, SandBox, StoryMode, CustomBattle, Enlisted[/b]
-[*]Start/load game, talk to any lord, choose enlistment dialog option
-[*]Access [b]Enlisted Status[/b] menu as your hub (camp, quartermaster, orders, leave, discharge)
-[/list]
-
-════════════════════════════════════════════════
-
-[h1]Updating the Mod[/h1]
-
-[h2]Normal Updates (No Clean Install Required)[/h2]
-Steam automatically updates the mod. Most updates are seamless.
-
-[h2]Major Updates (Clean Install Required)[/h2]
-When the changelog says [b]"CLEAN INSTALL REQUIRED"[/b], follow these steps:
-
-[b]METHOD 1: Delete Modules Folder (Recommended - Easiest)[/b]
-[list=1]
-[*]Unsubscribe from Enlisted
-[*]Navigate to: [i]<Bannerlord>\Modules\[/i]
-[*]Delete the [b]Enlisted[/b] folder
+[*]Unsubscribe from Enlisted in Steam Workshop
+[*]Navigate to: [i]C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\[/i]
+[*]Delete the [b]3621116083[/b] folder
 [*]Resubscribe to the mod
-[*]Steam will redownload fresh files
 [/list]
-
-[b]METHOD 2: Verify Game Files[/b]
-[list=1]
-[*]Unsubscribe from Enlisted
-[*]Right-click Bannerlord in Steam, Properties, Local Files, [b]Verify Integrity of Game Files[/b]
-[*]Resubscribe to Enlisted
-[/list]
-
-[b]Why Clean Installs?[/b] Steam Workshop doesn't auto-delete removed files. If we delete JSON content files (events, orders, decisions), old files remain and cause conflicts. Clean installs ensure you have the correct file set.
-
-════════════════════════════════════════════════
-
-[h1]Troubleshooting[/h1]
+Why? Steam doesn't auto-delete removed files. Old content files can cause conflicts.
 
 [h2]Automatic Conflict Detection[/h2]
-The mod automatically detects conflicts with other mods at startup. Check these logs:
+Built-in diagnostics run on startup and log to the Debugging folder inside your mod installation.
 
-[b]Log Location:[/b] [i]<Bannerlord>\Modules\Enlisted\Debugging\[/i]
+[b]Log Location (Workshop Install):[/b]
+[i]C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\3621116083\Debugging\[/i]
 
-[b]Key Files:[/b]
+[b]What It Detects:[/b]
 [list]
-[*][i]Conflicts-A_*.log[/i] - Mod conflicts, Harmony patch issues, module health
-[*][i]Session-A_*.log[/i] - Current session detailed log
-[*][i]Current_Session_README.txt[/i] - Quick guide to what to share when reporting issues
+[*]Harmony patch conflicts with other mods
+[*]Missing or corrupt content files
+[*]Catalog loading errors
+[*]Installation issues
 [/list]
 
-[h2]Common Issues[/h2]
-
-[b]Mod menu options don't show[/b]
+[b]Key Log Files:[/b]
 [list]
-[*]Confirm Bannerlord.Harmony is enabled and loaded BEFORE Enlisted in launcher
+[*][i]Conflicts-A_*.log[/i] - Startup diagnostics. Check if game crashes on launch or other mods cause issues
+[*][i]Session-A_*.log[/i] - Runtime errors with searchable codes. Check when events don't fire or gameplay breaks
 [/list]
 
-[b]Events don't fire / content missing[/b]
+[b]When to Check:[/b]
 [list]
-[*]You likely need a clean install. See "Major Updates" section above
+[*]Game crashes on startup → Check Conflicts log for patch conflicts
+[*]Events don't fire or content missing → Check Conflicts log for file errors
+[*]Weird gameplay issues → Check Session log for error codes
+[*]After installing other mods → Compare Conflicts logs before/after
 [/list]
 
-[b]War Sails features don't work[/b]
-[list]
-[*]War Sails DLC must be enabled. Check Session log for [i]W-DLC-*[/i] warnings
-[/list]
-
-[b]Game feels "stuck" after leaving menu/encounter[/b]
-[list]
-[*]Share [i]Session-A_*.log[/i] + mod list/load order on GitHub Issues
-[/list]
-
-[b]Save won't load / loads into broken state[/b]
-[list]
-[*]Check for [i]E-SAVELOAD-*[/i] in Session log, then share both Session and Conflicts logs
-[/list]
-
-[h2]Reporting Issues[/h2]
-When reporting bugs on [url=https://github.com/Arkpointt/Enlisted/issues]GitHub Issues[/url]:
-[list=1]
-[*]Include error code(s) if visible (e.g., [i][E-CAMPUI-031][/i])
-[*]Attach [i]Session-A_*.log[/i] and [i]Conflicts-A_*.log[/i]
-[*]List other active mods and load order
-[*]Describe exact steps to reproduce
-[/list]
-
-════════════════════════════════════════════════
-
-[h1]Documentation & Community[/h1]
-
-[b]Full Documentation:[/b] [i]<Bannerlord>\Modules\Enlisted\docs\[/i]
-[b]GitHub (Open Source):[/b] [url=https://github.com/Arkpointt/Enlisted]Contributions Welcome[/url]
-[b]Discord:[/b] [url=https://discord.gg/your-discord]Join the Community[/url]
-
-[b]Current Version:[/b] v0.9.x
-[b]Target Game:[/b] Bannerlord v1.3.13
-[b]Content:[/b] 245 narrative pieces (17 orders, 84 order events, 37 decisions, 56 context events, 51 map incidents, 23 retinue events)
-
-════════════════════════════════════════════════
-
-[i]Enlisted is open source and community-driven. Feedback, bug reports, and contributions are welcome![/i]"
+[h2]Links[/h2]
+[b]GitHub:[/b] [url=https://github.com/Arkpointt/Enlisted]Open Source - Contributions Welcome[/url]
+[b]Documentation:[/b] Full docs included in mod folder
+[b]Version:[/b] v0.9.x"
 	"visibility"		"0"
     "tags"
     {
@@ -216,12 +81,23 @@ When reporting bugs on [url=https://github.com/Arkpointt/Enlisted/issues]GitHub 
 		"1"		"Singleplayer"
 		"2"		"Overhaul"
     }
-	"changenote"		"v0.9.1.2 - Hotfix
+	"changenote"		"v0.9.1.2 - Commitment Model & Content Orchestration
 
-[b]FIXES[/b]
-[list]
-[*] TODO: Add changelog items here
-[/list]
+NEW FEATURES:
+- Commitment-based opportunity scheduling: Click future-phase opportunities to schedule (greyed out until phase), click current/past to fire immediately
+- Each opportunity appears once per day maximum with phase-specific generation
+- Uncommitted opportunities disappear when their phase passes
+- Enhanced duplicate prevention across all content types
 
-TODO: Add description of what this hotfix addresses."
+CONTENT SYSTEM:
+- Improved event delivery management and pacing logic
+- Enhanced decision system integration with phase-aware scheduling
+- Smarter world-state analysis for adaptive event selection
+- Refined camp opportunity generation with better filtering
+
+TECHNICAL:
+- Enhanced conflict detection system for mod compatibility diagnostics
+- Improved content orchestration architecture with better state management
+- Updated logging infrastructure with more diagnostic information
+- Repository modernization: reorganized project structure for better maintainability"
 }
