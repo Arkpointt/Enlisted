@@ -1,224 +1,145 @@
 # WARP.md
 
-This file provides guidance to WARP (warp.dev) when working with code in this repository.
+Guidance for Warp AI agents working in this Bannerlord mod codebase.
 
-## Repository overview
+## 🚨 Critical Rules (Read First)
 
-Enlisted is a C# Bannerlord mod targeting **Mount & Blade II: Bannerlord v1.3.13** that turns the game into a soldier career simulator: the player enlists with a lord, follows orders, progresses through ranks, and eventually commands their own retinue.
+1. **Target Version:** Bannerlord **v1.3.13** — never assume APIs from later versions
+2. **API Verification:** Use local decompile at `C:\Dev\Enlisted\Decompile\` (not online docs)
+3. **New C# Files:** Must be manually added to `Enlisted.csproj` via `<Compile Include="..."/>`
+4. **Tooltips:** Cannot be null — every event/decision option needs a tooltip (<80 chars)
+5. **JSON Field Order:** Fallback fields (`title`, `setup`, `text`) must immediately follow their ID fields
+6. **Code Quality:** Fix all ReSharper warnings; never suppress without documented reason
 
-The project uses an old-style `.csproj` with **explicit file includes** and integrates tightly with Bannerlord native APIs and data formats.
-
-## Documentation entrypoints
-
-Read these before doing any non-trivial work:
-
-- `docs/BLUEPRINT.md` – Single source of truth for architecture, coding standards, constraints (target game version, build configuration, logging, JSON/XML conventions).
-- `docs/INDEX.md` – Complete documentation index and feature lookup table.
-- `docs/DEVELOPER-GUIDE.md` – Practical build, structure, and integration guide.
-- `docs/Features/Core/core-gameplay.md` – High-level description of all major gameplay systems and how they interact.
-- `docs/Content/content-index.md` and `docs/Content/event-catalog-by-system.md` – Catalog and grouping of all events, decisions, orders, and incidents.
-
-Use `docs/INDEX.md` as the main navigator: most feature docs are under `docs/Features/**`, content catalogs under `docs/Content/**`, and technical/native references under `docs/Reference/**`.
-
-## Build and validation commands
-
-All commands assume the project root: `Enlisted/` (where `Enlisted.csproj` and `Enlisted.sln` live).
-
-### Build the mod DLL
-
-Configuration and platform are fixed for the mod; the build also runs the `AfterBuild` copy steps that deploy into the Bannerlord `Modules/Enlisted` folder.
+## ⚡ Quick Commands
 
 ```powershell path=null start=null
-# From project root
+# Build
+dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+
+# Validate content (run before committing)
+python Tools/Validation/validate_content.py
+
+# Sync localization strings
+python Tools/Validation/sync_event_strings.py
+
+# Upload to Steam Workshop (interactive window required)
+.\Tools\Steam\upload.ps1
+```
+
+## 📁 Key Paths
+
+| Path | Purpose |
+|------|---------|
+| `src/Features/` | All gameplay code (Enlistment, Orders, Content, Combat, Equipment, etc.) |
+| `ModuleData/Enlisted/` | JSON config, events, orders, decisions |
+| `ModuleData/Languages/enlisted_strings.xml` | Localized strings |
+| `Tools/Validation/` | Content validators |
+| `docs/` | All documentation |
+| `C:\Dev\Enlisted\Decompile\` | Native Bannerlord API reference (v1.3.13) |
+| `<BannerlordInstall>\Modules\Enlisted\Debugging\` | Runtime mod logs |
+
+## 📚 Documentation Quick Reference
+
+| Need to... | Read |
+|------------|------|
+| Understand project architecture | [docs/BLUEPRINT.md](docs/BLUEPRINT.md) |
+| Find documentation for a feature | [docs/INDEX.md](docs/INDEX.md) |
+| Understand core gameplay systems | [docs/Features/Core/core-gameplay.md](docs/Features/Core/core-gameplay.md) |
+| Write events/decisions/orders | [docs/Features/Content/writing-style-guide.md](docs/Features/Content/writing-style-guide.md) |
+| Check JSON schemas | [docs/Features/Content/event-system-schemas.md](docs/Features/Content/event-system-schemas.md) |
+| Find all content (events, orders) | [docs/Features/Content/content-index.md](docs/Features/Content/content-index.md) |
+| Use validation tools | [Tools/README.md](Tools/README.md) |
+| Technical patterns (logging, save) | [Tools/TECHNICAL-REFERENCE.md](Tools/TECHNICAL-REFERENCE.md) |
+
+## 🔧 Multi-Agent Workflow
+
+**See [Tools/AGENT-WORKFLOW.md](Tools/AGENT-WORKFLOW.md)** for complete workflow documentation.
+
+**Single agent (default):** Describe your task naturally. Warp will analyze → implement → validate.
+
+**Invoke specific phases:**
+- `[ANALYZE]` — Read-only investigation
+- `[ANALYZE:CODE]` — Force C# analysis
+- `[ANALYZE:CONTENT]` — Force content/JSON analysis
+- `[ANALYZE:VOICE]` — Narrative style review
+- `[ANALYZE:BALANCE]` — Effects/economy review
+- `[IMPLEMENT]` — Skip analysis, go to implementation
+- `[VALIDATE]` — Run QA validation only
+
+## 📂 Project Structure
+
+```
+Enlisted/
+├── src/
+│   ├── Mod.Entry/          SubModule + Harmony init
+│   ├── Mod.Core/           Logging, config, save system, helpers
+│   ├── Mod.GameAdapters/   Harmony patches
+│   └── Features/           All gameplay features
+│       ├── Enlistment/     Core service state, XP, retirement
+│       ├── Orders/         Mission-driven directives
+│       ├── Content/        Events, Decisions, Orchestrator
+│       ├── Combat/         Battle participation, formation
+│       ├── Equipment/      Quartermaster, gear management
+│       └── ...             (14 feature folders total)
+├── ModuleData/
+│   ├── Enlisted/           JSON config + content files
+│   └── Languages/          XML localization
+├── Tools/                  Validators, upload scripts
+├── docs/                   All documentation
+└── GUI/                    Gauntlet UI prefabs
+```
+
+## 🛠️ Common Tasks
+
+### Add New C# File
+1. Create file in appropriate `src/Features/` subfolder
+2. Add to `Enlisted.csproj`: `<Compile Include="src\Features\MyFeature\MyClass.cs"/>`
+3. Run `python Tools/Validation/validate_content.py` (catches missing files)
+4. Build and fix warnings
+
+### Add New Event/Decision/Order
+1. Read [writing-style-guide.md](docs/Features/Content/writing-style-guide.md) for voice/tone
+2. Add JSON definition to `ModuleData/Enlisted/Events/` or `Decisions/`
+3. Follow field ordering: `titleId` → `title` → `setupId` → `setup`
+4. Include tooltips for all options (<80 chars, factual)
+5. Run validator: `python Tools/Validation/validate_content.py`
+6. Sync strings: `python Tools/Validation/sync_event_strings.py`
+
+### Before Committing
+```powershell path=null start=null
+python Tools/Validation/validate_content.py
 dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 ```
 
-The compiled DLL and copied assets end up under the configured Bannerlord install path (see `Enlisted.csproj` `OutputPath`).
+## ⚠️ Common Pitfalls
 
-### Validate narrative/content data
+| Problem | Solution |
+|---------|----------|
+| Gold not showing in UI | Use `GiveGoldAction.ApplyBetweenCharacters()`, not `ChangeHeroGold()` |
+| Crash iterating equipment | Use numeric loop to `NumEquipmentSetSlots`, not `Enum.GetValues()` |
+| New file not compiling | Add to `Enlisted.csproj` `<Compile Include="..."/>` |
+| API doesn't exist | Verify against local decompile, not online docs |
+| Tooltips null | Every option must have a tooltip — validator catches this |
+| JSON validation fails | Check field ordering (fallback immediately after ID) |
+| Reputation/needs wrong | Use centralized managers (EscalationManager, CompanyNeedsManager) |
 
-The content validator enforces the JSON schema and cross-file rules described in `docs/Features/Technical/conflict-detection-system.md` and the content docs.
+## 🎯 Project Overview
 
-```powershell path=null start=null
-# Standard validation
-python tools/events/validate_events.py
+**Enlisted** is a C# Bannerlord mod that transforms the game into a soldier career simulator:
+- Player enlists with a lord, follows orders, earns wages
+- 9-tier rank progression (T1 recruit → T9 commander)
+- 245 narrative content pieces (events, decisions, orders)
+- JSON-driven content with XML localization
+- Old-style `.csproj` with explicit file includes
 
-# Strict mode (treat warnings as failures; preferred for CI / pre-commit)
-python tools/events/validate_events.py --strict
+## 📋 Code Quality Checklist
 
-# Sync missing XML localization strings from JSON files
-python tools/events/sync_event_strings.py
-
-# Check for missing strings without modifying files
-python tools/events/sync_event_strings.py --check
-```
-
-If you touch any of `ModuleData/Enlisted/Events/*.json`, `ModuleData/Enlisted/Decisions/*.json`, or `ModuleData/Enlisted/Orders/*.json`, run the validator before building or submitting changes.
-
-### Optional: Qodana / static analysis
-
-If Qodana is configured in your environment, BLUEPRINT expects periodic scans:
-
-```powershell path=null start=null
-qodana scan --show-report
-```
-
-Run this before large refactors or feature branches to catch code-quality regressions alongside ReSharper/Rider warnings.
-
-### Deploy to Steam Workshop
-
-After building and validating, deploy updates to Steam Workshop (ID: 3621116083):
-
-```powershell path=null start=null
-# Update changelog in Tools/Steam/workshop_upload.vdf first
-
-# Method 1: Using upload script (RECOMMENDED - opens interactive window)
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Dev\Enlisted\Enlisted\Tools\Steam'; .\upload.ps1" -Wait
-
-# Method 2: Direct steamcmd command (requires cached credentials)
-cd C:\Dev\steamcmd
-.\steamcmd.exe +login YOUR_USERNAME +workshop_build_item "C:\Dev\Enlisted\Enlisted\Tools\Steam\workshop_upload.vdf" +quit
-```
-
-**Important**: The `upload.ps1` script must run in an interactive PowerShell window to handle Steam Guard authentication. The `Start-Process` command opens a new window automatically. See `docs/BLUEPRINT.md` Steam Workshop Upload section for full details.
-
-## Logs and diagnostics
-
-The mod has its own logging pipeline; this is the primary place to look when debugging behavior.
-
-- **Enlisted mod logs:** `<BannerlordInstall>\Modules\Enlisted\Debugging\`
-  - Rotating `Session-A_*.log`, `Session-B_*.log`, `Session-C_*.log` (gameplay/session logs).
-  - Rotating `Conflicts-A_*.log`, `Conflicts-B_*.log`, `Conflicts-C_*.log` (patch/mod conflict diagnostics).
-  - `Current_Session_README.txt` summarises the active session and which files to share.
-- **Bannerlord crash dumps (engine-level):** `C:\ProgramData\Mount and Blade II Bannerlord\crashes\`.
-
-Logging is configured via `ModuleData/Enlisted/settings.json` and written through `Mod.Core.Logging.ModLogger`.
-
-## Environment & API constraints
-
-Key constraints and expectations (see `docs/BLUEPRINT.md` for details):
-
-- Target **game version is fixed** at Bannerlord **v1.3.13**; do not assume APIs from later game versions.
-- Verify Bannerlord APIs against the **local decompile** at `C:\Dev\Enlisted\Decompile\` rather than online docs.
-- New C# files **must be added explicitly** to `Enlisted.csproj` via `<Compile Include="..." />` or they will not be compiled.
-- **ReSharper/Rider warnings are treated as the linter:** Always fix warnings before committing. Never suppress unless there's a documented compatibility reason (e.g., namespace conflicts). Run Qodana scans before major refactors.
-- **Tooltips cannot be null:** Every event option, decision, order, and UI element must have a factual, concise tooltip.
-- **JSON field ordering:** Fallback fields (`title`, `setup`, `text`) must immediately follow their ID fields (`titleId`, `setupId`, `textId`).
-
-## High-level architecture
-
-### C# project layout
-
-The primary project is `Enlisted.csproj` (targeting .NET Framework 4.7.2). Source code is organized as follows (see `docs/BLUEPRINT.md` and `docs/DEVELOPER-GUIDE.md` for details and current statuses):
-
-- `src/Mod.Entry/`
-  - SubModule entry point and Harmony initialization.
-- `src/Mod.Core/`
-  - Configuration loading (`ModSettings`, `ModConfig`, `ConfigurationManager`).
-  - Logging and diagnostics (`ModLogger`, `ModConflictDiagnostics`, `SessionDiagnostics`).
-  - Save system support (`EnlistedSaveDefiner`) and utility/helpers (`PlayerContext`, `CampaignSafetyGuard`, etc.).
-- `src/Mod.GameAdapters/`
-  - Harmony patches that adapt/guard native Bannerlord behavior (encounters, parties, UI, DLC edge cases, etc.).
-- `src/Features/**`
-  - Feature modules grouped by gameplay concern; each has its own behaviors, managers, and data models. The important ones conceptually are:
-    - **Enlistment** – Core enlisted state machine and lifecycle (join/leave service, contracts, grace periods, XP and term tracking).
-    - **Orders** – Chain-of-command order system (multi-day order lifecycle, progression, consequences).
-  - **Content** – JSON-driven narrative engine: event/decision/order catalogs, pacing, delivery, and the Content Orchestrator (AI-driven dynamic content selection and pacing system).
-    - **Identity** – Trait- and reputation-based identity/role detection and soldier reputation tracking.
-    - **Escalation** – Discipline/scrutiny/medical-risk tracks and associated threshold events.
-    - **Company** – Company-wide needs (Readiness, Morale, Supplies, Equipment, Rest) and their managers.
-    - **Context** – Strategic context and war stance analysis (Grand Campaign, Last Stand, Winter Camp, etc.).
-  - **Interface** – Native `GameMenu`-based UI hub (Camp Hub with accordion-style decision sections, 8-stage muster system every 12 days, reports, news/daily brief).
-    - **Equipment** – Quartermaster, equipment management, baggage access, provisions and pricing.
-    - **Ranks** – Promotion logic and culture-specific rank naming.
-    - **Conversations** – Dynamic, data-driven dialogs (e.g., quartermaster conversations).
-    - **Combat** – Formation assignment, battle participation hooks, training XP hooks.
-    - **Conditions** – Player medical/injury/illness state and related menus.
-    - **Retinue** – Commander-tier retinue and named veterans; service record tracking.
-    - **Camp** – Camp life activities, fatigue, and opportunity generation.
-
-The `.csproj` `ItemGroup` lists are the authoritative map of which classes compile into the DLL; check there when locating or adding code.
-
-### Data & content pipeline
-
-The mod relies heavily on external data for tuning and narrative content:
-
-- **Config & content JSON (`ModuleData/Enlisted/`)**
-  - `enlisted_config.json` – Master tuning/feature flags (wages, retirement, event pacing, camp life, escalation, conditions, etc.).
-  - `progression_config.json` – Tier XP thresholds, culture-specific rank titles, wage system details.
-  - `Config/*.json` – Additional tuning for equipment, retinue, baggage, simulation, strategic context, etc.
-  - `Events/*.json` – Narrative events, automatic decisions, map incidents; use the schemas in `docs/Features/Content/event-system-schemas.md`.
-  - `Decisions/decisions.json` – Camp Hub player-initiated decisions (see `ModuleData/Enlisted/Decisions/README.md`).
-  - `Orders/*.json` – Tiered order definitions driving the orders system.
-- **Localization XML (`ModuleData/Languages/`)**
-  - `enlisted_strings.xml`, `language_data.xml` and per-language folders, as documented in `ModuleData/Languages/README.md`.
-  - Follow the rules there for placeholders, entities, and adding languages.
-- **GUI XML (`GUI/Brushes/**`, `GUI/Prefabs/**`)**
-  - Gauntlet UI definitions for quartermaster screens and other complex interfaces; see UI docs in `docs/Features/UI/ui-systems-master.md`.
-
-`Enlisted.csproj` `AfterBuild` copies JSON, XML, and GUI content into the Bannerlord `Modules/Enlisted` folder (see the `AfterBuild` target for directory layout and file lists).
-
-## Working on features and content
-
-### When editing or adding C# code
-
-- Place new classes in the appropriate `src/` subfolder to match existing feature boundaries.
-- Add the new file path to the `<Compile Include="..." />` ItemGroup in `Enlisted.csproj`.
-- Run a build (`dotnet build -c "Enlisted RETAIL" /p:Platform=x64`) and fix any ReSharper/compiler issues.
-- When touching Bannerlord APIs, cross-check signatures and expected behavior in the `C:\Dev\Enlisted\Decompile\` tree rather than guessing.
-
-### When editing or adding JSON content
-
-- **Critical JSON rules:**
-  - Fallback fields (`title`, `setup`, `text`) must **immediately follow** their ID fields (`titleId`, `setupId`, `textId`)
-  - **Tooltips cannot be null** – every option must have a factual, concise tooltip (1 sentence, under 80 chars)
-  - Always include fallback text in JSON, even with XML localization (serves as safety net and source of truth)
-- Follow field ordering and fallback rules from `docs/BLUEPRINT.md` and `docs/Features/Content/event-system-schemas.md`.
-- Keep narrative/content changes consistent with the catalogs in `docs/Content/content-index.md` and `docs/Content/event-catalog-by-system.md`.
-- **Before committing:**
-  ```powershell
-  # Validate JSON schema and cross-file rules
-  python tools/events/validate_events.py --strict
-  
-  # Sync any missing XML localization strings
-  python tools/events/sync_event_strings.py
-  ```
-
-### When working with UI
-
-- Prefer using the existing native `GameMenu`-based patterns and Gauntlet prefabs defined in `GUI/Prefabs/**`.
-- Use `docs/Features/UI/ui-systems-master.md` and the UI sections of `docs/BLUEPRINT.md` as the reference for which menus, ViewModels, and XML prefabs are authoritative.
-
-## How to get oriented for a new task
-
-Depending on what you want to change:
-
-- **Gameplay/system behavior:**
-  - Start at `docs/Features/Core/core-gameplay.md`, then drill into the relevant `docs/Features/**` document (pay, promotion, retinue, orders, camp life, etc.).
-  - Locate the corresponding manager/behavior in `src/Features/**` using the "System Map" sections in those docs.
-- **Narrative/content:**
-  - Use `docs/Content/content-index.md` or `docs/Content/event-catalog-by-system.md` to find the event/decision/order IDs.
-  - Edit the appropriate JSON under `ModuleData/Enlisted/**` and associated localization entries under `ModuleData/Languages/**`, then run the validator.
-  - Use `sync_event_strings.py` to automatically extract missing XML strings from JSON files.
-- **Muster system (pay day ceremony):**
-  - 8-stage `GameMenu` sequence occurring every 12 days
-  - Stages: Intro → Pay Line → Baggage Check → Inspection → Recruit → Promotion Recap → Retinue → Complete
-  - See `docs/Features/Core/muster-system.md` for complete flow and integration points
-- **Integration with other mods or Bannerlord systems:**
-  - Consult `docs/Reference/native-apis.md` and the Harmony patch list in `docs/Features/Technical/conflict-detection-system.md` / conflicts logs to understand what Enlisted already patches or depends on.
-
-## Code quality checklist
-
-Before committing code, verify:
-
-- [ ] All ReSharper/Rider warnings addressed (never suppress without documented reason)
-- [ ] Braces used for all single-line control statements
-- [ ] No unused `using` directives, variables, parameters, or methods
-- [ ] No redundant namespace qualifiers (use `using` statements)
-- [ ] No redundant default parameter values in method calls
-- [ ] Comments describe **current behavior** (not "Phase X added..." or changelog-style framing)
-- [ ] New files added to `Enlisted.csproj` with `<Compile Include="..."/>`
-- [ ] Tooltips provided for all event options (cannot be null)
-- [ ] JSON fallback fields immediately follow ID fields
-- [ ] Build succeeds: `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
-- [ ] Events validated: `python tools/events/validate_events.py --strict`
+- [ ] ReSharper warnings fixed (no suppressions without reason)
+- [ ] Braces on all control statements
+- [ ] No unused imports/variables/methods
+- [ ] New files added to `.csproj`
+- [ ] Tooltips present for all options
+- [ ] JSON field ordering correct
+- [ ] Build succeeds
+- [ ] Validator passes
