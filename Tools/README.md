@@ -4,6 +4,17 @@ Development tools, utilities, and diagnostics for the Enlisted mod.
 
 ---
 
+## Multi-Agent Workflow
+
+**See [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md)** for the single-conversation multi-agent system.
+
+Quick commands:
+- `[ANALYZE]` — Investigation only, no changes
+- `[IMPLEMENT]` — Go straight to making changes
+- `[VALIDATE]` — Run QA checks only
+
+---
+
 ## Quick Debug Logging Toggle
 
 **`toggle_debug_logging.ps1`** - Easily enable/disable debug logging for specific categories without manually editing JSON.

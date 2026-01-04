@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Enlisted.Features.Context;
 using Enlisted.Features.Equipment.Behaviors;
+using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Ranks.Behaviors;
 using Enlisted.Features.Identity;
@@ -170,8 +171,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
             CampaignEvents.ConversationEnded.AddNonSerializedListener(this, OnConversationEnded);
+            CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
             Instance = this;
             ModLogger.Info(LogCategory, "MusterMenuHandler registered");
+        }
+
+        /// <summary>
+        /// Hourly tick handler to check for deferred muster triggers.
+        /// When muster was deferred due to player being in combat, conversation, or another menu,
+        /// this retries the trigger once conditions allow.
+        /// </summary>
+        private void OnHourlyTick()
+        {
+            // Only check if we're enlisted and have a pending deferred muster
+            if (EnlistmentBehavior.Instance?.IsEnlisted != true)
+            {
+                return;
+            }
+
+            CheckPendingMusterTrigger();
         }
 
         private void OnConversationEnded(IEnumerable<CharacterObject> characters)
@@ -772,6 +790,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return (false, "Player in conversation");
             }
 
+            // Player has a Gauntlet UI screen open (provisions, equipment selector, upgrade screen)
+            // These are custom UI layers that would be disrupted by menu activation
+            if (QuartermasterProvisionsBehavior.IsOpen || QuartermasterEquipmentSelectorBehavior.IsOpen)
+            {
+                return (false, "Player in Gauntlet UI");
+            }
+
             // Already in a muster sequence
             if (_currentMuster != null)
             {
@@ -788,8 +813,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var nextMenu = menuManager?.NextMenu;
                 if (nextMenu != null && !string.IsNullOrEmpty(nextMenu.StringId))
                 {
-                    // Allow muster menus themselves
-                    if (nextMenu.StringId.StartsWith("enlisted_muster"))
+                    // Allow all enlisted menus (status, camp hub, muster, etc.) - these are our menus
+                    if (nextMenu.StringId.StartsWith("enlisted_"))
                     {
                         return (true, null);
                     }
@@ -862,10 +887,23 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            // Prevent rapid retry attempts
+            // Prevent rapid retry attempts - but only skip if we're already pending
+            // The throttle prevents spam, but we must ensure muster eventually triggers.
+            // If throttled, set deferred flag so the hourly check will retry.
             if (CampaignTime.Now - _lastMusterTriggerAttempt < CampaignTime.Hours(1))
             {
-                ModLogger.Debug(LogCategory, "Muster trigger attempt throttled (< 1 hour since last)");
+                // Only throttle if there's already a deferred muster pending.
+                // If neither flag is set, this is a fresh attempt that got throttled
+                // and we need to ensure it retries.
+                if (!_musterPendingAfterCombat && !_musterPendingAfterMenu)
+                {
+                    _musterPendingAfterMenu = true;
+                    ModLogger.Debug(LogCategory, "Muster trigger attempt throttled - setting deferred flag to retry later");
+                }
+                else
+                {
+                    ModLogger.Debug(LogCategory, "Muster trigger attempt throttled (already deferred)");
+                }
                 return;
             }
             _lastMusterTriggerAttempt = CampaignTime.Now;

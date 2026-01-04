@@ -7,13 +7,22 @@
     <UpdateItem>
         <ModuleFolder Value="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"/>
         <!-- A direct path of your module -->   
-        <ChangeNotes Value="v0.9.1.4 - [Development Build]
+        <ChangeNotes Value="v0.9.1.4 - Content Orchestration &amp; Combat Log (2026-01-04)
 
-[CHANGES]
-- TBD
+[CONTENT]
+- Enhanced ContentOrchestrator with 24-hour cross-day opportunity scheduling
+- Updated all order event files with improved content and formatting
+- Expanded combat log with comprehensive battle event tracking
 
-[DETAILS]
-- Development version in progress" />
+[SYSTEMS]
+- Enhanced menu behaviors for better narrative flow
+- Improved news reporting systems
+- Better event pacing and distribution
+
+[TOOLS]
+- Added debug logging toggle tool for development
+- Improved validation tools with better analysis and error reporting
+- Updated documentation (combat log, encounter safety, orchestrator)" />
         <!-- Insert patch notes -->
         <Tags> 
             <!-- You can use the following tags: -->
