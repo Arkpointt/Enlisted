@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using TaleWorlds.Library;
 
 namespace Enlisted.Mod.Core.Config
 {
@@ -17,40 +17,10 @@ namespace Enlisted.Mod.Core.Config
         private const string LogCategory = "Config";
 
         /// <summary>
-        /// Gets the module data path. Uses TaleWorlds.Library.BasePath to find the game root,
-        /// then constructs the path to Modules/Enlisted/ModuleData/Enlisted.
+        /// Gets the module data path using ModulePaths utility.
+        /// This correctly resolves paths for both manual/Nexus installs and Steam Workshop.
         /// </summary>
-        private static string ModuleDataPath
-        {
-            get
-            {
-                if (_moduleDataPath == null)
-                {
-                    try
-                    {
-                        // TaleWorlds.Library.BasePath.Name gives us the game installation root
-                        // Config files are in <GameRoot>/Modules/Enlisted/ModuleData/Enlisted/
-                        var gameRoot = BasePath.Name;
-                        _moduleDataPath = Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted");
-
-                        if (!Directory.Exists(_moduleDataPath))
-                        {
-                            ModLogger.Warn(LogCategory, $"Module data path not found: {_moduleDataPath}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        ModLogger.Error(LogCategory, "Failed to determine module data path", ex);
-                        // Fallback to old path construction (may not work but better than null)
-                        _moduleDataPath = Path.Combine(
-                            AppDomain.CurrentDomain.BaseDirectory,
-                            "..", "..", "Modules", "Enlisted", "ModuleData", "Enlisted");
-                    }
-                }
-                return _moduleDataPath;
-            }
-        }
-        private static string _moduleDataPath;
+        private static string ModuleDataPath => ModulePaths.ModuleDataPath;
 
         private static readonly JsonSerializerSettings SnakeCaseSettings = new JsonSerializerSettings
         {
@@ -145,24 +115,11 @@ namespace Enlisted.Mod.Core.Config
 
         /// <summary>
         /// Get module data path for config file consumers.
-        /// Uses TaleWorlds.Library.BasePath for correct path resolution.
+        /// Uses ModulePaths utility for correct resolution with both manual and Workshop installs.
         /// </summary>
         public static string GetModuleDataPathForConsumers()
         {
-            try
-            {
-                // Use BasePath.Name to get game root, then add Modules\Enlisted\ModuleData\Enlisted
-                var gameRoot = BasePath.Name;
-                return Path.Combine(gameRoot, "Modules", "Enlisted", "ModuleData", "Enlisted");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error(LogCategory, "Failed to determine module data path for consumers", ex);
-                // Fallback to corrected path (may not work but better than null)
-                return Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "..", "..", "Modules", "Enlisted", "ModuleData", "Enlisted");
-            }
+            return ModulePaths.ModuleDataPath;
         }
 
         public static PlayerConditionsConfig LoadPlayerConditionsConfig()

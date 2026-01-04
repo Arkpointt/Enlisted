@@ -10,11 +10,11 @@ using Enlisted.Features.Escalation;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.SaveSystem;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
-using TaleWorlds.Library;
 using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Camp
@@ -249,7 +249,7 @@ namespace Enlisted.Features.Camp
 
             try
             {
-                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "Config", "simulation_config.json");
+                var configPath = ModulePaths.GetConfigPath("simulation_config.json");
                 if (File.Exists(configPath))
                 {
                     var json = File.ReadAllText(configPath);

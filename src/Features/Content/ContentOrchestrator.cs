@@ -10,9 +10,9 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.SaveSystem;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.Library;
 
 namespace Enlisted.Features.Content
 {
@@ -2070,8 +2070,7 @@ namespace Enlisted.Features.Content
 
             try
             {
-                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData",
-                    "Enlisted", "Config", "orchestrator_overrides.json");
+                var configPath = ModulePaths.GetConfigPath("orchestrator_overrides.json");
 
                 if (!File.Exists(configPath))
                 {

@@ -13,6 +13,7 @@ using Enlisted.Features.Orders.Behaviors;
 using Enlisted.Features.Ranks;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.SaveSystem;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
@@ -1763,7 +1764,7 @@ namespace Enlisted.Features.Camp
 
             try
             {
-                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "Decisions", "camp_opportunities.json");
+                var configPath = Path.Combine(ModulePaths.GetContentPath("Decisions"), "camp_opportunities.json");
                 if (!File.Exists(configPath))
                 {
                     ModLogger.ErrorCode(LogCategory, "E-CAMP-001", 

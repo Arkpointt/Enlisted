@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json.Linq;
-using TaleWorlds.Library;
 
 namespace Enlisted.Features.Content
 {
@@ -225,78 +225,21 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Gets the base path for event JSON files.
+        /// Uses ModulePaths utility for correct resolution with both manual and Workshop installs.
         /// </summary>
-        private static string GetEventsBasePath()
-        {
-            // Use BasePath from ModuleHelper if available, otherwise construct from current location
-            var modulePath = GetModulePath();
-            if (string.IsNullOrEmpty(modulePath))
-            {
-                return string.Empty;
-            }
-
-            return Path.Combine(modulePath, "ModuleData", "Enlisted", "Events");
-        }
+        private static string GetEventsBasePath() => ModulePaths.GetContentPath("Events");
 
         /// <summary>
         /// Gets the base path for decision JSON files.
+        /// Uses ModulePaths utility for correct resolution with both manual and Workshop installs.
         /// </summary>
-        private static string GetDecisionsBasePath()
-        {
-            var modulePath = GetModulePath();
-            if (string.IsNullOrEmpty(modulePath))
-            {
-                return string.Empty;
-            }
-
-            return Path.Combine(modulePath, "ModuleData", "Enlisted", "Decisions");
-        }
+        private static string GetDecisionsBasePath() => ModulePaths.GetContentPath("Decisions");
 
         /// <summary>
         /// Gets the base path for order event JSON files.
+        /// Uses ModulePaths utility for correct resolution with both manual and Workshop installs.
         /// </summary>
-        private static string GetOrderEventsBasePath()
-        {
-            var modulePath = GetModulePath();
-            if (string.IsNullOrEmpty(modulePath))
-            {
-                return string.Empty;
-            }
-
-            return Path.Combine(modulePath, "ModuleData", "Enlisted", "Orders", "order_events");
-        }
-
-        /// <summary>
-        /// Gets the Enlisted module path.
-        /// </summary>
-        private static string GetModulePath()
-        {
-            try
-            {
-                // TaleWorlds.Library.BasePath.Name gives us the game installation root
-                // Modules are in <GameRoot>/Modules/<ModuleName>/
-                var gameRoot = BasePath.Name;
-                var modulePath = Path.Combine(gameRoot, "Modules", "Enlisted");
-
-                if (Directory.Exists(modulePath))
-                {
-                    return modulePath;
-                }
-
-                // Fallback: check if we're running from development environment
-                var devPath = Path.Combine(gameRoot, "..", "..", "Enlisted");
-                if (Directory.Exists(devPath))
-                {
-                    return Path.GetFullPath(devPath);
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error(LogCategory, "Failed to determine module path", ex);
-            }
-
-            return string.Empty;
-        }
+        private static string GetOrderEventsBasePath() => Path.Combine(ModulePaths.GetContentPath("Orders"), "order_events");
 
         /// <summary>
         /// Loads events from a single JSON file.

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Util;
 using Newtonsoft.Json.Linq;
-using TaleWorlds.Library;
 using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Conversations.Data
@@ -149,44 +149,13 @@ namespace Enlisted.Features.Conversations.Data
 
         /// <summary>
         /// Gets the base path for dialogue JSON files.
+        /// Uses ModulePaths utility for correct resolution with both manual and Workshop installs.
         /// </summary>
         private string GetDialogueBasePath()
         {
-            try
-            {
-                var gameRoot = BasePath.Name;
-                ModLogger.Debug(LogCategory, $"Game root path: {gameRoot}");
-                
-                // Primary path: Game installation
-                var modulePath = Path.Combine(gameRoot, "Modules", "Enlisted");
-                ModLogger.Debug(LogCategory, $"Checking module path: {modulePath}");
-                
-                if (Directory.Exists(modulePath))
-                {
-                    var dialoguePath = Path.Combine(modulePath, "ModuleData", "Enlisted", "Dialogue");
-                    ModLogger.Info(LogCategory, $"Using dialogue path: {dialoguePath}");
-                    return dialoguePath;
-                }
-
-                // Fallback for development environment
-                var devPath = Path.Combine(gameRoot, "..", "..", "Enlisted", "ModuleData", "Enlisted", "Dialogue");
-                if (Directory.Exists(devPath))
-                {
-                    var resolvedPath = Path.GetFullPath(devPath);
-                    ModLogger.Info(LogCategory, $"Using dev dialogue path: {resolvedPath}");
-                    return resolvedPath;
-                }
-                
-                ModLogger.Error(LogCategory, $"Dialogue directory not found! Tried paths:" +
-                    $"\n  1. {modulePath}" +
-                    $"\n  2. {devPath}");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error(LogCategory, "Failed to determine dialogue path", ex);
-            }
-
-            return string.Empty;
+            var path = ModulePaths.GetContentPath("Dialogue");
+            ModLogger.Debug(LogCategory, $"Using dialogue path: {path}");
+            return path;
         }
 
         /// <summary>
