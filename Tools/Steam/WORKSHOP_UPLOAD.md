@@ -2,6 +2,47 @@
 
 This guide covers how to publish the Enlisted mod to the Steam Workshop for Mount & Blade II: Bannerlord.
 
+## Quick Start - How to Upload
+
+**THE SIMPLE WAY (Do this first):**
+
+Open PowerShell and run:
+```powershell
+cd C:\Dev\Enlisted\Enlisted
+.\Tools\Steam\upload.ps1
+```
+
+Or from the project root, just:
+```powershell
+.\Tools\Steam\upload.ps1
+```
+
+**If that doesn't work (script exits without prompting):**
+
+The script needs to run in an interactive PowerShell window. Use this command to launch it:
+```powershell
+Start-Process powershell.exe -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", "C:\Dev\Enlisted\Enlisted\Tools\Steam\upload.ps1"
+```
+
+**What the script does:**
+1. Prompts for your Steam username
+2. Asks for your Steam password
+3. Requests your Steam Guard code
+4. Uploads to Workshop ID 3621116083
+
+**That's it.** The rest of this document is for troubleshooting and understanding the process.
+
+---
+
+## IMPORTANT: VDF Character Limits
+
+**CRITICAL:** SteamCMD's VDF parser has strict character limits:
+- **Description field:** ~2000 characters max (with BBCode)
+- **Changenote field:** ~500 characters max
+- If you exceed these, you'll get: `CKeyValuesSystem::AddStringToPool: key name too long`
+
+**Solution:** Keep descriptions concise. Use BBCode efficiently. Test with short changenotes.
+
 ## Prerequisites
 
 1. **Steam Account** with Bannerlord (AppID: 261550)
@@ -52,9 +93,25 @@ Edit `workshop_upload.vdf` and update these paths:
 
 ## Uploading to Steam Workshop
 
-### First Upload (Creating the Workshop Item)
+### Using the Upload Script (Recommended)
 
-1. Open PowerShell or Command Prompt
+**From project root, run:**
+```powershell
+.\Tools\Steam\upload.ps1
+```
+
+This will:
+1. Prompt for your Steam username
+2. Prompt for your Steam password
+3. Request your Steam Guard code
+4. Generate resolved VDF with absolute paths
+5. Upload to Workshop ID 3621116083
+
+### Manual Upload via SteamCMD
+
+If the script fails, you can upload manually:
+
+1. Open PowerShell in interactive mode (NOT through automation)
 2. Navigate to SteamCMD:
    ```powershell
    cd C:\Dev\steamcmd
@@ -62,40 +119,53 @@ Edit `workshop_upload.vdf` and update these paths:
 
 3. Login and upload:
    ```powershell
-   .\steamcmd.exe +login YOUR_STEAM_USERNAME +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit
+   .\steamcmd.exe +login YOUR_STEAM_USERNAME +workshop_build_item "C:\Dev\Enlisted\Enlisted\Tools\Steam\workshop_upload.vdf" +quit
    ```
    
    You'll be prompted for your password and Steam Guard code.
 
-4. **Important**: After the first successful upload, Steam assigns a Workshop Item ID. Note this ID from the output (it looks like a long number, e.g., `1234567890`).
+### First Upload Only (Creating New Workshop Item)
 
-5. Update `workshop_upload.vdf` with your new ID:
-   ```
-   "publishedfileid" "1234567890"
-   ```
+**Skip this if workshop item already exists (ID: 3621116083)**
 
-### Updating an Existing Workshop Item
-
-1. Make sure `publishedfileid` is set to your Workshop Item ID
-2. Update the `changenote` field with your release notes
-3. Run the same upload command:
-   ```powershell
-   .\steamcmd.exe +login YOUR_STEAM_USERNAME +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit
-   ```
-
-## Making Your Mod Public
-
-The VDF is configured with `"visibility" "2"` (Hidden) by default. After testing:
-
-1. Go to your Steam Workshop page: https://steamcommunity.com/sharedfiles/filedetails/?id=YOUR_WORKSHOP_ID
-2. Click "Edit title & description"
-3. Change visibility from "Hidden" to "Public"
-
-Or update the VDF:
+After first successful upload, Steam assigns a Workshop Item ID. Update `workshop_upload.vdf`:
 ```
-"visibility" "0"
+"publishedfileid" "YOUR_NEW_ID"
 ```
-And re-upload.
+
+## VDF File Structure
+
+**Key Fields:**
+- `description` - Main Workshop page body (USE BBCode: [h1], [h2], [list], [b], [i], [url])
+- `changenote` - Update notes (plain text or BBCode, keep SHORT)
+- `visibility` - 0=Public, 1=Friends, 2=Hidden
+
+**Current Configuration:**
+- Visibility: Public (0)
+- Workshop ID: 3621116083
+- Description: Full feature list + troubleshooting
+- Changenote: Version-specific updates
+
+## Workshop Folder Paths
+
+**IMPORTANT:** For Workshop subscribers, logs go to the WORKSHOP folder, not Modules!
+
+**Workshop Install Path:**
+```
+C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\3621116083\
+```
+
+**Debugging Logs Location:**
+```
+C:\Program Files (x86)\Steam\steamapps\workshop\content\261550\3621116083\Debugging\
+```
+
+**Manual Install Path (for reference):**
+```
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\
+```
+
+When writing user-facing documentation, ALWAYS use the workshop path for Steam Workshop users.
 
 ## Verification Checklist
 
@@ -167,12 +237,49 @@ tools/workshop/
 └── preview.png.placeholder  (delete after adding real image)
 ```
 
+## Common Issues & Solutions
+
+### "key name too long" Error
+
+**Problem:** VDF parser fails with `CKeyValuesSystem::AddStringToPool: key name too long`
+
+**Cause:** Description or changenote exceeds character limits
+
+**Solution:**
+1. Shorten description (aim for ~2000 chars with BBCode)
+2. Shorten changenote (aim for ~500 chars)
+3. Delete `workshop_upload.resolved.vdf` and retry
+
+### Upload Script Doesn't Prompt for Username
+
+**Problem:** Script runs but exits without prompting
+
+**Cause:** Running in non-interactive PowerShell session
+
+**Solution:** Open script in NEW PowerShell window:
+```powershell
+Start-Process powershell.exe -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", "C:\Dev\Enlisted\Enlisted\Tools\Steam\upload.ps1"
+```
+
+### Changes Not Appearing on Workshop
+
+**Problem:** Uploaded but description unchanged
+
+**Cause:** Cached resolved.vdf file with old content
+
+**Solution:**
+1. Delete `Tools\Steam\workshop_upload.resolved.vdf`
+2. Re-run upload script
+
 ## Quick Reference
 
 | Field | Value |
 |-------|-------|
 | AppID | 261550 |
+| Workshop ID | 3621116083 |
 | Mod Name | Enlisted |
-| Version | v0.9.1 |
-| Visibility | 0=Public, 1=Friends, 2=Hidden |
+| Current Version | v0.9.1.2 |
+| Target Game | Bannerlord v1.3.13 |
+| Visibility | 0 (Public) |
+| Upload Script | `.\Tools\Steam\upload.ps1` |
 
