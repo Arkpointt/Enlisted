@@ -53,6 +53,12 @@ from .planning_tools import (
     save_plan,
     load_plan,
 )
+from .file_tools import (
+    write_source,
+    write_event,
+    update_localization,
+    append_to_csproj,
+)
 
 __all__ = [
     # Validation
@@ -110,4 +116,10 @@ __all__ = [
     # Planning
     "save_plan",
     "load_plan",
+    
+    # File Writing
+    "write_source",
+    "write_event",
+    "update_localization",
+    "append_to_csproj",
 ]

@@ -69,6 +69,11 @@ from .tools import (
     # Verification
     verify_file_exists_tool,
     list_event_ids,
+    # File Writing
+    write_source,
+    write_event,
+    update_localization,
+    append_to_csproj,
 )
 
 # === LLM Configurations ===
@@ -331,6 +336,9 @@ class EnlistedCrew:
                 find_in_code,        # Search to find relevant code
                 read_source_section, # Read targeted snippets
                 read_source,         # Full file when implementing
+                # File writing tools
+                write_source,        # Write C# files
+                append_to_csproj,    # Add new files to project
             ],
             knowledge_sources=[self.ui_knowledge],
             respect_context_window=True,
@@ -353,6 +361,9 @@ class EnlistedCrew:
                 check_event_format,
                 get_style_guide,
                 read_doc_tool,
+                # File writing tools
+                write_event,         # Write JSON event files
+                update_localization, # Add strings to XML
             ],
             knowledge_sources=[self.content_knowledge],
             respect_context_window=True,
@@ -410,6 +421,8 @@ class EnlistedCrew:
                 read_source,         # Full file when needed
                 list_feature_files_tool,
                 get_game_systems,
+                # File writing for doc updates
+                update_localization, # Can update XML strings during doc sync
             ],
             knowledge_sources=[self.planning_knowledge],
             respect_context_window=True,

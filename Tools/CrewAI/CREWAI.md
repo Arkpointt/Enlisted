@@ -221,6 +221,15 @@ Tools use natural naming for readability. The `@tool("Name")` decorator defines 
 | `verify_file_exists_tool` | Validates C# file paths exist before including in plans |
 | `list_event_ids` | Lists all event/opportunity IDs from JSON folders |
 
+### File Writing
+
+| Tool | Purpose |
+|------|---------|
+| `write_source` | Write C# source files to `src/` directories |
+| `write_event` | Write JSON event files to `ModuleData/Enlisted/` |
+| `update_localization` | Add/update strings in `enlisted_strings.xml` |
+| `append_to_csproj` | Add new C# files to Enlisted.csproj compile list |
+
 ---
 
 ## Knowledge Sources
