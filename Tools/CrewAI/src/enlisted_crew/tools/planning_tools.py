@@ -10,8 +10,8 @@ from datetime import datetime
 from crewai.tools import tool
 
 
-@tool("Write Planning Document")
-def write_planning_doc_tool(feature_name: str, content: str) -> str:
+@tool("Save Plan")
+def save_plan(feature_name: str, content: str) -> str:
     """
     Write a planning document to docs/CrewAI_Plans/ with intelligent versioning.
     
@@ -118,8 +118,8 @@ def _calculate_similarity(text1: str, text2: str) -> float:
     return intersection / union if union > 0 else 0.0
 
 
-@tool("Read Planning Document")
-def read_planning_doc_tool(feature_name: str) -> str:
+@tool("Load Plan")
+def load_plan(feature_name: str) -> str:
     """
     Read a planning document from docs/CrewAI_Plans/.
     

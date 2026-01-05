@@ -71,7 +71,16 @@ From `DetermineOpportunityBudget()`:
 
 ## Reputation Thresholds
 
-Reputation tracks (0-100) managed by `EscalationManager`:
+Reputation tracks managed by `EscalationManager`:
+
+**Soldier Reputation (-50 to +50):**
+- Can go negative (hated) or positive (bonded)
+- Starting value: 0 (Neutral)
+- Status levels vary by track design
+
+**Lord & Officer Reputation (0-100):**
+- Only positive values, starts neutral
+- Starting value: 50 (Fair)
 
 || Status | Threshold | Effects |
 ||--------|-----------|----------|
@@ -80,9 +89,6 @@ Reputation tracks (0-100) managed by `EscalationManager`:
 || **Fair** | 40-59 | Neutral standing |
 || **Good** | 60-79 | Positive effects |
 || **Excellent** | 80+ | Strong bonuses |
-
-**Tracks:** Soldier Reputation, Officer Reputation, Lord Reputation
-**Starting value:** 50 (Fair)
 
 ## Escalation Track Thresholds
 

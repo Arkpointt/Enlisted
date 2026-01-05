@@ -198,7 +198,7 @@ Some orders have severe failure penalties beyond reputation loss:
 
 ---
 
-## Camp Opportunities (29 total)
+## Camp Opportunities (36 total)
 
 **File:** `ModuleData/Enlisted/Decisions/camp_opportunities.json`  
 **System:** Pre-scheduled by ContentOrchestrator 24 hours ahead  
@@ -675,7 +675,7 @@ Retinue events focus on managing your personal command at T7+. Events cover loya
 | **Core Decisions** | 3 | `decisions.json` | ✅ Implemented |
 | **Camp Decisions** | 26 | `camp_decisions.json` | ✅ Implemented |
 | **Medical Decisions** | 8 | `medical_decisions.json` (4 land + 4 sea) | ✅ Implemented |
-| **Camp Opportunities** | 29 | `camp_opportunities.json` | ✅ Implemented |
+| **Camp Opportunities** | 36 | `camp_opportunities.json` | ✅ Implemented |
 | **Escalation Events** | 10 | `events_escalation_thresholds.json` | ✅ Implemented |
 | Events - Universal | 8 | `events_camp_life.json` | Indexed |
 | Events - Food/Supply | 10 | `events_food_supply.json` | Indexed |
@@ -683,7 +683,7 @@ Retinue events focus on managing your personal command at T7+. Events cover loya
 | Map Incidents | 45 | `incidents_battle/siege/town/village/leaving/waiting.json` | ✅ Implemented |
 | **Retinue Events** | 17 | `events_retinue.json` | ✅ Implemented |
 | **Retinue Incidents** | 6 | `incidents_retinue.json` | ✅ Implemented |
-| **TOTAL** | **275** | **38 JSON files** | ✅ Complete |
+| **TOTAL** | **282** | **38 JSON files** | ✅ Complete |
 
 ### By Trigger
 
@@ -692,7 +692,7 @@ Retinue events focus on managing your personal command at T7+. Events cover loya
 | System-assigned | 17 | Orders from chain of command |
 | Duty-based | 84 | Order events during duty execution |
 | Player-initiated | 37 | Camp Hub menu decisions (direct choice) |
-| Orchestrated | 29 | Camp opportunities (pre-scheduled 24hrs ahead) |
+| Orchestrated | 36 | Camp opportunities (pre-scheduled 24hrs ahead) |
 | State threshold | 10 | Escalation crossed (Scrutiny/Discipline) |
 | Medical pressure | 4 | Illness onset triggers |
 | Onboarding | 1 | Baggage stowage (first enlistment) |

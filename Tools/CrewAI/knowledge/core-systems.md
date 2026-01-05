@@ -22,7 +22,7 @@
 - Location: `src/Features/Camp/CampOpportunityGenerator.cs`
 - Purpose: Generates candidate opportunities for each DayPhase
 - Key method: `GenerateCandidatesForPhase(DayPhase)` - Returns candidates filtered by phase
-- JSON source: `ModuleData/Enlisted/Decisions/camp_opportunities.json` (29 opportunities)
+- JSON source: `ModuleData/Enlisted/Decisions/camp_opportunities.json` (36 opportunities)
 - Fitness scoring considers: player preferences, pressure states, variety
 
 ### Order Progression System
@@ -55,8 +55,11 @@
 - Purpose: Tracks escalation tracks and reputation systems
 - **Escalation tracks (0-10):** Scrutiny (officer attention), Discipline (enforcement level)
 - **Escalation tracks (0-5):** MedicalRisk (illness onset threshold at 3+)
-- **Reputation tracks (0-100):** SoldierReputation, OfficerReputation, LordReputation
-- **Reputation thresholds:** <20 Critical, 20-40 Poor, 40-60 Fair, 60-80 Good, 80+ Excellent
+- **Reputation tracks:**
+  - **SoldierReputation (-50 to +50):** Peer standing, can be negative (hated) or positive (bonded)
+  - **LordReputation (0-100):** Trust and loyalty with lord, starts neutral, only goes up
+  - **OfficerReputation (0-100):** Perceived potential by NCOs/officers, starts neutral, only goes up
+- **Reputation thresholds:** Varies by track - see EscalationState.cs for exact ranges
 - Daily passive decay, threshold events trigger at milestones
 - Related: `EscalationState.cs`, threshold event JSONs in `Events/`
 

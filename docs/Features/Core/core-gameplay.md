@@ -115,10 +115,10 @@ Your role in the company emerges from your native Bannerlord traits, which devel
 - Multiple specializations can develop simultaneously (e.g., Scout + NCO)
 
 ### Expanded Reputation
-We track three distinct reputation values (-50 to +100):
-1.  **Lord Reputation**: Your standing with the lord you serve.
-2.  **Officer Reputation**: How the NCOs and officers perceive your competence.
-3.  **Soldier Reputation**: Your popularity and respect among the rank-and-file.
+We track three distinct reputation values:
+1.  **Lord Reputation (0-100)**: Your standing with the lord you serve.
+2.  **Officer Reputation (0-100)**: How the NCOs and officers perceive your competence.
+3.  **Soldier Reputation (-50 to +50)**: Your popularity and respect among the rank-and-file.
 
 ---
 

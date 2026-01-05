@@ -125,9 +125,9 @@ src/Features/Escalation/
 **Tracks:**
 - Scrutiny (0-10): Camp crime, rule-breaking
 - Discipline (0-10): Rule-breaking, insubordination
-- Soldier Reputation (-50 to +50): Peer standing
-- Lord Reputation (-50 to +50): Trust, loyalty, competence in lord's eyes
-- Officer Reputation (-50 to +50): Potential, promise as seen by NCOs/officers
+- Soldier Reputation (-50 to +50): Peer standing, can go negative
+- Lord Reputation (0-100): Trust, loyalty, competence in lord's eyes, starts neutral
+- Officer Reputation (0-100): Potential, promise as seen by NCOs/officers, starts neutral
 - Medical Risk (0-5): Injury/illness severity
 
 ### Schedule Activities System
@@ -379,8 +379,8 @@ private TraitObject GetTraitFromId(string traitId)
 | **Smuggler** | Hidden Skill | 0-20 | Black market specialty | Native trait |
 | **Thug** | Hidden Skill | 0-20 | Enforcement specialty | Native trait |
 | **Soldier Rep** | Social | -50 to +50 | Peer respect | Escalation (renamed) |
-| **Lord Rep** | Social | -50 to +50 | Trust/loyalty with lord | Escalation (new) |
-| **Officer Rep** | Social | -50 to +50 | Perceived potential | Escalation (new) |
+| **Lord Rep** | Social | 0-100 | Trust/loyalty with lord | Escalation (new) |
+| **Officer Rep** | Social | 0-100 | Perceived potential | Escalation (new) |
 | **Scrutiny** | Escalation | 0-10 | Camp crime level | Escalation |
 | **Discipline** | Escalation | 0-10 | Rule-breaking level | Escalation |
 | **Medical Risk** | Condition | 0-5 | Injury/illness severity | Escalation |
@@ -1021,13 +1021,13 @@ public sealed class EscalationState
     public int Scrutiny { get; set; }
     public int Discipline { get; set; }
     public int MedicalRisk { get; set; }
-    public int SoldierReputation { get; set; }
-    public int LordReputation { get; set; }
-    public int OfficerReputation { get; set; }
+    public int SoldierReputation { get; set; }  // -50 to +50
+    public int LordReputation { get; set; }     // 0 to 100
+    public int OfficerReputation { get; set; }  // 0 to 100
     
-    // Constants
-    public const int ReputationMin = -50;
-    public const int ReputationMax = 50;
+    // Constants (for Soldier reputation only)
+    public const int SoldierReputationMin = -50;
+    public const int SoldierReputationMax = 50;
 }
 ```
 
@@ -1453,11 +1453,11 @@ Lord Reputation: 45/100 (Respected)
 Officer Reputation: 20/100 (Promising)
 "The officers see potential but want to see more leadership."
 
-Soldier Reputation: -35/100 (Disliked)
+Soldier Reputation: -35/50 (Disliked)
 "Most of the men avoid you. Your harsh methods have made you unpopular."
 
-Officer Reputation: -65/100 (Despised)
-"The officers consider you a liability. One more failure and you're done."
+Officer Reputation: 15/100 (Struggling)
+"The officers see you as struggling to meet expectations."
 ```
 
 **5.3: Add Trait Display in Character Screen**
@@ -1512,8 +1512,8 @@ EscalationState
 ├── Scrutiny (0-10)
 ├── Discipline (0-10)
 ├── SoldierReputation (-50 to +50)
-├── LordReputation (-50 to +50)
-├── OfficerReputation (-50 to +50)
+├── LordReputation (0-100)
+├── OfficerReputation (0-100)
 └── MedicalRisk (0-5)
 
 TraitIntegrationHelper
@@ -1572,8 +1572,8 @@ src/Features/Content/
 ```csharp
 // EscalationState
 public int SoldierReputation { get; set; }  // -50 to +50
-public int LordReputation { get; set; }      // -50 to +50
-public int OfficerReputation { get; set; }   // -50 to +50
+public int LordReputation { get; set; }      // 0 to 100
+public int OfficerReputation { get; set; }   // 0 to 100
 
 // TraitIntegrationHelper
 public static TraitObject GetTrait(string traitId);

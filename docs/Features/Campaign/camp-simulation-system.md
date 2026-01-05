@@ -499,7 +499,7 @@ public IReadOnlyList<ScheduledOpportunity> GetCurrentPhaseOpportunities()
 
 ## Opportunity Types
 
-### The 29 Opportunities (Complete List)
+### The 36 Opportunities (Complete List)
 
 **Training (5):**
 - `opp_weapon_drill` - Weapon training session → dec_training_drill
@@ -1098,7 +1098,7 @@ Shows: Empty (no time for camp activities during siege)
 - `src/Features/Camp/Models/PlayerPreferences.cs` - Preference tracking
 
 **Data Files:**
-- `ModuleData/Enlisted/Opportunities/camp_opportunities.json` - 29 opportunity definitions
+- `ModuleData/Enlisted/Decisions/camp_opportunities.json` - 36 opportunity definitions
 - `ModuleData/Enlisted/Decisions/decisions.json` - Target decisions (26 need creation)
 - `ModuleData/Enlisted/Config/camp_simulation_config.json` - Configuration
 

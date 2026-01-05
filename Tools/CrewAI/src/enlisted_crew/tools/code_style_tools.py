@@ -242,8 +242,8 @@ def check_framework_compatibility(code: str) -> List[Tuple[str, str]]:
     return issues
 
 
-@tool("Check C# Code Style")
-def check_code_style_tool(code: str) -> str:
+@tool("Review Code")
+def review_code(code: str) -> str:
     """
     Check C# code against Enlisted coding standards.
     
@@ -289,8 +289,8 @@ def check_code_style_tool(code: str) -> str:
     return report
 
 
-@tool("Check Bannerlord Patterns")
-def check_bannerlord_patterns_tool(code: str) -> str:
+@tool("Check Game Patterns")
+def check_game_patterns(code: str) -> str:
     """
     Check C# code for Bannerlord-specific anti-patterns.
     
@@ -337,8 +337,8 @@ def check_bannerlord_patterns_tool(code: str) -> str:
     return report
 
 
-@tool("Check C# File")
-def check_csharp_file_tool(file_path: str) -> str:
+@tool("Review Source File")
+def review_source_file(file_path: str) -> str:
     """
     Read and check a C# file for all style, pattern, and compatibility issues.
     
@@ -376,9 +376,9 @@ def check_csharp_file_tool(file_path: str) -> str:
     # Run all checks
     report = f"Analyzing: {file_path}\n\n"
     
-    style_report = check_code_style_tool(code)
-    pattern_report = check_bannerlord_patterns_tool(code)
-    compat_report = check_framework_compatibility_tool(code)
+    style_report = review_code(code)
+    pattern_report = check_game_patterns(code)
+    compat_report = check_compatibility(code)
     
     if "OK" in style_report and "OK" in pattern_report and "COMPATIBLE" in compat_report:
         return report + "✅ ALL CHECKS PASSED\n\nNo issues found."
@@ -395,8 +395,8 @@ def check_csharp_file_tool(file_path: str) -> str:
     return report
 
 
-@tool("Check Framework Compatibility")
-def check_framework_compatibility_tool(code: str) -> str:
+@tool("Check Compatibility")
+def check_compatibility(code: str) -> str:
     """
     Check C# code for .NET 5+ features incompatible with .NET Framework 4.7.2.
     

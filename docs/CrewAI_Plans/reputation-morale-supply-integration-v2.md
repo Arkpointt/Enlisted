@@ -1,16 +1,17 @@
 # Reputation-Morale-Supply Integration
 
-**Summary:** Cross-system integration creating meaningful feedback loops between reputation tracks (-50 to +50), company needs (0-100), and pressure systems. Implements gradient-based content weighting, reputation-influenced need recovery, morale-influenced reputation decay, pressure arc narrative events, and synergy effects when multiple systems are stressed.
+**Summary:** Cross-system integration creating meaningful feedback loops between reputation tracks (Soldier: -50 to +50, Lord/Officer: 0-100), company needs (0-100), and pressure systems. Implements gradient-based content weighting, reputation-influenced need recovery, morale-influenced reputation decay, pressure arc narrative events, and synergy effects when multiple systems are stressed.
 
 **Status:** 📋 Planning
 
-**Last Updated:** 2026-01-08
+**Last Updated:** 2026-01-05 (added tier-aware player experience section)
 
 **Related Docs:** 
 - [Systems Integration Analysis](../ANEWFEATURE/systems-integration-analysis.md)
 - [Architecture Improvement Report](../ANEWFEATURE/architecture-improvement-report.md)
 - [Content System Architecture](../Features/Content/content-system-architecture.md)
 - [Camp Simulation System](../Features/Campaign/camp-simulation-system.md)
+- [Game Design Principles](../../Tools/CrewAI/knowledge/game-design-principles.md)
 
 ---
 
@@ -20,7 +21,7 @@
 
 Enlisted has **7 core tracking systems** that operate largely in isolation:
 - **Company Needs** (0-100): Supplies, Morale, Rest, Readiness, Equipment
-- **Reputation Tracks** (-50 to +50): Soldier, Officer, Lord
+- **Reputation Tracks**: Soldier (-50 to +50), Officer (0-100), Lord (0-100)
 - **Escalation Tracks** (0-10): Scrutiny, Discipline, Medical Risk (0-5)
 - **Pressure Tracking**: Days low supplies/morale/rest, sustained pressure counters
 
@@ -42,6 +43,68 @@ Players expect their actions to have ripple effects. A leader with high morale s
 
 ---
 
+## Tier-Aware Player Experience
+
+**Reference:** [Game Design Principles](../../Tools/CrewAI/knowledge/game-design-principles.md)
+
+This feature MUST account for the three distinct player experiences in Enlisted:
+
+### T1-T4: Enlisted Track (Grunt)
+**"Things happen TO you"**
+
+- Player witnesses company problems with limited agency to fix them
+- Pressure arcs manifest as rumors, observations, peer complaints
+- Player verbs: "Witness", "Report", "Participate", "Survive"
+- Example: Supply crisis → "You hear fighting over scraps at the cook's fire"
+
+### T5-T6: Officer Track (NCO)
+**"You handle your squad"**
+
+- Player has authority over their squad during crises
+- Pressure arcs involve squad-level decisions
+- Player verbs: "Investigate", "Mentor", "Handle", "Lead small group"
+- Example: Supply crisis → "Two of YOUR soldiers are fighting over rations. Others watch you."
+
+### T7-T9: Commander Track
+**"You command troops"**
+
+- Player makes company-wide decisions during crises
+- Pressure arcs involve resource allocation, discipline, petitioning lord
+- Player verbs: "Order", "Allocate", "Discipline", "Petition", "Command"
+- Example: Supply crisis → "Fighting in YOUR retinue. Discipline is breaking down."
+
+### Tier-Variant Pressure Arc Events
+
+Each pressure arc stage needs **tier-appropriate variants**:
+
+| Stage | T1-T4 (Grunt) | T5-T6 (NCO) | T7+ (Commander) |
+|-------|---------------|-------------|-----------------|
+| Day 3 | "Rations are thin. You see men eyeing each other's bowls." | "Your squad grumbles about portions. They look to you." | "Supply officer reports rationing. Your retinue needs guidance." |
+| Day 5 | "A fight breaks out. Do you step in or get the NCO?" | "Two of YOUR men fighting. The squad watches how you handle it." | "Fights breaking out. Time for harsh discipline or shared sacrifice." |
+| Day 7 | "You hear whispers of desertion. Report it or stay quiet?" | "One of your men is planning to desert. Confront him or let him go?" | "Desertions imminent. Petition the lord for resupply or make hard choices." |
+
+### Design Checklist (Per Event)
+
+Before implementing pressure arc events, verify:
+
+- [ ] **Tier variants exist** - Same event has T1-T4, T5-T6, T7+ versions
+- [ ] **Player agency matches tier** - Grunt observes, NCO handles squad, Commander decides
+- [ ] **Soldier-eye view** - "Thin gruel" not "Supply level: 35%"
+- [ ] **Memorable moment** - Would player tell a friend about this?
+- [ ] **Positive arcs too** - Not just crises, also high-morale celebrations
+
+### Positive Arcs (Often Forgotten)
+
+Don't only track bad things. High morale/supplies should also trigger events:
+
+| Stage | T1-T4 (Grunt) | T5-T6 (NCO) | T7+ (Commander) |
+|-------|---------------|-------------|-----------------|
+| Day 3 | "Men in good spirits. Someone starts a song." | "Your squad is in fine form. Pride swells." | "Retinue morale excellent. Veterans approach with requests." |
+| Day 5 | "Roaring campfire. War stories flow freely." | "Your men boast about your leadership." | "Peak cohesion. Retinue ready for anything." |
+| Day 7 | "Peak morale. Bonus event: Veteran offers mentoring." | "Peak morale. Squad bonds. Skill training opportunity." | "Peak morale. Retinue loyalty event. Named veteran emerges." |
+
+---
+
 ## Current State Analysis
 
 ### Verified File Locations
@@ -52,7 +115,7 @@ All references below have been verified to exist:
 |--------|------|----------|
 | Camp Opportunities | `src/Features/Camp/CampOpportunityGenerator.cs` | Generates candidate opportunities with fitness scoring |
 | Company Needs | `src/Features/Company/CompanyNeedsManager.cs` | Static manager for need degradation/recovery (0-100 scale) |
-| Escalation/Reputation | `src/Features/Escalation/EscalationManager.cs` | Manages reputation tracks (-50 to +50) and escalation (0-10) |
+| Escalation/Reputation | `src/Features/Escalation/EscalationManager.cs` | Manages reputation tracks (Soldier: -50 to +50, Lord/Officer: 0-100) and escalation (0-10) |
 | Company Simulation | `src/Features/Camp/CompanySimulationBehavior.cs` | Daily background simulation, tracks pressure counters |
 | Pressure Calculation | `src/Features/Content/SimulationPressureCalculator.cs` | Calculates instant pressure (0-100) from multiple sources |
 | Event Delivery | `src/Features/Content/EventDeliveryManager.cs` | Central effect processor (line 518: ApplyEffects()) |
@@ -126,21 +189,35 @@ All references below have been verified to exist:
 - Queue events through `EventDeliveryManager.Instance.QueueEvent()`
 
 **Content Requirements (NEW events to create):**
+
+Pressure arc events require **tier variants** (see Tier-Aware Player Experience section above).
+
 ```json
 // ModuleData/Enlisted/Events/pressure_arc_events.json
 {
   "events": [
-    {"id": "supply_pressure_stage_1", ...},  // Day 3: "Rations are thin"
-    {"id": "supply_pressure_stage_2", ...},  // Day 5: "Fights over scraps"
-    {"id": "supply_crisis", ...},            // Day 7: Desertion event
-    {"id": "morale_pressure_stage_1", ...},  // Day 3: "Dark mood"
-    {"id": "morale_pressure_stage_2", ...},  // Day 5: "Talk of desertion"
-    {"id": "morale_crisis", ...},            // Day 7: Mutiny brewing
-    {"id": "rest_pressure_stage_1", ...},    // Day 3: "Exhausted men"
-    {"id": "rest_crisis", ...}               // Day 7: Injuries spike
+    // Supply pressure - T1-T4 (observing)
+    {"id": "supply_pressure_stage_1_grunt", "requirements": {"tier": {"max": 4}}, ...},
+    {"id": "supply_pressure_stage_2_grunt", "requirements": {"tier": {"max": 4}}, ...},
+    {"id": "supply_crisis_grunt", "requirements": {"tier": {"max": 4}}, ...},
+    
+    // Supply pressure - T5-T6 (squad leadership)
+    {"id": "supply_pressure_stage_1_nco", "requirements": {"tier": {"min": 5, "max": 6}}, ...},
+    {"id": "supply_pressure_stage_2_nco", "requirements": {"tier": {"min": 5, "max": 6}}, ...},
+    {"id": "supply_crisis_nco", "requirements": {"tier": {"min": 5, "max": 6}}, ...},
+    
+    // Supply pressure - T7+ (command decisions)
+    {"id": "supply_pressure_stage_1_cmd", "requirements": {"tier": {"min": 7}}, ...},
+    {"id": "supply_pressure_stage_2_cmd", "requirements": {"tier": {"min": 7}}, ...},
+    {"id": "supply_crisis_cmd", "requirements": {"tier": {"min": 7}}, ...},
+    
+    // Similar tier variants for morale_pressure_* and rest_pressure_*
+    // Plus POSITIVE arcs: morale_high_stage_1/2/3 with tier variants
   ]
 }
 ```
+
+**Event Count:** ~27 pressure arc events (3 stages × 3 tracks × 3 tiers = 27 minimum, plus positive arcs)
 
 ### Goal 4: Synergy Effects
 
@@ -320,15 +397,18 @@ Daily Tick (6:00 AM)
 
 **Deliverable:** Low supplies → more foraging opportunities appear naturally.
 
-### Phase 3: Pressure Arcs (2-3 days)
+### Phase 3: Pressure Arcs (4-5 days)
 
-**Goal:** Progressive narrative events for sustained pressure.
+**Goal:** Progressive narrative events for sustained pressure, with tier-appropriate player agency.
 
 | Task | File | Effort |
 |------|------|--------|
 | Add `CheckPressureArcEvents()` to simulation | `CompanySimulationBehavior.cs` | 4 hours |
-| Create 8 pressure arc events (JSON) | `pressure_arc_events.json` | 8 hours |
+| Create tier-variant pressure arc events (JSON) | `pressure_arc_events.json` | 16 hours |
+| Create positive arc events (high morale) | `pressure_arc_events.json` | 8 hours |
 | Add synergy-aware forecasts | `EnlistedNewsBehavior.cs` | 3 hours |
+
+**Content scope:** ~35 events (27 negative arcs + 8 positive arcs with tier variants)
 
 **Deliverable:** Day 3 supply shortage → "rations thin" event, Day 5 → "fights breaking out", Day 7 → crisis.
 
@@ -479,6 +559,11 @@ Daily Tick (6:00 AM)
 - [ ] Players get warning events before crises (time to react)
 - [ ] High reputation feels rewarding through recovery bonuses
 - [ ] Low morale has visible consequences beyond content gating
+- [ ] **T1-T4 players** witness and report crises (appropriate agency)
+- [ ] **T5-T6 players** handle squad-level problems (NCO authority)
+- [ ] **T7+ players** make command decisions (retinue leadership)
+- [ ] Positive arcs feel as impactful as negative spirals
+- [ ] Players would tell a friend about crisis moments
 
 ### Technical Success
 
@@ -528,9 +613,20 @@ This feature creates **meaningful feedback loops** between Enlisted's core track
 
 All changes follow existing patterns (singleton managers, SyncData persistence, daily tick processing) and maintain save compatibility. Configuration is externalized to JSON for easy tuning.
 
-**Estimated Total Effort:** 7-10 days
+**Estimated Total Effort:** 10-14 days (increased for tier-variant content)
 **Risk Level:** Low-Medium (mostly additive changes, well-isolated)
-**Player Impact:** High (creates emergent "everything going wrong" moments)
+**Player Impact:** High (tier-appropriate agency during crises, memorable "tell a friend" moments)
+
+### Tier-Aware Design Verification
+
+Before implementation, verify each pressure arc event against the [Game Design Principles](../../Tools/CrewAI/knowledge/game-design-principles.md):
+
+- [ ] T1-T4 events have "witness/report/participate" verbs
+- [ ] T5-T6 events have "investigate/mentor/handle squad" verbs  
+- [ ] T7+ events have "order/allocate/command" verbs
+- [ ] Soldier-eye view (narrative, not numbers)
+- [ ] Positive arcs exist (not just death spirals)
+- [ ] Each event passes the "tell a friend" test
 
 ---
 

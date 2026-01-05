@@ -24,41 +24,51 @@ LITELLM_COMPAT_PARAMS = {
 }
 
 from .tools import (
-    validate_content_tool,
-    sync_localization_tool,
-    run_build_tool,
-    analyze_validation_report_tool,
-    check_writing_style_tool,
-    check_tooltip_style_tool,
-    suggest_style_improvements_tool,
-    validate_event_schema_tool,
-    create_event_json_tool,
-    read_event_file_tool,
-    list_event_files_tool,
-    check_code_style_tool,
-    check_bannerlord_patterns_tool,
-    check_framework_compatibility_tool,
-    check_csharp_file_tool,
+    # Validation
+    validate_content,
+    sync_strings,
+    build,
+    analyze_issues,
+    # Style Review
+    review_prose,
+    review_tooltip,
+    suggest_edits,
+    get_style_guide,
+    # Event Schema
+    check_event_format,
+    draft_event,
+    read_event,
+    list_events,
+    # Code Review
+    review_code,
+    check_game_patterns,
+    check_compatibility,
+    review_source_file,
+    # Documentation
     read_doc_tool,
     list_docs_tool,
-    search_docs_tool,
-    read_csharp_tool,
-    search_csharp_tool,
-    read_csharp_snippet_tool,
+    find_in_docs,
+    # Source Code
+    read_source,
+    find_in_code,
+    read_source_section,
     list_feature_files_tool,
+    # Debug & Native
     read_debug_logs_tool,
     search_debug_logs_tool,
     read_native_crash_logs_tool,
-    search_native_api_tool,
-    read_writing_style_guide_tool,
-    load_content_context_tool,
-    load_feature_context_tool,
-    load_code_context_tool,
-    load_domain_context_tool,
-    write_planning_doc_tool,
-    read_planning_doc_tool,
+    find_in_native_api,
+    # Context Loaders
+    get_writing_guide,
+    get_architecture,
+    get_dev_reference,
+    get_game_systems,
+    # Planning
+    save_plan,
+    load_plan,
+    # Verification
     verify_file_exists_tool,
-    list_json_event_ids_tool,
+    list_event_ids,
 )
 
 # === LLM Configurations ===
@@ -150,13 +160,13 @@ class EnlistedCrew:
         """
         # Systems knowledge - for systems_analyst, feature_architect
         self.systems_knowledge = TextFileKnowledgeSource(
-            file_paths=["enlisted-systems.md"]
+            file_paths=["core-systems.md"]
         )
         
         # Code knowledge - for code_analyst, csharp_implementer
         self.code_knowledge = TextFileKnowledgeSource(
             file_paths=[
-                "enlisted-systems.md",
+                "core-systems.md",
                 "error-codes.md",
             ]
         )
@@ -164,8 +174,9 @@ class EnlistedCrew:
         # Content knowledge - for content_author, content_analyst
         self.content_knowledge = TextFileKnowledgeSource(
             file_paths=[
-                "json-schemas.md",
+                "event-format.md",
                 "balance-values.md",
+                "game-design-principles.md",  # Tier-aware content guidance
             ]
         )
         
@@ -173,15 +184,24 @@ class EnlistedCrew:
         self.balance_knowledge = TextFileKnowledgeSource(
             file_paths=[
                 "balance-values.md",
-                "enlisted-systems.md",
+                "core-systems.md",
+                "game-design-principles.md",  # Player engagement checks
             ]
         )
         
         # Planning knowledge - for documentation_maintainer (planning tasks)
         self.planning_knowledge = TextFileKnowledgeSource(
             file_paths=[
-                "enlisted-systems.md",
+                "core-systems.md",
                 "content-files.md",  # JSON content inventory for verification
+            ]
+        )
+        
+        # Design knowledge - for feature_architect (player experience)
+        self.design_knowledge = TextFileKnowledgeSource(
+            file_paths=[
+                "core-systems.md",
+                "game-design-principles.md",  # Tier-aware design, Story Test
             ]
         )
         
@@ -189,7 +209,7 @@ class EnlistedCrew:
         self.ui_knowledge = TextFileKnowledgeSource(
             file_paths=[
                 "ui-systems.md",
-                "enlisted-systems.md",
+                "core-systems.md",
             ]
         )
     
@@ -215,10 +235,10 @@ class EnlistedCrew:
             config=self.agents_config["systems_analyst"],
             llm=OPUS_DEEP,  # TIER 1: System integration requires deep reasoning
             tools=[
-                load_domain_context_tool,  # Context first
-                search_docs_tool,          # Find docs
-                read_doc_tool,             # Read docs
-                search_csharp_tool,        # Find code patterns
+                get_game_systems,    # Context first
+                find_in_docs,        # Find docs
+                read_doc_tool,       # Read docs
+                find_in_code,        # Find code patterns
             ],
             knowledge_sources=[self.systems_knowledge],
             respect_context_window=True,
@@ -233,22 +253,22 @@ class EnlistedCrew:
             config=self.agents_config["code_analyst"],
             llm=SONNET_ANALYSIS,  # TIER 2: Analysis needs reasoning to catch bugs
             tools=[
-                load_code_context_tool,  # CALL FIRST - loads dev guide, APIs, common issues
-                verify_file_exists_tool,     # Verify file paths in planning docs
-                list_json_event_ids_tool,    # Verify event IDs in planning docs
-                run_build_tool,
-                validate_content_tool,
-                check_code_style_tool,
-                check_bannerlord_patterns_tool,
-                check_framework_compatibility_tool,
-                check_csharp_file_tool,
+                get_dev_reference,       # CALL FIRST - loads dev guide, APIs, common issues
+                verify_file_exists_tool, # Verify file paths in planning docs
+                list_event_ids,          # Verify event IDs in planning docs
+                build,
+                validate_content,
+                review_code,
+                check_game_patterns,
+                check_compatibility,
+                review_source_file,
                 read_debug_logs_tool,
                 search_debug_logs_tool,
                 read_native_crash_logs_tool,  # For hard game crashes
-                search_native_api_tool,
-                search_csharp_tool,  # Search first, then read snippets
-                read_csharp_snippet_tool,  # Prefer snippets over full files
-                read_csharp_tool,  # Full file only when needed
+                find_in_native_api,
+                find_in_code,        # Search first, then read snippets
+                read_source_section, # Prefer snippets over full files
+                read_source,         # Full file only when needed
             ],
             knowledge_sources=[self.code_knowledge],
             respect_context_window=True,
@@ -262,10 +282,10 @@ class EnlistedCrew:
             config=self.agents_config["content_analyst"],
             llm=HAIKU_FAST,
             tools=[
-                validate_event_schema_tool,
-                read_event_file_tool,
-                list_event_files_tool,
-                validate_content_tool,
+                check_event_format,
+                read_event,
+                list_events,
+                validate_content,
             ],
             knowledge_sources=[self.content_knowledge],
             respect_context_window=True,
@@ -278,16 +298,16 @@ class EnlistedCrew:
             config=self.agents_config["feature_architect"],
             llm=OPUS_DEEP,  # TIER 1: Architecture mistakes are expensive
             tools=[
-                load_feature_context_tool,    # Context first
-                verify_file_exists_tool,      # Verify file paths in specs
-                list_json_event_ids_tool,     # Verify event IDs in specs
-                search_docs_tool,             # Find docs  
-                read_doc_tool,                # Read docs
-                search_csharp_tool,           # Find code
-                read_csharp_snippet_tool,     # Read sections
-                validate_content_tool,        # Check schemas
+                get_architecture,        # Context first
+                verify_file_exists_tool, # Verify file paths in specs
+                list_event_ids,          # Verify event IDs in specs
+                find_in_docs,            # Find docs
+                read_doc_tool,           # Read docs
+                find_in_code,            # Find code
+                read_source_section,     # Read sections
+                validate_content,        # Check schemas
             ],
-            knowledge_sources=[self.systems_knowledge],
+            knowledge_sources=[self.design_knowledge],  # Includes game-design-principles.md
             respect_context_window=True,
             max_retry_limit=2,
             allow_delegation=True,  # Can delegate
@@ -300,17 +320,17 @@ class EnlistedCrew:
             config=self.agents_config["csharp_implementer"],
             llm=SONNET_EXECUTE,  # TIER 3: Executing from clear specs, QA catches issues
             tools=[
-                verify_file_exists_tool,      # Verify file paths before proposing changes
-                run_build_tool,
-                validate_content_tool,
-                check_code_style_tool,
-                check_bannerlord_patterns_tool,
-                check_framework_compatibility_tool,
-                check_csharp_file_tool,
-                search_native_api_tool,
-                search_csharp_tool,  # Search to find relevant code
-                read_csharp_snippet_tool,  # Read targeted snippets
-                read_csharp_tool,  # Full file when implementing
+                verify_file_exists_tool, # Verify file paths before proposing changes
+                build,
+                validate_content,
+                review_code,
+                check_game_patterns,
+                check_compatibility,
+                review_source_file,
+                find_in_native_api,
+                find_in_code,        # Search to find relevant code
+                read_source_section, # Read targeted snippets
+                read_source,         # Full file when implementing
             ],
             knowledge_sources=[self.ui_knowledge],
             respect_context_window=True,
@@ -323,15 +343,15 @@ class EnlistedCrew:
             config=self.agents_config["content_author"],
             llm=HAIKU_FAST,
             tools=[
-                load_content_context_tool,  # CALL FIRST - loads style guide, schemas, reminders
-                list_json_event_ids_tool,   # Check existing IDs to avoid conflicts
-                create_event_json_tool,
-                check_writing_style_tool,
-                check_tooltip_style_tool,
-                suggest_style_improvements_tool,
-                read_event_file_tool,
-                validate_event_schema_tool,
-                read_writing_style_guide_tool,
+                get_writing_guide,   # CALL FIRST - loads style guide, schemas, reminders
+                list_event_ids,      # Check existing IDs to avoid conflicts
+                draft_event,
+                review_prose,
+                review_tooltip,
+                suggest_edits,
+                read_event,
+                check_event_format,
+                get_style_guide,
                 read_doc_tool,
             ],
             knowledge_sources=[self.content_knowledge],
@@ -345,11 +365,11 @@ class EnlistedCrew:
             config=self.agents_config["qa_agent"],
             llm=SONNET_QA,  # TIER 2.5: QA is last defense - NEVER skimp here
             tools=[
-                validate_content_tool,
-                sync_localization_tool,
-                run_build_tool,
-                analyze_validation_report_tool,
-                check_code_style_tool,
+                validate_content,
+                sync_strings,
+                build,
+                analyze_issues,
+                review_code,
             ],
             respect_context_window=True,
         )
@@ -361,10 +381,10 @@ class EnlistedCrew:
             config=self.agents_config["balance_analyst"],
             llm=HAIKU_FAST,
             tools=[
-                load_domain_context_tool,  # CALL FIRST - needs game balance knowledge
-                validate_event_schema_tool,
-                read_event_file_tool,
-                list_event_files_tool,
+                get_game_systems,   # CALL FIRST - needs game balance knowledge
+                check_event_format,
+                read_event,
+                list_events,
                 read_doc_tool,
             ],
             knowledge_sources=[self.balance_knowledge],
@@ -378,18 +398,18 @@ class EnlistedCrew:
             config=self.agents_config["documentation_maintainer"],
             llm=SONNET_ANALYSIS,  # TIER 2: Doc sync requires reasoning about what changed
             tools=[
-                write_planning_doc_tool,     # Write planning docs
-                read_planning_doc_tool,      # Read planning docs (for fixes)
-                verify_file_exists_tool,     # Verify file paths before including
-                list_json_event_ids_tool,    # Verify event IDs before including
+                save_plan,               # Write planning docs
+                load_plan,               # Read planning docs (for fixes)
+                verify_file_exists_tool, # Verify file paths before including
+                list_event_ids,          # Verify event IDs before including
                 read_doc_tool,
                 list_docs_tool,
-                search_docs_tool,
-                search_csharp_tool,  # Search for code changes
-                read_csharp_snippet_tool,  # Read relevant snippets
-                read_csharp_tool,  # Full file when needed
+                find_in_docs,
+                find_in_code,        # Search for code changes
+                read_source_section, # Read relevant snippets
+                read_source,         # Full file when needed
                 list_feature_files_tool,
-                load_domain_context_tool,
+                get_game_systems,
             ],
             knowledge_sources=[self.planning_knowledge],
             respect_context_window=True,
@@ -402,16 +422,16 @@ class EnlistedCrew:
             config=self.agents_config["architecture_advisor"],
             llm=OPUS_DEEP,  # TIER 1: Architecture analysis needs deep reasoning
             tools=[
-                load_domain_context_tool,    # Understand game systems first
-                load_feature_context_tool,   # Understand architecture patterns
-                verify_file_exists_tool,     # Verify paths when suggesting changes
-                search_docs_tool,            # Find documentation
-                read_doc_tool,               # Read docs
-                search_csharp_tool,          # Find code patterns
-                read_csharp_snippet_tool,    # Read targeted snippets
-                read_csharp_tool,            # Full files when needed
-                list_feature_files_tool,     # Understand feature structure
-                search_native_api_tool,      # Check Bannerlord API constraints
+                get_game_systems,        # Understand game systems first
+                get_architecture,        # Understand architecture patterns
+                verify_file_exists_tool, # Verify paths when suggesting changes
+                find_in_docs,            # Find documentation
+                read_doc_tool,           # Read docs
+                find_in_code,            # Find code patterns
+                read_source_section,     # Read targeted snippets
+                read_source,             # Full files when needed
+                list_feature_files_tool, # Understand feature structure
+                find_in_native_api,      # Check Bannerlord API constraints
             ],
             knowledge_sources=[self.systems_knowledge],
             respect_context_window=True,
@@ -672,6 +692,8 @@ class EnlistedCrew:
             ],
             process=Process.sequential,
             verbose=True,
+            memory=True,  # Enable crew memory for context across tasks
+            cache=True,   # Cache tool results to avoid redundant calls
         )
     
     @crew
@@ -719,6 +741,8 @@ class EnlistedCrew:
             ],
             process=Process.sequential,
             verbose=True,
+            memory=True,  # Enable crew memory for context across tasks
+            cache=True,   # Cache tool results to avoid redundant calls
         )
     
     @crew
@@ -773,6 +797,8 @@ class EnlistedCrew:
             ],
             process=Process.sequential,
             verbose=True,
+            memory=True,  # Enable crew memory for context across tasks
+            cache=True,   # Cache tool results to avoid redundant calls
         )
     
     # ==========================================================================
@@ -793,4 +819,5 @@ class EnlistedCrew:
             tasks=[self.validate_all_task()],
             process=Process.sequential,
             verbose=True,
+            cache=True,   # Cache tool results to avoid redundant calls
         )

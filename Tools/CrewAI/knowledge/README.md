@@ -15,23 +15,35 @@ implementation details that change as the codebase evolves.
 
 | File | Content | Updated When |
 |------|---------|--------------|
-| `enlisted-systems.md` | High-level system summaries, key classes, relationships | Architecture changes |
+| `core-systems.md` | High-level system summaries, key classes, relationships | Architecture changes |
 | `error-codes.md` | Error code meanings (E-*, W-*) and log locations | New error codes added |
-| `json-schemas.md` | Current JSON field requirements, ordering rules | Schema changes |
+| `event-format.md` | Current JSON field requirements, ordering rules | Schema changes |
 | `balance-values.md` | XP rates, tier thresholds, economy values | Balance tuning |
 | `ui-systems.md` | Menu behaviors, event delivery, Gauntlet screens | UI changes |
+| `game-design-principles.md` | Tier-aware design, player experience, engagement rules | Design philosophy updates |
+| `content-files.md` | JSON content inventory, folder structure, ID conventions | Content additions |
 
 ## How Agents Use This
 
 Agents are configured with `knowledge_sources` pointing to this folder.
 At runtime, they query relevant files instead of relying on static backstory text.
 
+### Agent → Knowledge Mapping
+
+| Knowledge Source | Files Included | Used By |
+|------------------|----------------|---------|
+| `systems_knowledge` | core-systems | systems_analyst |
+| `design_knowledge` | core-systems, game-design-principles | feature_architect |
+| `code_knowledge` | core-systems, error-codes | code_analyst |
+| `content_knowledge` | event-format, balance-values, game-design-principles | content_author, content_analyst |
+| `balance_knowledge` | balance-values, core-systems, game-design-principles | balance_analyst |
+| `ui_knowledge` | ui-systems, core-systems | csharp_implementer |
+| `planning_knowledge` | core-systems, content-files | documentation_maintainer |
+
 Example in `crew.py`:
 ```python
-from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
-
-knowledge = TextFileKnowledgeSource(
-    file_paths=["knowledge/enlisted-systems.md", "knowledge/error-codes.md"]
+self.design_knowledge = TextFileKnowledgeSource(
+    file_paths=["core-systems.md", "game-design-principles.md"]
 )
 ```
 

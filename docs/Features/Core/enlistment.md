@@ -137,10 +137,10 @@ Rank names are determined by the enlisted lord's culture (all 9 tiers):
 (Source: `progression_config.json` → `culture_ranks` section)
 
 **Reputation System:**
-Identity is tracked via three reputation scales (-50 to +100):
-- **Lord Reputation**: Impacted by strategic success and loyalty.
-- **Officer Reputation**: Impacted by order completion and competence.
-- **Soldier Reputation**: Impacted by camp activities and shared hardship.
+Identity is tracked via three reputation scales:
+- **Lord Reputation (0-100)**: Impacted by strategic success and loyalty.
+- **Officer Reputation (0-100)**: Impacted by order completion and competence.
+- **Soldier Reputation (-50 to +50)**: Impacted by camp activities and shared hardship.
 
 **Orders System:**
 Instead of passive assignments, players receive explicit orders from the chain of command:

@@ -154,8 +154,8 @@ def check_punctuation(text: str) -> List[Tuple[str, str]]:
     return issues
 
 
-@tool("Check Writing Style")
-def check_writing_style_tool(text: str) -> str:
+@tool("Review Prose")
+def review_prose(text: str) -> str:
     """
     Check if text follows the Enlisted writing style guide.
     
@@ -204,8 +204,8 @@ def check_writing_style_tool(text: str) -> str:
     return report
 
 
-@tool("Check Tooltip Style")
-def check_tooltip_style_tool(tooltip: str) -> str:
+@tool("Review Tooltip")
+def review_tooltip(tooltip: str) -> str:
     """
     Check if a tooltip follows Enlisted tooltip guidelines.
     
@@ -258,8 +258,8 @@ def check_tooltip_style_tool(tooltip: str) -> str:
     return report
 
 
-@tool("Read Writing Style Guide")
-def read_writing_style_guide_tool() -> str:
+@tool("Get Style Guide")
+def get_style_guide() -> str:
     """
     Read the complete Enlisted writing style guide.
     
@@ -286,8 +286,8 @@ def read_writing_style_guide_tool() -> str:
         return f"ERROR reading style guide: {e}"
 
 
-@tool("Suggest Style Improvements")
-def suggest_style_improvements_tool(text: str) -> str:
+@tool("Suggest Edits")
+def suggest_edits(text: str) -> str:
     """
     Suggest improvements to make text more Enlisted-style.
     

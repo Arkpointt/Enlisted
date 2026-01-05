@@ -31,7 +31,7 @@ PROJECT_ROOT = get_project_root()
 
 
 @tool("Validate Content")
-def validate_content_tool() -> str:
+def validate_content() -> str:
     """
     Run the Enlisted content validator (validate_content.py).
     
@@ -70,8 +70,8 @@ def validate_content_tool() -> str:
         return f"ERROR: Failed to run validator: {e}"
 
 
-@tool("Sync Localization Strings")
-def sync_localization_tool(check_only: bool = True) -> str:
+@tool("Sync Strings")
+def sync_strings(check_only: bool = True) -> str:
     """
     Sync JSON string IDs to XML localization file.
     
@@ -111,8 +111,8 @@ def sync_localization_tool(check_only: bool = True) -> str:
         return f"ERROR: Failed to run sync: {e}"
 
 
-@tool("Run Build")
-def run_build_tool() -> str:
+@tool("Build")
+def build() -> str:
     """
     Build the Enlisted mod DLL using dotnet.
     
@@ -148,8 +148,8 @@ def run_build_tool() -> str:
         return f"ERROR: Failed to run build: {e}"
 
 
-@tool("Analyze Validation Report")
-def analyze_validation_report_tool() -> str:
+@tool("Analyze Issues")
+def analyze_issues() -> str:
     """
     Run the validation analyzer to get a prioritized summary of issues.
     

@@ -183,7 +183,7 @@ All event/decision files use this root structure:
 
 ## Camp Opportunities
 
-29 opportunities in `camp_opportunities.json`, key fields:
+36 opportunities in `camp_opportunities.json`, key fields:
 ```json
 {
   "id": "opp_weapon_drill",
@@ -204,7 +204,7 @@ All event/decision files use this root structure:
 | Content | Location |
 |---------|----------|
 | Camp Hub Decisions | `ModuleData/Enlisted/Decisions/decisions.json` |
-| Camp Opportunities | `ModuleData/Enlisted/Decisions/camp_opportunities.json` (29 opps) |
+| Camp Opportunities | `ModuleData/Enlisted/Decisions/camp_opportunities.json` (36 opps) |
 | Medical Decisions | `ModuleData/Enlisted/Decisions/medical_decisions.json` |
 | Events | `ModuleData/Enlisted/Events/events_*.json` (8 files) |
 | Map Incidents | `ModuleData/Enlisted/Events/incidents_*.json` (7 files) |

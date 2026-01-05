@@ -12,7 +12,18 @@ analyze_systems:
     Feature: {feature_name}
     Related Systems: {related_systems}
     
-    Tasks:
+    WORKFLOW:
+    1. Call load_domain_context_tool FIRST to get current game system values
+    2. Search documentation to find relevant specs and design docs
+    3. Search codebase for relevant C# files
+    4. Trace data flows between systems
+    
+    SEARCH EFFICIENCY (saves tokens and time):
+    - All search results are cached; avoid re-searching the same query
+    - Limit to 3-5 distinct queries; when you have enough info, stop and summarize
+    - Focus on system integration, not exhaustive code reading
+    
+    ANALYSIS TASKS:
     1. Identify relevant C# files and their responsibilities
     2. Trace data flows between systems (Orchestrator, Managers, Content)
     3. Find integration points where new code would connect
@@ -34,7 +45,18 @@ analyze_codebase:
     Focus: {focus_area}
     Files: {file_paths}
     
-    Tasks:
+    WORKFLOW:
+    1. Call load_code_context_tool FIRST to load dev guide, APIs, common issues
+    2. Use search_csharp_tool to find relevant files
+    3. Use read_csharp_snippet_tool for targeted sections (prefer over full file reads)
+    4. Only use read_csharp_tool when you need full file context
+    
+    SEARCH EFFICIENCY:
+    - Track files you've already found; don't re-search
+    - Limit total searches to 5-8 per task
+    - When you have enough info, STOP and summarize
+    
+    ANALYSIS TASKS:
     1. Read and understand the existing code
     2. Identify patterns (data models, method signatures, error handling)
     3. Find save/load handling (SyncData implementations)
@@ -202,6 +224,12 @@ suggest_improvements:
     Focus Area: {focus_area}
     Current Pain Points: {pain_points}
     
+    WORKFLOW:
+    1. Call load_domain_context_tool FIRST to understand game systems
+    2. Call load_feature_context_tool to understand architecture patterns
+    3. Search docs for related design decisions and constraints
+    4. Search codebase to understand current implementation
+    
     ANALYSIS PROCESS:
     1. Research the current implementation thoroughly
     2. Understand WHY it was built this way (constraints, history)
@@ -279,7 +307,31 @@ design_feature:
     Description: {description}
     Related Docs: {related_docs}
     
-    Requirements:
+    WORKFLOW:
+    1. Call load_feature_context_tool FIRST to load BLUEPRINT, patterns, integration
+    2. Search documentation for related specs and existing designs
+    3. Search codebase for similar implementations to follow
+    4. Use verify_file_exists_tool before referencing any C# files
+    
+    SEARCH EFFICIENCY:
+    - Use what other agents already found from context
+    - Limit new searches to ~5 distinct queries
+    - When you have enough context, STOP and produce the spec
+    
+    TIER-AWARE DESIGN (required for player-facing features):
+    - Check knowledge/game-design-principles.md for tier guidance
+    - T1-T4 (Grunt): Things happen TO the player
+    - T5-T6 (NCO): Player handles their squad
+    - T7+ (Commander): Player commands troops
+    - Same event should have different player verbs per tier
+    
+    PLAYER EXPERIENCE CHECK (required):
+    - What's the most memorable moment this feature creates?
+    - Would a player tell a friend about this?
+    - Is there player agency during crisis states?
+    - Are positive outcomes as impactful as negative consequences?
+    
+    SPEC REQUIREMENTS:
     1. Create data models with field types and purposes
     2. Define method signatures with parameters and returns
     3. List all files that need changes (C#, JSON, docs)
@@ -299,6 +351,7 @@ design_feature:
     - Save/load considerations
     - Error handling plan
     - Phased implementation roadmap
+    - Tier-aware player experience notes
   agent: feature_architect
 
 review_feature_design:
@@ -336,7 +389,14 @@ implement_csharp:
     Specification: {spec_content}
     Files to create/modify: {file_list}
     
-    Requirements:
+    WORKFLOW:
+    1. Call load_code_context_tool FIRST to load dev guide, APIs, common issues
+    2. Use search_native_api_tool for unfamiliar Bannerlord APIs
+    3. Use verify_file_exists_tool to confirm file paths before proposing changes
+    4. Use search_csharp_tool to find related code to follow as patterns
+    5. Use read_csharp_snippet_tool for targeted reading (prefer over full files)
+    
+    CODE REQUIREMENTS:
     1. Follow Enlisted code style (Allman braces, _camelCase, XML docs)
     2. Add new files to Enlisted.csproj
     3. Use proper Bannerlord patterns (TextObject, GiveGoldAction, etc.)
@@ -360,7 +420,20 @@ implement_content:
     Content Type: {content_type}
     Requirements: {requirements}
     
-    Requirements:
+    WORKFLOW:
+    1. Call load_content_context_tool FIRST to load style guide, schemas, reminders
+    2. Call load_domain_context_tool to understand current balance values
+    3. Use list_json_event_ids_tool to check existing IDs and avoid conflicts
+    4. Use read_event_file_tool to see existing examples as templates
+    
+    TIER-AWARE CONTENT (required):
+    - Check knowledge/game-design-principles.md for tier guidance
+    - T1-T4: Events happen TO the player (witness, report, participate)
+    - T5-T6: Player has authority (investigate, mentor, discipline)
+    - T7+: Player commands (order, allocate, petition)
+    - Use soldier-eye view: "Thin gruel for dinner" not "Supply level: 35%"
+    
+    SCHEMA REQUIREMENTS:
     1. Follow event-system-schemas.md exactly
     2. Use proper field ordering (fallback after ID)
     3. Include all required fields (tooltips, effects)
@@ -475,17 +548,30 @@ review_balance:
     
     Target: {target}
     
-    Checks:
+    WORKFLOW:
+    1. Call load_domain_context_tool FIRST to get current balance values
+    2. Read the content file(s) using read_event_file_tool
+    3. Compare effects against tier-appropriate ranges from knowledge files
+    
+    NUMERICAL BALANCE CHECKS:
     - Skill XP rewards match tier and difficulty
     - Gold amounts appropriate for tier
     - Reputation effects create meaningful tradeoffs
     - Company needs effects are proportional
     - Order events include skillXp
+    
+    PLAYER ENGAGEMENT CHECKS (see knowledge/game-design-principles.md):
+    - Invisible effects (+1/day) need visible narrative wrappers
+    - Death spirals need hero opportunity escape valves
+    - Positive arcs should feel as impactful as negative spirals
+    - Events need tier-appropriate player agency
+    - Ask: "Would a player tell their friend about this?"
   expected_output: >
     Balance review report with:
     - Effects summary
     - Balance concerns
     - Tier appropriateness
+    - Player engagement assessment
     - Suggested adjustments
   agent: balance_analyst
 

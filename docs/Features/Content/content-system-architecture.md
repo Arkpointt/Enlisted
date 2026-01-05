@@ -209,7 +209,7 @@ The orchestrator coordinates three content tracks:
 - Pre-scheduled 24 hours ahead at daily tick (6am)
 - Locked once generated - persist regardless of context changes
 - Narrative hints woven into Company Reports ("A card game is forming this evening")
-- 29 camp opportunities with fitness scoring (defined in `ModuleData/Enlisted/Decisions/camp_opportunities.json`)
+- 36 camp opportunities with fitness scoring (defined in `ModuleData/Enlisted/Decisions/camp_opportunities.json`)
 - Displayed in DECISIONS accordion on main menu
 - Player interacts when ready; opportunities remain until consumed or phase ends
 
@@ -1303,7 +1303,7 @@ JSON files include fallback text for development:
 | `ModuleData/Enlisted/Decisions/decisions.json` | Core camp decisions (training, social, economic) |
 | `ModuleData/Enlisted/Decisions/camp_decisions.json` | Additional camp activities |
 | `ModuleData/Enlisted/Decisions/medical_decisions.json` | Medical system decisions (surgeon, rest, with sea variants) |
-| `ModuleData/Enlisted/Decisions/camp_opportunities.json` | 29 orchestrated opportunities (pre-scheduled by ContentOrchestrator) |
+| `ModuleData/Enlisted/Decisions/camp_opportunities.json` | 36 orchestrated opportunities (pre-scheduled by ContentOrchestrator) |
 
 **Order Event Files:**
 

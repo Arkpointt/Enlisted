@@ -62,7 +62,7 @@
 | **Injuries & Illnesses** | [injury-system.md](Features/Content/injury-system.md) | Unified condition tracking, maritime context awareness |
 | **Camp Hub Decisions** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 33 player-initiated decisions |
 | **Orchestrator Camp Simulation** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Background + Opportunities layers |
-| **Camp Opportunities** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | 29 contextual activities with learning |
+| **Camp Opportunities** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | 36 contextual activities with learning |
 | **Camp Opportunity Hints** | [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) | Narrative foreshadowing in Daily Brief (camp rumors + personal hints) |
 | **Opportunity Pre-Scheduling** | [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) | 24h ahead locking, prevents disappearance on context changes |
 | **Camp Background** | [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Autonomous roster tracking, incidents |
@@ -219,7 +219,7 @@
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| [README.md](Features/Content/README.md) | Content system overview: 275 content pieces (17 orders, 84 order events, 37 decisions, 29 camp opportunities, 57 context events, 51 map incidents) | ✅ Current |
+| [README.md](Features/Content/README.md) | Content system overview: 282 content pieces (17 orders, 84 order events, 37 decisions, 36 camp opportunities, 57 context events, 51 map incidents) | ✅ Current |
 | [content-index.md](Features/Content/content-index.md) | Master catalog: all content with IDs, titles, descriptions, requirements, effects, skill checks organized by category | ✅ Current |
 | [content-organization-map.md](Features/Content/content-organization-map.md) | Visual hierarchy: parent-child relationships, file locations, workflows for adding new content | ✅ Current |
 
@@ -243,7 +243,7 @@
 | [complete-menu-analysis.md](Reference/complete-menu-analysis.md) | Complete native menu system analysis: tick-based menu refresh system, GetGenericStateMenu() priority order, siege menu flow (join_siege_event vs menu_siege_strategies), BesiegerCamp mechanics, race condition timeline documentation, captivity and village raid menus cataloged - use to understand menu transitions and timing issues | 📚 Reference |
 | [captivity-and-raid-analysis.md](Reference/captivity-and-raid-analysis.md) | Captivity and village raid systems deep dive: complete captivity flow (capture → 13 menu paths → release), army removal during captivity, village raid system (lord raiding while enlisted), enlisted mod gaps and recommendations - use to understand captivity handling and plan enlisted captivity features | 📚 Reference |
 | [opportunities-system-spec.md](Reference/opportunities-system-spec.md) | ⚠️ **LEGACY** - Replaced by [Camp Simulation System](Features/Campaign/camp-simulation-system.md) | 🗄️ Deprecated |
-| [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Two-layer camp system: Background Simulation (autonomous company life) + Camp Opportunities (29 player activities with learning), Decision Scheduling (Phase 9). Content flows immediately on enlistment (no grace period). Complete implementation documentation. | ✅ Implemented |
+| [camp-simulation-system.md](Features/Campaign/camp-simulation-system.md) | Two-layer camp system: Background Simulation (autonomous company life) + Camp Opportunities (36 player activities with learning), Decision Scheduling (Phase 9). Content flows immediately on enlistment (no grace period). Complete implementation documentation. | ✅ Implemented |
 
 ---
 

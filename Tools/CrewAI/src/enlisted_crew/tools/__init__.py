@@ -2,101 +2,112 @@
 Enlisted CrewAI Custom Tools
 
 Tools that extend CrewAI agent capabilities for Enlisted mod development.
+Natural naming convention for better readability.
 """
 
 from .validation_tools import (
-    validate_content_tool,
-    sync_localization_tool,
-    run_build_tool,
-    analyze_validation_report_tool,
+    validate_content,
+    sync_strings,
+    build,
+    analyze_issues,
 )
 from .style_tools import (
-    check_writing_style_tool,
-    check_tooltip_style_tool,
-    suggest_style_improvements_tool,
-    read_writing_style_guide_tool,
+    review_prose,
+    review_tooltip,
+    suggest_edits,
+    get_style_guide,
 )
 from .schema_tools import (
-    validate_event_schema_tool,
-    create_event_json_tool,
-    read_event_file_tool,
-    list_event_files_tool,
+    check_event_format,
+    draft_event,
+    read_event,
+    list_events,
 )
 from .code_style_tools import (
-    check_code_style_tool,
-    check_bannerlord_patterns_tool,
-    check_framework_compatibility_tool,
-    check_csharp_file_tool,
+    review_code,
+    check_game_patterns,
+    check_compatibility,
+    review_source_file,
 )
 from .docs_tools import (
     SearchCache,
     read_doc_tool,
     list_docs_tool,
-    search_docs_tool,
-    read_csharp_tool,
-    search_csharp_tool,
-    read_csharp_snippet_tool,
+    find_in_docs,
+    read_source,
+    find_in_code,
+    read_source_section,
     list_feature_files_tool,
     read_debug_logs_tool,
     search_debug_logs_tool,
     read_native_crash_logs_tool,
-    search_native_api_tool,
-    load_content_context_tool,
-    load_feature_context_tool,
-    load_code_context_tool,
-    load_domain_context_tool,
+    find_in_native_api,
+    get_writing_guide,
+    get_architecture,
+    get_dev_reference,
+    get_game_systems,
     verify_file_exists_tool,
-    list_json_event_ids_tool,
+    list_event_ids,
 )
 from .planning_tools import (
-    write_planning_doc_tool,
-    read_planning_doc_tool,
+    save_plan,
+    load_plan,
 )
 
 __all__ = [
-    # Validation tools
-    "validate_content_tool",
-    "sync_localization_tool", 
-    "run_build_tool",
-    "analyze_validation_report_tool",
-    # Style tools
-    "check_writing_style_tool",
-    "check_tooltip_style_tool",
-    "suggest_style_improvements_tool",
-    "read_writing_style_guide_tool",
-    # Schema tools
-    "validate_event_schema_tool",
-    "create_event_json_tool",
-    "read_event_file_tool",
-    "list_event_files_tool",
-    # Code style tools
-    "check_code_style_tool",
-    "check_bannerlord_patterns_tool",
-    "check_framework_compatibility_tool",
-    "check_csharp_file_tool",
-    # Documentation tools
+    # Validation
+    "validate_content",
+    "sync_strings",
+    "build",
+    "analyze_issues",
+    
+    # Style Review
+    "review_prose",
+    "review_tooltip",
+    "suggest_edits",
+    "get_style_guide",
+    
+    # Event Schema
+    "check_event_format",
+    "draft_event",
+    "read_event",
+    "list_events",
+    
+    # Code Review
+    "review_code",
+    "check_game_patterns",
+    "check_compatibility",
+    "review_source_file",
+    
+    # Documentation
     "read_doc_tool",
     "list_docs_tool",
-    "search_docs_tool",
+    "find_in_docs",
     "SearchCache",
-    "read_csharp_tool",
-    "search_csharp_tool",
-    "read_csharp_snippet_tool",
+    
+    # Source Code
+    "read_source",
+    "find_in_code",
+    "read_source_section",
     "list_feature_files_tool",
-    # Debug and native API tools
+    
+    # Debug & Native API
     "read_debug_logs_tool",
     "search_debug_logs_tool",
     "read_native_crash_logs_tool",
-    "search_native_api_tool",
-    # Context loader tools
-    "load_content_context_tool",
-    "load_feature_context_tool",
-    "load_code_context_tool",
-    "load_domain_context_tool",
-    # Verification tools
+    "find_in_native_api",
+    
+    # Context Loaders
+    "get_writing_guide",
+    "get_architecture",
+    "get_dev_reference",
+    "get_game_systems",
+    
+    # Verification
     "verify_file_exists_tool",
-    "list_json_event_ids_tool",
-    # Planning tools
-    "write_planning_doc_tool",
-    "read_planning_doc_tool",
+    "list_event_ids",
+    
+    # Planning
+    "save_plan",
+    "load_plan",
 ]

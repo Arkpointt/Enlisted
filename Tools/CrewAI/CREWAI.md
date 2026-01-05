@@ -139,75 +139,87 @@ export ENLISTED_PROJECT_ROOT=C:\Dev\Enlisted\Enlisted
 
 ## Custom Tools
 
-### Validation Tools
+Tools use natural naming for readability. The `@tool("Name")` decorator defines what agents see.
+
+### Validation
+
 | Tool | Purpose |
 |------|---------|
-| `validate_content_tool` | Runs `validate_content.py` |
-| `sync_localization_tool` | Runs `sync_event_strings.py` |
-| `run_build_tool` | Runs `dotnet build` |
-| `analyze_validation_report_tool` | Generates prioritized report |
+| `validate_content` | Runs `validate_content.py` |
+| `sync_strings` | Runs `sync_event_strings.py` |
+| `build` | Runs `dotnet build` |
+| `analyze_issues` | Generates prioritized report |
 
-### Style Tools
+### Style Review
+
 | Tool | Purpose |
 |------|---------|
-| `check_writing_style_tool` | Validates against `writing-style-guide.md` |
-| `check_tooltip_style_tool` | Checks tooltips (<80 chars) |
-| `suggest_style_improvements_tool` | Provides rewrites |
-| `read_writing_style_guide_tool` | Loads style guide |
+| `review_prose` | Validates against `writing-style-guide.md` |
+| `review_tooltip` | Checks tooltips (<80 chars) |
+| `suggest_edits` | Provides rewrites |
+| `get_style_guide` | Loads style guide |
 
-### Schema Tools
+### Event Schema
+
 | Tool | Purpose |
 |------|---------|
-| `validate_event_schema_tool` | JSON structure validation |
-| `create_event_json_tool` | Generates valid events |
-| `read_event_file_tool` | Reads event files |
-| `list_event_files_tool` | Lists all events |
+| `check_event_format` | JSON structure validation |
+| `draft_event` | Generates valid events |
+| `read_event` | Reads event files |
+| `list_events` | Lists all events |
 
-### Code Style Tools
+### Code Review
+
 | Tool | Purpose |
 |------|---------|
-| `check_code_style_tool` | Allman braces, _camelCase, XML docs |
-| `check_bannerlord_patterns_tool` | TextObject, Hero, Equipment patterns |
-| `check_framework_compatibility_tool` | .NET Framework 4.7.2 compatibility |
-| `check_csharp_file_tool` | Combined C# analysis |
+| `review_code` | Allman braces, _camelCase, XML docs |
+| `check_game_patterns` | TextObject, Hero, Equipment patterns |
+| `check_compatibility` | .NET Framework 4.7.2 compatibility |
+| `review_source_file` | Combined C# analysis |
 
-### Documentation Tools
+### Documentation
+
 | Tool | Purpose |
 |------|---------|
 | `read_doc_tool` | Read project docs |
 | `list_docs_tool` | List doc files |
-| `search_docs_tool` | Search across docs |
-| `read_csharp_tool` | Read C# source |
-| `search_csharp_tool` | Search C# codebase |
-| `read_csharp_snippet_tool` | Read specific sections |
+| `find_in_docs` | Search across docs |
+| `read_source` | Read C# source |
+| `find_in_code` | Search C# codebase |
+| `read_source_section` | Read specific sections |
 | `list_feature_files_tool` | List `src/Features/` files |
 
-### Debug Tools
+### Debug & Native API
+
 | Tool | Purpose |
 |------|---------|
 | `read_debug_logs_tool` | Read mod debug logs |
 | `search_debug_logs_tool` | Search for error codes |
 | `read_native_crash_logs_tool` | Read native game crash logs |
-| `search_native_api_tool` | Search Bannerlord API docs |
+| `find_in_native_api` | Search Bannerlord API docs |
 
-### Context Loader Tools
+### Context Loaders
+
 | Tool | Purpose |
 |------|---------|
-| `load_domain_context_tool` | Loads game systems knowledge |
-| `load_feature_context_tool` | Loads BLUEPRINT, patterns |
-| `load_code_context_tool` | Loads dev guide, APIs |
-| `load_content_context_tool` | Loads style guide, schemas |
+| `get_game_systems` | Loads game systems knowledge |
+| `get_architecture` | Loads BLUEPRINT, patterns |
+| `get_dev_reference` | Loads dev guide, APIs |
+| `get_writing_guide` | Loads style guide, schemas |
 
-### Planning Tools
-|| Tool | Purpose |
-||---------|---------|
-|| `write_planning_doc_tool` | Writes to `docs/CrewAI_Plans/` with versioning |
+### Planning
 
-### Verification Tools
-|| Tool | Purpose |
-||---------|---------|
-|| `verify_file_exists_tool` | Validates C# file paths exist before including in plans |
-|| `list_json_event_ids_tool` | Lists all event/opportunity IDs from JSON folders |
+| Tool | Purpose |
+|------|---------|
+| `save_plan` | Writes to `docs/CrewAI_Plans/` with versioning |
+| `load_plan` | Reads planning document |
+
+### Verification
+
+| Tool | Purpose |
+|------|---------|
+| `verify_file_exists_tool` | Validates C# file paths exist before including in plans |
+| `list_event_ids` | Lists all event/opportunity IDs from JSON folders |
 
 ---
 
@@ -219,24 +231,29 @@ The `knowledge/` folder contains **dynamic context** that changes with the codeb
 
 | File | Content | Used By |
 |------|---------|---------|
-| `enlisted-systems.md` | System summaries, key classes | systems_analyst, feature_architect, balance_analyst |
+| `core-systems.md` | System summaries, key classes | systems_analyst, feature_architect, balance_analyst |
 | `error-codes.md` | Error meanings, log locations | code_analyst |
-| `json-schemas.md` | JSON field requirements | content_analyst, content_author |
+| `event-format.md` | JSON field requirements | content_analyst, content_author |
 | `balance-values.md` | XP rates, tier thresholds, economy | content_analyst, content_author, balance_analyst |
-|| `ui-systems.md` | Menu behaviors, Gauntlet screens | csharp_implementer |
-|| `content-files.md` | JSON content inventory, folder locations | documentation_maintainer |
+| `ui-systems.md` | Menu behaviors, Gauntlet screens | csharp_implementer |
+| `content-files.md` | JSON content inventory, folder locations | documentation_maintainer |
+| `game-design-principles.md` | Tier-aware design, player experience | feature_architect, content_author, balance_analyst |
 
 ### Knowledge Source Mapping
 
 ```python
 # In crew.py _init_knowledge_sources()
-systems_knowledge → systems_analyst, feature_architect
-code_knowledge → code_analyst (systems + error-codes)
-content_knowledge → content_analyst, content_author (schemas + balance)
-balance_knowledge → balance_analyst (balance + systems)
-ui_knowledge → csharp_implementer (ui-systems + systems)
-planning_knowledge → documentation_maintainer (systems + content-files)
+systems_knowledge → systems_analyst (core-systems)
+design_knowledge → feature_architect (core-systems + game-design-principles)
+code_knowledge → code_analyst (core-systems + error-codes)
+content_knowledge → content_analyst, content_author (event-format + balance + game-design-principles)
+balance_knowledge → balance_analyst (balance + core-systems + game-design-principles)
+ui_knowledge → csharp_implementer (ui-systems + core-systems)
+planning_knowledge → documentation_maintainer (core-systems + content-files)
 ```
+
+**Note:** `game-design-principles.md` is loaded by agents that make player-facing decisions:
+feature_architect (design), content_author (content), balance_analyst (review).
 
 ### When to Update
 
@@ -298,23 +315,52 @@ Agent(
 )
 ```
 
-### Backstory Best Practices
+### Workflow Configuration Patterns
 
-**Good:**
-```yaml
-backstory: >
-  You understand the 9-tier progression (T1-T9), triple reputation tracks,
-  and Company Needs systems. Start by loading domain context, then search
-  documentation to understand system integration points.
+Per [CrewAI documentation](https://docs.crewai.com/), Crews support additional parameters:
+
+```python
+Crew(
+    agents=[...],
+    tasks=[...],
+    process=Process.sequential,    # or Process.hierarchical
+    verbose=True,                  # Show execution details
+    memory=True,                   # Enable crew memory across tasks
+    cache=True,                    # Cache tool results (avoids redundant calls)
+)
 ```
 
-**Bad (Too Prescriptive):**
+| Parameter | Purpose | When to Use |
+|-----------|---------|-------------|
+| `memory=True` | Share context between tasks | Multi-step workflows |
+| `cache=True` | Cache tool results | Avoid redundant API/search calls |
+| `verbose=True` | Show execution details | Development/debugging |
+
+### Backstory Best Practices
+
+Per [CrewAI official documentation](https://docs.crewai.com/), backstories describe
+WHO the agent is (expertise, knowledge), not HOW to use tools. Prescriptive
+instructions belong in task descriptions.
+
+**Good (Natural - describes expertise):**
+```yaml
+backstory: >
+  You are an expert at understanding multi-system game architectures. You know
+  Enlisted's 9-tier progression (T1-T9), triple reputation tracks, and Company
+  Needs systems. Check the knowledge files for current balance values.
+```
+
+**Bad (Prescriptive - gives instructions):**
 ```yaml
 backstory: >
   ALWAYS call load_domain_context_tool FIRST to understand...
   SEARCH EFFICIENCY RULES (CRITICAL):
   - All search results are cached; NEVER re-search...
 ```
+
+**Where prescriptive instructions go:**
+- Task descriptions in `tasks.yaml` (WORKFLOW sections)
+- These instructions are task-specific and can change per task type
 
 ---
 
@@ -333,16 +379,17 @@ Tools/CrewAI/
 │   ├── config/
 │   │   ├── agents.yaml      # Agent definitions
 │   │   └── tasks.yaml       # Task templates
-│   ├── tools/               # Custom tools
+│   ├── tools/               # Custom tools (natural naming)
 │   ├── crew.py              # Crew orchestration
 │   └── main.py              # CLI entry point
 ├── knowledge/               # Dynamic context (runtime queries)
-│   ├── enlisted-systems.md
-│   ├── error-codes.md
-│   ├── json-schemas.md
-│   ├── balance-values.md
-│   ├── ui-systems.md
-│   └── content-files.md
+│   ├── core-systems.md      # System summaries
+│   ├── error-codes.md       # Error code meanings
+│   ├── event-format.md      # JSON requirements
+│   ├── balance-values.md    # Balance numbers
+│   ├── ui-systems.md        # Menu behaviors
+│   ├── content-files.md     # Content inventory
+│   └── game-design-principles.md  # Player experience
 ├── tests/                   # Unit tests
 ├── pyproject.toml           # Dependencies
 └── CREWAI.md               # This file
@@ -407,7 +454,7 @@ context:
 ✅ **Correct:**
 ```python
 TextFileKnowledgeSource(
-    file_paths=["enlisted-systems.md"]  # Relative to knowledge/
+    file_paths=["core-systems.md"]  # Relative to knowledge/
 )
 ```
 

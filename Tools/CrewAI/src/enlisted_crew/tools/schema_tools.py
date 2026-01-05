@@ -147,8 +147,8 @@ def validate_event_structure(event: Dict[str, Any]) -> List[str]:
     return issues
 
 
-@tool("Validate Event Schema")
-def validate_event_schema_tool(event_json: str) -> str:
+@tool("Check Event Format")
+def check_event_format(event_json: str) -> str:
     """
     Validate a JSON event against the Enlisted schema.
     
@@ -184,8 +184,8 @@ def validate_event_schema_tool(event_json: str) -> str:
     return report
 
 
-@tool("Create Event JSON")
-def create_event_json_tool(
+@tool("Draft Event")
+def draft_event(
     event_id: str,
     category: str,
     title: str,
@@ -269,8 +269,8 @@ def create_event_json_tool(
     return json.dumps(event, indent=2)
 
 
-@tool("Read Event File")
-def read_event_file_tool(file_path: str) -> str:
+@tool("Read Event")
+def read_event(file_path: str) -> str:
     """
     Read a JSON event file from ModuleData/Enlisted/.
     
@@ -299,8 +299,8 @@ def read_event_file_tool(file_path: str) -> str:
     return f"ERROR: File not found. Tried:\n" + "\n".join(str(p) for p in possible_paths)
 
 
-@tool("List Event Files")
-def list_event_files_tool() -> str:
+@tool("List Events")
+def list_events() -> str:
     """
     List all JSON event and decision files in ModuleData/Enlisted/.
     

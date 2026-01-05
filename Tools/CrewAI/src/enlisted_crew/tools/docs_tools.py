@@ -182,8 +182,8 @@ def list_docs_tool(folder: str = "") -> str:
     return result
 
 
-@tool("Search Documentation")
-def search_docs_tool(query: str) -> str:
+@tool("Find in Docs")
+def find_in_docs(query: str) -> str:
     """
     Search for text in project documentation.
     
@@ -266,10 +266,10 @@ def search_docs_tool(query: str) -> str:
     return SearchCache.set(cache_key, result)
 
 
-@tool("Load Content Writing Context")
-def load_content_context_tool() -> str:
+@tool("Get Writing Guide")
+def get_writing_guide() -> str:
     """
-    Load all essential context for content writing tasks.
+    Get essential context for content writing tasks.
     
     CALL THIS FIRST when writing events, decisions, or any narrative content.
     Returns a bundle of key references:
@@ -322,10 +322,10 @@ def load_content_context_tool() -> str:
     return "\n".join(context_parts)
 
 
-@tool("Load Feature Development Context")
-def load_feature_context_tool() -> str:
+@tool("Get Architecture")
+def get_architecture() -> str:
     """
-    Load essential context for feature development tasks.
+    Get essential context for feature development tasks.
     
     CALL THIS FIRST when designing or implementing new features.
     Returns:
@@ -386,10 +386,10 @@ Files:
     return "\n".join(context_parts)
 
 
-@tool("Load Enlisted Domain Context")
-def load_domain_context_tool() -> str:
+@tool("Get Game Systems")
+def get_game_systems() -> str:
     """
-    Load comprehensive Enlisted mod domain knowledge.
+    Get comprehensive Enlisted mod domain knowledge.
     
     CALL THIS FIRST for any task involving game mechanics or systems.
     Returns key knowledge about:
@@ -410,25 +410,31 @@ def load_domain_context_tool() -> str:
 Player enlists with a lord → follows army (party invisible) → receives orders → 
 earns XP → gets promoted (T1→T9) → eventually discharges or becomes commander.
 
-## 9-Tier Rank Progression
-| Tier | XP Required | Generic Title | Key Unlock |
-|------|-------------|---------------|------------|
-| T1   | 0           | Follower      | Starting rank |
-| T2   | 800         | Recruit       | Formation selection |
-| T3   | 3,000       | Free Sword    | Specialist roles |
-| T4   | 6,000       | Veteran       | Squad leadership |
-| T5   | 11,000      | Blade         | Officer track |
-| T6   | 19,000      | Chosen        | Senior NCO |
-| T7   | 30,000      | Captain       | Commander track, 20-troop retinue |
-| T8   | 45,000      | Commander     | 30-troop retinue |
-| T9   | 65,000      | Marshal       | 40-troop retinue (max) |
+## 9-Tier Rank Progression (THREE CAREER TRACKS)
+
+| Tier | XP | Title | Track | Key Unlock |
+|------|-----|-------|-------|------------|
+| T1 | 0 | Follower | Enlisted | Starting rank, basic duties |
+| T2 | 800 | Recruit | Enlisted | Formation selection |
+| T3 | 3,000 | Free Sword | Enlisted | Basic combat veteran |
+| T4 | 6,000 | Veteran | Enlisted | Squad leadership, can train troops |
+| T5 | 11,000 | Blade | Officer | NCO authority, specialist missions |
+| T6 | 19,000 | Chosen | Officer | Senior NCO, mentoring |
+| T7 | 30,000 | Captain | Commander | 20-troop retinue, strategic orders |
+| T8 | 45,000 | Commander | Commander | 30-troop retinue |
+| T9 | 65,000 | Marshal | Commander | 40-troop retinue (max) |
+
+**Three Career Tracks (CRITICAL for tier-aware content):**
+- **Enlisted (T1-T4)**: You're a grunt. Things happen TO you. Auto-assigned duties.
+- **Officer (T5-T6)**: You're an NCO. You handle your squad. Mentor recruits, investigate issues.
+- **Commander (T7-T9)**: You command troops. Strategic decisions, retinue management.
 
 Promotions require: XP + Days in Rank + Battles + Reputation + Low Discipline
 
-## Three Reputation Tracks (-50 to +100)
-- **Soldier Rep**: Peer respect, affects social events
-- **Officer Rep**: NCO perception, affects order assignments  
-- **Lord Rep**: Lord's trust, affects special missions, discharge band
+## Three Reputation Tracks
+- **Soldier Rep (-50 to +50)**: Peer respect, can be negative (hated) or positive (bonded)
+- **Officer Rep (0-100)**: NCO perception, starts neutral, only positive
+- **Lord Rep (0-100)**: Lord's trust, starts neutral, only positive
 
 ## Escalation Tracks (0-10 scale)
 - **Scrutiny**: How closely watched (triggers inspections at 7+)
@@ -452,15 +458,21 @@ Thresholds: Critical(<20), Low(20-40), Normal(40-70), Good(70-90), Excellent(>90
 ## Order System (Chain of Command)
 - Orders arrive every 3-5 days
 - Execute over multiple phases (4 phases/day)
-- T1-T3: Basic tasks (guard, patrol, firewood)
-- T4-T6: Specialist (scouting, medical, leading patrols)
-- T7-T9: Strategic directives (command squads)
+- **T1-T3**: Basic tasks (guard, patrol, firewood) - AUTO-ASSIGNED
+- **T4-T6**: Specialist missions (scouting, medical, leading patrols) - NCO AUTHORITY
+- **T7-T9**: Strategic directives (command squads) - FULL COMMAND
+
+**NCO Events (T4-T6 only):**
+- `evt_nco_new_recruit` - "Your problem now"
+- `evt_nco_squad_dispute` - Handle conflicts in YOUR squad
+- `evt_nco_equipment_theft` - Investigate YOUR men
+- Training chain - You can TRAIN lord's T1-T3 troops
 
 ## Content Delivery
 - ContentOrchestrator schedules opportunities 24h ahead
 - WorldStateAnalyzer determines context (Garrison, Campaign, Siege, etc.)
 - Events fire based on day phase (Dawn, Midday, Dusk, Night)
-- Camp opportunities: 29 contextual activities
+- Camp opportunities: 36 contextual activities
 
 ## Discharge Bands
 | Band | Trigger | Re-entry |
@@ -490,10 +502,10 @@ Thresholds: Critical(<20), Low(20-40), Normal(40-70), Good(70-90), Excellent(>90
 """
 
 
-@tool("Load Code Analysis Context")
-def load_code_context_tool() -> str:
+@tool("Get Dev Reference")
+def get_dev_reference() -> str:
     """
-    Load essential context for code analysis and review tasks.
+    Get essential context for code analysis and review tasks.
     
     CALL THIS FIRST when analyzing or reviewing C# code.
     Returns patterns, anti-patterns, and Bannerlord API reference.
@@ -543,8 +555,8 @@ Performance:
     return "\n".join(context_parts)
 
 
-@tool("Read C# Source File")
-def read_csharp_tool(file_path: str) -> str:
+@tool("Read Source")
+def read_source(file_path: str) -> str:
     """
     Read a C# source file from the project.
     
@@ -574,8 +586,8 @@ def read_csharp_tool(file_path: str) -> str:
     return f"ERROR: File not found. Tried:\n" + "\n".join(str(p) for p in possible_paths)
 
 
-@tool("Search C# Codebase")
-def search_csharp_tool(query: str, max_results: int = 20) -> str:
+@tool("Find in Code")
+def find_in_code(query: str, max_results: int = 20) -> str:
     """
     Search the src/ C# codebase for a text pattern and return file hits with line snippets.
 
@@ -626,8 +638,8 @@ def search_csharp_tool(query: str, max_results: int = 20) -> str:
     return SearchCache.set(cache_key, result)
 
 
-@tool("Read C# Snippet")
-def read_csharp_snippet_tool(
+@tool("Read Source Section")
+def read_source_section(
     file_path: str,
     pattern: str = "",
     max_snippets: int = 8,
@@ -873,8 +885,8 @@ def read_native_crash_logs_tool(recent_only: bool = True) -> str:
     return "\n\n" + "="*60 + "\n\n".join(results)
 
 
-@tool("Search Native API")
-def search_native_api_tool(query: str) -> str:
+@tool("Find in Native API")
+def find_in_native_api(query: str) -> str:
     """
     Search the native Bannerlord decompiled source for API patterns.
     
@@ -970,8 +982,8 @@ def verify_file_exists_tool(file_path: str) -> str:
     return result
 
 
-@tool("List JSON Event IDs")
-def list_json_event_ids_tool(folder: str = "Decisions") -> str:
+@tool("List Event IDs")
+def list_event_ids(folder: str = "Decisions") -> str:
     """
     List all event/opportunity IDs from JSON content files.
     

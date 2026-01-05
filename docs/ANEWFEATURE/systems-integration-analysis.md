@@ -19,8 +19,8 @@ Enlisted has **7 core tracking systems** that should drive content delivery:
 | **Rest/Fatigue** | 0-100 | ⚠️ Partial | Activity gating |
 | **Readiness** | 0-100 | ⚠️ Partial | Combat effectiveness |
 | **Soldier Rep** | -50 to +50 | ✅ Good | Event filtering, option gating |
-| **Officer Rep** | -50 to +50 | ✅ Good | Promotion, order quality |
-| **Lord Rep** | -50 to +50 | ✅ Good | Trust, assignments, discharge |
+| **Officer Rep** | 0-100 | ✅ Good | Promotion, order quality |
+| **Lord Rep** | 0-100 | ✅ Good | Trust, assignments, discharge |
 | **Scrutiny** | 0-10 | ✅ Good | Inspection events, discipline |
 | **Discipline** | 0-10 | ✅ Good | Promotion blocking |
 | **Medical Risk** | 0-5 | ✅ Good | Illness triggers, treatment |
@@ -77,11 +77,14 @@ EXCELLENT: >90   → Bonus opportunities
 
 ---
 
-### 2. Reputation Tracks (-50 to +50)
+### 2. Reputation Tracks
 
 **Location:** `src/Features/Escalation/EscalationManager.cs`, `EscalationState.cs`
 
 Three social standing tracks with the military hierarchy:
+- **Soldier Reputation:** -50 to +50 (bipolar - can be hated or bonded)
+- **Lord Reputation:** 0 to 100 (starts neutral, builds up)
+- **Officer Reputation:** 0 to 100 (starts neutral, builds up)
 
 | Track | Description | Positive Effects | Negative Effects |
 |-------|-------------|------------------|------------------|
