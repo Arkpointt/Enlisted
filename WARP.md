@@ -119,6 +119,46 @@ Better prompts = better results + fewer wasted AI credits.
 
 **Setup:** See [Tools/CrewAI/README.md](Tools/CrewAI/README.md) (requires `.env` with `ANTHROPIC_API_KEY`)
 
+### CrewAI Internal Structure (Tools/CrewAI/)
+
+```
+Tools/CrewAI/
+├── src/enlisted_crew/
+│   ├── config/
+│   │   ├── agents.yaml      # Agent definitions (role, goal, backstory)
+│   │   └── tasks.yaml       # Task templates
+│   ├── tools/               # Custom tools (docs_tools.py, validation_tools.py)
+│   ├── crew.py              # Crew orchestration (bug_hunting_crew, planning_crew, etc.)
+│   └── main.py              # Entry point
+├── knowledge/               # Dynamic context files (queried at runtime)
+│   ├── enlisted-systems.md  # System summaries, key classes, effect details
+│   ├── error-codes.md       # Error code meanings, log locations
+│   ├── json-schemas.md      # JSON field requirements
+│   ├── balance-values.md    # XP rates, tier thresholds, economy
+│   └── content-files.md     # JSON content inventory, folder locations
+├── tests/                   # Unit tests
+└── pyproject.toml           # Dependencies
+```
+
+**Knowledge Sources:** The `knowledge/` folder contains **dynamic context** that changes with the codebase.
+- **Backstories** = durable, architectural ("Check src/Features/Enlistment/ for XP logic")
+- **Knowledge files** = implementation details ("T2=800 XP, T3=3000 XP")
+- When systems change, `documentation_maintainer` updates knowledge files
+- Agents query these at runtime instead of relying on stale backstory text
+
+**Knowledge wiring** (in `crew.py`):
+- `systems_knowledge` → systems_analyst, feature_architect
+- `code_knowledge` → code_analyst (systems + error-codes)
+- `content_knowledge` → content_analyst, content_author (schemas + balance)
+- `balance_knowledge` → balance_analyst (balance + systems)
+- `ui_knowledge` → csharp_implementer (ui-systems + systems)
+- `planning_knowledge` → documentation_maintainer (systems + content-files)
+
+**CrewAI Config Patterns:**
+1. **Tools: Python Only, NOT YAML** — When using `@CrewBase` with `config=`, define tools in Python only (not in agents.yaml)
+2. **Task Context: Use Method Names** — In tasks.yaml `context:` field, use full method names like `analyze_systems_task` (not `analyze_systems`)
+3. **Knowledge Sources: Relative Paths** — Use relative paths like `"enlisted-systems.md"` (CrewAI resolves from knowledge/ folder)
+
 ## 📂 Project Structure
 
 ```
