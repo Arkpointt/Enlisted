@@ -19,6 +19,13 @@ A single-conversation workflow where Warp adopts specialist "agent" perspectives
 "[VALIDATE] Check my changes before I commit"
 ```
 
+**For complex work, use CrewAI** (see [CrewAI Integration](#crewai-integration)):
+```
+"Use CrewAI bug_hunting_crew to investigate E-ENCOUNTER-042"
+"Use CrewAI planning_crew to design the skill integration feature"
+"Use CrewAI full_feature_crew to implement the approved spec"
+```
+
 ---
 
 ## The Agent Pipeline
@@ -645,3 +652,95 @@ You can force a specific perspective:
 
 **"Changes look wrong"**
 → Reject the edit. Warp won't force changes you don't approve.
+
+---
+
+## CrewAI Integration
+
+For complex multi-agent workflows, this project has a **CrewAI integration** at `Tools/CrewAI/`.
+
+### When to Use CrewAI vs Warp Directly
+
+| Task | Use |
+|------|-----|
+| Quick fixes, single-file changes | Warp directly |
+| Analysis questions | Warp directly |
+| New content (1-3 events) | Warp directly |
+| Bug investigation with error codes | CrewAI `bug_hunting_crew` |
+| Complex multi-file features | CrewAI `full_feature_crew` |
+| Planning docs for ANEWFEATURE/ | CrewAI `planning_crew` |
+| Pre-release validation | CrewAI `validation_crew` |
+
+### How to Invoke CrewAI
+
+**Tell Warp what you want**, and Warp will write and run a CrewAI kickoff script:
+
+```
+User: "Use CrewAI to create a planning doc for consolidating the systems integration"
+
+Warp creates and runs:
+  from enlisted_crew import EnlistedCrew
+  EnlistedCrew().planning_crew().kickoff(inputs={
+      "feature_name": "Systems Integration Consolidation",
+      "description": "...",
+      "related_systems": "Supply, Morale, Reputation, Escalation"
+  })
+```
+
+### Available CrewAI Crews
+
+| Crew | Purpose | Agents |
+|------|---------|--------|
+| `bug_hunting_crew()` | Investigate crashes/bugs, trace to root cause, fix | code_analyst → systems_analyst → csharp_implementer → qa_agent |
+| `planning_crew()` | Design docs only (ANEWFEATURE/) - NO code | systems_analyst → feature_architect → documentation_maintainer |
+| `feature_design_crew()` | Design spec without implementation | systems_analyst → code_analyst → feature_architect → balance_analyst |
+| `full_feature_crew()` | End-to-end: design → implement → docs | All 9 agents |
+| `validation_crew()` | Pre-commit checks | content_analyst → qa_agent |
+| `content_creation_crew()` | New JSON content | content_author → content_analyst → balance_analyst |
+| `code_review_crew()` | C# code review | code_analyst → qa_agent |
+| `documentation_crew()` | Sync docs after implementation | documentation_maintainer |
+
+### CrewAI Model Tiers
+
+| Agent | Model | Purpose |
+|-------|-------|--------|
+| systems_analyst, feature_architect | Opus 4.5 + 10k thinking | Complex architecture |
+| code_analyst, documentation_maintainer | Sonnet 4.5 + 5k thinking | Analysis requiring reasoning |
+| qa_agent | Sonnet 4.5 + 3k thinking | Final validation (never skimp) |
+| csharp_implementer | Sonnet 4.5 (no thinking) | Execute from specs |
+| content_analyst, content_author, balance_analyst | Haiku 4.5 | Fast validation/generation |
+
+### Planning vs Implementation
+
+**IMPORTANT:** CrewAI knows the difference:
+
+- `planning_crew()` → Creates doc in `ANEWFEATURE/` with Status: 📋 Planning
+  - Does NOT update INDEX.md, AI context, or validators
+  
+- `full_feature_crew()` → Implements code AND updates all docs
+  - Updates INDEX.md, AI context (CrewAI, Warp), validators
+
+### Example Prompts for CrewAI
+
+```
+"Use CrewAI bug_hunting_crew to investigate E-ENCOUNTER-042 crash"
+→ Searches logs, traces root cause, proposes fix, validates it compiles
+
+"Use CrewAI planning_crew to design the skill integration feature"
+→ Creates planning doc, no code changes
+
+"Use CrewAI full_feature_crew to implement the approved skill integration spec"
+→ Implements C#, JSON, updates all docs
+
+"Use CrewAI validation_crew to check all content before release"
+→ Runs comprehensive validation
+
+"Use CrewAI content_creation_crew to add 5 new camp opportunities"
+→ Creates JSON content with style/schema compliance
+```
+
+### CrewAI Setup
+
+See `Tools/CrewAI/README.md` for setup instructions. Requires:
+- Python environment with `pip install -e .`
+- `.env` file with `ANTHROPIC_API_KEY`

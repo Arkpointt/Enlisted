@@ -34,6 +34,10 @@ $RECYCLE.BIN/
 # Tooling
 .qodo/
 
+# Environment files (API keys)
+.env
+Tools/CrewAI/.env
+
 # Archives
 *.zip
 *.7z

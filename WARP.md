@@ -2,6 +2,10 @@
 
 Guidance for Warp AI agents working in this Bannerlord mod codebase.
 
+> **How this file works:** Warp automatically applies these rules to all agent interactions.
+> Subdirectory WARP.md files (like `Tools/CrewAI/WARP.md`) take precedence for that area.
+> See `Tools/AGENT-WORKFLOW.md` for multi-agent workflow details and CrewAI integration.
+
 ## 🚨 Critical Rules (Read First)
 
 1. **Target Version:** Bannerlord **v1.3.13** — never assume APIs from later versions
@@ -10,6 +14,7 @@ Guidance for Warp AI agents working in this Bannerlord mod codebase.
 4. **Tooltips:** Cannot be null — every event/decision option needs a tooltip (<80 chars)
 5. **JSON Field Order:** Fallback fields (`title`, `setup`, `text`) must immediately follow their ID fields
 6. **Code Quality:** Fix all ReSharper warnings; never suppress without documented reason
+7. **CrewAI for Complex Work:** Use `"Use CrewAI [crew_name] to [task]"` for multi-file features, bug hunting, planning docs
 
 ## ⚡ Quick Commands
 
@@ -66,6 +71,53 @@ python Tools/Validation/sync_event_strings.py
 - `[ANALYZE:BALANCE]` — Effects/economy review
 - `[IMPLEMENT]` — Skip analysis, go to implementation
 - `[VALIDATE]` — Run QA validation only
+
+## 💡 Prompt Best Practices
+
+Better prompts = better results + fewer wasted AI credits.
+
+**Be specific:** Instead of vague requests, include:
+- Exact error codes or log snippets
+- File paths you suspect are involved
+- What you've already tried
+- Expected outcome format
+
+**Planning workflow for new features:**
+1. Discuss the idea with Warp (me) — I'll ask questions, probe edge cases
+2. Once scope is clear, I craft a prompt for `planning_crew`
+3. CrewAI produces a design doc in `ANEWFEATURE/` with `Status: 📋 Planning`
+4. Review and iterate until approved
+5. Implementation via Warp directly or `full_feature_crew`
+
+| ❌ Vague | ✅ Specific |
+|----------|------------|
+| "Fix the bug" | "Investigate E-ENCOUNTER-042 crash when opening camp menu after battle" |
+| "Add an event" | "Add a T3 barracks event in `Events/camp/` where sergeant offers training" |
+| "Why doesn't this work?" | "OrderProgressTracker.RecordProgress() not persisting after save/load" |
+
+**Attach relevant context:** Use `@filename` to attach files instead of making the agent search. Saves time and credits.
+
+**Start fresh conversations:** Don't continue unrelated tasks in the same conversation—it confuses context and wastes tokens.
+
+## 🤖 CrewAI Integration (Complex Tasks)
+
+**For complex multi-agent work**, use the CrewAI integration at `Tools/CrewAI/`.
+
+| Task | Command |
+|------|---------|
+| Bug investigation | `"Use CrewAI bug_hunting_crew to investigate E-ENCOUNTER-042"` |
+| Planning docs | `"Use CrewAI planning_crew to design [feature]"` |
+| Full feature dev | `"Use CrewAI full_feature_crew to implement [spec]"` |
+| Pre-release check | `"Use CrewAI validation_crew to check all content"` |
+| New content | `"Use CrewAI content_creation_crew to add [events]"` |
+
+**When to use CrewAI vs Warp directly:**
+- Quick fixes, single-file changes → Warp directly
+- Bug hunting with error codes → CrewAI `bug_hunting_crew`
+- Multi-file features → CrewAI `full_feature_crew`
+- Planning docs (ANEWFEATURE/) → CrewAI `planning_crew`
+
+**Setup:** See [Tools/CrewAI/README.md](Tools/CrewAI/README.md) (requires `.env` with `ANTHROPIC_API_KEY`)
 
 ## 📂 Project Structure
 
