@@ -46,6 +46,9 @@ from .docs_tools import (
     load_code_context_tool,
     load_domain_context_tool,
 )
+from .planning_tools import (
+    write_planning_doc_tool,
+)
 
 __all__ = [
     # Validation tools
@@ -87,4 +90,6 @@ __all__ = [
     "load_feature_context_tool",
     "load_code_context_tool",
     "load_domain_context_tool",
+    # Planning tools
+    "write_planning_doc_tool",
 ]

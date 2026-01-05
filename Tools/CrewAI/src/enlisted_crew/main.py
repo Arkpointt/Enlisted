@@ -5,13 +5,14 @@ Enlisted CrewAI CLI
 Command-line interface for running Enlisted CrewAI workflows.
 
 Usage:
-    enlisted-crew validate                    # Run full validation
-    enlisted-crew validate-file <path>        # Validate specific file
-    enlisted-crew create-event                # Create new event interactively
-    enlisted-crew style-review <path>         # Review style of event file
-    enlisted-crew code-review <paths...>      # Review C# code changes
-    enlisted-crew full-review <paths...>      # Full content review
-    enlisted-crew hunt-bug --description "..."  # Investigate a bug (Flow-based)
+    enlisted-crew validate                          # Run full validation
+    enlisted-crew validate-file <path>              # Validate specific file
+    enlisted-crew create-event --theme "..."        # Create new event
+    enlisted-crew style-review <path>               # Review event style
+    enlisted-crew code-review <paths...>            # Review C# code
+    enlisted-crew full-review <paths...>            # Full content review
+    enlisted-crew plan -f feature-name -d "..."     # Create planning doc
+    enlisted-crew hunt-bug -d "..."                 # Investigate bug
 """
 
 import argparse
@@ -111,6 +112,32 @@ def main():
         help="Paths to files to review",
     )
     
+    # plan command
+    plan_parser = subparsers.add_parser(
+        "plan",
+        help="Create a planning document for a proposed feature",
+    )
+    plan_parser.add_argument(
+        "--feature", "-f",
+        required=True,
+        help="Feature name (kebab-case like 'reputation-integration')",
+    )
+    plan_parser.add_argument(
+        "--description", "-d",
+        required=True,
+        help="Brief description of what the feature does",
+    )
+    plan_parser.add_argument(
+        "--systems", "-s",
+        default="",
+        help="Related systems (e.g. 'EscalationManager, ContentOrchestrator')",
+    )
+    plan_parser.add_argument(
+        "--docs", "-D",
+        default="",
+        help="Related documentation files",
+    )
+    
     # hunt-bug command (Flow-based)
     hunt_parser = subparsers.add_parser(
         "hunt-bug",
@@ -174,6 +201,14 @@ def main():
             result = run_code_review(crew, args.file_paths)
         elif args.command == "full-review":
             result = run_full_review(crew, args.file_paths)
+        elif args.command == "plan":
+            result = run_plan(
+                crew,
+                feature_name=args.feature,
+                description=args.description,
+                systems=args.systems,
+                docs=args.docs,
+            )
         elif args.command == "hunt-bug":
             result = run_hunt_bug(
                 description=args.description,
@@ -363,6 +398,29 @@ def run_full_review(crew: EnlistedCrew, file_paths: list):
     
     full_crew = crew.full_review_crew()
     return full_crew.kickoff(inputs={"file_paths": paths_str})
+
+
+def run_plan(
+    crew: EnlistedCrew,
+    feature_name: str,
+    description: str,
+    systems: str = "",
+    docs: str = "",
+):
+    """Run planning crew to create a design document."""
+    SearchCache.clear()
+    print(f"\n🎯 Planning feature: {feature_name}")
+    print(f"Description: {description}\n")
+    
+    planning_crew = crew.planning_crew()
+    result = planning_crew.kickoff(inputs={
+        "feature_name": feature_name,
+        "description": description,
+        "related_systems": systems or "See design doc for analysis",
+        "related_docs": docs or "See design doc for references",
+    })
+    
+    return result
 
 
 def run_hunt_bug(

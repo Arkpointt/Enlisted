@@ -69,16 +69,44 @@ From `DetermineOpportunityBudget()`:
 | Siege Attacking | 1 | 1 | 1 | 1 |
 | Siege Defending | 0 | 0 | 0 | 0 |
 
+## Reputation Thresholds
+
+Reputation tracks (0-100) managed by `EscalationManager`:
+
+|| Status | Threshold | Effects |
+||--------|-----------|----------|
+|| **Critical** | < 20 | Severe penalties, blocked promotions |
+|| **Poor** | 20-39 | Moderate penalties |
+|| **Fair** | 40-59 | Neutral standing |
+|| **Good** | 60-79 | Positive effects |
+|| **Excellent** | 80+ | Strong bonuses |
+
+**Tracks:** Soldier Reputation, Officer Reputation, Lord Reputation
+**Starting value:** 50 (Fair)
+
+## Escalation Track Thresholds
+
+Escalation tracks managed by `EscalationManager`:
+
+|| Track | Range | Meaning |
+||-------|-------|----------|
+|| **Scrutiny** | 0-10 | Officer attention level |
+|| **Discipline** | 0-10 | Enforcement strictness |
+|| **Medical Risk** | 0-5 | Illness onset at 3+ |
+
+**Passive decay:** Daily reduction towards baseline
+**Threshold events:** Trigger at milestones (e.g., scrutiny 3, 7, 9)
+
 ## Company Needs Thresholds
 
 Company needs are 0-100 tracks monitored by `CompanySimulationBehavior`:
 
-| Status | Threshold | Effects |
-|--------|-----------|----------|
-| **Critical** | < 20 | Crisis events trigger |
-| **Low** | 20-40 | Negative pressure accumulates |
-| **Normal** | 40-70 | Baseline state |
-| **Good** | > 70 | Positive morale effects |
+|| Status | Threshold | Effects |
+||--------|-----------|----------|
+|| **Critical** | < 20 | Crisis events trigger |
+|| **Low** | 20-40 | Negative pressure accumulates |
+|| **Normal** | 40-70 | Baseline state |
+|| **Good** | > 70 | Positive morale effects |
 
 **Tracks:** Supplies, Morale, Rest, Readiness, Equipment
 

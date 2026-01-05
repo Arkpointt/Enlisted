@@ -425,27 +425,34 @@ create_planning_doc:
     Description: {description}
     Related Systems: {related_systems}
     
+    PROCESS:
+    1. Research existing systems using search/read tools
+    2. Draft comprehensive planning document in markdown
+    3. Use write_planning_doc_tool to save to docs/CrewAI_Plans/
+    
     PLANNING DOC RULES:
-    - Place in docs/ANEWFEATURE/ (or Planning/ if renamed)
+    - Save to docs/CrewAI_Plans/ using write_planning_doc_tool
     - Set Status: 📋 Planning
+    - Tool handles versioning automatically (updates vs new versions)
     - DO NOT update INDEX.md Feature Lookup (not implemented yet)
     - DO NOT update AI context docs (no code exists yet)
-    - DO NOT update validators (no schema changes yet)
     - DO reference existing docs as Related Docs
     
-    Structure:
-    1. Problem Statement - What problem does this solve?
-    2. Current State - How do existing systems work today?
-    3. Proposed Design - Technical approach
-    4. Integration Points - Which files/systems are affected?
-    5. Implementation Phases - Suggested order of work
-    6. Open Questions - Unresolved design decisions
+    Document Structure:
+    1. Title and summary
+    2. Problem Statement - What problem does this solve?
+    3. Current State - How do existing systems work today?
+    4. Proposed Design - Technical approach with data models, methods
+    5. Integration Points - Which files/systems are affected?
+    6. Implementation Phases - Suggested order of work
+    7. Open Questions - Unresolved design decisions
+    
+    IMPORTANT: You MUST call write_planning_doc_tool(feature_name="{feature_name}", content="...") to save the document.
   expected_output: >
-    Planning document created with:
-    - File path (in ANEWFEATURE/ or Planning/)
-    - Status: 📋 Planning
-    - Summary of proposed changes
-    - NO updates to other docs (planning only)
+    Success message from write_planning_doc_tool showing:
+    - File path in docs/CrewAI_Plans/
+    - Whether it was a new document, minor update, or major version
+    - Status: 📋 Planning in the document content
   agent: documentation_maintainer
 
 sync_documentation:

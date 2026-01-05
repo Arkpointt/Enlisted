@@ -36,6 +36,49 @@
 - Purpose: Pipeline for queuing and showing events, applying effects
 - Related: `EventCatalog.cs`, `EventSelector.cs`, `EventRequirementChecker.cs`
 
+### Escalation System
+- Location: `src/Features/Escalation/EscalationManager.cs`
+- Purpose: Tracks escalation tracks and reputation systems
+- **Escalation tracks (0-10):** Scrutiny (officer attention), Discipline (enforcement level)
+- **Escalation tracks (0-5):** MedicalRisk (illness onset threshold at 3+)
+- **Reputation tracks (0-100):** SoldierReputation, OfficerReputation, LordReputation
+- **Reputation thresholds:** <20 Critical, 20-40 Poor, 40-60 Fair, 60-80 Good, 80+ Excellent
+- Daily passive decay, threshold events trigger at milestones
+- Related: `EscalationState.cs`, threshold event JSONs in `Events/`
+
+### Company Needs System
+- Location: `src/Features/Company/CompanyNeedsManager.cs`
+- Purpose: Manages company need degradation and recovery (0-100 scale)
+- **Needs tracks:** Supplies, Morale, Rest, Readiness, Equipment
+- **Daily degradation:** Supplies (handled by CompanySupplyManager), Readiness (-2), Morale (-1), Rest (-4)
+- **Accelerated degradation:** Long marches (+5 rest/readiness), Low morale (+3 readiness)
+- **Status levels:** Excellent (80+), Good (60-79), Fair (40-59), Poor (20-39), Critical (<20)
+- **Thresholds:** Critical <20 (crisis events), Low 20-40 (pressure), Normal 40-70, Good >70
+- Related: `CompanyNeedsState.cs`, `CompanySimulationBehavior.cs`
+
+### Company Simulation System
+- Location: `src/Features/Camp/CompanySimulationBehavior.cs`
+- Purpose: Background daily simulation - soldiers get sick, desert, recover
+- Tracks: sick count, missing count, casualties, pressure accumulation
+- **Pressure tracking:** Days low supplies/morale/rest, days high sickness, recent desertions
+- Feeds news system and provides context for orchestrator
+- Related: `CompanyRoster.cs`, `CompanyPressure.cs`, `SimulationConfig.json`
+
+### Simulation Pressure System
+- Location: `src/Features/Content/SimulationPressureCalculator.cs`
+- Purpose: Calculates current pressure (0-100) from multiple sources
+- **Pressure sources:**
+  - Low supplies (<30): +20 pressure
+  - Exhausted company (<30 rest): +15 pressure
+  - Low morale (<30): +15 pressure
+  - High discipline (>7): +25 pressure
+  - High scrutiny (>7): +20 pressure
+  - High medical risk (>3): +15 pressure
+  - Wounded player (<50% HP): +15 pressure
+  - Enemy territory: +15 pressure
+  - Reputation-blocked promotion: +5-15 pressure
+- Used by orchestrator for content pacing and variety overrides
+
 ## Key Enums
 
 ### DayPhase (`OrchestratorEnums.cs`)
@@ -60,13 +103,17 @@ Current implementation (4 phases) is functional but expected to change.
 
 ## File Locations
 
-| System | Location |
-|--------|----------|
-| Content Orchestrator | `src/Features/Content/ContentOrchestrator.cs` |
-| Camp Opportunities | `src/Features/Camp/CampOpportunityGenerator.cs` |
-| Enlistment | `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` |
-| Orders | `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs` |
-| Events JSON | `ModuleData/Enlisted/Events/` |
-| Decisions JSON | `ModuleData/Enlisted/Decisions/` |
-| Order Events JSON | `ModuleData/Enlisted/Orders/order_events/` |
-| Config | `ModuleData/Enlisted/Config/` |
+|| System | Location |
+||--------|----------|
+|| Content Orchestrator | `src/Features/Content/ContentOrchestrator.cs` |
+|| Camp Opportunities | `src/Features/Camp/CampOpportunityGenerator.cs` |
+|| Enlistment | `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` |
+|| Orders | `src/Features/Orders/Behaviors/OrderProgressionBehavior.cs` |
+|| Escalation Manager | `src/Features/Escalation/EscalationManager.cs` |
+|| Company Needs Manager | `src/Features/Company/CompanyNeedsManager.cs` |
+|| Company Simulation | `src/Features/Camp/CompanySimulationBehavior.cs` |
+|| Pressure Calculator | `src/Features/Content/SimulationPressureCalculator.cs` |
+|| Events JSON | `ModuleData/Enlisted/Events/` |
+|| Decisions JSON | `ModuleData/Enlisted/Decisions/` |
+|| Order Events JSON | `ModuleData/Enlisted/Orders/order_events/` |
+|| Config | `ModuleData/Enlisted/Config/` |

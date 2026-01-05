@@ -47,6 +47,7 @@ from .tools import (
     load_feature_context_tool,
     load_code_context_tool,
     load_domain_context_tool,
+    write_planning_doc_tool,
 )
 
 # === LLM Configurations ===
@@ -192,18 +193,15 @@ class EnlistedCrew:
             config=self.agents_config["systems_analyst"],
             llm=OPUS_DEEP,  # TIER 1: System integration requires deep reasoning
             tools=[
-                load_domain_context_tool,  # CALL FIRST - loads game systems knowledge
-                load_feature_context_tool,  # Architecture and patterns
-                validate_content_tool,
-                run_build_tool,
-                read_debug_logs_tool,
-                search_debug_logs_tool,
-                read_doc_tool,
-                search_docs_tool,
+                load_domain_context_tool,  # Context first
+                search_docs_tool,          # Find docs
+                read_doc_tool,             # Read docs
+                search_csharp_tool,        # Find code patterns
             ],
             knowledge_sources=[self.systems_knowledge],
             respect_context_window=True,
-            max_retry_limit=1,
+            max_retry_limit=2,
+            allow_delegation=True,  # Coordination role
         )
     
     @agent
@@ -256,21 +254,17 @@ class EnlistedCrew:
             config=self.agents_config["feature_architect"],
             llm=OPUS_DEEP,  # TIER 1: Architecture mistakes are expensive
             tools=[
-                load_feature_context_tool,  # CALL FIRST - loads BLUEPRINT, systems integration, patterns
-                read_doc_tool,
-                search_docs_tool,
-                search_csharp_tool,  # Search first
-                read_csharp_snippet_tool,  # Read targeted snippets
-                read_csharp_tool,  # Full file when needed
-                list_feature_files_tool,
-                validate_content_tool,
-                run_build_tool,
-                check_code_style_tool,
-                search_native_api_tool,
+                load_feature_context_tool,    # Context first
+                search_docs_tool,             # Find docs  
+                read_doc_tool,                # Read docs
+                search_csharp_tool,           # Find code
+                read_csharp_snippet_tool,     # Read sections
+                validate_content_tool,        # Check schemas
             ],
             knowledge_sources=[self.systems_knowledge],
             respect_context_window=True,
-            max_retry_limit=1,
+            max_retry_limit=2,
+            allow_delegation=True,  # Can delegate
         )
     
     @agent
@@ -356,6 +350,7 @@ class EnlistedCrew:
             config=self.agents_config["documentation_maintainer"],
             llm=SONNET_ANALYSIS,  # TIER 2: Doc sync requires reasoning about what changed
             tools=[
+                write_planning_doc_tool,     # Write planning docs
                 read_doc_tool,
                 list_docs_tool,
                 search_docs_tool,
