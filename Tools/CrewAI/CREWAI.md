@@ -35,6 +35,7 @@ Specialized AI agents for Enlisted mod development:
 | **Content Writing** | content_author | Haiku 4.5 (fast) |
 | **Schema Validation** | content_analyst | Haiku 4.5 (fast) |
 | **Balance Review** | balance_analyst | Haiku 4.5 (fast) |
+| **Architecture Advisory** | architecture_advisor | Opus 4.5 (10k thinking) |
 | **Implementation** | csharp_implementer | Sonnet 4.5 (execution) |
 
 ---
@@ -104,6 +105,9 @@ enlisted-crew code-review src/Features/*.cs
 # Planning
 enlisted-crew plan -f feature-name -d "description"
 
+# Architecture advisory
+enlisted-crew advise -f feature-name -p "problem-description"
+
 # Bug hunting
 enlisted-crew hunt-bug -d "description" -e "error-codes"
 ```
@@ -165,6 +169,16 @@ enlisted-crew hunt-bug -d "description" -e "error-codes"
 **Role:** Game balance review  
 **Tools:** 5 tools (domain context, event files, docs)
 
+### Architecture Advisor (Proactive Improvement)
+**Model:** Opus 4.5 with 10k thinking tokens  
+**Role:** Suggests architecture improvements based on industry patterns + Bannerlord constraints  
+**Tools:** 10 tools (systems knowledge, docs, code analysis, patterns)  
+**Configuration:**
+- Analyzes existing systems and recommends improvements
+- Provides prioritized suggestions (quick wins, technical debt, feature gaps)
+- Considers .NET 4.7.2, Harmony, SaveableTypeDefiner constraints
+- Industry patterns: state machines, event-driven, data-driven, progression systems
+
 ### C# Implementer (Execution)
 **Model:** Sonnet 4.5 (no thinking - execution)  
 **Role:** Code generation from specs  
@@ -179,9 +193,10 @@ enlisted-crew hunt-bug -d "description" -e "error-codes"
 **Use:** Pre-commit validation, CI checks
 
 ### planning_crew
-**Agents:** systems_analyst → feature_architect → documentation_maintainer  
+**Agents:** systems_analyst → feature_architect → documentation_maintainer → code_analyst  
 **Use:** Create design docs WITHOUT implementation  
-**Output:** `docs/CrewAI_Plans/feature-name.md` (Status: 📋 Planning)
+**Output:** `docs/CrewAI_Plans/feature-name.md` (Status: 📋 Planning)  
+**Validation:** code_analyst verifies file paths and event IDs before finalizing
 
 ### full_feature_crew
 **Agents:** All 9 agents  
@@ -200,6 +215,12 @@ enlisted-crew hunt-bug -d "description" -e "error-codes"
 ### documentation_crew
 **Agents:** documentation_maintainer  
 **Use:** Update docs after implementation
+
+### advisory_crew
+**Agents:** systems_analyst → architecture_advisor → documentation_maintainer → code_analyst  
+**Use:** Analyze systems and suggest architecture improvements  
+**Output:** `docs/CrewAI_Plans/[feature]-recommendations.md`  
+**Validation:** code_analyst verifies suggestions against existing code
 
 ---
 
@@ -265,9 +286,15 @@ enlisted-crew hunt-bug -d "description" -e "error-codes"
 | `load_content_context_tool` | Loads style guide, schemas |
 
 ### Planning Tools
-| Tool | Purpose |
-|------|---------|
-| `write_planning_doc_tool` | Writes to `docs/CrewAI_Plans/` with versioning |
+|| Tool | Purpose |
+||---------|---------|
+|| `write_planning_doc_tool` | Writes to `docs/CrewAI_Plans/` with versioning |
+
+### Verification Tools
+|| Tool | Purpose |
+||---------|---------|
+|| `verify_file_exists_tool` | Validates C# file paths exist before including in plans |
+|| `list_json_event_ids_tool` | Lists all event/opportunity IDs from JSON folders |
 
 ---
 
@@ -283,7 +310,8 @@ The `knowledge/` folder contains **dynamic context** that changes with the codeb
 | `error-codes.md` | Error meanings, log locations | code_analyst |
 | `json-schemas.md` | JSON field requirements | content_analyst, content_author |
 | `balance-values.md` | XP rates, tier thresholds, economy | content_analyst, content_author, balance_analyst |
-| `ui-systems.md` | Menu behaviors, Gauntlet screens | csharp_implementer |
+|| `ui-systems.md` | Menu behaviors, Gauntlet screens | csharp_implementer |
+|| `content-files.md` | JSON content inventory, folder locations | documentation_maintainer |
 
 ### Knowledge Source Mapping
 
@@ -294,6 +322,7 @@ code_knowledge → code_analyst (systems + error-codes)
 content_knowledge → content_analyst, content_author (schemas + balance)
 balance_knowledge → balance_analyst (balance + systems)
 ui_knowledge → csharp_implementer (ui-systems + systems)
+planning_knowledge → documentation_maintainer (systems + content-files)
 ```
 
 ### When to Update
@@ -399,7 +428,8 @@ Tools/CrewAI/
 │   ├── error-codes.md
 │   ├── json-schemas.md
 │   ├── balance-values.md
-│   └── ui-systems.md
+│   ├── ui-systems.md
+│   └── content-files.md
 ├── tests/                   # Unit tests
 ├── pyproject.toml           # Dependencies
 └── CREWAI.md               # This file

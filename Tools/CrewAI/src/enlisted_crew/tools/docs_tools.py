@@ -63,6 +63,9 @@ def get_project_root() -> Path:
 
 PROJECT_ROOT = get_project_root()
 
+# Content and module data paths
+MODULE_DATA_PATH = PROJECT_ROOT / "ModuleData"
+
 # Runtime and development paths
 BANNERLORD_INSTALL = Path(r"C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord")
 MOD_DEBUGGING_PATH = BANNERLORD_INSTALL / "Modules" / "Enlisted" / "Debugging"
@@ -924,6 +927,97 @@ def search_native_api_tool(query: str) -> str:
         return f"No matches for '{query}' in native decompile"
     
     return f"Native API matches for '{query}':\n\n" + "\n\n".join(results)
+
+
+@tool("Verify File Exists")
+def verify_file_exists_tool(file_path: str) -> str:
+    """
+    Verify that a file path exists in the project.
+    
+    Use this to validate file references BEFORE including them in planning docs.
+    Catches hallucinated file names early.
+    
+    Args:
+        file_path: Relative path from project root, e.g. "src/Features/Content/EventEffectApplier.cs"
+                   or "ModuleData/Enlisted/Events/some_file.json"
+    
+    Returns:
+        Verification result with exists/not-found status and suggestions if not found.
+    """
+    full_path = PROJECT_ROOT / file_path
+    
+    if full_path.exists():
+        return f"✅ VERIFIED: {file_path} exists"
+    
+    # File not found - try to suggest alternatives
+    suggestions = []
+    parent = full_path.parent
+    if parent.exists():
+        # List similar files in the same directory
+        stem = full_path.stem.lower()
+        for f in parent.iterdir():
+            if f.is_file() and (stem in f.stem.lower() or f.stem.lower() in stem):
+                suggestions.append(str(f.relative_to(PROJECT_ROOT)))
+    
+    result = f"❌ NOT FOUND: {file_path}"
+    if suggestions:
+        result += "\n   Similar files found:\n" + "\n".join(f"   • {s}" for s in suggestions[:5])
+    else:
+        # Maybe the directory doesn't exist
+        if not parent.exists():
+            result += f"\n   Directory does not exist: {parent.relative_to(PROJECT_ROOT)}"
+    
+    return result
+
+
+@tool("List JSON Event IDs")
+def list_json_event_ids_tool(folder: str = "Decisions") -> str:
+    """
+    List all event/opportunity IDs from JSON content files.
+    
+    Use this to validate event ID references BEFORE including them in planning docs.
+    Prevents hallucinating non-existent event IDs.
+    
+    Args:
+        folder: Which JSON folder to search. One of:
+                - "Decisions" - Camp opportunities, decisions (default)
+                - "Events" - Event definitions
+                - "Orders" - Order events (searches order_events/ subdir)
+    
+    Returns:
+        List of all IDs found in the specified folder.
+    """
+    json_folder = MODULE_DATA_PATH / "Enlisted"
+    
+    if folder == "Orders":
+        json_folder = json_folder / "Orders" / "order_events"
+    else:
+        json_folder = json_folder / folder
+    
+    if not json_folder.exists():
+        return f"ERROR: Folder not found: {json_folder.relative_to(PROJECT_ROOT)}"
+    
+    results = []
+    ids_found = []
+    
+    for json_file in sorted(json_folder.glob("*.json")):
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Extract IDs using regex - handles nested arrays
+                import re
+                ids = re.findall(r'"id"\s*:\s*"([^"]+)"', content)
+                if ids:
+                    ids_found.extend(ids)
+                    results.append(f"📄 {json_file.name}: {len(ids)} IDs")
+        except Exception as e:
+            results.append(f"⚠️ {json_file.name}: Error reading - {e}")
+    
+    summary = f"📁 {folder}/ - {len(ids_found)} total IDs across {len(results)} files\n\n"
+    summary += "Files:\n" + "\n".join(results)
+    summary += "\n\nAll IDs:\n" + "\n".join(f"  • {id}" for id in sorted(set(ids_found)))
+    
+    return summary
 
 
 @tool("List Feature Files")

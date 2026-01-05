@@ -36,6 +36,20 @@
 - Purpose: Pipeline for queuing and showing events, applying effects
 - Related: `EventCatalog.cs`, `EventSelector.cs`, `EventRequirementChecker.cs`
 
+**Effect Application Details:**
+- `ApplyEffects()` method at line 518 is the central effect processor
+- Reputation changes: `lordRep` (line 613-617), `officerRep` (line 620-624), `soldierRep` (line 627-631)
+- Escalation changes: `scrutiny` (635), `discipline` (641), `medicalRisk` (647)
+- Gold: line 654-667, HP: line 670-684, CompanyNeeds: line 728-740
+- News integration: `NotifyNewsOfEventOutcome()` at line 459 reports significant changes to `EnlistedNewsBehavior`
+- Only soldierRep shows inline UI notifications; other rep changes are silent
+
+**Integration Points for Reputation:**
+- Primary: `EventDeliveryManager.ApplyEffects()` - processes JSON event effects
+- Secondary: `OrderManager.cs` lines 809, 814, 819 - order completion bonuses
+- `EscalationManager.cs` line 517-553 - `ApplyPassiveDecay()` daily reputation decay
+- `EscalationManager.cs` line 677-697 - `CheckThresholdCrossing()` triggers milestone events
+
 ### Escalation System
 - Location: `src/Features/Escalation/EscalationManager.cs`
 - Purpose: Tracks escalation tracks and reputation systems

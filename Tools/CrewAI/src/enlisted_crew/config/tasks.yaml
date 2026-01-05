@@ -192,6 +192,82 @@ validate_bug_fix:
   agent: qa_agent
 
 # =============================================================================
+# ADVISORY TASKS
+# =============================================================================
+
+suggest_improvements:
+  description: >
+    Analyze a system or feature area and suggest improvements:
+    
+    Focus Area: {focus_area}
+    Current Pain Points: {pain_points}
+    
+    ANALYSIS PROCESS:
+    1. Research the current implementation thoroughly
+    2. Understand WHY it was built this way (constraints, history)
+    3. Identify gaps compared to industry best practices
+    4. Consider Bannerlord modding constraints
+    5. Propose concrete, actionable improvements
+    
+    SUGGESTION CATEGORIES:
+    - QUICK WINS: Can implement in <1 day, low risk, high value
+    - TECHNICAL DEBT: Problems that will get worse if ignored
+    - FEATURE GAPS: Functionality players expect but is missing
+    - ARCHITECTURE: Structural improvements for maintainability
+    - FUTURE-PROOFING: Enable future features without breaking changes
+    
+    FOR EACH SUGGESTION INCLUDE:
+    - Problem: What's wrong or missing?
+    - Impact: How does this affect players/developers?
+    - Solution: Concrete implementation approach
+    - Effort: Hours/days estimate
+    - Risk: Save compatibility, crash risk, complexity
+    - Dependencies: What must exist first?
+    
+    CONSTRAINTS TO RESPECT:
+    - .NET Framework 4.7.2 compatibility
+    - Save/load compatibility with existing saves
+    - Harmony patching limitations
+    - Single-threaded game loop
+  expected_output: >
+    Architecture improvement report with:
+    - Current State Assessment (brief)
+    - Prioritized Suggestions by category
+    - For each: Problem, Impact, Solution, Effort, Risk
+    - Recommended implementation order
+    - Dependencies between suggestions
+  agent: architecture_advisor
+
+review_architecture:
+  description: >
+    Review an existing system's architecture for quality and suggest refactoring:
+    
+    System: {system_name}
+    Files: {file_paths}
+    
+    REVIEW CRITERIA:
+    1. Single Responsibility: Does each class do one thing?
+    2. Coupling: Are dependencies explicit and minimal?
+    3. Testability: Could this be unit tested (in theory)?
+    4. Error Handling: Are failures handled gracefully?
+    5. Performance: Any obvious bottlenecks?
+    6. Maintainability: Can a new developer understand this?
+    7. Extensibility: Can new features be added without major changes?
+    
+    BANNERLORD-SPECIFIC CHECKS:
+    - SaveableTypeDefiner: All persistent classes registered?
+    - CampaignBehavior lifecycle: Proper initialization/cleanup?
+    - Harmony patches: Minimal and well-guarded?
+    - Native API usage: Null-safe and version-aware?
+  expected_output: >
+    Architecture review with:
+    - Quality scores (1-5) for each criterion
+    - Specific issues found
+    - Refactoring suggestions with effort estimates
+    - Priority ranking
+  agent: architecture_advisor
+
+# =============================================================================
 # FEATURE DESIGN TASKS
 # =============================================================================
 
@@ -447,6 +523,21 @@ create_planning_doc:
     6. Implementation Phases - Suggested order of work
     7. Open Questions - Unresolved design decisions
     
+    VERIFICATION REQUIREMENTS (CRITICAL - prevents hallucinated references):
+    Before including ANY file path or event ID in the document:
+    1. Use verify_file_exists_tool("src/Features/SomeFile.cs") for C# file paths
+    2. Use list_json_event_ids_tool("Decisions") to verify opportunity IDs exist
+    3. Use list_json_event_ids_tool("Events") to verify event IDs exist
+    4. NEVER reference files like "EventEffectApplier.cs" without verification
+    5. NEVER reference IDs like "opp_some_name" without verifying they exist
+    6. If a file doesn't exist, find and use the correct file name
+    
+    JSON FOLDER PATHS (correct locations):
+    - Camp opportunities: ModuleData/Enlisted/Decisions/camp_opportunities.json
+    - Events: ModuleData/Enlisted/Events/
+    - Order events: ModuleData/Enlisted/Orders/order_events/
+    - NOT "Events/" for opportunities - that's WRONG
+    
     IMPORTANT: You MUST call write_planning_doc_tool(feature_name="{feature_name}", content="...") to save the document.
   expected_output: >
     Success message from write_planning_doc_tool showing:
@@ -454,6 +545,50 @@ create_planning_doc:
     - Whether it was a new document, minor update, or major version
     - Status: 📋 Planning in the document content
   agent: documentation_maintainer
+
+validate_planning_doc:
+  description: >
+    Validate a planning document for accuracy before finalizing.
+    
+    Planning Document: {planning_doc_path}
+    
+    VALIDATION CHECKS:
+    1. File path verification:
+       - Extract all C# file paths mentioned (src/Features/*.cs)
+       - Use verify_file_exists_tool for EACH path
+       - Flag any NOT FOUND paths
+    
+    2. Event ID verification:
+       - Extract all event/opportunity IDs mentioned (opp_*, evt_*, etc.)
+       - Use list_json_event_ids_tool("Decisions") for opp_* IDs
+       - Use list_json_event_ids_tool("Events") for event IDs
+       - Flag any IDs not in the returned lists
+    
+    3. JSON folder path verification:
+       - Camp opportunities should be in Decisions/, NOT Events/
+       - Order events should be in Orders/order_events/
+       - Flag incorrect folder references
+    
+    4. Line number verification (if included):
+       - Use read_csharp_tool to check if referenced line numbers are approximately correct
+       - Flag if method is referenced at line X but actually at line Y (off by >20 lines)
+    
+    REPORT FORMAT:
+    For each issue found, report:
+    - ❌ [Type] Description of issue
+    - Suggested fix
+    
+    If all verifications pass:
+    - ✅ All file paths verified
+    - ✅ All event IDs verified
+    - ✅ All folder paths correct
+  expected_output: >
+    Validation report with:
+    - List of verification errors found (or "All checks passed")
+    - Suggested corrections for each error
+    - Overall pass/fail status
+    - Recommendation to update planning doc if errors found
+  agent: code_analyst
 
 sync_documentation:
   description: >

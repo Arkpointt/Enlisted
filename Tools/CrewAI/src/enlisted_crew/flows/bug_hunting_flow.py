@@ -57,6 +57,7 @@ from ..tools import (
     validate_content_tool,
     check_code_style_tool,
     check_bannerlord_patterns_tool,
+    verify_file_exists_tool,
 )
 
 
@@ -228,6 +229,7 @@ def get_implementer() -> Agent:
                 - Always check Hero.MainHero != null
                 - Use TextObject for strings (not concatenation)
                 - Add new files to Enlisted.csproj
+                - VERIFY file paths exist before referencing them
                 
                 OUTPUT FORMAT:
                 - Write your fix proposal as plain text with code blocks
@@ -236,6 +238,7 @@ def get_implementer() -> Agent:
                 """,
             llm=SONNET_EXECUTE,
             tools=[
+                verify_file_exists_tool,  # Verify file paths before proposing changes
                 search_csharp_tool,  # Search to find relevant code
                 read_csharp_snippet_tool,  # Read targeted snippets
                 read_csharp_tool,  # Full file when implementing

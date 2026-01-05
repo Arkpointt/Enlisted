@@ -45,6 +45,8 @@ from .docs_tools import (
     load_feature_context_tool,
     load_code_context_tool,
     load_domain_context_tool,
+    verify_file_exists_tool,
+    list_json_event_ids_tool,
 )
 from .planning_tools import (
     write_planning_doc_tool,
@@ -90,6 +92,9 @@ __all__ = [
     "load_feature_context_tool",
     "load_code_context_tool",
     "load_domain_context_tool",
+    # Verification tools
+    "verify_file_exists_tool",
+    "list_json_event_ids_tool",
     # Planning tools
     "write_planning_doc_tool",
 ]

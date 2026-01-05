@@ -48,6 +48,8 @@ from .tools import (
     load_code_context_tool,
     load_domain_context_tool,
     write_planning_doc_tool,
+    verify_file_exists_tool,
+    list_json_event_ids_tool,
 )
 
 # === LLM Configurations ===
@@ -163,6 +165,14 @@ class EnlistedCrew:
             ]
         )
         
+        # Planning knowledge - for documentation_maintainer (planning tasks)
+        self.planning_knowledge = TextFileKnowledgeSource(
+            file_paths=[
+                "enlisted-systems.md",
+                "content-files.md",  # JSON content inventory for verification
+            ]
+        )
+        
         # UI knowledge - for feature_architect, csharp_implementer (UI work)
         self.ui_knowledge = TextFileKnowledgeSource(
             file_paths=[
@@ -212,6 +222,8 @@ class EnlistedCrew:
             llm=SONNET_ANALYSIS,  # TIER 2: Analysis needs reasoning to catch bugs
             tools=[
                 load_code_context_tool,  # CALL FIRST - loads dev guide, APIs, common issues
+                verify_file_exists_tool,     # Verify file paths in planning docs
+                list_json_event_ids_tool,    # Verify event IDs in planning docs
                 run_build_tool,
                 validate_content_tool,
                 check_code_style_tool,
@@ -255,6 +267,8 @@ class EnlistedCrew:
             llm=OPUS_DEEP,  # TIER 1: Architecture mistakes are expensive
             tools=[
                 load_feature_context_tool,    # Context first
+                verify_file_exists_tool,      # Verify file paths in specs
+                list_json_event_ids_tool,     # Verify event IDs in specs
                 search_docs_tool,             # Find docs  
                 read_doc_tool,                # Read docs
                 search_csharp_tool,           # Find code
@@ -274,6 +288,7 @@ class EnlistedCrew:
             config=self.agents_config["csharp_implementer"],
             llm=SONNET_EXECUTE,  # TIER 3: Executing from clear specs, QA catches issues
             tools=[
+                verify_file_exists_tool,      # Verify file paths before proposing changes
                 run_build_tool,
                 validate_content_tool,
                 check_code_style_tool,
@@ -297,6 +312,7 @@ class EnlistedCrew:
             llm=HAIKU_FAST,
             tools=[
                 load_content_context_tool,  # CALL FIRST - loads style guide, schemas, reminders
+                list_json_event_ids_tool,   # Check existing IDs to avoid conflicts
                 create_event_json_tool,
                 check_writing_style_tool,
                 check_tooltip_style_tool,
@@ -351,6 +367,8 @@ class EnlistedCrew:
             llm=SONNET_ANALYSIS,  # TIER 2: Doc sync requires reasoning about what changed
             tools=[
                 write_planning_doc_tool,     # Write planning docs
+                verify_file_exists_tool,     # Verify file paths before including
+                list_json_event_ids_tool,    # Verify event IDs before including
                 read_doc_tool,
                 list_docs_tool,
                 search_docs_tool,
@@ -360,7 +378,32 @@ class EnlistedCrew:
                 list_feature_files_tool,
                 load_domain_context_tool,
             ],
+            knowledge_sources=[self.planning_knowledge],
             respect_context_window=True,
+        )
+    
+    @agent
+    def architecture_advisor(self) -> Agent:
+        """Architecture advisor - uses Opus for deep analysis and improvement suggestions."""
+        return Agent(
+            config=self.agents_config["architecture_advisor"],
+            llm=OPUS_DEEP,  # TIER 1: Architecture analysis needs deep reasoning
+            tools=[
+                load_domain_context_tool,    # Understand game systems first
+                load_feature_context_tool,   # Understand architecture patterns
+                verify_file_exists_tool,     # Verify paths when suggesting changes
+                search_docs_tool,            # Find documentation
+                read_doc_tool,               # Read docs
+                search_csharp_tool,          # Find code patterns
+                read_csharp_snippet_tool,    # Read targeted snippets
+                read_csharp_tool,            # Full files when needed
+                list_feature_files_tool,     # Understand feature structure
+                search_native_api_tool,      # Check Bannerlord API constraints
+            ],
+            knowledge_sources=[self.systems_knowledge],
+            respect_context_window=True,
+            max_retry_limit=2,
+            allow_delegation=True,
         )
     
     # === Tasks ===
@@ -413,6 +456,21 @@ class EnlistedCrew:
         """Validate a proposed bug fix."""
         return Task(
             config=self.tasks_config["validate_bug_fix"],
+        )
+    
+    # Advisory tasks
+    @task
+    def suggest_improvements_task(self) -> Task:
+        """Suggest improvements based on industry best practices."""
+        return Task(
+            config=self.tasks_config["suggest_improvements"],
+        )
+    
+    @task
+    def review_architecture_task(self) -> Task:
+        """Review system architecture and suggest refactoring."""
+        return Task(
+            config=self.tasks_config["review_architecture"],
         )
     
     # Design tasks
@@ -519,6 +577,13 @@ class EnlistedCrew:
             config=self.tasks_config["create_planning_doc"],
         )
     
+    @task
+    def validate_planning_doc_task(self) -> Task:
+        """Validate a planning document for accuracy (file paths, event IDs, etc.)."""
+        return Task(
+            config=self.tasks_config["validate_planning_doc"],
+        )
+    
     # === Crews ===
     
     @crew
@@ -534,7 +599,20 @@ class EnlistedCrew:
         2. code_analyst analyzes existing code patterns
         3. feature_architect produces detailed spec
         4. balance_analyst reviews for game balance
+        5. code_analyst validates file paths and event IDs in the spec
+        
+        The final validation step catches hallucinated references before the spec
+        is considered complete.
         """
+        # Create design task and validation task with context chaining
+        design = self.design_feature_task()
+        review = self.review_feature_design_task()
+        review.context = [design]
+        
+        # Reuse validate_planning_doc for spec validation (same checks apply)
+        validate_spec = self.validate_planning_doc_task()
+        validate_spec.context = [design, review]
+        
         return Crew(
             agents=[
                 self.systems_analyst(),
@@ -545,8 +623,9 @@ class EnlistedCrew:
             tasks=[
                 self.analyze_systems_task(),
                 self.analyze_codebase_task(),
-                self.design_feature_task(),
-                self.review_feature_design_task(),
+                design,
+                review,
+                validate_spec,
             ],
             process=Process.sequential,
             verbose=True,
@@ -741,6 +820,54 @@ class EnlistedCrew:
         )
     
     @crew
+    def advisory_crew(self) -> Crew:
+        """
+        Architecture advisory crew for suggesting improvements.
+        
+        Use for:
+        - "What should I improve in the Escalation system?"
+        - "Review the Content system architecture"
+        - "What are quick wins for the Camp UI?"
+        - Proactive improvement suggestions based on industry best practices
+        
+        Unlike planning_crew (which designs what you ask for), this crew
+        PROACTIVELY suggests what SHOULD be built based on:
+        - Industry best practices (state machines, event-driven, etc.)
+        - Game design patterns (progression, economy, feedback loops)
+        - Technical debt identification
+        - Bannerlord modding constraints
+        
+        Workflow:
+        1. systems_analyst researches current implementation
+        2. architecture_advisor suggests improvements
+        3. documentation_maintainer writes recommendations to planning doc
+        4. code_analyst validates file paths referenced in recommendations
+        """
+        # Create tasks with context chaining for validation
+        suggest = self.suggest_improvements_task()
+        create_doc = self.create_planning_doc_task()
+        create_doc.context = [suggest]
+        validate_doc = self.validate_planning_doc_task()
+        validate_doc.context = [create_doc]
+        
+        return Crew(
+            agents=[
+                self.systems_analyst(),
+                self.architecture_advisor(),
+                self.documentation_maintainer(),
+                self.code_analyst(),  # Validates the recommendations
+            ],
+            tasks=[
+                self.analyze_systems_task(),
+                suggest,
+                create_doc,
+                validate_doc,
+            ],
+            process=Process.sequential,
+            verbose=True,
+        )
+    
+    @crew
     def planning_crew(self) -> Crew:
         """
         Planning-only crew for creating design docs WITHOUT implementation.
@@ -756,18 +883,29 @@ class EnlistedCrew:
         Workflow:
         1. systems_analyst researches existing systems
         2. feature_architect creates design spec
-        3. documentation_maintainer writes the planning doc (in ANEWFEATURE/)
+        3. documentation_maintainer writes the planning doc (with verification)
+        4. code_analyst validates the planning doc (checks file paths, event IDs)
+        
+        The validation step catches hallucinated file names, fabricated event IDs,
+        and incorrect folder paths BEFORE the document is finalized.
         """
+        # Create validation task with context from planning doc task
+        create_doc = self.create_planning_doc_task()
+        validate_doc = self.validate_planning_doc_task()
+        validate_doc.context = [create_doc]  # Pass planning doc to validator
+        
         return Crew(
             agents=[
                 self.systems_analyst(),
                 self.feature_architect(),
                 self.documentation_maintainer(),
+                self.code_analyst(),  # Validates the planning doc
             ],
             tasks=[
                 self.analyze_systems_task(),
                 self.design_feature_task(),
-                self.create_planning_doc_task(),
+                create_doc,
+                validate_doc,
             ],
             process=Process.sequential,
             verbose=True,

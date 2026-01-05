@@ -23,10 +23,11 @@ Tools/CrewAI/
 │   ├── crew.py              # Crew orchestration (bug_hunting_crew, planning_crew, etc.)
 │   └── main.py              # Entry point
 ├── knowledge/               # Dynamic context files (queried at runtime)
-│   ├── enlisted-systems.md  # System summaries, key classes
+│   ├── enlisted-systems.md  # System summaries, key classes, effect details
 │   ├── error-codes.md       # Error code meanings, log locations
 │   ├── json-schemas.md      # JSON field requirements
-│   └── balance-values.md    # XP rates, tier thresholds, economy
+│   ├── balance-values.md    # XP rates, tier thresholds, economy
+│   └── content-files.md     # JSON content inventory, folder locations
 ├── tests/                   # Unit tests
 └── pyproject.toml           # Dependencies
 ```
@@ -69,6 +70,7 @@ def systems_analyst(self) -> Agent:
 - `content_knowledge` → content_analyst, content_author (schemas + balance)
 - `balance_knowledge` → balance_analyst (balance + systems)
 - `ui_knowledge` → csharp_implementer (ui-systems + systems)
+- `planning_knowledge` → documentation_maintainer (systems + content-files)
 
 ## ⚡ Quick Commands
 
@@ -95,7 +97,7 @@ pytest tests/
 | Crew | Agents | Use Case |
 |------|--------|----------|
 | `bug_hunting_crew()` | code_analyst → systems_analyst → csharp_implementer → qa_agent | Crash investigation |
-| `planning_crew()` | systems_analyst → feature_architect → documentation_maintainer | Design docs only |
+|| `planning_crew()` | systems_analyst → feature_architect → documentation_maintainer → code_analyst | Design docs with validation |
 | `full_feature_crew()` | All agents | Complete feature development |
 | `validation_crew()` | qa_agent → documentation_maintainer | Pre-commit checks |
 | `content_creation_crew()` | narrative_designer → qa_agent | JSON events/decisions |
