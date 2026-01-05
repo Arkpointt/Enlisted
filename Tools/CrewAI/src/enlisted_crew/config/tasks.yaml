@@ -550,7 +550,7 @@ validate_planning_doc:
   description: >
     Validate a planning document for accuracy before finalizing.
     
-    Planning Document: {planning_doc_path}
+    You will receive the planning document content from the previous task's output via context.
     
     VALIDATION CHECKS:
     1. File path verification:

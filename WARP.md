@@ -158,6 +158,10 @@ Tools/CrewAI/
 1. **Tools: Python Only, NOT YAML** — When using `@CrewBase` with `config=`, define tools in Python only (not in agents.yaml)
 2. **Task Context: Use Method Names** — In tasks.yaml `context:` field, use full method names like `analyze_systems_task` (not `analyze_systems`)
 3. **Knowledge Sources: Relative Paths** — Use relative paths like `"enlisted-systems.md"` (CrewAI resolves from knowledge/ folder)
+4. **Context Chaining** — In sequential process, adjacent tasks auto-receive previous output. Use explicit `task.context = [task1, task2]` for:
+   - Non-adjacent dependencies (task 4 needs task 1's output)
+   - Multiple dependencies (task needs outputs from tasks 2 AND 3)
+   - Example: `planning_crew` uses `create_doc.context = [analyze, design]` so documentation receives both analysis and design outputs
 
 ## 📂 Project Structure
 

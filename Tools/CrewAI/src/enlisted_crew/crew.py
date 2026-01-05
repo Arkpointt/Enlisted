@@ -597,21 +597,27 @@ class EnlistedCrew:
         Workflow:
         1. systems_analyst researches system interconnections
         2. code_analyst analyzes existing code patterns
-        3. feature_architect produces detailed spec
+        3. feature_architect produces detailed spec (receives 1+2)
         4. balance_analyst reviews for game balance
         5. code_analyst validates file paths and event IDs in the spec
         
         The final validation step catches hallucinated references before the spec
         is considered complete.
         """
-        # Create design task and validation task with context chaining
-        design = self.design_feature_task()
-        review = self.review_feature_design_task()
-        review.context = [design]
+        # Create tasks with explicit context for non-adjacent dependencies
+        analyze_sys = self.analyze_systems_task()
+        analyze_code = self.analyze_codebase_task()
         
-        # Reuse validate_planning_doc for spec validation (same checks apply)
+        # Design needs BOTH systems and code analysis (non-adjacent: needs task 1)
+        design = self.design_feature_task()
+        design.context = [analyze_sys, analyze_code]
+        
+        review = self.review_feature_design_task()
+        # Review auto-receives design output (adjacent)
+        
+        # Validation needs the design to check file paths
         validate_spec = self.validate_planning_doc_task()
-        validate_spec.context = [design, review]
+        validate_spec.context = [design]
         
         return Crew(
             agents=[
@@ -621,8 +627,8 @@ class EnlistedCrew:
                 self.balance_analyst(),
             ],
             tasks=[
-                self.analyze_systems_task(),
-                self.analyze_codebase_task(),
+                analyze_sys,
+                analyze_code,
                 design,
                 review,
                 validate_spec,
@@ -641,9 +647,18 @@ class EnlistedCrew:
         
         Workflow:
         1. csharp_implementer writes C# code
-        2. content_author creates JSON content
-        3. qa_agent validates everything
+        2. content_author creates JSON content (receives C# context)
+        3. qa_agent validates everything (receives both)
         """
+        # Create tasks - sequential auto-passes adjacent outputs
+        impl_csharp = self.implement_csharp_task()
+        impl_content = self.implement_content_task()
+        # Content auto-receives C# output (adjacent)
+        
+        # Validation needs both implementation outputs
+        validate = self.validate_all_task()
+        validate.context = [impl_csharp, impl_content]
+        
         return Crew(
             agents=[
                 self.csharp_implementer(),
@@ -651,9 +666,9 @@ class EnlistedCrew:
                 self.qa_agent(),
             ],
             tasks=[
-                self.implement_csharp_task(),
-                self.implement_content_task(),
-                self.validate_all_task(),
+                impl_csharp,
+                impl_content,
+                validate,
             ],
             process=Process.sequential,
             verbose=True,
@@ -729,7 +744,12 @@ class EnlistedCrew:
         
         Use for: PR reviews, code audits, pre-commit checks.
         Uses Sonnet 4.5 + thinking for code analysis.
+        
+        Workflow:
+        1. code_analyst reviews code patterns and style
+        2. qa_agent validates implementation (receives review)
         """
+        # Sequential auto-passes review output to validation (adjacent)
         return Crew(
             agents=[self.code_analyst(), self.qa_agent()],
             tasks=[self.review_code_task(), self.validate_implementation_task()],
@@ -839,14 +859,22 @@ class EnlistedCrew:
         
         Workflow:
         1. systems_analyst researches current implementation
-        2. architecture_advisor suggests improvements
-        3. documentation_maintainer writes recommendations to planning doc
-        4. code_analyst validates file paths referenced in recommendations
+        2. architecture_advisor suggests improvements (receives analysis)
+        3. documentation_maintainer writes recommendations (receives both)
+        4. code_analyst validates file paths (receives doc)
         """
-        # Create tasks with context chaining for validation
+        # Create tasks with explicit context for multi-task dependencies
+        analyze = self.analyze_systems_task()
+        
+        # Suggest needs the analysis (non-adjacent if we add more tasks later)
         suggest = self.suggest_improvements_task()
+        suggest.context = [analyze]
+        
+        # Doc needs both analysis context AND suggestions
         create_doc = self.create_planning_doc_task()
-        create_doc.context = [suggest]
+        create_doc.context = [analyze, suggest]
+        
+        # Validation needs the doc output
         validate_doc = self.validate_planning_doc_task()
         validate_doc.context = [create_doc]
         
@@ -858,7 +886,7 @@ class EnlistedCrew:
                 self.code_analyst(),  # Validates the recommendations
             ],
             tasks=[
-                self.analyze_systems_task(),
+                analyze,
                 suggest,
                 create_doc,
                 validate_doc,
@@ -882,17 +910,27 @@ class EnlistedCrew:
         
         Workflow:
         1. systems_analyst researches existing systems
-        2. feature_architect creates design spec
-        3. documentation_maintainer writes the planning doc (with verification)
+        2. feature_architect creates design spec (receives analysis)
+        3. documentation_maintainer writes the planning doc (receives both)
         4. code_analyst validates the planning doc (checks file paths, event IDs)
         
         The validation step catches hallucinated file names, fabricated event IDs,
         and incorrect folder paths BEFORE the document is finalized.
         """
-        # Create validation task with context from planning doc task
+        # Create tasks with explicit context for multi-task dependencies
+        analyze = self.analyze_systems_task()
+        
+        # Design needs the systems analysis
+        design = self.design_feature_task()
+        design.context = [analyze]
+        
+        # Doc creation needs both analysis AND design
         create_doc = self.create_planning_doc_task()
+        create_doc.context = [analyze, design]
+        
+        # Validation needs the doc output
         validate_doc = self.validate_planning_doc_task()
-        validate_doc.context = [create_doc]  # Pass planning doc to validator
+        validate_doc.context = [create_doc]
         
         return Crew(
             agents=[
@@ -902,8 +940,8 @@ class EnlistedCrew:
                 self.code_analyst(),  # Validates the planning doc
             ],
             tasks=[
-                self.analyze_systems_task(),
-                self.design_feature_task(),
+                analyze,
+                design,
                 create_doc,
                 validate_doc,
             ],

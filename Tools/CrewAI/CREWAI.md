@@ -196,6 +196,7 @@ enlisted-crew hunt-bug -d "description" -e "error-codes"
 **Agents:** systems_analyst → feature_architect → documentation_maintainer → code_analyst  
 **Use:** Create design docs WITHOUT implementation  
 **Output:** `docs/CrewAI_Plans/feature-name.md` (Status: 📋 Planning)  
+**Context Flow:** design receives analyze output, create_doc receives [analyze, design], validate receives create_doc  
 **Validation:** code_analyst verifies file paths and event IDs before finalizing
 
 ### full_feature_crew
@@ -220,7 +221,26 @@ enlisted-crew hunt-bug -d "description" -e "error-codes"
 **Agents:** systems_analyst → architecture_advisor → documentation_maintainer → code_analyst  
 **Use:** Analyze systems and suggest architecture improvements  
 **Output:** `docs/CrewAI_Plans/[feature]-recommendations.md`  
+**Context Flow:** suggest receives analyze, create_doc receives [analyze, suggest], validate receives create_doc  
 **Validation:** code_analyst verifies suggestions against existing code
+
+### feature_design_crew
+**Agents:** systems_analyst → code_analyst → feature_architect → balance_analyst → code_analyst  
+**Use:** Complex architectural design with validation  
+**Output:** Technical specifications  
+**Context Flow:** design receives [analyze_systems, analyze_code], validate receives design  
+**Validation:** Catches hallucinated file paths and event IDs
+
+### feature_implementation_crew
+**Agents:** csharp_implementer → content_author → qa_agent  
+**Use:** Execute approved feature specs  
+**Context Flow:** validate receives [impl_csharp, impl_content]  
+**Validation:** Comprehensive build and content validation
+
+### code_review_crew
+**Agents:** code_analyst → qa_agent  
+**Use:** PR reviews, code audits  
+**Context Flow:** Sequential (auto-passes review to validation)
 
 ---
 
