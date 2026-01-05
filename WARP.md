@@ -99,69 +99,32 @@ Better prompts = better results + fewer wasted AI credits.
 
 **Start fresh conversations:** Don't continue unrelated tasks in the same conversation—it confuses context and wastes tokens.
 
-## 🤖 CrewAI Integration (Complex Tasks)
+## 🤖 CrewAI - Three Workflows
 
-**For complex multi-agent work**, use the CrewAI integration at `Tools/CrewAI/`.
+**For complex multi-agent work**, use CrewAI at `Tools/CrewAI/`.
 
-| Task | Command |
-|------|---------|
-| Bug investigation | `"Use CrewAI bug_hunting_crew to investigate E-ENCOUNTER-042"` |
-| Planning docs | `"Use CrewAI planning_crew to design [feature]"` |
-| Full feature dev | `"Use CrewAI full_feature_crew to implement [spec]"` |
-| Pre-release check | `"Use CrewAI validation_crew to check all content"` |
-| New content | `"Use CrewAI content_creation_crew to add [events]"` |
+```bash
+# Activate first
+cd Tools/CrewAI && .\.venv\Scripts\Activate.ps1
+
+# Design a feature (research → advise → design → document → validate)
+enlisted-crew plan -f "feature-name" -d "description"
+
+# Find & fix bugs (investigate → analyze → fix → validate)
+enlisted-crew hunt-bug -d "bug description" -e "E-XXX-*"
+
+# Build from approved plan (analyze → code → content → validate → docs)
+enlisted-crew implement -p "docs/CrewAI_Plans/feature.md"
+
+# Quick pre-commit check
+enlisted-crew validate
+```
 
 **When to use CrewAI vs Warp directly:**
 - Quick fixes, single-file changes → Warp directly
-- Bug hunting with error codes → CrewAI `bug_hunting_crew`
-- Multi-file features → CrewAI `full_feature_crew`
-- Planning docs (ANEWFEATURE/) → CrewAI `planning_crew`
+- Multi-file features, planning, bug hunting → CrewAI
 
-**Setup:** See [Tools/CrewAI/README.md](Tools/CrewAI/README.md) (requires `.env` with `ANTHROPIC_API_KEY`)
-
-### CrewAI Internal Structure (Tools/CrewAI/)
-
-```
-Tools/CrewAI/
-├── src/enlisted_crew/
-│   ├── config/
-│   │   ├── agents.yaml      # Agent definitions (role, goal, backstory)
-│   │   └── tasks.yaml       # Task templates
-│   ├── tools/               # Custom tools (docs_tools.py, validation_tools.py)
-│   ├── crew.py              # Crew orchestration (bug_hunting_crew, planning_crew, etc.)
-│   └── main.py              # Entry point
-├── knowledge/               # Dynamic context files (queried at runtime)
-│   ├── enlisted-systems.md  # System summaries, key classes, effect details
-│   ├── error-codes.md       # Error code meanings, log locations
-│   ├── json-schemas.md      # JSON field requirements
-│   ├── balance-values.md    # XP rates, tier thresholds, economy
-│   └── content-files.md     # JSON content inventory, folder locations
-├── tests/                   # Unit tests
-└── pyproject.toml           # Dependencies
-```
-
-**Knowledge Sources:** The `knowledge/` folder contains **dynamic context** that changes with the codebase.
-- **Backstories** = durable, architectural ("Check src/Features/Enlistment/ for XP logic")
-- **Knowledge files** = implementation details ("T2=800 XP, T3=3000 XP")
-- When systems change, `documentation_maintainer` updates knowledge files
-- Agents query these at runtime instead of relying on stale backstory text
-
-**Knowledge wiring** (in `crew.py`):
-- `systems_knowledge` → systems_analyst, feature_architect
-- `code_knowledge` → code_analyst (systems + error-codes)
-- `content_knowledge` → content_analyst, content_author (schemas + balance)
-- `balance_knowledge` → balance_analyst (balance + systems)
-- `ui_knowledge` → csharp_implementer (ui-systems + systems)
-- `planning_knowledge` → documentation_maintainer (systems + content-files)
-
-**CrewAI Config Patterns:**
-1. **Tools: Python Only, NOT YAML** — When using `@CrewBase` with `config=`, define tools in Python only (not in agents.yaml)
-2. **Task Context: Use Method Names** — In tasks.yaml `context:` field, use full method names like `analyze_systems_task` (not `analyze_systems`)
-3. **Knowledge Sources: Relative Paths** — Use relative paths like `"enlisted-systems.md"` (CrewAI resolves from knowledge/ folder)
-4. **Context Chaining** — In sequential process, adjacent tasks auto-receive previous output. Use explicit `task.context = [task1, task2]` for:
-   - Non-adjacent dependencies (task 4 needs task 1's output)
-   - Multiple dependencies (task needs outputs from tasks 2 AND 3)
-   - Example: `planning_crew` uses `create_doc.context = [analyze, design]` so documentation receives both analysis and design outputs
+**Setup:** See [Tools/CrewAI/CREWAI.md](Tools/CrewAI/CREWAI.md) (requires `.env` with `ANTHROPIC_API_KEY`)
 
 ## 📂 Project Structure
 

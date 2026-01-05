@@ -1,42 +1,94 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Multi-agent AI workflows for Enlisted Bannerlord mod development.  
+**Summary:** Three AI workflows for Enlisted Bannerlord mod development.  
 **Status:** ✅ Implemented  
 **Last Updated:** 2026-01-05
 
 ---
 
-## 📑 Table of Contents
+## 📑 Quick Start
 
-1. [Overview](#overview)
-2. [Setup](#setup)
-3. [CLI Commands](#cli-commands)
-4. [Agents](#agents)
-5. [Crews (Workflows)](#crews-workflows)
-6. [Custom Tools](#custom-tools)
-7. [Knowledge Sources](#knowledge-sources)
-8. [Best Practices](#best-practices)
-9. [Warp Integration](#warp-integration)
-10. [Architecture Reference](#architecture-reference)
+```bash
+# Design a feature
+enlisted-crew plan -f "feature-name" -d "what it does"
+
+# Find and fix bugs  
+enlisted-crew hunt-bug -d "bug description" -e "E-XXX-*"
+
+# Build from approved plan
+enlisted-crew implement -p "docs/CrewAI_Plans/feature.md"
+
+# Pre-commit validation
+enlisted-crew validate
+```
 
 ---
 
-## Overview
+## Three Workflows
 
-Specialized AI agents for Enlisted mod development:
+### 1. 🎯 Plan - Design a Feature
+```bash
+enlisted-crew plan -f "reputation-integration" -d "Connect reputation to morale/supply"
+```
 
-| Capability | Agent | Model |
-|------------|-------|-------|
-| **Systems Analysis** | systems_analyst | Opus 4.5 (10k thinking) |
-| **Feature Design** | feature_architect | Opus 4.5 (10k thinking) |
-| **Code Analysis** | code_analyst | Sonnet 4.5 (5k thinking) |
-| **Planning Docs** | documentation_maintainer | Sonnet 4.5 (5k thinking) |
-| **Quality Assurance** | qa_agent | Sonnet 4.5 (3k thinking) |
-| **Content Writing** | content_author | Haiku 4.5 (fast) |
-| **Schema Validation** | content_analyst | Haiku 4.5 (fast) |
-| **Balance Review** | balance_analyst | Haiku 4.5 (fast) |
-| **Architecture Advisory** | architecture_advisor | Opus 4.5 (10k thinking) |
-| **Implementation** | csharp_implementer | Sonnet 4.5 (execution) |
+**What it does:**
+1. **Research** - systems_analyst investigates existing code
+2. **Advise** - architecture_advisor suggests best practices
+3. **Design** - feature_architect creates technical spec
+4. **Document** - documentation_maintainer writes to `docs/CrewAI_Plans/`
+5. **Validate** - code_analyst verifies no hallucinated files/IDs
+
+**Output:** Validated planning doc ready for implementation.
+
+---
+
+### 2. 🐛 Hunt Bug - Find & Fix Issues
+```bash
+enlisted-crew hunt-bug -d "Crash when opening camp menu" -e "E-CAMPUI-042"
+```
+
+**What it does:**
+1. **Investigate** - code_analyst searches logs, finds bug location
+2. **Analyze** - systems_analyst checks related systems for impact
+3. **Fix** - csharp_implementer proposes minimal code fix
+4. **Validate** - qa_agent verifies fix builds and doesn't break anything
+
+**Output:** Bug report + validated fix ready to apply.
+
+---
+
+### 3. 🛠️ Implement - Build from Plan
+```bash
+enlisted-crew implement -p "docs/CrewAI_Plans/reputation-integration.md"
+```
+
+**What it does:**
+1. **Analyze** - systems_analyst reads plan, understands scope
+2. **Code** - csharp_implementer writes C# code
+3. **Content** - content_author writes JSON events/decisions
+4. **Validate** - qa_agent runs build + content checks
+5. **Document** - documentation_maintainer updates docs
+
+**Output:** Complete implementation + updated documentation.
+
+---
+
+## Agents (10 total)
+
+Each workflow uses the agents it needs:
+
+| Agent | Role | Model |
+|-------|------|-------|
+| systems_analyst | Research existing systems | Opus 4.5 (10k thinking) |
+| architecture_advisor | Suggest best practices | Opus 4.5 (10k thinking) |
+| feature_architect | Design technical specs | Opus 4.5 (10k thinking) |
+| code_analyst | Find bugs, validate plans | Sonnet 4.5 (5k thinking) |
+| csharp_implementer | Write C# code | Sonnet 4.5 (execution) |
+| content_author | Write JSON events | Haiku 4.5 (fast) |
+| content_analyst | Validate JSON schemas | Haiku 4.5 (fast) |
+| qa_agent | Final validation | Haiku 4.5 (3k thinking) |
+| documentation_maintainer | Write/update docs | Sonnet 4.5 (5k thinking) |
+| balance_analyst | Review game balance | Haiku 4.5 (fast) |
 
 ---
 
@@ -82,165 +134,6 @@ If running from outside the project:
 ```bash
 export ENLISTED_PROJECT_ROOT=C:\Dev\Enlisted\Enlisted
 ```
-
----
-
-## CLI Commands
-
-```bash
-# Activate environment first
-.\.venv\Scripts\Activate.ps1
-
-# Validation
-enlisted-crew validate                          # Full validation
-enlisted-crew validate-file <path>              # Single file
-
-# Content creation
-enlisted-crew create-event --theme "..." --tier 1-3
-enlisted-crew style-review <path>
-
-# Code review
-enlisted-crew code-review src/Features/*.cs
-
-# Planning
-enlisted-crew plan -f feature-name -d "description"
-
-# Architecture advisory
-enlisted-crew advise -f feature-name -p "problem-description"
-
-# Bug hunting
-enlisted-crew hunt-bug -d "description" -e "error-codes"
-```
-
----
-
-## Agents
-
-### Systems Analyst (Coordination)
-**Model:** Opus 4.5 with 10k thinking tokens  
-**Role:** Complex system integration analysis  
-**Tools:** 4 tools (domain context, docs, code search)  
-**Configuration:**
-- `max_retry_limit=2` (increased from 1)
-- `allow_delegation=True` (coordination role)
-
-### Feature Architect (Design)
-**Model:** Opus 4.5 with 10k thinking tokens  
-**Role:** Multi-file technical design  
-**Tools:** 6 tools (feature context, docs, code snippets, validation)  
-**Configuration:**
-- `max_retry_limit=2`
-- `allow_delegation=True`
-
-### Code Analyst (Analysis)
-**Model:** Sonnet 4.5 with 5k thinking tokens  
-**Role:** C# pattern detection, bug investigation  
-**Tools:** 7 tools (code context, code reading, pattern checks, logs)  
-**Configuration:**
-- `max_retry_limit=2`
-- `allow_delegation=False` (execution role)
-
-### Documentation Maintainer (Planning)
-**Model:** Sonnet 4.5 with 5k thinking tokens  
-**Role:** Planning docs, doc sync, standards  
-**Tools:** 9 tools (planning writer, docs, code search)  
-**Configuration:**
-- Writes to `docs/CrewAI_Plans/` with intelligent versioning
-- Updates existing docs after implementation
-
-### QA Agent (Validation)
-**Model:** Sonnet 4.5 with 3k thinking tokens  
-**Role:** Final validation gate  
-**Tools:** 5 tools (validation, localization, build, analysis)  
-**Philosophy:** "Spend tokens on validation, not generation"
-
-### Content Author (Generation)
-**Model:** Haiku 4.5 (fast)  
-**Role:** Event writing following style guide  
-**Tools:** 7 tools (content context, style checks, schema validation)
-
-### Content Analyst (Validation)
-**Model:** Haiku 4.5 (fast)  
-**Role:** Schema validation specialist  
-**Tools:** 4 tools (schema tools, event files, docs)
-
-### Balance Analyst (Review)
-**Model:** Haiku 4.5 (fast)  
-**Role:** Game balance review  
-**Tools:** 5 tools (domain context, event files, docs)
-
-### Architecture Advisor (Proactive Improvement)
-**Model:** Opus 4.5 with 10k thinking tokens  
-**Role:** Suggests architecture improvements based on industry patterns + Bannerlord constraints  
-**Tools:** 10 tools (systems knowledge, docs, code analysis, patterns)  
-**Configuration:**
-- Analyzes existing systems and recommends improvements
-- Provides prioritized suggestions (quick wins, technical debt, feature gaps)
-- Considers .NET 4.7.2, Harmony, SaveableTypeDefiner constraints
-- Industry patterns: state machines, event-driven, data-driven, progression systems
-
-### C# Implementer (Execution)
-**Model:** Sonnet 4.5 (no thinking - execution)  
-**Role:** Code generation from specs  
-**Tools:** 10 tools (build, validation, code style, native API search)
-
----
-
-## Crews (Workflows)
-
-### validation_crew
-**Agents:** qa_agent, documentation_maintainer  
-**Use:** Pre-commit validation, CI checks
-
-### planning_crew
-**Agents:** systems_analyst → feature_architect → documentation_maintainer → code_analyst  
-**Use:** Create design docs WITHOUT implementation  
-**Output:** `docs/CrewAI_Plans/feature-name.md` (Status: 📋 Planning)  
-**Context Flow:** design receives analyze output, create_doc receives [analyze, design], validate receives create_doc  
-**Validation:** code_analyst verifies file paths and event IDs before finalizing
-
-### full_feature_crew
-**Agents:** All 9 agents  
-**Use:** Complete feature development (design → implement → test → document)  
-**Process:** Hierarchical with feature_architect as manager
-
-### bug_hunting_crew (deprecated - use BugHuntingFlow)
-**Agents:** code_analyst → systems_analyst → csharp_implementer → qa_agent  
-**Use:** Crash investigation  
-**Replaced by:** Flow-based `BugHuntingFlow` with better state management
-
-### content_creation_crew
-**Agents:** content_author, content_analyst, balance_analyst, qa_agent  
-**Use:** Create and validate JSON events
-
-### documentation_crew
-**Agents:** documentation_maintainer  
-**Use:** Update docs after implementation
-
-### advisory_crew
-**Agents:** systems_analyst → architecture_advisor → documentation_maintainer → code_analyst  
-**Use:** Analyze systems and suggest architecture improvements  
-**Output:** `docs/CrewAI_Plans/[feature]-recommendations.md`  
-**Context Flow:** suggest receives analyze, create_doc receives [analyze, suggest], validate receives create_doc  
-**Validation:** code_analyst verifies suggestions against existing code
-
-### feature_design_crew
-**Agents:** systems_analyst → code_analyst → feature_architect → balance_analyst → code_analyst  
-**Use:** Complex architectural design with validation  
-**Output:** Technical specifications  
-**Context Flow:** design receives [analyze_systems, analyze_code], validate receives design  
-**Validation:** Catches hallucinated file paths and event IDs
-
-### feature_implementation_crew
-**Agents:** csharp_implementer → content_author → qa_agent  
-**Use:** Execute approved feature specs  
-**Context Flow:** validate receives [impl_csharp, impl_content]  
-**Validation:** Comprehensive build and content validation
-
-### code_review_crew
-**Agents:** code_analyst → qa_agent  
-**Use:** PR reviews, code audits  
-**Context Flow:** Sequential (auto-passes review to validation)
 
 ---
 

@@ -584,243 +584,100 @@ class EnlistedCrew:
             config=self.tasks_config["validate_planning_doc"],
         )
     
-    # === Crews ===
+    # ==========================================================================
+    # THREE CORE WORKFLOWS
+    # ==========================================================================
+    # 
+    # 1. plan_workflow    - Design a feature (research → advise → design → validate)
+    # 2. bug_workflow     - Find & fix bugs (investigate → analyze → fix → validate)  
+    # 3. implement_workflow - Build from plan (read → code → content → validate → docs)
+    #
+    # Each workflow is SELF-CONTAINED - it handles everything including validation.
+    # ==========================================================================
     
     @crew
-    def feature_design_crew(self) -> Crew:
+    def plan_workflow(self) -> Crew:
         """
-        Feature design crew for complex architectural work.
+        PLANNING WORKFLOW - Design a feature completely.
         
-        Use for: Features like Orchestrator-Opportunity-Unification, Systems Integration.
-        Uses Opus 4.5 + thinking for deep analysis and design.
+        CLI: enlisted-crew plan -f "feature-name" -d "description"
         
-        Workflow:
-        1. systems_analyst researches system interconnections
-        2. code_analyst analyzes existing code patterns
-        3. feature_architect produces detailed spec (receives 1+2)
-        4. balance_analyst reviews for game balance
-        5. code_analyst validates file paths and event IDs in the spec
+        Complete chain:
+        1. systems_analyst → Research existing systems
+        2. architecture_advisor → Suggest best practices & improvements
+        3. feature_architect → Design the feature spec
+        4. documentation_maintainer → Write planning doc to docs/CrewAI_Plans/
+        5. code_analyst → VALIDATE plan accuracy (no hallucinated files/IDs)
         
-        The final validation step catches hallucinated references before the spec
-        is considered complete.
+        Output: Validated planning doc ready for implementation.
         """
-        # Create tasks with explicit context for non-adjacent dependencies
-        analyze_sys = self.analyze_systems_task()
-        analyze_code = self.analyze_codebase_task()
+        # Task 1: Research existing systems
+        analyze = self.analyze_systems_task()
         
-        # Design needs BOTH systems and code analysis (non-adjacent: needs task 1)
+        # Task 2: Suggest improvements based on analysis
+        suggest = self.suggest_improvements_task()
+        suggest.context = [analyze]
+        
+        # Task 3: Design the feature (receives research + suggestions)
         design = self.design_feature_task()
-        design.context = [analyze_sys, analyze_code]
+        design.context = [analyze, suggest]
         
-        review = self.review_feature_design_task()
-        # Review auto-receives design output (adjacent)
+        # Task 4: Write the planning doc (receives all prior work)
+        create_doc = self.create_planning_doc_task()
+        create_doc.context = [analyze, suggest, design]
         
-        # Validation needs the design to check file paths
-        validate_spec = self.validate_planning_doc_task()
-        validate_spec.context = [design]
+        # Task 5: Validate the plan is accurate
+        validate_doc = self.validate_planning_doc_task()
+        validate_doc.context = [create_doc]
         
         return Crew(
             agents=[
                 self.systems_analyst(),
-                self.code_analyst(),
+                self.architecture_advisor(),
                 self.feature_architect(),
-                self.balance_analyst(),
+                self.documentation_maintainer(),
+                self.code_analyst(),
             ],
             tasks=[
-                analyze_sys,
-                analyze_code,
+                analyze,
+                suggest,
                 design,
-                review,
-                validate_spec,
+                create_doc,
+                validate_doc,
             ],
             process=Process.sequential,
             verbose=True,
         )
     
     @crew
-    def feature_implementation_crew(self) -> Crew:
+    def bug_workflow(self) -> Crew:
         """
-        Feature implementation crew for executing designs.
+        BUG HUNTING WORKFLOW - Find and fix bugs completely.
         
-        Use for: Implementing approved feature specs.
-        Uses Sonnet 4.5 + thinking for code generation.
+        CLI: enlisted-crew hunt-bug -d "description" -e "error codes"
         
-        Workflow:
-        1. csharp_implementer writes C# code
-        2. content_author creates JSON content (receives C# context)
-        3. qa_agent validates everything (receives both)
+        Complete chain:
+        1. code_analyst → Investigate logs, find the bug
+        2. systems_analyst → Analyze related systems for impact
+        3. csharp_implementer → Propose minimal fix
+        4. qa_agent → VALIDATE fix is correct, builds, doesn't break anything
+        
+        Output: Bug report + validated fix ready to apply.
         """
-        # Create tasks - sequential auto-passes adjacent outputs
-        impl_csharp = self.implement_csharp_task()
-        impl_content = self.implement_content_task()
-        # Content auto-receives C# output (adjacent)
-        
-        # Validation needs both implementation outputs
-        validate = self.validate_all_task()
-        validate.context = [impl_csharp, impl_content]
-        
-        return Crew(
-            agents=[
-                self.csharp_implementer(),
-                self.content_author(),
-                self.qa_agent(),
-            ],
-            tasks=[
-                impl_csharp,
-                impl_content,
-                validate,
-            ],
-            process=Process.sequential,
-            verbose=True,
-        )
-    
-    @crew
-    def full_feature_crew(self) -> Crew:
-        """
-        Complete feature development crew (design + implementation + docs).
-        
-        Use for: End-to-end feature development like:
-        - Systems Integration Analysis improvements
-        - Content Skill Integration
-        - New game mechanics
-        
-        This is the crew to use for docs/ANEWFEATURE/ style work.
-        Managed by feature_architect using Opus 4.5.
-        
-        INCLUDES documentation_maintainer to ensure docs stay in sync!
-        """
-        return Crew(
-            agents=[
-                self.systems_analyst(),
-                self.code_analyst(),
-                self.content_analyst(),
-                self.feature_architect(),
-                self.csharp_implementer(),
-                self.content_author(),
-                self.qa_agent(),
-                self.balance_analyst(),
-                self.documentation_maintainer(),  # Keeps docs in sync
-            ],
-            tasks=[self.full_feature_workflow_task(), self.sync_documentation_task()],
-            process=Process.hierarchical,
-            manager_agent=self.feature_architect(),
-            verbose=True,
-        )
-    
-    @crew
-    def validation_crew(self) -> Crew:
-        """
-        Validation-focused crew for checking content integrity.
-        
-        Use for: Pre-commit validation, CI checks, content audits.
-        Uses Haiku 4.5 for fast validation.
-        """
-        return Crew(
-            agents=[self.content_analyst(), self.qa_agent()],
-            tasks=[self.validate_all_task()],
-            process=Process.sequential,
-            verbose=True,
-        )
-    
-    @crew
-    def content_creation_crew(self) -> Crew:
-        """
-        Content creation crew for writing new events.
-        
-        Use for: Creating new events, expanding content.
-        Uses Haiku 4.5 for fast content generation.
-        """
-        return Crew(
-            agents=[self.content_author(), self.content_analyst(), self.balance_analyst()],
-            tasks=[self.full_content_workflow_task()],
-            process=Process.sequential,
-            verbose=True,
-        )
-    
-    @crew
-    def code_review_crew(self) -> Crew:
-        """
-        Code review crew for C# changes.
-        
-        Use for: PR reviews, code audits, pre-commit checks.
-        Uses Sonnet 4.5 + thinking for code analysis.
-        
-        Workflow:
-        1. code_analyst reviews code patterns and style
-        2. qa_agent validates implementation (receives review)
-        """
-        # Sequential auto-passes review output to validation (adjacent)
-        return Crew(
-            agents=[self.code_analyst(), self.qa_agent()],
-            tasks=[self.review_code_task(), self.validate_implementation_task()],
-            process=Process.sequential,
-            verbose=True,
-        )
-    
-    @crew
-    def documentation_crew(self) -> Crew:
-        """
-        Documentation maintenance crew.
-        
-        Use for:
-        - Post-implementation doc sync (sync_documentation_task)
-        - Periodic doc audits (audit_documentation_task)
-        - Checking doc accuracy after major changes
-        
-        Uses Sonnet 4.5 + thinking because doc sync requires reasoning.
-        """
-        return Crew(
-            agents=[self.documentation_maintainer()],
-            tasks=[self.sync_documentation_task()],
-            process=Process.sequential,
-            verbose=True,
-        )
-    
-    @crew
-    def documentation_audit_crew(self) -> Crew:
-        """
-        Documentation audit crew for checking doc accuracy.
-        
-        Use for: Periodic audits, pre-release checks, finding stale docs.
-        """
-        return Crew(
-            agents=[self.documentation_maintainer()],
-            tasks=[self.audit_documentation_task()],
-            process=Process.sequential,
-            verbose=True,
-        )
-    
-    @crew
-    def bug_hunting_crew(self) -> Crew:
-        """
-        Bug investigation crew for tracking down crashes and issues.
-        
-        ⚠️ DEPRECATED: Use BugHuntingFlow instead for better state management.
-        
-        The Flow-based approach (flows/bug_hunting_flow.py) provides:
-        - Structured state management with Pydantic models
-        - Conditional routing based on bug severity
-        - Better debugging and observability
-        - Cleaner data passing between agents
-        
-        Usage:
-            from enlisted_crew.flows import BugHuntingFlow
-            flow = BugHuntingFlow()
-            result = flow.kickoff(inputs={"description": "...", ...})
-        
-        Or via CLI:
-            enlisted-crew hunt-bug -d "bug description" -e "error codes"
-        
-        This Crew is kept for backwards compatibility but may be removed in future.
-        """
-        # Create tasks with context chaining
+        # Task 1: Investigate the bug
         investigate = self.investigate_bug_task()
+        
+        # Task 2: Analyze related systems
         analyze_systems = self.analyze_bug_systems_task()
         analyze_systems.context = [investigate]
+        
+        # Task 3: Propose fix (receives investigation + analysis)
         propose_fix = self.propose_bug_fix_task()
         propose_fix.context = [investigate, analyze_systems]
+        
+        # Task 4: Validate the fix
         validate_fix = self.validate_bug_fix_task()
-        validate_fix.context = [propose_fix]
+        validate_fix.context = [investigate, analyze_systems, propose_fix]
         
         return Crew(
             agents=[
@@ -840,111 +697,75 @@ class EnlistedCrew:
         )
     
     @crew
-    def advisory_crew(self) -> Crew:
+    def implement_workflow(self) -> Crew:
         """
-        Architecture advisory crew for suggesting improvements.
+        IMPLEMENTATION WORKFLOW - Build from an approved plan.
         
-        Use for:
-        - "What should I improve in the Escalation system?"
-        - "Review the Content system architecture"
-        - "What are quick wins for the Camp UI?"
-        - Proactive improvement suggestions based on industry best practices
+        CLI: enlisted-crew implement -p "docs/CrewAI_Plans/feature.md"
         
-        Unlike planning_crew (which designs what you ask for), this crew
-        PROACTIVELY suggests what SHOULD be built based on:
-        - Industry best practices (state machines, event-driven, etc.)
-        - Game design patterns (progression, economy, feedback loops)
-        - Technical debt identification
-        - Bannerlord modding constraints
+        Complete chain:
+        1. systems_analyst → Read plan, understand what to build
+        2. csharp_implementer → Write C# code
+        3. content_author → Write JSON content
+        4. qa_agent → VALIDATE everything builds and works
+        5. documentation_maintainer → Update docs to reflect implementation
         
-        Workflow:
-        1. systems_analyst researches current implementation
-        2. architecture_advisor suggests improvements (receives analysis)
-        3. documentation_maintainer writes recommendations (receives both)
-        4. code_analyst validates file paths (receives doc)
+        Output: Complete implementation + updated documentation.
         """
-        # Create tasks with explicit context for multi-task dependencies
+        # Task 1: Analyze the plan
         analyze = self.analyze_systems_task()
         
-        # Suggest needs the analysis (non-adjacent if we add more tasks later)
-        suggest = self.suggest_improvements_task()
-        suggest.context = [analyze]
+        # Task 2: Implement C# code
+        impl_csharp = self.implement_csharp_task()
+        impl_csharp.context = [analyze]
         
-        # Doc needs both analysis context AND suggestions
-        create_doc = self.create_planning_doc_task()
-        create_doc.context = [analyze, suggest]
+        # Task 3: Implement JSON content
+        impl_content = self.implement_content_task()
+        impl_content.context = [analyze, impl_csharp]
         
-        # Validation needs the doc output
-        validate_doc = self.validate_planning_doc_task()
-        validate_doc.context = [create_doc]
+        # Task 4: Validate everything
+        validate = self.validate_all_task()
+        validate.context = [impl_csharp, impl_content]
+        
+        # Task 5: Update documentation
+        sync_docs = self.sync_documentation_task()
+        sync_docs.context = [impl_csharp, impl_content, validate]
         
         return Crew(
             agents=[
                 self.systems_analyst(),
-                self.architecture_advisor(),
+                self.csharp_implementer(),
+                self.content_author(),
+                self.qa_agent(),
                 self.documentation_maintainer(),
-                self.code_analyst(),  # Validates the recommendations
             ],
             tasks=[
                 analyze,
-                suggest,
-                create_doc,
-                validate_doc,
+                impl_csharp,
+                impl_content,
+                validate,
+                sync_docs,
             ],
             process=Process.sequential,
             verbose=True,
         )
     
+    # ==========================================================================
+    # UTILITY CREWS (kept for specific use cases)
+    # ==========================================================================
+    
     @crew
-    def planning_crew(self) -> Crew:
+    def validation_crew(self) -> Crew:
         """
-        Planning-only crew for creating design docs WITHOUT implementation.
+        Quick validation check - pre-commit or CI.
         
-        Use for:
-        - Creating docs/ANEWFEATURE/ planning documents
-        - Designing features before committing to implementation
-        - Exploring architectural options
+        CLI: enlisted-crew validate
         
-        IMPORTANT: This crew does NOT implement code or update AI context docs.
-        It only produces planning documents with Status: 📋 Planning.
-        
-        Workflow:
-        1. systems_analyst researches existing systems
-        2. feature_architect creates design spec (receives analysis)
-        3. documentation_maintainer writes the planning doc (receives both)
-        4. code_analyst validates the planning doc (checks file paths, event IDs)
-        
-        The validation step catches hallucinated file names, fabricated event IDs,
-        and incorrect folder paths BEFORE the document is finalized.
+        Runs build + content validation without the full workflow overhead.
         """
-        # Create tasks with explicit context for multi-task dependencies
-        analyze = self.analyze_systems_task()
-        
-        # Design needs the systems analysis
-        design = self.design_feature_task()
-        design.context = [analyze]
-        
-        # Doc creation needs both analysis AND design
-        create_doc = self.create_planning_doc_task()
-        create_doc.context = [analyze, design]
-        
-        # Validation needs the doc output
-        validate_doc = self.validate_planning_doc_task()
-        validate_doc.context = [create_doc]
-        
         return Crew(
-            agents=[
-                self.systems_analyst(),
-                self.feature_architect(),
-                self.documentation_maintainer(),
-                self.code_analyst(),  # Validates the planning doc
-            ],
-            tasks=[
-                analyze,
-                design,
-                create_doc,
-                validate_doc,
-            ],
+            agents=[self.content_analyst(), self.qa_agent()],
+            tasks=[self.validate_all_task()],
             process=Process.sequential,
             verbose=True,
         )

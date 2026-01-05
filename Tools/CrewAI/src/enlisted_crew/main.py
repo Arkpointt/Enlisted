@@ -2,17 +2,14 @@
 """
 Enlisted CrewAI CLI
 
-Command-line interface for running Enlisted CrewAI workflows.
+Three core workflows for Enlisted mod development:
 
-Usage:
-    enlisted-crew validate                          # Run full validation
-    enlisted-crew validate-file <path>              # Validate specific file
-    enlisted-crew create-event --theme "..."        # Create new event
-    enlisted-crew style-review <path>               # Review event style
-    enlisted-crew code-review <paths...>            # Review C# code
-    enlisted-crew full-review <paths...>            # Full content review
-    enlisted-crew plan -f feature-name -d "..."     # Create planning doc
-    enlisted-crew hunt-bug -d "..."                 # Investigate bug
+    enlisted-crew plan -f "feature" -d "description"    # Design a feature
+    enlisted-crew hunt-bug -d "bug" -e "E-XXX-*"        # Find & fix bugs
+    enlisted-crew implement -p "plan.md"                # Build from plan
+
+Utility:
+    enlisted-crew validate                              # Pre-commit check
 """
 
 import argparse
@@ -43,76 +40,18 @@ def main():
         help="Run full validation on all content",
     )
     
-    # validate-file command
-    validate_file_parser = subparsers.add_parser(
-        "validate-file",
-        help="Validate a specific event file",
+    # implement command - BUILD FROM APPROVED PLAN
+    implement_parser = subparsers.add_parser(
+        "implement",
+        help="Build a feature from an approved planning doc",
     )
-    validate_file_parser.add_argument(
-        "file_path",
-        help="Path to event JSON file",
-    )
-    
-    # create-event command
-    create_parser = subparsers.add_parser(
-        "create-event",
-        help="Create a new event",
-    )
-    create_parser.add_argument(
-        "--type", "-t",
-        dest="event_type",
-        default="decision",
-        help="Event type (decision, escalation, role, etc.)",
-    )
-    create_parser.add_argument(
-        "--category", "-c",
-        default="general",
-        help="Event category",
-    )
-    create_parser.add_argument(
-        "--theme",
+    implement_parser.add_argument(
+        "--plan", "-p",
         required=True,
-        help="Event theme/topic description",
-    )
-    create_parser.add_argument(
-        "--tier",
-        default="1-9",
-        help="Tier range (e.g., '1-3', '4-6', '1-9')",
+        help="Path to approved planning doc (e.g., docs/CrewAI_Plans/feature.md)",
     )
     
-    # style-review command
-    style_parser = subparsers.add_parser(
-        "style-review",
-        help="Review and improve event writing style",
-    )
-    style_parser.add_argument(
-        "file_path",
-        help="Path to event JSON file",
-    )
-    
-    # code-review command
-    code_parser = subparsers.add_parser(
-        "code-review",
-        help="Review C# code changes",
-    )
-    code_parser.add_argument(
-        "file_paths",
-        nargs="+",
-        help="Paths to C# files to review",
-    )
-    
-    # full-review command
-    full_parser = subparsers.add_parser(
-        "full-review",
-        help="Run full content review",
-    )
-    full_parser.add_argument(
-        "file_paths",
-        nargs="+",
-        help="Paths to files to review",
-    )
-    
-    # plan command
+    # plan command - DESIGN A FEATURE
     plan_parser = subparsers.add_parser(
         "plan",
         help="Create a planning document for a proposed feature",
@@ -185,22 +124,8 @@ def main():
     try:
         if args.command == "validate":
             result = run_validation(crew)
-        elif args.command == "validate-file":
-            result = run_file_validation(crew, args.file_path)
-        elif args.command == "create-event":
-            result = run_create_event(
-                crew,
-                event_type=args.event_type,
-                category=args.category,
-                theme=args.theme,
-                tier_range=args.tier,
-            )
-        elif args.command == "style-review":
-            result = run_style_review(crew, args.file_path)
-        elif args.command == "code-review":
-            result = run_code_review(crew, args.file_paths)
-        elif args.command == "full-review":
-            result = run_full_review(crew, args.file_paths)
+        elif args.command == "implement":
+            result = run_implement(crew, args.plan)
         elif args.command == "plan":
             result = run_plan(
                 crew,
@@ -236,147 +161,65 @@ def main():
 
 
 def run_validation(crew: EnlistedCrew):
-    """Run full validation crew."""
-    SearchCache.clear()  # Clear cache for fresh session
-    print("Running full validation...")
+    """Run quick validation check."""
+    SearchCache.clear()
+    print("\n" + "=" * 60)
+    print("VALIDATION CHECK")
+    print("=" * 60 + "\n")
+    
     validation_crew = crew.validation_crew()
     return validation_crew.kickoff()
 
 
-def run_file_validation(crew: EnlistedCrew, file_path: str):
-    """Run validation on a specific file."""
-    SearchCache.clear()  # Clear cache for fresh session
-    print(f"Validating: {file_path}")
+def run_implement(crew: EnlistedCrew, plan_path: str):
+    """
+    IMPLEMENTATION WORKFLOW - Build from an approved plan.
     
-    # Create a one-off crew for file validation
-    from crewai import Crew, Process, Task
+    Chain: analyze → code → content → validate → docs
+    """
+    SearchCache.clear()
+    print("\n" + "=" * 60)
+    print("IMPLEMENTATION WORKFLOW")
+    print("=" * 60)
+    print(f"\n📝 Plan: {plan_path}\n")
     
-    task = Task(
-        description=f"""
-        Validate the event file against the Enlisted schema:
-        - Check required fields (id, category, title, setup)
-        - Verify field ordering (fallback after ID)
-        - Validate option count (0 or 2-6, never 1)
-        - Check tooltip presence and length (<80 chars)
-        - Verify skill names, roles, and contexts
-        
-        File to validate: {file_path}
-        """,
-        expected_output="Detailed validation report with issues and fixes",
-        agent=crew.content_analyst(),
-    )
+    # Read the plan content
+    from pathlib import Path
+    plan_file = Path(plan_path)
+    if not plan_file.exists():
+        raise FileNotFoundError(f"Plan not found: {plan_path}")
     
-    file_crew = Crew(
-        agents=[crew.content_analyst()],
-        tasks=[task],
-        process=Process.sequential,
-        verbose=True,
-    )
+    plan_content = plan_file.read_text(encoding='utf-8')
+    feature_name = plan_file.stem  # e.g., "reputation-integration" from filename
     
-    return file_crew.kickoff()
-
-
-def run_create_event(
-    crew: EnlistedCrew,
-    event_type: str,
-    category: str,
-    theme: str,
-    tier_range: str,
-):
-    """Run event creation crew."""
-    SearchCache.clear()  # Clear cache for fresh session
-    print(f"Creating {event_type} event: {theme}")
+    print(f"Feature: {feature_name}")
+    print("Starting implementation...\n")
     
-    from crewai import Crew, Process, Task
-    
-    task = Task(
-        description=f"""
-        Create a new event based on the following brief:
-        
-        Event Type: {event_type}
-        Category: {category}
-        Theme: {theme}
-        Tier Range: {tier_range}
-        
-        Requirements:
-        - Follow Enlisted writing style (sparse, concrete, implied emotion)
-        - Create 2-4 options with clear tradeoffs
-        - Include tooltips under 80 characters
-        - Use proper field ordering (fallback after ID)
-        - Match the specified tier and context
-        """,
-        expected_output="Complete, valid JSON event file",
-        agent=crew.content_author(),
-    )
-    
-    create_crew = Crew(
-        agents=[crew.content_author(), crew.content_analyst()],
-        tasks=[task],
-        process=Process.sequential,
-        verbose=True,
-    )
-    
-    return create_crew.kickoff()
-
-
-def run_style_review(crew: EnlistedCrew, file_path: str):
-    """Run style review crew."""
-    SearchCache.clear()  # Clear cache for fresh session
-    print(f"Reviewing style: {file_path}")
-    
-    from crewai import Crew, Process, Task
-    
-    task = Task(
-        description=f"""
-        Review and improve the writing style of the event file:
-        
-        Event file: {file_path}
-        
-        Check for:
-        - Forbidden words (steel yourself, amidst, the men, etc.)
-        - Purple prose (too many adjectives, flowery language)
-        - Weak verbs (is, was, had, seemed)
-        - Missing concrete imagery
-        - Tooltip length violations
-        
-        Suggest specific rewrites that maintain meaning while improving style.
-        """,
-        expected_output="Style review with specific rewrite suggestions",
-        agent=crew.content_author(),
-    )
-    
-    style_crew = Crew(
-        agents=[crew.content_author()],
-        tasks=[task],
-        process=Process.sequential,
-        verbose=True,
-    )
-    
-    return style_crew.kickoff()
+    implement_workflow = crew.implement_workflow()
+    return implement_workflow.kickoff(inputs={
+        "feature_name": feature_name,
+        "description": f"Implement according to plan: {plan_path}",
+        "spec_content": plan_content,
+        "file_list": "See plan for file list",
+        "related_systems": "See plan for system details",
+        "content_type": "events and decisions as specified in plan",
+        "requirements": "See plan for requirements",
+        "changed_files": "Files changed during implementation",
+        "feature_area": feature_name,
+    })
 
 
 def run_code_review(crew: EnlistedCrew, file_paths: list):
-    """Run code review crew."""
-    SearchCache.clear()  # Clear cache for fresh session
+    """Legacy - kept for backwards compatibility."""
+    SearchCache.clear()
     paths_str = ", ".join(file_paths)
     print(f"Reviewing code: {paths_str}")
     
     from crewai import Crew, Process, Task
     
     task = Task(
-        description=f"""
-        Review C# code changes for Enlisted-specific issues:
-        
-        Focus areas:
-        - SaveableTypeDefiner: new saveable classes registered?
-        - TextObject: using SetTextVariable, not string concat?
-        - Hero safety: null checks before accessing Hero properties?
-        - Equipment iteration: using ToList() on equipment collections?
-        - Gold: using AddGoldAction, not direct assignment?
-        
-        Files to review: {paths_str}
-        """,
-        expected_output="Code review report with issues and recommendations",
+        description=f"Review C# code files: {paths_str}",
+        expected_output="Code review report",
         agent=crew.code_analyst(),
     )
     
@@ -390,16 +233,6 @@ def run_code_review(crew: EnlistedCrew, file_paths: list):
     return code_crew.kickoff()
 
 
-def run_full_review(crew: EnlistedCrew, file_paths: list):
-    """Run full review crew."""
-    SearchCache.clear()  # Clear cache for fresh session
-    paths_str = ", ".join(file_paths)
-    print(f"Running full review: {paths_str}")
-    
-    full_crew = crew.full_review_crew()
-    return full_crew.kickoff(inputs={"file_paths": paths_str})
-
-
 def run_plan(
     crew: EnlistedCrew,
     feature_name: str,
@@ -407,17 +240,27 @@ def run_plan(
     systems: str = "",
     docs: str = "",
 ):
-    """Run planning crew to create a design document."""
-    SearchCache.clear()
-    print(f"\n🎯 Planning feature: {feature_name}")
-    print(f"Description: {description}\n")
+    """
+    PLANNING WORKFLOW - Design a feature completely.
     
-    planning_crew = crew.planning_crew()
-    result = planning_crew.kickoff(inputs={
+    Chain: research → advise → design → write doc → validate
+    """
+    SearchCache.clear()
+    print("\n" + "=" * 60)
+    print("PLANNING WORKFLOW")
+    print("=" * 60)
+    print(f"\n🎯 Feature: {feature_name}")
+    print(f"Description: {description}\n")
+    print("Starting planning workflow...\n")
+    
+    plan_workflow = crew.plan_workflow()
+    result = plan_workflow.kickoff(inputs={
         "feature_name": feature_name,
         "description": description,
-        "related_systems": systems or "See design doc for analysis",
-        "related_docs": docs or "See design doc for references",
+        "related_systems": systems or "To be determined by analysis",
+        "related_docs": docs or "To be determined by analysis",
+        "focus_area": feature_name,
+        "pain_points": description,
     })
     
     return result
@@ -432,18 +275,14 @@ def run_hunt_bug(
     user_logs: str = None,
 ):
     """
-    Run bug hunting flow.
+    BUG HUNTING WORKFLOW - Find and fix bugs completely.
     
-    Uses the Flow-based BugHuntingFlow for state-managed bug investigation.
-    
-    Args:
-        user_logs: End-user provided logs. Can be:
-            - Direct log content (pasted)
-            - Path to a log file
-            If not provided, flow will analyze code paths instead of searching logs.
+    Chain: investigate → analyze → fix → validate
     """
-    from .flows import BugHuntingFlow
+    from .crew import EnlistedCrew
     from pathlib import Path
+    
+    SearchCache.clear()
     
     # Handle user_logs - could be file path or direct content
     user_log_content = None
@@ -453,40 +292,30 @@ def run_hunt_bug(
             print(f"📂 Reading user log file: {user_logs}")
             user_log_content = log_path.read_text(encoding='utf-8', errors='replace')
         else:
-            # Treat as direct log content
             user_log_content = user_logs
     
     print("\n" + "=" * 60)
-    print("ENLISTED BUG HUNTING FLOW")
+    print("BUG HUNTING WORKFLOW")
     print("=" * 60)
-    print(f"\nDescription: {description[:100]}...")
+    print(f"\n🐛 Description: {description[:100]}...")
     print(f"Error Codes: {error_codes}")
     print(f"Repro Steps: {repro_steps}")
-    print(f"Context: {context or 'None'}")
-    print(f"User Logs: {'Provided (' + str(len(user_log_content)) + ' chars)' if user_log_content else 'None - will analyze code paths'}")
-    print("\nStarting investigation...\n")
+    print(f"User Logs: {'Provided' if user_log_content else 'None'}")
+    print("\nStarting bug investigation...\n")
     
-    # Create and run the flow
-    flow = BugHuntingFlow()
+    # Use the new bug_workflow crew
+    crew = EnlistedCrew()
+    bug_workflow = crew.bug_workflow()
     
-    result = flow.kickoff(inputs={
-        "bug_report": {
-            "description": description,
-            "error_codes": error_codes,
-            "repro_steps": repro_steps,
-            "context": context,
-            "user_log_content": user_log_content,
-        }
+    result = bug_workflow.kickoff(inputs={
+        "bug_description": description,
+        "error_codes": error_codes,
+        "repro_steps": repro_steps,
+        "context": context or "No additional context",
+        "user_log_content": user_log_content or "No logs provided",
     })
     
-    # Get final state
-    final_state = result
-    
-    # Output report
-    if hasattr(final_state, 'final_report') and final_state.final_report:
-        report = final_state.final_report
-    else:
-        report = str(result)
+    report = str(result)
     
     if output_file:
         with open(output_file, 'w', encoding='utf-8') as f:
