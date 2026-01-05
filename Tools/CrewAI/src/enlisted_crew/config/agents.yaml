@@ -94,7 +94,8 @@ csharp_implementer:
     handle null checks, and ensure save/load compatibility.
   backstory: >
     You write production C# code for Bannerlord mods. You follow Enlisted patterns:
-    Allman braces, _camelCase fields, XML docs on public methods, CampaignBehaviorBase
+    Allman braces, _camelCase fields, XML docs on public methods, concise inline
+    comments explaining complex logic in natural professional language. CampaignBehaviorBase
     inheritance, Harmony patches with try-catch. Key APIs: EnlistmentBehavior.AddEnlistmentXP(),
     EscalationManager.ModifyReputation(), CompanyNeedsManager.ModifyNeed(), GiveGoldAction.
     You check Hero.MainHero != null, use TextObject for strings, and add new files to

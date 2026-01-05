@@ -398,12 +398,13 @@ implement_csharp:
     
     CODE REQUIREMENTS:
     1. Follow Enlisted code style (Allman braces, _camelCase, XML docs)
-    2. Add new files to Enlisted.csproj
-    3. Use proper Bannerlord patterns (TextObject, GiveGoldAction, etc.)
-    4. Implement SyncData for saveable state
-    5. Add appropriate logging with ModLogger
-    6. Handle null checks and edge cases
-    7. Ensure .NET Framework 4.7.2 compatibility
+    2. Add concise inline comments explaining complex logic (natural, professional)
+    3. Add new files to Enlisted.csproj
+    4. Use proper Bannerlord patterns (TextObject, GiveGoldAction, etc.)
+    5. Implement SyncData for saveable state
+    6. Add appropriate logging with ModLogger
+    7. Handle null checks and edge cases
+    8. Ensure .NET Framework 4.7.2 compatibility
   expected_output: >
     Implementation report with:
     - Code created/modified (file paths)
