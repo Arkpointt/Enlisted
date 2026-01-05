@@ -50,6 +50,7 @@ from .docs_tools import (
 )
 from .planning_tools import (
     write_planning_doc_tool,
+    read_planning_doc_tool,
 )
 
 __all__ = [
@@ -97,4 +98,5 @@ __all__ = [
     "list_json_event_ids_tool",
     # Planning tools
     "write_planning_doc_tool",
+    "read_planning_doc_tool",
 ]

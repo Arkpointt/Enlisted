@@ -118,6 +118,40 @@ def _calculate_similarity(text1: str, text2: str) -> float:
     return intersection / union if union > 0 else 0.0
 
 
+@tool("Read Planning Document")
+def read_planning_doc_tool(feature_name: str) -> str:
+    """
+    Read a planning document from docs/CrewAI_Plans/.
+    
+    Args:
+        feature_name: Kebab-case name like "reputation-morale-integration"
+    
+    Returns:
+        The full content of the planning document, or error if not found.
+    """
+    try:
+        project_root = Path(os.environ.get("ENLISTED_PROJECT_ROOT", r"C:\Dev\Enlisted\Enlisted"))
+        plans_dir = project_root / "docs" / "CrewAI_Plans"
+        
+        # Clean feature name
+        clean_name = re.sub(r'[^a-z0-9-]', '-', feature_name.lower())
+        doc_path = plans_dir / f"{clean_name}.md"
+        
+        if not doc_path.exists():
+            # Check for versioned files
+            versioned = sorted(plans_dir.glob(f"{clean_name}-v*.md"), reverse=True)
+            if versioned:
+                doc_path = versioned[0]  # Use latest version
+            else:
+                return f"❌ Planning document not found: {clean_name}.md"
+        
+        content = doc_path.read_text(encoding='utf-8')
+        return f"📄 {doc_path.name}:\n\n{content}"
+    
+    except Exception as e:
+        return f"❌ Error reading planning document: {str(e)}"
+
+
 def _find_next_version(directory: Path, base_name: str) -> int:
     """Find the next available version number (v2, v3, etc.)."""
     existing = list(directory.glob(f"{base_name}-v*.md"))

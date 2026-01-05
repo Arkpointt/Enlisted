@@ -502,9 +502,16 @@ create_planning_doc:
     Related Systems: {related_systems}
     
     PROCESS:
-    1. Research existing systems using search/read tools
-    2. Draft comprehensive planning document in markdown
-    3. Use write_planning_doc_tool to save to docs/CrewAI_Plans/
+    1. BUILD VERIFICATION REGISTRY FIRST (MANDATORY):
+       a. Call list_json_event_ids_tool("Decisions") - save the full list of valid opp_* IDs
+       b. Call list_json_event_ids_tool("Events") - save the full list of valid evt_* IDs
+       c. For each C# file you plan to reference, call verify_file_exists_tool() BEFORE drafting
+       d. Only reference IDs and paths that returned ✅ VERIFIED
+    2. Research existing systems using search/read tools
+    3. Draft comprehensive planning document in markdown
+       - ONLY use file paths and event IDs from your verification registry
+       - If you need to reference something not in the registry, verify it first
+    4. Use write_planning_doc_tool to save to docs/CrewAI_Plans/
     
     PLANNING DOC RULES:
     - Save to docs/CrewAI_Plans/ using write_planning_doc_tool
@@ -582,13 +589,43 @@ validate_planning_doc:
     - ✅ All file paths verified
     - ✅ All event IDs verified
     - ✅ All folder paths correct
+    
+    CRITICAL: If ANY errors are found, set status to NEEDS_CORRECTION.
+    If all checks pass, set status to VALIDATED.
   expected_output: >
     Validation report with:
+    - Status: VALIDATED or NEEDS_CORRECTION
     - List of verification errors found (or "All checks passed")
     - Suggested corrections for each error
     - Overall pass/fail status
-    - Recommendation to update planning doc if errors found
   agent: code_analyst
+
+fix_planning_doc:
+  description: >
+    Fix hallucinations and errors in a planning document.
+    
+    You will receive the validation report from the previous task via context.
+    If the validation status is VALIDATED, simply return "No fixes needed."
+    
+    If the validation status is NEEDS_CORRECTION:
+    1. Read the current planning doc from docs/CrewAI_Plans/{feature_name}.md
+    2. For each error in the validation report:
+       a. HALLUCINATED FILE PATH: Find the correct file using search_csharp_tool, then replace
+       b. HALLUCINATED EVENT ID: Remove the fabricated ID or replace with a real one from list_json_event_ids_tool
+       c. WRONG FOLDER PATH: Replace with correct path (Decisions/ for opp_*, Events/ for evt_*)
+       d. WRONG LINE NUMBER: Update to correct line or remove line reference
+    3. Save the corrected document using write_planning_doc_tool
+    
+    RULES:
+    - Every fix MUST be verified before applying
+    - If you can't find a valid replacement, mark with [TODO: needs real reference]
+    - Preserve all other content exactly
+    - Update "Last Updated" with correction note
+  expected_output: >
+    Either:
+    - "No fixes needed." if validation passed
+    - List of corrections made with write_planning_doc_tool success message
+  agent: documentation_maintainer
 
 sync_documentation:
   description: >

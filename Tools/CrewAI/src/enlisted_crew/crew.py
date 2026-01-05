@@ -15,6 +15,14 @@ from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
 from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
 
+# LiteLLM compatibility settings for Claude extended thinking + tool calling
+# Issue: Anthropic API requires thinking blocks from previous turns, but
+# CrewAI strips them. Using drop_params=True auto-disables thinking when needed.
+# See: https://github.com/crewAIInc/crewAI/issues/2323
+LITELLM_COMPAT_PARAMS = {
+    "drop_params": True,  # Drop thinking param when it causes API errors
+}
+
 from .tools import (
     validate_content_tool,
     sync_localization_tool,
@@ -48,6 +56,7 @@ from .tools import (
     load_code_context_tool,
     load_domain_context_tool,
     write_planning_doc_tool,
+    read_planning_doc_tool,
     verify_file_exists_tool,
     list_json_event_ids_tool,
 )
@@ -76,6 +85,7 @@ OPUS_DEEP = LLM(
     model=_get_env("ENLISTED_LLM_OPUS_DEEP", "anthropic/claude-opus-4-5-20251101"),
     thinking={"type": "enabled", "budget_tokens": 10000},
     max_tokens=16000,
+    **LITELLM_COMPAT_PARAMS,
 )
 
 # TIER 2: Sonnet 4.5 with thinking - analysis that requires reasoning
@@ -84,6 +94,7 @@ SONNET_ANALYSIS = LLM(
     model=_get_env("ENLISTED_LLM_SONNET_ANALYSIS", "anthropic/claude-sonnet-4-5-20250929"),
     thinking={"type": "enabled", "budget_tokens": 5000},
     max_tokens=8000,
+    **LITELLM_COMPAT_PARAMS,
 )
 
 # TIER 3: Sonnet 4.5 without thinking - execution from clear specs
@@ -107,6 +118,7 @@ SONNET_QA = LLM(
     model=_get_env("ENLISTED_LLM_QA", "anthropic/claude-haiku-4-5-20251001"),
     thinking={"type": "enabled", "budget_tokens": 2048},
     max_tokens=6000,
+    **LITELLM_COMPAT_PARAMS,
 )
 
 
@@ -367,6 +379,7 @@ class EnlistedCrew:
             llm=SONNET_ANALYSIS,  # TIER 2: Doc sync requires reasoning about what changed
             tools=[
                 write_planning_doc_tool,     # Write planning docs
+                read_planning_doc_tool,      # Read planning docs (for fixes)
                 verify_file_exists_tool,     # Verify file paths before including
                 list_json_event_ids_tool,    # Verify event IDs before including
                 read_doc_tool,
@@ -584,6 +597,13 @@ class EnlistedCrew:
             config=self.tasks_config["validate_planning_doc"],
         )
     
+    @task
+    def fix_planning_doc_task(self) -> Task:
+        """Fix hallucinations and errors found during validation."""
+        return Task(
+            config=self.tasks_config["fix_planning_doc"],
+        )
+    
     # ==========================================================================
     # THREE CORE WORKFLOWS
     # ==========================================================================
@@ -630,6 +650,10 @@ class EnlistedCrew:
         validate_doc = self.validate_planning_doc_task()
         validate_doc.context = [create_doc]
         
+        # Task 6: Fix any hallucinations found (auto-correction loop)
+        fix_doc = self.fix_planning_doc_task()
+        fix_doc.context = [create_doc, validate_doc]
+        
         return Crew(
             agents=[
                 self.systems_analyst(),
@@ -644,6 +668,7 @@ class EnlistedCrew:
                 design,
                 create_doc,
                 validate_doc,
+                fix_doc,  # Auto-correct hallucinations
             ],
             process=Process.sequential,
             verbose=True,

@@ -3,25 +3,20 @@
 ## JSON Content Folders
 All content JSON files are located under `ModuleData/Enlisted/`.
 
-**IMPORTANT:** When referencing JSON files or IDs in planning docs, use the `verify_file_exists_tool` and `list_json_event_ids_tool` to confirm they exist. Do NOT fabricate IDs.
+**CRITICAL:** This file is a REFERENCE ONLY. It may be out of date.
+When referencing JSON files or IDs in planning docs:
+1. ALWAYS use `verify_file_exists_tool` to confirm file paths exist
+2. ALWAYS use `list_json_event_ids_tool` to get the current list of IDs
+3. NEVER assume an ID exists without verification - IDs change frequently
 
 ### Decisions/ (Camp Opportunities & Decisions)
-- `camp_opportunities.json` - 29 opportunities (opp_* IDs)
+- `camp_opportunities.json` - 36+ opportunities (opp_* IDs) - USE TOOL TO GET CURRENT LIST
 - `camp_decisions.json` - Decision tree content
 - `decisions.json` - General decisions
 - `medical_decisions.json` - Medical system decisions
 
-**Camp Opportunity IDs (from camp_opportunities.json):**
-- opp_weapon_drill, opp_card_game, opp_dice_game, opp_war_stories
-- opp_rest_tent, opp_help_wounded, opp_equipment_maintenance
-- opp_mess_tent, opp_letter_home, opp_mending_clothes
-- opp_market_browse, opp_tavern_visit, opp_volunteer_duty
-- opp_campfire_songs, opp_extra_rations, opp_pray_shrine
-- opp_wrestling_match, opp_archery_practice, opp_horse_grooming
-- opp_foraging_trip, opp_fishing_trip, opp_hunting_trip
-- opp_night_watch, opp_morning_exercises, opp_swimming
-- opp_gather_firewood, opp_cook_meal, opp_repair_tent
-- opp_laundry, opp_sharpen_weapons
+**Camp Opportunity IDs:** DO NOT use this list - call `list_json_event_ids_tool("Decisions")` instead.
+This static list is for reference only and may be incomplete:
 
 ### Events/ (Event Definitions)
 - `events_escalation_thresholds.json` - Reputation milestone events
