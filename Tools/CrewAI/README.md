@@ -2,7 +2,7 @@
 
 **Summary:** Multi-agent AI workflows for Enlisted Bannerlord mod development.
 **Status:** ✅ Implemented
-**Last Updated:** 2026-01-04 (Anthropic Claude setup, tiered thinking, domain context)
+**Last Updated:** 2026-01-05 (Added Flow-based bug hunting, state models)
 **Related Docs:** [AGENT-WORKFLOW.md](../AGENT-WORKFLOW.md), [BLUEPRINT.md](../../docs/BLUEPRINT.md)
 
 ---
@@ -16,6 +16,7 @@ This CrewAI integration provides specialized AI agents for:
 - **Balance Review** - Effects, XP rewards, and progression balance
 - **Quality Assurance** - Full validation pipeline and build checks
 - **Documentation Sync** - Keep docs and AI context current
+- **Bug Hunting** - Flow-based investigation with conditional routing (NEW)
 
 ## Setup
 
@@ -81,6 +82,10 @@ enlisted-crew code-review Services/PayService.cs Systems/TierSystem.cs
 
 # Full content review
 enlisted-crew full-review ModuleData/Enlisted/Events/*.json
+
+# Hunt bugs (Flow-based)
+enlisted-crew hunt-bug -d "player can't move after leaving lord" -e "none" -r "left my lord"
+enlisted-crew hunt-bug --description "..." --error-codes "E-ENCOUNTER-042" --output report.md
 ```
 
 ### Python API
@@ -178,3 +183,61 @@ enlisted-crew code-review <changed-files>
 ```bash
 enlisted-crew full-review ModuleData/Enlisted/**/*.json
 ```
+
+### Bug Hunting (Flow-based)
+```bash
+# Basic usage
+enlisted-crew hunt-bug -d "player unable to move after leaving lord"
+
+# With error codes and repro steps
+enlisted-crew hunt-bug \
+  --description "Player can't move, game not frozen" \
+  --error-codes "E-ENCOUNTER-042" \
+  --repro-steps "Enlist with lord, serve 10 days, leave, try to move"
+
+# Save report to file
+enlisted-crew hunt-bug -d "..." -o bug_report.md
+```
+
+## Flows (Advanced Workflows)
+
+Flows provide structured, state-managed workflows with conditional routing.
+
+### BugHuntingFlow
+
+The recommended way to investigate bugs. Uses Pydantic state models for clean data passing.
+
+```python
+from enlisted_crew.flows import BugHuntingFlow
+
+flow = BugHuntingFlow()
+result = flow.kickoff(inputs={
+    "description": "Player unable to move after leaving lord",
+    "error_codes": "none",
+    "repro_steps": "left my lord",
+})
+
+# Access structured state
+if result.investigation:
+    print(f"Severity: {result.investigation.severity}")
+    print(f"Root Cause: {result.investigation.root_cause}")
+
+if result.fix_proposal:
+    print(f"Fix: {result.fix_proposal.summary}")
+```
+
+**Flow Steps:**
+1. `receive_bug_report` - Parse input, create initial state
+2. `investigate_bug` - Code analyst searches logs and code
+3. `assess_severity` - Router decides: simple → propose_fix, complex → analyze_systems
+4. `analyze_systems` - (optional) Systems analyst for complex bugs
+5. `propose_fix` - C# implementer suggests minimal fix
+6. `validate_fix` - QA agent validates the proposal
+7. `generate_report` - Create final structured report
+
+**State Models:**
+- `BugReport` - Input from user
+- `Investigation` - Code analyst findings (severity, root cause, affected files)
+- `SystemsAnalysis` - Systems analyst findings (scope, related systems)
+- `FixProposal` - Proposed code changes
+- `ValidationResult` - QA validation results

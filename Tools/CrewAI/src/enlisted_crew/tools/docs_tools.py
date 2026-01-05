@@ -6,8 +6,45 @@ Tools for reading and searching project documentation.
 
 import os
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Optional, Any
 from crewai.tools import tool
+
+
+# === Search Result Cache ===
+# Prevents LLM from wasting tokens by re-searching the same queries
+class SearchCache:
+    """Module-level cache to deduplicate repeated searches within a session."""
+    _cache: Dict[str, str] = {}
+    _hit_count: Dict[str, int] = {}
+    
+    @classmethod
+    def get(cls, cache_key: str) -> Optional[str]:
+        """Get cached result, returning None if not found."""
+        if cache_key in cls._cache:
+            cls._hit_count[cache_key] = cls._hit_count.get(cache_key, 0) + 1
+            hits = cls._hit_count[cache_key]
+            return f"[CACHED - searched {hits}x before]\n{cls._cache[cache_key]}"
+        return None
+    
+    @classmethod
+    def set(cls, cache_key: str, result: str) -> str:
+        """Store result in cache and return it."""
+        cls._cache[cache_key] = result
+        cls._hit_count[cache_key] = 0
+        return result
+    
+    @classmethod
+    def clear(cls) -> None:
+        """Clear all cached results (call between flow runs if needed)."""
+        cls._cache.clear()
+        cls._hit_count.clear()
+    
+    @classmethod
+    def stats(cls) -> str:
+        """Return cache statistics."""
+        total_queries = len(cls._cache)
+        total_hits = sum(cls._hit_count.values())
+        return f"SearchCache: {total_queries} unique queries, {total_hits} cache hits"
 
 
 def get_project_root() -> Path:
@@ -41,29 +78,50 @@ def read_doc_tool(doc_path: str) -> str:
     Args:
         doc_path: Path to doc file, relative to project root or docs/ folder.
                   Examples: "BLUEPRINT.md", "docs/INDEX.md", "WARP.md",
-                  "docs/Features/Content/event-system-schemas.md"
+                  "Features/Core/enlistment.md", "ANEWFEATURE/systems-integration-analysis.md"
     
     Returns:
         Contents of the documentation file.
     """
-    # Try various path resolutions
+    # Normalize path separators
+    doc_path = doc_path.replace("\\", "/")
+    
+    # Try various path resolutions (most specific to most general)
     possible_paths = [
         PROJECT_ROOT / doc_path,
         PROJECT_ROOT / "docs" / doc_path,
-        PROJECT_ROOT / "Tools" / doc_path,
         PROJECT_ROOT / "docs" / "Features" / doc_path,
+        PROJECT_ROOT / "docs" / "Features" / "Core" / doc_path,
+        PROJECT_ROOT / "docs" / "Features" / "Content" / doc_path,
+        PROJECT_ROOT / "docs" / "Features" / "Campaign" / doc_path,
         PROJECT_ROOT / "docs" / "ANEWFEATURE" / doc_path,
+        PROJECT_ROOT / "docs" / "Reference" / doc_path,
+        PROJECT_ROOT / "Tools" / doc_path,
     ]
     
     for path in possible_paths:
         if path.exists() and path.is_file():
             try:
                 with open(path, 'r', encoding='utf-8') as f:
-                    return f.read()
+                    content = f.read()
+                    # Truncate very long docs to avoid token explosion
+                    if len(content) > 30000:
+                        return f"[Truncated - showing first 30KB of {path.name}]\n\n" + content[:30000]
+                    return content
             except Exception as e:
                 return f"ERROR reading {path}: {e}"
     
-    return f"ERROR: Doc not found. Tried:\n" + "\n".join(str(p) for p in possible_paths)
+    # Provide helpful suggestions
+    error_msg = f"ERROR: Doc '{doc_path}' not found.\n\n"
+    error_msg += "Available documentation folders:\n"
+    error_msg += "  • docs/Features/Core/ (enlistment, promotion, orders, retinue)\n"
+    error_msg += "  • docs/Features/Content/ (events, schemas, writing-style)\n"
+    error_msg += "  • docs/Features/Campaign/ (battle, simulation)\n"
+    error_msg += "  • docs/ANEWFEATURE/ (systems-integration, content-effects)\n"
+    error_msg += "  • docs/Reference/ (native-apis)\n"
+    error_msg += "\nUse search_docs_tool to find docs by content, or list_docs_tool to browse.\n"
+    error_msg += f"\nPaths tried:\n" + "\n".join(f"  • {p}" for p in possible_paths[:5])
+    return error_msg
 
 
 @tool("List Documentation Files")
@@ -132,6 +190,12 @@ def search_docs_tool(query: str) -> str:
     Returns:
         List of files containing the query with matching snippets.
     """
+    # Check cache first to avoid duplicate searches
+    cache_key = f"docs:{query.lower()}"
+    cached = SearchCache.get(cache_key)
+    if cached:
+        return cached
+    
     docs_dir = PROJECT_ROOT / "docs"
     results = []
     query_lower = query.lower()
@@ -192,9 +256,11 @@ def search_docs_tool(query: str) -> str:
             continue
     
     if not results:
-        return f"No documentation found containing '{query}'"
+        result = f"No documentation found containing '{query}'"
+    else:
+        result = f"Found '{query}' in {len(results)} files:\n\n" + "\n\n".join(results[:10])
     
-    return f"Found '{query}' in {len(results)} files:\n\n" + "\n\n".join(results[:10])
+    return SearchCache.set(cache_key, result)
 
 
 @tool("Load Content Writing Context")
@@ -505,6 +571,139 @@ def read_csharp_tool(file_path: str) -> str:
     return f"ERROR: File not found. Tried:\n" + "\n".join(str(p) for p in possible_paths)
 
 
+@tool("Search C# Codebase")
+def search_csharp_tool(query: str, max_results: int = 20) -> str:
+    """
+    Search the src/ C# codebase for a text pattern and return file hits with line snippets.
+
+    Args:
+        query: Text to search for (case-insensitive).
+        max_results: Maximum number of files to return (default 20).
+
+    Returns:
+        Matches grouped by file with up to 3 line snippets per file.
+    """
+    # Check cache first to avoid duplicate searches
+    cache_key = f"csharp:{query.lower()}:{max_results}"
+    cached = SearchCache.get(cache_key)
+    if cached:
+        return cached
+    
+    src_dir = PROJECT_ROOT / "src"
+    if not src_dir.exists():
+        return f"ERROR: src folder not found at {src_dir}"
+
+    results = []
+    q = query.lower()
+    for cs_file in src_dir.glob("**/*.cs"):
+        try:
+            with open(cs_file, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+            if q not in content.lower():
+                continue
+            lines = content.split('\n')
+            matches = []
+            for i, line in enumerate(lines):
+                if q in line.lower():
+                    matches.append(f"  L{i+1}: {line[:100]}")
+                    if len(matches) >= 3:
+                        break
+            rel = cs_file.relative_to(PROJECT_ROOT)
+            results.append(f"📄 {rel}:\n" + "\n".join(matches))
+            if len(results) >= max_results:
+                break
+        except Exception:
+            continue
+
+    if not results:
+        result = f"No matches for '{query}' in src/"
+    else:
+        result = f"Found '{query}' in {len(results)} files (showing up to {max_results}):\n\n" + "\n\n".join(results)
+    
+    return SearchCache.set(cache_key, result)
+
+
+@tool("Read C# Snippet")
+def read_csharp_snippet_tool(
+    file_path: str,
+    pattern: str = "",
+    max_snippets: int = 8,
+    lines_before: int = 20,
+    lines_after: int = 20,
+    max_chars: int = 8000,
+) -> str:
+    """
+    Read only small, relevant excerpts from a C# file.
+
+    Constraints:
+    - Returns at most `max_snippets` matched excerpts
+    - Each excerpt includes `lines_before/after` context
+    - Hard-capped to `max_chars` total output to protect LLM context
+
+    Args:
+        file_path: Path relative to project root or src/.
+        pattern: Case-insensitive text to locate; if empty, returns file header only.
+        max_snippets: Max excerpts to return (default 8).
+        lines_before/after: Context lines around each match.
+        max_chars: Hard output cap (default 8000 chars).
+    """
+    # Resolve file
+    possible_paths = [
+        PROJECT_ROOT / file_path,
+        PROJECT_ROOT / "src" / file_path,
+        PROJECT_ROOT / "src" / "Features" / file_path,
+    ]
+    path = None
+    for p in possible_paths:
+        if p.exists() and p.is_file():
+            path = p
+            break
+    if path is None:
+        return f"ERROR: File not found. Tried:\n" + "\n".join(str(p) for p in possible_paths)
+
+    try:
+        with open(path, 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+    except Exception as e:
+        return f"ERROR reading {path}: {e}"
+
+    # If no pattern, return only file header
+    lines = content.split('\n')
+    if not pattern:
+        head = "\n".join(lines[: min(50, len(lines))])
+        return f"📄 {path.relative_to(PROJECT_ROOT)} (header only)\n" + head[: max_chars]
+
+    q = pattern.lower()
+    excerpts = []
+    for i, line in enumerate(lines):
+        if q in line.lower():
+            start = max(0, i - lines_before)
+            end = min(len(lines), i + lines_after + 1)
+            block = "\n".join(lines[start:end])
+            excerpts.append((i + 1, block))
+            if len(excerpts) >= max_snippets:
+                break
+
+    if not excerpts:
+        return f"No matches for '{pattern}' in {path.relative_to(PROJECT_ROOT)}"
+
+    out_parts = [f"📄 {path.relative_to(PROJECT_ROOT)}"]
+    total = 0
+    for ln, block in excerpts:
+        header = f"\n--- SNIPPET around L{ln} ---\n"
+        chunk = header + block
+        if total + len(chunk) > max_chars:
+            break
+        out_parts.append(chunk)
+        total += len(chunk)
+
+    summary = f"\n--- SUMMARY ---\nSnippets: {len(out_parts)-1}, max_chars={max_chars}, pattern='{pattern}'"
+    out = "\n".join(out_parts) + summary
+    if len(out) > max_chars:
+        out = out[:max_chars] + "\n... [truncated by snippet tool]"
+    return out
+
+
 @tool("Read Debug Logs")
 def read_debug_logs_tool(session: str = "A") -> str:
     """
@@ -557,6 +756,12 @@ def search_debug_logs_tool(query: str, error_codes_only: bool = False) -> str:
     Returns:
         Matching log lines with context.
     """
+    # Check cache first to avoid duplicate searches
+    cache_key = f"logs:{query.lower()}:{error_codes_only}"
+    cached = SearchCache.get(cache_key)
+    if cached:
+        return cached
+    
     if not MOD_DEBUGGING_PATH.exists():
         return f"ERROR: Debugging folder not found at {MOD_DEBUGGING_PATH}"
     
@@ -585,9 +790,11 @@ def search_debug_logs_tool(query: str, error_codes_only: bool = False) -> str:
             continue
     
     if not results:
-        return f"No matches for '{query}' in debug logs"
+        result = f"No matches for '{query}' in debug logs"
+    else:
+        result = f"Found '{query}' in logs:\n\n" + "\n\n".join(results)
     
-    return f"Found '{query}' in logs:\n\n" + "\n\n".join(results)
+    return SearchCache.set(cache_key, result)
 
 
 @tool("Read Native Crash Logs")
@@ -605,7 +812,7 @@ def read_native_crash_logs_tool(recent_only: bool = True) -> str:
     Returns:
         Contents of crash logs with timestamps.
     
-    Log Location: C:\ProgramData\Mount and Blade II Bannerlord\logs\
+    Log Location: C:\\ProgramData\\Mount and Blade II Bannerlord\\logs\\
     """
     if not NATIVE_CRASH_LOGS_PATH.exists():
         return f"ERROR: Native crash logs not found at {NATIVE_CRASH_LOGS_PATH}"

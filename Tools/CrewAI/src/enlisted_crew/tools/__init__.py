@@ -29,10 +29,13 @@ from .code_style_tools import (
     check_csharp_file_tool,
 )
 from .docs_tools import (
+    SearchCache,
     read_doc_tool,
     list_docs_tool,
     search_docs_tool,
     read_csharp_tool,
+    search_csharp_tool,
+    read_csharp_snippet_tool,
     list_feature_files_tool,
     read_debug_logs_tool,
     search_debug_logs_tool,
@@ -69,7 +72,10 @@ __all__ = [
     "read_doc_tool",
     "list_docs_tool",
     "search_docs_tool",
+    "SearchCache",
     "read_csharp_tool",
+    "search_csharp_tool",
+    "read_csharp_snippet_tool",
     "list_feature_files_tool",
     # Debug and native API tools
     "read_debug_logs_tool",

@@ -130,6 +130,67 @@ investigate_bug:
     - Reproduction steps verified
   agent: code_analyst
 
+analyze_bug_systems:
+  description: >
+    Analyze systems related to the bug found in the previous investigation.
+    
+    You will receive the bug investigation results from the prior task's context.
+    
+    Tasks:
+    1. Review the systems identified in the bug investigation
+    2. Check for related code patterns that might have similar issues
+    3. Identify integration points that could be affected
+    4. Assess if this is a localized bug or systemic issue
+    5. Determine what other files might need similar fixes
+  expected_output: >
+    Systems analysis for bug with:
+    - Related systems and their roles
+    - Similar code patterns found
+    - Scope of the issue (localized vs systemic)
+    - List of files that may need fixes
+    - Risk assessment for the fix
+  agent: systems_analyst
+
+propose_bug_fix:
+  description: >
+    Propose a minimal code fix based on the bug investigation and systems
+    analysis from prior tasks (provided in context).
+    
+    Requirements:
+    1. Propose the MINIMAL fix that addresses the root cause
+    2. Follow Enlisted code style (Allman braces, _camelCase, XML docs)
+    3. Use proper Bannerlord patterns
+    4. Consider save/load compatibility
+    5. Add appropriate error handling
+    6. Include code diff or pseudocode for the fix
+  expected_output: >
+    Bug fix proposal with:
+    - Files to modify
+    - Code changes (diff format preferred)
+    - Explanation of why this fixes the bug
+    - Any risks or side effects
+    - Testing recommendations
+  agent: csharp_implementer
+
+validate_bug_fix:
+  description: >
+    Validate the proposed bug fix from the prior task (provided in context).
+    
+    Checks:
+    1. Run dotnet build to verify compilation
+    2. Check code style compliance
+    3. Verify the fix matches the investigation findings
+    4. Assess if the fix could introduce regressions
+    5. Confirm fix is minimal and targeted
+  expected_output: >
+    Bug fix validation report with:
+    - Build status (pass/fail)
+    - Style compliance
+    - Fix completeness assessment
+    - Regression risk assessment
+    - Approval or required changes
+  agent: qa_agent
+
 # =============================================================================
 # FEATURE DESIGN TASKS
 # =============================================================================

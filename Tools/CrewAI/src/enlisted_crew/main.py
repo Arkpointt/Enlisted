@@ -11,6 +11,7 @@ Usage:
     enlisted-crew style-review <path>         # Review style of event file
     enlisted-crew code-review <paths...>      # Review C# code changes
     enlisted-crew full-review <paths...>      # Full content review
+    enlisted-crew hunt-bug --description "..."  # Investigate a bug (Flow-based)
 """
 
 import argparse
@@ -20,6 +21,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from .crew import EnlistedCrew
+from .tools import SearchCache
 
 
 def main():
@@ -109,6 +111,42 @@ def main():
         help="Paths to files to review",
     )
     
+    # hunt-bug command (Flow-based)
+    hunt_parser = subparsers.add_parser(
+        "hunt-bug",
+        help="Investigate a bug using Flow-based workflow",
+    )
+    hunt_parser.add_argument(
+        "--description", "-d",
+        required=True,
+        help="Description of the bug from user report",
+    )
+    hunt_parser.add_argument(
+        "--error-codes", "-e",
+        default="none",
+        help="Any error codes (E-*, W-*) from logs",
+    )
+    hunt_parser.add_argument(
+        "--repro-steps", "-r",
+        default="unknown",
+        help="Steps to reproduce the bug",
+    )
+    hunt_parser.add_argument(
+        "--context", "-c",
+        default=None,
+        help="Additional context (game state, mods, etc.)",
+    )
+    hunt_parser.add_argument(
+        "--output", "-o",
+        default=None,
+        help="Output file for the report (default: print to console)",
+    )
+    hunt_parser.add_argument(
+        "--logs", "-l",
+        default=None,
+        help="User-provided log content OR path to log file from end user (not local dev logs)",
+    )
+    
     args = parser.parse_args()
     
     if not args.command:
@@ -136,6 +174,15 @@ def main():
             result = run_code_review(crew, args.file_paths)
         elif args.command == "full-review":
             result = run_full_review(crew, args.file_paths)
+        elif args.command == "hunt-bug":
+            result = run_hunt_bug(
+                description=args.description,
+                error_codes=args.error_codes,
+                repro_steps=args.repro_steps,
+                context=args.context,
+                output_file=args.output,
+                user_logs=args.logs,
+            )
         else:
             parser.print_help()
             sys.exit(1)
@@ -155,6 +202,7 @@ def main():
 
 def run_validation(crew: EnlistedCrew):
     """Run full validation crew."""
+    SearchCache.clear()  # Clear cache for fresh session
     print("Running full validation...")
     validation_crew = crew.validation_crew()
     return validation_crew.kickoff()
@@ -162,6 +210,7 @@ def run_validation(crew: EnlistedCrew):
 
 def run_file_validation(crew: EnlistedCrew, file_path: str):
     """Run validation on a specific file."""
+    SearchCache.clear()  # Clear cache for fresh session
     print(f"Validating: {file_path}")
     
     # Create a one-off crew for file validation
@@ -200,6 +249,7 @@ def run_create_event(
     tier_range: str,
 ):
     """Run event creation crew."""
+    SearchCache.clear()  # Clear cache for fresh session
     print(f"Creating {event_type} event: {theme}")
     
     from crewai import Crew, Process, Task
@@ -236,6 +286,7 @@ def run_create_event(
 
 def run_style_review(crew: EnlistedCrew, file_path: str):
     """Run style review crew."""
+    SearchCache.clear()  # Clear cache for fresh session
     print(f"Reviewing style: {file_path}")
     
     from crewai import Crew, Process, Task
@@ -271,6 +322,7 @@ def run_style_review(crew: EnlistedCrew, file_path: str):
 
 def run_code_review(crew: EnlistedCrew, file_paths: list):
     """Run code review crew."""
+    SearchCache.clear()  # Clear cache for fresh session
     paths_str = ", ".join(file_paths)
     print(f"Reviewing code: {paths_str}")
     
@@ -305,11 +357,85 @@ def run_code_review(crew: EnlistedCrew, file_paths: list):
 
 def run_full_review(crew: EnlistedCrew, file_paths: list):
     """Run full review crew."""
+    SearchCache.clear()  # Clear cache for fresh session
     paths_str = ", ".join(file_paths)
     print(f"Running full review: {paths_str}")
     
     full_crew = crew.full_review_crew()
     return full_crew.kickoff(inputs={"file_paths": paths_str})
+
+
+def run_hunt_bug(
+    description: str,
+    error_codes: str = "none",
+    repro_steps: str = "unknown",
+    context: str = None,
+    output_file: str = None,
+    user_logs: str = None,
+):
+    """
+    Run bug hunting flow.
+    
+    Uses the Flow-based BugHuntingFlow for state-managed bug investigation.
+    
+    Args:
+        user_logs: End-user provided logs. Can be:
+            - Direct log content (pasted)
+            - Path to a log file
+            If not provided, flow will analyze code paths instead of searching logs.
+    """
+    from .flows import BugHuntingFlow
+    from pathlib import Path
+    
+    # Handle user_logs - could be file path or direct content
+    user_log_content = None
+    if user_logs:
+        log_path = Path(user_logs)
+        if log_path.exists() and log_path.is_file():
+            print(f"📂 Reading user log file: {user_logs}")
+            user_log_content = log_path.read_text(encoding='utf-8', errors='replace')
+        else:
+            # Treat as direct log content
+            user_log_content = user_logs
+    
+    print("\n" + "=" * 60)
+    print("ENLISTED BUG HUNTING FLOW")
+    print("=" * 60)
+    print(f"\nDescription: {description[:100]}...")
+    print(f"Error Codes: {error_codes}")
+    print(f"Repro Steps: {repro_steps}")
+    print(f"Context: {context or 'None'}")
+    print(f"User Logs: {'Provided (' + str(len(user_log_content)) + ' chars)' if user_log_content else 'None - will analyze code paths'}")
+    print("\nStarting investigation...\n")
+    
+    # Create and run the flow
+    flow = BugHuntingFlow()
+    
+    result = flow.kickoff(inputs={
+        "bug_report": {
+            "description": description,
+            "error_codes": error_codes,
+            "repro_steps": repro_steps,
+            "context": context,
+            "user_log_content": user_log_content,
+        }
+    })
+    
+    # Get final state
+    final_state = result
+    
+    # Output report
+    if hasattr(final_state, 'final_report') and final_state.final_report:
+        report = final_state.final_report
+    else:
+        report = str(result)
+    
+    if output_file:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(report)
+        print(f"\n📄 Report saved to: {output_file}")
+    
+    return report
 
 
 if __name__ == "__main__":

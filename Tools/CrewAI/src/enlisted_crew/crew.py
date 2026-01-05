@@ -35,6 +35,8 @@ from .tools import (
     list_docs_tool,
     search_docs_tool,
     read_csharp_tool,
+    search_csharp_tool,
+    read_csharp_snippet_tool,
     list_feature_files_tool,
     read_debug_logs_tool,
     search_debug_logs_tool,
@@ -51,51 +53,56 @@ from .tools import (
 # Philosophy: Spend tokens on ANALYSIS and VALIDATION, save on EXECUTION.
 # Bugs from cheap generation cost more to fix than thinking tokens.
 #
+# Model versions: Claude 4.5 family (Opus, Sonnet, Haiku)
+# - Opus 4.5: 200K context, best for complex multi-system reasoning
+# - Sonnet 4.5: 200K context, excellent coding and analysis
+# - Haiku 4.5: 200K context, fast and cost-effective
+#
 # Tier 1: Deep Thinking (complex reasoning, high-stakes decisions)
 # Tier 2: Standard Thinking (code analysis, pattern detection)  
 # Tier 3: Execution (following specs, generating from templates)
 # Tier 4: Fast Validation (schema checks, style checks)
 
-# TIER 1: Opus with deep thinking - architectural decisions
+import os as _os
+def _get_env(name: str, default: str) -> str:
+    return _os.environ.get(name, default)
+
+# TIER 1: Opus 4.5 with deep thinking - architectural decisions
 # Use for: Feature design, system integration, multi-file changes
-# Cost: ~$2/call but prevents expensive architectural mistakes
 OPUS_DEEP = LLM(
-    model="anthropic/claude-opus-4-20250514",
+    model=_get_env("ENLISTED_LLM_OPUS_DEEP", "anthropic/claude-opus-4-5-20251101"),
     thinking={"type": "enabled", "budget_tokens": 10000},
     max_tokens=16000,
 )
 
-# TIER 2: Sonnet with thinking - analysis that requires reasoning
+# TIER 2: Sonnet 4.5 with thinking - analysis that requires reasoning
 # Use for: Code review, bug analysis, understanding existing systems
-# Cost: ~$0.20/call - worth it to catch issues before implementation
 SONNET_ANALYSIS = LLM(
-    model="anthropic/claude-sonnet-4-20250514",
+    model=_get_env("ENLISTED_LLM_SONNET_ANALYSIS", "anthropic/claude-sonnet-4-5-20250929"),
     thinking={"type": "enabled", "budget_tokens": 5000},
     max_tokens=8000,
 )
 
-# TIER 3: Sonnet without thinking - execution from clear specs
+# TIER 3: Sonnet 4.5 without thinking - execution from clear specs
 # Use for: Writing code from specs, implementing defined changes
-# Cost: ~$0.12/call - spec already did the thinking
 SONNET_EXECUTE = LLM(
-    model="anthropic/claude-sonnet-4-20250514",
+    model=_get_env("ENLISTED_LLM_EXECUTE", "anthropic/claude-sonnet-4-5-20250929"),
     max_tokens=8000,
 )
 
-# TIER 4: Haiku - high-volume validation and generation
+# TIER 4: Haiku 4.5 - high-volume validation and generation
 # Use for: Schema validation, style checks, content from templates
-# Cost: ~$0.005/call - fast and cheap, QA catches any issues
 HAIKU_FAST = LLM(
-    model="anthropic/claude-haiku-4-20250514",
+    model=_get_env("ENLISTED_LLM_HAIKU", "anthropic/claude-haiku-4-5-20251001"),
     max_tokens=4000,
 )
 
-# TIER 2.5: Sonnet for QA - thinking enabled because QA is the safety net
+# TIER 2.5: Haiku 4.5 for QA with thinking - safety net
 # Use for: Final validation before commit, catching what others missed
-# Cost: ~$0.15/call - NEVER skimp on QA, it's your last line of defense
+# Note: min budget_tokens is 1024 per Anthropic API
 SONNET_QA = LLM(
-    model="anthropic/claude-sonnet-4-20250514",
-    thinking={"type": "enabled", "budget_tokens": 3000},
+    model=_get_env("ENLISTED_LLM_QA", "anthropic/claude-haiku-4-5-20251001"),
+    thinking={"type": "enabled", "budget_tokens": 2048},
     max_tokens=6000,
 )
 
@@ -195,6 +202,8 @@ class EnlistedCrew:
                 search_docs_tool,
             ],
             knowledge_sources=[self.systems_knowledge],
+            respect_context_window=True,
+            max_retry_limit=1,
         )
     
     @agent
@@ -215,9 +224,13 @@ class EnlistedCrew:
                 search_debug_logs_tool,
                 read_native_crash_logs_tool,  # For hard game crashes
                 search_native_api_tool,
-                read_csharp_tool,
+                search_csharp_tool,  # Search first, then read snippets
+                read_csharp_snippet_tool,  # Prefer snippets over full files
+                read_csharp_tool,  # Full file only when needed
             ],
             knowledge_sources=[self.code_knowledge],
+            respect_context_window=True,
+            max_retry_limit=1,
         )
     
     @agent
@@ -233,6 +246,7 @@ class EnlistedCrew:
                 validate_content_tool,
             ],
             knowledge_sources=[self.content_knowledge],
+            respect_context_window=True,
         )
     
     @agent
@@ -245,7 +259,9 @@ class EnlistedCrew:
                 load_feature_context_tool,  # CALL FIRST - loads BLUEPRINT, systems integration, patterns
                 read_doc_tool,
                 search_docs_tool,
-                read_csharp_tool,
+                search_csharp_tool,  # Search first
+                read_csharp_snippet_tool,  # Read targeted snippets
+                read_csharp_tool,  # Full file when needed
                 list_feature_files_tool,
                 validate_content_tool,
                 run_build_tool,
@@ -253,6 +269,8 @@ class EnlistedCrew:
                 search_native_api_tool,
             ],
             knowledge_sources=[self.systems_knowledge],
+            respect_context_window=True,
+            max_retry_limit=1,
         )
     
     @agent
@@ -269,9 +287,12 @@ class EnlistedCrew:
                 check_framework_compatibility_tool,
                 check_csharp_file_tool,
                 search_native_api_tool,
-                read_csharp_tool,
+                search_csharp_tool,  # Search to find relevant code
+                read_csharp_snippet_tool,  # Read targeted snippets
+                read_csharp_tool,  # Full file when implementing
             ],
             knowledge_sources=[self.ui_knowledge],
+            respect_context_window=True,
         )
     
     @agent
@@ -292,11 +313,12 @@ class EnlistedCrew:
                 read_doc_tool,
             ],
             knowledge_sources=[self.content_knowledge],
+            respect_context_window=True,
         )
     
     @agent
     def qa_agent(self) -> Agent:
-        """QA agent - uses Sonnet with thinking as final safety net."""
+        """QA agent - uses Haiku 4.5 with thinking as final safety net."""
         return Agent(
             config=self.agents_config["qa_agent"],
             llm=SONNET_QA,  # TIER 2.5: QA is last defense - NEVER skimp here
@@ -307,6 +329,7 @@ class EnlistedCrew:
                 analyze_validation_report_tool,
                 check_code_style_tool,
             ],
+            respect_context_window=True,
         )
     
     @agent
@@ -323,6 +346,7 @@ class EnlistedCrew:
                 read_doc_tool,
             ],
             knowledge_sources=[self.balance_knowledge],
+            respect_context_window=True,
         )
     
     @agent
@@ -335,10 +359,13 @@ class EnlistedCrew:
                 read_doc_tool,
                 list_docs_tool,
                 search_docs_tool,
-                read_csharp_tool,
+                search_csharp_tool,  # Search for code changes
+                read_csharp_snippet_tool,  # Read relevant snippets
+                read_csharp_tool,  # Full file when needed
                 list_feature_files_tool,
                 load_domain_context_tool,
             ],
+            respect_context_window=True,
         )
     
     # === Tasks ===
@@ -370,6 +397,27 @@ class EnlistedCrew:
         """Investigate a bug or crash."""
         return Task(
             config=self.tasks_config["investigate_bug"],
+        )
+    
+    @task
+    def analyze_bug_systems_task(self) -> Task:
+        """Analyze systems related to a bug."""
+        return Task(
+            config=self.tasks_config["analyze_bug_systems"],
+        )
+    
+    @task
+    def propose_bug_fix_task(self) -> Task:
+        """Propose a minimal fix for a bug."""
+        return Task(
+            config=self.tasks_config["propose_bug_fix"],
+        )
+    
+    @task
+    def validate_bug_fix_task(self) -> Task:
+        """Validate a proposed bug fix."""
+        return Task(
+            config=self.tasks_config["validate_bug_fix"],
         )
     
     # Design tasks
@@ -653,19 +701,33 @@ class EnlistedCrew:
         """
         Bug investigation crew for tracking down crashes and issues.
         
-        Use for:
-        - Investigating crashes with error codes (E-*, W-*)
-        - Tracing bugs to root cause
-        - Finding related code that needs similar fixes
+        ⚠️ DEPRECATED: Use BugHuntingFlow instead for better state management.
         
-        Workflow:
-        1. code_analyst searches logs and traces to root cause
-        2. systems_analyst checks for related patterns
-        3. csharp_implementer proposes minimal fix
-        4. qa_agent validates the fix compiles
+        The Flow-based approach (flows/bug_hunting_flow.py) provides:
+        - Structured state management with Pydantic models
+        - Conditional routing based on bug severity
+        - Better debugging and observability
+        - Cleaner data passing between agents
         
-        Uses Sonnet 4.5 + thinking for analysis - bugs need careful reasoning.
+        Usage:
+            from enlisted_crew.flows import BugHuntingFlow
+            flow = BugHuntingFlow()
+            result = flow.kickoff(inputs={"description": "...", ...})
+        
+        Or via CLI:
+            enlisted-crew hunt-bug -d "bug description" -e "error codes"
+        
+        This Crew is kept for backwards compatibility but may be removed in future.
         """
+        # Create tasks with context chaining
+        investigate = self.investigate_bug_task()
+        analyze_systems = self.analyze_bug_systems_task()
+        analyze_systems.context = [investigate]
+        propose_fix = self.propose_bug_fix_task()
+        propose_fix.context = [investigate, analyze_systems]
+        validate_fix = self.validate_bug_fix_task()
+        validate_fix.context = [propose_fix]
+        
         return Crew(
             agents=[
                 self.code_analyst(),
@@ -674,10 +736,10 @@ class EnlistedCrew:
                 self.qa_agent(),
             ],
             tasks=[
-                self.investigate_bug_task(),
-                self.analyze_systems_task(),
-                self.implement_csharp_task(),
-                self.validate_all_task(),
+                investigate,
+                analyze_systems,
+                propose_fix,
+                validate_fix,
             ],
             process=Process.sequential,
             verbose=True,

@@ -19,6 +19,12 @@ systems_analyst:
     You trace data flows from ContentOrchestrator through WorldStateAnalyzer,
     CompanyNeedsManager, EscalationManager, and into content delivery. You understand
     how promotion requirements gate progression and how discharge bands affect re-entry.
+    
+    SEARCH EFFICIENCY RULES (CRITICAL):
+    - All search results are cached; NEVER re-search the same query
+    - DO NOT search terms other agents already searched in this session
+    - Limit to 3-5 new, distinct queries per task
+    - Focus on system integration, not re-investigating code already found
   verbose: true
   allow_delegation: true
 
@@ -35,6 +41,12 @@ code_analyst:
     equipment iteration, reputation/needs APIs. You read existing code to understand how
     systems work before proposing changes. You enforce .NET Framework 4.7.2 compatibility
     and catch issues that break saves or cause crashes.
+    
+    SEARCH EFFICIENCY RULES (CRITICAL - saves tokens and time):
+    - NEVER re-search the same query - all search results are cached
+    - Track files you've already found; use read_csharp_snippet_tool instead of re-searching
+    - Limit total searches to 5-8 per task; when you have enough info, STOP and summarize
+    - If you get "[CACHED - searched Nx before]", do NOT search again
     
     BUG HUNTING EXPERTISE:
     
@@ -105,6 +117,11 @@ feature_architect:
     specs with: data models, method signatures, file lists, and phased implementation plans.
     You reference existing patterns (WorldStateAnalyzer, ScheduledOpportunity) and ensure
     new code integrates cleanly. You consider save/load, error handling, and edge cases.
+    
+    SEARCH EFFICIENCY RULES:
+    - Search results are cached; use what other agents already found
+    - Limit new searches to ~5 distinct queries for design research
+    - When you have enough context, STOP searching and produce the spec
   verbose: true
   allow_delegation: true
 
@@ -285,7 +302,5 @@ documentation_maintainer:
     
     When editing ANY doc, check and fix these issues. Small improvements compound.
     Documentation debt is technical debt - you prevent AND reduce it incrementally.
-  verbose: true
-    - list_feature_files_tool
   verbose: true
   allow_delegation: false
