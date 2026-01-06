@@ -174,11 +174,14 @@ class EnlistedCrew:
         Note: CrewAI expects relative paths from the project's knowledge/ directory.
         
         Chunk settings (for embedding model compatibility):
-        - chunk_size=2000 chars (~500 tokens) - fits within 8192 token embedding limit
-        - chunk_overlap=200 - maintains context between chunks
+        - chunk_size=24000 chars (~6000 tokens) - fits within 8191 token embedding limit
+        - chunk_overlap=2400 chars (~600 tokens) - 10% overlap maintains context
+        - text-embedding-3-small model has 8191 token limit
+        - Using ~6000 tokens leaves headroom for dense technical content
         """
         # Shared chunk settings for embedding model compatibility
-        chunk_params = {"chunk_size": 2000, "chunk_overlap": 200}
+        # Much larger chunks than before - GPT-5 + text-embedding-3-small handle this well
+        chunk_params = {"chunk_size": 24000, "chunk_overlap": 2400}
         
         # Systems knowledge - for systems_analyst, feature_architect
         self.systems_knowledge = TextFileKnowledgeSource(
