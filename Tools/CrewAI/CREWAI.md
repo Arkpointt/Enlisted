@@ -884,6 +884,10 @@ enlisted-crew stats
 enlisted-crew stats -c PlanningFlow
 enlisted-crew stats -c ImplementationFlow
 enlisted-crew stats -c BugHuntingFlow
+
+# View cost tracking
+enlisted-crew stats --costs
+enlisted-crew stats -c PlanningFlow --costs
 ```
 
 **Example Output:**
@@ -904,6 +908,18 @@ Crew: ImplementationFlow
   Min Duration: 265.10s
   Max Duration: 312.40s
 ==================================================================
+
+==================================================================
+LLM COST REPORT
+==================================================================
+Crew: PlanningFlow
+
+Total LLM Calls: 124
+Input Tokens: 45,320
+Output Tokens: 8,940
+Total Cost: $0.1620
+Avg Cost/Call: $0.0013
+==================================================================
 ```
 
 ### How Monitoring Helps
@@ -922,6 +938,136 @@ Crew: ImplementationFlow
    - Which tools fail most often?
    - Are there patterns in errors?
    - Is performance degrading over time?
+
+4. **Optimize Costs** (NEW)
+   - Track token usage per workflow
+   - Identify expensive operations
+   - Compare model costs across runs
+   - Budget API spending accurately
+
+---
+
+## Execution Hooks - Safety & Cost Control
+
+CrewAI Execution Hooks provide fine-grained control during agent execution. Located in `hooks.py`, these hooks run automatically before and after every LLM call and tool execution.
+
+### What We've Implemented
+
+**1. LLM Call Hooks** (`@after_llm_call`)
+- **Cost Tracking** - Automatic token usage and cost calculation for every LLM call
+- **Database Logging** - Persist costs to `llm_costs` table for analysis
+- **Real-time Display** - Console output shows cost per call
+- **Running Totals** - Track cumulative costs for the current workflow run
+
+**2. Tool Call Hooks** (`@before_tool_call`, `@after_tool_call`)
+- **Safety Guards** - Validate arguments before dangerous operations execute
+- **Path Validation** - Block writes outside project boundaries
+- **SQL Injection Prevention** - Validate content IDs for suspicious patterns
+- **Error Logging** - Track tool failures for debugging
+
+### Hooks in Action
+
+**Before Tool Call (Safety Validation):**
+```
+      [BLOCKED] write_source - Path outside project: C:\Windows\System32\file.cs
+      [BLOCKED] delete_content_item - Suspicious content_id (potential SQL injection)
+      [Tool executes normally if validation passes]
+```
+
+**After LLM Call (Cost Tracking):**
+```
+      [COST] gpt-5.2: 1240 in + 380 out = $0.0055
+      [COST] gpt-5-mini: 620 in + 180 out = $0.0004
+      [COST] gpt-5: 2100 in + 850 out = $0.0103
+```
+
+**End of Run Summary:**
+```
+======================================================================
+RUN COST SUMMARY
+======================================================================
+Total LLM Calls: 47
+Input Tokens: 125,430
+Output Tokens: 38,210
+Total Cost: $0.70
+======================================================================
+
+======================================================================
+SAFETY GUARD SUMMARY
+======================================================================
+Blocked Operations: 2
+  - write_source: Path outside project boundaries
+  - delete_content_item: Suspicious content_id (potential SQL injection)
+======================================================================
+```
+
+### Safety Features
+
+**1. File Write Validation**
+   - Blocks absolute paths outside project root
+   - Detects suspicious patterns (`../../../`, `C:\Windows`, `/etc/`, `~/.ssh`)
+   - Validates all file-writing tools: `write_source`, `write_event`, `write_doc`, `update_localization`, `append_to_csproj`
+
+**2. Database Operation Protection**
+   - Requires `content_id` parameter for all database operations
+   - Validates content IDs for SQL injection patterns (`'`, `"`, `;`, `--`, `DROP`, `DELETE`)
+   - Blocks operations with missing required parameters
+
+**3. Denied Operations Tracking**
+   - Logs all blocked operations with reason and timestamp
+   - Available for post-run analysis via `get_denied_operations()`
+   - Displayed in safety summary at end of run
+
+### Cost Tracking Benefits
+
+- **Transparency** - See exact API costs per LLM call in real-time
+- **Optimization** - Identify which agents/tasks consume most tokens
+- **Budgeting** - Track cumulative spending per workflow run
+- **Model Comparison** - Compare GPT-5.2 vs GPT-5-mini vs GPT-5 costs
+- **Historical Analysis** - Query `llm_costs` table for cost trends over time
+
+**Cost Estimates (per 1M tokens):**
+- `gpt-5.2`: $2.50 input, $10.00 output
+- `gpt-5`: $2.00 input, $8.00 output
+- `gpt-5-mini`: $0.10 input, $0.40 output
+- `gpt-5-nano`: $0.05 input, $0.20 output
+
+### Database Schema
+
+**New table for cost tracking:**
+```sql
+CREATE TABLE llm_costs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    model TEXT NOT NULL,
+    input_tokens INTEGER NOT NULL,
+    output_tokens INTEGER NOT NULL,
+    cost_usd REAL NOT NULL
+);
+```
+
+**Example cost analysis queries:**
+```sql
+-- Total cost by model
+SELECT model, SUM(cost_usd) as total_cost, COUNT(*) as calls
+FROM llm_costs
+GROUP BY model
+ORDER BY total_cost DESC;
+
+-- Daily cost breakdown
+SELECT DATE(timestamp) as date, SUM(cost_usd) as daily_cost
+FROM llm_costs
+GROUP BY DATE(timestamp)
+ORDER BY date DESC;
+
+-- Most expensive LLM calls
+SELECT timestamp, model, input_tokens, output_tokens, cost_usd
+FROM llm_costs
+ORDER BY cost_usd DESC
+LIMIT 10;
+```
+
+All hooks are **automatically enabled** - no configuration needed. Summaries print at the end of every workflow run.
 
 4. **Optimize Costs**
    - Which workflows use most tokens?

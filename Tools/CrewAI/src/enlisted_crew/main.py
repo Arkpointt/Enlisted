@@ -21,7 +21,9 @@ from dotenv import load_dotenv
 
 from .crew import EnlistedCrew
 from .tools import SearchCache
-from .monitoring import enable_monitoring, print_execution_report
+from .monitoring import enable_monitoring, print_execution_report, print_cost_report
+from .hooks import reset_all_hooks, print_all_summaries
+from .hooks import print_cost_report  # Import to register hooks
 
 
 def main():
@@ -30,6 +32,8 @@ def main():
     
     # Enable execution monitoring for all workflows
     enable_monitoring()
+    
+    # Note: Execution hooks are automatically registered on import
     
     parser = argparse.ArgumentParser(
         description="Enlisted CrewAI - Multi-agent workflows for Enlisted mod development",
@@ -54,6 +58,11 @@ def main():
         "--crew", "-c",
         default=None,
         help="Filter by crew name (e.g., 'PlanningFlow', 'ImplementationFlow', 'BugHuntingFlow')",
+    )
+    stats_parser.add_argument(
+        "--costs", 
+        action="store_true",
+        help="Show LLM cost tracking statistics",
     )
     
     # implement command - BUILD FROM APPROVED PLAN
@@ -142,6 +151,8 @@ def main():
             result = run_validation(crew)
         elif args.command == "stats":
             print_execution_report(crew_name=args.crew)
+            if args.costs:
+                print_cost_report(crew_name=args.crew)
             return  # No result to print
         elif args.command == "implement":
             result = run_implement(crew, args.plan)
@@ -203,6 +214,7 @@ def run_implement(crew: EnlistedCrew, plan_path: str):
     from .flows import ImplementationFlow
     
     SearchCache.clear()
+    reset_all_hooks()  # Reset cost tracking and safety guards
     print("\n" + "=" * 60)
     print("IMPLEMENTATION WORKFLOW (Flow-based)")
     print("=" * 60)
@@ -219,6 +231,9 @@ def run_implement(crew: EnlistedCrew, plan_path: str):
     result = flow.kickoff(inputs={
         "plan_path": plan_path,
     })
+    
+    # Print cost and safety summaries
+    print_all_summaries()
     
     # Return the final report from the flow state
     if hasattr(result, 'final_report'):
@@ -272,6 +287,7 @@ def run_plan(
     from .flows import PlanningFlow
     
     SearchCache.clear()
+    reset_all_hooks()  # Reset cost tracking and safety guards
     print("\n" + "=" * 60)
     print("PLANNING WORKFLOW (Flow-based)")
     print("=" * 60)
@@ -291,6 +307,9 @@ def run_plan(
         "related_systems": systems or "",
         "related_docs": docs or "",
     })
+    
+    # Print cost and safety summaries
+    print_all_summaries()
     
     # Return the final report from the flow state
     if hasattr(result, 'final_report'):
@@ -315,6 +334,7 @@ def run_hunt_bug(
     from pathlib import Path
     
     SearchCache.clear()
+    reset_all_hooks()  # Reset cost tracking and safety guards
     
     # Handle user_logs - could be file path or direct content
     user_log_content = None
@@ -346,6 +366,9 @@ def run_hunt_bug(
         "context": context or "No additional context",
         "user_log_content": user_log_content or "No logs provided",
     })
+    
+    # Print cost and safety summaries
+    print_all_summaries()
     
     # Extract report from flow state
     if hasattr(result, 'final_report'):

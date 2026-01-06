@@ -339,8 +339,8 @@ def print_execution_report(crew_name: Optional[str] = None):
             print(f"Max Duration: {stats['max_duration_seconds']:.2f}s")
     else:
         # Multiple crews
-        for crew_name, crew_stats in stats.items():
-            print(f"\nCrew: {crew_name}")
+        for crew_name_key, crew_stats in stats.items():
+            print(f"\nCrew: {crew_name_key}")
             print(f"  Total Runs: {crew_stats['total_runs']}")
             if crew_stats['total_runs'] > 0:
                 print(f"  Avg Duration: {crew_stats['avg_duration_seconds']:.2f}s ({crew_stats['avg_duration_seconds']/60:.1f}m)")
@@ -352,6 +352,134 @@ def print_execution_report(crew_name: Optional[str] = None):
 
 # Global monitoring instance - initialized once
 _MONITOR_INSTANCE: Optional[EnlistedExecutionMonitor] = None
+
+
+def print_cost_report(crew_name: Optional[str] = None):
+    """
+    Print a formatted cost tracking report from execution hooks.
+    
+    Args:
+        crew_name: Filter by crew name (correlates by timestamp). If None, shows all costs.
+    """
+    project_root = Path(__file__).parent.parent.parent.parent.parent
+    db_path = str(project_root / "Tools" / "CrewAI" / "enlisted_knowledge.db")
+    
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        
+        # Check if llm_costs table exists
+        cursor.execute("""
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='llm_costs'
+        """)
+        if not cursor.fetchone():
+            print("\n[INFO] No cost data available yet. Run a workflow to start tracking costs.\n")
+            return
+        
+        print("\n" + "=" * 70)
+        print("LLM COST TRACKING REPORT")
+        print("=" * 70 + "\n")
+        
+        # If filtering by crew, get timestamp range
+        timestamp_filter = ""
+        filter_params = []
+        if crew_name:
+            cursor.execute("""
+                SELECT MIN(started_at), MAX(completed_at)
+                FROM crew_executions
+                WHERE crew_name = ?
+            """, (crew_name,))
+            result = cursor.fetchone()
+            if result and result[0]:
+                timestamp_filter = "WHERE timestamp BETWEEN ? AND ?"
+                filter_params = [result[0], result[1] or datetime.now().isoformat()]
+                print(f"Filtered by crew: {crew_name}\n")
+        
+        # Total costs by model
+        query = f"""
+            SELECT 
+                model,
+                COUNT(*) as total_calls,
+                SUM(input_tokens) as total_input,
+                SUM(output_tokens) as total_output,
+                SUM(cost_usd) as total_cost
+            FROM llm_costs
+            {timestamp_filter}
+            GROUP BY model
+            ORDER BY total_cost DESC
+        """
+        cursor.execute(query, filter_params)
+        results = cursor.fetchall()
+        
+        if not results:
+            print("[INFO] No cost data available for the specified filters.\n")
+            print("=" * 70 + "\n")
+            return
+        
+        print("Cost by Model:")
+        print("-" * 70)
+        total_cost = 0
+        total_calls = 0
+        total_input = 0
+        total_output = 0
+        
+        for row in results:
+            model, calls, input_tokens, output_tokens, cost = row
+            total_cost += cost
+            total_calls += calls
+            total_input += input_tokens
+            total_output += output_tokens
+            
+            print(f"  {model:20} | Calls: {calls:4} | In: {input_tokens:8,} | Out: {output_tokens:8,} | ${cost:7.2f}")
+        
+        print("-" * 70)
+        print(f"  {'TOTAL':20} | Calls: {total_calls:4} | In: {total_input:8,} | Out: {total_output:8,} | ${total_cost:7.2f}")
+        print()
+        
+        # Most expensive individual calls
+        query = f"""
+            SELECT timestamp, model, input_tokens, output_tokens, cost_usd
+            FROM llm_costs
+            {timestamp_filter}
+            ORDER BY cost_usd DESC
+            LIMIT 5
+        """
+        cursor.execute(query, filter_params)
+        expensive_calls = cursor.fetchall()
+        
+        if expensive_calls:
+            print("\nMost Expensive LLM Calls:")
+            print("-" * 70)
+            for row in expensive_calls:
+                timestamp, model, input_tokens, output_tokens, cost = row
+                # Format timestamp
+                dt = datetime.fromisoformat(timestamp)
+                time_str = dt.strftime('%Y-%m-%d %H:%M:%S')
+                print(f"  {time_str} | {model:15} | {input_tokens:6,}in + {output_tokens:6,}out = ${cost:.4f}")
+        
+        # Daily cost summary (if we have multiple days of data)
+        query = f"""
+            SELECT 
+                DATE(timestamp) as date,
+                COUNT(*) as calls,
+                SUM(cost_usd) as daily_cost
+            FROM llm_costs
+            {timestamp_filter}
+            GROUP BY DATE(timestamp)
+            ORDER BY date DESC
+            LIMIT 7
+        """
+        cursor.execute(query, filter_params)
+        daily_results = cursor.fetchall()
+        
+        if len(daily_results) > 1:
+            print("\n\nDaily Cost Summary (Last 7 Days):")
+            print("-" * 70)
+            for row in daily_results:
+                date, calls, daily_cost = row
+                print(f"  {date} | Calls: {calls:4} | ${daily_cost:7.2f}")
+        
+        print("\n" + "=" * 70 + "\n")
 
 
 def enable_monitoring(db_path: Optional[str] = None):
