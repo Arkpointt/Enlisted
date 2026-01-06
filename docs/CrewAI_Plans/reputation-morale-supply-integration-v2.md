@@ -2,16 +2,47 @@
 
 **Summary:** Cross-system integration creating meaningful feedback loops between reputation tracks (Soldier: -50 to +50, Lord/Officer: 0-100), company needs (0-100), and pressure systems. Implements gradient-based content weighting, reputation-influenced need recovery, morale-influenced reputation decay, pressure arc narrative events, and synergy effects when multiple systems are stressed.
 
-**Status:** 📋 Planning
+**Status:** ⚙️ Partial Implementation (Phase 3 - Supply Pressure Arc completed)
 
-**Last Updated:** 2026-01-05 (added tier-aware player experience section)
+**Last Updated:** 2026-01-06 (Supply pressure arc events implemented and documented)
 
 **Related Docs:** 
+- [Company Events - Pressure Arcs](../Features/Core/company-events.md#pressure-arc-events) ✅ Implemented
+- [Company Supply Simulation](../Features/Equipment/company-supply-simulation.md#supply-pressure-arc-events) ✅ Implemented
+- [Test Implementation Plan (Archived)](../Archive/supply-pressure-arc-test-IMPLEMENTED.md)
 - [Systems Integration Analysis](../ANEWFEATURE/systems-integration-analysis.md)
 - [Architecture Improvement Report](../ANEWFEATURE/architecture-improvement-report.md)
 - [Content System Architecture](../Features/Content/content-system-architecture.md)
 - [Camp Simulation System](../Features/Campaign/camp-simulation-system.md)
 - [Game Design Principles](../../Tools/CrewAI/knowledge/game-design-principles.md)
+
+---
+
+## Implementation Progress
+
+### ✅ Completed (2026-01-06)
+
+**Supply Pressure Arc Events:**
+- 9 tier-variant events (3 stages × 3 tiers) implemented and tested
+- Fires at Day 3, 5, 7 of sustained low supplies
+- `CompanySimulationBehavior.CheckPressureArcEvents()` method active
+- Full documentation dispersed to permanent feature docs
+
+**Files Modified:**
+- `src/Features/Camp/CompanySimulationBehavior.cs` - Added pressure arc event triggering
+- `ModuleData/Enlisted/Events/pressure_arc_events.json` - 9 supply events created
+- `ModuleData/Languages/enlisted_strings.xml` - Localization added
+
+**Documentation Updated:**
+- [Company Events](../Features/Core/company-events.md#pressure-arc-events)
+- [Company Supply Simulation](../Features/Equipment/company-supply-simulation.md#supply-pressure-arc-events)
+
+### ⏳ Remaining Work
+
+- Phases 1, 2, 4 (Quick Wins, Gradient Fitness, Synergy & Polish)
+- Morale and rest pressure arcs (18 more events)
+- Positive arcs for high morale/supplies (8 events)
+- Synergy-aware forecasts
 
 ---
 
@@ -397,20 +428,29 @@ Daily Tick (6:00 AM)
 
 **Deliverable:** Low supplies → more foraging opportunities appear naturally.
 
-### Phase 3: Pressure Arcs (4-5 days)
+### Phase 3: Pressure Arcs (4-5 days) - ⚙️ PARTIALLY COMPLETE
 
 **Goal:** Progressive narrative events for sustained pressure, with tier-appropriate player agency.
 
-| Task | File | Effort |
-|------|------|--------|
-| Add `CheckPressureArcEvents()` to simulation | `CompanySimulationBehavior.cs` | 4 hours |
-| Create tier-variant pressure arc events (JSON) | `pressure_arc_events.json` | 16 hours |
-| Create positive arc events (high morale) | `pressure_arc_events.json` | 8 hours |
-| Add synergy-aware forecasts | `EnlistedNewsBehavior.cs` | 3 hours |
+| Task | File | Status | Effort |
+|------|------|--------|--------|
+| Add `CheckPressureArcEvents()` to simulation | `CompanySimulationBehavior.cs` | ✅ Done | 4 hours |
+| Create **supply** tier-variant pressure arc events (JSON) | `pressure_arc_events.json` | ✅ Done (9 events) | 6 hours |
+| Create **morale** tier-variant pressure arc events (JSON) | `pressure_arc_events.json` | ⏳ Remaining | 6 hours |
+| Create **rest** tier-variant pressure arc events (JSON) | `pressure_arc_events.json` | ⏳ Remaining | 4 hours |
+| Create positive arc events (high morale) | `positive_arc_events.json` | ⏳ Remaining | 8 hours |
+| Add synergy-aware forecasts | `EnlistedNewsBehavior.cs` | ⏳ Remaining | 3 hours |
 
-**Content scope:** ~35 events (27 negative arcs + 8 positive arcs with tier variants)
+**Content scope:** 
+- ✅ **Completed:** 9 supply pressure arc events (3 stages × 3 tiers)
+- ⏳ **Remaining:** ~26 events (18 morale/rest arcs + 8 positive arcs)
 
-**Deliverable:** Day 3 supply shortage → "rations thin" event, Day 5 → "fights breaking out", Day 7 → crisis.
+**Deliverable:** 
+- ✅ Day 3/5/7 supply shortage → tier-appropriate narrative events
+- ⏳ Morale and rest pressure arcs
+- ⏳ Positive arcs for high morale/supplies
+
+**See:** [Company Events - Pressure Arcs](../Features/Core/company-events.md#pressure-arc-events) for implemented supply arc details.
 
 ### Phase 4: Synergy & Polish (2 days)
 
