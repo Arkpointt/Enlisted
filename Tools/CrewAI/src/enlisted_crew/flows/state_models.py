@@ -1,8 +1,13 @@
 """
-State Models for Bug Hunting Flow
+State Models for All CrewAI Flows
 
-Pydantic models that define structured state for the bug hunting workflow.
+Pydantic models that define structured state for all workflows.
 These ensure type safety and validation as data flows between agents.
+
+Flows:
+- PlanningFlow: Feature design and specification
+- ImplementationFlow: Code and content implementation
+- BugHuntingFlow: Bug investigation and fixing
 """
 
 from enum import Enum
@@ -24,6 +29,129 @@ class ConfidenceLevel(str, Enum):
     LIKELY = "likely"         # Strong indicators
     SPECULATIVE = "speculative"  # Educated guess, needs verification
 
+
+# === Planning Flow Enums and Models ===
+
+class ValidationStatus(str, Enum):
+    """Status of plan validation."""
+    NOT_VALIDATED = "not_validated"
+    PASSED = "passed"
+    FAILED = "failed"
+    FIXED = "fixed"
+
+
+class ValidationOutput(BaseModel):
+    """
+    Structured output model for validation tasks.
+    
+    Use with TaskOutput.pydantic for type-safe validation result parsing.
+    """
+    status: ValidationStatus = ValidationStatus.NOT_VALIDATED
+    issues_found: List[str] = Field(default_factory=list)
+    verified_items: List[str] = Field(default_factory=list)
+    file_checks: int = Field(default=0, description="Number of files verified")
+    method_checks: int = Field(default=0, description="Number of methods verified")
+    content_id_checks: int = Field(default=0, description="Number of content IDs verified")
+
+
+class PlanningState(BaseModel):
+    """
+    State for the Planning Flow.
+    
+    Tracks research, design, and validation progress.
+    """
+    # Flow ID (required by CrewAI Flows)
+    id: str = Field(
+        default="",
+        description="Unique flow execution ID (auto-generated)"
+    )
+    
+    # Input
+    feature_name: str = ""
+    description: str = ""
+    related_systems: str = ""
+    related_docs: str = ""
+    
+    # Research phase
+    research_output: str = ""
+    suggestions_output: str = ""
+    
+    # Design phase
+    design_output: str = ""
+    plan_path: str = ""
+    
+    # Validation phase
+    validation_status: ValidationStatus = ValidationStatus.NOT_VALIDATED
+    validation_issues: List[str] = Field(default_factory=list)
+    fix_attempts: int = 0
+    max_fix_attempts: int = 2
+    
+    # Execution tracking
+    current_step: str = "start"
+    
+    # Final
+    success: bool = False
+    final_report: str = ""
+
+
+# === Implementation Flow Enums and Models ===
+
+class ImplementationStatus(str, Enum):
+    """Status of a component's implementation."""
+    NOT_STARTED = "not_started"
+    PARTIAL = "partial"
+    COMPLETE = "complete"
+    SKIP = "skip"  # Explicitly marked to skip
+
+
+class ComponentCheck(BaseModel):
+    """Result of checking if a component exists."""
+    name: str
+    exists: bool
+    path: Optional[str] = None
+    details: str = ""
+
+
+class ImplementationState(BaseModel):
+    """
+    State for the Implementation Flow.
+    
+    Tracks what's been done, what needs doing, and routing decisions.
+    """
+    # Flow ID (required by CrewAI Flows)
+    id: str = Field(
+        default="",
+        description="Unique flow execution ID (auto-generated)"
+    )
+    
+    # Input
+    plan_path: str = ""
+    plan_content: str = ""
+    
+    # Verification results (populated by verify_existing step)
+    csharp_status: ImplementationStatus = ImplementationStatus.NOT_STARTED
+    content_status: ImplementationStatus = ImplementationStatus.NOT_STARTED
+    existing_files: List[str] = Field(default_factory=list)
+    existing_event_ids: List[str] = Field(default_factory=list)
+    missing_csharp: List[str] = Field(default_factory=list)  # Files/methods still needed
+    missing_content: List[str] = Field(default_factory=list)  # Event IDs still needed
+    
+    # Execution tracking
+    current_step: str = "start"
+    skipped_steps: List[str] = Field(default_factory=list)
+    
+    # Outputs
+    csharp_output: str = ""
+    content_output: str = ""
+    validation_output: str = ""
+    docs_output: str = ""
+    
+    # Final
+    success: bool = False
+    final_report: str = ""
+
+
+# === Bug Hunting Flow Models ===
 
 class BugReport(BaseModel):
     """Input from user describing the bug."""

@@ -125,15 +125,20 @@ enlisted-crew validate
 # View execution statistics (performance metrics, timing, tool usage)
 enlisted-crew stats [-c crew_name]
 
+# View execution statistics with cost tracking
+enlisted-crew stats --costs [-c crew_name]
+
 # Test flow performance (runs crew multiple times, provides metrics)
 crewai test -n 3 -m gpt-5
 ```
 
 **CrewAI writes files directly:** All flows apply changes to disk (C#, JSON, localization, .csproj). Review with `git diff` after running.
 
-**Monitoring:** All executions are automatically tracked in `enlisted_knowledge.db`. Use `enlisted-crew stats` to view performance metrics, identify bottlenecks, and optimize workflows.
+**Monitoring:** All executions are automatically tracked in `enlisted_knowledge.db`. Use `enlisted-crew stats` to view performance metrics, identify bottlenecks, and optimize workflows. Add `--costs` to see token usage and API costs.
 
-**Testing:** Use `crewai test -n 3 -m gpt-5` to validate crew performance across iterations. See `Tools/CrewAI/test_flows.ps1` for automated testing script.
+**Safety Hooks:** Execution hooks automatically validate dangerous operations (file writes, database changes) and track costs. All hooks run transparently - no configuration needed.
+
+**Testing:** Run `python test_all.py` for comprehensive system check (config, database, MCP, agents, LLMs). Use `crewai test -n 3 -m gpt-5` to validate crew performance across iterations.
 
 **When to use CrewAI vs Warp directly:**
 - Quick fixes, single-file changes → Warp directly
@@ -143,7 +148,10 @@ crewai test -n 3 -m gpt-5
 **Requirements:** OpenAI API key in `.env` file  
 **Models:** OpenAI GPT-5 family (GPT-5.2, GPT-5 mini, GPT-5 nano)  
 **Memory:** Enabled with text-embedding-3-large for superior knowledge retrieval  
-**State Persistence:** All flows resume on failure (`persist=True`)
+**State Persistence:** All flows resume on failure (`persist=True`)  
+**Database:** 23 SQLite tools for instant lookups (error codes, tiers, balance, content, API patterns)  
+**MCP Server:** Bannerlord API MCP server with 8 tools for semantic C# code analysis  
+**Prompt Caching:** Enabled on all LLM tiers (~90% cost savings on repeated knowledge sources)
 
 ## 📂 Project Structure
 

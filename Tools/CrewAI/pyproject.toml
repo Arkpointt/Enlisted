@@ -8,6 +8,7 @@ dependencies = [
     "crewai>=0.95.0",
     "crewai-tools>=0.17.0",
     "python-dotenv>=1.0.0",
+    "mcp>=1.0.0",
 ]
 
 [project.optional-dependencies]

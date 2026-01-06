@@ -11,8 +11,9 @@ from typing import Optional, List
 from crewai.tools import tool
 
 
-# Database location
-DB_PATH = Path(r"C:\Dev\SQLite3\enlisted_knowledge.db")
+# Database location (relative to project root)
+_PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent
+DB_PATH = _PROJECT_ROOT / "Tools" / "CrewAI" / "database" / "enlisted_knowledge.db"
 
 
 def _get_connection() -> sqlite3.Connection:
@@ -20,7 +21,7 @@ def _get_connection() -> sqlite3.Connection:
     if not DB_PATH.exists():
         raise FileNotFoundError(
             f"Database not found at {DB_PATH}. "
-            "Run: cd Tools/CrewAI && powershell ./setup_database.ps1"
+            "Run: cd Tools/CrewAI/database && sqlite3 enlisted_knowledge.db < schema.sql"
         )
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row

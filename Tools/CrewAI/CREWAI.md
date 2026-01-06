@@ -1,8 +1,8 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Three AI workflows for Enlisted Bannerlord mod development.  
+**Summary:** Three AI workflows for Enlisted Bannerlord mod development with advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (23 database tools), and prompt caching across all LLM tiers.  
 **Status:** ✅ Implemented  
-**Last Updated:** 2026-01-05
+**Last Updated:** 2026-01-06 (Added conditional tasks, Bannerlord API MCP server with 8 tools, 23 database tools across all agents, prompt caching enabled for ~90% cost savings on knowledge sources, comprehensive tool audits)
 
 ---
 
@@ -252,6 +252,41 @@ Tools use natural naming for readability. The `@tool("Name")` decorator defines 
 | `update_localization` | Add/update strings in `enlisted_strings.xml` |
 | `append_to_csproj` | Add new C# files to Enlisted.csproj compile list |
 
+### Database (SQLite Knowledge Base)
+
+**Query Tools (14 total):**
+
+| Tool | Purpose |
+|------|---------|
+| `lookup_error_code` | Find error code meanings and solutions |
+| `get_tier_info` | Get tier XP threshold, ranks, equipment access for specific tier |
+| `get_all_tiers` | Get all 9 tiers with progression data |
+| `get_system_dependencies` | Find what systems depend on/interact with a system |
+| `lookup_core_system` | Get core system definitions and metadata |
+| `lookup_api_pattern` | Get Bannerlord API usage examples and patterns |
+| `get_balance_value` | Get specific balance value by key |
+| `search_balance` | Search balance values by category |
+| `get_balance_by_category` | Get all balance values for a category |
+| `lookup_content_id` | Check if content ID exists in database |
+| `search_content` | Search content by type, category, status |
+| `get_valid_categories` | Get all 26 valid event categories |
+| `get_valid_severities` | Get all 5 valid severity levels |
+| `check_database_health` | Verify database integrity, find orphaned records |
+
+**Maintenance Tools (9 total):**
+
+| Tool | Purpose |
+|------|---------|
+| `add_content_item` | Register new event/decision/order in database |
+| `update_content_item` | Update existing content metadata |
+| `delete_content_item` | Remove content metadata when JSON deleted |
+| `add_balance_value` | Register new balance value |
+| `update_balance_value` | Update existing balance value |
+| `add_error_code` | Register new error code pattern |
+| `add_system_dependency` | Document system dependencies |
+| `sync_content_from_files` | Scan all JSON files and sync to database |
+| `record_implementation` | Log implementation completion for tracking |
+
 ---
 
 ## Knowledge Sources
@@ -319,40 +354,74 @@ feature_architect (design), content_author (content), balance_analyst (review).
 **Architecture/Coordination Agents (GPT-5.2 high reasoning):**
 ```python
 Agent(
-    llm=GPT5_ARCHITECT,            # High reasoning capability
+    llm=GPT5_ARCHITECT,            # GPT-5.2 with 10K reasoning tokens
     tools=[...],                   # 4-6 tools for coordination
-    max_retry_limit=2,
-    allow_delegation=True,         # Can delegate
+    max_iter=10,                   # Max iterations before forced stop
+    max_retry_limit=3,             # Retries on error
+    reasoning=True,                # Enable reflection before acting
+    max_reasoning_attempts=3,      # Allow 3 reasoning cycles
+    allow_delegation=True,         # Can delegate to other agents
 )
 ```
 
 **Analysis Agents (GPT-5.2 standard reasoning):**
 ```python
 Agent(
-    llm=GPT5_ANALYST,              # Standard reasoning
+    llm=GPT5_ANALYST,              # GPT-5.2 with 5K reasoning tokens
     tools=[...],                   # 7-10 tools
-    max_retry_limit=2,             # Allow recovery
-    allow_delegation=False,        # Execution role
+    max_iter=10,
+    max_retry_limit=3,
+    reasoning=True,                # Enable reflection before acting
+    max_reasoning_attempts=3,      # Allow 3 reasoning cycles
+    allow_delegation=False,        # Execution role, no delegation
 )
 ```
 
 **Implementation Agents (GPT-5 mini execution):**
 ```python
 Agent(
-    llm=GPT5_IMPLEMENTER,          # Fast, cost-efficient
+    llm=GPT5_IMPLEMENTER,          # GPT-5 mini (fast, cost-efficient)
     tools=[...],                   # 3-8 tools
-    max_retry_limit=1,
-    allow_delegation=False,
+    max_iter=10,
+    max_retry_limit=3,
+    reasoning=True,                # Enable reflection for complex code
+    max_reasoning_attempts=3,      # Allow 3 reasoning cycles
+    allow_delegation=False,        # Execution role, no delegation
 )
 ```
 
-**Fast Validation Agents (GPT-5 nano):**
+**Fast Validation Agents (GPT-5 mini/nano):**
 ```python
 Agent(
-    llm=GPT5_FAST,                 # Ultra-fast validation
+    llm=GPT5_FAST,                 # GPT-5 nano (ultra-fast validation)
     tools=[...],                   # 3-5 tools
+    max_iter=10,
+    max_retry_limit=3,
+    allow_delegation=False,        # Execution role, no delegation
 )
 ```
+
+### Advanced Agent Parameters
+
+**Reasoning Agents** (`reasoning=True`, `max_reasoning_attempts=3`):
+- Enabled for: systems_analyst, architecture_advisor, feature_architect, code_analyst, csharp_implementer
+- Agents reflect on the task before taking action
+- Creates a reasoning chain before executing tools or writing output
+- Each reasoning attempt consumes tokens (included in thinking budget)
+- **When to use:** Complex planning, multi-step analysis, code generation
+- **When NOT to use:** Simple validation, file reading, fast execution
+
+**Delegation** (`allow_delegation=True/False`):
+- **True:** Coordinator agents (systems_analyst, architecture_advisor, feature_architect) can delegate subtasks to other agents
+- **False:** Specialist agents (csharp_implementer, content_author, qa_agent) focus on their domain only
+- Delegation enables hierarchical workflows within a single crew
+- **Philosophy:** Architects coordinate, specialists execute
+
+**Iteration Limits** (`max_iter=10`, `max_retry_limit=3`):
+- `max_iter`: Hard stop after N iterations (prevents infinite loops)
+- `max_retry_limit`: How many times to retry on tool/LLM errors
+- Set higher for complex tasks, lower for simple validation
+- All our agents use `max_iter=10` and `max_retry_limit=3` as conservative defaults
 
 ### Workflow Configuration Patterns
 
@@ -367,9 +436,34 @@ Crew(
     memory=True,                   # Enable crew memory across tasks (short-term, long-term, entity)
     cache=True,                    # Cache tool results (avoids redundant calls)
     planning=True,                 # AgentPlanner creates step-by-step execution plan
+    planning_llm=GPT5_PLANNING,    # Use GPT-5 for planning (best quality)
     embedder=EMBEDDER_CONFIG,      # text-embedding-3-large for superior knowledge retrieval
 )
 ```
+
+#### Planning Configuration
+
+When `planning=True` is enabled, CrewAI's **AgentPlanner** creates a detailed execution plan before each crew iteration:
+
+**What the Planner Does:**
+1. Analyzes the task requirements
+2. Identifies which agents are needed
+3. Creates a step-by-step execution plan
+4. Determines optimal tool usage sequence
+5. Anticipates potential blockers
+
+**Planning LLM Selection:**
+```python
+planning_llm=GPT5_PLANNING  # Uses GPT-5 with 10K thinking tokens
+```
+
+**Why GPT-5 for planning?**
+- Best reasoning capability for complex task decomposition
+- Higher success rate than GPT-5 mini on multi-step plans
+- Cost difference is minimal (planning is <5% of total LLM calls)
+- Worth the extra $0.01-0.03 per run for better execution plans
+
+**All 15 internal crews** (within PlanningFlow, ImplementationFlow, BugHuntingFlow) use `planning_llm=GPT5_PLANNING`.
 
 #### Memory Configuration
 
@@ -461,17 +555,86 @@ rm -rf ~/AppData/Local/CrewAI/enlisted_crew/entities/
 
 ## Testing
 
+### Quick Comprehensive Test
+
+**Run everything at once:**
 ```bash
 cd Tools/CrewAI
-crewai test --n_iterations 3
+python test_all.py
 ```
 
-This runs your crew multiple times and reports success rate, token usage, and execution time.
+This tests:
+- ✅ Configuration (flows, state models)
+- ✅ Database (23 tools, connectivity)
+- ✅ MCP Server (8 tools, index)
+- ✅ Agents (10 agents, tool assignments)
+- ✅ LLM Configuration (5 tiers, prompt caching)
+- ✅ Environment (API keys, paths, knowledge files)
 
-**What to verify:**
-- Plan workflow: Creates doc in `docs/CrewAI_Plans/`, has all required sections
-- Implement workflow: Code compiles, JSON validates, XML synced, `git diff` shows expected changes
-- Bug workflow: Investigation identifies root cause, fix compiles
+**Exit codes:**
+- `0` = All tests passed, system ready
+- `1` = Some tests failed, needs attention
+
+### Individual Test Tools
+
+**Test flows with real execution:**
+```bash
+cd Tools/CrewAI
+crewai test --n_iterations 3  # Official CrewAI test (benchmarking)
+```
+
+### What to Verify After Testing
+
+**Generated Files:**
+- Plan workflow: Doc in `docs/CrewAI_Plans/` with all required sections, no hallucinated references
+- Implement workflow: C# in `src/Features/`, JSON in `ModuleData/Enlisted/`, XML localization updated, `.csproj` updated
+- Bug workflow: Investigation report, proposed fix, validation results
+
+**Code Quality:**
+- [ ] Build succeeds: `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
+- [ ] No new ReSharper warnings
+- [ ] Run `python Tools/Validation/validate_content.py`
+- [ ] All JSON schemas valid, no missing localization strings
+
+**Database & Docs:**
+- [ ] Check `sqlite3 enlisted_knowledge.db` - content_metadata and implementation_history updated
+- [ ] Plan status updated (if implementing)
+- [ ] Feature docs synchronized
+
+**Review Changes:**
+- [ ] Run `git status` and `git diff` to review all modifications
+- [ ] Verify no unintended files were modified
+
+### Performance Baselines
+
+After initial testing, establish baselines for regression detection:
+
+| Flow | Target Quality | Max Execution Time | Notes |
+|------|---------------|--------------------|-------|
+| PlanningFlow | 8.0+ | 180s | Research phase slowest |
+| ImplementationFlow | 8.5+ | 300s | C# generation most complex |
+| BugHuntingFlow | 8.0+ | 200s | Investigation variable |
+
+### Troubleshooting
+
+**"Module not found: crewai"**
+```bash
+cd Tools/CrewAI
+.\.venv\Scripts\Activate.ps1
+pip install -e .
+```
+
+**"OPENAI_API_KEY not set"**
+```bash
+$env:OPENAI_API_KEY = "sk-..."  # Current session
+# Or add to .env file
+```
+
+**"Flow failed mid-run"**
+Flows have `persist=True` - just re-run the same command. The flow will resume from the last successful step.
+
+**"Hallucinated files/IDs in plan"**
+PlanningFlow has auto-fix enabled. If validation detects hallucinations, it will automatically correct them (up to 2 attempts).
 
 **Memory location (Windows):**
 ```
@@ -487,22 +650,153 @@ To reset: `rm -rf ~/AppData/Local/CrewAI/enlisted_crew/long_term_memory/`
 
 ## SQLite Knowledge Database
 
-Structured, queryable knowledge that complements CrewAI's automatic memory.
+Structured, queryable knowledge that complements CrewAI's vector-based memory system. The database provides instant lookups for facts that would otherwise require semantic search through markdown files.
 
-**Setup:**
+### Why Both Database + Vector Knowledge?
+
+**Vector Knowledge (markdown files):**
+- Semantic search for concepts and patterns
+- Good for: "How do I implement X?", "What's the pattern for Y?"
+- Requires embedding and similarity search
+
+**Database (SQLite):**
+- Instant lookups for structured facts
+- Good for: "What's tier 5 XP threshold?", "What does E-MUSTER-042 mean?"
+- Direct SQL queries, no LLM token cost
+
+**Result:** Agents get best of both worlds - semantic understanding from vectors, precise facts from database.
+
+### Setup
+
 ```powershell
-.\Tools\CrewAI\setup_database.ps1
+cd Tools\CrewAI\database
+.\setup.ps1
 ```
 
-Creates `C:\Dev\SQLite3\enlisted_knowledge.db` with:
-- `tier_definitions` - XP thresholds from `progression_config.json`
-- `error_catalog` - Error codes from source (E-MUSTER-*, E-UI-*, etc.)
-- `game_systems` - Core behaviors (EnlistmentBehavior, ContentOrchestrator, etc.)
-- `content_metadata` - All events/decisions/orders with categories/severities
-- `api_patterns` - Bannerlord API usage examples
-- `implementation_history` - What was built when
+Creates `enlisted_knowledge.db` in `Tools/CrewAI/` with production data from the codebase.
 
-**Database tools:** `lookup_error_code`, `get_tier_info`, `get_system_dependencies`, `lookup_api_pattern`, `record_implementation`, `scan_content_files`
+### Database Schema
+
+**1. Tier Progression** (`tier_definitions`, `culture_ranks`)
+- All 9 tiers (T1-T9) with XP requirements from `progression_config.json`
+- Formation selection tiers, equipment access tiers
+- Officer and Commander track progression
+- Culture-specific rank names (Empire, Sturgia, Aserai, etc.)
+
+**2. Error Catalog** (`error_catalog`)
+- 50+ error codes from actual codebase (E-MUSTER-*, E-UI-*, W-*, etc.)
+- Category, description, common causes, suggested solutions
+- Related systems for each error
+- Source: Grepped from all C# logging statements
+
+**3. Game Systems** (`game_systems`, `system_dependencies`)
+- Core behaviors: EnlistmentBehavior, CompanySimulationBehavior, ContentOrchestrator, etc.
+- File paths, key methods, descriptions
+- System dependency graph (who calls what)
+- Source: Scanned all `CampaignBehaviorBase` implementations
+
+**4. Content Metadata** (`content_metadata`)
+- All events, decisions, orders from JSON files
+- **26 verified categories:** `camp_life`, `crisis`, `discipline`, `combat_aftermath`, `nco_decision`, `strategic_choice`, `routine_order`, `tactical_order`, `commander_order`, etc.
+- **5 verified severities:** `routine`, `attention`, `important`, `urgent`, `critical`
+- Tier ranges, localization keys, descriptions
+- Source: Recursively scanned `ModuleData/Enlisted/**/*.json`
+
+**5. API Patterns** (`api_patterns`)
+- Common Bannerlord API usage examples
+- Patterns for hero management, party operations, clan relationships
+- Common mistakes and how to avoid them
+
+**6. Balance Values** (`balance_values`)
+- Configurable balance numbers (supply consumption rates, fatigue thresholds, etc.)
+- System name, value name, current value, units, notes
+- Source: Grepped from config files and C# constants
+
+**7. Implementation History** (`implementation_history`)
+- Tracks what was implemented when
+- Plan file, date, implementer (human or crew), files modified, content IDs added
+- Enables "what's already done?" checks for partial implementations
+
+**8. Monitoring Tables** (see Execution Monitoring section)
+- `crew_executions`, `agent_executions`, `task_executions`, `tool_usages`
+- Performance tracking, cost tracking (separate from knowledge DB)
+
+### Database Tools
+
+**Query Tools (14 total):**
+- `lookup_error_code` - Get error details by code (e.g., "E-MUSTER-042")
+- `get_tier_info` - Get tier thresholds, ranks, equipment access
+- `get_all_tiers` - Get all 9 tiers with full progression data
+- `get_system_dependencies` - Find what systems depend on a given system
+- `lookup_core_system` - Get core system definitions and metadata
+- `lookup_api_pattern` - Get Bannerlord API usage examples
+- `get_balance_value` - Get specific balance values by key
+- `search_balance` - Search all balance values, optionally by category
+- `get_balance_by_category` - Get all balance values for a category
+- `lookup_content_id` - Check if content ID exists
+- `search_content` - Search content by type, category, status
+- `get_valid_categories` - List all 26 valid event categories
+- `get_valid_severities` - List all 5 valid event severities
+- `check_database_health` - Verify database integrity, find orphans
+
+**Maintenance Tools (9 total):**
+- `add_content_item` - Register new event/decision/order after creating JSON
+- `update_content_item` - Update existing content metadata
+- `delete_content_item` - Remove content metadata when JSON deleted
+- `add_balance_value` - Register new balance value
+- `update_balance_value` - Update balance value
+- `add_error_code` - Register new error code
+- `add_system_dependency` - Document system dependencies
+- `sync_content_from_files` - Scan all JSON files and sync to database
+- `record_implementation` - Log implementation completion
+
+### How Agents Use the Database
+
+**Content Author:**
+- Queries `get_valid_categories` and `get_valid_severities` before creating events
+- Calls `add_content_item` after writing new JSON files
+- Uses `lookup_content_id` to avoid duplicate IDs
+
+**C# Implementer:**
+- Queries `lookup_error_code` to understand existing error patterns
+- Uses `get_tier_info` to correctly implement tier-aware features
+- Calls `add_system_dependency` after creating new system connections
+- Uses `lookup_api_pattern` for Bannerlord API guidance
+
+**Documentation Maintainer:**
+- Calls `sync_content_from_files` after implementation to update database
+- Calls `record_implementation` to log completion
+- Uses `check_database_health` to verify database integrity
+
+**Feature Architect:**
+- Queries `get_system_dependencies` to understand impact of changes
+- Uses `get_balance_value` to reference current balance numbers
+- Queries `content_metadata` to see existing content distribution
+
+### Database Maintenance Workflow
+
+The database is **automatically maintained** during implementation:
+
+1. **Content Author creates JSON** → Calls `add_content_item` with metadata
+2. **Documentation Maintainer finishes** → Calls `sync_content_from_files` to catch any missed items
+3. **Documentation Maintainer finishes** → Calls `record_implementation` to log completion
+4. **Health Check** → `check_database_health` verifies no orphaned records
+
+**Manual Sync** (if needed):
+```powershell
+# Re-scan all JSON files and update database
+cd Tools\CrewAI
+python -c "from enlisted_crew.tools.database_tools import sync_content_from_files; sync_content_from_files()"
+```
+
+### Database Benefits
+
+1. **Performance** - Instant lookups vs embedding search (no LLM cost)
+2. **Accuracy** - Exact values, no semantic ambiguity
+3. **Validation** - Check IDs exist before referencing
+4. **Auditing** - Track what was implemented when
+5. **Schema Enforcement** - Only valid categories/severities allowed
+6. **Cross-Referencing** - Link content IDs to systems to error codes
 
 ### Backstory Best Practices
 
@@ -799,18 +1093,7 @@ Execution Time (s)   126      145      138      136
 
 ### Testing Our Three Flows
 
-**Automated Test Script:**
-```bash
-# From project root
-.\Tools\CrewAI\test_flows.ps1
-```
-
-This script tests all three flows with real-world scenarios:
-1. **PlanningFlow** - Generate a test feature design
-2. **ImplementationFlow** - (Requires existing plan)
-3. **BugHuntingFlow** - Investigate and fix a test bug
-
-**Manual Testing:**
+**Manual Flow Testing:**
 ```bash
 # Test PlanningFlow
 enlisted-crew plan -f "Test Feature" -d "A simple feature to validate workflow"
@@ -1154,6 +1437,265 @@ ORDER BY date DESC;
 **Monitoring is always active.** No configuration needed - just run your workflows and check stats anytime.
 
 ---
+
+## Conditional Tasks and Routing
+
+CrewAI provides powerful conditional execution at two levels: **Flow routing** (`@router`) and **Task-level conditions** (`ConditionalTask`).
+
+### Flow-Level Routing with `@router`
+
+**When to use:** Route between major workflow steps based on state.
+
+**Pattern:**
+```python
+@router(previous_step)
+def route_next(self, state: MyState) -> str:
+    """Decide which path to take based on state."""
+    if my_condition(state):
+        return "path_a"
+    else:
+        return "path_b"
+
+@listen("path_a")
+def handle_path_a(self, state: MyState) -> MyState:
+    # Only runs if router returned "path_a"
+    ...
+```
+
+**Best Practices:**
+1. **Extract condition functions** - Keep routing logic testable and reusable
+2. **Use logging helpers** - Provide clear visibility into routing decisions
+3. **Update state.skipped_steps** - Track which paths were not taken
+
+**Example from ImplementationFlow:**
+```python
+from .conditions import csharp_complete, format_routing_decision
+
+@router(verify_existing)
+def route_csharp(self, state: ImplementationState) -> str:
+    if csharp_complete(state):
+        print(format_routing_decision(
+            condition_name="csharp_complete",
+            condition_result=True,
+            chosen_path="route_content",
+            reason=f"C# status: {state.csharp_status.value}"
+        ))
+        state.skipped_steps.append("implement_csharp")
+        return "route_content"
+    
+    return "implement_csharp"
+```
+
+### Task-Level Conditions with `ConditionalTask`
+
+**When to use:** Conditionally execute individual tasks within a Crew based on previous task output.
+
+**Pattern:**
+```python
+from crewai.tasks.conditional_task import ConditionalTask
+from crewai.tasks.task_output import TaskOutput
+
+def needs_deep_check(output: TaskOutput) -> bool:
+    """Condition function evaluates previous task output."""
+    return "complex" in str(output.raw).lower()
+
+# This task only runs if needs_deep_check returns True
+conditional_task = ConditionalTask(
+    description="Perform deep validation for complex plans",
+    expected_output="Deep validation report",
+    condition=needs_deep_check,
+    agent=my_agent,
+)
+
+crew = Crew(
+    agents=[agent1, agent2],
+    tasks=[basic_task, conditional_task],  # conditional_task may skip
+    process=Process.sequential,
+)
+```
+
+**Best Practices:**
+1. **Pure condition functions** - No side effects, deterministic
+2. **Check output.raw** - Access task output text
+3. **Use TaskOutput.pydantic** - For structured output (see below)
+
+**Example from PlanningFlow:**
+```python
+def needs_deep_validation(output: TaskOutput) -> bool:
+    """Check if plan mentions complex systems."""
+    content = str(output.raw).lower()
+    complex_keywords = ["contentorchestrator", "state machine"]
+    return any(keyword in content for keyword in complex_keywords)
+
+deep_validation = ConditionalTask(
+    description="Deep system integration validation",
+    condition=needs_deep_validation,
+    agent=get_architecture_advisor(),
+)
+```
+
+### Structured Output with TaskOutput.pydantic
+
+**Pattern:** Use Pydantic models for type-safe task output parsing.
+
+**1. Define output model:**
+```python
+# In state_models.py
+class ValidationOutput(BaseModel):
+    status: ValidationStatus
+    issues_found: List[str] = Field(default_factory=list)
+    verified_items: List[str] = Field(default_factory=list)
+    file_checks: int = 0
+```
+
+**2. Condition function with structured access:**
+```python
+def validation_failed(output: TaskOutput) -> bool:
+    """Check validation status using structured output."""
+    # Prefer Pydantic model if available
+    if hasattr(output, 'pydantic') and output.pydantic:
+        if isinstance(output.pydantic, ValidationOutput):
+            return output.pydantic.status == ValidationStatus.FAILED
+    
+    # Fallback to text parsing
+    return "status: failed" in str(output.raw).lower()
+```
+
+**3. Extract structured data:**
+```python
+def get_validation_issues(output: TaskOutput) -> List[str]:
+    """Extract issues using structured output."""
+    if hasattr(output, 'pydantic') and isinstance(output.pydantic, ValidationOutput):
+        return output.pydantic.issues_found
+    return []
+```
+
+### Reusable Condition Functions
+
+All condition functions are centralized in `flows/conditions.py`:
+
+**Planning Flow Conditions:**
+- `validation_passed(state)` - Check if validation passed
+- `needs_plan_fix(state)` - Check if fix attempt should run
+- `validation_complete(state)` - Check if validation process done
+
+**Implementation Flow Conditions:**
+- `needs_csharp_work(state)` - Check if C# needed
+- `needs_content_work(state)` - Check if JSON needed
+- `csharp_complete(state)` - Check if C# done
+- `content_complete(state)` - Check if content done
+
+**Bug Hunting Flow Conditions:**
+- `needs_systems_analysis(state)` - Check if complex bug
+- `is_simple_bug(state)` - Check if simple bug
+- `has_high_confidence(state)` - Check investigation confidence
+
+**TaskOutput Conditions:**
+- `validation_passed_in_output(output)` - Parse validation result
+- `build_succeeded_in_output(output)` - Parse build result
+- `get_validation_issues_from_output(output)` - Extract issues
+
+### Routing Decision Logging
+
+Use `format_routing_decision()` for consistent, clear logging:
+
+```python
+from .conditions import format_routing_decision
+
+print(format_routing_decision(
+    condition_name="needs_csharp_work",
+    condition_result=True,
+    chosen_path="implement_csharp",
+    reason=f"C# status: {state.csharp_status.value} - work needed"
+))
+
+# Output:
+# 🔀 CONDITIONAL ROUTING
+#    Condition: needs_csharp_work
+#    Result: ✓ True
+#    Decision: implement_csharp
+#    Reason: C# status: partial - work needed
+```
+
+### Testing Conditional Logic
+
+Condition functions are pure and testable:
+
+```python
+def test_needs_csharp_work():
+    # NOT_STARTED -> True
+    state = ImplementationState(csharp_status=ImplementationStatus.NOT_STARTED)
+    assert needs_csharp_work(state) == True
+    
+    # COMPLETE -> False
+    state = ImplementationState(csharp_status=ImplementationStatus.COMPLETE)
+    assert needs_csharp_work(state) == False
+    
+    # PARTIAL -> True
+    state = ImplementationState(csharp_status=ImplementationStatus.PARTIAL)
+    assert needs_csharp_work(state) == True
+```
+
+---
+
+## MCP Servers Integration
+
+CrewAI supports Model Context Protocol (MCP) servers for extending agent capabilities with external tools and services.
+
+### Active MCP Servers
+
+#### ✅ Bannerlord API MCP Server
+
+**Status:** ✅ Implemented and Active
+
+**Purpose:** Provides semantic access to decompiled Bannerlord source code (`C:\Dev\Enlisted\Decompile`) with fast indexed queries.
+
+**Location:** `Tools/CrewAI/mcp_servers/bannerlord_api_server.py`
+
+**Tools Provided:**
+- `get_class_definition` - Get full class with methods, properties, interfaces
+- `search_api` - Search by name with type filtering (class/method/property)
+- `find_implementations` - Find all classes implementing an interface
+- `find_subclasses` - Get class inheritance hierarchy
+- `get_namespace_contents` - List all classes in a namespace
+- `get_method_signature` - Get method parameters, return type, modifiers
+- `read_source_code` - **NEW:** Read actual C# implementation code with context
+- `find_usage_examples` - **NEW:** Find where/how natives USE an API (real examples)
+
+**Agents Using MCP:**
+- `code_analyst` - Verifies API usage during code analysis
+- `csharp_implementer` - Validates signatures before writing code
+- `feature_architect` - Explores API structure during design
+
+**Setup:**
+```powershell
+cd Tools/CrewAI/mcp_servers
+python build_index.py  # First time only, 2-5 minutes
+# Verification included in test_all.py
+```
+
+**Performance:**
+- Index Build: 2-5 minutes (one-time)
+- Index Size: ~50-100 MB
+- Query Speed: <50ms
+- Indexed: ~8,500 classes, ~65,000 methods, ~25,000 properties
+
+**Prompt Caching:** ✅ Enabled on all LLMs
+- ~90% reduction in input costs for repeated knowledge sources
+- ~85% faster time-to-first-token
+- Caches: core-systems.md, error-codes.md, event-format.md, balance-values.md, etc.
+
+**Replacement:** Deprecates the old `find_in_native_api` tool (slow grep-based search) with semantic indexing.
+
+### Evaluated Standard MCP Servers
+
+| MCP Server | Status | Reason |
+|------------|--------|--------|
+| **Git MCP** | ⚠️ Consider | Would add version control analysis (git blame, commit history) for bug hunting |
+| **Filesystem MCP** | ❌ Redundant | We have `file_tools.py` and `docs_tools.py` |
+| **SQLite MCP** | ❌ Redundant | We have 28 database tools in `database_tools.py` |
+| **Web Search MCP** | ⚠️ Consider | Could research Bannerlord APIs |
+| **Browser MCP** | ❌ Not applicable | Not needed for game modding workflow |
 
 ## Related Documentation
 

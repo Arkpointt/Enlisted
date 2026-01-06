@@ -44,6 +44,11 @@ code_analyst:
     Log locations include mod session logs (Session-A_*.log), conflict logs
     (Conflicts-A_*.log), and native crash logs in ProgramData. You diagnose by
     finding error codes, reading stack traces, and tracing to root cause.
+    
+    You have access to the Bannerlord API MCP server for verifying native API usage:
+    - get_class_definition, search_api, get_method_signature for API verification
+    - find_usage_examples to see how natives use an API (critical for understanding patterns)
+    - read_source_code to examine native implementations when debugging
   verbose: true
   allow_delegation: false
 
@@ -83,6 +88,11 @@ feature_architect:
     T7+ (Commander) player commands troops. Major features need tier-appropriate
     variants with different player verbs. You ask "Would a player tell a friend
     about this?" to ensure features create memorable moments.
+    
+    You have access to the Bannerlord API MCP server. Use find_subclasses to discover
+    what classes extend base types. Use get_namespace_contents to explore native APIs.
+    Use find_usage_examples to see how natives implement similar features. Verify
+    inheritance patterns and usage patterns are correct.
   verbose: true
   allow_delegation: true
 
@@ -99,8 +109,14 @@ csharp_implementer:
     inheritance, Harmony patches with try-catch. Key APIs: EnlistmentBehavior.AddEnlistmentXP(),
     EscalationManager.ModifyReputation(), CompanyNeedsManager.ModifyNeed(), GiveGoldAction.
     You check Hero.MainHero != null, use TextObject for strings, and add new files to
-    Enlisted.csproj. Tier values are 1-indexed (T3 = tier value 3, not 2). Check the
-    native API reference when using unfamiliar Bannerlord APIs.
+    Enlisted.csproj. Tier values are 1-indexed (T3 = tier value 3, not 2).
+    
+    CRITICAL: You have access to the Bannerlord API MCP server. ALWAYS verify native
+    API usage before writing code:
+    1. get_method_signature - Check method parameters and return types
+    2. find_usage_examples - See HOW natives use an API (real code examples)
+    3. read_source_code - Read implementation details when needed
+    NEVER guess API signatures or usage patterns.
   verbose: true
   allow_delegation: false
 

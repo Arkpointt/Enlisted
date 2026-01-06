@@ -37,27 +37,52 @@ from .state_models import (
     CodeChange,
 )
 
+# Import condition functions
+from .conditions import (
+    needs_systems_analysis,
+    is_simple_bug,
+    is_critical_bug,
+    has_high_confidence,
+    has_user_logs,
+    format_routing_decision,
+)
+
 # Import tools from our tools module
 from ..tools import (
     SearchCache,
+    # Debug & Logs
     read_debug_logs_tool,
     search_debug_logs_tool,
     read_native_crash_logs_tool,
-    search_native_api_tool,
-    read_csharp_tool,
-    search_csharp_tool,
-    read_csharp_snippet_tool,
+    # Source Code
+    find_in_code,  # Was: search_csharp_tool
+    read_source,  # Was: read_csharp_tool
+    read_source_section,  # Was: read_csharp_snippet_tool
+    # Documentation
     read_doc_tool,
-    search_docs_tool,
+    find_in_docs,  # Was: search_docs_tool
     list_feature_files_tool,
-    load_code_context_tool,
-    load_domain_context_tool,
-    load_feature_context_tool,
-    run_build_tool,
-    validate_content_tool,
-    check_code_style_tool,
-    check_bannerlord_patterns_tool,
+    # Context Loaders (use get_dev_reference instead of load_code_context_tool)
+    get_dev_reference,
+    get_game_systems,  # Was: load_domain_context_tool
+    # Native API (deprecated, agents should use MCP server instead)
+    find_in_native_api,  # Was: search_native_api_tool
+    # Validation & Build
+    build,  # Was: run_build_tool
+    validate_content,  # Was: validate_content_tool
+    # Code Review
+    review_code,  # Was: check_code_style_tool
+    check_game_patterns,  # Was: check_bannerlord_patterns_tool
+    # Verification
     verify_file_exists_tool,
+    # Database Tools (for bug investigation)
+    lookup_error_code,  # Find known error patterns
+    lookup_api_pattern,  # Find correct Bannerlord API usage
+    get_system_dependencies,  # Understand system interactions
+    lookup_core_system,  # Identify which core systems are affected
+    lookup_content_id,  # Check if content IDs exist when debugging content bugs
+    search_content,  # Search for related content when investigating
+    get_balance_value,  # Check balance values when debugging gameplay issues
 )
 
 
@@ -75,8 +100,8 @@ def get_project_root() -> Path:
     return Path(r"C:\Dev\Enlisted\Enlisted")
 
 
-# === LLM Configurations ===
-# Model names follow litellm/Anthropic convention. Thinking is enabled via parameters.
+# === LLM Configurations (OpenAI GPT-5 family) ===
+# Unified with main crew.py - all workflows use GPT-5 models.
 # Override via ENLISTED_LLM_* env vars if needed.
 
 import os as _os
@@ -84,31 +109,37 @@ import os as _os
 def _get_env(name: str, default: str) -> str:
     return _os.environ.get(name, default)
 
-# Sonnet 4.5 with thinking for analysis
-SONNET_ANALYSIS = LLM(
-    model=_get_env("ENLISTED_LLM_SONNET_ANALYSIS", "anthropic/claude-sonnet-4-5-20250929"),
-    thinking={"type": "enabled", "budget_tokens": 2000},
-    max_tokens=4000,
+# GPT-5.2 for analysis and architecture (high reasoning)
+GPT5_ANALYSIS = LLM(
+    model=_get_env("ENLISTED_LLM_ANALYST", "gpt-5.2"),
+    thinking={"type": "enabled", "budget_tokens": 5000},
+    max_tokens=8000,
 )
 
-# Opus 4.5 for deep system analysis (has largest context window: 200K)
-OPUS_DEEP = LLM(
-    model=_get_env("ENLISTED_LLM_OPUS_DEEP", "anthropic/claude-opus-4-5-20251101"),
-    thinking={"type": "enabled", "budget_tokens": 4000},
+# GPT-5.2 for deep system analysis
+GPT5_DEEP = LLM(
+    model=_get_env("ENLISTED_LLM_ARCHITECT", "gpt-5.2"),
+    thinking={"type": "enabled", "budget_tokens": 10000},
+    max_tokens=16000,
+)
+
+# GPT-5 mini for faster execution tasks
+GPT5_EXECUTE = LLM(
+    model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5-mini"),
+    max_tokens=8000,
+)
+
+# GPT-5 mini for QA with thinking
+GPT5_QA = LLM(
+    model=_get_env("ENLISTED_LLM_QA", "gpt-5-mini"),
+    thinking={"type": "enabled", "budget_tokens": 2048},
     max_tokens=6000,
 )
 
-# Haiku 4.5 for faster execution tasks (no thinking)
-SONNET_EXECUTE = LLM(
-    model=_get_env("ENLISTED_LLM_EXECUTE", "anthropic/claude-haiku-4-5-20251001"),
-    max_tokens=3000,
-)
-
-# Haiku 4.5 for QA with light thinking (min budget_tokens is 1024 per Anthropic API)
-SONNET_QA = LLM(
-    model=_get_env("ENLISTED_LLM_QA", "anthropic/claude-haiku-4-5-20251001"),
-    thinking={"type": "enabled", "budget_tokens": 1024},
-    max_tokens=2500,
+# GPT-5 for planning (balanced capability, cost-efficient)
+GPT5_PLANNING = LLM(
+    model=_get_env("ENLISTED_LLM_PLANNING", "gpt-5"),
+    max_tokens=4000,
 )
 
 
@@ -124,9 +155,9 @@ def get_code_analyst() -> Agent:
                 goal="Investigate bugs by searching logs, reading code, and tracing to root cause",
                 backstory="""You are an expert Bannerlord modder and debugger. You:
                 
-                1. FIRST call load_code_context_tool to understand coding patterns
+                1. FIRST call get_dev_reference to understand coding patterns
                 2. Search mod debug logs for error codes (E-*, W-*) using search_debug_logs_tool
-                3. Read relevant C# source files with read_csharp_snippet_tool (small excerpts)
+                3. Read relevant C# source files with read_source_section (small excerpts)
                 4. Trace bugs to root cause through stack traces and code analysis
                 5. Assess severity: SIMPLE (config/typo), MODERATE (logic), COMPLEX (multi-system), CRITICAL (crash/data loss)
                 
@@ -147,21 +178,29 @@ def get_code_analyst() -> Agent:
                 - Session-A_*.log = Current session (newest)
                 - Conflicts-A_*.log = Mod conflicts
                 """,
-            llm=SONNET_ANALYSIS,
+            llm=GPT5_ANALYSIS,
             tools=[
-                load_code_context_tool,
+                get_dev_reference,
                 read_debug_logs_tool,
                 search_debug_logs_tool,
                 read_native_crash_logs_tool,
-                search_csharp_tool,
-                read_csharp_snippet_tool,
+                find_in_code,
+                read_source_section,
                 read_doc_tool,
-                search_docs_tool,
+                find_in_docs,
                 list_feature_files_tool,
+                # Database tools for bug investigation
+                lookup_error_code,  # Check if this is a known error pattern
+                lookup_content_id,  # Verify content IDs when debugging content bugs
+                search_content,  # Find related content
             ],
             verbose=True,
             respect_context_window=True,
-            max_retry_limit=1,
+            max_iter=15,
+            max_retry_limit=3,
+            reasoning=True,  # Enable reflection for thorough investigation
+            max_reasoning_attempts=3,  # Limit reasoning iterations
+            allow_delegation=True,  # Lead investigator can delegate specialized tasks
         )
     return _agent_cache["code_analyst"]
 
@@ -174,7 +213,7 @@ def get_systems_analyst() -> Agent:
                 goal="Analyze how systems interconnect and find related code that may have similar issues",
                 backstory="""You are an expert at understanding Enlisted's core systems:
                 
-                1. FIRST call load_domain_context_tool to understand game systems
+                1. FIRST call get_game_systems to understand game systems
                 2. Trace data flows between Orchestrator, Managers, and Content
                 3. Identify integration points and dependencies
                 4. Find similar patterns that might have the same bug
@@ -192,21 +231,29 @@ def get_systems_analyst() -> Agent:
                 - EscalationManager: Reputation, discipline, scrutiny
                 - CompanyNeedsManager: Supply, morale, rest, readiness
                 """,
-            llm=OPUS_DEEP,
+            llm=GPT5_DEEP,
             tools=[
-                load_domain_context_tool,
-                load_feature_context_tool,
-                search_csharp_tool,  # Search first
-                read_csharp_snippet_tool,  # Read targeted snippets
-                read_csharp_tool,  # Full file when needed
+                get_game_systems,
+                get_dev_reference,
+                find_in_code,  # Search first
+                read_source_section,  # Read targeted snippets
+                read_source,  # Full file when needed
                 read_doc_tool,
-                search_docs_tool,
+                find_in_docs,
                 list_feature_files_tool,
-                search_native_api_tool,
+                find_in_native_api,  # DEPRECATED: Use MCP server
+                # Database tools for systems analysis
+                get_system_dependencies,  # Understand how systems interact
+                lookup_core_system,  # Identify which core systems are affected
+                lookup_api_pattern,  # Find correct Bannerlord API usage patterns
             ],
             verbose=True,
             respect_context_window=True,
-            max_retry_limit=1,
+            max_iter=15,
+            max_retry_limit=3,
+            reasoning=True,  # Enable reflection for system integration analysis
+            max_reasoning_attempts=3,  # Limit reasoning iterations
+            allow_delegation=True,  # Coordinator can delegate system-specific analysis
         )
     return _agent_cache["systems_analyst"]
 
@@ -236,18 +283,26 @@ def get_implementer() -> Agent:
                 - DO NOT output XML or function_calls tags - just describe the fix
                 - Use ```csharp code blocks for code changes
                 """,
-            llm=SONNET_EXECUTE,
+            llm=GPT5_EXECUTE,
             tools=[
                 verify_file_exists_tool,  # Verify file paths before proposing changes
-                search_csharp_tool,  # Search to find relevant code
-                read_csharp_snippet_tool,  # Read targeted snippets
-                read_csharp_tool,  # Full file when implementing
-                search_native_api_tool,
-                check_code_style_tool,
-                check_bannerlord_patterns_tool,
+                find_in_code,  # Search to find relevant code
+                read_source_section,  # Read targeted snippets
+                read_source,  # Full file when implementing
+                find_in_native_api,  # DEPRECATED: Agents should use MCP server
+                review_code,
+                check_game_patterns,
+                # Database tools for fix proposals
+                lookup_api_pattern,  # Ensure fix uses correct Bannerlord API patterns
+                get_balance_value,  # Check balance values when proposing gameplay fixes
             ],
             verbose=True,
             respect_context_window=True,
+            max_iter=20,
+            max_retry_limit=3,
+            reasoning=True,  # Plan fix strategy before proposing
+            max_reasoning_attempts=3,  # Limit reasoning iterations
+            allow_delegation=False,  # Specialist focuses on fix proposals
         )
     return _agent_cache["implementer"]
 
@@ -266,14 +321,17 @@ def get_qa_agent() -> Agent:
                 4. Assess regression risk
                 5. Only approve when all checks pass
                 """,
-            llm=SONNET_QA,
+            llm=GPT5_QA,
             tools=[
-                run_build_tool,
-                validate_content_tool,
-                check_code_style_tool,
+                build,
+                validate_content,
+                review_code,
             ],
             verbose=True,
             respect_context_window=True,
+            max_iter=10,
+            max_retry_limit=3,
+            allow_delegation=False,  # Specialist focuses on QA/validation
         )
     return _agent_cache["qa_agent"]
 
@@ -281,6 +339,9 @@ def get_qa_agent() -> Agent:
 class BugHuntingFlow(Flow[BugHuntingState]):
     """
     Flow-based bug hunting workflow.
+    
+    State Persistence: Enabled via persist=True. If a run fails, you can resume
+    from the last successful step by re-running with the same inputs.
     
     Steps:
     1. receive_bug_report - Parse and validate input
@@ -295,6 +356,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
     """
     
     initial_state = BugHuntingState
+    persist = True  # Auto-save state to SQLite for recovery on failure
     
     # === Flow Steps ===
     
@@ -377,10 +439,10 @@ class BugHuntingFlow(Flow[BugHuntingState]):
                 ===== END LOG CONTENT =====
                 
                 INVESTIGATION STEPS:
-                1. Call load_code_context_tool first to understand error codes
+                1. Call get_dev_reference first to understand error codes
                 2. Search the provided content for E-*/W-* codes
                 3. Identify stack traces and exception messages
-                4. Prefer search_csharp_tool + read_csharp_snippet_tool (small excerpts); avoid read_csharp_tool
+                4. Prefer find_in_code + read_source_section (small excerpts); avoid read_source
                 5. Trace to root cause
                 
                 Assess severity and whether systems analysis is needed.
@@ -408,10 +470,10 @@ class BugHuntingFlow(Flow[BugHuntingState]):
                 CONTEXT: {br.context or "None provided"}
                 
                 APPROACH:
-                1. Call load_code_context_tool first
+                1. Call get_dev_reference first
                 2. Break down the symptoms and related game state transitions
-                3. Use search_docs_tool for relevant docs
-                4. Use search_csharp_tool + read_csharp_snippet_tool on implicated code (small excerpts only)
+                3. Use find_in_docs for relevant docs
+                4. Use find_in_code + read_source_section on implicated code (small excerpts only)
                 5. Hypothesize root causes and identify likely affected files
                 
                 Assess severity and whether systems analysis is needed.
@@ -426,7 +488,9 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             process=Process.sequential,
             verbose=True,
             memory=True,    # Enable memory for context retention
+            cache=True,     # Cache tool results
             planning=True,  # AgentPlanner creates step plan before execution
+            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
         )
         result = crew.kickoff()
         raw_output = str(result)
@@ -452,6 +516,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         """
         Router: Decide next step based on investigation results.
         
+        Uses condition functions for clean, testable routing logic.
         Listens to both investigation methods (one will skip, one will run).
         Only processes after the actual investigation completes.
         
@@ -460,17 +525,25 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         - "propose_fix" for SIMPLE/MODERATE bugs
         """
         investigation = state.investigation
+        severity = investigation.severity.value if investigation else "unknown"
         
-        if investigation.needs_systems_analysis or investigation.severity in [
-            BugSeverity.COMPLEX,
-            BugSeverity.CRITICAL,
-        ]:
-            print("\n🔀 ROUTING: Complex bug → Systems Analysis")
+        if needs_systems_analysis(state):
+            print(format_routing_decision(
+                condition_name="needs_systems_analysis",
+                condition_result=True,
+                chosen_path="analyze_systems",
+                reason=f"Severity: {severity}, requires deeper analysis"
+            ))
             return "analyze_systems"
-        else:
-            print("\n🔀 ROUTING: Simple bug → Propose Fix (skipping systems analysis)")
-            state.skipped_steps.append("analyze_systems")
-            return "propose_fix"
+        
+        print(format_routing_decision(
+            condition_name="is_simple_bug",
+            condition_result=True,
+            chosen_path="propose_fix",
+            reason=f"Severity: {severity}, can skip systems analysis"
+        ))
+        state.skipped_steps.append("analyze_systems")
+        return "propose_fix"
     
     @listen("analyze_systems")
     def analyze_systems(self, state: BugHuntingState) -> BugHuntingState:
@@ -498,7 +571,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             AFFECTED FILES: {[f.path for f in investigation.affected_files] if investigation.affected_files else "Unknown"}
             
             ANALYSIS TASKS:
-            1. Call load_domain_context_tool first
+            1. Call get_game_systems first
             2. Review the systems identified in the investigation
             3. Check for related code patterns that might have similar issues
             4. Identify integration points that could be affected
@@ -522,7 +595,9 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             process=Process.sequential,
             verbose=True,
             memory=True,    # Enable memory for context retention
+            cache=True,     # Cache tool results
             planning=True,  # AgentPlanner creates step plan before execution
+            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
         )
         
         result = crew.kickoff()
@@ -611,7 +686,9 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             process=Process.sequential,
             verbose=True,
             memory=True,    # Enable memory for context retention
+            cache=True,     # Cache tool results
             planning=True,  # AgentPlanner creates step plan before execution
+            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
         )
         
         result = crew.kickoff()
@@ -675,7 +752,9 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             process=Process.sequential,
             verbose=True,
             memory=True,    # Enable memory for context retention
+            cache=True,     # Cache tool results
             planning=True,  # AgentPlanner creates step plan before execution
+            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
         )
         
         result = crew.kickoff()

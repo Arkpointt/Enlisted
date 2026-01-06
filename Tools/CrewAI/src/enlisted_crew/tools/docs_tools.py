@@ -122,7 +122,7 @@ def read_doc_tool(doc_path: str) -> str:
     error_msg += "  • docs/Features/Campaign/ (battle, simulation)\n"
     error_msg += "  • docs/ANEWFEATURE/ (systems-integration, content-effects)\n"
     error_msg += "  • docs/Reference/ (native-apis)\n"
-    error_msg += "\nUse search_docs_tool to find docs by content, or list_docs_tool to browse.\n"
+    error_msg += "\nUse find_in_docs to find docs by content, or list_docs_tool to browse.\n"
     error_msg += f"\nPaths tried:\n" + "\n".join(f"  • {p}" for p in possible_paths[:5])
     return error_msg
 
@@ -888,7 +888,15 @@ def read_native_crash_logs_tool(recent_only: bool = True) -> str:
 @tool("Find in Native API")
 def find_in_native_api(query: str) -> str:
     """
-    Search the native Bannerlord decompiled source for API patterns.
+    [DEPRECATED] Search the native Bannerlord decompiled source for API patterns.
+    
+    PREFER: Use the Bannerlord API MCP server tools instead:
+    - get_class_definition(class_name)
+    - search_api(query, filter_type)
+    - get_method_signature(class_name, method_name)
+    
+    The MCP server is faster (indexed), provides full signatures, and has semantic understanding.
+    This tool remains for backward compatibility only.
     
     Use this to verify how native APIs work before using them.
     The decompile is from Bannerlord v1.3.13 (the target version).

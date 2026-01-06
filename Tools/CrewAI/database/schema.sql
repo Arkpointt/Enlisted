@@ -1,5 +1,5 @@
 -- Enlisted Mod - Project Knowledge Database Schema
--- Location: C:\Dev\SQLite3\enlisted_knowledge.db
+-- Location: Tools/CrewAI/database/enlisted_knowledge.db
 --
 -- This database provides structured, queryable knowledge for CrewAI agents.
 -- All values extracted from actual codebase (verified January 2026).
@@ -358,3 +358,38 @@ INSERT OR IGNORE INTO api_patterns (api_name, category, usage_pattern, descripti
 ('Hero.MainHero', 'core', 'if (Hero.MainHero != null) { ... }', 'Access player hero', 'ALWAYS null-check before access'),
 ('MobileParty.MainParty', 'party', 'if (MobileParty.MainParty != null) { ... }', 'Access player party', 'ALWAYS null-check before access'),
 ('CampaignTime.Now', 'time', 'var today = CampaignTime.Now;', 'Get current game time', 'Use for comparisons, not raw Day values');
+
+-- ============================================================
+-- 9. GAME SYSTEMS - Core gameplay systems and their locations
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS game_systems (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    system_name TEXT NOT NULL UNIQUE,          -- e.g., "EnlistmentBehavior", "EscalationManager"
+    file_path TEXT,                            -- Relative path in decompile
+    namespace TEXT,                            -- .NET namespace
+    description TEXT,                          -- What this system does
+    key_methods TEXT,                          -- Important methods (comma-separated)
+    dependencies TEXT                          -- Other systems it depends on
+);
+
+-- ============================================================
+-- 10. CONTENT METADATA - Lightweight content registry
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS content_metadata (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    content_id TEXT NOT NULL UNIQUE,           -- e.g., "equipment_inspection"
+    type TEXT NOT NULL,                        -- "event", "decision", "order"
+    category TEXT,                             -- Content category
+    severity TEXT,                             -- Severity level
+    file_path TEXT,                            -- Relative path to JSON
+    description TEXT,                          -- Brief description
+    tier_min INTEGER,                          -- Minimum tier
+    tier_max INTEGER,                          -- Maximum tier
+    localization_key TEXT,                     -- Localization key
+    status TEXT DEFAULT 'active'               -- "active", "deleted"
+);
+
+CREATE INDEX idx_content_metadata_type ON content_metadata(type);
+CREATE INDEX idx_content_metadata_status ON content_metadata(status);

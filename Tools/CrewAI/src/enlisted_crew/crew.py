@@ -74,6 +74,7 @@ from .tools import (
     lookup_content_id,
     search_content,
     get_balance_value,
+    search_balance,  # MISSING! Used by systems_analyst, balance_analyst, architecture_advisor
     lookup_error_code,
     get_tier_info,
     get_system_dependencies,
@@ -82,6 +83,8 @@ from .tools import (
     get_valid_severities,
     lookup_core_system,
     get_all_tiers,
+    get_balance_by_category,  # MISSING! Used by feature_architect, balance_analyst
+    check_database_health,  # MISSING! Used by qa_agent
     # Database Maintenance
     add_content_item,
     update_content_item,
@@ -109,6 +112,11 @@ from .tools import (
 # - GPT-5 mini: $0.25 in / $2 out
 # - GPT-5 nano: $0.15 in / $0.60 out (estimated)
 #
+# Prompt Caching: ENABLED on all models
+# - Reduces input costs by ~90% for repeated knowledge sources
+# - Reduces latency by ~85% (time-to-first-token)
+# - Perfect for stable context (docs, error codes, balance values)
+#
 # Tier 1: Deep Reasoning (architecture, design, system integration)
 # Tier 2: Standard Reasoning (code analysis, bug investigation)
 # Tier 3: Execution (implementation from specs)
@@ -124,6 +132,8 @@ GPT5_ARCHITECT = LLM(
     model=_get_env("ENLISTED_LLM_ARCHITECT", "gpt-5.2"),
     max_tokens=16000,
     temperature=0.7,
+    # Enable prompt caching for knowledge sources (~90% cost reduction on repeated context)
+    supports_prompt_caching=True,
 )
 
 # TIER 2: GPT-5.2 for code analysis and review
@@ -132,6 +142,7 @@ GPT5_ANALYST = LLM(
     model=_get_env("ENLISTED_LLM_ANALYST", "gpt-5.2"),
     max_tokens=12000,
     temperature=0.5,
+    supports_prompt_caching=True,
 )
 
 # TIER 3: GPT-5 mini for implementation - execution from specs
@@ -140,6 +151,7 @@ GPT5_IMPLEMENTER = LLM(
     model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5-mini"),
     max_tokens=8000,
     temperature=0.3,
+    supports_prompt_caching=True,
 )
 
 # TIER 4: GPT-5 nano - high-volume validation and content generation
@@ -148,6 +160,7 @@ GPT5_FAST = LLM(
     model=_get_env("ENLISTED_LLM_FAST", "gpt-5-nano"),
     max_tokens=4000,
     temperature=0.2,
+    supports_prompt_caching=True,
 )
 
 # TIER 2.5: GPT-5 mini for QA - final safety net
@@ -156,6 +169,7 @@ GPT5_QA = LLM(
     model=_get_env("ENLISTED_LLM_QA", "gpt-5-mini"),
     max_tokens=6000,
     temperature=0.3,
+    supports_prompt_caching=True,
 )
 
 # === Embedder Configuration ===
@@ -294,6 +308,14 @@ class EnlistedCrew:
                 find_in_docs,        # Find docs
                 read_doc_tool,       # Read docs
                 find_in_code,        # Find code patterns
+                read_source_section, # Read code snippets
+                read_source,         # Read full files when needed
+                # Database tools for systems analysis - CRITICAL!
+                get_system_dependencies,  # Understand how systems interact
+                lookup_core_system,       # Get core system definitions
+                lookup_api_pattern,       # Verify Bannerlord API patterns
+                get_all_tiers,            # Understand tier progression impact
+                search_balance,           # Search balance values by category
             ],
             knowledge_sources=[self.systems_knowledge],
             respect_context_window=True,
@@ -324,6 +346,11 @@ class EnlistedCrew:
                 find_in_code,        # Search first, then read snippets
                 read_source_section, # Prefer snippets over full files
                 read_source,         # Full file only when needed
+                # Database tools for analysis
+                lookup_error_code,      # Identify known error patterns
+                lookup_api_pattern,     # Verify correct API usage
+                get_system_dependencies,  # Understand system interactions
+                lookup_core_system,     # Identify affected core systems
             ],
             knowledge_sources=[self.code_knowledge],
             respect_context_window=True,
@@ -341,6 +368,11 @@ class EnlistedCrew:
                 read_event,
                 list_events,
                 validate_content,
+                # Database tools for content analysis
+                lookup_content_id,  # Verify content IDs exist
+                search_content,     # Find related content
+                get_valid_categories,  # Verify categories are valid
+                get_valid_severities,  # Verify severities are valid
             ],
             knowledge_sources=[self.content_knowledge],
             respect_context_window=True,
@@ -361,6 +393,12 @@ class EnlistedCrew:
                 find_in_code,            # Find code
                 read_source_section,     # Read sections
                 validate_content,        # Check schemas
+                # Database tools for architectural design
+                get_system_dependencies,  # Understand how systems interact
+                lookup_api_pattern,       # Find correct Bannerlord API patterns
+                lookup_core_system,       # Identify which core systems will be affected
+                get_all_tiers,            # Understand tier progression for features
+                get_balance_by_category,  # Get balance values by category for design
             ],
             knowledge_sources=[self.design_knowledge],  # Includes game-design-principles.md
             respect_context_window=True,
@@ -446,7 +484,17 @@ class EnlistedCrew:
                 build,
                 analyze_issues,
                 review_code,
+                check_game_patterns,
+                # Database tools for QA - CRITICAL for verification!
+                lookup_error_code,      # Check if errors match known patterns
+                lookup_content_id,      # Verify content IDs exist
+                search_content,         # Find related content for validation
+                get_valid_categories,   # Verify categories are valid
+                get_valid_severities,   # Verify severities are valid
+                lookup_api_pattern,     # Verify API usage is correct
+                check_database_health,  # Verify database integrity
             ],
+            knowledge_sources=[self.code_knowledge],  # MISSING! QA needs code patterns
             respect_context_window=True,
         )
     
@@ -462,6 +510,14 @@ class EnlistedCrew:
                 read_event,
                 list_events,
                 read_doc_tool,
+                # Database tools for balance analysis - THIS WAS MISSING!
+                get_balance_value,        # Get specific balance values
+                search_balance,           # Search all balance values
+                get_balance_by_category,  # Get balance values by category
+                get_tier_info,            # Get tier XP ranges for balance
+                get_all_tiers,            # Get all tier data
+                lookup_content_id,        # Verify content IDs
+                search_content,           # Find related content for balance review
             ],
             knowledge_sources=[self.balance_knowledge],
             respect_context_window=True,
@@ -515,6 +571,12 @@ class EnlistedCrew:
                 read_source,             # Full files when needed
                 list_feature_files_tool, # Understand feature structure
                 find_in_native_api,      # Check Bannerlord API constraints
+                # Database tools for architecture analysis - CRITICAL!
+                get_system_dependencies,  # Understand system interactions
+                lookup_core_system,       # Get core system definitions
+                lookup_api_pattern,       # Verify Bannerlord API patterns
+                get_all_tiers,            # Understand tier progression for architecture
+                search_balance,           # Check balance implications
             ],
             knowledge_sources=[self.systems_knowledge],
             respect_context_window=True,
@@ -711,187 +773,30 @@ class EnlistedCrew:
     # THREE CORE WORKFLOWS
     # ==========================================================================
     # 
-    # 1. plan_workflow    - Design a feature (research → advise → design → validate)
-    # 2. bug_workflow     - Find & fix bugs (investigate → analyze → fix → validate)  
-    # 3. implement_workflow - Build from plan (read → code → content → validate → docs)
+    # All workflows are now Flow-based (see flows/ directory):
+    # 1. PlanningFlow       - Design a feature (flows/planning_flow.py)
+    # 2. ImplementationFlow - Build from plan (flows/implementation_flow.py)
+    # 3. BugHuntingFlow     - Find & fix bugs (flows/bug_hunting_flow.py)
     #
-    # Each workflow is SELF-CONTAINED - it handles everything including validation.
+    # Each Flow uses state persistence and conditional routing.
+    # The only Crew remaining here is bug_workflow (legacy, kept for compatibility).
     # ==========================================================================
     
-    @crew
-    def plan_workflow(self) -> Crew:
-        """
-        PLANNING WORKFLOW - Design a feature completely.
-        
-        CLI: enlisted-crew plan -f "feature-name" -d "description"
-        
-        Complete chain:
-        1. systems_analyst → Research existing systems
-        2. architecture_advisor → Suggest best practices & improvements
-        3. feature_architect → Design the feature spec
-        4. documentation_maintainer → Write planning doc to docs/CrewAI_Plans/
-        5. code_analyst → VALIDATE plan accuracy (no hallucinated files/IDs)
-        
-        Output: Validated planning doc ready for implementation.
-        """
-        # Task 1: Research existing systems
-        analyze = self.analyze_systems_task()
-        
-        # Task 2: Suggest improvements based on analysis
-        suggest = self.suggest_improvements_task()
-        suggest.context = [analyze]
-        
-        # Task 3: Design the feature (receives research + suggestions)
-        design = self.design_feature_task()
-        design.context = [analyze, suggest]
-        
-        # Task 4: Write the planning doc (receives all prior work)
-        create_doc = self.create_planning_doc_task()
-        create_doc.context = [analyze, suggest, design]
-        
-        # Task 5: Validate the plan is accurate
-        validate_doc = self.validate_planning_doc_task()
-        validate_doc.context = [create_doc]
-        
-        # Task 6: Fix any hallucinations found (auto-correction loop)
-        fix_doc = self.fix_planning_doc_task()
-        fix_doc.context = [create_doc, validate_doc]
-        
-        return Crew(
-            agents=[
-                self.systems_analyst(),
-                self.architecture_advisor(),
-                self.feature_architect(),
-                self.documentation_maintainer(),
-                self.code_analyst(),
-            ],
-            tasks=[
-                analyze,
-                suggest,
-                design,
-                create_doc,
-                validate_doc,
-                fix_doc,  # Auto-correct hallucinations
-            ],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,     # Enable crew memory for context across tasks
-            cache=True,      # Cache tool results to avoid redundant calls
-            planning=True,   # AgentPlanner creates step-by-step execution plan
-            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-large for superior semantic understanding
-        )
+    # NOTE: plan_workflow has been replaced by PlanningFlow
+    # (see flows/planning_flow.py) which uses Flow-based state management
+    # with automatic hallucination detection and correction.
     
-    @crew
-    def bug_workflow(self) -> Crew:
-        """
-        BUG HUNTING WORKFLOW - Find and fix bugs completely.
-        
-        CLI: enlisted-crew hunt-bug -d "description" -e "error codes"
-        
-        Complete chain:
-        1. code_analyst → Investigate logs, find the bug
-        2. systems_analyst → Analyze related systems for impact
-        3. csharp_implementer → Propose minimal fix
-        4. qa_agent → VALIDATE fix is correct, builds, doesn't break anything
-        
-        Output: Bug report + validated fix ready to apply.
-        """
-        # Task 1: Investigate the bug
-        investigate = self.investigate_bug_task()
-        
-        # Task 2: Analyze related systems
-        analyze_systems = self.analyze_bug_systems_task()
-        analyze_systems.context = [investigate]
-        
-        # Task 3: Propose fix (receives investigation + analysis)
-        propose_fix = self.propose_bug_fix_task()
-        propose_fix.context = [investigate, analyze_systems]
-        
-        # Task 4: Validate the fix
-        validate_fix = self.validate_bug_fix_task()
-        validate_fix.context = [investigate, analyze_systems, propose_fix]
-        
-        return Crew(
-            agents=[
-                self.code_analyst(),
-                self.systems_analyst(),
-                self.csharp_implementer(),
-                self.qa_agent(),
-            ],
-            tasks=[
-                investigate,
-                analyze_systems,
-                propose_fix,
-                validate_fix,
-            ],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,     # Enable crew memory for context across tasks
-            cache=True,      # Cache tool results to avoid redundant calls
-            planning=True,   # AgentPlanner creates step-by-step execution plan
-            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-large for superior semantic understanding
-        )
-    
-    @crew
-    def implement_workflow(self) -> Crew:
-        """
-        IMPLEMENTATION WORKFLOW - Build from an approved plan.
-        
-        CLI: enlisted-crew implement -p "docs/CrewAI_Plans/feature.md"
-        
-        Complete chain:
-        1. systems_analyst → Read plan, understand what to build
-        2. csharp_implementer → Write C# code
-        3. content_author → Write JSON content
-        4. qa_agent → VALIDATE everything builds and works
-        5. documentation_maintainer → Update docs to reflect implementation
-        
-        Output: Complete implementation + updated documentation.
-        """
-        # Task 1: Analyze the plan
-        analyze = self.analyze_systems_task()
-        
-        # Task 2: Implement C# code
-        impl_csharp = self.implement_csharp_task()
-        impl_csharp.context = [analyze]
-        
-        # Task 3: Implement JSON content
-        impl_content = self.implement_content_task()
-        impl_content.context = [analyze, impl_csharp]
-        
-        # Task 4: Validate everything
-        validate = self.validate_all_task()
-        validate.context = [impl_csharp, impl_content]
-        
-        # Task 5: Update documentation
-        sync_docs = self.sync_documentation_task()
-        sync_docs.context = [impl_csharp, impl_content, validate]
-        
-        return Crew(
-            agents=[
-                self.systems_analyst(),
-                self.csharp_implementer(),
-                self.content_author(),
-                self.qa_agent(),
-                self.documentation_maintainer(),
-            ],
-            tasks=[
-                analyze,
-                impl_csharp,
-                impl_content,
-                validate,
-                sync_docs,
-            ],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,     # Enable crew memory for context across tasks
-            cache=True,      # Cache tool results to avoid redundant calls
-            planning=True,   # AgentPlanner creates step-by-step execution plan
-            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-large for superior semantic understanding
-        )
+    # NOTE: bug_workflow has been replaced by BugHuntingFlow
+    # (see flows/bug_hunting_flow.py) which uses Flow-based state management
+    # with severity routing and automatic fix validation.
     
     # ==========================================================================
     # UTILITY CREWS (kept for specific use cases)
+    # ==========================================================================
+    # 
+    # NOTE: implement_workflow has been replaced by ImplementationFlow
+    # (see flows/implementation_flow.py) which uses Flow-based state management
+    # to detect partial implementations and route around completed work.
     # ==========================================================================
     
     @crew

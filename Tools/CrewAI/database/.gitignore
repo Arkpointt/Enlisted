@@ -1,0 +1,7 @@
+# Database file is generated from schema - don't commit it
+enlisted_knowledge.db
+
+# Keep these in git:
+# - schema.sql (source of truth)
+# - setup.ps1 (build script)
+# - README.md (documentation)
