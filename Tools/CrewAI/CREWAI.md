@@ -2,7 +2,7 @@
 
 **Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (23 database tools), and automatic prompt caching.  
 **Status:** ✅ Implemented  
-**Last Updated:** 2026-01-06 (Unified all LLMs to GPT-5.2 with `reasoning_effort` optimization for cost/performance balance, removed Anthropic-specific parameters, fixed all emoji encoding issues for Windows PowerShell compatibility)
+**Last Updated:** 2026-01-06 (Added gap analysis and human-in-the-loop to PlanningFlow; feature_architect now investigates broken references and classifies them with remediation proposals or human review for unclear cases)
 
 ---
 
@@ -41,14 +41,26 @@ enlisted-crew plan -f "reputation-integration" -d "Connect reputation to morale/
 **What it does:**
 1. **Research** - systems_analyst investigates existing code
 2. **Advise** - architecture_advisor suggests best practices
-3. **Design** - feature_architect creates technical spec
-4. **Document** - documentation_maintainer writes to `docs/CrewAI_Plans/`
-5. **Validate** - code_analyst verifies no hallucinated files/IDs
-6. **Auto-fix** - If hallucinations found, automatically correct them (up to 2 attempts)
+3. **Design** - feature_architect creates technical spec + gap analysis
+   - Searches for broken references (code calling non-existent events/IDs)
+   - Classifies gaps: DEPRECATED | MISSING_IMPL | TEST_CODE | OUTDATED_DOCS | UNCLEAR
+   - Proposes remediation or flags for human review
+4. **Human Review** (conditional) - If UNCLEAR gaps found:
+   - Flow pauses with `@human_feedback` decorator
+   - Human provides guidance: "deprecated" | "implement" | "test_code" | "continue"
+   - GPT-5.2 LLM classifies feedback and routes to appropriate handler
+5. **Document** - documentation_maintainer writes to `docs/CrewAI_Plans/`
+6. **Validate** - code_analyst verifies no hallucinated files/IDs
+7. **Auto-fix** - If hallucinations found, automatically correct them (up to 2 attempts)
 
 **State Persistence:** If the flow fails mid-run, re-running resumes from last successful step.
 
-**Output:** Validated planning doc ready for implementation.
+**Key Features:**
+- **Intelligent gap detection** - Agent investigates WHY references are broken
+- **Human-in-the-loop** - Pauses for guidance when intent is unclear
+- **LLM-assisted routing** - Classifies free-text feedback into structured outcomes
+
+**Output:** Validated planning doc ready for implementation, with discovered gaps addressed.
 
 ---
 
