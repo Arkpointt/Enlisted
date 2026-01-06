@@ -214,32 +214,42 @@ INSERT OR IGNORE INTO balance_values (key, value, unit, category, config_file, d
 ('formation_change_cooldown', 7, 'days', 'progression', 'progression_config.json', 'Days between formation changes'),
 ('formation_free_changes', 1, 'count', 'progression', 'progression_config.json', 'Free formation changes allowed');
 
--- Valid categories (verified from ModuleData/Enlisted/Events/*.json)
+-- Valid categories (verified from ModuleData/Enlisted/**/*.json - all content types)
 INSERT OR IGNORE INTO valid_categories (category, description, used_in) VALUES
-('crisis', 'Urgent problems requiring attention', 'events'),
-('map_incident', 'Encounters during travel/waiting', 'events'),
+('camp_life', 'Daily camp activities and routines', 'events'),
+('crisis', 'Urgent problems requiring immediate attention', 'events'),
+('decision', 'Player choices with consequences', 'decisions'),
+('discipline', 'Behavioral issues and corrections', 'orders'),
+('discovery', 'Learning and skill development', 'events'),
+('economic', 'Financial and resource management', 'events'),
+('emergency_drill', 'Combat readiness training', 'orders'),
+('extended_rest', 'Recovery and recuperation', 'orders'),
+('foraging', 'Resource gathering activities', 'orders'),
+('formation', 'Formation selection and tactics', 'orders'),
+('light_duty', 'Reduced work assignments', 'orders'),
+('map_incident', 'Random encounters during travel', 'events'),
+('medical', 'Illness, injury, and treatment', 'events'),
+('onboarding', 'New player introduction and tutorials', 'events'),
+('order_event', 'Order-triggered events', 'events'),
+('patrol', 'Patrol and reconnaissance missions', 'orders'),
+('pay', 'Wage, payment, and compensation', 'events'),
+('problems', 'General problems and complications', 'events'),
+('promotion', 'Tier advancement and recognition', 'events'),
+('recovery', 'Healing and rehabilitation', 'orders'),
 ('retinue', 'Companion and follower events', 'events'),
-('medical', 'Illness and injury events', 'events'),
-('promotion', 'Tier advancement events', 'events'),
-('pay', 'Wage and payment events', 'events'),
-('threshold', 'Escalation threshold events', 'events'),
-('onboarding', 'New player introduction events', 'events'),
-('camp_life', 'Daily camp activities', 'events'),
-('opportunity', 'Positive chances for advancement', 'events');
+('social', 'Social interactions and relationships', 'events'),
+('special', 'Special circumstances and unique events', 'events'),
+('threshold', 'Escalation threshold triggers', 'events'),
+('training', 'Skill training and practice', 'orders'),
+('work', 'Work assignments and labor', 'orders');
 
--- Valid severities (verified from ModuleData/Enlisted/**/*.json)
+-- Valid severities (verified from ModuleData/Enlisted/**/*.json - actually used)
 INSERT OR IGNORE INTO valid_severities (severity, description, used_in) VALUES
-('normal', 'Standard priority event', 'events'),
-('attention', 'Requires player attention', 'events'),
-('critical', 'High priority, serious consequences', 'events'),
-('urgent', 'Time-sensitive situation', 'events'),
-('positive', 'Good news or opportunity', 'events'),
-('serious', 'Major problem (rare)', 'events'),
-('moderate', 'Medium severity (rare)', 'events'),
-('minor', 'Low severity injury', 'injuries'),
-('severe', 'High severity injury', 'injuries'),
-('flavor', 'Atmospheric/flavor text', 'simulation'),
-('notable', 'Worth mentioning', 'simulation');
+('normal', 'Standard priority event', 'all'),
+('attention', 'Requires player attention', 'all'),
+('critical', 'High priority, serious consequences', 'all'),
+('serious', 'Major problem or situation', 'all'),
+('moderate', 'Medium severity', 'all');
 
 -- Core systems (from src/Features)
 INSERT OR IGNORE INTO core_systems (name, full_name, type, file_path, description, key_responsibilities) VALUES
