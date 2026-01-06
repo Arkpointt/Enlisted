@@ -9,6 +9,10 @@ from typing import List, Tuple
 from pathlib import Path
 from crewai.tools import tool
 
+from .docs_tools import get_project_root
+
+PROJECT_ROOT = get_project_root()
+
 
 # Enlisted C# Style Rules
 CODE_STYLE_RULES = {
@@ -278,13 +282,13 @@ def review_code(code: str) -> str:
     if errors:
         report += "ERRORS (must fix):\n"
         for e in errors:
-            report += f"  ❌ {e}\n"
+            report += f"  ERROR: {e}\n"
         report += "\n"
     
     if warnings:
         report += "WARNINGS (should fix):\n"
         for w in warnings:
-            report += f"  ⚠️ {w}\n"
+            report += f"  WARNING: {w}\n"
     
     return report
 
@@ -326,13 +330,13 @@ def check_game_patterns(code: str) -> str:
     if errors:
         report += "CRITICAL (will cause bugs):\n"
         for e in errors:
-            report += f"  ❌ {e}\n"
+            report += f"  ERROR: {e}\n"
         report += "\n"
     
     if warnings:
         report += "WARNINGS (potential issues):\n"
         for w in warnings:
-            report += f"  ⚠️ {w}\n"
+            report += f"  WARNING: {w}\n"
     
     return report
 
@@ -381,7 +385,7 @@ def review_source_file(file_path: str) -> str:
     compat_report = check_compatibility(code)
     
     if "OK" in style_report and "OK" in pattern_report and "COMPATIBLE" in compat_report:
-        return report + "✅ ALL CHECKS PASSED\n\nNo issues found."
+        return report + "OK: ALL CHECKS PASSED\n\nNo issues found."
     
     if "ISSUES" in style_report:
         report += style_report + "\n"
@@ -421,6 +425,6 @@ def check_compatibility(code: str) -> str:
     report += "Target: .NET Framework 4.7.2 / C# 9.0\n\n"
     
     for msg, sev in issues:
-        report += f"  ❌ {msg}\n"
+        report += f"  ERROR: {msg}\n"
     
     return report

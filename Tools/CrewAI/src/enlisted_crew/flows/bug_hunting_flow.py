@@ -324,11 +324,11 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         # Normalize has_user_logs
         br.has_user_logs = bool(br.user_log_content and br.user_log_content.strip())
         
-        print(f"\n📋 Bug Report Received:")
+        print(f"\nBug Report Received:")
         print(f"   Description: {br.description[:100]}...")
         print(f"   Error Codes: {br.error_codes}")
         print(f"   Repro Steps: {br.repro_steps}")
-        print(f"   User Logs: {'✅ Provided' if br.has_user_logs else '❌ Not provided (will analyze code paths)'}")
+        print(f"   User Logs: {'[OK] Provided' if br.has_user_logs else '[X] Not provided (will analyze code paths)'}")
         
         # Set and return initial state
         return BugHuntingState(
@@ -349,14 +349,14 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         if br.has_user_logs:
             print("\n🔀 ROUTING: User provided logs → Analyzing provided logs")
             print("\n" + "-"*60)
-            print("🔍 STEP: Investigating Bug (with user-provided logs)")
+            print("[SEARCH] STEP: Investigating Bug (with user-provided logs)")
             print("-"*60)
             log_content = br.user_log_content or ""
             # Truncate log content to avoid token spikes
             max_log_chars = 50000
             if len(log_content) > max_log_chars:
                 log_content = log_content[:max_log_chars] + "\n... [TRUNCATED - log too long]"
-                print(f"⚠️  Log content truncated to {max_log_chars} chars")
+                print(f"[!]  Log content truncated to {max_log_chars} chars")
             task = Task(
                 description=f"""
                 Investigate the following bug report using the PROVIDED LOG CONTENT.
@@ -391,7 +391,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         else:
             print("\n🔀 ROUTING: No user logs → Analyzing code paths based on symptoms")
             print("\n" + "-"*60)
-            print("🔍 STEP: Investigating Bug (analyzing code paths - no logs)")
+            print("[SEARCH] STEP: Investigating Bug (analyzing code paths - no logs)")
             print("-"*60)
             task = Task(
                 description=f"""
@@ -425,6 +425,8 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             tasks=[task],
             process=Process.sequential,
             verbose=True,
+            memory=True,    # Enable memory for context retention
+            planning=True,  # AgentPlanner creates step plan before execution
         )
         result = crew.kickoff()
         raw_output = str(result)
@@ -519,6 +521,8 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             tasks=[task],
             process=Process.sequential,
             verbose=True,
+            memory=True,    # Enable memory for context retention
+            planning=True,  # AgentPlanner creates step plan before execution
         )
         
         result = crew.kickoff()
@@ -606,6 +610,8 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             tasks=[task],
             process=Process.sequential,
             verbose=True,
+            memory=True,    # Enable memory for context retention
+            planning=True,  # AgentPlanner creates step plan before execution
         )
         
         result = crew.kickoff()
@@ -630,7 +636,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         Step 5: QA agent validates the proposed fix.
         """
         print("\n" + "-"*60)
-        print("✅ STEP: Validating Fix (qa_agent)")
+        print("[OK] STEP: Validating Fix (qa_agent)")
         print("-"*60)
         
         fix_proposal = state.fix_proposal
@@ -668,6 +674,8 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             tasks=[task],
             process=Process.sequential,
             verbose=True,
+            memory=True,    # Enable memory for context retention
+            planning=True,  # AgentPlanner creates step plan before execution
         )
         
         result = crew.kickoff()
@@ -692,7 +700,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         Final step: Generate comprehensive bug report.
         """
         print("\n" + "-"*60)
-        print("📝 STEP: Generating Final Report")
+        print("[DOC] STEP: Generating Final Report")
         print("-"*60)
         
         report_parts = [

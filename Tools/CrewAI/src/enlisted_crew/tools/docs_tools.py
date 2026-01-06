@@ -219,7 +219,7 @@ def find_in_docs(query: str) -> str:
                                 break
                     
                     rel_path = md_file.relative_to(PROJECT_ROOT)
-                    results.append(f"📄 {rel_path}:\n" + "\n".join(matches))
+                    results.append(f"FILE: {rel_path}:\n" + "\n".join(matches))
         except Exception:
             continue
     
@@ -236,7 +236,7 @@ def find_in_docs(query: str) -> str:
                             matches.append(f"    L{i+1}: {line[:80]}...")
                             if len(matches) >= 3:
                                 break
-                    results.append(f"📄 {md_file.name}:\n" + "\n".join(matches))
+                    results.append(f"FILE: {md_file.name}:\n" + "\n".join(matches))
         except Exception:
             continue
     
@@ -254,7 +254,7 @@ def find_in_docs(query: str) -> str:
                             if len(matches) >= 3:
                                 break
                     rel_path = md_file.relative_to(PROJECT_ROOT)
-                    results.append(f"📄 {rel_path}:\n" + "\n".join(matches))
+                    results.append(f"FILE: {rel_path}:\n" + "\n".join(matches))
         except Exception:
             continue
     
@@ -624,7 +624,7 @@ def find_in_code(query: str, max_results: int = 20) -> str:
                     if len(matches) >= 3:
                         break
             rel = cs_file.relative_to(PROJECT_ROOT)
-            results.append(f"📄 {rel}:\n" + "\n".join(matches))
+            results.append(f"FILE: {rel}:\n" + "\n".join(matches))
             if len(results) >= max_results:
                 break
         except Exception:
@@ -686,7 +686,7 @@ def read_source_section(
     lines = content.split('\n')
     if not pattern:
         head = "\n".join(lines[: min(50, len(lines))])
-        return f"📄 {path.relative_to(PROJECT_ROOT)} (header only)\n" + head[: max_chars]
+        return f"FILE: {path.relative_to(PROJECT_ROOT)} (header only)\n" + head[: max_chars]
 
     q = pattern.lower()
     excerpts = []
@@ -702,7 +702,7 @@ def read_source_section(
     if not excerpts:
         return f"No matches for '{pattern}' in {path.relative_to(PROJECT_ROOT)}"
 
-    out_parts = [f"📄 {path.relative_to(PROJECT_ROOT)}"]
+    out_parts = [f"FILE: {path.relative_to(PROJECT_ROOT)}"]
     total = 0
     for ln, block in excerpts:
         header = f"\n--- SNIPPET around L{ln} ---\n"
@@ -800,7 +800,7 @@ def search_debug_logs_tool(query: str, error_codes_only: bool = False) -> str:
                         break
                 
                 if matches:
-                    results.append(f"📄 {log_file.name}:\n" + "\n".join(matches))
+                    results.append(f"FILE: {log_file.name}:\n" + "\n".join(matches))
         except Exception:
             continue
     
@@ -841,7 +841,7 @@ def read_native_crash_logs_tool(recent_only: bool = True) -> str:
             with open(crashlist, 'r', encoding='utf-8', errors='replace') as f:
                 content = f.read()
                 if content.strip():
-                    results.append(f"📋 CRASH LIST SUMMARY:\n{content[-5000:]}")
+                    results.append(f"CRASH LIST SUMMARY:\n{content[-5000:]}")
         except Exception as e:
             results.append(f"ERROR reading crashlist.txt: {e}")
     
@@ -927,7 +927,7 @@ def find_in_native_api(query: str) -> str:
                     
                     if matches:
                         rel_path = cs_file.relative_to(NATIVE_DECOMPILE_PATH)
-                        results.append(f"📄 {rel_path}:\n" + "\n---\n".join(matches))
+                        results.append(f"FILE: {rel_path}:\n" + "\n---\n".join(matches))
         except Exception:
             continue
         
@@ -959,7 +959,7 @@ def verify_file_exists_tool(file_path: str) -> str:
     full_path = PROJECT_ROOT / file_path
     
     if full_path.exists():
-        return f"✅ VERIFIED: {file_path} exists"
+        return f"VERIFIED: VERIFIED: {file_path} exists"
     
     # File not found - try to suggest alternatives
     suggestions = []
@@ -971,7 +971,7 @@ def verify_file_exists_tool(file_path: str) -> str:
             if f.is_file() and (stem in f.stem.lower() or f.stem.lower() in stem):
                 suggestions.append(str(f.relative_to(PROJECT_ROOT)))
     
-    result = f"❌ NOT FOUND: {file_path}"
+    result = f"NOT FOUND: NOT FOUND: {file_path}"
     if suggestions:
         result += "\n   Similar files found:\n" + "\n".join(f"   • {s}" for s in suggestions[:5])
     else:
@@ -1021,9 +1021,9 @@ def list_event_ids(folder: str = "Decisions") -> str:
                 ids = re.findall(r'"id"\s*:\s*"([^"]+)"', content)
                 if ids:
                     ids_found.extend(ids)
-                    results.append(f"📄 {json_file.name}: {len(ids)} IDs")
+                    results.append(f"FILE: {json_file.name}: {len(ids)} IDs")
         except Exception as e:
-            results.append(f"⚠️ {json_file.name}: Error reading - {e}")
+            results.append(f"WARNING: {json_file.name}: Error reading - {e}")
     
     summary = f"📁 {folder}/ - {len(ids_found)} total IDs across {len(results)} files\n\n"
     summary += "Files:\n" + "\n".join(results)

@@ -342,10 +342,114 @@ Crew(
     tasks=[...],
     process=Process.sequential,    # or Process.hierarchical
     verbose=True,                  # Show execution details
-    memory=True,                   # Enable crew memory across tasks
+    memory=True,                   # Enable crew memory across tasks (short-term, long-term, entity)
     cache=True,                    # Cache tool results (avoids redundant calls)
+    planning=True,                 # AgentPlanner creates step-by-step execution plan
+    embedder=EMBEDDER_CONFIG,      # text-embedding-3-large for superior knowledge retrieval
 )
 ```
+
+#### Memory Configuration
+
+When `memory=True` is enabled, **all three memory types** are automatically active:
+
+**1. Short-Term Memory (Execution Context)**
+- Stores recent interactions during the current workflow run
+- Uses RAG to recall relevant information within the current execution
+- Automatically cleared at the start of each workflow
+
+**2. Long-Term Memory (Cross-Run Learning)**
+- Preserves insights and learnings from past executions
+- Agents remember patterns like:
+  - "Tier-aware events need variant ID suffixes (T1/T2/T3)"
+  - "Always validate JSON before syncing to XML"
+  - "Use GiveGoldAction for gold changes, not direct Hero.Gold manipulation"
+- Persists across multiple runs in platform-specific storage
+
+**3. Entity Memory (Relationship Tracking)**
+- Tracks entities encountered during tasks (systems, classes, concepts, factions)
+- Builds relationship maps for better context understanding
+- Example entities: `EnlistmentBehavior`, `ContentOrchestrator`, `Hero.MainHero`, `Tier System`, `Reputation`
+
+#### Embedder Configuration
+
+```python
+EMBEDDER_CONFIG = {
+    "provider": "openai",
+    "config": {
+        "model_name": "text-embedding-3-large",  # 3,072 dimensions
+    }
+}
+```
+
+**Why text-embedding-3-large:**
+- 3,072 dimensions (vs 1,536 for text-embedding-3-small)
+- Superior semantic understanding for technical content
+- Better retrieval accuracy for code and documentation
+- Better performance with large knowledge chunks
+
+#### Knowledge Chunking Strategy
+
+```python
+TextFileKnowledgeSource(
+    file_paths=["knowledge/core-systems.md"],
+    chunk_size=24000,      # ~24K chars per chunk
+    chunk_overlap=2400,    # 10% overlap between chunks
+)
+```
+
+**Rationale:**
+- **Large chunks** (24K) preserve context for complex technical content
+- **10% overlap** ensures concepts at chunk boundaries aren't lost
+- Leverages text-embedding-3-large's ability to handle larger context windows
+- Reduces fragmentation of long class definitions, system explanations
+
+#### Planning Feature
+
+When `planning=True` is enabled:
+- Before each crew iteration, an `AgentPlanner` creates a step-by-step execution plan
+- This plan is automatically added to each task description
+- Agents understand the full workflow and their role within it
+
+**Benefits:**
+- Better task decomposition
+- More coherent agent outputs
+- Fewer redundant searches or tool calls
+- Agents understand dependencies between tasks
+
+#### Memory Storage Location
+
+**Windows:**
+```
+C:\Users\{username}\AppData\Local\CrewAI\enlisted_crew\
+├── knowledge/               # ChromaDB embeddings (chunked knowledge files)
+├── short_term_memory/       # Current execution context (RAG-based)
+├── long_term_memory/        # Insights from past runs (SQLite DB)
+└── entities/                # Entity relationships (RAG-based)
+```
+
+**To clear memory for a fresh start:**
+```bash
+rm -rf ~/AppData/Local/CrewAI/enlisted_crew/long_term_memory/
+rm -rf ~/AppData/Local/CrewAI/enlisted_crew/entities/
+# Knowledge embeddings will rebuild automatically on next run
+```
+
+---
+
+## Testing & Validation
+
+See `TESTING.md` for comprehensive testing documentation.
+
+**Quick test command:**
+```bash
+cd Tools/CrewAI
+crewai test --n_iterations 3
+```
+
+This runs your crew multiple times and provides performance metrics (success rate, token usage, execution time).
+
+---
 
 | Parameter | Purpose | When to Use |
 |-----------|---------|-------------|

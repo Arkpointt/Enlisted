@@ -95,9 +95,9 @@ def write_source(file_path: str, content: str) -> str:
         # Check if file is new (needs .csproj entry)
         csproj_reminder = ""
         if not (PROJECT_ROOT / "Enlisted.csproj").read_text().find(file_path.replace("/", "\\")) >= 0:
-            csproj_reminder = f"\n\n⚠️ REMINDER: Add to Enlisted.csproj:\n<Compile Include=\"{file_path.replace('/', '\\')}\"/>"
+            csproj_reminder = f"\n\nREMINDER: Add to Enlisted.csproj:\n<Compile Include=\"{file_path.replace('/', '\\')}\"/>"
         
-        return f"✅ Wrote C# file: {file_path} ({len(content)} bytes){csproj_reminder}"
+        return f"OK: Wrote C# file: {file_path} ({len(content)} bytes){csproj_reminder}"
     
     except Exception as e:
         return f"ERROR writing {file_path}: {e}"
@@ -138,7 +138,7 @@ def write_event(file_path: str, content: str) -> str:
         # Write file with BOM for Windows compatibility
         full_path.write_text(content, encoding='utf-8-sig')
         
-        return f"✅ Wrote JSON file: {file_path} ({len(content)} bytes)"
+        return f"OK: Wrote JSON file: {file_path} ({len(content)} bytes)"
     
     except Exception as e:
         return f"ERROR writing {file_path}: {e}"
@@ -173,10 +173,10 @@ def update_localization(string_id: str, text: str) -> str:
             new_content = re.sub(pattern, replacement, content)
             
             if new_content == content:
-                return f"⚠️ String {string_id} exists but couldn't update (check format)"
+                return f"WARNING: String {string_id} exists but couldn't update (check format)"
             
             xml_path.write_text(new_content, encoding='utf-8')
-            return f"✅ Updated localization: {string_id}"
+            return f"OK: Updated localization: {string_id}"
         
         else:
             # Add new string before closing </strings> tag
@@ -184,7 +184,7 @@ def update_localization(string_id: str, text: str) -> str:
             new_content = content.replace("</strings>", f"{new_string}</strings>")
             
             xml_path.write_text(new_content, encoding='utf-8')
-            return f"✅ Added localization: {string_id}"
+            return f"OK: Added localization: {string_id}"
     
     except Exception as e:
         return f"ERROR updating localization: {e}"
@@ -229,7 +229,7 @@ def write_doc(file_path: str, content: str) -> str:
     try:
         directory.mkdir(parents=True, exist_ok=True)
         full_path.write_text(content, encoding='utf-8')
-        return f"✅ Wrote documentation: {file_path} ({len(content)} bytes)"
+        return f"OK: Wrote documentation: {file_path} ({len(content)} bytes)"
     
     except Exception as e:
         return f"ERROR writing {file_path}: {e}"
@@ -259,7 +259,7 @@ def append_to_csproj(file_path: str) -> str:
         
         # Check if already included
         if windows_path in content:
-            return f"⚠️ File already in csproj: {file_path}"
+            return f"WARNING: File already in csproj: {file_path}"
         
         # Find the last <Compile Include= entry and add after it
         import re
@@ -275,7 +275,7 @@ def append_to_csproj(file_path: str) -> str:
         new_content = content[:insert_pos] + new_entry + content[insert_pos:]
         
         csproj_path.write_text(new_content, encoding='utf-8')
-        return f"✅ Added to csproj: {file_path}"
+        return f"OK: Added to csproj: {file_path}"
     
     except Exception as e:
         return f"ERROR updating csproj: {e}"

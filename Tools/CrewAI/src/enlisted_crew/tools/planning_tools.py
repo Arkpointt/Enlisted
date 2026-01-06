@@ -43,7 +43,7 @@ def save_plan(feature_name: str, content: str) -> str:
             # First time - create new file
             _write_file(base_path, content, is_new=True)
             rel_path = base_path.relative_to(project_root)
-            return f"✅ Created new planning document:\n   Path: {base_path}\n   Relative: {rel_path}"
+            return f"OK: Created new planning document:\n   Path: {base_path}\n   Relative: {rel_path}"
         
         # File exists - check similarity
         existing_content = base_path.read_text(encoding='utf-8')
@@ -55,17 +55,17 @@ def save_plan(feature_name: str, content: str) -> str:
             updated_content = _add_revision_note(content, timestamp)
             _write_file(base_path, updated_content, is_new=False)
             rel_path = base_path.relative_to(project_root)
-            return f"✅ Updated planning document (minor changes):\n   Path: {base_path}\n   Relative: {rel_path}"
+            return f"OK: Updated planning document (minor changes):\n   Path: {base_path}\n   Relative: {rel_path}"
         
         else:  # < 70% similar = major rewrite, create new version
             version = _find_next_version(plans_dir, clean_name)
             versioned_path = plans_dir / f"{clean_name}-v{version}.md"
             _write_file(versioned_path, content, is_new=True)
             rel_path = versioned_path.relative_to(project_root)
-            return f"✅ Created new version (major changes):\n   Path: {versioned_path}\n   Relative: {rel_path}\n   Previous version preserved as {base_path.name}"
+            return f"OK: Created new version (major changes):\n   Path: {versioned_path}\n   Relative: {rel_path}\n   Previous version preserved as {base_path.name}"
     
     except Exception as e:
-        return f"❌ Error writing planning document: {str(e)}"
+        return f"ERROR: Error writing planning document: {str(e)}"
 
 
 def _write_file(path: Path, content: str, is_new: bool):
@@ -143,13 +143,13 @@ def load_plan(feature_name: str) -> str:
             if versioned:
                 doc_path = versioned[0]  # Use latest version
             else:
-                return f"❌ Planning document not found: {clean_name}.md"
+                return f"ERROR: Planning document not found: {clean_name}.md"
         
         content = doc_path.read_text(encoding='utf-8')
-        return f"📄 {doc_path.name}:\n\n{content}"
+        return f"FILE: {doc_path.name}:\n\n{content}"
     
     except Exception as e:
-        return f"❌ Error reading planning document: {str(e)}"
+        return f"ERROR: Error reading planning document: {str(e)}"
 
 
 def _find_next_version(directory: Path, base_name: str) -> int:

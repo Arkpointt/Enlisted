@@ -738,9 +738,10 @@ class EnlistedCrew:
             ],
             process=Process.sequential,
             verbose=True,
-            memory=True,  # Enable crew memory for context across tasks
-            cache=True,   # Cache tool results to avoid redundant calls
-            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-small (larger context than ada-002)
+            memory=True,     # Enable crew memory for context across tasks
+            cache=True,      # Cache tool results to avoid redundant calls
+            planning=True,   # AgentPlanner creates step-by-step execution plan
+            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-large for superior semantic understanding
         )
     
     @crew
@@ -788,9 +789,10 @@ class EnlistedCrew:
             ],
             process=Process.sequential,
             verbose=True,
-            memory=True,  # Enable crew memory for context across tasks
-            cache=True,   # Cache tool results to avoid redundant calls
-            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-small (larger context than ada-002)
+            memory=True,     # Enable crew memory for context across tasks
+            cache=True,      # Cache tool results to avoid redundant calls
+            planning=True,   # AgentPlanner creates step-by-step execution plan
+            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-large for superior semantic understanding
         )
     
     @crew
@@ -845,9 +847,10 @@ class EnlistedCrew:
             ],
             process=Process.sequential,
             verbose=True,
-            memory=True,  # Enable crew memory for context across tasks
-            cache=True,   # Cache tool results to avoid redundant calls
-            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-small (larger context than ada-002)
+            memory=True,     # Enable crew memory for context across tasks
+            cache=True,      # Cache tool results to avoid redundant calls
+            planning=True,   # AgentPlanner creates step-by-step execution plan
+            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-large for superior semantic understanding
         )
     
     # ==========================================================================

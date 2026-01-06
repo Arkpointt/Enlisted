@@ -193,13 +193,13 @@ def review_prose(text: str) -> str:
     if errors:
         report += "ERRORS (must fix):\n"
         for e in errors:
-            report += f"  ❌ {e}\n"
+            report += f"  ERROR: {e}\n"
         report += "\n"
     
     if warnings:
         report += "WARNINGS (should fix):\n"
         for w in warnings:
-            report += f"  ⚠️ {w}\n"
+            report += f"  WARNING: {w}\n"
     
     return report
 
@@ -253,7 +253,7 @@ def review_tooltip(tooltip: str) -> str:
     
     report = "TOOLTIP ISSUES:\n"
     for issue in issues:
-        report += f"  ⚠️ {issue}\n"
+        report += f"  WARNING: {issue}\n"
     
     return report
 

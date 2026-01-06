@@ -182,7 +182,7 @@ def check_event_format(event_json: str) -> str:
     
     report = f"SCHEMA ISSUES ({len(issues)}):\n\n"
     for issue in issues:
-        severity = "❌" if "CRITICAL" in issue or "Missing required" in issue else "⚠️"
+        severity = "ERROR:" if "CRITICAL" in issue or "Missing required" in issue else "WARNING:"
         report += f"  {severity} {issue}\n"
     
     return report

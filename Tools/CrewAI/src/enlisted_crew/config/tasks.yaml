@@ -602,7 +602,7 @@ create_planning_doc:
        a. Call list_json_event_ids_tool("Decisions") - save the full list of valid opp_* IDs
        b. Call list_json_event_ids_tool("Events") - save the full list of valid evt_* IDs
        c. For each C# file you plan to reference, call verify_file_exists_tool() BEFORE drafting
-       d. Only reference IDs and paths that returned ✅ VERIFIED
+       d. Only reference IDs and paths that returned [OK] VERIFIED
     2. Research existing systems using search/read tools
     3. Draft comprehensive planning document in markdown
        - ONLY use file paths and event IDs from your verification registry
@@ -611,7 +611,7 @@ create_planning_doc:
     
     PLANNING DOC RULES:
     - Save to docs/CrewAI_Plans/ using write_planning_doc_tool
-    - Set Status: 📋 Planning
+    - Set Status: [PLANNING] Planning
     - Tool handles versioning automatically (updates vs new versions)
     - DO NOT update INDEX.md Feature Lookup (not implemented yet)
     - DO NOT update AI context docs (no code exists yet)
@@ -646,7 +646,7 @@ create_planning_doc:
     Success message from write_planning_doc_tool showing:
     - File path in docs/CrewAI_Plans/
     - Whether it was a new document, minor update, or major version
-    - Status: 📋 Planning in the document content
+    - Status: [PLANNING] Planning in the document content
   agent: documentation_maintainer
 
 validate_planning_doc:
@@ -678,13 +678,13 @@ validate_planning_doc:
     
     REPORT FORMAT:
     For each issue found, report:
-    - ❌ [Type] Description of issue
+    - [X] [Type] Description of issue
     - Suggested fix
     
     If all verifications pass:
-    - ✅ All file paths verified
-    - ✅ All event IDs verified
-    - ✅ All folder paths correct
+    - [OK] All file paths verified
+    - [OK] All event IDs verified
+    - [OK] All folder paths correct
     
     CRITICAL: If ANY errors are found, set status to NEEDS_CORRECTION.
     If all checks pass, set status to VALIDATED.
@@ -740,7 +740,7 @@ sync_documentation:
     
     PLAN FILE UPDATE (if plan_path provided):
     1. Use load_plan to read the current plan file
-    2. Change status from "📋 Planning" to "✅ Implemented"
+    2. Change status from "[PLANNING] Planning" to "[OK] Implemented"
     3. Add "## Implementation Summary" section at the end with:
        - Date implemented
        - Files created/modified (from changed_files)
@@ -781,7 +781,7 @@ sync_documentation:
     IMPORTANT: Small improvements compound. Fix issues in docs you touch.
   expected_output: >
     Documentation sync report with:
-    - Plan file update (status changed to ✅ Implemented, summary added)
+    - Plan file update (status changed to [OK] Implemented, summary added)
     - Docs updated (with change summary)
     - Status field changes
     - INDEX.md updates needed

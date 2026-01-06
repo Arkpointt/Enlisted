@@ -181,7 +181,7 @@ def run_implement(crew: EnlistedCrew, plan_path: str):
     print("\n" + "=" * 60)
     print("IMPLEMENTATION WORKFLOW")
     print("=" * 60)
-    print(f"\n📝 Plan: {plan_path}\n")
+    print(f"\nPlan: {plan_path}\n")
     
     # Read the plan content
     from pathlib import Path
@@ -250,7 +250,7 @@ def run_plan(
     print("\n" + "=" * 60)
     print("PLANNING WORKFLOW")
     print("=" * 60)
-    print(f"\n🎯 Feature: {feature_name}")
+    print(f"\nFeature: {feature_name}")
     print(f"Description: {description}\n")
     print("Starting planning workflow...\n")
     
@@ -290,7 +290,7 @@ def run_hunt_bug(
     if user_logs:
         log_path = Path(user_logs)
         if log_path.exists() and log_path.is_file():
-            print(f"📂 Reading user log file: {user_logs}")
+            print(f"Reading user log file: {user_logs}")
             user_log_content = log_path.read_text(encoding='utf-8', errors='replace')
         else:
             user_log_content = user_logs
@@ -298,7 +298,7 @@ def run_hunt_bug(
     print("\n" + "=" * 60)
     print("BUG HUNTING WORKFLOW")
     print("=" * 60)
-    print(f"\n🐛 Description: {description[:100]}...")
+    print(f"\nBug: {description[:100]}...")
     print(f"Error Codes: {error_codes}")
     print(f"Repro Steps: {repro_steps}")
     print(f"User Logs: {'Provided' if user_log_content else 'None'}")
@@ -321,7 +321,7 @@ def run_hunt_bug(
     if output_file:
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(report)
-        print(f"\n📄 Report saved to: {output_file}")
+        print(f"\nReport saved to: {output_file}")
     
     return report
 
