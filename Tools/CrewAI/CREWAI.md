@@ -24,9 +24,16 @@ enlisted-crew validate
 
 ---
 
-## Three Workflows
+## Three Workflows (All Flow-based)
 
-### 1. 🎯 Plan - Design a Feature
+All workflows use CrewAI Flows with:
+- **State persistence** (`persist=True`) - Resume on failure
+- **Conditional routing** (`@router`) - Skip completed work
+- **GPT-5 models** - No thinking/tool_choice conflicts
+
+---
+
+### 1. Plan - Design a Feature (PlanningFlow)
 ```bash
 enlisted-crew plan -f "reputation-integration" -d "Connect reputation to morale/supply"
 ```
@@ -37,37 +44,52 @@ enlisted-crew plan -f "reputation-integration" -d "Connect reputation to morale/
 3. **Design** - feature_architect creates technical spec
 4. **Document** - documentation_maintainer writes to `docs/CrewAI_Plans/`
 5. **Validate** - code_analyst verifies no hallucinated files/IDs
+6. **Auto-fix** - If hallucinations found, automatically correct them (up to 2 attempts)
+
+**State Persistence:** If the flow fails mid-run, re-running resumes from last successful step.
 
 **Output:** Validated planning doc ready for implementation.
 
 ---
 
-### 2. 🐛 Hunt Bug - Find & Fix Issues
+### 2. Hunt Bug - Find & Fix Issues (BugHuntingFlow)
 ```bash
 enlisted-crew hunt-bug -d "Crash when opening camp menu" -e "E-CAMPUI-042"
 ```
 
 **What it does:**
 1. **Investigate** - code_analyst searches logs, finds bug location
-2. **Analyze** - systems_analyst checks related systems for impact
-3. **Fix** - csharp_implementer proposes minimal code fix
-4. **Validate** - qa_agent verifies fix builds and doesn't break anything
+2. **Route Severity** - Different handling for critical vs minor bugs
+3. **Analyze** - systems_analyst checks related systems for impact
+4. **Fix** - csharp_implementer proposes minimal code fix
+5. **Validate** - qa_agent verifies fix builds and doesn't break anything
+
+**State Persistence:** If the flow fails mid-run, re-running resumes from last successful step.
 
 **Output:** Bug report + validated fix ready to apply.
 
 ---
 
-### 3. 🛠️ Implement - Build from Plan
+### 3. Implement - Build from Plan (ImplementationFlow)
 ```bash
 enlisted-crew implement -p "docs/CrewAI_Plans/reputation-integration.md"
 ```
 
-**What it does:**
-1. **Analyze** - systems_analyst reads plan, understands scope
-2. **Code** - csharp_implementer writes C# code
-3. **Content** - content_author writes JSON events/decisions
-4. **Validate** - qa_agent runs build + content checks
-5. **Document** - documentation_maintainer updates docs
+**What it does (smart partial-implementation handling):**
+1. **Load Plan** - Read the approved planning document
+2. **Verify Existing** - Check what's ALREADY implemented in codebase
+   - Searches for C# files/methods mentioned in plan
+   - Checks for existing JSON content IDs
+   - Determines C# status: COMPLETE / PARTIAL / NOT_STARTED
+   - Determines Content status: COMPLETE / PARTIAL / NOT_STARTED
+3. **Route C#** - Skip if already complete, implement only missing parts
+4. **Route Content** - Skip if already complete, create only missing IDs
+5. **Validate** - qa_agent runs build + content checks
+6. **Document** - Update plan status, sync database, disperse to feature docs
+
+**Key Feature:** The Flow automatically detects partial implementations and routes around completed work. You can re-run the same plan multiple times safely - it will only do what's still needed.
+
+**State Persistence:** If the flow fails mid-run, re-running resumes from last successful step.
 
 **Output:** Complete implementation + updated documentation.
 
@@ -740,6 +762,96 @@ This configuration maximizes context retention while staying well within the 8,1
 ✅ **Style Validation:** Complete coverage  
 ✅ **Integration:** validate_content.py, sync_event_strings.py, dotnet build  
 ✅ **Documentation:** Comprehensive
+
+---
+
+## Testing Your Flows
+
+CrewAI provides a built-in testing command to evaluate crew performance across multiple iterations.
+
+### Using `crewai test`
+
+The official testing command runs your crew multiple times and generates performance metrics.
+
+**Basic Usage:**
+```bash
+crewai test                    # Default: 2 iterations, gpt-4o-mini
+crewai test -n 3 -m gpt-5      # 3 iterations with GPT-5
+crewai test --n_iterations 5   # 5 iterations with default model
+```
+
+**What It Measures:**
+- Task completion quality scores
+- Agent effectiveness metrics
+- Crew coordination efficiency
+- Execution time per run
+- Average performance across iterations
+
+**Example Output:**
+```
+Tasks/Crew/Agents    Run 1    Run 2    Run 3    Avg. Total
+---------------------------------------------------------
+Task: analyze        8.5      9.0      8.8      8.77
+Task: implement      7.8      8.2      8.0      8.00
+Crew Overall         8.2      8.6      8.4      8.40
+Execution Time (s)   126      145      138      136
+```
+
+### Testing Our Three Flows
+
+**Automated Test Script:**
+```bash
+# From project root
+.\Tools\CrewAI\test_flows.ps1
+```
+
+This script tests all three flows with real-world scenarios:
+1. **PlanningFlow** - Generate a test feature design
+2. **ImplementationFlow** - (Requires existing plan)
+3. **BugHuntingFlow** - Investigate and fix a test bug
+
+**Manual Testing:**
+```bash
+# Test PlanningFlow
+enlisted-crew plan -f "Test Feature" -d "A simple feature to validate workflow"
+
+# Test BugHuntingFlow
+enlisted-crew hunt-bug -d "Test bug description" -e "E-TEST-001"
+
+# Test ImplementationFlow (requires plan file)
+enlisted-crew implement -p "docs/CrewAI_Plans/test-feature.md"
+```
+
+### What to Validate After Testing
+
+1. **Generated Files:**
+   - Check `docs/CrewAI_Plans/` for planning outputs
+   - Verify C# code quality and style compliance
+   - Review JSON content for schema adherence
+
+2. **Database Updates:**
+   - Run `sqlite3 enlisted_knowledge.db ".tables"` to verify tables exist
+   - Check content_metadata was updated
+   - Verify implementation_history logged the run
+
+3. **Documentation Sync:**
+   - Confirm feature docs were updated
+   - Verify plan status changed to "Implemented"
+   - Check INDEX.md references new features
+
+4. **Code Changes:**
+   - Run `git diff` to review all modifications
+   - Verify .csproj was updated with new files
+   - Check enlisted_strings.xml for new localization
+
+### Performance Baselines
+
+After initial testing, establish baselines for each flow:
+- **PlanningFlow:** Target 8.0+ quality, <180s execution
+- **ImplementationFlow:** Target 8.5+ quality, <300s execution  
+- **BugHuntingFlow:** Target 8.0+ quality, <200s execution
+
+Use these baselines to detect performance regression after configuration changes.
 
 ---
 

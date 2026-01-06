@@ -99,28 +99,36 @@ Better prompts = better results + fewer wasted AI credits.
 
 **Start fresh conversations:** Don't continue unrelated tasks in the same conversation—it confuses context and wastes tokens.
 
-## 🤖 CrewAI - Three Workflows
+## 🤖 CrewAI - Three Flows
 
 **For complex multi-agent work**, use CrewAI at `Tools/CrewAI/`.
+
+All workflows are **Flow-based** with state persistence - if a run fails, re-running resumes from the last successful step.
 
 ```bash
 # Activate first
 cd Tools/CrewAI && .\.venv\Scripts\Activate.ps1
 
-# Design a feature (research → advise → design → document → validate)
+# Design a feature (PlanningFlow: research → advise → design → validate → auto-fix)
 enlisted-crew plan -f "feature-name" -d "description"
 
-# Find & fix bugs (investigate → analyze → apply fix → validate)
+# Find & fix bugs (BugHuntingFlow: investigate → route → analyze → fix → validate)
 enlisted-crew hunt-bug -d "bug description" -e "E-XXX-*"
 
-# Build from approved plan (analyze → write code → write content → validate → docs)
+# Build from approved plan (ImplementationFlow: verify → route → implement → validate → docs)
+# Smart: Detects partial implementations, routes around completed work
 enlisted-crew implement -p "docs/CrewAI_Plans/feature.md"
 
 # Quick pre-commit check
 enlisted-crew validate
+
+# Test flow performance (runs crew multiple times, provides metrics)
+crewai test -n 3 -m gpt-5
 ```
 
-**CrewAI writes files directly:** The `implement` and `hunt-bug` workflows apply changes to disk (C#, JSON, localization, .csproj). Review with `git diff` after running.
+**CrewAI writes files directly:** All flows apply changes to disk (C#, JSON, localization, .csproj). Review with `git diff` after running.
+
+**Testing:** Use `crewai test -n 3 -m gpt-5` to validate crew performance across iterations. See `Tools/CrewAI/test_flows.ps1` for automated testing script.
 
 **When to use CrewAI vs Warp directly:**
 - Quick fixes, single-file changes → Warp directly
@@ -129,7 +137,8 @@ enlisted-crew validate
 **Setup:** See [Tools/CrewAI/CREWAI.md](Tools/CrewAI/CREWAI.md)  
 **Requirements:** OpenAI API key in `.env` file  
 **Models:** OpenAI GPT-5 family (GPT-5.2, GPT-5 mini, GPT-5 nano)  
-**Memory:** Enabled with text-embedding-3-large for superior knowledge retrieval
+**Memory:** Enabled with text-embedding-3-large for superior knowledge retrieval  
+**State Persistence:** All flows resume on failure (`persist=True`)
 
 ## 📂 Project Structure
 
