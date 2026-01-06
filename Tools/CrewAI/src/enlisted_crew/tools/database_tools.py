@@ -565,3 +565,509 @@ def get_balance_by_category(category: str) -> str:
         return _format_results(rows)
     except Exception as e:
         return f"Error querying database: {str(e)}"
+
+
+# =============================================================================
+# DATABASE MAINTENANCE TOOLS
+# These tools allow the implementation crew to keep the database in sync
+# with actual project files when content is added, modified, or deleted.
+# =============================================================================
+
+
+@tool("add_content_item")
+def add_content_item(
+    content_id: str,
+    content_type: str,
+    category: str,
+    file_path: str,
+    title: str,
+    severity: str = "normal",
+    tier_variant: bool = False,
+    status: str = "active"
+) -> str:
+    """
+    Add a new content item to the database.
+    
+    Args:
+        content_id: Unique ID (e.g., "supply_pressure_t1")
+        content_type: Type ("event", "decision", "order")
+        category: Category ("camp_life", "crisis", "opportunity", etc.)
+        file_path: Path to JSON file (e.g., "ModuleData/Enlisted/Events/supply.json")
+        title: Human-readable title
+        severity: Severity level (default: "normal")
+        tier_variant: Whether this has T1/T2/T3 variants (default: False)
+        status: Status (default: "active")
+    
+    Returns:
+        Confirmation message.
+    
+    Example:
+        add_content_item(
+            content_id="supply_pressure_t1",
+            content_type="event",
+            category="crisis",
+            file_path="ModuleData/Enlisted/Events/pressure_arc.json",
+            title="Supply Pressure Stage 1",
+            tier_variant=True
+        )
+    """
+    try:
+        from datetime import datetime
+        
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        # Check if already exists
+        cursor.execute("SELECT id FROM content_metadata WHERE content_id = ?", (content_id,))
+        if cursor.fetchone():
+            conn.close()
+            return f"Content '{content_id}' already exists. Use update_content_item to modify."
+        
+        cursor.execute("""
+            INSERT INTO content_metadata 
+            (content_id, type, category, severity, file_path, description, 
+             tier_min, tier_max, localization_key)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            content_id,
+            content_type,
+            category,
+            severity,
+            file_path,
+            title,
+            1 if tier_variant else None,
+            9 if tier_variant else None,
+            content_id
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return f"Added content: {content_id} ({content_type}/{category})"
+    except Exception as e:
+        return f"Error adding content: {str(e)}"
+
+
+@tool("update_content_item")
+def update_content_item(
+    content_id: str,
+    category: Optional[str] = None,
+    severity: Optional[str] = None,
+    file_path: Optional[str] = None,
+    title: Optional[str] = None,
+    status: Optional[str] = None
+) -> str:
+    """
+    Update an existing content item in the database.
+    
+    Args:
+        content_id: The ID of the content to update
+        category: New category (optional)
+        severity: New severity (optional)
+        file_path: New file path (optional)
+        title: New title (optional)
+        status: New status ("active", "deprecated", "planned") (optional)
+    
+    Returns:
+        Confirmation message.
+    
+    Example:
+        update_content_item(
+            content_id="equipment_inspection",
+            category="camp_life",
+            status="deprecated"
+        )
+    """
+    try:
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        # Build dynamic update
+        updates = []
+        params = []
+        
+        if category:
+            updates.append("category = ?")
+            params.append(category)
+        if severity:
+            updates.append("severity = ?")
+            params.append(severity)
+        if file_path:
+            updates.append("file_path = ?")
+            params.append(file_path)
+        if title:
+            updates.append("description = ?")
+            params.append(title)
+        if status:
+            updates.append("status = ?")
+            params.append(status)
+        
+        if not updates:
+            return "No fields to update. Provide at least one field."
+        
+        params.append(content_id)
+        
+        cursor.execute(f"""
+            UPDATE content_metadata 
+            SET {", ".join(updates)}
+            WHERE content_id = ?
+        """, params)
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return f"Content '{content_id}' not found."
+        
+        conn.commit()
+        conn.close()
+        
+        return f"Updated content: {content_id}"
+    except Exception as e:
+        return f"Error updating content: {str(e)}"
+
+
+@tool("delete_content_item")
+def delete_content_item(content_id: str) -> str:
+    """
+    Remove a content item from the database (marks as deleted, doesn't hard delete).
+    
+    Args:
+        content_id: The ID of the content to remove
+    
+    Returns:
+        Confirmation message.
+    
+    Example:
+        delete_content_item("old_event_id")
+    """
+    try:
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        # Soft delete - mark as deprecated rather than hard delete
+        cursor.execute("""
+            UPDATE content_metadata 
+            SET status = 'deleted'
+            WHERE content_id = ?
+        """, (content_id,))
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return f"Content '{content_id}' not found."
+        
+        conn.commit()
+        conn.close()
+        
+        return f"Deleted content: {content_id}"
+    except Exception as e:
+        return f"Error deleting content: {str(e)}"
+
+
+@tool("update_balance_value")
+def update_balance_value(
+    key: str,
+    value: float,
+    description: Optional[str] = None
+) -> str:
+    """
+    Update a game balance value.
+    
+    Args:
+        key: The balance key (e.g., "tier_5_xp_threshold")
+        value: The new numeric value
+        description: Updated description (optional)
+    
+    Returns:
+        Confirmation message.
+    
+    Example:
+        update_balance_value("morale_low_threshold", 25.0)
+    """
+    try:
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        if description:
+            cursor.execute("""
+                UPDATE balance_values 
+                SET value = ?, description = ?
+                WHERE key = ?
+            """, (value, description, key))
+        else:
+            cursor.execute("""
+                UPDATE balance_values 
+                SET value = ?
+                WHERE key = ?
+            """, (value, key))
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return f"Balance key '{key}' not found."
+        
+        conn.commit()
+        conn.close()
+        
+        return f"Updated balance: {key} = {value}"
+    except Exception as e:
+        return f"Error updating balance: {str(e)}"
+
+
+@tool("add_balance_value")
+def add_balance_value(
+    key: str,
+    value: float,
+    unit: str,
+    category: str,
+    description: str
+) -> str:
+    """
+    Add a new balance value to the database.
+    
+    Args:
+        key: Unique key (e.g., "new_threshold")
+        value: Numeric value
+        unit: Unit type ("xp", "gold", "days", "%", "count")
+        category: Category ("tier", "economy", "morale", "supply", "progression")
+        description: What this value controls
+    
+    Returns:
+        Confirmation message.
+    
+    Example:
+        add_balance_value(
+            key="reputation_gain_major",
+            value=15.0,
+            unit="points",
+            category="reputation",
+            description="Rep gained from major positive actions"
+        )
+    """
+    try:
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT key FROM balance_values WHERE key = ?", (key,))
+        if cursor.fetchone():
+            conn.close()
+            return f"Balance key '{key}' already exists. Use update_balance_value."
+        
+        cursor.execute("""
+            INSERT INTO balance_values (key, value, unit, category, description)
+            VALUES (?, ?, ?, ?, ?)
+        """, (key, value, unit, category, description))
+        
+        conn.commit()
+        conn.close()
+        
+        return f"Added balance: {key} = {value} {unit}"
+    except Exception as e:
+        return f"Error adding balance: {str(e)}"
+
+
+@tool("add_error_code")
+def add_error_code(
+    error_code: str,
+    category: str,
+    description: str,
+    common_causes: str,
+    suggested_solutions: str,
+    related_systems: Optional[str] = None
+) -> str:
+    """
+    Add a new error code to the catalog.
+    
+    Args:
+        error_code: The error code (e.g., "E-SUPPLY-001")
+        category: Error category (e.g., "SUPPLY", "CAMPUI", "SAVELOAD")
+        description: What this error means
+        common_causes: Common reasons this error occurs
+        suggested_solutions: How to fix this error
+        related_systems: Comma-separated list of affected systems (optional)
+    
+    Returns:
+        Confirmation message.
+    
+    Example:
+        add_error_code(
+            error_code="E-SUPPLY-001",
+            category="SUPPLY",
+            description="Supply calculation overflow",
+            common_causes="Party too large, negative supply values",
+            suggested_solutions="Check party size limits, validate supply before calculations"
+        )
+    """
+    try:
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT error_code FROM error_catalog WHERE error_code = ?", (error_code,))
+        if cursor.fetchone():
+            conn.close()
+            return f"Error code '{error_code}' already exists."
+        
+        cursor.execute("""
+            INSERT INTO error_catalog 
+            (error_code, category, description, common_causes, suggested_solutions, related_systems)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (error_code, category, description, common_causes, suggested_solutions, related_systems))
+        
+        conn.commit()
+        conn.close()
+        
+        return f"Added error code: {error_code}"
+    except Exception as e:
+        return f"Error adding error code: {str(e)}"
+
+
+@tool("add_system_dependency")
+def add_system_dependency(
+    system_name: str,
+    depends_on: str,
+    dependency_type: str,
+    description: str
+) -> str:
+    """
+    Record a dependency between two systems.
+    
+    Args:
+        system_name: The system that has the dependency (e.g., "SupplyManager")
+        depends_on: What it depends on (e.g., "EnlistmentBehavior")
+        dependency_type: Type ("direct_call", "event_subscription", "config_read")
+        description: How/why it depends
+    
+    Returns:
+        Confirmation message.
+    
+    Example:
+        add_system_dependency(
+            system_name="SupplyManager",
+            depends_on="EnlistmentBehavior",
+            dependency_type="direct_call",
+            description="Gets company party for supply calculations"
+        )
+    """
+    try:
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO system_dependencies 
+            (system_name, depends_on, dependency_type, description)
+            VALUES (?, ?, ?, ?)
+        """, (system_name, depends_on, dependency_type, description))
+        
+        conn.commit()
+        conn.close()
+        
+        return f"Added dependency: {system_name} -> {depends_on}"
+    except Exception as e:
+        return f"Error adding dependency: {str(e)}"
+
+
+@tool("sync_content_from_files")
+def sync_content_from_files() -> str:
+    """
+    Scan JSON content files and sync to database.
+    Adds new content, marks missing content as deleted.
+    
+    Returns:
+        Summary of changes made.
+    
+    Example:
+        sync_content_from_files()
+    """
+    import json
+    from pathlib import Path
+    
+    try:
+        project_root = Path(r"C:\Dev\Enlisted\Enlisted")
+        content_dirs = [
+            project_root / "ModuleData" / "Enlisted" / "Events",
+            project_root / "ModuleData" / "Enlisted" / "Decisions",
+            project_root / "ModuleData" / "Enlisted" / "Orders",
+        ]
+        
+        found_ids = set()
+        added = 0
+        updated = 0
+        
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        for content_dir in content_dirs:
+            if not content_dir.exists():
+                continue
+            
+            content_type = content_dir.name.lower().rstrip("s")  # Events -> event
+            
+            for json_file in content_dir.glob("*.json"):
+                try:
+                    with open(json_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    
+                    # Handle both single items and arrays
+                    items = data if isinstance(data, list) else [data]
+                    
+                    for item in items:
+                        if "id" not in item:
+                            continue
+                        
+                        content_id = item["id"]
+                        found_ids.add(content_id)
+                        
+                        # Check if exists
+                        cursor.execute(
+                            "SELECT content_id FROM content_metadata WHERE content_id = ?",
+                            (content_id,)
+                        )
+                        
+                        if cursor.fetchone():
+                            # Update existing
+                            cursor.execute("""
+                                UPDATE content_metadata 
+                                SET category = ?, severity = ?, file_path = ?
+                                WHERE content_id = ?
+                            """, (
+                                item.get("category", "unknown"),
+                                item.get("severity", "normal"),
+                                str(json_file.relative_to(project_root)),
+                                content_id
+                            ))
+                            updated += 1
+                        else:
+                            # Add new
+                            cursor.execute("""
+                                INSERT INTO content_metadata 
+                                (content_id, type, category, severity, file_path, description)
+                                VALUES (?, ?, ?, ?, ?, ?)
+                            """, (
+                                content_id,
+                                content_type,
+                                item.get("category", "unknown"),
+                                item.get("severity", "normal"),
+                                str(json_file.relative_to(project_root)),
+                                item.get("title", content_id)
+                            ))
+                            added += 1
+                
+                except (json.JSONDecodeError, KeyError):
+                    continue
+        
+        # Mark missing content as deleted
+        cursor.execute("SELECT content_id FROM content_metadata WHERE status = 'active'")
+        existing_ids = {row[0] for row in cursor.fetchall()}
+        missing_ids = existing_ids - found_ids
+        
+        deleted = 0
+        for missing_id in missing_ids:
+            cursor.execute(
+                "UPDATE content_metadata SET status = 'deleted' WHERE content_id = ?",
+                (missing_id,)
+            )
+            deleted += 1
+        
+        conn.commit()
+        conn.close()
+        
+        return f"Sync complete: {added} added, {updated} updated, {deleted} marked deleted"
+    except Exception as e:
+        return f"Error syncing content: {str(e)}"

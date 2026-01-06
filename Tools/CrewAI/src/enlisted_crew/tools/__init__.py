@@ -60,6 +60,32 @@ from .file_tools import (
     update_localization,
     append_to_csproj,
 )
+from .database_tools import (
+    # Query tools
+    lookup_content_id,
+    search_content,
+    get_balance_value,
+    search_balance,
+    lookup_error_code,
+    get_tier_info,
+    get_system_dependencies,
+    lookup_api_pattern,
+    get_valid_categories,
+    get_valid_severities,
+    lookup_core_system,
+    get_all_tiers,
+    get_balance_by_category,
+    # Maintenance tools
+    add_content_item,
+    update_content_item,
+    delete_content_item,
+    update_balance_value,
+    add_balance_value,
+    add_error_code,
+    add_system_dependency,
+    record_implementation,
+    sync_content_from_files,
+)
 
 __all__ = [
     # Validation
@@ -124,4 +150,30 @@ __all__ = [
     "write_doc",
     "update_localization",
     "append_to_csproj",
+    
+    # Database Query
+    "lookup_content_id",
+    "search_content",
+    "get_balance_value",
+    "search_balance",
+    "lookup_error_code",
+    "get_tier_info",
+    "get_system_dependencies",
+    "lookup_api_pattern",
+    "get_valid_categories",
+    "get_valid_severities",
+    "lookup_core_system",
+    "get_all_tiers",
+    "get_balance_by_category",
+    
+    # Database Maintenance
+    "add_content_item",
+    "update_content_item",
+    "delete_content_item",
+    "update_balance_value",
+    "add_balance_value",
+    "add_error_code",
+    "add_system_dependency",
+    "record_implementation",
+    "sync_content_from_files",
 ]

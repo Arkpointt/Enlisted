@@ -70,6 +70,28 @@ from .tools import (
     write_doc,
     update_localization,
     append_to_csproj,
+    # Database Query
+    lookup_content_id,
+    search_content,
+    get_balance_value,
+    lookup_error_code,
+    get_tier_info,
+    get_system_dependencies,
+    lookup_api_pattern,
+    get_valid_categories,
+    get_valid_severities,
+    lookup_core_system,
+    get_all_tiers,
+    # Database Maintenance
+    add_content_item,
+    update_content_item,
+    delete_content_item,
+    update_balance_value,
+    add_balance_value,
+    add_error_code,
+    add_system_dependency,
+    record_implementation,
+    sync_content_from_files,
 )
 
 # === LLM Configurations ===
@@ -368,6 +390,11 @@ class EnlistedCrew:
                 write_source,        # Write C# files
                 append_to_csproj,    # Add new files to project
                 update_localization, # Add TextObject strings to XML
+                # Database tools
+                lookup_api_pattern,  # Find correct Bannerlord API usage
+                get_balance_value,   # Get correct thresholds/costs
+                add_error_code,      # Add new error codes when implementing logging
+                add_system_dependency,  # Record new system relationships
             ],
             knowledge_sources=[self.ui_knowledge],
             respect_context_window=True,
@@ -396,6 +423,12 @@ class EnlistedCrew:
                 # Validation tools (complete the workflow)
                 sync_strings,        # Batch-sync JSON string IDs to XML
                 validate_content,    # Full content validation
+                # Database maintenance
+                lookup_content_id,   # Check if ID exists before creating
+                add_content_item,    # Register new content in database
+                get_valid_categories,  # Get valid categories
+                get_valid_severities,  # Get valid severities
+                get_tier_info,       # Get tier XP ranges for tier-aware content
             ],
             knowledge_sources=[self.content_knowledge],
             respect_context_window=True,
@@ -456,6 +489,10 @@ class EnlistedCrew:
                 # File writing for doc updates
                 write_doc,           # Write/update markdown docs
                 update_localization, # Update XML localization strings
+                # Database maintenance
+                record_implementation,    # Record what was implemented
+                sync_content_from_files,  # Sync database with actual JSON files
+                update_balance_value,     # Update balance values when changed
             ],
             knowledge_sources=[self.planning_knowledge],
             respect_context_window=True,

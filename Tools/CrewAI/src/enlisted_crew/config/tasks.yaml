@@ -450,6 +450,17 @@ implement_content:
     4. Use proper field ordering (fallback after ID)
     5. Include all required fields (tooltips, effects)
     6. Follow writing-style-guide.md for narrative text
+    
+    DATABASE REGISTRATION:
+    1. Call lookup_content_id to check new IDs don't conflict with existing ones
+    2. Call get_valid_categories and get_valid_severities to verify values
+    3. After writing JSON, call add_content_item for each new content item:
+       - content_id: The event/decision/order ID
+       - content_type: "event", "decision", or "order"
+       - category: The category used
+       - file_path: Path to the JSON file
+       - title: Human-readable title
+       - tier_variant: True if has T1/T2/T3 variants
   expected_output: >
     Content implementation report with:
     - JSON files created/modified
@@ -457,6 +468,7 @@ implement_content:
     - Schema validation status (validate_content output)
     - Style compliance status
     - Balance assessment
+    - Database registration (content IDs added)
   agent: content_author
 
 # =============================================================================
@@ -779,6 +791,18 @@ sync_documentation:
     - Remove duplicate files (prefer Reference/ or Features/ over ANEWFEATURE/)
     
     IMPORTANT: Small improvements compound. Fix issues in docs you touch.
+    
+    DATABASE MAINTENANCE (REQUIRED - run at end of every implementation):
+    1. Call sync_content_from_files to sync JSON content to database
+    2. Call record_implementation with:
+       - feature_name: Name of what was implemented
+       - plan_file: The plan_path if provided
+       - files_added: New files from changed_files
+       - files_modified: Modified files from changed_files
+       - content_ids: Any new event/decision/order IDs created
+    3. If balance values changed, call update_balance_value for each
+    
+    This ensures the knowledge database stays in sync with the actual codebase.
   expected_output: >
     Documentation sync report with:
     - Plan file update (status changed to [OK] Implemented, summary added)
@@ -788,6 +812,7 @@ sync_documentation:
     - Cross-reference fixes
     - AI context sync updates (CrewAI, Warp, domain context)
     - Incremental improvements made (renames, link fixes, header standardization)
+    - Database sync results (content synced, implementation recorded)
     - Any outstanding doc debt
   agent: documentation_maintainer
 
