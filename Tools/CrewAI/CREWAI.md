@@ -437,25 +437,50 @@ rm -rf ~/AppData/Local/CrewAI/enlisted_crew/entities/
 
 ---
 
-## Testing & Validation
+## Testing
 
-See `TESTING.md` for comprehensive testing documentation.
-
-**Quick test command:**
 ```bash
 cd Tools/CrewAI
 crewai test --n_iterations 3
 ```
 
-This runs your crew multiple times and provides performance metrics (success rate, token usage, execution time).
+This runs your crew multiple times and reports success rate, token usage, and execution time.
+
+**What to verify:**
+- Plan workflow: Creates doc in `docs/CrewAI_Plans/`, has all required sections
+- Implement workflow: Code compiles, JSON validates, XML synced, `git diff` shows expected changes
+- Bug workflow: Investigation identifies root cause, fix compiles
+
+**Memory location (Windows):**
+```
+C:\Users\{username}\AppData\Local\CrewAI\enlisted_crew\
+├── knowledge/        # ChromaDB embeddings
+├── long_term_memory/ # Learnings (SQLite)
+└── entities/         # Entity relationships
+```
+
+To reset: `rm -rf ~/AppData/Local/CrewAI/enlisted_crew/long_term_memory/`
 
 ---
 
-| Parameter | Purpose | When to Use |
-|-----------|---------|-------------|
-| `memory=True` | Share context between tasks | Multi-step workflows |
-| `cache=True` | Cache tool results | Avoid redundant API/search calls |
-| `verbose=True` | Show execution details | Development/debugging |
+## SQLite Knowledge Database
+
+Structured, queryable knowledge that complements CrewAI's automatic memory.
+
+**Setup:**
+```powershell
+.\Tools\CrewAI\setup_database.ps1
+```
+
+Creates `C:\Dev\SQLite3\enlisted_knowledge.db` with:
+- `tier_definitions` - XP thresholds from `progression_config.json`
+- `error_catalog` - Error codes from source (E-MUSTER-*, E-UI-*, etc.)
+- `game_systems` - Core behaviors (EnlistmentBehavior, ContentOrchestrator, etc.)
+- `content_metadata` - All events/decisions/orders with categories/severities
+- `api_patterns` - Bannerlord API usage examples
+- `implementation_history` - What was built when
+
+**Database tools:** `lookup_error_code`, `get_tier_info`, `get_system_dependencies`, `lookup_api_pattern`, `record_implementation`, `scan_content_files`
 
 ### Backstory Best Practices
 
