@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from crewai import Agent, Crew, Process, Task, LLM
-from crewai.flow.flow import Flow, listen, router, start, or_
+from crewai.flow.flow import Flow, listen, router, start, or_, human_feedback
 from crewai.tasks.conditional_task import ConditionalTask
 from crewai.tasks.task_output import TaskOutput
 from pydantic import BaseModel, Field
@@ -219,19 +219,30 @@ def get_feature_architect() -> Agent:
     if "feature_architect" not in _agent_cache:
         _agent_cache["feature_architect"] = Agent(
             role="Feature Architect",
-            goal="Design complete technical specifications for new features",
-            backstory="""You design features with VERIFIED technical specs.
+            goal="Design complete technical specifications AND identify gaps in existing code",
+            backstory="""You design features with VERIFIED technical specs AND investigate gaps.
 
 CRITICAL - TOOL-FIRST WORKFLOW:
 1. Call get_dev_reference FIRST to understand coding patterns
 2. Call lookup_content_id to check what content IDs already exist
 3. Call list_event_ids to see existing event naming patterns
-4. Use find_in_code to verify integration points exist
+4. Use find_in_code to search for broken references (e.g., methods calling non-existent IDs)
+5. Use read_source to examine code that references missing content
+
+GAP ANALYSIS - When you find broken references:
+1. INVESTIGATE WHY: Check docs, search for related code, look for patterns
+2. CLASSIFY the gap:
+   - DEPRECATED: Old code calling removed features → plan to delete it
+   - MISSING_IMPL: Code calling features that should exist → plan to implement
+   - TEST_CODE: Test file calling unbuilt APIs → note as expected gap
+   - OUTDATED_DOCS: Docs reference removed code → plan doc update
+   - UNCLEAR: Can't determine intent → FLAG FOR HUMAN REVIEW with question
+3. INCLUDE REMEDIATION in your design spec
 
 EVERY file path, method name, and content ID you specify MUST be verified.
 DO NOT invent file paths or method names. Check they exist or follow patterns.
 
-Your spec is only useful if implementation won't hit "file not found" errors.""",
+Your spec must address BOTH new features AND discovered gaps.""",
             llm=GPT5_ARCHITECT,
             tools=[
                 get_dev_reference,
@@ -244,7 +255,7 @@ Your spec is only useful if implementation won't hit "file not found" errors."""
             ],
             verbose=True,
             respect_context_window=True,
-            max_iter=15,
+            max_iter=25,  # Increased for gap analysis workflow
             max_retry_limit=3,
             reasoning=True,  # Think before designing
             max_reasoning_attempts=3,  # Limit reasoning iterations
@@ -483,6 +494,11 @@ class PlanningFlow(Flow[PlanningState]):
             3. Define JSON content IDs (events, decisions, orders)
             4. Specify integration with existing systems
             5. Include tier-variant content if applicable
+            6. SEARCH for broken references in related code (use find_in_code)
+            7. For EACH broken reference found:
+               a. Investigate WHY it's broken (check docs, patterns, history)
+               b. Classify: DEPRECATED | MISSING_IMPL | TEST_CODE | OUTDATED_DOCS | UNCLEAR
+               c. Propose remediation OR flag for human review
             
             OUTPUT: Complete technical spec with:
             - File paths (exact, verifiable)
@@ -490,6 +506,10 @@ class PlanningFlow(Flow[PlanningState]):
             - Content IDs (unique, following naming conventions)
             - Integration points
             - Implementation order
+            - **GAPS DISCOVERED** section:
+              * List each broken reference found
+              * Classification and reasoning
+              * Proposed fix OR question for human
             """,
             expected_output="Technical specification document",
             agent=get_feature_architect(),
@@ -508,10 +528,97 @@ class PlanningFlow(Flow[PlanningState]):
         
         result = crew.kickoff()
         state.design_output = str(result)
-        state.current_step = "write"
+        
+        # Check if design contains UNCLEAR gaps that need human review
+        design_lower = str(result).lower()
+        if "unclear" in design_lower and "gap" in design_lower:
+            state.current_step = "human_review"
+        else:
+            state.current_step = "write"
         return state
     
     @listen(design_feature)
+    @router
+    def route_after_design(self, state: PlanningState) -> str:
+        """Route to human review if UNCLEAR gaps found, otherwise continue to write."""
+        if state.current_step == "human_review":
+            return "human_review"
+        return "write_plan"
+    
+    @listen("human_review")
+    @human_feedback(
+        message="""The Feature Architect found UNCLEAR gaps that need your guidance.
+        
+Please review the design output and provide one of:
+- 'deprecated' - This code should be removed
+- 'implement' - This feature should be implemented
+- 'test_code' - This is test code, gap is expected
+- 'continue' - Proceed with current plan
+
+You can also provide specific instructions for the plan.""",
+        emit=["deprecated", "implement", "test_code", "continue"],
+        llm="gpt-5.2",
+        default_outcome="continue",
+    )
+    def review_unclear_gaps(self, state: PlanningState) -> str:
+        """Human-in-the-loop step for reviewing unclear gaps.
+        
+        Returns the design output with UNCLEAR gaps highlighted.
+        Human feedback will be classified into one of the emit outcomes.
+        """
+        # Return the design output - it will be shown to the human
+        return state.design_output
+    
+    @listen("deprecated")
+    def handle_deprecated_gap(self, result) -> PlanningState:
+        """Human classified gap as deprecated code - add removal to plan."""
+        state = self.state
+        print("\n[HUMAN FEEDBACK] Gap classified as DEPRECATED")
+        print(f"Instructions: {result.feedback}")
+        
+        # Append removal instructions to design
+        state.design_output += f"\n\n## HUMAN GUIDANCE: DEPRECATED CODE\n{result.feedback}\n"
+        state.design_output += "Action: Remove deprecated code references in implementation.\n"
+        state.current_step = "write"
+        return state
+    
+    @listen("implement")
+    def handle_missing_implementation(self, result) -> PlanningState:
+        """Human classified gap as missing feature - add implementation to plan."""
+        state = self.state
+        print("\n[HUMAN FEEDBACK] Gap classified as MISSING IMPLEMENTATION")
+        print(f"Instructions: {result.feedback}")
+        
+        # Append implementation instructions to design
+        state.design_output += f"\n\n## HUMAN GUIDANCE: IMPLEMENT FEATURE\n{result.feedback}\n"
+        state.design_output += "Action: Include missing feature implementation in plan.\n"
+        state.current_step = "write"
+        return state
+    
+    @listen("test_code")
+    def handle_test_code_gap(self, result) -> PlanningState:
+        """Human classified gap as test code - note and continue."""
+        state = self.state
+        print("\n[HUMAN FEEDBACK] Gap classified as TEST CODE (expected)")
+        print(f"Note: {result.feedback}")
+        
+        # Note that gap is expected
+        state.design_output += f"\n\n## HUMAN GUIDANCE: TEST CODE GAP (EXPECTED)\n{result.feedback}\n"
+        state.current_step = "write"
+        return state
+    
+    @listen("continue")
+    def handle_continue(self, result) -> PlanningState:
+        """Human chose to continue with current plan."""
+        state = self.state
+        print("\n[HUMAN FEEDBACK] Continuing with current plan")
+        if result.feedback:
+            print(f"Additional notes: {result.feedback}")
+            state.design_output += f"\n\n## HUMAN NOTES\n{result.feedback}\n"
+        state.current_step = "write"
+        return state
+    
+    @listen(or_("write_plan", "deprecated", "implement", "test_code", "continue"))
     def write_plan(self, state: PlanningState) -> PlanningState:
         """Step 4: Write planning document."""
         print("\n" + "-"*60)
