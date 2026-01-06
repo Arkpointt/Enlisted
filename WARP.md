@@ -146,12 +146,16 @@ crewai test -n 3 -m gpt-5
 
 **Setup:** See [Tools/CrewAI/CREWAI.md](Tools/CrewAI/CREWAI.md)  
 **Requirements:** OpenAI API key in `.env` file  
-**Models:** OpenAI GPT-5 family (GPT-5.2, GPT-5 mini, GPT-5 nano)  
+**Model:** GPT-5.2 unified across all agents with optimized `reasoning_effort`:
+  - `high` (~8s): Architecture, complex decisions, deep system analysis
+  - `medium` (~5s): Bug analysis, QA validation, code review
+  - `low` (~5s): Implementation from specs, documentation, planning
+  - `none` (~1s): Schema validation, formatting, simple content generation  
 **Memory:** Enabled with text-embedding-3-large for superior knowledge retrieval  
 **State Persistence:** All flows resume on failure (`persist=True`)  
 **Database:** 23 SQLite tools for instant lookups (error codes, tiers, balance, content, API patterns)  
 **MCP Server:** Bannerlord API MCP server with 8 tools for semantic C# code analysis  
-**Prompt Caching:** Enabled on all LLM tiers (~90% cost savings on repeated knowledge sources)
+**Prompt Caching:** Automatic (OpenAI handles caching for prompts >1024 tokens)
 
 ## 📂 Project Structure
 
