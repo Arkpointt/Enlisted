@@ -327,4 +327,4 @@ def list_events() -> str:
     if not files:
         return "No event files found in ModuleData/Enlisted/"
     
-    return "Event files:\n" + "\n".join(f"  • {f}" for f in sorted(files))
+    return "Event files:\n" + "\n".join(f"  - {f}" for f in sorted(files))

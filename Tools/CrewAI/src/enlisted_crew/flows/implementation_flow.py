@@ -110,36 +110,44 @@ def _get_env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 
 
-# GPT-5.2 for analysis and architecture
+# =============================================================================
+# LLM TIERS - reasoning_effort optimizes cost/performance
+# high=deep thinking | medium=balanced | low=quick | none=instant
+# =============================================================================
+
+# HIGH reasoning - architecture/design decisions
 GPT5_ARCHITECT = LLM(
     model=_get_env("ENLISTED_LLM_ARCHITECT", "gpt-5.2"),
-    thinking={"type": "enabled", "budget_tokens": 10000},
-    max_tokens=16000,
+    max_completion_tokens=16000,
+    reasoning_effort="high",
 )
 
-# GPT-5 mini for implementation (fast, cost-efficient)
+# LOW reasoning - implementation from clear specs
 GPT5_IMPLEMENTER = LLM(
-    model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5-mini"),
-    max_tokens=8000,
+    model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5.2"),
+    max_completion_tokens=8000,
+    reasoning_effort="low",
 )
 
-# GPT-5 mini for QA
+# MEDIUM reasoning - QA needs to catch issues
 GPT5_QA = LLM(
-    model=_get_env("ENLISTED_LLM_QA", "gpt-5-mini"),
-    thinking={"type": "enabled", "budget_tokens": 2048},
-    max_tokens=6000,
+    model=_get_env("ENLISTED_LLM_QA", "gpt-5.2"),
+    max_completion_tokens=6000,
+    reasoning_effort="medium",
 )
 
-# GPT-5 nano for fast content creation
+# NONE reasoning - fast content, no thinking needed
 GPT5_FAST = LLM(
-    model=_get_env("ENLISTED_LLM_FAST", "gpt-5-nano"),
-    max_tokens=4000,
+    model=_get_env("ENLISTED_LLM_FAST", "gpt-5.2"),
+    max_completion_tokens=4000,
+    reasoning_effort="none",
 )
 
-# GPT-5 for planning (balanced capability, cost-efficient)
+# LOW reasoning - planning from structured prompts
 GPT5_PLANNING = LLM(
-    model=_get_env("ENLISTED_LLM_PLANNING", "gpt-5"),
-    max_tokens=4000,
+    model=_get_env("ENLISTED_LLM_PLANNING", "gpt-5.2"),
+    max_completion_tokens=4000,
+    reasoning_effort="low",
 )
 
 
@@ -366,23 +374,24 @@ class ImplementationFlow(Flow[ImplementationState]):
     
     @start()
     def load_plan(self) -> ImplementationState:
-        """Entry point: Load the implementation plan."""
+        """Entry point: Load the implementation plan.
+        
+        Inputs are passed via kickoff(inputs={...}) and populate self.state.
+        """
         print("\n" + "="*60)
         print("IMPLEMENTATION FLOW STARTED")
         print("="*60)
         
-        # Get plan path from inputs
-        inputs = getattr(self, 'inputs', {}) or {}
-        plan_path = inputs.get("plan_path", "")
+        # Access state - inputs populate state fields with matching names
+        state = self.state
+        plan_path = state.plan_path if hasattr(state, 'plan_path') else ""
         
         if not plan_path:
             print("[ERROR] No plan_path provided!")
-            return ImplementationState(
-                plan_path="",
-                current_step="error",
-                success=False,
-                final_report="Error: No plan_path provided in inputs",
-            )
+            state.current_step = "error"
+            state.success = False
+            state.final_report = "Error: No plan_path provided in inputs"
+            return state
         
         print(f"\nLoading plan: {plan_path}")
         
@@ -392,21 +401,17 @@ class ImplementationFlow(Flow[ImplementationState]):
         
         if not full_path.exists():
             print(f"[ERROR] Plan not found: {full_path}")
-            return ImplementationState(
-                plan_path=plan_path,
-                current_step="error",
-                success=False,
-                final_report=f"Error: Plan not found: {plan_path}",
-            )
+            state.current_step = "error"
+            state.success = False
+            state.final_report = f"Error: Plan not found: {plan_path}"
+            return state
         
         plan_content = full_path.read_text(encoding="utf-8")
         print(f"[OK] Plan loaded ({len(plan_content)} chars)")
         
-        return ImplementationState(
-            plan_path=plan_path,
-            plan_content=plan_content,
-            current_step="verify",
-        )
+        state.plan_content = plan_content
+        state.current_step = "verify"
+        return state
     
     @listen(load_plan)
     def verify_existing(self, state: ImplementationState) -> ImplementationState:

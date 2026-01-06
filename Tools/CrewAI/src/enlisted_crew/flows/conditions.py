@@ -316,10 +316,10 @@ def format_routing_decision(
     Returns:
         Formatted log message
     """
-    symbol = "✓" if condition_result else "✗"
+    symbol = "[OK]" if condition_result else "[X]"
     
     return f"""
-🔀 CONDITIONAL ROUTING
+*** CONDITIONAL ROUTING ***
    Condition: {condition_name}
    Result: {symbol} {condition_result}
    Decision: {chosen_path}

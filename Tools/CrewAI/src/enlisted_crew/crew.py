@@ -126,50 +126,58 @@ import os as _os
 def _get_env(name: str, default: str) -> str:
     return _os.environ.get(name, default)
 
-# TIER 1: GPT-5.2 with high reasoning - architectural decisions
+# =============================================================================
+# LLM TIERS - Optimized reasoning_effort for cost/performance balance
+# =============================================================================
+# high   = Deep thinking, more tokens, slower (architecture, complex decisions)
+# medium = Balanced reasoning (analysis, QA, catching bugs)
+# low    = Quick thinking (implementation from clear specs)
+# none   = Instant mode only (validation, formatting, simple tasks)
+# =============================================================================
+
+# TIER 1: HIGH reasoning - architectural decisions requiring deep thought
 # Use for: Feature design, system integration, multi-file analysis
 GPT5_ARCHITECT = LLM(
     model=_get_env("ENLISTED_LLM_ARCHITECT", "gpt-5.2"),
-    max_tokens=16000,
+    max_completion_tokens=16000,
     temperature=0.7,
-    # Enable prompt caching for knowledge sources (~90% cost reduction on repeated context)
-    supports_prompt_caching=True,
+    reasoning_effort="high",  # Deep reasoning for complex architecture
 )
 
-# TIER 2: GPT-5.2 for code analysis and review
-# Use for: Code review, bug investigation, understanding existing systems
+# TIER 2: MEDIUM reasoning - analysis requiring careful thought
+# Use for: Code review, bug investigation, understanding systems
 GPT5_ANALYST = LLM(
     model=_get_env("ENLISTED_LLM_ANALYST", "gpt-5.2"),
-    max_tokens=12000,
+    max_completion_tokens=12000,
     temperature=0.5,
-    supports_prompt_caching=True,
+    reasoning_effort="medium",  # Balanced reasoning for analysis
 )
 
-# TIER 3: GPT-5 mini for implementation - execution from specs
+# TIER 3: LOW reasoning - execution from clear specifications
 # Use for: Writing code from specs, implementing defined changes
 GPT5_IMPLEMENTER = LLM(
-    model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5-mini"),
-    max_tokens=8000,
+    model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5.2"),
+    max_completion_tokens=8000,
     temperature=0.3,
-    supports_prompt_caching=True,
+    reasoning_effort="low",  # Quick thinking, specs are clear
 )
 
-# TIER 4: GPT-5 nano - high-volume validation and content generation
+# TIER 4: NONE reasoning - pure execution, no thinking needed
 # Use for: Schema validation, style checks, content from templates
 GPT5_FAST = LLM(
-    model=_get_env("ENLISTED_LLM_FAST", "gpt-5-nano"),
-    max_tokens=4000,
+    model=_get_env("ENLISTED_LLM_FAST", "gpt-5.2"),
+    max_completion_tokens=4000,
     temperature=0.2,
-    supports_prompt_caching=True,
+    reasoning_effort="none",  # Instant mode, no reasoning overhead
 )
 
-# TIER 2.5: GPT-5 mini for QA - final safety net
-# Use for: Final validation before commit, catching what others missed
+# TIER 2.5: MEDIUM reasoning - QA needs to catch what others missed
+# Use for: Final validation before commit, finding edge cases
 GPT5_QA = LLM(
-    model=_get_env("ENLISTED_LLM_QA", "gpt-5-mini"),
-    max_tokens=6000,
+    model=_get_env("ENLISTED_LLM_QA", "gpt-5.2"),
+    max_completion_tokens=6000,
     temperature=0.3,
-    supports_prompt_caching=True,
+    reasoning_effort="medium",  # Needs reasoning to catch bugs
 )
 
 # === Embedder Configuration ===
@@ -349,7 +357,10 @@ class EnlistedCrew:
             ],
             knowledge_sources=[self.systems_knowledge],
             respect_context_window=True,
+            max_iter=10,  # Prevent infinite loops
             max_retry_limit=2,
+            reasoning=True,  # Enable reflection before acting
+            max_reasoning_attempts=3,  # Allow 3 reasoning cycles
             allow_delegation=True,  # Coordination role
         )
     
@@ -384,7 +395,10 @@ class EnlistedCrew:
             ],
             knowledge_sources=[self.code_knowledge],
             respect_context_window=True,
+            max_iter=10,  # Prevent infinite loops
             max_retry_limit=1,
+            reasoning=True,  # Enable reflection for bug analysis
+            max_reasoning_attempts=3,  # Allow 3 reasoning cycles
         )
     
     @agent
@@ -406,6 +420,7 @@ class EnlistedCrew:
             ],
             knowledge_sources=[self.content_knowledge],
             respect_context_window=True,
+            max_iter=10,  # Prevent infinite loops
         )
     
     @agent
@@ -432,7 +447,10 @@ class EnlistedCrew:
             ],
             knowledge_sources=[self.design_knowledge],  # Includes game-design-principles.md
             respect_context_window=True,
+            max_iter=10,  # Prevent infinite loops
             max_retry_limit=2,
+            reasoning=True,  # Enable reflection for architecture design
+            max_reasoning_attempts=3,  # Allow 3 reasoning cycles
             allow_delegation=True,  # Can delegate
         )
     
@@ -466,6 +484,9 @@ class EnlistedCrew:
             ],
             knowledge_sources=[self.ui_knowledge],
             respect_context_window=True,
+            max_iter=10,  # Prevent infinite loops
+            reasoning=True,  # Enable reflection for code generation
+            max_reasoning_attempts=3,  # Allow 3 reasoning cycles
         )
     
     @agent
@@ -500,6 +521,7 @@ class EnlistedCrew:
             ],
             knowledge_sources=[self.content_knowledge],
             respect_context_window=True,
+            max_iter=10,  # Prevent infinite loops
         )
     
     @agent
@@ -526,6 +548,7 @@ class EnlistedCrew:
             ],
             knowledge_sources=[self.code_knowledge],  # MISSING! QA needs code patterns
             respect_context_window=True,
+            max_iter=10,  # Prevent infinite loops
         )
     
     @agent
@@ -551,6 +574,7 @@ class EnlistedCrew:
             ],
             knowledge_sources=[self.balance_knowledge],
             respect_context_window=True,
+            max_iter=10,  # Prevent infinite loops
         )
     
     @agent
@@ -582,6 +606,7 @@ class EnlistedCrew:
             ],
             knowledge_sources=[self.planning_knowledge],
             respect_context_window=True,
+            max_iter=10,  # Prevent infinite loops
         )
     
     @agent
@@ -610,7 +635,10 @@ class EnlistedCrew:
             ],
             knowledge_sources=[self.systems_knowledge],
             respect_context_window=True,
+            max_iter=10,  # Prevent infinite loops
             max_retry_limit=2,
+            reasoning=True,  # Enable reflection for architecture analysis
+            max_reasoning_attempts=3,  # Allow 3 reasoning cycles
             allow_delegation=True,
         )
     

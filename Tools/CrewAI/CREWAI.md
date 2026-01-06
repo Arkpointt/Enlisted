@@ -1,8 +1,8 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Three AI workflows for Enlisted Bannerlord mod development with advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (23 database tools), and prompt caching across all LLM tiers.  
+**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (23 database tools), and automatic prompt caching.  
 **Status:** ✅ Implemented  
-**Last Updated:** 2026-01-06 (Added conditional tasks, Bannerlord API MCP server with 8 tools, 23 database tools across all agents, prompt caching enabled for ~90% cost savings on knowledge sources, comprehensive tool audits)
+**Last Updated:** 2026-01-06 (Unified all LLMs to GPT-5.2 with `reasoning_effort` optimization for cost/performance balance, removed Anthropic-specific parameters, fixed all emoji encoding issues for Windows PowerShell compatibility)
 
 ---
 
@@ -29,7 +29,7 @@ enlisted-crew validate
 All workflows use CrewAI Flows with:
 - **State persistence** (`persist=True`) - Resume on failure
 - **Conditional routing** (`@router`) - Skip completed work
-- **GPT-5 models** - No thinking/tool_choice conflicts
+- **GPT-5.2 unified** - Optimized reasoning levels (high/medium/low/none)
 
 ---
 
@@ -103,14 +103,14 @@ Each workflow uses the agents it needs:
 |-------|------|-------|
 | systems_analyst | Research existing systems | GPT-5.2 (high reasoning) |
 | architecture_advisor | Suggest best practices | GPT-5.2 (high reasoning) |
-| feature_architect | Design technical specs | GPT-5.2 (high reasoning) |
-| code_analyst | Find bugs, validate plans | GPT-5.2 (standard reasoning) |
-| csharp_implementer | Write C# code | GPT-5 mini (execution) |
-| content_author | Write JSON events | GPT-5 nano (fast) |
-| content_analyst | Validate JSON schemas | GPT-5 nano (fast) |
-| qa_agent | Final validation | GPT-5 mini (standard) |
-| documentation_maintainer | Write/update docs | GPT-5.2 (standard reasoning) |
-| balance_analyst | Review game balance | GPT-5 nano (fast) |
+| feature_architect | Design technical specs | GPT-5.2 (`reasoning_effort="high"`) |
+| code_analyst | Find bugs, validate plans | GPT-5.2 (`reasoning_effort="medium"`) |
+| csharp_implementer | Write C# code | GPT-5.2 (`reasoning_effort="low"`) |
+| content_author | Write JSON events | GPT-5.2 (`reasoning_effort="none"`) |
+| content_analyst | Validate JSON schemas | GPT-5.2 (`reasoning_effort="none"`) |
+| qa_agent | Final validation | GPT-5.2 (`reasoning_effort="medium"`) |
+| documentation_maintainer | Write/update docs | GPT-5.2 (`reasoning_effort="medium"`) |
+| balance_analyst | Review game balance | GPT-5.2 (`reasoning_effort="none"`) |
 
 ---
 
@@ -354,7 +354,7 @@ feature_architect (design), content_author (content), balance_analyst (review).
 **Architecture/Coordination Agents (GPT-5.2 high reasoning):**
 ```python
 Agent(
-    llm=GPT5_ARCHITECT,            # GPT-5.2 with 10K reasoning tokens
+    llm=GPT5_ARCHITECT,            # GPT-5.2 with reasoning enabled
     tools=[...],                   # 4-6 tools for coordination
     max_iter=10,                   # Max iterations before forced stop
     max_retry_limit=3,             # Retries on error
@@ -367,7 +367,7 @@ Agent(
 **Analysis Agents (GPT-5.2 standard reasoning):**
 ```python
 Agent(
-    llm=GPT5_ANALYST,              # GPT-5.2 with 5K reasoning tokens
+    llm=GPT5_ANALYST,              # GPT-5.2 with reasoning
     tools=[...],                   # 7-10 tools
     max_iter=10,
     max_retry_limit=3,
@@ -377,10 +377,10 @@ Agent(
 )
 ```
 
-**Implementation Agents (GPT-5 mini execution):**
+**Implementation Agents (GPT-5.2 with low reasoning):**
 ```python
 Agent(
-    llm=GPT5_IMPLEMENTER,          # GPT-5 mini (fast, cost-efficient)
+    llm=GPT5_IMPLEMENTER,          # GPT-5.2 with reasoning_effort="low"
     tools=[...],                   # 3-8 tools
     max_iter=10,
     max_retry_limit=3,
@@ -390,10 +390,10 @@ Agent(
 )
 ```
 
-**Fast Validation Agents (GPT-5 mini/nano):**
+**Fast Validation Agents (GPT-5.2 with no reasoning):**
 ```python
 Agent(
-    llm=GPT5_FAST,                 # GPT-5 nano (ultra-fast validation)
+    llm=GPT5_FAST,                 # GPT-5.2 with reasoning_effort="none" (instant mode)
     tools=[...],                   # 3-5 tools
     max_iter=10,
     max_retry_limit=3,
@@ -407,7 +407,7 @@ Agent(
 - Enabled for: systems_analyst, architecture_advisor, feature_architect, code_analyst, csharp_implementer
 - Agents reflect on the task before taking action
 - Creates a reasoning chain before executing tools or writing output
-- Each reasoning attempt consumes tokens (included in thinking budget)
+- Each reasoning attempt consumes tokens (included in reasoning budget)
 - **When to use:** Complex planning, multi-step analysis, code generation
 - **When NOT to use:** Simple validation, file reading, fast execution
 
@@ -454,16 +454,16 @@ When `planning=True` is enabled, CrewAI's **AgentPlanner** creates a detailed ex
 
 **Planning LLM Selection:**
 ```python
-planning_llm=GPT5_PLANNING  # Uses GPT-5 with 10K thinking tokens
+planning_llm=GPT5_PLANNING  # Uses GPT-5 for best planning quality
 ```
 
-**Why GPT-5 for planning?**
-- Best reasoning capability for complex task decomposition
-- Higher success rate than GPT-5 mini on multi-step plans
-- Cost difference is minimal (planning is <5% of total LLM calls)
-- Worth the extra $0.01-0.03 per run for better execution plans
+**Why GPT-5.2 with low reasoning for planning?**
+- Structured planning prompts don't need deep reasoning
+- `reasoning_effort="low"` provides fast, reliable planning
+- Auto-switches to instant mode when prompts are clear
+- Consistent quality across all planning operations
 
-**All 15 internal crews** (within PlanningFlow, ImplementationFlow, BugHuntingFlow) use `planning_llm=GPT5_PLANNING`.
+**All 15 internal crews** (within PlanningFlow, ImplementationFlow, BugHuntingFlow) use `planning_llm=GPT5_PLANNING` (GPT-5.2 with `reasoning_effort="low"`).
 
 #### Memory Configuration
 
@@ -1025,21 +1025,20 @@ print(result.fix_proposal.summary)
 
 ### Model Strategy (OpenAI GPT-5 Family)
 
-| Tier | Model | Use | Reasoning |
-|------|-------|-----|-----------|
-| 1 | GPT-5.2 | Architecture, system integration | High |
-| 2 | GPT-5.2 | Code analysis, bug investigation, doc sync | Standard |
-| 2.5 | GPT-5 mini | QA validation | Standard |
-| 3 | GPT-5 mini | Code generation from specs | Low |
-| 4 | GPT-5 nano | Schema checks, content generation | Minimal |
+| Reasoning Level | Speed | Use Case | Model |
+|-----------------|-------|----------|-------|
+| `high` | ~8s | Architecture, complex decisions, deep system analysis | GPT-5.2 |
+| `medium` | ~5s | Bug analysis, QA validation, code review, doc sync | GPT-5.2 |
+| `low` | ~5s | Implementation from specs, documentation, planning | GPT-5.2 |
+| `none` | ~1s | Schema validation, formatting, simple content | GPT-5.2 |
 
-**Philosophy:** "Spend tokens on ANALYSIS and VALIDATION, save on EXECUTION. Bugs from cheap generation cost more to fix than reasoning tokens."
+**Philosophy:** "Use reasoning where it matters: architecture & analysis. Save on execution & validation."
 
 **Key Benefits:**
-- No thinking/tool_choice conflicts (Anthropic-specific issue)
-- Consistent 200K context window across all models
-- Configurable reasoning effort for all models
-- Cost-efficient: GPT-5 mini at $0.25/1M in, GPT-5 nano even cheaper
+- **Single model (GPT-5.2)** - No context/capability mismatches between agents
+- **Auto mode-switching** - Automatically uses instant mode when appropriate
+- **Optimized costs** - Only pay for reasoning when needed via `reasoning_effort` parameter
+- **200K context** - Consistent across all agents
 
 ### Memory & Knowledge Configuration
 

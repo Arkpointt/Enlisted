@@ -92,30 +92,37 @@ def _get_env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 
 
-# GPT-5.2 for architecture and deep analysis
+# =============================================================================
+# LLM TIERS - reasoning_effort optimizes cost/performance
+# high=deep thinking | medium=balanced | low=quick | none=instant
+# =============================================================================
+
+# HIGH reasoning - architecture and feature design
 GPT5_ARCHITECT = LLM(
     model=_get_env("ENLISTED_LLM_ARCHITECT", "gpt-5.2"),
-    thinking={"type": "enabled", "budget_tokens": 10000},
-    max_tokens=16000,
+    max_completion_tokens=16000,
+    reasoning_effort="high",
 )
 
-# GPT-5.2 for analysis
+# MEDIUM reasoning - analysis and verification
 GPT5_ANALYST = LLM(
     model=_get_env("ENLISTED_LLM_ANALYST", "gpt-5.2"),
-    thinking={"type": "enabled", "budget_tokens": 5000},
-    max_tokens=8000,
+    max_completion_tokens=8000,
+    reasoning_effort="medium",
 )
 
-# GPT-5 mini for documentation
+# LOW reasoning - documentation from clear structure
 GPT5_DOCS = LLM(
-    model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5-mini"),
-    max_tokens=8000,
+    model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5.2"),
+    max_completion_tokens=8000,
+    reasoning_effort="low",
 )
 
-# GPT-5 for planning (balanced capability, cost-efficient)
+# LOW reasoning - planning from structured prompts
 GPT5_PLANNING = LLM(
-    model=_get_env("ENLISTED_LLM_PLANNING", "gpt-5"),
-    max_tokens=4000,
+    model=_get_env("ENLISTED_LLM_PLANNING", "gpt-5.2"),
+    max_completion_tokens=4000,
+    reasoning_effort="low",
 )
 
 
@@ -293,36 +300,33 @@ class PlanningFlow(Flow[PlanningState]):
     
     @start()
     def receive_request(self) -> PlanningState:
-        """Entry point: Parse feature request."""
+        """Entry point: Parse feature request.
+        
+        Inputs are passed via kickoff(inputs={...}) and populate self.state.
+        """
         print("\n" + "="*60)
         print("PLANNING FLOW STARTED")
         print("="*60)
         
-        inputs = getattr(self, 'inputs', {}) or {}
+        # Access state - inputs populate state fields with matching names
+        state = self.state
         
-        feature_name = inputs.get("feature_name", "")
-        description = inputs.get("description", "")
+        feature_name = state.feature_name if hasattr(state, 'feature_name') else ""
+        description = state.description if hasattr(state, 'description') else ""
         
         if not feature_name or not description:
             print("[ERROR] Missing feature_name or description!")
-            return PlanningState(
-                feature_name=feature_name,
-                description=description,
-                current_step="error",
-                success=False,
-                final_report="Error: Missing feature_name or description",
-            )
+            print(f"[DEBUG] state={state}")
+            state.current_step = "error"
+            state.success = False
+            state.final_report = "Error: Missing feature_name or description"
+            return state
         
         print(f"\nFeature: {feature_name}")
         print(f"Description: {description[:100]}...")
         
-        return PlanningState(
-            feature_name=feature_name,
-            description=description,
-            related_systems=inputs.get("related_systems", ""),
-            related_docs=inputs.get("related_docs", ""),
-            current_step="research",
-        )
+        state.current_step = "research"
+        return state
     
     @listen(receive_request)
     def research_systems(self, state: PlanningState) -> PlanningState:

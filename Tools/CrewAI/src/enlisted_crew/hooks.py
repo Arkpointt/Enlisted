@@ -25,8 +25,9 @@ from crewai.hooks import (
 TOKEN_COSTS = {
     "gpt-5.2": {"input": 2.50, "output": 10.00},
     "gpt-5": {"input": 2.00, "output": 8.00},
-    "gpt-5-mini": {"input": 0.10, "output": 0.40},
-    "gpt-5-nano": {"input": 0.05, "output": 0.20},
+    "gpt-5.2": {"input": 2.50, "output": 10.00},  # Instant mode ~$0.50/$2.00, Thinking mode $2.50/$10.00
+    "gpt-5-mini": {"input": 0.10, "output": 0.40},  # Legacy reference
+    "gpt-5-nano": {"input": 0.05, "output": 0.20},  # Legacy reference
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},  # Fallback/default
 }
 
@@ -50,7 +51,7 @@ def _estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
     Estimate cost for an LLM call.
     
     Args:
-        model: Model name (e.g., "gpt-5.2", "gpt-5-mini")
+        model: Model name (e.g., "gpt-5.2" with auto mode-switching)
         input_tokens: Number of input tokens
         output_tokens: Number of output tokens
     

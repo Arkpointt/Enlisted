@@ -292,8 +292,8 @@ def suggest_edits(text: str) -> str:
     Suggest improvements to make text more Enlisted-style.
     
     Provides specific suggestions for:
-    - Vocabulary replacements (modern → medieval)
-    - Emotion rewrites (abstract → physical)
+    - Vocabulary replacements (modern -> medieval)
+    - Emotion rewrites (abstract -> physical)
     - Sentence shortening
     
     Args:
@@ -308,7 +308,7 @@ def suggest_edits(text: str) -> str:
     text_lower = text.lower()
     for modern, medieval in VOCABULARY_SUGGESTIONS.items():
         if modern in text_lower:
-            suggestions.append(f"Replace '{modern}' → '{medieval}'")
+            suggestions.append(f"Replace '{modern}' -> '{medieval}'")
     
     # Emotion rewrite suggestions
     emotion_patterns = {
@@ -321,7 +321,7 @@ def suggest_edits(text: str) -> str:
     
     for pattern, suggestion in emotion_patterns.items():
         if re.search(pattern, text):
-            suggestions.append(f"Rewrite emotion: '{pattern}' → '{suggestion}'")
+            suggestions.append(f"Rewrite emotion: '{pattern}' -> '{suggestion}'")
     
     # Sentence length suggestions
     sentences = re.split(r'[.!?]+', text)
@@ -329,7 +329,7 @@ def suggest_edits(text: str) -> str:
         words = sentence.strip().split()
         if len(words) > 15:
             suggestions.append(
-                f"Shorten: \"{sentence[:40]}...\" ({len(words)} words → aim for 8-12)"
+                f"Shorten: \"{sentence[:40]}...\" ({len(words)} words -> aim for 8-12)"
             )
     
     if not suggestions:
@@ -337,6 +337,6 @@ def suggest_edits(text: str) -> str:
     
     report = "STYLE SUGGESTIONS:\n\n"
     for s in suggestions:
-        report += f"• {s}\n"
+        report += f"- {s}\n"
     
     return report

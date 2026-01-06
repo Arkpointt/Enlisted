@@ -109,37 +109,44 @@ import os as _os
 def _get_env(name: str, default: str) -> str:
     return _os.environ.get(name, default)
 
-# GPT-5.2 for analysis and architecture (high reasoning)
+# =============================================================================
+# LLM TIERS - reasoning_effort optimizes cost/performance
+# high=deep thinking | medium=balanced | low=quick | none=instant
+# =============================================================================
+
+# MEDIUM reasoning - bug analysis needs careful thought
 GPT5_ANALYSIS = LLM(
     model=_get_env("ENLISTED_LLM_ANALYST", "gpt-5.2"),
-    thinking={"type": "enabled", "budget_tokens": 5000},
-    max_tokens=8000,
+    max_completion_tokens=8000,
+    reasoning_effort="medium",
 )
 
-# GPT-5.2 for deep system analysis
+# HIGH reasoning - deep system analysis for complex bugs
 GPT5_DEEP = LLM(
     model=_get_env("ENLISTED_LLM_ARCHITECT", "gpt-5.2"),
-    thinking={"type": "enabled", "budget_tokens": 10000},
-    max_tokens=16000,
+    max_completion_tokens=16000,
+    reasoning_effort="high",
 )
 
-# GPT-5 mini for faster execution tasks
+# LOW reasoning - fix implementation from clear specs
 GPT5_EXECUTE = LLM(
-    model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5-mini"),
-    max_tokens=8000,
+    model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5.2"),
+    max_completion_tokens=8000,
+    reasoning_effort="low",
 )
 
-# GPT-5 mini for QA with thinking
+# MEDIUM reasoning - QA validation needs to catch issues
 GPT5_QA = LLM(
-    model=_get_env("ENLISTED_LLM_QA", "gpt-5-mini"),
-    thinking={"type": "enabled", "budget_tokens": 2048},
-    max_tokens=6000,
+    model=_get_env("ENLISTED_LLM_QA", "gpt-5.2"),
+    max_completion_tokens=6000,
+    reasoning_effort="medium",
 )
 
-# GPT-5 for planning (balanced capability, cost-efficient)
+# LOW reasoning - planning from structured prompts
 GPT5_PLANNING = LLM(
-    model=_get_env("ENLISTED_LLM_PLANNING", "gpt-5"),
-    max_tokens=4000,
+    model=_get_env("ENLISTED_LLM_PLANNING", "gpt-5.2"),
+    max_completion_tokens=4000,
+    reasoning_effort="low",
 )
 
 
@@ -364,6 +371,8 @@ class BugHuntingFlow(Flow[BugHuntingState]):
     def receive_bug_report(self) -> BugHuntingState:
         """
         Entry point: Read kickoff inputs mapped into state and normalize BugReport.
+        
+        Inputs are passed via kickoff(inputs={...}) and populate self.state.
         """
         # Clear search cache from any previous runs
         SearchCache.clear()
@@ -372,17 +381,17 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         print("BUG HUNTING FLOW STARTED")
         print("="*60)
         
-        # Prefer kickoff-mapped state; fall back to legacy self.inputs for compatibility
-        br = getattr(self, 'state', None).bug_report if hasattr(self, 'state') else None
-        if br is None:
-            inputs = getattr(self, 'inputs', {}) or {}
-            br = BugReport(
-                description=inputs.get("description", "No description provided"),
-                error_codes=inputs.get("error_codes", "none"),
-                repro_steps=inputs.get("repro_steps", "unknown"),
-                context=inputs.get("context", None),
-                user_log_content=inputs.get("user_log_content", None),
-            )
+        # Access state - inputs populate flat fields (bug_description, error_codes, etc.)
+        state = self.state
+        
+        # Build BugReport from flat state inputs
+        br = BugReport(
+            description=state.bug_description or "No description provided",
+            error_codes=state.error_codes or "none",
+            repro_steps=state.repro_steps or "unknown",
+            context=state.context,
+            user_log_content=state.user_log_content,
+        )
         # Normalize has_user_logs
         br.has_user_logs = bool(br.user_log_content and br.user_log_content.strip())
         
@@ -392,11 +401,10 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         print(f"   Repro Steps: {br.repro_steps}")
         print(f"   User Logs: {'[OK] Provided' if br.has_user_logs else '[X] Not provided (will analyze code paths)'}")
         
-        # Set and return initial state
-        return BugHuntingState(
-            bug_report=br,
-            current_step="investigate",
-        )
+        # Update state with constructed BugReport and return
+        state.bug_report = br
+        state.current_step = "investigate"
+        return state
     
     @listen(receive_bug_report)
     def investigate_bug(self, state: BugHuntingState) -> BugHuntingState:
@@ -409,7 +417,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         br = state.bug_report
         
         if br.has_user_logs:
-            print("\n🔀 ROUTING: User provided logs → Analyzing provided logs")
+            print("\n[ROUTE] User provided logs -> Analyzing provided logs")
             print("\n" + "-"*60)
             print("[SEARCH] STEP: Investigating Bug (with user-provided logs)")
             print("-"*60)
@@ -451,7 +459,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
                 agent=get_code_analyst(),
             )
         else:
-            print("\n🔀 ROUTING: No user logs → Analyzing code paths based on symptoms")
+            print("\n[ROUTE] No user logs -> Analyzing code paths based on symptoms")
             print("\n" + "-"*60)
             print("[SEARCH] STEP: Investigating Bug (analyzing code paths - no logs)")
             print("-"*60)
@@ -504,7 +512,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             needs_systems_analysis=self._needs_systems_analysis(raw_output),
             raw_output=raw_output,
         )
-        print(f"\n📊 Investigation Complete:")
+        print(f"\n[RESULT] Investigation Complete:")
         print(f"   Severity: {investigation.severity.value}")
         print(f"   Needs Systems Analysis: {investigation.needs_systems_analysis}")
         state.investigation = investigation
@@ -553,7 +561,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         Only runs for COMPLEX/CRITICAL bugs.
         """
         print("\n" + "-"*60)
-        print("🔬 STEP: Systems Analysis (systems_analyst)")
+        print("[SYSTEMS] STEP: Systems Analysis (systems_analyst)")
         print("-"*60)
         
         investigation = state.investigation
@@ -623,7 +631,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         Receives investigation (and optionally systems analysis) as context.
         """
         print("\n" + "-"*60)
-        print("🔧 STEP: Proposing Fix (csharp_implementer)")
+        print("[FIX] STEP: Proposing Fix (csharp_implementer)")
         print("-"*60)
         
         investigation = state.investigation

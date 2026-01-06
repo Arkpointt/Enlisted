@@ -10,7 +10,7 @@ Available Flows:
 
 All flows use:
 - State persistence (persist=True) for recovery on failure
-- GPT-5 family models (gpt-5.2, gpt-5-mini, gpt-5-nano)
+- GPT-5.2 with automatic instant/thinking mode switching
 - Conditional routing with reusable condition functions
 
 Conditional Routing:

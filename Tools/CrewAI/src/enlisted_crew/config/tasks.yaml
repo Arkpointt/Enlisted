@@ -87,7 +87,7 @@ analyze_content_structure:
   expected_output: >
     Content analysis report with:
     - Schema compliance status
-    - Delivery pipeline (JSON → C# → UI)
+    - Delivery pipeline (JSON -> C# -> UI)
     - Content gaps identified
     - Localization status
     - Integration recommendations
@@ -762,7 +762,7 @@ sync_documentation:
        - Add new system documentation to relevant docs/Features/*.md files
        - Do NOT leave implementation details only in the plan file
        - Plan files are temporary - feature docs are permanent
-       - Example: Pressure arc events → update company-events.md + company-supply-simulation.md
+       - Example: Pressure arc events -> update company-events.md + company-supply-simulation.md
     5. Use save_plan to write the updated plan
     6. Consider moving plan to Archive/ if implementation is complete
     
@@ -792,9 +792,9 @@ sync_documentation:
     
     INCREMENTAL IMPROVEMENTS (fix on every doc you touch):
     - Ensure standard header format: # Title, **Summary:**, **Status:**, **Last Updated:**, **Related Docs:**
-    - Fix filename casing if wrong (SCREAMING-CASE.md → screaming-case.md)
-    - Fix broken internal links (../Gameplay/ → ../Campaign/)
-    - Move misplaced docs (ANEWFEATURE/reference.md → Reference/)
+    - Fix filename casing if wrong (SCREAMING-CASE.md -> screaming-case.md)
+    - Fix broken internal links (../Gameplay/ -> ../Campaign/)
+    - Move misplaced docs (ANEWFEATURE/reference.md -> Reference/)
     - Remove duplicate files (prefer Reference/ or Features/ over ANEWFEATURE/)
     
     IMPORTANT: Small improvements compound. Fix issues in docs you touch.

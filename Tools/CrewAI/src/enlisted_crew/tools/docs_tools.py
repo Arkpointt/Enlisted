@@ -117,13 +117,13 @@ def read_doc_tool(doc_path: str) -> str:
     # Provide helpful suggestions
     error_msg = f"ERROR: Doc '{doc_path}' not found.\n\n"
     error_msg += "Available documentation folders:\n"
-    error_msg += "  • docs/Features/Core/ (enlistment, promotion, orders, retinue)\n"
-    error_msg += "  • docs/Features/Content/ (events, schemas, writing-style)\n"
-    error_msg += "  • docs/Features/Campaign/ (battle, simulation)\n"
-    error_msg += "  • docs/ANEWFEATURE/ (systems-integration, content-effects)\n"
-    error_msg += "  • docs/Reference/ (native-apis)\n"
+    error_msg += "  - docs/Features/Core/ (enlistment, promotion, orders, retinue)\n"
+    error_msg += "  - docs/Features/Content/ (events, schemas, writing-style)\n"
+    error_msg += "  - docs/Features/Campaign/ (battle, simulation)\n"
+    error_msg += "  - docs/ANEWFEATURE/ (systems-integration, content-effects)\n"
+    error_msg += "  - docs/Reference/ (native-apis)\n"
     error_msg += "\nUse find_in_docs to find docs by content, or list_docs_tool to browse.\n"
-    error_msg += f"\nPaths tried:\n" + "\n".join(f"  • {p}" for p in possible_paths[:5])
+    error_msg += f"\nPaths tried:\n" + "\n".join(f"  - {p}" for p in possible_paths[:5])
     return error_msg
 
 
@@ -156,9 +156,9 @@ def list_docs_tool(folder: str = "") -> str:
                 first_line = f.readline().strip()
                 # Extract title from markdown header
                 title = first_line.lstrip('#').strip() if first_line.startswith('#') else md_file.stem
-                files.append(f"  • {md_file.name}: {title}")
+                files.append(f"  - {md_file.name}: {title}")
         except Exception:
-            files.append(f"  • {md_file.name}")
+            files.append(f"  - {md_file.name}")
     
     # List subdirectories
     subdirs = []
@@ -407,8 +407,8 @@ def get_game_systems() -> str:
 === ENLISTED MOD DOMAIN KNOWLEDGE ===
 
 ## Core Gameplay Loop
-Player enlists with a lord → follows army (party invisible) → receives orders → 
-earns XP → gets promoted (T1→T9) → eventually discharges or becomes commander.
+Player enlists with a lord -> follows army (party invisible) -> receives orders -> 
+earns XP -> gets promoted (T1->T9) -> eventually discharges or becomes commander.
 
 ## 9-Tier Rank Progression (THREE CAREER TRACKS)
 
@@ -450,7 +450,7 @@ Promotions require: XP + Days in Rank + Battles + Reputation + Low Discipline
 Thresholds: Critical(<20), Low(20-40), Normal(40-70), Good(70-90), Excellent(>90)
 
 ## Quartermaster System
-- Equipment tiers match player tier (T3 player → T1-T3 gear)
+- Equipment tiers match player tier (T3 player -> T1-T3 gear)
 - Quality modifiers: Poor/Inferior/Common/Fine/Masterwork/Legendary
 - Reputation affects: discounts (0-30%), quality distribution, Officers Armory access
 - Supply <30% blocks equipment purchases
@@ -743,7 +743,7 @@ def read_debug_logs_tool(session: str = "A") -> str:
         # List what's available
         all_logs = list(MOD_DEBUGGING_PATH.glob("Session-*.log"))
         if all_logs:
-            return "Available logs:\n" + "\n".join(f"  • {f.name}" for f in sorted(all_logs))
+            return "Available logs:\n" + "\n".join(f"  - {f.name}" for f in sorted(all_logs))
         return f"No session logs found in {MOD_DEBUGGING_PATH}"
     
     # Read the most recent matching file
@@ -981,7 +981,7 @@ def verify_file_exists_tool(file_path: str) -> str:
     
     result = f"NOT FOUND: NOT FOUND: {file_path}"
     if suggestions:
-        result += "\n   Similar files found:\n" + "\n".join(f"   • {s}" for s in suggestions[:5])
+        result += "\n   Similar files found:\n" + "\n".join(f"   - {s}" for s in suggestions[:5])
     else:
         # Maybe the directory doesn't exist
         if not parent.exists():
@@ -1035,7 +1035,7 @@ def list_event_ids(folder: str = "Decisions") -> str:
     
     summary = f"📁 {folder}/ - {len(ids_found)} total IDs across {len(results)} files\n\n"
     summary += "Files:\n" + "\n".join(results)
-    summary += "\n\nAll IDs:\n" + "\n".join(f"  • {id}" for id in sorted(set(ids_found)))
+    summary += "\n\nAll IDs:\n" + "\n".join(f"  - {id}" for id in sorted(set(ids_found)))
     
     return summary
 
@@ -1074,11 +1074,11 @@ def list_feature_files_tool(feature: str = "") -> str:
             with open(cs_file, 'r', encoding='utf-8') as f:
                 for line in f:
                     if 'class ' in line or 'interface ' in line:
-                        files.append(f"  • {cs_file.name}")
+                        files.append(f"  - {cs_file.name}")
                         break
                 else:
-                    files.append(f"  • {cs_file.name}")
+                    files.append(f"  - {cs_file.name}")
         except Exception:
-            files.append(f"  • {cs_file.name}")
+            files.append(f"  - {cs_file.name}")
     
     return f"Files in {feature}:\n" + "\n".join(files)

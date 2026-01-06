@@ -335,6 +335,9 @@ class BugHuntingState(BaseModel):
     
     This is the main state object that flows through the entire workflow,
     accumulating results from each step.
+    
+    Inputs are passed via kickoff(inputs={...}) and populate fields directly.
+    Use bug_description (not description) to avoid conflicts.
     """
     # Flow ID (required by CrewAI Flows)
     id: str = Field(
@@ -342,7 +345,29 @@ class BugHuntingState(BaseModel):
         description="Unique flow execution ID (auto-generated)"
     )
     
-    # Input
+    # Input fields (flat inputs for kickoff)
+    bug_description: str = Field(
+        default="",
+        description="User's description of what went wrong"
+    )
+    error_codes: str = Field(
+        default="none",
+        description="Any E-*/W-* error codes from logs"
+    )
+    repro_steps: str = Field(
+        default="unknown",
+        description="Steps to reproduce the bug"
+    )
+    context: Optional[str] = Field(
+        default=None,
+        description="Additional context (game state, mods, etc.)"
+    )
+    user_log_content: Optional[str] = Field(
+        default=None,
+        description="Log content provided by the end user"
+    )
+    
+    # Constructed bug report (built from flat inputs)
     bug_report: Optional[BugReport] = None
     
     # Step outputs

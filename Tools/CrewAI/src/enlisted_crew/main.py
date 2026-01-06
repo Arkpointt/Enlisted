@@ -15,6 +15,7 @@ Utility:
 
 import argparse
 import sys
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -23,12 +24,13 @@ from .crew import EnlistedCrew
 from .tools import SearchCache
 from .monitoring import enable_monitoring, print_execution_report, print_cost_report
 from .hooks import reset_all_hooks, print_all_summaries
-from .hooks import print_cost_report  # Import to register hooks
 
 
 def main():
     """Main CLI entry point."""
-    load_dotenv()
+    # Load .env from Tools/CrewAI directory
+    env_path = Path(__file__).parent.parent.parent / ".env"
+    load_dotenv(env_path)
     
     # Enable execution monitoring for all workflows
     enable_monitoring()
@@ -328,7 +330,7 @@ def run_hunt_bug(
     """
     BUG HUNTING WORKFLOW - Find and fix bugs completely.
     
-    Chain: investigate → analyze → fix → validate
+    Chain: investigate -> analyze -> fix -> validate
     """
     from .crew import EnlistedCrew
     from pathlib import Path

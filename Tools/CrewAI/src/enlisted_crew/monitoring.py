@@ -15,9 +15,8 @@ from crewai.events import (
     BaseEventListener,
     CrewKickoffStartedEvent,
     CrewKickoffCompletedEvent,
-    AgentExecutionCompletedEvent,
-    TaskExecutionCompletedEvent,
-    ToolExecutionEvent,
+    TaskCompletedEvent,
+    ToolUsageFinishedEvent,
 )
 
 
@@ -167,36 +166,7 @@ class EnlistedExecutionMonitor(BaseEventListener):
                     """, (end_time.isoformat(), duration, output_length, self.current_crew_id))
                     conn.commit()
         
-        @crewai_event_bus.on(AgentExecutionCompletedEvent)
-        def on_agent_completed(source, event):
-            """Handle agent execution completion."""
-            agent_name = event.agent.role if hasattr(event.agent, 'role') else 'Unknown Agent'
-            
-            # Try to get execution time if available
-            duration = getattr(event, 'execution_time', None)
-            if duration:
-                print(f"  [AGENT] {agent_name} completed in {duration:.2f}s")
-            else:
-                print(f"  [AGENT] {agent_name} completed")
-            
-            # Log to database
-            if self.current_crew_id and duration:
-                with sqlite3.connect(self.db_path) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        INSERT INTO agent_executions 
-                        (crew_execution_id, agent_role, started_at, completed_at, duration_seconds)
-                        VALUES (?, ?, ?, ?, ?)
-                    """, (
-                        self.current_crew_id,
-                        agent_name,
-                        (datetime.now() - duration).isoformat() if duration else datetime.now().isoformat(),
-                        datetime.now().isoformat(),
-                        duration
-                    ))
-                    conn.commit()
-        
-        @crewai_event_bus.on(TaskExecutionCompletedEvent)
+        @crewai_event_bus.on(TaskCompletedEvent)
         def on_task_completed(source, event):
             """Handle task execution completion."""
             task_desc = event.task.description[:50] if hasattr(event.task, 'description') else 'Unknown Task'
@@ -225,11 +195,11 @@ class EnlistedExecutionMonitor(BaseEventListener):
                     ))
                     conn.commit()
         
-        @crewai_event_bus.on(ToolExecutionEvent)
+        @crewai_event_bus.on(ToolUsageFinishedEvent)
         def on_tool_used(source, event):
             """Handle tool execution."""
             tool_name = event.tool_name if hasattr(event, 'tool_name') else 'Unknown Tool'
-            success = getattr(event, 'success', True)
+            success = not hasattr(event, 'error') or event.error is None
             error = getattr(event, 'error', None)
             
             if success:
