@@ -5,14 +5,29 @@ Provides structured access to project knowledge stored in SQLite.
 All data verified against actual codebase (January 2026).
 """
 
+import os
 import sqlite3
 from pathlib import Path
 from typing import Optional, List
 from crewai.tools import tool
 
 
+def _get_project_root() -> Path:
+    """Get the Enlisted project root directory."""
+    env_root = os.environ.get("ENLISTED_PROJECT_ROOT")
+    if env_root:
+        return Path(env_root)
+    
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "Enlisted.csproj").exists():
+            return parent
+    
+    return Path(r"C:\Dev\Enlisted\Enlisted")
+
+
 # Database location (relative to project root)
-_PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent
+_PROJECT_ROOT = _get_project_root()
 DB_PATH = _PROJECT_ROOT / "Tools" / "CrewAI" / "database" / "enlisted_knowledge.db"
 
 
@@ -66,8 +81,8 @@ def lookup_content_id(content_id: str) -> str:
         cursor = conn.cursor()
         
         cursor.execute("""
-            SELECT * FROM content_items 
-            WHERE id = ? OR id LIKE ?
+            SELECT * FROM content_metadata 
+            WHERE content_id = ? OR content_id LIKE ?
         """, (content_id, f"%{content_id}%"))
         
         rows = cursor.fetchall()
@@ -105,7 +120,7 @@ def search_content(
         conn = _get_connection()
         cursor = conn.cursor()
         
-        query = "SELECT id, type, category, title, tier_variant FROM content_items WHERE status = ?"
+        query = "SELECT content_id, type, category, description, tier_min, tier_max FROM content_metadata WHERE status = ?"
         params = [status]
         
         if content_type:
@@ -116,7 +131,7 @@ def search_content(
             query += " AND category = ?"
             params.append(category)
         
-        query += " ORDER BY type, category, id LIMIT 50"
+        query += " ORDER BY type, category, content_id LIMIT 50"
         
         cursor.execute(query, params)
         rows = cursor.fetchall()
@@ -1077,14 +1092,30 @@ def sync_content_from_files() -> str:
             
             for json_file in content_dir.rglob("*.json"):  # rglob for subdirectories
                 try:
-                    with open(json_file, "r", encoding="utf-8") as f:
+                    # Use utf-8-sig to handle files with BOM (common on Windows)
+                    with open(json_file, "r", encoding="utf-8-sig") as f:
                         data = json.load(f)
                     
-                    # Handle both single items and arrays
-                    items = data if isinstance(data, list) else [data]
+                    # Handle nested structures (events/decisions/orders arrays)
+                    items = []
+                    if isinstance(data, list):
+                        items = data
+                    elif isinstance(data, dict):
+                        # Check for nested content arrays
+                        if "events" in data:
+                            items.extend(data["events"])
+                        elif "decisions" in data:
+                            items.extend(data["decisions"])
+                        elif "orders" in data:
+                            items.extend(data["orders"])
+                        elif "opportunities" in data:
+                            items.extend(data["opportunities"])
+                        elif "id" in data:
+                            # Single item at root
+                            items = [data]
                     
                     for item in items:
-                        if "id" not in item:
+                        if not isinstance(item, dict) or "id" not in item:
                             continue
                         
                         content_id = item["id"]

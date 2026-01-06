@@ -6,6 +6,7 @@ and debugging.
 """
 
 import json
+import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -18,6 +19,20 @@ from crewai.events import (
     TaskCompletedEvent,
     ToolUsageFinishedEvent,
 )
+
+
+def _get_project_root() -> Path:
+    """Get the Enlisted project root directory."""
+    env_root = os.environ.get("ENLISTED_PROJECT_ROOT")
+    if env_root:
+        return Path(env_root)
+    
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "Enlisted.csproj").exists():
+            return parent
+    
+    return Path(r"C:\Dev\Enlisted\Enlisted")
 
 
 class EnlistedExecutionMonitor(BaseEventListener):
@@ -44,8 +59,8 @@ class EnlistedExecutionMonitor(BaseEventListener):
         super().__init__()
         
         if db_path is None:
-            project_root = Path(__file__).parent.parent.parent.parent.parent
-            db_path = str(project_root / "Tools" / "CrewAI" / "enlisted_knowledge.db")
+            project_root = _get_project_root()
+            db_path = str(project_root / "Tools" / "CrewAI" / "database" / "enlisted_knowledge.db")
         
         self.db_path = db_path
         self._init_monitoring_tables()
@@ -237,8 +252,8 @@ def get_execution_stats(db_path: Optional[str] = None, crew_name: Optional[str] 
         Dictionary with execution statistics
     """
     if db_path is None:
-        project_root = Path(__file__).parent.parent.parent.parent.parent
-        db_path = str(project_root / "Tools" / "CrewAI" / "enlisted_knowledge.db")
+        project_root = _get_project_root()
+        db_path = str(project_root / "Tools" / "CrewAI" / "database" / "enlisted_knowledge.db")
     
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
@@ -331,8 +346,8 @@ def print_cost_report(crew_name: Optional[str] = None):
     Args:
         crew_name: Filter by crew name (correlates by timestamp). If None, shows all costs.
     """
-    project_root = Path(__file__).parent.parent.parent.parent.parent
-    db_path = str(project_root / "Tools" / "CrewAI" / "enlisted_knowledge.db")
+    project_root = _get_project_root()
+    db_path = str(project_root / "Tools" / "CrewAI" / "database" / "enlisted_knowledge.db")
     
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()

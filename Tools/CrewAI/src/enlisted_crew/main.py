@@ -193,14 +193,22 @@ def main():
 
 
 def run_validation(crew: EnlistedCrew):
-    """Run quick validation check."""
-    SearchCache.clear()
-    print("\n" + "=" * 60)
-    print("VALIDATION CHECK")
-    print("=" * 60 + "\n")
+    """Run quick validation check using ValidationFlow."""
+    from .flows import ValidationFlow
     
-    validation_crew = crew.validation_crew()
-    return validation_crew.kickoff()
+    SearchCache.clear()
+    reset_all_hooks()  # Reset cost tracking and safety guards
+    
+    flow = ValidationFlow()
+    result = flow.kickoff()
+    
+    # Print cost summary
+    print_all_summaries()
+    
+    # Return the final report from the flow state
+    if hasattr(result, 'final_report'):
+        return result.final_report
+    return str(result)
 
 
 def run_implement(crew: EnlistedCrew, plan_path: str):
@@ -241,30 +249,6 @@ def run_implement(crew: EnlistedCrew, plan_path: str):
     if hasattr(result, 'final_report'):
         return result.final_report
     return str(result)
-
-
-def run_code_review(crew: EnlistedCrew, file_paths: list):
-    """Legacy - kept for backwards compatibility."""
-    SearchCache.clear()
-    paths_str = ", ".join(file_paths)
-    print(f"Reviewing code: {paths_str}")
-    
-    from crewai import Crew, Process, Task
-    
-    task = Task(
-        description=f"Review C# code files: {paths_str}",
-        expected_output="Code review report",
-        agent=crew.code_analyst(),
-    )
-    
-    code_crew = Crew(
-        agents=[crew.code_analyst(), crew.qa_agent()],
-        tasks=[task],
-        process=Process.sequential,
-        verbose=True,
-    )
-    
-    return code_crew.kickoff()
 
 
 def run_plan(

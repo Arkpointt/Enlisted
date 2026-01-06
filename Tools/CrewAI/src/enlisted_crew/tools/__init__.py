@@ -52,6 +52,8 @@ from .docs_tools import (
 from .planning_tools import (
     save_plan,
     load_plan,
+    parse_plan,
+    get_plan_hash,
 )
 from .file_tools import (
     write_source,
@@ -144,6 +146,8 @@ __all__ = [
     # Planning
     "save_plan",
     "load_plan",
+    "parse_plan",
+    "get_plan_hash",
     
     # File Writing
     "write_source",

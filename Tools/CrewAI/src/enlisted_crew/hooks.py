@@ -4,6 +4,7 @@ Execution hooks for Enlisted CrewAI workflows.
 Provides cost tracking, safety guards, and validation for LLM and tool calls.
 """
 
+import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -15,6 +16,20 @@ from crewai.hooks import (
     before_tool_call,
     after_tool_call,
 )
+
+
+def _get_project_root() -> Path:
+    """Get the Enlisted project root directory."""
+    env_root = os.environ.get("ENLISTED_PROJECT_ROOT")
+    if env_root:
+        return Path(env_root)
+    
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "Enlisted.csproj").exists():
+            return parent
+    
+    return Path(r"C:\Dev\Enlisted\Enlisted")
 
 
 # =============================================================================
@@ -42,8 +57,8 @@ _CURRENT_RUN_COSTS = {
 
 def _get_db_path() -> str:
     """Get path to monitoring database."""
-    project_root = Path(__file__).parent.parent.parent.parent.parent
-    return str(project_root / "Tools" / "CrewAI" / "enlisted_knowledge.db")
+    project_root = _get_project_root()
+    return str(project_root / "Tools" / "CrewAI" / "database" / "enlisted_knowledge.db")
 
 
 def _estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
@@ -219,7 +234,7 @@ def validate_tool_safety(context):
             
             # Block absolute paths outside project
             if path.is_absolute():
-                project_root = Path(__file__).parent.parent.parent.parent.parent
+                project_root = _get_project_root()
                 try:
                     path.relative_to(project_root)
                 except ValueError:

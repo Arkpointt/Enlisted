@@ -53,6 +53,8 @@ from ..tools import (
     # Planning
     load_plan,
     save_plan,
+    parse_plan,
+    get_plan_hash,
     # File Operations
     write_source,
     write_event,
@@ -163,26 +165,36 @@ def get_systems_analyst() -> Agent:
         _agent_cache["systems_analyst"] = Agent(
             role="Systems Analyst",
             goal="Read implementation plans and verify what already exists in the codebase",
-            backstory="""You analyze feature plans and check what's already implemented.
+            backstory="""You verify implementation status using DATABASE TOOLS FIRST.
 
-Your job is to:
-1. Read the plan file thoroughly
-2. Extract all C# files/methods that need to be created
-3. Extract all JSON content IDs (events, decisions, orders) that need to be created
-4. Check if each one ALREADY EXISTS in the codebase
-5. Report exactly what's DONE vs what's STILL NEEDED
+CRITICAL - TOOL-FIRST WORKFLOW (execute in order):
+1. Call parse_plan to get structured list of content IDs and files
+2. Call lookup_content_id for EACH content ID (one call per ID)
+3. Call verify_file_exists_tool for EACH C# file (one call per file)
+4. Use find_in_code only if you need to verify methods exist
 
-This prevents duplicate work and wasted effort.""",
+TOOL CALL FORMAT: Each tool takes ONE argument, not arrays.
+- CORRECT: lookup_content_id("event_1") then lookup_content_id("event_2")
+- WRONG: lookup_content_id(["event_1", "event_2"])
+
+DATABASE TOOLS ARE FAST - use them before reading files.
+Report exactly: DONE (exists) vs NEEDED (not found).""",
             llm=GPT5_ARCHITECT,
             tools=[
-                load_plan,
-                read_doc_tool,
-                verify_file_exists_tool,
-                list_event_ids,
-                find_in_code,
-                read_source,
+                # Plan parsing tools FIRST - structured extraction
+                parse_plan,
+                get_plan_hash,
+                # Database tools - fast lookups
                 lookup_content_id,
                 search_content,
+                list_event_ids,
+                # File verification tools
+                verify_file_exists_tool,
+                find_in_code,
+                # Only use these if needed for context
+                load_plan,
+                read_source,
+                read_doc_tool,
             ],
             verbose=True,
             respect_context_window=True,
@@ -409,7 +421,13 @@ class ImplementationFlow(Flow[ImplementationState]):
         plan_content = full_path.read_text(encoding="utf-8")
         print(f"[OK] Plan loaded ({len(plan_content)} chars)")
         
+        # Calculate and store plan hash for version tracking
+        import hashlib
+        plan_hash = hashlib.md5(plan_content.encode('utf-8')).hexdigest()[:12]
+        print(f"[OK] Plan hash: {plan_hash}")
+        
         state.plan_content = plan_content
+        state.plan_hash = plan_hash
         state.current_step = "verify"
         return state
     
@@ -426,30 +444,42 @@ class ImplementationFlow(Flow[ImplementationState]):
         
         task = Task(
             description=f"""
-            Analyze this implementation plan and verify what already exists:
+            Verify what's already implemented for this plan.
             
-            PLAN CONTENT:
-            {state.plan_content[:8000]}
+            PLAN PATH: {state.plan_path}
+            PLAN HASH: {state.plan_hash}
             
-            YOUR TASKS:
-            1. Extract ALL C# files/methods mentioned in the plan
-            2. Extract ALL JSON content IDs (events, decisions, orders) mentioned
-            3. For each C# file: use verify_file_exists_tool to check if it exists
-            4. For each content ID: use lookup_content_id to check if it exists
-            5. If files exist, use find_in_code to check if specific methods exist
+            CRITICAL - TOOL-FIRST WORKFLOW (execute in order):
+            
+            1. FIRST call parse_plan with the plan path to get structured data:
+               - This returns JSON with csharp_files, content_ids, methods, status
+               - Use this structured output to guide your verification
+            
+            2. For each content_id from parse_plan output:
+               - Call lookup_content_id to check if it exists in the database
+               - Mark as DONE if found, NEEDED if not found
+            
+            3. For each csharp_file from parse_plan output:
+               - Call verify_file_exists_tool to check if file exists
+               - Mark as DONE if found, NEEDED if not found
+            
+            4. For methods, use find_in_code only if parse_plan didn't detect file status
+            
+            DO NOT:
+            - Read documentation files to check what exists
+            - Spend iterations "planning" without tool calls
+            - Re-search the same things
             
             REPORT FORMAT:
             ## Already Implemented
-            - List all files/IDs that ALREADY EXIST
+            - List all files/IDs that ALREADY EXIST (verified by tools)
             
-            ## Still Needed
+            ## Still Needed  
             - List all files/IDs that DON'T EXIST and need to be created
             
             ## Status
             - C# Status: COMPLETE / PARTIAL / NOT_STARTED
             - Content Status: COMPLETE / PARTIAL / NOT_STARTED
-            
-            Be thorough - check EVERY file and ID mentioned in the plan.
             """,
             expected_output="Verification report with lists of existing vs missing implementations",
             agent=get_systems_analyst(),

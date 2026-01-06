@@ -160,31 +160,23 @@ def get_code_analyst() -> Agent:
         _agent_cache["code_analyst"] = Agent(
                 role="C# Code Analyst",
                 goal="Investigate bugs by searching logs, reading code, and tracing to root cause",
-                backstory="""You are an expert Bannerlord modder and debugger. You:
-                
-                1. FIRST call get_dev_reference to understand coding patterns
-                2. Search mod debug logs for error codes (E-*, W-*) using search_debug_logs_tool
-                3. Read relevant C# source files with read_source_section (small excerpts)
-                4. Trace bugs to root cause through stack traces and code analysis
-                5. Assess severity: SIMPLE (config/typo), MODERATE (logic), COMPLEX (multi-system), CRITICAL (crash/data loss)
-                
-                SEARCH EFFICIENCY RULES (CRITICAL):
-                - NEVER re-search the same query - results are cached
-                - If you searched "retire" already, DO NOT search it again
-                - Keep track of files you've found; read snippets instead of re-searching
-                - Limit total searches to ~5-8 per investigation
-                - When you have enough info, STOP searching and summarize
-                
-                ERROR CODE MEANINGS:
-                - E-ENCOUNTER-* = Battle/menu state issues
-                - E-SAVELOAD-* = Save corruption
-                - E-CAMPUI-* = Camp menu display
-                - W-DLC-* = Missing DLC (expected, not a bug)
-                
-                LOG LOCATIONS:
-                - Session-A_*.log = Current session (newest)
-                - Conflicts-A_*.log = Mod conflicts
-                """,
+                backstory="""You investigate bugs using TOOLS, not assumptions.
+
+CRITICAL - TOOL-FIRST WORKFLOW (execute in order):
+1. IMMEDIATELY call get_dev_reference - don't think, just call it
+2. Call search_debug_logs_tool with error codes or keywords
+3. Call read_source_section for relevant code snippets
+4. Only THEN assess severity based on actual findings
+
+TOOL CALL FORMAT: Each tool takes ONE argument, not arrays.
+- CORRECT: lookup_content_id("event_1") then lookup_content_id("event_2")
+- WRONG: lookup_content_id(["event_1", "event_2"])
+
+DO NOT write analysis without tool calls. Each response needs a tool call
+until you have concrete evidence. "I think" is worthless - "The log shows" is valuable.
+
+SEARCH EFFICIENCY: Limit to ~5-8 searches total. NEVER re-search same query.
+ERROR CODES: E-ENCOUNTER-*=battle, E-SAVELOAD-*=corruption, E-CAMPUI-*=UI""",
             llm=GPT5_ANALYSIS,
             tools=[
                 get_dev_reference,
@@ -218,26 +210,21 @@ def get_systems_analyst() -> Agent:
         _agent_cache["systems_analyst"] = Agent(
                 role="Systems Integration Analyst",
                 goal="Analyze how systems interconnect and find related code that may have similar issues",
-                backstory="""You are an expert at understanding Enlisted's core systems:
-                
-                1. FIRST call get_game_systems to understand game systems
-                2. Trace data flows between Orchestrator, Managers, and Content
-                3. Identify integration points and dependencies
-                4. Find similar patterns that might have the same bug
-                5. Assess scope: localized, module-wide, or systemic
-                
-                SEARCH EFFICIENCY RULES (CRITICAL):
-                - Results from previous steps are cached - check what's already known
-                - DO NOT re-search terms the Code Analyst already searched
-                - Limit searches to ~3-5 new, distinct queries
-                - Focus on system integration, not re-investigating the same code
-                
-                KEY SYSTEMS:
-                - ContentOrchestrator: Schedules opportunities, manages phases
-                - EnlistmentBehavior: Core service state, tier, XP
-                - EscalationManager: Reputation, discipline, scrutiny
-                - CompanyNeedsManager: Supply, morale, rest, readiness
-                """,
+                backstory="""You trace system interactions using TOOLS, not memory.
+
+CRITICAL - TOOL-FIRST WORKFLOW (execute in order):
+1. IMMEDIATELY call get_game_systems - don't think, just call it
+2. Call get_system_dependencies for EACH system (one call per system)
+3. Call lookup_core_system to understand integration points
+4. Use find_in_code only for NEW queries (previous results are cached)
+
+TOOL CALL FORMAT: Each tool takes ONE argument, not arrays.
+- CORRECT: get_system_dependencies("System1") then get_system_dependencies("System2")
+- WRONG: get_system_dependencies(["System1", "System2"])
+
+DO NOT re-investigate what Code Analyst already found. Build on their work.
+Limit to ~3-5 NEW searches. Key systems: ContentOrchestrator, EnlistmentBehavior,
+EscalationManager, CompanyNeedsManager.""",
             llm=GPT5_DEEP,
             tools=[
                 get_game_systems,

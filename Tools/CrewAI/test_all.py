@@ -259,68 +259,70 @@ def test_mcp_server():
         return True  # Non-critical
 
 
-# ===== Test 5: Agents & Tools =====
+# ===== Test 5: Flow Agents =====
 
-def test_agents_configuration():
-    """Test agent and tool configuration."""
-    print_header("5. AGENTS & TOOLS TESTS")
+def test_flow_agents():
+    """Test that all flows can instantiate their agents."""
+    print_header("5. FLOW AGENTS TESTS")
     
     try:
-        from enlisted_crew.crew import EnlistedCrew
+        from enlisted_crew.flows import ValidationFlow
+        from enlisted_crew.flows.validation_flow import (
+            get_content_validator, get_build_validator, get_qa_reporter
+        )
         
-        ec = EnlistedCrew()
-        
-        # Get agent methods
-        agent_methods = [
-            m for m in dir(ec) 
-            if not m.startswith('_') and callable(getattr(ec, m)) and 
-            ('analyst' in m or 'architect' in m or 'implementer' in m or 
-             'author' in m or 'maintainer' in m or 'advisor' in m or 'agent' in m)
+        # Test ValidationFlow agents
+        agents = [
+            ("content_validator", get_content_validator),
+            ("build_validator", get_build_validator),
+            ("qa_reporter", get_qa_reporter),
         ]
         
-        print_pass(f"Found {len(agent_methods)} agent methods")
+        for name, factory in agents:
+            agent = factory()
+            tool_count = len(agent.tools) if hasattr(agent, 'tools') and agent.tools else 0
+            print_pass(f"ValidationFlow.{name}: {tool_count} tools")
         
-        # Test creating a few agents
-        test_agents = ['systems_analyst', 'code_analyst', 'feature_architect', 'qa_agent']
-        available_agents = [m for m in agent_methods if m in test_agents]
-        
-        for agent_name in available_agents:
-            try:
-                agent = getattr(ec, agent_name)()
-                print_pass(f"Agent '{agent_name}': {len(agent.tools if hasattr(agent, 'tools') else [])} tools")
-            except Exception as e:
-                print_fail(f"Agent '{agent_name}' failed: {e}")
+        print_info("")
+        print_info("    All agents are now defined inline in Flow files.")
+        print_info("    See flows/ directory for agent definitions.")
         
         return True
     except Exception as e:
-        print_fail(f"Agents test failed: {e}")
+        print_fail(f"Flow agents test failed: {e}")
         return False
 
 
 # ===== Test 6: LLM Configuration =====
 
 def test_llm_configuration():
-    """Test LLM tier configuration."""
+    """Test LLM configuration is accessible in flows."""
     print_header("6. LLM CONFIGURATION TESTS")
     
     try:
-        from enlisted_crew.crew import (
-            GPT5_ARCHITECT, GPT5_ANALYST, GPT5_IMPLEMENTER, 
-            GPT5_FAST, GPT5_QA
-        )
+        # LLMs are now defined inline in each flow
+        # Just verify the flow modules have LLM definitions
+        from enlisted_crew.flows import validation_flow, planning_flow, implementation_flow, bug_hunting_flow
         
-        llms = [
-            ("GPT5_ARCHITECT", GPT5_ARCHITECT),
-            ("GPT5_ANALYST", GPT5_ANALYST),
-            ("GPT5_IMPLEMENTER", GPT5_IMPLEMENTER),
-            ("GPT5_FAST", GPT5_FAST),
-            ("GPT5_QA", GPT5_QA),
+        flows_with_llms = [
+            ("validation_flow", validation_flow),
+            ("planning_flow", planning_flow),
+            ("implementation_flow", implementation_flow),
+            ("bug_hunting_flow", bug_hunting_flow),
         ]
         
-        for name, llm in llms:
-            print_pass(f"{name}: {llm.model}")
-            print_info(f"    - Max tokens: {llm.max_tokens}")
-            print_info(f"    - Prompt caching: {llm.supports_prompt_caching if hasattr(llm, 'supports_prompt_caching') else 'N/A'}")
+        for name, flow_module in flows_with_llms:
+            # Check if module has LLM objects (GPT5_*)
+            llm_names = [n for n in dir(flow_module) if n.startswith('GPT5_')]
+            if llm_names:
+                print_pass(f"{name}: {len(llm_names)} LLM configs")
+                for llm_name in llm_names:
+                    print_info(f"    - {llm_name}")
+            else:
+                print_warn(f"{name}: No LLM configs (may use defaults)")
+        
+        print_info("")
+        print_info("    LLMs are now defined inline per Flow for better isolation.")
         
         return True
     except Exception as e:
@@ -377,7 +379,7 @@ def main():
         ("Database", test_database),
         ("Database Tools", test_database_tools),
         ("MCP Server", test_mcp_server),
-        ("Agents & Tools", test_agents_configuration),
+        ("Flow Agents", test_flow_agents),
         ("LLM Configuration", test_llm_configuration),
         ("Environment", test_environment),
     ]

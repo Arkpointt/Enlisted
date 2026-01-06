@@ -7,6 +7,7 @@ Available Flows:
 - PlanningFlow: Design features with research, architecture advice, and validation
 - ImplementationFlow: Implement features from plans with smart partial-implementation handling
 - BugHuntingFlow: Investigate bugs, analyze systems, propose and validate fixes
+- ValidationFlow: Pre-commit validation (content, build, localization)
 
 All flows use:
 - State persistence (persist=True) for recovery on failure
@@ -23,6 +24,7 @@ Conditional Routing:
 from .planning_flow import PlanningFlow
 from .implementation_flow import ImplementationFlow
 from .bug_hunting_flow import BugHuntingFlow
+from .validation_flow import ValidationFlow, ValidationState
 
 # Import all state models from centralized location
 from .state_models import (
@@ -81,6 +83,8 @@ __all__ = [
     "PlanningFlow",
     "ImplementationFlow",
     "BugHuntingFlow",
+    "ValidationFlow",
+    "ValidationState",
     # Planning state models
     "PlanningState",
     "ValidationStatus",

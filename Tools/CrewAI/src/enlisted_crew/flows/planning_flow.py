@@ -137,9 +137,20 @@ def get_systems_analyst() -> Agent:
         _agent_cache["systems_analyst"] = Agent(
             role="Systems Analyst",
             goal="Research existing Enlisted systems to understand integration points",
-            backstory="""You research the Enlisted codebase to understand how systems work.
-You find relevant code, documentation, and dependencies. Your research forms
-the foundation for feature design.""",
+            backstory="""You research the Enlisted codebase using TOOLS, not memory.
+
+CRITICAL - TOOL-FIRST WORKFLOW:
+1. IMMEDIATELY call get_game_systems - don't think, just call it
+2. Call get_system_dependencies for EACH system (one call per system)
+3. Use find_in_code to locate relevant files
+4. Use read_source to examine code
+
+TOOL CALL FORMAT: Each tool takes ONE argument, not arrays.
+- CORRECT: get_system_dependencies("CompanyNeedsManager") then get_system_dependencies("EscalationManager")
+- WRONG: get_system_dependencies(["CompanyNeedsManager", "EscalationManager"])
+
+DO NOT spend iterations "planning" or "thinking". EXECUTE TOOLS.
+If you find yourself writing paragraphs without tool calls, STOP and call a tool.""",
             llm=GPT5_ARCHITECT,
             tools=[
                 get_game_systems,
@@ -168,9 +179,20 @@ def get_architecture_advisor() -> Agent:
         _agent_cache["architecture_advisor"] = Agent(
             role="Architecture Advisor",
             goal="Suggest best practices and architectural improvements",
-            backstory="""You advise on architecture and best practices for Enlisted features.
-You identify potential issues, suggest improvements, and ensure designs
-follow established patterns.""",
+            backstory="""You advise on architecture using VERIFIED facts from tools.
+
+CRITICAL - TOOL-FIRST WORKFLOW:
+1. IMMEDIATELY call get_architecture to load patterns
+2. Call get_tier_info for EACH tier needed (one call per tier: 1, 4, 5, 6, 7)
+3. Use find_in_code to verify patterns exist in codebase
+4. Use get_balance_value for EACH value needed (one call per value)
+
+TOOL CALL FORMAT: Each tool takes ONE argument, not arrays.
+- CORRECT: get_tier_info(5) then get_tier_info(6) then get_tier_info(7)
+- WRONG: get_tier_info([5, 6, 7])
+
+DO NOT give advice based on assumptions. Every recommendation must be
+grounded in actual tool output. Your advice is only valuable if verified.""",
             llm=GPT5_ARCHITECT,
             tools=[
                 get_architecture,
@@ -198,9 +220,18 @@ def get_feature_architect() -> Agent:
         _agent_cache["feature_architect"] = Agent(
             role="Feature Architect",
             goal="Design complete technical specifications for new features",
-            backstory="""You design features with detailed technical specs. You specify
-exact file paths, method signatures, event IDs, and integration points.
-Your specs are detailed enough for direct implementation.""",
+            backstory="""You design features with VERIFIED technical specs.
+
+CRITICAL - TOOL-FIRST WORKFLOW:
+1. Call get_dev_reference FIRST to understand coding patterns
+2. Call lookup_content_id to check what content IDs already exist
+3. Call list_event_ids to see existing event naming patterns
+4. Use find_in_code to verify integration points exist
+
+EVERY file path, method name, and content ID you specify MUST be verified.
+DO NOT invent file paths or method names. Check they exist or follow patterns.
+
+Your spec is only useful if implementation won't hit "file not found" errors.""",
             llm=GPT5_ARCHITECT,
             tools=[
                 get_dev_reference,

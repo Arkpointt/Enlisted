@@ -128,6 +128,16 @@ class ImplementationState(BaseModel):
     plan_path: str = ""
     plan_content: str = ""
     
+    # Plan version tracking (for detecting mid-implementation changes)
+    plan_hash: str = Field(
+        default="",
+        description="MD5 hash of plan content at start of implementation"
+    )
+    plan_changed: bool = Field(
+        default=False,
+        description="True if plan was modified during implementation"
+    )
+    
     # Verification results (populated by verify_existing step)
     csharp_status: ImplementationStatus = ImplementationStatus.NOT_STARTED
     content_status: ImplementationStatus = ImplementationStatus.NOT_STARTED
