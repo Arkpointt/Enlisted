@@ -85,6 +85,7 @@ from .database_tools import (
     add_system_dependency,
     record_implementation,
     sync_content_from_files,
+    check_database_health,
 )
 
 __all__ = [
@@ -176,4 +177,5 @@ __all__ = [
     "add_system_dependency",
     "record_implementation",
     "sync_content_from_files",
+    "check_database_health",
 ]

@@ -963,6 +963,81 @@ def add_system_dependency(
         return f"Error adding dependency: {str(e)}"
 
 
+@tool("check_database_health")
+def check_database_health() -> str:
+    """
+    Verify database integrity and report statistics.
+    
+    Returns:
+        Health report with table counts and any issues found.
+    
+    Example:
+        check_database_health()
+    """
+    try:
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        report = ["Database Health Report:", "=" * 40]
+        
+        # Check each table exists and get counts
+        tables = [
+            ("content_metadata", "content_id"),
+            ("balance_values", "key"),
+            ("error_catalog", "error_code"),
+            ("tier_definitions", "tier"),
+            ("game_systems", "system_name"),
+            ("system_dependencies", "id"),
+            ("api_patterns", "api_name"),
+            ("implementation_history", "id"),
+        ]
+        
+        for table_name, pk_col in tables:
+            try:
+                cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+                count = cursor.fetchone()[0]
+                report.append(f"  {table_name}: {count} rows")
+            except sqlite3.OperationalError:
+                report.append(f"  {table_name}: MISSING TABLE")
+        
+        # Check for orphaned content (marked deleted)
+        cursor.execute(
+            "SELECT COUNT(*) FROM content_metadata WHERE status = 'deleted'"
+        )
+        deleted = cursor.fetchone()[0]
+        if deleted > 0:
+            report.append(f"\nOrphaned content (deleted): {deleted}")
+        
+        # Check for missing file paths
+        cursor.execute("""
+            SELECT content_id, file_path FROM content_metadata 
+            WHERE status = 'active' AND file_path IS NOT NULL
+        """)
+        
+        project_root = Path(r"C:\Dev\Enlisted\Enlisted")
+        missing_files = []
+        for row in cursor.fetchall():
+            file_path = project_root / row[1]
+            if not file_path.exists():
+                missing_files.append(row[0])
+        
+        if missing_files:
+            report.append(f"\nContent with missing files: {len(missing_files)}")
+            for cid in missing_files[:5]:
+                report.append(f"  - {cid}")
+            if len(missing_files) > 5:
+                report.append(f"  ... and {len(missing_files) - 5} more")
+        
+        conn.close()
+        
+        report.append("\n" + "=" * 40)
+        report.append("Status: OK" if not missing_files else "Status: NEEDS SYNC")
+        
+        return "\n".join(report)
+    except Exception as e:
+        return f"Error checking database: {str(e)}"
+
+
 @tool("sync_content_from_files")
 def sync_content_from_files() -> str:
     """
@@ -999,7 +1074,7 @@ def sync_content_from_files() -> str:
             
             content_type = content_dir.name.lower().rstrip("s")  # Events -> event
             
-            for json_file in content_dir.glob("*.json"):
+            for json_file in content_dir.rglob("*.json"):  # rglob for subdirectories
                 try:
                     with open(json_file, "r", encoding="utf-8") as f:
                         data = json.load(f)
