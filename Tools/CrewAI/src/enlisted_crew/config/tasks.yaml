@@ -426,6 +426,15 @@ implement_content:
     2. Call load_domain_context_tool to understand current balance values
     3. Use list_json_event_ids_tool to check existing IDs and avoid conflicts
     4. Use read_event_file_tool to see existing examples as templates
+    5. Create JSON events with BOTH titleId AND title fallback (same for setup, options)
+    6. Use write_event tool to save JSON files
+    7. Run sync_strings tool to add strings to enlisted_strings.xml
+    8. Run validate_content tool to verify no errors
+    
+    CRITICAL - TWO-FILE SYSTEM:
+    - JSON files define structure/logic; XML file has localized text
+    - Every string ID (titleId, setupId, textId) MUST exist in enlisted_strings.xml
+    - Use sync_strings tool after writing JSON to generate XML entries
     
     TIER-AWARE CONTENT (required):
     - Check knowledge/game-design-principles.md for tier guidance
@@ -436,18 +445,18 @@ implement_content:
     
     SCHEMA REQUIREMENTS:
     1. Follow event-system-schemas.md exactly
-    2. Use proper field ordering (fallback after ID)
-    3. Include all required fields (tooltips, effects)
-    4. Follow writing-style-guide.md for narrative text
-    5. Use thematic skill aliases where appropriate
-    6. Ensure balanced effects (reference systems-integration-analysis.md)
+    2. Valid categories: crisis, decision, escalation, medical, pay, promotion, retinue, threshold, etc.
+    3. Valid severities: normal, attention, critical, urgent, positive
+    4. Use proper field ordering (fallback after ID)
+    5. Include all required fields (tooltips, effects)
+    6. Follow writing-style-guide.md for narrative text
   expected_output: >
     Content implementation report with:
     - JSON files created/modified
-    - Schema validation status
+    - XML localization strings synced (sync_strings output)
+    - Schema validation status (validate_content output)
     - Style compliance status
     - Balance assessment
-    - Localization strings needed
   agent: content_author
 
 # =============================================================================
@@ -719,6 +728,7 @@ sync_documentation:
     Synchronize documentation after IMPLEMENTED code changes. Only run this task
     when actual code/content has been created or modified - NOT for planning docs.
     
+    Plan File: {plan_path}
     Changed Files: {changed_files}
     Feature Area: {feature_area}
     
@@ -727,6 +737,15 @@ sync_documentation:
     - After JSON content is created and validates
     - After config files are modified
     - NOT after creating planning/design docs (use create_planning_doc instead)
+    
+    PLAN FILE UPDATE (if plan_path provided):
+    1. Use load_plan to read the current plan file
+    2. Change status from "📋 Planning" to "✅ Implemented"
+    3. Add "## Implementation Summary" section at the end with:
+       - Date implemented
+       - Files created/modified (from changed_files)
+       - Any deviations from original plan
+    4. Use save_plan to write the updated plan
     
     SYNC TASKS:
     1. Identify all docs that reference the changed code
@@ -762,6 +781,7 @@ sync_documentation:
     IMPORTANT: Small improvements compound. Fix issues in docs you touch.
   expected_output: >
     Documentation sync report with:
+    - Plan file update (status changed to ✅ Implemented, summary added)
     - Docs updated (with change summary)
     - Status field changes
     - INDEX.md updates needed

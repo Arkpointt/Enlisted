@@ -110,15 +110,17 @@ cd Tools/CrewAI && .\.venv\Scripts\Activate.ps1
 # Design a feature (research → advise → design → document → validate)
 enlisted-crew plan -f "feature-name" -d "description"
 
-# Find & fix bugs (investigate → analyze → fix → validate)
+# Find & fix bugs (investigate → analyze → apply fix → validate)
 enlisted-crew hunt-bug -d "bug description" -e "E-XXX-*"
 
-# Build from approved plan (analyze → code → content → validate → docs)
+# Build from approved plan (analyze → write code → write content → validate → docs)
 enlisted-crew implement -p "docs/CrewAI_Plans/feature.md"
 
 # Quick pre-commit check
 enlisted-crew validate
 ```
+
+**CrewAI writes files directly:** The `implement` and `hunt-bug` workflows apply changes to disk (C#, JSON, localization, .csproj). Review with `git diff` after running.
 
 **When to use CrewAI vs Warp directly:**
 - Quick fixes, single-file changes → Warp directly

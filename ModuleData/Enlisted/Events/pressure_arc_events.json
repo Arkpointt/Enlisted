@@ -1,128 +1,11 @@
-# Supply Pressure Arc - Implementation Test
-
-**Summary:** Minimal test implementation of the supply pressure arc system. Creates 9 tier-variant events (3 stages × 3 tiers) to validate the implementation workflow before tackling the full 35+ event plan.
-
-**Status:** ✅ Implemented
-
-**Last Updated:** 2026-01-06
-
-**Related Docs:** 
-- [Full Plan: Reputation-Morale-Supply Integration](./reputation-morale-supply-integration-v2.md)
-- [Game Design Principles](../../Tools/CrewAI/knowledge/game-design-principles.md)
-
----
-
-## Scope
-
-This is a **test subset** of the full reputation-morale-supply integration plan. It implements ONLY the supply pressure arc to validate the workflow.
-
-**In Scope:**
-- `CheckPressureArcEvents()` method in CompanySimulationBehavior.cs
-- 9 supply pressure events (3 stages × 3 tiers)
-- Basic event delivery integration
-
-**Out of Scope (Full Plan):**
-- Morale/rest pressure arcs
-- Positive arcs
-- Gradient fitness modifiers
-- Reputation-needs feedback loops
-- Synergy effects
-
----
-
-## C# Implementation
-
-### File: `src/Features/Camp/CompanySimulationBehavior.cs`
-
-Add method after existing pressure tracking:
-
-```csharp
-/// <summary>
-/// Checks pressure counters and fires narrative arc events at thresholds.
-/// Called from OnDailyTick after UpdatePressureTracking.
-/// </summary>
-private void CheckPressureArcEvents()
-{
-    if (_companyPressure == null) return;
-    
-    // Supply pressure arc
-    CheckSupplyPressureArc(_companyPressure.DaysLowSupplies);
-}
-
-private void CheckSupplyPressureArc(int daysLow)
-{
-    // Only fire at exact thresholds (avoid duplicates)
-    string eventId = null;
-    
-    switch (daysLow)
-    {
-        case 3:
-            eventId = GetTierVariantEventId("supply_pressure_stage_1");
-            break;
-        case 5:
-            eventId = GetTierVariantEventId("supply_pressure_stage_2");
-            break;
-        case 7:
-            eventId = GetTierVariantEventId("supply_crisis");
-            break;
-    }
-    
-    if (eventId != null)
-    {
-        EventDeliveryManager.Instance?.QueueEvent(eventId);
-        ModLogger.Info("CompanySimulation", $"Fired supply pressure event: {eventId}");
-    }
-}
-
-/// <summary>
-/// Returns tier-appropriate event ID suffix based on player tier.
-/// </summary>
-private string GetTierVariantEventId(string baseId)
-{
-    var tier = EnlistmentBehavior.Instance?.CurrentTier ?? 1;
-    
-    if (tier <= 4)
-        return $"{baseId}_grunt";
-    else if (tier <= 6)
-        return $"{baseId}_nco";
-    else
-        return $"{baseId}_cmd";
-}
-```
-
-### Integration Point
-
-In `OnDailyTick()`, add call after `UpdatePressureTracking()`:
-
-```csharp
-// Existing code
-UpdatePressureTracking();
-
-// NEW: Check for pressure arc events
-CheckPressureArcEvents();
-```
-
----
-
-## JSON Content
-
-### File: `ModuleData/Enlisted/Events/pressure_arc_events.json`
-
-Create new file with 9 events:
-
-```json
 {
   "schemaVersion": 2,
-  "category": "event",
+  "category": "crisis",
   "events": [
-    
-    // ========================================
-    // SUPPLY PRESSURE - STAGE 1 (Day 3)
-    // ========================================
     
     {
       "id": "supply_pressure_stage_1_grunt",
-      "category": "event",
+      "category": "crisis",
       "severity": "normal",
       "titleId": "supply_pressure_stage_1_grunt_title",
       "title": "Thin Rations",
@@ -166,7 +49,7 @@ Create new file with 9 events:
     
     {
       "id": "supply_pressure_stage_1_nco",
-      "category": "event",
+      "category": "crisis",
       "severity": "normal",
       "titleId": "supply_pressure_stage_1_nco_title",
       "title": "Your Squad Grumbles",
@@ -213,7 +96,7 @@ Create new file with 9 events:
     
     {
       "id": "supply_pressure_stage_1_cmd",
-      "category": "event",
+      "category": "crisis",
       "severity": "normal",
       "titleId": "supply_pressure_stage_1_cmd_title",
       "title": "Supply Officer's Report",
@@ -256,14 +139,10 @@ Create new file with 9 events:
       ]
     },
     
-    // ========================================
-    // SUPPLY PRESSURE - STAGE 2 (Day 5)
-    // ========================================
-    
     {
       "id": "supply_pressure_stage_2_grunt",
-      "category": "event",
-      "severity": "major",
+      "category": "crisis",
+      "severity": "attention",
       "titleId": "supply_pressure_stage_2_grunt_title",
       "title": "Fight at the Cook Fire",
       "setupId": "supply_pressure_stage_2_grunt_setup",
@@ -306,8 +185,8 @@ Create new file with 9 events:
     
     {
       "id": "supply_pressure_stage_2_nco",
-      "category": "event",
-      "severity": "major",
+      "category": "crisis",
+      "severity": "attention",
       "titleId": "supply_pressure_stage_2_nco_title",
       "title": "Your Men Are Fighting",
       "setupId": "supply_pressure_stage_2_nco_setup",
@@ -354,8 +233,8 @@ Create new file with 9 events:
     
     {
       "id": "supply_pressure_stage_2_cmd",
-      "category": "event",
-      "severity": "major",
+      "category": "crisis",
+      "severity": "attention",
       "titleId": "supply_pressure_stage_2_cmd_title",
       "title": "Discipline Breaking Down",
       "setupId": "supply_pressure_stage_2_cmd_setup",
@@ -401,13 +280,9 @@ Create new file with 9 events:
       ]
     },
     
-    // ========================================
-    // SUPPLY CRISIS (Day 7)
-    // ========================================
-    
     {
       "id": "supply_crisis_grunt",
-      "category": "event",
+      "category": "crisis",
       "severity": "critical",
       "titleId": "supply_crisis_grunt_title",
       "title": "Whispers of Desertion",
@@ -452,7 +327,7 @@ Create new file with 9 events:
     
     {
       "id": "supply_crisis_nco",
-      "category": "event",
+      "category": "crisis",
       "severity": "critical",
       "titleId": "supply_crisis_nco_title",
       "title": "One of Yours Is Leaving",
@@ -501,7 +376,7 @@ Create new file with 9 events:
     
     {
       "id": "supply_crisis_cmd",
-      "category": "event",
+      "category": "crisis",
       "severity": "critical",
       "titleId": "supply_crisis_cmd_title",
       "title": "Desertions Imminent",
@@ -561,66 +436,3 @@ Create new file with 9 events:
     }
   ]
 }
-```
-
----
-
-## Localization
-
-### File: `ModuleData/Languages/enlisted_strings.xml`
-
-Add string entries for all 9 events (titles, setups, option texts, tooltips).
-
-**Note:** The sync_event_strings.py tool will generate these automatically from the JSON.
-
----
-
-## Implementation Checklist
-
-### C# Tasks
-- [ ] Add `CheckPressureArcEvents()` method to CompanySimulationBehavior.cs
-- [ ] Add `CheckSupplyPressureArc()` helper method
-- [ ] Add `GetTierVariantEventId()` helper method
-- [ ] Add call to `CheckPressureArcEvents()` in `OnDailyTick()`
-- [ ] Verify EventDeliveryManager.QueueEvent() accepts these IDs
-- [ ] Build succeeds with no errors
-
-### JSON Tasks
-- [ ] Create `ModuleData/Enlisted/Events/pressure_arc_events.json`
-- [ ] Add all 9 events with correct tier requirements
-- [ ] Run `validate_content.py` - no errors
-- [ ] Run `sync_event_strings.py` - localization synced
-
-### Testing
-- [ ] Start game at T2 with low supplies → verify grunt events fire
-- [ ] Start game at T5 with low supplies → verify NCO events fire
-- [ ] Start game at T8 with low supplies → verify commander events fire
-- [ ] Verify events fire at exactly Day 3, 5, 7 (no duplicates)
-- [ ] Verify event effects apply correctly
-
----
-
-## Success Criteria
-
-- [ ] C# code compiles without errors
-- [ ] JSON validates without errors
-- [ ] Events fire at correct thresholds (Day 3, 5, 7)
-- [ ] Correct tier variant selected based on player tier
-- [ ] Effects apply correctly (reputation, HP, gold, etc.)
-- [ ] Player can make meaningful choices at each tier level
-
----
-
-## After This Test
-
-If successful, proceed with the full plan:
-1. Add morale and rest pressure arcs (18 more events)
-2. Add positive arcs (9+ events)
-3. Implement gradient fitness modifiers
-4. Implement reputation-needs feedback loops
-
-**Full Plan:** [reputation-morale-supply-integration-v2.md](./reputation-morale-supply-integration-v2.md)
-
----
-
-**End of Test Plan**

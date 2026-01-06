@@ -227,6 +227,7 @@ Tools use natural naming for readability. The `@tool("Name")` decorator defines 
 |------|---------|
 | `write_source` | Write C# source files to `src/` directories |
 | `write_event` | Write JSON event files to `ModuleData/Enlisted/` |
+| `write_doc` | Write/update markdown docs in `docs/Features/`, `docs/CrewAI_Plans/` |
 | `update_localization` | Add/update strings in `enlisted_strings.xml` |
 | `append_to_csproj` | Add new C# files to Enlisted.csproj compile list |
 

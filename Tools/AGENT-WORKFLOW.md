@@ -689,16 +689,12 @@ Warp creates and runs:
 
 ### Available CrewAI Crews
 
-| Crew | Purpose | Agents |
-|------|---------|--------|
-| `bug_hunting_crew()` | Investigate crashes/bugs, trace to root cause, fix | code_analyst → systems_analyst → csharp_implementer → qa_agent |
-| `planning_crew()` | Design docs only (ANEWFEATURE/) - NO code | systems_analyst → feature_architect → documentation_maintainer |
-| `feature_design_crew()` | Design spec without implementation | systems_analyst → code_analyst → feature_architect → balance_analyst |
-| `full_feature_crew()` | End-to-end: design → implement → docs | All 9 agents |
-| `validation_crew()` | Pre-commit checks | content_analyst → qa_agent |
-| `content_creation_crew()` | New JSON content | content_author → content_analyst → balance_analyst |
-| `code_review_crew()` | C# code review | code_analyst → qa_agent |
-| `documentation_crew()` | Sync docs after implementation | documentation_maintainer |
+| Crew | Purpose | Writes Files? | Agents |
+|------|---------|---------------|--------|
+| `bug_workflow()` | Investigate bugs, apply fix | ✅ C# | code_analyst → systems_analyst → csharp_implementer → qa_agent |
+| `plan_workflow()` | Design docs (CrewAI_Plans/) | ✅ Plan doc | systems_analyst → feature_architect → documentation_maintainer |
+| `implement_workflow()` | Build from approved plan | ✅ C#, JSON, XML | systems_analyst → csharp_implementer → content_author → qa_agent |
+| `validation_crew()` | Pre-commit checks | ❌ Read-only | content_analyst → qa_agent |
 
 ### CrewAI Model Tiers
 
@@ -724,20 +720,22 @@ Warp creates and runs:
 
 ```
 "Use CrewAI bug_hunting_crew to investigate E-ENCOUNTER-042 crash"
-→ Searches logs, traces root cause, proposes fix, validates it compiles
+→ Searches logs, traces root cause, WRITES fix to disk, validates it compiles
 
 "Use CrewAI planning_crew to design the skill integration feature"
 → Creates planning doc, no code changes
 
 "Use CrewAI full_feature_crew to implement the approved skill integration spec"
-→ Implements C#, JSON, updates all docs
+→ WRITES C#, JSON, localization files directly, updates all docs
 
 "Use CrewAI validation_crew to check all content before release"
 → Runs comprehensive validation
 
 "Use CrewAI content_creation_crew to add 5 new camp opportunities"
-→ Creates JSON content with style/schema compliance
+→ WRITES JSON content with style/schema compliance
 ```
+
+**Note:** `bug_hunting_crew`, `full_feature_crew`, and `content_creation_crew` now write files directly to disk. Always review changes with `git diff` after running these workflows.
 
 ### CrewAI Setup
 

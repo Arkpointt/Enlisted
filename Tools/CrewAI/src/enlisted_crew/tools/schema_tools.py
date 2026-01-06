@@ -61,6 +61,10 @@ def validate_event_structure(event: Dict[str, Any]) -> List[str]:
     elif event["category"] not in VALID_CATEGORIES:
         issues.append(f"Invalid category: {event['category']}. Valid: {VALID_CATEGORIES}")
     
+    # Severity validation (if present)
+    if "severity" in event and event["severity"] not in VALID_SEVERITIES:
+        issues.append(f"Invalid severity: {event['severity']}. Valid: {VALID_SEVERITIES}")
+    
     # Title/setup - need either ID or fallback (both preferred)
     if "titleId" not in event and "title" not in event:
         issues.append("Missing title: need titleId or title (both preferred)")

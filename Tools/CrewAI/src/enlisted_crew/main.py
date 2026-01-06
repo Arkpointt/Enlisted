@@ -204,6 +204,7 @@ def run_implement(crew: EnlistedCrew, plan_path: str):
         "related_systems": "See plan for system details",
         "content_type": "events and decisions as specified in plan",
         "requirements": "See plan for requirements",
+        "plan_path": plan_path,  # For updating plan status after implementation
         "changed_files": "Files changed during implementation",
         "feature_area": feature_name,
     })

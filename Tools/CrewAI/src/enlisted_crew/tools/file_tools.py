@@ -32,9 +32,11 @@ PROJECT_ROOT = get_project_root()
 
 # Allowed directories for file writing (security constraint)
 ALLOWED_WRITE_DIRS = [
+    # Source code
     "src/Features",
     "src/Mod.Core",
     "src/Mod.GameAdapters",
+    # JSON content
     "ModuleData/Enlisted/Events",
     "ModuleData/Enlisted/Decisions",
     "ModuleData/Enlisted/Orders",
@@ -42,8 +44,11 @@ ALLOWED_WRITE_DIRS = [
     "ModuleData/Enlisted/Conditions",
     "ModuleData/Enlisted/Content",
     "ModuleData/Languages",
+    # Documentation
     "docs/Features",
     "docs/CrewAI_Plans",
+    "docs/ANEWFEATURE",
+    "docs/Reference",
 ]
 
 
@@ -194,6 +199,40 @@ def _escape_xml(text: str) -> str:
             .replace('"', "&quot;")
             .replace("'", "&apos;")
             .replace("\n", "&#xA;"))
+
+
+@tool("Write Documentation")
+def write_doc(file_path: str, content: str) -> str:
+    """
+    Write or update a markdown documentation file anywhere in the project.
+    
+    Args:
+        file_path: Path relative to project root (e.g., "docs/INDEX.md", "README.md")
+        content: Full markdown content
+    
+    Returns:
+        Success message or error.
+    """
+    if not file_path.endswith(".md"):
+        return f"ERROR: write_doc only writes .md files. Got: {file_path}"
+    
+    full_path = PROJECT_ROOT / file_path
+    
+    # Safety: must be within project root
+    try:
+        full_path.resolve().relative_to(PROJECT_ROOT.resolve())
+    except ValueError:
+        return f"ERROR: Path {file_path} is outside project root"
+    
+    directory = full_path.parent
+    
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(content, encoding='utf-8')
+        return f"✅ Wrote documentation: {file_path} ({len(content)} bytes)"
+    
+    except Exception as e:
+        return f"ERROR writing {file_path}: {e}"
 
 
 @tool("Append to Csproj")

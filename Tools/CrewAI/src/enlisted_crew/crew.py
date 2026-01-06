@@ -72,6 +72,7 @@ from .tools import (
     # File Writing
     write_source,
     write_event,
+    write_doc,
     update_localization,
     append_to_csproj,
 )
@@ -162,10 +163,18 @@ class EnlistedCrew:
         unlike static backstories which should remain architectural.
         
         Note: CrewAI expects relative paths from the project's knowledge/ directory.
+        
+        Chunk settings (for embedding model compatibility):
+        - chunk_size=2000 chars (~500 tokens) - fits within 8192 token embedding limit
+        - chunk_overlap=200 - maintains context between chunks
         """
+        # Shared chunk settings for embedding model compatibility
+        chunk_params = {"chunk_size": 2000, "chunk_overlap": 200}
+        
         # Systems knowledge - for systems_analyst, feature_architect
         self.systems_knowledge = TextFileKnowledgeSource(
-            file_paths=["core-systems.md"]
+            file_paths=["core-systems.md"],
+            **chunk_params,
         )
         
         # Code knowledge - for code_analyst, csharp_implementer
@@ -173,7 +182,8 @@ class EnlistedCrew:
             file_paths=[
                 "core-systems.md",
                 "error-codes.md",
-            ]
+            ],
+            **chunk_params,
         )
         
         # Content knowledge - for content_author, content_analyst
@@ -182,7 +192,8 @@ class EnlistedCrew:
                 "event-format.md",
                 "balance-values.md",
                 "game-design-principles.md",  # Tier-aware content guidance
-            ]
+            ],
+            **chunk_params,
         )
         
         # Balance knowledge - for balance_analyst
@@ -191,7 +202,8 @@ class EnlistedCrew:
                 "balance-values.md",
                 "core-systems.md",
                 "game-design-principles.md",  # Player engagement checks
-            ]
+            ],
+            **chunk_params,
         )
         
         # Planning knowledge - for documentation_maintainer (planning tasks)
@@ -199,7 +211,8 @@ class EnlistedCrew:
             file_paths=[
                 "core-systems.md",
                 "content-files.md",  # JSON content inventory for verification
-            ]
+            ],
+            **chunk_params,
         )
         
         # Design knowledge - for feature_architect (player experience)
@@ -207,7 +220,8 @@ class EnlistedCrew:
             file_paths=[
                 "core-systems.md",
                 "game-design-principles.md",  # Tier-aware design, Story Test
-            ]
+            ],
+            **chunk_params,
         )
         
         # UI knowledge - for feature_architect, csharp_implementer (UI work)
@@ -215,7 +229,8 @@ class EnlistedCrew:
             file_paths=[
                 "ui-systems.md",
                 "core-systems.md",
-            ]
+            ],
+            **chunk_params,
         )
     
     def _find_project_root(self) -> Path:
@@ -339,6 +354,7 @@ class EnlistedCrew:
                 # File writing tools
                 write_source,        # Write C# files
                 append_to_csproj,    # Add new files to project
+                update_localization, # Add TextObject strings to XML
             ],
             knowledge_sources=[self.ui_knowledge],
             respect_context_window=True,
@@ -364,6 +380,9 @@ class EnlistedCrew:
                 # File writing tools
                 write_event,         # Write JSON event files
                 update_localization, # Add strings to XML
+                # Validation tools (complete the workflow)
+                sync_strings,        # Batch-sync JSON string IDs to XML
+                validate_content,    # Full content validation
             ],
             knowledge_sources=[self.content_knowledge],
             respect_context_window=True,
@@ -422,7 +441,8 @@ class EnlistedCrew:
                 list_feature_files_tool,
                 get_game_systems,
                 # File writing for doc updates
-                update_localization, # Can update XML strings during doc sync
+                write_doc,           # Write/update markdown docs
+                update_localization, # Update XML localization strings
             ],
             knowledge_sources=[self.planning_knowledge],
             respect_context_window=True,

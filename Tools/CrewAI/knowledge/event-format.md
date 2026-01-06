@@ -2,6 +2,47 @@
 
 **Canonical Reference:** `docs/Features/Content/event-system-schemas.md`
 
+## CRITICAL: Dual-File Content System
+
+Enlisted uses a **TWO-FILE SYSTEM** for all player-visible text:
+
+1. **JSON files** (`ModuleData/Enlisted/Events/*.json`) - Event structure, effects, logic
+2. **XML file** (`ModuleData/Languages/enlisted_strings.xml`) - Localized text strings
+
+**Every event with text MUST have strings in BOTH files.**
+
+### Content Creation Workflow
+
+```
+1. Write JSON event with:
+   - "titleId": "my_event_title"
+   - "title": "Fallback Title"      ← BOTH required!
+   - "setupId": "my_event_setup"
+   - "setup": "Fallback setup..."   ← BOTH required!
+   - Same for option text/tooltips
+
+2. Run sync_strings tool:
+   $ python Tools/Validation/sync_event_strings.py
+   → Adds missing entries to enlisted_strings.xml
+
+3. Verify with validate_content:
+   $ python Tools/Validation/validate_content.py
+   → Checks JSON structure AND XML references
+```
+
+### Why Both Files?
+
+- **JSON `title`/`setup`** = Fallback if XML missing (dev safety)
+- **XML `enlisted_strings.xml`** = Actual displayed text (supports translations)
+- Validator warns if JSON references an ID not in XML
+
+### Agent Workflow
+
+When creating content, use these tools in order:
+1. `draft_event` or `write_event` → Creates JSON
+2. `sync_strings` → Updates XML
+3. `validate_content` → Final check
+
 ## File Structure
 
 All event/decision files use this root structure:
@@ -31,6 +72,45 @@ All event/decision files use this root structure:
   "options": [ ... ]
 }
 ```
+
+## REQUIRED: Valid Categories & Severities
+
+**Using invalid values causes validation ERROR (blocks commit).**
+
+### Valid Categories
+
+| Category | Used For |
+|----------|----------|
+| `crisis` | Pressure arc events, supply/morale crises |
+| `decision` | Player-initiated camp decisions |
+| `escalation` | Escalation track events |
+| `general` | Generic events |
+| `map_incident` | Location-triggered events |
+| `medical` | Illness/injury events |
+| `muster` | 12-day muster events |
+| `onboarding` | Tutorial/early-game events |
+| `pay` | Pay tension/mutiny events |
+| `promotion` | Rank advancement events |
+| `retinue` | T7+ retinue events |
+| `role` | Role-specific events (Scout, Medic, etc.) |
+| `threshold` | Escalation threshold crossings |
+| `training` | Training-related events |
+| `universal` | Any-tier events |
+
+### Valid Severities
+
+| Severity | Priority | Used For |
+|----------|----------|----------|
+| `normal` | Low | Standard events, routine |
+| `positive` | Low | Good news, rewards |
+| `attention` | Medium | Escalating issues, warnings |
+| `urgent` | High | Time-sensitive problems |
+| `critical` | Highest | Crises, major consequences |
+
+**Example:** Supply pressure uses escalating severity:
+- Stage 1 (Day 3): `"severity": "normal"`
+- Stage 2 (Day 5): `"severity": "attention"`
+- Crisis (Day 7): `"severity": "critical"`
 
 ## ID Prefixes & Delivery
 

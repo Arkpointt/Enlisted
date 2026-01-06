@@ -228,6 +228,9 @@ namespace Enlisted.Features.Camp
             // Phase 5: Pulse Evaluation (threshold crossings)
             ProcessPulse(result);
 
+            // Phase 5.5: Pressure Arc Events (tier-variant narrative events at thresholds)
+            CheckPressureArcEvents();
+
             // Phase 6: News Generation
             GenerateNews(result);
 
@@ -653,6 +656,74 @@ namespace Enlisted.Features.Camp
                     Severity = "critical"
                 });
             }
+        }
+
+        /// <summary>
+        /// Checks pressure counters and fires narrative arc events at thresholds.
+        /// Called from ProcessDailySimulation after ProcessPulse.
+        /// </summary>
+        private void CheckPressureArcEvents()
+        {
+            if (_pressure == null)
+            {
+                return;
+            }
+
+            // Supply pressure arc
+            CheckSupplyPressureArc(_pressure.DaysLowSupplies);
+        }
+
+        private void CheckSupplyPressureArc(int daysLow)
+        {
+            // Only fire at exact thresholds (avoid duplicates)
+            string eventId = null;
+
+            switch (daysLow)
+            {
+                case 3:
+                    eventId = GetTierVariantEventId("supply_pressure_stage_1");
+                    break;
+                case 5:
+                    eventId = GetTierVariantEventId("supply_pressure_stage_2");
+                    break;
+                case 7:
+                    eventId = GetTierVariantEventId("supply_crisis");
+                    break;
+            }
+
+            if (eventId != null)
+            {
+                var evt = EventCatalog.GetEvent(eventId);
+                if (evt != null)
+                {
+                    EventDeliveryManager.Instance?.QueueEvent(evt);
+                    ModLogger.Info(LogCategory, $"Fired supply pressure event: {eventId}");
+                }
+                else
+                {
+                    ModLogger.Warn(LogCategory, $"Supply pressure event not found: {eventId}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns tier-appropriate event ID suffix based on player tier.
+        /// </summary>
+        private string GetTierVariantEventId(string baseId)
+        {
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+
+            if (tier <= 4)
+            {
+                return $"{baseId}_grunt";
+            }
+
+            if (tier <= 6)
+            {
+                return $"{baseId}_nco";
+            }
+
+            return $"{baseId}_cmd";
         }
 
         /// <summary>Phase 6: Push simulation results to the news system.</summary>

@@ -56,6 +56,7 @@ from .planning_tools import (
 from .file_tools import (
     write_source,
     write_event,
+    write_doc,
     update_localization,
     append_to_csproj,
 )
@@ -120,6 +121,7 @@ __all__ = [
     # File Writing
     "write_source",
     "write_event",
+    "write_doc",
     "update_localization",
     "append_to_csproj",
 ]

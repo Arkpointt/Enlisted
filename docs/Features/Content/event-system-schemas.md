@@ -88,12 +88,46 @@
 | Field | JSON Name | Type | Required | Notes |
 |-------|-----------|------|----------|-------|
 | ID | `id` | string | ✅ | Must be unique. Prefix determines delivery. |
-| Category | `category` | string | ✅ | Must be `"decision"` for Camp Hub decisions |
-| Severity | `severity` | string | ❌ | News priority/color: `"normal"`, `"positive"`, `"attention"`, `"urgent"`, `"critical"` (defaults to `"normal"`) |
+| Category | `category` | string | ✅ | See valid categories below. `"decision"` for Camp Hub. |
+| Severity | `severity` | string | ❌ | News priority: `"normal"`, `"positive"`, `"attention"`, `"urgent"`, `"critical"` |
 | Title ID | `titleId` | string | ✅* | XML localization key. *Either titleId OR title required (both recommended) |
 | Title Fallback | `title` | string | ✅* | Fallback text if localization missing. *Either titleId OR title required |
 | Setup ID | `setupId` | string | ✅* | XML localization key for description. *Either setupId OR setup required (both recommended) |
 | Setup Fallback | `setup` | string | ✅* | Fallback text if localization missing. *Either setupId OR setup required |
+
+### Valid Categories (enforced by validator)
+
+| Category | Used For | Example |
+|----------|----------|---------|
+| `crisis` | Pressure arc events, supply/morale crises | `supply_crisis_grunt` |
+| `decision` | Camp Hub player decisions | `dec_rest`, `dec_training_drill` |
+| `escalation` | Escalation system events | `esc_discipline_warning` |
+| `general` | Generic/miscellaneous events | - |
+| `map_incident` | Location-triggered events | `mi_town_tavern` |
+| `medical` | Illness/injury events | `illness_onset_*` |
+| `muster` | 12-day muster sequence | `muster_pay_line` |
+| `onboarding` | Tutorial/early-game | `evt_baggage_stowage` |
+| `pay` | Pay tension/mutiny arc | `pay_tension_grumbling` |
+| `promotion` | Rank advancement | `promotion_to_*` |
+| `retinue` | T7+ retinue events | `retinue_*` |
+| `role` | Role-specific (Scout, Medic, etc.) | `role_scout_*` |
+| `threshold` | Escalation threshold crossings | `discipline_warning` |
+| `training` | Training events | `training_*` |
+| `universal` | Any-tier events | - |
+
+**Invalid category = validation ERROR (blocks commit).**
+
+### Valid Severities
+
+| Severity | Priority | Color | Used For |
+|----------|----------|-------|----------|
+| `normal` | Low | Default | Routine events |
+| `positive` | Low | Green | Good news, rewards |
+| `attention` | Medium | Yellow | Escalating issues |
+| `urgent` | High | Orange | Time-sensitive |
+| `critical` | Highest | Red | Crises, major consequences |
+
+**Invalid severity = validation ERROR (blocks commit).**
 
 ---
 
