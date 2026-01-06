@@ -199,7 +199,37 @@ class EnlistedCrew:
         """Initialize the crew with project root detection and knowledge sources."""
         self.project_root = self._find_project_root()
         os.environ["ENLISTED_PROJECT_ROOT"] = str(self.project_root)
+        self._check_index_staleness()
         self._init_knowledge_sources()
+    
+    def _check_index_staleness(self):
+        """Check if MCP index is stale and warn user."""
+        from pathlib import Path
+        
+        mcp_index = self.project_root / "Tools" / "CrewAI" / "mcp_servers" / "bannerlord_api_index.db"
+        decompile_path = Path(r"C:\Dev\Enlisted\Decompile")
+        
+        if not mcp_index.exists():
+            print("\n[WARN] MCP index not found. Run: cd Tools/CrewAI/mcp_servers && python build_index.py\n")
+            return
+        
+        if not decompile_path.exists():
+            return  # Can't check staleness without decompile folder
+        
+        # Compare modification times (sample check)
+        index_mtime = mcp_index.stat().st_mtime
+        sample_dirs = ["TaleWorlds.Core", "TaleWorlds.CampaignSystem"]
+        
+        for subdir in sample_dirs:
+            check_dir = decompile_path / subdir
+            if check_dir.exists():
+                for cs_file in list(check_dir.rglob("*.cs"))[:5]:
+                    if cs_file.stat().st_mtime > index_mtime:
+                        print("\n" + "="*60)
+                        print("[WARN] MCP INDEX IS STALE - Decompile folder has newer files!")
+                        print("       Run: cd Tools/CrewAI && .\\update_after_patch.ps1")
+                        print("="*60 + "\n")
+                        return
     
     def _init_knowledge_sources(self):
         """

@@ -615,6 +615,32 @@ After initial testing, establish baselines for regression detection:
 | ImplementationFlow | 8.5+ | 300s | C# generation most complex |
 | BugHuntingFlow | 8.0+ | 200s | Investigation variable |
 
+### After Bannerlord Patch (Game Updates)
+
+When Bannerlord updates and you decompile a new version:
+
+```powershell
+cd Tools/CrewAI
+.\update_after_patch.ps1
+```
+
+This script:
+1. ✅ Checks decompile folder exists (`C:\Dev\Enlisted\Decompile`)
+2. ✅ Rebuilds MCP index with new API signatures
+3. ✅ Runs all tests to verify everything works
+
+**Automatic Staleness Detection:**
+- `test_all.py` warns if MCP index is older than decompiled code
+- `EnlistedCrew` warns on initialization if indexes are stale
+- No need to remember - the system will tell you!
+
+**When to Run:**
+| Update Type | Action |
+|-------------|--------|
+| Hotfix (bug fix) | Usually skip - no API changes |
+| Minor patch (e.x.x) | Run update script |
+| Major patch (x.x.0) | Run update script + review failures |
+
 ### Troubleshooting
 
 **"Module not found: crewai"**

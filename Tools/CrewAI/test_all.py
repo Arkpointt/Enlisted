@@ -195,6 +195,7 @@ def test_mcp_server():
     print_header("4. MCP SERVER TESTS")
     
     mcp_index_path = Path("mcp_servers/bannerlord_api_index.db")
+    decompile_path = Path(r"C:\Dev\Enlisted\Decompile")
     
     if not mcp_index_path.exists():
         print_warn(f"MCP index not found at {mcp_index_path}")
@@ -202,6 +203,32 @@ def test_mcp_server():
         return True  # Non-critical, return True
     
     print_pass(f"MCP index found ({mcp_index_path.stat().st_size // 1024 // 1024} MB)")
+    
+    # Check if MCP index is stale (decompile folder updated after index was built)
+    if decompile_path.exists():
+        index_mtime = mcp_index_path.stat().st_mtime
+        
+        # Find newest .cs file in decompile folder (sample check, not exhaustive)
+        newest_cs_time = 0
+        sample_dirs = ["TaleWorlds.Core", "TaleWorlds.CampaignSystem", "TaleWorlds.MountAndBlade"]
+        for subdir in sample_dirs:
+            check_dir = decompile_path / subdir
+            if check_dir.exists():
+                for cs_file in list(check_dir.rglob("*.cs"))[:10]:  # Sample first 10 files
+                    cs_mtime = cs_file.stat().st_mtime
+                    if cs_mtime > newest_cs_time:
+                        newest_cs_time = cs_mtime
+        
+        if newest_cs_time > index_mtime:
+            from datetime import datetime
+            index_date = datetime.fromtimestamp(index_mtime).strftime('%Y-%m-%d')
+            decompile_date = datetime.fromtimestamp(newest_cs_time).strftime('%Y-%m-%d')
+            print_warn(f"MCP INDEX IS STALE!")
+            print_warn(f"    Index built: {index_date}")
+            print_warn(f"    Decompile updated: {decompile_date}")
+            print_warn(f"    Run: cd mcp_servers && python build_index.py")
+        else:
+            print_pass("MCP index is up-to-date with decompile folder")
     
     try:
         sys.path.insert(0, str(Path("mcp_servers")))
