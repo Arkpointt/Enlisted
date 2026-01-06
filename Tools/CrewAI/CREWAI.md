@@ -570,6 +570,34 @@ print(result.fix_proposal.summary)
 - Configurable reasoning effort for all models
 - Cost-efficient: GPT-5 mini at $0.25/1M in, GPT-5 nano even cheaper
 
+### Memory & Knowledge Configuration
+
+All three workflows (plan, bug, implement) have crew memory enabled for context sharing between tasks.
+
+**Crew Memory Settings:**
+```python
+Crew(
+    memory=True,   # Share context across tasks
+    cache=True,    # Cache tool results to avoid redundancy
+    embedder=EMBEDDER_CONFIG,  # OpenAI embeddings
+)
+```
+
+**Embedder Configuration:**
+- **Model:** `text-embedding-3-large`
+- **Dimensions:** 3,072 (2x more than 3-small)
+- **Token Limit:** 8,191 tokens
+- **Cost:** ~$0.13 per 1M tokens
+- **Benefit:** Superior semantic understanding for technical content
+
+**Knowledge Source Chunking:**
+- **Chunk Size:** 24,000 chars (~6,000 tokens)
+- **Chunk Overlap:** 2,400 chars (~600 tokens, 10% overlap)
+- **Strategy:** Keep full sections together for context retention
+- **Safety Margin:** ~2,000 tokens below embedding limit
+
+This configuration maximizes context retention while staying well within the 8,191 token embedding limit. Agents can understand complete system descriptions without fragmentation.
+
 ### Integration Checklist Summary
 
 ✅ **File Structure:** All required files present  

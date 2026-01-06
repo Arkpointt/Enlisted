@@ -126,7 +126,10 @@ enlisted-crew validate
 - Quick fixes, single-file changes → Warp directly
 - Multi-file features, planning, bug hunting → CrewAI
 
-**Setup:** See [Tools/CrewAI/CREWAI.md](Tools/CrewAI/CREWAI.md) (requires `.env` with `ANTHROPIC_API_KEY`)
+**Setup:** See [Tools/CrewAI/CREWAI.md](Tools/CrewAI/CREWAI.md)  
+**Requirements:** OpenAI API key in `.env` file  
+**Models:** OpenAI GPT-5 family (GPT-5.2, GPT-5 mini, GPT-5 nano)  
+**Memory:** Enabled with text-embedding-3-large for superior knowledge retrieval
 
 ## 📂 Project Structure
 
