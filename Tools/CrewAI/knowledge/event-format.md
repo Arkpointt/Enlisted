@@ -77,35 +77,46 @@ All event/decision files use this root structure:
 
 **Using invalid values causes validation ERROR (blocks commit).**
 
-### Valid Categories
+### Valid Categories (verified from actual JSON files)
 
-| Category | Used For |
+| Category | Used In | Description |
+|----------|---------|-------------|
+| `camp_life` | Events | Daily camp activities and routines |
+| `crisis` | Events | Urgent problems requiring immediate attention |
+| `decision` | Decisions | Player choices with consequences |
+| `discipline` | Orders | Behavioral issues and corrections |
+| `discovery` | Events | Learning and skill development |
+| `economic` | Events | Financial and resource management |
+| `emergency_drill` | Orders | Combat readiness training |
+| `extended_rest` | Orders | Recovery and recuperation |
+| `foraging` | Orders | Resource gathering activities |
+| `formation` | Orders | Formation selection and tactics |
+| `light_duty` | Orders | Reduced work assignments |
+| `map_incident` | Events | Random encounters during travel |
+| `medical` | Events | Illness, injury, and treatment |
+| `onboarding` | Events | New player introduction and tutorials |
+| `order_event` | Events | Order-triggered events |
+| `patrol` | Orders | Patrol and reconnaissance missions |
+| `pay` | Events | Wage, payment, and compensation |
+| `problems` | Events | General problems and complications |
+| `promotion` | Events | Tier advancement and recognition |
+| `recovery` | Orders | Healing and rehabilitation |
+| `retinue` | Events | Companion and follower events |
+| `social` | Events | Social interactions and relationships |
+| `special` | Events | Special circumstances and unique events |
+| `threshold` | Events | Escalation threshold triggers |
+| `training` | Orders | Skill training and practice |
+| `work` | Orders | Work assignments and labor |
+
+### Valid Severities (verified from actual JSON files)
+
+| Severity | Used For |
 |----------|----------|
-| `crisis` | Pressure arc events, supply/morale crises |
-| `decision` | Player-initiated camp decisions |
-| `escalation` | Escalation track events |
-| `general` | Generic events |
-| `map_incident` | Location-triggered events |
-| `medical` | Illness/injury events |
-| `muster` | 12-day muster events |
-| `onboarding` | Tutorial/early-game events |
-| `pay` | Pay tension/mutiny events |
-| `promotion` | Rank advancement events |
-| `retinue` | T7+ retinue events |
-| `role` | Role-specific events (Scout, Medic, etc.) |
-| `threshold` | Escalation threshold crossings |
-| `training` | Training-related events |
-| `universal` | Any-tier events |
-
-### Valid Severities
-
-| Severity | Priority | Used For |
-|----------|----------|----------|
-| `normal` | Low | Standard events, routine |
-| `positive` | Low | Good news, rewards |
-| `attention` | Medium | Escalating issues, warnings |
-| `urgent` | High | Time-sensitive problems |
-| `critical` | Highest | Crises, major consequences |
+| `normal` | Standard priority event |
+| `attention` | Requires player attention |
+| `critical` | High priority, serious consequences |
+| `serious` | Major problem or situation |
+| `moderate` | Medium severity |
 
 **Example:** Supply pressure uses escalating severity:
 - Stage 1 (Day 3): `"severity": "normal"`

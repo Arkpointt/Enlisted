@@ -97,35 +97,50 @@
 
 ### Valid Categories (enforced by validator)
 
-| Category | Used For | Example |
-|----------|----------|---------|
-| `crisis` | Pressure arc events, supply/morale crises | `supply_crisis_grunt` |
-| `decision` | Camp Hub player decisions | `dec_rest`, `dec_training_drill` |
-| `escalation` | Escalation system events | `esc_discipline_warning` |
-| `general` | Generic/miscellaneous events | - |
-| `map_incident` | Location-triggered events | `mi_town_tavern` |
-| `medical` | Illness/injury events | `illness_onset_*` |
-| `muster` | 12-day muster sequence | `muster_pay_line` |
-| `onboarding` | Tutorial/early-game | `evt_baggage_stowage` |
-| `pay` | Pay tension/mutiny arc | `pay_tension_grumbling` |
-| `promotion` | Rank advancement | `promotion_to_*` |
-| `retinue` | T7+ retinue events | `retinue_*` |
-| `role` | Role-specific (Scout, Medic, etc.) | `role_scout_*` |
-| `threshold` | Escalation threshold crossings | `discipline_warning` |
-| `training` | Training events | `training_*` |
-| `universal` | Any-tier events | - |
+**Verified from actual JSON files (26 total):**
+
+| Category | Used In | Description |
+|----------|---------|-------------|
+| `camp_life` | Events | Daily camp activities and routines |
+| `crisis` | Events | Urgent problems requiring immediate attention |
+| `decision` | Decisions | Player choices with consequences |
+| `discipline` | Orders | Behavioral issues and corrections |
+| `discovery` | Events | Learning and skill development |
+| `economic` | Events | Financial and resource management |
+| `emergency_drill` | Orders | Combat readiness training |
+| `extended_rest` | Orders | Recovery and recuperation |
+| `foraging` | Orders | Resource gathering activities |
+| `formation` | Orders | Formation selection and tactics |
+| `light_duty` | Orders | Reduced work assignments |
+| `map_incident` | Events | Random encounters during travel |
+| `medical` | Events | Illness, injury, and treatment |
+| `onboarding` | Events | New player introduction and tutorials |
+| `order_event` | Events | Order-triggered events |
+| `patrol` | Orders | Patrol and reconnaissance missions |
+| `pay` | Events | Wage, payment, and compensation |
+| `problems` | Events | General problems and complications |
+| `promotion` | Events | Tier advancement and recognition |
+| `recovery` | Orders | Healing and rehabilitation |
+| `retinue` | Events | Companion and follower events |
+| `social` | Events | Social interactions and relationships |
+| `special` | Events | Special circumstances and unique events |
+| `threshold` | Events | Escalation threshold triggers |
+| `training` | Orders | Skill training and practice |
+| `work` | Orders | Work assignments and labor |
 
 **Invalid category = validation ERROR (blocks commit).**
 
 ### Valid Severities
 
-| Severity | Priority | Color | Used For |
-|----------|----------|-------|----------|
-| `normal` | Low | Default | Routine events |
-| `positive` | Low | Green | Good news, rewards |
-| `attention` | Medium | Yellow | Escalating issues |
-| `urgent` | High | Orange | Time-sensitive |
-| `critical` | Highest | Red | Crises, major consequences |
+**Verified from actual JSON files (5 total):**
+
+| Severity | Used For |
+|----------|----------|
+| `normal` | Standard priority event |
+| `attention` | Requires player attention |
+| `critical` | High priority, serious consequences |
+| `serious` | Major problem or situation |
+| `moderate` | Medium severity |
 
 **Invalid severity = validation ERROR (blocks commit).**
 
