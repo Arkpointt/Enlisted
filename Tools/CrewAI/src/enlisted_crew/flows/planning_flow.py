@@ -500,6 +500,10 @@ class PlanningFlow(Flow[PlanningState]):
                b. Classify: DEPRECATED | MISSING_IMPL | TEST_CODE | OUTDATED_DOCS | UNCLEAR
                c. Propose remediation OR flag for human review
             
+            If you encounter major uncertainties during design, you can ask the human
+            for clarification. Use human input sparingly - only for critical decisions
+            that significantly impact the design.
+            
             OUTPUT: Complete technical spec with:
             - File paths (exact, verifiable)
             - Method signatures
@@ -513,6 +517,7 @@ class PlanningFlow(Flow[PlanningState]):
             """,
             expected_output="Technical specification document",
             agent=get_feature_architect(),
+            human_input=True,  # Allow agent to ask clarifying questions during execution
         )
         
         crew = Crew(
