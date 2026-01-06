@@ -3,10 +3,13 @@ Enlisted CrewAI Crew Orchestration
 
 Main crew class that coordinates agents for Enlisted mod development workflows.
 
-Model Strategy (Claude 4.5 family):
-- Opus 4.5 + thinking: Complex architecture, multi-file design (feature_architect, systems_analyst)
-- Sonnet 4.5 + thinking: Code analysis, implementation (code_analyst, csharp_implementer)
-- Haiku 4.5: Fast validation, content generation (qa_agent, content_author, content_analyst, balance_analyst)
+Model Strategy (OpenAI GPT-5 family):
+- GPT-5.2: Best for complex architecture, code generation, agentic tasks
+- GPT-5 mini: Fast and cost-efficient for well-defined tasks, memory ops
+- GPT-5 nano: Ultra-fast for validation, schema checks, style review
+
+All models support configurable reasoning effort and have no thinking/tool_choice conflicts.
+Context: 200K tokens across the board.
 """
 
 import os
@@ -14,14 +17,6 @@ from pathlib import Path
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
 from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
-
-# LiteLLM compatibility settings for Claude extended thinking + tool calling
-# Issue: Anthropic API requires thinking blocks from previous turns, but
-# CrewAI strips them. Using drop_params=True auto-disables thinking when needed.
-# See: https://github.com/crewAIInc/crewAI/issues/2323
-LITELLM_COMPAT_PARAMS = {
-    "drop_params": True,  # Drop thinking param when it causes API errors
-}
 
 from .tools import (
     # Validation
@@ -79,63 +74,77 @@ from .tools import (
 
 # === LLM Configurations ===
 # Philosophy: Spend tokens on ANALYSIS and VALIDATION, save on EXECUTION.
-# Bugs from cheap generation cost more to fix than thinking tokens.
+# Bugs from cheap generation cost more to fix than reasoning tokens.
 #
-# Model versions: Claude 4.5 family (Opus, Sonnet, Haiku)
-# - Opus 4.5: 200K context, best for complex multi-system reasoning
-# - Sonnet 4.5: 200K context, excellent coding and analysis
-# - Haiku 4.5: 200K context, fast and cost-effective
+# Model Strategy: OpenAI GPT-5 family
+# - GPT-5.2: Flagship model, best for complex architecture and agentic tasks
+# - GPT-5 mini: Cost-efficient, fast, optimized for well-defined tasks
+# - GPT-5 nano: Ultra-fast for high-volume validation and generation
 #
-# Tier 1: Deep Thinking (complex reasoning, high-stakes decisions)
-# Tier 2: Standard Thinking (code analysis, pattern detection)  
-# Tier 3: Execution (following specs, generating from templates)
+# All models: 200K context window, configurable reasoning effort
+# Pricing (per 1M tokens):
+# - GPT-5.2: ~$2.50 in / ~$10 out (estimated)
+# - GPT-5 mini: $0.25 in / $2 out
+# - GPT-5 nano: $0.15 in / $0.60 out (estimated)
+#
+# Tier 1: Deep Reasoning (architecture, design, system integration)
+# Tier 2: Standard Reasoning (code analysis, bug investigation)
+# Tier 3: Execution (implementation from specs)
 # Tier 4: Fast Validation (schema checks, style checks)
 
 import os as _os
 def _get_env(name: str, default: str) -> str:
     return _os.environ.get(name, default)
 
-# TIER 1: Opus 4.5 with deep thinking - architectural decisions
-# Use for: Feature design, system integration, multi-file changes
-OPUS_DEEP = LLM(
-    model=_get_env("ENLISTED_LLM_OPUS_DEEP", "anthropic/claude-opus-4-5-20251101"),
-    thinking={"type": "enabled", "budget_tokens": 10000},
+# TIER 1: GPT-5.2 with high reasoning - architectural decisions
+# Use for: Feature design, system integration, multi-file analysis
+GPT5_ARCHITECT = LLM(
+    model=_get_env("ENLISTED_LLM_ARCHITECT", "gpt-5.2"),
     max_tokens=16000,
-    **LITELLM_COMPAT_PARAMS,
+    temperature=0.7,
 )
 
-# TIER 2: Sonnet 4.5 with thinking - analysis that requires reasoning
-# Use for: Code review, bug analysis, understanding existing systems
-SONNET_ANALYSIS = LLM(
-    model=_get_env("ENLISTED_LLM_SONNET_ANALYSIS", "anthropic/claude-sonnet-4-5-20250929"),
-    thinking={"type": "enabled", "budget_tokens": 5000},
-    max_tokens=8000,
-    **LITELLM_COMPAT_PARAMS,
+# TIER 2: GPT-5.2 for code analysis and review
+# Use for: Code review, bug investigation, understanding existing systems
+GPT5_ANALYST = LLM(
+    model=_get_env("ENLISTED_LLM_ANALYST", "gpt-5.2"),
+    max_tokens=12000,
+    temperature=0.5,
 )
 
-# TIER 3: Sonnet 4.5 without thinking - execution from clear specs
+# TIER 3: GPT-5 mini for implementation - execution from specs
 # Use for: Writing code from specs, implementing defined changes
-SONNET_EXECUTE = LLM(
-    model=_get_env("ENLISTED_LLM_EXECUTE", "anthropic/claude-sonnet-4-5-20250929"),
+GPT5_IMPLEMENTER = LLM(
+    model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5-mini"),
     max_tokens=8000,
+    temperature=0.3,
 )
 
-# TIER 4: Haiku 4.5 - high-volume validation and generation
+# TIER 4: GPT-5 nano - high-volume validation and content generation
 # Use for: Schema validation, style checks, content from templates
-HAIKU_FAST = LLM(
-    model=_get_env("ENLISTED_LLM_HAIKU", "anthropic/claude-haiku-4-5-20251001"),
+GPT5_FAST = LLM(
+    model=_get_env("ENLISTED_LLM_FAST", "gpt-5-nano"),
     max_tokens=4000,
+    temperature=0.2,
 )
 
-# TIER 2.5: Haiku 4.5 for QA with thinking - safety net
+# TIER 2.5: GPT-5 mini for QA - final safety net
 # Use for: Final validation before commit, catching what others missed
-# Note: min budget_tokens is 1024 per Anthropic API
-SONNET_QA = LLM(
-    model=_get_env("ENLISTED_LLM_QA", "anthropic/claude-haiku-4-5-20251001"),
-    thinking={"type": "enabled", "budget_tokens": 2048},
+GPT5_QA = LLM(
+    model=_get_env("ENLISTED_LLM_QA", "gpt-5-mini"),
     max_tokens=6000,
-    **LITELLM_COMPAT_PARAMS,
+    temperature=0.3,
 )
+
+# === Embedder Configuration ===
+# Use text-embedding-3-small for memory/knowledge embeddings.
+# Default ada-002 has strict 8192 token limit; 3-small handles longer inputs better.
+EMBEDDER_CONFIG = {
+    "provider": "openai",
+    "config": {
+        "model_name": "text-embedding-3-small",
+    }
+}
 
 
 @CrewBase
@@ -250,10 +259,10 @@ class EnlistedCrew:
     
     @agent
     def systems_analyst(self) -> Agent:
-        """Systems integration analyst - uses Opus for complex system analysis."""
+        """Systems integration analyst - uses GPT-5.2 for complex system analysis."""
         return Agent(
             config=self.agents_config["systems_analyst"],
-            llm=OPUS_DEEP,  # TIER 1: System integration requires deep reasoning
+            llm=GPT5_ARCHITECT,  # TIER 1: System integration requires deep reasoning
             tools=[
                 get_game_systems,    # Context first
                 find_in_docs,        # Find docs
@@ -268,10 +277,10 @@ class EnlistedCrew:
     
     @agent
     def code_analyst(self) -> Agent:
-        """C# code analyst - uses Sonnet with thinking for code analysis."""
+        """C# code analyst - uses GPT-5.2 for code analysis and bug investigation."""
         return Agent(
             config=self.agents_config["code_analyst"],
-            llm=SONNET_ANALYSIS,  # TIER 2: Analysis needs reasoning to catch bugs
+            llm=GPT5_ANALYST,  # TIER 2: Analysis needs reasoning to catch bugs
             tools=[
                 get_dev_reference,       # CALL FIRST - loads dev guide, APIs, common issues
                 verify_file_exists_tool, # Verify file paths in planning docs
@@ -297,10 +306,10 @@ class EnlistedCrew:
     
     @agent
     def content_analyst(self) -> Agent:
-        """Content schema analyst - uses Haiku for fast validation."""
+        """Content schema analyst - uses GPT-5 nano for fast validation."""
         return Agent(
             config=self.agents_config["content_analyst"],
-            llm=HAIKU_FAST,
+            llm=GPT5_FAST,
             tools=[
                 check_event_format,
                 read_event,
@@ -313,10 +322,10 @@ class EnlistedCrew:
     
     @agent
     def feature_architect(self) -> Agent:
-        """Feature architect - uses Opus for complex multi-file design."""
+        """Feature architect - uses GPT-5.2 for complex multi-file design."""
         return Agent(
             config=self.agents_config["feature_architect"],
-            llm=OPUS_DEEP,  # TIER 1: Architecture mistakes are expensive
+            llm=GPT5_ARCHITECT,  # TIER 1: Architecture mistakes are expensive
             tools=[
                 get_architecture,        # Context first
                 verify_file_exists_tool, # Verify file paths in specs
@@ -335,10 +344,10 @@ class EnlistedCrew:
     
     @agent
     def csharp_implementer(self) -> Agent:
-        """C# implementer - uses Sonnet for code generation from specs."""
+        """C# implementer - uses GPT-5 mini for code generation from specs."""
         return Agent(
             config=self.agents_config["csharp_implementer"],
-            llm=SONNET_EXECUTE,  # TIER 3: Executing from clear specs, QA catches issues
+            llm=GPT5_IMPLEMENTER,  # TIER 3: Executing from clear specs, QA catches issues
             tools=[
                 verify_file_exists_tool, # Verify file paths before proposing changes
                 build,
@@ -362,10 +371,10 @@ class EnlistedCrew:
     
     @agent
     def content_author(self) -> Agent:
-        """Content author - uses Haiku for fast content generation."""
+        """Content author - uses GPT-5 nano for fast content generation."""
         return Agent(
             config=self.agents_config["content_author"],
-            llm=HAIKU_FAST,
+            llm=GPT5_FAST,
             tools=[
                 get_writing_guide,   # CALL FIRST - loads style guide, schemas, reminders
                 list_event_ids,      # Check existing IDs to avoid conflicts
@@ -390,10 +399,10 @@ class EnlistedCrew:
     
     @agent
     def qa_agent(self) -> Agent:
-        """QA agent - uses Haiku 4.5 with thinking as final safety net."""
+        """QA agent - uses GPT-5 mini as final safety net."""
         return Agent(
             config=self.agents_config["qa_agent"],
-            llm=SONNET_QA,  # TIER 2.5: QA is last defense - NEVER skimp here
+            llm=GPT5_QA,  # TIER 2.5: QA is last defense - NEVER skimp here
             tools=[
                 validate_content,
                 sync_strings,
@@ -406,10 +415,10 @@ class EnlistedCrew:
     
     @agent
     def balance_analyst(self) -> Agent:
-        """Balance analyst - uses Haiku for content review."""
+        """Balance analyst - uses GPT-5 nano for content review."""
         return Agent(
             config=self.agents_config["balance_analyst"],
-            llm=HAIKU_FAST,
+            llm=GPT5_FAST,
             tools=[
                 get_game_systems,   # CALL FIRST - needs game balance knowledge
                 check_event_format,
@@ -423,10 +432,10 @@ class EnlistedCrew:
     
     @agent
     def documentation_maintainer(self) -> Agent:
-        """Documentation maintainer - uses Sonnet to ensure docs stay in sync."""
+        """Documentation maintainer - uses GPT-5.2 to ensure docs stay in sync."""
         return Agent(
             config=self.agents_config["documentation_maintainer"],
-            llm=SONNET_ANALYSIS,  # TIER 2: Doc sync requires reasoning about what changed
+            llm=GPT5_ANALYST,  # TIER 2: Doc sync requires reasoning about what changed
             tools=[
                 save_plan,               # Write planning docs
                 load_plan,               # Read planning docs (for fixes)
@@ -450,10 +459,10 @@ class EnlistedCrew:
     
     @agent
     def architecture_advisor(self) -> Agent:
-        """Architecture advisor - uses Opus for deep analysis and improvement suggestions."""
+        """Architecture advisor - uses GPT-5.2 for deep analysis and improvement suggestions."""
         return Agent(
             config=self.agents_config["architecture_advisor"],
-            llm=OPUS_DEEP,  # TIER 1: Architecture analysis needs deep reasoning
+            llm=GPT5_ARCHITECT,  # TIER 1: Architecture analysis needs deep reasoning
             tools=[
                 get_game_systems,        # Understand game systems first
                 get_architecture,        # Understand architecture patterns
@@ -727,6 +736,7 @@ class EnlistedCrew:
             verbose=True,
             memory=True,  # Enable crew memory for context across tasks
             cache=True,   # Cache tool results to avoid redundant calls
+            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-small (larger context than ada-002)
         )
     
     @crew
@@ -776,6 +786,7 @@ class EnlistedCrew:
             verbose=True,
             memory=True,  # Enable crew memory for context across tasks
             cache=True,   # Cache tool results to avoid redundant calls
+            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-small (larger context than ada-002)
         )
     
     @crew
@@ -832,6 +843,7 @@ class EnlistedCrew:
             verbose=True,
             memory=True,  # Enable crew memory for context across tasks
             cache=True,   # Cache tool results to avoid redundant calls
+            embedder=EMBEDDER_CONFIG,  # Use text-embedding-3-small (larger context than ada-002)
         )
     
     # ==========================================================================

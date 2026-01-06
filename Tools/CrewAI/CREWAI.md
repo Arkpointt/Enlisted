@@ -79,16 +79,16 @@ Each workflow uses the agents it needs:
 
 | Agent | Role | Model |
 |-------|------|-------|
-| systems_analyst | Research existing systems | Opus 4.5 (10k thinking) |
-| architecture_advisor | Suggest best practices | Opus 4.5 (10k thinking) |
-| feature_architect | Design technical specs | Opus 4.5 (10k thinking) |
-| code_analyst | Find bugs, validate plans | Sonnet 4.5 (5k thinking) |
-| csharp_implementer | Write C# code | Sonnet 4.5 (execution) |
-| content_author | Write JSON events | Haiku 4.5 (fast) |
-| content_analyst | Validate JSON schemas | Haiku 4.5 (fast) |
-| qa_agent | Final validation | Haiku 4.5 (3k thinking) |
-| documentation_maintainer | Write/update docs | Sonnet 4.5 (5k thinking) |
-| balance_analyst | Review game balance | Haiku 4.5 (fast) |
+| systems_analyst | Research existing systems | GPT-5.2 (high reasoning) |
+| architecture_advisor | Suggest best practices | GPT-5.2 (high reasoning) |
+| feature_architect | Design technical specs | GPT-5.2 (high reasoning) |
+| code_analyst | Find bugs, validate plans | GPT-5.2 (standard reasoning) |
+| csharp_implementer | Write C# code | GPT-5 mini (execution) |
+| content_author | Write JSON events | GPT-5 nano (fast) |
+| content_analyst | Validate JSON schemas | GPT-5 nano (fast) |
+| qa_agent | Final validation | GPT-5 mini (standard) |
+| documentation_maintainer | Write/update docs | GPT-5.2 (standard reasoning) |
+| balance_analyst | Review game balance | GPT-5 nano (fast) |
 
 ---
 
@@ -122,8 +122,7 @@ cp .env.example .env
 
 Edit `.env`:
 ```
-ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
-OPENAI_API_KEY=sk-your-openai-key-here  # For embeddings only
+OPENAI_API_KEY=sk-your-openai-key-here
 ```
 
 > **Security:** The `.env` file is gitignored. Never commit API keys.
@@ -295,33 +294,41 @@ feature_architect (design), content_author (content), balance_analyst (review).
 
 ### Agent Configuration Patterns
 
-**Analysis Agents (needs thinking):**
+**Architecture/Coordination Agents (GPT-5.2 high reasoning):**
 ```python
 Agent(
-    llm=SONNET_ANALYSIS,           # 5k thinking tokens
-    tools=[...],                   # 4-10 tools
-    max_retry_limit=2,             # Allow recovery
-    allow_delegation=False,        # Execution role
-)
-```
-
-**Coordination Agents (delegation):**
-```python
-Agent(
-    llm=OPUS_DEEP,                 # 10k thinking tokens
-    tools=[...],                   # 4-6 tools
+    llm=GPT5_ARCHITECT,            # High reasoning capability
+    tools=[...],                   # 4-6 tools for coordination
     max_retry_limit=2,
     allow_delegation=True,         # Can delegate
 )
 ```
 
-**Execution Agents (no thinking):**
+**Analysis Agents (GPT-5.2 standard reasoning):**
 ```python
 Agent(
-    llm=SONNET_EXECUTE,            # No thinking
-    tools=[...],                   # 3-5 tools
+    llm=GPT5_ANALYST,              # Standard reasoning
+    tools=[...],                   # 7-10 tools
+    max_retry_limit=2,             # Allow recovery
+    allow_delegation=False,        # Execution role
+)
+```
+
+**Implementation Agents (GPT-5 mini execution):**
+```python
+Agent(
+    llm=GPT5_IMPLEMENTER,          # Fast, cost-efficient
+    tools=[...],                   # 3-8 tools
     max_retry_limit=1,
     allow_delegation=False,
+)
+```
+
+**Fast Validation Agents (GPT-5 nano):**
+```python
+Agent(
+    llm=GPT5_FAST,                 # Ultra-fast validation
+    tools=[...],                   # 3-5 tools
 )
 ```
 
@@ -545,17 +552,23 @@ print(result.investigation.severity)
 print(result.fix_proposal.summary)
 ```
 
-### Model Strategy (Claude 4.5 Family)
+### Model Strategy (OpenAI GPT-5 Family)
 
-| Tier | Model | Use | Thinking |
-|------|-------|-----|----------|
-| 1 | Opus 4.5 | Architecture, complex design | 10k tokens |
-| 2 | Sonnet 4.5 | Code analysis, doc sync | 5k tokens |
-| 2.5 | Haiku 4.5 | QA validation | 3k tokens |
-| 3 | Sonnet 4.5 | Code generation from specs | None |
-| 4 | Haiku 4.5 | Schema checks, content generation | None |
+| Tier | Model | Use | Reasoning |
+|------|-------|-----|-----------|
+| 1 | GPT-5.2 | Architecture, system integration | High |
+| 2 | GPT-5.2 | Code analysis, bug investigation, doc sync | Standard |
+| 2.5 | GPT-5 mini | QA validation | Standard |
+| 3 | GPT-5 mini | Code generation from specs | Low |
+| 4 | GPT-5 nano | Schema checks, content generation | Minimal |
 
-**Philosophy:** "Spend tokens on ANALYSIS and VALIDATION, save on EXECUTION. Bugs from cheap generation cost more to fix than thinking tokens."
+**Philosophy:** "Spend tokens on ANALYSIS and VALIDATION, save on EXECUTION. Bugs from cheap generation cost more to fix than reasoning tokens."
+
+**Key Benefits:**
+- No thinking/tool_choice conflicts (Anthropic-specific issue)
+- Consistent 200K context window across all models
+- Configurable reasoning effort for all models
+- Cost-efficient: GPT-5 mini at $0.25/1M in, GPT-5 nano even cheaper
 
 ### Integration Checklist Summary
 
