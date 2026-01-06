@@ -137,12 +137,13 @@ GPT5_QA = LLM(
 )
 
 # === Embedder Configuration ===
-# Use text-embedding-3-small for memory/knowledge embeddings.
-# Default ada-002 has strict 8192 token limit; 3-small handles longer inputs better.
+# Use text-embedding-3-large for memory/knowledge embeddings.
+# 3,072 dimensions (vs 1,536 in 3-small) for superior semantic understanding.
+# Same 8,191 token limit, higher accuracy for technical content retrieval.
 EMBEDDER_CONFIG = {
     "provider": "openai",
     "config": {
-        "model_name": "text-embedding-3-small",
+        "model_name": "text-embedding-3-large",
     }
 }
 
