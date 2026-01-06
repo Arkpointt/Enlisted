@@ -122,11 +122,16 @@ enlisted-crew implement -p "docs/CrewAI_Plans/feature.md"
 # Quick pre-commit check
 enlisted-crew validate
 
+# View execution statistics (performance metrics, timing, tool usage)
+enlisted-crew stats [-c crew_name]
+
 # Test flow performance (runs crew multiple times, provides metrics)
 crewai test -n 3 -m gpt-5
 ```
 
 **CrewAI writes files directly:** All flows apply changes to disk (C#, JSON, localization, .csproj). Review with `git diff` after running.
+
+**Monitoring:** All executions are automatically tracked in `enlisted_knowledge.db`. Use `enlisted-crew stats` to view performance metrics, identify bottlenecks, and optimize workflows.
 
 **Testing:** Use `crewai test -n 3 -m gpt-5` to validate crew performance across iterations. See `Tools/CrewAI/test_flows.ps1` for automated testing script.
 

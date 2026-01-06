@@ -40,6 +40,11 @@ This script will:
 - Test BugHuntingFlow with sample bug
 - Provide next steps for validation
 
+**Monitoring is automatic:** All test runs are tracked in the database. Check performance with:
+```bash
+enlisted-crew stats
+```
+
 ---
 
 ## Individual Flow Testing

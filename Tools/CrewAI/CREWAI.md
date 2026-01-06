@@ -855,6 +855,160 @@ Use these baselines to detect performance regression after configuration changes
 
 ---
 
+## Execution Monitoring
+
+CrewAI Event Listeners track crew execution for performance insights and optimization.
+
+### What Gets Monitored
+
+**Real-Time Console Output:**
+- Crew start/completion with timestamps
+- Agent execution with durations
+- Task completion progress
+- Tool usage (success/failure)
+
+**Database Logging:**
+All execution metrics are stored in `enlisted_knowledge.db` for analysis:
+- `crew_executions` - Overall workflow runs
+- `agent_executions` - Individual agent performance
+- `task_executions` - Task-level timing
+- `tool_usages` - Tool calls and errors
+
+### View Execution Statistics
+
+```bash
+# All crews
+enlisted-crew stats
+
+# Specific crew
+enlisted-crew stats -c PlanningFlow
+enlisted-crew stats -c ImplementationFlow
+enlisted-crew stats -c BugHuntingFlow
+```
+
+**Example Output:**
+```
+==================================================================
+CREWAI EXECUTION STATISTICS
+==================================================================
+
+Crew: PlanningFlow
+  Total Runs: 5
+  Avg Duration: 142.35s (2.4m)
+  Min Duration: 128.50s
+  Max Duration: 167.20s
+
+Crew: ImplementationFlow
+  Total Runs: 3
+  Avg Duration: 284.67s (4.7m)
+  Min Duration: 265.10s
+  Max Duration: 312.40s
+==================================================================
+```
+
+### How Monitoring Helps
+
+1. **Identify Bottlenecks**
+   - Which agents take longest?
+   - Which tasks slow down workflows?
+   - Where do tool failures occur?
+
+2. **Track Improvements**
+   - Did configuration changes speed things up?
+   - Are reasoning agents worth the extra time?
+   - Is planning reducing overall execution?
+
+3. **Detect Issues**
+   - Which tools fail most often?
+   - Are there patterns in errors?
+   - Is performance degrading over time?
+
+4. **Optimize Costs**
+   - Which workflows use most tokens?
+   - Where can we use cheaper models?
+   - Are we caching effectively?
+
+### Monitoring Tables Schema
+
+```sql
+-- Crew-level tracking
+CREATE TABLE crew_executions (
+    id INTEGER PRIMARY KEY,
+    crew_name TEXT,
+    started_at TEXT,
+    completed_at TEXT,
+    duration_seconds REAL,
+    status TEXT,
+    output_length INTEGER,
+    notes TEXT
+);
+
+-- Agent-level tracking
+CREATE TABLE agent_executions (
+    id INTEGER PRIMARY KEY,
+    crew_execution_id INTEGER,
+    agent_role TEXT,
+    duration_seconds REAL,
+    FOREIGN KEY (crew_execution_id) REFERENCES crew_executions(id)
+);
+
+-- Task-level tracking
+CREATE TABLE task_executions (
+    id INTEGER PRIMARY KEY,
+    crew_execution_id INTEGER,
+    task_description TEXT,
+    duration_seconds REAL,
+    FOREIGN KEY (crew_execution_id) REFERENCES crew_executions(id)
+);
+
+-- Tool usage tracking
+CREATE TABLE tool_usages (
+    id INTEGER PRIMARY KEY,
+    crew_execution_id INTEGER,
+    tool_name TEXT,
+    executed_at TEXT,
+    success BOOLEAN,
+    error_message TEXT,
+    FOREIGN KEY (crew_execution_id) REFERENCES crew_executions(id)
+);
+```
+
+### Custom Analysis Queries
+
+```sql
+-- Find slowest agents
+SELECT agent_role, AVG(duration_seconds) as avg_time
+FROM agent_executions
+GROUP BY agent_role
+ORDER BY avg_time DESC
+LIMIT 5;
+
+-- Tool success rates
+SELECT 
+    tool_name,
+    COUNT(*) as total_calls,
+    SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes,
+    ROUND(100.0 * SUM(CASE WHEN success THEN 1 ELSE 0 END) / COUNT(*), 2) as success_rate
+FROM tool_usages
+GROUP BY tool_name
+ORDER BY total_calls DESC;
+
+-- Workflow trends over time
+SELECT 
+    DATE(started_at) as date,
+    crew_name,
+    AVG(duration_seconds) as avg_duration,
+    COUNT(*) as runs
+FROM crew_executions
+WHERE status = 'completed'
+GROUP BY DATE(started_at), crew_name
+ORDER BY date DESC;
+```
+
+**Monitoring is always active.** No configuration needed - just run your workflows and check stats anytime.
+
+---
+
 ## Related Documentation
 
 - **Root:** [WARP.md](../../WARP.md) - Project-wide conventions

@@ -10,6 +10,7 @@ Three core workflows for Enlisted mod development:
 
 Utility:
     enlisted-crew validate                              # Pre-commit check
+    enlisted-crew stats [-c crew_name]                  # View execution metrics
 """
 
 import argparse
@@ -20,11 +21,15 @@ from dotenv import load_dotenv
 
 from .crew import EnlistedCrew
 from .tools import SearchCache
+from .monitoring import enable_monitoring, print_execution_report
 
 
 def main():
     """Main CLI entry point."""
     load_dotenv()
+    
+    # Enable execution monitoring for all workflows
+    enable_monitoring()
     
     parser = argparse.ArgumentParser(
         description="Enlisted CrewAI - Multi-agent workflows for Enlisted mod development",
@@ -38,6 +43,17 @@ def main():
     validate_parser = subparsers.add_parser(
         "validate",
         help="Run full validation on all content",
+    )
+    
+    # stats command - VIEW EXECUTION STATISTICS
+    stats_parser = subparsers.add_parser(
+        "stats",
+        help="View execution statistics from monitoring",
+    )
+    stats_parser.add_argument(
+        "--crew", "-c",
+        default=None,
+        help="Filter by crew name (e.g., 'PlanningFlow', 'ImplementationFlow', 'BugHuntingFlow')",
     )
     
     # implement command - BUILD FROM APPROVED PLAN
@@ -124,6 +140,9 @@ def main():
     try:
         if args.command == "validate":
             result = run_validation(crew)
+        elif args.command == "stats":
+            print_execution_report(crew_name=args.crew)
+            return  # No result to print
         elif args.command == "implement":
             result = run_implement(crew, args.plan)
         elif args.command == "plan":
@@ -175,39 +194,36 @@ def run_implement(crew: EnlistedCrew, plan_path: str):
     """
     IMPLEMENTATION WORKFLOW - Build from an approved plan.
     
-    Chain: analyze → code → content → validate → docs
+    Uses ImplementationFlow which:
+    1. Verifies what's already implemented FIRST
+    2. Routes around completed work (no duplicates)
+    3. Only implements what's MISSING
+    4. Always validates and updates docs
     """
+    from .flows import ImplementationFlow
+    
     SearchCache.clear()
     print("\n" + "=" * 60)
-    print("IMPLEMENTATION WORKFLOW")
+    print("IMPLEMENTATION WORKFLOW (Flow-based)")
     print("=" * 60)
-    print(f"\nPlan: {plan_path}\n")
+    print(f"\nPlan: {plan_path}")
+    print("This workflow will:")
+    print("  1. Verify what's already implemented")
+    print("  2. Skip completed work automatically")
+    print("  3. Only implement missing parts")
+    print("  4. Validate everything")
+    print("  5. Update documentation\n")
     
-    # Read the plan content
-    from pathlib import Path
-    plan_file = Path(plan_path)
-    if not plan_file.exists():
-        raise FileNotFoundError(f"Plan not found: {plan_path}")
-    
-    plan_content = plan_file.read_text(encoding='utf-8')
-    feature_name = plan_file.stem  # e.g., "reputation-integration" from filename
-    
-    print(f"Feature: {feature_name}")
-    print("Starting implementation...\n")
-    
-    implement_workflow = crew.implement_workflow()
-    return implement_workflow.kickoff(inputs={
-        "feature_name": feature_name,
-        "description": f"Implement according to plan: {plan_path}",
-        "spec_content": plan_content,
-        "file_list": "See plan for file list",
-        "related_systems": "See plan for system details",
-        "content_type": "events and decisions as specified in plan",
-        "requirements": "See plan for requirements",
-        "plan_path": plan_path,  # For updating plan status after implementation
-        "changed_files": "Files changed during implementation",
-        "feature_area": feature_name,
+    # Use the new Flow-based workflow
+    flow = ImplementationFlow()
+    result = flow.kickoff(inputs={
+        "plan_path": plan_path,
     })
+    
+    # Return the final report from the flow state
+    if hasattr(result, 'final_report'):
+        return result.final_report
+    return str(result)
 
 
 def run_code_review(crew: EnlistedCrew, file_paths: list):
@@ -244,27 +260,42 @@ def run_plan(
     """
     PLANNING WORKFLOW - Design a feature completely.
     
-    Chain: research → advise → design → write doc → validate
+    Uses PlanningFlow which:
+    1. Researches existing systems
+    2. Gets architectural advice
+    3. Designs technical specification
+    4. Writes planning document
+    5. Validates for hallucinations (with auto-fix)
+    
+    State persistence enabled - can resume on failure.
     """
+    from .flows import PlanningFlow
+    
     SearchCache.clear()
     print("\n" + "=" * 60)
-    print("PLANNING WORKFLOW")
+    print("PLANNING WORKFLOW (Flow-based)")
     print("=" * 60)
     print(f"\nFeature: {feature_name}")
-    print(f"Description: {description}\n")
-    print("Starting planning workflow...\n")
+    print(f"Description: {description}")
+    print("\nThis workflow will:")
+    print("  1. Research existing systems")
+    print("  2. Get architectural advice")
+    print("  3. Design technical specification")
+    print("  4. Write planning document")
+    print("  5. Validate (auto-fix hallucinations)\n")
     
-    plan_workflow = crew.plan_workflow()
-    result = plan_workflow.kickoff(inputs={
+    flow = PlanningFlow()
+    result = flow.kickoff(inputs={
         "feature_name": feature_name,
         "description": description,
-        "related_systems": systems or "To be determined by analysis",
-        "related_docs": docs or "To be determined by analysis",
-        "focus_area": feature_name,
-        "pain_points": description,
+        "related_systems": systems or "",
+        "related_docs": docs or "",
     })
     
-    return result
+    # Return the final report from the flow state
+    if hasattr(result, 'final_report'):
+        return result.final_report
+    return str(result)
 
 
 def run_hunt_bug(
@@ -304,11 +335,11 @@ def run_hunt_bug(
     print(f"User Logs: {'Provided' if user_log_content else 'None'}")
     print("\nStarting bug investigation...\n")
     
-    # Use the new bug_workflow crew
-    crew = EnlistedCrew()
-    bug_workflow = crew.bug_workflow()
+    # Use BugHuntingFlow for state management and conditional routing
+    from .flows import BugHuntingFlow
     
-    result = bug_workflow.kickoff(inputs={
+    flow = BugHuntingFlow()
+    result = flow.kickoff(inputs={
         "bug_description": description,
         "error_codes": error_codes,
         "repro_steps": repro_steps,
@@ -316,7 +347,11 @@ def run_hunt_bug(
         "user_log_content": user_log_content or "No logs provided",
     })
     
-    report = str(result)
+    # Extract report from flow state
+    if hasattr(result, 'final_report'):
+        report = result.final_report
+    else:
+        report = str(result)
     
     if output_file:
         with open(output_file, 'w', encoding='utf-8') as f:
