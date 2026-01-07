@@ -351,7 +351,8 @@ feature_architect (design), content_author (content), balance_analyst (review).
 2. **Role-based specialization** - Clear, focused roles per agent
 3. **Tool assignment**: Agent level for general, task level for specific
 4. **Retry limits**: 2-3 for analysis, 1-2 for execution
-5. **Delegation**: Enable for coordinators, disable for executors
+5. **Hierarchical process**: Use manager agents for quality control (see below)
+6. **Delegation**: Enable for managers only, disable for specialists
 
 ### Tool Count Guidelines
 
@@ -363,77 +364,52 @@ feature_architect (design), content_author (content), balance_analyst (review).
 
 ### Agent Configuration Patterns
 
-**Architecture/Coordination Agents (GPT-5.2 high reasoning):**
+**Manager Agents (GPT-5.2 high reasoning):**
 ```python
 Agent(
     llm=GPT5_ARCHITECT,            # GPT-5.2 with reasoning enabled
     tools=[...],                   # 4-6 tools for coordination
-    max_iter=10,                   # Max iterations before forced stop
-    max_retry_limit=3,             # Retries on error
-    reasoning=True,                # Enable reflection before acting
-    max_reasoning_attempts=3,      # Allow 3 reasoning cycles
-    allow_delegation=True,         # Can delegate to other agents
+    max_iter=30,                   # Higher for managers (coordination needs more cycles)
+    max_retry_limit=3,
+    reasoning=True,
+    max_reasoning_attempts=3,
+    allow_delegation=True,         # REQUIRED for managers in hierarchical process
 )
 ```
 
-**Analysis Agents (GPT-5.2 standard reasoning):**
+**Specialist Agents (GPT-5.2 variable reasoning):**
 ```python
 Agent(
-    llm=GPT5_ANALYST,              # GPT-5.2 with reasoning
-    tools=[...],                   # 7-10 tools
-    max_iter=10,
+    llm=GPT5_ANALYST,              # Or GPT5_IMPLEMENTER, GPT5_FAST based on task
+    tools=[...],                   # 3-10 tools based on role
+    max_iter=15,                   # Lower for specialists (focused execution)
     max_retry_limit=3,
-    reasoning=True,                # Enable reflection before acting
-    max_reasoning_attempts=3,      # Allow 3 reasoning cycles
-    allow_delegation=False,        # Execution role, no delegation
+    reasoning=True,                # Enable for complex tasks
+    max_reasoning_attempts=3,
+    allow_delegation=False,        # Specialists don't delegate
 )
 ```
 
-**Implementation Agents (GPT-5.2 with low reasoning):**
-```python
-Agent(
-    llm=GPT5_IMPLEMENTER,          # GPT-5.2 with reasoning_effort="low"
-    tools=[...],                   # 3-8 tools
-    max_iter=10,
-    max_retry_limit=3,
-    reasoning=True,                # Enable reflection for complex code
-    max_reasoning_attempts=3,      # Allow 3 reasoning cycles
-    allow_delegation=False,        # Execution role, no delegation
-)
-```
-
-**Fast Validation Agents (GPT-5.2 with no reasoning):**
-```python
-Agent(
-    llm=GPT5_FAST,                 # GPT-5.2 with reasoning_effort="none" (instant mode)
-    tools=[...],                   # 3-5 tools
-    max_iter=10,
-    max_retry_limit=3,
-    allow_delegation=False,        # Execution role, no delegation
-)
-```
+**See "Hierarchical Process with Manager Agents" section below for complete patterns and all current manager/specialist configurations.**
 
 ### Advanced Agent Parameters
 
-**Reasoning Agents** (`reasoning=True`, `max_reasoning_attempts=3`):
+**Reasoning** (`reasoning=True`, `max_reasoning_attempts=3`):
 - Enabled for: systems_analyst, architecture_advisor, feature_architect, code_analyst, csharp_implementer
 - Agents reflect on the task before taking action
 - Creates a reasoning chain before executing tools or writing output
-- Each reasoning attempt consumes tokens (included in reasoning budget)
 - **When to use:** Complex planning, multi-step analysis, code generation
 - **When NOT to use:** Simple validation, file reading, fast execution
 
-**Delegation** (`allow_delegation=True/False`):
-- **True:** Coordinator agents (systems_analyst, architecture_advisor, feature_architect) can delegate subtasks to other agents
-- **False:** Specialist agents (csharp_implementer, content_author, qa_agent) focus on their domain only
-- Delegation enables hierarchical workflows within a single crew
-- **Philosophy:** Architects coordinate, specialists execute
+**Delegation** (`allow_delegation`):
+- **True:** Manager agents only - required for hierarchical process coordination
+- **False:** All specialist agents - focused domain execution
+- See "Hierarchical Process" section for complete manager/specialist patterns
 
-**Iteration Limits** (`max_iter=10`, `max_retry_limit=3`):
-- `max_iter`: Hard stop after N iterations (prevents infinite loops)
-- `max_retry_limit`: How many times to retry on tool/LLM errors
-- Set higher for complex tasks, lower for simple validation
-- All our agents use `max_iter=10` and `max_retry_limit=3` as conservative defaults
+**Iteration Limits** (`max_iter`, `max_retry_limit`):
+- Managers: `max_iter=30` (higher for coordination)
+- Specialists: `max_iter=15` (lower for focused execution)
+- `max_retry_limit=3` for all agents (retries on tool/LLM errors)
 
 ### Workflow Configuration Patterns
 
@@ -443,7 +419,7 @@ Per [CrewAI documentation](https://docs.crewai.com/), Crews support additional p
 Crew(
     agents=[...],
     tasks=[...],
-    process=Process.sequential,    # or Process.hierarchical
+    process=Process.sequential,    # or Process.hierarchical (recommended)
     verbose=True,                  # Show execution details
     memory=True,                   # Enable crew memory across tasks (short-term, long-term, entity)
     cache=True,                    # Cache tool results (avoids redundant calls)
@@ -452,6 +428,165 @@ Crew(
     embedder=EMBEDDER_CONFIG,      # text-embedding-3-large for superior knowledge retrieval
 )
 ```
+
+#### Hierarchical Process with Manager Agents
+
+**Status:** ✅ All flows migrated to hierarchical process (2025-01-07)
+
+Hierarchical process uses a **manager agent** to coordinate specialist agents, enabling better quality control and delegation. All 4 Enlisted flows now use this pattern.
+
+**Why Hierarchical:**
+- **Manager validation** - Manager reviews each agent's output before proceeding
+- **Strategic delegation** - Manager assigns tasks based on agent capabilities  
+- **Quality control** - Manager can request re-work if output doesn't meet standards
+- **Better coordination** - Manager ensures coherence across all specialist outputs
+- **Reduced errors** - Catches hallucinations and mistakes before they propagate
+
+**Pattern:**
+```python
+from crewai import Agent, Crew, Process, Task
+
+def get_my_manager() -> Agent:
+    """Manager agent that coordinates workflow."""
+    return Agent(
+        role="Workflow Coordinator",
+        goal="Coordinate specialists to produce high-quality output",
+        backstory="""You lead a team of specialists.
+        Your responsibilities:
+        1. Delegate tasks to appropriate specialists
+        2. Validate outputs meet quality standards
+        3. Ensure coherence across all work
+        4. Request re-work if needed""",
+        llm=GPT5_ARCHITECT,
+        allow_delegation=True,         # REQUIRED for managers
+        verbose=True,
+        max_iter=30,
+        max_retry_limit=3,
+    )
+
+crew = Crew(
+    agents=[specialist1, specialist2, specialist3],  # All specialists
+    tasks=[task1, task2, task3],
+    manager_agent=get_my_manager(),                   # Custom manager
+    process=Process.hierarchical,                     # REQUIRED
+    verbose=True,
+    memory=True,
+    cache=True,
+    planning=True,
+    planning_llm=GPT5_PLANNING,
+)
+```
+
+**Manager Agent Requirements:**
+- ✅ `allow_delegation=True` - REQUIRED for managers to delegate
+- ✅ High-capability LLM (GPT5_ARCHITECT) - Needs strategic thinking
+- ✅ Clear backstory about coordination responsibilities
+- ✅ Higher `max_iter` (30+) - Managers need more iterations for coordination
+
+**Specialist Agent Requirements:**
+- ✅ `allow_delegation=False` - Specialists don't delegate (only execute)
+- ✅ Domain-specific tools assigned
+- ✅ Lower `max_iter` (15-20) - Focused execution
+
+**Current Manager Agents:**
+
+| Flow | Manager Agent | Specialists Coordinated |
+|------|---------------|------------------------|
+| PlanningFlow | `get_planning_manager()` | systems_analyst, architecture_advisor, feature_architect, documentation_maintainer |
+| ImplementationFlow | `get_implementation_manager()` | systems_analyst, csharp_implementer, content_author, qa_agent, documentation_maintainer |
+| BugHuntingFlow | `get_bug_hunting_manager()` | code_analyst, systems_analyst, implementer, qa_agent |
+| ValidationFlow | `get_validation_manager()` | content_validator, build_validator, qa_reporter |
+
+**Manager Validation in Action:**
+
+Without hierarchical (sequential):
+```
+Agent A → produces output → Agent B (accepts as-is) → Agent C (accepts as-is)
+```
+
+With hierarchical:
+```
+Manager → assigns task to Agent A
+       → reviews A's output
+       → requests re-work if needed (up to max_iter)
+       → delegates to Agent B only when satisfied
+       → reviews B's output
+       → ensures coherence between A and B
+       → delegates to Agent C
+```
+
+#### Task Guardrails for Output Validation
+
+**Status:** ✅ Implemented on all critical tasks (2025-01-07)
+
+Guardrails validate task outputs **before proceeding** to the next task. Failed guardrails trigger automatic retries (up to `guardrail_max_retries`).
+
+**Pattern:**
+```python
+from typing import Tuple, Any
+from crewai.tasks.task_output import TaskOutput
+
+def validate_has_code(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure output includes actual code.
+    
+    Returns (True, output) if valid, (False, error_message) if invalid.
+    """
+    content = str(output.raw)
+    if "```" not in content:
+        return (False, "Output must include code in triple-backtick blocks.")
+    return (True, output)
+
+task = Task(
+    description="Implement feature...",
+    expected_output="Implementation with code",
+    agent=get_csharp_implementer(),
+    guardrails=[validate_has_code],
+    guardrail_max_retries=2,  # Retry up to 2 times on failure
+)
+```
+
+**Guardrail Benefits:**
+- **Early error detection** - Catches issues before they propagate
+- **Automatic retry** - Agent gets specific feedback and re-tries
+- **Better error messages** - Clear validation failure reasons
+- **Reduced manual review** - Common mistakes caught automatically
+
+**Implemented Guardrails (12 total):**
+
+**PlanningFlow (write_task):**
+- `validate_plan_structure` - Ensures required sections (Overview, Technical Specification, Files to Create)
+- `validate_no_placeholder_paths` - Catches hallucinated paths (PLACEHOLDER, TODO_PATH, path/to/)
+
+**ImplementationFlow (csharp_task, content_task):**
+- `validate_csharp_braces` - Balanced `{}` in C# code
+- `validate_csharp_has_code` - Implementation includes actual code
+- `validate_json_syntax` - JSON blocks are parseable
+- `validate_content_ids_format` - snake_case content IDs (not camelCase)
+
+**BugHuntingFlow (fix_task):**
+- `validate_fix_is_minimal` - Prevents "complete rewrite" proposals
+- `validate_fix_has_code` - Fix includes actual code
+- `validate_fix_explains_root_cause` - Requires root cause explanation
+
+**ValidationFlow (content_task, build_task, report_task):**
+- `validate_content_check_ran` - Validation actually executed
+- `validate_build_output_parsed` - Build output was processed
+- `validate_report_has_status` - Report has clear pass/fail status
+
+**Guardrail Guidelines:**
+
+1. **Keep guardrails fast** - Simple checks only (no LLM calls)
+2. **Return clear error messages** - Agent needs specific guidance
+3. **Use `guardrail_max_retries=2`** - Balance between fixing and moving on
+4. **Check obvious patterns** - Missing code blocks, unbalanced braces, placeholder text
+5. **Validate structure** - Required sections, expected keywords
+
+**When to Add Guardrails:**
+- ❌ Simple file reading/listing - No validation needed
+- ✅ Code generation - Check syntax, structure, completeness
+- ✅ Content creation - Check IDs, formatting, required fields
+- ✅ Planning/documentation - Check required sections, no placeholders
+- ✅ Bug fixes - Check minimal scope, includes code, explains root cause
 
 #### Planning Configuration
 
@@ -1527,6 +1662,8 @@ def route_csharp(self, state: ImplementationState) -> str:
 
 **When to use:** Conditionally execute individual tasks within a Crew based on previous task output.
 
+**Note:** ConditionalTask works with both sequential and hierarchical processes. In hierarchical mode, the manager evaluates the condition and routes accordingly.
+
 **Pattern:**
 ```python
 from crewai.tasks.conditional_task import ConditionalTask
@@ -1547,7 +1684,8 @@ conditional_task = ConditionalTask(
 crew = Crew(
     agents=[agent1, agent2],
     tasks=[basic_task, conditional_task],  # conditional_task may skip
-    process=Process.sequential,
+    manager_agent=get_manager(),           # Use hierarchical for better quality control
+    process=Process.hierarchical,
 )
 ```
 
