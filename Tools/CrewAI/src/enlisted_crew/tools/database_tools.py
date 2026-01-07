@@ -43,6 +43,17 @@ def _get_connection() -> sqlite3.Connection:
     return conn
 
 
+def _normalize(value: Optional[str]) -> Optional[str]:
+    """Normalize string input for better cache hits.
+    
+    Ensures that variations like 'Equipment_Inspection', 'EQUIPMENT_INSPECTION',
+    and '  equipment_inspection  ' all resolve to the same cache key.
+    """
+    if value is None:
+        return None
+    return value.strip().lower()
+
+
 def _format_results(rows: List[sqlite3.Row]) -> str:
     """Format query results as readable text."""
     if not rows:
@@ -77,12 +88,15 @@ def lookup_content_id(content_id: str) -> str:
         result = lookup_content_id("equipment_quality_inspection")
     """
     try:
+        # Normalize for cache hits
+        content_id = _normalize(content_id) or ""
+        
         conn = _get_connection()
         cursor = conn.cursor()
         
         cursor.execute("""
             SELECT * FROM content_metadata 
-            WHERE content_id = ? OR content_id LIKE ?
+            WHERE LOWER(content_id) = ? OR LOWER(content_id) LIKE ?
         """, (content_id, f"%{content_id}%"))
         
         rows = cursor.fetchall()
@@ -117,18 +131,23 @@ def search_content(
         result = search_content(content_type="event", category="camp_life")
     """
     try:
+        # Normalize for cache hits
+        content_type = _normalize(content_type)
+        category = _normalize(category)
+        status = _normalize(status) or "active"
+        
         conn = _get_connection()
         cursor = conn.cursor()
         
-        query = "SELECT content_id, type, category, description, tier_min, tier_max FROM content_metadata WHERE status = ?"
+        query = "SELECT content_id, type, category, description, tier_min, tier_max FROM content_metadata WHERE LOWER(status) = ?"
         params = [status]
         
         if content_type:
-            query += " AND type = ?"
+            query += " AND LOWER(type) = ?"
             params.append(content_type)
         
         if category:
-            query += " AND category = ?"
+            query += " AND LOWER(category) = ?"
             params.append(category)
         
         query += " ORDER BY type, category, content_id LIMIT 50"
@@ -157,12 +176,15 @@ def get_balance_value(key: str) -> str:
         result = get_balance_value("tier_5_xp_threshold")
     """
     try:
+        # Normalize for cache hits
+        key = _normalize(key) or ""
+        
         conn = _get_connection()
         cursor = conn.cursor()
         
         cursor.execute("""
             SELECT * FROM balance_values 
-            WHERE key = ? OR key LIKE ?
+            WHERE LOWER(key) = ? OR LOWER(key) LIKE ?
         """, (key, f"%{key}%"))
         
         rows = cursor.fetchall()
@@ -191,13 +213,16 @@ def search_balance(category: Optional[str] = None) -> str:
         result = search_balance(category="tier")
     """
     try:
+        # Normalize for cache hits
+        category = _normalize(category)
+        
         conn = _get_connection()
         cursor = conn.cursor()
         
         if category:
             cursor.execute("""
                 SELECT key, value, unit, description FROM balance_values 
-                WHERE category = ?
+                WHERE LOWER(category) = ?
                 ORDER BY key
             """, (category,))
         else:
@@ -230,12 +255,15 @@ def lookup_error_code(error_code: str) -> str:
         result = lookup_error_code("E-CAMPUI-042")
     """
     try:
+        # Normalize for cache hits (but preserve case for error codes which are uppercase)
+        error_code = error_code.strip().upper() if error_code else ""
+        
         conn = _get_connection()
         cursor = conn.cursor()
         
         cursor.execute("""
             SELECT * FROM error_catalog 
-            WHERE error_code = ? OR error_code LIKE ?
+            WHERE UPPER(error_code) = ? OR UPPER(error_code) LIKE ?
         """, (error_code, f"{error_code}%"))
         
         rows = cursor.fetchall()
@@ -294,23 +322,27 @@ def get_system_dependencies(system_name: str) -> str:
         result = get_system_dependencies("EnlistmentBehavior")
     """
     try:
+        # Normalize for cache hits (strip whitespace, preserve case for class names)
+        system_name = system_name.strip() if system_name else ""
+        search_pattern = f"%{system_name}%"
+        
         conn = _get_connection()
         cursor = conn.cursor()
         
-        # What this system depends on
+        # What this system depends on (case-insensitive LIKE)
         cursor.execute("""
             SELECT 'depends_on' as direction, depends_on as related_system, dependency_type, description
             FROM system_dependencies 
-            WHERE system_name LIKE ?
-        """, (f"%{system_name}%",))
+            WHERE system_name LIKE ? COLLATE NOCASE
+        """, (search_pattern,))
         depends_on = cursor.fetchall()
         
-        # What depends on this system
+        # What depends on this system (case-insensitive LIKE)
         cursor.execute("""
             SELECT 'depended_by' as direction, system_name as related_system, dependency_type, description
             FROM system_dependencies 
-            WHERE depends_on LIKE ?
-        """, (f"%{system_name}%",))
+            WHERE depends_on LIKE ? COLLATE NOCASE
+        """, (search_pattern,))
         depended_by = cursor.fetchall()
         
         conn.close()
@@ -346,12 +378,15 @@ def lookup_api_pattern(api_name: str) -> str:
         result = lookup_api_pattern("GiveGoldAction")
     """
     try:
+        # Normalize for cache hits (strip whitespace, preserve case for API names)
+        api_name = api_name.strip() if api_name else ""
+        
         conn = _get_connection()
         cursor = conn.cursor()
         
         cursor.execute("""
             SELECT * FROM api_patterns 
-            WHERE api_name LIKE ?
+            WHERE api_name LIKE ? COLLATE NOCASE
             ORDER BY api_name
         """, (f"%{api_name}%",))
         
@@ -498,14 +533,18 @@ def lookup_core_system(system_name: str) -> str:
         result = lookup_core_system("EnlistmentBehavior")
     """
     try:
+        # Normalize for cache hits (strip whitespace, preserve case for class names)
+        system_name = system_name.strip() if system_name else ""
+        search_pattern = f"%{system_name}%"
+        
         conn = _get_connection()
         cursor = conn.cursor()
         
         cursor.execute("""
             SELECT * FROM core_systems 
-            WHERE name LIKE ? OR full_name LIKE ?
+            WHERE name LIKE ? COLLATE NOCASE OR full_name LIKE ? COLLATE NOCASE
             ORDER BY name
-        """, (f"%{system_name}%", f"%{system_name}%"))
+        """, (search_pattern, search_pattern))
         
         rows = cursor.fetchall()
         conn.close()
@@ -562,13 +601,16 @@ def get_balance_by_category(category: str) -> str:
         result = get_balance_by_category("economy")
     """
     try:
+        # Normalize for cache hits
+        category = _normalize(category) or ""
+        
         conn = _get_connection()
         cursor = conn.cursor()
         
         cursor.execute("""
             SELECT key, value, unit, description 
             FROM balance_values 
-            WHERE category = ?
+            WHERE LOWER(category) = ?
             ORDER BY key
         """, (category,))
         

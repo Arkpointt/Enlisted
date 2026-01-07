@@ -17,6 +17,7 @@ Usage:
 """
 
 import os
+import time
 from pathlib import Path
 from typing import List, Optional
 
@@ -183,20 +184,24 @@ GPT5_ARCHITECT = LLM(
 # MEDIUM reasoning - analysis and verification
 GPT5_ANALYST = LLM(
     model=_get_env("ENLISTED_LLM_ANALYST", "gpt-5.2"),
-    max_completion_tokens=8000,
+    max_completion_tokens=12000,  # Increased for validation reports
     reasoning_effort="medium",
 )
 
 # LOW reasoning - documentation from clear structure
 GPT5_DOCS = LLM(
     model=_get_env("ENLISTED_LLM_IMPLEMENTER", "gpt-5.2"),
-    max_completion_tokens=8000,
+    max_completion_tokens=12000,  # Increased for comprehensive planning docs
     reasoning_effort="low",
 )
 
 # Planning LLM - use simple string (LLM objects with reasoning_effort cause issues with AgentPlanner)
 # See: https://docs.crewai.com/en/concepts/planning - examples all use simple strings
 GPT5_PLANNING = _get_env("ENLISTED_LLM_PLANNING", "gpt-5.2")
+
+# Function calling LLM - lightweight, no reasoning overhead for tool parameter extraction
+# Used at Crew level for all agents' tool calls (per CrewAI docs recommendation)
+GPT5_FUNCTION_CALLING = _get_env("ENLISTED_LLM_FUNCTION_CALLING", "gpt-5.2")
 
 
 # === Agent Factory ===
@@ -210,21 +215,16 @@ def get_planning_manager() -> Agent:
         _agent_cache["planning_manager"] = Agent(
             role="Planning Coordinator",
             goal="Efficiently coordinate research, design, and documentation to produce high-quality feature plans",
-            backstory="""You are an experienced project manager coordinating a feature planning team.
-            Your role is to:
-            1. Delegate research tasks to Systems Analyst
-            2. Request architectural advice from Architecture Advisor
-            3. Coordinate design work with Feature Architect
-            4. Ensure Documentation Maintainer captures all decisions
-            5. Validate outputs meet quality standards before proceeding
-            
-            You ensure each specialist contributes their expertise while maintaining
-            overall coherence and quality of the planning document.""",
+            backstory="""Experienced technical project manager who coordinates planning teams. 
+            Delegates research to analysts, design to architects, and documentation to writers. 
+            Validates quality and ensures coherent output before proceeding.""",
             llm=GPT5_ARCHITECT,
-            allow_delegation=True,  # REQUIRED for manager
-            verbose=True,
-            max_iter=30,
+            allow_delegation=True,  # REQUIRED for hierarchical managers
+            reasoning=True,  # Enable strategic planning and coordination
+            max_reasoning_attempts=2,  # Limit overthinking (prevent delays)
+            max_iter=15,  # Reduced from default to prevent 90s delegation delays
             max_retry_limit=3,
+            verbose=True,
             respect_context_window=True,
         )
     return _agent_cache["planning_manager"]
@@ -236,20 +236,16 @@ def get_systems_analyst() -> Agent:
         _agent_cache["systems_analyst"] = Agent(
             role="Systems Analyst",
             goal="Research existing Enlisted systems to understand integration points",
-            backstory="""You research the Enlisted codebase using TOOLS, not memory.
+            backstory="""You research systems using DATABASE TOOLS FIRST, then code search.
 
-CRITICAL - TOOL-FIRST WORKFLOW:
-1. IMMEDIATELY call get_game_systems - don't think, just call it
-2. Call get_system_dependencies for EACH system (one call per system)
-3. Use find_in_code to locate relevant files
-4. Use read_source to examine code
+CRITICAL - DATABASE BEFORE CODE:
+1. FIRST call get_game_systems - instant system overview
+2. Call get_system_dependencies for each system mentioned
+3. Call lookup_api_pattern for Bannerlord API usage
+4. ONLY THEN use find_in_code for NEW queries not answered above
 
-TOOL CALL FORMAT: Each tool takes ONE argument, not arrays.
-- CORRECT: get_system_dependencies("CompanyNeedsManager") then get_system_dependencies("EscalationManager")
-- WRONG: get_system_dependencies(["CompanyNeedsManager", "EscalationManager"])
-
-DO NOT spend iterations "planning" or "thinking". EXECUTE TOOLS.
-If you find yourself writing paragraphs without tool calls, STOP and call a tool.""",
+Database tools are FAST and cached. Code search is SLOW.
+Limit to ~5-8 tool calls total. Never re-search same query.""",
             llm=GPT5_ARCHITECT,
             tools=[
                 get_game_systems,
@@ -278,20 +274,8 @@ def get_architecture_advisor() -> Agent:
         _agent_cache["architecture_advisor"] = Agent(
             role="Architecture Advisor",
             goal="Suggest best practices and architectural improvements",
-            backstory="""You advise on architecture using VERIFIED facts from tools.
-
-CRITICAL - TOOL-FIRST WORKFLOW:
-1. IMMEDIATELY call get_architecture to load patterns
-2. Call get_tier_info for EACH tier needed (one call per tier: 1, 4, 5, 6, 7)
-3. Use find_in_code to verify patterns exist in codebase
-4. Use get_balance_value for EACH value needed (one call per value)
-
-TOOL CALL FORMAT: Each tool takes ONE argument, not arrays.
-- CORRECT: get_tier_info(5) then get_tier_info(6) then get_tier_info(7)
-- WRONG: get_tier_info([5, 6, 7])
-
-DO NOT give advice based on assumptions. Every recommendation must be
-grounded in actual tool output. Your advice is only valuable if verified.""",
+            backstory="""Architecture expert who suggests best practices and design patterns 
+            based on verified information from the codebase and documentation.""",
             llm=GPT5_ARCHITECT,
             tools=[
                 get_architecture,
@@ -319,29 +303,16 @@ def get_feature_architect() -> Agent:
         _agent_cache["feature_architect"] = Agent(
             role="Feature Architect",
             goal="Design complete technical specifications AND identify gaps in existing code",
-            backstory="""You design features with VERIFIED technical specs AND investigate gaps.
+            backstory="""You design specs using DATABASE TOOLS FIRST to verify IDs exist.
 
-CRITICAL - TOOL-FIRST WORKFLOW:
-1. Call get_dev_reference FIRST to understand coding patterns
-2. Call lookup_content_id to check what content IDs already exist
-3. Call list_event_ids to see existing event naming patterns
-4. Use find_in_code to search for broken references (e.g., methods calling non-existent IDs)
-5. Use read_source to examine code that references missing content
+CRITICAL - DATABASE BEFORE CODE:
+1. FIRST call lookup_content_id for EACH content ID you plan to reference
+2. Call list_event_ids to see existing IDs in a category
+3. Call get_tier_info for tier-related features
+4. ONLY THEN use find_in_code for code patterns not in database
 
-GAP ANALYSIS - When you find broken references:
-1. INVESTIGATE WHY: Check docs, search for related code, look for patterns
-2. CLASSIFY the gap:
-   - DEPRECATED: Old code calling removed features → plan to delete it
-   - MISSING_IMPL: Code calling features that should exist → plan to implement
-   - TEST_CODE: Test file calling unbuilt APIs → note as expected gap
-   - OUTDATED_DOCS: Docs reference removed code → plan doc update
-   - UNCLEAR: Can't determine intent → FLAG FOR HUMAN REVIEW with question
-3. INCLUDE REMEDIATION in your design spec
-
-EVERY file path, method name, and content ID you specify MUST be verified.
-DO NOT invent file paths or method names. Check they exist or follow patterns.
-
-Your spec must address BOTH new features AND discovered gaps.""",
+Database tools prevent hallucinated IDs. Always verify before referencing.
+Limit to ~8-12 tool calls total.""",
             llm=GPT5_ARCHITECT,
             tools=[
                 get_dev_reference,
@@ -369,9 +340,8 @@ def get_documentation_maintainer() -> Agent:
         _agent_cache["documentation_maintainer"] = Agent(
             role="Documentation Maintainer",
             goal="Write clear, complete planning documents",
-            backstory="""You write planning documents that capture all design decisions.
-Your documents are saved to docs/CrewAI_Plans/ and serve as the
-source of truth for implementation.""",
+            backstory="""Technical writer who creates clear, comprehensive planning documents 
+            that serve as the source of truth for implementation.""",
             llm=GPT5_DOCS,
             tools=[
                 save_plan,
@@ -394,9 +364,16 @@ def get_code_analyst() -> Agent:
         _agent_cache["code_analyst"] = Agent(
             role="Code Analyst",
             goal="Validate that plans reference real files, methods, and IDs",
-            backstory="""You validate plans against the actual codebase. You check that
-every file path exists, every method signature is correct, and every
-content ID is available. You catch hallucinations before implementation.""",
+            backstory="""You validate plans using DATABASE TOOLS FIRST for fast lookups.
+
+CRITICAL - DATABASE BEFORE CODE:
+1. FIRST call lookup_content_id for EACH content ID in the plan
+2. Call search_content to find related content by category
+3. Call verify_file_exists_tool for EACH file path
+4. ONLY use find_in_code if database doesn't answer
+
+Database lookups are instant. Code grep is slow.
+Report: VALID (exists) vs HALLUCINATED (not found).""",
             llm=GPT5_ANALYST,
             tools=[
                 verify_file_exists_tool,
@@ -481,6 +458,31 @@ class PlanningFlow(Flow[PlanningState]):
         print("[PLANNING CREW] Running hierarchical planning...")
         print("-"*60)
         
+        # Pre-populate tool cache to avoid duplicate calls
+        if not state.cached_game_systems:
+            print("[CACHE] Pre-loading game systems...")
+            try:
+                state.cached_game_systems = get_game_systems()
+                print(f"[CACHE] Cached game systems ({len(state.cached_game_systems)} chars)")
+            except Exception as e:
+                print(f"[CACHE] Warning: Failed to cache game systems: {e}")
+        
+        if not state.cached_architecture:
+            print("[CACHE] Pre-loading architecture docs...")
+            try:
+                state.cached_architecture = get_architecture()
+                print(f"[CACHE] Cached architecture ({len(state.cached_architecture)} chars)")
+            except Exception as e:
+                print(f"[CACHE] Warning: Failed to cache architecture: {e}")
+        
+        if not state.cached_dev_reference:
+            print("[CACHE] Pre-loading dev reference...")
+            try:
+                state.cached_dev_reference = get_dev_reference()
+                print(f"[CACHE] Cached dev reference ({len(state.cached_dev_reference)} chars)")
+            except Exception as e:
+                print(f"[CACHE] Warning: Failed to cache dev reference: {e}")
+        
         plan_path = f"docs/CrewAI_Plans/{state.feature_name}.md"
         
         # Task 1: Research existing systems
@@ -492,18 +494,26 @@ class PlanningFlow(Flow[PlanningState]):
             DESCRIPTION: {state.description}
             RELATED SYSTEMS: {state.related_systems or "To be determined"}
             
-            RESEARCH TASKS:
-            1. Call get_game_systems first to understand core systems
-            2. Search documentation for related features
-            3. Find relevant C# code and understand the patterns
-            4. Identify integration points and dependencies
-            5. Note any existing similar functionality
+            === PRE-LOADED CONTEXT (DO NOT RE-FETCH) ===
+            {state.cached_game_systems[:3000]}
+            === END PRE-LOADED CONTEXT ===
             
-            OUTPUT: Comprehensive research summary with:
+            WORKFLOW (execute in order):
+            1. FIRST: Extract relevant info from PRE-LOADED CONTEXT above - DO NOT call get_game_systems
+            2. Call get_system_dependencies for 2-3 most relevant systems (one call per system)
+            3. Call lookup_core_system for any system you need details on
+            4. ONLY IF needed: Use find_in_code for specific queries not answered above
+            5. Limit total tool calls to ~10 maximum
+            
+            TOOL EFFICIENCY RULES:
+            - DO NOT call get_game_systems - it's already above
+            - Each tool takes ONE argument, not arrays
+            - Don't re-search same queries with slight variations
+            
+            OUTPUT: Research summary with:
             - Related systems and their roles
             - Key files and methods
             - Integration points
-            - Existing patterns to follow
             """,
             expected_output="Research summary of existing systems",
             agent=get_systems_analyst(),
@@ -517,17 +527,25 @@ class PlanningFlow(Flow[PlanningState]):
             FEATURE: {state.feature_name}
             DESCRIPTION: {state.description}
             
-            ADVISOR TASKS:
-            1. Review the research findings from Systems Analyst
-            2. Identify potential issues or risks
-            3. Suggest best practices to follow
-            4. Recommend architectural patterns
-            5. Note tier-aware design considerations (T1-T4 Grunt, T5-T6 NCO, T7+ Commander)
+            === PRE-LOADED CONTEXT (DO NOT RE-FETCH) ===
+            {state.cached_architecture[:3000]}
+            === END PRE-LOADED CONTEXT ===
+            
+            WORKFLOW (execute in order):
+            1. FIRST: Extract patterns from PRE-LOADED CONTEXT above - DO NOT call get_architecture
+            2. Call get_tier_info for 1-2 relevant tiers only (not all tiers)
+            3. Call get_balance_value only for specific values you need
+            4. ONLY IF needed: Use find_in_code for specific verification
+            5. Limit total tool calls to ~8 maximum
+            
+            TOOL EFFICIENCY RULES:
+            - DO NOT call get_architecture - it's already above
+            - Build on research task findings, don't re-research
+            - Each tool takes ONE argument, not arrays
             
             OUTPUT: Architectural recommendations with:
             - Suggested patterns
             - Risks to avoid
-            - Best practices
             - Tier considerations
             """,
             expected_output="Architectural recommendations",
@@ -543,32 +561,29 @@ class PlanningFlow(Flow[PlanningState]):
             FEATURE: {state.feature_name}
             DESCRIPTION: {state.description}
             
-            DESIGN TASKS:
-            1. Define exact file paths for new C# code
-            2. Specify method signatures and class structure
-            3. Define JSON content IDs (events, decisions, orders)
-            4. Specify integration with existing systems
-            5. Include tier-variant content if applicable
-            6. SEARCH for broken references in related code (use find_in_code)
-            7. For EACH broken reference found:
-               a. Investigate WHY it's broken (check docs, patterns, history)
-               b. Classify: DEPRECATED | MISSING_IMPL | TEST_CODE | OUTDATED_DOCS | UNCLEAR
-               c. Propose remediation OR flag for human review
+            === PRE-LOADED CONTEXT (DO NOT RE-FETCH) ===
+            {state.cached_dev_reference[:3000]}
+            === END PRE-LOADED CONTEXT ===
             
-            If you encounter major uncertainties during design, you can ask the human
-            for clarification. Use human input sparingly - only for critical decisions
-            that significantly impact the design.
+            WORKFLOW (execute in order):
+            1. FIRST: Extract coding patterns from PRE-LOADED CONTEXT above - DO NOT call get_dev_reference
+            2. Call lookup_content_id for each content ID you plan to create (verify uniqueness)
+            3. Call list_event_ids ONCE to see naming patterns
+            4. Build on research + advice findings - don't re-research
+            5. ONLY IF needed: Use find_in_code for specific verification
+            6. Limit total tool calls to ~12 maximum
             
-            OUTPUT: Complete technical spec with:
+            TOOL EFFICIENCY RULES:
+            - DO NOT call get_dev_reference - it's already above
+            - Use lookup_content_id BEFORE inventing new IDs
+            - Each tool takes ONE argument, not arrays
+            
+            OUTPUT: Technical spec with:
             - File paths (exact, verifiable)
             - Method signatures
-            - Content IDs (unique, following naming conventions)
+            - Content IDs (verified unique)
             - Integration points
-            - Implementation order
-            - **GAPS DISCOVERED** section:
-              * List each broken reference found
-              * Classification and reasoning
-              * Proposed fix OR question for human
+            - GAPS DISCOVERED section (if any broken references found)
             """,
             expected_output="Technical specification document",
             agent=get_feature_architect(),
@@ -623,9 +638,22 @@ class PlanningFlow(Flow[PlanningState]):
             cache=True,
             planning=True,
             planning_llm=GPT5_PLANNING,
+            function_calling_llm=GPT5_FUNCTION_CALLING,  # Lightweight LLM for tool calls
         )
         
+        start_time = time.time()
         result = crew.kickoff()
+        elapsed = time.time() - start_time
+        
+        # Progress tracking
+        try:
+            token_usage = result.token_usage if hasattr(result, 'token_usage') else None
+            if token_usage:
+                print(f"\n[PROGRESS] Phase 1 (Planning Crew) Complete:")
+                print(f"  Time: {elapsed:.1f}s")
+                print(f"  Tokens: {token_usage}")
+        except Exception as e:
+            print(f"\n[PROGRESS] Phase 1 (Planning Crew) Complete: {elapsed:.1f}s")
         
         # Extract outputs from crew result
         result_str = str(result)
@@ -841,9 +869,23 @@ class PlanningFlow(Flow[PlanningState]):
             cache=True,
             planning=True,
             planning_llm=GPT5_PLANNING,
+            function_calling_llm=GPT5_FUNCTION_CALLING,  # Lightweight LLM for tool calls
         )
         
+        start_time = time.time()
         result = crew.kickoff()
+        elapsed = time.time() - start_time
+        
+        # Progress tracking
+        try:
+            token_usage = result.token_usage if hasattr(result, 'token_usage') else None
+            if token_usage:
+                print(f"\n[PROGRESS] Phase 2 (Validation Crew) Complete:")
+                print(f"  Time: {elapsed:.1f}s")
+                print(f"  Tokens: {token_usage}")
+        except Exception as e:
+            print(f"\n[PROGRESS] Phase 2 (Validation Crew) Complete: {elapsed:.1f}s")
+        
         output = str(result)
         
         # Parse validation result
@@ -941,10 +983,24 @@ class PlanningFlow(Flow[PlanningState]):
             memory=True,
             cache=True,
             planning=True,
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
+            planning_llm=GPT5_PLANNING,
+            function_calling_llm=GPT5_FUNCTION_CALLING,  # Lightweight LLM for tool calls
         )
         
+        start_time = time.time()
         result = crew.kickoff()
+        elapsed = time.time() - start_time
+        
+        # Progress tracking
+        try:
+            token_usage = result.token_usage if hasattr(result, 'token_usage') else None
+            if token_usage:
+                print(f"\n[PROGRESS] Phase 3 (Fix Plan) Complete:")
+                print(f"  Time: {elapsed:.1f}s")
+                print(f"  Tokens: {token_usage}")
+        except Exception as e:
+            print(f"\n[PROGRESS] Phase 3 (Fix Plan) Complete: {elapsed:.1f}s")
+        
         state.validation_status = ValidationStatus.FIXED
         state.current_step = "validate"
         return state

@@ -143,7 +143,7 @@ def _get_env(name: str, default: str) -> str:
 # MEDIUM reasoning for QA - needs to catch issues
 GPT5_QA = LLM(
     model=_get_env("ENLISTED_LLM_QA", "gpt-5.2"),
-    max_completion_tokens=6000,
+    max_completion_tokens=8000,  # Increased for validation reports
     reasoning_effort="medium",
 )
 
@@ -153,6 +153,13 @@ GPT5_FAST = LLM(
     max_completion_tokens=4000,
     reasoning_effort="none",
 )
+
+# Planning LLM - use simple string (LLM objects with reasoning_effort cause issues with AgentPlanner)
+GPT5_PLANNING = _get_env("ENLISTED_LLM_PLANNING", "gpt-5.2")
+
+# Function calling LLM - lightweight, no reasoning overhead for tool parameter extraction
+# Used at Crew level for all agents' tool calls (per CrewAI docs recommendation)
+GPT5_FUNCTION_CALLING = _get_env("ENLISTED_LLM_FUNCTION_CALLING", "gpt-5.2")
 
 
 # === State Model ===
@@ -198,19 +205,16 @@ def get_validation_manager() -> Agent:
         _agent_cache["validation_manager"] = Agent(
             role="QA Coordinator",
             goal="Coordinate comprehensive validation to ensure quality before release",
-            backstory="""You lead a QA team that validates all changes before release.
-            Your responsibilities:
-            1. Delegate content validation (JSON schemas, strings)
-            2. Delegate build validation (compilation, no warnings)
-            3. Coordinate final QA report
-            4. Ensure no issues are missed
-            
-            You ensure all validation passes before approving.""",
+            backstory="""QA manager who coordinates validation teams before release. 
+            Delegates content validation and build checks to specialists, and ensures comprehensive QA reporting. 
+            Verifies all validation passes before approval.""",
             llm=GPT5_QA,
-            allow_delegation=True,  # REQUIRED for manager
-            verbose=True,
-            max_iter=20,
+            allow_delegation=True,  # REQUIRED for hierarchical managers
+            reasoning=True,  # Enable strategic coordination
+            max_reasoning_attempts=2,  # Limit overthinking (prevent delays)
+            max_iter=15,  # Reduced from default to prevent delegation delays
             max_retry_limit=3,
+            verbose=True,
             respect_context_window=True,
         )
     return _agent_cache["validation_manager"]
@@ -328,14 +332,18 @@ class ValidationFlow(Flow[ValidationState]):
         # Task 1: Content Validation
         content_task = Task(
             description="""
-            Validate all JSON content files in the Enlisted mod.
-            
-            WORKFLOW:
-            1. Call validate_content tool to run full validation
-            2. Report any schema errors, missing fields, or invalid values
-            
-            OUTPUT: List of validation errors or "All content valid"
-            """,
+Validate all JSON content files in the Enlisted mod.
+
+WORKFLOW (execute in order):
+1. Call validate_content tool to run full validation
+2. Report any schema errors, missing fields, or invalid values
+
+TOOL EFFICIENCY RULES:
+- Limit to 1-2 tool calls total
+- validate_content runs ALL checks in one call
+
+OUTPUT: List of validation errors or "All content valid"
+""",
             expected_output="Content validation results with pass/fail",
             agent=get_content_validator(),
             guardrails=[validate_content_check_ran],
@@ -345,14 +353,18 @@ class ValidationFlow(Flow[ValidationState]):
         # Task 2: Build Validation
         build_task = Task(
             description="""
-            Run dotnet build to verify C# code compiles.
-            
-            WORKFLOW:
-            1. Call build tool to run compilation
-            2. Report any build errors or warnings
-            
-            OUTPUT: Build result (success/failure with errors)
-            """,
+Run dotnet build to verify C# code compiles.
+
+WORKFLOW (execute in order):
+1. Call build tool to run compilation
+2. Report any build errors or warnings
+
+TOOL EFFICIENCY RULES:
+- Limit to 1 tool call total
+- build tool runs full compilation
+
+OUTPUT: Build result (success/failure with errors)
+""",
             expected_output="Build validation results with pass/fail",
             agent=get_build_validator(),
             guardrails=[validate_build_output_parsed],
@@ -362,11 +374,19 @@ class ValidationFlow(Flow[ValidationState]):
         # Task 3: Generate QA Report
         report_task = Task(
             description="""
-            Produce a clear validation report summarizing all checks.
-            
-            Compile results from content validation and build validation.
-            List any issues found and provide overall pass/fail status.
-            """,
+Produce a clear validation report summarizing all checks.
+
+WORKFLOW:
+1. Review content validation results from context
+2. Review build validation results from context
+3. Compile into clear report
+
+TOOL EFFICIENCY RULES:
+- NO tool calls needed - all data is in context above
+- Just synthesize the report
+
+OUTPUT: Pass/fail status + prioritized list of issues (if any)
+""",
             expected_output="Final QA report with overall status",
             agent=get_qa_reporter(),
             context=[content_task, build_task],
@@ -385,6 +405,11 @@ class ValidationFlow(Flow[ValidationState]):
             manager_agent=get_validation_manager(),
             process=Process.hierarchical,
             verbose=True,
+            memory=True,
+            cache=True,
+            planning=True,
+            planning_llm=GPT5_PLANNING,
+            function_calling_llm=GPT5_FUNCTION_CALLING,  # Lightweight LLM for tool calls
         )
         
         result = crew.kickoff()

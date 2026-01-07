@@ -76,6 +76,11 @@ class PlanningState(BaseModel):
     research_output: str = ""
     suggestions_output: str = ""
     
+    # Tool result cache (avoid duplicate expensive calls)
+    cached_game_systems: str = ""  # Result of get_game_systems
+    cached_architecture: str = ""  # Result of get_architecture
+    cached_dev_reference: str = ""  # Result of get_dev_reference
+    
     # Design phase
     design_output: str = ""
     plan_path: str = ""

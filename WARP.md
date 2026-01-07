@@ -146,11 +146,14 @@ crewai test -n 3 -m gpt-5
 
 **Setup:** See [Tools/CrewAI/CREWAI.md](Tools/CrewAI/CREWAI.md)  
 **Requirements:** OpenAI API key in `.env` file  
+**Package:** Migrated to `crewai[tools]>=0.95.0` (deprecated `crewai-tools` standalone archived Nov 2025)  
 **Model:** GPT-5.2 unified across all agents with optimized `reasoning_effort`:
   - `high` (~8s): Architecture, complex decisions, deep system analysis
   - `medium` (~5s): Bug analysis, QA validation, code review
   - `low` (~5s): Implementation from specs, documentation, planning
   - `none` (~1s): Schema validation, formatting, simple content generation  
+**Manager Optimization (2026-01-07):** All 4 hierarchical managers now use `reasoning=True` + `max_reasoning_attempts=2` for strategic coordination, `max_iter=15` to prevent delegation delays, and concise ~50-word backstories (85% token savings)  
+**Token Limits:** Increased from 8K→12K for comprehensive outputs  
 **Memory:** Enabled with text-embedding-3-large for superior knowledge retrieval  
 **State Persistence:** All flows resume on failure (`persist=True`)  
 **Database:** 23 SQLite tools for instant lookups (error codes, tiers, balance, content, API patterns)  

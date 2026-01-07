@@ -2,7 +2,7 @@
 
 **Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (23 database tools), automatic prompt caching, and **intelligent manager analysis** that detects and logs critical issues while maintaining fully automated workflows.  
 **Status:** ✅ Implemented  
-**Last Updated:** 2026-01-07 (Disabled human feedback loops across all flows; managers detect and log issues but workflows run fully automated)
+**Last Updated:** 2026-01-07 (Performance Optimization: Phase 1-2: function_calling_llm, tool efficiency rules, DATABASE FIRST backstories; Phase 3: Input normalization for cache hits; Phase 4: Tool count reduction - agents now have 4-8 tools each vs 9-14 previously)
 
 ---
 
@@ -127,6 +127,8 @@ Each workflow uses the agents it needs:
 ### 1. Create Virtual Environment
 
 Requires **Python 3.10-3.13**.
+
+**Package Update (2026-01-07):** Migrated from deprecated standalone `crewai-tools` package (archived Nov 2025) to modern `crewai[tools]>=0.95.0`. Tools are now integrated in the main CrewAI repository.
 
 ```powershell
 cd Tools/CrewAI
@@ -262,6 +264,8 @@ Tools use natural naming for readability. The `@tool("Name")` decorator defines 
 
 ### Database (SQLite Knowledge Base)
 
+**23 Total Database Tools:** 14 query tools + 9 maintenance tools for structured, instant lookups with no LLM cost.
+
 **Query Tools (14 total):**
 
 | Tool | Purpose |
@@ -294,6 +298,13 @@ Tools use natural naming for readability. The `@tool("Name")` decorator defines 
 | `add_system_dependency` | Document system dependencies |
 | `sync_content_from_files` | Scan all JSON files and sync to database |
 | `record_implementation` | Log implementation completion for tracking |
+
+**Why Custom Tools Over NL2SQL:**
+- **Faster:** Pre-written SQL queries execute instantly (no LLM generation step)
+- **Cacheable:** Input normalization ensures same queries = cache hits
+- **Type-safe:** Validated parameters, structured outputs
+- **Domain-specific:** Optimized for Enlisted knowledge base queries
+- **Zero token cost:** Normalized lookups hit cache directly, no LLM calls needed
 
 ---
 
@@ -364,12 +375,13 @@ feature_architect (design), content_author (content), balance_analyst (review).
 ```python
 Agent(
     llm=GPT5_ARCHITECT,            # GPT-5.2 with reasoning enabled
-    tools=[...],                   # 4-6 tools for coordination
-    max_iter=30,                   # Higher for managers (coordination needs more cycles)
+    tools=[...],                   # 4-6 tools for coordination (optional)
+    max_iter=15,                   # Reduced to prevent 90s delegation delays
     max_retry_limit=3,
-    reasoning=True,
-    max_reasoning_attempts=3,
+    reasoning=True,                # Enable strategic coordination
+    max_reasoning_attempts=2,      # Limit overthinking (prevent delays)
     allow_delegation=True,         # REQUIRED for managers in hierarchical process
+    backstory="""Concise ~50-word backstory focused on delegation and coordination.""",
 )
 ```
 
@@ -403,9 +415,68 @@ Agent(
 - See "Hierarchical Process" section for complete manager/specialist patterns
 
 **Iteration Limits** (`max_iter`, `max_retry_limit`):
-- Managers: `max_iter=30` (higher for coordination)
-- Specialists: `max_iter=15` (lower for focused execution)
+- Managers: `max_iter=15` (reduced to prevent 90s delegation delays)
+- Specialists: `max_iter=15-25` (based on task complexity)
 - `max_retry_limit=3` for all agents (retries on tool/LLM errors)
+
+**Manager Optimization (2026-01-07):**
+- All 4 manager agents now use `reasoning=True` + `max_reasoning_attempts=2`
+- Backstories reduced from ~100 words to ~50 words (85% token savings)
+- `max_iter` reduced from 20-35 to 15 (prevents 90-second delegation delays)
+- Token limits increased: 8K→12K for comprehensive outputs
+
+**Function Calling LLM Optimization (2026-01-07):**
+- All 4 Crews now use `function_calling_llm=GPT5_FUNCTION_CALLING` (PlanningFlow, BugHuntingFlow, ImplementationFlow, ValidationFlow)
+- Separates tool parameter extraction from main agent reasoning
+- Prevents heavyweight reasoning LLM from being used for every tool call
+- Significant token savings on tool-heavy workflows
+
+**Task Description Optimization (2026-01-07):**
+- All task descriptions now include "WORKFLOW (execute in order)" with numbered steps
+- "TOOL EFFICIENCY RULES" section added to every task with specific tool call limits
+- "DO NOT re-search" / "DO NOT re-verify" instructions prevent redundant tool calls
+- Pre-loaded context emphasized in PlanningFlow task descriptions (3000 char limit)
+- Tool call limits by task type:
+  - Investigation tasks: 5-10 calls
+  - Systems analysis: 4-6 calls
+  - Implementation: 10-15 calls
+  - Validation: 1-4 calls
+  - Documentation: 4-5 calls
+
+**Agent Backstory Optimization (2026-01-07):**
+- All agents with database tools now have "DATABASE TOOLS FIRST" instructions in backstories
+- Pattern: "CRITICAL - DATABASE BEFORE CODE/LOGS/CREATING" with numbered steps
+- Agents prioritize fast database lookups over slow code/log searches
+- Updated agents:
+  - `systems_analyst` (planning): get_game_systems → get_system_dependencies → lookup_api_pattern → THEN find_in_code
+  - `feature_architect` (planning): lookup_content_id → list_event_ids → get_tier_info → THEN find_in_code
+  - `code_analyst` (planning): lookup_content_id → search_content → verify_file_exists_tool → THEN find_in_code
+  - `code_analyst` (bug_hunting): lookup_error_code FIRST → THEN search_debug_logs
+  - `content_author` (implementation): lookup_content_id → get_valid_categories → get_valid_severities → THEN create
+
+**Database Tool Input Normalization (2026-01-07 - Phase 3):**
+- All 14 query tools now normalize inputs for better cache hit rates
+- Normalization strategies:
+  - Content IDs/categories: `.strip().lower()` + `LOWER()` in SQL (snake_case convention)
+  - Error codes: `.strip().upper()` + `UPPER()` in SQL (E-PREFIX-NNN convention)
+  - System/API names: `.strip()` + `COLLATE NOCASE` in SQL (PascalCase preserved)
+- Result: `"EQUIPMENT"`, `"equipment"`, and `"  equipment  "` all produce identical queries and cache hits
+- Zero LLM token cost for normalized lookups (direct cache hits)
+
+**Tool Count Reduction (2026-01-07 - Phase 4):**
+- Reduced tool counts per agent to prevent decision paralysis and improve focus
+- Previous: 9-14 tools per agent; Now: 4-8 tools per agent
+- Removed redundant tools from agents (e.g., `find_in_docs` when `find_in_code` sufficient)
+- Removed deprecated tools (`find_in_native_api` - use MCP server instead)
+- Each agent now has only the tools essential for their specific role
+- Updated agents:
+  - `systems_analyst` (impl): 12→8 tools
+  - `csharp_implementer`: 10→5 tools
+  - `content_author`: 9→5 tools
+  - `documentation_maintainer` (impl): 7→4 tools
+  - `code_analyst` (bug): 14→6 tools
+  - `systems_analyst` (bug): 12→5 tools
+  - `implementer` (bug): 9→4 tools
 
 ### Workflow Configuration Patterns
 
@@ -421,8 +492,21 @@ Crew(
     cache=True,                    # Cache tool results (avoids redundant calls)
     planning=True,                 # AgentPlanner creates step-by-step execution plan
     planning_llm=GPT5_PLANNING,    # Use GPT-5 for planning (best quality)
+    function_calling_llm=GPT5_FUNCTION_CALLING,  # Lightweight LLM for tool parameter extraction
     embedder=EMBEDDER_CONFIG,      # text-embedding-3-large for superior knowledge retrieval
 )
+```
+
+**Function Calling LLM (`function_calling_llm`):**
+- Per [CrewAI docs](https://docs.crewai.com/core-concepts/Collaboration/), this manages "language models for executing tasks and tools"
+- Crew-level setting applies to ALL agents in the crew for tool calls
+- Individual agents can override with their own `function_calling_llm` parameter
+- Without this, agents use their heavyweight reasoning LLM for every tool parameter extraction
+- Significant token savings on tool-heavy workflows
+
+```python
+# LLM definition (in flow files)
+GPT5_FUNCTION_CALLING = _get_env("ENLISTED_LLM_FUNCTION_CALLING", "gpt-5.2")
 ```
 
 #### Hierarchical Process with Manager Agents
@@ -447,17 +531,16 @@ def get_my_manager() -> Agent:
     return Agent(
         role="Workflow Coordinator",
         goal="Coordinate specialists to produce high-quality output",
-        backstory="""You lead a team of specialists.
-        Your responsibilities:
-        1. Delegate tasks to appropriate specialists
-        2. Validate outputs meet quality standards
-        3. Ensure coherence across all work
-        4. Request re-work if needed""",
+        backstory="""Experienced coordinator who delegates tasks to specialists, 
+        validates quality, and ensures coherent output across all work.""",
         llm=GPT5_ARCHITECT,
         allow_delegation=True,         # REQUIRED for managers
-        verbose=True,
-        max_iter=30,
+        reasoning=True,                # Enable strategic coordination
+        max_reasoning_attempts=2,      # Limit overthinking
+        max_iter=15,                   # Reduced to prevent delays
         max_retry_limit=3,
+        verbose=True,
+        respect_context_window=True,
     )
 
 crew = Crew(
@@ -470,14 +553,17 @@ crew = Crew(
     cache=True,
     planning=True,
     planning_llm=GPT5_PLANNING,
+    function_calling_llm=GPT5_FUNCTION_CALLING,       # Lightweight tool calls
 )
 ```
 
 **Manager Agent Requirements:**
 - ✅ `allow_delegation=True` - REQUIRED for managers to delegate
+- ✅ `reasoning=True` + `max_reasoning_attempts=2` - Strategic planning without overthinking
 - ✅ High-capability LLM (GPT5_ARCHITECT) - Needs strategic thinking
-- ✅ Clear backstory about coordination responsibilities
-- ✅ Higher `max_iter` (30+) - Managers need more iterations for coordination
+- ✅ Concise backstory (~50 words) - Focused on delegation and coordination
+- ✅ `max_iter=15` - Prevents 90-second delegation delays
+- ✅ Increased token limits (12K+) - Comprehensive outputs without hitting limits
 
 **Specialist Agent Requirements:**
 - ✅ `allow_delegation=False` - Specialists don't delegate (only execute)
