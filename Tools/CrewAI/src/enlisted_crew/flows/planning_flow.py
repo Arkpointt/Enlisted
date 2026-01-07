@@ -462,7 +462,7 @@ class PlanningFlow(Flow[PlanningState]):
         if not state.cached_game_systems:
             print("[CACHE] Pre-loading game systems...")
             try:
-                state.cached_game_systems = get_game_systems()
+                state.cached_game_systems = get_game_systems.run()
                 print(f"[CACHE] Cached game systems ({len(state.cached_game_systems)} chars)")
             except Exception as e:
                 print(f"[CACHE] Warning: Failed to cache game systems: {e}")
@@ -470,7 +470,7 @@ class PlanningFlow(Flow[PlanningState]):
         if not state.cached_architecture:
             print("[CACHE] Pre-loading architecture docs...")
             try:
-                state.cached_architecture = get_architecture()
+                state.cached_architecture = get_architecture.run()
                 print(f"[CACHE] Cached architecture ({len(state.cached_architecture)} chars)")
             except Exception as e:
                 print(f"[CACHE] Warning: Failed to cache architecture: {e}")
@@ -478,7 +478,7 @@ class PlanningFlow(Flow[PlanningState]):
         if not state.cached_dev_reference:
             print("[CACHE] Pre-loading dev reference...")
             try:
-                state.cached_dev_reference = get_dev_reference()
+                state.cached_dev_reference = get_dev_reference.run()
                 print(f"[CACHE] Cached dev reference ({len(state.cached_dev_reference)} chars)")
             except Exception as e:
                 print(f"[CACHE] Warning: Failed to cache dev reference: {e}")
