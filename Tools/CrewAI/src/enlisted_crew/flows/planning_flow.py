@@ -131,6 +131,32 @@ GPT5_PLANNING = LLM(
 _agent_cache = {}
 
 
+def get_planning_manager() -> Agent:
+    """Manager agent that coordinates the planning workflow."""
+    if "planning_manager" not in _agent_cache:
+        _agent_cache["planning_manager"] = Agent(
+            role="Planning Coordinator",
+            goal="Efficiently coordinate research, design, and documentation to produce high-quality feature plans",
+            backstory="""You are an experienced project manager coordinating a feature planning team.
+            Your role is to:
+            1. Delegate research tasks to Systems Analyst
+            2. Request architectural advice from Architecture Advisor
+            3. Coordinate design work with Feature Architect
+            4. Ensure Documentation Maintainer captures all decisions
+            5. Validate outputs meet quality standards before proceeding
+            
+            You ensure each specialist contributes their expertise while maintaining
+            overall coherence and quality of the planning document.""",
+            llm=GPT5_ARCHITECT,
+            allow_delegation=True,  # REQUIRED for manager
+            verbose=True,
+            max_iter=30,
+            max_retry_limit=3,
+            respect_context_window=True,
+        )
+    return _agent_cache["planning_manager"]
+
+
 def get_systems_analyst() -> Agent:
     """Research existing systems and code."""
     if "systems_analyst" not in _agent_cache:
@@ -168,7 +194,7 @@ If you find yourself writing paragraphs without tool calls, STOP and call a tool
             max_retry_limit=3,  # Retry on transient errors
             reasoning=True,  # Plan research strategy before executing
             max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=True,  # Coordinator can delegate to specialists
+            allow_delegation=False,  # Specialists don't delegate (only managers do)
         )
     return _agent_cache["systems_analyst"]
 
@@ -209,7 +235,7 @@ grounded in actual tool output. Your advice is only valuable if verified.""",
             max_retry_limit=3,
             reasoning=True,  # Think before advising
             max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=True,  # Advisor can delegate research tasks
+            allow_delegation=False,  # Specialists don't delegate (only managers do)
         )
     return _agent_cache["architecture_advisor"]
 
@@ -259,7 +285,7 @@ Your spec must address BOTH new features AND discovered gaps.""",
             max_retry_limit=3,
             reasoning=True,  # Think before designing
             max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=True,  # Orchestrator can delegate implementation details
+            allow_delegation=False,  # Specialists don't delegate (only managers do)
         )
     return _agent_cache["feature_architect"]
 
@@ -321,14 +347,16 @@ class PlanningFlow(Flow[PlanningState]):
     """
     Flow-based planning workflow for feature design.
     
+    Uses hierarchical process with a Planning Manager coordinating specialists.
+    
     State Persistence: Enabled via persist=True. If a run fails, you can resume
     from the last successful step by re-running with the same inputs.
     
     Steps:
-    1. research_systems - Analyze existing code and docs
-    2. suggest_improvements - Get architectural advice
-    3. design_feature - Create technical specification
-    4. write_plan - Save planning document
+    1. receive_request - Parse and validate inputs
+    2. run_planning_crew - Single hierarchical crew (research → advise → design → write)
+    3. route_after_planning - Check for UNCLEAR gaps
+    4. review_unclear_gaps - (conditional) Human review of gaps
     5. validate_plan - Check for hallucinations
     6. route_validation - Fix issues or complete
     7. fix_plan - (conditional) Correct any issues
@@ -367,17 +395,23 @@ class PlanningFlow(Flow[PlanningState]):
         print(f"\nFeature: {feature_name}")
         print(f"Description: {description[:100]}...")
         
-        state.current_step = "research"
+        state.current_step = "planning"
         return state
     
     @listen(receive_request)
-    def research_systems(self, state: PlanningState) -> PlanningState:
-        """Step 1: Research existing systems."""
+    def run_planning_crew(self, state: PlanningState) -> PlanningState:
+        """Single hierarchical crew for all planning work.
+        
+        Manager coordinates: research → advise → design → write
+        """
         print("\n" + "-"*60)
-        print("[RESEARCH] Analyzing existing systems...")
+        print("[PLANNING CREW] Running hierarchical planning...")
         print("-"*60)
         
-        task = Task(
+        plan_path = f"docs/CrewAI_Plans/{state.feature_name}.md"
+        
+        # Task 1: Research existing systems
+        research_task = Task(
             description=f"""
             Research existing Enlisted systems for this feature:
             
@@ -402,41 +436,16 @@ class PlanningFlow(Flow[PlanningState]):
             agent=get_systems_analyst(),
         )
         
-        crew = Crew(
-            agents=[get_systems_analyst()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,
-            cache=True,  # Cache tool results
-            planning=True,
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
-        )
-        
-        result = crew.kickoff()
-        state.research_output = str(result)
-        state.current_step = "suggest"
-        return state
-    
-    @listen(research_systems)
-    def suggest_improvements(self, state: PlanningState) -> PlanningState:
-        """Step 2: Get architectural advice."""
-        print("\n" + "-"*60)
-        print("[ADVISE] Getting architectural recommendations...")
-        print("-"*60)
-        
-        task = Task(
+        # Task 2: Suggest architectural improvements (depends on research)
+        advise_task = Task(
             description=f"""
             Suggest architectural improvements for this feature:
             
             FEATURE: {state.feature_name}
             DESCRIPTION: {state.description}
             
-            RESEARCH FINDINGS:
-            {state.research_output[:4000]}
-            
             ADVISOR TASKS:
-            1. Review the research findings
+            1. Review the research findings from Systems Analyst
             2. Identify potential issues or risks
             3. Suggest best practices to follow
             4. Recommend architectural patterns
@@ -450,43 +459,16 @@ class PlanningFlow(Flow[PlanningState]):
             """,
             expected_output="Architectural recommendations",
             agent=get_architecture_advisor(),
+            context=[research_task],  # Depends on research
         )
         
-        crew = Crew(
-            agents=[get_architecture_advisor()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,
-            cache=True,
-            planning=True,
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
-        )
-        
-        result = crew.kickoff()
-        state.suggestions_output = str(result)
-        state.current_step = "design"
-        return state
-    
-    @listen(suggest_improvements)
-    def design_feature(self, state: PlanningState) -> PlanningState:
-        """Step 3: Create technical specification."""
-        print("\n" + "-"*60)
-        print("[DESIGN] Creating technical specification...")
-        print("-"*60)
-        
-        task = Task(
+        # Task 3: Design technical specification (depends on research + advice)
+        design_task = Task(
             description=f"""
             Design the technical specification for this feature:
             
             FEATURE: {state.feature_name}
             DESCRIPTION: {state.description}
-            
-            RESEARCH:
-            {state.research_output[:3000]}
-            
-            RECOMMENDATIONS:
-            {state.suggestions_output[:2000]}
             
             DESIGN TASKS:
             1. Define exact file paths for new C# code
@@ -517,38 +499,79 @@ class PlanningFlow(Flow[PlanningState]):
             """,
             expected_output="Technical specification document",
             agent=get_feature_architect(),
-            human_input=True,  # Allow agent to ask clarifying questions during execution
+            context=[research_task, advise_task],  # Depends on both
+            human_input=True,  # PRESERVE task-level HITL
         )
         
+        # Task 4: Write planning document (depends on design)
+        write_task = Task(
+            description=f"""
+            Write the planning document for this feature:
+            
+            FEATURE: {state.feature_name}
+            OUTPUT PATH: {plan_path}
+            
+            DOCUMENT TASKS:
+            1. Use save_plan tool to write the document
+            2. Include all technical details from the design
+            3. Add implementation checklist
+            4. Include validation criteria
+            5. Mark status as "Planning"
+            
+            DOCUMENT STRUCTURE:
+            - Title and Status
+            - Overview
+            - Technical Specification
+            - Files to Create/Modify
+            - Content IDs
+            - Implementation Checklist
+            - Validation Criteria
+            """,
+            expected_output="Planning document saved to disk",
+            agent=get_documentation_maintainer(),
+            context=[design_task],  # Depends on design
+        )
+        
+        # Single hierarchical crew with manager coordination
         crew = Crew(
-            agents=[get_feature_architect()],
-            tasks=[task],
-            process=Process.sequential,
+            agents=[
+                get_systems_analyst(),
+                get_architecture_advisor(),
+                get_feature_architect(),
+                get_documentation_maintainer(),
+            ],
+            tasks=[research_task, advise_task, design_task, write_task],
+            manager_agent=get_planning_manager(),
+            process=Process.hierarchical,
             verbose=True,
             memory=True,
             cache=True,
             planning=True,
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
+            planning_llm=GPT5_PLANNING,
         )
         
         result = crew.kickoff()
-        state.design_output = str(result)
+        
+        # Extract outputs from crew result
+        result_str = str(result)
+        state.design_output = result_str
+        state.plan_path = plan_path
         
         # Check if design contains UNCLEAR gaps that need human review
-        design_lower = str(result).lower()
-        if "unclear" in design_lower and "gap" in design_lower:
+        if "unclear" in result_str.lower() and "gap" in result_str.lower():
             state.current_step = "human_review"
         else:
-            state.current_step = "write"
+            state.current_step = "validate"
+        
         return state
     
-    @listen(design_feature)
+    @listen(run_planning_crew)
     @router
-    def route_after_design(self, state: PlanningState) -> str:
-        """Route to human review if UNCLEAR gaps found, otherwise continue to write."""
+    def route_after_planning(self, state: PlanningState) -> str:
+        """Route to human review if UNCLEAR gaps found, otherwise continue to validate."""
         if state.current_step == "human_review":
             return "human_review"
-        return "write_plan"
+        return "validate"
     
     @listen("human_review")
     @human_feedback(
@@ -584,7 +607,7 @@ You can also provide specific instructions for the plan.""",
         # Append removal instructions to design
         state.design_output += f"\n\n## HUMAN GUIDANCE: DEPRECATED CODE\n{result.feedback}\n"
         state.design_output += "Action: Remove deprecated code references in implementation.\n"
-        state.current_step = "write"
+        state.current_step = "validate"
         return state
     
     @listen("implement")
@@ -597,7 +620,7 @@ You can also provide specific instructions for the plan.""",
         # Append implementation instructions to design
         state.design_output += f"\n\n## HUMAN GUIDANCE: IMPLEMENT FEATURE\n{result.feedback}\n"
         state.design_output += "Action: Include missing feature implementation in plan.\n"
-        state.current_step = "write"
+        state.current_step = "validate"
         return state
     
     @listen("test_code")
@@ -609,7 +632,7 @@ You can also provide specific instructions for the plan.""",
         
         # Note that gap is expected
         state.design_output += f"\n\n## HUMAN GUIDANCE: TEST CODE GAP (EXPECTED)\n{result.feedback}\n"
-        state.current_step = "write"
+        state.current_step = "validate"
         return state
     
     @listen("continue")
@@ -620,65 +643,10 @@ You can also provide specific instructions for the plan.""",
         if result.feedback:
             print(f"Additional notes: {result.feedback}")
             state.design_output += f"\n\n## HUMAN NOTES\n{result.feedback}\n"
-        state.current_step = "write"
-        return state
-    
-    @listen(or_("write_plan", "deprecated", "implement", "test_code", "continue"))
-    def write_plan(self, state: PlanningState) -> PlanningState:
-        """Step 4: Write planning document."""
-        print("\n" + "-"*60)
-        print("[WRITE] Saving planning document...")
-        print("-"*60)
-        
-        plan_path = f"docs/CrewAI_Plans/{state.feature_name}.md"
-        
-        task = Task(
-            description=f"""
-            Write the planning document for this feature:
-            
-            FEATURE: {state.feature_name}
-            OUTPUT PATH: {plan_path}
-            
-            DESIGN SPEC:
-            {state.design_output[:5000]}
-            
-            DOCUMENT TASKS:
-            1. Use save_plan tool to write the document
-            2. Include all technical details from the design
-            3. Add implementation checklist
-            4. Include validation criteria
-            5. Mark status as "Planning"
-            
-            DOCUMENT STRUCTURE:
-            - Title and Status
-            - Overview
-            - Technical Specification
-            - Files to Create/Modify
-            - Content IDs
-            - Implementation Checklist
-            - Validation Criteria
-            """,
-            expected_output="Planning document saved to disk",
-            agent=get_documentation_maintainer(),
-        )
-        
-        crew = Crew(
-            agents=[get_documentation_maintainer()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,
-            cache=True,
-            planning=True,
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
-        )
-        
-        result = crew.kickoff()
-        state.plan_path = plan_path
         state.current_step = "validate"
         return state
     
-    @listen(write_plan)
+    @listen(or_("validate", "deprecated", "implement", "test_code", "continue"))
     def validate_plan(self, state: PlanningState) -> PlanningState:
         """
         Step 5: Validate plan accuracy.

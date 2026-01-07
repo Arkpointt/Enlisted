@@ -159,6 +159,31 @@ GPT5_PLANNING = LLM(
 _agent_cache = {}
 
 
+def get_implementation_manager() -> Agent:
+    """Manager agent that coordinates the implementation workflow."""
+    if "implementation_manager" not in _agent_cache:
+        _agent_cache["implementation_manager"] = Agent(
+            role="Implementation Lead",
+            goal="Coordinate efficient implementation of approved plans with quality validation",
+            backstory="""You lead an implementation team that builds features from approved plans.
+            Your responsibilities:
+            1. Verify what's already implemented (delegate to Systems Analyst)
+            2. Coordinate C# implementation ONLY if needed (conditional)
+            3. Coordinate content creation ONLY if needed (conditional)
+            4. Ensure QA validates all changes
+            5. Update documentation to reflect completed work
+            
+            You skip unnecessary work and ensure quality at each step.""",
+            llm=GPT5_ARCHITECT,
+            allow_delegation=True,  # REQUIRED for manager
+            verbose=True,
+            max_iter=35,
+            max_retry_limit=3,
+            respect_context_window=True,
+        )
+    return _agent_cache["implementation_manager"]
+
+
 def get_systems_analyst() -> Agent:
     """Analyzer that reads plans and verifies existing implementation."""
     if "systems_analyst" not in _agent_cache:
@@ -202,7 +227,7 @@ Report exactly: DONE (exists) vs NEEDED (not found).""",
             max_retry_limit=3,
             reasoning=True,  # Enable reflection for thorough analysis
             max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=True,  # Coordinator can delegate verification tasks
+            allow_delegation=False,  # Specialists don't delegate (only managers do)
         )
     return _agent_cache["systems_analyst"]
 
@@ -357,26 +382,46 @@ Disperse implementation details to permanent docs, don't leave them only in plan
 
 # === The Flow ===
 
+# === Condition Functions for ConditionalTasks ===
+
+def needs_csharp_implementation(output: TaskOutput) -> bool:
+    """Check if C# implementation is needed based on verification output."""
+    if not output or not output.raw:
+        return True  # Default to running if no output
+    content = str(output.raw).lower()
+    # Skip if verification says complete
+    if "c# status: complete" in content or "csharp status: complete" in content:
+        return False
+    # Run if needed
+    return "not_started" in content or "partial" in content or "still needed" in content
+
+
+def needs_content_implementation(output: TaskOutput) -> bool:
+    """Check if JSON content creation is needed based on verification output."""
+    if not output or not output.raw:
+        return True  # Default to running if no output
+    content = str(output.raw).lower()
+    # Skip if verification says complete
+    if "content status: complete" in content:
+        return False
+    # Run if needed
+    return "not_started" in content or "partial" in content or "still needed" in content
+
+
 class ImplementationFlow(Flow[ImplementationState]):
     """
-    Flow-based implementation workflow with smart partial-implementation handling.
+    Flow-based implementation workflow with hierarchical process.
     
-    Key feature: Verifies what already exists BEFORE implementing.
-    Routes around completed work to avoid duplicates.
+    Uses a single hierarchical crew with ConditionalTasks to skip
+    already-implemented components.
     
     State Persistence: Enabled via persist=True. If a run fails, you can resume
     from the last successful step by re-running with the same inputs.
     
     Steps:
     1. load_plan - Read the plan file
-    2. verify_existing - Check what's already implemented
-    3. route_csharp - Decide if C# work is needed
-    4. implement_csharp - (conditional) Write C# code
-    5. route_content - Decide if content work is needed
-    6. implement_content - (conditional) Write JSON content
-    7. validate_all - Validate everything builds
-    8. update_docs - Update documentation and database
-    9. generate_report - Final summary
+    2. run_implementation_crew - Single hierarchical crew with ConditionalTasks
+    3. generate_report - Final summary
     """
     
     initial_state = ImplementationState
@@ -428,148 +473,49 @@ class ImplementationFlow(Flow[ImplementationState]):
         
         state.plan_content = plan_content
         state.plan_hash = plan_hash
-        state.current_step = "verify"
+        state.current_step = "implement"
         return state
     
     @listen(load_plan)
-    def verify_existing(self, state: ImplementationState) -> ImplementationState:
-        """
-        Step 2: Analyze plan and verify what already exists.
+    def run_implementation_crew(self, state: ImplementationState) -> ImplementationState:
+        """Single hierarchical crew for all implementation work.
         
-        This is the KEY step that prevents duplicate work.
+        Manager coordinates: verify → C# (conditional) → content (conditional) → QA → docs
         """
         print("\n" + "-"*60)
-        print("[VERIFY] Checking what's already implemented...")
+        print("[IMPLEMENTATION CREW] Running hierarchical implementation...")
         print("-"*60)
         
-        task = Task(
+        # Task 1: Verify what already exists
+        verify_task = Task(
             description=f"""
             Verify what's already implemented for this plan.
             
             PLAN PATH: {state.plan_path}
             PLAN HASH: {state.plan_hash}
             
-            CRITICAL - TOOL-FIRST WORKFLOW (execute in order):
-            
-            1. FIRST call parse_plan with the plan path to get structured data:
-               - This returns JSON with csharp_files, content_ids, methods, status
-               - Use this structured output to guide your verification
-            
-            2. For each content_id from parse_plan output:
-               - Call lookup_content_id to check if it exists in the database
-               - Mark as DONE if found, NEEDED if not found
-            
-            3. For each csharp_file from parse_plan output:
-               - Call verify_file_exists_tool to check if file exists
-               - Mark as DONE if found, NEEDED if not found
-            
-            4. For methods, use find_in_code only if parse_plan didn't detect file status
-            
-            DO NOT:
-            - Read documentation files to check what exists
-            - Spend iterations "planning" without tool calls
-            - Re-search the same things
+            CRITICAL - TOOL-FIRST WORKFLOW:
+            1. Call parse_plan with the plan path to get structured data
+            2. For each content_id: call lookup_content_id to check existence
+            3. For each csharp_file: call verify_file_exists_tool
             
             REPORT FORMAT:
             ## Already Implemented
-            - List all files/IDs that ALREADY EXIST (verified by tools)
+            - List all files/IDs that ALREADY EXIST
             
             ## Still Needed  
-            - List all files/IDs that DON'T EXIST and need to be created
+            - List all files/IDs that DON'T EXIST
             
             ## Status
             - C# Status: COMPLETE / PARTIAL / NOT_STARTED
             - Content Status: COMPLETE / PARTIAL / NOT_STARTED
             """,
-            expected_output="Verification report with lists of existing vs missing implementations",
+            expected_output="Verification report with implementation status",
             agent=get_systems_analyst(),
         )
         
-        crew = Crew(
-            agents=[get_systems_analyst()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,
-            cache=True,
-            planning=True,
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
-        )
-        
-        result = crew.kickoff()
-        output = str(result)
-        
-        # Parse the output to determine statuses
-        output_lower = output.lower()
-        
-        # Determine C# status
-        if "c# status: complete" in output_lower or "csharp status: complete" in output_lower:
-            state.csharp_status = ImplementationStatus.COMPLETE
-        elif "c# status: partial" in output_lower or "csharp status: partial" in output_lower:
-            state.csharp_status = ImplementationStatus.PARTIAL
-        elif "still needed" in output_lower and (".cs" in output_lower or "method" in output_lower):
-            state.csharp_status = ImplementationStatus.PARTIAL
-        elif "c# status: not" in output_lower or "no c# work" in output_lower:
-            state.csharp_status = ImplementationStatus.NOT_STARTED
-        
-        # Determine content status
-        if "content status: complete" in output_lower:
-            state.content_status = ImplementationStatus.COMPLETE
-        elif "content status: partial" in output_lower:
-            state.content_status = ImplementationStatus.PARTIAL
-        elif "still needed" in output_lower and ("event" in output_lower or "json" in output_lower):
-            state.content_status = ImplementationStatus.PARTIAL
-        elif "content status: not" in output_lower or "no content work" in output_lower:
-            state.content_status = ImplementationStatus.NOT_STARTED
-        
-        print(f"\n[VERIFY] Results:")
-        print(f"   C# Status: {state.csharp_status.value}")
-        print(f"   Content Status: {state.content_status.value}")
-        
-        state.current_step = "route_csharp"
-        return state
-    
-    @router(verify_existing)
-    def route_csharp(self, state: ImplementationState) -> str:
-        """
-        Router: Decide if C# implementation is needed.
-        
-        Uses condition functions for clean, testable routing logic.
-        
-        Returns:
-        - "implement_csharp" if work is needed
-        - "route_content" if C# is already complete
-        """
-        if csharp_complete(state):
-            print(format_routing_decision(
-                condition_name="csharp_complete",
-                condition_result=True,
-                chosen_path="route_content",
-                reason=f"C# status: {state.csharp_status.value} - skipping implementation"
-            ))
-            state.skipped_steps.append("implement_csharp")
-            return "route_content"
-        
-        print(format_routing_decision(
-            condition_name="needs_csharp_work",
-            condition_result=True,
-            chosen_path="implement_csharp",
-            reason=f"C# status: {state.csharp_status.value} - work needed"
-        ))
-        return "implement_csharp"
-    
-    @listen("implement_csharp")
-    def implement_csharp(self, state: ImplementationState) -> ImplementationState:
-        """
-        Step 3 (conditional): Implement C# code.
-        
-        Only implements what's MISSING, not what already exists.
-        """
-        print("\n" + "-"*60)
-        print("[CODE] Implementing C# (missing parts only)...")
-        print("-"*60)
-        
-        task = Task(
+        # Task 2: Implement C# code (CONDITIONAL - only if needed)
+        csharp_task = ConditionalTask(
             description=f"""
             Implement the C# code specified in this plan.
             
@@ -578,88 +524,24 @@ class ImplementationFlow(Flow[ImplementationState]):
             PLAN:
             {state.plan_content[:6000]}
             
-            ALREADY EXISTS (from verification):
-            {state.existing_files}
-            
             STEPS:
             1. Review the plan for C# requirements
             2. Use verify_file_exists_tool before creating any file
-            3. If file exists, use find_in_code to check if method exists
-            4. Only write code for what's MISSING
-            5. Follow Enlisted patterns: Allman braces, _camelCase, XML docs
-            6. Use write_source to create/modify files
-            7. Use append_to_csproj for new .cs files
-            8. Use update_localization for any new strings
+            3. Only write code for what's MISSING
+            4. Follow Enlisted patterns: Allman braces, _camelCase, XML docs
+            5. Use write_source to create/modify files
+            6. Use append_to_csproj for new .cs files
             
-            If EVERYTHING already exists, say "All C# already implemented" and stop.
+            If EVERYTHING already exists, say "All C# already implemented".
             """,
-            expected_output="C# implementation report: what was created, what was skipped",
+            expected_output="C# implementation report",
+            condition=needs_csharp_implementation,
             agent=get_csharp_implementer(),
+            context=[verify_task],
         )
         
-        crew = Crew(
-            agents=[get_csharp_implementer()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,
-            cache=True,
-            planning=True,
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
-        )
-        
-        result = crew.kickoff()
-        state.csharp_output = str(result)
-        state.current_step = "route_content"
-        return state
-    
-    @listen(or_("route_content", implement_csharp))
-    def route_content_check(self, state: ImplementationState) -> ImplementationState:
-        """Intermediate step to set up content routing."""
-        state.current_step = "content_decision"
-        return state
-    
-    @router(route_content_check)
-    def route_content(self, state: ImplementationState) -> str:
-        """
-        Router: Decide if content implementation is needed.
-        
-        Uses condition functions for clean, testable routing logic.
-        
-        Returns:
-        - "implement_content" if work is needed
-        - "validate_all" if content is already complete
-        """
-        if content_complete(state):
-            print(format_routing_decision(
-                condition_name="content_complete",
-                condition_result=True,
-                chosen_path="validate_all",
-                reason=f"Content status: {state.content_status.value} - skipping implementation"
-            ))
-            state.skipped_steps.append("implement_content")
-            return "validate_all"
-        
-        print(format_routing_decision(
-            condition_name="needs_content_work",
-            condition_result=True,
-            chosen_path="implement_content",
-            reason=f"Content status: {state.content_status.value} - work needed"
-        ))
-        return "implement_content"
-    
-    @listen("implement_content")
-    def implement_content(self, state: ImplementationState) -> ImplementationState:
-        """
-        Step 4 (conditional): Implement JSON content.
-        
-        Only creates what's MISSING, not what already exists.
-        """
-        print("\n" + "-"*60)
-        print("[CONTENT] Implementing JSON content (missing parts only)...")
-        print("-"*60)
-        
-        task = Task(
+        # Task 3: Implement JSON content (CONDITIONAL - only if needed)
+        content_task = ConditionalTask(
             description=f"""
             Create the JSON content specified in this plan.
             
@@ -668,147 +550,100 @@ class ImplementationFlow(Flow[ImplementationState]):
             PLAN:
             {state.plan_content[:6000]}
             
-            ALREADY EXISTS (from verification):
-            {state.existing_event_ids}
-            
             WORKFLOW:
             1. Call list_event_ids FIRST to see all existing IDs
-            2. Compare with what the plan requires
-            3. Only create events/decisions with NEW IDs
-            4. Use write_event for each new piece of content
-            5. Use update_localization for display strings
-            6. Call sync_strings after writing
-            7. Call validate_content to verify
+            2. Only create events/decisions with NEW IDs
+            3. Use write_event for each new piece of content
+            4. Use update_localization for display strings
+            5. Call sync_strings and validate_content to verify
             
-            VALID CATEGORIES: camp_life, combat, company_events, crisis, dialogue,
-            discipline, downtime, equipment, escalation, faction, fatigue, formation,
-            identity, leave, logistics, maintenance, morale, officer, order, progression,
-            quartermaster, reaction, reputation, rest, retinue, supply, training
-            
-            VALID SEVERITIES: normal, attention, critical, positive, info
-            
-            If EVERYTHING already exists, say "All content already implemented" and stop.
+            If EVERYTHING already exists, say "All content already implemented".
             """,
-            expected_output="Content implementation report: what was created, what was skipped",
+            expected_output="Content implementation report",
+            condition=needs_content_implementation,
             agent=get_content_author(),
+            context=[verify_task],
         )
         
-        crew = Crew(
-            agents=[get_content_author()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,
-            cache=True,
-            planning=True,
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
-        )
-        
-        result = crew.kickoff()
-        state.content_output = str(result)
-        state.current_step = "validate"
-        return state
-    
-    @listen(or_("validate_all", implement_content))
-    def validate_all(self, state: ImplementationState) -> ImplementationState:
-        """
-        Step 5: Validate everything builds and passes checks.
-        
-        Always runs, even if implementation was skipped.
-        """
-        print("\n" + "-"*60)
-        print("[QA] Validating implementation...")
-        print("-"*60)
-        
-        task = Task(
-            description=f"""
+        # Task 4: Validate everything builds (always runs)
+        validate_task = Task(
+            description="""
             Validate that the implementation is correct:
-            
-            SKIPPED STEPS: {state.skipped_steps}
             
             VALIDATION CHECKLIST:
             1. Run build tool to verify C# compilation
             2. Run validate_content to check JSON/XML
             3. Check for any obvious issues
             
-            If steps were skipped (already implemented), just verify
-            the existing implementation still works.
-            
             Report: PASS or FAIL with details.
             """,
-            expected_output="Validation report: build status, content validation, overall pass/fail",
+            expected_output="Validation report with pass/fail status",
             agent=get_qa_agent(),
+            context=[verify_task, csharp_task, content_task],
         )
         
-        crew = Crew(
-            agents=[get_qa_agent()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,
-            cache=True,
-            planning=True,
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
-        )
-        
-        result = crew.kickoff()
-        state.validation_output = str(result)
-        state.current_step = "docs"
-        return state
-    
-    @listen(validate_all)
-    def update_docs(self, state: ImplementationState) -> ImplementationState:
-        """
-        Step 6: Update documentation and database.
-        
-        Always runs to ensure docs are up to date.
-        """
-        print("\n" + "-"*60)
-        print("[DOCS] Updating documentation...")
-        print("-"*60)
-        
-        task = Task(
+        # Task 5: Update documentation (always runs)
+        docs_task = Task(
             description=f"""
             Update documentation to reflect the implementation:
             
             PLAN FILE: {state.plan_path}
             
             TASKS:
-            1. Read the plan file
-            2. Update status to "Implemented" or "Partial"
-            3. Add Implementation Summary section listing:
-               - What was implemented
-               - What was already done (skipped)
-               - Files created/modified
-            4. Disperse key details to permanent feature docs in docs/Features/
-            5. Call sync_content_from_files to update content database
-            6. Call record_implementation with summary
-            
-            SKIPPED (already done): {state.skipped_steps}
-            
-            The plan file should clearly show what's complete vs remaining.
+            1. Update plan status to "Implemented" or "Partial"
+            2. Add Implementation Summary section
+            3. Call sync_content_from_files to update content database
+            4. Call record_implementation with summary
             """,
             expected_output="Documentation update report",
             agent=get_documentation_maintainer(),
+            context=[validate_task],
         )
         
+        # Single hierarchical crew with manager coordination
         crew = Crew(
-            agents=[get_documentation_maintainer()],
-            tasks=[task],
-            process=Process.sequential,
+            agents=[
+                get_systems_analyst(),
+                get_csharp_implementer(),
+                get_content_author(),
+                get_qa_agent(),
+                get_documentation_maintainer(),
+            ],
+            tasks=[verify_task, csharp_task, content_task, validate_task, docs_task],
+            manager_agent=get_implementation_manager(),
+            process=Process.hierarchical,
             verbose=True,
             memory=True,
             cache=True,
             planning=True,
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
+            planning_llm=GPT5_PLANNING,
         )
         
         result = crew.kickoff()
-        state.docs_output = str(result)
+        
+        # Store outputs from hierarchical crew
+        result_str = str(result)
+        state.csharp_output = result_str
+        state.content_output = result_str
+        state.validation_output = result_str
+        state.docs_output = result_str
+        
+        # Parse status from output
+        output_lower = result_str.lower()
+        if "c# status: complete" in output_lower or "all c# already implemented" in output_lower:
+            state.csharp_status = ImplementationStatus.COMPLETE
+        elif "c# status: partial" in output_lower:
+            state.csharp_status = ImplementationStatus.PARTIAL
+        
+        if "content status: complete" in output_lower or "all content already implemented" in output_lower:
+            state.content_status = ImplementationStatus.COMPLETE
+        elif "content status: partial" in output_lower:
+            state.content_status = ImplementationStatus.PARTIAL
+        
         state.current_step = "report"
         return state
     
-    @listen(update_docs)
+    @listen(run_implementation_crew)
     def generate_report(self, state: ImplementationState) -> ImplementationState:
         """Final step: Generate implementation report."""
         print("\n" + "-"*60)

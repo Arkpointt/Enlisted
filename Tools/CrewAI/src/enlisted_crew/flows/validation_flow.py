@@ -96,6 +96,30 @@ class ValidationState(BaseModel):
 _agent_cache = {}
 
 
+def get_validation_manager() -> Agent:
+    """Manager agent that coordinates the validation workflow."""
+    if "validation_manager" not in _agent_cache:
+        _agent_cache["validation_manager"] = Agent(
+            role="QA Coordinator",
+            goal="Coordinate comprehensive validation to ensure quality before release",
+            backstory="""You lead a QA team that validates all changes before release.
+            Your responsibilities:
+            1. Delegate content validation (JSON schemas, strings)
+            2. Delegate build validation (compilation, no warnings)
+            3. Coordinate final QA report
+            4. Ensure no issues are missed
+            
+            You ensure all validation passes before approving.""",
+            llm=GPT5_QA,
+            allow_delegation=True,  # REQUIRED for manager
+            verbose=True,
+            max_iter=20,
+            max_retry_limit=3,
+            respect_context_window=True,
+        )
+    return _agent_cache["validation_manager"]
+
+
 def get_content_validator() -> Agent:
     """Agent that validates JSON content."""
     if "content_validator" not in _agent_cache:
@@ -172,13 +196,14 @@ Focus on actionable issues. Don't pad the report with unnecessary text.""",
 
 class ValidationFlow(Flow[ValidationState]):
     """
-    Flow-based validation workflow.
+    Flow-based validation workflow with hierarchical process.
+    
+    Uses a single hierarchical crew for all validation tasks.
     
     Steps:
-    1. validate_content - Check JSON schemas
-    2. validate_build - Run dotnet build
-    3. check_strings - Verify localization sync
-    4. generate_report - Produce final report
+    1. begin_validation - Initialize
+    2. run_validation_crew - Single hierarchical crew (content → build → strings → report)
+    3. generate_report - Final summary
     """
     
     initial_state = ValidationState
@@ -191,17 +216,21 @@ class ValidationFlow(Flow[ValidationState]):
         print("=" * 60)
         
         state = self.state
-        state.current_step = "content"
+        state.current_step = "validate"
         return state
     
     @listen(begin_validation)
-    def validate_content_step(self, state: ValidationState) -> ValidationState:
-        """Step 1: Validate JSON content."""
+    def run_validation_crew(self, state: ValidationState) -> ValidationState:
+        """Single hierarchical crew for all validation work.
+        
+        Manager coordinates: content → build → report
+        """
         print("\n" + "-" * 60)
-        print("[CONTENT] Validating JSON content...")
+        print("[VALIDATION CREW] Running hierarchical validation...")
         print("-" * 60)
         
-        task = Task(
+        # Task 1: Content Validation
+        content_task = Task(
             description="""
             Validate all JSON content files in the Enlisted mod.
             
@@ -211,41 +240,12 @@ class ValidationFlow(Flow[ValidationState]):
             
             OUTPUT: List of validation errors or "All content valid"
             """,
-            expected_output="Content validation results",
+            expected_output="Content validation results with pass/fail",
             agent=get_content_validator(),
         )
         
-        crew = Crew(
-            agents=[get_content_validator()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-        )
-        
-        result = crew.kickoff()
-        output = str(result)
-        state.content_output = output
-        
-        # Check if validation passed
-        output_lower = output.lower()
-        if "error" in output_lower or "fail" in output_lower or "invalid" in output_lower:
-            state.content_valid = False
-            state.issues_found.append("Content validation errors found")
-        else:
-            state.content_valid = True
-            print("[OK] Content validation passed")
-        
-        state.current_step = "build"
-        return state
-    
-    @listen(validate_content_step)
-    def validate_build_step(self, state: ValidationState) -> ValidationState:
-        """Step 2: Validate C# build."""
-        print("\n" + "-" * 60)
-        print("[BUILD] Running dotnet build...")
-        print("-" * 60)
-        
-        task = Task(
+        # Task 2: Build Validation
+        build_task = Task(
             description="""
             Run dotnet build to verify C# code compiles.
             
@@ -255,60 +255,75 @@ class ValidationFlow(Flow[ValidationState]):
             
             OUTPUT: Build result (success/failure with errors)
             """,
-            expected_output="Build validation results",
+            expected_output="Build validation results with pass/fail",
             agent=get_build_validator(),
         )
         
+        # Task 3: Generate QA Report
+        report_task = Task(
+            description="""
+            Produce a clear validation report summarizing all checks.
+            
+            Compile results from content validation and build validation.
+            List any issues found and provide overall pass/fail status.
+            """,
+            expected_output="Final QA report with overall status",
+            agent=get_qa_reporter(),
+            context=[content_task, build_task],
+        )
+        
+        # Single hierarchical crew
         crew = Crew(
-            agents=[get_build_validator()],
-            tasks=[task],
-            process=Process.sequential,
+            agents=[
+                get_content_validator(),
+                get_build_validator(),
+                get_qa_reporter(),
+            ],
+            tasks=[content_task, build_task, report_task],
+            manager_agent=get_validation_manager(),
+            process=Process.hierarchical,
             verbose=True,
         )
         
         result = crew.kickoff()
         output = str(result)
+        
+        # Parse results
+        output_lower = output.lower()
+        state.content_output = output
         state.build_output = output
         
-        # Check if build passed
-        output_lower = output.lower()
-        if "error" in output_lower or "fail" in output_lower:
+        # Check content validation
+        if "content" in output_lower and ("error" in output_lower or "invalid" in output_lower):
+            state.content_valid = False
+            state.issues_found.append("Content validation errors found")
+        else:
+            state.content_valid = True
+        
+        # Check build validation
+        if "build" in output_lower and "error" in output_lower:
             state.build_valid = False
             state.issues_found.append("Build errors found")
         else:
             state.build_valid = True
-            print("[OK] Build passed")
         
-        state.current_step = "strings"
-        return state
-    
-    @listen(validate_build_step)
-    def check_strings_step(self, state: ValidationState) -> ValidationState:
-        """Step 3: Check localization strings sync."""
-        print("\n" + "-" * 60)
-        print("[STRINGS] Checking localization sync...")
-        print("-" * 60)
-        
-        # Run sync_strings directly (it's a simple tool call)
+        # Check strings (run directly since it's a simple tool)
         try:
-            result = sync_strings._run()
-            state.strings_output = result
-            
-            if "error" in result.lower() or "missing" in result.lower():
+            strings_result = sync_strings._run()
+            state.strings_output = strings_result
+            if "error" in strings_result.lower() or "missing" in strings_result.lower():
                 state.strings_synced = False
                 state.issues_found.append("Localization strings out of sync")
             else:
                 state.strings_synced = True
-                print("[OK] Strings synced")
         except Exception as e:
             state.strings_output = f"Error: {str(e)}"
             state.strings_synced = False
-            state.issues_found.append(f"String sync error: {str(e)}")
         
         state.current_step = "report"
         return state
     
-    @listen(check_strings_step)
+    @listen(run_validation_crew)
     def generate_report(self, state: ValidationState) -> ValidationState:
         """Step 4: Generate final validation report."""
         print("\n" + "-" * 60)

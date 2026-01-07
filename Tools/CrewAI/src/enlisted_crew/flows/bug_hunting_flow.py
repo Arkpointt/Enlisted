@@ -154,6 +154,31 @@ GPT5_PLANNING = LLM(
 _agent_cache = {}
 
 
+def get_bug_hunting_manager() -> Agent:
+    """Manager agent that coordinates the bug hunting workflow."""
+    if "bug_hunting_manager" not in _agent_cache:
+        _agent_cache["bug_hunting_manager"] = Agent(
+            role="Bug Triage Manager",
+            goal="Efficiently investigate, fix, and validate bug reports with appropriate depth",
+            backstory="""You lead a bug hunting team that triages and resolves issues.
+            Your responsibilities:
+            1. Delegate investigation to Code Analyst
+            2. Assess severity from investigation results
+            3. For CRITICAL/HIGH: delegate systems analysis (conditional)
+            4. Coordinate fix implementation
+            5. Ensure QA validates the fix thoroughly
+            
+            You adapt investigation depth based on bug severity.""",
+            llm=GPT5_DEEP,
+            allow_delegation=True,  # REQUIRED for manager
+            verbose=True,
+            max_iter=30,
+            max_retry_limit=3,
+            respect_context_window=True,
+        )
+    return _agent_cache["bug_hunting_manager"]
+
+
 def get_code_analyst() -> Agent:
     """Get or create code analyst agent."""
     if "code_analyst" not in _agent_cache:
@@ -199,7 +224,7 @@ ERROR CODES: E-ENCOUNTER-*=battle, E-SAVELOAD-*=corruption, E-CAMPUI-*=UI""",
             max_retry_limit=3,
             reasoning=True,  # Enable reflection for thorough investigation
             max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=True,  # Lead investigator can delegate specialized tasks
+            allow_delegation=False,  # Specialists don't delegate (only managers do)
         )
     return _agent_cache["code_analyst"]
 
@@ -247,7 +272,7 @@ EscalationManager, CompanyNeedsManager.""",
             max_retry_limit=3,
             reasoning=True,  # Enable reflection for system integration analysis
             max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=True,  # Coordinator can delegate system-specific analysis
+            allow_delegation=False,  # Specialists don't delegate (only managers do)
         )
     return _agent_cache["systems_analyst"]
 
@@ -330,23 +355,43 @@ def get_qa_agent() -> Agent:
     return _agent_cache["qa_agent"]
 
 
+# === Condition Functions for ConditionalTasks ===
+
+def needs_systems_analysis_task(output: TaskOutput) -> bool:
+    """Check if systems analysis is needed based on investigation output."""
+    if not output or not output.raw:
+        return False
+    output_lower = str(output.raw).lower()
+    
+    # Skip indicators
+    skip_indicators = [
+        "no systems analysis needed", "simple fix", "straightforward fix",
+        "localized issue", "single file"
+    ]
+    if any(indicator in output_lower for indicator in skip_indicators):
+        return False
+    
+    # Triggers
+    triggers = [
+        "critical", "high", "multi-system", "complex", "integration issue",
+        "state machine", "needs systems analysis"
+    ]
+    return any(trigger in output_lower for trigger in triggers)
+
+
 class BugHuntingFlow(Flow[BugHuntingState]):
     """
-    Flow-based bug hunting workflow.
+    Flow-based bug hunting workflow with hierarchical process.
+    
+    Uses a single hierarchical crew with ConditionalTask for systems analysis.
     
     State Persistence: Enabled via persist=True. If a run fails, you can resume
     from the last successful step by re-running with the same inputs.
     
     Steps:
     1. receive_bug_report - Parse and validate input
-    2. investigate_bug - Code analyst searches logs and code
-    3. assess_severity - Router decides next steps based on findings
-    4. analyze_systems - (optional) Systems analyst for complex bugs
-    5. propose_fix - C# implementer suggests minimal fix
-    6. validate_fix - QA agent validates the proposal
-    7. generate_report - Create final report
-    
-    The flow uses conditional routing to skip systems analysis for simple bugs.
+    2. run_bug_hunting_crew - Single hierarchical crew (investigate → analyze (conditional) → fix → validate)
+    3. generate_report - Create final report
     """
     
     initial_state = BugHuntingState
@@ -394,381 +439,152 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         return state
     
     @listen(receive_bug_report)
-    def investigate_bug(self, state: BugHuntingState) -> BugHuntingState:
-        """
-        Step 2: Investigate the bug using either user logs or code-path analysis.
+    def run_bug_hunting_crew(self, state: BugHuntingState) -> BugHuntingState:
+        """Single hierarchical crew for bug hunting.
         
-        If user provided logs: analyze those logs (do not read local logs).
-        Else: analyze relevant code paths based on symptoms.
+        Manager coordinates: investigate → analyze (conditional) → fix → validate
         """
+        print("\n" + "-"*60)
+        print("[BUG HUNTING CREW] Running hierarchical investigation...")
+        print("-"*60)
+        
         br = state.bug_report
         
+        # Build investigation description based on log availability
         if br.has_user_logs:
-            print("\n[ROUTE] User provided logs -> Analyzing provided logs")
-            print("\n" + "-"*60)
-            print("[SEARCH] STEP: Investigating Bug (with user-provided logs)")
-            print("-"*60)
             log_content = br.user_log_content or ""
-            # Truncate log content to avoid token spikes
             max_log_chars = 50000
             if len(log_content) > max_log_chars:
-                log_content = log_content[:max_log_chars] + "\n... [TRUNCATED - log too long]"
-                print(f"[!]  Log content truncated to {max_log_chars} chars")
-            task = Task(
-                description=f"""
-                Investigate the following bug report using the PROVIDED LOG CONTENT.
-                IMPORTANT: Analyze ONLY the provided log content. Do NOT search local logs.
-                
-                HARD CONSTRAINTS (token safety):
-                - Read at most 10 short excerpts/snippets (method bodies or <200 lines total)
-                - Do not paste full files; quote only minimal, relevant lines
-                - After gathering notes, summarize and STOP; do not retry if context warnings occur
-                
-                BUG DESCRIPTION: {br.description}
-                ERROR CODES MENTIONED: {br.error_codes}
-                REPRO STEPS: {br.repro_steps}
-                CONTEXT: {br.context or "None provided"}
-                
-                ===== USER-PROVIDED LOG CONTENT =====
-                {log_content}
-                ===== END LOG CONTENT =====
-                
-                INVESTIGATION STEPS:
-                1. Call get_dev_reference first to understand error codes
-                2. Search the provided content for E-*/W-* codes
-                3. Identify stack traces and exception messages
-                4. Prefer find_in_code + read_source_section (small excerpts); avoid read_source
-                5. Trace to root cause
-                
-                Assess severity and whether systems analysis is needed.
-                """,
-                expected_output="Investigation report (from provided logs): summary, root cause, files, severity, confidence, needs systems analysis",
-                agent=get_code_analyst(),
-            )
+                log_content = log_content[:max_log_chars] + "\n... [TRUNCATED]"
+            investigation_desc = f"""
+            Investigate bug using PROVIDED LOG CONTENT.
+            
+            BUG DESCRIPTION: {br.description}
+            ERROR CODES: {br.error_codes}
+            REPRO STEPS: {br.repro_steps}
+            
+            LOG CONTENT:
+            {log_content[:20000]}
+            
+            Assess severity and identify root cause.
+            """
         else:
-            print("\n[ROUTE] No user logs -> Analyzing code paths based on symptoms")
-            print("\n" + "-"*60)
-            print("[SEARCH] STEP: Investigating Bug (analyzing code paths - no logs)")
-            print("-"*60)
-            task = Task(
-                description=f"""
-                Investigate this END USER bug report by analyzing CODE PATHS.
-                IMPORTANT: No logs were provided. Do NOT search local dev logs.
-                
-                HARD CONSTRAINTS (token safety):
-                - Search first; then open only targeted, small code excerpts
-                - Quote at most 10 short snippets total (<200 lines combined)
-                - Summarize between reads; if context warnings occur, STOP and produce findings
-                
-                BUG DESCRIPTION: {br.description}
-                REPRO STEPS: {br.repro_steps}
-                CONTEXT: {br.context or "None provided"}
-                
-                APPROACH:
-                1. Call get_dev_reference first
-                2. Break down the symptoms and related game state transitions
-                3. Use find_in_docs for relevant docs
-                4. Use find_in_code + read_source_section on implicated code (small excerpts only)
-                5. Hypothesize root causes and identify likely affected files
-                
-                Assess severity and whether systems analysis is needed.
-                """,
-                expected_output="Investigation report (no logs): summary, hypothesized root cause, files, severity, confidence, needs systems analysis",
-                agent=get_code_analyst(),
-            )
+            investigation_desc = f"""
+            Investigate bug by analyzing CODE PATHS (no logs provided).
+            
+            BUG DESCRIPTION: {br.description}
+            REPRO STEPS: {br.repro_steps}
+            CONTEXT: {br.context or "None"}
+            
+            1. Call get_dev_reference first
+            2. Use find_in_code + read_source_section
+            3. Assess severity and identify root cause.
+            """
         
-        crew = Crew(
-            agents=[get_code_analyst()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,    # Enable memory for context retention
-            cache=True,     # Cache tool results
-            planning=True,  # AgentPlanner creates step plan before execution
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
+        # Task 1: Investigation
+        investigate_task = Task(
+            description=investigation_desc,
+            expected_output="Investigation report with severity, root cause, affected files",
+            agent=get_code_analyst(),
         )
+        
+        # Task 2: Systems Analysis (CONDITIONAL - only for complex bugs)
+        systems_task = ConditionalTask(
+            description="""
+            Analyze systems related to this bug:
+            1. Call get_game_systems first
+            2. Check related code patterns
+            3. Identify integration points
+            4. Assess scope and risk
+            """,
+            expected_output="Systems analysis with scope, related systems, risk assessment",
+            condition=needs_systems_analysis_task,
+            agent=get_systems_analyst(),
+            context=[investigate_task],
+        )
+        
+        # Task 3: Propose Fix
+        fix_task = Task(
+            description="""
+            Propose a minimal fix for this bug:
+            1. Propose MINIMAL fix addressing root cause
+            2. Follow Enlisted code style (Allman braces, _camelCase)
+            3. Include code in ```csharp blocks
+            4. Consider save/load compatibility
+            """,
+            expected_output="Fix proposal with code changes and explanation",
+            agent=get_implementer(),
+            context=[investigate_task, systems_task],
+        )
+        
+        # Task 4: Validate Fix
+        validate_task = Task(
+            description="""
+            Validate the proposed bug fix:
+            1. Run dotnet build to verify compilation
+            2. Check code style compliance
+            3. Verify fix addresses root cause
+            4. Assess regression risk
+            """,
+            expected_output="Validation report with build status and approval",
+            agent=get_qa_agent(),
+            context=[fix_task],
+        )
+        
+        # Single hierarchical crew
+        crew = Crew(
+            agents=[
+                get_code_analyst(),
+                get_systems_analyst(),
+                get_implementer(),
+                get_qa_agent(),
+            ],
+            tasks=[investigate_task, systems_task, fix_task, validate_task],
+            manager_agent=get_bug_hunting_manager(),
+            process=Process.hierarchical,
+            verbose=True,
+            memory=True,
+            cache=True,
+            planning=True,
+            planning_llm=GPT5_PLANNING,
+        )
+        
         result = crew.kickoff()
         raw_output = str(result)
         
-        investigation = Investigation(
-            summary=raw_output[:500] if len(raw_output) > 500 else raw_output,
+        # Populate state from results
+        state.investigation = Investigation(
+            summary=raw_output[:500],
             root_cause=None,
             error_codes_found=[],
             severity=self._assess_severity_from_output(raw_output),
             confidence=ConfidenceLevel.LIKELY if br.has_user_logs else ConfidenceLevel.SPECULATIVE,
-            needs_systems_analysis=self._needs_systems_analysis(raw_output),
-            raw_output=raw_output,
-        )
-        print(f"\n[RESULT] Investigation Complete:")
-        print(f"   Severity: {investigation.severity.value}")
-        print(f"   Needs Systems Analysis: {investigation.needs_systems_analysis}")
-        state.investigation = investigation
-        state.current_step = "route"
-        return state
-    
-    @router(investigate_bug)
-    def assess_severity(self, state: BugHuntingState) -> str:
-        """
-        Router: Decide next step based on investigation results.
-        
-        Uses condition functions for clean, testable routing logic.
-        Listens to both investigation methods (one will skip, one will run).
-        Only processes after the actual investigation completes.
-        
-        Returns:
-        - "analyze_systems" for COMPLEX/CRITICAL bugs
-        - "propose_fix" for SIMPLE/MODERATE bugs
-        """
-        investigation = state.investigation
-        severity = investigation.severity.value if investigation else "unknown"
-        
-        if needs_systems_analysis(state):
-            print(format_routing_decision(
-                condition_name="needs_systems_analysis",
-                condition_result=True,
-                chosen_path="analyze_systems",
-                reason=f"Severity: {severity}, requires deeper analysis"
-            ))
-            return "analyze_systems"
-        
-        print(format_routing_decision(
-            condition_name="is_simple_bug",
-            condition_result=True,
-            chosen_path="propose_fix",
-            reason=f"Severity: {severity}, can skip systems analysis"
-        ))
-        state.skipped_steps.append("analyze_systems")
-        return "propose_fix"
-    
-    @listen("analyze_systems")
-    def analyze_systems(self, state: BugHuntingState) -> BugHuntingState:
-        """
-        Step 3 (optional): Systems analyst does deeper analysis.
-        
-        Only runs for COMPLEX/CRITICAL bugs.
-        """
-        print("\n" + "-"*60)
-        print("[SYSTEMS] STEP: Systems Analysis (systems_analyst)")
-        print("-"*60)
-        
-        investigation = state.investigation
-        
-        task = Task(
-            description=f"""
-            Analyze systems related to this bug:
-            
-            HARD CONSTRAINTS (token safety):
-            - Quote at most 8 small excerpts in total; no full files
-            - Prefer diagrams/lists over code dumps; summarize aggressively
-            - If context warnings occur, finalize with current summary and proceed
-            
-            INVESTIGATION SUMMARY: {investigation.summary}
-            AFFECTED FILES: {[f.path for f in investigation.affected_files] if investigation.affected_files else "Unknown"}
-            
-            ANALYSIS TASKS:
-            1. Call get_game_systems first
-            2. Review the systems identified in the investigation
-            3. Check for related code patterns that might have similar issues
-            4. Identify integration points that could be affected
-            5. Assess scope: localized, module-wide, or systemic
-            6. Determine what other files might need similar fixes
-            """,
-            expected_output="""
-            Systems analysis with:
-            - Related systems and their roles
-            - Scope of the issue
-            - Similar code patterns found
-            - Risk assessment for any fix
-            - Additional files that may need changes
-            """,
-            agent=get_systems_analyst(),
-        )
-        
-        crew = Crew(
-            agents=[get_systems_analyst()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,    # Enable memory for context retention
-            cache=True,     # Cache tool results
-            planning=True,  # AgentPlanner creates step plan before execution
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
-        )
-        
-        result = crew.kickoff()
-        raw_output = str(result)
-        
-        systems_analysis = SystemsAnalysis(
-            related_systems=[],  # Would parse from output
-            scope="module-wide",  # Would parse from output
-            similar_patterns=[],
-            risk_assessment="",
+            needs_systems_analysis=False,
             raw_output=raw_output,
         )
         
-        state.systems_analysis = systems_analysis
-        state.current_step = "propose_fix"
-        return state
-    
-    @listen(or_("propose_fix", analyze_systems))
-    def propose_fix(self, state: BugHuntingState) -> BugHuntingState:
-        """
-        Step 4: C# implementer proposes a fix.
-        
-        Receives investigation (and optionally systems analysis) as context.
-        """
-        print("\n" + "-"*60)
-        print("[FIX] STEP: Proposing Fix (csharp_implementer)")
-        print("-"*60)
-        
-        investigation = state.investigation
-        systems_analysis = state.systems_analysis
-        
-        context = f"""
-        INVESTIGATION:
-        {investigation.summary}
-        
-        Affected Files: {[f.path for f in investigation.affected_files] if investigation.affected_files else "See investigation"}
-        Severity: {investigation.severity.value}
-        """
-        
-        if systems_analysis:
-            context += f"""
-            
-        SYSTEMS ANALYSIS:
-        {systems_analysis.raw_output[:2000] if systems_analysis.raw_output else "No additional analysis"}
-        """
-        
-        task = Task(
-            description=f"""
-            Propose a minimal fix for this bug:
-            
-            {context}
-            
-            REQUIREMENTS:
-            1. Propose the MINIMAL fix that addresses root cause
-            2. Follow Enlisted code style (Allman braces, _camelCase, XML docs)
-            3. Use proper Bannerlord patterns
-            4. Consider save/load compatibility
-            5. Include code changes in ```csharp code blocks
-            
-            CRITICAL PATTERNS TO FOLLOW:
-            - Always check Hero.MainHero != null before access
-            - Use TextObject for all user-visible strings
-            - Use GiveGoldAction for gold changes
-            - Use EscalationManager for reputation changes
-            
-            OUTPUT FORMAT (IMPORTANT):
-            - Write your response as plain text with markdown code blocks
-            - Use ```csharp for C# code changes
-            - DO NOT output XML tags or <function_calls> - just describe the fix
-            - Be concise but complete
-            """,
-            expected_output="""
-            Fix proposal with:
-            - Summary of the proposed fix (1-2 sentences)
-            - Files to modify (list paths)
-            - Code changes in ```csharp blocks
-            - Brief explanation of why this fixes the bug
-            - Any risks or side effects
-            """,
-            agent=get_implementer(),
-        )
-        
-        crew = Crew(
-            agents=[get_implementer()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,    # Enable memory for context retention
-            cache=True,     # Cache tool results
-            planning=True,  # AgentPlanner creates step plan before execution
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
-        )
-        
-        result = crew.kickoff()
-        raw_output = str(result)
-        
-        fix_proposal = FixProposal(
-            summary=raw_output[:500] if len(raw_output) > 500 else raw_output,
-            changes=[],  # Would parse from output
+        state.fix_proposal = FixProposal(
+            summary=raw_output[:500],
+            changes=[],
             explanation="",
             risks=[],
             testing_notes="",
             raw_output=raw_output,
         )
         
-        state.fix_proposal = fix_proposal
-        state.current_step = "validate"
-        return state
-    
-    @listen(propose_fix)
-    def validate_fix(self, state: BugHuntingState) -> BugHuntingState:
-        """
-        Step 5: QA agent validates the proposed fix.
-        """
-        print("\n" + "-"*60)
-        print("[OK] STEP: Validating Fix (qa_agent)")
-        print("-"*60)
-        
-        fix_proposal = state.fix_proposal
-        
-        task = Task(
-            description=f"""
-            Validate the proposed bug fix:
-            
-            FIX PROPOSAL:
-            {fix_proposal.summary}
-            
-            FULL PROPOSAL:
-            {fix_proposal.raw_output[:3000]}
-            
-            VALIDATION CHECKS:
-            1. Run dotnet build to verify compilation
-            2. Check code style compliance
-            3. Verify the fix matches the investigation findings
-            4. Assess if the fix could introduce regressions
-            5. Confirm fix is minimal and targeted
-            """,
-            expected_output="""
-            Validation report with:
-            - Build status (pass/fail/not_run)
-            - Style compliance issues
-            - Concerns about the fix
-            - Recommendations for improvement
-            - Final approval (approved/needs_changes)
-            """,
-            agent=get_qa_agent(),
-        )
-        
-        crew = Crew(
-            agents=[get_qa_agent()],
-            tasks=[task],
-            process=Process.sequential,
-            verbose=True,
-            memory=True,    # Enable memory for context retention
-            cache=True,     # Cache tool results
-            planning=True,  # AgentPlanner creates step plan before execution
-            planning_llm=GPT5_PLANNING,  # Use gpt-5 for planning
-        )
-        
-        result = crew.kickoff()
-        raw_output = str(result)
-        
-        validation = ValidationResult(
-            approved=True,  # Would parse from output
-            build_status="not_run",  # Would parse from output
+        state.validation = ValidationResult(
+            approved="approved" in raw_output.lower() or "pass" in raw_output.lower(),
+            build_status="pass" if "build: pass" in raw_output.lower() else "not_run",
             style_issues=[],
             concerns=[],
             recommendations=[],
             raw_output=raw_output,
         )
         
-        state.validation = validation
         state.current_step = "report"
         return state
     
-    @listen(validate_fix)
+    @listen(run_bug_hunting_crew)
     def generate_report(self, state: BugHuntingState) -> BugHuntingState:
         """
         Final step: Generate comprehensive bug report.
