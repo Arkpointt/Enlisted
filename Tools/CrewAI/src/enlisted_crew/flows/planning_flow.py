@@ -194,12 +194,9 @@ GPT5_DOCS = LLM(
     reasoning_effort="low",
 )
 
-# LOW reasoning - planning from structured prompts
-GPT5_PLANNING = LLM(
-    model=_get_env("ENLISTED_LLM_PLANNING", "gpt-5.2"),
-    max_completion_tokens=4000,
-    reasoning_effort="low",
-)
+# Planning LLM - use simple string (LLM objects with reasoning_effort cause issues with AgentPlanner)
+# See: https://docs.crewai.com/en/concepts/planning - examples all use simple strings
+GPT5_PLANNING = _get_env("ENLISTED_LLM_PLANNING", "gpt-5.2")
 
 
 # === Agent Factory ===

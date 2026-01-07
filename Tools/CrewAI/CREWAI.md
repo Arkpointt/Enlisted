@@ -2073,6 +2073,40 @@ python build_index.py  # First time only, 2-5 minutes
 | **Web Search MCP** | ⚠️ Consider | Could research Bannerlord APIs |
 | **Browser MCP** | ❌ Not applicable | Not needed for game modding workflow |
 
+## Troubleshooting
+
+### "Received None or empty response from LLM call" (during Planning)
+
+**Cause:** Using an `LLM()` object with `reasoning_effort` parameter for `planning_llm`. The CrewAI AgentPlanner doesn't properly handle LLM objects with extra parameters.
+
+**Solution:** Use a **simple string** for `planning_llm`, not an LLM object:
+
+```python
+# ❌ BROKEN - LLM object with reasoning_effort
+planning_llm=LLM(
+    model="gpt-5.2",
+    max_completion_tokens=4000,
+    reasoning_effort="low",  # This breaks AgentPlanner!
+)
+
+# ✅ WORKS - Simple string (matches official docs)
+planning_llm="gpt-5.2"
+```
+
+This matches the [official CrewAI documentation](https://docs.crewai.com/en/concepts/planning) which only shows simple strings in examples.
+
+**Note:** You CAN use `LLM()` objects with `reasoning_effort` for agent LLMs - just not for `planning_llm`.
+
+### Windows Console Emoji Errors
+
+**Example:** `'charmap' codec can't encode character '\U0001f680'`
+
+**Cause:** Windows console doesn't support emoji characters from CrewAI's event logging.
+
+**Solution:** These are harmless warnings, not errors. The crew executes normally. To suppress, set `PYTHONIOENCODING=utf-8` in your environment.
+
+---
+
 ## Related Documentation
 
 - **Root:** [WARP.md](../../WARP.md) - Project-wide conventions

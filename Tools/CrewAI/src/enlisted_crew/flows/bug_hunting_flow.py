@@ -249,12 +249,9 @@ GPT5_QA = LLM(
     reasoning_effort="medium",
 )
 
-# LOW reasoning - planning from structured prompts
-GPT5_PLANNING = LLM(
-    model=_get_env("ENLISTED_LLM_PLANNING", "gpt-5.2"),
-    max_completion_tokens=4000,
-    reasoning_effort="low",
-)
+# Planning LLM - use simple string (LLM objects with reasoning_effort cause issues with AgentPlanner)
+# See: https://docs.crewai.com/en/concepts/planning - examples all use simple strings
+GPT5_PLANNING = _get_env("ENLISTED_LLM_PLANNING", "gpt-5.2")
 
 
 # Agent cache (module-level to avoid Flow initialization issues)
@@ -654,8 +651,8 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             verbose=True,
             memory=True,
             cache=True,
-            # NOTE: planning=True disabled - causes "None or empty response" with GPT-5.2
-            planning=False,
+            planning=True,
+            planning_llm=GPT5_PLANNING,
         )
         
         result = crew.kickoff()
