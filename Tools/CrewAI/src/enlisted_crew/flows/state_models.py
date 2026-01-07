@@ -89,6 +89,13 @@ class PlanningState(BaseModel):
     # Execution tracking
     current_step: str = "start"
     
+    # Manager escalation (human-in-the-loop)
+    needs_human_review: bool = False
+    critical_issues: List[str] = Field(default_factory=list)  # Serialized DetectedIssue objects
+    manager_analysis: str = ""
+    manager_recommendation: str = ""
+    human_guidance: str = ""  # Human's response if escalated
+    
     # Final
     success: bool = False
     final_report: str = ""
@@ -149,6 +156,13 @@ class ImplementationState(BaseModel):
     # Execution tracking
     current_step: str = "start"
     skipped_steps: List[str] = Field(default_factory=list)
+    
+    # Manager escalation (human-in-the-loop)
+    needs_human_review: bool = False
+    critical_issues: List[str] = Field(default_factory=list)  # Serialized DetectedIssue objects
+    manager_analysis: str = ""
+    manager_recommendation: str = ""
+    human_guidance: str = ""  # Human's response if escalated
     
     # Outputs
     csharp_output: str = ""
@@ -395,6 +409,13 @@ class BugHuntingState(BaseModel):
         default_factory=list,
         description="Steps that were skipped (e.g., systems_analysis for simple bugs)"
     )
+    
+    # Manager escalation (human-in-the-loop)
+    needs_human_review: bool = False
+    critical_issues: List[str] = Field(default_factory=list)  # Serialized DetectedIssue objects
+    manager_analysis: str = ""
+    manager_recommendation: str = ""
+    human_guidance: str = ""  # Human's response if escalated
     
     # Final output
     final_report: Optional[str] = None
