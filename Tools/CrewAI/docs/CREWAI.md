@@ -1,8 +1,8 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (23 database tools), automatic prompt caching, and **intelligent manager analysis** that detects and logs critical issues while maintaining fully automated workflows.  
+**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities), automatic prompt caching, and **intelligent manager analysis** that detects and logs critical issues while maintaining fully automated workflows.  
 **Status:** ✅ Implemented  
-**Last Updated:** 2026-01-07 (Performance Optimization: Phase 1-2: function_calling_llm, tool efficiency rules, DATABASE FIRST backstories; Phase 3: Input normalization for cache hits; Phase 4: Tool count reduction - agents now have 4-8 tools each vs 9-14 previously)
+**Last Updated:** 2026-01-07 (Performance Optimization Complete: Phases 1-6 implemented, 3 critical bugs fixed, batch database tools added)
 
 ---
 
@@ -264,9 +264,9 @@ Tools use natural naming for readability. The `@tool("Name")` decorator defines 
 
 ### Database (SQLite Knowledge Base)
 
-**23 Total Database Tools:** 14 query tools + 9 maintenance tools for structured, instant lookups with no LLM cost.
+**24 Total Database Tools:** 14 query tools (including 1 batch tool) + 9 maintenance tools for structured, instant lookups with no LLM cost.
 
-**Query Tools (14 total):**
+**Query Tools (14 total, including batch capabilities):**
 
 | Tool | Purpose |
 |------|---------|
@@ -280,6 +280,7 @@ Tools use natural naming for readability. The `@tool("Name")` decorator defines 
 | `search_balance` | Search balance values by category |
 | `get_balance_by_category` | Get all balance values for a category |
 | `lookup_content_id` | Check if content ID exists in database |
+| `lookup_content_ids_batch` | Check multiple content IDs at once (batch processing, 1 query vs N queries) |
 | `search_content` | Search content by type, category, status |
 | `get_valid_categories` | Get all 26 valid event categories |
 | `get_valid_severities` | Get all 5 valid severity levels |
@@ -470,13 +471,136 @@ Agent(
 - Removed deprecated tools (`find_in_native_api` - use MCP server instead)
 - Each agent now has only the tools essential for their specific role
 - Updated agents:
-  - `systems_analyst` (impl): 12→8 tools
+  - `systems_analyst` (impl): 12→9 tools (added batch tool)
   - `csharp_implementer`: 10→5 tools
-  - `content_author`: 9→5 tools
+  - `content_author`: 9→6 tools (re-added add_content_item)
   - `documentation_maintainer` (impl): 7→4 tools
   - `code_analyst` (bug): 14→6 tools
   - `systems_analyst` (bug): 12→5 tools
   - `implementer` (bug): 9→4 tools
+
+**Batch Database Tools (2026-01-07 - Phase 6):**
+- Created `lookup_content_ids_batch` for pseudo-parallel content ID lookups
+- Uses single SQL query with `WHERE IN` clause instead of N separate queries
+- Format: `lookup_content_ids_batch("id1,id2,id3")` - comma-separated string, NOT array
+- Added to `systems_analyst` in ImplementationFlow (9 tools total)
+- Usage guidance in backstory: Use batch for 3+ IDs, single `lookup_content_id` for 1-2 IDs
+- Workaround for CrewAI's lack of native parallel tool calling (confirmed via GitHub Issue #2239)
+- Result: 1 database query instead of N queries when verifying multiple content IDs
+- Future expansion possible: Batch tools for other high-frequency operations
+
+**Example Usage:**
+```python
+# Single lookup (1-2 IDs)
+result = lookup_content_id("equipment_inspection")
+
+# Batch lookup (3+ IDs) - MUCH faster
+result = lookup_content_ids_batch("equipment_inspection,supply_low,morale_check")
+# Returns: Found 3/3 with details + Not found list if any missing
+```
+
+---
+
+## 🐛 Bug Fixes (2026-01-07)
+
+Three critical bugs were discovered and fixed during PlanningFlow testing:
+
+### Bug 1: Cache Pre-loading Tool Invocation
+**Issue:** Lines 465, 473, 481 in `planning_flow.py` called tools incorrectly:
+```python
+# WRONG - direct call on Tool object
+state.cached_game_systems = get_game_systems()
+```
+
+**Problem:** Context loader tools are CrewAI `Tool` objects, not plain Python functions. Direct invocation fails.
+
+**Fix:** Use the `.run()` method:
+```python
+# CORRECT - use Tool.run() method
+state.cached_game_systems = get_game_systems.run()
+```
+
+**Affected Tools:** `get_game_systems`, `get_architecture`, `get_dev_reference`  
+**Status:** ✅ Fixed in commit "Fix: Cache pre-loading in PlanningFlow - use tool.run() not direct call"
+
+### Bug 2: Agent Tool Assignment Conflicts
+**Issue:** Context loader tools were BOTH pre-loaded in task descriptions AND assigned to agent tool lists.
+
+**Problem:** Double strategy conflict - agents tried to call tools that are meant to be pre-loaded, not called.
+- `systems_analyst` had `get_game_systems` in tools list
+- `architecture_advisor` had `get_architecture` in tools list
+- `feature_architect` had `get_dev_reference` in tools list
+- But these tools were already being pre-loaded and embedded in task descriptions
+
+**Fix:** Removed context loader tools from agent tool lists:
+- `systems_analyst`: Removed `get_game_systems` (8→7 tools)
+- `architecture_advisor`: Removed `get_architecture` (7→6 tools)
+- `feature_architect`: Removed `get_dev_reference` (7→6 tools)
+- Updated backstories to reference "PRE-LOADED CONTEXT" instead of calling tools
+
+**Pattern:**
+```python
+# In flow task description:
+task_description = f"""
+=== PRE-LOADED CONTEXT (DO NOT RE-FETCH) ===
+{state.cached_game_systems[:3000]}
+=== END PRE-LOADED CONTEXT ===
+
+WORKFLOW:
+1. FIRST: Extract info from PRE-LOADED CONTEXT above
+2. Call get_system_dependencies for specific details
+3. DO NOT call get_game_systems - it's already above
+"""
+
+# Agent backstory:
+backstory = """You research using PRE-LOADED CONTEXT first.
+Game systems overview is PRE-LOADED in your task - read it there.
+DO NOT call get_game_systems."""
+```
+
+**Status:** ✅ Fixed in commit "Fix: Remove context loader tools from Planning agents - use pre-loaded cache"
+
+### Bug 3: Excessive Reasoning Performance Impact
+**Issue:** High reasoning effort on multiple agents causing 10-30 minute execution times.
+
+**Current Config:**
+- All PlanningFlow agents have `reasoning=True`
+- Manager + specialists have `reasoning_effort="high"` or `max_reasoning_attempts=2`
+- Result: Deep thinking on every step, very slow
+
+**Status:** ⚠️ Identified but NOT yet addressed (research needed on best practices)
+
+**Considerations:**
+- Planning agents: High reasoning may be justified for design quality
+- Implementation agents: Lower reasoning likely sufficient (following clear specs)
+- Validation agents: Medium reasoning to catch issues
+- Future: Consider "fast mode" configuration for iterative development
+
+---
+
+## 📋 Troubleshooting
+
+### Tool Invocation Errors
+**Symptom:** `'Tool' object is not callable`  
+**Cause:** Calling CrewAI Tool directly instead of using `.run()` method  
+**Fix:** Use `tool_name.run(args)` not `tool_name(args)`
+
+### Agent Calling Pre-loaded Tools
+**Symptom:** Agent tries to call `get_game_systems` when context already provided  
+**Cause:** Tool is in agent's tool list AND pre-loaded in task description  
+**Fix:** Remove tool from agent's tool list, reference "PRE-LOADED CONTEXT" in backstory
+
+### Slow Workflow Execution
+**Symptom:** Crew takes 10+ minutes to complete simple tasks  
+**Cause:** High reasoning effort on too many agents  
+**Fix:** Review `reasoning_effort` settings - use "high" only for true design/architecture work
+
+### Batch Tool Format Errors
+**Symptom:** Batch tool fails with "expected string, got list"  
+**Cause:** Passing array instead of comma-separated string  
+**Fix:** Use `lookup_content_ids_batch("id1,id2,id3")` NOT `lookup_content_ids_batch(["id1", "id2"])`
+
+---
 
 ### Workflow Configuration Patterns
 

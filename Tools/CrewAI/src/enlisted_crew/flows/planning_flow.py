@@ -172,13 +172,21 @@ def _get_env(name: str, default: str) -> str:
 # =============================================================================
 # LLM TIERS - reasoning_effort optimizes cost/performance
 # high=deep thinking | medium=balanced | low=quick | none=instant
+# 2026 Best Practice: Medium reasoning matches high quality for most tasks
 # =============================================================================
 
-# HIGH reasoning - architecture and feature design
-GPT5_ARCHITECT = LLM(
+# HIGH reasoning - only for deepest design work (feature_architect)
+GPT5_ARCHITECT_HIGH = LLM(
     model=_get_env("ENLISTED_LLM_ARCHITECT", "gpt-5.2"),
     max_completion_tokens=16000,
     reasoning_effort="high",
+)
+
+# MEDIUM reasoning - strategic coordination, research, analysis (manager, analysts, advisor)
+GPT5_ARCHITECT = LLM(
+    model=_get_env("ENLISTED_LLM_ARCHITECT", "gpt-5.2"),
+    max_completion_tokens=16000,
+    reasoning_effort="medium",
 )
 
 # MEDIUM reasoning - analysis and verification
@@ -311,7 +319,7 @@ CRITICAL - DATABASE BEFORE CODE:
 
 Database tools prevent hallucinated IDs. Always verify before referencing.
 Limit to ~8-12 tool calls total.""",
-            llm=GPT5_ARCHITECT,
+            llm=GPT5_ARCHITECT_HIGH,  # Only agent using high reasoning - complex design work
             tools=[
                 read_doc_tool,
                 read_source,
@@ -402,8 +410,8 @@ class PlanningFlow(Flow[PlanningState]):
     Steps:
     1. receive_request - Parse and validate inputs
     2. run_planning_crew - Single hierarchical crew (research -> advise -> design -> write)
-    3. route_after_planning - Check for UNCLEAR gaps
-    4. review_unclear_gaps - (conditional) Human review of gaps
+    3. check_for_issues - Manager analyzes outputs
+    4. route_after_check - Route to validation
     5. validate_plan - Check for hallucinations
     6. route_validation - Fix issues or complete
     7. fix_plan - (conditional) Correct any issues
@@ -585,7 +593,6 @@ class PlanningFlow(Flow[PlanningState]):
             expected_output="Technical specification document",
             agent=get_feature_architect(),
             context=[research_task, advise_task],  # Depends on both
-            human_input=True,  # PRESERVE task-level HITL
         )
         
         # Task 4: Write planning document (depends on design)
@@ -621,6 +628,7 @@ class PlanningFlow(Flow[PlanningState]):
         
         # Single hierarchical crew with manager coordination
         crew = Crew(
+            name="Planning Crew - Feature Design",
             agents=[
                 get_systems_analyst(),
                 get_architecture_advisor(),
@@ -656,12 +664,7 @@ class PlanningFlow(Flow[PlanningState]):
         result_str = str(result)
         state.design_output = result_str
         state.plan_path = plan_path
-        
-        # Check if design contains UNCLEAR gaps that need human review
-        if "unclear" in result_str.lower() and "gap" in result_str.lower():
-            state.current_step = "human_review"
-        else:
-            state.current_step = "validate"
+        state.current_step = "check_issues"
         
         return state
     
@@ -715,18 +718,7 @@ class PlanningFlow(Flow[PlanningState]):
                 auto_fixable=False,
             ))
         
-        # Check for UNCLEAR gaps (already handled by existing logic but add to escalation)
-        if "unclear" in design_output and "gap" in design_output:
-            issues.append(DetectedIssue(
-                issue_type=IssueType.HALLUCINATED_API,
-                severity=IssueSeverity.HIGH,
-                confidence=IssueConfidence.LOW,
-                description="Design contains unclear gaps that need classification",
-                affected_component="Planning Output",
-                evidence="UNCLEAR gaps found in design output",
-                manager_recommendation="Classify gaps as DEPRECATED, MISSING_IMPL, or TEST_CODE",
-                auto_fixable=False,
-            ))
+        # Note: UNCLEAR gaps detection removed - manager proceeds automatically
         
         # Check for dead code detection
         dead_code_patterns = ["deprecated", "unused", "dead code", "obsolete"]
@@ -744,32 +736,20 @@ class PlanningFlow(Flow[PlanningState]):
                 ))
                 break
         
-        # Determine if escalation needed
-        critical_issues = [i for i in issues if should_escalate_to_human(i)]
-        
-        if critical_issues:
-            print(f"[MANAGER] Found {len(critical_issues)} critical issue(s) requiring human review")
-            state.needs_human_review = True
-            state.critical_issues = [str(i) for i in critical_issues]
-            state.manager_analysis = format_critical_issues(critical_issues)
-            state.manager_recommendation = critical_issues[0].manager_recommendation if critical_issues else ""
-        else:
-            # Auto-fix minor issues
+        # Log issues but proceed automatically (no human review)
+        if issues:
+            print(f"[MANAGER] Found {len(issues)} issue(s) - logged for review")
+            state.critical_issues = [str(i) for i in issues]
             for issue in issues:
-                if issue.auto_fixable:
-                    print(f"[MANAGER] Auto-handling: {issue.description}")
-            print("[MANAGER] No critical issues found - proceeding with validation")
+                print(f"[MANAGER] Issue: {issue.description}")
+        else:
+            print("[MANAGER] No issues found - proceeding with validation")
         
         return state
     
     @router(check_for_issues)
     def route_after_check(self, state: PlanningState) -> str:
-        """Route to validation (human feedback disabled)."""
-        if state.needs_human_review:
-            print("[ROUTER] Critical issues detected but auto-proceeding (HITL disabled)")
-            print(f"[ROUTER] Issues logged: {len(state.critical_issues)}")
-            # Auto-resolve: log and continue to validation
-            state.needs_human_review = False
+        """Route to validation (fully automated)."""
         print("[ROUTER] -> validate")
         return "validate"
     
@@ -858,6 +838,7 @@ class PlanningFlow(Flow[PlanningState]):
         )
         
         crew = Crew(
+            name="Validation Crew - Plan Verification",
             agents=[get_code_analyst(), get_architecture_advisor()],
             tasks=[basic_validation, deep_validation],
             process=Process.sequential,
@@ -973,6 +954,7 @@ class PlanningFlow(Flow[PlanningState]):
         )
         
         crew = Crew(
+            name="Fix Crew - Plan Corrections",
             agents=[get_documentation_maintainer()],
             tasks=[task],
             process=Process.sequential,
