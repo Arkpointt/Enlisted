@@ -23,7 +23,8 @@ from typing import List, Optional
 from typing import Tuple, Any
 
 from crewai import Agent, Crew, Process, Task, LLM
-from crewai.flow.flow import Flow, listen, router, start, or_, human_feedback
+from crewai.flow.flow import Flow, listen, router, start, or_
+# human_feedback not available in current CrewAI version - feature commented out
 from crewai.tasks.conditional_task import ConditionalTask
 from crewai.tasks.task_output import TaskOutput
 from pydantic import BaseModel, Field
@@ -634,28 +635,32 @@ class PlanningFlow(Flow[PlanningState]):
         return "validate"
     
     @listen("human_review")
-    @human_feedback(
-        message="""The Feature Architect found UNCLEAR gaps that need your guidance.
-        
-Please review the design output and provide one of:
-- 'deprecated' - This code should be removed
-- 'implement' - This feature should be implemented
-- 'test_code' - This is test code, gap is expected
-- 'continue' - Proceed with current plan
-
-You can also provide specific instructions for the plan.""",
-        emit=["deprecated", "implement", "test_code", "continue"],
-        llm="gpt-5.2",
-        default_outcome="continue",
-    )
-    def review_unclear_gaps(self, state: PlanningState) -> str:
+    # @human_feedback decorator commented out - not available in current CrewAI version
+    # TODO: Re-enable when human_feedback is available
+    # @human_feedback(
+    #     message="""The Feature Architect found UNCLEAR gaps that need your guidance.
+    #     
+    # Please review the design output and provide one of:
+    # - 'deprecated' - This code should be removed
+    # - 'implement' - This feature should be implemented
+    # - 'test_code' - This is test code, gap is expected
+    # - 'continue' - Proceed with current plan
+    # 
+    # You can also provide specific instructions for the plan.""",
+    #     emit=["deprecated", "implement", "test_code", "continue"],
+    #     llm="gpt-5.2",
+    #     default_outcome="continue",
+    # )
+    def review_unclear_gaps(self, state: PlanningState) -> PlanningState:
         """Human-in-the-loop step for reviewing unclear gaps.
         
-        Returns the design output with UNCLEAR gaps highlighted.
-        Human feedback will be classified into one of the emit outcomes.
+        TODO: Re-enable human_feedback decorator when available in CrewAI.
+        For now, just continue with validation.
         """
-        # Return the design output - it will be shown to the human
-        return state.design_output
+        print("\n[INFO] HITL feature disabled - continuing with validation")
+        print("Unclear gaps found in design - proceeding without human review")
+        state.current_step = "validate"
+        return state
     
     @listen("deprecated")
     def handle_deprecated_gap(self, result) -> PlanningState:
