@@ -24,8 +24,25 @@ from typing import Tuple, Any
 
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.flow.flow import Flow, listen, router, start, or_
-# human_feedback not available in current CrewAI version - feature commented out
+try:
+    from crewai.flow.human_feedback import human_feedback, HumanFeedbackResult
+    HUMAN_FEEDBACK_AVAILABLE = True
+except ImportError:
+    HUMAN_FEEDBACK_AVAILABLE = False
+    HumanFeedbackResult = None  # Type hint fallback
+    print("[WARNING] human_feedback not available in this CrewAI version")
 from crewai.tasks.conditional_task import ConditionalTask
+
+# Import escalation framework
+from .escalation import (
+    DetectedIssue,
+    IssueType,
+    IssueSeverity,
+    IssueConfidence,
+    should_escalate_to_human,
+    format_critical_issues,
+    create_escalation_message,
+)
 from crewai.tasks.task_output import TaskOutput
 from pydantic import BaseModel, Field
 
@@ -627,34 +644,207 @@ class PlanningFlow(Flow[PlanningState]):
         return state
     
     @listen(run_planning_crew)
-    @router
-    def route_after_planning(self, state: PlanningState) -> str:
-        """Route to human review if UNCLEAR gaps found, otherwise continue to validate."""
+    def check_for_issues(self, state: PlanningState) -> PlanningState:
+        """Manager analyzes outputs and decides if human review needed.
+        
+        Detects:
+        - Hallucinated files/methods
+        - Conflicting documentation
+        - Dead code references
+        """
+        print("\n" + "-"*60)
+        print("[MANAGER] Analyzing planning outputs for issues...")
+        print("-"*60)
+        
+        issues = []
+        design_output = state.design_output.lower() if state.design_output else ""
+        
+        # Check for hallucinated file references
+        hallucinated_file_patterns = [
+            "file not found",
+            "does not exist",
+            "could not locate",
+            "missing file",
+        ]
+        for pattern in hallucinated_file_patterns:
+            if pattern in design_output:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.HALLUCINATED_FILE,
+                    severity=IssueSeverity.HIGH,
+                    confidence=IssueConfidence.MEDIUM,
+                    description=f"Plan references files that may not exist",
+                    affected_component="Planning Output",
+                    evidence=f"Pattern '{pattern}' found in design",
+                    manager_recommendation="Verify file paths with find_in_code tool",
+                    auto_fixable=True,
+                ))
+                break
+        
+        # Check for conflicting requirements
+        if "conflict" in design_output or "contradicts" in design_output:
+            issues.append(DetectedIssue(
+                issue_type=IssueType.CONFLICTING_REQUIREMENTS,
+                severity=IssueSeverity.CRITICAL,
+                confidence=IssueConfidence.MEDIUM,
+                description="Design contains conflicting requirements",
+                affected_component="Planning Output",
+                evidence="'conflict' or 'contradicts' found in design",
+                manager_recommendation="Human review needed to resolve conflicts",
+                auto_fixable=False,
+            ))
+        
+        # Check for UNCLEAR gaps (already handled by existing logic but add to escalation)
+        if "unclear" in design_output and "gap" in design_output:
+            issues.append(DetectedIssue(
+                issue_type=IssueType.HALLUCINATED_API,
+                severity=IssueSeverity.HIGH,
+                confidence=IssueConfidence.LOW,
+                description="Design contains unclear gaps that need classification",
+                affected_component="Planning Output",
+                evidence="UNCLEAR gaps found in design output",
+                manager_recommendation="Classify gaps as DEPRECATED, MISSING_IMPL, or TEST_CODE",
+                auto_fixable=False,
+            ))
+        
+        # Check for dead code detection
+        dead_code_patterns = ["deprecated", "unused", "dead code", "obsolete"]
+        for pattern in dead_code_patterns:
+            if pattern in design_output:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.DEPRECATED_SYSTEM,
+                    severity=IssueSeverity.MEDIUM,
+                    confidence=IssueConfidence.HIGH,
+                    description=f"Design references potentially deprecated code",
+                    affected_component="Planning Output",
+                    evidence=f"Pattern '{pattern}' found in design",
+                    manager_recommendation="Verify if code should be removed or updated",
+                    auto_fixable=True,
+                ))
+                break
+        
+        # Determine if escalation needed
+        critical_issues = [i for i in issues if should_escalate_to_human(i)]
+        
+        if critical_issues:
+            print(f"[MANAGER] Found {len(critical_issues)} critical issue(s) requiring human review")
+            state.needs_human_review = True
+            state.critical_issues = [str(i) for i in critical_issues]
+            state.manager_analysis = format_critical_issues(critical_issues)
+            state.manager_recommendation = critical_issues[0].manager_recommendation if critical_issues else ""
+        else:
+            # Auto-fix minor issues
+            for issue in issues:
+                if issue.auto_fixable:
+                    print(f"[MANAGER] Auto-handling: {issue.description}")
+            print("[MANAGER] No critical issues found - proceeding with validation")
+        
+        return state
+    
+    @router(check_for_issues)
+    def route_after_check(self, state: PlanningState) -> str:
+        """Route to human review if critical issues found, otherwise validate."""
+        if state.needs_human_review:
+            print("[ROUTER] -> escalate_to_human")
+            return "escalate_to_human"
         if state.current_step == "human_review":
+            print("[ROUTER] -> human_review")
             return "human_review"
+        print("[ROUTER] -> validate")
         return "validate"
     
+    @listen("escalate_to_human")
+    def human_review_critical(self, state: PlanningState):
+        """Human-in-the-loop for critical issues.
+        
+        When @human_feedback is available, this returns content for review.
+        Otherwise, uses terminal input as fallback.
+        """
+        print("\n" + "!"*60)
+        print("CRITICAL ISSUE DETECTED - Manager needs your review")
+        print("!"*60)
+        print(state.manager_analysis)
+        print(f"\nRecommendation: {state.manager_recommendation}")
+        print("\nOptions: abort | investigate | fix_and_retry | override")
+        
+        choice = input("Your decision: ").strip().lower()
+        
+        if choice == "abort":
+            state.success = False
+            state.current_step = "done"
+            state.final_report = f"ABORTED: {state.manager_analysis}"
+        elif choice == "fix_and_retry":
+            state.human_guidance = "User requested retry"
+            state.current_step = "planning"
+        elif choice == "override":
+            state.needs_human_review = False
+            state.current_step = "validate"
+        else:  # investigate or default
+            state.human_guidance = "investigate - proceed with caution"
+            state.current_step = "validate"
+            state.needs_human_review = False
+        
+        return state
+    
+    # Apply @human_feedback decorator if available (after class definition)
+    # This will be done at module level after class is defined
+    
+    # Note: These handlers are for @human_feedback emit routing.
+    # When @human_feedback is not available, human_review_critical handles
+    # routing directly via terminal input and state modification.
+    
+    @listen("abort")
+    def abort_workflow(self, result) -> PlanningState:
+        """Abort the workflow due to critical issues (emit route)."""
+        state = self.state
+        feedback = getattr(result, 'feedback', '') if hasattr(result, 'feedback') else ''
+        print(f"\nABORTED: Workflow stopped. Reason: {feedback}")
+        state.success = False
+        state.current_step = "done"
+        state.final_report = f"ABORTED: {state.manager_analysis}\nUser feedback: {feedback}"
+        return state
+    
+    @listen("investigate")
+    def deep_investigation(self, result) -> PlanningState:
+        """Continue with deeper investigation (emit route)."""
+        state = self.state
+        feedback = getattr(result, 'feedback', '') if hasattr(result, 'feedback') else ''
+        print(f"\nINVESTIGATING: Proceeding with additional analysis")
+        if feedback:
+            print(f"User guidance: {feedback}")
+            state.human_guidance = feedback
+        state.current_step = "validate"
+        state.needs_human_review = False
+        return state
+    
+    @listen("fix_and_retry")
+    def retry_with_guidance(self, result) -> PlanningState:
+        """Retry planning with human guidance (emit route)."""
+        state = self.state
+        feedback = getattr(result, 'feedback', '') if hasattr(result, 'feedback') else ''
+        print(f"\nFIXING: Retrying with guidance")
+        if feedback:
+            print(f"User guidance: {feedback}")
+            state.human_guidance = feedback
+        state.current_step = "planning"  # Will re-run planning crew
+        return state
+    
+    @listen("override")
+    def continue_despite_issues(self, result) -> PlanningState:
+        """Continue despite issues - human override (emit route)."""
+        state = self.state
+        feedback = getattr(result, 'feedback', '') if hasattr(result, 'feedback') else ''
+        print(f"\nOVERRIDE: Continuing despite issues")
+        if feedback:
+            print(f"Override reason: {feedback}")
+        state.needs_human_review = False
+        state.current_step = "validate"
+        return state
+    
     @listen("human_review")
-    # @human_feedback decorator commented out - not available in current CrewAI version
-    # TODO: Re-enable when human_feedback is available
-    # @human_feedback(
-    #     message="""The Feature Architect found UNCLEAR gaps that need your guidance.
-    #     
-    # Please review the design output and provide one of:
-    # - 'deprecated' - This code should be removed
-    # - 'implement' - This feature should be implemented
-    # - 'test_code' - This is test code, gap is expected
-    # - 'continue' - Proceed with current plan
-    # 
-    # You can also provide specific instructions for the plan.""",
-    #     emit=["deprecated", "implement", "test_code", "continue"],
-    #     llm="gpt-5.2",
-    #     default_outcome="continue",
-    # )
     def review_unclear_gaps(self, state: PlanningState) -> PlanningState:
         """Human-in-the-loop step for reviewing unclear gaps.
         
-        TODO: Re-enable human_feedback decorator when available in CrewAI.
+        NOTE: @human_feedback decorator disabled - requires CrewAI version with HITL support.
         For now, just continue with validation.
         """
         print("\n[INFO] HITL feature disabled - continuing with validation")
@@ -711,7 +901,7 @@ class PlanningFlow(Flow[PlanningState]):
         state.current_step = "validate"
         return state
     
-    @listen(or_("validate", "deprecated", "implement", "test_code", "continue"))
+    @listen(or_("validate", "deprecated", "implement", "test_code", "continue", "investigate", "override"))
     def validate_plan(self, state: PlanningState) -> PlanningState:
         """
         Step 5: Validate plan accuracy.

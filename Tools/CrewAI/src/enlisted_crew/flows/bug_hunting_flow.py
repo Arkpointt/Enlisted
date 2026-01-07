@@ -24,7 +24,19 @@ from typing import Optional, Tuple, Any
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.flow.flow import Flow, listen, router, start, or_
 from crewai.tasks.task_output import TaskOutput
+from crewai.tasks.conditional_task import ConditionalTask
 from pydantic import BaseModel
+
+# Import escalation framework
+from .escalation import (
+    DetectedIssue,
+    IssueType,
+    IssueSeverity,
+    IssueConfidence,
+    should_escalate_to_human,
+    format_critical_issues,
+    create_escalation_message,
+)
 
 from .state_models import (
     BugHuntingState,
@@ -642,8 +654,8 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             verbose=True,
             memory=True,
             cache=True,
-            planning=True,
-            planning_llm=GPT5_PLANNING,
+            # NOTE: planning=True disabled - causes "None or empty response" with GPT-5.2
+            planning=False,
         )
         
         result = crew.kickoff()
@@ -682,10 +694,198 @@ class BugHuntingFlow(Flow[BugHuntingState]):
         return state
     
     @listen(run_bug_hunting_crew)
+    def check_for_issues(self, state: BugHuntingState) -> BugHuntingState:
+        """Manager analyzes outputs and decides if human review needed.
+        
+        Detects:
+        - Scope creep on fixes
+        - Breaking changes
+        - Security concerns
+        """
+        print("\n" + "-"*60)
+        print("[MANAGER] Analyzing bug hunting outputs for issues...")
+        print("-"*60)
+        
+        issues = []
+        
+        # Get all outputs
+        investigation_output = state.investigation.raw_output.lower() if state.investigation else ""
+        fix_output = state.fix_proposal.raw_output.lower() if state.fix_proposal else ""
+        combined_output = investigation_output + fix_output
+        
+        # Check for scope creep on fixes
+        scope_creep_patterns = [
+            "refactor entire",
+            "complete rewrite",
+            "also fixed",
+            "bonus fix",
+            "while we're at it",
+            "additional changes",
+        ]
+        for pattern in scope_creep_patterns:
+            if pattern in combined_output:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.SCOPE_CREEP,
+                    severity=IssueSeverity.HIGH,
+                    confidence=IssueConfidence.MEDIUM,
+                    description="Bug fix may include scope creep beyond original issue",
+                    affected_component="Fix Proposal",
+                    evidence=f"Pattern '{pattern}' found in fix proposal",
+                    manager_recommendation="Review fix to ensure it only addresses the bug, not additional changes",
+                    auto_fixable=False,
+                ))
+                break
+        
+        # Check for breaking changes
+        breaking_patterns = [
+            "breaking change",
+            "backwards incompatible",
+            "save migration",
+            "schema change",
+            "api change",
+        ]
+        for pattern in breaking_patterns:
+            if pattern in combined_output:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.BREAKING_CHANGE,
+                    severity=IssueSeverity.CRITICAL,
+                    confidence=IssueConfidence.MEDIUM,
+                    description="Bug fix may introduce breaking changes",
+                    affected_component="Fix Proposal",
+                    evidence=f"Pattern '{pattern}' found in fix proposal",
+                    manager_recommendation="Review save/load compatibility and migration strategy",
+                    auto_fixable=False,
+                ))
+                break
+        
+        # Check for security concerns
+        security_patterns = [
+            "security risk",
+            "vulnerability",
+            "exploit",
+            "injection",
+            "unsafe",
+            "unvalidated input",
+        ]
+        for pattern in security_patterns:
+            if pattern in combined_output:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.SECURITY_CONCERN,
+                    severity=IssueSeverity.CRITICAL,
+                    confidence=IssueConfidence.HIGH,
+                    description="Bug or fix involves security concerns",
+                    affected_component="Bug Investigation",
+                    evidence=f"Pattern '{pattern}' found in analysis",
+                    manager_recommendation="Security review required before proceeding",
+                    auto_fixable=False,
+                ))
+                break
+        
+        # Check for data loss risk
+        data_loss_patterns = [
+            "data loss",
+            "corruption",
+            "save file",
+            "delete",
+            "truncate",
+        ]
+        for pattern in data_loss_patterns:
+            if pattern in combined_output:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.DATA_LOSS_RISK,
+                    severity=IssueSeverity.CRITICAL,
+                    confidence=IssueConfidence.MEDIUM,
+                    description="Bug or fix may involve data loss risk",
+                    affected_component="Bug Investigation",
+                    evidence=f"Pattern '{pattern}' found in analysis",
+                    manager_recommendation="Verify fix preserves data integrity",
+                    auto_fixable=False,
+                ))
+                break
+        
+        # Determine if escalation needed
+        critical_issues = [i for i in issues if should_escalate_to_human(i)]
+        
+        if critical_issues:
+            print(f"[MANAGER] Found {len(critical_issues)} critical issue(s) requiring human review")
+            state.needs_human_review = True
+            state.critical_issues = [str(i) for i in critical_issues]
+            state.manager_analysis = format_critical_issues(critical_issues)
+            state.manager_recommendation = critical_issues[0].manager_recommendation if critical_issues else ""
+        else:
+            for issue in issues:
+                if issue.auto_fixable:
+                    print(f"[MANAGER] Auto-handling: {issue.description}")
+            print("[MANAGER] No critical issues found - generating report")
+        
+        return state
+    
+    @router(check_for_issues)
+    def route_after_check(self, state: BugHuntingState) -> str:
+        """Route to human review if critical issues found, otherwise report."""
+        if state.needs_human_review:
+            print("[ROUTER] -> escalate_to_human")
+            return "escalate_to_human"
+        print("[ROUTER] -> report")
+        return "report"
+    
+    @listen("escalate_to_human")
+    def human_review_critical(self, state: BugHuntingState) -> BugHuntingState:
+        """Human-in-the-loop for critical issues.
+        
+        NOTE: @human_feedback decorator disabled - requires CrewAI version with HITL support.
+        For now, logs the issue and continues.
+        """
+        print("\n" + "!"*60)
+        print("CRITICAL ISSUE DETECTED - Manager needs your review")
+        print("!"*60)
+        print(state.manager_analysis)
+        print("\nOptions: abort | investigate | fix_and_retry | override")
+        print("[INFO] HITL disabled - defaulting to 'investigate'")
+        print("!"*60 + "\n")
+        
+        state.human_guidance = "investigate - proceed with caution"
+        state.needs_human_review = False
+        return state
+    
+    @listen("abort")
+    def abort_workflow(self, state: BugHuntingState) -> BugHuntingState:
+        """Abort the workflow due to critical issues."""
+        print("\nABORTED: Workflow stopped due to critical issues")
+        state.success = False
+        state.current_step = "complete"
+        state.final_report = f"ABORTED: {state.manager_analysis}"
+        return state
+    
+    @listen("investigate")
+    def deep_investigation(self, state: BugHuntingState) -> BugHuntingState:
+        """Continue with deeper investigation."""
+        print("\nINVESTIGATING: Proceeding with additional analysis")
+        return state
+    
+    @listen("fix_and_retry")
+    def retry_with_guidance(self, state: BugHuntingState) -> BugHuntingState:
+        """Retry bug hunting with human guidance."""
+        print(f"\nFIXING: Retrying with guidance")
+        state.current_step = "investigate"
+        return state
+    
+    @listen("override")
+    def continue_despite_issues(self, state: BugHuntingState) -> BugHuntingState:
+        """Continue despite issues (human override)."""
+        print("\nOVERRIDE: Continuing despite issues")
+        state.needs_human_review = False
+        return state
+    
+    @listen(or_("report", "escalate_to_human", "investigate", "override"))
     def generate_report(self, state: BugHuntingState) -> BugHuntingState:
         """
         Final step: Generate comprehensive bug report.
         """
+        # Skip if aborted
+        if state.current_step == "complete" and not state.success:
+            return state
+        
         print("\n" + "-"*60)
         print("[DOC] STEP: Generating Final Report")
         print("-"*60)

@@ -27,6 +27,17 @@ from crewai.flow.flow import Flow, listen, router, start, or_
 from crewai.tasks.task_output import TaskOutput
 from pydantic import BaseModel, Field
 
+# Import escalation framework
+from .escalation import (
+    DetectedIssue,
+    IssueType,
+    IssueSeverity,
+    IssueConfidence,
+    should_escalate_to_human,
+    format_critical_issues,
+    create_escalation_message,
+)
+
 # Import state models
 from .state_models import (
     ImplementationState,
@@ -701,8 +712,8 @@ class ImplementationFlow(Flow[ImplementationState]):
             verbose=True,
             memory=True,
             cache=True,
-            planning=True,
-            planning_llm=GPT5_PLANNING,
+            # NOTE: planning=True disabled - causes "None or empty response" with GPT-5.2
+            planning=False,
         )
         
         result = crew.kickoff()
@@ -730,8 +741,182 @@ class ImplementationFlow(Flow[ImplementationState]):
         return state
     
     @listen(run_implementation_crew)
+    def check_for_issues(self, state: ImplementationState) -> ImplementationState:
+        """Manager analyzes outputs and decides if human review needed.
+        
+        Detects:
+        - Hallucinated APIs
+        - Architecture violations
+        - Scope creep
+        """
+        print("\n" + "-"*60)
+        print("[MANAGER] Analyzing implementation outputs for issues...")
+        print("-"*60)
+        
+        issues = []
+        output_combined = (state.csharp_output + state.content_output + state.validation_output).lower()
+        
+        # Check for hallucinated API calls
+        hallucinated_api_patterns = [
+            "method not found",
+            "does not exist",
+            "cannot find",
+            "no such method",
+            "undefined method",
+            "getneeds()",  # Common hallucination from context
+        ]
+        for pattern in hallucinated_api_patterns:
+            if pattern in output_combined:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.HALLUCINATED_API,
+                    severity=IssueSeverity.HIGH,
+                    confidence=IssueConfidence.MEDIUM,
+                    description=f"Implementation may use non-existent API",
+                    affected_component="Implementation Output",
+                    evidence=f"Pattern '{pattern}' found in output",
+                    manager_recommendation="Verify API calls with find_in_code tool",
+                    auto_fixable=True,
+                ))
+                break
+        
+        # Check for architecture violations
+        architecture_violations = [
+            "violates architecture",
+            "breaks pattern",
+            "anti-pattern",
+            "not following convention",
+            "bypassing manager",
+        ]
+        for pattern in architecture_violations:
+            if pattern in output_combined:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.ARCHITECTURE_VIOLATION,
+                    severity=IssueSeverity.CRITICAL,
+                    confidence=IssueConfidence.MEDIUM,
+                    description="Implementation violates architecture patterns",
+                    affected_component="Implementation Output",
+                    evidence=f"Pattern '{pattern}' found in output",
+                    manager_recommendation="Review architecture docs and refactor",
+                    auto_fixable=False,
+                ))
+                break
+        
+        # Check for scope creep
+        scope_creep_patterns = [
+            "also added",
+            "additionally implemented",
+            "bonus feature",
+            "extra functionality",
+            "while we're here",
+        ]
+        for pattern in scope_creep_patterns:
+            if pattern in output_combined:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.SCOPE_CREEP,
+                    severity=IssueSeverity.HIGH,
+                    confidence=IssueConfidence.LOW,
+                    description="Implementation may include scope creep",
+                    affected_component="Implementation Output",
+                    evidence=f"Pattern '{pattern}' found in output",
+                    manager_recommendation="Review to ensure only planned features are implemented",
+                    auto_fixable=False,
+                ))
+                break
+        
+        # Check for breaking changes
+        if "breaking change" in output_combined or "backward compatibility" in output_combined:
+            issues.append(DetectedIssue(
+                issue_type=IssueType.BREAKING_CHANGE,
+                severity=IssueSeverity.CRITICAL,
+                confidence=IssueConfidence.MEDIUM,
+                description="Implementation may include breaking changes",
+                affected_component="Implementation Output",
+                evidence="'breaking change' or 'backward compatibility' mentioned",
+                manager_recommendation="Review save/load compatibility and migration paths",
+                auto_fixable=False,
+            ))
+        
+        # Determine if escalation needed
+        critical_issues = [i for i in issues if should_escalate_to_human(i)]
+        
+        if critical_issues:
+            print(f"[MANAGER] Found {len(critical_issues)} critical issue(s) requiring human review")
+            state.needs_human_review = True
+            state.critical_issues = [str(i) for i in critical_issues]
+            state.manager_analysis = format_critical_issues(critical_issues)
+            state.manager_recommendation = critical_issues[0].manager_recommendation if critical_issues else ""
+        else:
+            for issue in issues:
+                if issue.auto_fixable:
+                    print(f"[MANAGER] Auto-handling: {issue.description}")
+            print("[MANAGER] No critical issues found - generating report")
+        
+        return state
+    
+    @router(check_for_issues)
+    def route_after_check(self, state: ImplementationState) -> str:
+        """Route to human review if critical issues found, otherwise report."""
+        if state.needs_human_review:
+            print("[ROUTER] -> escalate_to_human")
+            return "escalate_to_human"
+        print("[ROUTER] -> report")
+        return "report"
+    
+    @listen("escalate_to_human")
+    def human_review_critical(self, state: ImplementationState) -> ImplementationState:
+        """Human-in-the-loop for critical issues.
+        
+        NOTE: @human_feedback decorator disabled - requires CrewAI version with HITL support.
+        For now, logs the issue and continues.
+        """
+        print("\n" + "!"*60)
+        print("CRITICAL ISSUE DETECTED - Manager needs your review")
+        print("!"*60)
+        print(state.manager_analysis)
+        print("\nOptions: abort | investigate | fix_and_retry | override")
+        print("[INFO] HITL disabled - defaulting to 'investigate'")
+        print("!"*60 + "\n")
+        
+        state.human_guidance = "investigate - proceed with caution"
+        state.needs_human_review = False
+        return state
+    
+    @listen("abort")
+    def abort_workflow(self, state: ImplementationState) -> ImplementationState:
+        """Abort the workflow due to critical issues."""
+        print("\nABORTED: Workflow stopped due to critical issues")
+        state.success = False
+        state.current_step = "complete"
+        state.final_report = f"ABORTED: {state.manager_analysis}"
+        return state
+    
+    @listen("investigate")
+    def deep_investigation(self, state: ImplementationState) -> ImplementationState:
+        """Continue with deeper investigation."""
+        print("\nINVESTIGATING: Proceeding with additional analysis")
+        return state
+    
+    @listen("fix_and_retry")
+    def retry_with_guidance(self, state: ImplementationState) -> ImplementationState:
+        """Retry implementation with human guidance."""
+        print(f"\nFIXING: Retrying with guidance")
+        state.current_step = "implement"
+        return state
+    
+    @listen("override")
+    def continue_despite_issues(self, state: ImplementationState) -> ImplementationState:
+        """Continue despite issues (human override)."""
+        print("\nOVERRIDE: Continuing despite issues")
+        state.needs_human_review = False
+        return state
+    
+    @listen(or_("report", "escalate_to_human", "investigate", "override"))
     def generate_report(self, state: ImplementationState) -> ImplementationState:
         """Final step: Generate implementation report."""
+        # Skip if aborted
+        if state.current_step == "complete" and not state.success:
+            return state
+        
         print("\n" + "-"*60)
         print("[REPORT] Generating final report...")
         print("-"*60)

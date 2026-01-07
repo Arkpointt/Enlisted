@@ -205,7 +205,7 @@ def create_escalation_message(
         Formatted message string
     """
     msg = [
-        f"⚠️  {flow_name.upper()} MANAGER - CRITICAL ISSUE DETECTED",
+        f"{flow_name.upper()} MANAGER - CRITICAL ISSUE DETECTED",
         "",
         "The manager has detected issues that require your review.",
         "These issues cannot be auto-fixed with confidence.",

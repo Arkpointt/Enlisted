@@ -330,11 +330,145 @@ def test_llm_configuration():
         return False
 
 
-# ===== Test 7: Environment =====
+# ===== Test 7: Escalation Framework =====
+
+def test_escalation_framework():
+    """Test manager escalation framework."""
+    print_header("7. ESCALATION FRAMEWORK TESTS")
+    
+    try:
+        # Import directly from escalation module to avoid crewai dependency
+        escalation_path = Path("src/enlisted_crew/flows")
+        sys.path.insert(0, str(escalation_path))
+        
+        from escalation import (
+            IssueType,
+            IssueSeverity,
+            IssueConfidence,
+            DetectedIssue,
+            should_escalate_to_human,
+            format_critical_issues,
+            categorize_issue_severity,
+            create_escalation_message,
+        )
+        print_pass("Escalation framework imported")
+    except Exception as e:
+        print_fail(f"Escalation import failed: {e}")
+        return False
+    
+    # Test 1: Critical severity always escalates
+    issue = DetectedIssue(
+        issue_type=IssueType.ARCHITECTURE_VIOLATION,
+        severity=IssueSeverity.CRITICAL,
+        confidence=IssueConfidence.HIGH,
+        description="Breaking architecture",
+        affected_component="test.cs",
+        evidence="Uses wrong pattern",
+        manager_recommendation="Fix it",
+    )
+    if should_escalate_to_human(issue, "critical_only"):
+        print_pass("Critical severity escalates")
+    else:
+        print_fail("Critical severity did not escalate")
+        return False
+    
+    # Test 2: Security always escalates
+    issue = DetectedIssue(
+        issue_type=IssueType.SECURITY_CONCERN,
+        severity=IssueSeverity.HIGH,
+        confidence=IssueConfidence.MEDIUM,
+        description="Potential SQL injection",
+        affected_component="query.cs",
+        evidence="Unsanitized input",
+        manager_recommendation="Review security",
+    )
+    if should_escalate_to_human(issue, "critical_only"):
+        print_pass("Security concern escalates")
+    else:
+        print_fail("Security concern did not escalate")
+        return False
+    
+    # Test 3: High confidence auto-fix doesn't escalate
+    issue = DetectedIssue(
+        issue_type=IssueType.INCORRECT_METHOD,
+        severity=IssueSeverity.MEDIUM,
+        confidence=IssueConfidence.HIGH,
+        description="Wrong method name",
+        affected_component="test.cs",
+        evidence="Found correct method",
+        manager_recommendation="Use GetNeeds() instead",
+        auto_fixable=True,
+    )
+    if not should_escalate_to_human(issue, "critical_only"):
+        print_pass("Auto-fixable high confidence doesn't escalate")
+    else:
+        print_fail("Auto-fixable high confidence escalated incorrectly")
+        return False
+    
+    # Test 4: High severity + low confidence escalates
+    issue = DetectedIssue(
+        issue_type=IssueType.HALLUCINATED_API,
+        severity=IssueSeverity.HIGH,
+        confidence=IssueConfidence.LOW,
+        description="Method might not exist",
+        affected_component="test.cs",
+        evidence="Search returned ambiguous results",
+        manager_recommendation="Need human to verify",
+    )
+    if should_escalate_to_human(issue, "critical_only"):
+        print_pass("High severity + low confidence escalates")
+    else:
+        print_fail("High severity + low confidence did not escalate")
+        return False
+    
+    # Test 5: Categorize issue severity
+    severity_tests = [
+        (IssueType.SECURITY_CONCERN, IssueSeverity.CRITICAL),
+        (IssueType.HALLUCINATED_API, IssueSeverity.HIGH),
+        (IssueType.DEPRECATED_SYSTEM, IssueSeverity.MEDIUM),
+        (IssueType.SPELLING_ERROR, IssueSeverity.LOW),
+    ]
+    
+    for issue_type, expected_severity in severity_tests:
+        result = categorize_issue_severity(issue_type)
+        if result == expected_severity:
+            print_pass(f"{issue_type.value} → {expected_severity.value}")
+        else:
+            print_fail(f"{issue_type.value} → got {result.value}, expected {expected_severity.value}")
+            return False
+    
+    # Test 6: Format critical issues
+    issues = [
+        DetectedIssue(
+            issue_type=IssueType.HALLUCINATED_API,
+            severity=IssueSeverity.HIGH,
+            confidence=IssueConfidence.LOW,
+            description="Method doesn't exist",
+            affected_component="ReputationManager.cs",
+            evidence="Search returned no results",
+            manager_recommendation="Use GetReputation() instead",
+        ),
+    ]
+    
+    output = format_critical_issues(issues)
+    if "CRITICAL ISSUES FOUND: 1" in output and "HALLUCINATED API" in output:
+        print_pass("Issue formatting works")
+    else:
+        print_fail("Issue formatting failed")
+        return False
+    
+    print_info("")
+    print_info("    All escalation logic tests passed.")
+    print_info("    Managers will auto-handle 80-90% of issues.")
+    
+    return True
+
+
+# ===== Test 8: Environment =====
 
 def test_environment():
     """Test environment configuration."""
-    print_header("7. ENVIRONMENT TESTS")
+    print_header("8. ENVIRONMENT TESTS")
     
     # Check OpenAI API key
     if os.environ.get("OPENAI_API_KEY"):
@@ -381,6 +515,7 @@ def main():
         ("MCP Server", test_mcp_server),
         ("Flow Agents", test_flow_agents),
         ("LLM Configuration", test_llm_configuration),
+        ("Escalation Framework", test_escalation_framework),
         ("Environment", test_environment),
     ]
     

@@ -166,7 +166,7 @@ def list_docs_tool(folder: str = "") -> str:
         if subdir.is_dir() and not subdir.name.startswith('.'):
             md_count = len(list(subdir.glob("**/*.md")))
             if md_count > 0:
-                subdirs.append(f"  📁 {subdir.name}/ ({md_count} docs)")
+                subdirs.append(f"  {subdir.name}/ ({md_count} docs)")
     
     result = f"Documentation in {folder or 'docs/'}:\n\n"
     
@@ -862,7 +862,7 @@ def read_native_crash_logs_tool(recent_only: bool = True) -> str:
                 # Truncate long files
                 if len(content) > 10000:
                     content = content[:10000] + "\n... [truncated]"
-                results.append(f"💥 {crash_file.name}:\n{content}")
+                results.append(f"CRASH: {crash_file.name}:\n{content}")
         except Exception as e:
             results.append(f"ERROR reading {crash_file.name}: {e}")
     
@@ -875,7 +875,7 @@ def read_native_crash_logs_tool(recent_only: bool = True) -> str:
                 # Just get the last portion
                 if len(content) > 5000:
                     content = "... [showing last 5KB]\n" + content[-5000:]
-                results.append(f"🔧 RGL LOG (game engine):\n{content}")
+                results.append(f"RGL LOG (game engine):\n{content}")
         except Exception:
             pass
     
@@ -1033,7 +1033,7 @@ def list_event_ids(folder: str = "Decisions") -> str:
         except Exception as e:
             results.append(f"WARNING: {json_file.name}: Error reading - {e}")
     
-    summary = f"📁 {folder}/ - {len(ids_found)} total IDs across {len(results)} files\n\n"
+    summary = f"{folder}/ - {len(ids_found)} total IDs across {len(results)} files\n\n"
     summary += "Files:\n" + "\n".join(results)
     summary += "\n\nAll IDs:\n" + "\n".join(f"  - {id}" for id in sorted(set(ids_found)))
     
@@ -1060,7 +1060,7 @@ def list_feature_files_tool(feature: str = "") -> str:
         for f in sorted(features_dir.iterdir()):
             if f.is_dir():
                 cs_count = len(list(f.glob("*.cs")))
-                folders.append(f"  📁 {f.name}/ ({cs_count} files)")
+                folders.append(f"  {f.name}/ ({cs_count} files)")
         return "Feature folders:\n" + "\n".join(folders)
     
     feature_dir = features_dir / feature

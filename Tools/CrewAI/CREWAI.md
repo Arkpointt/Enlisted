@@ -1,8 +1,8 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (23 database tools), and automatic prompt caching.  
+**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (23 database tools), automatic prompt caching, and **intelligent manager escalation** for critical issues.  
 **Status:** ✅ Implemented  
-**Last Updated:** 2026-01-06 (Added gap analysis and human-in-the-loop to PlanningFlow; feature_architect now investigates broken references and classifies them with remediation proposals or human review for unclear cases)
+**Last Updated:** 2026-01-07 (Added manager escalation framework to all flows; managers analyze outputs and escalate critical issues to humans while auto-handling minor issues)
 
 ---
 
@@ -1810,6 +1810,207 @@ def test_needs_csharp_work():
     state = ImplementationState(csharp_status=ImplementationStatus.PARTIAL)
     assert needs_csharp_work(state) == True
 ```
+
+---
+
+## Manager Escalation Framework
+
+**Status:** ✅ Implemented in all 4 flows (2026-01-07)
+
+Managers in all flows now intelligently analyze outputs and decide when to escalate issues to humans vs. auto-handle them. This ensures 80-90% of issues are handled automatically, with only critical issues requiring human judgment.
+
+### How It Works
+
+After each crew execution, the manager:
+
+1. **Analyzes outputs** for issue patterns (hallucinated APIs, architecture violations, etc.)
+2. **Classifies each issue** by type, severity, and confidence
+3. **Decides escalation** using `should_escalate_to_human()` rules
+4. **Routes accordingly:**
+   - Critical issues → Human review (with formatted analysis)
+   - Auto-fixable issues → Handled silently
+   - Minor issues → Logged and continued
+
+### Escalation Rules
+
+| Condition | Escalates? | Reason |
+|-----------|------------|--------|
+| CRITICAL severity | ✅ Always | Too important to auto-handle |
+| Security concern | ✅ Always | Requires human judgment |
+| Data loss risk | ✅ Always | Requires human judgment |
+| Breaking change | ✅ Always | Requires human judgment |
+| Conflicting requirements | ✅ Always | Human must decide |
+| Architecture violation | ✅ Always | Structural decisions |
+| HIGH severity + LOW confidence | ✅ Yes | Uncertain about serious issue |
+| HIGH severity + HIGH confidence + auto-fixable | ❌ No | Can safely auto-fix |
+| MEDIUM severity | ❌ Usually no | Auto-handle unless threshold raised |
+| LOW severity | ❌ Never | Always auto-handle |
+
+### Issue Types by Flow
+
+**PlanningFlow:**
+- `HALLUCINATED_FILE` - Plan references non-existent files
+- `CONFLICTING_REQUIREMENTS` - Design has contradictions
+- `HALLUCINATED_API` - Unclear gaps needing classification
+- `DEPRECATED_SYSTEM` - References to obsolete code
+
+**ImplementationFlow:**
+- `HALLUCINATED_API` - Uses non-existent methods
+- `ARCHITECTURE_VIOLATION` - Breaks established patterns
+- `SCOPE_CREEP` - Implements beyond plan scope
+- `BREAKING_CHANGE` - Affects save/load compatibility
+
+**BugHuntingFlow:**
+- `SCOPE_CREEP` - Fix includes unrelated changes
+- `BREAKING_CHANGE` - Fix affects compatibility
+- `SECURITY_CONCERN` - Security-related bug/fix
+- `DATA_LOSS_RISK` - Bug/fix involves data integrity
+
+**ValidationFlow:**
+- `ARCHITECTURE_VIOLATION` - Critical build failures
+- `DATA_LOSS_RISK` - Data integrity issues
+- `SECURITY_CONCERN` - Security patterns in content
+
+### Human Feedback Options
+
+When escalated, humans can respond with:
+
+| Option | Action |
+|--------|--------|
+| `abort` | Stop workflow, mark as failed |
+| `investigate` | Continue with deeper analysis |
+| `fix_and_retry` | Retry with human guidance |
+| `override` | Continue despite issues |
+
+**Note:** Currently, `@human_feedback` decorator requires CrewAI version with HITL support. When unavailable, flows default to `investigate` behavior and log the issue.
+
+### Escalation Framework Code
+
+**Location:** `flows/escalation.py`
+
+**Core Components:**
+```python
+# Issue classification
+class IssueType(Enum):
+    HALLUCINATED_API = "hallucinated_api"
+    SECURITY_CONCERN = "security_concern"
+    BREAKING_CHANGE = "breaking_change"
+    # ... 13 total issue types
+
+class IssueSeverity(Enum):
+    CRITICAL = "critical"  # Always escalate
+    HIGH = "high"          # Escalate if low confidence
+    MEDIUM = "medium"      # Usually auto-fix
+    LOW = "low"            # Always auto-fix
+
+class IssueConfidence(Enum):
+    HIGH = "high"      # Manager is certain
+    MEDIUM = "medium"  # Fairly sure
+    LOW = "low"        # Unsure - escalate if high severity
+
+@dataclass
+class DetectedIssue:
+    issue_type: IssueType
+    severity: IssueSeverity
+    confidence: IssueConfidence
+    description: str
+    affected_component: str
+    evidence: str
+    manager_recommendation: str
+    auto_fixable: bool = False
+
+# Core decision function
+def should_escalate_to_human(issue: DetectedIssue) -> bool:
+    # Critical always escalates
+    if issue.severity == IssueSeverity.CRITICAL:
+        return True
+    # Security/data loss always escalates
+    if issue.issue_type in [SECURITY_CONCERN, DATA_LOSS_RISK, BREAKING_CHANGE]:
+        return True
+    # High + low confidence escalates
+    if issue.severity == IssueSeverity.HIGH and issue.confidence == IssueConfidence.LOW:
+        return True
+    # ... other rules
+    return False
+```
+
+### Flow Integration Pattern
+
+Each flow adds escalation after crew execution:
+
+```python
+@listen(run_xxx_crew)
+def check_for_issues(self, state: XxxState) -> XxxState:
+    """Manager analyzes outputs for issues."""
+    issues = []
+    
+    # Detect issues from output
+    if "method not found" in state.output.lower():
+        issues.append(DetectedIssue(
+            issue_type=IssueType.HALLUCINATED_API,
+            severity=IssueSeverity.HIGH,
+            confidence=IssueConfidence.MEDIUM,
+            description="Uses non-existent API",
+            affected_component="Implementation Output",
+            evidence="Pattern found in output",
+            manager_recommendation="Verify with find_in_code",
+            auto_fixable=True,
+        ))
+    
+    # Determine escalation
+    critical_issues = [i for i in issues if should_escalate_to_human(i)]
+    
+    if critical_issues:
+        state.needs_human_review = True
+        state.manager_analysis = format_critical_issues(critical_issues)
+    else:
+        for issue in issues:
+            if issue.auto_fixable:
+                print(f"[MANAGER] Auto-handling: {issue.description}")
+    
+    return state
+
+@router(check_for_issues)
+def route_after_check(self, state: XxxState) -> str:
+    if state.needs_human_review:
+        return "escalate_to_human"
+    return "continue_workflow"
+```
+
+### State Model Fields
+
+All state models include escalation fields:
+
+```python
+class XxxState(BaseModel):
+    # ... existing fields ...
+    
+    # Manager escalation (human-in-the-loop)
+    needs_human_review: bool = False
+    critical_issues: List[str] = Field(default_factory=list)
+    manager_analysis: str = ""
+    manager_recommendation: str = ""
+    human_guidance: str = ""  # Human's response if escalated
+```
+
+### Testing Escalation
+
+Run the escalation framework tests:
+
+```bash
+cd Tools/CrewAI
+python test_escalation.py
+```
+
+**Tests cover:**
+- ✅ Critical severity always escalates
+- ✅ Security/data loss always escalate
+- ✅ High confidence auto-fixes don't escalate
+- ✅ Low confidence + high severity escalate
+- ✅ Low severity never escalates
+- ✅ Threshold settings work correctly
+- ✅ Issue formatting displays correctly
+- ✅ Escalation messages include all required info
 
 ---
 

@@ -238,11 +238,11 @@ def _extract_csharp_files(content: str) -> List[Dict[str, Any]]:
         context = content[context_start:match.end() + 50].lower()
         
         status = "unknown"
-        if any(marker in context for marker in ["✅", "completed", "implemented", "done"]):
+        if any(marker in context for marker in ["completed", "implemented", "done"]):
             status = "complete"
-        elif any(marker in context for marker in ["⏳", "pending", "todo", "needed", "remaining"]):
+        elif any(marker in context for marker in ["pending", "todo", "needed", "remaining"]):
             status = "pending"
-        elif any(marker in context for marker in ["❌", "blocked", "failed"]):
+        elif any(marker in context for marker in ["blocked", "failed"]):
             status = "blocked"
         
         files.append({"path": path, "status": status})
@@ -285,9 +285,9 @@ def _extract_content_ids(content: str) -> List[Dict[str, Any]]:
             context = content[context_start:match.end() + 50].lower()
             
             status = "unknown"
-            if any(marker in context for marker in ["✅", "completed", "implemented", "done"]):
+            if any(marker in context for marker in ["completed", "implemented", "done"]):
                 status = "complete"
-            elif any(marker in context for marker in ["⏳", "pending", "todo", "needed", "remaining"]):
+            elif any(marker in context for marker in ["pending", "todo", "needed", "remaining"]):
                 status = "pending"
             
             ids.append({
@@ -366,7 +366,7 @@ def _extract_phases(content: str) -> List[Dict[str, Any]]:
         context = content[match.start():context_end].lower()
         
         status = "pending"
-        if "✅" in context or "completed" in context[:200]:
+        if "completed" in context[:200]:
             status = "complete"
         
         phases.append({

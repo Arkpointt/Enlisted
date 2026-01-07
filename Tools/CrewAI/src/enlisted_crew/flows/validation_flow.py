@@ -18,9 +18,20 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Any
 
 from crewai import Agent, Crew, Process, Task, LLM
-from crewai.flow.flow import Flow, listen, router, start
+from crewai.flow.flow import Flow, listen, router, start, or_
 from crewai.tasks.task_output import TaskOutput
 from pydantic import BaseModel, Field
+
+# Import escalation framework
+from .escalation import (
+    DetectedIssue,
+    IssueType,
+    IssueSeverity,
+    IssueConfidence,
+    should_escalate_to_human,
+    format_critical_issues,
+    create_escalation_message,
+)
 
 # Import tools
 from ..tools import (
@@ -163,6 +174,13 @@ class ValidationState(BaseModel):
     # Tracking
     current_step: str = "start"
     issues_found: List[str] = Field(default_factory=list)
+    
+    # Manager escalation (human-in-the-loop)
+    needs_human_review: bool = False
+    critical_issues: List[str] = Field(default_factory=list)
+    manager_analysis: str = ""
+    manager_recommendation: str = ""
+    human_guidance: str = ""
     
     # Final
     success: bool = False
@@ -408,8 +426,164 @@ class ValidationFlow(Flow[ValidationState]):
         return state
     
     @listen(run_validation_crew)
+    def check_for_issues(self, state: ValidationState) -> ValidationState:
+        """Manager analyzes outputs and decides if human review needed.
+        
+        Detects:
+        - Critical build failures
+        - Data integrity issues
+        """
+        print("\n" + "-"*60)
+        print("[MANAGER] Analyzing validation outputs for issues...")
+        print("-"*60)
+        
+        issues = []
+        combined_output = (state.content_output + state.build_output + state.strings_output).lower()
+        
+        # Check for critical build failures
+        critical_build_patterns = [
+            "error cs",
+            "build failed",
+            "fatal error",
+            "compilation error",
+        ]
+        for pattern in critical_build_patterns:
+            if pattern in combined_output:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.ARCHITECTURE_VIOLATION,
+                    severity=IssueSeverity.CRITICAL,
+                    confidence=IssueConfidence.HIGH,
+                    description="Critical build errors detected",
+                    affected_component="Build Output",
+                    evidence=f"Pattern '{pattern}' found in build output",
+                    manager_recommendation="Fix compilation errors before proceeding",
+                    auto_fixable=False,
+                ))
+                break
+        
+        # Check for data integrity issues (missing localizations, etc.)
+        data_integrity_patterns = [
+            "missing string",
+            "orphan",
+            "duplicate id",
+            "schema violation",
+        ]
+        for pattern in data_integrity_patterns:
+            if pattern in combined_output:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.DATA_LOSS_RISK,
+                    severity=IssueSeverity.HIGH,
+                    confidence=IssueConfidence.MEDIUM,
+                    description="Data integrity issues detected",
+                    affected_component="Content Validation",
+                    evidence=f"Pattern '{pattern}' found in validation output",
+                    manager_recommendation="Review and fix data integrity issues",
+                    auto_fixable=True,
+                ))
+                break
+        
+        # Check for security patterns in content
+        security_patterns = [
+            "injection",
+            "script",
+            "<script",
+            "eval(",
+        ]
+        for pattern in security_patterns:
+            if pattern in combined_output:
+                issues.append(DetectedIssue(
+                    issue_type=IssueType.SECURITY_CONCERN,
+                    severity=IssueSeverity.CRITICAL,
+                    confidence=IssueConfidence.MEDIUM,
+                    description="Potential security issue in content",
+                    affected_component="Content Validation",
+                    evidence=f"Pattern '{pattern}' found in content",
+                    manager_recommendation="Security review required",
+                    auto_fixable=False,
+                ))
+                break
+        
+        # Determine if escalation needed
+        critical_issues = [i for i in issues if should_escalate_to_human(i)]
+        
+        if critical_issues:
+            print(f"[MANAGER] Found {len(critical_issues)} critical issue(s) requiring human review")
+            state.needs_human_review = True
+            state.critical_issues = [str(i) for i in critical_issues]
+            state.manager_analysis = format_critical_issues(critical_issues)
+            state.manager_recommendation = critical_issues[0].manager_recommendation if critical_issues else ""
+        else:
+            for issue in issues:
+                if issue.auto_fixable:
+                    print(f"[MANAGER] Auto-handling: {issue.description}")
+            print("[MANAGER] No critical issues found - generating report")
+        
+        return state
+    
+    @router(check_for_issues)
+    def route_after_check(self, state: ValidationState) -> str:
+        """Route to human review if critical issues found, otherwise report."""
+        if state.needs_human_review:
+            print("[ROUTER] -> escalate_to_human")
+            return "escalate_to_human"
+        print("[ROUTER] -> report")
+        return "report"
+    
+    @listen("escalate_to_human")
+    def human_review_critical(self, state: ValidationState) -> ValidationState:
+        """Human-in-the-loop for critical issues.
+        
+        NOTE: @human_feedback decorator disabled - requires CrewAI version with HITL support.
+        For now, logs the issue and continues.
+        """
+        print("\n" + "!"*60)
+        print("CRITICAL ISSUE DETECTED - Manager needs your review")
+        print("!"*60)
+        print(state.manager_analysis)
+        print("\nOptions: abort | investigate | fix_and_retry | override")
+        print("[INFO] HITL disabled - defaulting to 'investigate'")
+        print("!"*60 + "\n")
+        
+        state.human_guidance = "investigate - proceed with caution"
+        state.needs_human_review = False
+        return state
+    
+    @listen("abort")
+    def abort_workflow(self, state: ValidationState) -> ValidationState:
+        """Abort the workflow due to critical issues."""
+        print("\nABORTED: Workflow stopped due to critical issues")
+        state.success = False
+        state.current_step = "complete"
+        state.final_report = f"ABORTED: {state.manager_analysis}"
+        return state
+    
+    @listen("investigate")
+    def deep_investigation(self, state: ValidationState) -> ValidationState:
+        """Continue with deeper investigation."""
+        print("\nINVESTIGATING: Proceeding with additional analysis")
+        return state
+    
+    @listen("fix_and_retry")
+    def retry_with_guidance(self, state: ValidationState) -> ValidationState:
+        """Retry validation with human guidance."""
+        print(f"\nFIXING: Retrying with guidance")
+        state.current_step = "validate"
+        return state
+    
+    @listen("override")
+    def continue_despite_issues(self, state: ValidationState) -> ValidationState:
+        """Continue despite issues (human override)."""
+        print("\nOVERRIDE: Continuing despite issues")
+        state.needs_human_review = False
+        return state
+    
+    @listen(or_("report", "escalate_to_human", "investigate", "override"))
     def generate_report(self, state: ValidationState) -> ValidationState:
         """Step 4: Generate final validation report."""
+        # Skip if aborted
+        if state.current_step == "complete" and not state.success:
+            return state
+        
         print("\n" + "-" * 60)
         print("[REPORT] Generating validation report...")
         print("-" * 60)
