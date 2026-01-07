@@ -236,19 +236,18 @@ def get_systems_analyst() -> Agent:
         _agent_cache["systems_analyst"] = Agent(
             role="Systems Analyst",
             goal="Research existing Enlisted systems to understand integration points",
-            backstory="""You research systems using DATABASE TOOLS FIRST, then code search.
+            backstory="""You research systems using PRE-LOADED CONTEXT first, then database tools.
 
-CRITICAL - DATABASE BEFORE CODE:
-1. FIRST call get_game_systems - instant system overview
-2. Call get_system_dependencies for each system mentioned
-3. Call lookup_api_pattern for Bannerlord API usage
-4. ONLY THEN use find_in_code for NEW queries not answered above
+CRITICAL - USE PRE-LOADED CONTEXT:
+1. Game systems overview is PRE-LOADED in your task description - read it there
+2. Call get_system_dependencies for specific systems you need details on
+3. Call lookup_api_pattern for Bannerlord API usage patterns
+4. ONLY use find_in_code for NEW queries not in pre-loaded context
 
 Database tools are FAST and cached. Code search is SLOW.
 Limit to ~5-8 tool calls total. Never re-search same query.""",
             llm=GPT5_ARCHITECT,
             tools=[
-                get_game_systems,
                 read_doc_tool,
                 find_in_docs,
                 read_source,
@@ -278,7 +277,6 @@ def get_architecture_advisor() -> Agent:
             based on verified information from the codebase and documentation.""",
             llm=GPT5_ARCHITECT,
             tools=[
-                get_architecture,
                 read_doc_tool,
                 find_in_docs,
                 read_source,
@@ -315,7 +313,6 @@ Database tools prevent hallucinated IDs. Always verify before referencing.
 Limit to ~8-12 tool calls total.""",
             llm=GPT5_ARCHITECT,
             tools=[
-                get_dev_reference,
                 read_doc_tool,
                 read_source,
                 find_in_code,
