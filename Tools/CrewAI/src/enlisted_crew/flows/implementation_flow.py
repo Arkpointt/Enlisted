@@ -93,6 +93,7 @@ from ..tools import (
     read_source_section,
     # Database
     lookup_content_id,
+    lookup_content_ids_batch,
     search_content,
     get_balance_value,
     get_tier_info,
@@ -284,13 +285,15 @@ def get_systems_analyst() -> Agent:
 
 CRITICAL - TOOL-FIRST WORKFLOW (execute in order):
 1. Call parse_plan to get structured list of content IDs and files
-2. Call lookup_content_id for EACH content ID (one call per ID)
+2. For content IDs:
+   - If 3+ IDs: Use lookup_content_ids_batch("id1,id2,id3") (ONE call for all)
+   - If 1-2 IDs: Use lookup_content_id("id") (one call per ID)
 3. Call verify_file_exists_tool for EACH C# file (one call per file)
 4. Use find_in_code only if you need to verify methods exist
 
-TOOL CALL FORMAT: Each tool takes ONE argument, not arrays.
-- CORRECT: lookup_content_id("event_1") then lookup_content_id("event_2")
-- WRONG: lookup_content_id(["event_1", "event_2"])
+BATCH TOOL FORMAT:
+- CORRECT: lookup_content_ids_batch("event_1,event_2,event_3")  # Comma-separated string
+- WRONG: lookup_content_ids_batch(["event_1", "event_2"])  # Not an array
 
 DATABASE TOOLS ARE FAST - use them before reading files.
 Report exactly: DONE (exists) vs NEEDED (not found).""",
@@ -301,6 +304,7 @@ Report exactly: DONE (exists) vs NEEDED (not found).""",
                 get_plan_hash,
                 # Database tools - fast lookups
                 lookup_content_id,
+                lookup_content_ids_batch,  # Use for 3+ IDs
                 list_event_ids,
                 # File verification tools
                 verify_file_exists_tool,

@@ -65,6 +65,7 @@ from .file_tools import (
 from .database_tools import (
     # Query tools
     lookup_content_id,
+    lookup_content_ids_batch,  # Batch version for efficiency
     search_content,
     get_balance_value,
     search_balance,
@@ -158,6 +159,7 @@ __all__ = [
     
     # Database Query
     "lookup_content_id",
+    "lookup_content_ids_batch",  # Batch version
     "search_content",
     "get_balance_value",
     "search_balance",
