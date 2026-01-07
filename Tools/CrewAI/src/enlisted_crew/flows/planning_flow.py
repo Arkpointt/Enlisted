@@ -20,6 +20,8 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
+from typing import Tuple, Any
+
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.flow.flow import Flow, listen, router, start, or_, human_feedback
 from crewai.tasks.conditional_task import ConditionalTask
@@ -84,6 +86,62 @@ def get_project_root() -> Path:
             return parent
     
     return Path(r"C:\Dev\Enlisted\Enlisted")
+
+
+# =============================================================================
+# GUARDRAILS - Validate task outputs before proceeding
+# =============================================================================
+
+def validate_plan_structure(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure plan document has required sections.
+    
+    Returns (True, output) if valid, (False, error_message) if invalid.
+    Invalid outputs trigger retry up to guardrail_max_retries.
+    """
+    content = str(output.raw).lower()
+    required_sections = [
+        "overview",
+        "technical specification",
+        "files to create",
+    ]
+    missing = [s for s in required_sections if s not in content]
+    if missing:
+        return (False, f"Plan missing required sections: {missing}. Please include all sections.")
+    return (True, output)
+
+
+def validate_no_placeholder_paths(output: TaskOutput) -> Tuple[bool, Any]:
+    """Check for hallucinated or placeholder file paths.
+    
+    Catches common placeholder patterns that indicate incomplete planning.
+    """
+    content = str(output.raw)
+    suspicious_patterns = [
+        "PLACEHOLDER",
+        "TODO_PATH",
+        "path/to/",
+        "<file_path>",
+        "YOUR_PATH",
+        "CHANGE_ME",
+    ]
+    found = [p for p in suspicious_patterns if p in content]
+    if found:
+        return (False, f"Found placeholder paths: {found}. Replace with actual file paths.")
+    return (True, output)
+
+
+def validate_design_has_content_ids(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure design task includes content IDs if applicable.
+    
+    Design output should reference specific content IDs for events/decisions.
+    """
+    content = str(output.raw).lower()
+    # If design mentions events/decisions, it should have actual IDs
+    if "event" in content or "decision" in content:
+        # Check for ID patterns like evt_, decision_, etc.
+        if "evt_" not in content and "decision_" not in content and "_id" not in content:
+            return (False, "Design mentions events/decisions but no content IDs found. Please specify actual content IDs (e.g., evt_reputation_check).")
+    return (True, output)
 
 
 # === LLM Configurations (OpenAI GPT-5 family) ===
@@ -530,6 +588,8 @@ class PlanningFlow(Flow[PlanningState]):
             expected_output="Planning document saved to disk",
             agent=get_documentation_maintainer(),
             context=[design_task],  # Depends on design
+            guardrails=[validate_plan_structure, validate_no_placeholder_paths],
+            guardrail_max_retries=2,
         )
         
         # Single hierarchical crew with manager coordination

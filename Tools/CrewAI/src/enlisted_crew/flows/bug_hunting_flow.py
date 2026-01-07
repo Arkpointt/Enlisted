@@ -17,11 +17,13 @@ Usage:
 """
 
 import os
+import re
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple, Any
 
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.flow.flow import Flow, listen, router, start, or_
+from crewai.tasks.task_output import TaskOutput
 from pydantic import BaseModel
 
 from .state_models import (
@@ -98,6 +100,99 @@ def get_project_root() -> Path:
             return parent
     
     return Path(r"C:\Dev\Enlisted\Enlisted")
+
+
+# =============================================================================
+# GUARDRAILS - Validate task outputs before proceeding
+# =============================================================================
+
+def validate_fix_is_minimal(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure bug fix is minimal and targeted.
+    
+    Bug fixes should be surgical, not rewrites. This prevents scope creep.
+    """
+    content = str(output.raw).lower()
+    
+    # Reject if proposing a complete rewrite
+    rewrite_indicators = [
+        "complete rewrite",
+        "rewrite the entire",
+        "redesign the",
+        "refactor everything",
+        "replace the whole",
+    ]
+    for indicator in rewrite_indicators:
+        if indicator in content:
+            return (False, f"Bug fix proposes a '{indicator}'. Bug fixes should be minimal and targeted. Focus on the specific issue.")
+    
+    return (True, output)
+
+
+def validate_fix_has_code(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure fix proposal includes actual code.
+    
+    A fix proposal without code is just analysis, not a solution.
+    """
+    content = str(output.raw)
+    
+    # Check for code blocks
+    has_csharp = "```csharp" in content.lower() or "```c#" in content.lower()
+    has_inline_code = re.search(r'`[^`]+`', content) is not None
+    
+    if not has_csharp and not has_inline_code:
+        return (False, "Fix proposal must include actual code changes. Add the fix in ```csharp code blocks.")
+    
+    return (True, output)
+
+
+def validate_fix_explains_root_cause(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure fix explains the root cause.
+    
+    Understanding why helps validate the fix is correct.
+    """
+    content = str(output.raw).lower()
+    
+    # Check for root cause explanation
+    root_cause_indicators = [
+        "root cause",
+        "because",
+        "the issue is",
+        "the bug occurs",
+        "the problem is",
+        "caused by",
+    ]
+    has_explanation = any(ind in content for ind in root_cause_indicators)
+    
+    if not has_explanation:
+        return (False, "Fix proposal must explain the root cause. Add a 'Root Cause:' section explaining why this bug occurs.")
+    
+    return (True, output)
+
+
+def validate_investigation_has_evidence(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure investigation cites actual evidence from tools.
+    
+    Investigations should be grounded in actual log/code findings, not speculation.
+    """
+    content = str(output.raw).lower()
+    
+    # Check for evidence indicators
+    evidence_indicators = [
+        "log shows",
+        "found in",
+        "line ",
+        "file:",
+        ".cs",
+        "error code",
+        "stack trace",
+        "method",
+    ]
+    has_evidence = sum(1 for ind in evidence_indicators if ind in content) >= 2
+    
+    if not has_evidence:
+        return (False, "Investigation must cite evidence from logs or code. Reference specific files, line numbers, or error codes.")
+    
+    return (True, output)
 
 
 # === LLM Configurations (OpenAI GPT-5 family) ===
@@ -515,6 +610,8 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             expected_output="Fix proposal with code changes and explanation",
             agent=get_implementer(),
             context=[investigate_task, systems_task],
+            guardrails=[validate_fix_is_minimal, validate_fix_has_code, validate_fix_explains_root_cause],
+            guardrail_max_retries=2,
         )
         
         # Task 4: Validate Fix

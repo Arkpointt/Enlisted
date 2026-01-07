@@ -20,10 +20,11 @@ import os
 import json
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple, Any
 
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.flow.flow import Flow, listen, router, start, or_
+from crewai.tasks.task_output import TaskOutput
 from pydantic import BaseModel, Field
 
 # Import state models
@@ -104,6 +105,87 @@ def get_project_root() -> Path:
             return parent
     
     return Path(r"C:\Dev\Enlisted\Enlisted")
+
+
+# =============================================================================
+# GUARDRAILS - Validate task outputs before proceeding
+# =============================================================================
+
+def validate_csharp_braces(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure C# code has balanced braces.
+    
+    Catches common syntax errors before they reach the build step.
+    """
+    content = str(output.raw)
+    # Extract code blocks
+    csharp_blocks = re.findall(r'```csharp\s*([\s\S]*?)```', content, re.IGNORECASE)
+    csharp_blocks += re.findall(r'```c#\s*([\s\S]*?)```', content, re.IGNORECASE)
+    
+    for block in csharp_blocks:
+        open_braces = block.count('{')
+        close_braces = block.count('}')
+        if open_braces != close_braces:
+            return (False, f"Unbalanced braces in C# code: {open_braces} open vs {close_braces} close. Fix the code structure.")
+    
+    return (True, output)
+
+
+def validate_csharp_has_code(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure C# implementation actually contains code if not skipped.
+    
+    Prevents empty implementations from passing through.
+    """
+    content = str(output.raw).lower()
+    
+    # Skip check if everything was already implemented
+    if "all c# already implemented" in content or "already exists" in content:
+        return (True, output)
+    
+    # Otherwise, we should see code blocks
+    if "```csharp" not in content.lower() and "```c#" not in content.lower():
+        if "class " not in content and "void " not in content and "public " not in content:
+            return (False, "C# implementation task completed but no code was provided. Include the actual C# code in ```csharp blocks.")
+    
+    return (True, output)
+
+
+def validate_json_syntax(output: TaskOutput) -> Tuple[bool, Any]:
+    """Validate JSON blocks in content output.
+    
+    Catches malformed JSON before it's written to files.
+    """
+    content = str(output.raw)
+    json_blocks = re.findall(r'```json\s*([\s\S]*?)```', content, re.IGNORECASE)
+    
+    for i, block in enumerate(json_blocks):
+        try:
+            json.loads(block.strip())
+        except json.JSONDecodeError as e:
+            return (False, f"Invalid JSON in block {i+1}: {e}. Fix the JSON syntax.")
+    
+    return (True, output)
+
+
+def validate_content_ids_format(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure content IDs follow naming conventions.
+    
+    Content IDs should use snake_case and meaningful prefixes.
+    """
+    content = str(output.raw)
+    
+    # Skip if already implemented
+    if "all content already implemented" in content.lower():
+        return (True, output)
+    
+    # Look for ID definitions and check format
+    id_patterns = re.findall(r'["\']([a-zA-Z_][a-zA-Z0-9_]*)["\']', content)
+    
+    # Check for camelCase IDs (should be snake_case)
+    camel_case = [id for id in id_patterns if re.match(r'^[a-z]+[A-Z]', id) and len(id) > 3]
+    if camel_case:
+        return (False, f"Content IDs should use snake_case, not camelCase. Found: {camel_case[:3]}. Rename to snake_case format.")
+    
+    return (True, output)
 
 
 # === LLM Configurations (OpenAI GPT-5 family) ===
@@ -538,6 +620,8 @@ class ImplementationFlow(Flow[ImplementationState]):
             condition=needs_csharp_implementation,
             agent=get_csharp_implementer(),
             context=[verify_task],
+            guardrails=[validate_csharp_braces, validate_csharp_has_code],
+            guardrail_max_retries=2,
         )
         
         # Task 3: Implement JSON content (CONDITIONAL - only if needed)
@@ -563,6 +647,8 @@ class ImplementationFlow(Flow[ImplementationState]):
             condition=needs_content_implementation,
             agent=get_content_author(),
             context=[verify_task],
+            guardrails=[validate_json_syntax, validate_content_ids_format],
+            guardrail_max_retries=2,
         )
         
         # Task 4: Validate everything builds (always runs)

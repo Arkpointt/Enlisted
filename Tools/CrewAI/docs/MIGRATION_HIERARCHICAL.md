@@ -1,5 +1,23 @@
 # Migrate CrewAI Flows to Hierarchical Process
 
+## Migration Status: ✅ COMPLETE
+**Implemented:** January 7, 2025 (commit 7867a84)
+**Guardrails Added:** January 7, 2025
+
+**Completed:**
+- ✅ Phase 1-5: All 4 flows migrated to hierarchical process
+- ✅ Manager agents created for all flows
+- ✅ ConditionalTasks implemented (implementation_flow, bug_hunting_flow)
+- ✅ HITL patterns preserved
+- ✅ Specialist `allow_delegation=False` fixed
+- ✅ Guardrails implemented on all flows (12 guardrail functions total)
+
+**Not Yet Implemented:**
+- ⏳ Phase 6: Documentation updates (CREWAI.md)
+- ⏳ End-to-end testing
+
+---
+
 ## Problem Statement
 Current flows create **separate single-agent crews per step** with `Process.sequential`. Each step (research, design, write, validate) creates its own isolated Crew:
 
@@ -886,21 +904,66 @@ def validate_fix_is_minimal(output: TaskOutput) -> Tuple[bool, Any]:
 ## Migration Checklist
 
 ### Per Flow:
-- [ ] Create manager agent factory function
-- [ ] Consolidate separate crews into single hierarchical crew
-- [ ] Define all tasks with proper context dependencies
-- [ ] Set `process=Process.hierarchical`
-- [ ] Set `manager_agent=get_xxx_manager()`
-- [ ] Add guardrails to key tasks (write, implement, fix)
-- [ ] Preserve HITL patterns (both task-level and flow-level)
-- [ ] Update state management to work with consolidated output
-- [ ] Test flow end-to-end
+- [x] Create manager agent factory function
+- [x] Consolidate separate crews into single hierarchical crew
+- [x] Define all tasks with proper context dependencies
+- [x] Set `process=Process.hierarchical`
+- [x] Set `manager_agent=get_xxx_manager()`
+- [x] Add guardrails to key tasks (write, implement, fix)
+- [x] Preserve HITL patterns (both task-level and flow-level)
+- [x] Update state management to work with consolidated output
+- [ ] Test flow end-to-end — *manual testing pending*
 
 ### Documentation:
 - [ ] Update CREWAI.md with hierarchical process section
 - [ ] Document manager agent responsibilities
 - [ ] Document guardrails and their purpose
 - [ ] Update agent configuration patterns
+
+### Implementation Summary (completed 2025-01-07):
+**planning_flow.py:**
+- Added `get_planning_manager()` with `allow_delegation=True`
+- Fixed specialists: `allow_delegation=False` on lines 197, 238, 283
+- Consolidated 4 crews → 1 hierarchical crew in `run_planning_crew()`
+- Preserved `@human_feedback` HITL pattern for UNCLEAR gaps
+
+**implementation_flow.py:**
+- Added `get_implementation_manager()` with `allow_delegation=True`
+- Fixed specialist: `allow_delegation=False` on line 230
+- Added `needs_csharp_implementation()` and `needs_content_implementation()` conditions
+- Consolidated 5 crews → 1 hierarchical crew with ConditionalTasks
+
+**bug_hunting_flow.py:**
+- Added `get_bug_hunting_manager()` with `allow_delegation=True`
+- Fixed specialists: `allow_delegation=False` on lines 227, 274
+- Added `needs_systems_analysis_task()` condition
+- Consolidated 4 crews → 1 hierarchical crew with ConditionalTask
+
+**validation_flow.py:**
+- Added `get_validation_manager()` with `allow_delegation=True`
+- Consolidated 3 crews → 1 hierarchical crew
+- Manager coordinates content → build → report tasks
+
+### Guardrails Implementation (completed 2025-01-07):
+**planning_flow.py:** (2 guardrails on write_task)
+- `validate_plan_structure` — Ensures required sections exist
+- `validate_no_placeholder_paths` — Catches hallucinated/placeholder paths
+
+**implementation_flow.py:** (4 guardrails)
+- `validate_csharp_braces` — Ensures balanced braces in C# code
+- `validate_csharp_has_code` — Ensures C# implementation includes actual code
+- `validate_json_syntax` — Validates JSON blocks are parseable
+- `validate_content_ids_format` — Ensures snake_case content IDs
+
+**bug_hunting_flow.py:** (3 guardrails on fix_task)
+- `validate_fix_is_minimal` — Prevents "complete rewrite" proposals
+- `validate_fix_has_code` — Ensures fix includes actual code
+- `validate_fix_explains_root_cause` — Requires root cause explanation
+
+**validation_flow.py:** (3 guardrails)
+- `validate_content_check_ran` — Ensures content validation actually ran
+- `validate_build_output_parsed` — Ensures build output was processed
+- `validate_report_has_status` — Ensures report has clear pass/fail status
 
 ## Testing Strategy
 

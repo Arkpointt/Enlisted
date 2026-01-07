@@ -15,10 +15,11 @@ Usage:
 
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple, Any
 
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.flow.flow import Flow, listen, router, start
+from crewai.tasks.task_output import TaskOutput
 from pydantic import BaseModel, Field
 
 # Import tools
@@ -43,6 +44,83 @@ def _get_project_root() -> Path:
             return parent
     
     return Path(r"C:\Dev\Enlisted\Enlisted")
+
+
+# =============================================================================
+# GUARDRAILS - Validate task outputs before proceeding
+# =============================================================================
+
+def validate_report_has_status(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure QA report includes clear pass/fail status.
+    
+    Reports must be actionable with clear verdicts.
+    """
+    content = str(output.raw).lower()
+    
+    # Check for status indicators
+    has_status = any([
+        "pass" in content,
+        "fail" in content,
+        "passed" in content,
+        "failed" in content,
+        "error" in content,
+        "valid" in content,
+        "invalid" in content,
+    ])
+    
+    if not has_status:
+        return (False, "QA report must include clear pass/fail status. State whether each check PASSED or FAILED.")
+    
+    return (True, output)
+
+
+def validate_content_check_ran(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure content validation actually ran.
+    
+    Reports should reference actual validation results.
+    """
+    content = str(output.raw).lower()
+    
+    # Check for evidence that validation ran
+    validation_indicators = [
+        "validate",
+        "schema",
+        "json",
+        "content",
+        "checked",
+        "verified",
+    ]
+    has_validation = sum(1 for ind in validation_indicators if ind in content) >= 2
+    
+    if not has_validation:
+        return (False, "Content validation report must reference actual validation. Include what was checked and results.")
+    
+    return (True, output)
+
+
+def validate_build_output_parsed(output: TaskOutput) -> Tuple[bool, Any]:
+    """Ensure build validation includes actual build output.
+    
+    Build reports should reference actual dotnet build results.
+    """
+    content = str(output.raw).lower()
+    
+    # Check for build-related terms
+    build_indicators = [
+        "build",
+        "compile",
+        "succeeded",
+        "dotnet",
+        "error",
+        "warning",
+        "msbuild",
+    ]
+    has_build = sum(1 for ind in build_indicators if ind in content) >= 2
+    
+    if not has_build:
+        return (False, "Build validation must include actual build results. Reference compilation status, errors, or warnings.")
+    
+    return (True, output)
 
 
 # === LLM Configuration ===
@@ -242,6 +320,8 @@ class ValidationFlow(Flow[ValidationState]):
             """,
             expected_output="Content validation results with pass/fail",
             agent=get_content_validator(),
+            guardrails=[validate_content_check_ran],
+            guardrail_max_retries=2,
         )
         
         # Task 2: Build Validation
@@ -257,6 +337,8 @@ class ValidationFlow(Flow[ValidationState]):
             """,
             expected_output="Build validation results with pass/fail",
             agent=get_build_validator(),
+            guardrails=[validate_build_output_parsed],
+            guardrail_max_retries=2,
         )
         
         # Task 3: Generate QA Report
@@ -270,6 +352,8 @@ class ValidationFlow(Flow[ValidationState]):
             expected_output="Final QA report with overall status",
             agent=get_qa_reporter(),
             context=[content_task, build_task],
+            guardrails=[validate_report_has_status],
+            guardrail_max_retries=2,
         )
         
         # Single hierarchical crew
