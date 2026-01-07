@@ -852,62 +852,26 @@ class ImplementationFlow(Flow[ImplementationState]):
     
     @router(check_for_issues)
     def route_after_check(self, state: ImplementationState) -> str:
-        """Route to human review if critical issues found, otherwise report."""
+        """Route to report (human feedback disabled)."""
         if state.needs_human_review:
-            print("[ROUTER] -> escalate_to_human")
-            return "escalate_to_human"
+            print("[ROUTER] Critical issues detected but auto-proceeding (HITL disabled)")
+            print(f"[ROUTER] Issues logged: {len(state.critical_issues)}")
+            # Auto-resolve: log and continue to report
+            state.needs_human_review = False
         print("[ROUTER] -> report")
         return "report"
     
     @listen("escalate_to_human")
     def human_review_critical(self, state: ImplementationState) -> ImplementationState:
-        """Human-in-the-loop for critical issues.
-        
-        NOTE: @human_feedback decorator disabled - requires CrewAI version with HITL support.
-        For now, logs the issue and continues.
-        """
-        print("\n" + "!"*60)
-        print("CRITICAL ISSUE DETECTED - Manager needs your review")
-        print("!"*60)
-        print(state.manager_analysis)
-        print("\nOptions: abort | investigate | fix_and_retry | override")
-        print("[INFO] HITL disabled - defaulting to 'investigate'")
-        print("!"*60 + "\n")
-        
-        state.human_guidance = "investigate - proceed with caution"
+        """Human-in-the-loop for critical issues - DISABLED (never reached)."""
+        print("\n[MANAGER] Critical issues detected - auto-proceeding with investigation")
+        if state.manager_analysis:
+            print(f"[MANAGER] Analysis: {state.manager_analysis[:200]}...")
+        state.human_guidance = "auto-investigate - HITL disabled"
         state.needs_human_review = False
         return state
     
-    @listen("abort")
-    def abort_workflow(self, state: ImplementationState) -> ImplementationState:
-        """Abort the workflow due to critical issues."""
-        print("\nABORTED: Workflow stopped due to critical issues")
-        state.success = False
-        state.current_step = "complete"
-        state.final_report = f"ABORTED: {state.manager_analysis}"
-        return state
-    
-    @listen("investigate")
-    def deep_investigation(self, state: ImplementationState) -> ImplementationState:
-        """Continue with deeper investigation."""
-        print("\nINVESTIGATING: Proceeding with additional analysis")
-        return state
-    
-    @listen("fix_and_retry")
-    def retry_with_guidance(self, state: ImplementationState) -> ImplementationState:
-        """Retry implementation with human guidance."""
-        print(f"\nFIXING: Retrying with guidance")
-        state.current_step = "implement"
-        return state
-    
-    @listen("override")
-    def continue_despite_issues(self, state: ImplementationState) -> ImplementationState:
-        """Continue despite issues (human override)."""
-        print("\nOVERRIDE: Continuing despite issues")
-        state.needs_human_review = False
-        return state
-    
-    @listen(or_("report", "escalate_to_human", "investigate", "override"))
+    @listen("report")
     def generate_report(self, state: ImplementationState) -> ImplementationState:
         """Final step: Generate implementation report."""
         # Skip if aborted

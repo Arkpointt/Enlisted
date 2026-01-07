@@ -1,8 +1,8 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (23 database tools), automatic prompt caching, and **intelligent manager escalation** for critical issues.  
+**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (23 database tools), automatic prompt caching, and **intelligent manager analysis** that detects and logs critical issues while maintaining fully automated workflows.  
 **Status:** ✅ Implemented  
-**Last Updated:** 2026-01-07 (Added manager escalation framework to all flows; managers analyze outputs and escalate critical issues to humans while auto-handling minor issues)
+**Last Updated:** 2026-01-07 (Disabled human feedback loops across all flows; managers detect and log issues but workflows run fully automated)
 
 ---
 
@@ -44,21 +44,17 @@ enlisted-crew plan -f "reputation-integration" -d "Connect reputation to morale/
 3. **Design** - feature_architect creates technical spec + gap analysis
    - Searches for broken references (code calling non-existent events/IDs)
    - Classifies gaps: DEPRECATED | MISSING_IMPL | TEST_CODE | OUTDATED_DOCS | UNCLEAR
-   - Proposes remediation or flags for human review
-4. **Human Review** (conditional) - If UNCLEAR gaps found:
-   - Flow pauses with `@human_feedback` decorator
-   - Human provides guidance: "deprecated" | "implement" | "test_code" | "continue"
-   - GPT-5.2 LLM classifies feedback and routes to appropriate handler
-5. **Document** - documentation_maintainer writes to `docs/CrewAI_Plans/`
-6. **Validate** - code_analyst verifies no hallucinated files/IDs
-7. **Auto-fix** - If hallucinations found, automatically correct them (up to 2 attempts)
+   - Proposes remediation and logs issues for review
+4. **Document** - documentation_maintainer writes to `docs/CrewAI_Plans/`
+5. **Validate** - code_analyst verifies no hallucinated files/IDs
+6. **Auto-fix** - If hallucinations found, automatically correct them (up to 2 attempts)
 
 **State Persistence:** If the flow fails mid-run, re-running resumes from last successful step.
 
 **Key Features:**
 - **Intelligent gap detection** - Agent investigates WHY references are broken
-- **Human-in-the-loop** - Pauses for guidance when intent is unclear
-- **LLM-assisted routing** - Classifies free-text feedback into structured outcomes
+- **Manager analysis** - Detects and logs critical issues without blocking workflow
+- **Fully automated** - No interactive prompts; all flows run to completion
 
 **Output:** Validated planning doc ready for implementation, with discovered gaps addressed.
 
@@ -1813,11 +1809,11 @@ def test_needs_csharp_work():
 
 ---
 
-## Manager Escalation Framework
+## Manager Analysis Framework
 
 **Status:** ✅ Implemented in all 4 flows (2026-01-07)
 
-Managers in all flows now intelligently analyze outputs and decide when to escalate issues to humans vs. auto-handle them. This ensures 80-90% of issues are handled automatically, with only critical issues requiring human judgment.
+Managers in all flows intelligently analyze outputs and detect issues. Critical issues are logged with detailed analysis but workflows continue automatically without blocking. This allows for post-run review while maintaining fully automated execution.
 
 ### How It Works
 
@@ -1825,26 +1821,29 @@ After each crew execution, the manager:
 
 1. **Analyzes outputs** for issue patterns (hallucinated APIs, architecture violations, etc.)
 2. **Classifies each issue** by type, severity, and confidence
-3. **Decides escalation** using `should_escalate_to_human()` rules
-4. **Routes accordingly:**
-   - Critical issues → Human review (with formatted analysis)
+3. **Logs critical issues** using `should_escalate_to_human()` rules (for detection only)
+4. **Always routes to completion:**
+   - Critical issues → Logged with detailed analysis, workflow continues
    - Auto-fixable issues → Handled silently
    - Minor issues → Logged and continued
+   - **No blocking** → All flows run fully automated
 
-### Escalation Rules
+### Detection Rules
 
-| Condition | Escalates? | Reason |
-|-----------|------------|--------|
-| CRITICAL severity | ✅ Always | Too important to auto-handle |
-| Security concern | ✅ Always | Requires human judgment |
-| Data loss risk | ✅ Always | Requires human judgment |
-| Breaking change | ✅ Always | Requires human judgment |
-| Conflicting requirements | ✅ Always | Human must decide |
-| Architecture violation | ✅ Always | Structural decisions |
+| Condition | Logged as Critical? | Reason |
+|-----------|---------------------|--------|
+| CRITICAL severity | ✅ Always | Important to flag for review |
+| Security concern | ✅ Always | Requires post-run review |
+| Data loss risk | ✅ Always | Requires post-run review |
+| Breaking change | ✅ Always | Requires post-run review |
+| Conflicting requirements | ✅ Always | May need clarification |
+| Architecture violation | ✅ Always | Structural considerations |
 | HIGH severity + LOW confidence | ✅ Yes | Uncertain about serious issue |
 | HIGH severity + HIGH confidence + auto-fixable | ❌ No | Can safely auto-fix |
 | MEDIUM severity | ❌ Usually no | Auto-handle unless threshold raised |
 | LOW severity | ❌ Never | Always auto-handle |
+
+**Note:** All detection is for logging purposes only. Workflows never block on issues.
 
 ### Issue Types by Flow
 
@@ -1871,22 +1870,17 @@ After each crew execution, the manager:
 - `DATA_LOSS_RISK` - Data integrity issues
 - `SECURITY_CONCERN` - Security patterns in content
 
-### Human Feedback Options
+### Human Feedback (DISABLED)
 
-When escalated, humans can respond with:
+**Status:** Human-in-the-loop functionality has been completely disabled as of 2026-01-07.
 
-| Option | Action |
-|--------|--------|
-| `abort` | Stop workflow, mark as failed |
-| `investigate` | Continue with deeper analysis |
-| `fix_and_retry` | Retry with human guidance |
-| `override` | Continue despite issues |
+All flows run fully automated without interactive prompts. Critical issues are detected and logged but never block execution. The detection framework remains active for post-run analysis.
 
-**Note:** Currently, `@human_feedback` decorator requires CrewAI version with HITL support. When unavailable, flows default to `investigate` behavior and log the issue.
+**Rationale:** Blocking workflows interrupts automated CI/CD pipelines. Issue detection is preserved for review, but execution is never halted.
 
-### Escalation Framework Code
+### Detection Framework Code
 
-**Location:** `flows/escalation.py`
+**Location:** `src/enlisted_crew/flows/escalation.py`
 
 **Core Components:**
 ```python
@@ -1972,9 +1966,13 @@ def check_for_issues(self, state: XxxState) -> XxxState:
 
 @router(check_for_issues)
 def route_after_check(self, state: XxxState) -> str:
+    """Route to next step (human feedback disabled)."""
     if state.needs_human_review:
-        return "escalate_to_human"
-    return "continue_workflow"
+        print("[ROUTER] Critical issues detected but auto-proceeding (HITL disabled)")
+        print(f"[ROUTER] Issues logged: {len(state.critical_issues)}")
+        state.needs_human_review = False
+    print("[ROUTER] -> [next_step]")
+    return "[next_step]"  # Always continues, never blocks
 ```
 
 ### State Model Fields
@@ -2097,13 +2095,17 @@ This matches the [official CrewAI documentation](https://docs.crewai.com/en/conc
 
 **Note:** You CAN use `LLM()` objects with `reasoning_effort` for agent LLMs - just not for `planning_llm`.
 
-### Windows Console Emoji Errors
+### Code Style: No Emojis
 
-**Example:** `'charmap' codec can't encode character '\U0001f680'`
+**Status:** All emojis removed from CrewAI code as of 2026-01-07.
 
-**Cause:** Windows console doesn't support emoji characters from CrewAI's event logging.
+To maintain compatibility with Warp AI agent output standards (WARP.md: "Only use emojis if the user explicitly requests it"), all emoji characters have been removed from:
+- Tool output messages (`docs_tools.py`, `planning_tools.py`)
+- Flow print statements (all flow files)
+- Status indicators (replaced with text: "CRASH:", "RGL LOG")
+- Escalation messages (`escalation.py`)
 
-**Solution:** These are harmless warnings, not errors. The crew executes normally. To suppress, set `PYTHONIOENCODING=utf-8` in your environment.
+**Note:** Emojis in documentation (this file) are acceptable - the restriction applies only to Python code output.
 
 ---
 
