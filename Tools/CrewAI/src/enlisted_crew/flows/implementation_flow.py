@@ -561,7 +561,7 @@ class ImplementationFlow(Flow[ImplementationState]):
     def run_implementation_crew(self, state: ImplementationState) -> ImplementationState:
         """Single hierarchical crew for all implementation work.
         
-        Manager coordinates: verify → C# (conditional) → content (conditional) → QA → docs
+        Manager coordinates: verify -> C# (conditional) -> content (conditional) -> QA -> docs
         """
         print("\n" + "-"*60)
         print("[IMPLEMENTATION CREW] Running hierarchical implementation...")

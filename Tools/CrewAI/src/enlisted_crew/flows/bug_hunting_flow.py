@@ -480,7 +480,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
     
     Steps:
     1. receive_bug_report - Parse and validate input
-    2. run_bug_hunting_crew - Single hierarchical crew (investigate → analyze (conditional) → fix → validate)
+    2. run_bug_hunting_crew - Single hierarchical crew (investigate -> analyze (conditional) -> fix -> validate)
     3. generate_report - Create final report
     """
     
@@ -532,7 +532,7 @@ class BugHuntingFlow(Flow[BugHuntingState]):
     def run_bug_hunting_crew(self, state: BugHuntingState) -> BugHuntingState:
         """Single hierarchical crew for bug hunting.
         
-        Manager coordinates: investigate → analyze (conditional) → fix → validate
+        Manager coordinates: investigate -> analyze (conditional) -> fix -> validate
         """
         print("\n" + "-"*60)
         print("[BUG HUNTING CREW] Running hierarchical investigation...")

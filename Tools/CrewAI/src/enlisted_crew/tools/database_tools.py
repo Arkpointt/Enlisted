@@ -110,6 +110,65 @@ def lookup_content_id(content_id: str) -> str:
         return f"Error querying database: {str(e)}"
 
 
+@tool("lookup_content_ids_batch")
+def lookup_content_ids_batch(content_ids: str) -> str:
+    """
+    Look up multiple content items at once (batch processing).
+    
+    Args:
+        content_ids: Comma-separated list of content IDs (e.g., "event_1,event_2,event_3")
+    
+    Returns:
+        Details about all content items, grouped by ID.
+    
+    Example:
+        result = lookup_content_ids_batch("equipment_inspection,supply_low,morale_check")
+    
+    Note:
+        This is faster than calling lookup_content_id multiple times because it
+        uses a single database query with WHERE IN clause.
+    """
+    try:
+        # Parse and normalize input
+        ids = [_normalize(id.strip()) for id in content_ids.split(",") if id.strip()]
+        
+        if not ids:
+            return "No content IDs provided."
+        
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        # Build parameterized query for multiple IDs
+        placeholders = ",".join(["?" for _ in ids])
+        query = f"""
+            SELECT content_id, type, category, description, tier_min, tier_max, status
+            FROM content_metadata 
+            WHERE LOWER(content_id) IN ({placeholders})
+            ORDER BY type, category, content_id
+        """
+        
+        cursor.execute(query, ids)
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # Format results with found/not found status
+        if not rows:
+            return f"None of the {len(ids)} content IDs found in database: {', '.join(ids)}"
+        
+        found_ids = {row['content_id'].lower() for row in rows}
+        not_found = [id for id in ids if id not in found_ids]
+        
+        output = [f"Found {len(rows)}/{len(ids)} content IDs:\n"]
+        output.append(_format_results(rows))
+        
+        if not_found:
+            output.append(f"\n\nNot found ({len(not_found)}): {', '.join(not_found)}")
+        
+        return "".join(output)
+    except Exception as e:
+        return f"Error querying database: {str(e)}"
+
+
 @tool("search_content")
 def search_content(
     content_type: Optional[str] = None,

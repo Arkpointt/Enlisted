@@ -404,7 +404,7 @@ class PlanningFlow(Flow[PlanningState]):
     
     Steps:
     1. receive_request - Parse and validate inputs
-    2. run_planning_crew - Single hierarchical crew (research → advise → design → write)
+    2. run_planning_crew - Single hierarchical crew (research -> advise -> design -> write)
     3. route_after_planning - Check for UNCLEAR gaps
     4. review_unclear_gaps - (conditional) Human review of gaps
     5. validate_plan - Check for hallucinations
@@ -452,7 +452,7 @@ class PlanningFlow(Flow[PlanningState]):
     def run_planning_crew(self, state: PlanningState) -> PlanningState:
         """Single hierarchical crew for all planning work.
         
-        Manager coordinates: research → advise → design → write
+        Manager coordinates: research -> advise -> design -> write
         """
         print("\n" + "-"*60)
         print("[PLANNING CREW] Running hierarchical planning...")

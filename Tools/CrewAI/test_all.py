@@ -432,9 +432,9 @@ def test_escalation_framework():
     for issue_type, expected_severity in severity_tests:
         result = categorize_issue_severity(issue_type)
         if result == expected_severity:
-            print_pass(f"{issue_type.value} → {expected_severity.value}")
+            print_pass(f"{issue_type.value} -> {expected_severity.value}")
         else:
-            print_fail(f"{issue_type.value} → got {result.value}, expected {expected_severity.value}")
+            print_fail(f"{issue_type.value} -> got {result.value}, expected {expected_severity.value}")
             return False
     
     # Test 6: Format critical issues

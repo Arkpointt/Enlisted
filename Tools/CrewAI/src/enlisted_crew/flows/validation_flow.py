@@ -302,7 +302,7 @@ class ValidationFlow(Flow[ValidationState]):
     
     Steps:
     1. begin_validation - Initialize
-    2. run_validation_crew - Single hierarchical crew (content → build → strings → report)
+    2. run_validation_crew - Single hierarchical crew (content -> build -> strings -> report)
     3. generate_report - Final summary
     """
     
@@ -323,7 +323,7 @@ class ValidationFlow(Flow[ValidationState]):
     def run_validation_crew(self, state: ValidationState) -> ValidationState:
         """Single hierarchical crew for all validation work.
         
-        Manager coordinates: content → build → report
+        Manager coordinates: content -> build -> report
         """
         print("\n" + "-" * 60)
         print("[VALIDATION CREW] Running hierarchical validation...")
