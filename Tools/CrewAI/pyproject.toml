@@ -8,6 +8,9 @@ dependencies = [
     "crewai[tools]>=0.95.0",
     "python-dotenv>=1.0.0",
     "mcp>=1.0.0",
+    "tiktoken>=0.5.0",  # For accurate token counting and chunking
+    "rank-bm25>=0.2.2",  # BM25 keyword search for hybrid retrieval
+    "cohere>=5.0.0",  # Reranking API for final result refinement (+18% retrieval improvement)
 ]
 
 [project.optional-dependencies]

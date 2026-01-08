@@ -33,6 +33,8 @@ from .escalation import (
     create_escalation_message,
 )
 
+from ..memory_config import get_memory_config
+
 # Import tools
 from ..tools import (
     validate_content,
@@ -405,7 +407,7 @@ OUTPUT: Pass/fail status + prioritized list of issues (if any)
             manager_agent=get_validation_manager(),
             process=Process.hierarchical,
             verbose=True,
-            memory=True,
+            **get_memory_config(),  # memory=True + contextual retrieval
             cache=True,
             planning=True,
             planning_llm=GPT5_PLANNING,

@@ -61,6 +61,8 @@ from .conditions import (
     format_routing_decision,
 )
 
+from ..memory_config import get_memory_config
+
 # Import tools from our tools module
 from ..tools import (
     SearchCache,
@@ -691,7 +693,7 @@ OUTPUT: Build status + style compliance + approval decision
             manager_agent=get_bug_hunting_manager(),
             process=Process.hierarchical,
             verbose=True,
-            memory=True,
+            **get_memory_config(),  # memory=True + contextual retrieval
             cache=True,
             planning=True,
             planning_llm=GPT5_PLANNING,

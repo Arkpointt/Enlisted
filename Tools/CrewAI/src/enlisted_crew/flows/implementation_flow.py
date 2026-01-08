@@ -56,6 +56,8 @@ from .conditions import (
     format_routing_decision,
 )
 
+from ..memory_config import get_memory_config
+
 from ..tools import (
     # Context Loaders
     get_writing_guide,
@@ -740,7 +742,7 @@ OUTPUT: Documentation update confirmation
             manager_agent=get_implementation_manager(),
             process=Process.hierarchical,
             verbose=True,
-            memory=True,
+            **get_memory_config(),  # memory=True + contextual retrieval
             cache=True,
             planning=True,
             planning_llm=GPT5_PLANNING,

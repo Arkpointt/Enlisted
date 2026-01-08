@@ -62,6 +62,8 @@ from .conditions import (
     format_routing_decision,
 )
 
+from ..memory_config import get_memory_config
+
 from ..tools import (
     # Context Loaders
     get_writing_guide,
@@ -627,6 +629,7 @@ class PlanningFlow(Flow[PlanningState]):
         )
         
         # Single hierarchical crew with manager coordination
+        # Uses optimized memory config with truncating storage to prevent token limit errors
         crew = Crew(
             name="Planning Crew - Feature Design",
             agents=[
@@ -639,7 +642,7 @@ class PlanningFlow(Flow[PlanningState]):
             manager_agent=get_planning_manager(),
             process=Process.hierarchical,
             verbose=True,
-            memory=True,
+            **get_memory_config(),  # memory=True + truncating storage
             cache=True,
             planning=True,
             planning_llm=GPT5_PLANNING,
@@ -843,7 +846,7 @@ class PlanningFlow(Flow[PlanningState]):
             tasks=[basic_validation, deep_validation],
             process=Process.sequential,
             verbose=True,
-            memory=True,
+            **get_memory_config(),  # memory=True + truncating storage
             cache=True,
             planning=True,
             planning_llm=GPT5_PLANNING,
@@ -959,7 +962,7 @@ class PlanningFlow(Flow[PlanningState]):
             tasks=[task],
             process=Process.sequential,
             verbose=True,
-            memory=True,
+            **get_memory_config(),  # memory=True + truncating storage
             cache=True,
             planning=True,
             planning_llm=GPT5_PLANNING,

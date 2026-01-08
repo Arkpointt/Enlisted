@@ -1,8 +1,8 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities), automatic prompt caching, and **intelligent manager analysis** that detects and logs critical issues while maintaining fully automated workflows.  
+**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities), automatic prompt caching, **intelligent manager analysis** that detects and logs critical issues, and **Contextual Retrieval Memory System** with hybrid search (BM25 + vector), RRF fusion, Cohere reranking, and FILCO post-retrieval filtering for 67%+ better retrieval than basic RAG.  
 **Status:** ✅ Implemented  
-**Last Updated:** 2026-01-07 (Performance Optimization Complete: Phases 1-6 implemented, 3 critical bugs fixed, batch database tools added)
+**Last Updated:** 2026-01-07 (Contextual Retrieval + FILCO: Full pipeline - chunking, contextualization, BM25, RRF, reranking, FILCO filtering)
 
 ---
 
@@ -824,67 +824,153 @@ When `memory=True` is enabled, **all three memory types** are automatically acti
 
 **1. Short-Term Memory (Execution Context)**
 - Stores recent interactions during the current workflow run
-- Uses RAG to recall relevant information within the current execution
-- Automatically cleared at the start of each workflow
+- Uses ChromaDB with RAG to recall relevant information
+- Uses embeddings (8,192 token limit per query)
+- Cleared between workflow runs
 
 **2. Long-Term Memory (Cross-Run Learning)**
 - Preserves insights and learnings from past executions
+- Uses SQLite (no token limits)
 - Agents remember patterns like:
   - "Tier-aware events need variant ID suffixes (T1/T2/T3)"
   - "Always validate JSON before syncing to XML"
   - "Use GiveGoldAction for gold changes, not direct Hero.Gold manipulation"
-- Persists across multiple runs in platform-specific storage
+- Persists across multiple runs
 
 **3. Entity Memory (Relationship Tracking)**
 - Tracks entities encountered during tasks (systems, classes, concepts, factions)
-- Builds relationship maps for better context understanding
-- Example entities: `EnlistmentBehavior`, `ContentOrchestrator`, `Hero.MainHero`, `Tier System`, `Reputation`
+- Uses ChromaDB with RAG (8,192 token limit)
+- Example entities: `EnlistmentBehavior`, `ContentOrchestrator`, `Hero.MainHero`, `Tier System`
+
+#### Contextual Retrieval Memory System
+
+**Problem:** Short-Term and Entity memory use embeddings with an 8,192 token limit. Large agent outputs (9,000+ tokens) crash the embedding API. Simple truncation loses 24-67% of retrieval quality.
+
+**Solution:** Full contextual retrieval pipeline in `memory_config.py`:
+
+```python
+from enlisted_crew.memory_config import get_memory_config
+
+crew = Crew(
+    agents=[...],
+    tasks=[...],
+    **get_memory_config(),  # Contextual retrieval with hybrid search
+    cache=True,
+    planning=True,
+)
+```
+
+**Architecture (based on Anthropic's Contextual Retrieval research):**
+```
+Agent Output (9,000+ tokens)
+        │
+        ▼
+┌─────────────────────────────────┐
+│  1. CHUNKING                    │
+│  - Semantic boundaries          │
+│  - 1000 tokens per chunk        │
+│  - 15% overlap between chunks   │
+└─────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────┐
+│  2. CONTEXTUALIZATION (GPT-5.2) │
+│  - LLM generates context prefix │
+│  - "This chunk is from [flow]..."│
+│  - ~$0.001 per chunk            │
+└─────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────┐
+│  3. DUAL STORAGE                │
+│  - Vector DB (ChromaDB)         │
+│  - SQL table (contextual_memory)│
+└─────────────────────────────────┘
+```
+
+**Retrieval Pipeline (Hybrid Search + Reranking + FILCO):**
+```
+Query → Vector Search (top 20)
+      → BM25 Search (top 20)
+      → RRF Fusion (combines rankings)
+      → Cohere Rerank (rerank-v3.5)
+      → FILCO Filter (remove low-utility spans)
+      → Return filtered results
+```
+
+**Components:**
+- `chunk_content()` - Semantic chunking at paragraph boundaries
+- `contextualize_chunk()` - GPT-5.2 generates context prefix (reasoning=none for speed)
+- `store_chunk_in_sql()` - Stores in contextual_memory table for BM25 indexing
+- `BM25Index` - In-memory keyword index, rebuilds automatically on new chunks
+- `reciprocal_rank_fusion()` - Combines vector + BM25 results (k=60)
+- `rerank_results()` - Cohere rerank API for final refinement
+- `filco_filter()` - Post-retrieval filtering: removes low-utility spans, noise patterns, duplicates
+- `ContextualRAGStorage` - Custom storage with overridden `save()` and `search()` methods
+
+**Research-Based Improvement:**
+- Simple truncation: baseline (loses data)
+- Chunking only: +24% better retrieval
+- Contextual + BM25: +49% better retrieval
+- Contextual + BM25 + Reranking: +67% better retrieval
+- Contextual + BM25 + Reranking + FILCO: 67%+ with reduced noise ✅
+
+**Cost per multi-flow session:**
+- Chunking: $0 (local)
+- Contextualization: ~$0.003 (GPT-5.2, ~50 chunks)
+- Embeddings: ~$0.005 (text-embedding-3-large)
+- BM25: $0 (local)
+- Reranking: ~$0.002 (Cohere rerank-v3.5, 10 searches)
+- FILCO: $0 (local filtering)
+- **Total: ~$0.01 per session**
+
+**Reranking Configuration:**
+```python
+# In memory_config.py - can disable to save cost
+RERAN_ENABLED = True  # Set False to skip reranking
+RERAN_MODEL = "rerank-v3.5"  # Or rerank-v4.0-fast/pro
+```
+
+**FILCO Configuration:**
+```python
+# In memory_config.py - post-retrieval filtering
+FILCO_ENABLED = True  # Set False to disable FILCO
+FILCO_RELEVANCE_THRESHOLD = 0.35  # Minimum score to keep
+FILCO_MIN_RESULTS = 3  # Always keep at least this many
+```
+
+**Required API Keys:**
+- `OPENAI_API_KEY` - For embeddings and contextualization
+- `COHERE_API_KEY` - For reranking (optional, falls back gracefully)
+
+**Console output when activated:**
+```
+[MEMORY] Content exceeds limit (9390 tokens), applying contextual chunking...
+[MEMORY] Split into 12 chunks
+[MEMORY] Contextual chunking complete: 12 chunks stored
+[MEMORY] BM25 index rebuilt with 12 chunks
+[MEMORY] Hybrid search: 8 vector + 10 BM25 → 15 fused
+[MEMORY] Reranked 15 → 10 results (top score: 0.891)
+[MEMORY] FILCO: filtered 2 low-utility results (10 → 8)
+```
 
 #### Embedder Configuration
 
 ```python
+# From memory_config.py
 EMBEDDER_CONFIG = {
     "provider": "openai",
     "config": {
-        "model_name": "text-embedding-3-large",  # 3,072 dimensions
+        "model": "text-embedding-3-large",  # 8,192 token limit
     }
 }
 ```
 
 **Why text-embedding-3-large:**
-- 3,072 dimensions (vs 1,536 for text-embedding-3-small)
-- Superior semantic understanding for technical content
-- Better retrieval accuracy for code and documentation
-- Better performance with large knowledge chunks
-
-#### Knowledge Chunking Strategy
-
-```python
-TextFileKnowledgeSource(
-    file_paths=["knowledge/core-systems.md"],
-    chunk_size=24000,      # ~24K chars per chunk
-    chunk_overlap=2400,    # 10% overlap between chunks
-)
-```
-
-**Rationale:**
-- **Large chunks** (24K) preserve context for complex technical content
-- **10% overlap** ensures concepts at chunk boundaries aren't lost
-- Leverages text-embedding-3-large's ability to handle larger context windows
-- Reduces fragmentation of long class definitions, system explanations
-
-#### Planning Feature
-
-When `planning=True` is enabled:
-- Before each crew iteration, an `AgentPlanner` creates a step-by-step execution plan
-- This plan is automatically added to each task description
-- Agents understand the full workflow and their role within it
-
-**Benefits:**
-- Better task decomposition
-- More coherent agent outputs
-- Fewer redundant searches or tool calls
-- Agents understand dependencies between tasks
+- 3,072 dimensions for best semantic quality
+- Superior retrieval accuracy for technical content
+- Same 8,192 token limit as small (truncating storage handles this)
+- Cost: ~$0.13 per 1M tokens
 
 #### Memory Storage Location
 
@@ -893,16 +979,37 @@ When `planning=True` is enabled:
 C:\Users\{username}\AppData\Local\CrewAI\enlisted_crew\
 ├── knowledge/               # ChromaDB embeddings (chunked knowledge files)
 ├── short_term_memory/       # Current execution context (RAG-based)
-├── long_term_memory/        # Insights from past runs (SQLite DB)
+├── long_term_memory/        # Insights from past runs (ChromaDB)
+├── long_term_memory_storage.db  # SQLite database for task results
 └── entities/                # Entity relationships (RAG-based)
 ```
 
-**To clear memory for a fresh start:**
-```bash
-rm -rf ~/AppData/Local/CrewAI/enlisted_crew/long_term_memory/
-rm -rf ~/AppData/Local/CrewAI/enlisted_crew/entities/
-# Knowledge embeddings will rebuild automatically on next run
+#### Resetting Memory After Refactors
+
+**When to reset:**
+- After renaming systems/files
+- After major architectural refactors
+- After deleting/deprecating systems
+- If agents reference outdated patterns
+
+**Using PowerShell script:**
+```powershell
+cd Tools/CrewAI
+.\reset-memory.ps1           # Clear ALL memory
+.\reset-memory.ps1 -Long     # Clear only long-term memory
+.\reset-memory.ps1 -Help     # Show all options
 ```
+
+**Using Python:**
+```python
+from enlisted_crew.memory_config import clear_memory
+
+clear_memory()                    # Clear all
+clear_memory(['long'])            # Clear only long-term
+clear_memory(['short', 'entity']) # Clear short-term and entity
+```
+
+**Note:** Agents re-learn patterns within 1-2 runs after a reset.
 
 ---
 
@@ -1015,15 +1122,18 @@ Flows have `persist=True` - just re-run the same command. The flow will resume f
 **"Hallucinated files/IDs in plan"**
 PlanningFlow has auto-fix enabled. If validation detects hallucinations, it will automatically correct them (up to 2 attempts).
 
-**Memory location (Windows):**
-```
-C:\Users\{username}\AppData\Local\CrewAI\enlisted_crew\
-├── knowledge/        # ChromaDB embeddings
-├── long_term_memory/ # Learnings (SQLite)
-└── entities/         # Entity relationships
-```
+**"This model's maximum context length is 8192 tokens"**
+This is an embedding token limit error in Short-Term or Entity memory. The `memory_config.py` module should prevent this automatically. If you see this error:
+1. Ensure you're using `**get_memory_config()` in Crew definitions
+2. If using custom Crew config, add `short_term_memory` and `entity_memory` from `memory_config.py`
+3. As a fallback, set `memory=False` to disable memory entirely
 
-To reset: `rm -rf ~/AppData/Local/CrewAI/enlisted_crew/long_term_memory/`
+**"Agents reference outdated patterns after refactor"**
+Reset memory to clear stale learnings:
+```powershell
+cd Tools/CrewAI
+.\reset-memory.ps1
+```
 
 ---
 

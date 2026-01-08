@@ -4,6 +4,20 @@
 
 ---
 
+## 🧠 REQUIRED: Technical Standards
+
+**Before making ANY code changes, you MUST:**
+
+1. **Target Bannerlord v1.3.13** — Never assume APIs from later versions exist
+2. **Verify all APIs** against `C:\Dev\Enlisted\Decompile\` (NEVER use online docs)
+3. **Add new C# files** to `Enlisted.csproj` manually via `<Compile Include="..."/>` entries
+4. **Use ModLogger** with error codes (format: `E-SYSTEM-001`) for all logging
+5. **Never suppress ReSharper warnings** without documented justification
+6. **Run validation** before committing: `python Tools/Validation/validate_content.py`
+7. **Check if features exist** by searching codebase first — never hallucinate
+
+---
+
 ## 📋 TASK LOOKUP - Read the right doc for your task
 
 | Task | READ THIS FILE | Key Info |

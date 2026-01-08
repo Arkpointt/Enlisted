@@ -393,3 +393,28 @@ CREATE TABLE IF NOT EXISTS content_metadata (
 
 CREATE INDEX idx_content_metadata_type ON content_metadata(type);
 CREATE INDEX idx_content_metadata_status ON content_metadata(status);
+
+-- ============================================================
+-- 11. CONTEXTUAL MEMORY - CrewAI memory with chunking support
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS contextual_memory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    memory_id TEXT NOT NULL,                   -- Groups chunks from same memory item
+    memory_type TEXT NOT NULL,                 -- 'short_term', 'entity'
+    flow_name TEXT,                            -- 'planning', 'implementation', 'bug_hunting', 'validation'
+    agent_name TEXT,                           -- Which agent produced this
+    task_description TEXT,                     -- Context about the task
+    chunk_index INTEGER NOT NULL,              -- Position within the original content (0-based)
+    total_chunks INTEGER NOT NULL,             -- How many chunks in this memory item
+    original_content TEXT NOT NULL,            -- The chunk content
+    context_prefix TEXT,                       -- LLM-generated context ("This chunk is from...")
+    contextualized_content TEXT,               -- context_prefix + original_content
+    token_count INTEGER,                       -- Actual token count of this chunk
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP, -- When this was created
+    expires_at TEXT                            -- Optional expiration (for auto-cleanup)
+);
+
+CREATE INDEX idx_contextual_memory_id ON contextual_memory(memory_id);
+CREATE INDEX idx_contextual_memory_type ON contextual_memory(memory_type);
+CREATE INDEX idx_contextual_memory_flow ON contextual_memory(flow_name);

@@ -2,11 +2,20 @@
 
 Guidance for Warp AI agents working in this Bannerlord mod codebase.
 
-> **How this file works:** Warp automatically applies these rules to all agent interactions.
-> Subdirectory WARP.md files (like `Tools/CrewAI/WARP.md`) take precedence for that area.
-> See `Tools/AGENT-WORKFLOW.md` for multi-agent workflow details and CrewAI integration.
+## 🧠 REQUIRED: Read Before Answering
 
-## 🚨 Critical Rules (Read First)
+**ALWAYS read these files before answering ANY question about this project:**
+
+1. `docs/BLUEPRINT.md` — Architecture, coding standards, common pitfalls, quick commands
+2. `docs/INDEX.md` — Navigate to the correct documentation for any feature/system
+3. For content/events/orders: `docs/Features/Content/content-index.md`
+4. For APIs: Verify against `C:\Dev\Enlisted\Decompile\` (never assume, never use online docs)
+
+**Do NOT hallucinate features.** If you're unsure whether something exists, search the codebase or ask.
+
+---
+
+## 🚨 Critical Rules
 
 1. **Target Version:** Bannerlord **v1.3.13** — never assume APIs from later versions
 2. **API Verification:** Use local decompile at `C:\Dev\Enlisted\Decompile\` (not online docs)
@@ -58,8 +67,6 @@ python Tools/Validation/sync_event_strings.py
 | Technical patterns (logging, save) | [Tools/TECHNICAL-REFERENCE.md](Tools/TECHNICAL-REFERENCE.md) |
 
 ## 🔧 Multi-Agent Workflow
-
-**See [Tools/AGENT-WORKFLOW.md](Tools/AGENT-WORKFLOW.md)** for complete workflow documentation.
 
 **Single agent (default):** Describe your task naturally. Warp will analyze → implement → validate.
 
@@ -144,7 +151,7 @@ crewai test -n 3 -m gpt-5
 - Quick fixes, single-file changes → Warp directly
 - Multi-file features, planning, bug hunting → CrewAI
 
-**Setup:** See [Tools/CrewAI/CREWAI.md](Tools/CrewAI/CREWAI.md)  
+**Setup:** See [Tools/CrewAI/README.md](Tools/CrewAI/README.md)  
 **Requirements:** OpenAI API key in `.env` file  
 **Package:** Migrated to `crewai[tools]>=0.95.0` (deprecated `crewai-tools` standalone archived Nov 2025)  
 **Model:** GPT-5.2 unified across all agents with optimized `reasoning_effort`:
