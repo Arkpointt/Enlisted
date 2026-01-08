@@ -13,9 +13,9 @@ cd Tools/CrewAI/database
 ## What's Here
 
 - **`schema.sql`** - Database structure with all tables and seed data
-- **`enlisted_knowledge.db`** - SQLite database file (generated, gitignored)
-- **`setup.ps1`** - Setup script to create/recreate the database
-- **`.gitignore`** - Keeps schema in git, excludes generated .db file
+- **`enlisted_knowledge.db`** - SQLite database file (160 KB, tracked in Git for cross-platform use)
+- **`setup.ps1`** - Setup script to rebuild the database from schema if needed
+- **`.gitignore`** - (All files tracked for cross-platform sync)
 
 ## Database Structure
 
@@ -36,11 +36,12 @@ cd Tools/CrewAI/database
 
 ## Best Practice
 
-The database lives **within the project** for:
-- ✅ Version control (schema tracked, data gitignored)
-- ✅ Portability (self-contained project)
+The database lives **within the project** and is **tracked in Git** for:
+- ✅ Version control (schema AND data synced across platforms)
+- ✅ Portability (self-contained project, no setup required)
 - ✅ Clear ownership (no global dependencies)
 - ✅ Multiple project support (no conflicts)
+- ✅ Cross-platform development (Windows/Linux developers get same data)
 
 ## Maintenance Tools
 
