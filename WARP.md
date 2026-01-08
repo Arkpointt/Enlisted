@@ -52,6 +52,7 @@ python Tools/Validation/sync_event_strings.py
 | `docs/` | All documentation |
 | `C:\Dev\Enlisted\Decompile\` | Native Bannerlord API reference (v1.3.13, outside workspace) |
 | `Tools/CrewAI/database/` | Project knowledge database (enlisted_knowledge.db, in Git) |
+| `Tools/CrewAI/memory/` | AI learning memory (ChromaDB vectors, synced via Git) |
 | `<BannerlordInstall>\Modules\Enlisted\Debugging\` | Runtime mod logs |
 
 ## 📚 Documentation Quick Reference
