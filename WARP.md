@@ -9,7 +9,7 @@ Guidance for Warp AI agents working in this Bannerlord mod codebase.
 1. `docs/BLUEPRINT.md` — Architecture, coding standards, common pitfalls, quick commands
 2. `docs/INDEX.md` — Navigate to the correct documentation for any feature/system
 3. For content/events/orders: `docs/Features/Content/content-index.md`
-4. For APIs: Verify against `Decompile/` in workspace root (never assume, never use online docs)
+4. For APIs: Verify against local `Decompile/` (auto-detected, see PROJECT-RESOURCES.md)
 
 **Do NOT hallucinate features.** If you're unsure whether something exists, search the codebase or ask.
 
@@ -18,7 +18,7 @@ Guidance for Warp AI agents working in this Bannerlord mod codebase.
 ## 🚨 Critical Rules
 
 1. **Target Version:** Bannerlord **v1.3.13** — never assume APIs from later versions
-2. **API Verification:** Use local decompile at `Decompile/` in workspace root (not online docs)
+2. **API Verification:** Use local decompile (auto-detected, not online docs)
 3. **New C# Files:** Must be manually added to `Enlisted.csproj` via `<Compile Include="..."/>`
 4. **Tooltips:** Cannot be null — every event/decision option needs a tooltip (<80 chars)
 5. **JSON Field Order:** Fallback fields (`title`, `setup`, `text`) must immediately follow their ID fields
@@ -50,10 +50,10 @@ python Tools/Validation/sync_event_strings.py
 | `ModuleData/Languages/enlisted_strings.xml` | Localized strings |
 | `Tools/Validation/` | Content validators |
 | `docs/` | All documentation |
-| `C:\Dev\Enlisted\Decompile\` | Native Bannerlord API reference (v1.3.13, outside workspace) |
+| `../Decompile/` | Native Bannerlord API reference (v1.3.13, sibling to workspace, see [PROJECT-RESOURCES.md](docs/PROJECT-RESOURCES.md)) |
 | `Tools/CrewAI/database/` | Project knowledge database (enlisted_knowledge.db, in Git) |
 | `Tools/CrewAI/memory/` | AI learning memory (ChromaDB vectors, synced via Git) |
-| `<BannerlordInstall>\Modules\Enlisted\Debugging\` | Runtime mod logs |
+| `<BannerlordInstall>/Modules/Enlisted/Debugging/` | Runtime mod logs |
 
 ## 📚 Documentation Quick Reference
 
