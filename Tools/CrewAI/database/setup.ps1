@@ -31,8 +31,8 @@ Write-Host "[1/2] Creating database..." -ForegroundColor Yellow
 # Try to find sqlite3.exe
 $sqlite3 = $null
 $searchPaths = @(
-    "C:\Dev\SQLite3\sqlite3.exe",
-    "sqlite3.exe"  # In PATH
+    "sqlite3.exe",  # In PATH (preferred for cross-platform)
+    "C:\Dev\SQLite3\sqlite3.exe"  # Windows dev location
 )
 
 foreach ($path in $searchPaths) {

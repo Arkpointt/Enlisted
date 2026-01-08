@@ -1,7 +1,7 @@
 r"""
 Bannerlord API MCP Server
 
-Provides semantic access to decompiled Bannerlord source code at C:\Dev\Enlisted\Decompile.
+Provides semantic access to decompiled Bannerlord source code (Decompile/ in workspace root).
 Indexes C# classes, methods, interfaces, and provides structured queries for API verification.
 
 MCP Tools Exposed:
@@ -31,8 +31,45 @@ from mcp.server import NotificationOptions, Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
 
+def _get_project_root() -> Path:
+    """Get the Enlisted project root directory."""
+    import os
+    env_root = os.environ.get("ENLISTED_PROJECT_ROOT")
+    if env_root:
+        return Path(env_root)
+    
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "Enlisted.csproj").exists():
+            return parent
+    
+    return Path(r"C:\Dev\Enlisted\Enlisted")
+
+def _get_decompile_path() -> Path:
+    """Get the Decompile folder path. Checks multiple locations."""
+    import os
+    
+    # 1. Environment variable override
+    env_decompile = os.environ.get("BANNERLORD_DECOMPILE_PATH")
+    if env_decompile:
+        return Path(env_decompile)
+    
+    # 2. Sibling to project root (standard location)
+    project_root = _get_project_root()
+    sibling_decompile = project_root.parent / "Decompile"
+    if sibling_decompile.exists():
+        return sibling_decompile
+    
+    # 3. Inside workspace (if someone puts it there)
+    workspace_decompile = project_root / "Decompile"
+    if workspace_decompile.exists():
+        return workspace_decompile
+    
+    # 4. Fallback default
+    return Path(r"C:\Dev\Enlisted\Decompile")
+
 # Path to decompiled Bannerlord source
-DECOMPILE_PATH = Path(r"C:\Dev\Enlisted\Decompile")
+DECOMPILE_PATH = _get_decompile_path()
 # Path to index database (created on first run)
 INDEX_DB_PATH = Path(__file__).parent / "bannerlord_api_index.db"
 

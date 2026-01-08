@@ -9,7 +9,7 @@
 **Before making ANY code changes, you MUST:**
 
 1. **Target Bannerlord v1.3.13** — Never assume APIs from later versions exist
-2. **Verify all APIs** against `C:\Dev\Enlisted\Decompile\` (NEVER use online docs)
+2. **Verify all APIs** against `Decompile/` in workspace root (NEVER use online docs)
 3. **Add new C# files** to `Enlisted.csproj` manually via `<Compile Include="..."/>` entries
 4. **Use ModLogger** with error codes (format: `E-SYSTEM-001`) for all logging
 5. **Never suppress ReSharper warnings** without documented justification
@@ -43,7 +43,7 @@ python Tools/Validation/sync_event_strings.py         # Sync localization
 ## 🚨 CRITICAL RULES
 
 1. **Target Version:** Bannerlord v1.3.13 (not latest)
-2. **API Verification:** Use `C:\Dev\Enlisted\Decompile\` (never online docs)
+2. **API Verification:** Use `Decompile/` in workspace root (never online docs)
 3. **New C# Files:** Manually add to `Enlisted.csproj` → run validator
 4. **Logging:** Use `ModLogger` with error codes (`E-SYS-001`)
 5. **Opportunity Model:** Each opportunity once/day, commitment = click future to schedule, click current to fire
@@ -111,7 +111,9 @@ Enlisted/
 │   ├── Reference/          API research and analysis
 │   └── INDEX.md            Master documentation catalog
 │
-└── GUI/                    Gauntlet UI prefabs
+├── GUI/                    Gauntlet UI prefabs
+│
+└── Decompile/              Bannerlord v1.3.13 decompiled source (API reference)
 ```
 
 ### Feature Folders (src/Features/)
@@ -287,7 +289,7 @@ private bool CanReenlistWithFaction(Kingdom faction)
 
 **Always verify against the local native decompile FIRST**
 
-- **Location:** `C:\Dev\Enlisted\Decompile\`
+- **Location:** `Decompile/` (workspace root)
 - **Target Version:** v1.3.13
 
 **Key Assemblies:**

@@ -33,7 +33,7 @@ def build_index(rebuild: bool = False):
     
     if not DECOMPILE_PATH.exists():
         print(f"ERROR: Decompile path not found: {DECOMPILE_PATH}")
-        print("Make sure C:\\Dev\\Enlisted\\Decompile exists and contains decompiled source")
+        print("Make sure Decompile/ folder exists in workspace root and contains decompiled source")
         sys.exit(1)
     
     print(f"Building Bannerlord API index from {DECOMPILE_PATH}")

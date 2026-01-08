@@ -9,7 +9,7 @@ Guidance for Warp AI agents working in this Bannerlord mod codebase.
 1. `docs/BLUEPRINT.md` — Architecture, coding standards, common pitfalls, quick commands
 2. `docs/INDEX.md` — Navigate to the correct documentation for any feature/system
 3. For content/events/orders: `docs/Features/Content/content-index.md`
-4. For APIs: Verify against `C:\Dev\Enlisted\Decompile\` (never assume, never use online docs)
+4. For APIs: Verify against `Decompile/` in workspace root (never assume, never use online docs)
 
 **Do NOT hallucinate features.** If you're unsure whether something exists, search the codebase or ask.
 
@@ -18,7 +18,7 @@ Guidance for Warp AI agents working in this Bannerlord mod codebase.
 ## 🚨 Critical Rules
 
 1. **Target Version:** Bannerlord **v1.3.13** — never assume APIs from later versions
-2. **API Verification:** Use local decompile at `C:\Dev\Enlisted\Decompile\` (not online docs)
+2. **API Verification:** Use local decompile at `Decompile/` in workspace root (not online docs)
 3. **New C# Files:** Must be manually added to `Enlisted.csproj` via `<Compile Include="..."/>`
 4. **Tooltips:** Cannot be null — every event/decision option needs a tooltip (<80 chars)
 5. **JSON Field Order:** Fallback fields (`title`, `setup`, `text`) must immediately follow their ID fields
@@ -50,7 +50,8 @@ python Tools/Validation/sync_event_strings.py
 | `ModuleData/Languages/enlisted_strings.xml` | Localized strings |
 | `Tools/Validation/` | Content validators |
 | `docs/` | All documentation |
-| `C:\Dev\Enlisted\Decompile\` | Native Bannerlord API reference (v1.3.13) |
+| `C:\Dev\Enlisted\Decompile\` | Native Bannerlord API reference (v1.3.13, outside workspace) |
+| `Tools/CrewAI/database/` | Project knowledge database (enlisted_knowledge.db, in Git) |
 | `<BannerlordInstall>\Modules\Enlisted\Debugging\` | Runtime mod logs |
 
 ## 📚 Documentation Quick Reference
@@ -226,7 +227,7 @@ dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 | Dead hero tracking | Check `Hero.IsAlive` before `VisualTrackerManager` calls | **Crashes game** |
 | Item comparison by reference | Use `item.StringId` comparison, not `==` | Equipment confiscation fails |
 | Hardcoded strings | Use `TextObject("{=key}Fallback")` + XML | Missing localization |
-| API doesn't exist | Verify against local decompile at `C:\Dev\Enlisted\Decompile\` | Wrong API usage |
+| API doesn't exist | Verify against local decompile at `Decompile/` (workspace root) | Wrong API usage |
 | Tooltips null | Every option must have a tooltip (<80 chars, factual) | Validator error |
 | JSON validation fails | Fallback fields immediately after ID fields | Content won't load |
 | Reputation/needs modified directly | Use `EscalationManager`, `CompanyNeedsManager` | Bypasses clamping/logging |

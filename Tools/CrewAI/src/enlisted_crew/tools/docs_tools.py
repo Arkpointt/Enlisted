@@ -70,7 +70,43 @@ MODULE_DATA_PATH = PROJECT_ROOT / "ModuleData"
 BANNERLORD_INSTALL = Path(r"C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord")
 MOD_DEBUGGING_PATH = BANNERLORD_INSTALL / "Modules" / "Enlisted" / "Debugging"
 NATIVE_CRASH_LOGS_PATH = Path(r"C:\ProgramData\Mount and Blade II Bannerlord\logs")
-NATIVE_DECOMPILE_PATH = Path(r"C:\Dev\Enlisted\Decompile")
+def _get_project_root() -> Path:
+    """Get the Enlisted project root directory."""
+    env_root = os.environ.get("ENLISTED_PROJECT_ROOT")
+    if env_root:
+        return Path(env_root)
+    
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "Enlisted.csproj").exists():
+            return parent
+    
+    return Path(r"C:\Dev\Enlisted\Enlisted")
+
+def _get_decompile_path() -> Path:
+    """Get the Decompile folder path. Checks multiple locations."""
+    import os
+    
+    # 1. Environment variable override
+    env_decompile = os.environ.get("BANNERLORD_DECOMPILE_PATH")
+    if env_decompile:
+        return Path(env_decompile)
+    
+    # 2. Sibling to project root (standard location)
+    project_root = _get_project_root()
+    sibling_decompile = project_root.parent / "Decompile"
+    if sibling_decompile.exists():
+        return sibling_decompile
+    
+    # 3. Inside workspace (if someone puts it there)
+    workspace_decompile = project_root / "Decompile"
+    if workspace_decompile.exists():
+        return workspace_decompile
+    
+    # 4. Fallback default
+    return Path(r"C:\Dev\Enlisted\Decompile")
+
+NATIVE_DECOMPILE_PATH = _get_decompile_path()
 
 
 @tool("Read Project Documentation")

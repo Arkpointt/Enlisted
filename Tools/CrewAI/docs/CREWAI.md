@@ -1085,7 +1085,7 @@ cd Tools/CrewAI
 ```
 
 This script:
-1. ✅ Checks decompile folder exists (`C:\Dev\Enlisted\Decompile`)
+1. ✅ Checks decompile folder exists (`Decompile/` in workspace root)
 2. ✅ Rebuilds MCP index with new API signatures
 3. ✅ Runs all tests to verify everything works
 
@@ -2342,7 +2342,7 @@ CrewAI supports Model Context Protocol (MCP) servers for extending agent capabil
 
 **Status:** ✅ Implemented and Active
 
-**Purpose:** Provides semantic access to decompiled Bannerlord source code (`C:\Dev\Enlisted\Decompile`) with fast indexed queries.
+**Purpose:** Provides semantic access to decompiled Bannerlord source code (`Decompile/` in workspace root) with fast indexed queries.
 
 **Location:** `Tools/CrewAI/mcp_servers/bannerlord_api_server.py`
 

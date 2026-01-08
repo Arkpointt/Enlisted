@@ -195,7 +195,31 @@ def test_mcp_server():
     print_header("4. MCP SERVER TESTS")
     
     mcp_index_path = Path("mcp_servers/bannerlord_api_index.db")
-    decompile_path = Path(r"C:\Dev\Enlisted\Decompile")
+    # Get Decompile folder path (checks multiple locations)
+    def get_project_root():
+        env_root = os.environ.get("ENLISTED_PROJECT_ROOT")
+        if env_root:
+            return Path(env_root)
+        current = Path(__file__).resolve()
+        for parent in current.parents:
+            if (parent / "Enlisted.csproj").exists():
+                return parent
+        return Path(r"C:\Dev\Enlisted\Enlisted")
+    
+    # Check multiple locations
+    env_decompile = os.environ.get("BANNERLORD_DECOMPILE_PATH")
+    if env_decompile:
+        decompile_path = Path(env_decompile)
+    else:
+        project_root = get_project_root()
+        # Try sibling folder first (standard location)
+        sibling_decompile = project_root.parent / "Decompile"
+        if sibling_decompile.exists():
+            decompile_path = sibling_decompile
+        else:
+            # Fall back to workspace or default
+            workspace_decompile = project_root / "Decompile"
+            decompile_path = workspace_decompile if workspace_decompile.exists() else Path(r"C:\Dev\Enlisted\Decompile")
     
     if not mcp_index_path.exists():
         print_warn(f"MCP index not found at {mcp_index_path}")
