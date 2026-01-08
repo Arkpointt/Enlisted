@@ -306,6 +306,164 @@ def get_execution_stats(db_path: Optional[str] = None, crew_name: Optional[str] 
             }
 
 
+def get_execution_history(
+    db_path: Optional[str] = None,
+    crew_name: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    limit: Optional[int] = None
+) -> list:
+    """
+    Get chronological execution history with time-range filtering.
+    
+    Args:
+        db_path: Path to database. Defaults to enlisted_knowledge.db
+        crew_name: Filter by crew name. If None, returns all crews.
+        start_date: ISO format date string (e.g., '2026-01-01'). If None, no lower bound.
+        end_date: ISO format date string. If None, no upper bound.
+        limit: Maximum number of records to return. If None, returns all.
+    
+    Returns:
+        List of execution records with timestamps and durations
+    """
+    if db_path is None:
+        project_root = _get_project_root()
+        db_path = str(project_root / "Tools" / "CrewAI" / "database" / "enlisted_knowledge.db")
+    
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        
+        # Build WHERE clauses
+        where_clauses = ["status = 'completed'"]
+        params = []
+        
+        if crew_name:
+            where_clauses.append("crew_name = ?")
+            params.append(crew_name)
+        
+        if start_date:
+            where_clauses.append("started_at >= ?")
+            params.append(start_date)
+        
+        if end_date:
+            where_clauses.append("started_at <= ?")
+            params.append(end_date)
+        
+        where_clause = " AND ".join(where_clauses)
+        limit_clause = f"LIMIT {limit}" if limit else ""
+        
+        query = f"""
+            SELECT 
+                id,
+                crew_name,
+                started_at,
+                completed_at,
+                duration_seconds,
+                output_length
+            FROM crew_executions
+            WHERE {where_clause}
+            ORDER BY started_at DESC
+            {limit_clause}
+        """
+        
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        
+        return [
+            {
+                'id': row[0],
+                'crew_name': row[1],
+                'started_at': row[2],
+                'completed_at': row[3],
+                'duration_seconds': round(row[4], 2) if row[4] else 0,
+                'output_length': row[5]
+            }
+            for row in results
+        ]
+
+
+def get_performance_trends(
+    db_path: Optional[str] = None,
+    crew_name: Optional[str] = None,
+    window_size: int = 10
+) -> dict:
+    """
+    Analyze performance trends by comparing recent runs to historical average.
+    
+    Args:
+        db_path: Path to database. Defaults to enlisted_knowledge.db
+        crew_name: Filter by crew name. If None, analyzes all crews separately.
+        window_size: Number of recent runs to compare (default: 10)
+    
+    Returns:
+        Dictionary with trend analysis:
+        - historical_avg: Average duration of all runs except recent window
+        - recent_avg: Average duration of recent window
+        - trend: 'improving', 'degrading', or 'stable'
+        - percent_change: Percentage change (negative = faster)
+    """
+    if db_path is None:
+        project_root = _get_project_root()
+        db_path = str(project_root / "Tools" / "CrewAI" / "database" / "enlisted_knowledge.db")
+    
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        
+        if crew_name:
+            crews = [crew_name]
+        else:
+            cursor.execute("SELECT DISTINCT crew_name FROM crew_executions WHERE status = 'completed'")
+            crews = [row[0] for row in cursor.fetchall()]
+        
+        results = {}
+        
+        for crew in crews:
+            # Get all completed runs for this crew
+            cursor.execute("""
+                SELECT duration_seconds
+                FROM crew_executions
+                WHERE crew_name = ? AND status = 'completed'
+                ORDER BY started_at DESC
+            """, (crew,))
+            
+            durations = [row[0] for row in cursor.fetchall() if row[0] is not None]
+            
+            if len(durations) < window_size + 5:  # Need enough data for comparison
+                results[crew] = {
+                    'error': 'Insufficient data for trend analysis',
+                    'total_runs': len(durations),
+                    'required_runs': window_size + 5
+                }
+                continue
+            
+            # Recent window vs historical
+            recent = durations[:window_size]
+            historical = durations[window_size:]
+            
+            recent_avg = sum(recent) / len(recent)
+            historical_avg = sum(historical) / len(historical)
+            
+            percent_change = ((recent_avg - historical_avg) / historical_avg) * 100
+            
+            if percent_change < -5:
+                trend = 'improving'
+            elif percent_change > 5:
+                trend = 'degrading'
+            else:
+                trend = 'stable'
+            
+            results[crew] = {
+                'total_runs': len(durations),
+                'window_size': window_size,
+                'historical_avg_seconds': round(historical_avg, 2),
+                'recent_avg_seconds': round(recent_avg, 2),
+                'percent_change': round(percent_change, 2),
+                'trend': trend
+            }
+        
+        return results if not crew_name else results.get(crew_name, {})
+
+
 def print_execution_report(crew_name: Optional[str] = None):
     """Print a formatted execution statistics report."""
     stats = get_execution_stats(crew_name=crew_name)
@@ -333,6 +491,59 @@ def print_execution_report(crew_name: Optional[str] = None):
                 print(f"  Max Duration: {crew_stats['max_duration_seconds']:.2f}s")
     
     print("\n" + "=" * 70 + "\n")
+
+
+def print_trend_report(crew_name: Optional[str] = None, window_size: int = 10):
+    """
+    Print a formatted performance trend report.
+    
+    Args:
+        crew_name: Filter by crew name. If None, shows all crews.
+        window_size: Number of recent runs to compare (default: 10)
+    """
+    trends = get_performance_trends(crew_name=crew_name, window_size=window_size)
+    
+    print("\n" + "=" * 70)
+    print(f"PERFORMANCE TREND ANALYSIS (Last {window_size} runs vs Historical)")
+    print("=" * 70 + "\n")
+    
+    if 'error' in trends:
+        print(f"[INFO] {trends['error']}")
+        print(f"       Current runs: {trends['total_runs']}, Required: {trends['required_runs']}\n")
+        print("=" * 70 + "\n")
+        return
+    
+    if isinstance(trends, dict) and 'trend' in trends:
+        # Single crew
+        _print_crew_trend(crew_name, trends)
+    else:
+        # Multiple crews
+        for crew, trend_data in trends.items():
+            _print_crew_trend(crew, trend_data)
+    
+    print("=" * 70 + "\n")
+
+
+def _print_crew_trend(crew_name: str, trend_data: dict):
+    """Helper to print trend data for a single crew."""
+    if 'error' in trend_data:
+        print(f"Crew: {crew_name}")
+        print(f"  [INFO] {trend_data['error']}")
+        print(f"         Current runs: {trend_data['total_runs']}, Required: {trend_data['required_runs']}\n")
+        return
+    
+    trend_icon = {
+        'improving': '[+] IMPROVING',
+        'degrading': '[-] DEGRADING',
+        'stable': '[=] STABLE'
+    }.get(trend_data['trend'], '[?] UNKNOWN')
+    
+    print(f"Crew: {crew_name}")
+    print(f"  Total Runs: {trend_data['total_runs']}")
+    print(f"  Historical Avg: {trend_data['historical_avg_seconds']:.2f}s ({trend_data['historical_avg_seconds']/60:.1f}m)")
+    print(f"  Recent Avg: {trend_data['recent_avg_seconds']:.2f}s ({trend_data['recent_avg_seconds']/60:.1f}m)")
+    print(f"  Change: {trend_data['percent_change']:+.1f}%")
+    print(f"  Trend: {trend_icon}\n")
 
 
 # Global monitoring instance - initialized once

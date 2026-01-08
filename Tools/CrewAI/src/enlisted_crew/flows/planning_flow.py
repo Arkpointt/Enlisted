@@ -63,6 +63,7 @@ from .conditions import (
 )
 
 from ..memory_config import get_memory_config
+from ..monitoring import EnlistedExecutionMonitor
 
 from ..tools import (
     # Context Loaders
@@ -422,6 +423,12 @@ class PlanningFlow(Flow[PlanningState]):
     
     initial_state = PlanningState
     persist = True  # Auto-save state to SQLite for recovery on failure
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize execution monitoring
+        self._monitor = EnlistedExecutionMonitor()
+        print("[MONITORING] Execution monitoring enabled for PlanningFlow")
     
     # === Flow Steps ===
     

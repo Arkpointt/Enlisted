@@ -62,6 +62,7 @@ from .conditions import (
 )
 
 from ..memory_config import get_memory_config
+from ..monitoring import EnlistedExecutionMonitor
 
 # Import tools from our tools module
 from ..tools import (
@@ -488,6 +489,12 @@ class BugHuntingFlow(Flow[BugHuntingState]):
     
     initial_state = BugHuntingState
     persist = True  # Auto-save state to SQLite for recovery on failure
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize execution monitoring
+        self._monitor = EnlistedExecutionMonitor()
+        print("[MONITORING] Execution monitoring enabled for BugHuntingFlow")
     
     # === Flow Steps ===
     

@@ -2,7 +2,9 @@
 
 **Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities), automatic prompt caching, **intelligent manager analysis** that detects and logs critical issues, and **Contextual Retrieval Memory System** with hybrid search (BM25 + vector), RRF fusion, Cohere reranking, and FILCO post-retrieval filtering for 67%+ better retrieval than basic RAG.  
 **Status:** ✅ Implemented  
-**Last Updated:** 2026-01-07 (Contextual Retrieval + FILCO: Full pipeline - chunking, contextualization, BM25, RRF, reranking, FILCO filtering)
+**Last Updated:** 2026-01-08 (OpenAI Cost Optimization: Prompt caching + semantic codebase RAG planned)
+
+**Cost Optimization Plan:** See `docs/OPENAI_COST_OPTIMIZATION_PLAN.md` for 40-50% cost reduction via prompt caching optimization + custom RAG tool for semantic codebase search.
 
 ---
 
@@ -171,6 +173,8 @@ export ENLISTED_PROJECT_ROOT=C:\Dev\Enlisted\Enlisted
 ## Custom Tools
 
 Tools use natural naming for readability. The `@tool("Name")` decorator defines what agents see.
+
+**Planned Addition (Cost Optimization):** `search_codebase` tool for semantic search of `src/` + `Decompile/` using ChromaDB. See `docs/OPENAI_COST_OPTIMIZATION_PLAN.md` Phase 1-2 for implementation details.
 
 ### Validation
 
@@ -1664,6 +1668,10 @@ enlisted-crew stats -c BugHuntingFlow
 # View cost tracking
 enlisted-crew stats --costs
 enlisted-crew stats -c PlanningFlow --costs
+
+# Performance trend analysis (requires 15+ runs)
+enlisted-crew stats --trends
+enlisted-crew stats -c PlanningFlow --trends
 ```
 
 **Example Output:**
@@ -1715,11 +1723,81 @@ Avg Cost/Call: $0.0013
    - Are there patterns in errors?
    - Is performance degrading over time?
 
-4. **Optimize Costs** (NEW)
+4. **Optimize Costs**
    - Track token usage per workflow
    - Identify expensive operations
    - Compare model costs across runs
    - Budget API spending accurately
+
+5. **Performance Trends** (NEW)
+   - Automatic detection of performance degradation
+   - Compare recent runs vs historical average
+   - Time-range filtering for targeted analysis
+   - Track improvements from optimization work
+
+### Time-Range Filtering and Trend Analysis
+
+**Python API for custom queries:**
+
+```python
+from enlisted_crew.monitoring import (
+    get_execution_history,
+    get_performance_trends,
+    print_trend_report
+)
+
+# Get executions from a date range
+history = get_execution_history(
+    crew_name="PlanningFlow",
+    start_date="2026-01-01",
+    end_date="2026-01-31",
+    limit=50
+)
+
+# Analyze performance trends
+trends = get_performance_trends(
+    crew_name="PlanningFlow",
+    window_size=10  # Compare last 10 runs to historical
+)
+
+# Print formatted trend report
+print_trend_report(crew_name="PlanningFlow", window_size=10)
+```
+
+**Trend Analysis Output:**
+```
+======================================================================
+PERFORMANCE TREND ANALYSIS (Last 10 runs vs Historical)
+======================================================================
+
+Crew: PlanningFlow
+  Total Runs: 47
+  Historical Avg: 142.35s (2.4m)
+  Recent Avg: 128.50s (2.1m)
+  Change: -9.7%
+  Trend: [+] IMPROVING
+
+Crew: ImplementationFlow
+  Total Runs: 31
+  Historical Avg: 284.20s (4.7m)
+  Recent Avg: 312.50s (5.2m)
+  Change: +10.0%
+  Trend: [-] DEGRADING
+
+======================================================================
+```
+
+**Trend Detection Rules:**
+- `[+] IMPROVING`: Recent runs >5% faster than historical average
+- `[-] DEGRADING`: Recent runs >5% slower than historical average
+- `[=] STABLE`: Within ±5% of historical average
+- Requires at least 15 total runs (10 recent + 5 historical minimum)
+
+**Use Cases:**
+- **After optimization:** Validate that changes actually improved performance
+- **Continuous monitoring:** Detect gradual performance degradation
+- **A/B testing:** Compare performance before/after config changes
+- **Cost validation:** Confirm optimization plan achieved 40-50% reduction
 
 ---
 
@@ -1803,10 +1881,17 @@ Blocked Operations: 2
 - **Historical Analysis** - Query `llm_costs` table for cost trends over time
 
 **Cost Estimates (per 1M tokens):**
-- `gpt-5.2`: $2.50 input, $10.00 output
+- `gpt-5.2`: $1.75 input, $14.00 output (updated January 2026)
+- `gpt-5.2` (cached): $0.175 input (90% discount, 24-hour retention)
 - `gpt-5`: $2.00 input, $8.00 output
 - `gpt-5-mini`: $0.10 input, $0.40 output
 - `gpt-5-nano`: $0.05 input, $0.20 output
+
+**Cost Optimization (Planned):**
+- See `docs/OPENAI_COST_OPTIMIZATION_PLAN.md` for 40-50% cost reduction strategy
+- Prompt caching optimization: Static-first task descriptions for cache hits
+- Semantic codebase RAG: Replace expensive grep with vector search
+- 24-hour cache retention: `prompt_cache_retention='24h'` parameter
 
 ### Database Schema
 
