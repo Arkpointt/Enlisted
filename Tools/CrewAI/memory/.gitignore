@@ -1,0 +1,14 @@
+# CrewAI Memory Storage - All tracked for cross-platform learning
+#
+# This folder contains the AI's learned memory and is intentionally
+# tracked in Git so the AI's knowledge syncs between Windows and Linux.
+#
+# Memory grows over time but stays manageable (<200 MB typically).
+# Contains:
+# - short_term_memory/  - ChromaDB vectors (session context)
+# - long_term_memory/   - ChromaDB vectors (persistent learning)
+# - entities/           - ChromaDB vectors (entity relationships)
+# - long_term_memory_storage.db - SQLite database
+#
+# All files tracked for shared AI intelligence across platforms.
+# To clear memory: run ../../reset-memory.ps1

@@ -47,7 +47,9 @@ Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "Enlisted CrewAI - Memory Reset" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
-$memoryPath = "$env:LOCALAPPDATA\CrewAI\enlisted_crew"
+# Memory now stored in workspace for cross-platform sync
+$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+$memoryPath = Join-Path $scriptPath "memory"
 
 if (-not (Test-Path $memoryPath)) {
     Write-Host "[INFO] No memory folder found at $memoryPath" -ForegroundColor Yellow

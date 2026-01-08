@@ -89,18 +89,19 @@ def _get_project_root() -> Path:
 
 
 def _get_storage_path() -> Path:
-    """Get the CrewAI storage path for Enlisted."""
+    """Get the CrewAI storage path for Enlisted.
+    
+    Now uses workspace-relative path for cross-platform memory sharing.
+    Memory is stored in Tools/CrewAI/memory/ and tracked in Git so the AI
+    learns once and remembers across both Windows and Linux platforms.
+    """
     storage_dir = os.environ.get("CREWAI_STORAGE_DIR")
     if storage_dir:
         return Path(storage_dir)
     
-    # Default: AppData/Local/CrewAI/enlisted_crew on Windows
-    local_app_data = os.environ.get("LOCALAPPDATA", "")
-    if local_app_data:
-        return Path(local_app_data) / "CrewAI" / "enlisted_crew"
-    
-    # Fallback for non-Windows
-    return Path.home() / ".crewai" / "enlisted_crew"
+    # Default: Tools/CrewAI/memory/ (workspace-relative, syncs via Git)
+    project_root = _get_project_root()
+    return project_root / "Tools" / "CrewAI" / "memory"
 
 
 def _get_db_path() -> Path:

@@ -180,6 +180,7 @@ If you add new development resources:
 |----------|---------|----------|---------|
 | `Decompile/` | Bannerlord v1.3.13 API reference | `C:\Dev\Enlisted\Decompile\` (sibling to workspace) | ❌ No |
 | `enlisted_knowledge.db` | Project knowledge database | `Tools/CrewAI/database/` | ✅ Yes |
+| `CrewAI memory` | AI learned memory (ChromaDB + SQLite) | `Tools/CrewAI/memory/` | ✅ Yes |
 | `sqlite3` | Database CLI tool | System install | ❌ No |
 | `steamcmd` | Workshop upload tool | System install | ❌ No |
 
