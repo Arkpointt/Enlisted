@@ -19,20 +19,33 @@ cd Tools/CrewAI/database
 
 ## Database Structure
 
-### 12 Tables (360+ total rows)
+### Core Tables (14 tables, 149 rows of reference data)
 
+**Static Reference Data (in schema.sql):**
 1. **`tier_definitions`** (9 rows) - Player progression tiers 1-9
 2. **`error_catalog`** (40 rows) - Game error codes and fixes
-3. **`content_items`** (empty) - Legacy content registry
-4. **`valid_categories`** (13 rows) - Event/decision categories
-5. **`valid_severities`** (7 rows) - Severity levels
-6. **`balance_values`** (30 rows) - Core game balance values
-7. **`core_systems`** (7 rows) - Key Bannerlord systems
-8. **`system_dependencies`** (12 rows) - System relationships
-9. **`api_patterns`** (8 rows) - Common API usage patterns
-10. **`implementation_history`** (empty) - Feature implementation tracking
-11. **`game_systems`** (empty) - Decompiled game system registry
-12. **`content_metadata`** (empty) - Lightweight content index
+3. **`valid_categories`** (26 rows) - Event/decision categories
+4. **`valid_severities`** (5 rows) - Severity levels
+5. **`balance_values`** (30 rows) - Core game balance values
+6. **`core_systems`** (16 rows) - Key Bannerlord systems
+7. **`system_dependencies`** (15 rows) - System relationships
+8. **`api_patterns`** (8 rows) - Common API usage patterns
+
+**Dynamic Data (populated at runtime):**
+9. **`content_items`** (empty) - Legacy content registry
+10. **`content_metadata`** (empty) - Lightweight content index (populated by sync)
+11. **`implementation_history`** (empty) - Feature implementation tracking
+12. **`game_systems`** (empty) - Decompiled game system registry
+13. **`contextual_memory`** (empty) - CrewAI memory chunks (contextual retrieval)
+14. **`sqlite_sequence`** (auto) - SQLite internal auto-increment tracking
+
+**Monitoring Tables (created on first use, not in schema.sql):**
+- **`crew_executions`** - Crew-level execution tracking
+- **`agent_executions`** - Agent-level tracking
+- **`task_executions`** - Task-level tracking
+- **`tool_usages`** - Tool usage tracking
+
+These monitoring tables are created automatically by `EnlistedExecutionMonitor` when you run crews with monitoring enabled.
 
 ## Best Practice
 
