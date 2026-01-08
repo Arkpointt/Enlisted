@@ -974,15 +974,20 @@ EMBEDDER_CONFIG = {
 
 #### Memory Storage Location
 
-**Windows:**
+**Workspace-Relative (Cross-Platform):**
 ```
-C:\Users\{username}\AppData\Local\CrewAI\enlisted_crew\
+Tools/CrewAI/memory/
 ├── knowledge/               # ChromaDB embeddings (chunked knowledge files)
 ├── short_term_memory/       # Current execution context (RAG-based)
 ├── long_term_memory/        # Insights from past runs (ChromaDB)
 ├── long_term_memory_storage.db  # SQLite database for task results
 └── entities/                # Entity relationships (RAG-based)
 ```
+
+**Why In Workspace:**
+- Synced via Git for cross-platform consistency
+- Windows and Linux share the same AI learning
+- No per-platform memory divergence
 
 #### Resetting Memory After Refactors
 
