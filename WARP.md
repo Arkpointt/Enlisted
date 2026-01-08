@@ -1,6 +1,12 @@
-# WARP.md
+# WARP.md - Enlisted Project Routing
 
 Guidance for Warp AI agents working in this Bannerlord mod codebase.
+
+## ⏰ Current Context
+
+* **Date:** January 2026 (verify via system if uncertain)
+* **Target:** Bannerlord **v1.3.13**
+* **Do NOT** assume APIs/patterns from earlier versions or online docs
 
 ## 🧠 REQUIRED: Read Before Answering
 
@@ -13,17 +19,13 @@ Guidance for Warp AI agents working in this Bannerlord mod codebase.
 
 **Do NOT hallucinate features.** If you're unsure whether something exists, search the codebase or ask.
 
----
+## 🚨 TOP 5 Critical Rules
 
-## 🚨 Critical Rules
-
-1. **Target Version:** Bannerlord **v1.3.13** — never assume APIs from later versions
-2. **API Verification:** Use local decompile (auto-detected, not online docs)
-3. **New C# Files:** Must be manually added to `Enlisted.csproj` via `<Compile Include="..."/>`
-4. **Tooltips:** Cannot be null — every event/decision option needs a tooltip (<80 chars)
-5. **JSON Field Order:** Fallback fields (`title`, `setup`, `text`) must immediately follow their ID fields
-6. **Code Quality:** Fix all ReSharper warnings; never suppress without documented reason
-7. **CrewAI for Complex Work:** Use `"Use CrewAI [crew_name] to [task]"` for multi-file features, bug hunting, planning docs
+1. **Target Version:** Bannerlord **v1.3.13** — verify APIs against local `Decompile/`, never online docs
+2. **New C# Files:** Must be manually added to `Enlisted.csproj` via `<Compile Include="..."/>`
+3. **Tooltips Required:** Every event/decision option needs a tooltip (<80 chars) — validator will fail otherwise
+4. **JSON Field Order:** Fallback fields (`title`, `setup`, `text`) must immediately follow their ID fields
+5. **Context-Aware Rules:** When editing C# code, see `src/WARP.md`; for JSON content, see `ModuleData/WARP.md`
 
 ## ⚡ Quick Commands
 
@@ -45,15 +47,23 @@ python Tools/Validation/sync_event_strings.py
 
 | Path | Purpose |
 |------|---------|
-| `src/Features/` | All gameplay code (Enlistment, Orders, Content, Combat, Equipment, etc.) |
-| `ModuleData/Enlisted/` | JSON config, events, orders, decisions |
+| `src/Features/` | All gameplay code (see `src/WARP.md` for C# rules) |
+| `ModuleData/Enlisted/` | JSON config, events, orders, decisions (see `ModuleData/WARP.md` for content rules) |
 | `ModuleData/Languages/enlisted_strings.xml` | Localized strings |
 | `Tools/Validation/` | Content validators |
 | `docs/` | All documentation |
-| `../Decompile/` | Native Bannerlord API reference (v1.3.13, sibling to workspace, see [PROJECT-RESOURCES.md](docs/PROJECT-RESOURCES.md)) |
-| `Tools/CrewAI/database/` | Project knowledge database (enlisted_knowledge.db, in Git) |
-| `Tools/CrewAI/memory/` | AI learning memory (ChromaDB vectors, synced via Git) |
+| `../Decompile/` | Native Bannerlord API reference (v1.3.13) |
+| `Tools/CrewAI/` | Multi-agent workflows (see Tools/CrewAI/README.md) |
 | `<BannerlordInstall>/Modules/Enlisted/Debugging/` | Runtime mod logs |
+
+## 🧭 Task Routing
+
+| Working on... | Read First |
+|---------------|------------|
+| C# code (any) | `src/WARP.md` for critical patterns |
+| JSON content (events, orders) | `ModuleData/WARP.md` for field ordering, tooltips |
+| CrewAI workflows | `Tools/CrewAI/README.md` |
+| Battle AI | `docs/Features/Combat/BATTLE-AI-IMPLEMENTATION-SPEC.md` |
 
 ## 📚 Documentation Quick Reference
 
@@ -61,274 +71,17 @@ python Tools/Validation/sync_event_strings.py
 |------------|------|
 | Understand project architecture | [docs/BLUEPRINT.md](docs/BLUEPRINT.md) |
 | Find documentation for a feature | [docs/INDEX.md](docs/INDEX.md) |
-| Understand core gameplay systems | [docs/Features/Core/core-gameplay.md](docs/Features/Core/core-gameplay.md) |
+| Common pitfalls & code patterns | [docs/BLUEPRINT.md](docs/BLUEPRINT.md) (comprehensive list) |
 | Write events/decisions/orders | [docs/Features/Content/writing-style-guide.md](docs/Features/Content/writing-style-guide.md) |
 | Check JSON schemas | [docs/Features/Content/event-system-schemas.md](docs/Features/Content/event-system-schemas.md) |
 | Find all content (events, orders) | [docs/Features/Content/content-index.md](docs/Features/Content/content-index.md) |
-| Use validation tools | [Tools/README.md](Tools/README.md) |
-| Technical patterns (logging, save) | [Tools/TECHNICAL-REFERENCE.md](Tools/TECHNICAL-REFERENCE.md) |
 
-## 🔧 Multi-Agent Workflow
+## 🤖 When to Use CrewAI
 
-**Single agent (default):** Describe your task naturally. Warp will analyze → implement → validate.
+**Quick fixes, single-file changes:** Use Warp directly  
+**Multi-file features, planning, bug hunting:** Use CrewAI at `Tools/CrewAI/`
 
-**Invoke specific phases:**
-- `[ANALYZE]` — Read-only investigation
-- `[ANALYZE:CODE]` — Force C# analysis
-- `[ANALYZE:CONTENT]` — Force content/JSON analysis
-- `[ANALYZE:VOICE]` — Narrative style review
-- `[ANALYZE:BALANCE]` — Effects/economy review
-- `[IMPLEMENT]` — Skip analysis, go to implementation
-- `[VALIDATE]` — Run QA validation only
-
-## 💡 Prompt Best Practices
-
-Better prompts = better results + fewer wasted AI credits.
-
-**Be specific:** Instead of vague requests, include:
-- Exact error codes or log snippets
-- File paths you suspect are involved
-- What you've already tried
-- Expected outcome format
-
-**Planning workflow for new features:**
-1. Discuss the idea with Warp (me) — I'll ask questions, probe edge cases
-2. Once scope is clear, I craft a prompt for `planning_crew`
-3. CrewAI produces a design doc in `ANEWFEATURE/` with `Status: 📋 Planning`
-4. Review and iterate until approved
-5. Implementation via Warp directly or `full_feature_crew`
-
-| ❌ Vague | ✅ Specific |
-|----------|------------|
-| "Fix the bug" | "Investigate E-ENCOUNTER-042 crash when opening camp menu after battle" |
-| "Add an event" | "Add a T3 barracks event in `Events/camp/` where sergeant offers training" |
-| "Why doesn't this work?" | "OrderProgressTracker.RecordProgress() not persisting after save/load" |
-
-**Attach relevant context:** Use `@filename` to attach files instead of making the agent search. Saves time and credits.
-
-**Start fresh conversations:** Don't continue unrelated tasks in the same conversation—it confuses context and wastes tokens.
-
-## 🤖 CrewAI - Three Flows
-
-**For complex multi-agent work**, use CrewAI at `Tools/CrewAI/`.
-
-All workflows are **Flow-based** with state persistence - if a run fails, re-running resumes from the last successful step.
-
-```bash
-# Activate first
-cd Tools/CrewAI && .\.venv\Scripts\Activate.ps1
-
-# Design a feature (PlanningFlow: research → advise → design → validate → auto-fix)
-enlisted-crew plan -f "feature-name" -d "description"
-
-# Find & fix bugs (BugHuntingFlow: investigate → route → analyze → fix → validate)
-enlisted-crew hunt-bug -d "bug description" -e "E-XXX-*"
-
-# Build from approved plan (ImplementationFlow: verify → route → implement → validate → docs)
-# Smart: Detects partial implementations, routes around completed work
-enlisted-crew implement -p "docs/CrewAI_Plans/feature.md"
-
-# Quick pre-commit check
-enlisted-crew validate
-
-# View execution statistics (performance metrics, timing, tool usage)
-enlisted-crew stats [-c crew_name]
-
-# View execution statistics with cost tracking
-enlisted-crew stats --costs [-c crew_name]
-
-# Test flow performance (runs crew multiple times, provides metrics)
-crewai test -n 3 -m gpt-5
-```
-
-**CrewAI writes files directly:** All flows apply changes to disk (C#, JSON, localization, .csproj). Review with `git diff` after running.
-
-**Monitoring:** All executions are automatically tracked in `enlisted_knowledge.db`. Use `enlisted-crew stats` to view performance metrics, identify bottlenecks, and optimize workflows. Add `--costs` to see token usage and API costs.
-
-**Safety Hooks:** Execution hooks automatically validate dangerous operations (file writes, database changes) and track costs. All hooks run transparently - no configuration needed.
-
-**Testing:** Run `python test_all.py` for comprehensive system check (config, database, MCP, agents, LLMs). Use `crewai test -n 3 -m gpt-5` to validate crew performance across iterations.
-
-**When to use CrewAI vs Warp directly:**
-- Quick fixes, single-file changes → Warp directly
-- Multi-file features, planning, bug hunting → CrewAI
-
-**Setup:** See [Tools/CrewAI/README.md](Tools/CrewAI/README.md)  
-**Requirements:** OpenAI API key in `.env` file  
-**Package:** Migrated to `crewai[tools]>=0.95.0` (deprecated `crewai-tools` standalone archived Nov 2025)  
-**Model:** GPT-5.2 unified across all agents with optimized `reasoning_effort`:
-  - `high` (~8s): Architecture, complex decisions, deep system analysis
-  - `medium` (~5s): Bug analysis, QA validation, code review
-  - `low` (~5s): Implementation from specs, documentation, planning
-  - `none` (~1s): Schema validation, formatting, simple content generation  
-**Manager Optimization (2026-01-07):** All 4 hierarchical managers now use `reasoning=True` + `max_reasoning_attempts=2` for strategic coordination, `max_iter=15` to prevent delegation delays, and concise ~50-word backstories (85% token savings)  
-**Token Limits:** Increased from 8K→12K for comprehensive outputs  
-**Memory:** Enabled with text-embedding-3-large for superior knowledge retrieval  
-**State Persistence:** All flows resume on failure (`persist=True`)  
-**Database:** 23 SQLite tools for instant lookups (error codes, tiers, balance, content, API patterns)  
-**MCP Server:** Bannerlord API MCP server with 8 tools for semantic C# code analysis  
-**Prompt Caching:** Automatic (OpenAI handles caching for prompts >1024 tokens)
-
-## 📂 Project Structure
-
-```
-Enlisted/
-├── src/
-│   ├── Mod.Entry/          SubModule + Harmony init
-│   ├── Mod.Core/           Logging, config, save system, helpers
-│   ├── Mod.GameAdapters/   Harmony patches
-│   └── Features/           All gameplay features
-│       ├── Enlistment/     Core service state, XP, retirement
-│       ├── Orders/         Mission-driven directives
-│       ├── Content/        Events, Decisions, Orchestrator
-│       ├── Combat/         Battle participation, formation
-│       ├── Equipment/      Quartermaster, gear management
-│       └── ...             (14 feature folders total)
-├── ModuleData/
-│   ├── Enlisted/           JSON config + content files
-│   └── Languages/          XML localization
-├── Tools/                  Validators, upload scripts
-├── docs/                   All documentation
-└── GUI/                    Gauntlet UI prefabs
-```
-
-## 🛠️ Common Tasks
-
-### Add New C# File
-1. Create file in appropriate `src/Features/` subfolder
-2. Add to `Enlisted.csproj`: `<Compile Include="src\Features\MyFeature\MyClass.cs"/>`
-3. Run `python Tools/Validation/validate_content.py` (catches missing files)
-4. Build and fix warnings
-
-### Add New Event/Decision/Order
-1. Read [writing-style-guide.md](docs/Features/Content/writing-style-guide.md) for voice/tone
-2. Add JSON definition to `ModuleData/Enlisted/Events/` or `Decisions/`
-3. Follow field ordering: `titleId` → `title` → `setupId` → `setup`
-4. Include tooltips for all options (<80 chars, factual)
-5. Run validator: `python Tools/Validation/validate_content.py`
-6. Sync strings: `python Tools/Validation/sync_event_strings.py`
-
-### Before Committing
-```powershell path=null start=null
-python Tools/Validation/validate_content.py
-dotnet build -c "Enlisted RETAIL" /p:Platform=x64
-```
-
-## ⚠️ Common Pitfalls (WILL BREAK THE MOD)
-
-| Problem | Solution | Impact |
-|---------|----------|--------|
-| Gold not showing in UI | Use `GiveGoldAction.ApplyBetweenCharacters()`, not `ChangeHeroGold()` | Players lose money silently |
-| Crash iterating equipment | Use numeric loop to `NumEquipmentSetSlots`, not `Enum.GetValues()` | **Crashes game** |
-| New file not compiling | Add to `Enlisted.csproj` `<Compile Include="..."/>` | Code doesn't run, validator catches |
-| "Cannot Create Save" crash | Register new types in `EnlistedSaveDefiner` | **Blocks saving** |
-| Order events without XP | All order event options MUST have `effects.skillXp` | Validator error, breaks progression |
-| In-progress flags not persisted | Persist ALL workflow flags in `SyncData()` (not just completed/scheduled) | Duplicate events on load |
-| Encounter finished in settlement | Check `PlayerEncounter.InsideSettlement` before finishing | Menus disappear unexpectedly |
-| Dead hero tracking | Check `Hero.IsAlive` before `VisualTrackerManager` calls | **Crashes game** |
-| Item comparison by reference | Use `item.StringId` comparison, not `==` | Equipment confiscation fails |
-| Hardcoded strings | Use `TextObject("{=key}Fallback")` + XML | Missing localization |
-| API doesn't exist | Verify against local decompile at `Decompile/` (workspace root) | Wrong API usage |
-| Tooltips null | Every option must have a tooltip (<80 chars, factual) | Validator error |
-| JSON validation fails | Fallback fields immediately after ID fields | Content won't load |
-| Reputation/needs modified directly | Use `EscalationManager`, `CompanyNeedsManager` | Bypasses clamping/logging |
-
-## 🔑 Critical Code Patterns
-
-### Localization (TextObject)
-```csharp
-// ✅ CORRECT: Localized with fallback
-new TextObject("{=my_string_id}Fallback text here")
-// Add to ModuleData/Languages/enlisted_strings.xml:
-// <string id="my_string_id" text="Localized text" />
-
-// ❌ WRONG: Hardcoded string
-new TextObject("Hardcoded text")
-```
-
-### Save System (New Types)
-```csharp
-// When adding new serializable class/enum:
-// 1. Register in EnlistedSaveDefiner.DefineClassTypes() or DefineEnumTypes()
-// 2. Persist ALL state flags in SyncData(), including in-progress flags:
-SyncData(dataStore, "_eventScheduled", ref _scheduled);
-SyncData(dataStore, "_eventCompleted", ref _completed);
-SyncData(dataStore, "_eventInProgress", ref _inProgress);  // Don't forget!
-```
-
-### Item Comparison
-```csharp
-// ✅ CORRECT: StringId comparison
-if (element.Item != null && element.Item.StringId == targetItem.StringId) { }
-
-// ❌ WRONG: Reference equality (fails for equipped items)
-if (element.Item == targetItem) { }
-```
-
-### Encounter Transitions
-```csharp
-// ✅ CORRECT: Deferred menu activation
-NextFrameDispatcher.RunNextFrame(() => GameMenu.ActivateGameMenu("menu_id"));
-
-// ❌ WRONG: Immediate activation during encounter
-GameMenu.ActivateGameMenu("menu_id");
-```
-
-### Hero Safety
-```csharp
-// ✅ CORRECT: Null-safe during character creation
-var hero = CampaignSafetyGuard.SafeMainHero;
-if (hero == null) return;
-
-// ❌ WRONG: Direct access
-var hero = Hero.MainHero;  // Can be null during creation
-```
-
-### Hero Tracking
-```csharp
-// ✅ CORRECT: Check if alive before tracking
-if (hero.IsAlive)
-{
-    VisualTrackerManager.RegisterObject(hero);
-}
-
-// ❌ WRONG: No alive check
-VisualTrackerManager.RegisterObject(hero);  // Crashes if dead
-```
-
-### Gold Transactions
-```csharp
-// ✅ CORRECT: Updates party treasury (visible in UI)
-GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);  // Grant
-GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, amount);  // Deduct
-
-// ❌ WRONG: Modifies internal gold not visible in party UI
-Hero.MainHero.ChangeHeroGold(amount);
-```
-
-### Equipment Iteration
-```csharp
-// ✅ CORRECT: Iterate valid equipment slots (0-11)
-for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
-{
-    var slot = (EquipmentIndex)i;
-    var element = equipment[slot];
-    // ...
-}
-
-// ❌ WRONG: Includes invalid count enum values, causes crashes
-foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex))) { }
-```
-
-### Reputation/Needs Changes
-```csharp
-// ✅ CORRECT: Use centralized managers (handles clamping, logging)
-EscalationManager.Instance.ModifyReputation(ReputationType.Soldier, 5, "reason");
-CompanyNeedsManager.Instance.ModifyNeed(NeedType.Morale, -10, "reason");
-
-// ❌ WRONG: Direct modification bypasses validation
-_soldierReputation += 5;
-```
+See `Tools/CrewAI/README.md` for setup and commands.
 
 ## 🎯 Project Overview
 
@@ -338,14 +91,3 @@ _soldierReputation += 5;
 - 245 narrative content pieces (events, decisions, orders)
 - JSON-driven content with XML localization
 - Old-style `.csproj` with explicit file includes
-
-## 📋 Code Quality Checklist
-
-- [ ] ReSharper warnings fixed (no suppressions without reason)
-- [ ] Braces on all control statements
-- [ ] No unused imports/variables/methods
-- [ ] New files added to `.csproj`
-- [ ] Tooltips present for all options
-- [ ] JSON field ordering correct
-- [ ] Build succeeds
-- [ ] Validator passes

@@ -2,8 +2,8 @@
 
 **Summary:** Master index of all documentation files organized by category. Use this to find documentation for specific topics or systems.
 
-**Last Updated:** 2026-01-04 (Bug fixes: Battle side determination for army race conditions. Removed 3-day grace period - content flows immediately.)
-**Total Documents:** 55
+**Last Updated:** 2026-01-08 (Rules system optimization: Context-aware WARP.md files, token reduction ~64%)
+**Total Documents:** 58
 
 > **Note:** Documents marked "⚠️ Mixed" have core features implemented but also contain planned/designed features not yet in code. Check their Implementation Checklist sections for details.
 
@@ -114,6 +114,9 @@
 | [README.md](README.md) | Main entry point and mod overview | ✅ Current |
 | [BLUEPRINT.md](BLUEPRINT.md) | Project architecture and coding standards | ✅ Current |
 | [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md) | Build guide, development patterns, validation (Phase 7 project structure checks) | ✅ Current |
+| [../WARP.md](../WARP.md) | AI agent routing document: project context (2026, v1.3.13), required reading, TOP 5 critical rules, task routing to subdirectory rules | ✅ Current |
+| [../src/WARP.md](../src/WARP.md) | Context-aware C# development rules: critical patterns (gold, equipment, save system, hero safety), new file checklist | ✅ Current |
+| [../ModuleData/WARP.md](../ModuleData/WARP.md) | Context-aware JSON content rules: field ordering, tooltips, order events, validation | ✅ Current |
 | [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md) | Orchestrator scheduling unification: pre-schedules opportunities 24h ahead, locks schedule to prevent disappearance on context changes, narrative hint integration, removes menu cache for single source of truth | ✅ Implemented |
 
 ---
