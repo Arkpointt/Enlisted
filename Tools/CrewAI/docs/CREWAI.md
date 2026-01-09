@@ -52,31 +52,36 @@ enlisted-crew hunt-bug -d "Crash when opening camp menu" -e "E-CAMPUI-042"
 **Output:** Bug report + validated fix ready to apply.
 
 ---
-
 ### 2. Implement - Build from Plan (ImplementationFlow)
 ```bash
-enlisted-crew implement -p "docs/CrewAI_Plans/reputation-integration.md"
+enl isted-crew implement -p "docs/CrewAI_Plans/reputation-integration.md"
 ```
 
-**What it does (single-agent steps with smart routing):**
-1. **Load Plan** - Read the approved planning document (pure Python)
-2. **Verify Existing** - Single-agent checks what's already implemented
-   - Searches for C# files/methods mentioned in plan
-   - Checks for existing JSON content IDs
-   - Determines C# status: COMPLETE / PARTIAL / NOT_STARTED
-   - Determines Content status: COMPLETE / PARTIAL / NOT_STARTED
-3. **Implement C#** - Single-agent writes C# code (conditional via Flow router)
-4. **Implement Content** - Single-agent creates JSON content (conditional via Flow router)
-5. **Validate Build** - Direct tool call to dotnet build (pure Python)
-6. **Validate Content** - Direct tool call to content validator (pure Python)
-7. **Sync Docs** - Direct tool calls for database sync (pure Python)
-8. **Generate Report** - Final summary (pure Python)
+**What it does (single-agent pattern, 8 Flow steps):**
+1. **load_plan** - Read planning document (pure Python)
+2. **verify_existing** - Single-agent Crew checks what exists
+   - Tools: parse_plan, lookup_content_ids_batch, verify_file_exists_tool, search_codebase
+   - Sets C# status: COMPLETE / PARTIAL / NOT_STARTED
+   - Sets Content status: COMPLETE / PARTIAL / NOT_STARTED
+3. **implement_csharp** - Single-agent Crew writes C# (conditional)
+   - Tools: search_codebase, read_source, write_source, append_to_csproj
+   - Skips if C# status is COMPLETE
+4. **implement_content** - Single-agent Crew creates JSON (conditional)
+   - Tools: write_event, update_localization, lookup_content_id, add_content_item, get_valid_categories
+   - Skips if Content status is COMPLETE
+5. **validate_build** - Dotnet build (pure Python)
+6. **validate_content_check** - Content validator (pure Python)
+7. **sync_docs** - Database sync + implementation log (pure Python)
+8. **generate_report** - Final summary (pure Python)
 
-**Architecture:** Each step uses a single-agent Crew or pure Python. Flow controls routing based on state, not agent autonomy. Expected: 10-15 tool calls total.
+**Architecture (Phase 2 Refactor):**
+- **Pattern:** Each step accesses state via `self.state` (CrewAI Flow pattern)
+- **Before:** 5-agent sequential Crew → 80-100 tool calls → 3-5 min
+- **After:** 8 Flow steps (3 single-agent + 5 pure Python) → 10-15 tool calls → 1-2 min
+- **File size:** 1,013 lines → 364 lines (64% reduction)
+- **Memory:** Temporarily disabled (can cause hangs)
 
-**Key Feature:** The Flow automatically detects partial implementations and routes around completed work. You can re-run the same plan multiple times safely - it will only do what's still needed.
-
-**State Persistence:** If the flow fails mid-run, re-running resumes from last successful step.
+**Key Feature:** Smart conditional routing - skips already-completed work. Re-run same plan multiple times safely.
 
 **Output:** Complete implementation + updated documentation.
 
