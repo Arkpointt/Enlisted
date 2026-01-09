@@ -33,7 +33,7 @@
 - **Managers:** CompanyNeedsManager, EscalationManager, ContentOrchestrator
 - **Integration Points:** How systems connect to content delivery
 - **Code Locations:** `src/Features/` in main Enlisted project
-- **Docs:** `docs/Features/`, `docs/ANEWFEATURE/systems-integration-analysis.md` (example output)
+- **Docs:** `docs/Features/`, `docs/CrewAI_Plans/` (output location)
 
 **Project Constraints:**
 - **Bannerlord Version:** v1.3.13 (verify APIs against `Decompile/` not online docs)
@@ -186,11 +186,11 @@ enlisted-crew analyze-system "CompanyNeedsManager" --subsystem
 - `--all`: Analyze all major systems
 - `--focus`: Analysis focus (integration|efficiency|both) - default: both
 - `--subsystem`: Treat as subsystem (narrower scope)
-- `--output`: Custom output path (default: `docs/ANEWFEATURE/`)
+- `--output`: Custom output path (default: `docs/CrewAI_Plans/`)
 
 ## Output Format
 
-**Location:** `docs/ANEWFEATURE/{system-name}-analysis.md`
+**Location:** `docs/CrewAI_Plans/{system-name}-analysis.md`
 
 **Structure:**
 ```markdown
@@ -289,12 +289,12 @@ Focus: {integration|efficiency|both}
 **Typical Workflow:**
 1. User: `enlisted-crew analyze-system "Supply,Morale"`
 2. SystemAnalysisFlow runs for 3-5 minutes (unattended)
-3. Outputs: `docs/ANEWFEATURE/supply-morale-analysis.md`
+3. Outputs: `docs/CrewAI_Plans/supply-morale-analysis.md`
 4. User reviews analysis document
 5. User picks "Recommendation 2: Add supply-aware opportunity weighting"
 6. User asks Warp Agent to create implementation plan:
-   - User: "Create plan for Recommendation 2 from supply-morale-analysis.md"
-   - Warp Agent reads analysis and creates detailed plan
+   - User: "Create plan for Recommendation 2 from docs/CrewAI_Plans/supply-morale-analysis.md"
+   - Warp Agent reads analysis and creates detailed plan at `docs/CrewAI_Plans/supply-opportunity-weighting.md`
 7. User: `enlisted-crew implement -p docs/CrewAI_Plans/supply-opportunity-weighting.md`
 8. ImplementationFlow executes with single-agent Crews per step
 
@@ -325,7 +325,7 @@ Focus: {integration|efficiency|both}
 **Addition:** Export `SystemAnalysisFlow`, `SystemAnalysisState`
 
 ### 5. Documentation
-**Path:** `docs/CREWAI.md` (update existing)  
+**Path:** `Tools/CrewAI/docs/CREWAI.md` (update existing)  
 **Addition:** Section 4 "Analyze System - Technical Integration Analysis" (~50 lines)
 
 ### 6. Tests
@@ -415,7 +415,7 @@ class SystemAnalysisState(BaseModel):
 - [ ] Analyze 1-5 systems in single execution
 - [ ] Generate comprehensive analysis document (gap + efficiency sections)
 - [ ] Provide prioritized recommendations with effort estimates
-- [ ] Output saved to `docs/ANEWFEATURE/{system-name}-analysis.md`
+- [ ] Output saved to `docs/CrewAI_Plans/{system-name}-analysis.md`
 - [ ] CLI command `enlisted-crew analyze-system` works with all flags
 - [ ] Execution completes in 3-5 minutes
 
@@ -465,8 +465,8 @@ class SystemAnalysisState(BaseModel):
 - [ ] Test each agent task individually
 
 ### Phase 4: Documentation & Testing (~1.5 hours)
-- [ ] Update `docs/CREWAI.md` with System Analysis section
-- [ ] Create example analysis doc in `docs/ANEWFEATURE/`
+- [ ] Update `Tools/CrewAI/docs/CREWAI.md` with System Analysis section
+- [ ] Create example analysis doc in `docs/CrewAI_Plans/`
 - [ ] Write basic flow execution test
 - [ ] Write state transition test
 - [ ] Write output format validation test
