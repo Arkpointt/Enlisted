@@ -306,9 +306,13 @@ Create JSON content from plan. Only create what's MISSING.
         print("-"*60)
         
         sync_result = sync_content_from_files.run()
+        
+        # Extract feature name from plan path
+        feature_name = Path(self.state.plan_path).stem.replace("-", " ").replace("_", " ").title()
+        
         record_result = record_implementation.run(
-            plan_path=self.state.plan_path,
-            status="complete"
+            feature_name=feature_name,
+            plan_path=self.state.plan_path
         )
         
         self.state.docs_output = f"{sync_result}\n{record_result}"

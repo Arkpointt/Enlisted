@@ -500,7 +500,7 @@ def lookup_api_pattern(api_name: str) -> str:
 @tool("record_implementation")
 def record_implementation(
     feature_name: str,
-    plan_file: Optional[str] = None,
+    plan_path: Optional[str] = None,
     files_added: Optional[str] = None,
     files_modified: Optional[str] = None,
     content_ids: Optional[str] = None,
@@ -511,7 +511,7 @@ def record_implementation(
     
     Args:
         feature_name: Name of the feature implemented
-        plan_file: Path to planning document (optional)
+        plan_path: Path to planning document (optional)
         files_added: Comma-separated list of new files (optional)
         files_modified: Comma-separated list of modified files (optional)
         content_ids: Comma-separated list of event/decision IDs (optional)
@@ -523,7 +523,7 @@ def record_implementation(
     Example:
         result = record_implementation(
             feature_name="Supply Pressure Arc",
-            plan_file="docs/CrewAI_Plans/supply-pressure-arc.md",
+            plan_path="docs/CrewAI_Plans/supply-pressure-arc.md",
             content_ids="supply_low_t1,supply_low_t2,supply_low_t3"
         )
     """
@@ -540,7 +540,7 @@ def record_implementation(
             VALUES (?, ?, ?, 'crewai', ?, ?, ?, ?)
         """, (
             feature_name,
-            plan_file,
+            plan_path,
             datetime.now().isoformat(),
             files_added,
             files_modified,
