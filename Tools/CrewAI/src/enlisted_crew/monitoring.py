@@ -591,14 +591,16 @@ def print_cost_report(crew_name: Optional[str] = None):
                 filter_params = [result[0], result[1] or datetime.now().isoformat()]
                 print(f"Filtered by crew: {crew_name}\n")
         
-        # Total costs by model
+        # Total costs by model (with cache metrics)
         query = f"""
             SELECT 
                 model,
                 COUNT(*) as total_calls,
                 SUM(input_tokens) as total_input,
                 SUM(output_tokens) as total_output,
-                SUM(cost_usd) as total_cost
+                SUM(COALESCE(cached_tokens, 0)) as total_cached,
+                SUM(cost_usd) as total_cost,
+                SUM(COALESCE(cache_savings_usd, 0)) as total_savings
             FROM llm_costs
             {timestamp_filter}
             GROUP BY model
@@ -618,23 +620,44 @@ def print_cost_report(crew_name: Optional[str] = None):
         total_calls = 0
         total_input = 0
         total_output = 0
+        total_cached = 0
+        total_savings = 0
         
         for row in results:
-            model, calls, input_tokens, output_tokens, cost = row
+            model, calls, input_tokens, output_tokens, cached_tokens, cost, savings = row
             total_cost += cost
             total_calls += calls
             total_input += input_tokens
             total_output += output_tokens
+            total_cached += cached_tokens
+            total_savings += savings
             
-            print(f"  {model:20} | Calls: {calls:4} | In: {input_tokens:8,} | Out: {output_tokens:8,} | ${cost:7.2f}")
+            # Calculate cache hit rate for this model
+            cache_pct = (cached_tokens / input_tokens * 100) if input_tokens > 0 else 0
+            
+            print(f"  {model:20} | Calls: {calls:4} | In: {input_tokens:8,} ({cached_tokens:7,} cached) | Out: {output_tokens:8,} | ${cost:7.2f}")
         
         print("-" * 70)
-        print(f"  {'TOTAL':20} | Calls: {total_calls:4} | In: {total_input:8,} | Out: {total_output:8,} | ${total_cost:7.2f}")
+        
+        # Calculate overall cache hit rate
+        overall_cache_pct = (total_cached / total_input * 100) if total_input > 0 else 0
+        full_cost = total_cost + total_savings
+        savings_pct = (total_savings / full_cost * 100) if full_cost > 0 else 0
+        
+        print(f"  {'TOTAL':20} | Calls: {total_calls:4} | In: {total_input:8,} ({total_cached:7,} cached, {overall_cache_pct:.0f}%) | Out: {total_output:8,} | ${total_cost:7.2f}")
+        
+        # Show cache savings if any
+        if total_savings > 0:
+            print()
+            print(f"  Cache Savings: ${total_savings:.2f} ({savings_pct:.0f}% cost reduction)")
+            print(f"  Full Cost (no cache): ${full_cost:.2f}")
+        
         print()
         
-        # Most expensive individual calls
+        # Most expensive individual calls (with cache info)
         query = f"""
-            SELECT timestamp, model, input_tokens, output_tokens, cost_usd
+            SELECT timestamp, model, input_tokens, output_tokens, 
+                   COALESCE(cached_tokens, 0) as cached_tokens, cost_usd
             FROM llm_costs
             {timestamp_filter}
             ORDER BY cost_usd DESC
@@ -647,11 +670,17 @@ def print_cost_report(crew_name: Optional[str] = None):
             print("\nMost Expensive LLM Calls:")
             print("-" * 70)
             for row in expensive_calls:
-                timestamp, model, input_tokens, output_tokens, cost = row
+                timestamp, model, input_tokens, output_tokens, cached_tokens, cost = row
                 # Format timestamp
                 dt = datetime.fromisoformat(timestamp)
                 time_str = dt.strftime('%Y-%m-%d %H:%M:%S')
-                print(f"  {time_str} | {model:15} | {input_tokens:6,}in + {output_tokens:6,}out = ${cost:.4f}")
+                
+                # Show cache info if present
+                if cached_tokens > 0:
+                    cache_pct = (cached_tokens / input_tokens * 100) if input_tokens > 0 else 0
+                    print(f"  {time_str} | {model:15} | {input_tokens:6,}in ({cached_tokens:5,} cached, {cache_pct:.0f}%) + {output_tokens:6,}out = ${cost:.4f}")
+                else:
+                    print(f"  {time_str} | {model:15} | {input_tokens:6,}in + {output_tokens:6,}out = ${cost:.4f}")
         
         # Daily cost summary (if we have multiple days of data)
         query = f"""

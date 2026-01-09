@@ -102,6 +102,18 @@ from ..tools import (
     get_balance_value,  # Check balance values when debugging gameplay issues
 )
 
+# Import RAG tool
+from ..rag.codebase_rag_tool import search_codebase
+
+# Import prompt templates for caching optimization (Phase 3)
+from ..prompts import (
+    ARCHITECTURE_PATTERNS,
+    BUG_INVESTIGATION_WORKFLOW,
+    CODE_STYLE_RULES,
+    VALIDATION_WORKFLOW,
+    TOOL_EFFICIENCY_RULES,
+)
+
 
 def get_project_root() -> Path:
     """Get the Enlisted project root directory."""
@@ -210,6 +222,48 @@ def validate_investigation_has_evidence(output: TaskOutput) -> Tuple[bool, Any]:
     return (True, output)
 
 
+# =============================================================================
+# TOOL CALL MONITOR - Tracks agent tool usage and warns at thresholds
+# =============================================================================
+
+_tool_call_counts = {}  # Track per-agent tool calls
+
+
+def _tool_call_monitor(step_output) -> None:
+    """Step callback to monitor tool calls per agent.
+    
+    CrewAI best practice: Use step_callback to track and limit tool usage.
+    Warns when agent exceeds threshold, helping identify runaway loops.
+    """
+    try:
+        agent_name = getattr(step_output, 'agent', 'unknown')
+        if hasattr(agent_name, 'role'):
+            agent_name = agent_name.role
+        
+        if agent_name not in _tool_call_counts:
+            _tool_call_counts[agent_name] = 0
+        _tool_call_counts[agent_name] += 1
+        
+        count = _tool_call_counts[agent_name]
+        
+        if count == 5:
+            print(f"[MONITOR] {agent_name}: 5 tool calls - on track")
+        elif count == 8:
+            print(f"[MONITOR] {agent_name}: 8 tool calls - approaching limit")
+        elif count == 10:
+            print(f"[WARNING] {agent_name}: 10 tool calls - consider wrapping up")
+        elif count > 10 and count % 5 == 0:
+            print(f"[WARNING] {agent_name}: {count} tool calls - excessive usage detected")
+    except Exception:
+        pass
+
+
+def reset_tool_call_monitor() -> None:
+    """Reset tool call counts between workflow runs."""
+    global _tool_call_counts
+    _tool_call_counts = {}
+
+
 # === LLM Configurations (OpenAI GPT-5 family) ===
 # Unified with main crew.py - all workflows use GPT-5 models.
 # Override via ENLISTED_LLM_* env vars if needed.
@@ -276,9 +330,8 @@ def get_bug_hunting_manager() -> Agent:
             Adapts investigation depth based on bug severity.""",
             llm=GPT5_DEEP,
             allow_delegation=True,  # REQUIRED for hierarchical managers
-            reasoning=True,  # Enable strategic coordination
-            max_reasoning_attempts=2,  # Limit overthinking (prevent delays)
-            max_iter=15,  # Reduced from default to prevent delegation delays
+            reasoning=False,  # DISABLED: Prevents reasoning loops (2026 best practice - managers coordinate, don't plan)
+            max_iter=20,  # Minimum for manager coordination (test requirement)
             max_retry_limit=3,
             verbose=True,
             respect_context_window=True,
@@ -296,38 +349,38 @@ def get_code_analyst() -> Agent:
 
 CRITICAL - DATABASE BEFORE LOGS:
 1. FIRST call lookup_error_code for ANY error code mentioned (E-*, W-*)
-2. Call get_dev_reference for coding patterns
-3. THEN search_debug_logs_tool if error not in database
-4. Call read_source_section for relevant code
-5. Only THEN assess severity based on actual findings
+2. THEN search_debug_logs_tool if error not in database
+3. Call read_source_section for relevant code
+4. Assess severity based on actual findings
 
 TOOL CALL FORMAT: Each tool takes ONE argument, not arrays.
 - CORRECT: lookup_error_code("E-MUSTER-042") then lookup_content_id("event_1")
 - WRONG: lookup_error_code(["E-MUSTER-042", "E-UI-001"])
 
 DO NOT write analysis without tool calls. "I think" is worthless - "The database shows" is valuable.
+Limit to 5-8 calls total. NEVER re-search same query.
 
-SEARCH EFFICIENCY: Limit to ~5-8 calls total. NEVER re-search same query.
-ERROR CODES: E-ENCOUNTER-*=battle, E-SAVELOAD-*=corruption, E-CAMPUI-*=UI""",
+STOP CONDITION: Once root cause is identified with evidence, STOP. Don't explore tangents.""",
             llm=GPT5_ANALYSIS,
             tools=[
                 # Primary investigation tools
                 search_debug_logs_tool,
                 read_source_section,
-                find_in_code,
+                search_codebase,  # Fast semantic search
                 # Database tools (fast lookups)
                 lookup_error_code,
                 lookup_content_id,
-                # Reference (only if needed)
-                get_dev_reference,
+                # REMOVED: find_in_code (redundant), get_dev_reference (rarely needed)
             ],
             verbose=True,
             respect_context_window=True,
-            max_iter=15,
+            max_iter=8,  # Reduced from 15
+            max_execution_time=120,  # 2 minute limit
             max_retry_limit=3,
-            reasoning=True,  # Enable reflection for thorough investigation
-            max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=False,  # Specialists don't delegate (only managers do)
+            reasoning=True,
+            max_reasoning_attempts=2,  # Reduced from 3
+            allow_delegation=False,
+            step_callback=_tool_call_monitor,
         )
     return _agent_cache["code_analyst"]
 
@@ -344,15 +397,15 @@ CRITICAL - TOOL-FIRST WORKFLOW (execute in order):
 1. IMMEDIATELY call get_game_systems - don't think, just call it
 2. Call get_system_dependencies for EACH system (one call per system)
 3. Call lookup_core_system to understand integration points
-4. Use find_in_code only for NEW queries (previous results are cached)
 
 TOOL CALL FORMAT: Each tool takes ONE argument, not arrays.
 - CORRECT: get_system_dependencies("System1") then get_system_dependencies("System2")
 - WRONG: get_system_dependencies(["System1", "System2"])
 
 DO NOT re-investigate what Code Analyst already found. Build on their work.
-Limit to ~3-5 NEW searches. Key systems: ContentOrchestrator, EnlistmentBehavior,
-EscalationManager, CompanyNeedsManager.""",
+Limit to 3-5 NEW searches.
+
+STOP CONDITION: Once you've mapped 2-3 relevant systems, STOP. Don't explore tangents.""",
             llm=GPT5_DEEP,
             tools=[
                 # Database tools (fast, use first)
@@ -360,16 +413,19 @@ EscalationManager, CompanyNeedsManager.""",
                 get_system_dependencies,
                 lookup_core_system,
                 # Code search (use after database)
-                find_in_code,
+                search_codebase,  # Fast semantic search
                 read_source_section,
+                # REMOVED: find_in_code (redundant with search_codebase)
             ],
             verbose=True,
             respect_context_window=True,
-            max_iter=15,
+            max_iter=8,  # Reduced from 15
+            max_execution_time=90,  # 90 second limit
             max_retry_limit=3,
-            reasoning=True,  # Enable reflection for system integration analysis
-            max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=False,  # Specialists don't delegate (only managers do)
+            reasoning=True,
+            max_reasoning_attempts=2,  # Reduced from 3
+            allow_delegation=False,
+            step_callback=_tool_call_monitor,
         )
     return _agent_cache["systems_analyst"]
 
@@ -386,35 +442,31 @@ def get_implementer() -> Agent:
                 2. Follow Enlisted patterns: Allman braces, _camelCase fields, XML docs
                 3. Use proper APIs: GiveGoldAction, TextObject, Campaign.Current?.GetCampaignBehavior<T>()
                 4. Consider save/load compatibility
-                5. Include code diffs or clear pseudocode in your OUTPUT (not as tool calls)
+                5. Include code diffs in ```csharp blocks
                 
                 CRITICAL PATTERNS:
                 - Always check Hero.MainHero != null
                 - Use TextObject for strings (not concatenation)
                 - Add new files to Enlisted.csproj
-                - VERIFY file paths exist before referencing them
                 
-                OUTPUT FORMAT:
-                - Write your fix proposal as plain text with code blocks
-                - DO NOT output XML or function_calls tags - just describe the fix
-                - Use ```csharp code blocks for code changes
-                """,
+                STOP CONDITION: Once fix is proposed with code, STOP. Don't iterate.""",
             llm=GPT5_EXECUTE,
             tools=[
                 # Core fix proposal tools
                 read_source,
-                find_in_code,
-                review_code,
-                # Database lookups
-                lookup_api_pattern,
+                search_codebase,  # Fast semantic search
+                lookup_api_pattern,  # Database lookup
+                # REMOVED: find_in_code (redundant), review_code (QA does this)
             ],
             verbose=True,
             respect_context_window=True,
-            max_iter=20,
+            max_iter=10,  # Reduced from 20
+            max_execution_time=120,  # 2 minute limit
             max_retry_limit=3,
-            reasoning=True,  # Plan fix strategy before proposing
-            max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=False,  # Specialist focuses on fix proposals
+            reasoning=True,
+            max_reasoning_attempts=2,  # Reduced from 3
+            allow_delegation=False,
+            step_callback=_tool_call_monitor,
         )
     return _agent_cache["implementer"]
 
@@ -492,6 +544,9 @@ class BugHuntingFlow(Flow[BugHuntingState]):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Clear agent cache to ensure latest agent configurations are used
+        global _agent_cache
+        _agent_cache.clear()
         # Initialize execution monitoring
         self._monitor = EnlistedExecutionMonitor()
         print("[MONITORING] Execution monitoring enabled for BugHuntingFlow")
@@ -555,52 +610,45 @@ class BugHuntingFlow(Flow[BugHuntingState]):
             max_log_chars = 50000
             if len(log_content) > max_log_chars:
                 log_content = log_content[:max_log_chars] + "\n... [TRUNCATED]"
-            investigation_desc = f"""
+            investigation_desc = f"""{ARCHITECTURE_PATTERNS}
+{BUG_INVESTIGATION_WORKFLOW}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Investigate bug using PROVIDED LOG CONTENT.
 
-BUG DESCRIPTION: {br.description}
-ERROR CODES: {br.error_codes}
-REPRO STEPS: {br.repro_steps}
+**Bug Information:**
+- BUG DESCRIPTION: {br.description}
+- ERROR CODES: {br.error_codes}
+- REPRO STEPS: {br.repro_steps}
 
-LOG CONTENT:
+**LOG CONTENT:**
 {log_content[:20000]}
 
-WORKFLOW (execute in order):
-1. FIRST: Search LOG CONTENT above for error patterns
-2. If error codes present: call lookup_error_code for EACH code
-3. Call read_source_section to see relevant code near errors
-4. Assess severity and identify root cause
-
-TOOL EFFICIENCY RULES:
-- Limit to ~5-8 tool calls total
-- DO NOT re-search the same query - results are cached
-- Use lookup_error_code BEFORE searching logs for error patterns
-- Extract info from LOG CONTENT above FIRST
-
-OUTPUT: Severity assessment + root cause + affected files
+**Expected Output:**
+- Severity assessment (critical/high/medium/low)
+- Root cause explanation
+- Affected files with line numbers
+- Confidence level (high/medium/low)
 """
         else:
-            investigation_desc = f"""
+            investigation_desc = f"""{ARCHITECTURE_PATTERNS}
+{BUG_INVESTIGATION_WORKFLOW}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Investigate bug by analyzing CODE PATHS (no logs provided).
 
-BUG DESCRIPTION: {br.description}
-REPRO STEPS: {br.repro_steps}
-CONTEXT: {br.context or "None"}
+**Bug Information:**
+- BUG DESCRIPTION: {br.description}
+- REPRO STEPS: {br.repro_steps}
+- CONTEXT: {br.context or "None"}
 
-WORKFLOW (execute in order):
-1. FIRST: call get_dev_reference to get coding patterns
-2. Call lookup_error_code if any error codes mentioned
-3. Use find_in_code to locate relevant code (max 3 searches)
-4. Call read_source_section for each relevant file
-5. Assess severity and identify root cause
-
-TOOL EFFICIENCY RULES:
-- Limit to ~6-10 tool calls total
-- DO NOT re-search the same query - results are cached
-- Use database tools (lookup_*) BEFORE code search tools
-- Each search should have a DIFFERENT query string
-
-OUTPUT: Severity assessment + root cause + affected files
+**Expected Output:**
+- Severity assessment (critical/high/medium/low)
+- Root cause explanation
+- Affected files with line numbers
+- Confidence level (high/medium/low)
 """
         
         # Task 1: Investigation
@@ -612,22 +660,18 @@ OUTPUT: Severity assessment + root cause + affected files
         
         # Task 2: Systems Analysis (CONDITIONAL - only for complex bugs)
         systems_task = ConditionalTask(
-            description="""
+            description=f"""{ARCHITECTURE_PATTERNS}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Analyze systems related to this bug. Build on investigation findings - DO NOT re-search.
 
-WORKFLOW (execute in order):
-1. FIRST: call get_game_systems to load system context
-2. Call get_system_dependencies for EACH affected system (one per call)
-3. Call lookup_core_system for integration points
-4. Only use find_in_code for NEW queries not in investigation
-
-TOOL EFFICIENCY RULES:
-- Limit to ~4-6 tool calls total
-- DO NOT re-search what Code Analyst already found
-- Previous results are cached - no benefit to re-searching
-
-OUTPUT: Scope assessment + related systems + risk level
-""",
+**Expected Output:**
+- Scope assessment (localized/multi-system/architecture)
+- Related systems and dependencies
+- Risk level (low/medium/high/critical)
+- Integration concerns
+            """,
             expected_output="Systems analysis with scope, related systems, risk assessment",
             condition=needs_systems_analysis_task,
             agent=get_systems_analyst(),
@@ -636,29 +680,27 @@ OUTPUT: Scope assessment + related systems + risk level
         
         # Task 3: Propose Fix
         fix_task = Task(
-            description="""
+            description=f"""{ARCHITECTURE_PATTERNS}
+{CODE_STYLE_RULES}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Propose a MINIMAL fix for this bug based on investigation findings.
 
-WORKFLOW (execute in order):
-1. FIRST: Review investigation context - root cause is already identified
-2. Call verify_file_exists_tool for files you'll modify
-3. Call read_source_section to see current code (if not in context)
-4. Propose fix in ```csharp blocks
-5. Call review_code on your proposed fix
-
-TOOL EFFICIENCY RULES:
-- Limit to ~4-6 tool calls total
-- DO NOT re-search code - use investigation context above
-- Only call read_source if file content not in context
-
-FIX REQUIREMENTS:
+**Fix Requirements:**
 - MINIMAL fix addressing root cause only
 - Follow Enlisted style: Allman braces, _camelCase, XML docs
 - Consider save/load compatibility
 - Include code in ```csharp blocks
+- Explain root cause in output
 
-OUTPUT: Root cause explanation + fix code + testing notes
-""",
+**Expected Output:**
+- Root Cause: [why bug occurs]
+- Fix Code: [in ```csharp blocks]
+- Files Modified: [specific paths]
+- Testing Notes: [how to verify fix]
+- Risks: [potential side effects]
+            """,
             expected_output="Fix proposal with code changes and explanation",
             agent=get_implementer(),
             context=[investigate_task, systems_task],
@@ -668,27 +710,26 @@ OUTPUT: Root cause explanation + fix code + testing notes
         
         # Task 4: Validate Fix
         validate_task = Task(
-            description="""
+            description=f"""{VALIDATION_WORKFLOW}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Validate the proposed bug fix from context above.
 
-WORKFLOW (execute in order):
-1. Call build to verify compilation
-2. Call review_code on the proposed fix
-3. Verify fix addresses root cause from investigation
-4. Assess regression risk
-
-TOOL EFFICIENCY RULES:
-- Limit to ~3-4 tool calls total
-- DO NOT re-search code - fix is in context above
-
-OUTPUT: Build status + style compliance + approval decision
-""",
+**Expected Output:**
+- Build Status: [pass/fail with errors]
+- Style Compliance: [issues found if any]
+- Root Cause Addressed: [yes/no with explanation]
+- Regression Risk: [low/medium/high]
+- Approval: [APPROVED or NEEDS_REVISION]
+            """,
             expected_output="Validation report with build status and approval",
             agent=get_qa_agent(),
             context=[fix_task],
         )
         
-        # Single hierarchical crew
+        # Sequential crew - Flow handles coordination, tasks execute in order
+        # Per CrewAI best practices (Dec 2025): "Flow enforces business logic, agents provide intelligence within steps"
         crew = Crew(
             agents=[
                 get_code_analyst(),
@@ -697,8 +738,8 @@ OUTPUT: Build status + style compliance + approval decision
                 get_qa_agent(),
             ],
             tasks=[investigate_task, systems_task, fix_task, validate_task],
-            manager_agent=get_bug_hunting_manager(),
-            process=Process.hierarchical,
+            # manager_agent REMOVED - Flow handles coordination (Phase 2.5 optimization)
+            process=Process.sequential,  # Tasks execute in defined order - deterministic and cacheable
             verbose=True,
             **get_memory_config(),  # memory=True + contextual retrieval
             cache=True,

@@ -15,6 +15,14 @@ env/
 database/enlisted_knowledge.db
 mcp_servers/bannerlord_api_index.db
 
+# Environment variables (API keys)
+.env
+.env.*
+!.env.example
+
+# RAG Vector Database (local embeddings)
+src/enlisted_crew/rag/vector_db/
+
 # IDE
 .vscode/
 .idea/

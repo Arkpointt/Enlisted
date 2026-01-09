@@ -497,7 +497,14 @@ def rerank_results(
         client = cohere.ClientV2(api_key=cohere_key)
         
         # Extract just the content strings for reranking
-        documents = [content for content, _ in results]
+        # Filter out empty/whitespace-only documents to prevent API errors
+        valid_results = [(content, score) for content, score in results if content and content.strip()]
+        
+        if not valid_results:
+            print("[MEMORY] No valid documents to rerank, returning empty list")
+            return []
+        
+        documents = [content for content, _ in valid_results]
         
         # Call Cohere rerank API
         response = client.rerank(
@@ -668,22 +675,26 @@ def get_contextual_short_term_memory():
                 super().__init__(*args, **kwargs)
                 self._bm25_index = get_bm25_index("short_term")
             
-            def save(self, value, metadata=None, agent=None):
-                """Save with contextual retrieval pipeline."""
+            def save(self, value, metadata=None):
+                """Save with contextual retrieval pipeline.
+                
+                Note: chromadb 1.4.0+ removed 'agent' parameter from save().
+                Agent info is extracted from metadata instead.
+                """
                 if not isinstance(value, str):
-                    return super().save(value, metadata, agent)
+                    return super().save(value, metadata)
                 
                 token_count = estimate_tokens(value)
                 
                 # If under limit, use default behavior
                 if token_count <= EMBEDDING_TOKEN_LIMIT - 500:
-                    return super().save(value, metadata, agent)
+                    return super().save(value, metadata)
                 
                 print(f"[MEMORY] Content exceeds limit ({token_count} tokens), applying contextual chunking...")
                 
-                # Extract metadata
-                flow_name = getattr(agent, 'flow_name', None) if agent else None
-                agent_name = getattr(agent, 'role', 'unknown') if agent else 'unknown'
+                # Extract metadata from dict (agent parameter no longer passed in chromadb 1.4.0+)
+                flow_name = metadata.get('flow_name') if metadata else None
+                agent_name = metadata.get('agent', 'unknown') if metadata else 'unknown'
                 task_desc = metadata.get('task', '') if metadata else ''
                 
                 chunk_metadata = {
@@ -708,7 +719,7 @@ def get_contextual_short_term_memory():
                     
                     # Save contextualized version to vector DB
                     contextualized = f"{context_prefix}\n\n{chunk['content']}"
-                    super().save(contextualized, metadata, agent)
+                    super().save(contextualized, metadata)
                 
                 print(f"[MEMORY] Contextual chunking complete: {len(chunks)} chunks stored")
                 return memory_id
@@ -789,21 +800,25 @@ def get_contextual_entity_memory():
                 super().__init__(*args, **kwargs)
                 self._bm25_index = get_bm25_index("entity")
             
-            def save(self, value, metadata=None, agent=None):
-                """Save with contextual retrieval pipeline."""
+            def save(self, value, metadata=None):
+                """Save with contextual retrieval pipeline.
+                
+                Note: chromadb 1.4.0+ removed 'agent' parameter from save().
+                Agent info is extracted from metadata instead.
+                """
                 if not isinstance(value, str):
-                    return super().save(value, metadata, agent)
+                    return super().save(value, metadata)
                 
                 token_count = estimate_tokens(value)
                 
                 if token_count <= EMBEDDING_TOKEN_LIMIT - 500:
-                    return super().save(value, metadata, agent)
+                    return super().save(value, metadata)
                 
                 print(f"[MEMORY] Entity exceeds limit ({token_count} tokens), applying contextual chunking...")
                 
-                # Extract metadata
-                flow_name = getattr(agent, 'flow_name', None) if agent else None
-                agent_name = getattr(agent, 'role', 'unknown') if agent else 'unknown'
+                # Extract metadata from dict (agent parameter no longer passed in chromadb 1.4.0+)
+                flow_name = metadata.get('flow_name') if metadata else None
+                agent_name = metadata.get('agent', 'unknown') if metadata else 'unknown'
                 task_desc = metadata.get('task', '') if metadata else ''
                 
                 chunk_metadata = {
@@ -819,7 +834,7 @@ def get_contextual_entity_memory():
                     context_prefix = contextualize_chunk(chunk, value)
                     store_chunk_in_sql(chunk, memory_id, "entity", context_prefix)
                     contextualized = f"{context_prefix}\n\n{chunk['content']}"
-                    super().save(contextualized, metadata, agent)
+                    super().save(contextualized, metadata)
                 
                 print(f"[MEMORY] Entity chunking complete: {len(chunks)} chunks stored")
                 return memory_id

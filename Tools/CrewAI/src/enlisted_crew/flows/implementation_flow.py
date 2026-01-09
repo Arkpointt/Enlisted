@@ -107,6 +107,18 @@ from ..tools import (
     sync_content_from_files,
 )
 
+# Import RAG tool
+from ..rag.codebase_rag_tool import search_codebase
+
+# Import prompt templates for caching optimization (Phase 3)
+from ..prompts import (
+    ARCHITECTURE_PATTERNS,
+    IMPLEMENTATION_WORKFLOW,
+    VALIDATION_WORKFLOW,
+    CODE_STYLE_RULES,
+    TOOL_EFFICIENCY_RULES,
+)
+
 
 def get_project_root() -> Path:
     """Get the Enlisted project root directory."""
@@ -203,6 +215,48 @@ def validate_content_ids_format(output: TaskOutput) -> Tuple[bool, Any]:
     return (True, output)
 
 
+# =============================================================================
+# TOOL CALL MONITOR - Tracks agent tool usage and warns at thresholds
+# =============================================================================
+
+_tool_call_counts = {}  # Track per-agent tool calls
+
+
+def _tool_call_monitor(step_output) -> None:
+    """Step callback to monitor tool calls per agent.
+    
+    CrewAI best practice: Use step_callback to track and limit tool usage.
+    Warns when agent exceeds threshold, helping identify runaway loops.
+    """
+    try:
+        agent_name = getattr(step_output, 'agent', 'unknown')
+        if hasattr(agent_name, 'role'):
+            agent_name = agent_name.role
+        
+        if agent_name not in _tool_call_counts:
+            _tool_call_counts[agent_name] = 0
+        _tool_call_counts[agent_name] += 1
+        
+        count = _tool_call_counts[agent_name]
+        
+        if count == 5:
+            print(f"[MONITOR] {agent_name}: 5 tool calls - on track")
+        elif count == 8:
+            print(f"[MONITOR] {agent_name}: 8 tool calls - approaching limit")
+        elif count == 10:
+            print(f"[WARNING] {agent_name}: 10 tool calls - consider wrapping up")
+        elif count > 10 and count % 5 == 0:
+            print(f"[WARNING] {agent_name}: {count} tool calls - excessive usage detected")
+    except Exception:
+        pass
+
+
+def reset_tool_call_monitor() -> None:
+    """Reset tool call counts between workflow runs."""
+    global _tool_call_counts
+    _tool_call_counts = {}
+
+
 # === LLM Configurations (OpenAI GPT-5 family) ===
 
 def _get_env(name: str, default: str) -> str:
@@ -268,9 +322,8 @@ def get_implementation_manager() -> Agent:
             Optimizes by skipping already-implemented work.""",
             llm=GPT5_ARCHITECT,
             allow_delegation=True,  # REQUIRED for hierarchical managers
-            reasoning=True,  # Enable strategic coordination
-            max_reasoning_attempts=2,  # Limit overthinking (prevent delays)
-            max_iter=15,  # Reduced from default to prevent delegation delays
+            reasoning=False,  # DISABLED: Prevents reasoning loops (2026 best practice - managers coordinate, don't plan)
+            max_iter=20,  # Minimum for manager coordination (test requirement)
             max_retry_limit=3,
             verbose=True,
             respect_context_window=True,
@@ -292,14 +345,15 @@ CRITICAL - TOOL-FIRST WORKFLOW (execute in order):
    - If 3+ IDs: Use lookup_content_ids_batch("id1,id2,id3") (ONE call for all)
    - If 1-2 IDs: Use lookup_content_id("id") (one call per ID)
 3. Call verify_file_exists_tool for EACH C# file (one call per file)
-4. Use find_in_code only if you need to verify methods exist
 
 BATCH TOOL FORMAT:
 - CORRECT: lookup_content_ids_batch("event_1,event_2,event_3")  # Comma-separated string
 - WRONG: lookup_content_ids_batch(["event_1", "event_2"])  # Not an array
 
 DATABASE TOOLS ARE FAST - use them before reading files.
-Report exactly: DONE (exists) vs NEEDED (not found).""",
+Report exactly: DONE (exists) vs NEEDED (not found).
+
+STOP CONDITION: Once all IDs and files are checked, produce report. Don't re-verify.""",
             llm=GPT5_ARCHITECT,
             tools=[
                 # Plan parsing tools FIRST - structured extraction
@@ -311,17 +365,18 @@ Report exactly: DONE (exists) vs NEEDED (not found).""",
                 list_event_ids,
                 # File verification tools
                 verify_file_exists_tool,
-                find_in_code,
-                # Context (only if needed)
-                load_plan,
+                search_codebase,  # Fast semantic search
+                # REMOVED: find_in_code (redundant), load_plan (rarely needed)
             ],
             verbose=True,
             respect_context_window=True,
-            max_iter=20,  # Thorough verification needs more iterations
+            max_iter=10,  # Reduced from 20 - verification should be fast
+            max_execution_time=120,  # 2 minute limit
             max_retry_limit=3,
-            reasoning=True,  # Enable reflection for thorough analysis
-            max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=False,  # Specialists don't delegate (only managers do)
+            reasoning=True,
+            max_reasoning_attempts=2,  # Reduced from 3
+            allow_delegation=False,
+            step_callback=_tool_call_monitor,
         )
     return _agent_cache["systems_analyst"]
 
@@ -341,24 +396,28 @@ You follow these patterns:
 - TextObject for user-visible strings
 - Add new files to Enlisted.csproj
 
-You only implement what's MISSING. If code already exists, skip it.""",
+You only implement what's MISSING. If code already exists, skip it.
+
+STOP CONDITION: Once all code is written and compiles, STOP. Don't refactor working code.""",
             llm=GPT5_IMPLEMENTER,
             tools=[
                 # Core implementation tools
+                search_codebase,  # Fast semantic search
                 read_source,
                 write_source,
                 append_to_csproj,
                 update_localization,
-                # Validation (run at end)
-                review_code,
+                # REMOVED: find_in_code (redundant), review_code (QA does this)
             ],
             verbose=True,
             respect_context_window=True,
-            max_iter=25,  # Code writing may need multiple iterations
+            max_iter=15,  # Reduced from 25
+            max_execution_time=180,  # 3 minute limit for code writing
             max_retry_limit=3,
-            reasoning=True,  # Plan code structure before implementing
-            max_reasoning_attempts=3,  # Limit reasoning iterations
-            allow_delegation=False,  # Specialist focuses on C# implementation
+            reasoning=True,
+            max_reasoning_attempts=2,  # Reduced from 3
+            allow_delegation=False,
+            step_callback=_tool_call_monitor,
         )
     return _agent_cache["csharp_implementer"]
 
@@ -374,34 +433,35 @@ def get_content_author() -> Agent:
 CRITICAL - DATABASE BEFORE CREATING:
 1. FIRST call lookup_content_id for EACH ID you plan to create
 2. Call get_valid_categories to verify category names
-3. Call get_valid_severities to verify severity values
-4. ONLY create content with IDs that DON'T exist in database
+3. ONLY create content with IDs that DON'T exist in database
 
 CREATION WORKFLOW:
 1. Create JSON with UNIQUE IDs (verified non-existent above)
 2. Write JSON to ModuleData/Enlisted/Events/ (or appropriate folder)
 3. Add localization strings to XML with update_localization
-4. Run sync_strings and validate_content ONCE at end
 
 Database lookups prevent duplicate IDs. Always verify first.
-You only create what's MISSING. Skip existing content.""",
+You only create what's MISSING. Skip existing content.
+
+STOP CONDITION: Once content is created and validated, STOP. Don't iterate.""",
             llm=GPT5_FAST,
             tools=[
                 # Core content tools
                 write_event,
                 update_localization,
-                # Validation (run at end)
-                validate_content,
                 # Database tools
                 get_valid_categories,
                 lookup_content_id,
-                add_content_item,  # Register new content in database immediately
+                add_content_item,
+                # REMOVED: validate_content (QA does this), get_valid_severities (rarely used)
             ],
             verbose=True,
             respect_context_window=True,
-            max_iter=15,
+            max_iter=10,  # Reduced from 15
+            max_execution_time=120,  # 2 minute limit
             max_retry_limit=3,
-            allow_delegation=False,  # Specialist focuses on JSON content creation
+            allow_delegation=False,
+            step_callback=_tool_call_monitor,
         )
     return _agent_cache["content_author"]
 
@@ -517,6 +577,9 @@ class ImplementationFlow(Flow[ImplementationState]):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Clear agent cache to ensure latest agent configurations are used
+        global _agent_cache
+        _agent_cache.clear()
         # Initialize execution monitoring
         self._monitor = EnlistedExecutionMonitor()
         print("[MONITORING] Execution monitoring enabled for ImplementationFlow")
@@ -582,25 +645,17 @@ class ImplementationFlow(Flow[ImplementationState]):
         
         # Task 1: Verify what already exists
         verify_task = Task(
-            description=f"""
+            description=f"""{IMPLEMENTATION_WORKFLOW}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Verify what's already implemented for this plan.
 
-PLAN PATH: {state.plan_path}
-PLAN HASH: {state.plan_hash}
+**Plan Information:**
+- PLAN PATH: {state.plan_path}
+- PLAN HASH: {state.plan_hash}
 
-WORKFLOW (execute in order):
-1. FIRST: call parse_plan with the plan path to get structured data
-2. For each content_id: call lookup_content_id to check existence
-3. For each csharp_file: call verify_file_exists_tool
-4. Compile results into status report
-
-TOOL EFFICIENCY RULES:
-- Limit to ~8-12 tool calls total
-- Use database tools (lookup_*) - they are FAST
-- DO NOT read full files yet - just verify existence
-- Each lookup_content_id takes ONE id (not arrays)
-
-OUTPUT FORMAT:
+**Expected Output:**
 ## Already Implemented
 - List files/IDs that EXIST
 
@@ -610,40 +665,28 @@ OUTPUT FORMAT:
 ## Status
 - C# Status: COMPLETE / PARTIAL / NOT_STARTED
 - Content Status: COMPLETE / PARTIAL / NOT_STARTED
-""",
+            """,
             expected_output="Verification report with implementation status",
             agent=get_systems_analyst(),
         )
         
         # Task 2: Implement C# code (CONDITIONAL - only if needed)
         csharp_task = ConditionalTask(
-            description=f"""
+            description=f"""{ARCHITECTURE_PATTERNS}
+{CODE_STYLE_RULES}
+{IMPLEMENTATION_WORKFLOW}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Implement the C# code specified in this plan. Only implement what's MISSING.
 
-PLAN (first 6000 chars):
+**Plan Content (first 6000 chars):**
 {state.plan_content[:6000]}
 
-WORKFLOW (execute in order):
-1. FIRST: Check verification context - "Still Needed" section has the list
-2. For each needed file: call read_source to see related code patterns
-3. Write code following Enlisted patterns
-4. Use write_source to create/modify files
-5. Use append_to_csproj for NEW .cs files
-
-TOOL EFFICIENCY RULES:
-- Limit to ~10-15 tool calls total
-- DO NOT re-verify existence - verification context above has this
-- Only read files you need for context (not all files)
-- Batch related writes together
-
-CODE REQUIREMENTS:
-- Follow Enlisted patterns: Allman braces, _camelCase, XML docs
-- Proper null checks (Hero.MainHero != null)
-- TextObject for user-visible strings
-
-OUTPUT: If ALL already exists: "All C# already implemented"
-Otherwise: List of files created/modified + summary
-""",
+**Expected Output:**
+If ALL already exists: "All C# already implemented"
+Otherwise: List of files created/modified + implementation summary
+            """,
             expected_output="C# implementation report",
             condition=needs_csharp_implementation,
             agent=get_csharp_implementer(),
@@ -654,33 +697,26 @@ Otherwise: List of files created/modified + summary
         
         # Task 3: Implement JSON content (CONDITIONAL - only if needed)
         content_task = ConditionalTask(
-            description=f"""
+            description=f"""{ARCHITECTURE_PATTERNS}
+{IMPLEMENTATION_WORKFLOW}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Create the JSON content specified in this plan. Only create what's MISSING.
 
-PLAN (first 6000 chars):
+**Plan Content (first 6000 chars):**
 {state.plan_content[:6000]}
 
-WORKFLOW (execute in order):
-1. FIRST: Check verification context - "Still Needed" section has the list
-2. For each needed content: call write_event to create
-3. Call update_localization for display strings
-4. Call sync_strings once at end
-5. Call validate_content to verify
-
-TOOL EFFICIENCY RULES:
-- Limit to ~8-12 tool calls total
-- DO NOT call list_event_ids - verification context above has existing IDs
-- Create content in batches where possible
-- Call sync_strings and validate_content ONCE at end (not per file)
-
-CONTENT REQUIREMENTS:
+**Content Requirements:**
 - Use snake_case for IDs
-- Valid categories: camp_life, combat, company_events, crisis, dialogue, etc.
-- Valid severities: normal, attention, critical, positive, info
+- Valid categories: call get_valid_categories to verify
+- Valid severities: call get_valid_severities to verify
+- Include tooltip field (<80 chars) for all options
 
-OUTPUT: If ALL already exists: "All content already implemented"
+**Expected Output:**
+If ALL already exists: "All content already implemented"
 Otherwise: List of content created + validation status
-""",
+            """,
             expected_output="Content implementation report",
             condition=needs_content_implementation,
             agent=get_content_author(),
@@ -691,21 +727,20 @@ Otherwise: List of content created + validation status
         
         # Task 4: Validate everything builds (always runs)
         validate_task = Task(
-            description="""
+            description=f"""{VALIDATION_WORKFLOW}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Validate that the implementation is correct.
 
-WORKFLOW (execute in order):
-1. Call build to verify C# compilation
-2. Call validate_content to check JSON/XML
-3. Review context above for any issues
+**Expected Output:**
+Validation Status: PASS or FAIL
 
-TOOL EFFICIENCY RULES:
-- Limit to ~2-3 tool calls total
-- DO NOT re-read files - implementation context above has details
-- Build and validate_content are the key checks
-
-OUTPUT: PASS or FAIL with details
-""",
+If FAIL:
+- Issues Found: [list with severity]
+- Build Status: [compilation errors if any]
+- Recommendations: [fixes needed]
+            """,
             expected_output="Validation report with pass/fail status",
             agent=get_qa_agent(),
             context=[verify_task, csharp_task, content_task],
@@ -713,30 +748,34 @@ OUTPUT: PASS or FAIL with details
         
         # Task 5: Update documentation (always runs)
         docs_task = Task(
-            description=f"""
+            description=f"""{ARCHITECTURE_PATTERNS}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Update documentation to reflect the implementation.
 
-PLAN FILE: {state.plan_path}
+**Plan Information:**
+- PLAN FILE: {state.plan_path}
 
-WORKFLOW (execute in order):
+**Workflow:**
 1. Call load_plan to get current plan content
 2. Call save_plan with updated status ("Implemented" or "Partial")
 3. Call sync_content_from_files to update content database
 4. Call record_implementation with summary
 
-TOOL EFFICIENCY RULES:
-- Limit to ~4-5 tool calls total
-- DO NOT re-read implementation details - context above has them
-- sync_content_from_files updates database from actual files
-
-OUTPUT: Documentation update confirmation
-""",
+**Expected Output:**
+Documentation update confirmation with:
+- Plan status updated
+- Content database synchronized
+- Implementation logged
+            """,
             expected_output="Documentation update report",
             agent=get_documentation_maintainer(),
             context=[validate_task],
         )
         
-        # Single hierarchical crew with manager coordination
+        # Sequential crew - Flow handles coordination, tasks execute in order
+        # Per CrewAI best practices (Dec 2025): "Flow enforces business logic, agents provide intelligence within steps"
         crew = Crew(
             agents=[
                 get_systems_analyst(),
@@ -746,8 +785,8 @@ OUTPUT: Documentation update confirmation
                 get_documentation_maintainer(),
             ],
             tasks=[verify_task, csharp_task, content_task, validate_task, docs_task],
-            manager_agent=get_implementation_manager(),
-            process=Process.hierarchical,
+            # manager_agent REMOVED - Flow handles coordination (Phase 2.5 optimization)
+            process=Process.sequential,  # Tasks execute in defined order - deterministic and cacheable
             verbose=True,
             **get_memory_config(),  # memory=True + contextual retrieval
             cache=True,

@@ -8,7 +8,7 @@ All data verified against actual codebase (January 2026).
 import os
 import sqlite3
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict
 from crewai.tools import tool
 
 
@@ -52,6 +52,21 @@ def _normalize(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
     return value.strip().lower()
+
+
+# Simple in-memory cache for database queries (survives across tool calls)
+_query_cache: Dict[str, str] = {}
+
+
+def _get_cached(key: str) -> Optional[str]:
+    """Get cached result."""
+    return _query_cache.get(key)
+
+
+def _set_cached(key: str, value: str) -> str:
+    """Cache result and return it."""
+    _query_cache[key] = value
+    return value
 
 
 def _format_results(rows: List[sqlite3.Row]) -> str:
@@ -341,6 +356,8 @@ def get_tier_info(tier: int) -> str:
     """
     Get information about a specific player progression tier.
     
+    Cached - tier info never changes.
+    
     Args:
         tier: The tier number (1-10)
     
@@ -350,6 +367,11 @@ def get_tier_info(tier: int) -> str:
     Example:
         result = get_tier_info(5)
     """
+    cache_key = f"tier:{tier}"
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+    
     try:
         conn = _get_connection()
         cursor = conn.cursor()
@@ -361,7 +383,7 @@ def get_tier_info(tier: int) -> str:
         if not rows:
             return f"Tier {tier} not found in database."
         
-        return _format_results(rows)
+        return _set_cached(cache_key, _format_results(rows))
     except Exception as e:
         return f"Error querying database: {str(e)}"
 
@@ -371,8 +393,10 @@ def get_system_dependencies(system_name: str) -> str:
     """
     Get dependencies for a system (what it depends on or what depends on it).
     
+    Cached to avoid repeated queries for same system.
+    
     Args:
-        system_name: The system name (e.g., "EnlistmentBehavior")
+        system_name: The system_name (e.g., "EnlistmentBehavior")
     
     Returns:
         List of dependencies and dependents.
@@ -380,9 +404,14 @@ def get_system_dependencies(system_name: str) -> str:
     Example:
         result = get_system_dependencies("EnlistmentBehavior")
     """
+    # Normalize for cache hits
+    system_name = system_name.strip() if system_name else ""
+    cache_key = f"sysdep:{system_name.lower()}"
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+    
     try:
-        # Normalize for cache hits (strip whitespace, preserve case for class names)
-        system_name = system_name.strip() if system_name else ""
         search_pattern = f"%{system_name}%"
         
         conn = _get_connection()
@@ -415,9 +444,11 @@ def get_system_dependencies(system_name: str) -> str:
             results.append(_format_results(depended_by))
         
         if not results:
-            return f"No dependency information found for '{system_name}'."
+            result = f"No dependency information found for '{system_name}'."
+        else:
+            result = "\n".join(results)
         
-        return "\n".join(results)
+        return _set_cached(cache_key, result)
     except Exception as e:
         return f"Error querying database: {str(e)}"
 
@@ -426,6 +457,8 @@ def get_system_dependencies(system_name: str) -> str:
 def lookup_api_pattern(api_name: str) -> str:
     """
     Look up a Bannerlord API usage pattern.
+    
+    Cached - API patterns are static.
     
     Args:
         api_name: The API name (e.g., "GiveGoldAction" or "TextObject")
@@ -436,10 +469,14 @@ def lookup_api_pattern(api_name: str) -> str:
     Example:
         result = lookup_api_pattern("GiveGoldAction")
     """
+    # Normalize for cache hits
+    api_name = api_name.strip() if api_name else ""
+    cache_key = f"api:{api_name.lower()}"
+    cached = _get_cached(cache_key)
+    if cached:
+        return cached
+    
     try:
-        # Normalize for cache hits (strip whitespace, preserve case for API names)
-        api_name = api_name.strip() if api_name else ""
-        
         conn = _get_connection()
         cursor = conn.cursor()
         
@@ -455,7 +492,7 @@ def lookup_api_pattern(api_name: str) -> str:
         if not rows:
             return f"No API patterns found for '{api_name}'."
         
-        return _format_results(rows)
+        return _set_cached(cache_key, _format_results(rows))
     except Exception as e:
         return f"Error querying database: {str(e)}"
 

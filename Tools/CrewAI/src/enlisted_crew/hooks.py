@@ -50,7 +50,9 @@ TOKEN_COSTS = {
 _CURRENT_RUN_COSTS = {
     "total_input_tokens": 0,
     "total_output_tokens": 0,
+    "cached_tokens": 0,
     "total_cost_usd": 0.0,
+    "cache_savings_usd": 0.0,
     "llm_calls": 0,
 }
 
@@ -96,6 +98,7 @@ def track_llm_costs(context):
     Track token usage and costs for every LLM call.
     
     Logs to database and updates running total for current execution.
+    Includes cache hit tracking for OpenAI prompt caching.
     """
     # Extract token usage if available
     usage = getattr(context, "usage", None)
@@ -108,20 +111,37 @@ def track_llm_costs(context):
     if input_tokens == 0 and output_tokens == 0:
         return None
     
+    # Extract cache hit info (OpenAI returns this for cached prompts)
+    cached_tokens = 0
+    prompt_tokens_details = getattr(usage, "prompt_tokens_details", None)
+    if prompt_tokens_details:
+        cached_tokens = getattr(prompt_tokens_details, "cached_tokens", 0)
+    
     # Get model name
     model = getattr(context, "model", "unknown")
     
-    # Calculate cost
-    cost = _estimate_cost(model, input_tokens, output_tokens)
+    # Calculate actual cost (cached tokens get 90% discount)
+    uncached_input_tokens = input_tokens - cached_tokens
+    cost = _estimate_cost(model, uncached_input_tokens, output_tokens)
+    
+    # Calculate savings from cache (what we would have paid without cache)
+    full_cost = _estimate_cost(model, input_tokens, output_tokens)
+    cache_savings = full_cost - cost
     
     # Update running totals
     _CURRENT_RUN_COSTS["total_input_tokens"] += input_tokens
     _CURRENT_RUN_COSTS["total_output_tokens"] += output_tokens
+    _CURRENT_RUN_COSTS["cached_tokens"] += cached_tokens
     _CURRENT_RUN_COSTS["total_cost_usd"] += cost
+    _CURRENT_RUN_COSTS["cache_savings_usd"] += cache_savings
     _CURRENT_RUN_COSTS["llm_calls"] += 1
     
-    # Log to console
-    print(f"      [COST] {model}: {input_tokens} in + {output_tokens} out = ${cost:.4f}")
+    # Log to console with cache info
+    if cached_tokens > 0:
+        cache_pct = (cached_tokens / input_tokens * 100) if input_tokens > 0 else 0
+        print(f"      [COST] {model}: {input_tokens} in ({cached_tokens} cached, {cache_pct:.0f}%) + {output_tokens} out = ${cost:.4f} (saved ${cache_savings:.4f})")
+    else:
+        print(f"      [COST] {model}: {input_tokens} in + {output_tokens} out = ${cost:.4f}")
     
     # Log to database
     try:
@@ -129,7 +149,7 @@ def track_llm_costs(context):
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
             
-            # Ensure table exists
+            # Ensure table exists (with cache tracking columns)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS llm_costs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -137,14 +157,28 @@ def track_llm_costs(context):
                     model TEXT NOT NULL,
                     input_tokens INTEGER NOT NULL,
                     output_tokens INTEGER NOT NULL,
-                    cost_usd REAL NOT NULL
+                    cached_tokens INTEGER DEFAULT 0,
+                    cost_usd REAL NOT NULL,
+                    cache_savings_usd REAL DEFAULT 0.0
                 )
             """)
             
+            # Migrate existing table if needed (add cache columns to old schema)
+            try:
+                cursor.execute("PRAGMA table_info(llm_costs)")
+                columns = [row[1] for row in cursor.fetchall()]
+                
+                if "cached_tokens" not in columns:
+                    cursor.execute("ALTER TABLE llm_costs ADD COLUMN cached_tokens INTEGER DEFAULT 0")
+                if "cache_savings_usd" not in columns:
+                    cursor.execute("ALTER TABLE llm_costs ADD COLUMN cache_savings_usd REAL DEFAULT 0.0")
+            except Exception:
+                pass  # Table didn't exist yet, no migration needed
+            
             cursor.execute("""
-                INSERT INTO llm_costs (timestamp, model, input_tokens, output_tokens, cost_usd)
-                VALUES (?, ?, ?, ?, ?)
-            """, (datetime.now().isoformat(), model, input_tokens, output_tokens, cost))
+                INSERT INTO llm_costs (timestamp, model, input_tokens, output_tokens, cached_tokens, cost_usd, cache_savings_usd)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (datetime.now().isoformat(), model, input_tokens, output_tokens, cached_tokens, cost, cache_savings))
             
             conn.commit()
     except Exception as e:
@@ -168,19 +202,39 @@ def reset_run_costs():
     """Reset cost tracking for a new run."""
     _CURRENT_RUN_COSTS["total_input_tokens"] = 0
     _CURRENT_RUN_COSTS["total_output_tokens"] = 0
+    _CURRENT_RUN_COSTS["cached_tokens"] = 0
     _CURRENT_RUN_COSTS["total_cost_usd"] = 0.0
+    _CURRENT_RUN_COSTS["cache_savings_usd"] = 0.0
     _CURRENT_RUN_COSTS["llm_calls"] = 0
 
 
 def print_run_cost_summary():
-    """Print a formatted summary of costs for the current run."""
+    """Print a formatted summary of costs for the current run with cache hit metrics."""
     print("\n" + "=" * 70)
     print("RUN COST SUMMARY")
     print("=" * 70)
     print(f"Total LLM Calls: {_CURRENT_RUN_COSTS['llm_calls']}")
     print(f"Input Tokens: {_CURRENT_RUN_COSTS['total_input_tokens']:,}")
+    
+    # Cache hit metrics
+    cached = _CURRENT_RUN_COSTS['cached_tokens']
+    total_input = _CURRENT_RUN_COSTS['total_input_tokens']
+    if cached > 0 and total_input > 0:
+        cache_hit_rate = (cached / total_input) * 100
+        print(f"  - Cached: {cached:,} ({cache_hit_rate:.1f}% hit rate)")
+        print(f"  - Uncached: {total_input - cached:,}")
+    
     print(f"Output Tokens: {_CURRENT_RUN_COSTS['total_output_tokens']:,}")
-    print(f"Total Cost: ${_CURRENT_RUN_COSTS['total_cost_usd']:.2f}")
+    print(f"Actual Cost: ${_CURRENT_RUN_COSTS['total_cost_usd']:.2f}")
+    
+    # Show savings if cache was used
+    savings = _CURRENT_RUN_COSTS['cache_savings_usd']
+    if savings > 0:
+        full_cost = _CURRENT_RUN_COSTS['total_cost_usd'] + savings
+        savings_pct = (savings / full_cost * 100) if full_cost > 0 else 0
+        print(f"Cache Savings: ${savings:.2f} ({savings_pct:.0f}% reduction)")
+        print(f"Full Cost (no cache): ${full_cost:.2f}")
+    
     print("=" * 70 + "\n")
 
 

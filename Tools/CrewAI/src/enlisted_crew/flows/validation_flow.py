@@ -44,6 +44,12 @@ from ..tools import (
     review_code,
 )
 
+# Import prompt templates for caching optimization (Phase 3)
+from ..prompts import (
+    VALIDATION_WORKFLOW,
+    TOOL_EFFICIENCY_RULES,
+)
+
 
 def _get_project_root() -> Path:
     """Get the Enlisted project root directory."""
@@ -212,9 +218,8 @@ def get_validation_manager() -> Agent:
             Verifies all validation passes before approval.""",
             llm=GPT5_QA,
             allow_delegation=True,  # REQUIRED for hierarchical managers
-            reasoning=True,  # Enable strategic coordination
-            max_reasoning_attempts=2,  # Limit overthinking (prevent delays)
-            max_iter=15,  # Reduced from default to prevent delegation delays
+            reasoning=False,  # DISABLED: Prevents reasoning loops (2026 best practice - managers coordinate, don't plan)
+            max_iter=20,  # Minimum for manager coordination (test requirement)
             max_retry_limit=3,
             verbose=True,
             respect_context_window=True,
@@ -333,19 +338,19 @@ class ValidationFlow(Flow[ValidationState]):
         
         # Task 1: Content Validation
         content_task = Task(
-            description="""
+            description=f"""{VALIDATION_WORKFLOW}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Validate all JSON content files in the Enlisted mod.
 
-WORKFLOW (execute in order):
-1. Call validate_content tool to run full validation
-2. Report any schema errors, missing fields, or invalid values
-
-TOOL EFFICIENCY RULES:
-- Limit to 1-2 tool calls total
-- validate_content runs ALL checks in one call
-
-OUTPUT: List of validation errors or "All content valid"
-""",
+**Expected Output:**
+- Validation Status: PASS or FAIL
+- If FAIL: List of validation errors with details
+- Missing tooltips: [list if any]
+- Invalid categories: [list if any]
+- Orphaned strings: [list if any]
+            """,
             expected_output="Content validation results with pass/fail",
             agent=get_content_validator(),
             guardrails=[validate_content_check_ran],
@@ -354,19 +359,17 @@ OUTPUT: List of validation errors or "All content valid"
         
         # Task 2: Build Validation
         build_task = Task(
-            description="""
+            description=f"""{VALIDATION_WORKFLOW}
+{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Run dotnet build to verify C# code compiles.
 
-WORKFLOW (execute in order):
-1. Call build tool to run compilation
-2. Report any build errors or warnings
-
-TOOL EFFICIENCY RULES:
-- Limit to 1 tool call total
-- build tool runs full compilation
-
-OUTPUT: Build result (success/failure with errors)
-""",
+**Expected Output:**
+- Build Status: SUCCESS or FAIL
+- If FAIL: Compilation errors with file paths and line numbers
+- Warnings: [list if any]
+            """,
             expected_output="Build validation results with pass/fail",
             agent=get_build_validator(),
             guardrails=[validate_build_output_parsed],
@@ -375,20 +378,24 @@ OUTPUT: Build result (success/failure with errors)
         
         # Task 3: Generate QA Report
         report_task = Task(
-            description="""
+            description=f"""{TOOL_EFFICIENCY_RULES}
+
+=== YOUR TASK ===
 Produce a clear validation report summarizing all checks.
 
-WORKFLOW:
+**Workflow:**
 1. Review content validation results from context
 2. Review build validation results from context
-3. Compile into clear report
+3. Compile into clear, prioritized report
 
-TOOL EFFICIENCY RULES:
-- NO tool calls needed - all data is in context above
-- Just synthesize the report
-
-OUTPUT: Pass/fail status + prioritized list of issues (if any)
-""",
+**Expected Output:**
+- Overall Status: PASS or FAIL
+- Content Validation: [status]
+- Build Validation: [status]
+- Critical Issues: [prioritized list if any]
+- Warnings: [list if any]
+- Recommendations: [next steps if issues found]
+            """,
             expected_output="Final QA report with overall status",
             agent=get_qa_reporter(),
             context=[content_task, build_task],
@@ -396,7 +403,8 @@ OUTPUT: Pass/fail status + prioritized list of issues (if any)
             guardrail_max_retries=2,
         )
         
-        # Single hierarchical crew
+        # Sequential crew - Flow handles coordination, tasks execute in order
+        # Per CrewAI best practices (Dec 2025): "Flow enforces business logic, agents provide intelligence within steps"
         crew = Crew(
             agents=[
                 get_content_validator(),
@@ -404,8 +412,8 @@ OUTPUT: Pass/fail status + prioritized list of issues (if any)
                 get_qa_reporter(),
             ],
             tasks=[content_task, build_task, report_task],
-            manager_agent=get_validation_manager(),
-            process=Process.hierarchical,
+            # manager_agent REMOVED - Flow handles coordination (Phase 2.5 optimization)
+            process=Process.sequential,  # Tasks execute in defined order - deterministic and cacheable
             verbose=True,
             **get_memory_config(),  # memory=True + contextual retrieval
             cache=True,
