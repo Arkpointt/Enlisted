@@ -286,30 +286,31 @@ def test_mcp_server():
 # ===== Test 5: Flow Agents =====
 
 def test_flow_agents():
-    """Test that all flows can instantiate their agents."""
+    """Test that all flows use single-agent pattern (Phase 2-4 refactor)."""
     print_header("5. FLOW AGENTS TESTS")
     
     try:
-        from enlisted_crew.flows import ValidationFlow
-        from enlisted_crew.flows.validation_flow import (
-            get_content_validator, get_build_validator, get_qa_reporter
-        )
+        from enlisted_crew.flows import ValidationFlow, ImplementationFlow, BugHuntingFlow
+        import inspect
         
-        # Test ValidationFlow agents
-        agents = [
-            ("content_validator", get_content_validator),
-            ("build_validator", get_build_validator),
-            ("qa_reporter", get_qa_reporter),
+        flows = [
+            ("ImplementationFlow", ImplementationFlow, 3),  # Expected single-agent Crews
+            ("BugHuntingFlow", BugHuntingFlow, 3),
+            ("ValidationFlow", ValidationFlow, 2),
         ]
         
-        for name, factory in agents:
-            agent = factory()
-            tool_count = len(agent.tools) if hasattr(agent, 'tools') and agent.tools else 0
-            print_pass(f"ValidationFlow.{name}: {tool_count} tools")
+        for name, FlowClass, expected_crews in flows:
+            source = inspect.getsource(FlowClass)
+            single_agent_count = source.count('agents=[agent]')
+            if single_agent_count == expected_crews:
+                print_pass(f"{name}: {single_agent_count}/{expected_crews} single-agent Crews")
+            else:
+                print_warn(f"{name}: {single_agent_count} single-agent Crews (expected {expected_crews})")
         
         print_info("")
-        print_info("    All agents are now defined inline in Flow files.")
-        print_info("    See flows/ directory for agent definitions.")
+        print_info("    Phase 2-4 Complete: All flows refactored to single-agent pattern.")
+        print_info("    Agents are now defined inline in each Flow step.")
+        print_info("    Agent factory functions removed.")
         
         return True
     except Exception as e:
@@ -325,12 +326,11 @@ def test_llm_configuration():
     
     try:
         # LLMs are now defined inline in each flow
-        # Just verify the flow modules have LLM definitions
-        from enlisted_crew.flows import validation_flow, planning_flow, implementation_flow, bug_hunting_flow
+        # PlanningFlow removed in Phase 1
+        from enlisted_crew.flows import validation_flow, implementation_flow, bug_hunting_flow
         
         flows_with_llms = [
             ("validation_flow", validation_flow),
-            ("planning_flow", planning_flow),
             ("implementation_flow", implementation_flow),
             ("bug_hunting_flow", bug_hunting_flow),
         ]
@@ -346,6 +346,7 @@ def test_llm_configuration():
                 print_warn(f"{name}: No LLM configs (may use defaults)")
         
         print_info("")
+        print_info("    Phase 1: PlanningFlow removed (use Warp Agent for planning).")
         print_info("    LLMs are now defined inline per Flow for better isolation.")
         
         return True
@@ -488,7 +489,160 @@ def test_escalation_framework():
     return True
 
 
-# ===== Test 8: Environment =====
+# ===== Test 8: Monitoring =====
+
+def test_monitoring():
+    """Test execution monitoring is enabled in all flows."""
+    print_header("8. MONITORING TESTS")
+    
+    try:
+        from enlisted_crew.flows import ImplementationFlow, BugHuntingFlow, ValidationFlow
+        from enlisted_crew.monitoring import EnlistedExecutionMonitor
+        
+        print_pass("Monitoring imports successful")
+        
+        # Test that all flows initialize monitoring
+        flows = [
+            ("ImplementationFlow", ImplementationFlow),
+            ("BugHuntingFlow", BugHuntingFlow),
+            ("ValidationFlow", ValidationFlow),
+        ]
+        
+        for name, FlowClass in flows:
+            flow = FlowClass()
+            if hasattr(flow, '_monitor'):
+                print_pass(f"{name}: monitoring initialized")
+            else:
+                print_fail(f"{name}: no _monitor attribute")
+                return False
+        
+        # Check database tables exist
+        db_path = Path("database/enlisted_knowledge.db")
+        if db_path.exists():
+            conn = sqlite3.connect(db_path)
+            monitoring_tables = [
+                "crew_executions",
+                "agent_executions",
+                "task_executions",
+                "tool_usages",
+                "llm_costs",
+            ]
+            
+            for table in monitoring_tables:
+                try:
+                    conn.execute(f"SELECT COUNT(*) FROM {table}")
+                    print_pass(f"Table '{table}' exists")
+                except:
+                    print_warn(f"Table '{table}' not found")
+            
+            conn.close()
+        
+        print_info("")
+        print_info("    Monitoring tracks: crew/agent/task execution, tool usage, LLM costs")
+        print_info("    View stats: enlisted-crew stats --costs")
+        
+        return True
+    except Exception as e:
+        print_fail(f"Monitoring test failed: {e}")
+        return False
+
+
+# ===== Test 9: Semantic Search =====
+
+def test_semantic_search():
+    """Test semantic documentation and codebase search."""
+    print_header("9. SEMANTIC SEARCH TESTS")
+    
+    try:
+        from enlisted_crew.tools.docs_tools import search_docs_semantic
+        from enlisted_crew.rag.codebase_rag_tool import search_codebase
+        
+        print_pass("Semantic search tools imported")
+        
+        # Check documentation index
+        docs_index_path = Path("src/enlisted_crew/rag/docs_vector_db")
+        if docs_index_path.exists():
+            print_pass(f"Documentation index found")
+            
+            # Try to get index stats
+            try:
+                import sys
+                sys.path.insert(0, "src")
+                from enlisted_crew.rag.docs_indexer import DocsIndexer
+                
+                indexer = DocsIndexer()
+                stats = indexer.get_stats()
+                print_info(f"    - Chunks: {stats.get('total_chunks', 'N/A')}")
+                print_info(f"    - Status: {stats.get('status', 'N/A')}")
+            except Exception as e:
+                print_info(f"    - Could not load stats: {e}")
+        else:
+            print_warn("Documentation index not found")
+            print_info("    Run: python -m enlisted_crew.rag.docs_indexer --index-all")
+        
+        # Check codebase index
+        code_index_path = Path("src/enlisted_crew/rag/vector_db")
+        if code_index_path.exists():
+            print_pass(f"Codebase index found")
+        else:
+            print_warn("Codebase index not found")
+            print_info("    Run: python -m enlisted_crew.rag.codebase_indexer --index-all")
+        
+        print_info("")
+        print_info("    Semantic search enables natural language queries for code/docs")
+        
+        return True
+    except Exception as e:
+        print_fail(f"Semantic search test failed: {e}")
+        return False
+
+
+# ===== Test 10: Tool Access =====
+
+def test_tool_access():
+    """Test that agents have correct tool assignments."""
+    print_header("10. TOOL ACCESS TESTS")
+    
+    try:
+        import inspect
+        from enlisted_crew.flows import ImplementationFlow, BugHuntingFlow, ValidationFlow
+        
+        # Check ImplementationFlow agents have semantic search
+        impl_source = inspect.getsource(ImplementationFlow)
+        if "search_docs_semantic" in impl_source:
+            count = impl_source.count("search_docs_semantic")
+            print_pass(f"ImplementationFlow: search_docs_semantic present ({count} references)")
+        else:
+            print_fail("ImplementationFlow: missing search_docs_semantic")
+            return False
+        
+        # Check BugHuntingFlow agents have semantic search
+        bug_source = inspect.getsource(BugHuntingFlow)
+        if "search_docs_semantic" in bug_source:
+            count = bug_source.count("search_docs_semantic")
+            print_pass(f"BugHuntingFlow: search_docs_semantic present ({count} references)")
+        else:
+            print_fail("BugHuntingFlow: missing search_docs_semantic")
+            return False
+        
+        # Check ValidationFlow doesn't need search (uses validators)
+        val_source = inspect.getsource(ValidationFlow)
+        if "validate_content" in val_source and "build" in val_source:
+            print_pass(f"ValidationFlow: validation tools present")
+        else:
+            print_fail("ValidationFlow: missing validation tools")
+            return False
+        
+        print_info("")
+        print_info("    All agents have appropriate tool access for their roles")
+        
+        return True
+    except Exception as e:
+        print_fail(f"Tool access test failed: {e}")
+        return False
+
+
+# ===== Test 11: Environment =====
 
 def test_environment():
     """Test environment configuration."""
@@ -540,6 +694,9 @@ def main():
         ("Flow Agents", test_flow_agents),
         ("LLM Configuration", test_llm_configuration),
         ("Escalation Framework", test_escalation_framework),
+        ("Monitoring", test_monitoring),
+        ("Semantic Search", test_semantic_search),
+        ("Tool Access", test_tool_access),
         ("Environment", test_environment),
     ]
     

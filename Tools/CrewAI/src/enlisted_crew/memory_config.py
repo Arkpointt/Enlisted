@@ -1,20 +1,16 @@
-"""Enlisted CrewAI Memory Configuration - Contextual Retrieval System
+"""Enlisted CrewAI Memory Configuration - Simplified for CrewAI 1.8.0+
 
-Provides high-quality memory with chunking, contextualization, hybrid search (BM25 + vector),
-reranking, and FILCO filtering to achieve 67%+ better retrieval than basic RAG.
+Provides memory configuration that works reliably with modern CrewAI versions.
 
-The Problem:
-- Short-Term and Entity memory use embeddings (ChromaDB + RAG)
-- OpenAI embedding models have 8,192 token limit per request
-- Large agent outputs (9,000+ tokens) crash the embedding API
+Previous Issues (Fixed):
+- Custom ContextualRAGStorage was incompatible with CrewAI 1.8.0 RAGStorage API
+- Complex hybrid search pipeline (BM25+Vector+Cohere reranking) caused hangs
+- No timeouts on external API calls
 
-The Solution (Contextual Retrieval + FILCO):
-1. CHUNKING: Split large content at semantic boundaries (500-1000 tokens, 15% overlap)
-2. CONTEXTUALIZATION: LLM generates context prefix for each chunk ("This chunk is from...")
-3. DUAL INDEXING: Store in both vector DB (embeddings) and BM25 (keyword search)
-4. HYBRID RETRIEVAL: Combine vector + BM25 results with Reciprocal Rank Fusion
-5. RERANKING: Final refinement with Cohere/Voyage reranker
-6. FILCO: Filter low-utility spans before passing to LLM (reduces noise, improves faithfulness)
+Current Solution:
+- Use CrewAI's built-in memory with simple embedder config
+- Disable custom storage classes that are incompatible
+- Keep chunking logic for reference but don't use custom storage
 
 Usage:
     from enlisted_crew.memory_config import get_memory_config
@@ -461,20 +457,26 @@ def reciprocal_rank_fusion(
 # COHERE RERANKER
 # =============================================================================
 
+# Timeout for external API calls (prevents hangs)
+COHERE_TIMEOUT_SECONDS = 10.0
+
+
 def rerank_results(
     query: str,
     results: List[Tuple[str, float]],  # (content, score)
-    top_n: int = RERAN_TOP_N
+    top_n: int = RERAN_TOP_N,
+    timeout: float = COHERE_TIMEOUT_SECONDS
 ) -> List[Tuple[str, float]]:
     """Rerank results using Cohere's rerank API.
     
     Provides +18% improvement in retrieval quality on top of hybrid search.
-    Falls back to original results if Cohere API unavailable.
+    Falls back to original results if Cohere API unavailable or times out.
     
     Args:
         query: The search query
         results: List of (content, score) tuples from RRF fusion
         top_n: Number of results to return
+        timeout: Max seconds to wait for Cohere API (default: 10s)
     
     Returns:
         Reranked results as (content, relevance_score) sorted by relevance
@@ -493,8 +495,13 @@ def rerank_results(
     
     try:
         import cohere
+        from httpx import Timeout
         
-        client = cohere.ClientV2(api_key=cohere_key)
+        # Create client with explicit timeout to prevent hangs
+        client = cohere.ClientV2(
+            api_key=cohere_key,
+            timeout=Timeout(timeout, connect=5.0)
+        )
         
         # Extract just the content strings for reranking
         # Filter out empty/whitespace-only documents to prevent API errors
@@ -528,6 +535,9 @@ def rerank_results(
     
     except ImportError:
         print("[MEMORY] cohere package not installed, skipping reranking")
+        return results[:top_n]
+    except TimeoutError:
+        print(f"[MEMORY] Cohere API timed out after {timeout}s, using RRF results")
         return results[:top_n]
     except Exception as e:
         print(f"[MEMORY] Reranking failed: {e}, using RRF results")
@@ -623,34 +633,43 @@ def filco_filter(
 # CUSTOM STORAGE WITH CONTEXTUAL RETRIEVAL
 # =============================================================================
 
-def get_memory_config() -> Dict[str, Any]:
-    """Get optimized memory configuration for Enlisted crews.
+def get_memory_config(use_advanced: bool = False) -> Dict[str, Any]:
+    """Get memory configuration for Enlisted crews.
     
     Returns a dict that can be unpacked into Crew():
         crew = Crew(**get_memory_config(), agents=[...], tasks=[...])
     
-    Configuration:
-    - memory=True: Enable all memory types
-    - embedder: text-embedding-3-large (best quality)
-    - Long-Term Memory: SQLite (no token limits)
-    - Short-Term/Entity: Contextual retrieval with chunking, BM25, reranking
+    Args:
+        use_advanced: If True, use custom contextual storage (experimental, may hang).
+                      If False (default), use CrewAI's built-in memory.
     
-    Note: Large outputs are automatically chunked, contextualized, and indexed
-    for hybrid search. This achieves 49-67% better retrieval than basic RAG.
+    Configuration (default mode):
+    - memory=True: Enable all memory types (short-term, long-term, entity)
+    - embedder: text-embedding-3-large for best semantic search quality
+    - CrewAI handles storage automatically (ChromaDB + SQLite)
+    
+    Note: Custom contextual retrieval (BM25+Cohere reranking) is disabled by default.
+    The built-in CrewAI memory works reliably in v1.8.0. Set use_advanced=True only
+    if you need hybrid search capabilities and are willing to debug potential issues.
     """
     config = {
         "memory": True,
         "embedder": get_embedder_config(),
     }
     
-    # Custom storage with contextual retrieval
-    short_term = get_contextual_short_term_memory()
-    entity = get_contextual_entity_memory()
-    
-    if short_term:
-        config["short_term_memory"] = short_term
-    if entity:
-        config["entity_memory"] = entity
+    # Advanced mode: Custom storage with contextual retrieval
+    # Uses BM25 hybrid search + Cohere reranking + FILCO filtering
+    # May cause hangs due to API incompatibilities - use with caution
+    if use_advanced:
+        print("[MEMORY] WARNING: Advanced memory mode enabled (experimental).")
+        print("[MEMORY] Using custom ContextualRAGStorage with hybrid search.")
+        short_term = get_contextual_short_term_memory()
+        entity = get_contextual_entity_memory()
+        
+        if short_term:
+            config["short_term_memory"] = short_term
+        if entity:
+            config["entity_memory"] = entity
     
     return config
 
@@ -663,17 +682,42 @@ def get_contextual_short_term_memory():
     - LLM-generated context prefixes
     - SQL storage for metadata
     - Hybrid search: vector + BM25 with RRF fusion
+    
+    Returns:
+        ContextualShortTermMemory instance
     """
     try:
         from crewai.memory.short_term.short_term_memory import ShortTermMemory
         from crewai.memory.storage.rag_storage import RAGStorage
         
         class ContextualRAGStorage(RAGStorage):
-            """RAGStorage with contextual retrieval: chunking, contextualization, hybrid search."""
+            """RAGStorage with contextual retrieval: chunking, contextualization, hybrid search.
             
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                self._bm25_index = get_bm25_index("short_term")
+            CrewAI 1.8.0 compatibility:
+            - Matches RAGStorage.__init__(type, allow_reset, embedder_config, crew, path)
+            - Handles None crew gracefully (empty agents string)
+            - BM25 index initialized lazily to avoid blocking
+            """
+            
+            def __init__(self, type: str, allow_reset: bool = True, 
+                         embedder_config=None, crew=None, path: str = None):
+                # Call parent with explicit kwargs for CrewAI 1.8.0 compatibility
+                super().__init__(
+                    type=type,
+                    allow_reset=allow_reset,
+                    embedder_config=embedder_config,
+                    crew=crew,
+                    path=path
+                )
+                # Initialize BM25 index lazily (avoid blocking during init)
+                self._bm25_index = None
+                self._bm25_memory_type = "short_term"
+            
+            def _get_bm25_index(self):
+                """Lazy initialization of BM25 index."""
+                if self._bm25_index is None:
+                    self._bm25_index = get_bm25_index(self._bm25_memory_type)
+                return self._bm25_index
             
             def save(self, value, metadata=None):
                 """Save with contextual retrieval pipeline.
@@ -750,7 +794,7 @@ def get_contextual_short_term_memory():
                     vector_tuples = []
                 
                 # Step 2: BM25 search (keyword)
-                bm25_results = self._bm25_index.search(query, top_k=BM25_SEARCH_TOP_K)
+                bm25_results = self._get_bm25_index().search(query, top_k=BM25_SEARCH_TOP_K)
                 
                 # Step 3: RRF fusion
                 if not vector_tuples and not bm25_results:
@@ -777,28 +821,64 @@ def get_contextual_short_term_memory():
                 
                 return filtered
         
-        storage = ContextualRAGStorage(
-            type="short_term",
-            embedder_config=get_embedder_config(),
-        )
-        return ShortTermMemory(storage=storage)
+        # Return a custom ShortTermMemory subclass that creates storage with crew context
+        class ContextualShortTermMemory(ShortTermMemory):
+            """ShortTermMemory that uses ContextualRAGStorage for hybrid search."""
+            
+            def __init__(self, crew=None, embedder_config=None, storage=None, path=None):
+                if storage is None:
+                    storage = ContextualRAGStorage(
+                        type="short_term",
+                        allow_reset=True,
+                        embedder_config=embedder_config or get_embedder_config(),
+                        crew=crew,
+                        path=path,
+                    )
+                super().__init__(crew=crew, embedder_config=embedder_config, storage=storage, path=path)
+        
+        # Return instance with None crew (will be set by CrewAI)
+        return ContextualShortTermMemory(crew=None, embedder_config=get_embedder_config())
+        return ContextualShortTermMemory
     except ImportError as e:
         print(f"[MEMORY] Warning: Could not create contextual storage: {e}")
         return None
 
 
 def get_contextual_entity_memory():
-    """Get Entity Memory with contextual retrieval and hybrid search."""
+    """Get Entity Memory with contextual retrieval and hybrid search.
+    
+    Returns:
+        ContextualEntityMemory instance
+    """
     try:
         from crewai.memory.entity.entity_memory import EntityMemory
         from crewai.memory.storage.rag_storage import RAGStorage
         
         class ContextualRAGStorage(RAGStorage):
-            """RAGStorage with contextual retrieval for entities."""
+            """RAGStorage with contextual retrieval for entities.
             
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                self._bm25_index = get_bm25_index("entity")
+            CrewAI 1.8.0 compatibility:
+            - Matches RAGStorage.__init__(type, allow_reset, embedder_config, crew, path)
+            - BM25 index initialized lazily
+            """
+            
+            def __init__(self, type: str, allow_reset: bool = True,
+                         embedder_config=None, crew=None, path: str = None):
+                super().__init__(
+                    type=type,
+                    allow_reset=allow_reset,
+                    embedder_config=embedder_config,
+                    crew=crew,
+                    path=path
+                )
+                self._bm25_index = None
+                self._bm25_memory_type = "entity"
+            
+            def _get_bm25_index(self):
+                """Lazy initialization of BM25 index."""
+                if self._bm25_index is None:
+                    self._bm25_index = get_bm25_index(self._bm25_memory_type)
+                return self._bm25_index
             
             def save(self, value, metadata=None):
                 """Save with contextual retrieval pipeline.
@@ -855,7 +935,7 @@ def get_contextual_entity_memory():
                     vector_tuples = []
                 
                 # Step 2: BM25 search
-                bm25_results = self._bm25_index.search(query, top_k=BM25_SEARCH_TOP_K)
+                bm25_results = self._get_bm25_index().search(query, top_k=BM25_SEARCH_TOP_K)
                 
                 # Step 3: RRF fusion
                 if not vector_tuples and not bm25_results:
@@ -877,11 +957,23 @@ def get_contextual_entity_memory():
                 
                 return filtered
         
-        storage = ContextualRAGStorage(
-            type="entities",
-            embedder_config=get_embedder_config(),
-        )
-        return EntityMemory(storage=storage)
+        # Return a custom EntityMemory subclass that creates storage with crew context
+        class ContextualEntityMemory(EntityMemory):
+            """EntityMemory that uses ContextualRAGStorage for hybrid search."""
+            
+            def __init__(self, crew=None, embedder_config=None, storage=None, path=None):
+                if storage is None:
+                    storage = ContextualRAGStorage(
+                        type="entities",
+                        allow_reset=True,
+                        embedder_config=embedder_config or get_embedder_config(),
+                        crew=crew,
+                        path=path,
+                    )
+                super().__init__(crew=crew, embedder_config=embedder_config, storage=storage, path=path)
+        
+        # Return instance with None crew (will be set by CrewAI)
+        return ContextualEntityMemory(crew=None, embedder_config=get_embedder_config())
     except ImportError as e:
         print(f"[MEMORY] Warning: Could not create contextual entity storage: {e}")
         return None

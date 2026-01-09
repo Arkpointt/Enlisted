@@ -5,9 +5,9 @@ Pydantic models that define structured state for all workflows.
 These ensure type safety and validation as data flows between agents.
 
 Flows:
-- PlanningFlow: Feature design and specification
 - ImplementationFlow: Code and content implementation
 - BugHuntingFlow: Bug investigation and fixing
+- ValidationFlow: Pre-commit validation
 """
 
 from enum import Enum
@@ -28,82 +28,6 @@ class ConfidenceLevel(str, Enum):
     CERTAIN = "certain"       # Clear evidence, reproducible
     LIKELY = "likely"         # Strong indicators
     SPECULATIVE = "speculative"  # Educated guess, needs verification
-
-
-# === Planning Flow Enums and Models ===
-
-class ValidationStatus(str, Enum):
-    """Status of plan validation."""
-    NOT_VALIDATED = "not_validated"
-    PASSED = "passed"
-    FAILED = "failed"
-    FIXED = "fixed"
-
-
-class ValidationOutput(BaseModel):
-    """
-    Structured output model for validation tasks.
-    
-    Use with TaskOutput.pydantic for type-safe validation result parsing.
-    """
-    status: ValidationStatus = ValidationStatus.NOT_VALIDATED
-    issues_found: List[str] = Field(default_factory=list)
-    verified_items: List[str] = Field(default_factory=list)
-    file_checks: int = Field(default=0, description="Number of files verified")
-    method_checks: int = Field(default=0, description="Number of methods verified")
-    content_id_checks: int = Field(default=0, description="Number of content IDs verified")
-
-
-class PlanningState(BaseModel):
-    """
-    State for the Planning Flow.
-    
-    Tracks research, design, and validation progress.
-    """
-    # Flow ID (required by CrewAI Flows)
-    id: str = Field(
-        default="",
-        description="Unique flow execution ID (auto-generated)"
-    )
-    
-    # Input
-    feature_name: str = ""
-    description: str = ""
-    related_systems: str = ""
-    related_docs: str = ""
-    
-    # Research phase
-    research_output: str = ""
-    suggestions_output: str = ""
-    
-    # Tool result cache (avoid duplicate expensive calls)
-    cached_game_systems: str = ""  # Result of get_game_systems
-    cached_architecture: str = ""  # Result of get_architecture
-    cached_dev_reference: str = ""  # Result of get_dev_reference
-    
-    # Design phase
-    design_output: str = ""
-    plan_path: str = ""
-    
-    # Validation phase
-    validation_status: ValidationStatus = ValidationStatus.NOT_VALIDATED
-    validation_issues: List[str] = Field(default_factory=list)
-    fix_attempts: int = 0
-    max_fix_attempts: int = 2
-    
-    # Execution tracking
-    current_step: str = "start"
-    
-    # Manager escalation (human-in-the-loop)
-    needs_human_review: bool = False
-    critical_issues: List[str] = Field(default_factory=list)  # Serialized DetectedIssue objects
-    manager_analysis: str = ""
-    manager_recommendation: str = ""
-    human_guidance: str = ""  # Human's response if escalated
-    
-    # Final
-    success: bool = False
-    final_report: str = ""
 
 
 # === Implementation Flow Enums and Models ===

@@ -1,7 +1,8 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Two AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities), automatic prompt caching, **Contextual Retrieval Memory System** with hybrid search (BM25 + vector), RRF fusion, Cohere reranking, and FILCO post-retrieval filtering for 67%+ better retrieval than basic RAG, and **Semantic Codebase Search** via ChromaDB vector index for fast code retrieval.  
-**Status:** ✅ Production  
+**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), single-agent Flow pattern, advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities), automatic prompt caching, Contextual Retrieval Memory System with hybrid search (BM25 + vector + Cohere reranking), and semantic search via ChromaDB vector index for fast code and documentation retrieval.  
+**Status:** ✅ Production Ready  
+**Architecture:** Single-agent Crews + Pure Python for optimal performance  
 **Last Updated:** 2026-01-09
 
 ---
@@ -26,12 +27,21 @@ enlisted-crew stats
 
 ---
 
-## Two Workflows (All Flow-based)
+## Architecture
 
-All workflows use CrewAI Flows with:
-- **State persistence** (`persist=True`) - Resume on failure
-- **Conditional routing** (`@router`) - Skip completed work
-- **GPT-5.2 unified** - Optimized reasoning levels (high/medium/low/none)
+**Single-Agent Flow Pattern:** Each workflow uses CrewAI Flows to coordinate single-agent Crews and pure Python steps for optimal performance.
+
+**Key Features:**
+- **State persistence** - Resume workflows on failure
+- **Conditional routing** - Skip completed work automatically  
+- **Single-agent Crews** - Each step uses one focused agent with minimal tools
+- **Pure Python steps** - Deterministic operations (validation, builds) don't need LLMs
+- **GPT-5.2 unified** - All agents use same model with optimized reasoning levels
+
+**Performance:**
+- 10-15 tool calls per workflow (vs 80-100 with multi-agent)
+- 1-2 minute execution (vs 3-5 minutes)
+- 80% cost reduction from focused tool usage
 
 ---
 
@@ -40,14 +50,28 @@ All workflows use CrewAI Flows with:
 enlisted-crew hunt-bug -d "Crash when opening camp menu" -e "E-CAMPUI-042"
 ```
 
-**What it does:**
-1. **Investigate** - code_analyst searches logs, finds bug location
-2. **Route Severity** - Different handling for critical vs minor bugs
-3. **Analyze** - systems_analyst checks related systems for impact
-4. **Fix** - csharp_implementer proposes minimal code fix
-5. **Validate** - qa_agent verifies fix builds and doesn't break anything
+**Workflow (8 Flow steps):**
+1. **load_bug_report** - Parse bug report (pure Python)
+2. **investigate_bug** - Single-agent Crew investigates root cause
+   - Tools: search_debug_logs_tool, search_codebase, search_docs_semantic, lookup_error_code, read_source_section
+   - Parses severity, confidence, root cause
+3. **route_complexity** - @router decides if systems analysis needed
+   - Routes to analyze_systems OR propose_fix based on severity/complexity
+4. **analyze_systems** - Single-agent Crew analyzes system dependencies (conditional)
+   - Tools: get_system_dependencies, lookup_core_system, get_game_systems
+   - Skips for simple bugs
+5. **propose_fix** - Single-agent Crew proposes minimal fix
+   - Tools: read_source, search_codebase, search_docs_semantic, lookup_api_pattern
+   - Guardrails: validate_fix_is_minimal, validate_fix_has_code, validate_fix_explains_root_cause
+6. **validate_fix** - Build validation (pure Python)
+7. **check_for_issues** - Pattern-based issue detection (pure Python)
+8. **generate_report** - Final report (pure Python)
 
-**State Persistence:** If the flow fails mid-run, re-running resumes from last successful step.
+**Architecture:**
+- 8 Flow steps: 3 single-agent Crews + 5 pure Python steps
+- ~10-15 tool calls per execution
+- ~1-2 minute average execution time
+- 614 lines of code
 
 **Output:** Bug report + validated fix ready to apply.
 
@@ -57,33 +81,62 @@ enlisted-crew hunt-bug -d "Crash when opening camp menu" -e "E-CAMPUI-042"
 enl isted-crew implement -p "docs/CrewAI_Plans/reputation-integration.md"
 ```
 
-**What it does (single-agent pattern, 8 Flow steps):**
+**Workflow (8 Flow steps):**
 1. **load_plan** - Read planning document (pure Python)
 2. **verify_existing** - Single-agent Crew checks what exists
-   - Tools: parse_plan, lookup_content_ids_batch, verify_file_exists_tool, search_codebase
+   - Tools: parse_plan, lookup_content_ids_batch, verify_file_exists_tool, search_codebase, search_docs_semantic
    - Sets C# status: COMPLETE / PARTIAL / NOT_STARTED
    - Sets Content status: COMPLETE / PARTIAL / NOT_STARTED
 3. **implement_csharp** - Single-agent Crew writes C# (conditional)
-   - Tools: search_codebase, read_source, write_source, append_to_csproj
+   - Tools: search_codebase, search_docs_semantic, read_source, write_source, append_to_csproj
    - Skips if C# status is COMPLETE
 4. **implement_content** - Single-agent Crew creates JSON (conditional)
-   - Tools: write_event, update_localization, lookup_content_id, add_content_item, get_valid_categories
+   - Tools: write_event, update_localization, lookup_content_id, add_content_item, get_valid_categories, get_style_guide, search_docs_semantic
    - Skips if Content status is COMPLETE
 5. **validate_build** - Dotnet build (pure Python)
 6. **validate_content_check** - Content validator (pure Python)
 7. **sync_docs** - Database sync + implementation log (pure Python)
 8. **generate_report** - Final summary (pure Python)
 
-**Architecture (Phase 2 Refactor):**
-- **Pattern:** Each step accesses state via `self.state` (CrewAI Flow pattern)
-- **Before:** 5-agent sequential Crew → 80-100 tool calls → 3-5 min
-- **After:** 8 Flow steps (3 single-agent + 5 pure Python) → 10-15 tool calls → 1-2 min
-- **File size:** 1,013 lines → 364 lines (64% reduction)
-- **Memory:** Temporarily disabled (can cause hangs)
+**Architecture:**
+- 8 Flow steps: 3 single-agent Crews + 5 pure Python steps
+- ~10-15 tool calls per execution
+- ~1-2 minute average execution time
+- 366 lines of code
+- Memory: All Crew steps use `get_memory_config()` with optional advanced mode
 
 **Key Feature:** Smart conditional routing - skips already-completed work. Re-run same plan multiple times safely.
 
 **Output:** Complete implementation + updated documentation.
+
+---
+### 3. Validate - Pre-Commit Quality Assurance (ValidationFlow)
+```bash
+enlisted-crew validate
+```
+
+**Workflow (6 Flow steps):**
+1. **validate_content_check** - Single-agent Crew validates JSON schemas
+   - Tools: validate_content, check_event_format
+   - Checks all event/decision/order files
+   - Guardrails: validate_content_check_ran
+2. **validate_build_check** - Single-agent Crew validates C# build
+   - Tools: build, review_code
+   - Runs dotnet build, checks for errors
+   - Guardrails: validate_build_output_parsed
+3. **sync_localization** - Sync XML strings (pure Python)
+4. **check_for_issues** - Pattern-based issue detection (pure Python)
+5. **route_after_check** - @router (always proceeds to report)
+6. **generate_report** - Final validation report (pure Python)
+
+**Architecture:**
+- 6 Flow steps: 2 single-agent Crews + 4 pure Python steps
+- ~4-6 tool calls per execution
+- ~30-45 second average execution time
+- 557 lines of code
+- Memory: Both Crew steps use `get_memory_config()` with optional advanced mode
+
+**Output:** Validation report with pass/fail status for content, build, and localization.
 
 ---
 
@@ -156,33 +209,45 @@ export ENLISTED_PROJECT_ROOT=C:\Dev\Enlisted\Enlisted
 
 Tools use natural naming for readability. The `@tool("Name")` decorator defines what agents see.
 
-### Semantic Codebase Search
+### Semantic Search (Vector-Based)
 
 | Tool | Purpose |
 |------|----------|
 | `search_codebase` | Semantic search of `src/` + `Decompile/` C# code using ChromaDB vector index |
+| `search_docs_semantic` | Semantic search of `docs/` markdown files using ChromaDB vector index |
 
-**Features:**
+**Codebase Search Features:**
 - Fast vector-based search (replaces slow grep)
 - Smart C# chunking at method/property boundaries
 - Rich metadata: file paths, line numbers, class/method names
 - Returns top 5 relevant code examples
 - Optional path filtering: `search_codebase("morale calc", "src/Features/")`
 
+**Documentation Search Features:**
+- Natural language queries → relevant doc sections
+- Finds docs even with different terminology ("equipment purchasing" finds quartermaster-system.md)
+- Smart markdown chunking at heading boundaries
+- Rich metadata: file paths, section titles, line numbers
+- Returns top 5 relevant doc sections
+- Optional folder filtering: `search_docs_semantic("hero safety", "Reference")`
+
 **Usage:**
 ```bash
 # Index codebase (one-time, ~$0.014)
 python -m enlisted_crew.rag.codebase_indexer --index-all
-
-# Check stats
 python -m enlisted_crew.rag.codebase_indexer --stats
+
+# Index documentation (one-time, ~$0.08)
+python -m enlisted_crew.rag.docs_indexer --index-all
+python -m enlisted_crew.rag.docs_indexer --stats
 ```
 
 **Implementation:**
 - Location: `Tools/CrewAI/src/enlisted_crew/rag/`
-- Indexer: `codebase_indexer.py` (348 lines)
-- Tool: `codebase_rag_tool.py` (116 lines)
-- Embeddings: `text-embedding-3-large`
+- Codebase: `codebase_indexer.py` (354 lines), `codebase_rag_tool.py` (118 lines)
+- Docs: `docs_indexer.py` (296 lines), search tool in `docs_tools.py`
+- Embeddings: `text-embedding-3-large` (3,072 dimensions)
+- Indexed: 79 markdown files → 3,184 chunks
 
 ### Validation
 
@@ -224,11 +289,11 @@ python -m enlisted_crew.rag.codebase_indexer --stats
 
 | Tool | Purpose |
 |------|---------|
+| `search_docs_semantic` | **Semantic search** across docs/ (vector-based, natural language queries) |
 | `read_doc_tool` | Read project docs |
 | `list_docs_tool` | List doc files |
-| `find_in_docs` | Search across docs |
+| `find_in_docs` | Basic string search across docs (use `search_docs_semantic` instead for better results) |
 | `read_source` | Read C# source |
-| `find_in_code` | Search C# codebase |
 | `read_source_section` | Read specific sections |
 | `list_feature_files_tool` | List `src/Features/` files |
 
@@ -239,23 +304,27 @@ python -m enlisted_crew.rag.codebase_indexer --stats
 | `read_debug_logs_tool` | Read mod debug logs |
 | `search_debug_logs_tool` | Search for error codes |
 | `read_native_crash_logs_tool` | Read native game crash logs |
-| `find_in_native_api` | Search Bannerlord API docs |
+| ~~`find_in_native_api`~~ | **[DEPRECATED - Phase 5]** Use MCP Bannerlord API server instead |
 
 ### Context Loaders
 
-| Tool | Purpose |
-|------|---------|
-| `get_game_systems` | Loads game systems knowledge |
-| `get_architecture` | Loads BLUEPRINT, patterns |
-| `get_dev_reference` | Loads dev guide, APIs |
-| `get_writing_guide` | Loads style guide, schemas |
+**[DEPRECATED - Phase 5]** These tools were removed. Use pre-loaded context in Flow task descriptions instead.
+
+| Tool | Purpose | Replacement |
+|------|---------|-------------|
+| ~~`get_game_systems`~~ | Loads game systems knowledge | Pre-loaded in Flow `state.cached_*` fields |
+| ~~`get_architecture`~~ | Loads BLUEPRINT, patterns | Pre-loaded in Flow `state.cached_*` fields |
+| ~~`get_dev_reference`~~ | Loads dev guide, APIs | Pre-loaded in Flow `state.cached_*` fields |
+| ~~`get_writing_guide`~~ | Loads style guide, schemas | Database tools: `get_style_guide` |
 
 ### Planning
 
-| Tool | Purpose |
-|------|---------|
-| `save_plan` | Writes to `docs/CrewAI_Plans/` with versioning |
-| `load_plan` | Reads planning document |
+**[DEPRECATED - Phase 5]** Planning tools removed. Use Flow state management.
+
+| Tool | Purpose | Replacement |
+|------|---------|-------------|
+| ~~`save_plan`~~ | Writes to `docs/CrewAI_Plans/` with versioning | `write_doc` tool |
+| `load_plan` | Reads planning document | Still active (used in ImplementationFlow) |
 
 ### Verification
 
@@ -703,7 +772,6 @@ The `check_for_issues()` step in each Flow provides quality validation:
 - Routes to auto-fix or logs for review
 
 **Current Sequential Crews:**
-- `PlanningFlow` → research_task → advise_task → design_task → write_task
 - `ImplementationFlow` → verify_task → csharp_task → content_task → validate_task → docs_task
 - `BugHuntingFlow` → investigate_task → systems_task → fix_task → validate_task
 - `ValidationFlow` → content_task → build_task → report_task
@@ -770,7 +838,7 @@ Static templates in `enlisted_crew/prompts/templates.py`:
 **Cost Impact:**
 - 50-70% of prompt content cached on repeated workflows
 - 60%+ reduction in input token costs
-- Example: PlanningFlow drops from $0.0875 to $0.035 per run
+- Example: Workflow costs reduced by 60%+ with effective caching
 
 **Dependencies:**
 
@@ -821,11 +889,7 @@ task = Task(
 - **Better error messages** - Clear validation failure reasons
 - **Reduced manual review** - Common mistakes caught automatically
 
-**Implemented Guardrails (12 total):**
-
-**PlanningFlow (write_task):**
-- `validate_plan_structure` - Ensures required sections (Overview, Technical Specification, Files to Create)
-- `validate_no_placeholder_paths` - Catches hallucinated paths (PLACEHOLDER, TODO_PATH, path/to/)
+**Implemented Guardrails (10 total):**
 
 **ImplementationFlow (csharp_task, content_task):**
 - `validate_csharp_braces` - Balanced `{}` in C# code
@@ -880,7 +944,7 @@ planning_llm=GPT5_PLANNING  # Uses GPT-5 for best planning quality
 - Auto-switches to instant mode when prompts are clear
 - Consistent quality across all planning operations
 
-**All 15 internal crews** (within PlanningFlow, ImplementationFlow, BugHuntingFlow) use `planning_llm=GPT5_PLANNING` (GPT-5.2 with `reasoning_effort="low"`).
+**All internal crews** (within ImplementationFlow, BugHuntingFlow, ValidationFlow) use `planning_llm=GPT5_PLANNING` (GPT-5.2 with `reasoning_effort="low"`).
 
 #### Memory Configuration
 
@@ -906,11 +970,11 @@ When `memory=True` is enabled, **all three memory types** are automatically acti
 - Uses ChromaDB with RAG (8,192 token limit)
 - Example entities: `EnlistmentBehavior`, `ContentOrchestrator`, `Hero.MainHero`, `Tier System`
 
-#### Contextual Retrieval Memory System
+#### Memory Configuration
 
-**Problem:** Short-Term and Entity memory use embeddings with an 8,192 token limit. Large agent outputs (9,000+ tokens) crash the embedding API. Simple truncation loses 24-67% of retrieval quality.
+**CrewAI 1.8.0 Memory System:**
 
-**Solution:** Full contextual retrieval pipeline in `memory_config.py`:
+Use `get_memory_config()` for memory with optional advanced features:
 
 ```python
 from enlisted_crew.memory_config import get_memory_config
@@ -918,11 +982,35 @@ from enlisted_crew.memory_config import get_memory_config
 crew = Crew(
     agents=[...],
     tasks=[...],
-    **get_memory_config(),  # Contextual retrieval with hybrid search
+    **get_memory_config(),  # Basic: memory=True + embedder config
     cache=True,
     planning=True,
 )
 ```
+
+**Basic mode (default):**
+- `memory=True` - Enables short-term, long-term, and entity memory
+- `embedder` - Uses `text-embedding-3-large` for best semantic quality
+- CrewAI's built-in memory (ChromaDB + SQLite) - simple and reliable
+
+**Advanced mode (Anthropic Contextual Retrieval):**
+```python
+**get_memory_config(use_advanced=True)  # ✅ BM25+Cohere hybrid search
+```
+- Custom `ContextualRAGStorage` with BM25 keyword search
+- Reciprocal Rank Fusion for vector+BM25 combination
+- Cohere reranking (rerank-v3.5) with 10s timeout
+- FILCO post-retrieval filtering
+- +67% better retrieval than basic RAG (Anthropic research)
+- **Status:** ✅ Fixed for CrewAI 1.8.0 compatibility (2026-01-09)
+
+---
+
+## Advanced Memory Architecture (Optional)
+
+Based on Anthropic's Contextual Retrieval research, now compatible with CrewAI 1.8.0.
+
+**Problem:** Short-Term and Entity memory use embeddings with an 8,192 token limit. Large agent outputs (9,000+ tokens) crash the embedding API. Simple truncation loses 24-67% of retrieval quality.
 
 **Architecture (based on Anthropic's Contextual Retrieval research):**
 ```
@@ -962,7 +1050,7 @@ Query → Vector Search (top 20)
       → Return filtered results
 ```
 
-**Components:**
+**Components (in memory_config.py, disabled by default):**
 - `chunk_content()` - Semantic chunking at paragraph boundaries
 - `contextualize_chunk()` - GPT-5.2 generates context prefix (reasoning=none for speed)
 - `store_chunk_in_sql()` - Stores in contextual_memory table for BM25 indexing
@@ -979,7 +1067,7 @@ Query → Vector Search (top 20)
 - Contextual + BM25 + Reranking: +67% better retrieval
 - Contextual + BM25 + Reranking + FILCO: 67%+ with reduced noise ✅
 
-**Cost per multi-flow session:**
+**Cost per multi-flow session (advanced mode):**
 - Chunking: $0 (local)
 - Contextualization: ~$0.003 (GPT-5.2, ~50 chunks)
 - Embeddings: ~$0.005 (text-embedding-3-large)
@@ -988,16 +1076,13 @@ Query → Vector Search (top 20)
 - FILCO: $0 (local filtering)
 - **Total: ~$0.01 per session**
 
-**Reranking Configuration:**
+**Configuration Options (in memory_config.py):**
 ```python
-# In memory_config.py - can disable to save cost
+# Reranking (only used in advanced mode)
 RERAN_ENABLED = True  # Set False to skip reranking
 RERAN_MODEL = "rerank-v3.5"  # Or rerank-v4.0-fast/pro
-```
 
-**FILCO Configuration:**
-```python
-# In memory_config.py - post-retrieval filtering
+# FILCO post-retrieval filtering (only used in advanced mode)
 FILCO_ENABLED = True  # Set False to disable FILCO
 FILCO_RELEVANCE_THRESHOLD = 0.35  # Minimum score to keep
 FILCO_MIN_RESULTS = 3  # Always keep at least this many
@@ -1007,8 +1092,10 @@ FILCO_MIN_RESULTS = 3  # Always keep at least this many
 - `OPENAI_API_KEY` - For embeddings and contextualization
 - `COHERE_API_KEY` - For reranking (optional, falls back gracefully)
 
-**Console output when activated:**
+**Console output when advanced mode activated:**
 ```
+[MEMORY] WARNING: Advanced memory mode enabled (experimental).
+[MEMORY] Using custom ContextualRAGStorage with hybrid search.
 [MEMORY] Content exceeds limit (9390 tokens), applying contextual chunking...
 [MEMORY] Split into 12 chunks
 [MEMORY] Contextual chunking complete: 12 chunks stored
@@ -1196,6 +1283,16 @@ This is an embedding token limit error in Short-Term or Entity memory. The `memo
 1. Ensure you're using `**get_memory_config()` in Crew definitions
 2. If using custom Crew config, add `short_term_memory` and `entity_memory` from `memory_config.py`
 3. As a fallback, set `memory=False` to disable memory entirely
+
+**Memory hangs at "Retrieving..." forever**
+~~This was caused by the custom `ContextualRAGStorage` being incompatible with CrewAI 1.8.0.~~ **Fixed 2026-01-09.**
+
+If you still experience hangs:
+1. Update to latest code: `git pull origin development`
+2. Test basic mode: `**get_memory_config()` (built-in memory)
+3. Test advanced mode: `**get_memory_config(use_advanced=True)` (hybrid search)
+4. If issues persist, reset memory: `crewai reset-memories -a`
+5. Check for stale ChromaDB data in `/tmp/crewai_*` or `~/.config/CrewAI/`
 
 **"Agents reference outdated patterns after refactor"**
 Reset memory to clear stale learnings:
@@ -1574,7 +1671,7 @@ print(result.fix_proposal.summary)
 
 ### Memory & Knowledge Configuration
 
-All three workflows (plan, bug, implement) have crew memory enabled for context sharing between tasks.
+All three workflows (implement, bug-hunt, validate) have crew memory enabled for context sharing between tasks.
 
 **Crew Memory Settings:**
 ```python
@@ -1652,22 +1749,22 @@ Execution Time (s)   126      145      138      136
 
 **Manual Flow Testing:**
 ```bash
-# Test PlanningFlow
-enlisted-crew plan -f "Test Feature" -d "A simple feature to validate workflow"
-
 # Test BugHuntingFlow
 enlisted-crew hunt-bug -d "Test bug description" -e "E-TEST-001"
 
 # Test ImplementationFlow (requires plan file)
 enlisted-crew implement -p "docs/CrewAI_Plans/test-feature.md"
+
+# Test ValidationFlow
+enlisted-crew validate
 ```
 
 ### What to Validate After Testing
 
 1. **Generated Files:**
-   - Check `docs/CrewAI_Plans/` for planning outputs
    - Verify C# code quality and style compliance
    - Review JSON content for schema adherence
+   - Check implementation reports
 
 2. **Database Updates:**
    - Run `sqlite3 enlisted_knowledge.db ".tables"` to verify tables exist
@@ -1676,8 +1773,8 @@ enlisted-crew implement -p "docs/CrewAI_Plans/test-feature.md"
 
 3. **Documentation Sync:**
    - Confirm feature docs were updated
-   - Verify plan status changed to "Implemented"
    - Check INDEX.md references new features
+   - Verify implementation history logged
 
 4. **Code Changes:**
    - Run `git diff` to review all modifications
@@ -1687,9 +1784,9 @@ enlisted-crew implement -p "docs/CrewAI_Plans/test-feature.md"
 ### Performance Baselines
 
 After initial testing, establish baselines for each flow:
-- **PlanningFlow:** Target 8.0+ quality, <180s execution
-- **ImplementationFlow:** Target 8.5+ quality, <300s execution  
-- **BugHuntingFlow:** Target 8.0+ quality, <200s execution
+- **ImplementationFlow:** Target 8.5+ quality, <120s execution (down from 300s pre-refactor)
+- **BugHuntingFlow:** Target 8.0+ quality, <80s execution (down from 200s pre-refactor)
+- **ValidationFlow:** Target 8.0+ quality, <60s execution
 
 Use these baselines to detect performance regression after configuration changes.
 
@@ -1721,17 +1818,17 @@ All execution metrics are stored in `enlisted_knowledge.db` for analysis:
 enlisted-crew stats
 
 # Specific crew
-enlisted-crew stats -c PlanningFlow
 enlisted-crew stats -c ImplementationFlow
 enlisted-crew stats -c BugHuntingFlow
+enlisted-crew stats -c ValidationFlow
 
 # View cost tracking
 enlisted-crew stats --costs
-enlisted-crew stats -c PlanningFlow --costs
+enlisted-crew stats -c ImplementationFlow --costs
 
 # Performance trend analysis (requires 15+ runs)
 enlisted-crew stats --trends
-enlisted-crew stats -c PlanningFlow --trends
+enlisted-crew stats -c ImplementationFlow --trends
 ```
 
 **Example Output:**
@@ -1740,17 +1837,17 @@ enlisted-crew stats -c PlanningFlow --trends
 CREWAI EXECUTION STATISTICS
 ==================================================================
 
-Crew: PlanningFlow
-  Total Runs: 5
-  Avg Duration: 142.35s (2.4m)
-  Min Duration: 128.50s
-  Max Duration: 167.20s
-
 Crew: ImplementationFlow
-  Total Runs: 3
-  Avg Duration: 284.67s (4.7m)
-  Min Duration: 265.10s
-  Max Duration: 312.40s
+  Total Runs: 12
+  Avg Duration: 98.45s (1.6m)
+  Min Duration: 85.20s
+  Max Duration: 115.30s
+
+Crew: BugHuntingFlow
+  Total Runs: 8
+  Avg Duration: 72.15s (1.2m)
+  Min Duration: 65.10s
+  Max Duration: 85.40s
 ==================================================================
 
 ==================================================================

@@ -26,46 +26,10 @@ from .state_models import (
     BugHuntingState,
     BugSeverity,
     ConfidenceLevel,
-    # Planning
-    PlanningState,
-    ValidationStatus,
     # Implementation
     ImplementationState,
     ImplementationStatus,
 )
-
-
-# === Planning Flow Conditions ===
-
-def validation_passed(state: PlanningState) -> bool:
-    """Check if plan validation passed."""
-    return state.validation_status == ValidationStatus.PASSED
-
-
-def validation_fixed(state: PlanningState) -> bool:
-    """Check if plan was successfully fixed after validation failure."""
-    return state.validation_status == ValidationStatus.FIXED
-
-
-def can_retry_fix(state: PlanningState) -> bool:
-    """Check if we can attempt another fix iteration."""
-    return state.fix_attempts < state.max_fix_attempts
-
-
-def needs_plan_fix(state: PlanningState) -> bool:
-    """Check if plan validation failed and we should attempt a fix."""
-    return (
-        state.validation_status == ValidationStatus.FAILED
-        and can_retry_fix(state)
-    )
-
-
-def validation_complete(state: PlanningState) -> bool:
-    """Check if validation process is complete (passed, fixed, or max attempts reached)."""
-    return (
-        state.validation_status in [ValidationStatus.PASSED, ValidationStatus.FIXED]
-        or state.fix_attempts >= state.max_fix_attempts
-    )
 
 
 # === Implementation Flow Conditions ===
@@ -174,15 +138,8 @@ def validation_failed_in_output(output: TaskOutput) -> bool:
     if not output:
         return False
     
-    # Prefer structured Pydantic output if available
-    if hasattr(output, 'pydantic') and output.pydantic:
-        try:
-            # Access ValidationOutput model fields directly
-            from .state_models import ValidationStatus, ValidationOutput
-            if isinstance(output.pydantic, ValidationOutput):
-                return output.pydantic.status == ValidationStatus.FAILED
-        except (AttributeError, ImportError):
-            pass  # Fall back to text parsing
+    # Note: No structured Pydantic validation available for this output type
+    # Fall through to text parsing
     
     # Fallback: Parse text output
     if not output.raw:

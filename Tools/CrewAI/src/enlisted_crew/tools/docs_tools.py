@@ -622,56 +622,6 @@ def read_source(file_path: str) -> str:
     return f"ERROR: File not found. Tried:\n" + "\n".join(str(p) for p in possible_paths)
 
 
-@tool("Find in Code")
-def find_in_code(query: str, max_results: int = 20) -> str:
-    """
-    Search the src/ C# codebase for a text pattern and return file hits with line snippets.
-
-    Args:
-        query: Text to search for (case-insensitive).
-        max_results: Maximum number of files to return (default 20).
-
-    Returns:
-        Matches grouped by file with up to 3 line snippets per file.
-    """
-    # Check cache first to avoid duplicate searches
-    cache_key = f"csharp:{query.lower()}:{max_results}"
-    cached = SearchCache.get(cache_key)
-    if cached:
-        return cached
-    
-    src_dir = PROJECT_ROOT / "src"
-    if not src_dir.exists():
-        return f"ERROR: src folder not found at {src_dir}"
-
-    results = []
-    q = query.lower()
-    for cs_file in src_dir.glob("**/*.cs"):
-        try:
-            with open(cs_file, 'r', encoding='utf-8', errors='replace') as f:
-                content = f.read()
-            if q not in content.lower():
-                continue
-            lines = content.split('\n')
-            matches = []
-            for i, line in enumerate(lines):
-                if q in line.lower():
-                    matches.append(f"  L{i+1}: {line[:100]}")
-                    if len(matches) >= 3:
-                        break
-            rel = cs_file.relative_to(PROJECT_ROOT)
-            results.append(f"FILE: {rel}:\n" + "\n".join(matches))
-            if len(results) >= max_results:
-                break
-        except Exception:
-            continue
-
-    if not results:
-        result = f"No matches for '{query}' in src/"
-    else:
-        result = f"Found '{query}' in {len(results)} files (showing up to {max_results}):\n\n" + "\n\n".join(results)
-    
-    return SearchCache.set(cache_key, result)
 
 
 @tool("Read Source Section")
@@ -1118,3 +1068,92 @@ def list_feature_files_tool(feature: str = "") -> str:
             files.append(f"  - {cs_file.name}")
     
     return f"Files in {feature}:\n" + "\n".join(files)
+
+
+@tool("Search Documentation (Semantic)")
+def search_docs_semantic(query: str, folder_filter: str = "") -> str:
+    """Semantic search across project documentation using vector embeddings.
+    
+    This tool performs fast vector-based semantic search over indexed documentation,
+    finding relevant docs even with different terminology or phrasing.
+    
+    Args:
+        query: Natural language question or topic to search for.
+               Examples: "equipment purchasing rules", "hero death safety patterns",
+                        "camp opportunity scheduling", "how does quartermaster work"
+        folder_filter: Optional folder to narrow search scope.
+                      Examples: "Features/Core", "Features/Content", "Reference"
+    
+    Returns:
+        Top 5 most relevant documentation sections with file paths and snippets.
+        Each result includes the source file, section title, and relevant content.
+    
+    Example:
+        >>> search_docs_semantic("equipment purchasing")
+        [1] File: docs/Features/Equipment/quartermaster-system.md
+            Section: Equipment Purchasing
+            Content: The QM offers equipment categorized by type...
+    """
+    try:
+        from langchain_chroma import Chroma
+        from langchain_openai import OpenAIEmbeddings
+        
+        project_root = _get_project_root()
+        persist_dir = project_root / "Tools" / "CrewAI" / "src" / "enlisted_crew" / "rag" / "docs_vector_db"
+        
+        if not persist_dir.exists():
+            return (
+                f"Documentation index not found at {persist_dir}.\n\n"
+                "Run the indexer first:\n"
+                "  cd Tools/CrewAI\n"
+                "  python -m enlisted_crew.rag.docs_indexer --index-all"
+            )
+        
+        # Initialize embeddings (same as codebase search)
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+        
+        vectorstore = Chroma(
+            persist_directory=str(persist_dir),
+            embedding_function=embeddings
+        )
+        
+        # Perform similarity search
+        # If filtering by folder, retrieve more results to ensure we get 5 matches after filtering
+        k = 50 if folder_filter else 5
+        retriever = vectorstore.as_retriever(
+            search_type="similarity",
+            search_kwargs={"k": k}
+        )
+        
+        docs = retriever.invoke(query)
+        
+        # Filter by folder after retrieval if specified
+        if folder_filter and docs:
+            docs = [doc for doc in docs if folder_filter in doc.metadata.get('source', '')]
+            # Limit to top 5 after filtering
+            docs = docs[:5]
+        
+        if not docs:
+            return f"No relevant documentation found for query: '{query}'"
+        
+        # Format results
+        results = []
+        for i, doc in enumerate(docs, 1):
+            metadata = doc.metadata
+            source = metadata.get('source', 'Unknown')
+            section_title = metadata.get('section_title', 'Unknown Section')
+            start_line = metadata.get('start_line', '?')
+            end_line = metadata.get('end_line', '?')
+            
+            results.append(f"[{i}] File: {source}")
+            results.append(f"    Section: {section_title}")
+            results.append(f"    Lines {start_line}-{end_line}")
+            results.append(f"    {doc.page_content[:400]}...")  # First 400 chars
+            results.append("")
+        
+        return "\n".join(results)
+    
+    except ImportError:
+        return "Error: Required packages not installed. Run: pip install langchain-chroma langchain-openai"
+    except Exception as e:
+        return f"Error searching documentation: {str(e)}"

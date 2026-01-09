@@ -6,6 +6,11 @@ This Flow runs comprehensive validation checks on the codebase:
 - C# build verification
 - Localization string sync check
 
+Phase 4 Refactor (2026-01-09):
+- Removed: Multi-agent Crew with 3 agents
+- Pattern: Pure Python + single-agent Crew for complex checks
+- Steps: 6 Flow methods (2 single-agent + 4 pure Python)
+
 Usage:
     from enlisted_crew.flows import ValidationFlow
     
@@ -15,10 +20,10 @@ Usage:
 
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple, Any
+from typing import List, Tuple, Any
 
 from crewai import Agent, Crew, Process, Task, LLM
-from crewai.flow.flow import Flow, listen, router, start, or_
+from crewai.flow.flow import Flow, listen, router, start
 from crewai.tasks.task_output import TaskOutput
 from pydantic import BaseModel, Field
 
@@ -30,10 +35,10 @@ from .escalation import (
     IssueConfidence,
     should_escalate_to_human,
     format_critical_issues,
-    create_escalation_message,
 )
 
 from ..memory_config import get_memory_config
+from ..monitoring import EnlistedExecutionMonitor
 
 # Import tools
 from ..tools import (
@@ -44,7 +49,7 @@ from ..tools import (
     review_code,
 )
 
-# Import prompt templates for caching optimization (Phase 3)
+# Import prompt templates for caching optimization
 from ..prompts import (
     VALIDATION_WORKFLOW,
     TOOL_EFFICIENCY_RULES,
@@ -151,7 +156,7 @@ def _get_env(name: str, default: str) -> str:
 # MEDIUM reasoning for QA - needs to catch issues
 GPT5_QA = LLM(
     model=_get_env("ENLISTED_LLM_QA", "gpt-5.2"),
-    max_completion_tokens=8000,  # Increased for validation reports
+    max_completion_tokens=8000,
     reasoning_effort="medium",
 )
 
@@ -162,11 +167,10 @@ GPT5_FAST = LLM(
     reasoning_effort="none",
 )
 
-# Planning LLM - use simple string (LLM objects with reasoning_effort cause issues with AgentPlanner)
+# Planning LLM - use simple string
 GPT5_PLANNING = _get_env("ENLISTED_LLM_PLANNING", "gpt-5.2")
 
-# Function calling LLM - lightweight, no reasoning overhead for tool parameter extraction
-# Used at Crew level for all agents' tool calls (per CrewAI docs recommendation)
+# Function calling LLM - lightweight
 GPT5_FUNCTION_CALLING = _get_env("ENLISTED_LLM_FUNCTION_CALLING", "gpt-5.2")
 
 
@@ -190,47 +194,61 @@ class ValidationState(BaseModel):
     current_step: str = "start"
     issues_found: List[str] = Field(default_factory=list)
     
-    # Manager escalation (human-in-the-loop)
+    # Manager escalation
     needs_human_review: bool = False
     critical_issues: List[str] = Field(default_factory=list)
     manager_analysis: str = ""
     manager_recommendation: str = ""
-    human_guidance: str = ""
     
     # Final
     success: bool = False
     final_report: str = ""
 
 
-# === Agent Factory ===
+# === The Flow ===
 
-_agent_cache = {}
-
-
-def get_validation_manager() -> Agent:
-    """Manager agent that coordinates the validation workflow."""
-    if "validation_manager" not in _agent_cache:
-        _agent_cache["validation_manager"] = Agent(
-            role="QA Coordinator",
-            goal="Coordinate comprehensive validation to ensure quality before release",
-            backstory="""QA manager who coordinates validation teams before release. 
-            Delegates content validation and build checks to specialists, and ensures comprehensive QA reporting. 
-            Verifies all validation passes before approval.""",
-            llm=GPT5_QA,
-            allow_delegation=True,  # REQUIRED for hierarchical managers
-            reasoning=False,  # DISABLED: Prevents reasoning loops (2026 best practice - managers coordinate, don't plan)
-            max_iter=20,  # Minimum for manager coordination (test requirement)
-            max_retry_limit=3,
-            verbose=True,
-            respect_context_window=True,
-        )
-    return _agent_cache["validation_manager"]
-
-
-def get_content_validator() -> Agent:
-    """Agent that validates JSON content."""
-    if "content_validator" not in _agent_cache:
-        _agent_cache["content_validator"] = Agent(
+class ValidationFlow(Flow[ValidationState]):
+    """
+    Flow-based validation workflow with single-agent pattern.
+    
+    Phase 4 Architecture (2026-01-09):
+    - Step 1: validate_content_check - Single-agent Crew (2 tools: validate_content, check_event_format) + memory
+    - Step 2: validate_build_check - Single-agent Crew (2 tools: build, review_code) + memory
+    - Step 3: sync_localization - Pure Python (direct tool call)
+    - Step 4: check_for_issues - Pure Python (pattern-based issue detection)
+    - Step 5: route_after_check - @router (escalation disabled, always proceeds)
+    - Step 6: generate_report - Pure Python (format final report)
+    
+    Removed:
+    - Multi-agent Crew with 3 agents
+    - Agent factory functions (get_content_validator, get_build_validator, get_qa_reporter, get_validation_manager)
+    - Hierarchical process overhead
+    
+    Expected impact:
+    - Tool calls: 15-20 → 4-6 (70% reduction)
+    - Execution time: 1-2 min → 30-45s (60% faster)
+    - Cost: 70% reduction
+    """
+    
+    initial_state = ValidationState
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._monitor = EnlistedExecutionMonitor()
+        print("[MONITORING] Execution monitoring enabled")
+    
+    @start()
+    def validate_content_check(self) -> ValidationState:
+        """Step 1: Validate JSON content with single-agent Crew."""
+        print("\n" + "=" * 60)
+        print("VALIDATION FLOW - Step 1: Content Validation")
+        print("=" * 60)
+        
+        state = self.state
+        state.current_step = "content_check"
+        
+        # Single agent with only content validation tools
+        agent = Agent(
             role="Content Validator",
             goal="Validate JSON content files against schemas",
             backstory="""You validate JSON content for the Enlisted mod.
@@ -240,104 +258,18 @@ TOOL-FIRST WORKFLOW:
 2. Call check_event_format for specific file issues
 3. Report all errors found
 
-Each tool takes ONE argument. Execute tools immediately, don't think first.""",
+Each tool takes ONE argument. Execute tools immediately.""",
             llm=GPT5_FAST,
             tools=[
                 validate_content,
                 check_event_format,
             ],
-            verbose=True,
-            respect_context_window=True,
             max_iter=5,
             max_retry_limit=2,
+            allow_delegation=False,
         )
-    return _agent_cache["content_validator"]
-
-
-def get_build_validator() -> Agent:
-    """Agent that validates C# build."""
-    if "build_validator" not in _agent_cache:
-        _agent_cache["build_validator"] = Agent(
-            role="Build Validator",
-            goal="Verify C# code compiles without errors",
-            backstory="""You validate C# builds for the Enlisted mod.
-
-TOOL-FIRST WORKFLOW:
-1. Call build to run dotnet build
-2. Report any compilation errors
-
-Execute tools immediately, don't think first.""",
-            llm=GPT5_FAST,
-            tools=[
-                build,
-                review_code,
-            ],
-            verbose=True,
-            respect_context_window=True,
-            max_iter=5,
-            max_retry_limit=2,
-        )
-    return _agent_cache["build_validator"]
-
-
-def get_qa_reporter() -> Agent:
-    """Agent that produces final QA report."""
-    if "qa_reporter" not in _agent_cache:
-        _agent_cache["qa_reporter"] = Agent(
-            role="QA Reporter",
-            goal="Produce clear validation report with prioritized issues",
-            backstory="""You produce final QA reports for the Enlisted mod.
-
-You receive validation results and produce a clear, prioritized report.
-Focus on actionable issues. Don't pad the report with unnecessary text.""",
-            llm=GPT5_QA,
-            tools=[],
-            verbose=True,
-            respect_context_window=True,
-            max_iter=3,
-        )
-    return _agent_cache["qa_reporter"]
-
-
-# === The Flow ===
-
-class ValidationFlow(Flow[ValidationState]):
-    """
-    Flow-based validation workflow with hierarchical process.
-    
-    Uses a single hierarchical crew for all validation tasks.
-    
-    Steps:
-    1. begin_validation - Initialize
-    2. run_validation_crew - Single hierarchical crew (content -> build -> strings -> report)
-    3. generate_report - Final summary
-    """
-    
-    initial_state = ValidationState
-    
-    @start()
-    def begin_validation(self) -> ValidationState:
-        """Entry point: Initialize validation."""
-        print("\n" + "=" * 60)
-        print("VALIDATION FLOW STARTED")
-        print("=" * 60)
         
-        state = self.state
-        state.current_step = "validate"
-        return state
-    
-    @listen(begin_validation)
-    def run_validation_crew(self, state: ValidationState) -> ValidationState:
-        """Single hierarchical crew for all validation work.
-        
-        Manager coordinates: content -> build -> report
-        """
-        print("\n" + "-" * 60)
-        print("[VALIDATION CREW] Running hierarchical validation...")
-        print("-" * 60)
-        
-        # Task 1: Content Validation
-        content_task = Task(
+        task = Task(
             description=f"""{VALIDATION_WORKFLOW}
 {TOOL_EFFICIENCY_RULES}
 
@@ -352,13 +284,68 @@ Validate all JSON content files in the Enlisted mod.
 - Orphaned strings: [list if any]
             """,
             expected_output="Content validation results with pass/fail",
-            agent=get_content_validator(),
+            agent=agent,
             guardrails=[validate_content_check_ran],
             guardrail_max_retries=2,
         )
         
-        # Task 2: Build Validation
-        build_task = Task(
+        # Single-agent crew with memory
+        crew = Crew(
+            agents=[agent],
+            tasks=[task],
+            **get_memory_config(),
+            process=Process.sequential,
+            cache=True,
+            planning=True,
+            planning_llm=GPT5_PLANNING,
+            function_calling_llm=GPT5_FUNCTION_CALLING,
+        )
+        
+        result = crew.kickoff()
+        state.content_output = str(result)
+        
+        # Parse results
+        output_lower = state.content_output.lower()
+        if "error" in output_lower or "invalid" in output_lower or "fail" in output_lower:
+            state.content_valid = False
+            state.issues_found.append("Content validation errors found")
+        else:
+            state.content_valid = True
+        
+        print(f"[CONTENT] Validation: {'PASSED' if state.content_valid else 'FAILED'}")
+        return state
+    
+    @listen(validate_content_check)
+    def validate_build_check(self, state: ValidationState) -> ValidationState:
+        """Step 2: Validate C# build with single-agent Crew."""
+        print("\n" + "-" * 60)
+        print("VALIDATION FLOW - Step 2: Build Validation")
+        print("-" * 60)
+        
+        state.current_step = "build_check"
+        
+        # Single agent with only build validation tools
+        agent = Agent(
+            role="Build Validator",
+            goal="Verify C# code compiles without errors",
+            backstory="""You validate C# builds for the Enlisted mod.
+
+TOOL-FIRST WORKFLOW:
+1. Call build to run dotnet build
+2. Report any compilation errors
+
+Execute tools immediately.""",
+            llm=GPT5_FAST,
+            tools=[
+                build,
+                review_code,
+            ],
+            max_iter=5,
+            max_retry_limit=2,
+            allow_delegation=False,
+        )
+        
+        task = Task(
             description=f"""{VALIDATION_WORKFLOW}
 {TOOL_EFFICIENCY_RULES}
 
@@ -371,80 +358,47 @@ Run dotnet build to verify C# code compiles.
 - Warnings: [list if any]
             """,
             expected_output="Build validation results with pass/fail",
-            agent=get_build_validator(),
+            agent=agent,
             guardrails=[validate_build_output_parsed],
             guardrail_max_retries=2,
         )
         
-        # Task 3: Generate QA Report
-        report_task = Task(
-            description=f"""{TOOL_EFFICIENCY_RULES}
-
-=== YOUR TASK ===
-Produce a clear validation report summarizing all checks.
-
-**Workflow:**
-1. Review content validation results from context
-2. Review build validation results from context
-3. Compile into clear, prioritized report
-
-**Expected Output:**
-- Overall Status: PASS or FAIL
-- Content Validation: [status]
-- Build Validation: [status]
-- Critical Issues: [prioritized list if any]
-- Warnings: [list if any]
-- Recommendations: [next steps if issues found]
-            """,
-            expected_output="Final QA report with overall status",
-            agent=get_qa_reporter(),
-            context=[content_task, build_task],
-            guardrails=[validate_report_has_status],
-            guardrail_max_retries=2,
-        )
-        
-        # Sequential crew - Flow handles coordination, tasks execute in order
-        # Per CrewAI best practices (Dec 2025): "Flow enforces business logic, agents provide intelligence within steps"
+        # Single-agent crew with memory
         crew = Crew(
-            agents=[
-                get_content_validator(),
-                get_build_validator(),
-                get_qa_reporter(),
-            ],
-            tasks=[content_task, build_task, report_task],
-            # manager_agent REMOVED - Flow handles coordination (Phase 2.5 optimization)
-            process=Process.sequential,  # Tasks execute in defined order - deterministic and cacheable
-            verbose=True,
-            **get_memory_config(),  # memory=True + contextual retrieval
+            agents=[agent],
+            tasks=[task],
+            **get_memory_config(),
+            process=Process.sequential,
             cache=True,
             planning=True,
             planning_llm=GPT5_PLANNING,
-            function_calling_llm=GPT5_FUNCTION_CALLING,  # Lightweight LLM for tool calls
+            function_calling_llm=GPT5_FUNCTION_CALLING,
         )
         
         result = crew.kickoff()
-        output = str(result)
+        state.build_output = str(result)
         
         # Parse results
-        output_lower = output.lower()
-        state.content_output = output
-        state.build_output = output
-        
-        # Check content validation
-        if "content" in output_lower and ("error" in output_lower or "invalid" in output_lower):
-            state.content_valid = False
-            state.issues_found.append("Content validation errors found")
-        else:
-            state.content_valid = True
-        
-        # Check build validation
-        if "build" in output_lower and "error" in output_lower:
+        output_lower = state.build_output.lower()
+        if "error" in output_lower or "fail" in output_lower:
             state.build_valid = False
             state.issues_found.append("Build errors found")
         else:
             state.build_valid = True
         
-        # Check strings (run directly since it's a simple tool)
+        print(f"[BUILD] Validation: {'PASSED' if state.build_valid else 'FAILED'}")
+        return state
+    
+    @listen(validate_build_check)
+    def sync_localization(self, state: ValidationState) -> ValidationState:
+        """Step 3: Sync localization strings - Pure Python."""
+        print("\n" + "-" * 60)
+        print("VALIDATION FLOW - Step 3: Localization Sync")
+        print("-" * 60)
+        
+        state.current_step = "localization_sync"
+        
+        # Call tool directly (no agent needed for simple tool execution)
         try:
             strings_result = sync_strings._run()
             state.strings_output = strings_result
@@ -456,21 +410,23 @@ Produce a clear validation report summarizing all checks.
         except Exception as e:
             state.strings_output = f"Error: {str(e)}"
             state.strings_synced = False
+            state.issues_found.append(f"Localization sync failed: {str(e)}")
         
-        state.current_step = "report"
+        print(f"[STRINGS] Sync: {'PASSED' if state.strings_synced else 'FAILED'}")
         return state
     
-    @listen(run_validation_crew)
+    @listen(sync_localization)
     def check_for_issues(self, state: ValidationState) -> ValidationState:
-        """Manager analyzes outputs and decides if human review needed.
+        """Step 4: Pattern-based issue detection - Pure Python.
         
         Detects:
         - Critical build failures
         - Data integrity issues
+        - Security concerns
         """
-        print("\n" + "-"*60)
+        print("\n" + "-" * 60)
         print("[MANAGER] Analyzing validation outputs for issues...")
-        print("-"*60)
+        print("-" * 60)
         
         issues = []
         combined_output = (state.content_output + state.build_output + state.strings_output).lower()
@@ -496,7 +452,7 @@ Produce a clear validation report summarizing all checks.
                 ))
                 break
         
-        # Check for data integrity issues (missing localizations, etc.)
+        # Check for data integrity issues
         data_integrity_patterns = [
             "missing string",
             "orphan",
@@ -517,7 +473,7 @@ Produce a clear validation report summarizing all checks.
                 ))
                 break
         
-        # Check for security patterns in content
+        # Check for security patterns
         security_patterns = [
             "injection",
             "script",
@@ -557,7 +513,7 @@ Produce a clear validation report summarizing all checks.
     
     @router(check_for_issues)
     def route_after_check(self, state: ValidationState) -> str:
-        """Route to report (human feedback disabled)."""
+        """Step 5: Route to report (escalation disabled, always proceeds)."""
         if state.needs_human_review:
             print("[ROUTER] Critical issues detected but auto-proceeding (HITL disabled)")
             print(f"[ROUTER] Issues logged: {len(state.critical_issues)}")
@@ -566,26 +522,14 @@ Produce a clear validation report summarizing all checks.
         print("[ROUTER] -> report")
         return "report"
     
-    @listen("escalate_to_human")
-    def human_review_critical(self, state: ValidationState) -> ValidationState:
-        """Human-in-the-loop for critical issues - DISABLED (never reached)."""
-        print("\n[MANAGER] Critical issues detected - auto-proceeding with investigation")
-        if state.manager_analysis:
-            print(f"[MANAGER] Analysis: {state.manager_analysis[:200]}...")
-        state.human_guidance = "auto-investigate - HITL disabled"
-        state.needs_human_review = False
-        return state
-    
     @listen("report")
     def generate_report(self, state: ValidationState) -> ValidationState:
-        """Step 4: Generate final validation report."""
-        # Skip if aborted
-        if state.current_step == "complete" and not state.success:
-            return state
-        
+        """Step 6: Generate final validation report - Pure Python."""
         print("\n" + "-" * 60)
         print("[REPORT] Generating validation report...")
         print("-" * 60)
+        
+        state.current_step = "complete"
         
         # Determine overall success
         state.success = state.content_valid and state.build_valid and state.strings_synced
@@ -616,5 +560,4 @@ Produce a clear validation report summarizing all checks.
         
         print(state.final_report)
         
-        state.current_step = "complete"
         return state

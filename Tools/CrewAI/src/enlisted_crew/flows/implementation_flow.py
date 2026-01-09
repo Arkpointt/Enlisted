@@ -22,10 +22,11 @@ from ..tools import (
     parse_plan, lookup_content_ids_batch, verify_file_exists_tool,
     read_source, write_source, append_to_csproj,
     write_event, update_localization, lookup_content_id, add_content_item,
-    get_valid_categories, build, validate_content,
+    get_valid_categories, get_style_guide, build, validate_content,
     sync_content_from_files, record_implementation
 )
 from ..rag.codebase_rag_tool import search_codebase
+from ..tools.docs_tools import search_docs_semantic
 from ..prompts import ARCHITECTURE_PATTERNS, IMPLEMENTATION_WORKFLOW, CODE_STYLE_RULES
 
 
@@ -114,7 +115,7 @@ class ImplementationFlow(Flow[ImplementationState]):
             goal="Check what's already implemented using database and file tools",
             backstory="You verify implementation status efficiently.",
             llm=GPT5_ARCHITECT,
-            tools=[parse_plan, lookup_content_ids_batch, verify_file_exists_tool, search_codebase],
+            tools=[parse_plan, lookup_content_ids_batch, verify_file_exists_tool, search_codebase, search_docs_semantic],
             max_iter=5,
             allow_delegation=False,
             verbose=True,
@@ -149,8 +150,7 @@ Verify what's already implemented for this plan.
             tasks=[task],
             process=Process.sequential,
             verbose=True,
-            # Memory disabled for testing - can cause hangs
-            # **get_memory_config(),
+            **get_memory_config(),  # Uses simplified memory (no custom storage)
         )
         
         result = crew.kickoff()
@@ -193,7 +193,7 @@ Verify what's already implemented for this plan.
             goal="Write C# code following Enlisted patterns",
             backstory="You implement production C# code efficiently.",
             llm=GPT5_IMPLEMENTER,
-            tools=[search_codebase, read_source, write_source, append_to_csproj],
+            tools=[search_codebase, search_docs_semantic, read_source, write_source, append_to_csproj],
             max_iter=8,
             allow_delegation=False,
             verbose=True,
@@ -218,8 +218,7 @@ Implement C# code from plan. Only implement what's MISSING.
             tasks=[task],
             process=Process.sequential,
             verbose=True,
-            # Memory disabled for testing
-            # **get_memory_config(),
+            **get_memory_config(),  # Uses simplified memory (no custom storage)
         )
         
         result = crew.kickoff()
@@ -243,7 +242,7 @@ Implement C# code from plan. Only implement what's MISSING.
             goal="Create JSON content following Enlisted schemas",
             backstory="You create JSON events, decisions, orders efficiently.",
             llm=GPT5_FAST,
-            tools=[write_event, update_localization, lookup_content_id, add_content_item, get_valid_categories],
+            tools=[write_event, update_localization, lookup_content_id, add_content_item, get_valid_categories, get_style_guide, search_docs_semantic],
             max_iter=8,
             allow_delegation=False,
             verbose=True,
@@ -267,8 +266,7 @@ Create JSON content from plan. Only create what's MISSING.
             tasks=[task],
             process=Process.sequential,
             verbose=True,
-            # Memory disabled for testing
-            # **get_memory_config(),
+            **get_memory_config(),  # Uses simplified memory (no custom storage)
         )
         
         result = crew.kickoff()

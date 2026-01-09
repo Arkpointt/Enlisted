@@ -12,9 +12,6 @@ from .validation_tools import (
     analyze_issues,
 )
 from .style_tools import (
-    review_prose,
-    review_tooltip,
-    suggest_edits,
     get_style_guide,
 )
 from .schema_tools import (
@@ -33,24 +30,18 @@ from .docs_tools import (
     SearchCache,
     read_doc_tool,
     list_docs_tool,
-    find_in_docs,
+    search_docs_semantic,
     read_source,
-    find_in_code,
     read_source_section,
     list_feature_files_tool,
     read_debug_logs_tool,
     search_debug_logs_tool,
     read_native_crash_logs_tool,
-    find_in_native_api,
-    get_writing_guide,
-    get_architecture,
-    get_dev_reference,
     get_game_systems,
     verify_file_exists_tool,
     list_event_ids,
 )
 from .planning_tools import (
-    save_plan,
     load_plan,
     parse_plan,
     get_plan_hash,
@@ -99,9 +90,6 @@ __all__ = [
     "analyze_issues",
     
     # Style Review
-    "review_prose",
-    "review_tooltip",
-    "suggest_edits",
     "get_style_guide",
     
     # Event Schema
@@ -119,12 +107,11 @@ __all__ = [
     # Documentation
     "read_doc_tool",
     "list_docs_tool",
-    "find_in_docs",
+    "search_docs_semantic",
     "SearchCache",
     
     # Source Code
     "read_source",
-    "find_in_code",
     "read_source_section",
     "list_feature_files_tool",
     
@@ -132,12 +119,8 @@ __all__ = [
     "read_debug_logs_tool",
     "search_debug_logs_tool",
     "read_native_crash_logs_tool",
-    "find_in_native_api",
     
-    # Context Loaders
-    "get_writing_guide",
-    "get_architecture",
-    "get_dev_reference",
+    # Context Loaders (kept: get_game_systems still used)
     "get_game_systems",
     
     # Verification
@@ -145,7 +128,6 @@ __all__ = [
     "list_event_ids",
     
     # Planning
-    "save_plan",
     "load_plan",
     "parse_plan",
     "get_plan_hash",
