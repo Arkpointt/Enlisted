@@ -7,6 +7,7 @@ CrewAI multi-agent system for Enlisted mod development.
 - **Implementation Flow**: Code implementation with validation and testing
 - **Bug Hunting Flow**: Automated bug detection and analysis
 - **Validation Flow**: Quality assurance and testing
+- **System Analysis Flow**: 📋 Planned - Technical system integration analysis (gap finding, efficiency optimization)
 - **Semantic Search Tools**: Vector-based search for code and documentation
   - Code search: `src/` + `Decompile/` C# codebase
   - Doc search: `docs/` markdown files (79 files, 3,184 chunks)
@@ -32,6 +33,9 @@ enlisted-crew hunt-bug -d "bug description" -e "E-XXX-*"
 enlisted-crew implement -p "path/to/plan.md"
 enlisted-crew validate
 enlisted-crew stats
+
+# Planned (not yet implemented)
+# enlisted-crew analyze-system "Supply,Morale,Reputation"
 ```
 
 **Note on Planning**: For planning and design tasks, use Warp Agent directly in your terminal. It has full codebase access and is faster than multi-agent orchestration. The planning flow has been deprecated in favor of direct interaction with Warp.

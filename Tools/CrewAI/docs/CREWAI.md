@@ -25,6 +25,9 @@ enlisted-crew stats
 
 **Note:** For planning/design tasks, use Warp Agent directly. It has full codebase access and is faster than multi-agent orchestration.
 
+**Future Workflows:**
+- SystemAnalysisFlow (planned) - Find integration gaps and efficiency issues in game systems. See [system-analysis-flow-implementation.md](../../docs/CrewAI_Plans/system-analysis-flow-implementation.md)
+
 ---
 
 ## Architecture

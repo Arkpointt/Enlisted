@@ -4,6 +4,52 @@
 > **Last Updated:** 2026-01-09  
 > **Architecture:** Single-agent Crews (aligned with current v1.0 architecture)
 
+## Implementation Context
+
+**Project Location:** `Tools/CrewAI/` in Enlisted workspace
+
+**Reference Implementations:**
+- **ImplementationFlow:** `src/enlisted_crew/flows/implementation_flow.py` (366 lines) - Example of single-agent Crew pattern
+- **BugHuntingFlow:** `src/enlisted_crew/flows/bug_hunting_flow.py` (614 lines) - Example of conditional routing
+- **ValidationFlow:** `src/enlisted_crew/flows/validation_flow.py` (557 lines) - Example of pure Python steps
+
+**Key Files to Reference:**
+- **Agent definitions:** `src/enlisted_crew/agents/` - All 10 agents already defined
+- **State models:** `src/enlisted_crew/flows/state_models.py` - Add SystemAnalysisState here
+- **Conditions:** `src/enlisted_crew/flows/conditions.py` - Reusable condition functions
+- **Tools:** `src/enlisted_crew/tools/` - All tools already exist (search_codebase, search_docs_semantic, etc.)
+- **CLI:** `src/enlisted_crew/main.py` - Add analyze-system subcommand
+- **Tests:** `test_all.py` - Comprehensive test suite pattern
+
+**Development Rules:**
+- Read `Tools/CrewAI/README.md` for project overview
+- Read `Tools/CrewAI/docs/CREWAI.md` for architecture details
+- Follow single-agent Crew pattern (NOT multi-agent)
+- Use 3-5 tools max per agent
+- Each Flow step either single-agent Crew OR pure Python (never both)
+
+**Target Systems for Analysis:**
+- **Core Systems:** Supply, Morale, Reputation, Escalation, Readiness, Rest
+- **Managers:** CompanyNeedsManager, EscalationManager, ContentOrchestrator
+- **Integration Points:** How systems connect to content delivery
+- **Code Locations:** `src/Features/` in main Enlisted project
+- **Docs:** `docs/Features/`, `docs/ANEWFEATURE/systems-integration-analysis.md` (example output)
+
+**Project Constraints:**
+- **Bannerlord Version:** v1.3.13 (verify APIs against `Decompile/` not online docs)
+- **C# Project:** Old-style `.csproj` with explicit file includes
+- **Python:** 3.10-3.13 required
+- **LLM:** GPT-5.2 with optimized reasoning levels
+
+**Testing Approach:**
+- Add test to `test_all.py` following existing pattern
+- Verify state transitions
+- Validate output format
+- Check CLI argument parsing
+- Run: `python test_all.py`
+
+---
+
 ## Problem Statement
 
 Enlisted has complex interconnected systems (Supply, Morale, Reputation, Escalation, etc.) that need tight integration for emergent gameplay. However:

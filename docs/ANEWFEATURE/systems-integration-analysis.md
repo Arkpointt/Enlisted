@@ -4,6 +4,8 @@
 
 **Status:** 📋 Planning (Phase-aware scheduling & commitment model ✅ IMPLEMENTED 2026-01-04)
 **Last Updated:** 2026-01-04
+
+> **Note:** Future analyses like this can be automated using SystemAnalysisFlow. See [docs/CrewAI_Plans/system-analysis-flow-implementation.md](../../docs/CrewAI_Plans/system-analysis-flow-implementation.md).
 **Related Docs:** [Content Effects Reference](content-effects-reference.md), [Content Skill Integration Plan](content-skill-integration-plan.md), [Camp Simulation System](../Features/Campaign/camp-simulation-system.md), [Identity System](../Features/Identity/identity-system.md), [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
 
 ---
