@@ -69,7 +69,8 @@ def test_configuration():
     
     try:
         from enlisted_crew.crew import EnlistedCrew
-        from enlisted_crew.flows import PlanningFlow, ImplementationFlow, BugHuntingFlow
+        from enlisted_crew.flows import ImplementationFlow, BugHuntingFlow
+        # Note: PlanningFlow deprecated - use Warp Agent for planning
         print_pass("All imports successful")
     except Exception as e:
         print_fail(f"Import failed: {e}")
@@ -82,9 +83,8 @@ def test_configuration():
         print_fail(f"EnlistedCrew init failed: {e}")
         return False
     
-    # Test flows
+    # Test flows (PlanningFlow deprecated)
     flows = [
-        ("PlanningFlow", PlanningFlow),
         ("ImplementationFlow", ImplementationFlow),
         ("BugHuntingFlow", BugHuntingFlow),
     ]

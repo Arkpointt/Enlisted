@@ -4,7 +4,6 @@ CrewAI multi-agent system for Enlisted mod development.
 
 ## Features
 
-- **Planning Flow**: Strategic planning with systems analysis, architecture review, and documentation maintenance
 - **Implementation Flow**: Code implementation with validation and testing
 - **Bug Hunting Flow**: Automated bug detection and analysis
 - **Validation Flow**: Quality assurance and testing
@@ -24,8 +23,13 @@ pip install -e .
 ## Usage
 
 ```bash
-enlisted-crew
+enlisted-crew hunt-bug -d "bug description" -e "E-XXX-*"
+enlisted-crew implement -p "path/to/plan.md"
+enlisted-crew validate
+enlisted-crew stats
 ```
+
+**Note on Planning**: For planning and design tasks, use Warp Agent directly in your terminal. It has full codebase access and is faster than multi-agent orchestration. The planning flow has been deprecated in favor of direct interaction with Warp.
 
 ## Requirements
 

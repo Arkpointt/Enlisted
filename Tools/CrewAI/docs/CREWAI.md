@@ -1,17 +1,14 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities), automatic prompt caching, **intelligent manager analysis** that detects and logs critical issues, **Contextual Retrieval Memory System** with hybrid search (BM25 + vector), RRF fusion, Cohere reranking, and FILCO post-retrieval filtering for 67%+ better retrieval than basic RAG, and **Semantic Codebase Search** via ChromaDB vector index for fast code retrieval.  
-**Status:** ✅ Implemented  
-**Last Updated:** 2026-01-08
+**Summary:** Two AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities), automatic prompt caching, **Contextual Retrieval Memory System** with hybrid search (BM25 + vector), RRF fusion, Cohere reranking, and FILCO post-retrieval filtering for 67%+ better retrieval than basic RAG, and **Semantic Codebase Search** via ChromaDB vector index for fast code retrieval.  
+**Status:** ✅ Production  
+**Last Updated:** 2026-01-09
 
 ---
 
 ## 📑 Quick Start
 
 ```bash
-# Design a feature
-enlisted-crew plan -f "feature-name" -d "what it does"
-
 # Find and fix bugs  
 enlisted-crew hunt-bug -d "bug description" -e "E-XXX-*"
 
@@ -20,11 +17,16 @@ enlisted-crew implement -p "docs/CrewAI_Plans/feature.md"
 
 # Pre-commit validation
 enlisted-crew validate
+
+# View execution statistics
+enlisted-crew stats
 ```
+
+**Note:** For planning/design tasks, use Warp Agent directly. It has full codebase access and is faster than multi-agent orchestration.
 
 ---
 
-## Three Workflows (All Flow-based)
+## Two Workflows (All Flow-based)
 
 All workflows use CrewAI Flows with:
 - **State persistence** (`persist=True`) - Resume on failure
@@ -33,34 +35,7 @@ All workflows use CrewAI Flows with:
 
 ---
 
-### 1. Plan - Design a Feature (PlanningFlow)
-```bash
-enlisted-crew plan -f "reputation-integration" -d "Connect reputation to morale/supply"
-```
-
-**What it does:**
-1. **Research** - systems_analyst investigates existing code
-2. **Advise** - architecture_advisor suggests best practices
-3. **Design** - feature_architect creates technical spec + gap analysis
-   - Searches for broken references (code calling non-existent events/IDs)
-   - Classifies gaps: DEPRECATED | MISSING_IMPL | TEST_CODE | OUTDATED_DOCS | UNCLEAR
-   - Proposes remediation and logs issues for review
-4. **Document** - documentation_maintainer writes to `docs/CrewAI_Plans/`
-5. **Validate** - code_analyst verifies no hallucinated files/IDs
-6. **Auto-fix** - If hallucinations found, automatically correct them (up to 2 attempts)
-
-**State Persistence:** If the flow fails mid-run, re-running resumes from last successful step.
-
-**Key Features:**
-- **Intelligent gap detection** - Agent investigates WHY references are broken
-- **Manager analysis** - Detects and logs critical issues without blocking workflow
-- **Fully automated** - No interactive prompts; all flows run to completion
-
-**Output:** Validated planning doc ready for implementation, with discovered gaps addressed.
-
----
-
-### 2. Hunt Bug - Find & Fix Issues (BugHuntingFlow)
+### 1. Hunt Bug - Find & Fix Issues (BugHuntingFlow)
 ```bash
 enlisted-crew hunt-bug -d "Crash when opening camp menu" -e "E-CAMPUI-042"
 ```
@@ -78,22 +53,26 @@ enlisted-crew hunt-bug -d "Crash when opening camp menu" -e "E-CAMPUI-042"
 
 ---
 
-### 3. Implement - Build from Plan (ImplementationFlow)
+### 2. Implement - Build from Plan (ImplementationFlow)
 ```bash
 enlisted-crew implement -p "docs/CrewAI_Plans/reputation-integration.md"
 ```
 
-**What it does (smart partial-implementation handling):**
-1. **Load Plan** - Read the approved planning document
-2. **Verify Existing** - Check what's ALREADY implemented in codebase
+**What it does (single-agent steps with smart routing):**
+1. **Load Plan** - Read the approved planning document (pure Python)
+2. **Verify Existing** - Single-agent checks what's already implemented
    - Searches for C# files/methods mentioned in plan
    - Checks for existing JSON content IDs
    - Determines C# status: COMPLETE / PARTIAL / NOT_STARTED
    - Determines Content status: COMPLETE / PARTIAL / NOT_STARTED
-3. **Route C#** - Skip if already complete, implement only missing parts
-4. **Route Content** - Skip if already complete, create only missing IDs
-5. **Validate** - qa_agent runs build + content checks
-6. **Document** - Update plan status, sync database, disperse to feature docs
+3. **Implement C#** - Single-agent writes C# code (conditional via Flow router)
+4. **Implement Content** - Single-agent creates JSON content (conditional via Flow router)
+5. **Validate Build** - Direct tool call to dotnet build (pure Python)
+6. **Validate Content** - Direct tool call to content validator (pure Python)
+7. **Sync Docs** - Direct tool calls for database sync (pure Python)
+8. **Generate Report** - Final summary (pure Python)
+
+**Architecture:** Each step uses a single-agent Crew or pure Python. Flow controls routing based on state, not agent autonomy. Expected: 10-15 tool calls total.
 
 **Key Feature:** The Flow automatically detects partial implementations and routes around completed work. You can re-run the same plan multiple times safely - it will only do what's still needed.
 

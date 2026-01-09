@@ -2,15 +2,17 @@
 """
 Enlisted CrewAI CLI
 
-Three core workflows for Enlisted mod development:
+Two core workflows for Enlisted mod development:
 
-    enlisted-crew plan -f "feature" -d "description"    # Design a feature
     enlisted-crew hunt-bug -d "bug" -e "E-XXX-*"        # Find & fix bugs
     enlisted-crew implement -p "plan.md"                # Build from plan
 
 Utility:
     enlisted-crew validate                              # Pre-commit check
     enlisted-crew stats [-c crew_name]                  # View execution metrics
+
+Note: For planning/design tasks, use Warp Agent directly. It has full codebase
+      access and is faster than multi-agent orchestration.
 """
 
 import argparse
@@ -78,32 +80,6 @@ def main():
         help="Path to approved planning doc (e.g., docs/CrewAI_Plans/feature.md)",
     )
     
-    # plan command - DESIGN A FEATURE
-    plan_parser = subparsers.add_parser(
-        "plan",
-        help="Create a planning document for a proposed feature",
-    )
-    plan_parser.add_argument(
-        "--feature", "-f",
-        required=True,
-        help="Feature name (kebab-case like 'reputation-integration')",
-    )
-    plan_parser.add_argument(
-        "--description", "-d",
-        required=True,
-        help="Brief description of what the feature does",
-    )
-    plan_parser.add_argument(
-        "--systems", "-s",
-        default="",
-        help="Related systems (e.g. 'EscalationManager, ContentOrchestrator')",
-    )
-    plan_parser.add_argument(
-        "--docs", "-D",
-        default="",
-        help="Related documentation files",
-    )
-    
     # hunt-bug command (Flow-based)
     hunt_parser = subparsers.add_parser(
         "hunt-bug",
@@ -158,14 +134,6 @@ def main():
             return  # No result to print
         elif args.command == "implement":
             result = run_implement(crew, args.plan)
-        elif args.command == "plan":
-            result = run_plan(
-                crew,
-                feature_name=args.feature,
-                description=args.description,
-                systems=args.systems,
-                docs=args.docs,
-            )
         elif args.command == "hunt-bug":
             result = run_hunt_bug(
                 description=args.description,
@@ -240,58 +208,6 @@ def run_implement(crew: EnlistedCrew, plan_path: str):
     flow = ImplementationFlow()
     result = flow.kickoff(inputs={
         "plan_path": plan_path,
-    })
-    
-    # Print cost and safety summaries
-    print_all_summaries()
-    
-    # Return the final report from the flow state
-    if hasattr(result, 'final_report'):
-        return result.final_report
-    return str(result)
-
-
-def run_plan(
-    crew: EnlistedCrew,
-    feature_name: str,
-    description: str,
-    systems: str = "",
-    docs: str = "",
-):
-    """
-    PLANNING WORKFLOW - Design a feature completely.
-    
-    Uses PlanningFlow which:
-    1. Researches existing systems
-    2. Gets architectural advice
-    3. Designs technical specification
-    4. Writes planning document
-    5. Validates for hallucinations (with auto-fix)
-    
-    State persistence enabled - can resume on failure.
-    """
-    from .flows import PlanningFlow
-    
-    SearchCache.clear()
-    reset_all_hooks()  # Reset cost tracking and safety guards
-    print("\n" + "=" * 60)
-    print("PLANNING WORKFLOW (Flow-based)")
-    print("=" * 60)
-    print(f"\nFeature: {feature_name}")
-    print(f"Description: {description}")
-    print("\nThis workflow will:")
-    print("  1. Research existing systems")
-    print("  2. Get architectural advice")
-    print("  3. Design technical specification")
-    print("  4. Write planning document")
-    print("  5. Validate (auto-fix hallucinations)\n")
-    
-    flow = PlanningFlow()
-    result = flow.kickoff(inputs={
-        "feature_name": feature_name,
-        "description": description,
-        "related_systems": systems or "",
-        "related_docs": docs or "",
     })
     
     # Print cost and safety summaries

@@ -637,25 +637,36 @@ src/enlisted_crew/main.py                         # Remove 'plan' CLI command
 Tools/CrewAI/README.md                            # Add: "For planning, use Warp Agent directly"
 ```
 
-### Phase 2: Refactor Implementation Flow
+### Phase 2: Refactor Implementation Flow ✅ COMPLETE
 
-**Rewrite in place:**
+**Status:** Completed 2026-01-09
+
+**Rewritten:**
 ```
-src/enlisted_crew/flows/implementation_flow.py   # REWRITE to single-agent pattern
+src/enlisted_crew/flows/implementation_flow.py   # ✅ Refactored to single-agent pattern
 ```
 
-**Pattern change:**
-- Remove: `run_implementation_crew()` method with multi-agent Crew
-- Remove: All `get_*()` agent factory functions
-- Add: Separate Flow methods per step, each with inline single-agent Crew or pure Python
-- Keep: State models, guardrails, condition functions
+**Changes made:**
+- ✅ Removed: `run_implementation_crew()` method with 5-agent Crew
+- ✅ Removed: All `get_*()` agent factory functions (298 lines)
+- ✅ Removed: `ConditionalTask` imports and usage
+- ✅ Added: 8 separate Flow methods (load, verify, implement_csharp, implement_content, validate_build, validate_content, sync_docs, report)
+- ✅ Kept: State models, guardrails, condition functions
+- ✅ File reduced: 1,013 → 715 lines (29% smaller)
 
-**Tools used by new steps:**
-- `verify_existing`: `lookup_content_ids_batch`, `verify_file_exists_tool`, `parse_plan`
-- `implement_csharp`: `search_codebase`, `read_source`, `write_source`, `append_to_csproj`
-- `implement_content`: `write_event`, `update_localization`, `lookup_content_id`, `add_content_item`
-- `validate_build`: Pure Python (subprocess call)
-- `sync_database`: Pure Python (`sync_content_from_files._run()`, `record_implementation._run()`)
+**New architecture:**
+- Step 2 `verify_existing`: Single-agent Crew (4 tools: parse_plan, lookup_content_ids_batch, verify_file_exists_tool, search_codebase)
+- Step 3 `implement_csharp`: Single-agent Crew (4 tools: search_codebase, read_source, write_source, append_to_csproj) - conditional via @router
+- Step 4 `implement_content`: Single-agent Crew (5 tools: write_event, update_localization, lookup_content_id, add_content_item, get_valid_categories) - conditional via @router
+- Step 5 `validate_build`: Pure Python (direct build.run() call)
+- Step 6 `validate_content_check`: Pure Python (direct validate_content.run() call)
+- Step 7 `sync_docs`: Pure Python (sync_content_from_files.run(), record_implementation.run())
+- Step 8 `generate_report`: Pure Python
+
+**Expected impact:**
+- Tool calls: 80-100 → 10-15 (85% reduction)
+- Execution time: 3-5 min → 1-2 min (60% faster)
+- Cost: 80% reduction
 
 ### Phase 3: Refactor Bug Hunting Flow
 

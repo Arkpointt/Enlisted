@@ -344,13 +344,12 @@ def test_hierarchical_crew_configuration():
     
     try:
         # Import flow classes
-        from enlisted_crew.flows.planning_flow import PlanningFlow
+        # Note: PlanningFlow deprecated - use Warp Agent for planning
         from enlisted_crew.flows.implementation_flow import ImplementationFlow
         from enlisted_crew.flows.bug_hunting_flow import BugHuntingFlow
         from enlisted_crew.flows.validation_flow import ValidationFlow
         
         flows = [
-            ("PlanningFlow", PlanningFlow),
             ("ImplementationFlow", ImplementationFlow),
             ("BugHuntingFlow", BugHuntingFlow),
             ("ValidationFlow", ValidationFlow),
