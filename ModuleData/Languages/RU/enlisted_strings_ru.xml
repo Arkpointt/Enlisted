@@ -4859,6 +4859,794 @@
     <string id="str_ok" text="Подтвердить" />
     <string id="str_understood" text="Понял" />
     <string id="enl_culture_mismatch" text="Ваш предыдущий тип свиты ({TYPE}) недоступен в {CULTURE}. Вы выберете новый тип построения по достижении звания командира." />
+    <string id="News_ArmyDisbanded" text="Армия {LORD} распущена." />
+    <string id="News_ArmyForming" text="{LORD} собирает армию." />
+    <string id="News_Butchery" text="Резня в {PLACE}: {WINNER} и {LOSER} обескровили друг друга." />
+    <string id="News_Captured" text="{SETTLEMENT} захвачен(о) {KINGDOM}." />
+    <string id="News_Costly" text="{WINNER} одержал дорогую победу над {LOSER} в {PLACE}." />
+    <string id="News_Executed" text="{LORD} был казнен {EXECUTOR}." />
+    <string id="News_ExecutedNoExecutor" text="{LORD} был казнен." />
+    <string id="News_Fallen" text="{SETTLEMENT} пал(о) перед {KINGDOM}." />
+    <string id="News_Inconclusive" text="Бесплодные бои возле {PLACE}." />
+    <string id="News_Peace" text="Мир заключен с {KINGDOM}." />
+    <string id="News_PlayerBattle" text="Мы помогли обеспечить победу при {PLACE}." />
+    <string id="News_PlayerDefeat" text="Нас выбили из {PLACE}." />
+    <string id="News_PrisonerCapturedBy" text="{LORD} был захвачен {CAPTOR}." />
+    <string id="News_PrisonerEscaped" text="{LORD} сбежал из плена." />
+    <string id="News_PrisonerReleased" text="{LORD} был освобожден из плена." />
+    <string id="News_PrisonerTaken" text="{LORD} был взят в плен." />
+    <string id="News_Pyrrhic" text="Пиррова победа при {PLACE}: {WINNER} победил {LOSER}, но ценой больших потерь." />
+    <string id="News_Raid" text="{SETTLEMENT} был(о) разорено." />
+    <string id="News_Siege" text="Осада идет у {SETTLEMENT}." />
+    <string id="News_Victory" text="{WINNER} разгромил {LOSER} возле {PLACE}." />
+    <string id="News_War" text="Война объявлена между {KINGDOM_A} и {KINGDOM_B}." />
+    <string id="brief_fallback_exhausted" text="Вы истощены." />
+    <string id="brief_fallback_illness" text="Вы больны, но держитесь." />
+    <string id="brief_fallback_injury" text="Вы ранены, но продолжаете путь." />
+    <string id="brief_fallback_tired" text="Вы устали, но уверены." />
+    <string id="camp_atmo_aftermath_lost_1" text="Отряд перегруппировывается после поражения. Боевой дух низок, но не сломлен." />
+    <string id="camp_atmo_aftermath_lost_2" text="Над лагерем висит мрачное настроение. Потери тяжким грузом." />
+    <string id="camp_atmo_aftermath_lost_3" text="После поражения отряд зализывает раны. Завтра новый день." />
+    <string id="camp_atmo_aftermath_won_1" text="Лагерь полон энергии победы. Солдаты празднуют и отдыхают." />
+    <string id="camp_atmo_aftermath_won_2" text="Победа еще свежа. Отряд перевязывает раны и считает павших." />
+    <string id="camp_atmo_aftermath_won_3" text="Битва выиграна, но работа не окончена. Раненым нужен уход." />
+    <string id="camp_atmo_army_day_1" text="Армейский лагерь простирается во все стороны. Приказы эхом разносятся меж шатров." />
+    <string id="camp_atmo_army_day_2" text="Войско собирается. Ваш отряд стоит наготове среди собранных сил." />
+    <string id="camp_atmo_army_day_3" text="Здесь собрана объединенная мощь королевства. Впечатляющее зрелище." />
+    <string id="camp_atmo_army_evening_1" text="Костры армейского лагеря, как звезды на земле. Войско располагается на ночлег." />
+    <string id="camp_atmo_army_evening_2" text="Вечер в большом лагере. Солдаты из разных отрядов делятся историями." />
+    <string id="camp_atmo_army_evening_3" text="Армия отдыхает. Завтра может принести битву." />
+    <string id="camp_atmo_army_morning_1" text="Большой лагерь пробуждается к жизни. Знамена многих лордов трепещут на утреннем ветру." />
+    <string id="camp_atmo_army_morning_2" text="Рассвет над армейским лагерем. Тысячи готовятся к предстоящему дню." />
+    <string id="camp_atmo_army_morning_3" text="Армия просыпается. Ваш отряд — один из многих в войске." />
+    <string id="camp_atmo_army_night_1" text="Армия спит под одеялом звезд. Караульные огни отмечают периметр." />
+    <string id="camp_atmo_army_night_2" text="Ночь в большом лагере. Тысячи отдыхают, что бы ни принесло завтра." />
+    <string id="camp_atmo_army_night_3" text="Войско затихло. Только часовые и неспящие бодрствуют." />
+    <string id="camp_atmo_fallback" text="Отряд занимается своими обязанностями." />
+    <string id="camp_atmo_march_day_1" text="Пыль поднимается над колонной, пока отряд продвигается вперед." />
+    <string id="camp_atmo_march_day_2" text="Миля за милей отряд марширует под открытым небом." />
+    <string id="camp_atmo_march_day_3" text="Дорога тянется впереди. Вы маршируете с остальными." />
+    <string id="camp_atmo_march_evening_1" text="Колонна останавливается на ночь. Усталые солдаты разбивают лагерь." />
+    <string id="camp_atmo_march_evening_2" text="Еще один день марша позади. Отряд обустраивается на ночь." />
+    <string id="camp_atmo_march_evening_3" text="На дороге спускается вечер. Время отдохнуть уставшим ногам." />
+    <string id="camp_atmo_march_morning_1" text="Колонна строится при раннем свете. Впереди еще один день марша." />
+    <string id="camp_atmo_march_morning_2" text="Рассвет над дорогой. Отряд готовится к движению." />
+    <string id="camp_atmo_march_morning_3" text="Раздается утренний рог. Время взвалить ранцы и маршировать." />
+    <string id="camp_atmo_march_night_1" text="Придорожный лагерь под звездами. Отряд отдыхает для завтрашнего марша." />
+    <string id="camp_atmo_march_night_2" text="Ночь в дороге. Костерки малы, но желанны." />
+    <string id="camp_atmo_march_night_3" text="Дорога темна и тиха. Бодрствуют только дозорные." />
+    <string id="camp_atmo_settlement_day_1" text="Лагерь кипит активностью под полуденным солнцем." />
+    <string id="camp_atmo_settlement_day_2" text="Солдаты занимаются своими делами в тени поселения." />
+    <string id="camp_atmo_settlement_day_3" text="Рутина лагерной жизни продолжается под ясным небом." />
+    <string id="camp_atmo_settlement_evening_1" text="Костры вспыхивают, когда солнце опускается за горизонт." />
+    <string id="camp_atmo_settlement_evening_2" text="Дневная работа заканчивается. Солдаты собираются у костров." />
+    <string id="camp_atmo_settlement_evening_3" text="Вечер опускается на лагерь. Смена караула." />
+    <string id="camp_atmo_settlement_morning_1" text="Утренний свет проникает в лагерь, солдаты готовятся к дню." />
+    <string id="camp_atmo_settlement_morning_2" text="Запах костров смешивается со звуками просыпающегося лагеря." />
+    <string id="camp_atmo_settlement_morning_3" text="Еще один день начинается в виду стен." />
+    <string id="camp_atmo_settlement_night_1" text="Лагерь спит под звездами. В темноте мерцают караульные огни." />
+    <string id="camp_atmo_settlement_night_2" text="Ночь наступила. Лагерь тих, слышны лишь шаги часовых." />
+    <string id="camp_atmo_settlement_night_3" text="Тьма окутывает лагерь. Завтра наступит достаточно скоро." />
+    <string id="camp_atmo_siege_day_1" text="Осада продолжается. Катапульты швыряют камни в упрямые стены." />
+    <string id="camp_atmo_siege_day_2" text="Лагерь наполнен звуками осадных работ. Стены падут — рано или поздно." />
+    <string id="camp_atmo_siege_day_3" text="Под осадными линиями вы ждете приказа к штурму." />
+    <string id="camp_atmo_siege_evening_1" text="Осадные машины затихают на ночь. Стены остаются." />
+    <string id="camp_atmo_siege_evening_2" text="Вечер в осадном лагере. Крепость темнеет на фоне угасающего неба." />
+    <string id="camp_atmo_siege_evening_3" text="Еще один день без пролома. Осада тянется." />
+    <string id="camp_atmo_siege_morning_1" text="Рассвет над осадными линиями. Стены высятся в утреннем свете." />
+    <string id="camp_atmo_siege_morning_2" text="Начинается очередной день осадных работ. Крепость ждет." />
+    <string id="camp_atmo_siege_morning_3" text="Утро в осадном лагере. Инженеры уже за работой." />
+    <string id="camp_atmo_siege_night_1" text="Ночь в осадных линиях. Стены — тени на фоне звезд." />
+    <string id="camp_atmo_siege_night_2" text="Осадный лагерь спит. Крепость наблюдает, молча и выжидая." />
+    <string id="camp_atmo_siege_night_3" text="Тьма над осадой. Завтра работа продолжится." />
+    <string id="context_narration_coordinated_offensive" text="Знамена собираются. Ваш лорд ведет союзные войска, чтобы подвести врага под меч." />
+    <string id="context_narration_desperate_defense" text="Темные дни. Королевство истекает кровью, и нужна каждая рука с мечом. Не будет покоя, пока не переломится ход." />
+    <string id="context_narration_garrison_duty" text="Отряд держит поселение, охраняет стены и поддерживает порядок внутри." />
+    <string id="context_narration_patrol_peacetime" text="Мирные времена, но нужна бдительность. Войско патрулирует, чтобы отогнать бандитов и показать знамя." />
+    <string id="context_narration_raid_operation" text="Ваш лорд хочет обескровить вражескую казну до начала настоящей кампании. Жгите их запасы, забирайте скот." />
+    <string id="context_narration_recruitment_drive" text="Войско набирает силу. Запасы копятся, лезвия точатся. Готовится большое наступление." />
+    <string id="context_narration_siege_operation" text="Войско окружило каменные стены. Дни превращаются в недели, пока машины бомбят, а терпение иссякает." />
+    <string id="context_narration_winter_camp" text="Кампания закончена. Отряд отдыхает, тренируется и выполняет повседневные обязанности, пока снег покрывает землю." />
+    <string id="dec_challenge_cancel" text="Некоторые оскорбления не стоят смерти." />
+    <string id="dec_challenge_cancel_result" text="Вы пропускаете мимо ушей. Умный выбор, хоть и не самый удовлетворяющий." />
+    <string id="dec_challenge_formal" text="Вызвать на формальную дуэль." />
+    <string id="dec_challenge_result" text="Сталь звенит, кровь льется. Выиграй или проиграй, вы заявили о себе. Офицеры узнают об этом — как и все остальные." />
+    <string id="dec_challenge_setup" text="Вызови их. Разберись как положено, со свидетелями. Старые обычаи еще имеют значение." />
+    <string id="dec_challenge_title" text="Вызвать кого-нибудь" />
+    <string id="dec_check_supplies_cancel" text="Я узнаю, когда все остальные." />
+    <string id="dec_check_supplies_cancel_result" text="Неведение имеет свои преимущества. Ты узнаешь, когда нужно будет." />
+    <string id="dec_check_supplies_do" text="Узнать о запасах отряда." />
+    <string id="dec_check_supplies_result" text="Квартирмейстер делится положением дел — запасы продовольствия, фуража, снаряжения. Информация — сила, даже в мелочах." />
+    <string id="dec_check_supplies_setup" text="Спроси квартирмейстера, как у нас дела. Хорошо знать до того, как станет отчаянно." />
+    <string id="dec_check_supplies_title" text="Проверить снабжение" />
+    <string id="dec_combat_drill_cancel" text="Может, позже." />
+    <string id="dec_combat_drill_cancel_result" text="Тренировочная площадка подождет." />
+    <string id="dec_combat_drill_do" text="Потренироваться с экипированным оружием." />
+    <string id="dec_combat_drill_result" text="Сержант работает с вами жестко, сосредотачиваясь на оружии, которое вы носите. Ваши движения становятся плавнее, смертоноснее." />
+    <string id="dec_combat_drill_setup" text="Попроси дополнительное время для тренировки с сержантом. Тяжелая работа, но она оттачивает навыки владения экипированным оружием." />
+    <string id="dec_combat_drill_title" text="Боевая тренировка" />
+    <string id="dec_confront_rival_cancel" text="Оставить пока." />
+    <string id="dec_confront_rival_cancel_result" text="Вы глотаете гнев. Некоторые битвы не стоят того." />
+    <string id="dec_confront_rival_fists" text="Разобраться кулаками, вдали от офицеров." />
+    <string id="dec_confront_rival_fists_result" text="Вы обмениваетесь ударами за повозками с припасами. Выиграл или проиграл, все кончено. Солдаты уважают тех, кто решает свои проблемы напрямую." />
+    <string id="dec_confront_rival_setup" text="Это длится слишком долго. В лагере есть тот, кто делает вашу жизнь трудной. Пора разобраться." />
+    <string id="dec_confront_rival_title" text="Противостоять своему сопернику" />
+    <string id="dec_confront_rival_words" text="Противостоять напрямую, словами." />
+    <string id="dec_confront_rival_words_result" text="Вы находите своего соперника и говорите то, что нужно. Напряжение спадает — к лучшему или худшему, но воздух очищен." />
+    <string id="dec_dangerous_wager_accept" text="'Договорились.' Встань и докажи это." />
+    <string id="dec_dangerous_wager_cancel" text="'Мне нечего тебе доказывать.' Остаться сидеть." />
+    <string id="dec_dangerous_wager_cancel_result" text="Вы качаете головой. {SOLDIER_NAME} пожимает плечами, называет вас благоразумным или трусом в зависимости от выпитого. Завтра никто не вспомнит, что вы отказались. А может, и вспомнят." />
+    <string id="dec_dangerous_wager_careful" text="'Двойная ставка или ничего — но на моих условиях.'" />
+    <string id="dec_dangerous_wager_careful_lose" text="Даже умный подход иногда идет наперекосяк. Вы теряете еще больше монет и залечиваете новые синяки. По крайней мере, вы пытались поступить умно." />
+    <string id="dec_dangerous_wager_careful_result" text="Вы переворачиваете вызов, складываете шансы в свою пользу. Все еще рискованно, но расчетливо. Когда у вас получается, выигрыш слаще — и вы почти не хромаете после." />
+    <string id="dec_dangerous_wager_lose_result" text="Гордыня предшествует падению. Вы больно падаете на землю, или обжигаетесь, или любая дурацкая затея идет наперекосяк. Солдаты морщатся. Монеты уходят к {SOLDIER_NAME}. Ваша гордость — в грязи." />
+    <string id="dec_dangerous_wager_setup" text="От скуки солдаты становятся изобретательными. {SOLDIER_NAME} ухмыляется на вас через костер. 'Слышал, у тебя яйца железные. Спорим на двадцать денаров, что ты не можешь...' Далее следует нечто невероятно опасное или невероятно глупое. Возможно, и то, и другое." />
+    <string id="dec_dangerous_wager_title" text="Принять опасное пари" />
+    <string id="dec_dangerous_wager_win_result" text="Сердце колотится, солдаты ревут, и каким-то образом — у вас получается. Монеты {SOLDIER_NAME} падают вам на ладонь, пока лагерь ликует. Эту историю будут рассказывать неделями. А вы будете ее чувствовать столько же." />
+    <string id="dec_endurance_cancel" text="Сберечь силы." />
+    <string id="dec_endurance_cancel_result" text="Вы решаете сберечь силы для того, что действительно важно." />
+    <string id="dec_endurance_result" text="Вы бежите, пока грудь не разрывается, а ноги не кричат о пощаде. Каждый круг делает вас труднее убить." />
+    <string id="dec_endurance_run" text="Бегать круги вокруг лагеря." />
+    <string id="dec_endurance_setup" text="Беги по периметру лагеря, пока не горят легкие. Солдаты живут и умирают благодаря своей выносливости." />
+    <string id="dec_endurance_title" text="Тренировка выносливости" />
+    <string id="dec_gamble_high_lose_result" text="Кости вас предают. Ваша ставка исчезла, и даже больше. Победители усмехаются, пока вы пересчитываете остаток." />
+    <string id="dec_gamble_low_cancel" text="'Не сегодня, ребята.' Идите дальше." />
+    <string id="dec_gamble_low_cancel_result" text="Вы отмахиваетесь и уходите. Кошелек остается полным, но вы упускаете товарищеское общение за игрой." />
+    <string id="dec_gamble_low_casual" text="Кинуть медяки и играть для смеха. (Ставка 10 золотых)" />
+    <string id="dec_gamble_low_lose_result" text="Кости холодеют. Ваша ставка исчезает в других кошельках, но вы разделяете стоны и смех с остальными. Цена товарищества." />
+    <string id="dec_gamble_low_setup" text="За повозками с припасами кучка солдат сгрудилась над одеялом. Кости стучат, монеты переходят из рук в руки. Кто-то замечает, что вы наблюдаете, и манит вас. 'Есть место еще для одного, если твои монеты настоящие.'" />
+    <string id="dec_gamble_low_shrewd" text="Играть осторожно. Следить за шансами. (Ставка 10 золотых)" />
+    <string id="dec_gamble_low_shrewd_lose" text="Даже осторожная игра не может победить полосу невезения. Вы уходите с меньшим, но хотя бы не погнались за убытками." />
+    <string id="dec_gamble_low_shrewd_result" text="Вы играете сдержанно, сбрасываете, когда шансы против, повышаете, когда они за вас. Банк меньше, но он ваш. Остальные смотрят на вас с чем-то средним между уважением и раздражением." />
+    <string id="dec_gamble_low_title" text="Азартная игра (Низкие ставки)" />
+    <string id="dec_gamble_low_win_result" text="Сегодня кости любят вас. Вы забираете скромный банк, пока остальные стонут и требуют еще один раунд. Легкие деньги, легкая компания." />
+    <string id="dec_join_drinking_cancel" text="Я пас." />
+    <string id="dec_join_drinking_cancel_result" text="Вы отказываетесь от выпивки. Ясная голова имеет свою ценность." />
+    <string id="dec_join_drinking_heavy" text="Пить много и отдаться ночи." />
+    <string id="dec_join_drinking_heavy_result" text="Вы пьете, пока звезды не пляшут. Об этой ночи будут говорить. Хорошо это или плохо — покажет время." />
+    <string id="dec_join_drinking_moderate" text="Выпить пару кружек с парнями." />
+    <string id="dec_join_drinking_moderate_result" text="Вы делитесь выпивкой и смехом. Вечер приятно смазывается. Завтрашнее похмелье будет стоить сегодняшнего товарищества." />
+    <string id="dec_join_drinking_setup" text="Кто-то открыл бочонок. Присоединиться? Выпивка укрепляет связи, но привлекает внимание." />
+    <string id="dec_join_drinking_title" text="Присоединиться к выпивке" />
+    <string id="dec_join_men_cancel" text="Держаться в стороне." />
+    <string id="dec_join_men_cancel_result" text="Вы остаетесь в стороне. Иногда солдату нужно побыть одному." />
+    <string id="dec_join_men_do" text="Сесть с солдатами у их костра." />
+    <string id="dec_join_men_result" text="Вы делитесь теплом и историями с товарищами. Они ценят равного. Офицерам это может не понравиться, но товарищество заслуживается, а не присваивается." />
+    <string id="dec_join_men_setup" text="Присядь у их костра, поделись историями. Хорошо для боевого духа — их и твоего." />
+    <string id="dec_join_men_title" text="Присоединиться к солдатам" />
+    <string id="dec_keep_to_self_cancel" text="Может, стоит быть общительным." />
+    <string id="dec_keep_to_self_cancel_result" text="Вы передумываете. Компания других имеет свои достоинства." />
+    <string id="dec_keep_to_self_do" text="Найти тихое место и побыть одному." />
+    <string id="dec_keep_to_self_result" text="Вы находите тихий уголок лагеря и даете мыслям успокоиться. Тишина — облегчение после постоянного шума военной жизни." />
+    <string id="dec_keep_to_self_setup" text="Иногда уединение дороже компании. Найди тихое место вдали от толпы." />
+    <string id="dec_keep_to_self_title" text="Побыть одному" />
+    <string id="dec_lead_drill_cancel" text="Пусть сержанты разбираются." />
+    <string id="dec_lead_drill_cancel_result" text="Тренировать других сегодня не ваша задача." />
+    <string id="dec_lead_drill_do" text="Взять на себя тренировку младших солдат." />
+    <string id="dec_lead_drill_result" text="Вы командовали строевой подготовкой с авторитетом. Молодые солдаты четко реагируют на ваши приказы. Офицеры, наблюдающие сбоку, впечатлены." />
+    <string id="dec_lead_drill_setup" text="Веди строевую подготовку для молодых солдат. Обучение укрепляет собственные навыки и строит репутацию." />
+    <string id="dec_lead_drill_title" text="Вести строевую подготовку" />
+    <string id="dec_listen_rumors_cancel" text="Слухи — для скучающих солдат." />
+    <string id="dec_listen_rumors_cancel_result" text="У вас есть дела поважнее, чем сплетни." />
+    <string id="dec_listen_rumors_do" text="Побродить по лагерю, прислушиваясь к разговорам." />
+    <string id="dec_listen_rumors_result" text="Вы ловите обрывки разговоров — передвижения войск, дворцовая политика, страхи и надежды. Что-то из этого может даже оказаться правдой." />
+    <string id="dec_listen_rumors_setup" text="Держи уши открытыми в лагере. Информация — валюта в любой армии." />
+    <string id="dec_listen_rumors_title" text="Слушать слухи" />
+    <string id="dec_practice_medicine_assist" text="Помочь хирургу с пациентами." />
+    <string id="dec_practice_medicine_cancel" text="Не сегодня." />
+    <string id="dec_practice_medicine_cancel_result" text="У хирурга есть другие помощники. Ваши руки остаются чистыми." />
+    <string id="dec_practice_medicine_result" text="Вы проводите часы, помогая с ранами и болезнями. Хирург хмыкает одобрительно вашей работе. Пациенты ценят уверенные руки." />
+    <string id="dec_practice_medicine_setup" text="Предложи помощь хирургу с простыми случаями. Полевая медицина — не самое красивое занятие, но оно спасает жизни." />
+    <string id="dec_practice_medicine_title" text="Практиковать медицину" />
+    <string id="dec_prove_courage_cancel" text="Смелость подождет." />
+    <string id="dec_prove_courage_cancel_result" text="Вы решаете не выпендриваться. Настоящая смелость проявляется в бою, а не в лагерных трюках." />
+    <string id="dec_prove_courage_do" text="Сделать что-то смелое и безрассудное." />
+    <string id="dec_prove_courage_result" text="Вы делаете что-то храброе и глупое. Солдаты ликуют. Офицеры стонут. Ваше тело платит цену, но репутация — нет." />
+    <string id="dec_prove_courage_setup" text="Сделай что-то безрассудное, чтобы заслужить уважение. Солдаты уважают смелость — даже глупую." />
+    <string id="dec_prove_courage_title" text="Доказать свою смелость" />
+    <string id="dec_request_audience_cancel" text="Стесниться. Сейчас не время." />
+    <string id="dec_request_audience_cancel_result" text="Вы топчетесь у края шатра, затем отворачиваетесь. Стража даже не смотрит на вас. Лучше подождать, пока не будет более сильных карт." />
+    <string id="dec_request_audience_opportunity" text="Попросить шанс доказать себя в особом задании." />
+    <string id="dec_request_audience_opportunity_result" text="Бровь лорда приподнимается. Амбиции или глупость? 'Я запомню твою готовность, солдат. Когда понадобится что-то сделать, возможно, я позову тебя.' Вы выдвинули свое имя вперед. Теперь нужно доказать, что вы его достойны." />
+    <string id="dec_request_audience_pay" text="Смиренно попросить аванс жалованья. Долги давят." />
+    <string id="dec_request_audience_pay_result" text="Вы кратко объясняете свое положение. Выражение лица лорда нечитаемо, но он жестом указывает управляющему. Кошель с монетами падает вам на ладонь. 'Смотри, чтобы это было возмещено службой.' Теперь вы в долгу — другого рода." />
+    <string id="dec_request_audience_recognition" text="Напомнить лорду о своей службе. Рассказать о том, что вы сделали." />
+    <string id="dec_request_audience_recognition_result" text="{LORD_NAME} выслушивает вас, глаза остры. Когда вы заканчиваете, пауза — затем один кивок. 'Теперь я знаю твое лицо, солдат. Продолжай служить хорошо.' Это немного, но от лорда это — все." />
+    <string id="dec_request_audience_setup" text="Знамя лорда висит над командным шатром. Стража стоит на посту, офицеры снуют по важным делам. Простой солдат не может просто войти — но ваш чин дает вам право просить аудиенции, если вам есть что сказать." />
+    <string id="dec_request_audience_title" text="Просить аудиенцию" />
+    <string id="dec_request_leave_cancel" text="Неважно." />
+    <string id="dec_request_leave_cancel_result" text="Вы решаете не спрашивать. Будут другие возможности." />
+    <string id="dec_request_leave_denied_result" text="Запрос отклонен. Офицер даже не смотрит на вас. 'Скоро выступаем. Оставайся с отрядом.'" />
+    <string id="dec_request_leave_do" text="Запросить разрешение на увольнительную." />
+    <string id="dec_request_leave_granted_result" text="Разрешение дано, с условиями. У вас есть время до вечера. Не заставляйте их жалеть об этом." />
+    <string id="dec_request_leave_setup" text="Попросить разрешения сходить в город в свободное время. Офицеры не всегда одобряют, но спросить не грех." />
+    <string id="dec_request_leave_title" text="Запросить увольнительную" />
+    <string id="dec_rest_cancel" text="Пробиваться дальше. Сон — для гарнизона." />
+    <string id="dec_rest_cancel_result" text="Вы стряхиваете усталость. Кампания не ждет чьего-либо комфорта." />
+    <string id="dec_rest_extended_cancel" text="Я посплю, когда умру." />
+    <string id="dec_rest_extended_cancel_result" text="Вы пробиваетесь сквозь изнеможение. Сон подождет." />
+    <string id="dec_rest_extended_full" text="Найти свой спальный мешок и выспаться как следует." />
+    <string id="dec_rest_extended_result" text="Вы крепко спите и просыпаетесь, чувствуя себя новым человеком. Ваше тело благодарит вас за отдых." />
+    <string id="dec_rest_extended_setup" text="Вам нужен настоящий сон, а не просто вздремнуть. Полноценный ночной отдых творит чудеса, но вы будете недоступны какое-то время." />
+    <string id="dec_rest_extended_title" text="Продолжительный отдых" />
+    <string id="dec_rest_setup" text="Ноги ноют от марша, глаза горят от слишком многих караулов. Солдат учится хватать сон, где только может его найти." />
+    <string id="dec_rest_short" text="Найти тенистое место и украсть какой можно отдых." />
+    <string id="dec_rest_short_result" text="Вы втискиваетесь между ящиками с припасами, плащ служит подушкой. Шум лагеря стихает. Когда вы просыпаетесь, тени сместились, но вы чувствуете себя легче." />
+    <string id="dec_rest_title" text="Отдых" />
+    <string id="dec_rest_with_men" text="Отдыхать у костра с другими солдатами." />
+    <string id="dec_rest_with_men_result" text="Вы дремлете на краю костра, наполовину слушая разговоры солдат. Неглубокий сон, но компания держит темные мысли в страхе." />
+    <string id="dec_scout_area_cancel" text="Остаться внутри периметра." />
+    <string id="dec_scout_area_cancel_result" text="Лагерь достаточно безопасен. Незачем бродить." />
+    <string id="dec_scout_area_do" text="Обойти периметр и дальше." />
+    <string id="dec_scout_area_result" text="Вы исследуете местность вокруг лагеря — тропы, укрытия, подступы. Знания, которые могут пригодиться, когда скрестятся мечи." />
+    <string id="dec_scout_area_setup" text="Выйди за периметр лагеря. Узнай землю — это может спасти тебе жизнь." />
+    <string id="dec_scout_area_title" text="Разведка окрестностей" />
+    <string id="dec_seek_officers_cancel" text="Останусь со своими." />
+    <string id="dec_seek_officers_cancel_result" text="Ты остаёшься с солдатами. Продвижение придёт естественным путём." />
+    <string id="dec_seek_officers_do" text="Стать заметным для офицеров." />
+    <string id="dec_seek_officers_result" text="Ты находишь причины быть рядом с командным шатром. Офицеры замечают. Солдаты тоже замечают — и не всегда одобряют карьеристов." />
+    <string id="dec_seek_officers_setup" text="Побудь у командного шатра, выгляди полезным. Амбиции требуют быть на виду." />
+    <string id="dec_seek_officers_title" text="Искать расположения офицеров" />
+    <string id="dec_seek_treatment_basic" text="Только основы — бинты и мазь. (10 золотых)" />
+    <string id="dec_seek_treatment_basic_result" text="Передаются базовые припасы. Ничего особенного, но помогает." />
+    <string id="dec_seek_treatment_cancel" text="Справлюсь сам." />
+    <string id="dec_seek_treatment_cancel_result" text="Ты покидаешь шатёр хирурга. Работать придётся времени и удаче." />
+    <string id="dec_seek_treatment_full" text="Оплатить настоящее лечение. (30 золотых)" />
+    <string id="dec_seek_treatment_full_result" text="Хирург чистит и перевязывает твои раны умелыми руками. Жжёт адски, но заживёт чисто." />
+    <string id="dec_seek_treatment_setup" text="Шатёр хирурга. Пора как следует заняться ранами. Это будет стоить монет, но правильный уход предотвратит худшие проблемы." />
+    <string id="dec_seek_treatment_title" text="Обратиться за лечением" />
+    <string id="dec_shady_deal_cancel" text="Уйти." />
+    <string id="dec_shady_deal_cancel_result" text="Ты не хочешь участвовать в чём бы то ни было. Чистые руки стоят больше, чем грязные деньги." />
+    <string id="dec_shady_deal_do" text="Согласиться на сделку. Не задавать вопросов." />
+    <string id="dec_shady_deal_report" text="Сообщить о подозрительном предложении." />
+    <string id="dec_shady_deal_report_result" text="Ты рассказываешь офицерам о предложении. Они одобрительно кивают. Подозрительный тип исчезает, прежде чем его успевают допросить." />
+    <string id="dec_shady_deal_result" text="Монеты переходят из рук в руки в тени. Ты не знаешь, откуда товар, и не спрашиваешь. Прибыль есть прибыль." />
+    <string id="dec_shady_deal_setup" text="Один человек знает другого, у которого есть что продать. Товар выглядит достаточно легитимно, но цена подозрительно низкая." />
+    <string id="dec_shady_deal_title" text="Тёмная сделка" />
+    <string id="dec_side_work_cancel" text="Моей службы достаточно." />
+    <string id="dec_side_work_cancel_result" text="Ты отказываешься от дополнительной работы. Отдых тоже ценен." />
+    <string id="dec_side_work_do" text="Взять на себя дополнительный труд за деньги." />
+    <string id="dec_side_work_result" text="Часы тяжёлой работы — таскание, копание, подъём. Спина болит, но кошелёк тяжелеет." />
+    <string id="dec_side_work_setup" text="Кому-то в лагере нужна рабочая сила. Платит неплохо — если не против попотеть." />
+    <string id="dec_side_work_title" text="Подработка" />
+    <string id="dec_spar_cancel" text="Не сегодня. Качни головой и иди дальше." />
+    <string id="dec_spar_cancel_result" text="{SOLDIER_NAME} пожимает плечами и находит другого партнёра. Нет стыда в том, чтобы знать, когда беречь силы." />
+    <string id="dec_spar_friendly" text="Принять приглашение. Оставить всё в дружеском ключе." />
+    <string id="dec_spar_friendly_result" text="Деревянные клинки стучатся друг о друга, пока вы ходите по кругу, проверяя защиту друг друга. Никто не сдерживается, но никто и не пытается что-то доказать. Вы оба становитесь лучше от этого." />
+    <string id="dec_spar_hard" text="Пусть это будет не зря. Сражайся всерьёз." />
+    <string id="dec_spar_hard_result" text="Эта схватка приводит к крови. Вы набрасываетесь друг на друга, будто между вами настоящая вражда, и наблюдающие солдаты замолкают. Когда всё кончено, вы оба тяжело дышите и украшены свежими синяками. Молва об этой стычке разойдётся." />
+    <string id="dec_spar_setup" text="Плац занят. Несколько солдат отрабатывают приёмы, но настоящее обучение происходит, когда скрещиваются клинки. {SOLDIER_NAME} ловит твой взгляд и кивает в сторону тренировочного круга." />
+    <string id="dec_spar_title" text="Учебный поединок" />
+    <string id="dec_study_tactics_cancel" text="Карты подождут." />
+    <string id="dec_study_tactics_cancel_result" text="Ты откладываешь свитки. Практика всё равно лучше теории." />
+    <string id="dec_study_tactics_do" text="Изучить карты и обдумать увиденное." />
+    <string id="dec_study_tactics_result" text="Ты склоняешься над старыми картами сражений, размышляя о местности, построениях и времени. Закономерности войны проступают чётче." />
+    <string id="dec_study_tactics_setup" text="Возьми карту, подумай о построениях. Войны выигрывают те, кто думает до того, как сражаться." />
+    <string id="dec_study_tactics_title" text="Изучать тактику" />
+    <string id="dec_train_troops_cancel" text="Пусть этим займётся кто-то другой." />
+    <string id="dec_train_troops_cancel_result" text="Сегодня тренировка — чья-то другая ответственность." />
+    <string id="dec_train_troops_do" text="Взять на себя проведение тренировочных учений." />
+    <string id="dec_train_troops_result" text="Ты гоняешь рекрутов по полной. Они проклинают твоё имя, но будут сражаться лучше благодаря этому. Офицеры одобрительно кивают." />
+    <string id="dec_train_troops_setup" text="Проведи рекрутов через учения. Они научатся на твоём опыте — если ты их до этого не сломаешь." />
+    <string id="dec_train_troops_title" text="Тренировать солдат" />
+    <string id="dec_visit_market_browse" text="Потратить время на осмотр лавок." />
+    <string id="dec_visit_market_cancel" text="Нет времени на покупки." />
+    <string id="dec_visit_market_cancel_result" text="Долг зовёт громче, чем торговля." />
+    <string id="dec_visit_market_result" text="Ты бродишь по рынку, разглядывая товары. Разнообразие — приятная перемена после лагерного пайка и казённого снаряжения." />
+    <string id="dec_visit_market_setup" text="Посмотри, что может предложить город. Припасы, предметы роскоши, может, что-то полезное." />
+    <string id="dec_visit_market_title" text="Посетить рынок" />
+    <string id="dec_visit_quartermaster_cancel" text="У меня есть всё необходимое." />
+    <string id="dec_visit_quartermaster_cancel_result" text="Твоего текущего снаряжения хватит. Нет нужды тратить монеты, которых нет." />
+    <string id="dec_visit_quartermaster_do" text="Посмотреть, что есть в наличии у квартирмейстера." />
+    <string id="dec_visit_quartermaster_result" text="Ты просматриваешь запасы квартирмейстера. Оружие, доспехи, припасы — всё доступно за монеты или по требованию. Хорошо знать, что возможно." />
+    <string id="dec_visit_quartermaster_setup" text="Посмотри, что есть в наличии, может, сделай запрос. У квартирмейстера есть то, что тебе нужно — за цену." />
+    <string id="dec_visit_quartermaster_title" text="Навестить квартирмейстера" />
+    <string id="dec_volunteer_duty_cancel" text="Моих обычных обязанностей достаточно." />
+    <string id="dec_volunteer_duty_cancel_result" text="Ты молчишь. Нет нужды выделяться больше необходимого." />
+    <string id="dec_volunteer_duty_do" text="Вызваться на дополнительные обязанности." />
+    <string id="dec_volunteer_duty_result" text="{NCO_NAME} кивает на твоё предложение. Дополнительная работа находит тебя быстро. Офицеры ценят инициативу. Некоторые солдаты считают, что ты выпендриваешься." />
+    <string id="dec_volunteer_duty_setup" text="Скажи сержанту, что хочешь дополнительной работы. Инициативу замечают — к лучшему или худшему." />
+    <string id="dec_volunteer_duty_title" text="Вызваться на дежурство" />
+    <string id="dec_weapon_drill_cancel" text="Не сейчас." />
+    <string id="dec_weapon_drill_cancel_result" text="Тренировочные столбы будут там и завтра." />
+    <string id="dec_weapon_drill_do" text="Отработать базовые приёмы." />
+    <string id="dec_weapon_drill_result" text="Взмах, блок, укол, восстановление. Ты повторяешь приёмы, пока руки не горят огнём. Это честная работа." />
+    <string id="dec_weapon_drill_setup" text="Отрабатывай приёмы на тренировочных столбах. Базовая работа, но она строит мышечную память." />
+    <string id="dec_weapon_drill_title" text="Тренировка с оружием" />
+    <string id="dec_weapon_specialization_cancel" text="Предпочитаю разнообразие." />
+    <string id="dec_weapon_specialization_cancel_result" text="Специализация подождёт. Гибкость имеет свои достоинства." />
+    <string id="dec_weapon_specialization_do" text="Сосредоточиться на освоении основного оружия." />
+    <string id="dec_weapon_specialization_result" text="Часы сконцентрированной практики. Твои руки теперь знают это оружие как продолжение твоего тела." />
+    <string id="dec_weapon_specialization_setup" text="Сосредоточь свои тренировки на оружии, которое используешь чаще всего. Специалисты убивают быстрее, чем универсалы." />
+    <string id="dec_weapon_specialization_title" text="Специализация на оружии" />
+    <string id="decision_dice_body" text="{COMRADE_NAME} машет тебе, подзывая к группе, собравшейся у маленького костра. &quot;Давай, {PLAYER_RANK}! Нам нужны свежие монеты в банке.&quot; Игра в кости выглядит оживлённой, а тебе не помешает расслабиться." />
+    <string id="decision_dice_bold_outcome" text="Кости летят, золото течёт. Ты забираешь банк благодаря выигрышной серии, о которой говорит весь лагерь." />
+    <string id="decision_dice_decline" text="&quot;Не сегодня. Мне нужно отдохнуть.&quot;" />
+    <string id="decision_dice_decline_outcome" text="Ты возвращаешься в свою палатку. Сквозь ночь доносятся звуки смеха и проклятий." />
+    <string id="decision_dice_join_bold" text="&quot;Я чувствую себя везучим. Высокие ставки.&quot;" />
+    <string id="decision_dice_join_careful" text="&quot;Раздавай и мне — только маленькие ставки.&quot;" />
+    <string id="decision_dice_join_outcome" text="Леди удача благоволит тебе сегодня. Ты уходишь с удвоенной ставкой и несколькими новыми друзьями." />
+    <string id="decision_dice_title" text="Вечерняя игра в кости" />
+    <string id="decision_favor_body" text="{COMRADE_NAME} отводит тебя в сторону с озабоченным видом. &quot;Мне нужно попросить об одолжении. Моя семья... у них накопились долги. Мне нужны деньги, и быстро. Не мог бы ты одолжить мне немного? Клянусь, верну, как только смогу.&quot;" />
+    <string id="decision_favor_generous" text="&quot;Бери, сколько нужно, друг. Мы заботимся о своих.&quot;" />
+    <string id="decision_favor_generous_outcome" text="Лицо {COMRADE_NAME} заливает облегчение. &quot;Ты хороший солдат, {PLAYER_NAME}. Я не забуду этого.&quot; Он берёт монеты и спешит отправить их семье." />
+    <string id="decision_favor_modest" text="&quot;Я могу одолжить немного. Это не много, но возьми.&quot;" />
+    <string id="decision_favor_modest_outcome" text="{COMRADE_NAME} благодарно кивает. &quot;Каждая монетка помогает. Спасибо, {PLAYER_NAME}.&quot; Он с лёгкой улыбкой убирает монеты в карман." />
+    <string id="decision_favor_refuse" text="&quot;Я не могу позволить себе раздавать свои деньги. Прости.&quot;" />
+    <string id="decision_favor_refuse_outcome" text="Выражение лица {COMRADE_NAME} слегка твердеет, но он кивает. &quot;Я понимаю. Времена тяжёлые для всех.&quot; Он уходит без лишних слов." />
+    <string id="decision_favor_title" text="Просьба об одолжении" />
+    <string id="decision_gratitude_accept" text="&quot;Спасибо. Это много значит.&quot;" />
+    <string id="decision_gratitude_accept_outcome" text="Ты разворачиваешь свёрток и находишь несколько полезных припасов. Небольшие жесты, но они укрепляют доверие в роте." />
+    <string id="decision_gratitude_body" text="{COMRADE_NAME} находит тебя во время привала и протягивает маленький свёрток. &quot;Здесь немного, но я нашёл это, пока фуражировал. Подумал, тебе может пригодиться, после того, что ты для меня сделал.&quot;" />
+    <string id="decision_gratitude_refuse" text="&quot;Оставь себе. Ты мне ничего не должен.&quot;" />
+    <string id="decision_gratitude_refuse_outcome" text="{COMRADE_NAME} настаивает ещё раз, потом кивает, смущённый, но благодарный. &quot;Всё равно... спасибо.&quot; Кажется, сам жест значит больше, чем монеты." />
+    <string id="decision_gratitude_title" text="Небольшая благодарность" />
+    <string id="decision_lord_hunt_accept" text="&quot;Я польщён, милорд. Я явлюсь.&quot;" />
+    <string id="decision_lord_hunt_accept_outcome" text="Ты проводишь день, охотясь с партией {LORD_NAME}. Охота успешна — добыты олени, настроение приподнятое. По возвращении {LORD_NAME} предлагает тебе твою долю." />
+    <string id="decision_lord_hunt_body" text="{LORD_NAME} организует охотничью партию. К тебе подходит гонец с приглашением. Охоты лорда славятся хорошей добычей и избранной компанией — хотя могут быть и утомительными мероприятиями." />
+    <string id="decision_lord_hunt_decline" text="&quot;Благодарен за честь, но долг удерживает меня в лагере.&quot;" />
+    <string id="decision_lord_hunt_decline_outcome" text="Гонец кивает и удаляется. Возможно, в другой раз." />
+    <string id="decision_lord_hunt_title" text="Приглашение на охоту" />
+    <string id="decision_medic_charge" text="&quot;Достаньте мне чистой воды и свежих бинтов. Я разберусь.&quot;" />
+    <string id="decision_medic_charge_outcome" text="Ты работаешь всю ночь, накладывая припарки и наблюдая за состоянием солдата. К рассвету жар спадает. Разносится молва о твоём умении." />
+    <string id="decision_medic_emergency_body" text="Около медицинского шатра поднимается переполох. Один из раненых резко ухудшился — жар и инфекция. Другие медики смотрят на тебя. &quot;Что нам делать? Хирурга здесь нет!&quot;" />
+    <string id="decision_medic_emergency_title" text="Медицинская чрезвычайная ситуация" />
+    <string id="decision_medic_help" text="&quot;Нам нужен хирург. Кто-нибудь, скачите найти его — я стабилизирую пациента.&quot;" />
+    <string id="decision_medic_help_outcome" text="Ты поддерживаешь состояние солдата стабильным до прибытия хирурга. Благоразумный выбор — хирург мастерски справляется с осложнением." />
+    <string id="decision_qm_audit_bribe" text="Купить время: тихо дать взятку и продолжать дело." />
+    <string id="decision_qm_audit_bribe_outcome" text="Монеты переходят из рук в руки. Клерк теряет интерес. Ты получаешь несколько недель передышки." />
+    <string id="decision_qm_audit_burn" text="Уничтожить бумажный след: заставить проблему исчезнуть." />
+    <string id="decision_qm_audit_burn_outcome" text="Страницы гроссбуха скручиваются в пепел. Вопросы прекращаются. Но ты перешёл черту, за которую нет возврата." />
+    <string id="decision_qm_audit_cooperate" text="Сотрудничать: исправить, что можно, и принять удар." />
+    <string id="decision_qm_audit_cooperate_outcome" text="Ты проглатываешь гордость и разгребаешь беспорядок. Это стоит тебе репутации, но расследование затихает — пока что." />
+    <string id="decision_qm_audit_pressure_body" text="Клерк рыщет вокруг гроссбухов, задавая осторожные вопросы. Если что-то не так, они это найдут. Ты можешь встретить это лицом к лицу, похоронить или купить время." />
+    <string id="decision_qm_audit_pressure_title" text="Давление ревизии" />
+    <string id="decision_qm_deal_body" text="К тебе подходит странствующий торговец с повозкой излишков товара. &quot;У меня здесь качественные припасы — стрелы, одеяла, солонина. Я могу дать хорошую цену, но мне нужно быстро двигаться дальше. Капитану не обязательно знать детали...&quot;" />
+    <string id="decision_qm_deal_title" text="Предложение купца" />
+    <string id="decision_qm_official" text="&quot;Мне нужно будет согласовать любую покупку через надлежащие каналы.&quot;" />
+    <string id="decision_qm_official_outcome" text="Купец ворчит, но соглашается подождать. Ты получаешь разрешение, и рота получает качественные припасы законным путём." />
+    <string id="decision_qm_report" text="&quot;Здесь что-то нечисто. Мне следует доложить.&quot;" />
+    <string id="decision_qm_report_outcome" text="Ты предупреждаешь капитана. Оказывается, товары купца были украдены в соседней деревне. Твоя бдительность отмечена." />
+    <string id="decision_qm_supply_run_body" text="Повозки почти пусты, а солдаты считают дни между городами. Ты можешь сходить за припасами — законно, тихо или жёстко." />
+    <string id="decision_qm_supply_run_official" text="Сделать всё правильно: заплатить честную цену, записать чисто." />
+    <string id="decision_qm_supply_run_official_outcome" text="Ты тратишь монеты и время, но повозки возвращаются тяжелее, а гроссбух остаётся чистым. Квартирмейстер редко, но одобрительно кивает." />
+    <string id="decision_qm_supply_run_quiet" text="Сделать так, чтобы сработало: купить дёшево, немного сэкономить, накормить всех." />
+    <string id="decision_qm_supply_run_quiet_outcome" text="Ты достаёшь припасы. Ты также получаешь оплату. Пока что никто не спрашивает, как сошлись цифры." />
+    <string id="decision_qm_supply_run_ration" text="Жёсткий паёк: растянуть то, что есть, и двигать повозки дальше." />
+    <string id="decision_qm_supply_run_ration_outcome" text="Ты затягиваешь пояса и вводишь нормирование. Солдаты ворчат, но припасов хватает дольше." />
+    <string id="decision_qm_supply_run_title" text="Поход за припасами" />
+    <string id="decision_qm_unofficial" text="&quot;Покажи, что у тебя есть. Мы что-нибудь придумаем.&quot;" />
+    <string id="decision_qm_unofficial_outcome" text="Ты немного кладёшь себе в карман, обеспечивая роте хорошую сделку. Рискованно, но прибыльно." />
+    <string id="decision_repayment_accept" text="&quot;Я рад, что всё устроилось. Спасибо.&quot;" />
+    <string id="decision_repayment_accept_outcome" text="Ты с кивком кладёшь монеты в карман. {COMRADE_NAME} хлопает тебя по плечу. &quot;Если тебе когда-нибудь что-нибудь понадобится, просто попроси.&quot; Связь между вами укрепилась." />
+    <string id="decision_repayment_body" text="{COMRADE_NAME} подходит с улыбкой и мешочком монет. &quot;Я же говорил, что верну долг, правда? Моя сестра продала часть семейной земли — мы снова на плаву. Вот, что я тебе должен, и немного сверху за твоё доверие.&quot;" />
+    <string id="decision_repayment_refuse" text="&quot;Оставь себе. Считай это подарком между товарищами.&quot;" />
+    <string id="decision_repayment_refuse_outcome" text="{COMRADE_NAME} смотрит на тебя с удивлением, затем расплывается в широкой улыбке. &quot;Ты один из хороших, {PLAYER_NAME}. Я это запомню.&quot; Твоя репутация в роте взлетает." />
+    <string id="decision_repayment_title" text="Долг возвращён" />
+    <string id="decision_scout_accept" text="&quot;Считай, что сделано. У меня будет для тебя полный отчёт.&quot;" />
+    <string id="decision_scout_accept_outcome" text="Ты выезжаешь на рассвете и возвращаешься два дня спустя с подробными докладами. {SERGEANT_NAME} одобрительно кивает и вручает тебе мешочек с монетами." />
+    <string id="decision_scout_assignment_body" text="{SERGEANT_NAME} отводит тебя в сторону. &quot;Мне нужен кто-то надёжный для длительного патруля. На два дня, с разведкой местности впереди. Работа посложнее, но я позабочусь о компенсации.&quot;" />
+    <string id="decision_scout_assignment_title" text="Особое задание на разведку" />
+    <string id="decision_scout_decline" text="&quot;Я не в состоянии для длительного патруля прямо сейчас.&quot;" />
+    <string id="decision_scout_decline_outcome" text="{SERGEANT_NAME} слегка хмурится, но принимает твой ответ. Задание возьмёт кто-то другой." />
+    <string id="decision_training_accept" text="&quot;Я готов ко всему, чему сможешь меня научить, сержант.&quot;" />
+    <string id="decision_training_accept_outcome" text="Дополнительные тренировки изнурительны, но эффективны. Мышцы ноют, но клинок движется быстрее." />
+    <string id="decision_training_decline" text="&quot;Ценю предложение, но мне нужно распределять силы.&quot;" />
+    <string id="decision_training_decline_outcome" text="{SERGEANT_NAME} пожимает плечами. &quot;Твой выбор. Предложение остаётся в силе.&quot; Ты продолжаешь по стандартной программе." />
+    <string id="decision_training_offer_body" text="{SERGEANT_NAME} подходит во время тренировки. &quot;Ты подаёшь надежды, солдат. Я мог бы позаниматься с тобой после обычных занятий — нагрузить тебя сильнее остальных. Это будет изматывающе, но ты будешь улучшаться быстрее.&quot;" />
+    <string id="decision_training_offer_title" text="Возможность для тренировки" />
+    <string id="dm_desertion_accept" text="Дезертировать сейчас" />
+    <string id="dm_desertion_body" text="Несколько солдат планируют сбежать сегодня ночью. Они приглашают тебя присоединиться.\n\n&quot;Лорд нарушил своё слово. Мы заслужили свободу. Никто не осудит тебя, если пойдёшь с нами.&quot;\n\nТы уйдёшь с ними?" />
+    <string id="dm_desertion_decline" text="Остаться" />
+    <string id="dm_desertion_not_ready" text="Ты слушаешь планы дезертиров, но решаешь, что риск не стоит того... пока что." />
+    <string id="dm_desertion_title" text="Разговоры о дезертирстве" />
+    <string id="enlisted_accept_reenlist_bonus" text="Поле боя — единственный дом, который я знаю, милорд. Я останусь и заработаю это золото." />
+    <string id="enlisted_accept_retirement" text="Благодарю вас за всё, милорд. Было честью служить под вашим знаменем." />
+    <string id="enlisted_accept_service" text="Вы получили мою клятву, милорд. Укажите мне на врага." />
+    <string id="enlisted_continue_confirmed" text="Ха! Вот это дух! Я знал, что могу на тебя рассчитывать. Ещё один год, значит. Постарайся не угробить себя." />
+    <string id="enlisted_continue_service" text="С чего бы мне уходить сейчас? У нас ещё есть враги, которых нужно раздавить. Засчитывайте меня ещё на год." />
+    <string id="enlisted_decline_service" text="Ваше предложение щедро, милорд, но мне нужно подумать. Возможно, в другой раз." />
+    <string id="enlisted_different_faction_rejection" text="Постой-ка... я узнаю твою выправку. Ты служишь другому лорду, не так ли? Солдат не может служить двум господам. Возвращайся к своему командиру или сначала уладь свои дела с ним, прежде чем обращаться ко мне." />
+    <string id="enlisted_diplomatic_entry" text="Милорд, я хочу поговорить с вами о том, чтобы поступить к вам на службу." />
+    <string id="enlisted_discharge_guidance_text" text="Если ты хочешь покинуть мою службу, сделай это как положено. Разбей лагерь и подай прошение об отставке. Твоё окончательное жалование и отставные бумаги будут оформлены на следующей поверке." />
+    <string id="enlisted_discuss_discharge_guidance" text="Милорд, если бы я захотел покинуть вашу службу, как мне сделать это правильно?" />
+    <string id="enlisted_discuss_retirement" text="Милорд, я верно служил все эти многие месяцы. Пришло время обсудить моё будущее." />
+    <string id="enlisted_early_discharge" text="Милорд, я должен просить освободить меня от моей клятвы. Я не могу продолжать." />
+    <string id="enlisted_early_discharge_granted" text="Я освобождаю тебя от твоей клятвы. Ты уходишь без почёта полного срока службы, но ты свободен. Ступай, и хорошо подумай, прежде чем снова поднимешь оружие." />
+    <string id="enlisted_early_discharge_notification" text="Ты был уволен со службы без полных льгот." />
+    <string id="enlisted_lord_accepts" text="Я вижу сталь в твоих глазах. Ты сгодишься. Но знай — я ожидаю верности, дисциплины и мужества. Вот мои условия..." />
+    <string id="enlisted_lord_accepts_grace" text="Солдат, который ищет нового сюзерена вместо того, чтобы дезертировать? Это говорит о твоём характере. Я приветствую тебя в своих рядах. Вот мои условия..." />
+    <string id="enlisted_main_hub_response" text="Говори свободно. Что приводит воина в мой зал?" />
+    <string id="enlisted_reenlist_bonus_confirmed" text="Ха! Я знал, что в тебе ещё есть боевой дух. Твоё золото будет ждать тебя по завершении года. А теперь возвращайся на свой пост." />
+    <string id="enlisted_reenlist_cooldown" text="Милорд, вы, возможно, помните меня — я служил в этих землях раньше. Тихая жизнь мне не по нраву. Примете ли вы меня обратно?" />
+    <string id="enlisted_renewal_complete" text="Милорд, прошёл ещё один год. Что теперь станет со мной?" />
+    <string id="enlisted_renewal_discharge" text="Пришло время искать свой собственный путь, милорд. Я благодарю вас за возможность." />
+    <string id="enlisted_renewal_farewell" text="Тогда это прощание, по крайней мере пока. Ты был хорошим солдатом. Пусть ветра принесут тебе удачу." />
+    <string id="enlisted_renewal_options" text="Ты доказал свою состоятельность раз за разом. Получи отставку с пятью тысячами золотых и моим благословением или останься ещё на год с соответствующим бонусом. Что скажешь?" />
+    <string id="enlisted_request_service" text="Я предлагаю вам свой меч и свою верность, милорд. Примете ли вы меня в свои ряды?" />
+    <string id="enlisted_request_service_grace" text="Милорд, судьба забрала моего командира. Я солдат без знамени, но моя клятва этому королевству остаётся. Примете ли вы меня под своё командование?" />
+    <string id="enlisted_request_transfer" text="Милорд, в настоящее время я служу другому лорду этого королевства, но я считаю, что мои таланты лучше раскроются под вашим знаменем. Приняли бы вы мой перевод?" />
+    <string id="enlisted_retirement_benefits_explanation" text="Ты служил с честью, и я не забываю о верности. Уйди в отставку сейчас, и ты покинешь службу с золотом в кармане, моим личным рекомендательным письмом и уважением этого королевства. Или... останься ещё на год, и я удвою твоё выходное пособие. Выбор за тобой." />
+    <string id="enlisted_retirement_farewell" text="Иди с миром, солдат. Ты заслужил свой покой. Если когда-нибудь захочешь вернуться, моя дверь останется открытой." />
+    <string id="enlisted_retirement_later" text="Это не решение, которое принимается легкомысленно. Дайте мне время подумать, милорд." />
+    <string id="enlisted_return_accepted" text="Рад видеть тебя снова на ногах. Солдаты будут рады твоему возвращению. Встань в строй со своей ротой." />
+    <string id="enlisted_return_from_leave" text="Я отдохнул достаточно, милорд. Моему клинку не терпится. Я готов вернуться на передовую." />
+    <string id="enlisted_return_notification" text="Ты вернулся на действительную военную службу." />
+    <string id="enlisted_service_nevermind" text="Простите, милорд. Я говорил невпопад. Мне нечего обсуждать в это время." />
+    <string id="enlisted_service_terms_details" text="Ты будешь маршировать, когда я скажу маршировать, сражаться, когда я скажу сражаться, и держать строй, когда всё кажется потерянным. Твой срок — три года. Взамен ты будешь получать ежедневное жалование и место у костра. Мы договорились?" />
+    <string id="enlisted_transfer_accepted" text="Солдат, знающий себе цену. Хорошо, я передам весть твоему прежнему командиру. С этого дня ты маршируешь со мной." />
+    <string id="enlisted_transfer_notification" text="Ты перевёл свою службу к {LORD_NAME}. Твоё звание и опыт сохранены." />
+    <string id="enlisted_veteran_accept" text="Моя рука, держащая меч, крепка как никогда, милорд. Куда я вам нужен?" />
+    <string id="enlisted_veteran_accepted" text="Хорошо, что ты вернулся в строй. Явись к мастеру-оружейнику, чтобы выбрать свою роль, а затем найди свою роту." />
+    <string id="enlisted_veteran_decline" text="Простите, милорд. Зов оружия силён, но я ещё не готов. Возможно, в другой день." />
+    <string id="enlisted_veteran_welcome" text="Я тебя помню! Хороший солдат возвращается в строй. Твоё прежнее звание ждёт тебя, хотя тебе нужно будет заново выбрать специализацию. Прослужи один год, и уйдёшь с золотом в руках." />
+    <string id="evt_camp_brawl_opt_back_soldier" text="Поддержать своего товарища" />
+    <string id="evt_camp_brawl_opt_back_soldier_result" text="Ты вступаешь в драку, размахивая кулаками. Вместе с сослуживцем ты избиваешь другого солдата, пока тот не остаётся лежать. Толпа ревёт от одобрения — но вот и офицеры. Вы все оказываетесь в цепях на ночь, но твои товарищи знают, что ты за них горой. Это кое-чего стоит." />
+    <string id="evt_camp_brawl_opt_fetch_officer" text="Бежать за офицером" />
+    <string id="evt_camp_brawl_opt_fetch_officer_result" text="Ты мчишься к офицерскому шатру и возвращаешься с капитаном. Он немедленно разнимает драку и уводит обоих зачинщиков для наказания. Офицеры ценят твою быстроту реакции, но твои сослуживцы смотрят на тебя с недоверием. Никто не любит стукачей." />
+    <string id="evt_camp_brawl_opt_intervene" text="Разнять драку" />
+    <string id="evt_camp_brawl_opt_intervene_result" text="Ты расталкиваешь толпу и встаёшь между ними, получая случайный удар за свои труды. &quot;Хватит!&quot; — рявкаешь ты. Твой авторитет и присутствие шокируют их и заставляют остановиться. Офицеры прибывают мгновения спустя и благодарят тебя за предотвращение серьёзного инцидента. Обоим забиякам назначают наряд вне очереди." />
+    <string id="evt_camp_brawl_setup" text="Возле фургонов с припасами вспыхивает драка — два солдата, один из твоего подразделения, а другой из другой роты, наносят друг другу жестокие удары. Собирается толпа, выкрикивая слова поддержки. Офицеры ещё не заметили, но скоро заметят. Твой сослуживец проигрывает." />
+    <string id="evt_camp_brawl_title" text="Лагерная потасовка" />
+    <string id="evt_camp_fire_opt_inspire" text="Подбодрить солдат словами о цели." />
+    <string id="evt_camp_fire_opt_inspire_result" text="Ты встаёшь и говоришь о том, за что сражаешься, почему это важно. Твои слова зажигают что-то в глазах солдат. Когда ты заканчиваешь, они готовы последовать за тобой в самую тьму." />
+    <string id="evt_camp_fire_opt_leave" text="У тебя есть другие дела." />
+    <string id="evt_camp_fire_opt_leave_result" text="Ты отмахиваешься от приглашения и уходишь в темноту. Позади тебя смех продолжается без тебя." />
+    <string id="evt_camp_fire_opt_listen" text="Сесть и послушать их истории." />
+    <string id="evt_camp_fire_opt_listen_result" text="Ты устраиваешься и позволяешь рассказам ветеранов омыть тебя. Истории о славе и потерях, о павших товарищах и поверженных врагах. Солдаты ценят хорошего слушателя." />
+    <string id="evt_camp_fire_opt_share" text="Рассказать свою историю." />
+    <string id="evt_camp_fire_opt_share_result" text="Ты рассказываешь им о времени, когда всё пошло не так, и о том, как ты справился. Солдаты кивают, узнавая правду в твоих словах. К концу ты становишься одним из них." />
+    <string id="evt_camp_fire_setup" text="Вечерние костры разожжены, и солдаты собираются небольшими группами. Ветераны делятся историями о битвах прошлого, рекруты слушают с широко раскрытыми глазами, а кто-то достал бурдюк с чем-то, что явно не вода.\n\nОколо самого тёплого костра освобождается место. Солдаты жестами приглашают тебя присоединиться." />
+    <string id="evt_camp_fire_title" text="Истории у костра" />
+    <string id="evt_camp_gambling_opt_play" text="Присоединиться к игре" />
+    <string id="evt_camp_gambling_opt_play_result" text="Ты садишься и бросаешь свои монеты на одеяло. Кости крутятся, фортуна меняется, и когда игра прерывается через час, ты в выигрыше на пятьдесят денариев. Другие солдаты хлопают тебя по спине — теперь ты свой." />
+    <string id="evt_camp_gambling_opt_report" text="Сообщить об игре офицерам" />
+    <string id="evt_camp_gambling_opt_report_result" text="Ты идёшь прямо в офицерский шатёр и сообщаешь о нелегальной игре. Они немедленно прерывают игру. Офицеры ценят твоё соблюдение устава, но твои сослуживцы не забудут твоего предательства. После этого в лагере становится холоднее." />
+    <string id="evt_camp_gambling_opt_watch" text="Наблюдать, не играя" />
+    <string id="evt_camp_gambling_opt_watch_result" text="Ты наблюдаешь за игрой, изучая манеры и уловки игроков, не рискуя своими деньгами. Солдатам всё равно — по крайней мере, ты не бежишь к офицерам. Ты получаешь полезные знания о том, как читать людей." />
+    <string id="evt_camp_gambling_setup" text="Группа солдат собралась вокруг одеяла, трясёт кости и передаёт монеты. Игра технически запрещена уставом, но офицеры заняты в другом месте. Один из солдат замечает, что ты наблюдаешь, и машет тебе. &quot;Есть монеты, чтобы проиграть, друг?&quot;" />
+    <string id="evt_camp_gambling_title" text="Игра в кости" />
+    <string id="evt_camp_storytelling_opt_listen" text="Слушать ветеранов" />
+    <string id="evt_camp_storytelling_opt_listen_result" text="Ты откидываешься назад и даёшь ветеранам говорить. Их истории содержат тяжело добытую мудрость о тактике, местности и выживании. Ты узнаёшь больше, слушая, чем говоря." />
+    <string id="evt_camp_storytelling_opt_tell_battle" text="Поделиться своим боевым опытом" />
+    <string id="evt_camp_storytelling_opt_tell_battle_result" text="Ты пересказываешь битву у речной переправы — хаос, страх, момент, когда строй почти был прорван, но устоял. Солдаты слушают внимательно, кивая в знакомым деталям. Когда ты заканчиваешь, наступает мгновение почтительного молчания. Ты заслужил их уважение." />
+    <string id="evt_camp_storytelling_opt_tell_legend" text="Рассказать старые легенды" />
+    <string id="evt_camp_storytelling_opt_tell_legend_result" text="Ты обращаешься к древним сказаниям — о героях и чудовищах, предательствах и триумфах. Твои слова рисуют картины в озарённой огнём тьме. Молодые солдаты заворожены, и даже ветераны склоняются ближе. Истории напоминают всем, за что они сражаются." />
+    <string id="evt_camp_storytelling_setup" text="Солдаты собираются у вечернего костра, и разговор переходит к историям. Ветераны начинают делиться рассказами о прошлых кампаниях и легендарных воинах. Взгляды обращаются к тебе с ожиданием — ты видел свою долю действий." />
+    <string id="evt_camp_storytelling_title" text="Сказания у костра" />
+    <string id="evt_camp_supply_shortage_opt_forage" text="Возглавить отряд фуражиров" />
+    <string id="evt_camp_supply_shortage_opt_forage_result" text="Ты вызываешься возглавить небольшую группу в сельскую местность для фуражировки. Часы поисков приносят съедобные растения, немного дичи и забытый амбар. Ты возвращаешься с достаточным количеством еды, чтобы облегчить нехватку. Рота благодарна, и твоя репутация человека, который действует, растёт." />
+    <string id="evt_camp_supply_shortage_opt_hoard" text="Припрятать свои припасы" />
+    <string id="evt_camp_supply_shortage_opt_hoard_result" text="Ты хранишь свой запас в тайне и ешь, когда другие не видят. Ты сыт, но некоторые солдаты замечают твоё относительное здоровье по сравнению с их голодом. За тобой следуют подозрительные взгляды и холодные приёмы. Доверие заработать труднее, чем еду." />
+    <string id="evt_camp_supply_shortage_opt_share" text="Поделиться своими лишними пайками" />
+    <string id="evt_camp_supply_shortage_opt_share_result" text="Ты тихо раздаёшь свой запас самым голодным солдатам. Они благодарны сверх всяких слов. Сегодня ночью твой живот может быть пуст, но ты заслужил искреннюю преданность от своих товарищей. Даже офицеры слышат о твоей щедрости." />
+    <string id="evt_camp_supply_shortage_setup" text="Пайки снова на исходе. Получая свою скудную порцию, ты замечаешь, что некоторые солдаты получают ещё меньше — их глаза пусты от голода. У тебя есть запас еды на несколько дней, припрятанный с прошлых кампаний. Ты мог бы поделиться, но это твой запас безопасности, если станет хуже." />
+    <string id="evt_camp_supply_shortage_title" text="Голодные солдаты" />
+    <string id="evt_muster_inspection_opt_perfect" text="Стоять по стойке &quot;смирно&quot; безупречно" />
+    <string id="evt_muster_inspection_opt_perfect_result" text="Твоё снаряжение сверкает, твоя стойка безупречна. Капитан одобрительно кратко кивает. &quot;Вот это стандарт,&quot; — говорит он остальным. Твои сослуживцы берут на заметку, и офицеры запоминают твою дисциплину." />
+    <string id="evt_muster_inspection_opt_standard" text="Соответствовать базовым требованиям" />
+    <string id="evt_muster_inspection_opt_standard_result" text="Ты выглядишь достаточно прилично. Капитан проходит дальше без комментариев. Ты оправдал ожидания — ничего больше, ничего меньше." />
+    <string id="evt_muster_inspection_opt_unprepared" text="Ты не готов" />
+    <string id="evt_muster_inspection_opt_unprepared_result" text="Твоё снаряжение грязное, осанка неряшливая. Лицо капитана темнеет. &quot;Пять кругов вокруг лагеря с полной выкладкой,&quot; — приказывает он. &quot;Затем доложись квартирмейстеру для дополнительных нарядов.&quot; Другие солдаты избегают твоего взгляда, когда ты выходишь из строя." />
+    <string id="evt_muster_inspection_setup" text="Рота выстраивается в строй для утренней поверки. Капитан обходит строй, осматривая снаряжение и выправку каждого солдата. Он останавливается перед тобой, с критическим взглядом оглядывая тебя с ног до головы." />
+    <string id="evt_muster_inspection_title" text="Утренний смотр" />
+    <string id="evt_muster_new_recruit_opt_haze" text="Устроить ему традиционную &quot;посвятительную&quot;" />
+    <string id="evt_muster_new_recruit_opt_haze_result" text="Ты присоединяешься к другим солдатам, проводя рекрута через серию &quot;испытаний&quot; — ношение лишнего снаряжения, ношение воды, дополнительные караулы. Он несчастен, но держит рот на замке. Солдаты принимают тебя как своего, хотя офицеры и хмурятся на &quot;посвящение&quot;." />
+    <string id="evt_muster_new_recruit_opt_ignore" text="Предоставить ему самому разбираться" />
+    <string id="evt_muster_new_recruit_opt_ignore_result" text="Ты держишься особняком. Рекрут пробивается как может. Некоторые солдаты ворчат, что ветераны должны помогать новичкам, но у тебя свои заботы." />
+    <string id="evt_muster_new_recruit_opt_mentor" text="Отвести его в сторону и показать, как всё устроено" />
+    <string id="evt_muster_new_recruit_opt_mentor_result" text="Ты отводишь рекрута в сторону после поверки и тратишь время на исправление его хватки, стойки, выправки. Он благодарен и жаждет учиться. Офицеры замечают твои лидерские качества, а сослуживцы уважают твоё терпение. Рекрут запомнит эту доброту." />
+    <string id="evt_muster_new_recruit_setup" text="На утренней поверке в первом ряду, дрожа, стоит перепуганный видом рекрут. Он едва правильно держит копьё, и его глаза нервно мечутся при каждом звуке. Ветераны уже хихикают. Как опытный солдат, ты мог бы вмешаться — или дать ему учиться на собственных ошибках." />
+    <string id="evt_muster_new_recruit_title" text="Зелёный рекрут" />
+    <string id="evt_scout_enemy_patrol_opt_follow" text="Проследить за ними до их лагеря" />
+    <string id="evt_scout_enemy_patrol_opt_follow_result" text="Ты двигаешься как призрак по местности, держа патруль в поле зрения, не выдавая себя. Часы спустя ты обнаруживаешь их передовой лагерь — бесценная разведывательная информация. Твой лорд лично хвалит тебя за эти бесценные сведения, и молва о твоём умении разносится по роте." />
+    <string id="evt_scout_enemy_patrol_opt_intercept" text="Устроить засаду с другими разведчиками" />
+    <string id="evt_scout_enemy_patrol_opt_intercept_result" text="Ты подаёшь сигнал двум другим разведчикам присоединиться к тебе. Вместе вы организуете поспешную засаду на их пути. Бой короткий и решительный — твоя позиция и фактор неожиданности приносят победу. Офицеры довольны твоей инициативой, и ты получаешь долю припасов патруля." />
+    <string id="evt_scout_enemy_patrol_opt_observe" text="Наблюдать отсюда и доложить об их численности" />
+    <string id="evt_scout_enemy_patrol_opt_observe_result" text="Ты тщательно подсчитываешь их число, отмечая снаряжение и направление. Когда ты докладываешь офицерам, они хвалят твою старательность. Эти сведения помогут в планировании передвижений роты." />
+    <string id="evt_scout_enemy_patrol_setup" text="Разведывая впереди роты, ты замечаешь вражеский патруль, перемещающийся по долине внизу. Их, возможно, дюжина, вооружены и бдительны. Твоя позиция даёт тебе преимущество неожиданности, но вступать с ними в бой в одиночку было бы рискованно." />
+    <string id="evt_scout_enemy_patrol_title" text="Замечен вражеский патруль" />
+    <string id="evt_scout_night_watch_opt_alert" text="Сохранять бдительность и наблюдать внимательно" />
+    <string id="evt_scout_night_watch_opt_alert_result" text="Ты остаёшься бдительным, отслеживая каждый звук и тень. Движение оказывается оленем, но твоя бдительность не остаётся незамеченной. Офицер, совершающий обход, хвалит твою дисциплину, и твои товарищи спят спокойнее, зная, что ты на посту." />
+    <string id="evt_scout_night_watch_opt_doze" text="Ненадолго прикрыть глаза" />
+    <string id="evt_scout_night_watch_opt_doze_result" text="Ты закрываешь глаза всего на мгновение... и просыпаешься с вздрагиванием, обнаруживая, что рассвет уже брезжит, а сменивший тебя караул стоит над тобой с неодобрением. Молва разносится быстро. Офицеры назначают тебе дополнительные наряды, и твоя репутация страдает." />
+    <string id="evt_scout_night_watch_opt_investigate" text="Лично расследовать звуки" />
+    <string id="evt_scout_night_watch_opt_investigate_result" text="Ты тихо пробираешься в темноту на разведку. После тщательных поисков ты обнаруживаешь свежие следы, которые не принадлежат никакому зверю. Ты отмечаешь место и немедленно докладываешь. Офицеры отправляют патруль на рассвете, и твоя инициатива потенциально спасает жизни." />
+    <string id="evt_scout_night_watch_setup" text="Ты в ночном карауле, на посту у края лагеря под безлунным небом. Часы тянутся медленно в холодной темноте. Около полуночи ты слышишь нечто — движение в кустах за пределами света костра. Это может быть животное, дезертир или что-то похуже." />
+    <string id="evt_scout_night_watch_title" text="Ночной дозор" />
+    <string id="evt_scout_terrain_mastery_opt_shortcut" text="Предложить скрытую тропу" />
+    <string id="evt_scout_terrain_mastery_opt_shortcut_result" text="Ты делаешь шаг вперёд и описываешь альтернативный маршрут. Офицеры изучают свои карты, затем кивают в знак согласия. Твой путь экономит роте часы трудного марша. Твой лорд лично благодарит тебя, и солдаты ценят более лёгкий путь." />
+    <string id="evt_scout_terrain_mastery_opt_teach" text="Поделиться знаниями с младшими разведчиками" />
+    <string id="evt_scout_terrain_mastery_opt_teach_result" text="Вместо того чтобы просто указать маршрут, ты тратишь время, чтобы объяснить знаки и ориентиры, которые указывают на такие тропы. Младшие разведчики слушают внимательно, и офицеры замечают твоё лидерство. Эти знания послужат роте ещё долго после того, как ты уйдёшь." />
+    <string id="evt_scout_terrain_mastery_setup" text="Рота медленно продвигается по труднопроходимой местности. Ты узнаёшь этот регион по прошлым кампаниям и знаешь более быстрый маршрут, обходящий самые сложные участки. Офицеры не спрашивали твоего мнения, но ты мог бы высказаться." />
+    <string id="evt_scout_terrain_mastery_title" text="Знание местности" />
+    <string id="evt_scout_tracks_opt_ambush" text="Устроить засаду на их вероятном пути возвращения." />
+    <string id="evt_scout_tracks_opt_ambush_result" text="Терпеливое ожидание окупается. Когда вражеские разведчики возвращаются, твоя засада застаёт их полностью врасплох. Два пленника для допроса и похвала от офицеров." />
+    <string id="evt_scout_tracks_opt_investigate" text="Самому проследить за следами до доклада." />
+    <string id="evt_scout_tracks_opt_investigate_result" text="Ты идешь по отпечаткам через гряду и замечаешь небольшую вражескую разведгруппу, разбивающую лагерь. Ценная информация. Капитан захочет это знать." />
+    <string id="evt_scout_tracks_opt_report" text="Немедленно доложить сержанту." />
+    <string id="evt_scout_tracks_opt_report_result" text="Сержант кивает. &quot;Хороший глаз. Мы пошлём патруль проверить.&quot; Твоя старательность отмечена." />
+    <string id="evt_scout_tracks_setup" text="Ты находишь следы, которые не совпадают с маршрутами наших патрулей. Свежие, ведущие на восток к гряде. Могут быть вражеские разведчики, могут быть дезертиры, а могут быть и ничто.\n\nОтпечатки чёткие на мягкой земле. Кто-то прошёл здесь в последние несколько часов." />
+    <string id="evt_scout_tracks_title" text="Странные следы" />
+    <string id="evt_scrutiny_2_opt_deflect" text="Ненавязчиво перенаправить их подозрения в другую сторону." />
+    <string id="evt_scrutiny_2_opt_deflect_result" text="Небрежный комментарий здесь, наблюдение там. Ты сеешь семена сомнения относительно поведения другого солдата. Срабатывает, но ты добавил ещё один проступок к своему списку." />
+    <string id="evt_scrutiny_2_opt_laylow" text="Лечь на дно. Не высовываться." />
+    <string id="evt_scrutiny_2_opt_laylow_result" text="Ты делаешь себя незаметным, не вызываешься ни на какие наряды, не привлекаешь внимания. Бдительные глаза, кажется, находят другие цели. Но некоторые парни замечают, что ты их избегаешь." />
+    <string id="evt_scrutiny_2_opt_normal" text="Вести себя обычно. Не давать им ничего." />
+    <string id="evt_scrutiny_2_opt_normal_result" text="Ты продолжаешь, как будто ничего не изменилось. Возможно, так и есть. Возможно, тебе это кажется. Но ты остаёшься начеку, на всякий случай." />
+    <string id="evt_scrutiny_2_setup" text="Ты замечаешь это уже несколько дней. Кто-то уделяет тебе внимание.\n\nВзгляд сержанта задерживается на мгновение дольше. Снабженец наблюдает, когда ты проходишь мимо. Ничего явного, но чувство, что за тобой наблюдают, следует за тобой по лагерю.\n\nОни могут что-то подозревать. Или просто осторожничают. В любом случае, тебе стоит тщательно обдумать свои следующие шаги." />
+    <string id="evt_scrutiny_2_title" text="Бдительные глаза" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_first_time_confident_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_commander_onboard_01_commission_opt_first_time_confident_text" text="&quot;Я ждал этого, {LORD_TITLE}. Я вас не подведу.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_first_time_honest_outcome" text="Проблеск чего-то — уважения? — мелькает на лице {LORD_NAME}.\n\n&quot;Честно. Мне это нравится. Большинство командиров обещают победу. Немногие её доставляют.&quot;\n\nОни стучат по карте. &quot;Твоих лучших усилий должно хватить. А теперь позволь показать тебе, что мне нужно.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_first_time_honest_text" text="&quot;Я сделаю всё, что в моих силах, {LORD_TITLE}. Больше я обещать не могу.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_first_time_questions_outcome" text="Практические вопросы. {LORD_NAME} одобряет — или, по крайней мере, не не одобряет.\n\nОни проводят час, объясняя структуру. Кому ты подчиняешься. Какой властью ты фактически обладаешь. Какие границы нельзя переходить.\n\nТы уходишь со знанием, а не просто с солдатами." />
+    <string id="ll_evt_commander_onboard_01_commission_opt_first_time_questions_text" text="&quot;Какие ресурсы у меня есть? Какова цепь командования?&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_first_time_ready_outcome" text="{LORD_NAME} медленно кивает. &quot;Смотри, чтобы не вышло.&quot;\n\nОни возвращаются к карте, указывая на зону твоей ответственности. Ты слушаешь. Ты учишься. Когда ты уходишь, ты несёшь груз {TROOP_COUNT} жизней.\n\nОн чувствуется тяжелее, чем ты ожидал." />
+    <string id="ll_evt_commander_onboard_01_commission_opt_first_time_ready_text" text="&quot;Я понимаю, {LORD_TITLE}. Я не потрачу их впустую.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_return_needed_outcome" text="{LORD_NAME} медленно кивает. &quot;Я знаю этот тип.&quot;\n\nЗнают? Возможно. Или, может быть, они просто знают солдат.\n\n&quot;Твои люди ждут. Постарайся не угробить их.&quot;\n\nСтарая тяжесть опускается на твои плечи. Знакомая. Тяжёлая. Дом." />
+    <string id="ll_evt_commander_onboard_01_commission_opt_return_needed_text" text="&quot;Не мог остаться в стороне. Некоторым людям не сужден мир.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_return_reasons_outcome" text="{LORD_NAME} не спрашивает, что за дела. Лорды обычно так не делают.\n\n&quot;Заверши их, тогда. Но не за счёт моей армии.&quot;\n\nДостаточно справедливо. Твои призраки — твоя проблема. Солдаты — это работа." />
+    <string id="ll_evt_commander_onboard_01_commission_opt_return_reasons_text" text="&quot;Скажем так, у меня есть незаконченные дела.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_return_rusty_outcome" text="&quot;Ржавчина сходит.&quot; {LORD_NAME} указывает на карту. &quot;Битва имеет свойство отшлифовывать.&quot;\n\nОни тратят время, разбирая ситуацию. Что им нужно. Что ты будешь делать. Всё возвращается. Язык, мышление, тяжесть.\n\nРжавчина сходит. Они правы." />
+    <string id="ll_evt_commander_onboard_01_commission_opt_return_rusty_text" text="&quot;Я, возможно, заржавел, {LORD_TITLE}. Прошло много времени.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_return_sharp_outcome" text="&quot;Цель.&quot; {LORD_NAME} обдумывает это слово. &quot;Я могу её предоставить. Победа, поражение, смысл — это тебе предстоит найти.&quot;\n\nФилософски для командира, отдающего приказы. Но не ошибочно.\n\n&quot;Твои солдаты ждут, командир. Дай им во что верить.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_return_sharp_text" text="&quot;Остёр как никогда, {LORD_TITLE}. Просто нужна была цель.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_transfer_humble_outcome" text="{LORD_NAME} слегка расслабляется. Ты не будешь проблемным.\n\n&quot;Дисциплина. Результаты. Никаких сюрпризов.&quot; Простые ожидания. Понятные.\n\n&quot;Познакомься со своими офицерами. Изучи структуру. Мы выступаем через два дня.&quot;\n\nУ тебя есть два дня, чтобы стать частью этой армии." />
+    <string id="ll_evt_commander_onboard_01_commission_opt_transfer_humble_text" text="&quot;Новый старт. Скажите, как вы хотите, чтобы всё делалось.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_transfer_professional_outcome" text="Правильный ответ. {LORD_NAME} кивает.\n\n&quot;Смотри, чтобы так и было. Твои солдаты ждут. Не задерживай их.&quot;\n\nТы отпущен. Отношения начинаются с нуля. Но, по крайней мере, они не отрицательные." />
+    <string id="ll_evt_commander_onboard_01_commission_opt_transfer_professional_text" text="&quot;Я понимаю, {LORD_TITLE}. Я заслужу своё место.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_transfer_record_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_commander_onboard_01_commission_opt_transfer_record_text" text="&quot;Моя репутация говорит сама за себя, {LORD_TITLE}. Поинтересуйтесь.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_opt_transfer_why_here_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_commander_onboard_01_commission_opt_transfer_why_here_text" text="&quot;Вам интересно, почему я покинул своего прежнего лорда. Спросите.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_setup" text="Павильон {LORD_TITLE} {LORD_NAME}. Тебя вызвали.\n\nОни не тратят время на любезности. На столе разложена карта. Маркеры показывают позиции.\n\n&quot;Я даю тебе солдат. Не много — {TROOP_COUNT} для начала. Докажи, что можешь с ними справиться, и будет больше.&quot;\n\nОни поднимают глаза от карты. Глаза взвешивают тебя.\n\n&quot;Эти люди будут жить или умирать по твоим решениям. Не по моим. По твоим. Ты понимаешь, что это значит?&quot;\n\nЭто уже не отряд. Это настоящее командование. Настоящие солдаты в твоём отряде. Настоящие последствия." />
+    <string id="ll_evt_commander_onboard_01_commission_setup_first_time" text="Павильон {LORD_TITLE} {LORD_NAME}. Тебя вызвали.\n\nОни не тратят время на любезности. На столе разложена карта. Маркеры показывают позиции.\n\n&quot;Я даю тебе солдат. Не много — {TROOP_COUNT} для начала. Докажи, что можешь с ними справиться, и будет больше.&quot;\n\nОни поднимают глаза от карты. Глаза взвешивают тебя.\n\n&quot;Эти люди будут жить или умирать по твоим решениям. Не по моим. По твоим. Ты понимаешь, что это значит?&quot;\n\nЭто уже не отряд. Это настоящее командование. Настоящие солдаты в твоём отряде. Настоящие последствия." />
+    <string id="ll_evt_commander_onboard_01_commission_setup_return" text="Ты делал это раньше. Стоял в шатре лорда. Получал солдат. Нёс эту тяжесть.\n\nТы снял её. Ушёл. Пытался быть кем-то другим.\n\nИ вот ты снова здесь.\n\n{LORD_TITLE} {LORD_NAME} наблюдает за тобой. Они знают твою историю — кто-то с твоим опытом не появляется из ниоткуда.\n\n&quot;Снова в упряжке, командир?&quot;\n\n{TROOP_COUNT} солдат. Снова твои." />
+    <string id="ll_evt_commander_onboard_01_commission_setup_transfer" text="Новый лорд. Новая армия. То же звание.\n\n{LORD_TITLE} {LORD_NAME} осматривает тебя. Они знают, что ты командовал у кого-то другого. Они гадают, почему ты здесь сейчас.\n\n&quot;Я не знаю, что терпел твой прежний лорд. Здесь у меня есть ожидания.&quot;\n\nКарта на столе. {TROOP_COUNT} солдат для командования. Знакомая тяжесть, незнакомые обстоятельства.\n\n&quot;Докажи себя. Я не наследую доверие.&quot;" />
+    <string id="ll_evt_commander_onboard_01_commission_title" text="Твоё назначение" />
+    <string id="ll_evt_commander_onboard_02_meet_troops_opt_all_defer_outcome" text="{OFFICER_NAME} проводит тебя по строю. Имена, истории, сильные стороны, проблемы.\n\nЭтот надёжен. Этот пьёт. Эти двое ненавидят друг друга. Ветеран в заднем ряду забыл больше, чем большинство солдат узнает.\n\nК концу ты знаешь свою силу. Не лица — людей." />
+    <string id="ll_evt_commander_onboard_02_meet_troops_opt_all_defer_text" text="&quot;Расскажите мне о них, {OFFICER_NAME}. Кто эти люди?&quot;" />
+    <string id="ll_evt_commander_onboard_02_meet_troops_opt_all_speech_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_commander_onboard_02_meet_troops_opt_all_speech_text" text="Обратиться к ним как к группе. Обозначить ожидания." />
+    <string id="ll_evt_commander_onboard_02_meet_troops_opt_all_train_outcome" text="Слова дёшевы. Действия говорят.\n\nТы проводишь их через испытания. Базовые построения. Реакции на команды. Ничего замысловатого — просто компетентность.\n\nК концу ты знаешь, кто сообразителен, а кому нужна работа. Они знают, что ты заботишься об основах.\n\n&quot;Завтра снова,&quot; — говоришь ты {OFFICER_NAME}. &quot;Пока это не станет рефлексом.&quot;" />
+    <string id="ll_evt_commander_onboard_02_meet_troops_opt_all_train_text" text="&quot;Никаких речей. Учения по построению. Сейчас же.&quot;" />
+    <string id="ll_evt_commander_onboard_02_meet_troops_opt_all_walk_line_outcome" text="Ты идёшь медленно. Задерживаешься у каждого солдата. Проверяешь его снаряжение. Спрашиваешь имена. Некоторые встречают твой взгляд. Некоторые отводят глаза.\n\nК концу они знают твоё лицо. Ты знаешь их.\n\n&quot;Хорошие люди,&quot; — говоришь ты {OFFICER_NAME} потом. Достаточно громко, чтобы они услышали.\n\nЭто начало." />
+    <string id="ll_evt_commander_onboard_02_meet_troops_opt_all_walk_line_text" text="Пройди по строю. Посмотри каждому солдату в глаза." />
+    <string id="ll_evt_commander_onboard_02_meet_troops_setup" text="Твои солдаты. Построены. Ждут.\n\n{TROOP_COUNT} лиц смотрят на тебя. Некоторые ветераны, некоторые зелёные, все неуверенные. У них уже были командиры. Одни хорошие. Другие угробили людей.\n\nОни гадают, каким ты будешь.\n\nТвой сержант — {OFFICER_NAME} — стоит рядом с тобой. &quot;Они готовы к смотру, командир.&quot;\n\nЭто момент. Первое впечатление остаётся." />
+    <string id="ll_evt_commander_onboard_02_meet_troops_setup_all" text="Твои солдаты. Построены. Ждут.\n\n{TROOP_COUNT} лиц смотрят на тебя. Некоторые ветераны, некоторые зелёные, все неуверенные. У них уже были командиры. Одни хорошие. Другие угробили людей.\n\nОни гадают, каким ты будешь.\n\nТвой сержант — {OFFICER_NAME} — стоит рядом с тобой. &quot;Они готовы к смотру, командир.&quot;\n\nЭто момент. Первое впечатление остаётся." />
+    <string id="ll_evt_commander_onboard_02_meet_troops_title" text="Знакомство с твоими войсками" />
+    <string id="ll_evt_commander_onboard_03_first_blood_opt_all_drink_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_commander_onboard_03_first_blood_opt_all_drink_text" text="Найти бутылку. Сегодня вечером ты не командир." />
+    <string id="ll_evt_commander_onboard_03_first_blood_opt_all_face_it_outcome" text="Ты проходишь по списку. Каждое имя. Каждое лицо, которое можешь вспомнить.\n\nНекоторые командиры не делают этого. Так легче. Но легко — не значит правильно.\n\nТы будешь нести эти имена. Все имена, за все грядущие битвы. Это часть работы, о которой никто не говорит." />
+    <string id="ll_evt_commander_onboard_03_first_blood_opt_all_face_it_text" text="Прими это. Выучи их имена. Запомни их." />
+    <string id="ll_evt_commander_onboard_03_first_blood_opt_all_practical_outcome" text="Горе — это роскошь. Есть работа, которую нужно сделать.\n\nТы организуешь уход за ранеными. Отправляешь запросы на пополнение. Анализируешь, что пошло не так, что получилось.\n\nМёртвые мертвы. Живым нужна твоя сосредоточенность.\n\n{OFFICER_NAME} наблюдает за твоей работой. &quot;Холодно,&quot; — говорят они тихо. &quot;Но эффективно.&quot;\n\nВозможно, командование только в этом и заключается." />
+    <string id="ll_evt_commander_onboard_03_first_blood_opt_all_practical_text" text="Сосредоточься на том, что можно исправить. Раненые. Пополнение. Следующая битва." />
+    <string id="ll_evt_commander_onboard_03_first_blood_opt_all_talk_outcome" text="Ты находишь их после наступления темноты. &quot;Как вы это делаете? Как вы продолжаете отдавать приказы, зная, чего они стоят?&quot;\n\n{OFFICER_NAME} молчит долгое мгновение. &quot;Вы к этому не привыкаете. И не должны. День, когда вы перестанете это чувствовать, — это день, когда вы начнёте угробить людей понапрасну.&quot;\n\n&quot;И ты просто... носишь это?&quot;\n\n&quot;Ты носишь это. И ты следишь, чтобы оно того стоило.&quot;\n\nНеутешительно. Но правдиво." />
+    <string id="ll_evt_commander_onboard_03_first_blood_opt_all_talk_text" text="Поговорить с {OFFICER_NAME}. Они уже были на этом месте." />
+    <string id="ll_evt_commander_onboard_03_first_blood_setup" text="" />
+    <string id="ll_evt_commander_onboard_03_first_blood_setup_all" text="" />
+    <string id="ll_evt_commander_onboard_03_first_blood_title" text="Первая кровь" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_cocky_outcome" text="Отряд замолкает. Глаза {SERGEANT_NAME} твердеют. &quot;Неужели.&quot; Это не вопрос. &quot;Посмотрим.&quot;\n\nКогда они уходят, ты слышишь хихиканье рекрутов. {RECRUIT_NAME} ухмыляется тебе. Ветераны просто качают головами." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_cocky_text" text="&quot;Я справлялся и с хуже этого.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_eager_outcome" text="Проблеск чего-то — насмешки? одобрения? — мелькает на лице {SERGEANT_NAME}. &quot;Рвёшься, да? Посмотрим, как долго это продлится.&quot; Кто-то в роте усмехается. Но это не недружелюбно." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_eager_text" text="&quot;Готов доказать свою состоятельность, {NCO_RANK}.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_quiet_outcome" text="{SERGEANT_NAME} смотрит на тебя ещё мгновение, затем пожимает плечами. &quot;Молчун. Ладно. Только не будь тупым.&quot; Они уходят. Ты не произвёл никакого впечатления. Это может быть хорошо. Это может быть плохо." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_quiet_text" text="Просто кивни." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_respectful_outcome" text="{SERGEANT_NAME} отдаёт короткий кивок. &quot;Хорошо. Посмотрим, продержишься ли ты неделю.&quot; Они уходят. Не тепло, но и не враждебно. Сегодня ты не нажил врагов." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_first_time_respectful_text" text="&quot;Так точно, {NCO_RANK}.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_return_confident_outcome" text="Выражение лица {SERGEANT_NAME} остывает. &quot;Мог бы, значит. Тогда ты не будешь против показать рекрутам, как это делается.&quot; Они только что назначили тебе дополнительную работу. Молодец." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_return_confident_text" text="&quot;Три кампании. Я мог бы управлять отрядом во сне.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_return_honest_outcome" text="{SERGEANT_NAME} обдумывает это. &quot;Время в стороне.&quot; Они не спрашивают почему. Хорошие сержанты так не делают. &quot;Что ж, тогда ты знаешь, чего ожидают. Не заставляй меня учить тебя дважды.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_return_honest_text" text="&quot;Ага. Взял перерыв. Готов вернуться.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_return_humble_outcome" text="В глазах {SERGEANT_NAME} мелькает уважение. Ветеран, который не предполагает, что знает всё. Редкость. &quot;Справедливо. Но я буду полагаться на тебя, когда понадобится опыт. Таков уговор.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_return_humble_text" text="&quot;Давно это было. Я заржавел. Обращайтесь со мной как с рекрутом.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_return_private_outcome" text="Долгий взгляд. {SERGEANT_NAME} не давит. &quot;Хорошо. Твоё дело. Просто делай свою работу.&quot; Они уходят. У тебя есть секреты. Это нормально. Они есть у всех." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_return_private_text" text="&quot;Не хочу говорить о прошлом. Я здесь сейчас.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_mention_experience_outcome" text="&quot;Неужели.&quot; Тон {SERGEANT_NAME} ровный. &quot;И всё же ты здесь, начинаешь заново.&quot; Подтекст висит в воздухе. Возможно, это было не самое правильное, что можно было сказать." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_mention_experience_text" text="&quot;Служил три года под началом лорда {PREVIOUS_LORD}. Я знаю, как работает рота.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_professional_outcome" text="{SERGEANT_NAME} медленно кивает. &quot;Опытный, значит? Хорошо. Меньше опеки.&quot; Они указывают на фургоны со снаряжением. &quot;Проверка снаряжения через час. Не опаздывай.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_professional_text" text="&quot;Я знаю эту работу. Укажите, что делать.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_quiet_outcome" text="{SERGEANT_NAME} принимает твоё молчание за то, чем оно является — профессионал, которому не нужны речи. &quot;Ряд палаток. Рассвет. Не заставляй меня тебя искать.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_quiet_text" text="Просто кивни. Ты знаешь устав." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_respectful_outcome" text="Намёк на одобрение. Им приходилось иметь дело с переведёнными, которые тащили за собой багаж. Ты не будешь одним из таких. &quot;Хорошо. Найди себе место в ряду палаток. Мы выступаем на рассвете.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_opt_transfer_respectful_text" text="&quot;Так точно, {NCO_RANK}. Новый старт.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_setup" text="{NCO_RANK} {SERGEANT_NAME} осматривает тебя, как будто проверяет лошадь, в покупке которой не уверен.\n\n&quot;{PLAYER_NAME}, так? Ты теперь с {COMPANY_NAME}. Это значит, ты делаешь то, что я говорю, когда я говорю. Ты ешь, когда я говорю есть. Ты спишь, когда я говорю спать. Ты срёшь, когда я говорю срать.&quot;\n\nОстальная часть роты наблюдает издали. Некоторые усмехаются. Некоторые выглядят скучающими. Один рекрут выглядит таким же напуганным, как и ты.\n\n&quot;Понял?&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_setup_first_time" text="{NCO_RANK} {SERGEANT_NAME} осматривает тебя, как будто проверяет лошадь, в покупке которой не уверен.\n\n&quot;{PLAYER_NAME}, так? Ты теперь с {COMPANY_NAME}. Это значит, ты делаешь то, что я говорю, когда я говорю. Ты ешь, когда я говорю есть. Ты спишь, когда я говорю спать. Ты срёшь, когда я говорю срать.&quot;\n\nОстальная часть роты наблюдает издали. Некоторые усмехаются. Некоторые выглядят скучающими. Один рекрут выглядит таким же напуганным, как и ты.\n\n&quot;Понял?&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_setup_return" text="Снова в упряжке. Запах лагеря, звук солдат, тяжесть солдатской жизни снова оседает на твоих плечах.\n\n{NCO_RANK} {SERGEANT_NAME} осматривает тебя — и задерживается. Они видят это. То, как ты стоишь. То, как ты уже сканируешь лагерь, читаешь его планировку.\n\n&quot;Служил раньше, да?&quot;\n\nОтряд наблюдает с новым интересом. Ветеран, возвращающийся в строй. Это либо мудрость, либо отчаяние." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_setup_transfer" text="Другой лорд, другая рота. Ты знаешь, как это бывает.\n\n{NCO_RANK} {SERGEANT_NAME} осматривает тебя. Они и раньше видели переведённых. &quot;Ты теперь с {COMPANY_NAME}. Мне всё равно, кому ты служил раньше или что там делал. Здесь ты доказываешь себя заново.&quot;\n\nОтряд наблюдает. Прикидывает. Гадает, ты актив или обуза." />
+    <string id="ll_evt_enlisted_onboard_01_meet_squad_title" text="Знакомство с твоим отрядом" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_alone_outcome" text="Ты забираешь свою порцию и находишь тихое место подальше от костра. Смех стихает до бормотания. Звёзды яркие.\n\nТы ешь один. Наблюдаешь за лагерем. Изучаешь его ритмы со стороны.\n\nНекоторые солдаты замечают. Они запомнят тебя как того, кто не вливается в компанию. Это тоже репутация." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_alone_text" text="Взять свою еду и уйти в темноту" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_help_serve_outcome" text="Солдат на кухонном наряде выглядит удивлённым, затем облегчённым. &quot;Возьми тот котёл. Не пролей.&quot;\n\nТы раздаёшь. Все получают хороший взгляд на тебя. Некоторые кивают. Некоторые игнорируют. Но теперь все знают твоё лицо.\n\nТы ешь последним, но хорошо — привилегия повара. И ты познакомился со всеми, не выбирая сторон." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_help_serve_text" text="&quot;Нужна помощь с едой?&quot;" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_recruits_outcome" text="Ты находишь место рядом с {RECRUIT_NAME}. Они кивают тебе нервно. Еда приличная. Компания... зелёная. Но в общей неопытности есть безопасность.\n\n&quot;Первый день?&quot; — спрашивает {RECRUIT_NAME}. Ты киваешь. &quot;Я тоже. Думал, обмочусь, когда {NCO_RANK} закричал.&quot;\n\nТы ешь. Ты слушаешь. Ты не одинок в своей новизне." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_recruits_text" text="Сесть с другими рекрутами" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_veterans_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_veterans_text" text="Занять место рядом с ветеранами" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_ghosts_outcome" text="Костёр потрескивает. Голоса стихают до фонового шума.\n\nТы видел, как умирали люди у таких костров. Праздновал победы, которые стоили слишком дорого. Скорбел о друзьях, чьи имена начинаешь забывать.\n\nТы ешь. Ты не говоришь.\n\nОтряд даёт тебе пространство. Ветераны понимают молчание." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_ghosts_text" text="Смотреть в огонь. Некоторым воспоминаниям не нужно делиться." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_mentor_outcome" text="Рекрут держит ложку неправильно. Мелочь. Но ты помнишь, каким был таким же зелёным.\n\n&quot;Вот так,&quot; — говоришь ты тихо, показывая. &quot;Так пальцы не обожжёшь.&quot;\n\n{RECRUIT_NAME} моргает. Поправляет. &quot;Спасибо.&quot;\n\n{SERGEANT_NAME} замечает этот обмен. Ничего не говорит. Но замечает." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_mentor_text" text="Заметить, что {RECRUIT_NAME} не справляется. Предложить тихий совет." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_modest_outcome" text="Ты садишься, куда указали. Разговор течёт вокруг тебя — недавние битвы, жалобы на жалование, сплетни об офицерах.\n\nНекоторые вещи никогда не меняются. Ты ловишь себя на улыбке.\n\n{VETERAN_1_NAME} замечает это. &quot;Хорошо вернуться?&quot;\n\n&quot;Да,&quot; — признаёшься ты. &quot;Хорошо.&quot;" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_modest_text" text="Занять предложенное место. Слушать." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_share_wisdom_outcome" text="Они спрашивают. Ветераны всегда спрашивают — прикидывая нового старого служаку.\n\nТы рассказываешь одну. Не самую лучшую. Не хвастаясь. Просто... историю. Достаточно правдивую, чтобы звучать правдоподобно.\n\nКогда ты заканчиваешь, {VETERAN_1_NAME} медленно кивает. &quot;Ты повидал кое-что.&quot;\n\n&quot;Не мы ли все?&quot;\n\nТы ещё не один из них. Но ты говоришь на одном языке." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_share_wisdom_text" text="Когда спросят, рассказать историю из своих старых кампаний" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_bring_drink_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_bring_drink_text" text="Достать спрятанную флягу. &quot;Привёз кое-что со своего прошлого поста.&quot;" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_earn_spot_outcome" text="Ты занимаешь скромное место. Не с сырыми рекрутами — ты уже прошёл это. Но и не влезая в круг ветеранов.\n\n{VETERAN_1_NAME} наблюдает. Слегка кивает. Ты знаешь правила. Уважение заслуживают, а не переносят." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_earn_spot_text" text="Сесть с краю, не навязываясь" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_listen_outcome" text="Ты садишься. Ты ешь. Ты смеёшься, когда смеются другие. Ты держишь рот на замке насчёт того, как дела обстояли в твоём старом подразделении.\n\nУмно. К концу вечера ты знаешь, кто важен, кого избегать и где реальная власть в {COMPANY_NAME}.\n\nИнформация стоит больше, чем дружба. Пока что." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_listen_text" text="Слушать больше, чем говорить" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_tell_stories_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_tell_stories_text" text="Предложить историю из своего старого подразделения" />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_setup" text="Наступает вечер. Кухонные костры расцветают по лагерю, как оранжевые цветы.\n\n{COMPANY_NAME} собирается на своём месте — кострище, окружённое брёвнами, отполированными частым использованием. Истории перекрывают друг друга. Кто-то смеётся. Запах еды заставляет урчать живот.\n\nТы стоишь на краю. {VETERAN_1_NAME} замечает, что ты топчешься. &quot;Ну? Ты ешь или нет?&quot;\n\nЕсть место рядом с другими рекрутами, среди них {RECRUIT_NAME}. Есть свободное место ближе к ветеранам. И всегда есть темнота за пределами света костра." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_setup_first_time" text="Наступает вечер. Кухонные костры расцветают по лагерю, как оранжевые цветы.\n\n{COMPANY_NAME} собирается на своём месте — кострище, окружённое брёвнами, отполированными частым использованием. Истории перекрывают друг друга. Кто-то смеётся. Запах еды заставляет урчать живот.\n\nТы стоишь на краю. {VETERAN_1_NAME} замечает, что ты топчешься. &quot;Ну? Ты ешь или нет?&quot;\n\nЕсть место рядом с другими рекрутами, среди них {RECRUIT_NAME}. Есть свободное место ближе к ветеранам. И всегда есть темнота за пределами света костра." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_setup_return" text="Кострище. Ты сидел у сотни таких. Тепло, дым, ложь, которую солдаты рассказывают друг другу.\n\nТы почти скучал по этому. Почти.\n\n{COMPANY_NAME} собралась. Они знают, что ты ветеран — это видно по тому, как ты двигаешься, как не задаёшь очевидных вопросов. {VETERAN_1_NAME} жестом указывает на место. &quot;Садись. Ешь.&quot;\n\nНе приказ. Предложение. Им интересно узнать о тебе." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_setup_transfer" text="Вечер. Кострище.\n\nТы знаешь этот ритуал. У каждой роты есть своё — место, где рассказывают истории и формируются связи. Кострище {COMPANY_NAME} не исключение. Просто незнакомые лица у знакомого огня.\n\n{VETERAN_1_NAME} ловит твой взгляд. Взгляд говорит: мы знаем, что ты переведённый. Вопрос в том, какой?\n\nЕсть свободное место. Где ты сядешь, имеет значение." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_title" text="Кострище" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_outcome" text="{SERGEANT_NAME} задерживается. Обдумывает тебя. &quot;Хм. Тот, кто думает.&quot;\n\nОни назначают тебе снаряжение — оно самое срочное. Но они помнят, что ты спросил. Что ты думал о подразделении, а не только о задаче.\n\n&quot;Может, ты и продержишься,&quot; — бормочут они, уходя.\n\nВысокая похвала." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_text" text="&quot;Что больше всего нужно роте?&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_outcome" text="Ты проводишь утро с маслом, кожей и ржавчиной. Работа бездумная, но в ней есть навык — знать, что нужно заменить, что можно спасти, что достаточно хорошо.\n\nК полудню куча разобрана. Пряжка {SOLDIER_NAME} не подведёт в бою благодаря тебе. Маленькие победы.\n\n{SERGEANT_NAME} проверяет твою работу. Ничего не говорит. Это одобрение." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_text" text="&quot;Я займусь снаряжением.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_outcome" text="Наряд в отхожее место. Работа, которую никто не хочет.\n\nЗапах точно такой же отвратительный, как ты и ожидал. Может, даже хуже. Но ты копаешь. Ты не жалуешься. Ты делаешь это правильно.\n\nМолва разносится. Новобранец взял наряд в отхожее место без принуждения. Это кое-что значит.\n\n{SERGEANT_NAME} находит тебя в полдень, покрытого грязью и чем-то похуже. &quot;Не ожидал, что ты выберешь именно это.&quot; В голосе почти уважение. Почти." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_text" text="&quot;Я покопаю.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_outcome" text="Таскание дров. Просто. Изнурительно. Незаметно.\n\nТы делаешь один поход за другим. Плечи горят. На руках появляются мозоли. К полудню куча достаточно высока.\n\nНикто тебе не благодарен. Никто не замечает. Но сегодня вечером, когда костры будут гореть тепло, — это твоя работа.\n\n{SERGEANT_NAME} бросает взгляд на поленницу. Кивает один раз. Идёт дальше." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_text" text="&quot;Я принесу дрова для костра.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_all_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_all_text" text="&quot;От рассвета до заката. Всё, что нужно сделать. Всё подряд.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_outcome" text="Ты берёшь наряд в отхожее место. Самый худший. Намеренно.\n\n{SERGEANT_NAME} наблюдает, как ты работаешь — не как солдат, доказывающий что-то, а как человек, который знает, что гордость — это роскошь.\n\n&quot;Ладно,&quot; — говорят они, когда ты закончил. &quot;Ты всё ещё один из нас.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_text" text="&quot;Черновая работа. Такая же, как у любого рекрута. Я не выше этого.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_outcome" text="{SERGEANT_NAME} задерживается. Изучает тебя.\n\n&quot;Снабжение не сходится. Кто-то ворует, или квартирмейстеры считать не умеют. В любом случае, нужно исправить, пока капитан не заметил.&quot;\n\nНастоящая проблема. Не черновая работа. Они тебе доверяют.\n\nТы проводишь утро в шатрах со снаряжением. К полудню ты находишь расхождение — честная ошибка, не кража. Квартирмейстер должен тебе услугу. {SERGEANT_NAME} должен тебе больше.\n\n&quot;Хорошо, что ты вернулся,&quot; — признают они." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_text" text="&quot;В чём реальная проблема сейчас? Не та, что для отвлечения внимания, — настоящая.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_outcome" text="Ты работаешь с кучей снаряжения. Но ты делаешь больше, чем обслуживаешь — ты учишь. {RECRUIT_NAME} наблюдает, как ты определяешь трещину напряжения, невидимую неопытному глазу.\n\n&quot;Она бы сломалась в бою,&quot; — объясняешь ты. &quot;Научись это видеть.&quot;\n\n{SERGEANT_NAME} наблюдает. &quot;Может, нам повезло с этим,&quot; — бормочут они {SECOND_SHORT}." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_text" text="&quot;Поставьте меня туда, где помогает мой опыт. Проверка снаряжения.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_delegate_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_delegate_text" text="&quot;Я возьму снаряжение. {RECRUIT_NAME} может помочь с дровами.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_efficient_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_efficient_text" text="&quot;Я сделаю все три. К полудню.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_outcome" text="Ты работаешь эффективно. Ты делал это сотни раз. Разница видна — ты быстрее, тщательнее, замечаешь проблемы, которые другие бы пропустили.\n\n{SERGEANT_NAME} проверяет твою работу. Не находит, к чему придраться. &quot;Твоё старое подразделение хотя бы научило тебя правильно.&quot; Неохотное уважение." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_text" text="&quot;Снаряжение. Я разбираюсь в экипировке.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_outcome" text="&quot;Значит, отхожее место.&quot; {SERGEANT_NAME} почти улыбается.\n\nТы копаешь. Ты копал раньше. Запах тебя больше не беспокоит — точнее, ты научился его игнорировать.\n\nКогда ты закончил, вычистив лучше, чем требовалось, молва разносится. Переведённый взял дерьмовую работу. В буквальном смысле. Не жаловался.\n\nУважение заслуживают, а не переносят. Ты это знаешь." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_text" text="&quot;Дайте мне самую худшую.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup" text="{SERGEANT_NAME} находит тебя до утренней еды. Выражение их лица говорит, что это не светский визит.\n\n&quot;Новичкам достаются худшие работы. Так это работает. Так это всегда работало. Так это будет работать, когда нас обоих уже черви съедят.&quot;\n\nОни жестом указывают на три неприятные реалии лагерной жизни: кучу снаряжения, требующего обслуживания, штабель дров, требующих переноски, и траншею для отхожего места, требующую... внимания.\n\n&quot;Выбери одну. Сделай правильно. Не заставляй меня проверять тебя.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup_first_time" text="{SERGEANT_NAME} находит тебя до утренней еды. Выражение их лица говорит, что это не светский визит.\n\n&quot;Новичкам достаются худшие работы. Так это работает. Так это всегда работало. Так это будет работать, когда нас обоих уже черви съедят.&quot;\n\nОни жестом указывают на три неприятные реалии лагерной жизни: кучу снаряжения, требующего обслуживания, штабель дров, требующих переноски, и траншею для отхожего места, требующую... внимания.\n\n&quot;Выбери одну. Сделай правильно. Не заставляй меня проверять тебя.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup_return" text="{SERGEANT_NAME} подходит к тебе на рассвете. Но нет никакой лекции о новичках и черновой работе.\n\n&quot;Я знаю, ты делал это раньше. Вопрос в том, ты всё ещё в форме, или мир сделал тебя мягким?&quot;\n\nОни жестом указывают на лагерь. &quot;Кое-что нужно сделать. Ты выбирай. Покажи мне, какой солдат вернулся.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup_transfer" text="{SERGEANT_NAME} ловит тебя на рассвете. &quot;Переведённый, ты знаешь, как это работает. Новый в роте — значит, в самом низу кучи. Неважно, какое звание ты имел раньше.&quot;\n\nОни проверяют тебя. Смотрят, будешь ли ты тянуть карту &quot;а вот в моём старом подразделении&quot;.\n\nОбслуживание снаряжения. Переноска дров. Наряд в отхожее место. Вечная троица черновой работы.\n\n&quot;Выбери одну. Покажи мне, что ты не слишком хорош для основ.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_title" text="Докажи себя" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_outcome" text="{SECOND_SHORT} почти улыбается. &quot;Странно — это одно из слов.&quot;\n\nОтряд расслабляется. Ты признал слона в комнате. Некоторые вещи будут неловкими. Это нормально. Ты человек.\n\n&quot;У меня будет расписание нарядов для вас в течение часа, {PLAYER_RANK},&quot; — говорит {SECOND_SHORT}. Возвращение к делу. Но воздух стал чище." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_text" text="&quot;Это странно для нас обоих. Мы разберёмся.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_outcome" text="Чётко. Профессионально. По уставу.\n\nВыражение лица {SECOND_SHORT} не дрогнуло. &quot;Так точно, {PLAYER_RANK}.&quot;\n\nОтряд расходится. Ты провёл черту. Чёткие границы. Это не плохо. Но это факт." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_text" text="&quot;Продолжайте утренние обязанности, {SECOND_RANK}. Доложитесь мне после.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_steady_outcome" text="Напряжение слегка спадает. {SECOND_SHORT} кивает. &quot;Так точно, {PLAYER_RANK}. Но это меняет. Так уж устроено.&quot;\n\nОни правы. Меняет. Но ты дал понять, что не собираешься быть козлом.\n\nМаленькие милости." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_steady_text" text="&quot;Вольно, {SECOND_RANK}. Мы знаем друг друга. Это не изменится.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_outcome" text="Тишина затягивается. {SECOND_SHORT} наблюдает. Ждёт.\n\nНаконец, они сжалились. &quot;Возможно, нам стоит обсудить расписание, {PLAYER_RANK}. Наедине.&quot;\n\nОни покрывают тебя. Отряд делает вид, что не заметил твоей нерешительности.\n\nТебе придётся сделать лучше. Но не все делают лучше в первый же день." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_text" text="Замри. Ты не знаешь, что сказать." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_return_honest_outcome" text="{SECOND_SHORT} медленно кивает. Они не спрашивают почему. Хорошие сержанты никогда этого не делают.\n\n&quot;Тогда ты знаешь, как это работает, {PLAYER_RANK}. Я введу тебя в курс особенностей {COMPANY_NAME}.&quot;\n\nПрофессионально. Чисто. Хорошее начало." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_return_honest_text" text="&quot;Я делал это раньше. Отходил в сторону. Нужно было вернуться.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_return_private_outcome" text="{SECOND_SHORT} на мгновение задерживает на тебе взгляд. Затем кивает.\n\n&quot;Понял, {PLAYER_RANK}. Твои причины — твоё дело.&quot;\n\nНекоторые вещи не требуют объяснений. Ты здесь. Вот что важно." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_return_private_text" text="&quot;Просто... нужно было снова быть полезным. Оставим это так.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_return_rusty_outcome" text="Редко, когда офицер признаёт слабость. Уважение {SECOND_SHORT} заметно возрастает.\n\n&quot;Мы вернём тебя в форму, {PLAYER_RANK}. Для этого и нужны сержанты.&quot;\n\nПартнёрство, а не иерархия. Это может сработать." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_return_rusty_text" text="&quot;Прошло много времени. Я, возможно, заржавел. Поддержите меня, когда это будет нужно.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_return_sharp_outcome" text="Уверенность. Возможно, даже правдивая.\n\n{SECOND_SHORT} принимает это за чистую монету. &quot;Тогда за работу, {PLAYER_RANK}.&quot;\n\nТы проводишь утро, доказывая, что помнишь, как это работает. Ты помнишь. Включается мышечная память. Команды приходят естественно.\n\nТы вернулся." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_return_sharp_text" text="&quot;Я не заржавел. Я готов. Покажите, что у вас есть.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_assert_outcome" text="Профессионально. Ясно. Ты не отвергаешь их опыт, но и не подчиняешься.\n\n{SECOND_SHORT} медленно кивает. &quot;Сюда, {PLAYER_RANK}.&quot;\n\nОни проводят утро, показывая тебе, как работает {COMPANY_NAME}. К полудню ты знаешь, кому доверять и что нужно исправить." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_assert_text" text="&quot;Я командовал подразделениями раньше. Проведите меня через ваши текущие процедуры.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_inspect_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_inspect_text" text="&quot;Построить роту для смотра, {SECOND_RANK}. Немедленно.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_prove_yourself_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_prove_yourself_text" text="&quot;Я знаю, что мне нужно заслужить ваше доверие. Просто дайте мне шанс.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_respect_experience_outcome" text="Правильный ответ. {SECOND_SHORT} слегка расслабляет плечи.\n\n&quot;У меня будут отчёты для вас в течение часа, {PLAYER_RANK}. Список личного состава, готовность, любые проблемы, о которых вам следует знать.&quot;\n\nТы дал понять, что не собираешься отменять два года опыта в первый же день. Умно." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_respect_experience_text" text="&quot;Два года. Хорошо. Мне понадобится ваш опыт, {SECOND_RANK}.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_setup" text="Погоны кажутся тяжелее, чем должны. Просто ткань и нитки, но они меняют всё.\n\n{SERGEANT_NAME} — нет, теперь они {SECOND_SHORT}, твой сержант — стоит перед тобой. Тот же человек, который кричал на тебя как на рекрута. Который гонял тебя до упаду.\n\nТеперь они отдают честь.\n\n&quot;Приказы, {PLAYER_RANK}?&quot;\n\nОтряд наблюдает. Теперь твой отряд. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Мужчины и женщины, с которыми ты ел, копал отхожие места, проливал кровь.\n\nТеперь они ждут, когда ты скажешь им, что делать." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_setup_first_time" text="Погоны кажутся тяжелее, чем должны. Просто ткань и нитки, но они меняют всё.\n\n{SERGEANT_NAME} — нет, теперь они {SECOND_SHORT}, твой сержант — стоит перед тобой. Тот же человек, который кричал на тебя как на рекрута. Который гонял тебя до упаду.\n\nТеперь они отдают честь.\n\n&quot;Приказы, {PLAYER_RANK}?&quot;\n\nОтряд наблюдает. Теперь твой отряд. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Мужчины и женщины, с которыми ты ел, копал отхожие места, проливал кровь.\n\nТеперь они ждут, когда ты скажешь им, что делать." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_setup_return" text="Снова погоны. Ты думал, что оставил их позади.\n\n{SECOND_SHORT} отдаёт честь. Они тебя не знают, но им сказали: этот уже командовал раньше. Вернулся по какой-то причине.\n\n&quot;Добро пожаловать в {COMPANY_NAME}, {PLAYER_RANK}. Я {SECOND_RANK} {SECOND_SHORT}.&quot;\n\nНикакого подтекста об опыте. Они дают тебе преимущество сомнения. Пока что.\n\nОтряд наблюдает. Гадает, почему кто-то вернулся к этой жизни." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_setup_transfer" text="Новый лорд. Новая рота. Но те же погоны.\n\n{SECOND_SHORT} отдаёт тебе честь. Незнакомцу. Их глаза оценивают тебя так, как все сержанты оценивают новых офицеров: угробит ли этот нас?\n\n&quot;Добро пожаловать в {COMPANY_NAME}, {PLAYER_RANK}. Я {SECOND_RANK} {SECOND_SHORT}. Я управляю этим отрядом уже два года.&quot;\n\nПодтекст: я знаю этих людей. Ты — нет. Ступай осторожно.\n\nОтряд наблюдает. Теперь твой отряд. Люди, которые тебя не знают. Не доверяют тебе. Пока что." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_title" text="Погоны" />
+    <string id="ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_outcome" text="&quot;Ручей, {PLAYER_RANK}. Вода стоит того, чтобы быть на виду.&quot;\n\nТы киваешь. &quot;Значит, ручей.&quot;\n\nТы показал, что ценишь их опыт. Некоторые офицеры сочли бы это слабостью. {SECOND_SHORT} видит в этом мудрость.\n\n&quot;Я приведу роту в движение,&quot; — говорят они. Довольные." />
+    <string id="ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_text" text="&quot;Что вы порекомендуете, {SECOND_RANK}?&quot;" />
+    <string id="ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_outcome" text="&quot;Ручей,&quot; — говорит {SECOND_SHORT}.\n\n&quot;Опушка леса,&quot; — решаешь ты.\n\nЧелюсть {SECOND_SHORT} слегка сжимается. Ты сделал заявление: командуешь ты. Возможно, слишком очевидно.\n\nОтряд замечает. Они всегда замечают." />
+    <string id="ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_text" text="&quot;Что бы вы сделали?&quot; Затем выбрать противоположное." />
+    <string id="ll_evt_officer_onboard_02_first_command_opt_all_stream_outcome" text="Ты отдаёшь приказ. {SECOND_SHORT} кивает — ты видишь, они согласны.\n\nК вечеру у {COMPANY_NAME} лучший доступ к воде во всей роте. Некоторое ворчание насчёт открытой позиции, но полные бурдюки успокаивают большинство жалоб.\n\n&quot;Хорошее решение, {PLAYER_RANK},&quot; — говорит {SECOND_SHORT}. Тихо. Наедине. Но они сказали это." />
+    <string id="ll_evt_officer_onboard_02_first_command_opt_all_stream_text" text="&quot;Ручей. Вода важнее.&quot;" />
+    <string id="ll_evt_officer_onboard_02_first_command_opt_all_trees_outcome" text="Выражение лица {SECOND_SHORT} дрогнуло — они выбрали бы ручей. Но они передают приказ без комментариев.\n\nЭтой ночью рота носит воду издалека. Ворчание. Но когда внезапно налетает дождь, {COMPANY_NAME} остаётся сухой, в то время как лагерь у ручья промокает.\n\nУдача? Хорошая интуиция? В любом случае, решение было за тобой." />
+    <string id="ll_evt_officer_onboard_02_first_command_opt_all_trees_text" text="&quot;Опушка леса. Мне не нравится быть на виду.&quot;" />
+    <string id="ll_evt_officer_onboard_02_first_command_setup" text="Первое решение, которое действительно за тобой.\n\nАрмия двигается. {SECOND_SHORT} подходит с вопросом: где {COMPANY_NAME} разбивает лагерь сегодня ночью?\n\n&quot;Есть место у ручья — хорошая вода, но открытое. Или есть опушка леса — укрытое, но дальше от основного лагеря.&quot;\n\nУ них есть мнение. Ты видишь это в их глазах. Но они ждут, когда ты решишь.\n\nОтряд наблюдает. Твой первый настоящий приказ." />
+    <string id="ll_evt_officer_onboard_02_first_command_setup_all" text="Первое решение, которое действительно за тобой.\n\nАрмия двигается. {SECOND_SHORT} подходит с вопросом: где {COMPANY_NAME} разбивает лагерь сегодня ночью?\n\n&quot;Есть место у ручья — хорошая вода, но открытое. Или есть опушка леса — укрытое, но дальше от основного лагеря.&quot;\n\nУ них есть мнение. Ты видишь это в их глазах. Но они ждут, когда ты решишь.\n\nОтряд наблюдает. Твой первый настоящий приказ." />
+    <string id="ll_evt_officer_onboard_02_first_command_title" text="Твоя первая команда" />
+    <string id="ll_evt_officer_onboard_03_tested_opt_all_by_the_book_outcome" text="По уставу. Справедливо. {SOLDIER_NAME} знает правила; они их нарушили.\n\n&quot;Так точно, {PLAYER_RANK}.&quot; Они отдают честь — правильно на этот раз — и уходят.\n\n{SECOND_SHORT} слегка кивает. &quot;Вот как это делается.&quot;\n\nТеперь отряд знает, где черта. Хорошо." />
+    <string id="ll_evt_officer_onboard_03_tested_opt_all_by_the_book_text" text="&quot;Дополнительный наряд. Три дня. Свободны.&quot;" />
+    <string id="ll_evt_officer_onboard_03_tested_opt_all_harsh_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_officer_onboard_03_tested_opt_all_harsh_text" text="&quot;Дополнительный наряд. Неделя. И ты на отхожем месте, пока я не скажу иначе.&quot;" />
+    <string id="ll_evt_officer_onboard_03_tested_opt_all_let_sergeant_outcome" text="Ты берёшь на себя риск и доводишь дело до конца." />
+    <string id="ll_evt_officer_onboard_03_tested_opt_all_let_sergeant_text" text="&quot;Разберитесь с этим, {SECOND_RANK}.&quot;" />
+    <string id="ll_evt_officer_onboard_03_tested_opt_all_understand_outcome" text="{SECOND_SHORT} качает головой. &quot;Второй раз в этом месяце.&quot;\n\nТы поворачиваешься к {SOLDIER_NAME}. &quot;Похоже, на закономерность. Дополнительный наряд. Три дня. В третий раз отвечать придётся уже не мне.&quot;\n\nСправедливо. Предупреждение. Чёткие последствия.\n\n{SOLDIER_NAME} сглатывает. &quot;Так точно, {PLAYER_RANK}.&quot;" />
+    <string id="ll_evt_officer_onboard_03_tested_opt_all_understand_text" text="&quot;Это первый раз, {SECOND_RANK}?&quot;" />
+    <string id="ll_evt_officer_onboard_03_tested_setup" text="Это должно было случиться. Кто-то проверяет нового офицера.\n\n{SOLDIER_NAME} не явился на утреннюю поверку. Когда {SECOND_SHORT} нашёл их, они ещё спали — или притворялись спящими.\n\nТеперь они стоят перед тобой. Не совсем по стойке &quot;смирно&quot;. Не совсем неуважительно. Идут по грани.\n\n&quot;Проспал, {PLAYER_RANK}.&quot; Ни извинений. Ни оправданий. Просто плоское заявление.\n\n{SECOND_SHORT} наблюдает. Отряд наблюдает. Твой ход." />
+    <string id="ll_evt_officer_onboard_03_tested_setup_all" text="Это должно было случиться. Кто-то проверяет нового офицера.\n\n{SOLDIER_NAME} не явился на утреннюю поверку. Когда {SECOND_SHORT} нашёл их, они ещё спали — или притворялись спящими.\n\nТеперь они стоят перед тобой. Не совсем по стойке &quot;смирно&quot;. Не совсем неуважительно. Идут по грани.\n\n&quot;Проспал, {PLAYER_RANK}.&quot; Ни извинений. Ни оправданий. Просто плоское заявление.\n\n{SECOND_SHORT} наблюдает. Отряд наблюдает. Твой ход." />
+    <string id="ll_evt_officer_onboard_03_tested_title" text="Проверка" />
+    <string id="ll_evt_squad_bonded_opt_clean_outcome" text="&quot;Хорошо.&quot; {SERGEANT_NAME} выглядит облегчённым. &quot;Так и держи.&quot; Им не нужно было тебя предупреждать. Но они это сделали. Это кое-что значит." />
+    <string id="ll_evt_squad_bonded_opt_clean_text" text="&quot;Я чист. Но спасибо за предупреждение.&quot;" />
+    <string id="ll_evt_squad_bonded_opt_grateful_outcome" text="{SERGEANT_NAME} кивает. &quot;Только не заставляй меня жалеть об этом.&quot; Ты не заставишь. Вот каким должен быть отряд — прикрывать спины друг другу. Даже когда враг носит ту же форму." />
+    <string id="ll_evt_squad_bonded_opt_grateful_text" text="&quot;Я ценю это. Больше, чем вы знаете.&quot;" />
+    <string id="ll_evt_squad_bonded_opt_share_outcome" text="{SERGEANT_NAME} обдумывает. &quot;Я разберусь. Тихо.&quot; Они уходят предупредить остальных. Ты не единственный, кого они защищают. Но ты был первым. Это тоже кое-что значит." />
+    <string id="ll_evt_squad_bonded_opt_share_text" text="&quot;Кому-то ещё в роте нужно знать?&quot;" />
+    <string id="ll_evt_squad_bonded_opt_warn_others_outcome" text="&quot;Уверен?&quot; Ты киваешь. В течение следующего часа происходят тихие разговоры. К утру рота чиста. Проверка ничего не находит. {SERGEANT_NAME} никогда не связывают с предупреждением." />
+    <string id="ll_evt_squad_bonded_opt_warn_others_text" text="&quot;Позвольте мне рассказать остальным. Меньше риска для вас.&quot;" />
+    <string id="ll_evt_squad_bonded_setup" text="{SERGEANT_NAME} отводит тебя в сторону после проверки оружия. Их голос едва слышен.\n\n&quot;Сержант планирует проверку снаряжения завтра. Гончая капитана — ищет лишний паёк, пропавшее снаряжение, всё, за что можно прицепиться.&quot;\n\nОни смотрят тебе в глаза.\n\n&quot;Подумал, тебе следует знать. На случай, если у тебя есть что-то, что нужно... прибрать.&quot;\n\nЭто предупреждение. То, которое не дают кому попало. То, которое может доставить {SERGEANT_NAME} серьёзные неприятности, если кто-то узнает.\n\nТеперь ты семья. {COMPANY_NAME} защищает своих." />
+    <string id="ll_evt_squad_bonded_title" text="Связанные узами" />
+    <string id="ll_evt_squad_isolated_opt_alone_outcome" text="Темнота за пределами света костра холодна. Но по крайней мере она честна. Теперь ты знаешь, где стоишь. Иногда это стоит больше, чем ложное тепло." />
+    <string id="ll_evt_squad_isolated_opt_alone_text" text="Взять свою еду и есть в одиночестве. Они сделали свой выбор." />
+    <string id="ll_evt_squad_isolated_opt_approach_outcome" text="{SOLDIER_NAME} не приветствует тебя. Но и не отвергает. Несколько слов. Общая жалоба на еду. Это немного. Но это что-то." />
+    <string id="ll_evt_squad_isolated_opt_approach_outcome_failure" text="Молчание. Они ждут, когда ты уйдёшь. Когда ты уходишь, разговор возобновляется. Ты не был его частью. И сейчас не являешься." />
+    <string id="ll_evt_squad_isolated_opt_approach_text" text="Попытаться присоединиться к разговору. Пробить лёд." />
+    <string id="ll_evt_squad_isolated_opt_confront_outcome" text="{VETERAN_1_NAME} выступает вперёд. &quot;Ты знаешь, что сделал.&quot; Следует спор. Неприятный. Но по крайней мере честный. Обиды высказаны. Не прощены, но признаны." />
+    <string id="ll_evt_squad_isolated_opt_confront_outcome_failure" text="&quot;Ничего не происходит.&quot; Плоско. Окончательно. Они даже не хотят с тобой спорить. Это хуже." />
+    <string id="ll_evt_squad_isolated_opt_confront_text" text="&quot;Кто-нибудь хочет сказать мне, что происходит?&quot;" />
+    <string id="ll_evt_squad_isolated_opt_leader_outcome" text="Они не смягчают выражений. &quot;Ты потерял их доверие. То, как ты поступил с...&quot; — они перечисляют примеры. Каждый — маленькое предательство, о котором ты едва помнишь. &quot;Ты хочешь вернуться? Начни принимать другие решения.&quot; Путь вперёд. Трудный, но реальный." />
+    <string id="ll_evt_squad_isolated_opt_leader_text" text="Найти {SERGEANT_NAME}. Спросить, что случилось." />
+    <string id="ll_evt_squad_isolated_setup" text="Снова кострище. Но сегодня вечером промежутки вокруг тебя шире. Разговоры умирают, когда ты приближаешься. Смех прекращается.\n\n{SOLDIER_NAME} даже не поднимает взгляда, когда ты садишься. {VETERAN_1_NAME} находит, куда деться. {RECRUIT_NAME} следует за ними.\n\n{SERGEANT_NAME} наблюдает с другой стороны костра. Оценивает. Не вмешивается.\n\nТы всё ещё часть {COMPANY_NAME}. Технически. Но тепло ушло. Ты незнакомец в знакомой форме.\n\nВот каково чувство изоляции." />
+    <string id="ll_evt_squad_isolated_title" text="Изолированный" />
+    <string id="ll_evt_squad_sabotage_opt_confront_outcome" text="Ты замечаешь, как {SOLDIER_NAME} усмехается. Ты лезешь к ним в лицо. Происходит обмен словами. Может, и кулаками. Но сообщение ясно: ты не жертва." />
+    <string id="ll_evt_squad_sabotage_opt_confront_outcome_failure" text="Никто ничего не признаёт. Никто ничего не видел. Ты кричишь на стены. Ты выглядишь параноиком. Опасным. Они этого и хотели." />
+    <string id="ll_evt_squad_sabotage_opt_confront_text" text="Выяснить, кто это сделал. Заставить их ответить." />
+    <string id="ll_evt_squad_sabotage_opt_endure_outcome" text="Часы работы по восстановлению твоего снаряжения. Они хотели, чтобы ты разозлился. Они хотели конфронтации, которую могут выиграть. Ты отказываешь им в обоих. Холодно. Профессионально. Им наскучит в конце концов. Или нет. В любом случае, ты всё ещё стоишь." />
+    <string id="ll_evt_squad_sabotage_opt_endure_text" text="Исправить молча. Не давать им удовлетворения от твоей реакции." />
+    <string id="ll_evt_squad_sabotage_opt_report_outcome" text="Сержант слушает. Расследует, может быть. &quot;Я разберусь.&quot; Скорее всего, нет. Но теперь это зафиксировано. Если с тобой что-то случится, есть след." />
+    <string id="ll_evt_squad_sabotage_opt_report_text" text="Обратиться к сержанту. Это выходит за рамки отрядных игр." />
+    <string id="ll_evt_squad_sabotage_opt_transfer_outcome" text="{SERGEANT_NAME} не спорит. Бумаги проходят. Новая рота, новые люди, новый старт. Ты оставляешь врагов позади. Оставишь ли ты проблему позади... покажет время." />
+    <string id="ll_evt_squad_sabotage_opt_transfer_text" text="Запросить перевод. Этот отряд с тобой покончил." />
+    <string id="ll_evt_squad_sabotage_setup" text="Твоё снаряжение не в порядке.\n\nНичего явного — ничего, что не прошло бы проверку. Но твои ремни ослаблены. Твой клинок затупился. Твой бурдюк имеет медленную течь, которую ты не заметил, пока не вытекла половина воды.\n\nКто-то это сделал. Кто-то из {COMPANY_NAME}.\n\n{SERGEANT_NAME} не поможет. Они либо часть этого, либо смотрят в другую сторону. Один результат.\n\nТы сам по себе. В подразделении, которое хочет, чтобы ты ушёл — или хуже." />
+    <string id="ll_evt_squad_sabotage_title" text="Саботаж" />
+    <string id="ll_evt_squad_trusted_opt_decline_outcome" text="Лицо {VETERAN_1_NAME} падает, затем твердеет. &quot;Ладно. Забудь, что спрашивал.&quot; Они уходят. У тебя были причины. Хорошие, наверное. Но что-то сломалось." />
+    <string id="ll_evt_squad_trusted_opt_decline_text" text="&quot;Извини, не могу вмешиваться. Слишком рискованно.&quot;" />
+    <string id="ll_evt_squad_trusted_opt_help_outcome" text="Облегчение заливает лицо {VETERAN_1_NAME}. &quot;Завтра, у фургонов со снаряжением. Просто... будь там.&quot; Ты появляешься. Сборщик видит, что он не один. Разговор остаётся цивилизованным. Долг пересматривается, а не взыскивается силой." />
+    <string id="ll_evt_squad_trusted_opt_help_text" text="&quot;Я прикрою твою спину. Когда и где?&quot;" />
+    <string id="ll_evt_squad_trusted_opt_leverage_outcome" text="Долгая пауза. &quot;Какого рода услугу?&quot; Ты не уточняешь. Они всё равно соглашаются. Отчаявшиеся люди делают отчаянные вещи. Теперь у тебя есть рычаг. Стоит ли это больше, чем простая дружба... покажет время." />
+    <string id="ll_evt_squad_trusted_opt_leverage_text" text="&quot;Я помогу. Но ты будешь мне должен услугу. Настоящую.&quot;" />
+    <string id="ll_evt_squad_trusted_opt_money_outcome" text="{VETERAN_1_NAME} колеблется. &quot;Двадцать денариев. Я знаю, это много...&quot; Ты передаёшь их. Они смотрят на монеты, как будто они из золота. &quot;Я верну тебе каждый медяк, клянусь.&quot;" />
+    <string id="ll_evt_squad_trusted_opt_money_text" text="&quot;Сколько ты должен? Может, я смогу помочь напрямую.&quot;" />
+    <string id="ll_evt_squad_trusted_setup" text="{VETERAN_1_NAME} зажимает тебя после вечерней еды. Они оглядываются, убеждаясь, что никто не слушает.\n\n&quot;Есть проблема, {PLAYER_NAME}. Нужна помощь от того, кому можно доверять.&quot; Они делают паузу. &quot;Это ты.&quot;\n\nОни объясняют: долг со времени до армии. Сборщик придёт. Если у {VETERAN_1_NAME} не будет денег, станет некрасиво — для них, может, и для их семьи дома.\n\n&quot;Я не прошу денег. Просто... прикрой мою спину, когда сборщик появится. Убедись, что всё остаётся... цивилизованным.&quot;" />
+    <string id="ll_evt_squad_trusted_title" text="Доверенный" />
+    <string id="qm_bagcheck_body" text="Квартирмейстер поднимает перо. &quot;Ты не можешь маршировать в этом наряде. Полковые правила. Всё идёт в фургоны или в мой гроссбух. Если фургоны сгорят, сгорит и твоя прошлая жизнь. Как записать это, солдат?&quot;" />
+    <string id="qm_bagcheck_title" text="Проверка вещей при зачислении" />
+    <string id="qm_chat" text="Как ты оказался квартирмейстером?" />
+    <string id="qm_chat_response" text="Это долгая история. Скажем так, я оказался здесь после некоторых... интересных происшествий." />
+    <string id="qm_continue" text="Продолжить" />
+    <string id="qm_equipment_response" text="Давай посмотрим, что у меня есть в наличии для тебя." />
+    <string id="qm_greeting_dynamic" text="{QM_GREETING}" />
+    <string id="qm_leave" text="Я пойду." />
+    <string id="qm_menu_back_status" text="Вернуться к статусу рядового" />
+    <string id="qm_menu_manage_supplies" text="Управлять припасами отряда" />
+    <string id="qm_menu_request_accessories" text="Купить аксессуары" />
+    <string id="qm_menu_request_armor" text="Купить доспехи" />
+    <string id="qm_menu_request_mounts" text="Купить верховых животных" />
+    <string id="qm_menu_request_weapons" text="Купить оружие" />
+    <string id="qm_menu_return_equipment" text="Продать снаряжение" />
+    <string id="qm_request_equipment" text="Мне нужно снаряжение." />
+    <string id="qm_sell_all" text="&quot;Продать всё&quot; (60%)" />
+    <string id="qm_sell_equipment" text="Я хочу продать кое-какое снаряжение." />
+    <string id="qm_sell_hint" text="Ликвидировать всё по походной цене и уйти, тяжелее в монетах." />
+    <string id="qm_smuggle_hint" text="Протащить одну ценную вещь мимо гроссбуха; если поймают — её не будет." />
+    <string id="qm_smuggle_one" text="&quot;Я оставляю одну вещь&quot; (Воровство 30+)" />
+    <string id="qm_stow_all" text="&quot;Убрать всё&quot; (50 зол.)" />
+    <string id="qm_stow_hint" text="Переместить каждую мелочь в багажный фургон и заплатить клерку его взнос." />
+    <string id="strategic_context_coordinated_offensive" text="Большая кампания" />
+    <string id="strategic_context_desperate_defense" text="Последний рубеж" />
+    <string id="strategic_context_garrison_duty" text="Гарнизонная служба" />
+    <string id="strategic_context_patrol_peacetime" text="Объезд границ" />
+    <string id="strategic_context_raid_operation" text="Тревожные набеги" />
+    <string id="strategic_context_recruitment_drive" text="Сбор на войну" />
+    <string id="strategic_context_siege_operation" text="Осадные работы" />
+    <string id="strategic_context_winter_camp" text="Зимний лагерь" />
+    <string id="strategic_value_critical" text="Критический" />
+    <string id="strategic_value_high" text="Высокий" />
+    <string id="strategic_value_low" text="Низкий" />
+    <string id="strategic_value_moderate" text="Умеренный" />
+    <string id="war_stance_balanced" text="Сбалансированный" />
+    <string id="war_stance_defensive" text="Оборонительный" />
+    <string id="war_stance_desperate" text="Отчаянный" />
+    <string id="war_stance_offensive" text="Наступательный" />
     </strings>
 </base>
 
