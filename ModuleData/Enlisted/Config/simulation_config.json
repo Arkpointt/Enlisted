@@ -20,8 +20,6 @@
 
   "pressure_thresholds": {
     "lowSuppliesDays": 3,
-    "lowMoraleDays": 3,
-    "lowRestDays": 2,
     "highSicknessDays": 2,
     "desertionCount": 5,
     "_comment": "Days of low values before triggering crisis events"
@@ -117,7 +115,7 @@
       "textId": "{=sim_inc_repair}The men spent the evening mending kit. Quiet, useful work.",
       "weight": 10,
       "cooldown": 5,
-      "effects": { "Equipment": 2, "Rest": -1 }
+      "effects": { "Equipment": 2 }
     },
     {
       "id": "inc_campfire_tales",
@@ -144,7 +142,7 @@
       "textId": "{=sim_inc_weather_good}Clear skies and a warm breeze. Spirits lifted.",
       "weight": 8,
       "cooldown": 5,
-      "effects": { "Morale": 2, "Rest": 2 }
+      "effects": { "Morale": 2 }
     },
     {
       "id": "inc_bad_weather",
@@ -153,7 +151,7 @@
       "textId": "{=sim_inc_weather_bad}Rain soaked the camp. Everything damp and miserable.",
       "weight": 8,
       "cooldown": 4,
-      "effects": { "Morale": -2, "Rest": -2 }
+      "effects": { "Morale": -2 }
     },
     {
       "id": "inc_rumor_victory",

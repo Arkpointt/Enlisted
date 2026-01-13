@@ -7,6 +7,7 @@ All data verified against actual codebase (January 2026).
 
 import os
 import sqlite3
+import subprocess
 from pathlib import Path
 from typing import Optional, List, Dict
 from crewai.tools import tool
@@ -30,9 +31,49 @@ def _get_project_root() -> Path:
 _PROJECT_ROOT = _get_project_root()
 DB_PATH = _PROJECT_ROOT / "Tools" / "CrewAI" / "database" / "enlisted_knowledge.db"
 
+# Lazy sync flag - ensures systems database syncs once per Python process
+_systems_synced = False
+
+
+def _ensure_systems_synced():
+    """
+    Ensure core_systems table is synced with codebase (lazy, once per process).
+    
+    Runs Tools/Validation/sync_systems_db.py on first call to any systems tool.
+    Subsequent calls are no-ops. This ensures code is always truth.
+    """
+    global _systems_synced
+    if _systems_synced:
+        return
+    
+    sync_script = _PROJECT_ROOT / "Tools" / "Validation" / "sync_systems_db.py"
+    if not sync_script.exists():
+        _systems_synced = True  # Mark done even if script missing (non-fatal)
+        return
+    
+    try:
+        result = subprocess.run(
+            ["python3", str(sync_script)],
+            cwd=str(_PROJECT_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        if result.returncode == 0:
+            if "no changes needed" in result.stdout:
+                print("[DB] Systems database in sync")
+            else:
+                print("[DB] Systems database updated from code")
+    except Exception as e:
+        print(f"[DB WARN] Systems sync failed: {e}")
+    
+    _systems_synced = True
+
 
 def _get_connection() -> sqlite3.Connection:
     """Get database connection with row factory."""
+    _ensure_systems_synced()  # Sync once per process on first DB access
+    
     if not DB_PATH.exists():
         raise FileNotFoundError(
             f"Database not found at {DB_PATH}. "
@@ -608,6 +649,40 @@ def get_valid_severities() -> str:
         
         rows = cursor.fetchall()
         conn.close()
+        
+        return _format_results(rows)
+    except Exception as e:
+        return f"Error querying database: {str(e)}"
+
+
+@tool("list_all_core_systems")
+def list_all_core_systems() -> str:
+    """
+    List ALL core systems in the project with their descriptions.
+    
+    Use this to DISCOVER what tracking systems exist before analyzing them.
+    
+    Returns:
+        All core systems: name, type, file path, description, and key responsibilities.
+    
+    Example:
+        result = list_all_core_systems()  # Discover all systems first!
+    """
+    try:
+        conn = _get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT name, type, file_path, description, key_responsibilities 
+            FROM core_systems 
+            ORDER BY name
+        """)
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        if not rows:
+            return "No core systems found in database."
         
         return _format_results(rows)
     except Exception as e:

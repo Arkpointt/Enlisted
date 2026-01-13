@@ -37,7 +37,7 @@ The content system uses **world-state driven orchestration** instead of schedule
 - Activity levels drive order event frequency (quiet/routine/active/intense)
 - 84 order events fire contextually during 17 different order types
 - Player behavior learning improves content selection
-- Native Bannerlord effects integrated (traits, skills, morale, health)
+- Native Bannerlord effects integrated (traits, skills, health)
 - Camp opportunities dynamically generated based on context
 - Baggage train simulation responds to campaign conditions
 
@@ -226,7 +226,7 @@ Daily Tick (6am) → ContentOrchestrator.OnDailyTick()
 WorldStateAnalyzer.AnalyzeSituation()
   ├─ Detect lord's situation (garrison/campaign/siege)
   ├─ Analyze war status (peace/active/desperate)
-  ├─ Check company condition (supplies/morale/fatigue)
+- Check company condition (supplies/rest/fatigue)
   └─ Return: WorldSituation
   ↓
 CalculateActivityLevel(WorldSituation)
@@ -411,7 +411,7 @@ ApplyEffects()
 **Outcome Modifiers:**
 - Player skills → Better training outcomes
 - Fatigue → More mishaps when exhausted
-- Morale → Poor outcomes when morale low
+- Rest → Poor outcomes when exhausted
 - Equipment → Training penalties with poor gear
 - Weather/context → Siege = harsh conditions
 

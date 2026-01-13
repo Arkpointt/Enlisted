@@ -231,15 +231,9 @@ namespace Enlisted.Features.Camp
             }
 
             // Check for negative conditions
-            if (needs.Rest < 30)
-            {
-                return "fatigued";
-            }
-
-            if (needs.Morale < 30)
-            {
-                return "lowMorale";
-            }
+            // Note: Rest removed 2026-01-11 (redundant with player fatigue)
+            // Note: Morale removed (system no longer exists)
+            // For now, always use default weights
 
             // TODO: Check player skill level for highSkill set
             // For now, default to normal weights
@@ -507,15 +501,9 @@ namespace Enlisted.Features.Camp
                 {
                     needs.ModifyNeed(CompanyNeed.Supplies, outcome.SupplyChange);
                 }
-                if (outcome.MoraleChange != 0)
-                {
-                    needs.ModifyNeed(CompanyNeed.Morale, outcome.MoraleChange);
-                }
-                // Fatigue affects Rest need (inverted: more fatigue = less rest)
-                if (outcome.FatigueChange != 0)
-                {
-                    needs.ModifyNeed(CompanyNeed.Rest, -outcome.FatigueChange / 5);
-                }
+                // Note: Morale removed (system no longer exists)
+                // Note: Rest removed 2026-01-11 (redundant with player fatigue)
+                // Fatigue is tracked separately via EnlistmentBehavior.ModifyFatigue()
             }
 
             // Apply condition if mishap caused one

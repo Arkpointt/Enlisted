@@ -22,13 +22,6 @@
       "normal": 35,
       "poor": 30,
       "mishap": 15
-    },
-    "lowMorale": {
-      "excellent": 5,
-      "good": 20,
-      "normal": 35,
-      "poor": 28,
-      "mishap": 12
     }
   },
   "activities": {
@@ -249,13 +242,6 @@
         "mishap": { "min": 0, "max": 1 }
       },
       "fatigueChange": -5,
-      "moraleChange": {
-        "excellent": 8,
-        "good": 5,
-        "normal": 2,
-        "poor": 0,
-        "mishap": -5
-      },
       "flavorText": {
         "excellent": [
           "Good stories around the fire. Spirits high.",
@@ -617,13 +603,6 @@
         "mishap": { "min": 0, "max": 0 }
       },
       "fatigueChange": -40,
-      "moraleChange": {
-        "excellent": 5,
-        "good": 3,
-        "normal": 1,
-        "poor": 0,
-        "mishap": -2
-      },
       "flavorText": {
         "excellent": [
           "Full day of rest. Completely recovered.",
@@ -765,13 +744,6 @@
         "mishap": { "min": 0, "max": 0 }
       },
       "fatigueChange": -10,
-      "moraleChange": {
-        "excellent": 10,
-        "good": 6,
-        "normal": 3,
-        "poor": 1,
-        "mishap": -3
-      },
       "flavorText": {
         "excellent": [
           "Easy day. Spirits lifted across the company.",

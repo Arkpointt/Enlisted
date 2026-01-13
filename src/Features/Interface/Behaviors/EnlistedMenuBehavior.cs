@@ -1341,7 +1341,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnCampHubTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
-            // NOTE: Rest & Recover, Train Skills, and Morale Boost moved to Decisions menu.
+            // NOTE: Rest & Recover and Train Skills moved to Decisions menu.
 
             // Service Records
             starter.AddGameMenuOption(CampHubMenuId, "camp_hub_service_records",
@@ -1556,7 +1556,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     sb.AppendLine();
                 }
 
-                // === STATUS (Player's personal condition - injuries, hunger, fatigue, morale) ===
+                // === STATUS (Player's personal condition - injuries, hunger, fatigue) ===
                 var playerStatus = BuildPlayerPersonalStatus(enlistment);
                 if (!string.IsNullOrWhiteSpace(playerStatus))
                 {
@@ -1648,28 +1648,27 @@ namespace Enlisted.Features.Interface.Behaviors
                     parts.Add(string.Join(", ", strengthParts) + ".");
                 }
 
-                // Company needs woven into narrative
+                // Company needs woven into narrative (Readiness + Supplies)
                 if (companyNeeds != null)
                 {
                     var needsParts = new List<string>();
                     
+                    var readinessPhrase = GetReadinessPhrase(companyNeeds.Readiness);
                     var supplyPhrase = GetSupplyPhrase(companyNeeds.Supplies);
-                    var moralePhrase = GetMoralePhrase(companyNeeds.Morale);
                     
-                    needsParts.Add(supplyPhrase);
-                    needsParts.Add(moralePhrase);
-
-                    if (companyNeeds.Rest < 40)
+                    if (!string.IsNullOrEmpty(readinessPhrase))
                     {
-                        var exhaustedText = new TextObject("{=status_men_exhausted}men exhausted").ToString();
-                        var fatigueText = new TextObject("{=status_fatigue_showing}fatigue showing").ToString();
-                        var restPhrase = companyNeeds.Rest < 20 
-                            ? $"<span style=\"Alert\">{exhaustedText}</span>" 
-                            : $"<span style=\"Warning\">{fatigueText}</span>";
-                        needsParts.Add(restPhrase);
+                        needsParts.Add(readinessPhrase);
+                    }
+                    if (!string.IsNullOrEmpty(supplyPhrase))
+                    {
+                        needsParts.Add(supplyPhrase);
                     }
 
-                    parts.Add(string.Join(", ", needsParts) + ".");
+                    if (needsParts.Count > 0)
+                    {
+                        parts.Add(string.Join(", ", needsParts) + ".");
+                    }
                 }
 
                 // Location context
@@ -1770,15 +1769,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         // Add pressure context to siege rumors
                         var logisticsLow = campLife?.LogisticsStrain > 60;
-                        var moraleShaky = campLife?.MoraleShock > 50;
 
                         if (lordSituation == Content.Models.LordSituation.SiegeAttacking)
                         {
-                            if (logisticsLow && moraleShaky)
-                            {
-                                rumors.Add($"<span style=\"Alert\">Siege of {siegeTarget.Name} grinds on. Whispers of withdrawal if supplies don't improve.</span>");
-                            }
-                            else if (logisticsLow)
+                            if (logisticsLow)
                             {
                                 rumors.Add($"<span style=\"Warning\">Camp talk: {lord.Name} won't lift the siege, but men wonder how long supplies will last.</span>");
                             }
@@ -1811,18 +1805,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         
                         if (isEnemyFort)
                         {
-                            // Check recent news for context
-                            var recentVictory = newsSystem?.GetVisiblePersonalFeedItems(3)
-                                ?.Any(n => n.Category == "participation" && n.HeadlineKey == "News_PlayerBattle") == true;
-                            
-                            if (recentVictory)
-                            {
-                                rumors.Add($"<span style=\"Success\">After our victory, {lord.Name} marches on {target.Name}. Morale is high.</span>");
-                            }
-                            else
-                            {
-                                rumors.Add($"<span style=\"Warning\">Word is {lord.Name} means to take {target.Name}. Expect a fight.</span>");
-                            }
+                            rumors.Add($"<span style=\"Warning\">Word is {lord.Name} means to take {target.Name}. Expect a fight.</span>");
                         }
                         else
                         {
@@ -1904,22 +1887,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     
                     // Check for recent pay tension
                     var payProblems = campLife?.PayTension > 50;
-                    var moraleIssues = campLife?.MoraleShock > 40;
                     
-                    if (payProblems && moraleIssues)
+                    if (payProblems)
                     {
-                        rumors.Add($"<span style=\"Warning\">Men grumble about pay and boredom. {lord.Name} better have work for us soon.</span>");
-                    }
-                    else if (moraleIssues)
-                    {
-                        var dayNumber = (int)CampaignTime.Now.ToDays;
-                        var phrases = new[]
-                        {
-                            $"Men grow restless in garrison. Some say {lord.Name} will seek a campaign soon.",
-                            $"Camp morale sags with routine. Veterans mutter about needing action.",
-                            $"Idle hands make trouble. {lord.Name} needs to keep the men busy."
-                        };
-                        rumors.Add($"<span style=\"Default\">{PickRandomStable(phrases, dayNumber)}</span>");
+                        rumors.Add($"<span style=\"Warning\">Men grumble about late pay. {lord.Name} better settle accounts soon.</span>");
                     }
                     else if (settlement != null)
                     {
@@ -2490,32 +2461,6 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                     }
 
-                    // Morale with morale shock context
-                    // Skip shock warnings for fresh enlistment (< 1 day) - the lord's prior battles shouldn't alarm new recructs
-                    var freshlyEnlisted = enlistment?.DaysServed < 1f;
-                    var moraleShock = !freshlyEnlisted && campLife?.MoraleShock > 50;
-                    var payProblems = !freshlyEnlisted && campLife?.PayTension > 50;
-                    if (moraleShock || payProblems)
-                    {
-                        var issues = new List<string>();
-                        if (moraleShock)
-                        {
-                            issues.Add("recent setbacks");
-                        }
-                        if (payProblems)
-                        {
-                            issues.Add("pay disputes");
-                        }
-                        statusParts.Add($"<span style=\"Warning\">morale shaky</span> from {string.Join(" and ", issues)}");
-                    }
-                    else
-                    {
-                        var moralePhrase = GetMoralePhrase(companyNeeds.Morale);
-                        if (!string.IsNullOrEmpty(moralePhrase))
-                        {
-                            statusParts.Add(moralePhrase);
-                        }
-                    }
 
                     if (statusParts.Count > 0)
                     {
@@ -2537,21 +2482,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     detailParts.Add($"<span style=\"Warning\">{wounded} recovering</span> from injuries");
                 }
 
-                if (companyNeeds != null)
-                {
-                    if (companyNeeds.Rest < 20)
-                    {
-                        detailParts.Add("<span style=\"Alert\">exhaustion</span> weighs on everyone");
-                    }
-                    else if (companyNeeds.Rest < 40 && activityLevel == Content.Models.ActivityLevel.Intense)
-                    {
-                        detailParts.Add("<span style=\"Warning\">men push through fatigue</span>");
-                    }
-                    else if (companyNeeds.Rest < 40)
-                    {
-                        detailParts.Add("<span style=\"Warning\">fatigue</span> visible in the ranks");
-                    }
-                }
+                // Company Rest removed - no longer tracking company-wide fatigue
+                // Player fatigue (0-24 budget) remains separate and functional
 
                 // Add territory pressure warning if high
                 if (inHostileTerritory && detailParts.Count < 2)
@@ -2650,6 +2582,34 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
+        /// Returns a color-coded, descriptive phrase about readiness status.
+        /// </summary>
+        private static string GetReadinessPhrase(int readiness)
+        {
+            if (readiness >= 80)
+            {
+                return "<span style=\"Success\">Combat-ready and drilled</span>";
+            }
+            if (readiness >= 60)
+            {
+                return "<span style=\"Success\">Adequately trained</span>";
+            }
+            if (readiness >= 40)
+            {
+                return "Readiness adequate for most duties";
+            }
+            if (readiness >= 25)
+            {
+                return "<span style=\"Warning\">Training has slipped</span>";
+            }
+            if (readiness >= 15)
+            {
+                return "<span style=\"Alert\">Combat readiness poor</span>";
+            }
+            return "<span style=\"Alert\">Unprepared for battle</span>";
+        }
+
+        /// <summary>
         /// Returns a color-coded, descriptive phrase about supply status.
         /// </summary>
         private static string GetSupplyPhrase(int supplies)
@@ -2677,33 +2637,6 @@ namespace Enlisted.Features.Interface.Behaviors
             return "<span style=\"Alert\">Starvation threatens the company</span>";
         }
 
-        /// <summary>
-        /// Returns a color-coded, descriptive phrase about morale status.
-        /// </summary>
-        private static string GetMoralePhrase(int morale)
-        {
-            if (morale >= 80)
-            {
-                return "<span style=\"Success\">spirits are high, men confident</span>";
-            }
-            if (morale >= 60)
-            {
-                return "<span style=\"Success\">morale strong</span>";
-            }
-            if (morale >= 40)
-            {
-                return "morale steady, men focused";
-            }
-            if (morale >= 25)
-            {
-                return "<span style=\"Warning\">grumbling in the ranks</span>";
-            }
-            if (morale >= 15)
-            {
-                return "<span style=\"Alert\">men on edge, discipline fraying</span>";
-            }
-            return "<span style=\"Alert\">morale broken, desertion likely</span>";
-        }
 
         /// <summary>
         /// Returns a phrase describing current camp activity.
@@ -3182,7 +3115,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         /// Builds the camp news section containing notable updates for the player.
-        /// Includes company health (wounded, sick, casualties), supply status, morale, and upcoming events.
+        /// Includes company health (wounded, sick, casualties), supply status, and upcoming events.
         /// Returns empty string when there's nothing notable to report.
         /// </summary>
         private static string BuildCampNewsSection(EnlistmentBehavior enlistment)
@@ -3243,24 +3176,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
 
-                // Today's snapshot for morale and food status
+                // Today's snapshot for food status
                 var snapshot = news?.GetTodayDailyReportSnapshot();
                 if (snapshot != null)
                 {
-                    // Morale status (only show if not steady/normal)
-                    switch (snapshot.Morale)
-                    {
-                        case MoraleBand.Breaking:
-                            newsItems.Add("Morale is dangerously low");
-                            break;
-                        case MoraleBand.Low:
-                            newsItems.Add("Spirits are flagging among the troops");
-                            break;
-                        case MoraleBand.High:
-                            newsItems.Add("The company's spirits are high");
-                            break;
-                    }
-
                     // Food status (only show if problematic)
                     switch (snapshot.Food)
                     {
@@ -4069,7 +3988,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         sentences.Add("The defeat stings, but the company rebuilds. There will be another chance.");
                     }
-                    else if (activityLevel == Content.Models.ActivityLevel.Intense && (companyNeeds?.Supplies < 30 || companyNeeds?.Morale < 30))
+                    else if (activityLevel == Content.Models.ActivityLevel.Intense && companyNeeds?.Supplies < 30)
                     {
                         sentences.Add("Hard campaigning tests every soldier. Hold the line.");
                     }
@@ -5886,84 +5805,6 @@ namespace Enlisted.Features.Interface.Behaviors
             return "Despised";
         }
 
-        private static string BuildReadinessLine(int value, bool isMarching, bool isInCombat, bool lowMorale)
-        {
-            // Context: What's affecting readiness?
-            var context = "";
-            if (isInCombat)
-            {
-                context = new TextObject("{=status_readiness_combat} Battle drains our reserves.").ToString();
-            }
-            else if (isMarching && lowMorale)
-            {
-                context = new TextObject("{=status_readiness_march_morale} The long march and low spirits take their toll.").ToString();
-            }
-            else if (isMarching)
-            {
-                context = new TextObject("{=status_readiness_march} The march wears on the men.").ToString();
-            }
-            else if (lowMorale)
-            {
-                context = new TextObject("{=status_readiness_morale} Low morale saps the company's edge.").ToString();
-            }
-
-            // Status description by level
-            var description = value switch
-            {
-                >= 80 => new TextObject("{=status_readiness_excellent}The company stands battle-ready, formations tight and weapons sharp.").ToString(),
-                >= 60 => new TextObject("{=status_readiness_good}The company is prepared for action, though some drills have been skipped.").ToString(),
-                >= 40 => new TextObject("{=status_readiness_fair}The company can fight, but coordination has slipped.").ToString(),
-                >= 20 => new TextObject("{=status_readiness_poor}The company is disorganized. Officers bark orders to restore discipline.").ToString(),
-                _ => new TextObject("{=status_readiness_critical}The company is a shambles. Men mill about confused, barely fit for battle.").ToString()
-            };
-
-            // Apply color based on severity
-            var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
-            var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
-            var fullText = $"<span style=\"Label\">READINESS:</span> {coloredDescription}";
-
-            return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
-        }
-
-        private static string BuildMoraleLine(int value, EnlistmentBehavior enlistment, bool isInCombat, bool isInSiege)
-        {
-            // Context: What's affecting morale?
-            var context = "";
-            var payTension = enlistment?.PayTension ?? 0;
-
-            if (payTension >= 50)
-            {
-                context = new TextObject("{=status_morale_pay_high} Pay is long overdue and the men are angry.").ToString();
-            }
-            else if (payTension >= 25)
-            {
-                context = new TextObject("{=status_morale_pay_low} The men grumble about late wages.").ToString();
-            }
-            else if (isInSiege)
-            {
-                context = new TextObject("{=status_morale_siege} The tedium of siege weighs on everyone.").ToString();
-            }
-            else if (isInCombat)
-            {
-                context = new TextObject("{=status_morale_combat} Battle tests every man's courage.").ToString();
-            }
-
-            var description = value switch
-            {
-                >= 80 => new TextObject("{=status_morale_excellent}Spirits are high. The men sing as they march and talk of glory.").ToString(),
-                >= 60 => new TextObject("{=status_morale_good}The company's mood is steady. Complaints are few.").ToString(),
-                >= 40 => new TextObject("{=status_morale_fair}The men are restless. Grumbling spreads around the cookfires.").ToString(),
-                >= 20 => new TextObject("{=status_morale_poor}The company is unhappy. Fights break out and discipline slips.").ToString(),
-                _ => new TextObject("{=status_morale_critical}The company is on the edge. Desertion whispers spread through camp.").ToString()
-            };
-
-            // Apply color based on severity
-            var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
-            var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
-            var fullText = $"<span style=\"Label\">MORALE:</span> {coloredDescription}";
-
-            return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
-        }
 
         private static string BuildSuppliesLine(int value, bool isMarching, bool isInSiege)
         {
@@ -6030,39 +5871,8 @@ namespace Enlisted.Features.Interface.Behaviors
             return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
         }
 
-        private static string BuildRestLine(int value, bool isMarching, bool isInSettlement, bool isInArmy)
-        {
-            // Context: What's affecting rest?
-            var context = "";
-            if (isMarching && isInArmy)
-            {
-                context = new TextObject("{=status_rest_army_march} Forced marches with the army leave no time for rest.").ToString();
-            }
-            else if (isMarching)
-            {
-                context = new TextObject("{=status_rest_march} Days on the road exhaust even the hardiest soldiers.").ToString();
-            }
-            else if (isInSettlement)
-            {
-                context = new TextObject("{=status_rest_settlement} The settlement offers a chance to recover.").ToString();
-            }
-
-            var description = value switch
-            {
-                >= 80 => new TextObject("{=status_rest_excellent}The company is well-rested. Men wake refreshed and ready.").ToString(),
-                >= 60 => new TextObject("{=status_rest_good}The company has had adequate rest. Some yawning, but nothing serious.").ToString(),
-                >= 40 => new TextObject("{=status_rest_fair}Fatigue is setting in. Men doze on their feet during long halts.").ToString(),
-                >= 20 => new TextObject("{=status_rest_poor}The company is exhausted. Tempers flare and mistakes multiply.").ToString(),
-                _ => new TextObject("{=status_rest_critical}The company is dead on their feet. Men collapse during marches.").ToString()
-            };
-
-            // Apply color based on severity
-            var colorStyle = value >= 60 ? "Default" : value >= 40 ? "Warning" : "Alert";
-            var coloredDescription = $"<span style=\"{colorStyle}\">{description}</span>";
-            var fullText = $"<span style=\"Label\">REST:</span> {coloredDescription}";
-
-            return string.IsNullOrEmpty(context) ? fullText : $"{fullText} {context}";
-        }
+        // DEPRECATED: BuildRestLine removed - Company Rest no longer tracked
+        // Player fatigue (0-24 budget) remains separate and is displayed in player status section
 
         private static string GetPersonalityTraits()
         {

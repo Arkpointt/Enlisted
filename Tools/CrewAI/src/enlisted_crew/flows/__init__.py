@@ -7,6 +7,7 @@ Available Flows:
 - ImplementationFlow: Implement features from plans with smart partial-implementation handling
 - BugHuntingFlow: Investigate bugs, analyze systems, propose and validate fixes
 - ValidationFlow: Pre-commit validation (content, build, localization)
+- SystemAnalysisFlow: Automated system integration analysis with gap/efficiency findings
 
 All flows use:
 - State persistence (persist=True) for recovery on failure
@@ -23,6 +24,7 @@ Conditional Routing:
 from .implementation_flow import ImplementationFlow
 from .bug_hunting_flow import BugHuntingFlow
 from .validation_flow import ValidationFlow, ValidationState
+from .system_analysis_flow import SystemAnalysisFlow
 
 # Import all state models from centralized location
 from .state_models import (
@@ -41,6 +43,9 @@ from .state_models import (
     ValidationResult,
     AffectedFile,
     CodeChange,
+    # System Analysis
+    SystemAnalysisState,
+    AnalysisFocus,
 )
 
 # Condition functions for conditional routing
@@ -73,6 +78,7 @@ __all__ = [
     "BugHuntingFlow",
     "ValidationFlow",
     "ValidationState",
+    "SystemAnalysisFlow",
     # Implementation state models
     "ImplementationState",
     "ImplementationStatus",
@@ -88,6 +94,9 @@ __all__ = [
     "ValidationResult",
     "AffectedFile",
     "CodeChange",
+    # System analysis state models
+    "SystemAnalysisState",
+    "AnalysisFocus",
     # Condition functions
     "needs_csharp_work",
     "needs_content_work",

@@ -2367,15 +2367,14 @@ namespace Enlisted.Features.Content
                 ModLogger.Debug(LogCategory, $"Applied gold cost: -{costs.Gold.Value}");
             }
 
-            // Apply fatigue cost (affects company Rest need if available)
+            // Apply fatigue cost (player fatigue only)
             if (costs.Fatigue.HasValue && costs.Fatigue.Value > 0)
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.CompanyNeeds != null)
+                if (enlistment != null)
                 {
-                    var currentRest = enlistment.CompanyNeeds.GetNeed(CompanyNeed.Rest);
-                    enlistment.CompanyNeeds.SetNeed(CompanyNeed.Rest, currentRest - costs.Fatigue.Value);
-                    ModLogger.Debug(LogCategory, $"Applied fatigue cost: {costs.Fatigue.Value} (reduced Rest)");
+                    enlistment.ModifyFatigue(costs.Fatigue.Value);
+                    ModLogger.Debug(LogCategory, $"Applied fatigue cost: {costs.Fatigue.Value} (reduced player fatigue)");
                 }
             }
 
@@ -2408,16 +2407,15 @@ namespace Enlisted.Features.Content
                 ModLogger.Debug(LogCategory, $"Applied gold reward: +{rewards.Gold.Value}");
             }
 
-            // Apply fatigue relief (increases company Rest need)
+            // Apply fatigue relief (player fatigue only)
             if (rewards.FatigueRelief.HasValue && rewards.FatigueRelief.Value > 0)
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.CompanyNeeds != null)
+                if (enlistment != null)
                 {
-                    var currentRest = enlistment.CompanyNeeds.GetNeed(CompanyNeed.Rest);
-                    enlistment.CompanyNeeds.SetNeed(CompanyNeed.Rest, currentRest + rewards.FatigueRelief.Value);
+                    enlistment.ModifyFatigue(-rewards.FatigueRelief.Value);
                     rewardMessages.Add($"-{rewards.FatigueRelief.Value} fatigue");
-                    ModLogger.Debug(LogCategory, $"Applied fatigue relief: +{rewards.FatigueRelief.Value} Rest");
+                    ModLogger.Debug(LogCategory, $"Applied fatigue relief: +{rewards.FatigueRelief.Value} player fatigue");
                 }
             }
 

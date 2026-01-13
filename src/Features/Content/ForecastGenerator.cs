@@ -192,13 +192,8 @@ namespace Enlisted.Features.Content
                         Priority.High));
                 }
 
-                // Rest/exhaustion warnings
-                if (sim.Pressure.DaysLowRest >= 2)
-                {
-                    forecasts.Add((
-                        new TextObject("{=menu_ahead_rest_low}The men are exhausted. They need rest.").ToString(),
-                        Priority.High));
-                }
+                // Rest warnings removed - Company Rest deprecated 2026-01-11
+                // Player fatigue (0-24 budget) remains separate and is tracked per-player
             }
 
             // Discipline warnings from escalation tracks (0-10 scale)

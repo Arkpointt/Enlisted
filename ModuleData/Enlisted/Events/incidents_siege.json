@@ -51,14 +51,11 @@
           "resultText": "You guard your water jealously. Survival comes first—there's no room for sentiment when the wells run dry.",
           "risk": "safe",
           "effects": {
-            "companyNeeds": {
-              "Rest": 3
-            },
             "traitXp": {
               "Calculating": 3
             }
           },
-          "tooltip": "Safe choice. +3 Company rest. Calculating trait XP."
+          "tooltip": "Safe choice. Calculating trait XP."
         },
         {
           "id": "find_source",
@@ -393,15 +390,11 @@
           "effects": {
             "soldierRep": 8,
             "gold": -10,
-            "companyNeeds": {
-              "Rest": -8,
-              "Morale": 5
-            },
             "traitXp": {
               "Valor": -3
             }
           },
-          "tooltip": "Moderate risk. +8 Soldier rep. -10 gold. Harms company rest. -3 Valor trait XP."
+          "tooltip": "Moderate risk. +8 Soldier rep. -10 gold. -3 Valor trait XP."
         }
       ]
     },

@@ -1,9 +1,9 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Three AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), single-agent Flow pattern, advanced conditional routing, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities), automatic prompt caching, Contextual Retrieval Memory System with hybrid search (BM25 + vector + Cohere reranking), and semantic search via ChromaDB vector index for fast code and documentation retrieval.  
+**Summary:** Four production-ready AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), single-agent Flow pattern, advanced conditional routing, natural language system analysis, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities + auto-sync), automatic prompt caching, Contextual Retrieval Memory System with hybrid search (BM25 + vector + Cohere reranking), and semantic search via ChromaDB vector index for fast code and documentation retrieval.  
 **Status:** ✅ Production Ready  
 **Architecture:** Single-agent Crews + Pure Python for optimal performance  
-**Last Updated:** 2026-01-09
+**Last Updated:** 2026-01-11
 
 ---
 
@@ -12,6 +12,7 @@
 ```bash
 # Find and fix bugs  
 enlisted-crew hunt-bug -d "bug description" -e "E-XXX-*"
+# Reports auto-save to docs/CrewAI_Plans/bug-hunt-{description}-{timestamp}.md
 
 # Build from approved plan
 enlisted-crew implement -p "docs/CrewAI_Plans/feature.md"
@@ -21,12 +22,104 @@ enlisted-crew validate
 
 # View execution statistics
 enlisted-crew stats
+
+# Analyze systems - Natural language (RECOMMENDED)
+enlisted-crew analyze "analyze my gameplay flow"
+enlisted-crew analyze "find gaps in player progression"
+enlisted-crew analyze "audit player visibility"
+
+# Analyze systems - Explicit system names
+enlisted-crew analyze-system "Supply,Morale"
+# Analysis auto-saves to: docs/CrewAI_Plans/{system-name}-analysis.md
 ```
 
-**Note:** For planning/design tasks, use Warp Agent directly. It has full codebase access and is faster than multi-agent orchestration.
+---
 
-**Future Workflows:**
-- SystemAnalysisFlow (planned) - Find integration gaps and efficiency issues in game systems. See [system-analysis-flow-implementation.md](../../docs/CrewAI_Plans/system-analysis-flow-implementation.md)
+## 🚀 How to Run Each Workflow
+
+### Bug Hunting (BugHuntingFlow)
+```bash
+enlisted-crew hunt-bug -d "Crash when opening camp menu" -e "E-CAMPUI-042"
+
+# With reproduction steps
+enlisted-crew hunt-bug -d "Bug description" -e "E-XXX-*" -r "Steps to reproduce"
+
+# With user logs
+enlisted-crew hunt-bug -d "Bug description" -l "path/to/user.log"
+
+# Output: docs/CrewAI_Plans/bug-hunt-{description}-{timestamp}.md
+```
+
+### Implementation (ImplementationFlow)
+```bash
+enlisted-crew implement -p "docs/CrewAI_Plans/feature-plan.md"
+
+# Re-run same plan safely (skips completed work)
+enlisted-crew implement -p "docs/CrewAI_Plans/feature-plan.md"
+
+# Output: Completed implementation + validation report
+```
+
+### Validation (ValidationFlow)
+```bash
+enlisted-crew validate
+
+# Output: Pass/fail status for content, build, localization
+```
+
+### System Analysis (SystemAnalysisFlow)
+
+**Natural Language (Recommended):**
+```bash
+# Auto-detects relevant systems
+enlisted-crew analyze "analyze my gameplay flow"
+enlisted-crew analyze "find gaps in player progression"
+enlisted-crew analyze "what's wrong with the promotion system"
+enlisted-crew analyze "audit player visibility"
+
+# With focus options
+enlisted-crew analyze "find bottlenecks" --focus efficiency
+enlisted-crew analyze "audit visibility" --focus integration
+
+# Output: docs/CrewAI_Plans/{query-slug}-analysis.md
+```
+
+**Explicit System Names:**
+```bash
+# Single or multiple systems
+enlisted-crew analyze-system "Supply"
+enlisted-crew analyze-system "Supply,Morale,Reputation"
+
+# All major systems
+enlisted-crew analyze-system --all
+
+# Focus options
+enlisted-crew analyze-system "Supply" --focus integration    # Integration gaps only
+enlisted-crew analyze-system "Supply" --focus efficiency     # Performance only
+enlisted-crew analyze-system "Supply" --focus both           # Both (default)
+
+# Subsystem mode (narrower scope)
+enlisted-crew analyze-system "CompanyNeedsManager" --subsystem
+
+# Custom output path
+enlisted-crew analyze-system "Supply" -o "custom/path.md"
+
+# Output: docs/CrewAI_Plans/{system-name}-analysis.md
+```
+
+### Execution Statistics
+```bash
+# View all workflow stats
+enlisted-crew stats
+
+# Filter by workflow
+enlisted-crew stats -c BugHuntingFlow
+enlisted-crew stats -c ImplementationFlow
+enlisted-crew stats -c SystemAnalysisFlow
+
+# Show cost tracking
+enlisted-crew stats --costs
+```
 
 ---
 
@@ -51,6 +144,7 @@ enlisted-crew stats
 ### 1. Hunt Bug - Find & Fix Issues (BugHuntingFlow)
 ```bash
 enlisted-crew hunt-bug -d "Crash when opening camp menu" -e "E-CAMPUI-042"
+# Report auto-saves to: docs/CrewAI_Plans/bug-hunt-crash-when-opening-camp-menu-{timestamp}.md
 ```
 
 **Workflow (8 Flow steps):**
@@ -140,6 +234,198 @@ enlisted-crew validate
 - Memory: Both Crew steps use `get_memory_config()` with optional advanced mode
 
 **Output:** Validation report with pass/fail status for content, build, and localization.
+
+---
+
+### 4. Analyze System - Technical Integration Analysis (SystemAnalysisFlow)
+
+**Two Entry Points:**
+
+**1. Natural Language Analysis (Recommended):**
+```bash
+enlisted-crew analyze "analyze my gameplay flow"
+enlisted-crew analyze "find gaps in player progression"
+enlisted-crew analyze "what's wrong with the promotion system"
+enlisted-crew analyze "audit player visibility"
+# Auto-detects relevant systems from your query
+```
+
+**2. Explicit System Names:**
+```bash
+enlisted-crew analyze-system "Supply,Morale,Reputation"
+# Analysis saves to: docs/CrewAI_Plans/supply-morale-reputation-analysis.md
+```
+
+**Database Auto-Sync:** The systems database (`core_systems` table) automatically syncs with the codebase on first database tool access. This ensures code is always truth - if you add/rename/delete a system file, the database updates automatically. See Tools/Validation/sync_systems_db.py for details.
+
+#### Natural Language Flow (analyze command)
+
+**How It Works:**
+1. **Query Interpreter Agent** (GPT-5.2 high reasoning)
+   - Understands conceptual queries ("gameplay flow" = player progression through mod)
+   - Has architectural knowledge: all system names, conceptual mappings
+   - **Explores codebase** using tools: `get_game_systems`, `search_codebase`, `search_docs_semantic`
+   - Outputs: `SYSTEMS: Enlistment, Orders, Ranks, Reputation, Interface`
+
+2. **Parser** extracts system names from natural language response
+   - Validates against known systems (Enlistment, Promotion, Ranks, Reputation, Morale, Supply, Orders, etc.)
+   - Falls back to default gameplay flow if parsing fails
+
+3. **SystemAnalysisFlow** kicks off with identified systems
+
+**Example:**
+- Query: `"analyze my gameplay flow"`
+- Interpreter thinks: "gameplay flow" = player journey, checks Enlistment/Orders/Ranks systems
+- Identifies: Enlistment, Orders, Ranks, Reputation, Interface
+- Runs deep analysis on those 5 systems
+
+#### Core SystemAnalysisFlow (8 Flow steps)
+
+**Step 1: load_systems** (Pure Python)
+- Discovers system files in `src/Features/` (Manager.cs, Behavior.cs, State.cs patterns)
+- Sets output path: `docs/CrewAI_Plans/{system-slug}-analysis.md`
+- **Triggers lazy database sync** (code → database, happens once per Python process)
+
+**Step 2: analyze_architecture** (Single-agent Crew)
+- **Agent:** Systems Analyst (GPT-5.2 high reasoning)
+- **Tool Budget:** 8 calls max (forces efficient search)
+- **Tools:** search_codebase, search_docs_semantic, read_source, get_game_systems, get_system_dependencies
+- **Output:** Architecture overview with components, data flows, integration points
+- **Prompt includes:** ARCHITECTURE_PATTERNS context for guided analysis
+
+**Step 3: identify_gaps** (Single-agent Crew - conditional - **De-duplication**)
+- **Agent:** Architecture Advisor (GPT-5.2 architect reasoning)
+- **Tool Budget:** 12 calls (needs exploration)
+- **Tools:** search_codebase, search_docs_semantic, lookup_api_pattern, get_system_dependencies, search_content, get_balance_value, search_balance
+- **Domain Knowledge Injected:**
+  - Enlisted is a soldier career mod (enlist with lords, follow orders)
+  - JSON-driven content (ModuleData/Enlisted/) + XML localization
+  - Players see systems via: Camp Hub, Daily Brief, Tooltips, event text
+- **Finds:** Missing integrations, unused system values, invisible tracking, silent JSON effects
+- **Skips if:** `--focus efficiency` only
+- **Parsing:** Multi-pattern matching (emoji markers ❌⚠️, numbered items, bold text)
+- **De-duplication:** Normalizes titles (removes markdown/emojis/numbers), checks for near-duplicates before adding
+  - Reports duplicates skipped: `[GAPS] Identified 32 integration gaps (18 duplicates skipped)`
+
+**Step 4: critique_analysis** (Single-agent Crew - Generator-Critic Pattern - conditional - **De-duplication**)
+- **Agent:** Systems Critic & Game Designer (GPT-5.2 architect reasoning)
+- **Tool Budget:** 15 calls (highest - must verify everything)
+- **Dual Perspective:**
+  - **TYPE A - Implementation Gaps (QA):** Systems work but invisible, JSON effects ignored, features undocumented, stale database data
+  - **TYPE B - Design/Utilization Gaps (Game Designer):** Systems underutilized, binary-only usage (not gradient), no narrative arcs, values don't weight content selection
+- **Discovery-First Approach:**
+  - Phase 1: Call `list_all_core_systems()` → discover all 40 systems from database
+  - Phase 1: Call `get_all_tiers()` → tier progression table
+  - Phase 1: Call `get_balance_by_category("economy")`, `get_balance_by_category("xp")`
+  - Phase 2: For each system - audit visibility, handlers, consistency
+  - Phase 3: For each system - ask 4 questions:
+    - **Q1: Binary or Gradient?** (value=40 feel different than value=90?)
+    - **Q2: Gates or Weights?** (affects WHAT appears or just unlock/block?)
+    - **Q3: Narrative Arcs?** (duration tracking, escalating content?)
+    - **Q4: Cross-System Influence?** (systems isolated when they could interact?)
+- **Output:** Additional gaps missed by initial analysis, both implementation AND design opportunities
+- **De-duplication:** Checks against existing gaps from Step 3 (prevents duplicates across generator + critic)
+  - Reports: `[CRITIC] Added 12 unique gaps, skipped 8 duplicates (total: 44)`
+- **Skips if:** `--focus efficiency` only
+
+**Step 5: analyze_efficiency** (Single-agent Crew - conditional)
+- **Agent:** Code Analyst (GPT-5.2 medium reasoning)
+- **Tool Budget:** 10 calls
+- **Tools:** search_codebase, read_source, verify_file_exists_tool
+- **Focus:** Performance hotspots (Update/Tick/Calculate methods), duplicate logic, unnecessary allocations
+- **Skips if:** `--focus integration` only
+
+**Step 6: propose_improvements** (Single-agent Crew - **Structured Pydantic Output with Autonomous Fixing**)
+- **Agent:** Feature Architect (GPT-5.2 architect reasoning)
+- **Tool Budget:** 8 calls
+- **Tools:** search_docs_semantic, lookup_api_pattern, verify_file_exists_tool
+- **Structured Output:** Uses `output_pydantic=RecommendationsOutput` to force validated structure
+  - CrewAI embeds schema into prompt, validates output, retries if malformed
+  - **NEW:** Autonomous Pydantic output fixer automatically enhances prompts if validation fails
+  - Fallback text parsing if all retries exhausted
+- **Output Schema (Pydantic):**
+  ```python
+  class Recommendation:
+      title: str                    # Short name
+      description: str              # What to implement
+      benefit: str                  # Why it matters
+      effort_hours: int             # 1-100 estimate
+      impact: ImpactLevel           # high/medium/low
+      files: List[str]              # Affected paths
+  
+  class RecommendationsOutput:
+      priority_1_quick_wins: List[Recommendation]  # High Impact, Low Effort (< 4hrs)
+      priority_2_major: List[Recommendation]       # High Impact, Medium Effort (4-16hrs)
+      priority_3_minor: List[Recommendation]       # Medium Impact, Low Effort
+  ```
+- **Process:**
+  1. Review all gaps + efficiency issues
+  2. Estimate impact (high/medium/low) and effort (hours) for each
+  3. Prioritize by impact/effort ratio
+  4. Group into 3 priority buckets with detailed metadata
+- **Context:** Receives architecture summary (2500 chars), top 15 gaps, top 10 efficiency issues
+
+**Step 7: validate_feasibility** (Pure Python)
+- Pattern-based compatibility checks
+- Warns on: breaking changes, save migrations, API version mismatches
+
+**Step 8: generate_analysis_doc** (Pure Python)
+- Builds markdown document with: header, executive summary, architecture, gaps, efficiency issues, recommendations, compatibility warnings, next steps
+- Auto-saves to `docs/CrewAI_Plans/{system-name}-analysis.md`
+
+#### Architecture Summary
+
+- **8 Flow steps:** 5 single-agent Crews + 3 pure Python steps
+- **Tool calls:** ~30-40 per execution (strict per-step budgets prevent runaway usage)
+- **Execution time:** ~3-5 minutes
+- **Lines of code:** 942 (system_analysis_flow.py) + 576 (main.py natural language interpreter)
+
+#### CLI Options
+
+**Natural Language:**
+```bash
+enlisted-crew analyze "your query here"                      # Auto-detect systems
+enlisted-crew analyze "audit visibility" --focus integration # Integration only
+enlisted-crew analyze "find bottlenecks" --focus efficiency  # Efficiency only
+```
+
+**Explicit Systems:**
+```bash
+enlisted-crew analyze-system "Supply"                        # Single system
+enlisted-crew analyze-system "Supply,Morale"                 # Multiple systems
+enlisted-crew analyze-system --all                           # All major systems
+enlisted-crew analyze-system "Supply" --focus integration    # Integration only
+enlisted-crew analyze-system "Supply" --focus efficiency     # Efficiency only
+enlisted-crew analyze-system "CompanyNeedsManager" --subsystem  # Subsystem mode
+```
+
+#### Tool Budget System
+
+Each step has a strict tool call budget to prevent runaway usage:
+- **Step 2 (Architecture):** 8 calls - broad discovery
+- **Step 3 (Gaps):** 12 calls - needs exploration
+- **Step 4 (Critic):** 15 calls - highest budget, must verify everything
+- **Step 5 (Efficiency):** 10 calls - mechanical analysis
+- **Step 6 (Recommendations):** 8 calls - synthesis
+
+Budgets print at end of each step: `[BUDGET] Step used 7/8 tool calls`
+
+#### Key Features
+
+1. **Two-Tier Architecture:** Natural language → system identification → deep analysis
+2. **Discovery-First Critic:** Database lists ALL systems before code search (prevents blind spots)
+3. **Generator-Critic Pattern:** Initial analysis + skeptical second review
+4. **Dual Perspective Critic:** Finds BOTH implementation bugs AND design opportunities
+5. **Systematic Gap Analysis:** 4-question framework (Binary/Gradient, Gates/Weights, Arcs, Integration)
+6. **Strict Tool Budgets:** Forces efficient information gathering
+7. **Database-Driven Discovery:** Lazy sync ensures code is always truth
+8. **Structured Pydantic Output:** Recommendations use validated schemas (effort, impact, files, priority)
+9. **Gap De-duplication:** Normalizes and de-duplicates findings (prevents inflated counts)
+10. **Domain Knowledge Injection:** Prevents hallucinations with mod-specific context
+11. **Impact/Effort Prioritization:** Recommendations grouped by priority tiers with hour estimates
+12. **Memory Disabled:** Analysis workflows use `memory=False` to prevent contamination loops
+
+**Output:** Comprehensive analysis document with architecture overview, integration gaps, design opportunities, efficiency issues, and prioritized recommendations with effort estimates.
 
 ---
 
@@ -254,12 +540,13 @@ python -m enlisted_crew.rag.docs_indexer --stats
 
 ### Validation
 
-| Tool | Purpose |
-|------|---------|
-| `validate_content` | Runs `validate_content.py` |
-| `sync_strings` | Runs `sync_event_strings.py` |
-| `build` | Runs `dotnet build` |
-| `analyze_issues` | Generates prioritized report |
+|| Tool | Purpose |
+||------|---------|
+|| `validate_content` | Runs `validate_content.py` |
+|| `sync_strings` | Runs `sync_event_strings.py` |
+|| `sync_systems_db` | Auto-syncs core_systems DB table with codebase (automatic on first DB access) |
+|| `build` | Runs `dotnet build` |
+|| `analyze_issues` | Generates prioritized report |
 
 ### Style Review
 
@@ -370,19 +657,20 @@ python -m enlisted_crew.rag.docs_indexer --stats
 | `get_valid_severities` | Get all 5 valid severity levels |
 | `check_database_health` | Verify database integrity, find orphaned records |
 
-**Maintenance Tools (9 total):**
+**Maintenance Tools (10 total):**
 
-| Tool | Purpose |
-|------|---------|
-| `add_content_item` | Register new event/decision/order in database |
-| `update_content_item` | Update existing content metadata |
-| `delete_content_item` | Remove content metadata when JSON deleted |
-| `add_balance_value` | Register new balance value |
-| `update_balance_value` | Update existing balance value |
-| `add_error_code` | Register new error code pattern |
-| `add_system_dependency` | Document system dependencies |
-| `sync_content_from_files` | Scan all JSON files and sync to database |
-| `record_implementation` | Log implementation completion for tracking |
+|| Tool | Purpose |
+||------|---------|
+|| `add_content_item` | Register new event/decision/order in database |
+|| `update_content_item` | Update existing content metadata |
+|| `delete_content_item` | Remove content metadata when JSON deleted |
+|| `add_balance_value` | Register new balance value |
+|| `update_balance_value` | Update existing balance value |
+|| `add_error_code` | Register new error code pattern |
+|| `add_system_dependency` | Document system dependencies |
+|| `sync_content_from_files` | Scan all JSON files and sync to database |
+|| `sync_systems_database` | Auto-sync core_systems table with src/Features/ (runs automatically on first DB access) |
+|| `record_implementation` | Log implementation completion for tracking |
 
 **Why Custom Tools Over NL2SQL:**
 - **Faster:** Pre-written SQL queries execute instantly (no LLM generation step)
@@ -680,6 +968,34 @@ DO NOT call get_game_systems."""
 
 ### Slow Workflow Execution
 **Symptom:** Crew takes 10+ minutes to complete simple tasks  
+**Cause:** Manager agents with `reasoning=True`, or excessive tool calls  
+**Fix:** Disable reasoning on managers, add strict tool budgets to task descriptions
+
+### How to Run SystemAnalysisFlow
+**Symptom:** Confusion about how to invoke system analysis workflow  
+**Solution:** Two entry points available:
+
+1. **Natural Language (Recommended):**
+```bash
+enlisted-crew analyze "analyze my gameplay flow"
+enlisted-crew analyze "find gaps in player progression"
+```
+
+2. **Explicit System Names:**
+```bash
+enlisted-crew analyze-system "Supply,Morale,Reputation"
+enlisted-crew analyze-system "Supply" --focus integration
+enlisted-crew analyze-system --all
+```
+
+**Note:** NOT `analyze.py` or `analyze-script` - these don't exist. Use `enlisted-crew analyze` or `enlisted-crew analyze-system` commands.
+
+### Database Not Syncing
+**Symptom:** `core_systems` table has outdated/missing systems  
+**Solution:** Database auto-syncs on first access - just run any workflow that uses database tools. Or manually run:
+```bash
+python3 Tools/Validation/sync_systems_db.py
+```
 **Cause:** High reasoning effort on too many agents  
 **Fix:** Review `reasoning_effort` settings - use "high" only for true design/architecture work
 
@@ -2204,6 +2520,168 @@ ORDER BY date DESC;
 ```
 
 **Monitoring is always active.** No configuration needed - just run your workflows and check stats anytime.
+
+---
+
+## Autonomous Pydantic Output Fixer
+
+**Status:** ✅ Implemented (2026-01-11)
+
+Automatic detection and fixing of Pydantic output validation failures in CrewAI tasks.
+
+### Problem
+
+When using CrewAI's `output_pydantic` parameter with tool-enabled agents and complex prompts, the LLM often produces text instead of valid JSON, causing Pydantic validation to fail. This happens because:
+
+1. **Tool usage distracts the agent** - Agents with tools focus on using them, then forget to output structured JSON
+2. **Complex context** - Large prompts with many instructions dilute the JSON format requirement
+3. **Implicit schema** - CrewAI embeds the Pydantic schema but doesn't show a concrete example
+
+### Solution
+
+The `pydantic_output_fixer` module (`src/enlisted_crew/hooks/pydantic_output_fixer.py`) provides **automatic detection and retry** with enhanced prompts.
+
+### Usage
+
+**Option 1: Automatic Retry Wrapper (Recommended)**
+
+Wrap your crew execution to automatically retry on failure:
+
+```python
+from enlisted_crew.hooks import with_pydantic_retry
+
+task = Task(
+    description="Generate recommendations...",
+    output_pydantic=RecommendationsOutput,
+    agent=architect,
+)
+
+crew = Crew(agents=[architect], tasks=[task])
+
+# Automatic retry with enhanced prompt if validation fails
+result = with_pydantic_retry(crew, task, max_retries=1)
+```
+
+**Option 2: Proactive Enhancement**
+
+Pre-enhance the task description before creating it:
+
+```python
+from enlisted_crew.hooks import create_pydantic_safe_task
+
+# Automatically adds JSON schema example to the description
+task = create_pydantic_safe_task(
+    description="Generate recommendations...",
+    output_pydantic=RecommendationsOutput,
+    agent=architect,
+)
+
+crew = Crew(agents=[architect], tasks=[task])
+result = crew.kickoff()  # Higher chance of success on first try
+```
+
+### How It Works
+
+**Autonomous Flow:**
+1. **Execute normally** - Try the task as-is
+2. **Detect failure** - Check if `result.pydantic` is None
+3. **Auto-enhance** - Generate JSON example from Pydantic model schema
+4. **Retry** - Re-run with enhanced prompt
+5. **Return** - Success or graceful degradation
+
+**Zero manual intervention required** - The system fixes itself.
+
+### What Gets Auto-Generated
+
+From any Pydantic model, the system automatically generates an explicit JSON example:
+
+```python
+class Recommendation(BaseModel):
+    title: str
+    priority: int
+    files: List[str]
+```
+
+Becomes:
+
+```markdown
+**CRITICAL - OUTPUT FORMAT:**
+You MUST output ONLY valid JSON matching this EXACT structure:
+
+```json
+{
+  "title": "example_string",
+  "priority": 1,
+  "files": ["example_string"]
+}
+```
+
+**RULES:**
+- Output ONLY the JSON object above
+- No markdown code blocks
+- All field names must match exactly (case-sensitive)
+- All required fields must be present
+```
+
+### Key Features
+
+✅ **Autonomous** - No manual schema documentation needed  
+✅ **Schema-driven** - Generates examples from Pydantic models  
+✅ **Smart insertion** - Preserves existing prompt structure  
+✅ **Duplicate prevention** - Won't re-enhance already enhanced prompts  
+✅ **Graceful degradation** - Returns result even if retry fails  
+
+### Integration
+
+**SystemAnalysisFlow** already uses manual enhancement (lines 776-792). For new flows, use the helpers:
+
+```python
+# Manual approach (already done in SystemAnalysisFlow)
+task = Task(
+    description=f"...
+    
+**OUTPUT MUST BE VALID JSON:**
+```json
+{schema_example}
+```
+...",
+    output_pydantic=RecommendationsOutput,
+    agent=agent,
+)
+
+# Or use helper for automatic enhancement
+task = create_pydantic_safe_task(
+    description="...",
+    output_pydantic=RecommendationsOutput,
+    agent=agent,
+)
+```
+
+### Performance Impact
+
+- **Detection**: ~0ms (attribute check)
+- **Enhancement**: ~10-50ms (schema generation once)
+- **Retry**: +30-120 seconds (one additional LLM call)
+- **Tokens**: +200-500 tokens for JSON example
+
+### Testing
+
+```bash
+cd Tools/CrewAI
+uv run python test_pydantic_fixer.py
+```
+
+Tests verify:
+- ✓ Schema generation from Pydantic models
+- ✓ Description enhancement preserves original content
+- ✓ Duplicate prevention (doesn't re-enhance)
+
+### Documentation
+
+Complete documentation:
+- `docs/pydantic-output-fixer.md` - Full usage guide
+- `AUTONOMOUS-PYDANTIC-FIX.md` - Solution overview
+- `examples/autonomous_pydantic_example.py` - Working examples
 
 ---
 

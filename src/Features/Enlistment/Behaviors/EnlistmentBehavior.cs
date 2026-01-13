@@ -1811,7 +1811,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Manually serialize/deserialize company needs state.
-        ///     Persists all five need values (0-100 scale) plus non-food supply state to save file.
+        ///     Persists two need values (0-100 scale) plus non-food supply state to save file.
+        ///     Note: Morale and Rest removed - old saves with these values will load but discard them.
         /// </summary>
         private void SerializeCompanyNeeds(IDataStore dataStore)
         {
@@ -1819,17 +1820,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 if (!dataStore.IsLoading)
                 {
-                    // Saving: serialize each need value
+                    // Saving: serialize each need value (morale and rest removed)
                     if (_companyNeeds != null)
                     {
                         var readiness = _companyNeeds.Readiness;
-                        var morale = _companyNeeds.Morale;
-                        var rest = _companyNeeds.Rest;
                         var supplies = _companyNeeds.Supplies;
 
                         SyncKey(dataStore, "_companyNeeds_readiness", ref readiness);
-                        SyncKey(dataStore, "_companyNeeds_morale", ref morale);
-                        SyncKey(dataStore, "_companyNeeds_rest", ref rest);
                         SyncKey(dataStore, "_companyNeeds_supplies", ref supplies);
                     }
                     else
@@ -1837,8 +1834,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         // No state to save - write defaults
                         var defaultValue = 60;
                         SyncKey(dataStore, "_companyNeeds_readiness", ref defaultValue);
-                        SyncKey(dataStore, "_companyNeeds_morale", ref defaultValue);
-                        SyncKey(dataStore, "_companyNeeds_rest", ref defaultValue);
                         SyncKey(dataStore, "_companyNeeds_supplies", ref defaultValue);
                     }
 
@@ -1850,13 +1845,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     // Loading: reconstruct CompanyNeedsState from saved values
                     var readiness = 60;
-                    var morale = 60;
-                    var rest = 60;
+                    var morale = 60; // Backwards compatibility: load but discard
+                    var rest = 60;   // Backwards compatibility: load but discard
                     var supplies = 60;
 
                     SyncKey(dataStore, "_companyNeeds_readiness", ref readiness);
-                    SyncKey(dataStore, "_companyNeeds_morale", ref morale);
-                    SyncKey(dataStore, "_companyNeeds_rest", ref rest);
+                    SyncKey(dataStore, "_companyNeeds_morale", ref morale); // Load old value but don't use it
+                    SyncKey(dataStore, "_companyNeeds_rest", ref rest);     // Load old value but don't use it
                     SyncKey(dataStore, "_companyNeeds_supplies", ref supplies);
 
                     // Load supply component
@@ -1866,9 +1861,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     _companyNeeds = new CompanyNeedsState
                     {
                         Readiness = readiness,
-                        Morale = morale,
-                        Rest = rest,
                         Supplies = supplies
+                        // Rest removed 2026-01-11 - old save values loaded but discarded
                     };
 
                     // Restore CompanySupplyManager if player was enlisted
@@ -1886,12 +1880,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     if (nonFoodSupply < 15)
                     {
                         ModLogger.Info("SaveLoad",
-                            $"SUPPLY WARNING: Loaded critically low supply ({nonFoodSupply:F1}%) - R:{readiness} M:{morale} Rs:{rest}");
+                            $"SUPPLY WARNING: Loaded critically low supply ({nonFoodSupply:F1}%) - R:{readiness}");
                     }
                     else
                     {
                         ModLogger.Debug("SaveLoad",
-                            $"Loaded company needs - R:{readiness} M:{morale} Rs:{rest} S:{supplies}, NonFood:{nonFoodSupply:F1}%");
+                            $"Loaded company needs - R:{readiness} S:{supplies}, NonFood:{nonFoodSupply:F1}%");
                     }
                 }
             }
@@ -10699,11 +10693,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             /// <summary>Standard army rations - no bonus.</summary>
             Standard = 0,
-            /// <summary>Supplemental rations - +2 morale for 1 day.</summary>
+            /// <summary>Supplemental rations - 1 day duration.</summary>
             Supplemental = 1,
-            /// <summary>Officer's fare - +4 morale, +2 fatigue relief for 2 days.</summary>
+            /// <summary>Officer's fare - +2 fatigue relief for 2 days.</summary>
             Officer = 2,
-            /// <summary>Commander's feast - +8 morale, +5 fatigue relief for 3 days.</summary>
+            /// <summary>Commander's feast - +5 fatigue relief for 3 days.</summary>
             Commander = 3
         }
 
@@ -10742,22 +10736,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
         }
 
-        /// <summary>
-        ///     Gets the morale bonus from current food quality.
-        ///     Used by camp life behavior to adjust party morale.
-        /// </summary>
-        /// <returns>Morale bonus (0, 2, 4, or 8)</returns>
-        public int GetFoodMoraleBonus()
-        {
-            var quality = CurrentFoodQuality;
-            return quality switch
-            {
-                FoodQualityTier.Supplemental => 2,
-                FoodQualityTier.Officer => 4,
-                FoodQualityTier.Commander => 8,
-                _ => 0
-            };
-        }
 
         /// <summary>
         ///     Gets the fatigue relief bonus from current food quality.
@@ -10778,7 +10756,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Gets food quality information for display.
         /// </summary>
-        public (string Name, int MoraleBonus, int FatigueBonus, float DaysRemaining) GetFoodQualityInfo()
+        public (string Name, int FatigueBonus, float DaysRemaining) GetFoodQualityInfo()
         {
             var quality = CurrentFoodQuality;
             var remaining = FoodQualityTimeRemaining;
@@ -10792,12 +10770,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _ => "Standard Rations"
             };
 
-            return (name, GetFoodMoraleBonus(), GetFoodFatigueBonus(), daysRemaining);
+            return (name, GetFoodFatigueBonus(), daysRemaining);
         }
 
         /// <summary>
         ///     Purchases rations of the specified quality tier.
-        ///     Deducts gold, applies fatigue relief, sets morale bonus duration.
+        ///     Deducts gold, applies fatigue relief.
         /// </summary>
         /// <param name="tier">The food quality tier to purchase</param>
         /// <param name="cost">Gold cost (validated before calling)</param>
@@ -10873,19 +10851,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Retinue provisioning tier enumeration.
-        ///     Higher tiers provide better morale but cost more per soldier.
+        ///     Higher tiers provide better provisioning quality but cost more per soldier.
         /// </summary>
         public enum RetinueProvisioningTier
         {
             /// <summary>No provisions - starvation penalties apply.</summary>
             None = 0,
-            /// <summary>Bare minimum rations - -5 morale penalty.</summary>
+            /// <summary>Bare minimum rations - poor quality.</summary>
             BareMinimum = 1,
-            /// <summary>Standard army rations - no modifier.</summary>
+            /// <summary>Standard army rations - adequate quality.</summary>
             Standard = 2,
-            /// <summary>Good fare - +5 morale bonus.</summary>
+            /// <summary>Good fare - good quality.</summary>
             GoodFare = 3,
-            /// <summary>Officer quality - +10 morale bonus.</summary>
+            /// <summary>Officer quality - excellent quality.</summary>
             OfficerQuality = 4
         }
 
@@ -10924,19 +10902,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Gets the morale modifier from current retinue provisioning.
+        ///     Gets the provisioning quality level from current retinue provisioning.
         /// </summary>
-        /// <returns>Morale modifier (-10 to +10)</returns>
-        public int GetRetinueMoraleModifier()
+        /// <returns>Provisioning quality modifier (-10 to +10)</returns>
+        public int GetRetinueProvisioningQuality()
         {
             var tier = CurrentRetinueProvisioning;
             return tier switch
             {
                 RetinueProvisioningTier.None => -10,       // Starvation
-                RetinueProvisioningTier.BareMinimum => -5, // Grumbling
-                RetinueProvisioningTier.Standard => 0,     // Neutral
-                RetinueProvisioningTier.GoodFare => 5,     // Satisfied
-                RetinueProvisioningTier.OfficerQuality => 10, // High morale
+                RetinueProvisioningTier.BareMinimum => -5, // Poor quality
+                RetinueProvisioningTier.Standard => 0,     // Adequate
+                RetinueProvisioningTier.GoodFare => 5,     // Good quality
+                RetinueProvisioningTier.OfficerQuality => 10, // Excellent quality
                 _ => 0
             };
         }
@@ -10969,7 +10947,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Gets retinue provisioning information for display.
         /// </summary>
-        public (string Name, int MoraleModifier, float DaysRemaining) GetRetinueProvisioningInfo()
+        public (string Name, int QualityLevel, float DaysRemaining) GetRetinueProvisioningInfo()
         {
             var tier = CurrentRetinueProvisioning;
             var remaining = RetinueProvisioningTimeRemaining;
@@ -10984,7 +10962,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _ => "Not Provisioned"
             };
 
-            return (name, GetRetinueMoraleModifier(), daysRemaining);
+            return (name, GetRetinueProvisioningQuality(), daysRemaining);
         }
 
         /// <summary>

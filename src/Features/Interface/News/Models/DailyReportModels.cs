@@ -23,15 +23,6 @@ namespace Enlisted.Features.Interface.News.Models
         Critical = 4
     }
 
-    public enum MoraleBand
-    {
-        Unknown = 0,
-        High = 1,
-        Steady = 2,
-        Low = 3,
-        Breaking = 4
-    }
-
     public enum HealthDeltaBand
     {
         Unknown = 0,
@@ -76,7 +67,6 @@ namespace Enlisted.Features.Interface.News.Models
         // Company bands (best-effort; populated by producers in Phase 4)
         public ThreatBand Threat { get; set; } = ThreatBand.Unknown;
         public FoodBand Food { get; set; } = FoodBand.Unknown;
-        public MoraleBand Morale { get; set; } = MoraleBand.Unknown;
 
         // Optional tags (kept as strings for authoring flexibility; keep them stable + low-cardinality).
         public string ObjectiveTag { get; set; } = string.Empty; // e.g. "Traveling", "Besieging"

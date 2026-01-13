@@ -57,7 +57,7 @@
 | **Baggage Stowage (First Enlistment)** | [enlistment.md](Features/Core/enlistment.md) | First-Enlistment Bag Check (section 8) |
 | **Baggage Train Access** | [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md) | World-state-aware access gating |
 | **Buyback System** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Buyback System |
-| **Company Needs** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 5 transparent metrics (Readiness/Morale/etc) |
+|| **Company Needs** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 2 transparent metrics (Readiness/Supply) - Rest removed 2026-01-11 |
 | **ContentOrchestrator (System)** | [content-system-architecture.md](Features/Content/content-system-architecture.md) | World-state-driven content coordination: opportunity pre-scheduling, activity levels, schedule overrides, illness triggers |
 | **Injuries & Illnesses** | [injury-system.md](Features/Content/injury-system.md) | Unified condition tracking, maritime context awareness |
 | **Camp Hub Decisions** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 33 player-initiated decisions |
@@ -177,7 +177,7 @@
 | Document | Topic | Status |
 |----------|-------|--------|
 | [README.md](Features/Campaign/README.md) | Campaign folder overview | ✅ Current |
-| [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | Camp activities: daily routine events, social interactions, training opportunities, rest actions, morale management in camp | ✅ Current |
+|| [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | Camp activities: daily routine events, social interactions, training opportunities, rest actions, company needs management in camp | ✅ Current |
 | [temporary-leave.md](Features/Campaign/temporary-leave.md) | Leave system: requesting leave (rank-based approval), leave duration limits, leave activities (visit family, trade, rest), return requirements, AWOL consequences | ✅ Current |
 | [town-access-system.md](Features/Campaign/town-access-system.md) | Town access rules: rank-based restrictions (T1-T4 limited, T5+ more freedom), permission requirements, town activities available by rank, leave of absence system | ✅ Current |
 | [camp-routine-schedule-spec.md](Features/Campaign/camp-routine-schedule-spec.md) | Camp routine schedule: baseline daily routine (dawn formations, midday work, dusk social, night rest), world state deviations, schedule forecast UI | ✅ Implemented |
