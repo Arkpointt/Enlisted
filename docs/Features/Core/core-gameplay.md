@@ -114,11 +114,8 @@ Your role in the company emerges from your native Bannerlord traits, which devel
 - Your choices in orders and events grant trait XP, gradually developing your specialization
 - Multiple specializations can develop simultaneously (e.g., Scout + NCO)
 
-### Expanded Reputation
-We track three distinct reputation values:
-1.  **Lord Reputation (0-100)**: Your standing with the lord you serve.
-2.  **Officer Reputation (0-100)**: How the NCOs and officers perceive your competence.
-3.  **Soldier Reputation (-50 to +50)**: Your popularity and respect among the rank-and-file.
+### Reputation
+Reputation with your lord is tracked using native Bannerlord's relation system (`Hero.GetRelation()`). This integrates with vanilla mechanics and affects all interactions with your commanding officer. Positive relations improve opportunities, while negative relations can block progression.
 
 ---
 

@@ -153,18 +153,12 @@ namespace Enlisted.Features.Content
                         Priority.High));
                 }
 
-                // Morale warnings - escalating urgency based on consecutive days of low morale
-                if (sim.Pressure.DaysLowMorale >= 2)
+                // Readiness warnings (morale removed - using readiness as mood indicator)
+                if (needs != null && needs.Readiness < 30)
                 {
                     forecasts.Add((
-                        new TextObject("{=menu_ahead_morale_critical}The mood is dark. Something may break.").ToString(),
-                        Priority.Critical));
-                }
-                else if (needs != null && needs.Morale < 40)
-                {
-                    forecasts.Add((
-                        new TextObject("{=menu_ahead_morale_low}Grumbling in the ranks.").ToString(),
-                        Priority.Medium));
+                        new TextObject("{=menu_ahead_readiness_low}The men are exhausted.").ToString(),
+                        Priority.High));
                 }
 
                 // Health warnings - many sick soldiers spreading illness
@@ -196,11 +190,11 @@ namespace Enlisted.Features.Content
                 // Player fatigue (0-24 budget) remains separate and is tracked per-player
             }
 
-            // Discipline warnings from escalation tracks (0-10 scale)
-            if (_escalation?.State != null && _escalation.State.Discipline < 3)
+            // Scrutiny warnings from escalation tracks (0-100 scale)
+            if (_escalation?.State != null && _escalation.State.Scrutiny > 70)
             {
                 forecasts.Add((
-                    new TextObject("{=menu_ahead_discipline_low}Officers are losing patience.").ToString(),
+                    new TextObject("{=menu_ahead_scrutiny_high}Officers are watching closely.").ToString(),
                     Priority.Medium));
             }
 

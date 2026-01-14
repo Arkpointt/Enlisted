@@ -1769,11 +1769,12 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         // Add pressure context to siege rumors
                         var logisticsLow = campLife?.LogisticsStrain > 60;
-                        var moraleShaky = campLife?.MoraleShock > 50;
+                        // MoraleShock removed - ReadinessStrain doesn't exist either, just use logistics
+                        var readinessLow = logisticsLow;
 
                         if (lordSituation == Content.Models.LordSituation.SiegeAttacking)
                         {
-                            if (logisticsLow && moraleShaky)
+                            if (logisticsLow && readinessLow)
                             {
                                 rumors.Add($"<span style=\"Alert\">Siege of {siegeTarget.Name} grinds on. Whispers of withdrawal if supplies don't improve.</span>");
                             }
@@ -1903,13 +1904,14 @@ namespace Enlisted.Features.Interface.Behaviors
                     
                     // Check for recent pay tension
                     var payProblems = campLife?.PayTension > 50;
-                    var moraleIssues = campLife?.MoraleShock > 40;
+                    // MoraleShock removed - ReadinessStrain doesn't exist, use payProblems as proxy
+                    var readinessIssues = payProblems;
                     
-                    if (payProblems && moraleIssues)
+                    if (payProblems && readinessIssues)
                     {
                         rumors.Add($"<span style=\"Warning\">Men grumble about pay and boredom. {lord.Name} better have work for us soon.</span>");
                     }
-                    else if (moraleIssues)
+                    else if (readinessIssues)
                     {
                         var dayNumber = (int)CampaignTime.Now.ToDays;
                         var phrases = new[]
@@ -3198,19 +3200,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var snapshot = news?.GetTodayDailyReportSnapshot();
                 if (snapshot != null)
                 {
-                    // Morale status (only show if not steady/normal)
-                    switch (snapshot.Morale)
-                    {
-                        case MoraleBand.Breaking:
-                            newsItems.Add("Morale is dangerously low");
-                            break;
-                        case MoraleBand.Low:
-                            newsItems.Add("Spirits are flagging among the troops");
-                            break;
-                        case MoraleBand.High:
-                            newsItems.Add("The company's spirits are high");
-                            break;
-                    }
+                    // Morale removed - readiness is primary indicator now
 
                     // Food status (only show if problematic)
                     switch (snapshot.Food)
@@ -4011,7 +4001,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         sentences.Add("The defeat stings, but the company rebuilds. There will be another chance.");
                     }
-                    else if (activityLevel == Content.Models.ActivityLevel.Intense && (companyNeeds?.Supplies < 30 || companyNeeds?.Morale < 30))
+                    else if (activityLevel == Content.Models.ActivityLevel.Intense && (companyNeeds?.Supplies < 30 || companyNeeds?.Readiness < 30))
                     {
                         sentences.Add("Hard campaigning tests every soldier. Hold the line.");
                     }
@@ -5602,13 +5592,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 sb.AppendLine("<span style=\"Header\">=== REPUTATION ===</span>");
                 if (escalation?.State != null)
                 {
+                    // Officer/Soldier reputation removed - now using native lord relation
                     var lordColor = escalation.State.LordReputation >= 60 ? "Success" : escalation.State.LordReputation >= 40 ? "Warning" : "Alert";
-                    var officerColor = escalation.State.OfficerReputation >= 60 ? "Success" : escalation.State.OfficerReputation >= 40 ? "Warning" : "Alert";
-                    var soldierColor = escalation.State.SoldierReputation >= 60 ? "Success" : escalation.State.SoldierReputation >= 40 ? "Warning" : "Alert";
-
                     sb.AppendLine($"<span style=\"Label\">Lord:</span>     <span style=\"{lordColor}\">{escalation.State.LordReputation}/100 ({GetReputationLevel(escalation.State.LordReputation)})</span>");
-                    sb.AppendLine($"<span style=\"Label\">Officers:</span> <span style=\"{officerColor}\">{escalation.State.OfficerReputation}/100 ({GetReputationLevel(escalation.State.OfficerReputation)})</span>");
-                    sb.AppendLine($"<span style=\"Label\">Soldiers:</span> <span style=\"{soldierColor}\">{escalation.State.SoldierReputation}/100 ({GetSoldierReputationLevel(escalation.State.SoldierReputation)})</span>");
                 }
                 else
                 {

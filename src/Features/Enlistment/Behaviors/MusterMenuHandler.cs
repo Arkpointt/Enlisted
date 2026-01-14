@@ -998,7 +998,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Check for high scrutiny warning
                 var scrutiny = EscalationManager.Instance?.State?.Scrutiny ?? 0;
-                if (scrutiny >= 5)
+                if (scrutiny >= Escalation.EscalationThresholds.ScrutinyShakedown)
                 {
                     _currentMuster.HighScrutinyWarning = true;
                     ModLogger.Debug(LogCategory, $"High scrutiny warning enabled (scrutiny={scrutiny})");
@@ -3309,19 +3309,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var currentXp = enlistment.EnlistmentXP;
             var daysInRank = enlistment.DaysInRank;
             var battles = enlistment.BattlesSurvived;
-            var soldierRep = escalation?.State?.SoldierReputation ?? 0;
-            var discipline = escalation?.State?.Discipline ?? 0;
+            var scrutiny = escalation?.State?.Scrutiny ?? 0;  // Discipline/Soldier rep removed, using scrutiny
             var leaderRelation = enlistment.EnlistedLord?.GetRelationWithPlayer() ?? 0;
 
             // Check each requirement
             var xpReady = currentXp >= requiredXp;
             var daysReady = daysInRank >= req.DaysInRank;
             var battlesReady = battles >= req.BattlesRequired;
-            var soldierRepReady = soldierRep >= req.MinSoldierReputation;
             var leaderRelReady = leaderRelation >= req.MinLeaderRelation;
-            var disciplineReady = discipline < req.MaxDiscipline;
+            var scrutinyReady = scrutiny < req.MaxScrutiny;  // Discipline merged into Scrutiny (0-100 scale)
 
-            var allReady = xpReady && daysReady && battlesReady && soldierRepReady && leaderRelReady && disciplineReady;
+            var allReady = xpReady && daysReady && battlesReady && leaderRelReady && scrutinyReady;
 
             // Build the section
             sb.AppendLine();
@@ -3359,23 +3357,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var battlesStatus = battlesReady ? "(Ready)" : $"(Need +{req.BattlesRequired - battles})";
             sb.AppendLine($"  <span style=\"{battlesColor}\">{battlesIcon}</span> Battles Fought:  {battles}/{req.BattlesRequired} battles {battlesStatus}");
 
-            // Soldier Reputation
-            var soldierIcon = soldierRepReady ? "✓" : "✗";
-            var soldierColor = soldierRepReady ? "Success" : "Alert";
-            var soldierStatus = soldierRepReady ? "(Ready)" : $"(Need +{req.MinSoldierReputation - soldierRep})";
-            sb.AppendLine($"  <span style=\"{soldierColor}\">{soldierIcon}</span> Soldier Rep:     {soldierRep}/{req.MinSoldierReputation} {soldierStatus}");
-
             // Leader Relation
             var leaderIcon = leaderRelReady ? "✓" : "✗";
             var leaderColor = leaderRelReady ? "Success" : "Alert";
             var leaderStatus = leaderRelReady ? "(Ready)" : $"(Need +{req.MinLeaderRelation - leaderRelation})";
             sb.AppendLine($"  <span style=\"{leaderColor}\">{leaderIcon}</span> Leader Relation: {leaderRelation}/{req.MinLeaderRelation} {leaderStatus}");
 
-            // Discipline (lower is better)
-            var discIcon = disciplineReady ? "✓" : "✗";
-            var discColor = disciplineReady ? "Success" : "Alert";
-            var discStatus = disciplineReady ? "(Safe)" : "(Too high!)";
-            sb.AppendLine($"  <span style=\"{discColor}\">{discIcon}</span> Discipline:      {discipline}/{req.MaxDiscipline} max {discStatus}");
+            // Scrutiny (lower is better, 0-100 scale)
+            var scrutIcon = scrutinyReady ? "✓" : "✗";
+            var scrutColor = scrutinyReady ? "Success" : "Alert";
+            var scrutStatus = scrutinyReady ? "(Safe)" : "(Too high!)";
+            sb.AppendLine($"  <span style=\"{scrutColor}\">{scrutIcon}</span> Scrutiny:       {scrutiny}/{req.MaxScrutiny} max {scrutStatus}");
 
             // Show blocker advice if not ready
             if (!allReady)
@@ -3395,17 +3387,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     blockers.Add("Participate in more battles (not reserve duty)");
                 }
-                if (!soldierRepReady)
-                {
-                    blockers.Add("Improve soldier reputation via orders and events");
-                }
                 if (!leaderRelReady)
                 {
                     blockers.Add("Build relation with your lord via successful orders");
                 }
-                if (!disciplineReady)
+                if (!scrutinyReady)
                 {
-                    blockers.Add("Reduce discipline through good behavior");
+                    blockers.Add("Reduce scrutiny through good behavior and loyalty");
                 }
 
                 sb.AppendLine($"<span style=\"Warning\">BLOCKERS:</span> {string.Join("; ", blockers)}.");

@@ -646,7 +646,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Parses effects for an event option.
-        /// Handles alternate field names (lance_reputation→soldierRep, trait_xp→traitXp, etc.).
+        /// Handles alternate field names (trait_xp→traitXp, etc.).
         /// </summary>
         private static int ParseOptionEffects(JObject optJson, EventOption option, string sourceFile)
         {
@@ -703,34 +703,14 @@ namespace Enlisted.Features.Content
                 }
             }
 
-            // Parse reputation, mapping lance_reputation → soldierRep if needed
+            // Parse reputation
             if (effectsJson != null)
             {
                 effects.LordRep = effectsJson["lordRep"]?.Value<int>() ??
                                   effectsJson["lord_reputation"]?.Value<int>();
-                effects.OfficerRep = effectsJson["officerRep"]?.Value<int>() ??
-                                     effectsJson["officer_reputation"]?.Value<int>();
-                effects.SoldierRep = effectsJson["soldierRep"]?.Value<int>() ??
-                                     effectsJson["soldier_reputation"]?.Value<int>();
-
-                // Parse camp_reputation (current term) or migrate lance_reputation (deprecated)
-                var campRep = effectsJson["camp_reputation"]?.Value<int>();
-                if (campRep.HasValue && !effects.SoldierRep.HasValue)
-                {
-                    effects.SoldierRep = campRep;
-                }
-
-                var lanceRep = effectsJson["lance_reputation"]?.Value<int>();
-                if (lanceRep.HasValue && !effects.SoldierRep.HasValue)
-                {
-                    effects.SoldierRep = lanceRep;
-                    ModLogger.Debug(LogCategory, $"[{sourceFile}] Migrated lance_reputation → camp_reputation");
-                    warnings++;
-                }
 
                 // Parse escalation changes
                 effects.Scrutiny = effectsJson["scrutiny"]?.Value<int>();
-                effects.Discipline = effectsJson["discipline"]?.Value<int>();
                 effects.MedicalRisk = effectsJson["medicalRisk"]?.Value<int>() ??
                                       effectsJson["medical_risk"]?.Value<int>();
 
@@ -1039,15 +1019,9 @@ namespace Enlisted.Features.Content
 
             // Parse reputation changes
             effects.LordRep = effectsJson["lordRep"]?.Value<int>() ?? effectsJson["lord_reputation"]?.Value<int>();
-            effects.OfficerRep = effectsJson["officerRep"]?.Value<int>() ?? effectsJson["officer_reputation"]?.Value<int>();
-            effects.SoldierRep = effectsJson["soldierRep"]?.Value<int>() ??
-                                 effectsJson["soldier_reputation"]?.Value<int>() ??
-                                 effectsJson["camp_reputation"]?.Value<int>() ??
-                                 effectsJson["lance_reputation"]?.Value<int>();
 
             // Parse escalation changes
             effects.Scrutiny = effectsJson["scrutiny"]?.Value<int>();
-            effects.Discipline = effectsJson["discipline"]?.Value<int>();
             effects.MedicalRisk = effectsJson["medicalRisk"]?.Value<int>() ?? effectsJson["medical_risk"]?.Value<int>();
 
             // Parse resource changes
@@ -1105,25 +1079,10 @@ namespace Enlisted.Features.Content
 
             var effects = new EventEffects();
 
-            // Parse camp_reputation / soldierRep
-            var campRep = effectsToken["camp_reputation"]?.Value<int>();
-            if (campRep.HasValue)
-            {
-                effects.SoldierRep = campRep;
-            }
-            else
-            {
-                effects.SoldierRep = effectsToken["soldierRep"]?.Value<int>() ??
-                                     effectsToken["soldier_reputation"]?.Value<int>();
-            }
-
-            // Parse other common effects
+            // Parse common effects
             effects.LordRep = effectsToken["lordRep"]?.Value<int>() ??
                               effectsToken["lord_reputation"]?.Value<int>();
-            effects.OfficerRep = effectsToken["officerRep"]?.Value<int>() ??
-                                 effectsToken["officer_reputation"]?.Value<int>();
             effects.Scrutiny = effectsToken["scrutiny"]?.Value<int>();
-            effects.Discipline = effectsToken["discipline"]?.Value<int>();
             effects.MedicalRisk = effectsToken["medicalRisk"]?.Value<int>() ??
                                   effectsToken["medical_risk"]?.Value<int>();
             effects.Gold = effectsToken["gold"]?.Value<int>();

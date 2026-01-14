@@ -123,11 +123,8 @@ src/Features/Escalation/
 ```
 
 **Tracks:**
-- Scrutiny (0-10): Camp crime, rule-breaking
-- Discipline (0-10): Rule-breaking, insubordination
-- Soldier Reputation (-50 to +50): Peer standing, can go negative
-- Lord Reputation (0-100): Trust, loyalty, competence in lord's eyes, starts neutral
-- Officer Reputation (0-100): Potential, promise as seen by NCOs/officers, starts neutral
+- Scrutiny (0-100): Rule-breaking, insubordination, crime suspicion. Merged from old Scrutiny (0-10) and Discipline systems.
+- Lord Relation: Uses native Bannerlord `Hero.GetRelation()` (-100 to +100). Trust, loyalty, competence in lord's eyes.
 - Medical Risk (0-5): Injury/illness severity
 
 ### Schedule Activities System
@@ -1509,11 +1506,8 @@ Verify event gating works:
 
 ```
 EscalationState
-├── Scrutiny (0-10)
-├── Discipline (0-10)
-├── SoldierReputation (-50 to +50)
-├── LordReputation (0-100)
-├── OfficerReputation (0-100)
+├── Scrutiny (0-100)
+├── LordReputation → Uses native Hero.GetRelation()
 └── MedicalRisk (0-5)
 
 TraitIntegrationHelper

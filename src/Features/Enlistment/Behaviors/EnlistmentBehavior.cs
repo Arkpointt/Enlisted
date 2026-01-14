@@ -918,27 +918,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                     }
 
-                    // Apply restored reputation based on discharge band
-                    if ((officerRepRestore != 0 || soldierRepRestore != 0) && EscalationManager.Instance != null)
-                    {
-                        if (officerRepRestore != 0)
-                        {
-                            EscalationManager.Instance.State.OfficerReputation = officerRepRestore;
-                            ModLogger.Info("ServiceRecord", $"Restored officer reputation: {officerRepRestore}");
-                        }
-
-                        if (soldierRepRestore != 0)
-                        {
-                            EscalationManager.Instance.State.SoldierReputation = soldierRepRestore;
-                            ModLogger.Info("ServiceRecord", $"Restored soldier reputation: {soldierRepRestore}");
-                        }
-
-                        // Clamp restored values to valid ranges
-                        EscalationManager.Instance.State.ClampAll();
-
-                        // Show notification about reputation restoration
-                        ShowReputationRestorationNotification(band, officerRepRestore, soldierRepRestore);
-                    }
+                    // NOTE: Officer/Soldier reputation removed - now using native Bannerlord lord relations.
+                    // Service record restoration logic will be updated in Phase 3+.
+                    // For now, relation bonus covers this functionality.
 
                     if (targetTier >= 7)
                     {
@@ -2922,7 +2904,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var escalation = EscalationManager.Instance?.State;
                     if (escalation != null)
                     {
-                        escalation.Scrutiny = Math.Min(10, escalation.Scrutiny + 1);
+                        escalation.Scrutiny = Math.Min(100, escalation.Scrutiny + 1);
                     }
 
                     InformationManager.DisplayMessage(new InformationMessage(
@@ -3376,8 +3358,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var record = ServiceRecordManager.Instance.GetOrCreateRecord(_enlistedLord.MapFaction);
                         if (record != null && EscalationManager.Instance != null)
                         {
-                            record.OfficerRepAtExit = EscalationManager.Instance.State.OfficerReputation;
-                            record.SoldierRepAtExit = EscalationManager.Instance.State.SoldierReputation;
+                            // Officer/Soldier reputation removed - no longer tracking for service record
+                            record.OfficerRepAtExit = 0;
+                            record.SoldierRepAtExit = 0;
                             ModLogger.Info("ServiceRecord",
                                 $"Saved reputation snapshot: Officer={record.OfficerRepAtExit}, Soldier={record.SoldierRepAtExit}");
                         }
@@ -4685,8 +4668,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Get supply level
             int supplyLevel = _companyNeeds?.Supplies ?? 100;
 
-            // Get QM reputation
-            int qmRep = EscalationManager.Instance?.State?.OfficerReputation ?? 50;
+            // Get QM reputation (now using lord relation instead of officer rep)
+            int qmRep = EscalationManager.Instance?.State?.LordReputation ?? 50;
 
             // Get loss/sick counters from news behavior (before reset)
             // These are tracked by EnlistedNewsBehavior from battle events
@@ -4933,8 +4916,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void IssueNewRation()
         {
-            // Get QM reputation (use OfficerReputation as QM rep for now)
-            int qmRep = EscalationManager.Instance?.State?.OfficerReputation ?? 50;
+            // Get QM reputation (now using lord relation)
+            int qmRep = EscalationManager.Instance?.State?.LordReputation ?? 50;
 
             // Determine food item based on QM reputation
             string itemId = GetFoodItemForReputation(qmRep);
@@ -6263,8 +6246,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        /// Get discipline incident chance modifier based on PayTension.
-        /// Higher tension = more likely discipline problems.
+        /// Get scrutiny incident chance modifier based on PayTension.
+        /// Higher tension = more likely scrutiny problems.
         /// </summary>
         public float GetPayTensionDisciplineModifier()
         {

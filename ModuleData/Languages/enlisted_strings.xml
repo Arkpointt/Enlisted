@@ -406,15 +406,11 @@
     <string id="Enlisted_Status_OfficerRole" text="Serving as party {ROLE} - your {SKILL} skill affects the party." />
     <string id="Enlisted_Status_RetirementEligible" text="Eligible for honorable retirement with veteran benefits." />
     <string id="Enlisted_Status_Condition" text="Condition : {CONDITION}" />
-    <string id="Enlisted_Status_SoldierRep" text="Camp Rep : {VALUE} ({STATUS})" />
-    <string id="Enlisted_Status_Scrutiny" text="Scrutiny : {BAR} {VALUE}/10{WARNING}" />
-    <string id="Enlisted_Status_Discipline" text="Discipline : {BAR} {VALUE}/10{WARNING}" />
+    <string id="Enlisted_Status_Scrutiny" text="Scrutiny : {BAR} {VALUE}/100{WARNING}" />
     <string id="Enlisted_Status_CampStatus" text="Time: {DAYPART} | Days from Town: {DAYS}" />
     
     
-    <string id="esc_rep_changed" text="Camp Reputation: {CHANGE} ({STATUS})" />
     <string id="esc_scrutiny_changed" text="Scrutiny increased (+{DELTA}) - Status: {STATUS}" />
-    <string id="esc_discipline_changed" text="Discipline issues (+{DELTA}) - Status: {STATUS}" />
     
     
     
@@ -469,7 +465,7 @@
     
     
     <string id="menu_ahead_morale_low" text="Grumbling in the ranks." />
-    <string id="menu_ahead_discipline_low" text="Officers are losing patience." />
+    <string id="menu_ahead_scrutiny_high" text="Officers are watching closely." />
     
     
     <string id="menu_ahead_order_coming" text="{NCO_TITLE}'s been making lists." />
@@ -1377,12 +1373,12 @@
     
     <string id="muster_recruit_title" text="===  GREEN RECRUIT  ===" />
     <string id="muster_recruit_train" text="[Leadership 25+] Take Him Aside and Train Him" />
-    <string id="muster_recruit_train_tt" text="Train the recruit. +15 Leadership XP, +5 Officer Rep, +6 Soldier Rep." />
+    <string id="muster_recruit_train_tt" text="Train the recruit. +15 Leadership XP, +5 Lord Relation." />
     <string id="muster_recruit_train_blocked" text="Requires Leadership 25." />
     <string id="muster_recruit_ignore" text="Let Him Figure It Out" />
-    <string id="muster_recruit_ignore_tt" text="Ignore the recruit. -2 Soldier Rep." />
+    <string id="muster_recruit_ignore_tt" text="Ignore the recruit. -5 Lord Relation." />
     <string id="muster_recruit_haze" text="Give Him the Traditional Welcome" />
-    <string id="muster_recruit_haze_tt" text="Haze the recruit. +4 Soldier Rep, -5 Officer Rep, +8 Discipline." />
+    <string id="muster_recruit_haze_tt" text="Haze the recruit. +3 Lord Relation, +20 Scrutiny." />
     <string id="muster_recruit_continue" text="Continue" />
     <string id="muster_recruit_continue_tt" text="Proceed to next stage." />
 
@@ -1446,8 +1442,6 @@
 
     
     <string id="enlisted_standing_scrutiny_line" text="Scrutiny : {STATUS} ({VALUE})" />
-    <string id="enlisted_standing_discipline_line" text="Discipline : {STATUS} ({VALUE})" />
-    <string id="enlisted_standing_rep_line" text="Soldier Rep : {STATUS} ({VALUE})" />
     <string id="enlisted_standing_medical_line" text="Medical Risk : {STATUS} ({VALUE})" />
 
     
@@ -1458,22 +1452,6 @@
     <string id="esc_scrutiny_burning" text="Burning" />
     <string id="esc_scrutiny_exposed" text="Exposed" />
 
-    
-    <string id="esc_disc_clean" text="Clean" />
-    <string id="esc_disc_minor" text="Minor marks" />
-    <string id="esc_disc_troubled" text="Troubled" />
-    <string id="esc_disc_serious" text="Serious" />
-    <string id="esc_disc_critical" text="Critical" />
-    <string id="esc_disc_breaking" text="Breaking" />
-
-    
-    <string id="esc_rep_bonded" text="Bonded" />
-    <string id="esc_rep_trusted" text="Trusted" />
-    <string id="esc_rep_accepted" text="Accepted" />
-    <string id="esc_rep_neutral" text="Neutral" />
-    <string id="esc_rep_disliked" text="Disliked" />
-    <string id="esc_rep_outcast" text="Outcast" />
-    <string id="esc_rep_hated" text="Hated" />
 
     
     <string id="esc_med_none" text="None" />
@@ -2052,7 +2030,7 @@
     <string id="enlist_player_captured" text="You have been taken prisoner. Your service has ended." />
     <string id="enlist_kingdom_fallen" text="The kingdom you served has fallen. Your grace period has been cancelled." />
     <string id="enlist_promotion_quartermaster" text="Promoted to {RANK} (Tier {TIER})! Visit the Quartermaster to purchase new equipment." />
-    <string id="enlist_promotion_blocked_discipline" text="Promotion blocked: your discipline is under review. Reduce discipline risk before advancing." />
+    <string id="enlist_promotion_blocked_scrutiny" text="Promotion blocked: you're under scrutiny. Reduce scrutiny before advancing." />
     <string id="enlist_following_battle" text="Following your lord into battle!" />
     <string id="enlist_companions_rejoined" text="Your {COMPANION_COUNT} companions have rejoined your party upon retirement." />
 

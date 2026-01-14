@@ -2331,7 +2331,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
 
                 var supplies = companyNeeds.Supplies;
-                var morale = companyNeeds.Morale;
+            var morale = companyNeeds.Readiness; // Morale removed, using readiness
                 var archetype = enlistment.QuartermasterArchetype;
                 var reputation = enlistment.QuartermasterRelationship;
 
@@ -4073,12 +4073,12 @@ namespace Enlisted.Features.Conversations.Behaviors
                     ModLogger.Info("Baggage", "Column halted for baggage access");
                 }
 
-                // Apply officer reputation cost (inconvenience to the column)
+                // Apply lord reputation cost (inconvenience to the column)
                 var repCost = 3;
                 var escalation = EscalationManager.Instance;
                 if (escalation != null)
                 {
-                    escalation.ModifyOfficerReputation(-repCost, "Column halt for baggage access");
+                    escalation.ModifyLordReputation(-repCost); // Officer reputation removed, using lord relation
                 }
 
                 ModLogger.Info("Baggage", $"Column halt granted: Full baggage access until movement resumes (cost: -{repCost} Officer Rep)");

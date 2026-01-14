@@ -809,16 +809,7 @@ namespace Enlisted.Features.Orders.Behaviors
                     escalation.ModifyLordReputation(lordRep);
                     feedbackMessages.Add($"{(lordRep > 0 ? "+" : "")}{lordRep} Lord Reputation");
                 }
-                if (outcome.Reputation.TryGetValue("officer", out var officerRep))
-                {
-                    escalation.ModifyOfficerReputation(officerRep);
-                    feedbackMessages.Add($"{(officerRep > 0 ? "+" : "")}{officerRep} Officer Reputation");
-                }
-                if (outcome.Reputation.TryGetValue("soldier", out var soldierRep))
-                {
-                    escalation.ModifySoldierReputation(soldierRep);
-                    feedbackMessages.Add($"{(soldierRep > 0 ? "+" : "")}{soldierRep} Soldier Reputation");
-                }
+                // NOTE: Officer/Soldier reputation removed. Converted to lord reputation in JSON Phase 3.
             }
 
             // Apply company need changes
@@ -877,7 +868,7 @@ namespace Enlisted.Features.Orders.Behaviors
                 }
             }
 
-            // Apply escalation changes
+            // Apply escalation changes (scrutiny now 0-100, merged with discipline)
             if (outcome.Escalation != null)
             {
                 var escalation = EscalationManager.Instance;
@@ -886,11 +877,6 @@ namespace Enlisted.Features.Orders.Behaviors
                 {
                     escalation.ModifyScrutiny(scrutinyEsc);
                     feedbackMessages.Add($"{(scrutinyEsc > 0 ? "+" : "")}{scrutinyEsc} Scrutiny");
-                }
-                if (outcome.Escalation.TryGetValue("discipline", out var disciplineEsc))
-                {
-                    escalation.ModifyDiscipline(disciplineEsc);
-                    feedbackMessages.Add($"{(disciplineEsc > 0 ? "+" : "")}{disciplineEsc} Discipline");
                 }
             }
 

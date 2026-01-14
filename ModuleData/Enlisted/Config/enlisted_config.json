@@ -74,8 +74,6 @@
     "escalation": {
         "enabled": true,
         "scrutiny_decay_interval_days": 7,
-        "discipline_decay_interval_days": 14,
-        "soldier_rep_decay_interval_days": 14,
         "medical_risk_decay_interval_days": 1,
         "threshold_event_cooldown_days": 7
     },

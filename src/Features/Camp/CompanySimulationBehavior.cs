@@ -580,7 +580,13 @@ namespace Enlisted.Features.Camp
                         }
                         break;
                     case "discipline":
-                        escalation?.ModifyDiscipline(effect.Value, "camp incident");
+                        // Legacy: Discipline merged into Scrutiny in Phase 1 (0-100 scale)
+                        // Scale old 0-10 values to 0-100
+                        escalation?.ModifyScrutiny(effect.Value * 10, "camp incident - discipline");
+                        break;
+                    case "scrutiny":
+                        // Scrutiny effects (0-100 scale)
+                        escalation?.ModifyScrutiny(effect.Value, "camp incident");
                         break;
                 }
 

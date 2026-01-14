@@ -2555,14 +2555,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Show current status
                 if (enlistment != null)
                 {
-                    var (qualityName, moraleBonus, daysRemaining) = enlistment.GetFoodQualityInfo();
+                    var (qualityName, daysRemaining) = enlistment.GetFoodQualityInfo();  // Morale bonus removed
 
                     if (daysRemaining > 0)
                     {
-                        var statusText = new TextObject("{=qm_rations_current}Current: {QUALITY} (+{MORALE} morale) - {DAYS} days remaining");
+                        var statusText = new TextObject("{=qm_rations_current}Current: {QUALITY} - {DAYS} days remaining");
                         statusText.SetTextVariable("QUALITY", qualityName);
-                        statusText.SetTextVariable("MORALE", moraleBonus);
-                        statusText.SetTextVariable("DAYS", daysRemaining.ToString("F1"));
+                        statusText.SetTextVariable("DAYS", ((int)Math.Ceiling(daysRemaining)).ToString());
                         sb.AppendLine(statusText.ToString());
                     }
                     else

@@ -609,7 +609,7 @@ namespace Enlisted.Features.Content
                 }
             }
 
-            // Apply reputation changes
+            // Apply lord reputation changes (uses native Hero.GetRelation system)
             if (effects.LordRep.HasValue && escalation != null)
             {
                 escalation.ModifyLordReputation(effects.LordRep.Value, "event");
@@ -617,19 +617,7 @@ namespace Enlisted.Features.Content
                 ModLogger.Debug(LogCategory, $"Modified lord reputation by {effects.LordRep.Value}");
             }
 
-            if (effects.OfficerRep.HasValue && escalation != null)
-            {
-                escalation.ModifyOfficerReputation(effects.OfficerRep.Value, "event");
-                feedbackMessages.Add($"{(effects.OfficerRep.Value > 0 ? "+" : "")}{effects.OfficerRep.Value} Officer Reputation");
-                ModLogger.Debug(LogCategory, $"Modified officer reputation by {effects.OfficerRep.Value}");
-            }
-
-            if (effects.SoldierRep.HasValue && escalation != null)
-            {
-                escalation.ModifySoldierReputation(effects.SoldierRep.Value, "event");
-                feedbackMessages.Add($"{(effects.SoldierRep.Value > 0 ? "+" : "")}{effects.SoldierRep.Value} Soldier Reputation");
-                ModLogger.Debug(LogCategory, $"Modified soldier reputation by {effects.SoldierRep.Value}");
-            }
+            // Officer/Soldier reputation removed in Phase 3 - JSON files converted to use lordReputation
 
             // Apply escalation changes
             if (effects.Scrutiny.HasValue && escalation != null)
@@ -638,11 +626,7 @@ namespace Enlisted.Features.Content
                 ModLogger.Debug(LogCategory, $"Modified scrutiny by {effects.Scrutiny.Value}");
             }
 
-            if (effects.Discipline.HasValue && escalation != null)
-            {
-                escalation.ModifyDiscipline(effects.Discipline.Value, "event");
-                ModLogger.Debug(LogCategory, $"Modified discipline by {effects.Discipline.Value}");
-            }
+            // Discipline merged into Scrutiny in Phase 1 - JSON files converted to use scrutiny (0-100 scale)
 
             if (effects.MedicalRisk.HasValue && escalation != null)
             {
@@ -1981,25 +1965,10 @@ namespace Enlisted.Features.Content
                 parts.Add($"{effects.LordRep.Value:+#;-#;0} Lord Rep");
             }
 
-            if (effects.OfficerRep.HasValue && effects.OfficerRep.Value != 0)
-            {
-                parts.Add($"{effects.OfficerRep.Value:+#;-#;0} Officer Rep");
-            }
-
-            if (effects.SoldierRep.HasValue && effects.SoldierRep.Value != 0)
-            {
-                parts.Add($"{effects.SoldierRep.Value:+#;-#;0} Soldier Rep");
-            }
-
             // Escalation
             if (effects.Scrutiny.HasValue && effects.Scrutiny.Value != 0)
             {
                 parts.Add($"{effects.Scrutiny.Value:+#;-#;0} Scrutiny");
-            }
-
-            if (effects.Discipline.HasValue && effects.Discipline.Value != 0)
-            {
-                parts.Add($"{effects.Discipline.Value:+#;-#;0} Discipline");
             }
 
             // HP
@@ -2041,24 +2010,9 @@ namespace Enlisted.Features.Content
                 dict["LordRep"] = effects.LordRep.Value;
             }
 
-            if (effects.OfficerRep.HasValue && effects.OfficerRep.Value != 0)
-            {
-                dict["OfficerRep"] = effects.OfficerRep.Value;
-            }
-
-            if (effects.SoldierRep.HasValue && effects.SoldierRep.Value != 0)
-            {
-                dict["SoldierRep"] = effects.SoldierRep.Value;
-            }
-
             if (effects.Scrutiny.HasValue && effects.Scrutiny.Value != 0)
             {
                 dict["Scrutiny"] = effects.Scrutiny.Value;
-            }
-
-            if (effects.Discipline.HasValue && effects.Discipline.Value != 0)
-            {
-                dict["Discipline"] = effects.Discipline.Value;
             }
 
             if (effects.SkillXp != null)
