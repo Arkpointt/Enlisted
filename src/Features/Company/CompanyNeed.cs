@@ -13,7 +13,7 @@ namespace Enlisted.Features.Company
         /// <summary>Morale and unit cohesion (0-100)</summary>
         Morale,
         
-        /// <summary>Rest and fatigue management (0-100)</summary>
+        /// <summary>Rest and recovery (0-100)</summary>
         Rest,
         
         /// <summary>Food, water, and supplies (0-100)</summary>

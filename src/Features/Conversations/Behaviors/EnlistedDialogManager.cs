@@ -4215,14 +4215,8 @@ namespace Enlisted.Features.Conversations.Behaviors
             // Increase relationship for seeking guidance
             enlistment.ModifyQuartermasterRelationship(5);
 
-            // Small fatigue relief from spiritual comfort
-            if (enlistment.FatigueCurrent < 24)
-            {
-                enlistment.RestoreFatigue(2, "moral_guidance");
-            }
-
             InformationManager.DisplayMessage(new InformationMessage(
-                "The quartermaster's words bring some comfort. (+2 fatigue recovery)",
+                "The quartermaster's words bring some comfort.",
                 Colors.Green));
 
             ModLogger.Info("Quartermaster", "Moral guidance dialog triggered");

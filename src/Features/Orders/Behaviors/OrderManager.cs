@@ -1397,7 +1397,7 @@ namespace Enlisted.Features.Orders.Behaviors
                     case CompanyNeed.Morale:
                         return "Morale improving";
                     case CompanyNeed.Rest:
-                        return "Men recovering from fatigue";
+                        return "Men recovering well";
                     default:
                         return $"{needStr} improved";
                 }

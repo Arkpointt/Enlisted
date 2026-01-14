@@ -245,7 +245,7 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Cancels a commitment with a minor fatigue penalty.
+        /// Cancels a commitment.
         /// </summary>
         public void CancelCommitment(string opportunityId)
         {
@@ -256,14 +256,6 @@ namespace Enlisted.Features.Camp
             }
 
             _commitments.RemoveCommitment(opportunityId);
-
-            // Apply small fatigue penalty for canceling plans (restless from changing plans)
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment != null)
-            {
-                // Positive delta = spend fatigue, negative = restore
-                enlistment.ModifyFatigue(2);
-            }
 
             // Clear cache to force menu refresh
             _cachedOpportunities = null;
@@ -753,7 +745,6 @@ namespace Enlisted.Features.Camp
 
             // Player state
             context.PlayerOnDuty = IsPlayerOnDuty();
-            context.PlayerFatigue = 12; // Default fatigue - will integrate with fatigue system when available
             context.PlayerGold = Hero.MainHero.Gold;
             context.PlayerInjured = Hero.MainHero.HitPoints < Hero.MainHero.MaxHitPoints * 0.5f;
 
@@ -1218,12 +1209,6 @@ namespace Enlisted.Features.Camp
         private float CalculatePlayerStateModifier(CampOpportunity opp, CampContext camp, PlayerPreferences prefs)
         {
             float mod = 0f;
-
-            // Fatigue affects training
-            if (opp.Type == OpportunityType.Training && camp.PlayerFatigue < 5)
-            {
-                mod -= 25f;
-            }
 
             // Recovery when injured
             if (opp.Type == OpportunityType.Recovery && camp.PlayerInjured)

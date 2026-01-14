@@ -307,17 +307,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private CampaignTime _baggageCourierArrivalTime = CampaignTime.Zero;
         private ItemRoster _pendingCourierBaggage;
 
-        // Camp/Fatigue flavor hooks
-        private int _fatigueCurrent = 24;
-        private int _fatigueMax = 24;
-
-        // Enhanced fatigue system (24-point budget with health penalties)
-        // _fatigueCurrent represents REMAINING fatigue points (24 = fresh, 0 = exhausted)
-        // Health penalties trigger at LOW fatigue (8 or less remaining)
-        private CampaignTime _lastFatigueRecoveryTime = CampaignTime.Zero;
-        private float _healthBeforeExhaustion;
-        private float _accumulatedFatigueRecovery; // Fractional recovery accumulator
-
         private bool _playerCaptureCleanupScheduled;
         private CampaignTime _savedGraceEnlistmentDate = CampaignTime.Zero;
         private Hero _savedGraceLord;
@@ -448,13 +437,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         // ========================================================================
         // FOOD/RATIONS SYSTEM
-        // Allows player to purchase better rations for morale and fatigue bonuses
+        // Allows player to purchase better rations for morale bonuses
         // ========================================================================
 
         /// <summary>
-        ///     Current food quality tier affecting morale and fatigue recovery.
-        ///     Standard (0) = no bonus, Supplemental (1) = +2 morale, Officer (2) = +4 morale +2 fatigue,
-        ///     Commander (3) = +8 morale +5 fatigue.
+        ///     Current food quality tier affecting morale.
+        ///     Standard (0) = no bonus, Supplemental (1) = +2 morale, Officer (2) = +4 morale,
+        ///     Commander (3) = +8 morale.
         /// </summary>
         private int _currentFoodQuality;
 
@@ -790,57 +779,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>Campaign day of the last recruit event. Used for 10-day cooldown tracking.</summary>
         public int LastRecruitDay => _lastRecruitDay;
 
-        /// <summary>
-        ///     Current remaining fatigue points for camp actions.
-        ///     24 = fully rested, 0 = completely exhausted.
-        ///     Health penalties apply at 8 or below (exhausted) and 0 (severe exhaustion).
-        /// </summary>
-        public int FatigueCurrent => _fatigueCurrent;
-
-        /// <summary>
-        ///     Maximum fatigue points available (may be reduced by probation).
-        /// </summary>
-        public int FatigueMax => _fatigueMax;
-
-        /// <summary>
-        ///     Returns true if the player is in an exhausted state (low fatigue, health penalties active).
-        /// </summary>
-        public bool IsExhausted => _fatigueCurrent <= 8;
-
-        /// <summary>
-        ///     Returns true if the player is severely exhausted (critical fatigue level).
-        /// </summary>
-        public bool IsSeverelyExhausted => _fatigueCurrent <= 0;
-
-        /// <summary>
-        ///     Gets the fatigue percentage remaining (100% = fresh, 0% = exhausted).
-        ///     Useful for UI progress bars.
-        /// </summary>
-        public float FatiguePercentage => _fatigueMax > 0 ? (float)_fatigueCurrent / _fatigueMax * 100f : 0f;
-
-        /// <summary>
-        ///     Gets a localized fatigue status string for UI display.
-        /// </summary>
-        public string FatigueStatusText
-        {
-            get
-            {
-                if (_fatigueCurrent <= 0)
-                {
-                    return "Severely Exhausted";
-                }
-                if (_fatigueCurrent <= 8)
-                {
-                    return "Exhausted";
-                }
-                if (_fatigueCurrent <= 16)
-                {
-                    return "Tired";
-                }
-                return "Rested";
-            }
-        }
-
         // ========================================================================
         // QUARTERMASTER HERO PROPERTIES
         // ========================================================================
@@ -886,13 +824,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Open baggage train stash with fatigue gating by rank.
+        ///     Open baggage train stash.
         /// </summary>
         public bool TryOpenBaggageTrain()
         {
             try
             {
-                ModLogger.Info("Baggage", $"TryOpenBaggageTrain called. Tier={_enlistmentTier}, Fatigue={FatigueCurrent}/{FatigueMax}");
+                ModLogger.Info("Baggage", $"TryOpenBaggageTrain called. Tier={_enlistmentTier}");
                 
                 // Check if bag check is still pending - block access until onboarding is complete
                 if (IsBagCheckPending)
@@ -900,16 +838,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Info("Baggage", "Bag check pending - blocking baggage access until storage fee choice is made");
                     var msg = new TextObject("{=baggage_blocked_onboarding}The quartermaster needs you to sort out your storage arrangements first.");
                     InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Yellow));
-                    return false;
-                }
-                
-                var cost = GetBaggageFatigueCost();
-                ModLogger.Info("Baggage", $"Fatigue cost for baggage access: {cost}");
-                
-                if (cost > 0 && !TryConsumeFatigue(cost, "baggage_train"))
-                {
-                    var msg = new TextObject("{=qm_baggage_no_fatigue}You are too exhausted to rummage through the baggage train.");
-                    InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Red));
                     return false;
                 }
 
@@ -925,47 +853,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
         }
 
-        private int GetBaggageFatigueCost()
-        {
-            if (_enlistmentTier <= 2)
-            {
-                return 4;
-            }
-            if (_enlistmentTier <= 4)
-            {
-                return 2;
-            }
-            return 0;
-        }
-
-        /// <summary>
-        ///     Reduce fatigue for camp actions. Clamped to 0..FatigueMax. Returns true if applied.
-        ///     Safe to call by camp actions when they later consume fatigue.
-        ///     Now includes health penalty checks for exhaustion (Enhanced Fatigue System).
-        /// </summary>
-        public bool TryConsumeFatigue(int amount, string reason = null)
-        {
-            if (!IsEnlisted || amount <= 0)
-            {
-                return true;
-            }
-
-            var newValue = Math.Max(0, _fatigueCurrent - amount);
-            if (newValue == _fatigueCurrent)
-            {
-                return false;
-            }
-
-            _fatigueCurrent = newValue;
-            SessionDiagnostics.LogEvent("Fatigue", "Consumed",
-                $"amount={amount}, now={_fatigueCurrent}/{_fatigueMax}, reason={reason ?? "camp_action"}");
-
-            // Check for health penalties when fatigue gets critically low
-            CheckFatigueHealthPenalty();
-
-            return true;
-        }
-
         private void ActivateProbation()
         {
             var config = EnlistedConfig.LoadRetirementConfig();
@@ -973,11 +860,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _isOnProbation = true;
             _probationEnds = CampaignTime.Now + CampaignTime.Days(days);
 
-            var fatigueCap = Math.Max(1, config?.ProbationFatigueCap ?? 18);
-            _fatigueMax = Math.Min(_fatigueMax, fatigueCap);
-            _fatigueCurrent = Math.Min(_fatigueCurrent, _fatigueMax);
-
-            ModLogger.Info("Probation", $"Probation activated for {days} days (fatigue cap {_fatigueMax})");
+            ModLogger.Info("Probation", $"Probation activated for {days} days");
         }
 
         private void ClearProbation(string reason)
@@ -989,8 +872,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             _isOnProbation = false;
             _probationEnds = CampaignTime.Zero;
-            _fatigueMax = 24;
-            _fatigueCurrent = Math.Min(_fatigueCurrent, _fatigueMax);
 
             ModLogger.Info("Probation", $"Probation cleared ({reason})");
         }
@@ -1122,215 +1003,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Warn("ServiceRecord", $"Failed to show reputation restoration notification: {ex.Message}");
             }
-        }
-
-        /// <summary>
-        ///     Restore fatigue by amount (or full if amount &lt;= 0). Clamped to max.
-        /// </summary>
-        public void RestoreFatigue(int amount = 0, string reason = null)
-        {
-            var target = amount > 0 ? Math.Min(_fatigueMax, _fatigueCurrent + amount) : _fatigueMax;
-            if (target == _fatigueCurrent)
-            {
-                return;
-            }
-
-            _fatigueCurrent = target;
-            SessionDiagnostics.LogEvent("Fatigue", "Restored",
-                $"amount={amount}, now={_fatigueCurrent}/{_fatigueMax}, reason={reason ?? "rest"}");
-
-            // Check if we've recovered enough to remove health penalties
-            CheckFatigueHealthRecovery();
-        }
-
-        /// <summary>
-        /// Modifies fatigue by a delta value. Positive values add fatigue (reduce stamina),
-        /// negative values restore stamina. Used by events that apply fatigue costs.
-        /// </summary>
-        public void ModifyFatigue(int delta)
-        {
-            if (delta == 0)
-            {
-                return;
-            }
-
-            if (delta > 0)
-            {
-                TryConsumeFatigue(delta, "event_cost");
-            }
-            else
-            {
-                RestoreFatigue(-delta, "event_bonus");
-            }
-        }
-
-        /// <summary>
-        ///     Gets the hourly fatigue recovery rate based on military rank/tier.
-        ///     Higher ranks recover faster due to better accommodations and rest privileges.
-        ///     See: docs/Features/Core/camp-fatigue.md
-        /// </summary>
-        /// <returns>Fatigue points recovered per hour during rest periods.</returns>
-        public float GetFatigueRecoveryRate()
-        {
-            // Based on tier (see IMPLEMENTATION_PLAN.md)
-            // T1-T2: 0.5/hour (8 hours to full recovery from exhausted)
-            // T3-T4: 0.75/hour (~5.3 hours to full recovery)
-            // T5-T6: 1.0/hour (4 hours to full recovery)
-            // T7+: 1.25/hour (3.2 hours to full recovery)
-            if (_enlistmentTier <= 2)
-            {
-                return 0.5f;
-            }
-            if (_enlistmentTier <= 4)
-            {
-                return 0.75f;
-            }
-            if (_enlistmentTier <= 6)
-            {
-                return 1.0f;
-            }
-            return 1.25f;
-        }
-
-        /// <summary>
-        ///     Checks and applies health penalties based on current fatigue level.
-        ///     Called when fatigue is consumed. Low fatigue (high exhaustion) triggers penalties.
-        ///     - At 8 or less remaining: 15% health reduction
-        ///     - At 0 remaining: 70% health reduction (drops to 30%)
-        /// </summary>
-        private void CheckFatigueHealthPenalty()
-        {
-            var hero = Hero.MainHero;
-            if (hero == null)
-            {
-                return;
-            }
-
-            // Fatigue thresholds (remaining points):
-            // 0 = completely exhausted (severe penalty)
-            // 8 or less = exhausted (moderate penalty)
-            // 9+ = fine (no penalty)
-            const int SevereThreshold = 0;
-            const int ModerateThreshold = 8;
-
-            if (_fatigueCurrent <= SevereThreshold)
-            {
-                // Severe exhaustion: Drop to 30% health
-                if (_healthBeforeExhaustion < 0)
-                {
-                    _healthBeforeExhaustion = hero.HitPoints;
-                }
-
-                var targetHealth = Math.Max(1, (int)(hero.MaxHitPoints * 0.30f));
-                if (hero.HitPoints > targetHealth)
-                {
-                    hero.HitPoints = targetHealth;
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        "You collapse from exhaustion! Health dropped to 30%.",
-                        Colors.Red));
-                    ModLogger.Warn("Fatigue", $"Severe exhaustion penalty applied: HP={hero.HitPoints}/{hero.MaxHitPoints}");
-                }
-            }
-            else if (_fatigueCurrent <= ModerateThreshold)
-            {
-                // Moderate exhaustion: Reduce to 85% max health
-                if (_healthBeforeExhaustion < 0)
-                {
-                    _healthBeforeExhaustion = hero.HitPoints;
-                }
-
-                var targetHealth = Math.Max(1, (int)(hero.MaxHitPoints * 0.85f));
-                if (hero.HitPoints > targetHealth)
-                {
-                    hero.HitPoints = targetHealth;
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        "You're exhausted. Health reduced.",
-                        Colors.Yellow));
-                    ModLogger.Info("Fatigue", $"Moderate exhaustion penalty applied: HP={hero.HitPoints}/{hero.MaxHitPoints}");
-                }
-            }
-        }
-
-        /// <summary>
-        ///     Checks if health should be restored after fatigue recovery.
-        ///     Called when fatigue is restored. Removes health penalties when fatigue rises above danger zones.
-        /// </summary>
-        private void CheckFatigueHealthRecovery()
-        {
-            var hero = Hero.MainHero;
-            if (hero == null || _healthBeforeExhaustion < 0)
-            {
-                return;
-            }
-
-            const int ModerateThreshold = 8;
-
-            // Restore health if fatigue is now above the danger zone
-            if (_fatigueCurrent > ModerateThreshold)
-            {
-                var restoredHealth = (int)_healthBeforeExhaustion;
-                if (hero.HitPoints < restoredHealth)
-                {
-                    hero.HitPoints = Math.Min(restoredHealth, hero.MaxHitPoints);
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        "You feel rested. Health restored.",
-                        Colors.Green));
-                    ModLogger.Info("Fatigue", $"Health restored after rest: HP={hero.HitPoints}/{hero.MaxHitPoints}");
-                }
-                _healthBeforeExhaustion = -1f;
-            }
-        }
-
-        /// <summary>
-        ///     Processes hourly fatigue recovery during rest periods.
-        ///     Called from OnHourlyTick. Recovery only occurs during night hours (dusk/night/dawn).
-        ///     Settlement bonus provides +2 fatigue recovery per hour.
-        /// </summary>
-        public void ProcessFatigueRecovery()
-        {
-            if (!IsEnlisted)
-            {
-                return;
-            }
-            if (_fatigueCurrent >= _fatigueMax)
-            {
-                return; // Already at max
-            }
-
-            // Only recover during rest hours (dusk, night, dawn)
-            // Use Campaign.Current.IsNight as a simple check, or check time of day
-            var currentHour = CampaignTime.Now.CurrentHourInDay;
-            bool isRestPeriod = currentHour >= 20 || currentHour <= 6; // 8 PM to 6 AM
-
-            if (!isRestPeriod)
-            {
-                return;
-            }
-
-            // Get rank-based recovery rate
-            float recoveryRate = GetFatigueRecoveryRate();
-
-            // Settlement bonus: +2/hour when in a town
-            if (Settlement.CurrentSettlement?.IsTown == true)
-            {
-                recoveryRate += 2.0f;
-            }
-
-            // Accumulate fractional recovery
-            _accumulatedFatigueRecovery += recoveryRate;
-
-            // Apply whole number recovery
-            if (_accumulatedFatigueRecovery >= 1.0f)
-            {
-                int wholeRecovery = (int)_accumulatedFatigueRecovery;
-                _accumulatedFatigueRecovery -= wholeRecovery;
-
-                RestoreFatigue(wholeRecovery, "night_rest");
-                ModLogger.Debug("Fatigue",
-                    $"Hourly recovery: +{wholeRecovery} (rate={recoveryRate}/hr, tier={_enlistmentTier}, now={_fatigueCurrent}/{_fatigueMax})");
-            }
-
-            _lastFatigueRecoveryTime = CampaignTime.Now;
         }
 
         public bool HasActiveGraceProtection => CampaignTime.Now < _graceProtectionEnds;
@@ -1706,14 +1378,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_ncoFirstName", ref _ncoFirstName);
             SyncKey(dataStore, "_ncoRank", ref _ncoRank);
             SyncSoldierNames(dataStore);
-
-            SyncKey(dataStore, "_fatigueCurrent", ref _fatigueCurrent);
-            SyncKey(dataStore, "_fatigueMax", ref _fatigueMax);
-
-            // Enhanced fatigue system
-            SyncKey(dataStore, "_lastFatigueRecoveryTime", ref _lastFatigueRecoveryTime);
-            SyncKey(dataStore, "_healthBeforeExhaustion", ref _healthBeforeExhaustion);
-            SyncKey(dataStore, "_accumulatedFatigueRecovery", ref _accumulatedFatigueRecovery);
 
             // Quartermaster hero system
             SyncKey(dataStore, "_quartermasterHero", ref _quartermasterHero);
@@ -3442,8 +3106,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentDate = resumedFromGrace && _savedGraceEnlistmentDate != CampaignTime.Zero
                     ? _savedGraceEnlistmentDate
                     : CampaignTime.Now; // Record when service started (or resume previous enlistment date)
-                _fatigueMax = 24;
-                _fatigueCurrent = _fatigueMax;
                 _pendingMusterPay = 0;
                 _payMusterPending = false;
                 _nextPayday = CampaignTime.Zero;
@@ -4511,7 +4173,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Hourly tick handler that runs once per in-game hour while the player is enlisted.
         ///     Maintains party following, visibility, and encounter prevention state.
-        ///     Also processes hourly fatigue recovery during rest periods.
         ///     Called automatically by the game every hour.
         /// </summary>
         private void OnHourlyTick()
@@ -4531,10 +4192,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             ProcessDeferredBagCheck();
             ProcessCourierArrival();
-
-            // Process hourly fatigue recovery (enhanced fatigue system).
-            // This runs for enlisted players during rest periods (night hours)
-            ProcessFatigueRecovery();
 
             // Process hourly supply resupply when in settlements.
             // This allows partial-day settlement visits to provide meaningful supply gains.
@@ -5503,16 +5160,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 ModLogger.Info("Pay", $"Resolving pay muster: corruption attempt (PendingPay={_pendingMusterPay})");
 
-                // Fatigue cost
-                if (!TryConsumeFatigue(10, "corruption"))
-                {
-                    _lastPayOutcome = "corruption_blocked_fatigue";
-                    _payMusterPending = false;
-                    _nextPayday = ComputeNextPayday();
-                    ModLogger.Warn("Pay", $"Corruption muster blocked by fatigue (NextPayday={_nextPayday})");
-                    return;
-                }
-
                 var roguery = Hero.MainHero.GetSkillValue(DefaultSkills.Roguery);
                 var charm = Hero.MainHero.GetSkillValue(DefaultSkills.Charm);
                 var best = Math.Max(roguery, charm);
@@ -5596,16 +5243,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 ModLogger.Info("Pay", $"Resolving Quartermaster's Deal (PendingPay={_pendingMusterPay})");
-
-                // Fatigue cost
-                if (!TryConsumeFatigue(6, "quartermaster_deal"))
-                {
-                    _lastPayOutcome = "qm_deal_blocked_fatigue";
-                    _payMusterPending = false;
-                    _nextPayday = ComputeNextPayday();
-                    ModLogger.Warn("Pay", $"Quartermaster's Deal blocked by fatigue (NextPayday={_nextPayday})");
-                    return "blocked_fatigue";
-                }
 
                 var payout = Math.Max(0, (int)(_pendingMusterPay * 0.4f));
 
@@ -6894,8 +6531,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentXP = 0;
             }
 
-            ValidateFatigueOnLoad();
-
             // Migrate tracking fields for existing saves.
             MigratePhase7TrackingFields();
 
@@ -6970,17 +6605,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
         }
 
-        private void ValidateFatigueOnLoad()
-        {
-            if (_fatigueMax <= 0)
-            {
-                _fatigueMax = 24;
-            }
-            if (_fatigueCurrent <= 0 || _fatigueCurrent > _fatigueMax)
-            {
-                _fatigueCurrent = _fatigueMax;
-            }
-        }
 
         /// <summary>
         ///     Removes duplicate hero entries from player's roster that can occur after escape from captivity.
@@ -10701,9 +10325,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             Standard = 0,
             /// <summary>Supplemental rations - +2 morale for 1 day.</summary>
             Supplemental = 1,
-            /// <summary>Officer's fare - +4 morale, +2 fatigue relief for 2 days.</summary>
+            /// <summary>Officer's fare - +4 morale for 2 days.</summary>
             Officer = 2,
-            /// <summary>Commander's feast - +8 morale, +5 fatigue relief for 3 days.</summary>
+            /// <summary>Commander's feast - +8 morale for 3 days.</summary>
             Commander = 3
         }
 
@@ -10759,26 +10383,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
             };
         }
 
-        /// <summary>
-        ///     Gets the fatigue relief bonus from current food quality.
-        ///     Applied when rations are purchased (immediate relief).
-        /// </summary>
-        /// <returns>Fatigue relief points (0, 0, 2, or 5)</returns>
-        public int GetFoodFatigueBonus()
-        {
-            var quality = CurrentFoodQuality;
-            return quality switch
-            {
-                FoodQualityTier.Officer => 2,
-                FoodQualityTier.Commander => 5,
-                _ => 0
-            };
-        }
 
         /// <summary>
         ///     Gets food quality information for display.
         /// </summary>
-        public (string Name, int MoraleBonus, int FatigueBonus, float DaysRemaining) GetFoodQualityInfo()
+        public (string Name, int MoraleBonus, float DaysRemaining) GetFoodQualityInfo()
         {
             var quality = CurrentFoodQuality;
             var remaining = FoodQualityTimeRemaining;
@@ -10792,12 +10401,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _ => "Standard Rations"
             };
 
-            return (name, GetFoodMoraleBonus(), GetFoodFatigueBonus(), daysRemaining);
+            return (name, GetFoodMoraleBonus(), daysRemaining);
         }
 
         /// <summary>
         ///     Purchases rations of the specified quality tier.
-        ///     Deducts gold, applies fatigue relief, sets morale bonus duration.
+        ///     Deducts gold and sets morale bonus duration.
         /// </summary>
         /// <param name="tier">The food quality tier to purchase</param>
         /// <param name="cost">Gold cost (validated before calling)</param>
@@ -10828,19 +10437,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _currentFoodQuality = (int)tier;
             _foodQualityExpires = CampaignTime.Now + CampaignTime.Days(durationDays);
 
-            // Apply immediate fatigue relief for higher tiers
-            var fatigueBonus = tier switch
-            {
-                FoodQualityTier.Officer => 2,
-                FoodQualityTier.Commander => 5,
-                _ => 0
-            };
-
-            if (fatigueBonus > 0)
-            {
-                RestoreFatigue(fatigueBonus, "rations_purchase");
-            }
-
             // Increase quartermaster relationship
             ModifyQuartermasterRelationship(2);
 
@@ -10853,7 +10449,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             };
 
             ModLogger.Info("Food",
-                $"Purchased {tierName} for {effectiveCost}g (base {cost}g), duration {durationDays} days, fatigue relief +{fatigueBonus}");
+                $"Purchased {tierName} for {effectiveCost}g (base {cost}g), duration {durationDays} days");
 
             return true;
         }

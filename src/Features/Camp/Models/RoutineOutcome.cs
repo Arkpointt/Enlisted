@@ -44,9 +44,6 @@ namespace Enlisted.Features.Camp.Models
         /// <summary>Skill that receives the XP (e.g., "OneHanded", "Athletics", "Scouting").</summary>
         public string SkillAffected { get; set; }
 
-        /// <summary>Change in fatigue level. Positive = more tired, negative = recovery.</summary>
-        public int FatigueChange { get; set; }
-
         /// <summary>Gold or supplies found/earned. Can be negative for losses.</summary>
         public int GoldChange { get; set; }
 

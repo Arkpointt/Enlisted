@@ -89,7 +89,6 @@
     <string id="records_tier" text="Tier" />
     <string id="records_service_xp" text="Service XP" />
     <string id="records_days_served" text="Days Served" />
-    <string id="records_fatigue" text="Fatigue" />
     <string id="records_next_tier_req" text="Next Tier Requirement" />
     <string id="records_max_tier" text="(Max tier)" />
     <string id="records_discharge" text="Discharge" />
@@ -167,8 +166,6 @@
     <string id="status_wounded" text="wounded" />
     <string id="status_elite" text="elite" />
     <string id="status_veterans" text="veterans" />
-    <string id="status_men_exhausted" text="men exhausted" />
-    <string id="status_fatigue_showing" text="fatigue showing" />
     <string id="status_gear_failing" text="gear failing" />
     <string id="status_equipment_worn" text="equipment worn" />
     <string id="status_encamped_at" text="Encamped at {SETTLEMENT}" />
@@ -472,7 +469,6 @@
     
     
     <string id="menu_ahead_morale_low" text="Grumbling in the ranks." />
-    <string id="menu_ahead_rest_low" text="The men are exhausted. They need rest." />
     <string id="menu_ahead_discipline_low" text="Officers are losing patience." />
     
     
@@ -484,7 +480,7 @@
     <string id="menu_ahead_condition_untreated" text="You've been ignoring that {CONDITION}. It won't heal itself." />
     <string id="menu_ahead_condition_treated" text="Treatment is helping. Stay off your feet." />
     <string id="menu_ahead_medical_risk_high" text="You're pushing too hard. Rest before you collapse." />
-    <string id="menu_ahead_medical_risk_moderate" text="Fatigue is catching up with you." />
+    <string id="menu_ahead_medical_risk_moderate" text="You need rest soon." />
     
     
     <string id="condition_generic" text="ailment" />
@@ -878,7 +874,6 @@
     
     <string id="evt_baggage_stowage_opt_abort" text="&quot;I've changed my mind.&quot;" />
     <string id="evt_baggage_stowage_opt_abort_result" text="The clerk's quill stops. 'Changed your mind.' He's seen it before.&#10;&#10;He closes the ledger. 'Your lord won't be pleased. Go on, before anyone notices.'&#10;&#10;You gather your things. The other soldiers don't meet your eyes. The column marches on without you." />
-    <string id="qm_baggage_no_fatigue" text="You are too exhausted to rummage through the baggage train." />
     <string id="baggage_menu_option" text="Access Baggage Train" />
     <string id="baggage_tooltip_full_access" text="Access your stored belongings" />
     <string id="baggage_tooltip_no_access" text="Request baggage access (wagons behind the column)" />
@@ -1055,7 +1050,7 @@
     <string id="enl_camp_hub_unavailable" text="Service Status unavailable." />
     <string id="enl_camp_hub_title" text="Service Status" />
     <string id="enl_camp_hub_lord_line" text="Lord: {LORD_NAME}" />
-    <string id="enl_camp_hub_fatigue_line" text="Fatigue: {FAT_CUR}/{FAT_MAX} | {RANK} (T{TIER})" />
+    <string id="enl_camp_hub_rank_line" text="{RANK} (Tier {TIER})" />
     <string id="enl_camp_hub_objective_line" text="Lord's Work: {OBJECTIVE}" />
     <string id="enl_camp_hub_now_line" text="Now: {SITUATION} | Decisions: {COUNT}" />
 
@@ -1064,7 +1059,6 @@
     <string id="enl_act_fail_disabled" text="Activities system disabled" />
     <string id="enl_act_fail_not_enlisted" text="Not enlisted" />
     <string id="enl_act_fail_cooldown" text="On cooldown" />
-    <string id="enl_act_fail_too_fatigued" text="Too fatigued" />
     <string id="enl_act_fail_condition" text="Too injured or ill" />
 
     
@@ -1140,7 +1134,6 @@
     <string id="enl_sched_block_scouting_mission" text="Scouting Mission" />
     <string id="enl_sched_block_foraging_duty" text="Foraging Duty" />
     <string id="enl_sched_block_desc_fallback" text="Activity for {TIME_BLOCK}" />
-    <string id="enl_sched_effect_fatigue" text="Fatigue Cost: {COST}" />
     <string id="enl_sched_effect_xp" text="XP Reward: {XP}" />
     <string id="enl_sched_status_complete" text="Status: Complete" />
     <string id="enl_sched_status_completed" text="Status: Completed" />
@@ -1555,7 +1548,7 @@
     <string id="cond_treat_basic" text="Basic treatment" />
     <string id="cond_treat_basic_hint" text="Free (enlisted). Improves recovery." />
     <string id="cond_treat_thorough" text="Thorough treatment" />
-    <string id="cond_treat_thorough_hint" text="Costs fatigue. Strong recovery boost." />
+    <string id="cond_treat_thorough_hint" text="Takes time. Strong recovery boost." />
     <string id="cond_treat_herbal" text="Herbal remedy" />
     <string id="cond_treat_herbal_hint" text="Costs coin. Solid recovery boost." />
 
@@ -1636,13 +1629,13 @@
     
     <string id="qm_menu_rations" text="Purchase provisions" />
     <string id="qm_rations_intro" text="Purchase better rations from the quartermaster." />
-    <string id="qm_rations_desc" text="Higher quality food provides morale bonuses and fatigue relief." />
+    <string id="qm_rations_desc" text="Higher quality food provides morale bonuses." />
     <string id="qm_rations_current" text="Current: {QUALITY} (+{MORALE} morale) - {DAYS} days remaining" />
     <string id="qm_rations_standard" text="Current: Standard army rations (no bonus)" />
     <string id="qm_rations_gold" text="Your gold: {GOLD_ICON} {GOLD}" />
     <string id="qm_rations_supplemental" text="Supplemental Rations (10 gold) - +2 morale for 1 day" />
-    <string id="qm_rations_officer" text="Officer's Fare (30 gold) - +4 morale, +2 fatigue for 2 days" />
-    <string id="qm_rations_commander" text="Commander's Feast (75 gold) - +8 morale, +5 fatigue for 3 days" />
+    <string id="qm_rations_officer" text="Officer's Fare (30 gold) - +4 morale for 2 days" />
+    <string id="qm_rations_commander" text="Commander's Feast (75 gold) - +8 morale for 3 days" />
     <string id="qm_rations_no_gold" text="Not enough gold." />
     <string id="qm_rations_rank" text="Reserved for Tier 4+ soldiers." />
     <string id="qm_rations_not_enlisted" text="You must be enlisted to purchase provisions." />

@@ -1556,7 +1556,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     sb.AppendLine();
                 }
 
-                // === STATUS (Player's personal condition - injuries, hunger, fatigue, morale) ===
+                // === STATUS (Player's personal condition - injuries, illness, duty status) ===
                 var playerStatus = BuildPlayerPersonalStatus(enlistment);
                 if (!string.IsNullOrWhiteSpace(playerStatus))
                 {
@@ -1662,10 +1662,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     if (companyNeeds.Rest < 40)
                     {
                         var exhaustedText = new TextObject("{=status_men_exhausted}men exhausted").ToString();
-                        var fatigueText = new TextObject("{=status_fatigue_showing}fatigue showing").ToString();
+                        var tiredText = new TextObject("{=status_rest_low}rest needed").ToString();
                         var restPhrase = companyNeeds.Rest < 20 
                             ? $"<span style=\"Alert\">{exhaustedText}</span>" 
-                            : $"<span style=\"Warning\">{fatigueText}</span>";
+                            : $"<span style=\"Warning\">{tiredText}</span>";
                         needsParts.Add(restPhrase);
                     }
 
@@ -2013,7 +2013,7 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Builds player's personal status - flavor text about injuries, hunger, fatigue, scrutiny.
+        /// Builds player's personal status - flavor text about injuries, illness, duty status.
         /// </summary>
         private static string BuildPlayerPersonalStatus(EnlistmentBehavior enlistment)
         {
@@ -2112,19 +2112,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     else if (mainHero.IsWounded)
                     {
                         parts.Add("<span style=\"Alert\">Your wounds slow you.</span> Rest and heal before the next call.");
-                    }
-                    // Fatigue scale is 0-24: 0=exhausted, 8=tired threshold, 16=moderate, 24=fresh
-                    else if (enlistment?.FatigueCurrent <= 8)
-                    {
-                        parts.Add("<span style=\"Alert\">Bone-deep exhaustion.</span> Find rest soon or you'll collapse.");
-                    }
-                    else if (enlistment?.FatigueCurrent <= 16)
-                    {
-                        parts.Add("<span style=\"Warning\">Weariness creeps in.</span> Some rest would help.");
-                    }
-                    else if (enlistment?.FatigueCurrent >= 20)
-                    {
-                        parts.Add("<span style=\"Success\">Rested and sharp.</span> Ready for whatever comes.");
                     }
                 }
 
@@ -2523,7 +2510,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
 
-                // Sentence 4: Specific concerns (wounds, fatigue, equipment) with territory pressure
+                // Sentence 4: Specific concerns (wounds, rest, equipment) with territory pressure
                 var detailParts = new List<string>();
                 var wounded = lordParty?.MemberRoster?.TotalWounded ?? 0;
                 var inHostileTerritory = campLife?.TerritoryPressure > 60;
@@ -2545,11 +2532,11 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                     else if (companyNeeds.Rest < 40 && activityLevel == Content.Models.ActivityLevel.Intense)
                     {
-                        detailParts.Add("<span style=\"Warning\">men push through fatigue</span>");
+                        detailParts.Add("<span style=\"Warning\">men push through exhaustion</span>");
                     }
                     else if (companyNeeds.Rest < 40)
                     {
-                        detailParts.Add("<span style=\"Warning\">fatigue</span> visible in the ranks");
+                        detailParts.Add("<span style=\"Warning\">rest needed</span> in the ranks");
                     }
                 }
 
@@ -4004,15 +3991,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         sentences.Add("<span style=\"Alert\">Your wounds slow you.</span> Rest now, heal, and ride again when ready.");
                     }
-                    // Fatigue scale is 0-24: 0=exhausted, 8=tired threshold, 16=moderate, 24=fresh
-                    else if (enlistment?.FatigueCurrent <= 8)
-                    {
-                        sentences.Add("<span style=\"Alert\">Bone-deep exhaustion.</span> Push through or find rest soon, or you'll collapse.");
-                    }
-                    else if (enlistment?.FatigueCurrent <= 16)
-                    {
-                        sentences.Add("<span style=\"Warning\">Weariness creeps in.</span> A few hours rest would sharpen your edge.");
-                    }
                 }
 
                 // Critical player-relevant warnings from company state (supplies impact player directly)
@@ -4081,9 +4059,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         sentences.Add("Garrison duty suits a measured leader. The men trust your judgment.");
                     }
-                    else if (mainHero?.IsWounded != true && enlistment?.FatigueCurrent > 70)
+                    else if (mainHero?.IsWounded != true)
                     {
-                        sentences.Add("<span style=\"Success\">You're rested and ready.</span> Whatever comes, you'll face it.");
+                        sentences.Add("<span style=\"Success\">Ready for action.</span> Whatever comes, you'll face it.");
                     }
                 }
 
@@ -6051,7 +6029,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 >= 80 => new TextObject("{=status_rest_excellent}The company is well-rested. Men wake refreshed and ready.").ToString(),
                 >= 60 => new TextObject("{=status_rest_good}The company has had adequate rest. Some yawning, but nothing serious.").ToString(),
-                >= 40 => new TextObject("{=status_rest_fair}Fatigue is setting in. Men doze on their feet during long halts.").ToString(),
+                >= 40 => new TextObject("{=status_rest_fair}Exhaustion is setting in. Men doze on their feet during long halts.").ToString(),
                 >= 20 => new TextObject("{=status_rest_poor}The company is exhausted. Tempers flare and mistakes multiply.").ToString(),
                 _ => new TextObject("{=status_rest_critical}The company is dead on their feet. Men collapse during marches.").ToString()
             };

@@ -775,9 +775,6 @@ namespace Enlisted.Features.Content
                 effects.BagCheckChoice = effectsJson["bagCheckChoice"]?.ToString() ??
                                         effectsJson["bag_check_choice"]?.ToString();
 
-                // Parse fatigue effect
-                effects.Fatigue = effectsJson["fatigue"]?.Value<int>();
-
                 // Parse company needs
                 ParseDictionaryField(effectsJson, "companyNeeds", effects.CompanyNeeds);
             }
@@ -937,7 +934,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Parses a rewards block from JSON.
-        /// Contains gold, fatigue relief, xp, and skill xp rewards.
+        /// Contains gold, xp, and skill xp rewards.
         /// </summary>
         private static EventRewards ParseRewards(JToken rewardsToken)
         {
@@ -948,9 +945,7 @@ namespace Enlisted.Features.Content
 
             var rewards = new EventRewards
             {
-                Gold = rewardsToken["gold"]?.Value<int>(),
-                FatigueRelief = rewardsToken["fatigueRelief"]?.Value<int>() ??
-                               rewardsToken["fatigue_relief"]?.Value<int>()
+                Gold = rewardsToken["gold"]?.Value<int>()
             };
 
             // Parse general XP (e.g., {"enlisted": 20})
@@ -1000,7 +995,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Parses a costs block from JSON.
-        /// Contains gold, fatigue, and time costs.
+        /// Contains gold and time costs.
         /// </summary>
         private static EventCosts ParseCosts(JToken costsToken)
         {
@@ -1012,7 +1007,6 @@ namespace Enlisted.Features.Content
             return new EventCosts
             {
                 Gold = costsToken["gold"]?.Value<int>(),
-                Fatigue = costsToken["fatigue"]?.Value<int>(),
                 TimeHours = costsToken["time_hours"]?.Value<int>() ??
                            costsToken["timeHours"]?.Value<int>()
             };
@@ -1084,9 +1078,6 @@ namespace Enlisted.Features.Content
             // Parse bag check choice (first-enlistment gear handling)
             effects.BagCheckChoice = effectsJson["bagCheckChoice"]?.ToString() ??
                                     effectsJson["bag_check_choice"]?.ToString();
-
-            // Parse fatigue effect
-            effects.Fatigue = effectsJson["fatigue"]?.Value<int>();
 
             // Parse medical effects (illness, injury, treatment, worsening)
             effects.IllnessOnset = effectsJson["illnessOnset"]?.ToString() ?? effectsJson["illness_onset"]?.ToString();

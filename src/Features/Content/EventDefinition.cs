@@ -450,7 +450,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Rewards applied when this sub-choice is selected.
-        /// Includes gold, fatigue relief, XP, skill XP.
+        /// Includes gold, XP, skill XP.
         /// </summary>
         public EventRewards Rewards { get; set; }
 
@@ -471,11 +471,6 @@ namespace Enlisted.Features.Content
         /// Gold/denar reward (positive value).
         /// </summary>
         public int? Gold { get; set; }
-
-        /// <summary>
-        /// Fatigue relief (reduces current fatigue).
-        /// </summary>
-        public int? FatigueRelief { get; set; }
 
         /// <summary>
         /// General XP rewards (e.g., {"enlisted": 20} for enlisted-specific XP tracking).
@@ -505,11 +500,6 @@ namespace Enlisted.Features.Content
         /// Gold cost (deducted from player).
         /// </summary>
         public int? Gold { get; set; }
-
-        /// <summary>
-        /// Fatigue cost (added to player fatigue or company rest need).
-        /// </summary>
-        public int? Fatigue { get; set; }
 
         /// <summary>
         /// Time cost in hours (advances campaign time or affects scheduling).
@@ -685,12 +675,6 @@ namespace Enlisted.Features.Content
         /// Used by theft, raid, and loss events. Gracefully handles empty stash (no crash, no message).
         /// </summary>
         public int? RandomBaggageLoss { get; set; }
-
-        /// <summary>
-        /// Fatigue cost to apply (positive values add fatigue, negative values restore stamina).
-        /// Standard fatigue threshold is 100; actions become restricted at higher levels.
-        /// </summary>
-        public int? Fatigue { get; set; }
 
         /// <summary>
         /// Bag check action to execute when this option is chosen.

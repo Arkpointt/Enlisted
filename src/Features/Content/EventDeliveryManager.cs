@@ -814,12 +814,6 @@ namespace Enlisted.Features.Content
                 ApplyWorsenCondition();
             }
 
-            // Apply fatigue change
-            if (effects.Fatigue.HasValue && effects.Fatigue.Value != 0)
-            {
-                ApplyFatigueChange(effects.Fatigue.Value);
-            }
-
             // Apply discharge if specified. Ends the player's enlistment with the given band.
             if (!string.IsNullOrEmpty(effects.TriggersDischarge))
             {
@@ -1207,23 +1201,6 @@ namespace Enlisted.Features.Content
             }
 
             enlistment.StopEnlist("Aborted enlistment during bag check", isHonorableDischarge: false);
-        }
-
-        /// <summary>
-        /// Applies a fatigue change to the player.
-        /// Positive values add fatigue (more tired), negative values restore stamina.
-        /// </summary>
-        private void ApplyFatigueChange(int delta)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null)
-            {
-                ModLogger.Warn(LogCategory, "ApplyFatigueChange: EnlistmentBehavior not available");
-                return;
-            }
-
-            enlistment.ModifyFatigue(delta);
-            ModLogger.Debug(LogCategory, $"ApplyFatigueChange: Modified fatigue by {delta}");
         }
 
         /// <summary>
@@ -2349,7 +2326,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Applies costs from a sub-choice option.
-        /// Deducts gold, applies fatigue, etc.
+        /// Deducts gold, time, etc.
         /// </summary>
         private void ApplyCosts(EventCosts costs)
         {
@@ -2367,18 +2344,6 @@ namespace Enlisted.Features.Content
                 ModLogger.Debug(LogCategory, $"Applied gold cost: -{costs.Gold.Value}");
             }
 
-            // Apply fatigue cost (affects company Rest need if available)
-            if (costs.Fatigue.HasValue && costs.Fatigue.Value > 0)
-            {
-                var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.CompanyNeeds != null)
-                {
-                    var currentRest = enlistment.CompanyNeeds.GetNeed(CompanyNeed.Rest);
-                    enlistment.CompanyNeeds.SetNeed(CompanyNeed.Rest, currentRest - costs.Fatigue.Value);
-                    ModLogger.Debug(LogCategory, $"Applied fatigue cost: {costs.Fatigue.Value} (reduced Rest)");
-                }
-            }
-
             // Time costs could affect scheduling, but for now just log
             if (costs.TimeHours.HasValue && costs.TimeHours.Value > 0)
             {
@@ -2388,7 +2353,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Applies rewards from a sub-choice option.
-        /// Grants gold, fatigue relief, skill XP, etc.
+        /// Grants gold, skill XP, etc.
         /// </summary>
         private void ApplyRewards(EventRewards rewards)
         {
@@ -2406,19 +2371,6 @@ namespace Enlisted.Features.Content
                 GiveGoldAction.ApplyBetweenCharacters(null, hero, rewards.Gold.Value);
                 rewardMessages.Add($"+{rewards.Gold.Value} gold");
                 ModLogger.Debug(LogCategory, $"Applied gold reward: +{rewards.Gold.Value}");
-            }
-
-            // Apply fatigue relief (increases company Rest need)
-            if (rewards.FatigueRelief.HasValue && rewards.FatigueRelief.Value > 0)
-            {
-                var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.CompanyNeeds != null)
-                {
-                    var currentRest = enlistment.CompanyNeeds.GetNeed(CompanyNeed.Rest);
-                    enlistment.CompanyNeeds.SetNeed(CompanyNeed.Rest, currentRest + rewards.FatigueRelief.Value);
-                    rewardMessages.Add($"-{rewards.FatigueRelief.Value} fatigue");
-                    ModLogger.Debug(LogCategory, $"Applied fatigue relief: +{rewards.FatigueRelief.Value} Rest");
-                }
             }
 
             // Apply skill XP rewards with experience track modifier and track for enlistment XP

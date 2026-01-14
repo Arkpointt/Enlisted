@@ -215,12 +215,6 @@ namespace Enlisted.Features.Content
             hints.AddRange(nativeHints.Select(h => h.ToString()));
 
             // Add Enlisted-specific effect hints (not in native system)
-            if (effects.Fatigue.HasValue && effects.Fatigue.Value != 0)
-            {
-                var sign = effects.Fatigue.Value > 0 ? "+" : "";
-                hints.Add($"{sign}{effects.Fatigue.Value} Fatigue");
-            }
-
             if (effects.RetinueGain.HasValue && effects.RetinueGain.Value > 0)
             {
                 hints.Add($"+{effects.RetinueGain.Value} Retinue Soldiers");

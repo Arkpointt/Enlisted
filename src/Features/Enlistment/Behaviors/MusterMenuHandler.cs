@@ -99,10 +99,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             /// <summary>Strategic context from ArmyContextAnalyzer.</summary>
             public string StrategicContext { get; set; }
 
-            // Fatigue (reset at muster start)
-            /// <summary>Fatigue level before muster for "restored" message.</summary>
-            public int FatigueBeforeMuster { get; set; }
-
             // Pay stage outcomes
             /// <summary>Amount of pay received.</summary>
             public int PayReceived { get; set; }
@@ -418,7 +414,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Bribe;
-                    args.Tooltip = new TextObject("{=muster_pay_recount_tt}Roguery/Charm check. 120% pay on success. 10 fatigue cost.");
+                    args.Tooltip = new TextObject("{=muster_pay_recount_tt}Roguery/Charm check. 120% pay on success.");
                     return true;
                 },
                 _ => ResolveCorruptionMuster(),
@@ -430,7 +426,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-                    args.Tooltip = new TextObject("{=muster_pay_side_deal_tt}Take 40% pay for surplus equipment. 70% chance (your tier). 6 fatigue.");
+                    args.Tooltip = new TextObject("{=muster_pay_side_deal_tt}Take 40% pay for surplus equipment. 70% chance (your tier).");
                     return true;
                 },
                 _ => ResolveSideDealMuster(),
@@ -1000,9 +996,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ? ArmyContextAnalyzer.GetLordStrategicContext(lordParty)
                     : "patrol_peacetime";
 
-                // Capture fatigue state before reset
-                _currentMuster.FatigueBeforeMuster = enlistment.FatigueCurrent;
-
                 // Check for high scrutiny warning
                 var scrutiny = EscalationManager.Instance?.State?.Scrutiny ?? 0;
                 if (scrutiny >= 5)
@@ -1262,18 +1255,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 _currentMuster.CurrentStage = MusterIntroMenuId;
 
-                // Reset fatigue to maximum (muster day = rest day)
                 var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment != null)
-                {
-                    SafeApplyEffect("FatigueReset", () =>
-                    {
-                        var fatigueBeforeReset = enlistment.FatigueCurrent;
-                        enlistment.RestoreFatigue(0, "Muster rest day");
-                        _currentMuster.FatigueBeforeMuster = fatigueBeforeReset;
-                        ModLogger.Debug(LogCategory, $"Fatigue restored from {fatigueBeforeReset} to {enlistment.FatigueCurrent}");
-                    });
-                }
 
                 // Build intro text with null safety
                 var introText = BuildIntroTextSafe();
@@ -2477,16 +2459,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 sb.AppendLine($"<span style=\"Label\">THIS PERIOD:</span> <span style=\"Success\">+{periodXP} XP</span> (battles, training, orders completed)");
             }
 
-            // Fatigue restoration
-            var fatigueRestored = enlistment.FatigueCurrent - _currentMuster.FatigueBeforeMuster;
-            if (fatigueRestored > 0)
-            {
-                sb.AppendLine($"<span style=\"Label\">FATIGUE:</span> <span style=\"Success\">Restored to full</span> (muster rest day)");
-            }
-            else if (_currentMuster.FatigueBeforeMuster >= enlistment.FatigueMax)
-            {
-                sb.AppendLine("<span style=\"Label\">FATIGUE:</span> <span style=\"Success\">Already well-rested</span>");
-            }
 
             return sb.ToString();
         }

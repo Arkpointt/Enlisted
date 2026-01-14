@@ -149,7 +149,6 @@ namespace Enlisted.Features.Camp
             int xpGained = CalculateXp(activityConfig, outcomeType, overrideInfo);
 
             // Calculate other effects
-            int fatigueChange = GetFatigueChange(activityConfig, outcomeType);
             int goldChange = CalculateGoldChange(activityConfig, outcomeType);
             int supplyChange = CalculateSupplyChange(activityConfig, outcomeType);
             int moraleChange = CalculateMoraleChange(activityConfig, outcomeType);
@@ -173,7 +172,6 @@ namespace Enlisted.Features.Camp
                 Outcome = outcomeType,
                 XpGained = xpGained,
                 SkillAffected = skillName,
-                FatigueChange = fatigueChange,
                 GoldChange = goldChange,
                 SupplyChange = supplyChange,
                 MoraleChange = moraleChange,
@@ -184,7 +182,7 @@ namespace Enlisted.Features.Camp
             };
 
             ModLogger.Debug(LogCategory, 
-                $"Activity '{category}' outcome: {outcomeType} (+{xpGained} XP, fatigue {fatigueChange:+#;-#;0})");
+                $"Activity '{category}' outcome: {outcomeType} (+{xpGained} XP)");
 
             return outcome;
         }
@@ -231,11 +229,6 @@ namespace Enlisted.Features.Camp
             }
 
             // Check for negative conditions
-            if (needs.Rest < 30)
-            {
-                return "fatigued";
-            }
-
             if (needs.Morale < 30)
             {
                 return "lowMorale";
@@ -308,21 +301,6 @@ namespace Enlisted.Features.Camp
             return (int)(baseXp * modifier);
         }
 
-        /// <summary>
-        /// Gets fatigue change from activity config.
-        /// </summary>
-        private static int GetFatigueChange(JToken activityConfig, OutcomeType outcome)
-        {
-            int baseFatigue = activityConfig["fatigueChange"]?.Value<int>() ?? 10;
-
-            // Mishaps cause more fatigue
-            if (outcome == OutcomeType.Mishap)
-            {
-                baseFatigue = (int)(baseFatigue * 1.5f);
-            }
-
-            return baseFatigue;
-        }
 
         /// <summary>
         /// Calculates gold change based on activity type and outcome.
@@ -511,11 +489,6 @@ namespace Enlisted.Features.Camp
                 {
                     needs.ModifyNeed(CompanyNeed.Morale, outcome.MoraleChange);
                 }
-                // Fatigue affects Rest need (inverted: more fatigue = less rest)
-                if (outcome.FatigueChange != 0)
-                {
-                    needs.ModifyNeed(CompanyNeed.Rest, -outcome.FatigueChange / 5);
-                }
             }
 
             // Apply condition if mishap caused one
@@ -661,8 +634,7 @@ namespace Enlisted.Features.Camp
                     ["normal"] = new JObject { ["min"] = 3, ["max"] = 6 },
                     ["poor"] = new JObject { ["min"] = 1, ["max"] = 3 },
                     ["mishap"] = new JObject { ["min"] = 0, ["max"] = 1 }
-                },
-                ["fatigueChange"] = 10
+                }
             };
 
             return defaultConfig;

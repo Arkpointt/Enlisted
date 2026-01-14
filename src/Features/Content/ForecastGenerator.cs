@@ -19,7 +19,7 @@ namespace Enlisted.Features.Content
     /// <summary>
     /// Generates player-specific forecasts for the YOU section of the Main Menu.
     /// Produces NOW (current status) and AHEAD (upcoming predictions) text incorporating
-    /// duty status, health, fatigue, and culture-aware rank names.
+    /// duty status, health, conditions, and culture-aware rank names.
     /// </summary>
     public class ForecastGenerator
     {
@@ -312,7 +312,7 @@ namespace Enlisted.Features.Content
             if (pressureLevel == MedicalPressureLevel.Moderate && !medicalAnalysis.HasCondition)
             {
                 forecasts.Add((
-                    new TextObject("{=menu_ahead_medical_risk_moderate}Fatigue is catching up with you.").ToString(),
+                    new TextObject("{=menu_ahead_medical_risk_moderate}You need rest soon.").ToString(),
                     Priority.Medium));
             }
         }

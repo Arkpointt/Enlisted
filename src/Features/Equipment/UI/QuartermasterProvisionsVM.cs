@@ -446,7 +446,7 @@ namespace Enlisted.Features.Equipment.UI
                 var sb = new System.Text.StringBuilder();
 
                 // Get food quality info
-                var (qualityName, moraleBonus, _, daysRemaining) = enlistment.GetFoodQualityInfo();
+                var (qualityName, moraleBonus, daysRemaining) = enlistment.GetFoodQualityInfo();
 
                 if (daysRemaining > 0)
                 {
