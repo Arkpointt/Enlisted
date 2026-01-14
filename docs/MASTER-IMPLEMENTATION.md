@@ -6,7 +6,7 @@
 **Created:** 2026-01-14  
 **Last Updated:** 2026-01-14  
 **Target Completion:** 2-3 weeks  
-**Related Docs:** [CK3 Feast Chain Analysis](ANEWFEATURE/ck3-feast-chain-analysis.md), [Order Progression System](Features/Core/order-progression-system.md), [Event System Schemas](Features/Content/event-system-schemas.md)  
+**Related Docs:** [CK3 Feast Chain Analysis](ANEWFEATURE/ck3-feast-chain-analysis.md), [Order Progression System](Features/Core/order-progression-system.md), [Event System Schemas](Features/Content/event-system-schemas.md), [Content Effects Reference](ANEWFEATURE/content-effects-reference.md), [Native Skill XP](ANEWFEATURE/native-skill-xp.md)
 **Target Version:** Bannerlord v1.3.13
 
 ---
@@ -244,6 +244,16 @@ Prompts must be contextually appropriate. "Rustling in bushes" makes no sense at
 - `["sea"]` = Only fires at sea (hull, rigging, waves, hold)
 - `["any"]` = Fires in both contexts (rare, for universal prompts like "distant figure")
 
+**Skill Rewards by Order Type:**
+Outcomes should award skills thematically appropriate to each order:
+- **Guard Duty / Patrol** → Perception (Scouting), Athletics, OneHanded
+- **Foraging / Supply Run** → Perception (Scouting), Athletics
+- **Scout Duty / Recon** → Perception (Scouting), Riding, Tactics
+- **Equipment Repair** → Smithing (Crafting)
+- **Treat Wounded** → Medicine
+- **Lead Patrol** → Leadership, Tactics
+- **Training Recruits** → Leadership, combat skills (OneHanded, Bow, etc.)
+
 ```json
 // order_prompts.json (NEW FILE)
 {
@@ -370,21 +380,21 @@ Prompts must be contextually appropriate. "Rustling in bushes" makes no sense at
       },
       {
         "text": "You find nothing of interest. Time wasted, but at least you were thorough.",
-        "effects": { "fatigue": 2 }
+        "effects": { "fatigue": 2, "skillXp": { "Perception": 5 } }
       }
     ],
     "small_reward": [
       {
         "text": "You find a coin purse dropped by a careless traveler.",
-        "effects": { "gold": "25-75" }
+        "effects": { "gold": "25-75", "skillXp": { "Perception": 12 } }
       },
       {
         "text": "An abandoned pack contains useful supplies.",
-        "effects": { "company_supplies": 3 }
+        "effects": { "company_supplies": 3, "skillXp": { "Perception": 10 } }
       },
       {
         "text": "A fellow soldier saw you checking the perimeter. Word gets around.",
-        "effects": { "officer_reputation": 2 }
+        "effects": { "officer_reputation": 2, "skillXp": { "Perception": 8 } }
       }
     ],
     "event_chain": [
@@ -402,7 +412,7 @@ Prompts must be contextually appropriate. "Rustling in bushes" makes no sense at
     "danger": [
       {
         "text": "Ambush! Bandits were waiting in the bushes!",
-        "effects": { "trigger_combat": "bandit_ambush_small" }
+        "effects": { "trigger_combat": "bandit_ambush_small", "skillXp": { "OneHanded": 10 } }
       },
       {
         "text": "You step into a concealed pit. Your ankle twists painfully.",
@@ -412,6 +422,18 @@ Prompts must be contextually appropriate. "Rustling in bushes" makes no sense at
   }
 }
 ```
+
+**Skill XP Integration:**
+Outcomes should reward contextually appropriate skills using thematic aliases:
+- **Guard/Patrol orders** → `"Perception"` (maps to Scouting → Cunning)
+- **Combat outcomes** → `"OneHanded"`, `"TwoHanded"`, `"Polearm"` (maps to Vigor skills)
+- **Foraging/Supply** → `"Perception"` for finding things (Scouting)
+- **Equipment repair** → `"Smithing"` (maps to Crafting → Endurance)
+- **Mounted patrol** → `"Riding"` (Endurance)
+- **Leading situations** → `"Leadership"` (Social)
+- **Medical events** → `"Medicine"` (Intelligence)
+
+See [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for skill XP effect format and [Native Skill XP](ANEWFEATURE/native-skill-xp.md) for complete skill mappings.
 
 ---
 
@@ -465,7 +487,8 @@ Prompts must be contextually appropriate. "Rustling in bushes" makes no sense at
           },
           "immediate_effects": {
             "soldier_reputation": 3,
-            "scrutiny": 1
+            "scrutiny": 1,
+            "skillXp": { "Charm": 10 }
           }
         },
         {
@@ -477,7 +500,8 @@ Prompts must be contextually appropriate. "Rustling in bushes" makes no sense at
           "immediate_effects": {
             "officer_reputation": 5,
             "soldier_reputation": -8,
-            "gold": 15
+            "gold": 15,
+            "skillXp": { "Leadership": 8 }
           }
         }
       ]
@@ -589,12 +613,16 @@ The current 65 "Context Events" that fire randomly should be converted:
 | Danger events | 15 | → Prompt outcomes (danger) |
 | Story hooks | 20 | → Event chains (event_chain) |
 
+**Preserve skill XP:** Existing events that award skill XP should retain those rewards in their converted form.
+
 ### Order Events (84) → Prompt System
 
 The 84 existing order events become:
 - Prompt templates (contextual text per order type)
 - Outcome pools (what happens when player investigates)
 - Event chains (multi-phase narratives)
+
+**Add skill XP:** Many existing order events lack skill XP rewards. During conversion, add thematically appropriate skill XP to outcomes (see [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for effect format).
 
 ---
 
@@ -612,6 +640,12 @@ The 84 existing order events become:
 - [ ] 30% yield small rewards (gold, supplies, rep)
 - [ ] 15% trigger event chains
 - [ ] 5% trigger danger
+
+### Skill Progression
+- [ ] Outcomes award appropriate skill XP for order type
+- [ ] Thematic aliases work ("Perception" awards Scouting XP)
+- [ ] Skill XP integrates with native progression system
+- [ ] Different order types reward different skills (coverage balance)
 
 ### Event Chains
 - [ ] Chains progress through phases
@@ -646,10 +680,12 @@ The 84 existing order events become:
 4. Add prompt check to `OrderProgressionBehavior.ProcessSlotPhase()`
 5. Create `ModuleData/Enlisted/Prompts/order_prompts.json` with templates
 6. Create `ModuleData/Enlisted/Prompts/prompt_outcomes.json` with outcomes
-7. Create `PromptCatalog` to load and manage prompts
-8. Implement pre-roll outcome logic with ModLogger
-9. **Run validation:** `python Tools/Validation/validate_content.py`
-10. **Build and test:** `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
+7. **Add skill XP to all outcomes** - use thematic aliases ("Perception", "Smithing", etc.)
+8. Create `PromptCatalog` to load and manage prompts
+9. Implement pre-roll outcome logic with ModLogger
+10. **Verify skill XP integration** - ensure `ApplyPromptEffects` handles `skillXp` field
+11. **Run validation:** `python Tools/Validation/validate_content.py`
+12. **Build and test:** `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
 
 ### Phase 3: Event Chains (5-7 days)
 1. Create `EventChainManager` class (see Data Structures below)
@@ -682,10 +718,15 @@ The 84 existing order events become:
 1. Convert context events to appropriate categories
 2. Write new prompt templates per order type (follow [Writing Style Guide](Features/Content/writing-style-guide.md))
 3. Create outcome pools with variety
-4. Write 5-10 event chains with branches
-5. **Run validation after each content addition:** `python Tools/Validation/validate_content.py`
-6. **Sync localization strings:** `python Tools/Validation/sync_event_strings.py`
-7. Test in-game with different order types and contexts
+4. **Add skill XP to outcomes** - reference [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for:
+   - Skill XP effect format and thematic aliases
+   - Appropriate skills per order type (see Skill Rewards by Order Type section)
+   - Attribute coverage balance (ensure Vigor/Control/Intelligence get coverage)
+5. Write 5-10 event chains with branches
+6. **Run validation after each content addition:** `python Tools/Validation/validate_content.py`
+7. **Sync localization strings:** `python Tools/Validation/sync_event_strings.py`
+8. Test in-game with different order types and contexts
+9. **Verify skill progression** - test that outcomes award correct skill XP
 
 ---
 
@@ -1349,6 +1390,24 @@ private void ApplyPromptEffects(Dictionary<string, object> effects)
                 // Parse range "25-75" or single value
                 var gold = ParseGoldRange(effect.Value.ToString());
                 Hero.MainHero.ChangeHeroGold(gold);
+                break;
+                
+            case "skillXp":
+                // Parse skill XP dictionary { "Perception": 15, "Athletics": 10 }
+                var skillXpDict = effect.Value as Dictionary<string, object>;
+                if (skillXpDict != null)
+                {
+                    foreach (var skillEntry in skillXpDict)
+                    {
+                        var skill = SkillCheckHelper.GetSkillByName(skillEntry.Key);
+                        var xp = int.Parse(skillEntry.Value.ToString());
+                        if (skill != null)
+                        {
+                            Hero.MainHero.AddSkillXp(skill, xp);
+                            ModLogger.Debug(LogCategory, $"Awarded {xp} XP to {skill.Name}");
+                        }
+                    }
+                }
                 break;
                 
             case "officer_reputation":
