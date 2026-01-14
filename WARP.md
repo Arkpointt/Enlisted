@@ -74,7 +74,19 @@ python Tools/Validation/sync_event_strings.py
 | Common pitfalls & code patterns | [docs/BLUEPRINT.md](docs/BLUEPRINT.md) (comprehensive list) |
 | Write events/decisions/orders | [docs/Features/Content/writing-style-guide.md](docs/Features/Content/writing-style-guide.md) |
 | Check JSON schemas | [docs/Features/Content/event-system-schemas.md](docs/Features/Content/event-system-schemas.md) |
-| Find all content (events, orders) | [docs/Features/Content/content-index.md](docs/Features/Content/content-index.md) |
+|| Find all content (events, orders) | [docs/Features/Content/content-index.md](docs/Features/Content/content-index.md) |
+
+## 🔗 Context7 Libraries
+
+For up-to-date third-party library docs, use Context7 MCP with these IDs:
+
+| Library | Context7 ID |
+|---------|-------------|
+| Harmony | `/pardeike/harmony` |
+| Newtonsoft.Json | `/jamesnk/newtonsoft.json` |
+| C# Language | `/websites/learn_microsoft_en-us_dotnet_csharp` |
+
+**Note:** TaleWorlds/Bannerlord APIs are NOT in Context7 — use local `Decompile/` instead.
 
 ## 🤖 When to Use CrewAI
 

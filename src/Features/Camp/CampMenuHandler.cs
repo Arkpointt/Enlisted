@@ -869,13 +869,11 @@ namespace Enlisted.Features.Camp
                     var tierLabel = new TextObject("{=records_tier}Tier").ToString();
                     var serviceXpLabel = new TextObject("{=records_service_xp}Service XP").ToString();
                     var daysServedLabel = new TextObject("{=records_days_served}Days Served").ToString();
-                    var fatigueLabel = new TextObject("{=records_fatigue}Fatigue").ToString();
                     var nextTierLabel = new TextObject("{=records_next_tier_req}Next Tier Requirement").ToString();
                     
                     sb.AppendLine($"{tierLabel}: {enlistment.EnlistmentTier}");
                     sb.AppendLine($"{serviceXpLabel}: {enlistment.EnlistmentXP}");
                     sb.AppendLine($"{daysServedLabel}: {(int)enlistment.DaysServed}");
-                    sb.AppendLine($"{fatigueLabel}: {enlistment.FatigueCurrent}/{enlistment.FatigueMax}");
 
                     if (enlistment.EnlistmentTier < 6)
                     {
@@ -2905,21 +2903,18 @@ namespace Enlisted.Features.Camp
 
         private void OnEscortMerchant()
         {
-            // Always succeeds but costs fatigue
+            // Always succeeds - reduce PayTension
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null)
             {
                 return;
             }
 
-            // Cost fatigue
-            enlistment.TryConsumeFatigue(4, "escort_mission");
-
             // Reduce PayTension
             ReducePayTension(15);
 
             InformationManager.DisplayMessage(new InformationMessage(
-                new TextObject("{=hlm_escort_success}You escort the merchant safely. The lord's coffers grow. (-15 PayTension, -4 fatigue)").ToString(),
+                new TextObject("{=hlm_escort_success}You escort the merchant safely. The lord's coffers grow. (-15 PayTension)").ToString(),
                 Colors.Green));
 
             ModLogger.Info(LogCategory, "Escort merchant mission");

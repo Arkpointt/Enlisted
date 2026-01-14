@@ -38,6 +38,14 @@ $RECYCLE.BIN/
 .env
 Tools/CrewAI/.env
 
+# Python virtual environments
+venv/
+Tools/venv/
+Tools/CrewAI/venv/
+__pycache__/
+*.pyc
+*.pyo
+
 # Archives
 *.zip
 *.7z

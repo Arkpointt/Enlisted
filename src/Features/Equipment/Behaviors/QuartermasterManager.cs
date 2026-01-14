@@ -2549,20 +2549,19 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                 var sb = new StringBuilder();
                 sb.AppendLine(new TextObject("{=qm_rations_intro}Purchase better rations from the quartermaster.").ToString());
-                sb.AppendLine(new TextObject("{=qm_rations_desc}Higher quality food provides morale bonuses and fatigue relief.").ToString());
+                sb.AppendLine(new TextObject("{=qm_rations_desc}Higher quality food provides morale bonuses.").ToString());
                 sb.AppendLine();
 
                 // Show current status
                 if (enlistment != null)
                 {
-                    var (qualityName, moraleBonus, _, daysRemaining) = enlistment.GetFoodQualityInfo();
+                    var (qualityName, daysRemaining) = enlistment.GetFoodQualityInfo();  // Morale bonus removed
 
                     if (daysRemaining > 0)
                     {
-                        var statusText = new TextObject("{=qm_rations_current}Current: {QUALITY} (+{MORALE} morale) - {DAYS} days remaining");
+                        var statusText = new TextObject("{=qm_rations_current}Current: {QUALITY} - {DAYS} days remaining");
                         statusText.SetTextVariable("QUALITY", qualityName);
-                        statusText.SetTextVariable("MORALE", moraleBonus);
-                        statusText.SetTextVariable("DAYS", daysRemaining.ToString("F1"));
+                        statusText.SetTextVariable("DAYS", ((int)Math.Ceiling(daysRemaining)).ToString());
                         sb.AppendLine(statusText.ToString());
                     }
                     else
@@ -2634,15 +2633,15 @@ namespace Enlisted.Features.Equipment.Behaviors
                 _ => OnPurchaseRations(EnlistmentBehavior.FoodQualityTier.Supplemental, 10, 1),
                 false, 1);
 
-            // Officer's Fare - 30g, +4 morale, +2 fatigue relief, 2 days
+            // Officer's Fare - 30g, +4 morale, 2 days
             starter.AddGameMenuOption("quartermaster_rations", "rations_officer",
-                new TextObject("{=qm_rations_officer}Officer's Fare (30{GOLD_ICON}) - +4 morale, +2 fatigue for 2 days").ToString(),
+                new TextObject("{=qm_rations_officer}Officer's Fare (30{GOLD_ICON}) - +4 morale for 2 days").ToString(),
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
                     var enlistment = EnlistmentBehavior.Instance;
                     var cost = enlistment?.IsEnlisted == true ? enlistment.ApplyQuartermasterDiscount(30) : 30;
-                    args.Text = new TextObject($"Officer's Fare ({cost}{{GOLD_ICON}}) - +4 morale, +2 fatigue for 2 days");
+                    args.Text = new TextObject($"Officer's Fare ({cost}{{GOLD_ICON}}) - +4 morale for 2 days");
 
                     var canAfford = Hero.MainHero.Gold >= cost;
                     if (!canAfford)
@@ -2655,15 +2654,15 @@ namespace Enlisted.Features.Equipment.Behaviors
                 _ => OnPurchaseRations(EnlistmentBehavior.FoodQualityTier.Officer, 30, 2),
                 false, 2);
 
-            // Commander's Feast - 75g, +8 morale, +5 fatigue relief, 3 days
+            // Commander's Feast - 75g, +8 morale, 3 days
             starter.AddGameMenuOption("quartermaster_rations", "rations_commander",
-                new TextObject("{=qm_rations_commander}Commander's Feast (75{GOLD_ICON}) - +8 morale, +5 fatigue for 3 days").ToString(),
+                new TextObject("{=qm_rations_commander}Commander's Feast (75{GOLD_ICON}) - +8 morale for 3 days").ToString(),
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
                     var enlistment = EnlistmentBehavior.Instance;
                     var cost = enlistment?.IsEnlisted == true ? enlistment.ApplyQuartermasterDiscount(75) : 75;
-                    args.Text = new TextObject($"Commander's Feast ({cost}{{GOLD_ICON}}) - +8 morale, +5 fatigue for 3 days");
+                    args.Text = new TextObject($"Commander's Feast ({cost}{{GOLD_ICON}}) - +8 morale for 3 days");
 
                     var canAfford = Hero.MainHero.Gold >= cost;
                     var highEnoughTier = enlistment?.EnlistmentTier >= 4;

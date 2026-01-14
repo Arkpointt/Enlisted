@@ -38,7 +38,6 @@
         "debug_skip_gear_stripping": false,
         "probation_days": 12,
         "probation_wage_multiplier": 0.5,
-        "probation_fatigue_cap": 18,
         "commander_reentry_fine_gold": 3000
     },
     "finance": {
@@ -74,8 +73,6 @@
     "escalation": {
         "enabled": true,
         "scrutiny_decay_interval_days": 7,
-        "discipline_decay_interval_days": 14,
-        "soldier_rep_decay_interval_days": 14,
         "medical_risk_decay_interval_days": 1,
         "threshold_event_cooldown_days": 7
     },

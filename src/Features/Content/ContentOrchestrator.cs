@@ -759,13 +759,6 @@ namespace Enlisted.Features.Content
             // Calculate probability with modifiers
             var baseChance = pressure.MedicalRisk * 0.05f; // 5% per risk level (15-25% base)
             
-            // Fatigue modifier
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment != null && enlistment.FatigueCurrent <= 8)
-            {
-                baseChance += 0.10f; // +10% if exhausted
-            }
-
             // Season modifier - winter increases illness risk
             var worldSituation = WorldStateAnalyzer.AnalyzeSituation();
             // TODO: Add season detection when WorldStateAnalyzer has GetSeason()
@@ -1877,8 +1870,6 @@ namespace Enlisted.Features.Content
             return needName.ToLowerInvariant() switch
             {
                 "supplies" => needs.Supplies,
-                "rest" => needs.Rest,
-                "morale" => needs.Morale,
                 "readiness" => needs.Readiness,
                 _ => 100
             };
