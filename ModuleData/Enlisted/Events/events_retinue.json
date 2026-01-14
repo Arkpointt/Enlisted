@@ -1166,7 +1166,7 @@
           "rewards": {},
           "effects": {
             "retinueLoyalty": 15,
-            "scrutiny": 5000000,
+            "scrutiny": 50,
             "lordReputation": -20
           },
           "resultTextId": "evt_ret_test_refuse_result",

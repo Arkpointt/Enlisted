@@ -115,35 +115,13 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
-        /// Maps custom Soldier/Officer/Lord reputation to native personality traits.
+        /// Maps custom Lord reputation to native personality traits.
         /// This provides free UI integration on the character sheet and affects
         /// native game reactions from lords and companions.
         /// </summary>
         private static List<IncidentEffect> TranslateReputationToTraits(EventEffects effects, NativeTraitMappingConfig config)
         {
             var result = new List<IncidentEffect>();
-
-            // Soldier rep → Valor (bravery, fighting spirit)
-            if (effects.SoldierRep.HasValue && effects.SoldierRep.Value != 0)
-            {
-                var valorAmount = effects.SoldierRep.Value / config.ScaleDivisor;
-                if (Math.Abs(valorAmount) >= config.MinimumChange)
-                {
-                    result.Add(IncidentEffect.TraitChange(DefaultTraits.Valor, valorAmount));
-                    ModLogger.Debug(LogCategory, $"Soldier rep {effects.SoldierRep.Value} → Valor {valorAmount}");
-                }
-            }
-
-            // Officer rep → Calculating (tactical, organized)
-            if (effects.OfficerRep.HasValue && effects.OfficerRep.Value != 0)
-            {
-                var calcAmount = effects.OfficerRep.Value / config.ScaleDivisor;
-                if (Math.Abs(calcAmount) >= config.MinimumChange)
-                {
-                    result.Add(IncidentEffect.TraitChange(DefaultTraits.Calculating, calcAmount));
-                    ModLogger.Debug(LogCategory, $"Officer rep {effects.OfficerRep.Value} → Calculating {calcAmount}");
-                }
-            }
 
             // Lord rep → Honor (duty, keeping word)
             if (effects.LordRep.HasValue && effects.LordRep.Value != 0)

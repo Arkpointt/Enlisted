@@ -12,14 +12,14 @@ using TaleWorlds.Localization;
 namespace Enlisted.Features.Escalation
 {
     /// <summary>
-    /// Phase 4 escalation manager.
+    /// Escalation manager - tracks player trouble with command and medical risk.
     ///
     /// Responsibilities:
     /// - Owns the persisted EscalationState (save/load via CampaignBehavior SyncData)
     /// - Provides track modification APIs (Scrutiny 0-100, MedicalRisk 0-5)
-    /// - Provides lord reputation modification via native Hero.GetRelation system
+    /// - Manages lord reputation (0-100 scale, pending migration to native Hero.GetRelation)
     /// - Provides readable "state" descriptions for UI ("Watched", "Hot", "Trusted", etc.)
-    /// - Provides passive decay logic (integration into daily tick is a later step)
+    /// - Handles passive decay via daily tick
     ///
     /// Important constraints:
     /// - No instant hard fails: this manager never forces game-over; it only tracks and exposes state.

@@ -4,7 +4,6 @@ namespace Enlisted.Features.Company
     /// The two core needs that must be balanced for company health and effectiveness.
     /// Represents the enlisted lord's party needs (readiness, supplies).
     /// Each need ranges from 0-100, with thresholds at 30 (Poor) and 20 (Critical).
-    /// Note: Rest was removed 2026-01-11 (redundant with player fatigue system).
     /// </summary>
     public enum CompanyNeed
     {

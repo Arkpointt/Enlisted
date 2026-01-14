@@ -15,13 +15,6 @@
       "normal": 30,
       "poor": 12,
       "mishap": 3
-    },
-    "fatigued": {
-      "excellent": 5,
-      "good": 15,
-      "normal": 35,
-      "poor": 30,
-      "mishap": 15
     }
   },
   "activities": {
@@ -35,7 +28,6 @@
         "poor": { "min": 2, "max": 5 },
         "mishap": { "min": 0, "max": 2 }
       },
-      "fatigueChange": 5,
       "flavorText": {
         "excellent": [
           "Perfect alignment. The sergeant nods approval.",
@@ -101,7 +93,6 @@
         "poor": { "min": 3, "max": 7 },
         "mishap": { "min": 0, "max": 3 }
       },
-      "fatigueChange": 12,
       "mishapCondition": "minor_injury",
       "mishapChance": 0.4,
       "flavorText": {
@@ -169,7 +160,6 @@
         "poor": { "min": 1, "max": 3 },
         "mishap": { "min": 0, "max": 1 }
       },
-      "fatigueChange": 15,
       "goldChance": {
         "excellent": 0.3,
         "good": 0.15,
@@ -241,7 +231,6 @@
         "poor": { "min": 1, "max": 3 },
         "mishap": { "min": 0, "max": 1 }
       },
-      "fatigueChange": -5,
       "flavorText": {
         "excellent": [
           "Good stories around the fire. Spirits high.",
@@ -307,7 +296,6 @@
         "poor": { "min": 0, "max": 2 },
         "mishap": { "min": 0, "max": 0 }
       },
-      "fatigueChange": 3,
       "goldChance": {
         "excellent": 0.6,
         "good": 0.4,
@@ -384,7 +372,6 @@
         "poor": { "min": 0, "max": 0 },
         "mishap": { "min": 0, "max": 0 }
       },
-      "fatigueChange": -25,
       "recoveryBonus": {
         "excellent": 1.5,
         "good": 1.2,
@@ -457,7 +444,6 @@
         "poor": { "min": 1, "max": 4 },
         "mishap": { "min": 0, "max": 1 }
       },
-      "fatigueChange": 18,
       "supplyChange": {
         "excellent": { "min": 30, "max": 50 },
         "good": { "min": 15, "max": 30 },
@@ -532,7 +518,6 @@
         "poor": { "min": 1, "max": 3 },
         "mishap": { "min": 0, "max": 1 }
       },
-      "fatigueChange": 12,
       "goldChance": {
         "excellent": 0.2
       },
@@ -602,7 +587,6 @@
         "poor": { "min": 0, "max": 0 },
         "mishap": { "min": 0, "max": 0 }
       },
-      "fatigueChange": -40,
       "flavorText": {
         "excellent": [
           "Full day of rest. Completely recovered.",
@@ -668,7 +652,6 @@
         "poor": { "min": 2, "max": 5 },
         "mishap": { "min": 0, "max": 2 }
       },
-      "fatigueChange": 20,
       "readinessChange": {
         "excellent": 15,
         "good": 10,
@@ -743,7 +726,6 @@
         "poor": { "min": 0, "max": 1 },
         "mishap": { "min": 0, "max": 0 }
       },
-      "fatigueChange": -10,
       "flavorText": {
         "excellent": [
           "Easy day. Spirits lifted across the company.",
@@ -801,3 +783,4 @@
     }
   }
 }
+

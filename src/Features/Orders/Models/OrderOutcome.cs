@@ -33,7 +33,6 @@ namespace Enlisted.Features.Orders.Models
         /// Company need modifications.
         /// Keys: "Readiness", "Supplies".
         /// Values: delta to apply (positive improves, negative degrades).
-        /// Note: Rest removed 2026-01-11 (redundant with player fatigue system).
         /// </summary>
         public Dictionary<string, int> CompanyNeeds { get; set; } = [];
 

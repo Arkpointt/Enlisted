@@ -8,9 +8,9 @@ namespace Enlisted.Features.Escalation
     /// Persisted escalation tracks.
     ///
     /// Ranges (per docs/Features/Core/core-gameplay.md):
-    /// - Scrutiny: 0–100 (merged from old Scrutiny 0-10 + Discipline 0-10)
-    /// - Lord reputation: 0–100 (will migrate to native Hero.GetRelation)
-    /// - Medical risk: 0–5
+    /// - Scrutiny: 0–100 (tracks rule-breaking, insubordination, crime suspicion)
+    /// - Lord reputation: 0–100 (pending migration to native Hero.GetRelation)
+    /// - Medical risk: 0–5 (illness/injury risk from conditions and poor care)
     ///
     /// This class is intentionally "dumb storage". All rules live in EscalationManager.
     /// </summary>

@@ -887,7 +887,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 if (svc.TryConsumeReservistForFaction(faction, out var targetTier, out var bonusXp,
-                        out var relationBonus, out var band, out var probation, out var officerRepRestore, out var soldierRepRestore))
+                        out var relationBonus, out var band, out var probation))
                 {
                     if (probation)
                     {
@@ -918,9 +918,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                     }
 
-                    // NOTE: Officer/Soldier reputation removed - now using native Bannerlord lord relations.
-                    // Service record restoration logic will be updated in Phase 3+.
-                    // For now, relation bonus covers this functionality.
 
                     if (targetTier >= 7)
                     {
@@ -952,40 +949,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
         }
 
-        /// <summary>
-        /// Shows a notification to the player about restored reputation when re-enlisting.
-        /// Displays the discharge band and the restored reputation values.
-        /// </summary>
-        private void ShowReputationRestorationNotification(string band, int officerRepRestore, int soldierRepRestore)
-        {
-            try
-            {
-                if (officerRepRestore == 0 && soldierRepRestore == 0)
-                {
-                    return;
-                }
-
-                string bandDisplay = band switch
-                {
-                    "veteran" => "veteran status",
-                    "honorable" => "honorable service",
-                    "grace" => "previous service",
-                    _ => "service record"
-                };
-
-                var msg = new TextObject("{=enl_rep_restored}Your {BAND} has restored your standing: Officer {OFFICER_REP}, Soldiers {SOLDIER_REP}");
-                msg.SetTextVariable("BAND", bandDisplay);
-                msg.SetTextVariable("OFFICER_REP", officerRepRestore > 0 ? $"+{officerRepRestore}" : $"{officerRepRestore}");
-                msg.SetTextVariable("SOLDIER_REP", soldierRepRestore > 0 ? $"+{soldierRepRestore}" : $"{soldierRepRestore}");
-
-                InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Cyan));
-                ModLogger.Info("ServiceRecord", $"Reputation restoration notification shown: {band} (Officer={officerRepRestore}, Soldier={soldierRepRestore})");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Warn("ServiceRecord", $"Failed to show reputation restoration notification: {ex.Message}");
-            }
-        }
 
         public bool HasActiveGraceProtection => CampaignTime.Now < _graceProtectionEnds;
 
@@ -3355,15 +3318,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     try
                     {
-                        var record = ServiceRecordManager.Instance.GetOrCreateRecord(_enlistedLord.MapFaction);
-                        if (record != null && EscalationManager.Instance != null)
-                        {
-                            // Officer/Soldier reputation removed - no longer tracking for service record
-                            record.OfficerRepAtExit = 0;
-                            record.SoldierRepAtExit = 0;
-                            ModLogger.Info("ServiceRecord",
-                                $"Saved reputation snapshot: Officer={record.OfficerRepAtExit}, Soldier={record.SoldierRepAtExit}");
-                        }
+                        // Officer/Soldier reputation removed - service record no longer stores these
                     }
                     catch (Exception ex)
                     {

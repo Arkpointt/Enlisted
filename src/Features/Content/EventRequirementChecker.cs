@@ -76,12 +76,6 @@ namespace Enlisted.Features.Content
                     return false;
                 }
                 
-                // Check soldier reputation maximum (for theft events targeting unpopular soldiers)
-                if (!MeetsSoldierRepRequirement(requirements))
-                {
-                    return false;
-                }
-                
                 // Check baggage has items (for theft events)
                 if (!MeetsBaggageItemsRequirement(requirements))
                 {
@@ -316,15 +310,6 @@ namespace Enlisted.Features.Content
 
             var hpPercent = (hero.HitPoints * 100) / maxHp;
             return hpPercent < requirements.HpBelow.Value;
-        }
-        
-        /// <summary>
-        /// Soldier reputation requirements removed in Phase 3.
-        /// </summary>
-        private static bool MeetsSoldierRepRequirement(EventRequirements requirements)
-        {
-            // Soldier reputation removed - always pass this check
-            return true;
         }
         
         /// <summary>

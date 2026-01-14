@@ -1386,8 +1386,6 @@ Used in proving events (`events_promotion.json`) to grant rank promotions:
 **⚠️ COMMON MISTAKES:**
 - Use `hpChange`, not `hp`
 - Use `skillXp` in `effects` for main options, NOT in `rewards`
-- Use `fatigueRelief` in `rewards` (sub-choices only)
-- Use `soldierRep` (camelCase), parser also accepts `soldier_rep`
 - Don't forget `"promotes": true` in all proving event options (or promotion won't happen!)
 
 **✅ PLAYER FEEDBACK:**
@@ -1430,14 +1428,14 @@ Options with success/failure outcomes:
   "risk": "risky",
   "risk_chance": 50,
   "effects": {
-    "soldierRep": 1
+    "lordRep": 1
   },
   "effects_success": {
     "gold": 100
   },
   "effects_failure": {
     "gold": -100,
-    "soldierRep": -2
+    "lordRep": -2
   },
   "resultText": "You win!",
   "failure_resultText": "You lose everything."
@@ -1470,16 +1468,10 @@ Options with success/failure outcomes:
 
 For `requirements.minEscalation`, `triggers.escalation_requirements`, and `effects`:
 
-**Primary Tracks:**
-- `scrutiny` - Crime suspicion (0-10)
-- `discipline` - Rule-breaking record (0-10)
+**Active Tracks:**
+- `scrutiny` - Trouble/suspicion level (0-100 scale, replaces old Discipline track)
 - `medical_risk` / `medicalrisk` / `MedicalRisk` - Health status (0-5)
-- `pay_tension` / `pay_tension_min` / `paytension` - Pay tension (0-100)
-
-**Reputation Tracks:**
-- `soldierreputation` / `soldier_reputation` / `SoldierReputation` - Soldier rep (-50 to +50)
-- `officerreputation` / `officer_reputation` / `OfficerReputation` - Officer rep (0-100)
-- `lordreputation` / `lord_reputation` / `LordReputation` - Lord rep (0-100)
+- `lordreputation` / `lord_reputation` / `LordReputation` - Lord rep (0-100, uses native Hero.GetRelation())
 
 **Note:** Parser accepts multiple naming variants (camelCase, snake_case, PascalCase) for compatibility.
 
@@ -1543,10 +1535,10 @@ All variables use fallback values if data is unavailable (e.g., "the Sergeant" i
           "costs": {
             "fatigue": 2
           },
-          "effects": {
-            "skillXp": { "OneHanded": 25, "Athletics": 10 },
-            "soldierRep": 2
-          },
+  "effects": {
+    "skillXp": { "OneHanded": 25, "Athletics": 10 },
+    "lordRep": 2
+  },
           "resultTextId": "dec_spar_friendly_result",
           "resultText": "A good practice session. You both learn something."
         },
@@ -1557,11 +1549,11 @@ All variables use fallback values if data is unavailable (e.g., "the Sergeant" i
           "costs": {
             "fatigue": 4
           },
-          "effects": {
-            "skillXp": { "OneHanded": 40, "Athletics": 20 },
-            "soldierRep": 3,
-            "hpChange": -8
-          },
+  "effects": {
+    "skillXp": { "OneHanded": 40, "Athletics": 20 },
+    "lordRep": 3,
+    "hpChange": -8
+  },
           "resultTextId": "dec_spar_hard_result",
           "resultText": "Blood is drawn. Word spreads about this bout."
         }

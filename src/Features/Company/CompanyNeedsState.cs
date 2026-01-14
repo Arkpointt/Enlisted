@@ -9,7 +9,6 @@ namespace Enlisted.Features.Company
     /// Degrades daily based on activities and recovers through appropriate assignments.
     /// NOTE: Serialization is handled manually in ScheduleBehavior.SyncData()
     /// Supplies uses CompanySupplyManager for unified logistics calculation including rations.
-    /// Note: Rest was removed 2026-01-11 (redundant with player fatigue system).
     /// </summary>
     public class CompanyNeedsState
     {

@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 2,
   "packId": "decisions_catalog",
   "category": "decision",
@@ -28,12 +28,11 @@
           "textId": "dec_maintain_gear_do",
           "text": "Spend time maintaining your equipment.",
           "effects": {
-            "fatigue": 1,
-            "scrutiny": -1000000
+                        "scrutiny": -1000000
           },
           "resultTextId": "dec_maintain_gear_result",
           "resultText": "You work methodically - cleaning rust, sharpening edges, oiling leather. Your gear is ready for whatever comes.",
-          "tooltip": "Maintain your gear. Costs 1 fatigue."
+          "tooltip": "Maintain your gear."
         },
         {
           "id": "cancel",
@@ -71,11 +70,10 @@
             "gold": 20
           },
           "rewards": {
-            "fatigueRelief": 2
-          },
+                      },
           "resultTextId": "dec_write_letter_reassuring_result",
           "resultText": "You craft careful words of safety and good fortune. No need to worry those waiting for you. The courier takes your letter with the next dispatch.",
-          "tooltip": "Restores 2 fatigue. Costs 20 gold."
+          "tooltip": "Costs 20 gold."
         },
         {
           "id": "write_honest",
@@ -85,11 +83,10 @@
             "gold": 50
           },
           "rewards": {
-            "fatigueRelief": 4
-          },
+                      },
           "resultTextId": "dec_write_letter_honest_result",
           "resultText": "The truth flows onto the page - the fear, the boredom, the moments of strange pride. It feels good to be honest, even if the words might worry them.",
-          "tooltip": "Restores 4 fatigue. Costs 50 gold."
+          "tooltip": "Costs 50 gold."
         },
         {
           "id": "cancel",
@@ -152,3 +149,6 @@
     }
   ]
 }
+
+
+

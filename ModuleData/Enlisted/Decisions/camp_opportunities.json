@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "Defines camp life opportunities for the living camp simulation",
   "opportunities": [
     {
@@ -23,9 +23,7 @@
         "Midday"
       ],
       "orderCompatibility": {
-        "guard_duty": "risky",
-        "fatigue_duty": "blocked",
-        "default": "available"
+        "guard_duty": "risky","default": "available"
       },
       "detection": {
         "baseChance": 0.3,
@@ -206,9 +204,7 @@
         "Midday",
         "Dusk"
       ],
-      "orderCompatibility": {
-        "fatigue_duty": "available",
-        "default": "available"
+      "orderCompatibility": {"default": "available"
       }
     },
     {
@@ -259,9 +255,7 @@
         "Midday"
       ],
       "orderCompatibility": {
-        "guard_duty": "risky",
-        "fatigue_duty": "blocked",
-        "default": "available"
+        "guard_duty": "risky","default": "available"
       },
       "detection": {
         "baseChance": 0.35,
@@ -365,9 +359,7 @@
       "notAtSea": true,
       "orderCompatibility": {
         "guard_duty": "blocked",
-        "patrol": "blocked",
-        "fatigue_duty": "blocked",
-        "default": "available"
+        "patrol": "blocked","default": "available"
       }
     },
     {
@@ -393,9 +385,7 @@
         "Dusk"
       ],
       "notAtSea": true,
-      "orderCompatibility": {
-        "fatigue_duty": "available",
-        "default": "available"
+      "orderCompatibility": {"default": "available"
       }
     },
     {
@@ -511,9 +501,7 @@
         "Midday"
       ],
       "orderCompatibility": {
-        "guard_duty": "blocked",
-        "fatigue_duty": "blocked",
-        "default": "available"
+        "guard_duty": "blocked","default": "available"
       }
     },
     {
@@ -538,9 +526,7 @@
         "Midday"
       ],
       "orderCompatibility": {
-        "guard_duty": "risky",
-        "fatigue_duty": "blocked",
-        "default": "available"
+        "guard_duty": "risky","default": "available"
       },
       "detection": {
         "baseChance": 0.25,
@@ -681,9 +667,7 @@
       ],
       "orderCompatibility": {
         "guard_duty": "blocked",
-        "patrol": "blocked",
-        "fatigue_duty": "blocked",
-        "default": "available"
+        "patrol": "blocked","default": "available"
       }
     },
     {
@@ -1032,9 +1016,7 @@
         "Dusk"
       ],
       "atSea": true,
-      "orderCompatibility": {
-        "fatigue_duty": "available",
-        "default": "available"
+      "orderCompatibility": {"default": "available"
       }
     },
     {
@@ -1136,9 +1118,7 @@
       ],
       "orderCompatibility": {
         "guard_duty": "available",
-        "patrol": "available",
-        "fatigue_duty": "available",
-        "default": "available"
+        "patrol": "available","default": "available"
       },
       "requirements": {
         "conditionStates": [
@@ -1184,3 +1164,6 @@
     }
   ]
 }
+
+
+

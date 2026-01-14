@@ -68,7 +68,7 @@
           },
           "resultTextId": "mi_siege_water_find_result",
           "resultText": "You slip away and search the siege works. A spring, missed by others, trickles from the rocks. You mark the spot and report it to the sergeant.",
-          "tooltip": "Requires Scouting 40. Moderate risk. Train Scouting. +8 Officer rep. Boosts company supplies.",
+          "tooltip": "Requires Scouting 40. Moderate risk. +20 Scouting XP, +8 Lord reputation. Boosts company supplies.",
           "risk": "moderate",
           "effects": {
             "skillXp": {
@@ -114,7 +114,7 @@
           },
           "resultTextId": "mi_siege_boredom_games_result",
           "resultText": "Wrestling, races, archery contests—you give the men something to do besides brood. Morale lifts, if only for a while.",
-          "tooltip": "Requires Leadership 35. Train Leadership. +8 Soldier rep. Boosts company morale.",
+          "tooltip": "Requires Leadership 35. +15 Leadership XP, +4 Lord reputation. Boosts company morale.",
           "risk": "safe",
           "effects": {
             "skillXp": {
@@ -137,10 +137,10 @@
             "companyNeeds": {
               "Morale": -3
             },
-            "scrutiny": -2000000,
+            "scrutiny": -20,
             "lordReputation": 4
           },
-          "tooltip": "Enforce order. +5 Officer rep, -3 Soldier rep. Reduces discipline issues."
+          "tooltip": "Enforce order. +4 Lord reputation, -20 Scrutiny. Reduces morale."
         },
         {
           "id": "let_be",
@@ -150,12 +150,12 @@
           "resultText": "You stay out of it. Men will be men. A few black eyes and bureaucratic egos won't change the course of the siege.",
           "risk": "safe",
           "effects": {
-            "scrutiny": 2000000,
+            "scrutiny": 20,
             "companyNeeds": {
               "Morale": -5
             }
           },
-          "tooltip": "Safe choice. Adds 2 discipline issues. Harms company morale."
+          "tooltip": "Safe choice. +20 Scrutiny. Harms company morale."
         }
       ]
     },
@@ -191,10 +191,10 @@
             "traitXp": {
               "Honor": 5
             },
-            "scrutiny": -2000000,
+            "scrutiny": -20,
             "lordReputation": 10
           },
-          "tooltip": "Report deserter. +10 Officer rep. Honor trait XP. Reduces discipline issues."
+          "tooltip": "Report deserter. +10 Lord reputation, +5 Honor XP, -20 Scrutiny."
         },
         {
           "id": "confront",

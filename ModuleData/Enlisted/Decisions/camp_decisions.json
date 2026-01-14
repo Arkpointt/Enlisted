@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 2,
   "packId": "camp_decisions",
   "category": "decision",
@@ -28,14 +28,13 @@
           "textId": "dec_training_drill_focused",
           "text": "Train hard. Focus on your form.",
           "effects": {
-            "fatigue": 2,
-            "dynamicSkillXp": {
+                        "dynamicSkillXp": {
               "equipped_weapon": 8
             }
           },
           "resultTextId": "dec_training_drill_focused_result",
           "resultText": "Sweat runs down your back. Your arms ache. But your blade feels more natural now.",
-          "tooltip": "+8 XP to equipped weapon skill. Costs 2 fatigue."
+          "tooltip": "+8 XP to equipped weapon skill."
         },
         {
           "id": "cancel",
@@ -71,8 +70,7 @@
           "textId": "dec_training_spar_aggressive",
           "text": "Fight aggressively.",
           "effects": {
-            "fatigue": 3
-          },
+                      },
           "riskChance": 55,
           "effects_success": {
             "skillXp": {
@@ -89,7 +87,7 @@
           "resultTextId": "dec_training_spar_aggressive_win",
           "resultText": "You drive him back with a flurry. He yields with a grudging nod.",
           "resultTextFailure": "He reads your aggression and counters. You eat dirt.",
-          "tooltip": "55% win. Success: +3 rep, +6 Athletics XP. Failure: -5 HP, +3 XP. Costs 3 fatigue."
+          "tooltip": "55% win. Success: +3 rep, +6 Athletics XP. Failure: -5 HP, +3 XP."
         },
         {
           "id": "cancel",
@@ -126,15 +124,14 @@
           "textId": "dec_training_formation_drill",
           "text": "Join the line.",
           "effects": {
-            "fatigue": 2,
-            "skillXp": {
+                        "skillXp": {
               "Tactics": 4,
               "Polearm": 3
             }
           },
           "resultTextId": "dec_training_formation_drill_result",
           "resultText": "Shoulder to shoulder. Shield up, spear out. The rhythm becomes instinct.",
-          "tooltip": "+4 Tactics XP. +3 Polearm XP. Costs 2 fatigue."
+          "tooltip": "+4 Tactics XP. +3 Polearm XP."
         },
         {
           "id": "cancel",
@@ -170,15 +167,14 @@
           "textId": "dec_training_veteran_learn",
           "text": "Ask him to teach you.",
           "effects": {
-            "fatigue": 3,
-            "hpChange": -5,
+                        "hpChange": -5,
             "dynamicSkillXp": {
               "equipped_weapon": 12
             }
           },
           "resultTextId": "dec_training_veteran_learn_result",
           "resultText": "He doesn't pull his blows. By the end you're bruised, but you understand things you didn't before.",
-          "tooltip": "+12 weapon XP. -5 HP. Costs 3 fatigue. Worth it."
+          "tooltip": "+12 weapon XP. -5 HP. Worth it."
         },
         {
           "id": "cancel",
@@ -215,14 +211,13 @@
           "textId": "dec_training_archery_practice",
           "text": "Take some shots.",
           "effects": {
-            "fatigue": 2,
-            "skillXp": {
+                        "skillXp": {
               "Bow": 6
             }
           },
           "resultTextId": "dec_training_archery_practice_result",
           "resultText": "Nock, draw, release. Your groupings tighten with each round.",
-          "tooltip": "+6 Bow XP. Costs 2 fatigue."
+          "tooltip": "+6 Bow XP."
         },
         {
           "id": "cancel",
@@ -263,11 +258,10 @@
             "lordReputation": 1
           },
           "rewards": {
-            "fatigueRelief": 1
-          },
+                      },
           "resultTextId": "dec_social_stories_listen_result",
           "resultText": "Tales of sieges and charges. You learn names, faces, the weight of shared history.",
-          "tooltip": "+2 Soldier rep. +3 Charm XP. -1 fatigue."
+          "tooltip": "+2 Soldier rep. +3 Charm XP."
         },
         {
           "id": "cancel",
@@ -305,11 +299,10 @@
             "lordReputation": 0
           },
           "rewards": {
-            "fatigueRelief": 2
-          },
+                      },
           "resultTextId": "dec_social_storytelling_join_result",
           "resultText": "The tale carries you away from camp, from war, from everything but the firelight.",
-          "tooltip": "+1 Soldier rep. -2 fatigue."
+          "tooltip": "+1 Soldier rep."
         },
         {
           "id": "cancel",
@@ -347,11 +340,10 @@
             "lordReputation": 1
           },
           "rewards": {
-            "fatigueRelief": 2
-          },
+                      },
           "resultTextId": "dec_social_singing_join_result",
           "resultText": "Your voice joins the chorus. Off-key but heartfelt. For a moment, you're not soldiers.",
-          "tooltip": "+2 Soldier rep. -2 fatigue."
+          "tooltip": "+2 Soldier rep."
         },
         {
           "id": "cancel",
@@ -390,8 +382,7 @@
           },
           "effects": {
             "scrutiny": 1000000,
-            "fatigue": 2
-          },
+                      },
           "riskChance": 35,
           "effects_success": {
             "lordReputation": 2
@@ -402,7 +393,7 @@
           "resultTextId": "dec_drinking_contest_win",
           "resultText": "The crowd roars. Your opponent slumps. You barely remember the last round.",
           "resultTextFailure": "The world spins. You lose spectacularly. At least they had a good laugh.",
-          "tooltip": "35% to win 80 gold and +4 rep. Costs 20 gold, 2 fatigue, +1 Scrutiny."
+          "tooltip": "35% to win 80 gold and +4 rep. Costs 20 gold, +1 Scrutiny."
         },
         {
           "id": "cancel",
@@ -443,11 +434,10 @@
             "lordReputation": 0
           },
           "rewards": {
-            "fatigueRelief": 3
-          },
+                      },
           "resultTextId": "dec_tavern_drink_moderate_result",
           "resultText": "The wine is sour but the company's good. You relax, share a laugh.",
-          "tooltip": "+1 Soldier rep. -3 fatigue. Costs 10 gold."
+          "tooltip": "+1 Soldier rep. Costs 10 gold."
         },
         {
           "id": "cancel",
@@ -485,8 +475,7 @@
             "gold": 15
           },
           "effects": {
-            "fatigue": 1
-          },
+                      },
           "riskChance": 45,
           "rewards": {
             "gold": 40
@@ -497,7 +486,7 @@
           "resultTextId": "dec_arm_wrestling_win",
           "resultText": "His hand slams down. The crowd erupts. You've won respect.",
           "resultTextFailure": "Your arm buckles. He grins. Next time.",
-          "tooltip": "45% to win 40 gold and +2 rep. Costs 15 gold, 1 fatigue."
+          "tooltip": "45% to win 40 gold and +2 rep. Costs 15 gold."
         },
         {
           "id": "cancel",
@@ -629,15 +618,14 @@
           "textId": "dec_forage_join",
           "text": "Volunteer for the party.",
           "effects": {
-            "fatigue": 3,
-            "skillXp": {
+                        "skillXp": {
               "Scouting": 5
             },
             "lordReputation": 1
           },
           "resultTextId": "dec_forage_join_result",
           "resultText": "Hours of tramping through woods. You return tired but carrying something for the cookpots.",
-          "tooltip": "+5 Scouting XP. +1 Officer rep. Costs 3 fatigue."
+          "tooltip": "+5 Scouting XP. +1 Officer rep."
         },
         {
           "id": "cancel",
@@ -673,8 +661,7 @@
           "textId": "dec_work_repairs_work",
           "text": "Put in some work.",
           "effects": {
-            "fatigue": 2,
-            "skillXp": {
+                        "skillXp": {
               "Crafting": 4
             }
           },
@@ -683,7 +670,7 @@
           },
           "resultTextId": "dec_work_repairs_work_result",
           "resultText": "Honest work. Rough hands by the end, but coin in your pouch.",
-          "tooltip": "+4 Crafting XP. +20 gold. Costs 2 fatigue."
+          "tooltip": "+4 Crafting XP. +20 gold."
         },
         {
           "id": "cancel",
@@ -727,11 +714,10 @@
             }
           },
           "rewards": {
-            "fatigueRelief": 3
-          },
+                      },
           "resultTextId": "dec_trade_browse_buy_result",
           "resultText": "A small luxury. Something to remind you life isn't just marching and fighting.",
-          "tooltip": "+3 Trade XP. -3 fatigue. Costs 30 gold."
+          "tooltip": "+3 Trade XP. Costs 30 gold."
         },
         {
           "id": "cancel",
@@ -766,14 +752,13 @@
           "textId": "dec_rest_sleep_full",
           "text": "Get proper sleep.",
           "rewards": {
-            "fatigueRelief": 5
-          },
+                      },
           "effects": {
             "hpChange": 8
           },
           "resultTextId": "dec_rest_sleep_full_result",
           "resultText": "You sleep deeply. When you wake, the world feels slightly less crushing.",
-          "tooltip": "-5 fatigue. +8 HP."
+          "tooltip": "+8 HP."
         },
         {
           "id": "cancel",
@@ -809,11 +794,10 @@
           "textId": "dec_rest_short_nap",
           "text": "Close your eyes for a bit.",
           "rewards": {
-            "fatigueRelief": 2
-          },
+                      },
           "resultTextId": "dec_rest_short_nap_result",
           "resultText": "You drift off. When you stir, the shadows moved but you feel lighter.",
-          "tooltip": "-2 fatigue."
+          "tooltip": ""
         },
         {
           "id": "cancel",
@@ -848,14 +832,13 @@
           "textId": "dec_meditate_do",
           "text": "Find peace.",
           "rewards": {
-            "fatigueRelief": 3
-          },
+                      },
           "effects": {
             "scrutiny": -1000000
           },
           "resultTextId": "dec_meditate_do_result",
           "resultText": "You breathe. The noise fades. For a time, there is only stillness.",
-          "tooltip": "-3 fatigue. -1 Discipline."
+          "tooltip": "-1 Discipline."
         },
         {
           "id": "cancel",
@@ -890,11 +873,10 @@
           "textId": "dec_prayer_attend",
           "text": "Attend the service.",
           "rewards": {
-            "fatigueRelief": 2
-          },
+                      },
           "resultTextId": "dec_prayer_attend_result",
           "resultText": "You kneel with the others. The words wash over you. The war seems far away.",
-          "tooltip": "-2 fatigue."
+          "tooltip": ""
         },
         {
           "id": "cancel",
@@ -930,15 +912,14 @@
           "textId": "dec_help_wounded_assist",
           "text": "Lend a hand.",
           "effects": {
-            "fatigue": 2,
-            "skillXp": {
+                        "skillXp": {
               "Medicine": 6
             },
             "lordReputation": 1
           },
           "resultTextId": "dec_help_wounded_assist_result",
           "resultText": "Blood and bandages. Grim work but the men look at you with gratitude.",
-          "tooltip": "+6 Medicine XP. +2 Soldier rep. Costs 2 fatigue."
+          "tooltip": "+6 Medicine XP. +2 Soldier rep."
         },
         {
           "id": "cancel",
@@ -1012,15 +993,14 @@
           "textId": "dec_mentor_recruit_help",
           "text": "Show him how it's done.",
           "effects": {
-            "fatigue": 1,
-            "skillXp": {
+                        "skillXp": {
               "Leadership": 5
             },
             "lordReputation": 2
           },
           "resultTextId": "dec_mentor_recruit_help_result",
           "resultText": "You walk him through the movements. By the end, he's not perfect, but he's better.",
-          "tooltip": "+2 Soldier rep. +1 Officer rep. +5 Leadership XP. Costs 1 fatigue."
+          "tooltip": "+2 Soldier rep. +1 Officer rep. +5 Leadership XP."
         },
         {
           "id": "cancel",
@@ -1055,13 +1035,12 @@
           "textId": "dec_volunteer_extra_accept",
           "text": "Volunteer.",
           "effects": {
-            "fatigue": 4,
-            "scrutiny": -2000000,
+                        "scrutiny": -2000000,
             "lordReputation": 3
           },
           "resultTextId": "dec_volunteer_extra_accept_result",
           "resultText": "Long hours watching nothing happen. But the sergeant remembers who showed up.",
-          "tooltip": "+3 Officer rep. -2 Discipline. Costs 4 fatigue."
+          "tooltip": "+3 Officer rep. -2 Discipline."
         },
         {
           "id": "cancel",
@@ -1097,8 +1076,7 @@
           "textId": "dec_night_patrol_join",
           "text": "Join them.",
           "effects": {
-            "fatigue": 2,
-            "skillXp": {
+                        "skillXp": {
               "Scouting": 5
             },
             "lordReputation": 0
@@ -1110,7 +1088,7 @@
           "resultTextId": "dec_night_patrol_find",
           "resultText": "You find something - a lost coin pouch. Finders keepers.",
           "resultTextFailure": "Nothing but stars and silence. But the walk clears your head.",
-          "tooltip": "30% to find 25 gold. +5 Scouting XP. +1 rep. Costs 2 fatigue."
+          "tooltip": "30% to find 25 gold. +5 Scouting XP. +1 rep."
         },
         {
           "id": "cancel",
@@ -1143,3 +1121,6 @@
     }
   ]
 }
+
+
+

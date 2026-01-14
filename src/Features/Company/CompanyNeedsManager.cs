@@ -37,7 +37,6 @@ namespace Enlisted.Features.Company
 
             // Initial base degradation rates are hard-coded while the configuration system is being expanded.
             // NOTE: Supplies degradation is handled by CompanySupplyManager (unified logistics tracking).
-            // NOTE: Rest was removed 2026-01-11 (redundant with player fatigue system).
             var readinessDegradation = 2;
 
             // Check for accelerated degradation conditions

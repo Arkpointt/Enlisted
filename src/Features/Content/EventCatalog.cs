@@ -441,9 +441,6 @@ namespace Enlisted.Features.Content
             // Parse HP requirement (for decisions like Seek Treatment that require being wounded)
             reqs.HpBelow = reqJson["hp_below"]?.Value<int>() ?? reqJson["hpBelow"]?.Value<int>();
 
-            // Parse soldier reputation maximum (for theft events that target unpopular soldiers)
-            reqs.MaxSoldierRep = reqJson["maxSoldierRep"]?.Value<int>() ?? reqJson["max_soldier_rep"]?.Value<int>();
-
             // Parse baggage items requirement (for theft events that require items to exist)
             reqs.BaggageHasItems = reqJson["baggageHasItems"]?.Value<bool>() ?? reqJson["baggage_has_items"]?.Value<bool>();
 

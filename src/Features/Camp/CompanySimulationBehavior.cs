@@ -339,7 +339,6 @@ namespace Enlisted.Features.Camp
                     var needs = EnlistmentBehavior.Instance?.CompanyNeeds;
                     if (needs != null)
                     {
-                        // Note: Rest removed 2026-01-11 (redundant with player fatigue)
                         if (needs.Supplies > 70) recoveryChance += 0.05f;
                         if (needs.Supplies < 30) recoveryChance -= 0.10f;
 
@@ -570,9 +569,6 @@ namespace Enlisted.Features.Camp
                     case "morale":
                         // Morale system removed - skip morale effects
                         break;
-                    case "rest":
-                        // Rest system removed 2026-01-11 - skip rest effects
-                        break;
                     case "supplies":
                         if (needs != null)
                         {
@@ -608,7 +604,6 @@ namespace Enlisted.Features.Camp
             else _pressure.DaysLowSupplies = 0;
 
             // Morale tracking removed (system no longer exists)
-            // Rest tracking removed 2026-01-11 (redundant with player fatigue)
 
             // High sickness tracking
             if (_roster != null && _roster.TotalSoldiers > 0)

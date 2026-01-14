@@ -185,9 +185,6 @@ namespace Enlisted.Features.Content
                         new TextObject("{=menu_ahead_desertion}Men have been slipping away.").ToString(),
                         Priority.High));
                 }
-
-                // Rest warnings removed - Company Rest deprecated 2026-01-11
-                // Player fatigue (0-24 budget) remains separate and is tracked per-player
             }
 
             // Scrutiny warnings from escalation tracks (0-100 scale)

@@ -189,14 +189,13 @@
           "id": "discipline",
           "textId": "mi_ret_cowardice_discipline",
           "text": "Public flogging. Make an example.",
-          "tooltip": "-8 Loyalty, -10 Soldier rep. +5 Officer rep, +10 Discipline.",
+          "tooltip": "-8 Loyalty, -10 Scrutiny.",
           "resultTextId": "mi_ret_cowardice_discipline_result",
           "resultText": "He takes the lashes without a sound. The men watch in silence. They won't run. But they won't love you for this.",
           "risk": "safe",
           "effects": {
             "retinueLoyalty": -8,
-            "scrutiny": 10000000,
-            "lordReputation": 0
+            "scrutiny": -10
           }
         },
         {
@@ -247,13 +246,13 @@
           "id": "ignore",
           "textId": "mi_ret_cowardice_ignore",
           "text": "Let it go. Everyone has a bad day.",
-          "tooltip": "-3 Loyalty, -10 Discipline, -8 Soldier rep.",
+          "tooltip": "-3 Loyalty, +10 Scrutiny, -4 Lord reputation.",
           "resultTextId": "mi_ret_cowardice_ignore_result",
           "resultText": "You say nothing. The men exchange glances. If running is acceptable, what else is? Your authority weakens.",
           "risk": "safe",
           "effects": {
             "retinueLoyalty": -3,
-            "scrutiny": -10000000,
+            "scrutiny": 10,
             "lordReputation": -4
           }
         }

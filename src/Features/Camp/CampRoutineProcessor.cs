@@ -227,7 +227,6 @@ namespace Enlisted.Features.Camp
             }
 
         // Check for negative conditions
-        // Note: Rest removed 2026-01-11 (redundant with player fatigue)
         // Note: Morale removed (system no longer exists)
         // For now, always use default weights
 
@@ -476,8 +475,6 @@ namespace Enlisted.Features.Camp
                 needs.ModifyNeed(CompanyNeed.Supplies, outcome.SupplyChange);
             }
             // Note: Morale removed (system no longer exists)
-            // Note: Rest removed 2026-01-11 (redundant with player fatigue)
-            // Fatigue is tracked separately via EnlistmentBehavior.ModifyFatigue()
         }
 
         // Apply condition if mishap caused one
