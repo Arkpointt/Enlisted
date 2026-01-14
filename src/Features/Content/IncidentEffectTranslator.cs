@@ -61,15 +61,8 @@ namespace Enlisted.Features.Content
                     }
                 }
 
-                // Party morale change (mapped from Discipline for party-wide morale)
-                // Note: Native MoraleChange affects party RecentEventsMorale
-                if (effects.Discipline.HasValue && effects.Discipline.Value != 0)
-                {
-                    // Scale discipline to morale (discipline is 0-10, morale expects larger values)
-                    var moraleAmount = effects.Discipline.Value * 2f;
-                    result.Add(IncidentEffect.MoraleChange(moraleAmount));
-                    ModLogger.Debug(LogCategory, $"Translated discipline to morale: {moraleAmount}");
-                }
+                // Discipline effects no longer mapped to morale (morale system removed)
+                // Native party morale (RecentEventsMorale) was previously used but is now skipped
 
                 // Health/HP changes
                 if (effects.HpChange.HasValue && effects.HpChange.Value != 0)

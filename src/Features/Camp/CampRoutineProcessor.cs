@@ -148,12 +148,11 @@ namespace Enlisted.Features.Camp
             // Calculate XP
             int xpGained = CalculateXp(activityConfig, outcomeType, overrideInfo);
 
-            // Calculate other effects
-            int goldChange = CalculateGoldChange(activityConfig, outcomeType);
-            int supplyChange = CalculateSupplyChange(activityConfig, outcomeType);
-            int moraleChange = CalculateMoraleChange(activityConfig, outcomeType);
+        // Calculate other effects
+        int goldChange = CalculateGoldChange(activityConfig, outcomeType);
+        int supplyChange = CalculateSupplyChange(activityConfig, outcomeType);
 
-            // Check for mishap condition
+        // Check for mishap condition
             string conditionApplied = null;
             if (outcomeType == OutcomeType.Mishap)
             {
@@ -171,11 +170,10 @@ namespace Enlisted.Features.Camp
                 ActivityName = description ?? activityConfig["name"]?.Value<string>() ?? category,
                 Outcome = outcomeType,
                 XpGained = xpGained,
-                SkillAffected = skillName,
-                GoldChange = goldChange,
-                SupplyChange = supplyChange,
-                MoraleChange = moraleChange,
-                ConditionApplied = conditionApplied,
+            SkillAffected = skillName,
+            GoldChange = goldChange,
+            SupplyChange = supplyChange,
+            ConditionApplied = conditionApplied,
                 FlavorText = flavorText,
                 WasOverride = isOverride,
                 OverrideReason = overrideInfo?.Reason
@@ -228,13 +226,12 @@ namespace Enlisted.Features.Camp
                 return "default";
             }
 
-            // Check for negative conditions
-            if (needs.Morale < 30)
-            {
-                return "lowMorale";
-            }
+        // Check for negative conditions
+        // Note: Rest removed 2026-01-11 (redundant with player fatigue)
+        // Note: Morale removed (system no longer exists)
+        // For now, always use default weights
 
-            // TODO: Check player skill level for highSkill set
+        // TODO: Check player skill level for highSkill set
             // For now, default to normal weights
             return "default";
         }
@@ -357,13 +354,6 @@ namespace Enlisted.Features.Camp
             return _random.Next(min, max + 1);
         }
 
-        /// <summary>
-        /// Calculates morale change from activity.
-        /// </summary>
-        private static int CalculateMoraleChange(JToken activityConfig, OutcomeType outcome)
-        {
-            return activityConfig["moraleChange"]?[outcome.ToString().ToLowerInvariant()]?.Value<int>() ?? 0;
-        }
 
         /// <summary>
         /// Checks if a mishap should apply a condition.
@@ -481,17 +471,16 @@ namespace Enlisted.Features.Camp
             var needs = enlistment.CompanyNeeds;
             if (needs != null)
             {
-                if (outcome.SupplyChange != 0)
-                {
-                    needs.ModifyNeed(CompanyNeed.Supplies, outcome.SupplyChange);
-                }
-                if (outcome.MoraleChange != 0)
-                {
-                    needs.ModifyNeed(CompanyNeed.Morale, outcome.MoraleChange);
-                }
+            if (outcome.SupplyChange != 0)
+            {
+                needs.ModifyNeed(CompanyNeed.Supplies, outcome.SupplyChange);
             }
+            // Note: Morale removed (system no longer exists)
+            // Note: Rest removed 2026-01-11 (redundant with player fatigue)
+            // Fatigue is tracked separately via EnlistmentBehavior.ModifyFatigue()
+        }
 
-            // Apply condition if mishap caused one
+        // Apply condition if mishap caused one
             if (!string.IsNullOrEmpty(outcome.ConditionApplied))
             {
                 ApplyCondition(outcome.ConditionApplied);

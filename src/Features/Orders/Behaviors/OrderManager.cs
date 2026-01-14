@@ -1360,10 +1360,6 @@ namespace Enlisted.Features.Orders.Behaviors
                         return "Supplies critically low - Equipment access restricted";
                     case CompanyNeed.Readiness:
                         return "Unit readiness critical - Combat effectiveness severely reduced";
-                    case CompanyNeed.Morale:
-                        return "Morale breaking - Risk of desertion";
-                    case CompanyNeed.Rest:
-                        return "Men exhausted - Need rest urgently";
                     default:
                         return $"{needStr} is critically low";
                 }
@@ -1378,10 +1374,6 @@ namespace Enlisted.Features.Orders.Behaviors
                         return "Company well-supplied after resupply";
                     case CompanyNeed.Readiness:
                         return "Unit readiness greatly improved";
-                    case CompanyNeed.Morale:
-                        return "Morale lifted significantly";
-                    case CompanyNeed.Rest:
-                        return "Men well-rested and ready";
                     default:
                         return $"{needStr} significantly improved";
                 }
@@ -1392,14 +1384,10 @@ namespace Enlisted.Features.Orders.Behaviors
                 {
                     case CompanyNeed.Supplies:
                         return "Supplies replenished";
-                    case CompanyNeed.Readiness:
-                        return "Unit readiness improving";
-                    case CompanyNeed.Morale:
-                        return "Morale improving";
-                    case CompanyNeed.Rest:
-                        return "Men recovering well";
-                    default:
-                        return $"{needStr} improved";
+                case CompanyNeed.Readiness:
+                    return "Unit readiness improving";
+                default:
+                    return $"{needStr} improved";
                 }
             }
 
@@ -1412,10 +1400,6 @@ namespace Enlisted.Features.Orders.Behaviors
                         return "Supplies depleted significantly";
                     case CompanyNeed.Readiness:
                         return "Unit readiness declining sharply";
-                    case CompanyNeed.Morale:
-                        return "Morale declining";
-                    case CompanyNeed.Rest:
-                        return "Men growing exhausted";
                     default:
                         return $"{needStr} declined significantly";
                 }
@@ -1428,10 +1412,6 @@ namespace Enlisted.Features.Orders.Behaviors
                         return "Supplies running low";
                     case CompanyNeed.Readiness:
                         return "Unit readiness declining";
-                    case CompanyNeed.Morale:
-                        return "Morale slipping";
-                    case CompanyNeed.Rest:
-                        return "Men growing tired";
                     default:
                         return $"{needStr} declined";
                 }

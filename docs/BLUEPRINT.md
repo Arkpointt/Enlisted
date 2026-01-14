@@ -125,7 +125,7 @@ Enlisted/
 | Content | Events, Decisions, narrative delivery |
 | Identity | Role detection (Traits), Reputation helpers |
 | Escalation | Lord/Officer/Soldier reputation, Scrutiny/Discipline |
-| Company | Company-wide Needs (Readiness, Morale, Supply) |
+|| Company | Company-wide Needs (Readiness, Supply) - Note: Rest removed 2026-01-11 |
 | Context | Army context and objective analysis |
 | Interface | Camp Hub menu, News/Reports |
 | Equipment | Quartermaster and gear management |
@@ -476,6 +476,93 @@ The mod focuses on the **enlisted lord's party** (the Company). If the Company i
 **URL:** https://steamcommunity.com/sharedfiles/filedetails/?id=3621116083
 
 For deployment instructions, see [Tools/Steam/WORKSHOP_UPLOAD.md](../Tools/Steam/WORKSHOP_UPLOAD.md).
+
+---
+
+## Deprecated Systems
+
+**Systems marked for future removal but kept for backwards compatibility.**
+
+These systems have been logically removed from the mod but retain minimal code to:
+1. **Load old save files** without errors
+2. **Maintain serialization compatibility** during the deprecation period
+3. **Prevent save corruption** from missing data keys
+
+### Morale System (Deprecated: 2026-01-11)
+
+**Status:** Functionally removed, backwards-compatible save loading only  
+**Reason:** Redundant with existing systems (discipline, rest, supply provide sufficient depth)  
+**Safe Removal Date:** 2026-03-01 (after 6-week deprecation period)
+
+**Remaining Code (for compatibility):**
+- `CompanyNeed.Morale` enum value (never set, always 0)
+- Serialization keys in save/load methods (load old values, discard them)
+- Old config fields loaded but ignored (e.g., `sim_daysLowMorale`)
+
+**What Was Removed:**
+- All morale tracking, calculation, and display logic
+- Morale effects from events, orders, and incidents
+- Morale-based decision logic (desertions, crisis triggers)
+- UI display of morale status and changes
+- Database schema references
+
+**Full Removal Checklist** (after safe removal date):
+- [ ] Remove `Morale` from `CompanyNeed` enum
+- [ ] Remove morale serialization keys from all `SyncData()` methods
+- [ ] Remove morale load blocks from `EnlistmentBehavior`, `CompanySimulationBehavior`, `CampLifeBehavior`
+- [ ] Remove backwards-compatibility comments
+- [ ] Verify validation passes: `python Tools/Validation/validate_content.py`
+- [ ] Test with old save files (should still load, morale just ignored)
+
+**Files with Deprecation Code:**
+- `src/Features/Company/CompanyNeed.cs` (enum value)
+- `src/Features/Company/CompanyNeedsState.cs` (serialization)
+- `src/Features/Camp/CompanySimulationBehavior.cs` (pressure tracking load)
+- `src/Features/Camp/CampLifeBehavior.cs` (morale shock load)
+- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (save compatibility)
+
+### Company Rest System (Deprecated: 2026-01-11)
+
+**Status:** Functionally removed, backwards-compatible save loading only  
+**Reason:** Redundant with Player Fatigue system (0-24 budget). Company Rest was a 0-100 metric that degraded but provided no gameplay function.  
+**Safe Removal Date:** 2026-03-01 (after 6-week deprecation period)
+
+**IMPORTANT:** Player Fatigue remains fully functional - this deprecation only affects the unused Company-wide Rest metric.
+
+**Remaining Code (for compatibility):**
+- `CompanyNeed.Rest` enum value (never set, always 0)
+- Serialization keys in save/load methods (load old values, discard them)
+- Old config fields loaded but ignored (e.g., `lowRestDays`, "exhausted" schedule override)
+
+**What Was Removed:**
+- All Company Rest tracking, degradation, and calculation logic
+- Company Rest effects from events, incidents, and routine outcomes
+- "Exhausted" schedule override and orchestrator override
+- Rest pressure tracking (`DaysLowRest`, `exhausted` conditions)
+- Strategic context Rest predictions
+- UI display of Company Rest status
+
+**Full Removal Checklist** (after safe removal date):
+- [ ] Remove `Rest` from `CompanyNeed` enum
+- [ ] Remove rest serialization keys from all `SyncData()` methods
+- [ ] Remove rest load blocks from `EnlistmentBehavior`, `CompanySimulationBehavior`, `CampScheduleManager`
+- [ ] Remove "exhausted" override from `orchestrator_overrides.json`
+- [ ] Remove `lowRestDays` from `simulation_config.json`
+- [ ] Remove Rest predictions from `strategic_context_config.json`
+- [ ] Remove backwards-compatibility comments
+- [ ] Verify validation passes: `python Tools/Validation/validate_content.py`
+- [ ] Test with old save files (should still load, rest just ignored)
+
+**Files with Deprecation Code:**
+- `src/Features/Company/CompanyNeed.cs` (enum value)
+- `src/Features/Company/CompanyNeedsState.cs` (serialization)
+- `src/Features/Camp/CampScheduleManager.cs` (exhausted override load)
+- `src/Features/Camp/CompanySimulationBehavior.cs` (pressure tracking load)
+- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (save compatibility)
+- `ModuleData/Enlisted/Config/camp_schedule.json` ("exhausted" skippedWhen/boostedWhen)
+- `ModuleData/Enlisted/Config/orchestrator_overrides.json` ("exhausted" need-based override)
+- `ModuleData/Enlisted/Config/simulation_config.json` (lowRestDays, Rest incident effects)
+- `ModuleData/Enlisted/Config/strategic_context_config.json` (Rest predictions)
 
 ---
 

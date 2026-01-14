@@ -47,13 +47,10 @@ namespace Enlisted.Features.Camp.Models
         /// <summary>Gold or supplies found/earned. Can be negative for losses.</summary>
         public int GoldChange { get; set; }
 
-        /// <summary>Supply change from foraging or losses.</summary>
-        public int SupplyChange { get; set; }
+    /// <summary>Supply change from foraging or losses.</summary>
+    public int SupplyChange { get; set; }
 
-        /// <summary>Morale change from the activity.</summary>
-        public int MoraleChange { get; set; }
-
-        /// <summary>Condition ID to apply (e.g., "minor_injury", "illness"). Null if none.</summary>
+    /// <summary>Condition ID to apply (e.g., "minor_injury", "illness"). Null if none.</summary>
         public string ConditionApplied { get; set; }
 
         /// <summary>Short flavor text for combat log display.</summary>
@@ -98,16 +95,12 @@ namespace Enlisted.Features.Camp.Models
             {
                 gains.Add($"{GoldChange} denars");
             }
-            if (SupplyChange > 0)
-            {
-                gains.Add($"+{SupplyChange} supplies");
-            }
-            if (MoraleChange != 0)
-            {
-                gains.Add(MoraleChange > 0 ? $"+{MoraleChange} morale" : $"{MoraleChange} morale");
-            }
+        if (SupplyChange > 0)
+        {
+            gains.Add($"+{SupplyChange} supplies");
+        }
 
-            if (gains.Count > 0)
+        if (gains.Count > 0)
             {
                 result += " (" + string.Join(", ", gains) + ")";
             }

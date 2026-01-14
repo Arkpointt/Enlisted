@@ -446,17 +446,6 @@ namespace Enlisted.Features.Camp
                     }
                 }
 
-                // Check exhausted (low rest)
-                var exhausted = pressureOverrides["exhausted"];
-                if (exhausted != null)
-                {
-                    var threshold = exhausted["threshold"]?.Value<int>() ?? 30;
-                    if (needs.Rest < threshold)
-                    {
-                        ApplyPressureEffect(schedule, exhausted);
-                    }
-                }
-
                 // Check siege conditions
                 if (world.LordIs == LordSituation.SiegeAttacking || 
                     world.LordIs == LordSituation.SiegeDefending)

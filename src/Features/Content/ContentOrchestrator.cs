@@ -1870,8 +1870,6 @@ namespace Enlisted.Features.Content
             return needName.ToLowerInvariant() switch
             {
                 "supplies" => needs.Supplies,
-                "rest" => needs.Rest,
-                "morale" => needs.Morale,
                 "readiness" => needs.Readiness,
                 _ => 100
             };

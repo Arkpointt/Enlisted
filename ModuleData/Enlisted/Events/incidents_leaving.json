@@ -32,12 +32,9 @@
           "resultText": "You force yourself forward, step by agonizing step. The day is miserable, but you don't fall behind. The sergeant notices your suffering but says nothing.",
           "risk": "moderate",
           "effects": {
-            "companyNeeds": {
-              "Rest": -5
-            },
             "officerRep": 3
           },
-          "tooltip": "Moderate risk. +3 Officer rep. Harms company rest."
+          "tooltip": "Moderate risk. +3 Officer rep."
         },
         {
           "id": "seek_remedy",
@@ -50,13 +47,10 @@
           },
           "resultTextId": "mi_leave_hangover_remedy_result",
           "resultText": "The surgeon gives you a bitter tonic and a knowing look. 'This will help,' he says, 'but next time, drink less.' The relief is immediate.",
-          "tooltip": "Requires Medicine 25. Safe choice. -5 gold. Boosts company rest.",
+          "tooltip": "Requires Medicine 25. Safe choice. -5 gold.",
           "risk": "safe",
           "effects": {
-            "gold": -5,
-            "companyNeeds": {
-              "Rest": 5
-            }
+            "gold": -5
           }
         },
         {

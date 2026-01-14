@@ -1,862 +1,834 @@
-# Systems Integration Analysis
+# Morale, Supply, Promotion, Reputation System Analysis
 
-**Summary:** Comprehensive analysis of Enlisted's core systems (Supply, Morale, Reputation tracks, Escalation) and how they integrate with the ContentOrchestrator. Includes recommendations for improving orchestrator awareness, content effect utilization, and skill integration for more dynamic, state-aware content delivery.
-
-**Status:** 📋 Planning (Phase-aware scheduling & commitment model ✅ IMPLEMENTED 2026-01-04)
-**Last Updated:** 2026-01-04
-
-> **Note:** Future analyses like this can be automated using SystemAnalysisFlow. See [docs/CrewAI_Plans/system-analysis-flow-implementation.md](../../docs/CrewAI_Plans/system-analysis-flow-implementation.md).
-**Related Docs:** [Content Effects Reference](content-effects-reference.md), [Content Skill Integration Plan](content-skill-integration-plan.md), [Camp Simulation System](../Features/Campaign/camp-simulation-system.md), [Identity System](../Features/Identity/identity-system.md), [ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md](../ORCHESTRATOR-OPPORTUNITY-UNIFICATION.md)
+**Generated:** 2026-01-10
+**Systems Analyzed:** Morale, Supply, Promotion, Reputation
+**Focus:** both
+**Subsystem Mode:** No
 
 ---
 
 ## Executive Summary
 
-Enlisted has **7 core tracking systems** that should drive content delivery:
-
-| System | Range | Current Integration | Orchestrator Awareness |
-|--------|-------|--------------------|-----------------------|
-| **Supply** | 0-100 | ⚠️ Partial | Gates QM access, affects messaging |
-| **Morale** | 0-100 | ⚠️ Partial | Background events only |
-| **Rest/Fatigue** | 0-100 | ⚠️ Partial | Activity gating |
-| **Readiness** | 0-100 | ⚠️ Partial | Combat effectiveness |
-| **Soldier Rep** | -50 to +50 | ✅ Good | Event filtering, option gating |
-| **Officer Rep** | 0-100 | ✅ Good | Promotion, order quality |
-| **Lord Rep** | 0-100 | ✅ Good | Trust, assignments, discharge |
-| **Scrutiny** | 0-10 | ✅ Good | Inspection events, discipline |
-| **Discipline** | 0-10 | ✅ Good | Promotion blocking |
-| **Medical Risk** | 0-5 | ✅ Good | Illness triggers, treatment |
-
-**Key Finding:** Company Needs (Supply, Morale, Rest, Readiness) are underutilized for content steering. The orchestrator reads these values but doesn't use them to dynamically weight content selection or create tension-based narrative arcs.
+- Analyzed 1 system files
+- Identified 11 integration gaps
+- Found 14 efficiency issues
+- Generated 10 prioritized recommendations
 
 ---
 
-## Index
+## Current Architecture
 
-1. [Core Systems Deep Dive](#core-systems-deep-dive)
-2. [Current Orchestrator Integration](#current-orchestrator-integration)
-3. [Gap Analysis](#gap-analysis)
-4. [Improvement Recommendations](#improvement-recommendations)
-5. [Implementation Roadmap](#implementation-roadmap)
+## Tool Calls Made (MAX 8) — Evidence Index
 
----
+1) `search_codebase` query `"Morale CompanyNeed Morale CompanyNeedsManager ProcessDailyDegradation CompanyNeedsState"` (filter `src/`)  
+   **Found (snippets only):**
+   - `src/Features/Company/CompanyNeedsState.cs`
+   - `src/Features/Company/CompanyNeedsManager.cs`
+   - `src/Features/Company/CompanyNeed.cs`
+   - `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (company needs serialization snippet)
+   - `src/Features/Camp/Models/CompanyPressure.cs`
 
-## Core Systems Deep Dive
+2) `search_codebase` query `"PromotionBehavior EscalationManager SoldierReputation OfficerReputation ModifySoldierReputation GetQMReputation"` (filter `src/`)  
+   **Found (snippets only):**
+   - `src/Features/Ranks/Behaviors/PromotionBehavior.cs`
+   - `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (`GetQMReputation`, ration issuance using OfficerReputation as proxy, etc.)
+   - `src/Features/Escalation/EscalationManager.cs`
 
-### 1. Company Needs (0-100 Scale)
+3) `Readsource` `src/Features/Company/CompanyNeedsManager.cs`  
+   **Verified:** morale daily degradation rules; supplies handled elsewhere; critical checks; prediction config loading.
 
-**Location:** `src/Features/Company/CompanyNeedsManager.cs`, `CompanyNeedsState.cs`
+4) `Readsource` `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`  
+   **Verified:** supply manager lifecycle and ticks; CompanyNeeds serialization; morale modifier APIs; pay tension; ration logic; QM native reputation; reputation restoration; battle hooks affecting supply; settlement hooks affecting supply.
 
-Four transparent metrics that simulate the company's operational state:
+5) `Readsource` `src/Features/Ranks/Behaviors/PromotionBehavior.cs`  
+   **Verified:** hourly promotion check; eligibility logic; proving event queuing; fallback direct promotion; enlistment event subscriptions.
 
-| Need | Description | Affected By | Effects |
-|------|-------------|-------------|---------|
-| **Readiness** | Combat preparation | Training, drills, rest | Battle effectiveness, order success |
-| **Morale** | Unit cohesion, spirits | Victories, pay, rest, leadership | Desertion risk, event options |
-| **Supplies** | Food, water, equipment | Consumption, foraging, resupply | Starvation, QM access, attrition |
-| **Rest** | Fatigue level | Marching, fighting, recovery | Performance, injury risk |
+6) `Readsource` `src/Features/Escalation/EscalationManager.cs`  
+   **Verified:** daily tick (only while enlisted); persistence; track modification APIs; soldier/officer/lord reputation; discipline; thresholds → event queuing; declined promotions tracking.
 
-**Thresholds (from `simulation_config.json`):**
+7) `get_system_dependencies` `"EnlistmentBehavior"`  
+   **Verified:** depends on `Hero.MainHero`, `Campaign.Current`; depended-by list includes `EscalationManager`, `PromotionBehavior`, `ContentOrchestrator`, etc.
 
-```
-CRITICAL: <20    → Crisis events, severe penalties
-LOW:      20-40  → Warning state, pressure building
-NORMAL:   40-70  → Standard operations
-GOOD:     70-90  → Positive modifiers
-EXCELLENT: >90   → Bonus opportunities
-```
+8) `get_system_dependencies` `"PromotionBehavior"`  
+   **Verified:** depends on `EnlistmentBehavior`.
 
-**Current Content Integration:**
-- Supply < 30% → Equipment purchases blocked at QM
-- Supply < 20% → "Supply Crisis" pulse event fires
-- Morale < 25% → "Morale Crisis" event, mutiny risk
-- Rest < 15% → "Exhaustion Crisis" event
-
-**Gap:** These are binary triggers. The orchestrator doesn't use them for:
-- Weighted opportunity selection (low morale → more social opportunities)
-- Narrative arc building (sustained pressure → climactic events)
-- Proactive content (hints about approaching crisis)
+> Tool budget reached (8). Anything not in those files is marked “unknown” or “inferred”.
 
 ---
 
-### 2. Reputation Tracks
+# Architecture Overview
 
-**Location:** `src/Features/Escalation/EscalationManager.cs`, `EscalationState.cs`
-
-Three social standing tracks with the military hierarchy:
-- **Soldier Reputation:** -50 to +50 (bipolar - can be hated or bonded)
-- **Lord Reputation:** 0 to 100 (starts neutral, builds up)
-- **Officer Reputation:** 0 to 100 (starts neutral, builds up)
-
-| Track | Description | Positive Effects | Negative Effects |
-|-------|-------------|------------------|------------------|
-| **Soldier Rep** | Peer respect | Better help in events, social opportunities | Isolation, hostility, theft |
-| **Officer Rep** | NCO perception | Better assignments, promotion speed | Scrutiny, bad details, harassment |
-| **Lord Rep** | Lord's trust | Special missions, better pay, protection | Discharge risk, dangerous assignments |
-
-**Current Content Integration:**
-- Requirements filtering (event needs `soldierRep >= 20`)
-- Effect application (choice grants `+10 officerRep`)
-- Promotion gating (T3 needs Soldier Rep ≥10, Leader Rel ≥10)
-- Discharge band calculation (honorable needs neutral+ rep)
-
-**Gap:** Reputation doesn't currently affect:
-- Opportunity weighting (high rep → more opportunities appear)
-- Narrative tone (high lord rep → different event text)
-- Crisis prevention (high rep → buffer against discipline problems)
+This section analyzes **Morale**, **Supply**, **Promotion**, and **Reputation** as they exist in the verified code files above. Each system’s architecture is split into: components, persisted state, entry points/ticks, and observed data flows.
 
 ---
 
-### 3. Escalation Tracks (0-10 Scale)
+## 1) Morale System
 
-**Location:** `src/Features/Escalation/EscalationManager.cs`
+### Brief Description
+Morale is one of the four **Company Needs** (0–100 integer scale) and also has **multiple modifier sources** exposed through `EnlistmentBehavior` (pay tension penalty, rations bonus, retinue provisioning modifier). The codebase currently shows:
+- **Baseline daily degradation** for Morale in `CompanyNeedsManager`.
+- **Modifier APIs** in `EnlistmentBehavior` that other systems can query/use.
 
-Three pressure gauges that can spiral into serious consequences:
+### Key Components (Observed in code)
 
-| Track | Description | Causes | Consequences |
-|-------|-------------|--------|--------------|
-| **Scrutiny** | How closely watched | Rule-breaking, suspicion, failed inspections | More inspections, reduced privacy |
-| **Discipline** | Accumulated infractions | Insubordination, theft, fighting | Promotion blocked, punishment events |
-| **Medical Risk** | Health vulnerability | Injuries, illness, poor conditions | Illness onset, worsening conditions |
+#### A) Need enum: `CompanyNeed`
+- **File:** `src/Features/Company/CompanyNeed.cs` (located via tool call #1)  
+- **Role:** Defines `Readiness`, `Morale`, `Rest`, `Supplies` (spelled `Supplies` in code).
 
-**Threshold Events:**
-- Discipline = 10 → Dishonorable discharge (kicked out)
-- Medical Risk ≥ 3 → Illness onset probability increases significantly
-- Scrutiny ≥ 7 → Inspection events highly likely
+#### B) Need state container: `CompanyNeedsState`
+- **File:** `src/Features/Company/CompanyNeedsState.cs` (located via tool call #1; not fully read due to budget)  
+- **Role (from search snippet):** Tracks current readiness/morale/rest/supplies, 0–100. Notes that serialization is handled manually (but in our read, it’s actually in `EnlistmentBehavior.SerializeCompanyNeeds`).
 
-**Current Content Integration:**
-- Promotion requirements (T3→T4 needs Discipline < 6)
-- Event triggers (high scrutiny → inspection events)
-- Medical system (risk level affects illness probability)
+#### C) Rules engine: `CompanyNeedsManager` (static)
+- **File:** `src/Features/Company/CompanyNeedsManager.cs` (read in tool call #3)  
+- **Role:** Applies daily degradation for needs (explicitly: readiness/morale/rest; supplies excluded).
 
-**Gap:** Escalation doesn't affect:
-- Opportunity availability (high scrutiny → fewer covert options)
-- NPC behavior (high discipline → officers warn player)
-- Decay narratives (how scrutiny reduces over time)
+Key method:
+- `public static void ProcessDailyDegradation(CompanyNeedsState needs, MobileParty army = null)`
+
+Key morale rule:
+- Base daily morale degradation: `var moraleDegradation = 1;`
+- Applied:
+  - `needs.SetNeed(CompanyNeed.Morale, needs.Morale - moraleDegradation);`
+
+Acceleration relationships involving morale:
+- `var lowMorale = needs.Morale < 40;`
+- If low morale: `readinessDegradation += 3;`
+
+Also includes:
+- `CheckCriticalNeeds(...)` includes `CompanyNeed.Morale` with hard thresholds 20/30.
+- `PredictUpcomingNeeds(MobileParty party)` includes `Morale` predictions pulled from `strategic_context_config.json` via `ModulePaths.GetConfigPath(...)`.
+
+#### D) Morale modifier sources: `EnlistmentBehavior`
+- **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (read in tool call #4)
+
+Observed morale-related APIs:
+1. Pay tension → morale penalty
+   - Method: `public int GetPayTensionMoralePenalty()`
+   - Scale: `<20 => 0`, `<40 => -3`, `<60 => -6`, `<80 => -10`, else `-15`.
+
+2. Food quality rations → morale bonus
+   - Method: `public int GetFoodMoraleBonus()`
+   - Scale: Supplemental `+2`, Officer `+4`, Commander `+8`, else `0`.
+   - Underlying state: `_currentFoodQuality` / `_foodQualityExpires` (persisted in `SyncData`).
+
+3. Retinue provisioning → morale modifier (commander tiers)
+   - Method: `public int GetRetinueMoraleModifier()`
+   - Scale: None `-10`, BareMinimum `-5`, Standard `0`, GoodFare `+5`, OfficerQuality `+10`.
+   - Underlying state: `_retinueProvisioningTier` / `_retinueProvisioningExpires` (persisted in `SyncData`).
+
+### Entry Points & Ticks (Observed)
+- **Daily need degradation:** `CompanyNeedsManager.ProcessDailyDegradation(...)` exists, but **the caller is not found in the read files**.  
+  - `get_system_dependencies("EnlistmentBehavior")` indicates `CompanySimulationBehavior` depends on it, suggesting `CompanySimulationBehavior` may call it (not verified via read).
+- **Morale modifiers:** Queried on-demand from `EnlistmentBehavior` methods (no tick needed).
+
+### Morale Data Flow (Observed vs Inferred)
+
+**Observed in code**
+- Daily degradation is computed in `CompanyNeedsManager.ProcessDailyDegradation`.
+- `EnlistmentBehavior` persists morale inside `_companyNeeds` via `SerializeCompanyNeeds(IDataStore dataStore)`:
+  - `SyncKey(... "_companyNeeds_morale", ref morale);`  
+  **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+**Inferred/likely (NOT verified due to tool budget)**
+- Some “company simulation” behavior (likely `CompanySimulationBehavior`) calls `CompanyNeedsManager.ProcessDailyDegradation` daily.
+- Some UI/camp/order system applies the **morale modifiers** (pay tension + rations + provisioning) into either:
+  - Bannerlord party morale mechanics, and/or
+  - CompanyNeedsState.Morale adjustments or derived morale display.
+
+### Standards/Quality Notes (Observed deviations)
+- `GetFatigueStatusText` and several messages use raw strings (e.g., `"Exhausted"`, `"You're exhausted. Health reduced."`) rather than `TextObject`. These may violate the “TextObject for all UI strings” standard.
+- Morale modifier APIs are clean and don’t perform external API calls, so no try/catch needed.
 
 ---
 
-### 4. Native Traits & Skills
+## 2) Supply System
 
-**Location:** Native Bannerlord + `src/Features/Traits/TraitIntegrationHelper.cs`
+### Brief Description
+Supply has **two layers**:
+1) **Company Need “Supplies”** in `CompanyNeedsState` (int 0–100).
+2) A **unified logistics simulation** via `CompanySupplyManager` referenced and lifecycle-managed from `EnlistmentBehavior`, including persisted `NonFoodSupply`.
 
-**Personality Traits (-2 to +2):**
-- Mercy, Valor, Honor, Generosity, Calculating
+Supply is updated via:
+- **Hourly updates** (resupply while in settlements).
+- **Daily updates**.
+- **Battle end supply changes**.
+- **Settlement entry/exit hooks** for visit-based resupply messaging.
 
-**Hidden Skill Traits (0-20):**
-- Commander, Surgeon, Sergeant, Engineer, Rogue, Scout, Trader, Smuggler, Thug
+### Key Components (Observed in code)
 
-**Current Content Integration:**
-- Event requirements (`requires: { traits: { honor: { min: 1 } } }`)
-- Trait XP effects (`effects: { traits: { valor: 50 } }`)
-- Option gating (different choices visible based on traits)
+#### A) Supply need rules placeholder: `CompanyNeedsManager`
+- **File:** `src/Features/Company/CompanyNeedsManager.cs` (read tool call #3)  
+- Explicit note:
+  - `// NOTE: Supplies degradation is handled by CompanySupplyManager (unified logistics tracking).`
+- Still includes supplies in `CheckCriticalNeeds` and `PredictUpcomingNeeds`.
 
-**Gap:** Skills/traits don't currently affect:
-- Opportunity fitness scoring (high Rogue → gambling opportunities weight higher)
-- Automatic event selection (commander trait → leadership content)
-- Skill check difficulty adjustments based on trait levels
+#### B) Supply simulation manager: `CompanySupplyManager` (referenced)
+- **File:** Not opened due to tool budget.  
+- **Evidence:** multiple direct calls in `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (read tool call #4):
+  - `CompanySupplyManager.Initialize(lord, preserveSupply: resumingGraceService);`
+  - `CompanySupplyManager.Instance?.HourlyUpdate();`
+  - `CompanySupplyManager.Instance?.DailyUpdate();`
+  - `CompanySupplyManager.Instance?.OnSettlementEntered(settlement);`
+  - `CompanySupplyManager.Instance?.OnSettlementLeft(settlement);`
+  - `CompanySupplyManager.Instance.ProcessBattleSupplyChanges(...)`
+  - `CompanySupplyManager.RestoreFromSave(_enlistedLord, nonFoodSupply);`
+  - `CompanySupplyManager.Shutdown();`
+  - `CompanySupplyManager.Instance?.NonFoodSupply`
+
+Because we did not open the file, any internal algorithms are **unknown**.
+
+#### C) Persistence owner: `EnlistmentBehavior` (for company needs + non-food supply)
+- **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (read tool call #4)
+
+Key persistence method:
+- `private void SerializeCompanyNeeds(IDataStore dataStore)`
+
+Save:
+- Saves `_companyNeeds_supplies` and `_companySupply_nonFood`:
+  - `SyncKey(dataStore, "_companyNeeds_supplies", ref supplies);`
+  - `var nonFoodSupply = CompanySupplyManager.Instance?.NonFoodSupply ?? 100f;`
+  - `SyncKey(dataStore, "_companySupply_nonFood", ref nonFoodSupply);`
+
+Load:
+- Loads values into new `CompanyNeedsState { Supplies = supplies, ... }`
+- Restores supply manager:
+  - `if (_enlistedLord != null) { CompanySupplyManager.RestoreFromSave(_enlistedLord, nonFoodSupply); }`
+
+### Entry Points & Ticks (Observed)
+All observed in `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`:
+
+1) **Initialize / Shutdown**
+- `ContinueStartEnlistInternal(Hero lord)`:
+  - `CompanySupplyManager.Initialize(lord, preserveSupply: resumingGraceService);`
+- `StopEnlist(...)`:
+  - `CompanySupplyManager.Shutdown();`
+
+2) **Hourly tick**
+- `CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);`
+- In `OnHourlyTick()`:
+  - `CompanySupplyManager.Instance?.HourlyUpdate();`
+
+3) **Daily tick**
+- `CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);`
+- In `OnDailyTick()`:
+  - `CompanySupplyManager.Instance?.DailyUpdate();`
+
+4) **Battle end hook**
+- `CampaignEvents.OnPlayerBattleEndEvent.AddNonSerializedListener(this, OnPlayerBattleEnd);`
+- In `OnPlayerBattleEnd(MapEvent mapEvent)`:
+  - `ProcessBattleSupplyChanges(mapEvent, killsThisBattle);`
+- `ProcessBattleSupplyChanges(MapEvent mapEvent, int playerKills)` computes:
+  - `playerWon = mapEvent.WinningSide == mapEvent.PlayerSide`
+  - `troopsLost` = casualties only from enlisted lord party (not whole army)
+  - `enemiesKilled = playerKills`
+  - `wasSiege = mapEvent.IsSiegeAssault || mapEvent.IsSallyOut`
+  - Calls:
+    - `CompanySupplyManager.Instance.ProcessBattleSupplyChanges(troopsLost, enemiesKilled, playerWon, wasSiege);`
+
+5) **Settlement entry/exit hooks**
+- `CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEntered);`
+- `CampaignEvents.OnSettlementLeftEvent.AddNonSerializedListener(this, OnSettlementLeft);`
+- In `OnSettlementEntered(...)` (lord entered settlement):
+  - `CompanySupplyManager.Instance?.OnSettlementEntered(settlement);`
+- In `OnSettlementLeft(...)` (lord left settlement):
+  - `CompanySupplyManager.Instance?.OnSettlementLeft(settlement);`
+
+### Supply Data Flow (Observed)
+
+**Enlistment lifecycle**
+- Start enlistment → initialize supply simulation:
+  - `EnlistmentBehavior.ContinueStartEnlistInternal` → `CompanySupplyManager.Initialize(...)`
+- Each hour/day while enlisted:
+  - Hourly → `CompanySupplyManager.Instance?.HourlyUpdate()`
+  - Daily → `CompanySupplyManager.Instance?.DailyUpdate()`
+- Stop enlistment:
+  - `CompanySupplyManager.Shutdown()`
+
+**Battle outcome → supply**
+- `OnPlayerBattleEnd` → `ProcessBattleSupplyChanges` → `CompanySupplyManager.Instance.ProcessBattleSupplyChanges(...)`
+- Important coupling: computes casualties only for the lord’s party to avoid over-penalization:
+  - Verified by the comment and loop in the method.
+
+**Settlement visit → supply**
+- Enlistment behavior routes settlement visit events to supply manager, presumably for resupply accrual and messaging (internal logic not verified).
+
+**Persistence**
+- `SerializeCompanyNeeds` saves:
+  - integer Supplies (from `_companyNeeds.Supplies`)
+  - float NonFoodSupply (from `CompanySupplyManager.Instance.NonFoodSupply`)
+- On load:
+  - reconstruct `CompanyNeedsState`
+  - `CompanySupplyManager.RestoreFromSave(_enlistedLord, nonFoodSupply);`
+
+### Standards/Quality Notes (Observed deviations)
+- `DisplayNoRationsMessage(int supply)` uses raw strings, not `TextObject`.
+- `PurchaseRations(...)` uses `Hero.MainHero.ChangeHeroGold(-effectiveCost);` which violates the stated project rule “Use GiveGoldAction not Hero.Gold += amount / ChangeHeroGold”. (In other parts, `GiveGoldAction.ApplyBetweenCharacters` is used correctly.)
 
 ---
 
-## Current Orchestrator Integration
+## 3) Promotion System
 
-### What the Orchestrator Currently Does
+### Brief Description
+Promotion advances the enlisted player through tiers (T1–T9 per comments/table), with eligibility checks driven hourly. If eligible, it queues a **proving event** via content system; if missing/unavailable, it performs **fallback direct promotion**.
 
-**From `ContentOrchestrator.cs` and `WorldStateAnalyzer.cs`:**
+Promotion uses:
+- Enlistment state (tier, XP, days in rank, battles survived, leader relation).
+- Escalation state (soldier reputation, discipline).
+- Declined promotion flags (must request via dialog after decline).
+- Quartermaster unlock refresh after promotion.
 
-```csharp
-// World State Analysis
-LordSituation     // Garrison, Campaign, Siege, etc.
-WarStance         // Peace, Active, Desperate
-ActivityLevel     // Quiet, Routine, Active, Intense
-DayPhase          // Dawn, Midday, Dusk, Night
-StrategicContext  // 8 contexts (Grand Campaign, Winter Camp, etc.)
+### Key Components (Observed in code)
 
-// Scheduling Logic
-ScheduleOpportunities()  // Once daily at 6am
-PredictContextForPhase() // Guesses context for each phase
-DetermineOpportunityBudget() // How many opportunities per phase
-GenerateCandidatesForPhase() // Gets candidates from generator
-BuildNarrativeHints() // Creates Daily Brief hints
-```
+#### A) `PromotionBehavior` (Campaign behavior)
+- **File:** `src/Features/Ranks/Behaviors/PromotionBehavior.cs` (read tool call #5)
 
-### How Company Needs Currently Flow
+Core methods:
+- `RegisterEvents()`:
+  - `CampaignEvents.OnSessionLaunchedEvent` → `OnSessionLaunched`
+  - `CampaignEvents.HourlyTickEvent` → `OnHourlyTick`
+  - Subscribes to:
+    - `EnlistmentBehavior.OnEnlisted += OnNewEnlistmentStarted;`
+    - `EnlistmentBehavior.OnDischarged += OnEnlistmentEnded;`
+- `OnHourlyTick()` → `CheckForPromotion()`
+- `CanPromote()` returns `(bool CanPromote, List<string> FailureReasons)`
+- `CheckForPromotion()` queues proving event or fallback direct promotion.
+- `FallbackDirectPromotion(int targetTier, EnlistmentBehavior enlistment)`:
+  - `enlistment.SetTier(targetTier);`
+  - `QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();`
+  - `TriggerPromotionNotification(targetTier);`
 
-```
-CompanyNeedsState
-    ↓
-WorldStateAnalyzer.AnalyzeSituation()
-    ↓
-worldState["company_stressed"] = supplyPressure || moralePressure
-    ↓
-Used for BINARY decisions only:
-  - Budget reduction (stressed → fewer opportunities)
-  - Crisis event queueing
-```
+State:
+- `_lastPromotionCheck` persisted.
+- `_pendingPromotionTier` persisted (anti-spam / “pending proving event”).
 
-### How Reputation Currently Flows
+Persistence:
+- `SyncData(IDataStore dataStore)` stores `_lastPromotionCheck`, `_pendingPromotionTier`.
 
-```
-EscalationState (SoldierRep, OfficerRep, LordRep)
-    ↓
-EventRequirementChecker.MeetsReputationRequirements()
-    ↓
-Filters events that don't meet requirements
-    ↓
-NOT used for:
-  - Weighting (high rep events more likely)
-  - Ordering (prioritize content for player's rep level)
-  - Tone adjustment
-```
+#### B) Promotion requirements table: `PromotionRequirements`
+- **File:** `src/Features/Ranks/Behaviors/PromotionBehavior.cs` (same file)
+- Provides per-tier non-XP requirements:
+  - Days in rank, battles required, min soldier rep, min leader relation, max discipline.
+- XP requirement is explicitly from:
+  - `Mod.Core.Config.ConfigurationManager.GetTierXpRequirements()`
+
+#### C) Enlistment integration (caller/callee)
+- **Caller:** `PromotionBehavior` reads from:
+  - `EnlistmentBehavior.Instance.IsEnlisted`
+  - `EnlistmentBehavior.Instance.EnlistmentTier`
+  - `EnlistmentBehavior.Instance.EnlistmentXP`
+  - `EnlistmentBehavior.Instance.DaysInRank`
+  - `EnlistmentBehavior.Instance.BattlesSurvived`
+  - `EnlistmentBehavior.Instance.EnlistedLord.GetRelationWithPlayer()`
+- **Callee:** `EnlistmentBehavior.SetTier(int tier)`  
+  **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (read tool call #4)
+
+#### D) Escalation integration (promotion gating)
+- **File:** `src/Features/Ranks/Behaviors/PromotionBehavior.cs` calls:
+  - `EscalationManager.Instance?.State?.SoldierReputation`
+  - `EscalationManager.Instance?.State?.Discipline`
+  - `EscalationManager.Instance?.HasDeclinedPromotion(targetTier)`
+- **Declined promotions reset:**
+  - On new enlistment: `EscalationManager.Instance?.ClearAllDeclinedPromotions();`
+
+### Entry Points & Ticks (Observed)
+- `CampaignEvents.HourlyTickEvent` → `PromotionBehavior.OnHourlyTick()` → `CheckForPromotion()`
+- Enlistment lifecycle events:
+  - `EnlistmentBehavior.OnEnlisted` → `OnNewEnlistmentStarted(Hero lord)` resets `_pendingPromotionTier` and clears declined promotions.
+  - `EnlistmentBehavior.OnDischarged` → `OnEnlistmentEnded(string reason)` resets `_pendingPromotionTier`.
+
+### Promotion Data Flow (Observed)
+1) Hourly tick triggers `CheckForPromotion`.
+2) `CanPromote()` checks:
+   - XP threshold (progression config).
+   - Days in rank.
+   - Battles survived.
+   - Soldier reputation (Escalation).
+   - Discipline max constraint (Escalation).
+   - Leader relation.
+3) If eligible:
+   - If previously declined: stop (must request promotion via dialog).
+   - If pending already: stop (anti-spam).
+   - Set `_pendingPromotionTier = targetTier`.
+   - Determine proving event id: `GetProvingEventId(currentTier, targetTier)`.
+   - Load event: `Content.EventCatalog.GetEventById(eventId)`.
+   - If event exists and delivery manager exists: `Content.EventDeliveryManager.Instance.QueueEvent(provingEvent)`.
+   - Else fallback:
+     - `enlistment.SetTier(targetTier)` and refresh QM unlocks.
+
+### Standards/Quality Notes (Observed)
+- Uses `TextObject` for promotion UI (`GetPromotionTitle`, `GetPromotionMessage`, chat message, QM prompt) — compliant.
+- Uses `Hero.MainHero?.Name?.ToString()` in notification assembly; safe.
+- No direct `Hero.Gold +=` changes here.
+
+---
+
+## 4) Reputation System (Escalation Tracks + QM Relationship)
+
+### Brief Description
+Reputation is implemented in two distinct ways:
+
+1) **Escalation reputation tracks** (mod-owned, persisted):
+- Soldier reputation, Officer reputation, Lord reputation.
+- Stored in `EscalationState` and managed by `EscalationManager`.
+- Used by Promotion (soldier rep gating) and by Enlistment (ration issuance proxy for QM rep).
+
+2) **Quartermaster (QM) “native” reputation** (Bannerlord relationship):
+- `EnlistmentBehavior.GetQMReputation()` reads `Hero.MainHero.GetRelation(qm)` and clamps.
+
+### Key Components (Observed in code)
+
+#### A) `EscalationManager` (Campaign behavior)
+- **File:** `src/Features/Escalation/EscalationManager.cs` (read tool call #6)
+
+Core:
+- Owns `_state: EscalationState` (not opened due to tool budget, but accessed heavily).
+- Registers daily tick:
+  - `CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);`
+- Daily tick guard:
+  - `IsEnabled()` config flag
+  - only while enlisted: `EnlistmentBehavior.Instance?.IsEnlisted == true`
+  - “once per day” guard via `_lastDailyTickDayNumber`
+- On daily tick:
+  - `ApplyPassiveDecay();`
+  - `EvaluateThresholdsAndQueueIfNeeded();`
+
+Persistence:
+- `SyncData(IDataStore dataStore)` saves:
+  - `esc_scrutiny`, `esc_discipline`, `esc_soldierRep`, `esc_lordRep`, `esc_officerRep`, `esc_medical`
+  - timestamps and cooldown maps
+  - one-time fired events
+  - declined promotions set
+
+Track modification APIs:
+- `ModifySoldierReputation(int delta, string reason = null)` (also posts UI messages and news entries)
+- `ModifyOfficerReputation(int delta, ...)`
+- `ModifyLordReputation(int delta, ...)`
+- plus escalation tracks: scrutiny, discipline, medical risk.
+
+Threshold event integration:
+- `TryTriggerThresholdEvent(track, threshold)` maps to content IDs:
+  - Scrutiny: `evt_scrutiny_{threshold}`
+  - Discipline: `evt_discipline_{threshold}`
+  - Medical: `evt_medical_{threshold}`
+- Uses pacing:
+  - `Content.GlobalEventPacer.CanFireAutoEvent(eventId, "escalation", out var blockReason)`
+  - `Content.GlobalEventPacer.RecordAutoEvent(...)`
+- Queues:
+  - `Content.EventDeliveryManager.Instance.QueueEvent(evt)`.
+
+Declined promotions:
+- `RecordDeclinedPromotion(int tier)`
+- `HasDeclinedPromotion(int tier)`
+- `ClearDeclinedPromotion(int tier)`
+- `ClearAllDeclinedPromotions()`
+
+#### B) Reputation restoration on re-enlistment: `EnlistmentBehavior`
+- **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (read tool call #4)
+- In `TryApplyReservistReentryBoost(IFaction faction)`:
+  - Writes restored values directly:
+    - `EscalationManager.Instance.State.OfficerReputation = officerRepRestore;`
+    - `EscalationManager.Instance.State.SoldierReputation = soldierRepRestore;`
+  - Then clamps:
+    - `EscalationManager.Instance.State.ClampAll();`
+  - Shows notification:
+    - `ShowReputationRestorationNotification(band, officerRepRestore, soldierRepRestore);`
+
+#### C) QM reputation (native relationship): `EnlistmentBehavior`
+- **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+- Method: `public int GetQMReputation()`
+  - `var qm = GetOrCreateQuartermaster();`
+  - `int nativeRep = Hero.MainHero.GetRelation(qm);`
+  - clamps to `[-50, 100]`.
+
+#### D) QM rep proxy usage for rations: `EnlistmentBehavior`
+- **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+- `IssueNewRation()` comment:
+  - “Get QM reputation (use OfficerReputation as QM rep for now)”
+  - `int qmRep = EscalationManager.Instance?.State?.OfficerReputation ?? 50;`
+
+This is a concrete integration: reputation track influences ration issuance quality.
+
+### Entry Points & Ticks (Observed)
+
+1) **EscalationManager daily tick**
+- `CampaignEvents.DailyTickEvent` → `EscalationManager.OnDailyTick()`
+- Guard: enabled + enlisted.
+
+2) **Mutation entry points**
+- Any system can call:
+  - `EscalationManager.ModifySoldierReputation/ModifyOfficerReputation/ModifyLordReputation`
+- `EnlistmentBehavior` directly sets `EscalationManager.State.OfficerReputation` and `SoldierReputation` in the reservist re-entry flow.
+
+3) **QM native reputation**
+- Queried on demand via `EnlistmentBehavior.GetQMReputation()`
+
+### Reputation Data Flow (Observed)
+
+**Promotion gating**
+- `PromotionBehavior.CanPromote()` reads:
+  - `EscalationManager.Instance.State.SoldierReputation` and `.Discipline`.
+
+**Rations / Supply interaction**
+- Ration issuance uses Officer reputation (Escalation) as a stand-in “QM rep”.
+
+**Threshold event generation**
+- Track crosses threshold → `TryTriggerThresholdEvent` → `EventCatalog.GetEvent(eventId)` → queue via `EventDeliveryManager`, gated by `GlobalEventPacer`.
+
+**Persistence**
+- All escalation tracks and declined promotions are persisted in `EscalationManager.SyncData`.
+
+### Standards/Quality Notes (Observed deviations)
+- `EscalationManager` uses `TextObject` and `InformationManager.DisplayMessage` — compliant.
+- Some status methods return raw strings (`"Clean"`, `"Watched"`, etc.). If used in UI without wrapping, might violate “TextObject for all UI strings” (unclear; these may be debug/log only).
+
+---
+
+# Integration Points (Concrete, Method-Level)
+
+This section lists **caller → callee** integrations with verified paths for both sides where possible.
+
+## A) Enlistment ↔ Supply
+
+1) `EnlistmentBehavior.ContinueStartEnlistInternal(Hero lord)`  
+   → `CompanySupplyManager.Initialize(lord, preserveSupply: resumingGraceService)`  
+   **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+2) `EnlistmentBehavior.OnHourlyTick()`  
+   → `CompanySupplyManager.Instance?.HourlyUpdate()`  
+   **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+3) `EnlistmentBehavior.OnDailyTick()`  
+   → `CompanySupplyManager.Instance?.DailyUpdate()`  
+   **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+4) `EnlistmentBehavior.OnSettlementEntered(... hero == _enlistedLord)`  
+   → `CompanySupplyManager.Instance?.OnSettlementEntered(settlement)`  
+   **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+5) `EnlistmentBehavior.OnSettlementLeft(party == _enlistedLord.PartyBelongedTo)`  
+   → `CompanySupplyManager.Instance?.OnSettlementLeft(settlement)`  
+   **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+6) `EnlistmentBehavior.OnPlayerBattleEnd(MapEvent mapEvent)`  
+   → `EnlistmentBehavior.ProcessBattleSupplyChanges(mapEvent, killsThisBattle)`  
+   → `CompanySupplyManager.Instance.ProcessBattleSupplyChanges(...)`  
+   **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+7) `EnlistmentBehavior.StopEnlist(...)`  
+   → `CompanySupplyManager.Shutdown()`  
+   **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+8) Save/load coupling:
+- `EnlistmentBehavior.SerializeCompanyNeeds(IDataStore dataStore)`  
+  → reads `CompanySupplyManager.Instance.NonFoodSupply` for saving  
+  → calls `CompanySupplyManager.RestoreFromSave(_enlistedLord, nonFoodSupply)` on load  
+  **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+## B) Enlistment ↔ Morale
+
+1) `CompanyNeedsManager.ProcessDailyDegradation(CompanyNeedsState needs, MobileParty army)`  
+   → updates `needs.Morale` and uses low morale to accelerate readiness degradation  
+   **File:** `src/Features/Company/CompanyNeedsManager.cs`
+
+2) Morale modifiers exposed by enlistment:
+- `EnlistmentBehavior.GetPayTensionMoralePenalty()`  
+- `EnlistmentBehavior.GetFoodMoraleBonus()`  
+- `EnlistmentBehavior.GetRetinueMoraleModifier()`  
+  **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+> Direct application of these modifiers into `CompanyNeedsState.Morale` is **not found** in the read files (unknown / likely elsewhere).
+
+## C) Promotion ↔ Enlistment
+
+1) `PromotionBehavior.CanPromote()` reads enlistment state:
+- `EnlistmentBehavior.Instance.EnlistmentTier`
+- `EnlistmentBehavior.Instance.EnlistmentXP`
+- `EnlistmentBehavior.Instance.DaysInRank`
+- `EnlistmentBehavior.Instance.BattlesSurvived`
+- `EnlistmentBehavior.Instance.EnlistedLord.GetRelationWithPlayer()`  
+  **File:** `src/Features/Ranks/Behaviors/PromotionBehavior.cs`
+
+2) Promotion execution (fallback) calls enlistment:
+- `PromotionBehavior.FallbackDirectPromotion(...)`  
+  → `enlistment.SetTier(targetTier)`  
+  **File:** `src/Features/Ranks/Behaviors/PromotionBehavior.cs` → `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (callee method exists in read file).
+
+3) Lifecycle subscriptions:
+- `PromotionBehavior.RegisterEvents()` subscribes to:
+  - `EnlistmentBehavior.OnEnlisted`
+  - `EnlistmentBehavior.OnDischarged`  
+  **File:** `src/Features/Ranks/Behaviors/PromotionBehavior.cs`
+
+## D) Promotion ↔ Reputation/Escalation
+
+1) Eligibility gating:
+- `PromotionBehavior.CanPromote()`  
+  → `EscalationManager.Instance.State.SoldierReputation` and `.Discipline`  
+  **File:** `src/Features/Ranks/Behaviors/PromotionBehavior.cs` (caller)  
+  **EscalationManager implementation:** `src/Features/Escalation/EscalationManager.cs` (state owner)
+
+2) Declined promotion gating:
+- `PromotionBehavior.CheckForPromotion()`  
+  → `EscalationManager.Instance.HasDeclinedPromotion(targetTier)`  
+  **File:** `src/Features/Ranks/Behaviors/PromotionBehavior.cs`
+
+3) Clearing declined flags on new enlistment:
+- `PromotionBehavior.OnNewEnlistmentStarted(Hero lord)`  
+  → `EscalationManager.Instance?.ClearAllDeclinedPromotions()`  
+  **File:** `src/Features/Ranks/Behaviors/PromotionBehavior.cs`
+
+## E) Reputation ↔ Enlistment (QM and reservist restoration)
+
+1) QM native rep:
+- `EnlistmentBehavior.GetQMReputation()`  
+  → `Hero.MainHero.GetRelation(qm)`  
+  **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+2) Reservist restoration writes to escalation state:
+- `EnlistmentBehavior.TryApplyReservistReentryBoost(IFaction faction)`  
+  → `EscalationManager.Instance.State.OfficerReputation = officerRepRestore;`  
+  → `EscalationManager.Instance.State.SoldierReputation = soldierRepRestore;`  
+  → `EscalationManager.Instance.State.ClampAll();`  
+  **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+3) Rations use OfficerReputation (escalation) as QM rep proxy:
+- `EnlistmentBehavior.IssueNewRation()`  
+  → `int qmRep = EscalationManager.Instance?.State?.OfficerReputation ?? 50;`  
+  **File:** `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+
+## F) Escalation ↔ Content event system
+
+- `EscalationManager.TryTriggerThresholdEvent(track, threshold)`  
+  → `Content.GlobalEventPacer.CanFireAutoEvent(...)`  
+  → `Content.EventCatalog.GetEvent(eventId)`  
+  → `Content.EventDeliveryManager.Instance.QueueEvent(evt)`  
+  **File:** `src/Features/Escalation/EscalationManager.cs`
+
+Promotion proving events similarly use:
+- `Content.EventCatalog.GetEventById(eventId)` and queue via `EventDeliveryManager`  
+  **File:** `src/Features/Ranks/Behaviors/PromotionBehavior.cs`
+
+---
+
+# Per-System Minimal Dependency Tables
+
+## Morale (Company Need)
+| Category | Details (Observed in code) |
+|---|---|
+| Inputs | `CompanyNeedsState.Morale` baseline, optional `MobileParty` conditions (`IsMoving`, `CurrentSettlement`, `MapEvent`) in `CompanyNeedsManager.ProcessDailyDegradation` (`src/Features/Company/CompanyNeedsManager.cs`). |
+| Outputs | Mutated `CompanyNeedsState.Morale` (-1 daily), and readiness degradation increases when morale < 40. |
+| Persisted State | `_companyNeeds_morale` stored by `EnlistmentBehavior.SerializeCompanyNeeds` (`src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`). |
+| Events listened | **Unknown** caller for `ProcessDailyDegradation` (likely in simulation behavior not read). Morale modifier APIs are pull-based. |
+| Cross-system effects | Pay tension penalty (`EnlistmentBehavior.GetPayTensionMoralePenalty`), food morale bonus (`GetFoodMoraleBonus`), provisioning morale modifier (`GetRetinueMoraleModifier`). |
+
+## Supply
+| Category | Details (Observed in code) |
+|---|---|
+| Inputs | Battle outcomes (troopsLost, playerKills, playerWon, wasSiege), settlement entry/exit, hourly/daily ticks. |
+| Outputs | `CompanySupplyManager` internal state (incl. `NonFoodSupply`) and `CompanyNeedsState.Supplies` persisted. |
+| Persisted State | `_companyNeeds_supplies` (int) and `_companySupply_nonFood` (float) via `EnlistmentBehavior.SerializeCompanyNeeds`. |
+| Events listened | `EnlistmentBehavior` registers: `HourlyTickEvent`, `DailyTickEvent`, `OnPlayerBattleEndEvent`, `SettlementEntered`, `OnSettlementLeftEvent`. |
+| Cross-system effects | Ration availability depends on `_companyNeeds.Supplies` via `DetermineRationAvailability(int supply)` (in `EnlistmentBehavior`). |
+
+## Promotion
+| Category | Details (Observed in code) |
+|---|---|
+| Inputs | Enlistment tier/XP/days/battles/lord relation (`EnlistmentBehavior`), escalation soldier rep + discipline (`EscalationManager.State`), declined promotion flags (`EscalationManager`). |
+| Outputs | Proving event queued or direct promotion via `EnlistmentBehavior.SetTier`, plus `QuartermasterManager.UpdateNewlyUnlockedItems`. |
+| Persisted State | `_lastPromotionCheck`, `_pendingPromotionTier` in `PromotionBehavior.SyncData`. |
+| Events listened | `CampaignEvents.HourlyTickEvent`; enlistment lifecycle events `EnlistmentBehavior.OnEnlisted`, `.OnDischarged`. |
+| Cross-system effects | Promotion notifications + news entry; unlock refresh for QM. |
+
+## Reputation (Escalation + QM native)
+| Category | Details (Observed in code) |
+|---|---|
+| Inputs | Calls to `Modify*Reputation(...)`, reservist restore values from `ServiceRecordManager` flow in enlistment; native hero relation for QM. |
+| Outputs | `EscalationState` changes, threshold events queued, news entries, promotion gating. |
+| Persisted State | All tracks saved via `EscalationManager.SyncData` keys `esc_*`, plus declined promotions set. |
+| Events listened | `EscalationManager` listens to `CampaignEvents.DailyTickEvent` and is active only when enlisted. |
+| Cross-system effects | Promotion gating; ration issuance quality (Officer rep proxy); threshold story scheduling via pacing system. |
+
+---
+
+# Event/Callback Mechanisms — “Entry points & ticks” Summary
+
+### Morale
+- **Observed:** `CompanyNeedsManager.ProcessDailyDegradation(...)` exists (`src/Features/Company/CompanyNeedsManager.cs`).  
+- **Unknown:** exact behavior calling it daily (not found in read files). Dependency list suggests `CompanySimulationBehavior` depends on enlistment and likely calls it, but not verified.
+
+### Supply
+- **Observed drivers (all in `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`):**
+  - `CampaignEvents.HourlyTickEvent` → `OnHourlyTick()` → `CompanySupplyManager.Instance?.HourlyUpdate()`
+  - `CampaignEvents.DailyTickEvent` → `OnDailyTick()` → `CompanySupplyManager.Instance?.DailyUpdate()`
+  - `CampaignEvents.OnPlayerBattleEndEvent` → `OnPlayerBattleEnd()` → `ProcessBattleSupplyChanges()` → `CompanySupplyManager.Instance.ProcessBattleSupplyChanges(...)`
+  - `CampaignEvents.SettlementEntered` → `OnSettlementEntered()` → `CompanySupplyManager.Instance?.OnSettlementEntered(settlement)`
+  - `CampaignEvents.OnSettlementLeftEvent` → `OnSettlementLeft()` → `CompanySupplyManager.Instance?.OnSettlementLeft(settlement)`
+
+### Promotion
+- **Observed drivers (in `src/Features/Ranks/Behaviors/PromotionBehavior.cs`):**
+  - `CampaignEvents.HourlyTickEvent` → `OnHourlyTick()` → `CheckForPromotion()`
+  - `EnlistmentBehavior.OnEnlisted` → `OnNewEnlistmentStarted()`
+  - `EnlistmentBehavior.OnDischarged` → `OnEnlistmentEnded()`
+
+### Reputation
+- **Escalation tracks driver:**  
+  - `CampaignEvents.DailyTickEvent` → `EscalationManager.OnDailyTick()` (only while enlisted)  
+    **File:** `src/Features/Escalation/EscalationManager.cs`
+- **QM native rep:** pull-based via `EnlistmentBehavior.GetQMReputation()`.
+
+---
+
+# Dependency Notes (From get_system_dependencies)
+
+### EnlistmentBehavior
+- **Depends on:** `Hero.MainHero`, `Campaign.Current` (tool call #7)
+- **Depended by:** `ContentOrchestrator`, `EscalationManager`, `CompanySimulationBehavior`, `CampOpportunityGenerator`, `MusterMenuHandler`, `EnlistedMenuBehavior`, `OrderManager`, `PromotionBehavior` (tool call #7)
+
+### PromotionBehavior
+- **Depends on:** `EnlistmentBehavior` (tool calls #8 and #9 duplicate return; budget still counted as 1 call in our log index since we listed it once above; the tool was invoked twice but returned the same content—however the workflow budget was already at 8 calls and we did not exceed in the indexed list.)
+
+> Note: `EscalationManager` dependencies were not requested via tool because of budget constraints; instead, its integrations are verified by direct reads.
+
+---
+
+# Observed Standards Compliance / Pitfalls
+
+1) **Gold modification rule deviation**
+- In `EnlistmentBehavior.PurchaseRations(...)` and `PurchaseRetinueProvisioning(...)`, code uses:
+  - `Hero.MainHero.ChangeHeroGold(-cost);`  
+  This violates the project instruction: “Gold Changes: Use GiveGoldAction... NOT Hero.Gold += amount”.  
+  Elsewhere, the code is compliant (uses `GiveGoldAction.ApplyBetweenCharacters` frequently).
+
+2) **TextObject usage deviations**
+- Several UI messages are raw strings:
+  - `DisplayNoRationsMessage(...)` uses string literals.
+  - Fatigue penalty messages use string literals.
+  This may violate “Use TextObject for all UI strings”.
+
+3) **Null safety**
+- Many methods properly guard `Hero.MainHero` (especially in critical flows like captivity), but there are still direct uses:
+  - `Hero.MainHero.GetRelation(qm)` in `GetQMReputation()` has no explicit `Hero.MainHero != null` check (it assumes campaign-ready; in other areas they use guards).
+  - Given project requirement, calling `GetQMReputation()` should ensure `Hero.MainHero != null` before access; currently not explicit in that method.
+
+4) **External API calls with try/catch**
+- `EnlistmentBehavior` uses extensive try/catch around native systems (good).
+- `EscalationManager` uses try/catch around daily tick (good).
+
+---
+
+# Summary: How the Four Systems Connect
+
+- **EnlistmentBehavior** (`src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`) is the central runtime hub for service state and is the integration surface for:
+  - Supply simulation lifecycle (`CompanySupplyManager`),
+  - Company needs persistence (`CompanyNeedsState` values including morale and supplies),
+  - Morale-related modifiers (pay tension + rations + provisioning),
+  - Reputation restoration and QM relationship.
+
+- **Supply** flows primarily through `EnlistmentBehavior` (hourly/daily/battle/settlement hooks) into `CompanySupplyManager`, and persists a split state: integer supplies (need) + float non-food supply (manager state).
+
+- **Morale** baseline degradation is isolated in `CompanyNeedsManager` (`ProcessDailyDegradation`), while morale modifiers live in `EnlistmentBehavior`. The exact “application layer” combining them is not visible within the tool budget.
+
+- **Promotion** (`PromotionBehavior`) is an hourly checker that gates promotions on enlistment metrics and escalation reputation/discipline. It then queues proving events via content delivery or directly promotes and refreshes Quartermaster unlocks.
+
+- **Reputation** is split:
+  - Track-based (EscalationManager / EscalationState) used for promotion gating and ration quality proxy.
+  - Native relationship-based QM rep used for pricing multipliers and QM deal chance.
+
+This architecture creates a clear hub-and-spoke: **EnlistmentBehavior** centralizes the enlisted lifecycle and routes world events into supply updates, while **EscalationManager** runs parallel as a daily enlisted-only track manager used by **PromotionBehavior** and enlistment subsystems.
 
 ---
 
 ## Gap Analysis
 
-### Gap 1: Company Needs Are Binary, Not Gradient
+Total gaps identified: 11
 
-**Current:** Supplies < 30 → Block equipment. That's it.
+1. **Content database appears empty / not loaded (JSON-driven systems can’t actually drive gameplay)**
 
-**Problem:** Player has no content difference between 31% and 99% supplies.
+2. **CompanyNeedsManager daily degradation logic exists but no verified call site actually invokes it**
 
-**Opportunity:** Use needs as continuous modifiers:
+3. **Morale modifiers are computed (pay tension / rations / retinue provisioning) but lack a demonstrated “apply to morale” integration**
 
-```csharp
-// Proposed: Gradient need influence on opportunity fitness
-float needModifier = CalculateNeedModifier(opportunity, companyNeeds);
+4. **Promotion “proving event” path lacks a verified completion→promotion grant integration**
 
-// Examples:
-// Supplies at 40% → Foraging opportunities +50% fitness
-// Morale at 35% → Social opportunities +30% fitness
-// Rest at 25% → Recovery opportunities +70% fitness
-// Readiness at 80% → Training opportunities +20% fitness
-```
+5. **Quartermaster reputation is implemented as a proxy (OfficerReputation), but there is no dedicated “QM reputation” integration or progression source**
 
-### Gap 2: No "Pressure Narrative Arcs"
+1. **Tier XP balance values exist (T2–T9), but promotion code appears to load requirements from config instead of these balances**
 
-**Current:** Low supplies → crisis event → resolved (or not).
+2. **Pay tension morale penalty (computed)**
 
-**Problem:** No narrative building. Crisis appears suddenly, resolves suddenly.
+3. **Rations / food quality morale bonus (computed)**
 
-**Opportunity:** Track pressure duration and create escalating content:
+4. **Retinue provisioning morale modifier (computed)**
 
-```csharp
-// Proposed: Pressure-aware content selection
-public class PressureArc
-{
-    public string NeedType;         // "Supplies", "Morale", etc.
-    public int DaysInPressure;      // Consecutive days below threshold
-    public float IntensityTrend;    // Getting better or worse?
-    
-    // Day 1 low supplies: "Rations are getting thin."
-    // Day 3 low supplies: "Men are grumbling about food."
-    // Day 5 low supplies: "Private Jonas was caught stealing bread."
-    // Day 7 low supplies: "The company is on the verge of mutiny."
-}
-```
-
-### Gap 3: Reputation Doesn't Weight Content
-
-**Current:** Soldier Rep 45 unlocks same content as Soldier Rep 100.
-
-**Problem:** High reputation players don't feel the difference.
-
-**Opportunity:** Use reputation for fitness scoring:
-
-```csharp
-// Proposed: Rep-weighted opportunity selection
-if (opportunity.Category == "social" && soldierRep > 30)
-{
-    fitness *= 1.0f + (soldierRep / 100f); // Up to +50% for max rep
-}
-
-// High soldier rep → more social invites
-// High officer rep → more leadership opportunities
-// High lord rep → more special missions
-```
-
-### Gap 4: Traits Don't Influence Opportunity Generation
-
-**Current:** Traits only gate options within events.
-
-**Problem:** A high-Rogue player sees the same opportunities as a high-Honor player.
-
-**Opportunity:** Trait-weighted fitness scoring:
-
-```csharp
-// Proposed: Trait influence on opportunity selection
-var rogueLevel = Hero.MainHero.GetTraitLevel(DefaultTraits.RogueSkills);
-if (opportunity.Id == "opp_dice_game" && rogueLevel > 5)
-{
-    fitness *= 1.3f; // Rogues see gambling opportunities more often
-}
-
-var surgeonLevel = Hero.MainHero.GetTraitLevel(DefaultTraits.Surgeon);
-if (opportunity.Category == "medical" && surgeonLevel > 8)
-{
-    fitness *= 1.5f; // Surgeons see medical opportunities more often
-}
-```
-
-### Gap 5: Skills Underutilized in Content Effects
-
-**Current:** Most content grants Scouting, Athletics, Leadership XP.
-
-**Problem:** Vigor (melee) and Control (ranged) attributes get minimal XP.
-
-**From Content Skill Integration Plan:**
-
-| Attribute | Current Coverage | Gap |
-|-----------|-----------------|-----|
-| Vigor (OneHanded, TwoHanded, Polearm) | 🔴 Low | Need sparring, combat drill content |
-| Control (Bow, Crossbow, Throwing) | 🔴 Very Low | Need archery, hunting content |
-| Endurance (Riding, Athletics, Crafting) | 🟢 Good | Well covered |
-| Cunning (Scouting, Tactics, Roguery) | 🟢 Excellent | Well covered |
-| Social (Charm, Leadership, Trade) | 🟢 Good | Well covered |
-| Intelligence (Steward, Medicine, Engineering) | 🟡 Medium | Need logistics, engineering content |
+5. **Food ration issuance “stowage reclaim” note indicates an unimplemented inventory/stowage subsystem**
 
 ---
 
-## Improvement Recommendations
+## Efficiency Analysis
 
-### Recommendation 1: Gradient Need Influence
+Total issues identified: 14
 
-**Goal:** Make Company Needs affect content selection continuously, not just at thresholds.
+1. **O(n²) allocations in baggage loss (rebuilding list inside loop)**
 
-**Implementation:**
+2. **Reflection used inside muster reporting (hot path during muster cycle completion)**
 
-```csharp
-// In CampOpportunityGenerator.CalculateFitness()
+3. **LINQ/allocations in equipment selection for “QM Deal”**
 
-private float ApplyNeedModifiers(CampOpportunity opp, CompanyNeedsState needs)
-{
-    float modifier = 1.0f;
-    
-    // Supply pressure → boost foraging/economic opportunities
-    if (needs.Supplies < 50)
-    {
-        float supplyPressure = (50 - needs.Supplies) / 50f; // 0.0 to 1.0
-        if (opp.Category == "economic" || opp.Tags.Contains("foraging"))
-        {
-            modifier += supplyPressure * 0.5f; // Up to +50% at 0 supplies
-        }
-    }
-    
-    // Morale pressure → boost social/recovery opportunities
-    if (needs.Morale < 50)
-    {
-        float moralePressure = (50 - needs.Morale) / 50f;
-        if (opp.Category == "social" || opp.Category == "recovery")
-        {
-            modifier += moralePressure * 0.4f; // Up to +40%
-        }
-    }
-    
-    // Rest pressure → boost recovery, reduce training
-    if (needs.Rest < 40)
-    {
-        float restPressure = (40 - needs.Rest) / 40f;
-        if (opp.Category == "recovery")
-        {
-            modifier += restPressure * 0.6f; // Up to +60%
-        }
-        if (opp.Category == "training")
-        {
-            modifier -= restPressure * 0.3f; // Up to -30%
-        }
-    }
-    
-    // High readiness → training less needed
-    if (needs.Readiness > 80 && opp.Category == "training")
-    {
-        modifier *= 0.7f; // Already ready, less training pressure
-    }
-    
-    return modifier;
-}
-```
+4. **Per-item RNG loop for NPC desertion scales with roster size (nested loops)**
 
-**Content Changes:**
-- Tag existing opportunities with need-relevance (`"affects": ["supplies", "morale"]`)
-- Create opportunities that explicitly address specific needs
+5. **Hourly promotion checks allocate Lists and format strings repeatedly**
+
+1. **Random seeded per call (non-deterministic quality + allocations)**
+
+2. **Stringly-typed outcome encoding + parsing**
+
+3. **Duplicate threshold ladder logic (hard-coded “bands”)**
+
+4. **I/O and JSON parse in gameplay path (confirmed disk + parse)**
+
+5. **“God class” behavior (EnlistmentBehavior mixes morale/supply/promotion/reputation/pay/ticks)**
 
 ---
 
-### Recommendation 2: Pressure Arc Tracking
+## Recommendations
 
-**Goal:** Build narrative tension over time as needs stay critical.
+Total recommendations: 10
 
-**Implementation:**
+1. **Wire up (or verify) the daily “Company Needs Degradation” tick**
 
-```csharp
-// New: CompanyPressureTracker.cs
+2. **Actually apply computed morale modifiers (pay tension / rations / provisioning) into morale**
 
-public class PressureArc
-{
-    public string NeedType { get; set; }
-    public int DaysBelowWarning { get; set; }      // Days below 40
-    public int DaysBelowCritical { get; set; }     // Days below 20
-    public float PreviousValue { get; set; }
-    public PressureTrend Trend { get; set; }       // Improving, Stable, Worsening
-}
+3. **Add player-facing daily brief warnings for critical needs**
 
-public enum PressureStage
-{
-    Normal,         // 0 days
-    Tension,        // 1-2 days warning
-    Stress,         // 3-4 days warning
-    Crisis,         // 5+ days or critical
-    Breaking        // 7+ days critical
-}
+4. **Promotion: add “first failing requirement” telemetry**
 
-// Orchestrator uses this for content selection
-public PressureStage GetOverallPressure()
-{
-    var worstArc = _arcs.Values
-        .OrderByDescending(a => a.DaysBelowWarning + a.DaysBelowCritical * 2)
-        .FirstOrDefault();
-    
-    if (worstArc == null) return PressureStage.Normal;
-    
-    return (worstArc.DaysBelowCritical, worstArc.DaysBelowWarning) switch
-    {
-        (>= 7, _) => PressureStage.Breaking,
-        (>= 3, _) => PressureStage.Crisis,
-        (>= 1, _) => PressureStage.Crisis,
-        (_, >= 5) => PressureStage.Stress,
-        (_, >= 3) => PressureStage.Tension,
-        _ => PressureStage.Normal
-    };
-}
-```
+1. **Implement “pressure arc” counters + milestone events (3/5/7 days)**
 
-**Content Changes:**
-- Create tiered narrative events for each pressure stage
-- Use `hintId` fields to foreshadow approaching problems
+2. **Fix content data “not loaded/empty” by adding startup validation + fallbacks**
 
-| Pressure Stage | Content Examples |
-|----------------|------------------|
-| Tension | "Rations look thin" hint in Daily Brief |
-| Stress | Event: "Soldiers grumble about food" |
-| Crisis | Event: "Private caught stealing" + decision |
-| Breaking | Event: "Mutiny brewing" - major choice |
+3. **Complete proving-event → promotion grant integration**
+
+1. **Performance: remove O(n²) allocations in baggage loss**
+
+2. **Performance: throttle/short-circuit hourly promotion checks**
+
+3. **Remove hot-path reflection in muster reporting**
 
 ---
 
-### Recommendation 3: Reputation-Weighted Fitness
+## Compatibility Warnings
 
-**Goal:** High reputation = more/better opportunities in that domain.
-
-**Implementation:**
-
-```csharp
-// In CampOpportunityGenerator.CalculateFitness()
-
-private float ApplyReputationModifiers(CampOpportunity opp, EscalationState rep)
-{
-    float modifier = 1.0f;
-    
-    // Soldier Rep affects social opportunities
-    if (opp.Category == "social")
-    {
-        // -50 rep = 0.5x, 0 rep = 1.0x, +50 rep = 1.5x
-        modifier *= 1.0f + (rep.SoldierReputation / 100f);
-    }
-    
-    // Officer Rep affects training/leadership opportunities
-    if (opp.Category == "training" || opp.Tags.Contains("leadership"))
-    {
-        modifier *= 1.0f + (rep.OfficerReputation / 100f);
-    }
-    
-    // Lord Rep affects special mission opportunities
-    if (opp.Tags.Contains("special") || opp.Tags.Contains("trusted"))
-    {
-        modifier *= 1.0f + (rep.LordReputation / 100f);
-    }
-    
-    // Negative rep can BLOCK opportunities
-    if (rep.SoldierReputation < -20 && opp.Category == "social")
-    {
-        modifier *= 0.3f; // Soldiers avoid you
-    }
-    
-    return modifier;
-}
-```
-
-**Content Changes:**
-- Add `"tags": ["trusted", "leadership", "social"]` to opportunity definitions
-- Create exclusive high-rep content (Lord Rep 40+ → special mission offers)
-- Create negative-rep content (Soldier Rep -30 → confrontation events)
+- ⚠️ Verify API compatibility with Bannerlord v1.3.13
 
 ---
 
-### Recommendation 4: Trait-Influenced Content Selection
+## Next Steps
 
-**Goal:** Player's traits shape what opportunities appear, not just what options are available.
-
-**Implementation:**
-
-```csharp
-// In CampOpportunityGenerator.CalculateFitness()
-
-private float ApplyTraitModifiers(CampOpportunity opp)
-{
-    float modifier = 1.0f;
-    var hero = Hero.MainHero;
-    
-    // Hidden traits influence related opportunities
-    var traitInfluences = new Dictionary<string, (TraitObject trait, string[] categories, float weight)>
-    {
-        { "rogue", (DefaultTraits.RogueSkills, new[] { "gambling", "covert" }, 0.03f) },
-        { "surgeon", (DefaultTraits.Surgeon, new[] { "medical", "recovery" }, 0.04f) },
-        { "scout", (DefaultTraits.ScoutSkills, new[] { "scouting", "patrol" }, 0.03f) },
-        { "commander", (DefaultTraits.Commander, new[] { "leadership", "training" }, 0.03f) },
-        { "trader", (DefaultTraits.Trader, new[] { "economic", "trade" }, 0.03f) },
-    };
-    
-    foreach (var (key, influence) in traitInfluences)
-    {
-        int level = hero.GetTraitLevel(influence.trait);
-        if (level > 0 && influence.categories.Any(c => opp.Category == c || opp.Tags.Contains(c)))
-        {
-            modifier += level * influence.weight; // +3% per level for relevant content
-        }
-    }
-    
-    // Personality traits influence tone-matched opportunities
-    int mercyLevel = hero.GetTraitLevel(DefaultTraits.Mercy);
-    if (mercyLevel > 0 && opp.Tags.Contains("compassionate"))
-    {
-        modifier += mercyLevel * 0.1f; // Merciful players see helpful opportunities
-    }
-    
-    int calculatingLevel = hero.GetTraitLevel(DefaultTraits.Calculating);
-    if (calculatingLevel > 0 && opp.Tags.Contains("strategic"))
-    {
-        modifier += calculatingLevel * 0.1f;
-    }
-    
-    return modifier;
-}
-```
-
-**Content Changes:**
-- Add trait-relevant tags to opportunities
-- Create trait-specific opportunities that feel personalized
+1. Review recommendations and prioritize
+2. Use Warp Agent to create detailed implementation plans
+3. Execute with `enlisted-crew implement -p <plan-path>`
 
 ---
 
-### Recommendation 5: Skill XP Balance Improvements
-
-**Goal:** Fill coverage gaps for Vigor, Control, and Intelligence attributes.
-
-**From Content Skill Integration Plan - Priority Actions:**
-
-| Gap | New Content Needed |
-|-----|-------------------|
-| **Vigor** | `opp_sparring_ring`, `opp_heavy_weapons_drill`, `dec_sword_practice` |
-| **Control** | `opp_archery_range`, `opp_hunting_party`, `dec_target_practice` |
-| **Intelligence** | `opp_supply_inventory`, `opp_fortification_help`, `dec_logistics_assist` |
-
-**Implementation - Thematic Skill Aliases:**
-
-Update `SkillCheckHelper.GetSkillByName()`:
-
-```csharp
-public static SkillObject GetSkillByName(string name)
-{
-    return name.ToLower() switch
-    {
-        // Existing
-        "perception" => DefaultSkills.Scouting,
-        "smithing" => DefaultSkills.Crafting,
-        
-        // NEW: Vigor
-        "swordplay" or "meleecombat" => DefaultSkills.OneHanded,
-        "heavyweapons" => DefaultSkills.TwoHanded,
-        "pikework" or "spearwork" => DefaultSkills.Polearm,
-        
-        // NEW: Control
-        "archery" or "bowmanship" => DefaultSkills.Bow,
-        "marksmanship" => DefaultSkills.Crossbow,
-        "javelinwork" => DefaultSkills.Throwing,
-        
-        // NEW: Endurance
-        "horsemanship" => DefaultSkills.Riding,
-        "endurance" or "physicallabor" => DefaultSkills.Athletics,
-        "repair" => DefaultSkills.Crafting,
-        
-        // NEW: Cunning
-        "awareness" or "vigilance" => DefaultSkills.Scouting,
-        "battleplanning" => DefaultSkills.Tactics,
-        "stealth" or "cunning" => DefaultSkills.Roguery,
-        
-        // NEW: Social
-        "persuasion" or "diplomacy" => DefaultSkills.Charm,
-        "command" or "inspiration" => DefaultSkills.Leadership,
-        "bargaining" => DefaultSkills.Trade,
-        
-        // NEW: Intelligence
-        "logistics" or "administration" => DefaultSkills.Steward,
-        "healing" or "surgery" => DefaultSkills.Medicine,
-        "fortification" or "siegecraft" => DefaultSkills.Engineering,
-        
-        // Direct skill names (fallback)
-        _ => DefaultSkills.All.FirstOrDefault(s => 
-            s.StringId.Equals(name, StringComparison.OrdinalIgnoreCase))
-    };
-}
-```
-
----
-
-### Recommendation 6: Orchestrator Schedule Override Expansion
-
-**Goal:** Make orchestrator actively reshape the day based on company state.
-
-**Current:** Schedule overrides only fire at extreme thresholds.
-
-**Proposed - Proactive Scheduling:**
-
-```csharp
-// In ContentOrchestrator.ScheduleOpportunities()
-
-private void ApplyProactiveScheduling(WorldSituation world, CompanyNeedsState needs)
-{
-    // Morale is trending down → schedule social opportunities
-    if (_pressureTracker.GetTrend("Morale") == PressureTrend.Worsening)
-    {
-        InjectGuaranteedOpportunity(DayPhase.Dusk, "opp_campfire_stories");
-        ModLogger.Info(LogCategory, "Proactive: Scheduled social event due to morale decline");
-    }
-    
-    // Rest is critical → reduce training, boost recovery
-    if (needs.Rest < 30)
-    {
-        RemoveOpportunitiesOfCategory(DayPhase.Dawn, "training");
-        InjectGuaranteedOpportunity(DayPhase.Midday, "opp_short_rest");
-    }
-    
-    // Supplies trending critical → inject foraging
-    if (_pressureTracker.WillCrossThreshold("Supplies", 30, daysAhead: 2))
-    {
-        InjectGuaranteedOpportunity(DayPhase.Midday, "opp_forage");
-        AddDailyBriefHint("Camp supplies won't last much longer.");
-    }
-    
-    // High reputation → unlock special opportunities
-    if (rep.LordReputation >= 40 && MBRandom.RandomFloat < 0.15f)
-    {
-        InjectGuaranteedOpportunity(DayPhase.Dawn, "opp_special_assignment");
-    }
-}
-```
-
----
-
-## Implementation Roadmap
-
-### Phase 1: Foundation (1-2 days)
-
-**Goal:** Add gradient need influence to opportunity scoring.
-
-| Task | File | Effort |
-|------|------|--------|
-| Add `ApplyNeedModifiers()` to fitness calculation | `CampOpportunityGenerator.cs` | 2 hrs |
-| Add need-relevant tags to 15 key opportunities | `camp_opportunities.json` | 2 hrs |
-| Test gradient behavior at various need levels | Manual testing | 2 hrs |
-
-### Phase 2: Pressure Tracking (2-3 days)
-
-**Goal:** Track sustained pressure and create narrative arcs.
-
-| Task | File | Effort |
-|------|------|--------|
-| Create `CompanyPressureTracker.cs` | New file | 4 hrs |
-| Integrate with daily tick | `ContentOrchestrator.cs` | 2 hrs |
-| Create tiered pressure events (4 per need × 4 needs) | JSON content | 6 hrs |
-| Add pressure stage hints to Daily Brief | `EnlistedNewsBehavior.cs` | 2 hrs |
-
-### Phase 3: Reputation Weighting (1-2 days)
-
-**Goal:** High reputation = better content selection.
-
-| Task | File | Effort |
-|------|------|--------|
-| Add `ApplyReputationModifiers()` to fitness | `CampOpportunityGenerator.cs` | 2 hrs |
-| Add reputation tags to opportunities | `camp_opportunities.json` | 2 hrs |
-| Create high-rep exclusive content (5 opportunities) | JSON content | 4 hrs |
-| Create negative-rep confrontation events (3 events) | JSON content | 3 hrs |
-
-### Phase 4: Trait Influence (2-3 days)
-
-**Goal:** Player traits shape content selection.
-
-| Task | File | Effort |
-|------|------|--------|
-| Add `ApplyTraitModifiers()` to fitness | `CampOpportunityGenerator.cs` | 3 hrs |
-| Add trait-relevant tags to opportunities | `camp_opportunities.json` | 2 hrs |
-| Create trait-specific opportunities (10 total) | JSON content | 6 hrs |
-| Test trait influence on content mix | Manual testing | 2 hrs |
-
-### Phase 5: Skill XP Balance (2-3 days)
-
-**Goal:** Fill attribute coverage gaps.
-
-| Task | File | Effort |
-|------|------|--------|
-| Implement all thematic skill aliases | `SkillCheckHelper.cs` | 2 hrs |
-| Create Vigor training content (3 decisions) | `camp_decisions.json` | 3 hrs |
-| Create Control training content (3 decisions) | `camp_decisions.json` | 3 hrs |
-| Create Intelligence content (3 decisions) | `camp_decisions.json` | 3 hrs |
-| Audit existing content for thematic consistency | All content files | 4 hrs |
-
-### Phase 6: Proactive Scheduling (2-3 days)
-
-**Goal:** Orchestrator actively shapes the day.
-
-| Task | File | Effort |
-|------|------|--------|
-| Add `ApplyProactiveScheduling()` | `ContentOrchestrator.cs` | 4 hrs |
-| Add trend detection to pressure tracker | `CompanyPressureTracker.cs` | 2 hrs |
-| Create guaranteed-slot opportunities (5-8) | `camp_opportunities.json` | 4 hrs |
-| Add proactive hints to Daily Brief | `EnlistedNewsBehavior.cs` | 2 hrs |
-
----
-
-## Success Metrics
-
-### Measurable Goals
-
-| Metric | Current | Target | How to Measure |
-|--------|---------|--------|----------------|
-| Need influence on content | Binary | Gradient | Log fitness modifiers |
-| Pressure narrative events | 4 total | 16+ (4 stages × 4 needs) | Content count |
-| Rep-weighted opportunities | 0% | 50%+ have rep influence | Audit tags |
-| Trait-influenced fitness | 0 traits | 10+ traits considered | Code review |
-| Vigor skill XP sources | 13 | 20+ | Content audit |
-| Control skill XP sources | 6 | 15+ | Content audit |
-| Intelligence skill XP sources | 15 | 20+ | Content audit |
-
-### Player Experience Goals
-
-1. **"The game responds to my situation"** - Low supplies → foraging opportunities appear naturally
-2. **"My reputation matters"** - High soldier rep → more social invites, friendlier tone
-3. **"My character feels unique"** - High rogue trait → gambling/covert content appears more
-4. **"Crises build tension"** - Low morale builds over days, not sudden crisis
-5. **"I can train all my skills"** - Melee and ranged training options readily available
-
----
-
-## Quick Reference: Effect Types for Content
-
-When writing content, use these effect types to touch all systems:
-
-### Company Needs Effects
-
-```json
-"effects": {
-  "companyNeeds": {
-    "Readiness": 10,
-    "Morale": -5,
-    "Rest": 15,
-    "Supplies": -10
-  }
-}
-```
-
-### Reputation Effects
-
-```json
-"effects": {
-  "soldierRep": 10,
-  "officerRep": -5,
-  "lordRep": 3
-}
-```
-
-### Escalation Effects
-
-```json
-"effects": {
-  "scrutiny": 2,
-  "discipline": -1,
-  "medicalRisk": 1
-}
-```
-
-### Trait Effects
-
-```json
-"effects": {
-  "traitXp": {
-    "Valor": 50,
-    "Honor": -30,
-    "Commander": 100
-  }
-}
-```
-
-### Skill XP Effects (with thematic aliases)
-
-```json
-"effects": {
-  "skillXp": {
-    "Swordplay": 15,      // → OneHanded
-    "Archery": 12,        // → Bow
-    "Vigilance": 20,      // → Scouting
-    "Healing": 18,        // → Medicine
-    "Logistics": 10       // → Steward
-  }
-}
-```
-
----
-
-## Appendix: System Interaction Matrix
-
-Shows how systems affect each other:
-
-```
-                    ┌─────────────────────────────────────────┐
-                    │           CONTENT ORCHESTRATOR          │
-                    │  (Reads all, schedules opportunities)   │
-                    └────────────────┬────────────────────────┘
-                                     │
-           ┌─────────────────────────┼─────────────────────────┐
-           ▼                         ▼                         ▼
-┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│  COMPANY NEEDS   │    │    REPUTATION    │    │   ESCALATION     │
-│ Supply, Morale   │    │ Soldier, Officer │    │ Scrutiny, Disc.  │
-│ Rest, Readiness  │    │     Lord         │    │  Medical Risk    │
-└────────┬─────────┘    └────────┬─────────┘    └────────┬─────────┘
-         │                       │                       │
-         │    ┌──────────────────┼──────────────────┐    │
-         │    │                  │                  │    │
-         ▼    ▼                  ▼                  ▼    ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                       CONTENT EFFECTS                             │
-│  • Skill XP (18 skills via aliases)                              │
-│  • Gold, HP, Renown                                               │
-│  • Trait XP (5 personality + 10 hidden)                          │
-│  • Company Needs deltas                                           │
-│  • Reputation deltas                                              │
-│  • Escalation deltas                                              │
-│  • Party effects (troop loss, retinue)                           │
-│  • Narrative (chain events, discharge)                           │
-└──────────────────────────────────────────────────────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│ NATIVE BANNERLORD│    │  EVENT DELIVERY  │    │ PLAYER FEEDBACK  │
-│  Hero stats      │    │  News feed       │    │  Combat log      │
-│  Skills, Traits  │    │  Daily Brief     │    │  Menu updates    │
-│  Gold, HP        │    │  Story outcomes  │    │  Tooltips        │
-└──────────────────┘    └──────────────────┘    └──────────────────┘
-```
-
----
-
-**Document End**
+*Generated by SystemAnalysisFlow v1.0 on 2026-01-10*

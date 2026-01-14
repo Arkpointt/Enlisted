@@ -1651,25 +1651,24 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Company needs woven into narrative
                 if (companyNeeds != null)
                 {
-                    var needsParts = new List<string>();
-                    
-                    var supplyPhrase = GetSupplyPhrase(companyNeeds.Supplies);
-                    var moralePhrase = GetMoralePhrase(companyNeeds.Morale);
-                    
+                var needsParts = new List<string>();
+                
+                var supplyPhrase = GetSupplyPhrase(companyNeeds.Supplies);
+                var readinessPhrase = GetReadinessPhrase(companyNeeds.Readiness);
+                
+                if (!string.IsNullOrEmpty(supplyPhrase))
+                {
                     needsParts.Add(supplyPhrase);
-                    needsParts.Add(moralePhrase);
+                }
+                if (!string.IsNullOrEmpty(readinessPhrase))
+                {
+                    needsParts.Add(readinessPhrase);
+                }
 
-                    if (companyNeeds.Rest < 40)
-                    {
-                        var exhaustedText = new TextObject("{=status_men_exhausted}men exhausted").ToString();
-                        var tiredText = new TextObject("{=status_rest_low}rest needed").ToString();
-                        var restPhrase = companyNeeds.Rest < 20 
-                            ? $"<span style=\"Alert\">{exhaustedText}</span>" 
-                            : $"<span style=\"Warning\">{tiredText}</span>";
-                        needsParts.Add(restPhrase);
-                    }
-
+                if (needsParts.Count > 0)
+                {
                     parts.Add(string.Join(", ", needsParts) + ".");
+                }
                 }
 
                 // Location context
@@ -2477,32 +2476,12 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                     }
 
-                    // Morale with morale shock context
-                    // Skip shock warnings for fresh enlistment (< 1 day) - the lord's prior battles shouldn't alarm new recructs
-                    var freshlyEnlisted = enlistment?.DaysServed < 1f;
-                    var moraleShock = !freshlyEnlisted && campLife?.MoraleShock > 50;
-                    var payProblems = !freshlyEnlisted && campLife?.PayTension > 50;
-                    if (moraleShock || payProblems)
-                    {
-                        var issues = new List<string>();
-                        if (moraleShock)
-                        {
-                            issues.Add("recent setbacks");
-                        }
-                        if (payProblems)
-                        {
-                            issues.Add("pay disputes");
-                        }
-                        statusParts.Add($"<span style=\"Warning\">morale shaky</span> from {string.Join(" and ", issues)}");
-                    }
-                    else
-                    {
-                        var moralePhrase = GetMoralePhrase(companyNeeds.Morale);
-                        if (!string.IsNullOrEmpty(moralePhrase))
-                        {
-                            statusParts.Add(moralePhrase);
-                        }
-                    }
+                // Readiness check
+                var readinessPhrase = GetReadinessPhrase(companyNeeds.Readiness);
+                if (!string.IsNullOrEmpty(readinessPhrase))
+                {
+                    statusParts.Add(readinessPhrase);
+                }
 
                     if (statusParts.Count > 0)
                     {
@@ -2524,21 +2503,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     detailParts.Add($"<span style=\"Warning\">{wounded} recovering</span> from injuries");
                 }
 
-                if (companyNeeds != null)
-                {
-                    if (companyNeeds.Rest < 20)
-                    {
-                        detailParts.Add("<span style=\"Alert\">exhaustion</span> weighs on everyone");
-                    }
-                    else if (companyNeeds.Rest < 40 && activityLevel == Content.Models.ActivityLevel.Intense)
-                    {
-                        detailParts.Add("<span style=\"Warning\">men push through exhaustion</span>");
-                    }
-                    else if (companyNeeds.Rest < 40)
-                    {
-                        detailParts.Add("<span style=\"Warning\">rest needed</span> in the ranks");
-                    }
-                }
 
                 // Add territory pressure warning if high
                 if (inHostileTerritory && detailParts.Count < 2)
@@ -2664,33 +2628,33 @@ namespace Enlisted.Features.Interface.Behaviors
             return "<span style=\"Alert\">Starvation threatens the company</span>";
         }
 
-        /// <summary>
-        /// Returns a color-coded, descriptive phrase about morale status.
-        /// </summary>
-        private static string GetMoralePhrase(int morale)
+    /// <summary>
+    /// Returns a color-coded, descriptive phrase about readiness status.
+    /// </summary>
+    private static string GetReadinessPhrase(int readiness)
+    {
+        if (readiness >= 80)
         {
-            if (morale >= 80)
-            {
-                return "<span style=\"Success\">spirits are high, men confident</span>";
-            }
-            if (morale >= 60)
-            {
-                return "<span style=\"Success\">morale strong</span>";
-            }
-            if (morale >= 40)
-            {
-                return "morale steady, men focused";
-            }
-            if (morale >= 25)
-            {
-                return "<span style=\"Warning\">grumbling in the ranks</span>";
-            }
-            if (morale >= 15)
-            {
-                return "<span style=\"Alert\">men on edge, discipline fraying</span>";
-            }
-            return "<span style=\"Alert\">morale broken, desertion likely</span>";
+            return "<span style=\"Success\">combat readiness high</span>";
         }
+        if (readiness >= 60)
+        {
+            return "<span style=\"Success\">readiness solid</span>";
+        }
+        if (readiness >= 40)
+        {
+            return "readiness adequate";
+        }
+        if (readiness >= 25)
+        {
+            return "<span style=\"Warning\">training deficiencies noted</span>";
+        }
+        if (readiness >= 15)
+        {
+            return "<span style=\"Alert\">readiness poor</span>";
+        }
+        return "<span style=\"Alert\">unit combat ineffective</span>";
+    }
 
         /// <summary>
         /// Returns a phrase describing current camp activity.

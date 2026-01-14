@@ -45,14 +45,6 @@ namespace Enlisted.Features.Content
                     sources.Add("Low Supplies");
                 }
 
-                // Low rest/exhaustion adds pressure
-                var rest = needs.GetNeedValue(CompanyNeed.Rest);
-                if (rest < 30)
-                {
-                    pressure += 15;
-                    sources.Add("Exhausted Company");
-                }
-
                 // Low morale adds pressure
                 var morale = needs.GetNeedValue(CompanyNeed.Morale);
                 if (morale < 30)
