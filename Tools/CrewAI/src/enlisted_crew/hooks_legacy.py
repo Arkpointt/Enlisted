@@ -38,9 +38,9 @@ def _get_project_root() -> Path:
 
 # Token cost estimates (per 1M tokens) - GPT-5 pricing
 TOKEN_COSTS = {
-    "gpt-5.2": {"input": 2.50, "output": 10.00},
+    "gpt-5.2-codex": {"input": 2.50, "output": 10.00},
+    "gpt-5.2": {"input": 2.50, "output": 10.00},  # Legacy alias
     "gpt-5": {"input": 2.00, "output": 8.00},
-    "gpt-5.2": {"input": 2.50, "output": 10.00},  # Instant mode ~$0.50/$2.00, Thinking mode $2.50/$10.00
     "gpt-5-mini": {"input": 0.10, "output": 0.40},  # Legacy reference
     "gpt-5-nano": {"input": 0.05, "output": 0.20},  # Legacy reference
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},  # Fallback/default

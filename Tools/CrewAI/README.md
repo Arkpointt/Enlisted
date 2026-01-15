@@ -20,7 +20,7 @@ CrewAI multi-agent system for Enlisted mod development.
   - ChromaDB vector index with text-embedding-3-large
 - **Contextual Retrieval Memory**: Advanced memory system with +67% retrieval improvement
   - Semantic chunking (1000 tokens, 15% overlap)
-  - GPT-5.2 contextualization
+  - GPT-5.2 Codex contextualization
   - Hybrid search (Vector + BM25)
   - RRF fusion
   - Cohere reranking

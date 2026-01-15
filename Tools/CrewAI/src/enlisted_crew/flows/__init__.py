@@ -11,7 +11,7 @@ Available Flows:
 
 All flows use:
 - State persistence (persist=True) for recovery on failure
-- GPT-5.2 with automatic instant/thinking mode switching
+- GPT-5.2 Codex with automatic instant/thinking mode switching
 - Conditional routing with reusable condition functions
 
 Conditional Routing:

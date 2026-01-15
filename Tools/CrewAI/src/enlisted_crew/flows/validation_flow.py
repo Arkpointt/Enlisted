@@ -155,23 +155,23 @@ def _get_env(name: str, default: str) -> str:
 
 # MEDIUM reasoning for QA - needs to catch issues
 GPT5_QA = LLM(
-    model=_get_env("ENLISTED_LLM_QA", "gpt-5.2"),
+    model=_get_env("ENLISTED_LLM_QA", "gpt-5.2-codex"),
     max_completion_tokens=8000,
     reasoning_effort="medium",
 )
 
 # NONE reasoning for fast validation - just run tools
 GPT5_FAST = LLM(
-    model=_get_env("ENLISTED_LLM_FAST", "gpt-5.2"),
+    model=_get_env("ENLISTED_LLM_FAST", "gpt-5.2-codex"),
     max_completion_tokens=4000,
     reasoning_effort="none",
 )
 
 # Planning LLM - use simple string
-GPT5_PLANNING = _get_env("ENLISTED_LLM_PLANNING", "gpt-5.2")
+GPT5_PLANNING = _get_env("ENLISTED_LLM_PLANNING", "gpt-5.2-codex")
 
 # Function calling LLM - lightweight
-GPT5_FUNCTION_CALLING = _get_env("ENLISTED_LLM_FUNCTION_CALLING", "gpt-5.2")
+GPT5_FUNCTION_CALLING = _get_env("ENLISTED_LLM_FUNCTION_CALLING", "gpt-5.2-codex")
 
 
 # === State Model ===

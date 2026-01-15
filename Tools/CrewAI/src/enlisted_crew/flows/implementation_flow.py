@@ -45,9 +45,9 @@ def get_project_root() -> Path:
 
 
 # LLM Configurations
-GPT5_ARCHITECT = LLM(model="gpt-5.2", max_completion_tokens=16000, reasoning_effort="high")
-GPT5_IMPLEMENTER = LLM(model="gpt-5.2", max_completion_tokens=12000, reasoning_effort="low")
-GPT5_FAST = LLM(model="gpt-5.2", max_completion_tokens=4000, reasoning_effort="none")
+GPT5_ARCHITECT = LLM(model="gpt-5.2-codex", max_completion_tokens=16000, reasoning_effort="high")
+GPT5_IMPLEMENTER = LLM(model="gpt-5.2-codex", max_completion_tokens=12000, reasoning_effort="low")
+GPT5_FAST = LLM(model="gpt-5.2-codex", max_completion_tokens=4000, reasoning_effort="none")
 
 
 class ImplementationFlow(Flow[ImplementationState]):

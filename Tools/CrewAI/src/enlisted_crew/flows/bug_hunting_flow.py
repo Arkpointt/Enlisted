@@ -154,9 +154,9 @@ def validate_fix_explains_root_cause(output: TaskOutput) -> Tuple[bool, Any]:
 # LLM CONFIGURATIONS
 # =============================================================================
 
-GPT5_ARCHITECT = LLM(model="gpt-5.2", max_completion_tokens=16000, reasoning_effort="high")
-GPT5_ANALYST = LLM(model="gpt-5.2", max_completion_tokens=12000, reasoning_effort="medium")
-GPT5_IMPLEMENTER = LLM(model="gpt-5.2", max_completion_tokens=12000, reasoning_effort="low")
+GPT5_ARCHITECT = LLM(model="gpt-5.2-codex", max_completion_tokens=16000, reasoning_effort="high")
+GPT5_ANALYST = LLM(model="gpt-5.2-codex", max_completion_tokens=12000, reasoning_effort="medium")
+GPT5_IMPLEMENTER = LLM(model="gpt-5.2-codex", max_completion_tokens=12000, reasoning_effort="low")
 
 
 # =============================================================================

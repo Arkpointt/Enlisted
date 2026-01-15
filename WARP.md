@@ -85,6 +85,7 @@ For up-to-date third-party library docs, use Context7 MCP with these IDs:
 | Harmony | `/pardeike/harmony` |
 | Newtonsoft.Json | `/jamesnk/newtonsoft.json` |
 | C# Language | `/websites/learn_microsoft_en-us_dotnet_csharp` |
+| Pydantic AI | `/pydantic/pydantic-ai` |
 
 **Note:** TaleWorlds/Bannerlord APIs are NOT in Context7 — use local `Decompile/` instead.
 

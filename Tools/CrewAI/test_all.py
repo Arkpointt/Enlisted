@@ -68,8 +68,8 @@ def test_configuration():
     print_header("1. CONFIGURATION TESTS")
     
     try:
-        from enlisted_crew.crew import EnlistedCrew
-        from enlisted_crew.flows import ImplementationFlow, BugHuntingFlow
+        from enlisted_crew.crew import EnlistedCrew  # type: ignore[import-untyped]
+        from enlisted_crew.flows import ImplementationFlow, BugHuntingFlow  # type: ignore[import-untyped]
         # Note: PlanningFlow deprecated - use Warp Agent for planning
         print_pass("All imports successful")
     except Exception as e:
@@ -256,7 +256,7 @@ def test_mcp_server():
     
     try:
         sys.path.insert(0, str(Path("mcp_servers")))
-        from bannerlord_api_server import BannerlordAPIIndex, INDEX_DB_PATH, DECOMPILE_PATH
+        from bannerlord_api_server import BannerlordAPIIndex, INDEX_DB_PATH, DECOMPILE_PATH  # type: ignore[import-not-found]
         
         index = BannerlordAPIIndex(INDEX_DB_PATH, DECOMPILE_PATH)
         index.connect()
@@ -365,8 +365,8 @@ def test_escalation_framework():
         # Import directly from escalation module to avoid crewai dependency
         escalation_path = Path("src/enlisted_crew/flows")
         sys.path.insert(0, str(escalation_path))
-        
-        from escalation import (
+
+        from escalation import (  # type: ignore[import-not-found]
             IssueType,
             IssueSeverity,
             IssueConfidence,

@@ -1,6 +1,6 @@
 # Enlisted CrewAI - Master Documentation
 
-**Summary:** Four production-ready AI workflows for Enlisted Bannerlord mod development with GPT-5.2 (optimized reasoning levels), single-agent Flow pattern, advanced conditional routing, natural language system analysis, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities + auto-sync), automatic prompt caching, Contextual Retrieval Memory System with hybrid search (BM25 + vector + Cohere reranking), and semantic search via ChromaDB vector index for fast code and documentation retrieval.  
+**Summary:** Four production-ready AI workflows for Enlisted Bannerlord mod development with GPT-5.2 Codex (optimized reasoning levels), single-agent Flow pattern, advanced conditional routing, natural language system analysis, Bannerlord API MCP server, SQLite knowledge base (24 database tools + batch capabilities + auto-sync), automatic prompt caching, Contextual Retrieval Memory System with hybrid search (BM25 + vector + Cohere reranking), and semantic search via ChromaDB vector index for fast code and documentation retrieval.  
 **Status:** ✅ Production Ready  
 **Architecture:** Single-agent Crews + Pure Python for optimal performance  
 **Last Updated:** 2026-01-11
@@ -132,7 +132,7 @@ enlisted-crew stats --costs
 - **Conditional routing** - Skip completed work automatically  
 - **Single-agent Crews** - Each step uses one focused agent with minimal tools
 - **Pure Python steps** - Deterministic operations (validation, builds) don't need LLMs
-- **GPT-5.2 unified** - All agents use same model with optimized reasoning levels
+- **GPT-5.2 Codex unified** - All agents use same model with optimized reasoning levels
 
 **Performance:**
 - 10-15 tool calls per workflow (vs 80-100 with multi-agent)
@@ -261,7 +261,7 @@ enlisted-crew analyze-system "Supply,Morale,Reputation"
 #### Natural Language Flow (analyze command)
 
 **How It Works:**
-1. **Query Interpreter Agent** (GPT-5.2 high reasoning)
+1. **Query Interpreter Agent** (GPT-5.2 Codex high reasoning)
    - Understands conceptual queries ("gameplay flow" = player progression through mod)
    - Has architectural knowledge: all system names, conceptual mappings
    - **Explores codebase** using tools: `get_game_systems`, `search_codebase`, `search_docs_semantic`
@@ -287,14 +287,14 @@ enlisted-crew analyze-system "Supply,Morale,Reputation"
 - **Triggers lazy database sync** (code → database, happens once per Python process)
 
 **Step 2: analyze_architecture** (Single-agent Crew)
-- **Agent:** Systems Analyst (GPT-5.2 high reasoning)
+- **Agent:** Systems Analyst (GPT-5.2 Codex high reasoning)
 - **Tool Budget:** 8 calls max (forces efficient search)
 - **Tools:** search_codebase, search_docs_semantic, read_source, get_game_systems, get_system_dependencies
 - **Output:** Architecture overview with components, data flows, integration points
 - **Prompt includes:** ARCHITECTURE_PATTERNS context for guided analysis
 
 **Step 3: identify_gaps** (Single-agent Crew - conditional - **De-duplication**)
-- **Agent:** Architecture Advisor (GPT-5.2 architect reasoning)
+- **Agent:** Architecture Advisor (GPT-5.2 Codex architect reasoning)
 - **Tool Budget:** 12 calls (needs exploration)
 - **Tools:** search_codebase, search_docs_semantic, lookup_api_pattern, get_system_dependencies, search_content, get_balance_value, search_balance
 - **Domain Knowledge Injected:**
@@ -308,7 +308,7 @@ enlisted-crew analyze-system "Supply,Morale,Reputation"
   - Reports duplicates skipped: `[GAPS] Identified 32 integration gaps (18 duplicates skipped)`
 
 **Step 4: critique_analysis** (Single-agent Crew - Generator-Critic Pattern - conditional - **De-duplication**)
-- **Agent:** Systems Critic & Game Designer (GPT-5.2 architect reasoning)
+- **Agent:** Systems Critic & Game Designer (GPT-5.2 Codex architect reasoning)
 - **Tool Budget:** 15 calls (highest - must verify everything)
 - **Dual Perspective:**
   - **TYPE A - Implementation Gaps (QA):** Systems work but invisible, JSON effects ignored, features undocumented, stale database data
@@ -329,14 +329,14 @@ enlisted-crew analyze-system "Supply,Morale,Reputation"
 - **Skips if:** `--focus efficiency` only
 
 **Step 5: analyze_efficiency** (Single-agent Crew - conditional)
-- **Agent:** Code Analyst (GPT-5.2 medium reasoning)
+- **Agent:** Code Analyst (GPT-5.2 Codex medium reasoning)
 - **Tool Budget:** 10 calls
 - **Tools:** search_codebase, read_source, verify_file_exists_tool
 - **Focus:** Performance hotspots (Update/Tick/Calculate methods), duplicate logic, unnecessary allocations
 - **Skips if:** `--focus integration` only
 
 **Step 6: propose_improvements** (Single-agent Crew - **Structured Pydantic Output with Autonomous Fixing**)
-- **Agent:** Feature Architect (GPT-5.2 architect reasoning)
+- **Agent:** Feature Architect (GPT-5.2 Codex architect reasoning)
 - **Tool Budget:** 8 calls
 - **Tools:** search_docs_semantic, lookup_api_pattern, verify_file_exists_tool
 - **Structured Output:** Uses `output_pydantic=RecommendationsOutput` to force validated structure
@@ -435,16 +435,16 @@ Each workflow uses the agents it needs:
 
 | Agent | Role | Model |
 |-------|------|-------|
-| systems_analyst | Research existing systems | GPT-5.2 (high reasoning) |
-| architecture_advisor | Suggest best practices | GPT-5.2 (high reasoning) |
-| feature_architect | Design technical specs | GPT-5.2 (`reasoning_effort="high"`) |
-| code_analyst | Find bugs, validate plans | GPT-5.2 (`reasoning_effort="medium"`) |
-| csharp_implementer | Write C# code | GPT-5.2 (`reasoning_effort="low"`) |
-| content_author | Write JSON events | GPT-5.2 (`reasoning_effort="none"`) |
-| content_analyst | Validate JSON schemas | GPT-5.2 (`reasoning_effort="none"`) |
-| qa_agent | Final validation | GPT-5.2 (`reasoning_effort="medium"`) |
-| documentation_maintainer | Write/update docs | GPT-5.2 (`reasoning_effort="medium"`) |
-| balance_analyst | Review game balance | GPT-5.2 (`reasoning_effort="none"`) |
+| systems_analyst | Research existing systems | GPT-5.2 Codex (high reasoning) |
+| architecture_advisor | Suggest best practices | GPT-5.2 Codex (high reasoning) |
+| feature_architect | Design technical specs | GPT-5.2 Codex (`reasoning_effort="high"`) |
+| code_analyst | Find bugs, validate plans | GPT-5.2 Codex (`reasoning_effort="medium"`) |
+| csharp_implementer | Write C# code | GPT-5.2 Codex (`reasoning_effort="low"`) |
+| content_author | Write JSON events | GPT-5.2 Codex (`reasoning_effort="none"`) |
+| content_analyst | Validate JSON schemas | GPT-5.2 Codex (`reasoning_effort="none"`) |
+| qa_agent | Final validation | GPT-5.2 Codex (`reasoning_effort="medium"`) |
+| documentation_maintainer | Write/update docs | GPT-5.2 Codex (`reasoning_effort="medium"`) |
+| balance_analyst | Review game balance | GPT-5.2 Codex (`reasoning_effort="none"`) |
 
 ---
 
@@ -744,10 +744,10 @@ feature_architect (design), content_author (content), balance_analyst (review).
 
 ### Agent Configuration Patterns
 
-**Manager Agents (GPT-5.2 - reasoning DISABLED):**
+**Manager Agents (GPT-5.2 Codex - reasoning DISABLED):**
 ```python
 Agent(
-    llm=GPT5_ARCHITECT,            # GPT-5.2 with reasoning enabled
+    llm=GPT5_ARCHITECT,            # GPT-5.2 Codex with reasoning enabled
     tools=[...],                   # 4-6 tools for coordination (optional)
     max_iter=20,                   # Minimum for manager coordination (test requirement)
     max_retry_limit=3,
@@ -757,7 +757,7 @@ Agent(
 )
 ```
 
-**Specialist Agents (GPT-5.2 variable reasoning):**
+**Specialist Agents (GPT-5.2 Codex variable reasoning):**
 ```python
 Agent(
     llm=GPT5_ANALYST,              # Or GPT5_IMPLEMENTER, GPT5_FAST based on task
@@ -1034,7 +1034,7 @@ Crew(
 
 ```python
 # LLM definition (in flow files)
-GPT5_FUNCTION_CALLING = _get_env("ENLISTED_LLM_FUNCTION_CALLING", "gpt-5.2")
+GPT5_FUNCTION_CALLING = _get_env("ENLISTED_LLM_FUNCTION_CALLING", "gpt-5.2-codex")
 ```
 
 #### Sequential Process with Flow Coordination
@@ -1112,7 +1112,7 @@ All LLM definitions use OpenAI's extended prompt caching for 60%+ cost reduction
 **Configuration:**
 ```python
 GPT5_ARCHITECT = LLM(
-    model="gpt-5.2",
+    model="gpt-5.2-codex",
     max_completion_tokens=16000,
     reasoning_effort="medium",
     prompt_cache_retention="24h",  # Cache prompts for 24 hours
@@ -1257,13 +1257,13 @@ When `planning=True` is enabled, CrewAI's **AgentPlanner** creates a detailed ex
 planning_llm=GPT5_PLANNING  # Uses GPT-5 for best planning quality
 ```
 
-**Why GPT-5.2 with low reasoning for planning?**
+**Why GPT-5.2 Codex with low reasoning for planning?**
 - Structured planning prompts don't need deep reasoning
 - `reasoning_effort="low"` provides fast, reliable planning
 - Auto-switches to instant mode when prompts are clear
 - Consistent quality across all planning operations
 
-**All internal crews** (within ImplementationFlow, BugHuntingFlow, ValidationFlow) use `planning_llm=GPT5_PLANNING` (GPT-5.2 with `reasoning_effort="low"`).
+**All internal crews** (within ImplementationFlow, BugHuntingFlow, ValidationFlow) use `planning_llm=GPT5_PLANNING` (GPT-5.2 Codex with `reasoning_effort="low"`).
 
 #### Memory Configuration
 
@@ -1345,7 +1345,7 @@ Agent Output (9,000+ tokens)
         │
         ▼
 ┌─────────────────────────────────┐
-│  2. CONTEXTUALIZATION (GPT-5.2) │
+│  2. CONTEXTUALIZATION (GPT-5.2 Codex) │
 │  - LLM generates context prefix │
 │  - "This chunk is from [flow]..."│
 │  - ~$0.001 per chunk            │
@@ -1371,7 +1371,7 @@ Query → Vector Search (top 20)
 
 **Components (in memory_config.py, disabled by default):**
 - `chunk_content()` - Semantic chunking at paragraph boundaries
-- `contextualize_chunk()` - GPT-5.2 generates context prefix (reasoning=none for speed)
+- `contextualize_chunk()` - GPT-5.2 Codex generates context prefix (reasoning=none for speed)
 - `store_chunk_in_sql()` - Stores in contextual_memory table for BM25 indexing
 - `BM25Index` - In-memory keyword index, rebuilds automatically on new chunks
 - `reciprocal_rank_fusion()` - Combines vector + BM25 results (k=60)
@@ -1388,7 +1388,7 @@ Query → Vector Search (top 20)
 
 **Cost per multi-flow session (advanced mode):**
 - Chunking: $0 (local)
-- Contextualization: ~$0.003 (GPT-5.2, ~50 chunks)
+- Contextualization: ~$0.003 (GPT-5.2 Codex, ~50 chunks)
 - Embeddings: ~$0.005 (text-embedding-3-large)
 - BM25: $0 (local)
 - Reranking: ~$0.002 (Cohere rerank-v3.5, 10 searches)
@@ -1975,15 +1975,15 @@ print(result.fix_proposal.summary)
 
 | Reasoning Level | Speed | Use Case | Model |
 |-----------------|-------|----------|-------|
-| `high` | ~8s | Architecture, complex decisions, deep system analysis | GPT-5.2 |
-| `medium` | ~5s | Bug analysis, QA validation, code review, doc sync | GPT-5.2 |
-| `low` | ~5s | Implementation from specs, documentation, planning | GPT-5.2 |
-| `none` | ~1s | Schema validation, formatting, simple content | GPT-5.2 |
+| `high` | ~8s | Architecture, complex decisions, deep system analysis | GPT-5.2 Codex |
+| `medium` | ~5s | Bug analysis, QA validation, code review, doc sync | GPT-5.2 Codex |
+| `low` | ~5s | Implementation from specs, documentation, planning | GPT-5.2 Codex |
+| `none` | ~1s | Schema validation, formatting, simple content | GPT-5.2 Codex |
 
 **Philosophy:** "Use reasoning where it matters: architecture & analysis. Save on execution & validation."
 
 **Key Benefits:**
-- **Single model (GPT-5.2)** - No context/capability mismatches between agents
+- **Single model (GPT-5.2 Codex)** - No context/capability mismatches between agents
 - **Auto mode-switching** - Automatically uses instant mode when appropriate
 - **Optimized costs** - Only pay for reasoning when needed via `reasoning_effort` parameter
 - **200K context** - Consistent across all agents
@@ -2307,9 +2307,9 @@ CrewAI Execution Hooks provide fine-grained control during agent execution. Loca
 
 **After LLM Call (Cost Tracking with Cache Metrics):**
 ```
-      [COST] gpt-5.2: 2000 in (1000 cached, 50%) + 500 out = $0.0075 (saved $0.0025)
-      [COST] gpt-5.2: 2500 in (2000 cached, 80%) + 600 out = $0.0072 (saved $0.0050)
-      [COST] gpt-5.2: 1500 in (1500 cached, 100%) + 400 out = $0.0040 (saved $0.0037)
+      [COST] gpt-5.2-codex: 2000 in (1000 cached, 50%) + 500 out = $0.0075 (saved $0.0025)
+      [COST] gpt-5.2-codex: 2500 in (2000 cached, 80%) + 600 out = $0.0072 (saved $0.0050)
+      [COST] gpt-5.2-codex: 1500 in (1500 cached, 100%) + 400 out = $0.0040 (saved $0.0037)
 ```
 
 **End of Run Summary (with Cache Analytics):**
@@ -2359,13 +2359,13 @@ Blocked Operations: 2
 - **Cache Visibility** - Monitor prompt caching effectiveness with hit rates and savings
 - **Optimization** - Identify which agents/tasks consume most tokens
 - **Budgeting** - Track cumulative spending per workflow run
-- **Model Comparison** - Compare GPT-5.2 vs GPT-5-mini vs GPT-5 costs
+- **Model Comparison** - Compare GPT-5.2 Codex vs GPT-5-mini vs GPT-5 costs
 - **Historical Analysis** - Query `llm_costs` table for cost trends and cache performance over time
 - **Phase 3 Validation** - Verify 50-70% cache hit rate target from optimization plan
 
 **Cost Estimates (per 1M tokens):**
-- `gpt-5.2`: $1.75 input, $14.00 output (updated January 2026)
-- `gpt-5.2` (cached): $0.175 input (90% discount, 24-hour retention)
+- `gpt-5.2-codex`: $1.75 input, $14.00 output (updated January 2026)
+- `gpt-5.2-codex` (cached): $0.175 input (90% discount, 24-hour retention)
 - `gpt-5`: $2.00 input, $8.00 output
 - `gpt-5-mini`: $0.10 input, $0.40 output
 - `gpt-5-nano`: $0.05 input, $0.20 output
@@ -3161,13 +3161,13 @@ python build_index.py  # First time only, 2-5 minutes
 ```python
 # ❌ BROKEN - LLM object with reasoning_effort
 planning_llm=LLM(
-    model="gpt-5.2",
+    model="gpt-5.2-codex",
     max_completion_tokens=4000,
     reasoning_effort="low",  # This breaks AgentPlanner!
 )
 
 # ✅ WORKS - Simple string (matches official docs)
-planning_llm="gpt-5.2"
+planning_llm="gpt-5.2-codex"
 ```
 
 This matches the [official CrewAI documentation](https://docs.crewai.com/en/concepts/planning) which only shows simple strings in examples.

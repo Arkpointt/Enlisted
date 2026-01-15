@@ -449,7 +449,7 @@ def run_nl_analysis(
         Use get_game_systems to list all registered systems.
         
         Think about what the user REALLY wants to know, not just literal keywords.""",
-        llm=LLM(model="gpt-5.2", max_completion_tokens=4000, reasoning_effort="high"),
+        llm=LLM(model="gpt-5.2-codex", max_completion_tokens=4000, reasoning_effort="high"),
         tools=[search_codebase, search_docs_semantic, get_game_systems],
         max_iter=6,
         allow_delegation=False,

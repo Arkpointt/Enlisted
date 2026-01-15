@@ -93,9 +93,9 @@ def _add_gap_if_unique(gaps: List[dict], new_gap: dict) -> bool:
 
 
 # LLM Configurations
-GPT5_ANALYST = LLM(model="gpt-5.2", max_completion_tokens=12000, reasoning_effort="high")
-GPT5_ARCHITECT = LLM(model="gpt-5.2", max_completion_tokens=12000, reasoning_effort="high")
-GPT5_CODE_REVIEW = LLM(model="gpt-5.2", max_completion_tokens=8000, reasoning_effort="medium")
+GPT5_ANALYST = LLM(model="gpt-5.2-codex", max_completion_tokens=12000, reasoning_effort="high")
+GPT5_ARCHITECT = LLM(model="gpt-5.2-codex", max_completion_tokens=12000, reasoning_effort="high")
+GPT5_CODE_REVIEW = LLM(model="gpt-5.2-codex", max_completion_tokens=8000, reasoning_effort="medium")
 
 
 class SystemAnalysisFlow(Flow[SystemAnalysisState]):

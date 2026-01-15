@@ -65,7 +65,7 @@ FILCO_NOISE_PATTERNS = [  # Patterns that indicate low-utility content
 ]
 
 # Contextualization config
-CONTEXTUALIZATION_MODEL = "gpt-5.2"  # Same model as rest of system
+CONTEXTUALIZATION_MODEL = "gpt-5.2-codex"  # Same model as rest of system
 CONTEXTUALIZATION_MAX_TOKENS = 200
 CONTEXTUALIZATION_REASONING = "none"  # Fast, no reasoning needed for context generation
 

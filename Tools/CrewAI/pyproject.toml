@@ -32,4 +32,14 @@ packages = ["src/enlisted_crew"]
 include = [
     "src/enlisted_crew/**/*.py",
     "src/enlisted_crew/config/**/*.yaml",
+    "src/enlisted_crew/py.typed",
 ]
+
+[tool.mypy]
+# Tell mypy where to find the mcp_servers module
+mypy_path = "mcp_servers"
+
+# Ignore import errors for modules that are dynamically imported
+[[tool.mypy.overrides]]
+module = "bannerlord_api_server"
+ignore_missing_imports = false
