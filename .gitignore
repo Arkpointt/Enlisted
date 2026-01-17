@@ -36,12 +36,10 @@ $RECYCLE.BIN/
 
 # Environment files (API keys)
 .env
-Tools/CrewAI/.env
 
 # Python virtual environments
 venv/
 Tools/venv/
-Tools/CrewAI/venv/
 __pycache__/
 *.pyc
 *.pyo

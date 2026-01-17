@@ -1,7 +1,7 @@
 # Agentic AI Lessons & Principles
 
 > [!NOTE]
-> These principles were discovered and validated during the "Enlisted CrewAI" project (2024-2026). While the CrewAI implementation has been removed to simplify the stack, these architectural lessons remain the "Gold Standard" for building reliable agentic systems.
+> These principles were discovered and validated during agentic AI experiments on the Enlisted project (2024-2026). These architectural lessons remain the "Gold Standard" for building reliable agentic systems.
 
 ## 1. Contextual Retrieval (RAG)
 
@@ -24,10 +24,10 @@ We achieved **+67% retrieval accuracy** using this specific pipeline:
 
 ## 2. Agent Reliability Patterns
 
-### Single-Agent Crews vs. Multi-Agent Chat
+### Single-Agent vs. Multi-Agent Chat
 
 * **Discovery**: "Chatting" agents (A talks to B) is fun but fragile. It incurs massive token costs and often results in loop-de-loops.
-* **Solution**: **Single-Agent Flows**. Break a complex task into discrete steps, where each step is executed by a *single* agent with a specific toolset, coordinated by deterministic Python code (the "Flow").
+* **Solution**: **Single-Agent Flows**. Break a complex task into discrete steps, where each step is executed by a *single* agent with a specific toolset, coordinated by deterministic code.
   * *Benefit*: Deterministic control flow, easy debugging, 80% cost reduction.
 
 ### Pydantic Output Fixers

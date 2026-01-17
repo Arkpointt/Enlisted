@@ -25,16 +25,19 @@ python Tools/Validation/sync_event_strings.py
 ## Critical Rules (Will Break Mod)
 
 ### 1. Target Bannerlord v1.3.13
+
 - NEVER assume APIs from later versions
 - ALWAYS verify against local `Decompile/` directory (NOT online docs)
 
 ### 2. New C# Files Must Be Registered
+
 ```xml
 <!-- Add to Enlisted.csproj manually -->
 <Compile Include="src\Features\MyFeature\MyNewClass.cs"/>
 ```
 
 ### 3. Gold Transactions
+
 ```csharp
 // CORRECT - visible in UI
 GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);
@@ -44,6 +47,7 @@ Hero.MainHero.ChangeHeroGold(amount);
 ```
 
 ### 4. Equipment Iteration
+
 ```csharp
 // CORRECT - numeric loop
 for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
@@ -53,6 +57,7 @@ foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex)))
 ```
 
 ### 5. Hero Safety
+
 ```csharp
 // CORRECT - null-safe
 var hero = CampaignSafetyGuard.SafeMainHero;
@@ -63,16 +68,20 @@ if (hero.IsAlive) VisualTrackerManager.RegisterObject(hero);
 ```
 
 ### 6. JSON Field Order
+
 Fallback MUST immediately follow ID:
+
 ```json
 { "titleId": "key", "title": "Fallback", "setupId": "key2", "setup": "Text" }
 ```
 
 ### 7. Event Tooltips Required
+
 - All options need tooltips (<80 chars)
 - Format: action + effects + cooldown
 
 ### 8. Save System Registration
+
 ```csharp
 // In EnlistedSaveDefiner - missing = "Cannot Create Save" error
 DefineEnumType(typeof(MyNewEnum));
@@ -84,7 +93,7 @@ DefineClassType(typeof(MyNewClass));
 ## Key Documentation
 
 | Topic | File |
-|-------|------|
+| :--- | :--- |
 | Architecture & Standards | [docs/BLUEPRINT.md](docs/BLUEPRINT.md) |
 | Documentation Index | [docs/INDEX.md](docs/INDEX.md) |
 | C# Patterns | [src/WARP.md](src/WARP.md) |
@@ -96,7 +105,7 @@ DefineClassType(typeof(MyNewClass));
 
 ## Project Structure
 
-```
+```text
 src/Features/        C# gameplay features
 ModuleData/Enlisted/ JSON events, orders, decisions
 ModuleData/Languages/enlisted_strings.xml  Localization
@@ -106,6 +115,7 @@ Decompile/           Bannerlord v1.3.13 API (AUTHORITATIVE)
 ```
 
 ### Key Feature Folders
+
 - `Enlistment/` - Service state, retirement
 - `Orders/` - Mission directives
 - `Content/` - Events, decisions, narrative
@@ -124,6 +134,7 @@ Decompile/           Bannerlord v1.3.13 API (AUTHORITATIVE)
 - Comments describe current behavior (not changelog)
 
 ### Safe Patterns
+
 ```csharp
 // Deferred menu activation
 NextFrameDispatcher.RunNextFrame(() => GameMenu.ActivateGameMenu("menu_id"));
@@ -143,6 +154,7 @@ EscalationManager.Instance.ModifyReputation(ReputationType.Soldier, 5, "reason")
 ## Validation Checklist
 
 Before committing:
+
 - [ ] APIs verified against `Decompile/`
 - [ ] New C# files in `Enlisted.csproj`
 - [ ] JSON field order correct
@@ -157,7 +169,7 @@ Before committing:
 For third-party library docs, use Context7 MCP:
 
 | Library | ID |
-|---------|-----|
+| :--- | :--- |
 | Harmony | `/pardeike/harmony` |
 | Newtonsoft.Json | `/jamesnk/newtonsoft.json` |
 | C# Language | `/websites/learn_microsoft_en-us_dotnet_csharp` |
@@ -194,7 +206,7 @@ See [docs/BLUEPRINT.md](docs/BLUEPRINT.md) for complete pitfalls list with solut
 
 ## External Resources
 
-- **Steam Workshop:** https://steamcommunity.com/sharedfiles/filedetails/?id=3621116083
+- **Steam Workshop:** <https://steamcommunity.com/sharedfiles/filedetails/?id=3621116083>
 - **Requires:** Harmony for Bannerlord
 
 ---

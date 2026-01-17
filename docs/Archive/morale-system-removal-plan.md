@@ -2,10 +2,12 @@
 
 **Summary:** Comprehensive plan to safely remove the morale system from the Enlisted mod without breaking other systems. This document maps all morale dependencies, affected systems, and provides a step-by-step removal strategy.
 
-**Status:** ✅ Ready for Execution  
-**Created:** 2026-01-11  
-**Last Updated:** 2026-01-11 (Database verification complete)  
+**Status:** ✅ Completed
+**Created:** 2026-01-11
+**Last Updated:** 2026-01-16 (Morale removal complete; CrewAI tooling removed)
 **Related Docs:** [System Integration Analysis](systems-integration-analysis.md), [Company Needs](../Features/Campaign/camp-life-simulation.md)
+
+> **Archive Note (2026-01-16):** The CrewAI tooling referenced in this document has been removed from the project. References to `Tools/CrewAI/`, `sync_systems_db.py`, and the knowledge database are now historical context only.
 
 ---
 
@@ -494,47 +496,9 @@ Remove morale effect translation case.
 #### EventRequirementChecker.cs
 Remove morale requirement checks.
 
-### Phase 11: Update Database & Schema
+### Phase 11: ~~Update Database & Schema~~ (REMOVED)
 
-#### A. Update Database Sync Script
-
-**File:** `Tools/Validation/sync_systems_db.py`
-
-**Action:** Remove "morale tracking" from the keyword responsibility mapping (line 205).
-
-```python
-# BEFORE (line 205):
-"morale": "morale tracking",
-
-# AFTER:
-# Delete this line - morale system removed
-```
-
-**Why?** The sync script scans C# files and tags systems with "morale tracking" responsibility if they mention morale. After removal, we don't want this keyword to reappear.
-
-#### B. Update Schema.sql
-
-**File:** `Tools/CrewAI/database/schema.sql`
-
-**Action:** Remove "morale" category from balance_values table comment (line 54).
-
-```sql
--- BEFORE (line 54):
-category TEXT,  -- "tier", "economy", "morale", "supply", "xp"
-
--- AFTER:
-category TEXT,  -- "tier", "economy", "supply", "xp"
-```
-
-**Note:** No actual balance values use the "morale" category - this is just documentation cleanup.
-
-**Run after completion:**
-```bash
-python Tools/Validation/sync_systems_db.py --dry-run
-python Tools/Validation/sync_systems_db.py  # Apply changes
-```
-
-This regenerates `schema.sql` with updated system descriptions.
+> **Note:** CrewAI tooling was removed from the project (2026-01-16). The database sync script and schema.sql no longer exist. This phase is no longer applicable.
 
 ---
 
@@ -591,10 +555,10 @@ This regenerates `schema.sql` with updated system descriptions.
 29. [ ] Update `IncidentEffectTranslator.cs`
 30. [ ] Update `EventRequirementChecker.cs`
 
-**Day 7: Database & Dialog Cleanup**
-31. [ ] Update `Tools/Validation/sync_systems_db.py` (remove morale keyword - line 205)
-32. [ ] Update `Tools/CrewAI/database/schema.sql` (remove morale category - line 54)
-33. [ ] Run database sync: `python Tools/Validation/sync_systems_db.py`
+**Day 7: Dialog Cleanup**
+31. [x] ~~Update `Tools/Validation/sync_systems_db.py`~~ (CrewAI removed 2026-01-16)
+32. [x] ~~Update `Tools/CrewAI/database/schema.sql`~~ (CrewAI removed 2026-01-16)
+33. [x] ~~Run database sync~~ (CrewAI removed 2026-01-16)
 34. [ ] Search and update `EnlistedDialogManager.cs`
 
 **Day 8: Documentation Cleanup**

@@ -32,7 +32,7 @@ Development tools, utilities, and diagnostics for the Enlisted mod.
 
 ## Folder Structure
 
-```
+```text
 Tools/
 ├── README.md              This file - master tools reference
 ├── WARP.md                Guidance for WARP terminal (warp.dev)
@@ -52,7 +52,7 @@ Content and project validation ensures everything follows schema rules and proje
 ### Validation Phases
 
 | Phase | What It Checks |
-|-------|----------------|
+| :--- | :--- |
 | 1-4 | JSON structure, localization references, logic, consistency |
 | 5 | Orphan detection (unused XML strings) |
 | 5.5 | **Opportunity validation** (hints, deprecated 'immediate' field) |
@@ -103,7 +103,7 @@ python Tools/Validation/validate_content.py > Tools/Debugging/validation_report.
 ### Tools
 
 | Script | Purpose |
-|--------|---------|
+| :--- | :--- |
 | `validate_content.py` | Comprehensive validator (content, project structure, .csproj, C# TextObject refs) |
 | `analyze_validation.py` | Parse validation reports into prioritized, actionable summaries |
 | `sync_event_strings.py` | Extract string IDs from JSON and sync to XML localization |
@@ -135,7 +135,7 @@ python Tools/Validation/validate_content.py --fix-refs
 ### Issue Priority
 
 | Level | Description | Action |
-|-------|-------------|--------|
+| :--- | :--- | :--- |
 | **[CRITICAL]** | Invalid option counts, missing required fields | Fix immediately |
 | **[HIGH]** | Missing order XP, long tooltips, invalid skills | Fix before commit |
 | **[MEDIUM]** | Schema v1 files, tier/role mismatches | Fix when convenient |
@@ -158,7 +158,7 @@ Temporary reports, diagnostic scripts, and backups. **All files safe to delete.*
 ### Contents
 
 | Type | Files | Description |
-|------|-------|-------------|
+| :--- | :--- | :--- |
 | **Validation Reports** | `validation_report*.txt` | Content validation output (regenerate anytime) |
 | **Qodana Reports** | `qodana_*.txt`, `redundant_qualifiers.txt` | Static analysis output (regenerate with `qodana scan`) |
 | **Backups** | `enlisted_strings_backup_*.xml` | XML snapshots before major changes |
@@ -190,7 +190,7 @@ Scripts and configuration for Steam Workshop deployment.
 ### Files
 
 | File | Purpose |
-|------|---------|
+| :--- | :--- |
 | `upload.ps1` | Main upload script |
 | `WORKSHOP_UPLOAD.md` | Full deployment guide |
 | `workshop_upload.vdf` | SteamCMD configuration |
@@ -205,7 +205,7 @@ Scripts and configuration for Steam Workshop deployment.
 Utilities for analyzing the native game, localization, and codebase.
 
 | Script | Purpose |
-|--------|---------|
+| :--- | :--- |
 | `extract_native_map_incidents.py` | Extract incident data from game files |
 | `generate_language_template.py` | Create XML templates for new language translations |
 | `find_articles*.py` | Search and analyze documentation |
@@ -297,7 +297,7 @@ Validator checks structure, not gameplay logic. Test in-game!
 ## Related Documentation
 
 | Document | Description |
-|----------|-------------|
+| :--- | :--- |
 | [BLUEPRINT.md](../docs/BLUEPRINT.md) | Master project guide, coding standards, architecture |
 | [writing-style-guide.md](../docs/Features/Content/writing-style-guide.md) | Writing standards for RP text (voice, tone, tokens) |
 | [event-system-schemas.md](../docs/Features/Content/event-system-schemas.md) | JSON schema reference (source of truth) |
@@ -310,7 +310,7 @@ Validator checks structure, not gameplay logic. Test in-game!
 
 These files are in `.gitignore`:
 
-```
+```text
 # Validation reports (anywhere)
 Tools/Debugging/validation*.txt
 validation*.txt

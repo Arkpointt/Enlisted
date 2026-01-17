@@ -2,8 +2,8 @@
 
 **Summary:** Documentation for workspace resources (Decompile, steamcmd, SQLite3) that support development but are not part of the mod build.
 
-**Status:** ✅ Current  
-**Last Updated:** 2026-01-07  
+**Status:** ✅ Current
+**Last Updated:** 2026-01-16
 **Related Docs:** [BLUEPRINT.md](BLUEPRINT.md), [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md)
 
 ---
@@ -20,8 +20,6 @@ C:\Dev\Enlisted\
 
 These resources are **installed separately per-platform** and are **not part of the mod build**.
 
-**Note:** The project knowledge database (`enlisted_knowledge.db`) is located at `Tools/CrewAI/database/` and is tracked in Git.
-
 ---
 
 ## Decompile (Bannerlord Source Reference)
@@ -33,7 +31,7 @@ These resources are **installed separately per-platform** and are **not part of 
 **Setup:**
 1. Decompile Bannerlord v1.3.13 using your preferred tool (ILSpy, dotPeek, etc.)
 2. Extract to `C:\Dev\Enlisted\Decompile\`
-3. CrewAI will auto-detect it (checks multiple locations)
+3. AI tools will auto-detect it (checks multiple locations)
 
 **Why Outside Git:**
 - ✅ Keeps repo clean (77.5 MB, 6,306 files)
@@ -98,44 +96,6 @@ The `Tools/Steam/upload.ps1` script will:
 
 ---
 
-## SQLite3 Tools (Installed Separately)
-
-**Purpose:** Command-line tools for querying and managing the project knowledge database
-
-**Installation:**
-
-**Windows:**
-- Install at `C:\Dev\SQLite3\` or anywhere in PATH
-- Or use: `winget install SQLite.SQLite`
-- Download from: https://www.sqlite.org/download.html
-
-**Linux:**
-```bash
-# Ubuntu/Debian
-sudo apt install sqlite3
-
-# RHEL/CentOS/Fedora
-sudo yum install sqlite
-```
-
-**Database Location:**
-- Project knowledge DB: `Tools/CrewAI/database/enlisted_knowledge.db`
-- This database is tracked in Git (contains project knowledge for CrewAI agents)
-
-**Usage:**
-```bash
-# Query knowledge base (from workspace root)
-sqlite3 Tools/CrewAI/database/enlisted_knowledge.db
-
-# View all tables
-sqlite3 Tools/CrewAI/database/enlisted_knowledge.db ".tables"
-
-# Run a query
-sqlite3 Tools/CrewAI/database/enlisted_knowledge.db "SELECT * FROM content_metadata LIMIT 5"
-```
-
----
-
 ## Build Exclusion
 
 These folders do not interfere with builds:
@@ -179,11 +139,8 @@ If you add new development resources:
 | Resource | Purpose | Location | In Git? |
 |----------|---------|----------|---------|
 | `Decompile/` | Bannerlord v1.3.13 API reference | `C:\Dev\Enlisted\Decompile\` (sibling to workspace) | ❌ No |
-| `enlisted_knowledge.db` | Project knowledge database | `Tools/CrewAI/database/` | ✅ Yes |
-| `CrewAI memory` | AI learned memory (ChromaDB + SQLite) | `Tools/CrewAI/memory/` | ✅ Yes |
-| `sqlite3` | Database CLI tool | System install | ❌ No |
 | `steamcmd` | Workshop upload tool | System install | ❌ No |
 
 ---
 
-**Last updated:** 2026-01-07 (Moved resources into workspace for cross-platform development)
+**Last updated:** 2026-01-16 (Removed CrewAI references)

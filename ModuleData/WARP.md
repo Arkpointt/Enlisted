@@ -7,6 +7,7 @@ This WARP.md applies when working in ModuleData/. Root WARP.md still applies.
 Fallback fields MUST immediately follow their ID fields:
 
 ✅ **Correct:**
+
 ```json
 {
   "titleId": "event_title_key",
@@ -17,6 +18,7 @@ Fallback fields MUST immediately follow their ID fields:
 ```
 
 ❌ **Wrong (breaks localization):**
+
 ```json
 {
   "titleId": "...", 
@@ -34,6 +36,7 @@ Fallback fields MUST immediately follow their ID fields:
 * Format: action + side effects + cooldown
 
 **Example:**
+
 ```json
 "tooltip": "Train with sergeant. +50 XP, -10 gold. 3-day cooldown."
 ```
@@ -46,11 +49,12 @@ Fallback fields MUST immediately follow their ID fields:
 ## Validation Commands
 
 ```powershell
+
 python Tools/Validation/validate_content.py
 python Tools/Validation/sync_event_strings.py
 ```
 
 ## Full Reference
 
-See `docs/Features/Content/writing-style-guide.md` for voice/tone.  
+See `docs/Features/Content/writing-style-guide.md` for voice/tone.
 See `docs/Features/Content/event-system-schemas.md` for schemas.
