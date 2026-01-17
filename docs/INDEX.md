@@ -20,7 +20,7 @@
 **Finding What You Need:**
 
 | I need to... | Go to... |
-|--------------|----------|
+| --- | --- |
 | Understand the project scope | [BLUEPRINT.md](BLUEPRINT.md) → "Quick Orientation" |
 | Learn core game mechanics | [Features/Core/core-gameplay.md](Features/Core/core-gameplay.md) |
 | Understand rank progression | [Features/Core/promotion-system.md](Features/Core/promotion-system.md) |
@@ -32,6 +32,7 @@
 | Create new documentation | [BLUEPRINT.md](BLUEPRINT.md) → "Creating New Documentation" |
 
 **Documentation Structure:**
+
 - **Features/** - How systems work (organized by category: Core, Equipment, Combat, etc.)
 - **Content/** - Complete catalog of events, decisions, orders, map incidents
 - **Reference/** - Technical references: native APIs, AI analysis, skill mechanics
@@ -44,7 +45,7 @@
 2. [Feature Lookup Quick Reference](#feature-lookup-quick-reference)
 3. [Features](#features)
 4. [Content & Narrative](#content--narrative)
-5. [Research & Reference](#research--reference)
+5. [Reference & Research](#reference--research)
 
 ---
 
@@ -53,11 +54,8 @@
 **Can't find a specific feature? Use this lookup table:**
 
 | Feature / System | Found In Document | Section |
-|------------------|-------------------|---------|
-| **Baggage Stowage (First Enlistment)** | [enlistment.md](Features/Core/enlistment.md) | First-Enlistment Bag Check (section 8) |
-| **Baggage Train Access** | [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md) | World-state-aware access gating |
-| **Buyback System** | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Buyback System |
-|| **Company Needs** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 2 transparent metrics (Readiness/Supply) - Rest removed 2026-01-11 |
+| --- | --- | --- |
+| **Company Needs** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 2 transparent metrics (Readiness/Supply) - Rest removed 2026-01-11 |
 | **ContentOrchestrator (System)** | [content-system-architecture.md](Features/Content/content-system-architecture.md) | World-state-driven content coordination: opportunity pre-scheduling, activity levels, schedule overrides, illness triggers |
 | **Injuries & Illnesses** | [injury-system.md](Features/Content/injury-system.md) | Unified condition tracking, maritime context awareness |
 | **Camp Hub Decisions** | [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | 33 player-initiated decisions |
@@ -110,7 +108,7 @@
 **Start here for entry points and core reference:**
 
 | Document | Purpose | Status |
-|----------|---------|--------|
+| --- | --- | --- |
 | [README.md](README.md) | Main entry point and mod overview | ✅ Current |
 | [BLUEPRINT.md](BLUEPRINT.md) | Project architecture and coding standards | ✅ Current |
 | [DEVELOPER-GUIDE.md](DEVELOPER-GUIDE.md) | Build guide, development patterns, validation (Phase 7 project structure checks) | ✅ Current |
@@ -124,10 +122,11 @@
 ## Features
 
 ### Core Systems
+
 **Location:** `Features/Core/`
 
 | Document | Topic | Status |
-|----------|-------|--------|
+| --- | --- | --- |
 | [index.md](Features/Core/index.md) | Core features index | ✅ Current |
 | [core-gameplay.md](Features/Core/core-gameplay.md) | Complete gameplay overview covering all major systems and how they interact | ✅ Current |
 | [enlistment.md](Features/Core/enlistment.md) | Enlistment system: joining process, lord selection, initial rank assignment, contract terms | ✅ Current |
@@ -143,28 +142,31 @@
 | [onboarding-discharge-system.md](Features/Core/onboarding-discharge-system.md) | Onboarding (initial training, orientation, first conversations) and discharge (equipment reclamation, final pay settlement, retirement options) | ✅ Current |
 
 ### Equipment & Logistics
+
 **Location:** `Features/Equipment/`
 
 | Document | Topic | Status |
-|----------|-------|--------|
+| --- | --- | --- |
 | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Complete quartermaster system with 10+ subsystems: equipment purchasing (category browsing, reputation discounts 0-30%), quality modifiers (6 tiers affecting stats/prices), upgrade system (Gauntlet grid UI, sequential quality improvements with real stat bonuses, native ItemModifier system), buyback service (sell QM gear back at 30-65%), provisions/rations (T1-T6 issued, T7+ shop with Gauntlet grid UI), Officers Armory (T7+, elite gear), tier gates (rank-based access control), supply integration (equipment blocked <30%), first-meeting intro, contextual dialogue (150+ dynamic responses) | ✅ Current |
 | [provisions-rations-system.md](Features/Equipment/provisions-rations-system.md) | Food and rations: T1-T6 issued rations (12-day cycle, reclaimed at muster, quality by rep), T7+ provisions shop (premium prices 2.0-3.2x town markets, stock by supply level, Gauntlet grid UI with rank-based button gating), provision bundles (morale/fatigue boosts) | ✅ Current |
 | [company-supply-simulation.md](Features/Equipment/company-supply-simulation.md) | Company supply tracking (0-100% scale, includes rations, ammo, repairs, camp supplies), supply effects (equipment access gates, ration availability, QM greeting tone, stock levels), supply-based messaging | ⚠️ Mixed |
 | [baggage-train-availability.md](Features/Equipment/baggage-train-availability.md) | Baggage train access gating: world-state-aware simulation (probabilities adapt to campaign situation), dynamic decision system (appears only when accessible), orchestrator integration, rank-based privileges, emergency access, 5 baggage events | ✅ Current |
 
 ### Identity & Traits
+
 **Location:** `Features/Identity/`
 
 | Document | Topic | Status |
-|----------|-------|--------|
+| --- | --- | --- |
 | [README.md](Features/Identity/README.md) | Identity folder overview | ✅ Current |
 | [identity-system.md](Features/Identity/identity-system.md) | Trait and identity system: personality traits (acquired through events/actions), trait effects on events/dialogues/options, reputation tracking (soldier rep, QM rep, discipline), identity development over career | ✅ Current |
 
 ### Combat & Training
+
 **Location:** `Features/Combat/`
 
 | Document | Topic | Status |
-|----------|-------|--------|
+| --- | --- | --- |
 | [README.md](Features/Combat/README.md) | Combat folder overview | ✅ Current |
 | [training-system.md](Features/Combat/training-system.md) | Training and XP: camp training actions (weapon drills, fitness), skill progression (XP rates, skill caps by rank), training events (success/injury/fatigue), cooldowns | ✅ Current |
 | [formation-assignment.md](Features/Combat/formation-assignment.md) | Battle formation logic: T1-T6 soldiers auto-assigned to formation based on equipped weapons (bow→Ranged, horse→Cavalry, both→Horse Archer, melee→Infantry), teleported to formation position. T7+ commanders control their own party, no auto-assignment. | ✅ Current |
@@ -172,21 +174,23 @@
 | [agent-combat-ai.md](Features/Combat/agent-combat-ai.md) | Agent-level combat AI: 40+ tunable properties (blocking, parrying, aiming, reactions, shield use), AgentStatCalculateModel, AI level calculation, BehaviorValueSet, modding entry points, example profiles (Veteran, Elite Guard) | 📋 Plan |
 
 ### Campaign & World
+
 **Location:** `Features/Campaign/`
 
 | Document | Topic | Status |
-|----------|-------|--------|
+| --- | --- | --- |
 | [README.md](Features/Campaign/README.md) | Campaign folder overview | ✅ Current |
-|| [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | Camp activities: daily routine events, social interactions, training opportunities, rest actions, company needs management in camp | ✅ Current |
+| [camp-life-simulation.md](Features/Campaign/camp-life-simulation.md) | Camp activities: daily routine events, social interactions, training opportunities, rest actions, company needs management in camp | ✅ Current |
 | [temporary-leave.md](Features/Campaign/temporary-leave.md) | Leave system: requesting leave (rank-based approval), leave duration limits, leave activities (visit family, trade, rest), return requirements, AWOL consequences | ✅ Current |
 | [town-access-system.md](Features/Campaign/town-access-system.md) | Town access rules: rank-based restrictions (T1-T4 limited, T5+ more freedom), permission requirements, town activities available by rank, leave of absence system | ✅ Current |
 | [camp-routine-schedule-spec.md](Features/Campaign/camp-routine-schedule-spec.md) | Camp routine schedule: baseline daily routine (dawn formations, midday work, dusk social, night rest), world state deviations, schedule forecast UI | ✅ Implemented |
 
 ### Content System
+
 **Location:** `Features/Content/`
 
 | Document | Topic | Status |
-|----------|-------|--------|
+| --- | --- | --- |
 | [README.md](Features/Content/README.md) | Content folder overview | ✅ Current |
 | [content-system-architecture.md](Features/Content/content-system-architecture.md) | Complete content system architecture: world-state-driven orchestration (ContentOrchestrator owns opportunity lifecycle with 24h pre-scheduling, WorldStateAnalyzer, SimulationPressureCalculator, PlayerBehaviorTracker), activity level system, native Bannerlord effect integration (IncidentEffectTranslator, trait mapping), JSON-driven content delivery, requirement checking, localization. No grace period - content fires immediately upon enlistment. Orchestrator Unification complete. | ✅ Current |
 | [event-system-schemas.md](Features/Content/event-system-schemas.md) | Event system JSON schemas: event structure (triggers, conditions, options, outcomes), decision schemas, order schemas, dialogue schemas, **Progression System Schema** (generic probabilistic daily rolls for escalation tracks), camp opportunities schema (with hint/hintId fields for Daily Brief foreshadowing), validation rules | ✅ Current |
@@ -194,19 +198,21 @@
 | [writing-style-guide.md](Features/Content/writing-style-guide.md) | Bannerlord RP writing guide: voice and tone (terse military prose), tense/perspective rules, vocabulary (medieval military register, avoid anachronisms), setup/option/result text patterns, tooltip formatting, **opportunity hints** (camp rumors vs personal hints, placeholder usage, categorization), dialogue patterns by rank, common mistakes to avoid, examples and checklists | ✅ Current |
 
 ### Technical Systems
+
 **Location:** `Features/Technical/`
 
 | Document | Topic | Status |
-|----------|-------|--------|
+| --- | --- | --- |
 | [conflict-detection-system.md](Features/Technical/conflict-detection-system.md) | Conflict detection and prevention: event cooldown tracking, mutually exclusive events, resource conflicts (gold/items), state validation, anti-spam protections | ✅ Current |
 | [commander-track-schema.md](Features/Technical/commander-track-schema.md) | Commander tracking schema: save data structure for player progress, persistence patterns, serialization rules | 📋 Specification |
 | [encounter-safety.md](Features/Technical/encounter-safety.md) | Encounter safety patterns: battle side determination (handles 2 army race conditions), null checks, save/load safety, state validation, edge case handling, external interruptions (battles, captures) | ✅ Current |
 
 ### UI Systems
+
 **Location:** `Features/UI/`
 
 | Document | Topic | Status |
-|----------|-------|--------|
+| --- | --- | --- |
 | [README.md](Features/UI/README.md) | UI systems overview | ✅ Current |
 | [ui-systems-master.md](Features/UI/ui-systems-master.md) | Complete UI reference: all menus, screens, and interfaces (camp menu, muster menu, QM interfaces, equipment grids, dialogue flows), Gauntlet implementation patterns, UI technical requirements | ✅ Current |
 | [enlisted-combat-log.md](Features/UI/enlisted-combat-log.md) | Custom combat log widget: native-styled scrollable feed (right side, 5min persistence, 50 message history), smart auto-scroll (pauses on manual scroll), inactivity fade (35% after 10s), clickable encyclopedia links with faction-specific colors (kingdoms display in banner colors: Vlandia=red, Sturgia=blue, Battania=green, etc.), suppresses native log while enlisted via Harmony patch, color-coded messages with shadows | ✅ Current |
@@ -221,7 +227,7 @@
 **Location:** `Features/Content/`
 
 | Document | Purpose | Status |
-|----------|---------|--------|
+| --- | --- | --- |
 | [README.md](Features/Content/README.md) | Content system overview: 282 content pieces (17 orders, 84 order events, 37 decisions, 36 camp opportunities, 57 context events, 51 map incidents) | ✅ Current |
 | [content-index.md](Features/Content/content-index.md) | Master catalog: all content with IDs, titles, descriptions, requirements, effects, skill checks organized by category | ✅ Current |
 | [content-organization-map.md](Features/Content/content-organization-map.md) | Visual hierarchy: parent-child relationships, file locations, workflows for adding new content | ✅ Current |
@@ -233,8 +239,9 @@
 **Location:** `Reference/`
 
 | Document | Purpose | Status |
-|----------|---------|--------|
+| --- | --- | --- |
 | [README.md](Reference/README.md) | Reference overview and how to use reference docs | ✅ Current |
+| [AGENTIC_LESSONS.md](AGENTIC_LESSONS.md) | Agentic AI architectural lessons (RAG, Contextual Memory, Patterns) | ✅ Reference |
 | [native-apis.md](Reference/native-apis.md) | Campaign System API reference: Bannerlord API patterns, CampaignBehavior structure, common APIs (Hero, Party, Clan, Settlement), event hooks, save/load patterns - use for API verification against decompiled source | 📚 Reference |
 | [native-skill-xp.md](Reference/native-skill-xp.md) | Skill progression reference: attribute/skill hierarchy, focus points, learning rates, XP calculation formulas, thematic aliases - use when implementing training/skill systems | 📚 Reference |
 | [content-effects-reference.md](Reference/content-effects-reference.md) | Complete effects reference: all effect types (skill XP, gold, HP, reputation, escalation, company needs, party, narrative), native API integration, processing flow - use when writing content JSON | 📚 Reference |
@@ -263,5 +270,3 @@
 ---
 
 **Last reorganization:** 2026-01-03 (Added systems-integration-analysis.md)
-
-

@@ -53,7 +53,6 @@ python Tools/Validation/sync_event_strings.py
 | `Tools/Validation/` | Content validators |
 | `docs/` | All documentation |
 | `../Decompile/` | Native Bannerlord API reference (v1.3.13) |
-| `Tools/CrewAI/` | Multi-agent workflows (see Tools/CrewAI/README.md) |
 | `<BannerlordInstall>/Modules/Enlisted/Debugging/` | Runtime mod logs |
 
 ## 🧭 Task Routing
@@ -62,7 +61,7 @@ python Tools/Validation/sync_event_strings.py
 |---------------|------------|
 | C# code (any) | `src/WARP.md` for critical patterns |
 | JSON content (events, orders) | `ModuleData/WARP.md` for field ordering, tooltips |
-| CrewAI workflows | `Tools/CrewAI/README.md` |
+
 | Battle AI | `docs/Features/Combat/BATTLE-AI-IMPLEMENTATION-SPEC.md` |
 
 ## 📚 Documentation Quick Reference
@@ -89,18 +88,11 @@ For up-to-date third-party library docs, use Context7 MCP with these IDs:
 
 **Note:** TaleWorlds/Bannerlord APIs are NOT in Context7 — use local `Decompile/` instead.
 
-## 🤖 When to Use CrewAI
-
-**Quick fixes, single-file changes:** Use Warp directly  
-**Multi-file features, planning, bug hunting:** Use CrewAI at `Tools/CrewAI/`
-
-See `Tools/CrewAI/README.md` for setup and commands.
-
 ## 🎯 Project Overview
 
 **Enlisted** is a C# Bannerlord mod that transforms the game into a soldier career simulator:
-- Player enlists with a lord, follows orders, earns wages
-- 9-tier rank progression (T1 recruit → T9 commander)
-- 245 narrative content pieces (events, decisions, orders)
-- JSON-driven content with XML localization
-- Old-style `.csproj` with explicit file includes
+* Player enlists with a lord, follows orders, earns wages
+* 9-tier rank progression (T1 recruit → T9 commander)
+* 245 narrative content pieces (events, decisions, orders)
+* JSON-driven content with XML localization
+* Old-style `.csproj` with explicit file includes

@@ -1,12 +1,36 @@
 # Master Implementation Plan: Order Prompt Model
 
-**Summary:** Eliminate random event interrupts. Orders auto-assign, 85% of phases are routine (nothing happens), 15% fire a mini-prompt asking player if they want to engage. Player choice leads to CK3-style event chains with consequences.
+**Summary:** Eliminate random event interrupts. Orders auto-assign, 85% of
+phases are routine (nothing happens), 15% fire a mini-prompt asking player
+if they want to engage. Player choice leads to CK3-style event chains with
+consequences.
 
 **Status:** 📋 Specification  
 **Created:** 2026-01-14  
 **Last Updated:** 2026-01-14  
-**Target Completion:** 2-3 weeks  
-**Related Docs:** [CK3 Feast Chain Analysis](ANEWFEATURE/ck3-feast-chain-analysis.md), [Order Progression System](Features/Core/order-progression-system.md), [Event System Schemas](Features/Content/event-system-schemas.md), [Content Effects Reference](ANEWFEATURE/content-effects-reference.md), [Native Skill XP](ANEWFEATURE/native-skill-xp.md)
+**Target Completion:** 2-3 weeks
+**Related Docs:** [CK3 Feast Analysis](ANEWFEATURE/ck3-feast-chain-analysis.md),
+[Prompt Guide](Features/Content/writing-style-guide.md)
+
+## Table of Contents
+
+- [Core Vision](#core-vision)
+- [Current Problems](#current-problems)
+- [New Architecture](#new-architecture-the-order-prompt-model)
+- [Implementation Plan](#implementation-order-prompt-system)
+- [Systems to Remove](#what-gets-removed)
+- [Systems to Keep](#what-gets-kept)
+- [Event Chain Design](#event-chain-design-ck3-pattern)
+- [Testing Checklist](#testing-checklist)
+- [Implementation Priority](#implementation-priority)
+- [Appendix: CK3 Research Summary](#appendix-ck3-research-summary)
+- [Map Incident Weighting (Phase 4)](#map-incident-weighting-phase-4)
+- [Campaign Context Tracking (Phase 4)](#campaign-context-tracking-phase-4)
+- [Event Chains](#event-chain-design-ck3-pattern)
+- [Research: CK3 Feast Chains](#research-ck3-feast-chains)
+- [Event System Schemas](Features/Content/event-system-schemas.md)
+- [Content Effects Reference](ANEWFEATURE/content-effects-reference.md)
+- [Native Skill XP](ANEWFEATURE/native-skill-xp.md)
 **Target Version:** Bannerlord v1.3.13
 
 ---
@@ -15,11 +39,11 @@
 
 1. [Core Vision](#core-vision)
 2. [Current Problems](#current-problems)
-3. [New Architecture](#new-architecture)
-4. [Implementation Plan](#implementation-plan)
-5. [Systems to Remove](#systems-to-remove)
-6. [Systems to Keep](#systems-to-keep)
-7. [Event Chain Design](#event-chain-design)
+3. [New Architecture](#new-architecture-the-order-prompt-model)
+4. [Implementation Plan](#implementation-order-prompt-system)
+5. [Systems to Remove](#what-gets-removed)
+6. [Systems to Keep](#what-gets-kept)
+7. [Event Chain Design](#event-chain-design-ck3-pattern)
 8. [Testing Checklist](#testing-checklist)
 
 ---
@@ -27,12 +51,15 @@
 ## Core Vision
 
 ### The Problem We're Solving
-Random event interrupts feel jarring at 2x speed. Events "happen to" the player instead of the player choosing to engage.
+
+Random event interrupts feel jarring at 2x speed. Events "happen to" the
+player instead of the player choosing to engage.
 
 ### The Solution: Order Prompt Model
 
 **How it works:**
-```
+
+```text
 Order auto-assigned: "Guard Duty - 2 days"
   ↓
 Phase progresses (Dawn/Midday/Dusk/Night)
@@ -51,6 +78,7 @@ Event chain: 50% nothing / 30% gold / 20% ambush
 ```
 
 **Key principles:**
+
 1. **Orders are auto-assigned** - realistic for a soldier
 2. **Most duty is routine** - 85% nothing happens (like real military life)
 3. **Player chooses to engage** - prompts ask permission before events fire
@@ -60,13 +88,16 @@ Event chain: 50% nothing / 30% gold / 20% ambush
 ### CK3 Research Insight
 
 CK3 fires very few random events during normal play:
+
 - **Yearly events:** 25% chance (`chance_to_happen = 25`)
 - **Event pools:** 500-1000 weight for "nothing" vs 50-100 for events
 - **Result:** 3-5 random events per YEAR for players
 
-The drama comes from **activities** (feasts, hunts) where events ARE frequent because the player initiated them.
+The drama comes from **activities** (feasts, hunts) where events ARE
+frequent because the player initiated them.
 
-**Your orders = CK3 activities.** Make them event-rich via prompts, but keep idle time quiet.
+**Your orders = CK3 activities.** Make them event-rich via prompts, but
+keep idle time quiet.
 
 ---
 
@@ -74,15 +105,16 @@ The drama comes from **activities** (feasts, hunts) where events ARE frequent be
 
 ### Five Overlapping Content Systems
 
-The mod currently has multiple content delivery systems that overlap and cause confusion:
+The mod currently has multiple content delivery systems that overlap and
+cause confusion:
 
-| System | File | Behavior | Problem |
-|--------|------|----------|--------|
-| **Decisions** | DecisionManager.cs | Player browses Camp Hub, chooses | ✅ Working correctly |
-| **Order Events** | OrderProgressionBehavior.cs | Fire randomly at slot phases | Should be player-initiated |
-| **Narrative Events** | EventPacingManager.cs | Fire randomly every 3-5 days | **THE PROBLEM** - random spam |
-| **Map Incidents** | MapIncidentManager.cs | Fire on battle/settlement/siege | ✅ Contextual, keep |
-| **Camp Opportunities** | ContentOrchestrator.cs | Pre-scheduled 24h ahead | Overcomplicated |
+| System | File | Behavior | Prob |
+| :--- | :--- | :--- | :--- |
+| Decisions | Manager.cs | Hub choices | OK |
+| Order Evt | Behavior.cs | Slot phases | Needs prompt |
+| Narrative | Manager.cs | Random spam | **PROBLEM** |
+| Map Inc | Incident.cs | Battle/Set | Contextual |
+| Camp Opp | Orchestrator.cs | Pre-sched | Complex |
 
 ### The Core Problem: EventPacingManager.TryFireEvent()
 
@@ -114,7 +146,9 @@ This is the random event spam. It needs to be **deleted**.
 ## New Architecture: The Order Prompt Model
 
 ### Design Philosophy
+
 Inspired by CK3's feast event chains:
+
 - **Player chooses to engage** (via prompts during orders)
 - **Outcomes are pre-rolled** (hidden setup before player sees choices)
 - **Chains create narrative arcs** (not isolated random events)
@@ -122,8 +156,9 @@ Inspired by CK3's feast event chains:
 
 ### The Flow
 
-```
-Order auto-assigned → Player works through phases → 85% nothing / 15% prompt fires
+```text
+Order auto-assigned → Player works through phases →
+85% nothing / 15% prompt fires
 
 [Prompt Example]
 ┌─────────────────────────────────────┐
@@ -137,25 +172,27 @@ Order auto-assigned → Player works through phases → 85% nothing / 15% prompt
 └─────────────────────────────────────┘
 
 Player clicks [Investigate] → Event chain fires (outcome was pre-rolled)
+
 Player clicks [Stay Focused] → Nothing happens, order continues
 ```
 
 ### What Gets Removed
 
-| System | File | Action |
-|--------|------|--------|
-| Random narrative events | EventPacingManager.cs | **DELETE** TryFireEvent() |
-| GlobalEventPacer | enlisted_config.json | **DELETE** pacing section |
-| Context Events (65) | narrative-events.json | **CONVERT** to chain outcomes |
+| System | File | Change |
+| :--- | :--- | :--- |
+| OrderProg | Behavior.cs | Phase logic |
+| EventPac | Manager.cs | Remove spam |
+| Config | config.json | Remove pacing |
+| Data | orders.json | Add prompts |
 
 ### What Gets Kept
 
 | System | File | Notes |
-|--------|------|-------|
-| Orders (17) | orders.json | Auto-assigned, phases progress |
-| Decisions (37) | decisions.json | Player browses Camp Hub menu |
-| Map Incidents (51) | map-incidents.json | Battle/settlement/siege triggers |
-| Threshold events | escalation-events.json | Supply pressure, illness arcs |
+| :--- | :--- | :--- |
+| Orders | orders.json | Auto-assigned |
+| Decisions | decisions.json | Camp Hub menu |
+| Map Inc | incidents.json | Battle/Set |
+| Threshold | events.json | Supply surge |
 
 ---
 
@@ -169,12 +206,12 @@ private void ProcessSlotPhase(Order currentOrder)
 {
     // 85% of the time: routine, nothing happens
     var roll = MBRandom.RandomFloat;
-    if (roll >= 0.15f) 
+    if (roll >= 0.15f)
     {
         // Silent phase - order progresses normally
         return;
     }
-    
+
     // 15% of the time: show a prompt
     ShowOrderPrompt(currentOrder);
 }
@@ -183,21 +220,24 @@ private void ShowOrderPrompt(Order order)
 {
     // PRE-ROLL the outcome (CK3 pattern)
     var outcome = RollPromptOutcome(order);
-    
-    // Get contextual prompt text based on order type AND travel context (land/sea)
+
+    // Get contextual prompt text based on order type AND travel context
+    // (land/sea)
     var isAtSea = IsPartyAtSea();
     var prompt = GetPromptForOrder(order, isAtSea);
-    
+
     InquiryData inquiry = new InquiryData(
         prompt.Title,           // "Something Stirs"
-        prompt.Description,     // "You hear rustling in the bushes..." (land) or "Strange shadow in the water..." (sea)
+        prompt.Description,     // "You hear rustling in the bushes..."
+                                // (land) or "Strange shadow in the
+                                // water..." (sea)
         true, true,
         prompt.InvestigateText, // "Investigate" / "Check It Out" / etc.
         prompt.IgnoreText,      // "Stay Focused" / "Ignore It" / etc.
         () => FireEventChain(order, outcome),  // Player engages
         () => { /* Nothing - order continues */ }  // Player ignores
     );
-    
+
     InformationManager.ShowInquiry(inquiry);
 }
 
@@ -205,14 +245,14 @@ private OrderPrompt GetPromptForOrder(Order order, bool isAtSea)
 {
     // Get prompts for this order type
     var prompts = PromptCatalog.GetPromptsForOrderType(order.Id);
-    
+
     // Filter by travel context - only show contextually appropriate prompts
-    var contextualPrompts = prompts.Where(p => 
-        p.Contexts.Contains("any") || 
+    var contextualPrompts = prompts.Where(p =>
+        p.Contexts.Contains("any") ||
         (isAtSea && p.Contexts.Contains("sea")) ||
         (!isAtSea && p.Contexts.Contains("land"))
     ).ToList();
-    
+
     // Pick random contextual prompt
     return contextualPrompts[MBRandom.RandomInt(contextualPrompts.Count)];
 }
@@ -222,13 +262,13 @@ private PromptOutcome RollPromptOutcome(Order order)
     // CK3-style weighted random list
     // Outcome is determined BEFORE player sees prompt
     var roll = MBRandom.RandomFloat;
-    
+
     // Example weights (varies by order type):
     // 50% = nothing interesting
     // 30% = small reward (gold, item, reputation)
     // 15% = interesting event chain
     // 5%  = danger (ambush, injury)
-    
+
     if (roll < 0.50f) return PromptOutcome.Nothing;
     if (roll < 0.80f) return PromptOutcome.SmallReward;
     if (roll < 0.95f) return PromptOutcome.EventChain;
@@ -239,17 +279,16 @@ private PromptOutcome RollPromptOutcome(Order order)
 ### Prompt Templates by Order Type
 
 **IMPORTANT: Context Filtering**
-Prompts must be contextually appropriate. "Rustling in bushes" makes no sense at sea. Use `contexts` field to filter:
+Prompts must be contextually appropriate. "Rustling in bushes"
+makes no sense at sea. Use `contexts` field to filter:
+
 - `["land"]` = Only fires on land (bushes, treeline, campsite)
 - `["sea"]` = Only fires at sea (hull, rigging, waves, hold)
-- `["any"]` = Fires in both contexts (rare, for universal prompts like "distant figure")
+- `["any"]` = Fires in both contexts (universal prompts)
 
 **Skill Rewards by Order Type:**
 Outcomes should award skills thematically appropriate to each order:
-- **Guard Duty / Patrol** → Perception (Scouting), Athletics, OneHanded
-- **Foraging / Supply Run** → Perception (Scouting), Athletics
-- **Scout Duty / Recon** → Perception (Scouting), Riding, Tactics
-- **Equipment Repair** → Smithing (Crafting)
+
 - **Treat Wounded** → Medicine
 - **Lead Patrol** → Leadership, Tactics
 - **Training Recruits** → Leadership, combat skills (OneHanded, Bow, etc.)
@@ -264,42 +303,48 @@ Outcomes should award skills thematically appropriate to each order:
       "prompts": [
         {
           "title": "Something Stirs",
-          "description": "You hear rustling in the bushes nearby. Could be nothing. Could be trouble.",
+          "description": "You hear rustling in the bushes nearby. Could be nothing.
+            Could be trouble.",
           "investigate_text": "Investigate",
           "ignore_text": "Stay at Post",
           "contexts": ["land"]
         },
         {
           "title": "Distant Noise",
-          "description": "A sound carries from the treeline. Too faint to identify.",
+          "description": "A sound carries from the treeline. Too faint to
+            identify.",
           "investigate_text": "Check It Out",
           "ignore_text": "Ignore It",
           "contexts": ["land"]
         },
         {
           "title": "Strange Light",
-          "description": "A brief flicker of light in the darkness. Probably a firefly. Probably.",
+          "description": "A brief flicker of light in the darkness. Probably a
+            firefly. Probably.",
           "investigate_text": "Move Closer",
           "ignore_text": "Keep Watch",
           "contexts": ["land"]
         },
         {
           "title": "Shadow Below",
-          "description": "Something large moves beneath the hull. Too big to be a fish.",
+          "description": "Something large moves beneath the hull. Too big to be
+            a fish.",
           "investigate_text": "Look Closer",
           "ignore_text": "Keep Watch",
           "contexts": ["sea"]
         },
         {
           "title": "Loose Rope",
-          "description": "A rope swings free in the rigging. Cut loose, or just poorly tied?",
+          "description": "A rope swings free in the rigging. Cut loose, or just
+            poorly tied?",
           "investigate_text": "Investigate",
           "ignore_text": "Report It Later",
           "contexts": ["sea"]
         },
         {
           "title": "Strange Sound",
-          "description": "Unusual creaking from the hold below. Could be cargo shifting. Could be something else.",
+          "description": "Unusual creaking from the hold below. Could be cargo
+            shifting. Could be something else.",
           "investigate_text": "Check Below",
           "ignore_text": "Stay at Post",
           "contexts": ["sea"]
@@ -311,21 +356,24 @@ Outcomes should award skills thematically appropriate to each order:
       "prompts": [
         {
           "title": "Off the Path",
-          "description": "You spot what might be an old campsite through the brush. Worth investigating?",
+          "description": "You spot what might be an old campsite through the
+            brush. Worth investigating?",
           "investigate_text": "Search the Area",
           "ignore_text": "Stay on Task",
           "contexts": ["land"]
         },
         {
           "title": "Bodies Ahead",
-          "description": "You come across bodies in the field. Recent, from the look of them.",
+          "description": "You come across bodies in the field. Recent, from the
+            look of them.",
           "investigate_text": "Check Them",
           "ignore_text": "Move On",
           "contexts": ["land"]
         },
         {
           "title": "Floating Debris",
-          "description": "Wreckage floats nearby. Could be from a merchant ship. Could be bait.",
+          "description": "Wreckage floats nearby. Could be from a merchant ship.
+            Could be bait.",
           "investigate_text": "Investigate",
           "ignore_text": "Sail On",
           "contexts": ["sea"]
@@ -337,21 +385,24 @@ Outcomes should award skills thematically appropriate to each order:
       "prompts": [
         {
           "title": "Smoke on the Horizon",
-          "description": "A thin column of smoke rises in the distance. Not on your planned route.",
+          "description": "A thin column of smoke rises in the distance. Not on
+            your planned route.",
           "investigate_text": "Investigate",
           "ignore_text": "Continue Mission",
           "contexts": ["land", "sea"]
         },
         {
           "title": "Fresh Tracks",
-          "description": "Horse tracks, headed away from the main road. Could be nothing.",
+          "description": "Horse tracks, headed away from the main road. Could be
+            nothing.",
           "investigate_text": "Follow Them",
           "ignore_text": "Mark and Report",
           "contexts": ["land"]
         },
         {
           "title": "Distant Sail",
-          "description": "A sail appears on the horizon. Flying colors you don't recognize.",
+          "description": "A sail appears on the horizon. Flying colors you don't
+            recognize.",
           "investigate_text": "Close Distance",
           "ignore_text": "Note and Continue",
           "contexts": ["sea"]
@@ -379,7 +430,8 @@ Outcomes should award skills thematically appropriate to each order:
         "effects": {}
       },
       {
-        "text": "You find nothing of interest. Time wasted, but at least you were thorough.",
+        "text": "You find nothing of interest. Time wasted, but at least you
+          were thorough.",
         "effects": { "fatigue": 2, "skillXp": { "Perception": 5 } }
       }
     ],
@@ -393,14 +445,16 @@ Outcomes should award skills thematically appropriate to each order:
         "effects": { "company_supplies": 3, "skillXp": { "Perception": 10 } }
       },
       {
-        "text": "A fellow soldier saw you checking the perimeter. Word gets around.",
+        "text": "A fellow soldier saw you checking the perimeter. Word gets
+          around.",
         "effects": { "officer_reputation": 2, "skillXp": { "Perception": 8 } }
       }
     ],
     "event_chain": [
       {
         "chain_id": "deserter_encounter",
-        "text": "You find a deserter from another company, hiding in the brush...",
+        "text": "You find a deserter from another company, hiding in the
+          brush...",
         "trigger_event": "evt_deserter_chain_start"
       },
       {
@@ -412,7 +466,8 @@ Outcomes should award skills thematically appropriate to each order:
     "danger": [
       {
         "text": "Ambush! Bandits were waiting in the bushes!",
-        "effects": { "trigger_combat": "bandit_ambush_small", "skillXp": { "OneHanded": 10 } }
+        "effects": { "trigger_combat": "bandit_ambush_small",
+                     "skillXp": { "OneHanded": 10 } }
       },
       {
         "text": "You step into a concealed pit. Your ankle twists painfully.",
@@ -425,21 +480,22 @@ Outcomes should award skills thematically appropriate to each order:
 
 **Skill XP Integration:**
 Outcomes should reward contextually appropriate skills using thematic aliases:
+
 - **Guard/Patrol orders** → `"Perception"` (maps to Scouting → Cunning)
-- **Combat outcomes** → `"OneHanded"`, `"TwoHanded"`, `"Polearm"` (maps to Vigor skills)
+- **Combat outcomes** → `"OneHanded"`, `"TwoHanded"`, `"Polearm"`
+    (maps to Vigor skills)
 - **Foraging/Supply** → `"Perception"` for finding things (Scouting)
 - **Equipment repair** → `"Smithing"` (maps to Crafting → Endurance)
 - **Mounted patrol** → `"Riding"` (Endurance)
 - **Leading situations** → `"Leadership"` (Social)
 - **Medical events** → `"Medicine"` (Intelligence)
 
-See [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for skill XP effect format and [Native Skill XP](ANEWFEATURE/native-skill-xp.md) for complete skill mappings.
+See [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for
+skill XP effect format and [Native Skill XP](ANEWFEATURE/native-skill-xp.md)
+as a reference for skill names and mapping. Use thematic aliases
+like "Perception" to reward specific skills.
 
----
-
-## Event Chain Design (CK3 Pattern)
-
-### Chain Structure
+### Event Chain Design (CK3 Pattern)
 
 ```json
 // event_chains.json (NEW FILE)
@@ -453,7 +509,9 @@ See [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for sk
           "phase": 1,
           "event_id": "evt_deserter_chain_start",
           "title": "A Desperate Man",
-          "description": "The man begs you not to turn him in. He says the officers beat him, that he couldn't take another day. He's thin, exhausted, terrified.",
+          "description": "The man begs you not to turn him in. He says the
+            officers beat him, that he couldn't take another day. He's thin,
+            exhausted, terrified.",
           "choices": [
             {
               "text": "Let him go",
@@ -478,7 +536,8 @@ See [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for sk
           "event_id": "evt_deserter_mercy",
           "condition": "showed_mercy OR helped_escape",
           "title": "Gone",
-          "description": "He vanishes into the night. You wonder if you'll ever see him again.",
+          "description": "He vanishes into the night. You wonder if you'll ever
+            see him again.",
           "delay_days": "7-14",
           "follow_up": {
             "chance": 0.3,
@@ -496,7 +555,8 @@ See [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for sk
           "event_id": "evt_deserter_turned_in",
           "condition": "turned_in",
           "title": "Justice",
-          "description": "The officers thank you for your diligence. The deserter is hauled away. You try not to hear him screaming.",
+          "description": "The officers thank you for your diligence. The
+            deserter is hauled away. You try not to hear him screaming.",
           "immediate_effects": {
             "officer_reputation": 5,
             "soldier_reputation": -8,
@@ -513,13 +573,15 @@ See [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for sk
 ### CK3 Probability Model Applied
 
 From CK3's feast events analysis:
-- `random_list { 500 = { nothing } 50 = { actual_event } }` = 90% nothing
+
+- `random_list { 500 = { nothing } 50 = { actual_event } }` common pattern
+  - Result: Events feel rare and special, not spammy
 - Hidden setup events pre-roll outcomes
 - Delayed follow-ups create anticipation
 
 **Applied to Enlisted:**
 
-```
+```text
 Phase Transition Check:
 ├── 85% → Routine (silent, order continues)
 └── 15% → Prompt fires
@@ -542,6 +604,7 @@ Much closer to CK3's pacing than current spam.
 ### OrderProgressionBehavior.cs Changes
 
 **Current (lines ~89-120):**
+
 ```csharp
 private void ProcessSlotPhase(Order order)
 {
@@ -555,6 +618,7 @@ private void ProcessSlotPhase(Order order)
 ```
 
 **New:**
+
 ```csharp
 private void ProcessSlotPhase(Order order)
 {
@@ -569,13 +633,14 @@ private void ProcessSlotPhase(Order order)
 
 ### EventPacingManager.cs Changes
 
-**DELETE entire TryFireEvent() method (lines 133-176)**
+#### DELETE entire TryFireEvent() method (lines 133-176)
 
 This is the random event spam. Remove it entirely.
 
 ### enlisted_config.json Changes
 
-**Remove:**
+#### Remove
+
 ```json
 "decision_events": {
   "pacing": {
@@ -586,6 +651,7 @@ This is the random event spam. Remove it entirely.
 ```
 
 **Add:**
+
 ```json
 "order_prompts": {
   "prompt_chance": 0.15,
@@ -604,31 +670,37 @@ This is the random event spam. Remove it entirely.
 
 ### Converting 65 Context Events → Chain Outcomes
 
-The current 65 "Context Events" that fire randomly should be converted:
+The 65 "Context Events" should be converted:
 
-| Current Category | Count | Conversion |
-|-----------------|-------|------------|
-| Social encounters | 18 | → Camp Decisions (player-initiated) |
-| Discovery events | 12 | → Prompt outcomes (small_reward) |
-| Danger events | 15 | → Prompt outcomes (danger) |
-| Story hooks | 20 | → Event chains (event_chain) |
+| Category | Count | Conversion |
+| :--- | :--- | :--- |
+| Social | 18 | → Camp Decisions |
+| Disc | 12 | → Outcomes |
+| Danger | 15 | → Outcomes |
+| Story | 20 | → Event chains |
 
-**Preserve skill XP:** Existing events that award skill XP should retain those rewards in their converted form.
+**Preserve skill XP:** Existing events that award skill XP should retain
+those rewards in their converted form.
 
 ### Order Events (84) → Prompt System
 
 The 84 existing order events become:
+
 - Prompt templates (contextual text per order type)
 - Outcome pools (what happens when player investigates)
 - Event chains (multi-phase narratives)
 
-**Add skill XP:** Many existing order events lack skill XP rewards. During conversion, add thematically appropriate skill XP to outcomes (see [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for effect format).
+**Add skill XP:** Many existing order events lack skill XP rewards. During
+conversion, add thematically appropriate skill XP to outcomes (see
+[Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for
+effect format).
 
 ---
 
 ## Testing Checklist
 
 ### Prompt System
+
 - [ ] 85% of phases pass silently
 - [ ] 15% of phases show prompt
 - [ ] Prompts are contextual to order type
@@ -636,18 +708,21 @@ The 84 existing order events become:
 - [ ] [Investigate] triggers pre-rolled outcome
 
 ### Outcome Distribution
+
 - [ ] 50% of investigations yield nothing
 - [ ] 30% yield small rewards (gold, supplies, rep)
 - [ ] 15% trigger event chains
 - [ ] 5% trigger danger
 
 ### Skill Progression
+
 - [ ] Outcomes award appropriate skill XP for order type
 - [ ] Thematic aliases work ("Perception" awards Scouting XP)
 - [ ] Skill XP integrates with native progression system
 - [ ] Different order types reward different skills (coverage balance)
 
 ### Event Chains
+
 - [ ] Chains progress through phases
 - [ ] Player choices set flags
 - [ ] Flags affect later phases
@@ -655,6 +730,7 @@ The 84 existing order events become:
 - [ ] Chain state persists across saves
 
 ### Pacing
+
 - [ ] Average 1 interesting event per 8-12 days
 - [ ] No more random popup spam
 - [ ] Threshold events (supply crisis, etc.) still fire
@@ -666,6 +742,7 @@ The 84 existing order events become:
 ## Implementation Priority
 
 ### Phase 1: Remove Random Events (1-2 days)
+
 1. Delete `EventPacingManager.TryFireEvent()` method
 2. Remove pacing config from `enlisted_config.json`
 3. **Run validation:** `python Tools/Validation/validate_content.py`
@@ -674,20 +751,24 @@ The 84 existing order events become:
 6. Verify threshold events still work (supply crisis, illness arcs)
 
 ### Phase 2: Add Prompt System (3-5 days)
+
 1. Create data structures (see Data Structures below)
 2. **Add new .cs files to `Enlisted.csproj`** (validator will check)
 3. **Register new types in `EnlistedSaveDefiner`** if they need persistence
 4. Add prompt check to `OrderProgressionBehavior.ProcessSlotPhase()`
 5. Create `ModuleData/Enlisted/Prompts/order_prompts.json` with templates
 6. Create `ModuleData/Enlisted/Prompts/prompt_outcomes.json` with outcomes
-7. **Add skill XP to all outcomes** - use thematic aliases ("Perception", "Smithing", etc.)
+7. **Add skill XP to all outcomes** - use thematic aliases ("Perception",
+    "Smithing", etc.)
 8. Create `PromptCatalog` to load and manage prompts
 9. Implement pre-roll outcome logic with ModLogger
-10. **Verify skill XP integration** - ensure `ApplyPromptEffects` handles `skillXp` field
+10. **Verify skill XP integration** - ensure `ApplyPromptEffects` handles
+    `skillXp` field
 11. **Run validation:** `python Tools/Validation/validate_content.py`
 12. **Build and test:** `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
 
 ### Phase 3: Event Chains (5-7 days)
+
 1. Create `EventChainManager` class (see Data Structures below)
 2. **Add new .cs files to `Enlisted.csproj`**
 3. **Register chain state in `EnlistedSaveDefiner`**
@@ -699,6 +780,7 @@ The 84 existing order events become:
 9. Test chain branching with different choices
 
 ### Phase 4: Campaign Context Tracking (3-4 days)
+
 1. Create `CampaignContextTracker` class in `src/Features/Content/`
 2. **Add to `Enlisted.csproj`**
 3. Hook into battle end events to record battles
@@ -708,6 +790,7 @@ The 84 existing order events become:
 7. **Run validation:** `python Tools/Validation/validate_content.py`
 
 ### Phase 5: Map Incident Weighting (2-3 days)
+
 1. Add CK3-style weighting to `MapIncidentManager`
 2. Integrate with `ContentOrchestrator.GetCurrentWorldSituation()`
 3. Make incident chances respect global activity levels
@@ -715,15 +798,21 @@ The 84 existing order events become:
 5. **Run validation:** `python Tools/Validation/validate_content.py`
 
 ### Phase 6: Content Conversion (Ongoing)
+
 1. Convert context events to appropriate categories
-2. Write new prompt templates per order type (follow [Writing Style Guide](Features/Content/writing-style-guide.md))
+2. Write new prompt templates per order type (follow
+    [Writing Style Guide](Features/Content/writing-style-guide.md))
 3. Create outcome pools with variety
-4. **Add skill XP to outcomes** - reference [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for:
-   - Skill XP effect format and thematic aliases
-   - Appropriate skills per order type (see Skill Rewards by Order Type section)
-   - Attribute coverage balance (ensure Vigor/Control/Intelligence get coverage)
+4. **Add skill XP to outcomes** - reference
+    [Content Effects Reference](ANEWFEATURE/content-effects-reference.md) for:
+    - Skill XP effect format and thematic aliases
+    - Appropriate skills per order type (see Skill Rewards by Order Type
+        section)
+    - Attribute coverage balance (ensure Vigor/Control/Intelligence get
+        coverage)
 5. Write 5-10 event chains with branches
-6. **Run validation after each content addition:** `python Tools/Validation/validate_content.py`
+6. **Run validation after each content addition:**
+    `python Tools/Validation/validate_content.py`
 7. **Sync localization strings:** `python Tools/Validation/sync_event_strings.py`
 8. Test in-game with different order types and contexts
 9. **Verify skill progression** - test that outcomes award correct skill XP
@@ -732,32 +821,33 @@ The 84 existing order events become:
 
 ## Appendix: CK3 Research Summary
 
-### Key Findings from CK3 Feast Events
+### Research: CK3 Feast Chains
 
 Location: `C:\Program Files (x86)\Steam\steamapps\common\Crusader Kings III\game\events\activities\feast_activity\`
 
 1. **Heavy "nothing" weighting:**
-   - `random_list { 500 = { nothing } 50 = { actual_event } }` common pattern
-   - Result: Events feel rare and special, not spammy
+    - `random_list { 500 = { nothing } 50 = { actual_event } }` common pattern
+    - Result: Events feel rare and special, not spammy
 
 2. **Hidden setup events:**
-   - `feast_event_setup_0001` fires invisibly, pre-rolls outcome
-   - Player sees result event, not the dice roll
+    - `feast_event_setup_0001` fires invisibly, pre-rolls outcome
+    - Player sees result event, not the dice roll
 
 3. **Flag-based branching:**
-   - `set_variable { name = feast_outcome_generous }` stores choice
-   - Later phases check: `has_variable = feast_outcome_generous`
+    - `set_variable { name = feast_outcome_generous }` stores choice
+    - Later phases check: `has_variable = feast_outcome_generous`
 
 4. **Delayed follow-ups:**
-   - `trigger_event = { id = feast_follow_up days = { 7 14 } }`
-   - Creates anticipation between chain phases
+    - `trigger_event = { id = feast_follow_up days = { 7 14 } }`
+    - Creates anticipation between chain phases
 
 5. **Yearly event frequency:**
-   - `yearly_on_actions.txt` shows `chance_to_happen = 25`
-   - Most random events: 500-1000 weight "nothing" vs 50-100 "event"
-   - Net result: ~3-5 random events per year
+    - `yearly_on_actions.txt` shows `chance_to_happen = 25`
+    - Most random events: 500-1000 weight "nothing" vs 50-100 "event"
+    - Net result: ~3-5 random events per year
 
 ### Research Date
+
 January 14, 2026
 
 See also: `docs/ANEWFEATURE/ck3-feast-chain-analysis.md` for detailed analysis
@@ -766,9 +856,10 @@ See also: `docs/ANEWFEATURE/ck3-feast-chain-analysis.md` for detailed analysis
 
 ## Map Incident Weighting (Phase 4)
 
-### Problem
+### Problem: Interruption Fatigue
 
 MapIncidentManager currently fires incidents at **100% rate** when eligible:
+
 - Every battle end → Event fires
 - Every settlement entry → Event fires
 - Every settlement exit → Event fires
@@ -824,12 +915,14 @@ private bool ShouldFireIncident(string context)
 ### Updated Incident Flow
 
 **Before (Current):**
-```
+
+```text
 Battle ends → Check cooldown → TryDeliverIncident → Event fires (if eligible)
 ```
 
-**After (CK3-Style):**
-```
+**After (CK3-Style):
+
+```text
 Battle ends → Check cooldown → ShouldFireIncident? (30% at Active)
   ├─ Yes → TryDeliverIncident → Event fires
   └─ No → Nothing (routine)
@@ -838,6 +931,7 @@ Battle ends → Check cooldown → ShouldFireIncident? (30% at Active)
 ### Integration Points
 
 **OnBattleEnd:**
+
 ```csharp
 private void OnBattleEnd(MapEvent mapEvent)
 {
@@ -857,6 +951,7 @@ private void OnBattleEnd(MapEvent mapEvent)
 ```
 
 **OnSettlementEntered:**
+
 ```csharp
 private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
 {
@@ -880,6 +975,7 @@ private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero 
 ```
 
 **OnSettlementLeft:**
+
 ```csharp
 private void OnSettlementLeft(MobileParty party, Settlement settlement)
 {
@@ -901,22 +997,26 @@ private void OnSettlementLeft(MobileParty party, Settlement settlement)
 ### Expected Results
 
 **Garrison (Quiet - 10% base):**
+
 - Entering town: 10% chance
 - Leaving settlement: 7.5% chance
 - Battle end: 15% chance
 
 **Peacetime Campaign (Routine - 20% base):**
+
 - Entering town: 20% chance
 - Leaving settlement: 15% chance
 - Battle end: 30% chance
 
 **Active Campaign (Active - 30% base):**
+
 - Entering town: 30% chance
 - Leaving settlement: 22.5% chance
 - Battle end: 45% chance
 
 **Siege (Intense - 40% base):**
-- During siege (hourly): 48% chance (10% base * 1.2 * 4 checks/day)
+
+- During siege (hourly): 48% chance (10% base *1.2* 4 checks/day)
 - Battle end: 60% chance
 
 ### Benefits
@@ -927,7 +1027,7 @@ private void OnSettlementLeft(MobileParty party, Settlement settlement)
 4. **CK3-aligned** - Most triggers are routine, events feel special
 5. **Player-friendly** - No surprise spam at 2x speed
 
-### Testing
+### Testing: Incident Weighting
 
 - [ ] Garrison: Very few incidents (feels quiet)
 - [ ] Campaign: Moderate incidents (feels active)
@@ -939,16 +1039,19 @@ private void OnSettlementLeft(MobileParty party, Settlement settlement)
 
 ## Campaign Context Tracking (Phase 4)
 
-### Problem
+### Problem: Static Activity Levels
 
-Current `WorldStateAnalyzer` only checks "where is lord now" - but lords are ALWAYS moving.
-Result: `ActivityLevel.Routine` 90% of the time, defeating dynamic pacing.
+Current `WorldStateAnalyzer` only checks "where is lord now" - but lords are
+ALWAYS moving. Result: `ActivityLevel.Routine` 90% of the time, defeating
+dynamic pacing.
 
-Also: No way to filter events by recent history. Card games shouldn't fire right after battle.
+Also: No way to filter events by recent history. Card games shouldn't fire
+right after battle.
 
 ### Solution: Track Campaign History
 
 Track **what has happened recently** to determine:
+
 1. **Activity Level** - Based on recent battles, not current location
 2. **Campaign Context** - Filter events to contextually appropriate ones
 
@@ -967,12 +1070,12 @@ public enum CampaignContext
 
 ### Time Windows
 
-| Context | Time Since Battle | Activity Level | Event Types |
-|---------|-------------------|----------------|-------------|
-| PostBattle | 0-24 hours | Intense | Loot dead, help wounded, report casualties |
-| RecentEngagement | 1-3 days | Active | War stories, equipment repair, rest |
-| NormalCampaign | 3-7 days | Routine | Patrols, training, gambling, social |
-| Garrison | 7+ days | Quiet | Relaxation, town activities, downtime |
+| Context | Time | Level | Events |
+| :--- | :--- | :--- | :--- |
+| PostBattle | 0-24h | Intense | Loot, medicine, rep |
+| RecentEngagement | 1-3d | Active | War stories, smith |
+| NormalCampaign | 3-7d | Routine | Patrol, train, gamble |
+| Garrison | 7d+ | Quiet | Relax, town, downtime |
 
 ### CampaignContextTracker Class
 
@@ -1215,7 +1318,7 @@ float promptChance = context switch
 With 4 phases per day at 8%, that's ~32% daily chance for a PostBattle event.
 Gives player ~3 chances for something meaningful to happen in the 24-hour window.
 
-### Testing
+### Testing: Campaign Context
 
 - [ ] Battle ends → Context switches to PostBattle
 - [ ] PostBattle decisions appear in Camp Hub
@@ -1319,6 +1422,7 @@ public class PromptOutcomeData
 ### Integration with Existing Systems
 
 **IsPartyAtSea() - Use Existing Code:**
+
 ```csharp
 private bool IsPartyAtSea()
 {
@@ -1333,6 +1437,7 @@ private bool IsPartyAtSea()
 ```
 
 **FireEventChain() - Connect to Event System:**
+
 ```csharp
 private void FireEventChain(Order order, PromptOutcome outcome)
 {
@@ -1438,7 +1543,7 @@ private void ApplyPromptEffects(Dictionary<string, object> effects)
 
 ### File Structure
 
-```
+```text
 ModuleData/Enlisted/
 ├── Prompts/
 │   ├── order_prompts.json          (NEW - prompt templates)
@@ -1455,15 +1560,16 @@ ModuleData/Enlisted/
 
 ### Classes to Create
 
-| Class | File Path | Purpose | Add to .csproj |
-|-------|-----------|---------|----------------|
-| `OrderPrompt` | `src/Features/Orders/Models/OrderPrompt.cs` | Prompt data model | ✅ |
-| `PromptOutcome` | `src/Features/Orders/Models/PromptOutcome.cs` | Outcome enum | ✅ |
-| `PromptOutcomeData` | `src/Features/Orders/Models/PromptOutcomeData.cs` | Outcome effects | ✅ |
-| `PromptCatalog` | `src/Features/Orders/PromptCatalog.cs` | Load/manage prompts | ✅ |
-| `EventChainManager` | `src/Features/Content/EventChainManager.cs` | Manage chain state | ✅ |
+| Class | File | Purpose | .csp |
+| :--- | :--- | :--- | :--- |
+| `OrderPrompt` | `OrderPrompt.cs` | Model | ✅ |
+| `PromptOutcome` | `PromptOutcome.cs` | Enum | ✅ |
+| `PromptOutcomeData` | `PromptOutcomeData.cs` | Effects | ✅ |
+| `PromptCatalog` | `PromptCatalog.cs` | Load | ✅ |
+| `EventChainManager` | `EventChainManager.cs` | State | ✅ |
 
 **IMPORTANT:** After creating files, manually add to `Enlisted.csproj`:
+
 ```xml
 <Compile Include="src\Features\Orders\Models\OrderPrompt.cs"/>
 <Compile Include="src\Features\Orders\Models\PromptOutcome.cs"/>
@@ -1475,6 +1581,7 @@ ModuleData/Enlisted/
 ### Save System Registration
 
 **If any new classes need persistence, register in `EnlistedSaveDefiner`:**
+
 ```csharp
 // Example:
 AddClassDefinition(typeof(EventChainState), 1234);
@@ -1483,4 +1590,4 @@ AddEnumDefinition(typeof(PromptOutcome), 5678);
 
 ---
 
-**End of Order Prompt Model Specification**
+#### End of Order Prompt Model Specification

@@ -1,5 +1,0 @@
-# All files tracked in Git for cross-platform use:
-# - enlisted_knowledge.db (project knowledge, synced across platforms)
-# - schema.sql (source of truth)
-# - setup.ps1 (build script)
-# - README.md (documentation)

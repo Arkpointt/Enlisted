@@ -4,17 +4,6 @@ Development tools, utilities, and diagnostics for the Enlisted mod.
 
 ---
 
-## Multi-Agent Workflow
-
-**See [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md)** for the single-conversation multi-agent system.
-
-Quick commands:
-- `[ANALYZE]` — Investigation only, no changes
-- `[IMPLEMENT]` — Go straight to making changes
-- `[VALIDATE]` — Run QA checks only
-
----
-
 ## Quick Debug Logging Toggle
 
 **`toggle_debug_logging.ps1`** - Easily enable/disable debug logging for specific categories without manually editing JSON.
@@ -74,17 +63,20 @@ Content and project validation ensures everything follows schema rules and proje
 | 9.5 | **Camp schedule descriptions** (meaningful phase descriptions) |
 
 **Phase 5.5 (Opportunity Validation)** validates:
+
 - Hint fields (completeness, length, style)
 - Deprecated `immediate` field (removed 2026-01-04)
 - Phase definitions (`validPhases` correctness)
 
 **Phase 7 (Project Structure)** validates:
+
 - All `.cs` files in `src/` are in `.csproj`
 - All files referenced in `.csproj` actually exist
 - GUI assets are properly included
 - No rogue files cluttering the root directory
 
 **Phase 9 (C# TextObject)** validates:
+
 - All `TextObject("{=string_id}...")` patterns in C# code
 - Verifies string IDs exist in `enlisted_strings.xml`
 - Catches missing localization strings referenced from code
@@ -277,21 +269,27 @@ python Tools/Validation/validate_content.py
 ## Troubleshooting
 
 ### "Validator flags my custom skill as invalid"
+
 Add to `validation_extensions.json`:
+
 ```json
 {"valid_skills": ["MySkill"]}
 ```
 
 ### "Report file not found"
+
 Run validation first to generate the report:
+
 ```powershell
 python Tools/Validation/validate_content.py > Tools/Debugging/validation_report.txt
 ```
 
 ### "Analyzer shows 0 issues but validator found many"
+
 Analyzer only shows recognized patterns. Check the raw validation report for full list.
 
 ### "Validation passes but content doesn't work in-game"
+
 Validator checks structure, not gameplay logic. Test in-game!
 
 ---
