@@ -28,7 +28,7 @@
           "textId": "dec_training_drill_focused",
           "text": "Train hard. Focus on your form.",
           "effects": {
-                        "dynamicSkillXp": {
+            "dynamicSkillXp": {
               "equipped_weapon": 8
             }
           },
@@ -69,8 +69,7 @@
           "id": "spar_aggressive",
           "textId": "dec_training_spar_aggressive",
           "text": "Fight aggressively.",
-          "effects": {
-                      },
+          "effects": {},
           "riskChance": 55,
           "effects_success": {
             "skillXp": {
@@ -124,7 +123,7 @@
           "textId": "dec_training_formation_drill",
           "text": "Join the line.",
           "effects": {
-                        "skillXp": {
+            "skillXp": {
               "Tactics": 4,
               "Polearm": 3
             }
@@ -167,7 +166,7 @@
           "textId": "dec_training_veteran_learn",
           "text": "Ask him to teach you.",
           "effects": {
-                        "hpChange": -5,
+            "hpChange": -5,
             "dynamicSkillXp": {
               "equipped_weapon": 12
             }
@@ -211,7 +210,7 @@
           "textId": "dec_training_archery_practice",
           "text": "Take some shots.",
           "effects": {
-                        "skillXp": {
+            "skillXp": {
               "Bow": 6
             }
           },
@@ -257,8 +256,7 @@
             },
             "lordReputation": 1
           },
-          "rewards": {
-                      },
+          "rewards": {},
           "resultTextId": "dec_social_stories_listen_result",
           "resultText": "Tales of sieges and charges. You learn names, faces, the weight of shared history.",
           "tooltip": "+2 Soldier rep. +3 Charm XP."
@@ -298,8 +296,7 @@
           "effects": {
             "lordReputation": 0
           },
-          "rewards": {
-                      },
+          "rewards": {},
           "resultTextId": "dec_social_storytelling_join_result",
           "resultText": "The tale carries you away from camp, from war, from everything but the firelight.",
           "tooltip": "+1 Soldier rep."
@@ -339,8 +336,7 @@
           "effects": {
             "lordReputation": 1
           },
-          "rewards": {
-                      },
+          "rewards": {},
           "resultTextId": "dec_social_singing_join_result",
           "resultText": "Your voice joins the chorus. Off-key but heartfelt. For a moment, you're not soldiers.",
           "tooltip": "+2 Soldier rep."
@@ -381,8 +377,8 @@
             "gold": 20
           },
           "effects": {
-            "scrutiny": 1000000,
-                      },
+            "scrutiny": 1000000
+          },
           "riskChance": 35,
           "effects_success": {
             "lordReputation": 2
@@ -433,8 +429,7 @@
           "effects": {
             "lordReputation": 0
           },
-          "rewards": {
-                      },
+          "rewards": {},
           "resultTextId": "dec_tavern_drink_moderate_result",
           "resultText": "The wine is sour but the company's good. You relax, share a laugh.",
           "tooltip": "+1 Soldier rep. Costs 10 gold."
@@ -474,8 +469,7 @@
           "costs": {
             "gold": 15
           },
-          "effects": {
-                      },
+          "effects": {},
           "riskChance": 45,
           "rewards": {
             "gold": 40
@@ -618,7 +612,7 @@
           "textId": "dec_forage_join",
           "text": "Volunteer for the party.",
           "effects": {
-                        "skillXp": {
+            "skillXp": {
               "Scouting": 5
             },
             "lordReputation": 1
@@ -661,7 +655,7 @@
           "textId": "dec_work_repairs_work",
           "text": "Put in some work.",
           "effects": {
-                        "skillXp": {
+            "skillXp": {
               "Crafting": 4
             }
           },
@@ -713,8 +707,7 @@
               "Trade": 3
             }
           },
-          "rewards": {
-                      },
+          "rewards": {},
           "resultTextId": "dec_trade_browse_buy_result",
           "resultText": "A small luxury. Something to remind you life isn't just marching and fighting.",
           "tooltip": "+3 Trade XP. Costs 30 gold."
@@ -751,8 +744,7 @@
           "id": "rest_full",
           "textId": "dec_rest_sleep_full",
           "text": "Get proper sleep.",
-          "rewards": {
-                      },
+          "rewards": {},
           "effects": {
             "hpChange": 8
           },
@@ -793,8 +785,7 @@
           "id": "rest_nap",
           "textId": "dec_rest_short_nap",
           "text": "Close your eyes for a bit.",
-          "rewards": {
-                      },
+          "rewards": {},
           "resultTextId": "dec_rest_short_nap_result",
           "resultText": "You drift off. When you stir, the shadows moved but you feel lighter.",
           "tooltip": ""
@@ -831,8 +822,7 @@
           "id": "meditate_do",
           "textId": "dec_meditate_do",
           "text": "Find peace.",
-          "rewards": {
-                      },
+          "rewards": {},
           "effects": {
             "scrutiny": -1000000
           },
@@ -872,8 +862,7 @@
           "id": "prayer_attend",
           "textId": "dec_prayer_attend",
           "text": "Attend the service.",
-          "rewards": {
-                      },
+          "rewards": {},
           "resultTextId": "dec_prayer_attend_result",
           "resultText": "You kneel with the others. The words wash over you. The war seems far away.",
           "tooltip": ""
@@ -912,7 +901,7 @@
           "textId": "dec_help_wounded_assist",
           "text": "Lend a hand.",
           "effects": {
-                        "skillXp": {
+            "skillXp": {
               "Medicine": 6
             },
             "lordReputation": 1
@@ -993,7 +982,7 @@
           "textId": "dec_mentor_recruit_help",
           "text": "Show him how it's done.",
           "effects": {
-                        "skillXp": {
+            "skillXp": {
               "Leadership": 5
             },
             "lordReputation": 2
@@ -1035,7 +1024,7 @@
           "textId": "dec_volunteer_extra_accept",
           "text": "Volunteer.",
           "effects": {
-                        "scrutiny": -2000000,
+            "scrutiny": -2000000,
             "lordReputation": 3
           },
           "resultTextId": "dec_volunteer_extra_accept_result",
@@ -1076,7 +1065,7 @@
           "textId": "dec_night_patrol_join",
           "text": "Join them.",
           "effects": {
-                        "skillXp": {
+            "skillXp": {
               "Scouting": 5
             },
             "lordReputation": 0
@@ -1121,6 +1110,3 @@
     }
   ]
 }
-
-
-

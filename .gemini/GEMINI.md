@@ -6,7 +6,7 @@ You are a Senior C# Game Engine Developer specializing in **Mount & Blade II: Ba
 
 This is the **"Enlisted"** project, a C# solution for a Bannerlord mod.
 
-- **Root Directory**: `/home/kyle/projects/Enlisted`
+- **Root Directory**: `/home/onebodyamerica/Projects/Enlisted`
 - **Core Technology**: C# (.NET Framework/Core as applicable to Bannerlord), XML (SubModule), Harmony (patching).
 
 ## Coding Guidelines

@@ -2,49 +2,89 @@
 
 **Summary:** Eliminate random event interrupts. Orders auto-assign, 85% of
 phases are routine (nothing happens), 15% fire a mini-prompt asking player
-if they want to engage. Player choice leads to CK3-style event chains with
-consequences.
+if they want to engage. Both choices are gambles - investigate risks danger,
+ignore risks getting caught. CK3-style event chains with consequences.
 
-**Status:** 📋 Specification  
-**Created:** 2026-01-14  
-**Last Updated:** 2026-01-14  
-**Target Completion:** 2-3 weeks
-**Related Docs:** [CK3 Feast Analysis](ANEWFEATURE/ck3-feast-chain-analysis.md),
-[Prompt Guide](Features/Content/writing-style-guide.md)
+**Status:** 📋 Specification
+**Created:** 2026-01-14
+**Last Updated:** 2026-01-19
+**Target Version:** Bannerlord v1.3.13
 
-## Table of Contents
+**Related Docs:**
 
-- [Core Vision](#core-vision)
-- [Current Problems](#current-problems)
-- [New Architecture](#new-architecture-the-order-prompt-model)
-- [Implementation Plan](#implementation-order-prompt-system)
-- [Systems to Remove](#what-gets-removed)
-- [Systems to Keep](#what-gets-kept)
-- [Event Chain Design](#event-chain-design-ck3-pattern)
-- [Testing Checklist](#testing-checklist)
-- [Implementation Priority](#implementation-priority)
-- [Appendix: CK3 Research Summary](#appendix-ck3-research-summary)
-- [Map Incident Weighting (Phase 4)](#map-incident-weighting-phase-4)
-- [Campaign Context Tracking (Phase 4)](#campaign-context-tracking-phase-4)
-- [Event Chains](#event-chain-design-ck3-pattern)
-- [Research: CK3 Feast Chains](#research-ck3-feast-chains)
+- [CK3 Feast Analysis](ANEWFEATURE/ck3-feast-chain-analysis.md)
+- [Writing Style Guide](Features/Content/writing-style-guide.md)
 - [Event System Schemas](Features/Content/event-system-schemas.md)
 - [Content Effects Reference](ANEWFEATURE/content-effects-reference.md)
-- [Native Skill XP](ANEWFEATURE/native-skill-xp.md)
-**Target Version:** Bannerlord v1.3.13
 
 ---
 
-## Index
+## Table of Contents
 
-1. [Core Vision](#core-vision)
-2. [Current Problems](#current-problems)
-3. [New Architecture](#new-architecture-the-order-prompt-model)
-4. [Implementation Plan](#implementation-order-prompt-system)
-5. [Systems to Remove](#what-gets-removed)
-6. [Systems to Keep](#what-gets-kept)
-7. [Event Chain Design](#event-chain-design-ck3-pattern)
-8. [Testing Checklist](#testing-checklist)
+- [Critical Implementation Requirements](#critical-implementation-requirements)
+- [Core Vision](#core-vision)
+- [Current Problems](#current-problems)
+- [New Architecture](#new-architecture-the-order-prompt-model)
+- [Duty System (Simplified)](#duty-system-simplified)
+- [Decisions System](#decisions-system)
+- [Dual-Risk Choice Framework](#dual-risk-choice-framework)
+- [Event Chain System](#event-chain-system)
+- [Implementation: Order Prompt System](#implementation-order-prompt-system)
+- [Systems to Modify](#systems-to-modify)
+- [Content Conversion Plan](#content-conversion-plan)
+- [Testing Checklist](#testing-checklist)
+- [New Files Checklist](#new-files-checklist)
+- [Background Simulation Systems](#background-simulation-systems-autosim)
+- [Orchestrator Removal Plan](#orchestrator-removal-plan)
+- [JSON/XML File Cleanup](#jsonxml-file-cleanup)
+- [Implementation Priority](#implementation-priority)
+- [Map Incident Weighting](#map-incident-weighting-phase-4)
+- [Campaign Context Tracking](#campaign-context-tracking-phase-4)
+- [Data Structures](#data-structures)
+- [Error Code Reference](#error-code-reference)
+- [Appendix: CK3 Research Summary](#appendix-ck3-research-summary)
+
+---
+
+## Critical Implementation Requirements
+
+**Before writing ANY code, you MUST:**
+
+1. **Verify all APIs** against `Decompile/` in workspace root (NEVER online docs)
+2. **Add new C# files** to `Enlisted.csproj` manually via `<Compile Include="..."/>`
+3. **Register save types** in `EnlistedSaveDefiner` for any persisted classes/enums
+4. **Use ModLogger** with error codes (format: `E-PROMPT-001`)
+5. **Run validation** before committing: `python Tools/Validation/validate_content.py`
+6. **Include tooltips** on all event options (cannot be null)
+7. **Use `GiveGoldAction`** for gold changes (not `ChangeHeroGold`)
+
+### APIs to Verify in Decompile/
+
+Before implementing, verify these APIs exist in v1.3.13:
+
+| API | Expected Location | Usage |
+|:----|:------------------|:------|
+| `MBRandom.RandomFloat` | TaleWorlds.Core | Probability rolls |
+| `MBRandom.RandomFloatRanged` | TaleWorlds.Core | Delay range (1-4 hours) |
+| `CampaignTime.Hours()` | TaleWorlds.CampaignSystem | Delayed consequences |
+| `InformationManager.ShowInquiry` | TaleWorlds.Core | Prompt display |
+| `InquiryData` | TaleWorlds.Core | Prompt structure |
+| `Hero.MainHero.AddSkillXp` | TaleWorlds.CampaignSystem | Skill rewards |
+
+### Save System Registration
+
+Add to `EnlistedSaveDefiner.cs`:
+
+```csharp
+// New types for Order Prompt system
+DefineEnumType(typeof(PromptOutcome));
+DefineEnumType(typeof(DutyType));
+DefineEnumType(typeof(CampaignContext));
+DefineClassType(typeof(PendingConsequence));
+DefineClassType(typeof(EventChainState));
+DefineContainerType(typeof(List<PendingConsequence>));
+DefineContainerType(typeof(List<EventChainState>));
+```
 
 ---
 
@@ -71,10 +111,12 @@ Phase progresses (Dawn/Midday/Dusk/Night)
   "You hear rustling in the bushes."
   [Investigate] [Stay Focused]
   ↓
-Player clicks [Investigate]: Event chain fires
-Player clicks [Stay Focused]: Nothing, move on
+Player clicks [Investigate]: Outcome fires (pre-rolled)
+  → 50% nothing / 30% reward / 15% chain / 5% danger
   ↓
-Event chain: 50% nothing / 30% gold / 20% ambush
+Player clicks [Stay Focused]: ALSO a gamble!
+  → 85% nothing / 15% "caught slacking" follow-up
+  → Fined, lord rep loss, scrutiny
 ```
 
 **Key principles:**
@@ -82,8 +124,9 @@ Event chain: 50% nothing / 30% gold / 20% ambush
 1. **Orders are auto-assigned** - realistic for a soldier
 2. **Most duty is routine** - 85% nothing happens (like real military life)
 3. **Player chooses to engage** - prompts ask permission before events fire
-4. **Consequences follow choices** - CK3-style chains with outcomes
-5. **No random interrupts** - events only fire when player engages
+4. **Both choices are gambles** - investigate risks danger, ignore risks getting caught
+5. **Consequences follow choices** - CK3-style chains with outcomes
+6. **No random interrupts** - events only fire when player engages
 
 ### CK3 Research Insight
 
@@ -172,8 +215,666 @@ Order auto-assigned → Player works through phases →
 └─────────────────────────────────────┘
 
 Player clicks [Investigate] → Event chain fires (outcome was pre-rolled)
+  → 50% nothing / 30% reward / 15% chain / 5% danger
 
-Player clicks [Stay Focused] → Nothing happens, order continues
+Player clicks [Stay Focused] → ALSO a gamble (order-type dependent)
+  → Guard/Patrol: 20% "caught slacking" follow-up
+  → Foraging: 5% follow-up (nobody expects you to chase noises)
+  → Escort/March: 0% (staying in formation is correct)
+```
+
+---
+
+## Duty System (Simplified)
+
+### 4 Core Duties
+
+The previous 17-order system was overcomplicated. Consolidating to 4 duties:
+
+| Duty | Description | Tier Availability |
+|:-----|:------------|:------------------|
+| **Patrol** | Walk the perimeter, check routes, sweep areas | T3-9 |
+| **Guard** | Stand watch at a post, gates, or camp entrance | T1-9 |
+| **Sentry** | Observation post - hilltop, masthead, tower | T2-9 |
+| **Camp Labor** | Firewood, latrine, equipment, errands | T1-4 |
+
+### Design Principles
+
+1. **Duties are assigned** - The army tells you what to do
+2. **Events happen within duties** - Prompts fire during duty phases
+3. **Same duties, different events by tier** - A T1 on Guard sees different prompts than a T7
+4. **Sea variants built-in** - Each duty has land/sea context variants
+
+### Tier Gating Rationale
+
+- **Camp Labor (T1-4):** Grunt work. Officers don't haul firewood.
+- **Sentry (T2-9):** Requires some trust. Brand new recruits don't get lookout posts.
+- **Patrol (T3-9):** Requires initiative. You need to know the army before you walk its perimeter.
+- **Guard (T1-9):** Universal. Everyone stands watch.
+
+### Sea Context Variants
+
+| Duty | Land | Sea |
+|:-----|:-----|:----|
+| Patrol | Camp Patrol | Hull Inspection |
+| Guard | Guard Duty | Deck Watch |
+| Sentry | Sentry Post | Masthead Watch |
+| Camp Labor | Firewood/Latrine | Deck Scrubbing/Cargo |
+
+### Event Scaling by Tier
+
+Same duty, different events based on rank:
+
+**Guard Duty - T1 (Recruit):**
+> "You hear footsteps behind the supply tent."
+> [Investigate] [Stay at Post]
+
+**Guard Duty - T7 (Officer):**
+> "The corporal reports suspicious movement near the north picket."
+> [Go Check It Yourself] [Send a Patrol]
+
+The duty is the same. The player's role in the event changes.
+
+---
+
+## Decisions System
+
+### Free Time Activities
+
+When not on duty, the player chooses how to spend their time. These are
+**Decisions** - player-initiated activities with their own event chains.
+
+| Decision | Cost | Reward | Risk |
+|:---------|:-----|:-------|:-----|
+| **Hunt** | Leave camp | Food, skill XP | Injury, getting lost |
+| **Gamble** | Gold stake | Win gold | Lose gold, fights |
+| **Drink** | Gold | Social events, rumors | Trouble |
+| **Train** | Time | Skill XP | None |
+
+### Key Distinction: Duties vs Decisions
+
+- **Duties** = Assigned by the army. You don't choose.
+- **Decisions** = Your choice during free time. You pick the activity.
+
+### Decision Chains
+
+Each decision has its own chain file with text-based events:
+
+```
+ModuleData/Enlisted/Chains/
+├── hunt_chains.json          # Tracking, wildlife, getting lost
+├── gamble_chains.json        # Card games, dice, accusations
+├── drink_chains.json         # Tavern events, rumors, fights
+├── train_chains.json         # Practice, sparring, lessons
+```
+
+### Example: Hunt Decision
+
+```json
+// Chains/hunt_chains.json
+{
+  "schemaVersion": 1,
+  "decision": "hunt",
+  "chains": [
+    {
+      "id": "hunt_deer_tracks",
+      "name": "Deer Tracks",
+      "contexts": ["land"],
+
+      "trigger": {
+        "title": "Fresh Tracks",
+        "description": "You spot deer tracks leading into a thicket.",
+        "option_a": "Follow Quietly",
+        "option_b": "Try a Different Area"
+      },
+
+      "branches": {
+        "follow": {
+          "skill_check": {
+            "skill": "Athletics",
+            "threshold": 30,
+            "pass_branch": "successful_hunt",
+            "fail_branch": "deer_escapes"
+          }
+        }
+      },
+
+      "outcomes": {
+        "successful_hunt": {
+          "text": "You bring down a young buck. Meat for the camp tonight.",
+          "effects": {
+            "food_item": "venison",
+            "skill_xp": { "Athletics": 20 },
+            "lord_reputation": 1
+          }
+        },
+        "deer_escapes": {
+          "text": "A branch snaps underfoot. The deer bolts. Empty-handed.",
+          "effects": {
+            "skill_xp": { "Athletics": 5 }
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+### Example: Gamble Decision
+
+```json
+{
+  "id": "gamble_dice_game",
+  "decision": "gamble",
+  "trigger": {
+    "title": "Dice Game",
+    "description": "Three soldiers wave you over. 'Got coin? We're playing bones.'",
+    "option_a": "Join (Stake 20 gold)",
+    "option_b": "Watch"
+  },
+  "outcomes": {
+    "win_big": {
+      "weight": 20,
+      "text": "Lady luck smiles. You walk away with heavy pockets.",
+      "effects": { "gold": 50 }
+    },
+    "win_small": {
+      "weight": 25,
+      "text": "A modest win. Better than nothing.",
+      "effects": { "gold": 15 }
+    },
+    "lose": {
+      "weight": 40,
+      "text": "The dice hate you tonight. Your stake is gone.",
+      "effects": { "gold": -20 }
+    },
+    "accused_cheating": {
+      "weight": 15,
+      "text": "A soldier grabs your wrist. 'Those dice feel wrong to me.'",
+      "effects": { "gold": -20 },
+      "follow_up_branch": "cheating_accusation"
+    }
+  }
+}
+```
+
+---
+
+## Dual-Risk Choice Framework
+
+### The Core Insight: Neither Choice is Safe
+
+The original spec made [Ignore] a "safe" option with no downside. This removes
+tension. Instead, **both choices should be gambles**:
+
+| Choice | Upside | Downside |
+|:--|:--|:--|
+| Investigate | Gold, XP, items, story | Injury, sickness, ambush, fatigue |
+| Ignore | Avoid personal danger | Caught slacking: fined, lord rep loss, scrutiny |
+
+**The player weighs:** "Do I risk getting hurt, or risk getting caught?"
+
+### Investigate Outcomes (Pre-Rolled)
+
+When player clicks [Investigate], outcome was already determined:
+
+| Outcome | Weight | Examples |
+|:--|:--|:--|
+| Nothing | 50% | "Just the wind." / "A rabbit bolts." |
+| Small Reward | 30% | Gold (25-75), supplies, skill XP |
+| Event Chain | 15% | Deserter encounter, wounded soldier |
+| Danger | 5% | Ambush, injury, sickness |
+
+### Ignore Outcomes (Duty-Type Dependent)
+
+When player clicks [Ignore], a **follow-up check** runs based on duty type:
+
+| Duty | Catch Chance | Rationale |
+|:--|:--|:--|
+| **Guard** | 20% | Investigating IS your job |
+| **Sentry** | 20% | You're meant to spot AND report things |
+| **Patrol** | 15% | You should check things, but you're also covering ground |
+| **Camp Labor** | 0% | Not your job to chase noises while hauling firewood |
+| **Off Duty** | 0% | You're literally off duty - no expectations |
+
+### "Caught Slacking" Follow-Up Events
+
+If the ignore check fails, a follow-up event fires (delayed 1-4 hours):
+
+```json
+// ignore_consequences.json
+{
+  "schemaVersion": 1,
+  "category": "ignore_consequence",
+  "events": [
+    {
+      "id": "caught_slacking_tracks",
+      "titleId": "ignore_tracks_title",
+      "title": "Tracks Found",
+      "setupId": "ignore_tracks_setup",
+      "setup": "The sergeant finds footprints near your post. 'You didn't think to check these?' He's not happy.",
+      "tooltip": "Fined 15 gold. -2 Lord rep. +1 Scrutiny.",
+      "valid_duty_types": ["guard", "sentry", "patrol"],
+      "effects": {
+        "gold": -15,
+        "lord_reputation": -2,
+        "scrutiny": 1
+      }
+    },
+    {
+      "id": "caught_slacking_theft",
+      "titleId": "ignore_theft_title",
+      "title": "Missing Supplies",
+      "setupId": "ignore_theft_setup",
+      "setup": "Supplies went missing during your watch. Whether you saw something or not, it's on you.",
+      "tooltip": "Fined 25 gold. -3 Lord rep.",
+      "valid_duty_types": ["guard", "sentry", "patrol"],
+      "effects": {
+        "gold": -25,
+        "lord_reputation": -3
+      }
+    },
+    {
+      "id": "caught_slacking_ambush",
+      "titleId": "ignore_ambush_title",
+      "title": "Preventable Ambush",
+      "setupId": "ignore_ambush_setup",
+      "setup": "Bandits hit the rear column. Some say you ignored warning signs. Two men dead.",
+      "tooltip": "-5 Lord rep. 2 party casualties. +2 Scrutiny.",
+      "valid_duty_types": ["guard", "sentry", "patrol"],
+      "effects": {
+        "lord_reputation": -5,
+        "party_casualties": 2,
+        "scrutiny": 2
+      }
+    },
+    {
+      "id": "caught_slacking_minor",
+      "titleId": "ignore_minor_title",
+      "title": "Noted",
+      "setupId": "ignore_minor_setup",
+      "setup": "The corporal gives you a look. He saw you ignore something. Nothing said, but he'll remember.",
+      "tooltip": "+1 Scrutiny.",
+      "valid_duty_types": ["guard", "sentry", "patrol"],
+      "effects": {
+        "scrutiny": 1
+      }
+    }
+  ]
+}
+```
+
+### Actual Stakes in Enlisted
+
+**Available positive outcomes:**
+
+- Gold (via `GiveGoldAction.ApplyBetweenCharacters`)
+- Skill XP (thematic to order type)
+- Lord reputation
+- Items/equipment (rare)
+- Narrative satisfaction
+
+**Available negative outcomes:**
+
+- Gold loss (fines)
+- Lord reputation loss
+- Party loses men (`party_casualties`)
+- Player injury/sickness
+- Scrutiny increase
+
+---
+
+## Event Chain System
+
+### Organization: Context-Based (CK3 Pattern)
+
+CK3 organizes events by **what you're doing**, not by theme:
+- "You're at a feast" → feast chains available
+- "You're on a hunt" → hunt chains available
+
+Enlisted follows the same pattern with duties and decisions:
+
+```
+ModuleData/Enlisted/Chains/
+# Duty chains (assigned work)
+├── patrol_chains.json        # Caves, abandoned camps, travelers, wildlife
+├── guard_chains.json         # Gate incidents, drunk soldiers, thieves
+├── sentry_chains.json        # Distant signals, approaching parties
+├── camp_labor_chains.json    # Found items, accidents, shortcuts
+# Decision chains (free time activities)
+├── hunt_chains.json          # Tracking, wildlife, getting lost
+├── gamble_chains.json        # Card games, dice, accusations
+├── drink_chains.json         # Tavern events, rumors, fights
+├── train_chains.json         # Practice, sparring, lessons
+```
+
+Duty chains live in files for their **primary duty** but can specify multiple
+valid duties via the `duty_types` array. Decision chains are tied to a single
+decision type.
+
+### Chain Structure
+
+Every chain has three layers:
+
+| Layer | Purpose | Example |
+|:------|:--------|:--------|
+| **Trigger** | Initial prompt during duty | "You spot a cave entrance" |
+| **Branch** | What happens based on choice + skill | "You find a deserter" or "You fall into a trap" |
+| **Outcome** | Final resolution with rewards/penalties | +50 gold, +2 lord rep |
+
+```
+PATROL (duty assignment)
+  └─ "You spot a cave entrance" (TRIGGER)
+       ├─ [Investigate]
+       │    └─ Skill check (Scouting 40)
+       │         ├─ PASS → "You find a deserter hiding" (BRANCH)
+       │         │    ├─ [Turn him in] → +gold, +lord rep (OUTCOME)
+       │         │    └─ [Let him go] → -scrutiny (OUTCOME)
+       │         └─ FAIL → "You stumble into a trap" (BRANCH)
+       │              └─ HP loss, limp back (OUTCOME)
+       └─ [Ignore]
+           └─ 15% catch check → "Sergeant finds tracks" (CONSEQUENCE)
+```
+
+### Reward Types
+
+Outcomes can grant any combination of:
+
+| Reward | Examples | Notes |
+|:-------|:---------|:------|
+| **Gold** | 25-150 denars | Scaled by tier |
+| **Renown** | 1-5 points | Rare, significant finds only |
+| **Lord Reputation** | 1-5 points | Reporting valuable intel |
+| **Settlement Relations** | +2-5 with nearby village/town | Helping locals, returning lost goods |
+| **Skill XP** | 10-50 XP to relevant skill | Scouting, Medicine, Leadership, etc. |
+| **Food Item** | Grain, meat, fish, etc. | Foraging, hunting finds |
+| **Equipment** | Weapon, armor, trade goods | Rare - abandoned camps, dead travelers |
+| **Company Supplies** | +1-5 supply units | Found caches, successful foraging |
+
+### Penalty Types
+
+Danger outcomes and consequences can inflict:
+
+| Penalty | Examples | Notes |
+|:-------|:---------|:------|
+| **HP Loss** | 10-40 HP | Traps, ambushes, falls |
+| **Gold Loss** | 15-50 denars | Fines for negligence |
+| **Reputation Loss** | -1 to -5 | Failed duties, caught slacking |
+| **Scrutiny** | +1-3 points | Drawing officer attention |
+| **Injury** | Sprained ankle, cut, bruise | Temporary debuff |
+| **Sickness** | Food poisoning, fever | From bad foraging |
+| **Party Casualties** | 1-3 troops | Severe negligence only |
+
+### JSON Schema: Event Chain
+
+```json
+// Chains/patrol_chains.json
+{
+  "schemaVersion": 1,
+  "chains": [
+    {
+      "id": "cave_deserter",
+      "name": "The Cave Deserter",
+      "duty_types": ["patrol"],
+      "contexts": ["land"],
+      "tier_range": [3, 9],
+
+      "trigger": {
+        "title": "Cave Entrance",
+        "description": "You spot a dark opening in the hillside. Fresh footprints lead inside.",
+        "investigate_text": "Enter the Cave",
+        "ignore_text": "Mark It and Move On"
+      },
+
+      "investigate": {
+        "skill_check": {
+          "skill": "Scouting",
+          "threshold": 40,
+          "pass_branch": "deserter_found",
+          "fail_branch": "trap_sprung"
+        }
+      },
+
+      "branches": {
+        "deserter_found": {
+          "title": "A Desperate Man",
+          "description": "A ragged soldier cowers in the darkness. A deserter. He begs you not to turn him in.",
+          "choices": [
+            {
+              "text": "Turn him in to the officers",
+              "outcome": "turned_in"
+            },
+            {
+              "text": "Let him go",
+              "outcome": "released"
+            },
+            {
+              "text": "Give him food and directions",
+              "requirements": { "trait": "Mercy", "min": 20 },
+              "outcome": "helped"
+            }
+          ]
+        },
+        "trap_sprung": {
+          "title": "Ambush!",
+          "description": "You step inside and the ground gives way. A pit trap.",
+          "auto_outcome": "trap_injury"
+        }
+      },
+
+      "outcomes": {
+        "turned_in": {
+          "text": "The officers thank you. The deserter is dragged away screaming.",
+          "effects": {
+            "gold": 30,
+            "lord_reputation": 3,
+            "skill_xp": { "Leadership": 15 }
+          }
+        },
+        "released": {
+          "text": "He vanishes into the hills. You wonder if he'll make it.",
+          "effects": {
+            "scrutiny": 1,
+            "skill_xp": { "Charm": 10 }
+          }
+        },
+        "helped": {
+          "text": "You share your rations and point him toward the border.",
+          "effects": {
+            "trait_xp": { "Mercy": 15 },
+            "skill_xp": { "Charm": 20 }
+          },
+          "follow_up": {
+            "chance": 0.25,
+            "delay_days": [14, 30],
+            "chain_id": "deserter_returns"
+          }
+        },
+        "trap_injury": {
+          "text": "You haul yourself out, ankle throbbing. Stupid mistake.",
+          "effects": {
+            "hp_loss": 25,
+            "injury": "sprained_ankle"
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+### MVP: 3 Chains Per File
+
+Start with 3 chains per file to test the system. Expand after validation.
+
+**patrol_chains.json (3 chains):**
+1. Cave Entrance - deserter hiding, pit trap, empty cave
+2. Abandoned Campsite - loot, ambush, bodies with clues
+3. Tracks in the Mud - follow to merchant, bandit, or nothing
+
+**guard_chains.json (3 chains):**
+1. Drunk Soldier - let him pass, report him, help him to bed
+2. Suspicious Visitor - challenge, escort to captain, let pass
+3. Noise Behind Tents - thief, animal, nothing
+
+**sentry_chains.json (3 chains):**
+1. Smoke on Horizon - report it, investigate, ignore
+2. Approaching Riders - friendly scouts, merchants, enemy patrol
+3. Strange Light - signal fire, campfire, will-o-wisp (nothing)
+
+**camp_labor_chains.json (3 chains):**
+1. Found Coins - keep them, turn them in, split with buddy
+2. Shortcut Option - risky path (injury chance), safe path (slower)
+3. Buried Cache - food supplies, rusted weapons, empty hole
+
+### Decision Chains (MVP: 3 each)
+
+**hunt_chains.json (3 chains):**
+1. Deer Tracks - skill check to bring down game
+2. Lost in Woods - find way back or wander further
+3. Wolf Encounter - fight, flee, or scare off
+
+**gamble_chains.json (3 chains):**
+1. Dice Game - win/lose/accused of cheating
+2. Card Game - high stakes variant
+3. Arm Wrestling - strength check, side bets
+
+**drink_chains.json (3 chains):**
+1. Tavern Rumors - hear useful intel or gossip
+2. Drinking Contest - impress soldiers or embarrass yourself
+3. Bar Fight - intervene, join in, slip away
+
+**train_chains.json (3 chains):**
+1. Sparring Partner - improve combat skills
+2. Veteran's Lesson - learn specific technique
+3. Target Practice - bow/crossbow skill XP
+
+### Shared Chains
+
+Some triggers make sense across multiple duties. Use `duty_types` array:
+
+```json
+{
+  "id": "suspicious_sound",
+  "duty_types": ["guard", "sentry", "patrol"],
+  "contexts": ["land"],
+  "trigger": {
+    "title": "Something Stirs",
+    "description": "You hear rustling nearby. Could be nothing.",
+    "investigate_text": "Investigate",
+    "ignore_text": "Stay Alert"
+  }
+  // ... branches and outcomes
+}
+```
+
+This chain lives in one file but fires for guard, sentry, or patrol duties.
+
+---
+
+### Skill-Gated Information (Optional Enhancement)
+
+Higher skills can reveal information in tooltips, helping informed decisions:
+
+```
+"You hear rustling in the bushes."
+
+[Investigate]
+  - Low Scouting: "Could be anything."
+  - Mid Scouting (25+): "Sounds like a single person."
+  - High Scouting (50+): "Wounded man, alone, no weapons visible."
+
+[Stay at Post]
+  - Shows: "Risk: Sergeant might check your area later."
+```
+
+This rewards skill investment without gating content.
+
+### Implementation: Ignore Check Logic
+
+```csharp
+private void HandleIgnoreChoice(Order order)
+{
+    // Get catch chance based on order type
+    float catchChance = GetIgnoreCatchChance(order.Type);
+
+    if (catchChance <= 0f)
+    {
+        // No risk for this order type (escort, march, training)
+        return;
+    }
+
+    // Roll for "caught slacking"
+    if (MBRandom.RandomFloat < catchChance)
+    {
+        // Schedule follow-up event (1-4 hours later)
+        float delayHours = MBRandom.RandomFloatRanged(1f, 4f);
+        ScheduleIgnoreConsequence(order, delayHours);
+
+        ModLogger.Debug(LogCategory,
+            $"[E-PROMPT-010] Ignore consequence scheduled for {order.Type} in {delayHours:F1}h");
+    }
+}
+
+private float GetIgnoreCatchChance(DutyType dutyType)
+{
+    return dutyType switch
+    {
+        DutyType.Guard => 0.20f,
+        DutyType.Sentry => 0.20f,
+        DutyType.Patrol => 0.15f,
+        DutyType.CampLabor => 0f,
+        DutyType.OffDuty => 0f,
+        _ => 0.10f
+    };
+}
+
+private void ScheduleIgnoreConsequence(Order order, float delayHours)
+{
+    var consequence = IgnoreConsequenceCatalog.GetRandomConsequence(order.Type);
+
+    // Use CampaignTime for delayed event
+    var fireTime = CampaignTime.Now + CampaignTime.Hours(delayHours);
+
+    // Queue the consequence event
+    _pendingIgnoreConsequences.Add(new PendingConsequence
+    {
+        FireTime = fireTime,
+        ConsequenceId = consequence.Id,
+        OrderType = order.Type
+    });
+}
+```
+
+### Data Structure: Ignore Consequences
+
+```csharp
+// src/Features/Orders/Models/IgnoreConsequence.cs
+public class IgnoreConsequence
+{
+    public string Id { get; set; }
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public List<OrderType> ValidOrderTypes { get; set; } = new();
+    public Dictionary<string, object> Effects { get; set; } = new();
+}
+```
+
+### Data Structure: Pending Consequence
+
+```csharp
+// src/Features/Orders/Models/PendingConsequence.cs
+public class PendingConsequence
+{
+    [SaveableField(1)]
+    public CampaignTime FireTime { get; set; }
+
+    [SaveableField(2)]
+    public string ConsequenceId { get; set; }
+
+    [SaveableField(3)]
+    public DutyType DutyType { get; set; }
+}
 ```
 
 ### What Gets Removed
@@ -299,7 +1000,7 @@ Outcomes should award skills thematically appropriate to each order:
   "schemaVersion": 1,
   "prompts": [
     {
-      "order_types": ["guard_duty", "camp_patrol"],
+      "duty_types": ["guard", "sentry", "patrol"],
       "prompts": [
         {
           "title": "Something Stirs",
@@ -352,7 +1053,7 @@ Outcomes should award skills thematically appropriate to each order:
       ]
     },
     {
-      "order_types": ["foraging", "supply_run"],
+      "duty_types": ["patrol", "camp_labor"],
       "prompts": [
         {
           "title": "Off the Path",
@@ -381,7 +1082,7 @@ Outcomes should award skills thematically appropriate to each order:
       ]
     },
     {
-      "order_types": ["scout_duty", "reconnaissance"],
+      "duty_types": ["patrol", "sentry"],
       "prompts": [
         {
           "title": "Smoke on the Horizon",
@@ -445,9 +1146,8 @@ Outcomes should award skills thematically appropriate to each order:
         "effects": { "company_supplies": 3, "skillXp": { "Perception": 10 } }
       },
       {
-        "text": "A fellow soldier saw you checking the perimeter. Word gets
-          around.",
-        "effects": { "officer_reputation": 2, "skillXp": { "Perception": 8 } }
+        "text": "Your lord notices your diligence. Word gets around.",
+        "effects": { "lord_reputation": 2, "skillXp": { "Perception": 8 } }
       }
     ],
     "event_chain": [
@@ -527,7 +1227,7 @@ like "Perception" to reward specific skills.
               "text": "Give him food and directions away from camp",
               "next_phase": 2,
               "flag": "helped_escape",
-              "requirements": { "soldier_reputation": 20 }
+              "requirements": { "lord_reputation": 20 }
             }
           ]
         },
@@ -545,7 +1245,6 @@ like "Perception" to reward specific skills.
             "condition": "helped_escape"
           },
           "immediate_effects": {
-            "soldier_reputation": 3,
             "scrutiny": 1,
             "skillXp": { "Charm": 10 }
           }
@@ -555,11 +1254,10 @@ like "Perception" to reward specific skills.
           "event_id": "evt_deserter_turned_in",
           "condition": "turned_in",
           "title": "Justice",
-          "description": "The officers thank you for your diligence. The
+          "description": "Your lord thanks you for your diligence. The
             deserter is hauled away. You try not to hear him screaming.",
           "immediate_effects": {
-            "officer_reputation": 5,
-            "soldier_reputation": -8,
+            "lord_reputation": 5,
             "gold": 15,
             "skillXp": { "Leadership": 8 }
           }
@@ -704,15 +1402,25 @@ effect format).
 - [ ] 85% of phases pass silently
 - [ ] 15% of phases show prompt
 - [ ] Prompts are contextual to order type
-- [ ] [Ignore] button does nothing
+- [ ] Prompts filter by travel context (land/sea)
 - [ ] [Investigate] triggers pre-rolled outcome
+- [ ] [Ignore] triggers order-type-dependent catch check
 
-### Outcome Distribution
+### Investigate Outcome Distribution
 
 - [ ] 50% of investigations yield nothing
-- [ ] 30% yield small rewards (gold, supplies, rep)
+- [ ] 30% yield small rewards (gold, supplies, lord rep)
 - [ ] 15% trigger event chains
-- [ ] 5% trigger danger
+- [ ] 5% trigger danger (injury, ambush, sickness)
+
+### Ignore Consequence System
+
+- [ ] Guard/Sentry duties: 20% catch chance on ignore
+- [ ] Patrol duty: 15% catch chance on ignore
+- [ ] Camp Labor/Off Duty: 0% catch chance (no expectations)
+- [ ] "Caught slacking" events fire 1-4 hours after ignore
+- [ ] Consequences apply: gold loss, lord rep loss, scrutiny, party casualties
+- [ ] Ignore consequence state persists across saves
 
 ### Skill Progression
 
@@ -729,6 +1437,15 @@ effect format).
 - [ ] Delayed follow-ups fire correctly
 - [ ] Chain state persists across saves
 
+### Stakes Balance
+
+- [ ] Investigate risk feels meaningful (injury/danger outcomes matter)
+- [ ] Ignore risk feels meaningful (getting caught has real cost)
+- [ ] Neither choice feels "always correct"
+- [ ] Order type clearly affects optimal strategy
+- [ ] Lord rep changes are noticeable to player
+- [ ] Party casualty events feel impactful
+
 ### Pacing
 
 - [ ] Average 1 interesting event per 8-12 days
@@ -739,9 +1456,443 @@ effect format).
 
 ---
 
+## New Files Checklist
+
+### C# Files to Create
+
+Add each to `Enlisted.csproj` after creation:
+
+```xml
+<!-- Models -->
+<Compile Include="src\Features\Orders\Models\OrderPrompt.cs"/>
+<Compile Include="src\Features\Orders\Models\PromptOutcome.cs"/>
+<Compile Include="src\Features\Orders\Models\PromptOutcomeData.cs"/>
+<Compile Include="src\Features\Orders\Models\IgnoreConsequence.cs"/>
+<Compile Include="src\Features\Orders\Models\PendingConsequence.cs"/>
+
+<!-- Catalogs -->
+<Compile Include="src\Features\Orders\PromptCatalog.cs"/>
+<Compile Include="src\Features\Orders\IgnoreConsequenceCatalog.cs"/>
+
+<!-- Managers -->
+<Compile Include="src\Features\Content\EventChainManager.cs"/>
+<Compile Include="src\Features\Content\CampaignContextTracker.cs"/>
+
+<!-- Enums (if separate files) -->
+<Compile Include="src\Features\Content\CampaignContext.cs"/>
+```
+
+### JSON Data Files to Create
+
+```text
+ModuleData/Enlisted/
+├── Prompts/
+│   ├── order_prompts.json          # Prompt templates by order type
+│   ├── prompt_outcomes.json        # Outcome pools (nothing/reward/chain/danger)
+│   └── ignore_consequences.json    # "Caught slacking" events
+└── Chains/
+    └── event_chains.json           # Multi-phase event definitions
+```
+
+### Validation Updates
+
+After adding JSON files, update `Tools/Validation/validate_content.py` to:
+
+1. Validate new JSON schemas (prompts, outcomes, chains)
+2. Check prompt `contexts` field has valid values ("land", "sea", "any")
+3. Verify all ignore consequences have `tooltip` fields
+4. Ensure outcome `effects` use valid effect keys
+
+---
+
+## Background Simulation Systems (Autosim)
+
+These systems run automatically without player input. They are **separate from
+the orchestrator** and will continue working after orchestrator removal.
+
+### Core Simulation Systems (MUST KEEP)
+
+| System | Trigger | What It Does |
+|:-------|:--------|:-------------|
+| **CompanySimulationBehavior** | Daily | Sickness, injuries, desertion, incidents, crisis events |
+| **CampRoutineProcessor** | Phase boundary | XP gains, gold/supply changes, conditions |
+| **CampLifeBehavior** | Daily | Quartermaster mood, logistics strain, pay tension |
+| **CompanyNeedsManager** | Daily | Readiness degradation (2 base, +5 on march) |
+| **RetinueTrickleSystem** | Daily | Free soldier recruitment for T7+ commanders |
+| **RetinueCasualtyTracker** | After battles | Veteran emergence, casualty tracking |
+| **OrderProgressionBehavior** | Hourly | Event injection during duty phases |
+| **EscalationManager** | Daily | Scrutiny/discipline tracking |
+| **PlayerConditionBehavior** | Daily | Injury/illness duration tracking |
+| **BaggageTrainManager** | Hourly/Daily | Baggage delays, raids, access windows |
+
+### CompanySimulationBehavior - Daily Phases
+
+The main autosim runs these phases every day:
+
+1. **Consumption** - Resource depletion (via CompanyNeedsManager)
+2. **Recovery** - Wounded heal, sick recover or die
+3. **New Conditions** - Generate sickness (0-2%), injuries, desertion attempts
+4. **Incidents** - Roll 0-2 random camp incidents, apply effects
+5. **Pulse Evaluation** - Track pressure thresholds (low supplies, high sickness)
+6. **Pressure Arc Events** - Fire narrative events at day 3, 5, 7 of crisis
+7. **News Generation** - Push results to news system (max 5/day)
+
+**Crisis Triggers:**
+- Supply crisis: 3+ days at critical supply level
+- Epidemic: High sickness rate
+- Desertion waves: Multiple desertions in short period
+
+### CampRoutineProcessor - Phase Outcomes
+
+At phase boundaries (6am, 12pm, 6pm, midnight), rolls outcome quality:
+
+| Outcome | Chance | Effect |
+|:--------|:-------|:-------|
+| Excellent | 10% | High XP, bonus gold |
+| Good | 25% | Good XP, some gold |
+| Normal | 40% | Standard XP |
+| Poor | 20% | Low XP |
+| Mishap | 5% | Gold loss, possible condition |
+
+### RetinueTrickleSystem - Soldier Recruitment
+
+T7+ commanders get free soldiers based on context:
+
+| Context | Interval |
+|:--------|:---------|
+| Recent victory | 1 soldier per 2 days |
+| Peace (5+ days) | 1 per 2 days |
+| Friendly territory | 1 per 3 days |
+| Campaign (default) | 1 per 4-5 days |
+| Recent defeat | BLOCKED |
+
+### BaggageTrainManager - World-State Probabilities
+
+Baggage events use world state for probability modifiers:
+
+| Factor | Modifier |
+|:-------|:---------|
+| Activity: Intense | Higher delay/raid chance |
+| Lord: Defeated | Frozen (no changes) |
+| Terrain: Mountain | +10% delay |
+| Terrain: Snow | +15% delay |
+| War stance: Desperate | Higher raid chance |
+
+### Autosim Independence from Orchestrator
+
+These systems **do not require ContentOrchestrator**. They only use:
+- `WorldStateAnalyzer.AnalyzeSituation()` - Direct call works
+- `EventDeliveryManager.QueueEvent()` - For crisis events
+
+After orchestrator removal, replace:
+```csharp
+// OLD
+ContentOrchestrator.Instance.GetCurrentWorldSituation()
+ContentOrchestrator.Instance.QueueCrisisEvent(eventId)
+
+// NEW
+WorldStateAnalyzer.AnalyzeSituation()
+EventDeliveryManager.Instance.QueueEvent(EventCatalog.GetEvent(eventId))
+```
+
+### Removed Systems (2026-01-11)
+
+- **Morale System** - Affected desertions, incidents, company mood
+- **Rest/Fatigue Budget** - 0-24 hours, affected readiness/conditions
+- **Company Rest Activity** - Restored rest budget
+
+These are gone. Save loading handles migration.
+
+---
+
+## Orchestrator Removal Plan
+
+The ContentOrchestrator (2000+ lines) was designed for the OLD flat event system.
+With the new chain-based system, it's no longer needed. This section documents
+safe removal.
+
+### What ContentOrchestrator Did (OLD System)
+
+- Pre-scheduled "opportunities" 24 hours ahead
+- Tracked day phase transitions (Dawn/Midday/Dusk/Night)
+- Managed opportunity locking/commitment/consumption
+- Provided world state snapshots to other systems
+- Queued crisis events when company needs hit thresholds
+- Medical pressure tracking and illness triggers
+
+### Why It's No Longer Needed (NEW System)
+
+| OLD System | NEW System |
+|:-----------|:-----------|
+| Orchestrator picks events to fire | **Duties** assign chains contextually |
+| Player commits to future opportunities | Player picks **Decisions** immediately |
+| Complex 24h scheduling | Chains fire when duty/decision starts |
+| World state affects event selection | Chain `tier_range` and `contexts` filter |
+| Opportunity locking | No locking needed - chains are immediate |
+
+### Systems to PRESERVE
+
+**Enums (saved in games - MUST KEEP):**
+- `DayPhase` - Dawn/Midday/Dusk/Night (useful for duty timing)
+- `LordSituation` - What lord is doing (could affect chain availability)
+- `ActivityLevel` - Quiet/Routine/Active/Intense (could affect chain frequency)
+- `LifePhase`, `WarStance` - Saved in games
+
+**Classes to KEEP:**
+- `WorldStateAnalyzer` - Useful for detecting context (land/sea, war/peace)
+- `WorldSituation` - Snapshot struct used by other systems
+- `OrchestratorEnums.cs` - Contains the enums above
+
+**News System (KEEP FUNCTIONAL):**
+- `EnlistedNewsBehavior` - Can work with `WorldStateAnalyzer` directly
+- `MainMenuNewsCache` - Remove phase callback, use time-based refresh
+- `ForecastGenerator` - Keep for UI status display
+
+### Files to DELETE
+
+**C# Files:**
+```
+src/Features/Content/ContentOrchestrator.cs     # 2000+ lines - DELETE
+src/Features/Content/OrchestratorOverride.cs    # Override system - DELETE
+```
+
+**JSON/Config Files:**
+```
+ModuleData/Enlisted/Config/orchestrator_overrides.json  # DELETE
+```
+
+### Files to MODIFY
+
+**Remove ContentOrchestrator references from:**
+
+| File | Changes |
+|:-----|:--------|
+| `SubModule.cs` | Remove behavior registration |
+| `EnlistedMenuBehavior.cs` | Remove 7 orchestrator calls (opportunity system goes away) |
+| `EnlistedNewsBehavior.cs` | Replace 3 calls with `WorldStateAnalyzer` |
+| `MainMenuNewsCache.cs` | Remove `OnPhaseChanged` callback |
+| `OrderProgressionBehavior.cs` | Replace 2 calls with `WorldStateAnalyzer` |
+| `CompanySimulationBehavior.cs` | Move crisis event logic inline or to new system |
+| `CampScheduleManager.cs` | Remove override checking |
+| `CampRoutineProcessor.cs` | Remove override clearing |
+| `BaggageTrainManager.cs` | Replace with `WorldStateAnalyzer` |
+| `EventPacingManager.cs` | Replace with `WorldStateAnalyzer` |
+| `Enlisted.csproj` | Remove file references |
+
+### News System Preservation
+
+The news system shows players what's happening around the map. It should work
+without the orchestrator.
+
+**Current flow:**
+```
+ContentOrchestrator.GetCurrentWorldSituation()
+    └─ EnlistedNewsBehavior uses for context
+        └─ MainMenuNewsCache caches results
+            └─ UI displays news
+```
+
+**New flow:**
+```
+WorldStateAnalyzer.AnalyzeSituation()  # Direct call
+    └─ EnlistedNewsBehavior uses for context
+        └─ MainMenuNewsCache caches results (time-based refresh)
+            └─ UI displays news
+```
+
+**Changes needed:**
+1. Replace `ContentOrchestrator.Instance.GetCurrentWorldSituation()` with
+   `WorldStateAnalyzer.AnalyzeSituation()` (3 places in EnlistedNewsBehavior)
+2. Remove `OnPhaseChanged(DayPhase)` callback from MainMenuNewsCache
+3. Add time-based refresh (every 2 game hours) instead of phase-based
+
+### Crisis Event Handling
+
+Crisis events (supply shortage, epidemic, desertion wave) currently go through
+`ContentOrchestrator.QueueCrisisEvent()`. Move this logic to:
+
+**Option A: Inline in CompanySimulationBehavior**
+- When supply/morale hits threshold, directly queue event via EventDeliveryManager
+- Simple, no new systems
+
+**Option B: New CrisisEventManager (if needed later)**
+- Separate class for crisis logic
+- Only if crisis events become complex
+
+Recommend **Option A** for simplicity.
+
+### Camp Opportunity System Removal
+
+The old camp "opportunities" system (commit to future activities) is replaced by
+**Decisions**. Players now pick Hunt/Gamble/Drink/Train directly from a menu,
+and chains fire immediately.
+
+**Remove from EnlistedMenuBehavior:**
+- `GetCurrentPhaseOpportunities()` calls
+- `GetAllTodaysOpportunities()` calls
+- `CommitToOpportunity()` calls
+- `ConsumeOpportunity()` calls
+- Opportunity locking UI
+
+**Replace with:**
+- Simple Decision menu: [Hunt] [Gamble] [Drink] [Train]
+- Each triggers a random chain from that decision's chain file
+
+### Removal Order (Safe Sequence)
+
+1. **Create WorldStateAnalyzer fallback** - Ensure it works standalone
+2. **Update news system** - Replace orchestrator calls with WorldStateAnalyzer
+3. **Update order system** - Replace orchestrator calls
+4. **Inline crisis events** - Move to CompanySimulationBehavior
+5. **Remove camp opportunities** - Replace with Decision menu
+6. **Delete ContentOrchestrator.cs** - Remove registration from SubModule
+7. **Delete orchestrator_overrides.json** - Config no longer needed
+8. **Delete OrchestratorOverride.cs** - Override system removed
+9. **Update Enlisted.csproj** - Remove file references
+10. **Test thoroughly** - News, menus, orders, decisions all work
+
+---
+
+## JSON/XML File Cleanup
+
+With the new chain-based system, many old content files are obsolete. This section
+categorizes all content files by fate.
+
+### Files to DELETE (Old Event System)
+
+**Order Events (16 files) - Replaced by duty chains:**
+```
+ModuleData/Enlisted/Orders/order_events/
+├── camp_patrol_events.json         # → patrol_chains.json
+├── equipment_cleaning_events.json  # → camp_labor_chains.json
+├── escort_duty_events.json         # DELETE (no escort duty)
+├── firewood_detail_events.json     # → camp_labor_chains.json
+├── forage_supplies_events.json     # → patrol_chains.json or hunt
+├── guard_post_events.json          # → guard_chains.json
+├── inspect_defenses_events.json    # DELETE (no inspect duty)
+├── latrine_duty_events.json        # → camp_labor_chains.json
+├── lead_patrol_events.json         # → patrol_chains.json
+├── march_formation_events.json     # DELETE (no march duty)
+├── muster_inspection_events.json   # DELETE (no muster duty)
+├── repair_equipment_events.json    # → camp_labor_chains.json
+├── scout_route_events.json         # → patrol_chains.json
+├── sentry_duty_events.json         # → sentry_chains.json
+├── train_recruits_events.json      # → train_chains.json
+└── treat_wounded_events.json       # DELETE (no medical duty)
+```
+
+**Old Decision/Opportunity Files:**
+```
+ModuleData/Enlisted/Decisions/
+├── camp_opportunities.json    # DELETE - replaced by Decisions menu
+├── camp_decisions.json        # REVIEW - may have useful content
+├── decisions.json             # REVIEW - may have useful content
+└── medical_decisions.json     # KEEP for now - medical system separate
+```
+
+**Orchestrator Config:**
+```
+ModuleData/Enlisted/Config/
+└── orchestrator_overrides.json    # DELETE
+```
+
+### Files to KEEP (Still Used)
+
+**Event Files (threshold/crisis events):**
+```
+ModuleData/Enlisted/Events/
+├── events_escalation_thresholds.json  # KEEP - scrutiny/discipline events
+├── events_pay_tension.json            # KEEP - pay delay events
+├── events_pay_loyal.json              # KEEP - loyalty events
+├── events_pay_mutiny.json             # KEEP - mutiny events
+├── events_promotion.json              # KEEP - promotion events
+├── events_baggage_stowage.json        # KEEP - baggage system
+├── events_retinue.json                # KEEP - retinue events
+├── illness_onset.json                 # KEEP - medical system
+├── pressure_arc_events.json           # KEEP - company pressure
+├── incidents_*.json                   # REVIEW - may migrate to chains
+└── schema_version.json                # KEEP - version tracking
+```
+
+**Order Definitions (needed for duty assignment):**
+```
+ModuleData/Enlisted/Orders/
+├── orders_t1_t3.json    # REVIEW - simplify to 4 duties
+├── orders_t4_t6.json    # REVIEW - simplify to 4 duties
+└── orders_t7_t9.json    # REVIEW - simplify to 4 duties
+```
+
+**Config Files:**
+```
+ModuleData/Enlisted/Config/
+├── enlisted_config.json         # KEEP - core config
+├── simulation_config.json       # KEEP - company simulation
+├── progression_config.json      # KEEP - tier progression
+├── camp_schedule.json           # REVIEW - may simplify
+├── routine_outcomes.json        # REVIEW - may migrate to chains
+├── equipment_pricing.json       # KEEP - quartermaster
+├── retinue_config.json          # KEEP - retinue system
+├── baggage_config.json          # KEEP - baggage system
+├── strategic_context_config.json # REVIEW - may not need
+└── settings.json                # KEEP - user settings
+```
+
+### Files to CREATE (New Chain System)
+
+```
+ModuleData/Enlisted/Prompts/
+├── order_prompts.json       # NEW - prompt templates by duty type
+├── prompt_outcomes.json     # NEW - outcome pools (nothing/reward/chain/danger)
+└── ignore_consequences.json # NEW - "caught slacking" events
+
+ModuleData/Enlisted/Chains/
+├── patrol_chains.json       # NEW - 3 chains MVP
+├── guard_chains.json        # NEW - 3 chains MVP
+├── sentry_chains.json       # NEW - 3 chains MVP
+├── camp_labor_chains.json   # NEW - 3 chains MVP
+├── hunt_chains.json         # NEW - 3 chains MVP
+├── gamble_chains.json       # NEW - 3 chains MVP
+├── drink_chains.json        # NEW - 3 chains MVP
+└── train_chains.json        # NEW - 3 chains MVP
+```
+
+### Migration Strategy
+
+**Phase 1: Create new chain files (empty structure)**
+- Create 8 chain files with schema and 0 chains
+- Validate schema works
+
+**Phase 2: Migrate best content from old files**
+- Extract good events from order_events/*.json
+- Convert flat events to chain format (trigger → branch → outcome)
+- Target: 3 chains per file
+
+**Phase 3: Delete old files**
+- Remove order_events/ directory
+- Remove camp_opportunities.json
+- Remove orchestrator_overrides.json
+
+**Phase 4: Simplify order definitions**
+- Consolidate orders_t1_t3.json, orders_t4_t6.json, orders_t7_t9.json
+- Into single duties.json with 4 duties (Patrol, Guard, Sentry, Camp Labor)
+
+---
+
 ## Implementation Priority
 
-### Phase 1: Remove Random Events (1-2 days)
+### Phase 0: Orchestrator Removal (Before Other Phases)
+
+1. Update `EnlistedNewsBehavior` to use `WorldStateAnalyzer` directly
+2. Update `OrderProgressionBehavior` to use `WorldStateAnalyzer` directly
+3. Move crisis event queuing inline to `CompanySimulationBehavior`
+4. Remove opportunity system from `EnlistedMenuBehavior`
+5. Delete `ContentOrchestrator.cs` and `OrchestratorOverride.cs`
+6. Delete `orchestrator_overrides.json`
+7. Remove from `SubModule.cs` and `Enlisted.csproj`
+8. **Run validation:** `python Tools/Validation/validate_content.py`
+9. **Build and test:** `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
+
+### Phase 1: Remove Random Events
 
 1. Delete `EventPacingManager.TryFireEvent()` method
 2. Remove pacing config from `enlisted_config.json`
@@ -792,7 +1943,7 @@ effect format).
 ### Phase 5: Map Incident Weighting (2-3 days)
 
 1. Add CK3-style weighting to `MapIncidentManager`
-2. Integrate with `ContentOrchestrator.GetCurrentWorldSituation()`
+2. Integrate with `WorldStateAnalyzer.AnalyzeSituation()` (orchestrator already removed in Phase 0)
 3. Make incident chances respect global activity levels
 4. Test that incidents feel appropriately rare
 5. **Run validation:** `python Tools/Validation/validate_content.py`
@@ -877,8 +2028,8 @@ Make map incidents respect `ContentOrchestrator` activity levels:
 
 private bool ShouldFireIncident(string context)
 {
-    // Get world situation from orchestrator
-    var worldSituation = ContentOrchestrator.Instance?.GetCurrentWorldSituation();
+    // Get world situation (orchestrator removed - use WorldStateAnalyzer directly)
+    var worldSituation = WorldStateAnalyzer.AnalyzeSituation();
     var activityLevel = worldSituation?.ExpectedActivity ?? ActivityLevel.Routine;
     
     // Base chance by activity level (CK3-style: most contexts are quiet)
@@ -1282,17 +2433,17 @@ Post-battle decisions appear in Camp Hub only during valid window:
     },
     {
       "id": "dec_help_wounded",
-      "title": "Help the Wounded", 
+      "title": "Help the Wounded",
       "valid_contexts": ["PostBattle", "RecentEngagement"],
       "max_hours_since_battle": 48,
-      "effects": { "medicine_xp": 20, "soldier_reputation": 5 }
+      "effects": { "medicine_xp": 20, "lord_reputation": 3 }
     },
     {
       "id": "dec_report_casualties",
-      "title": "Report to Sergeant",
+      "title": "Report to Your Lord",
       "valid_contexts": ["PostBattle"],
       "max_hours_since_battle": 12,
-      "effects": { "officer_reputation": 3 }
+      "effects": { "lord_reputation": 3 }
     }
   ]
 }
@@ -1360,6 +2511,20 @@ public enum PromptOutcome
 }
 ```
 
+### DutyType Enum
+
+```csharp
+// src/Features/Orders/Models/DutyType.cs
+public enum DutyType
+{
+    Patrol,      // Walk perimeter, check routes (T3-9)
+    Guard,       // Stand watch at post (T1-9)
+    Sentry,      // Observation post (T2-9)
+    CampLabor,   // Firewood, latrine, errands (T1-4)
+    OffDuty      // Free time - no duties assigned
+}
+```
+
 ### PromptCatalog Class
 
 ```csharp
@@ -1376,19 +2541,19 @@ public static class PromptCatalog
         {
             // Load from ModuleData/Enlisted/Prompts/order_prompts.json
             // Parse JSON and populate _promptsByOrderType
-            ModLogger.Info(LogCategory, "Loaded prompt templates");
+            ModLogger.Info(LogCategory, "[E-PROMPT-001] Loaded prompt templates");
         }
         catch (Exception ex)
         {
-            ModLogger.Error(LogCategory, "Failed to load prompt templates", ex);
+            ModLogger.Error(LogCategory, "[E-PROMPT-002] Failed to load prompt templates", ex);
         }
     }
-    
+
     public static List<OrderPrompt> GetPromptsForOrderType(string orderType)
     {
         if (_promptsByOrderType == null)
         {
-            ModLogger.Warn(LogCategory, "Prompts not loaded yet");
+            ModLogger.Warn(LogCategory, "[E-PROMPT-003] Prompts not loaded yet");
             return new List<OrderPrompt>();
         }
         
@@ -1449,11 +2614,11 @@ private void FireEventChain(Order order, PromptOutcome outcome)
         
         if (outcomeData == null)
         {
-            ModLogger.Warn(LogCategory, $"No outcome data for {outcome}");
+            ModLogger.Warn(LogCategory, $"[E-PROMPT-004] No outcome data for {outcome}");
             return;
         }
-        
-        ModLogger.Info(LogCategory, $"Prompt outcome: {outcome} during order {order.Id}");
+
+        ModLogger.Info(LogCategory, $"[E-PROMPT-005] Prompt outcome: {outcome} during order {order.Id}");
         
         // Show outcome text
         if (!string.IsNullOrEmpty(outcomeData.Text))
@@ -1471,17 +2636,17 @@ private void FireEventChain(Order order, PromptOutcome outcome)
             if (evt != null)
             {
                 EventDeliveryManager.Instance?.QueueEvent(evt);
-                ModLogger.Debug(LogCategory, $"Queued event chain: {outcomeData.TriggerEvent}");
+                ModLogger.Debug(LogCategory, $"[E-PROMPT-006] Queued event chain: {outcomeData.TriggerEvent}");
             }
             else
             {
-                ModLogger.Warn(LogCategory, $"Event not found: {outcomeData.TriggerEvent}");
+                ModLogger.Warn(LogCategory, $"[E-PROMPT-007] Event not found: {outcomeData.TriggerEvent}");
             }
         }
     }
     catch (Exception ex)
     {
-        ModLogger.Error(LogCategory, "Failed to fire event chain", ex);
+        ModLogger.Error(LogCategory, "[E-PROMPT-008] Failed to fire event chain", ex);
     }
 }
 
@@ -1494,9 +2659,18 @@ private void ApplyPromptEffects(Dictionary<string, object> effects)
             case "gold":
                 // Parse range "25-75" or single value
                 var gold = ParseGoldRange(effect.Value.ToString());
-                Hero.MainHero.ChangeHeroGold(gold);
+                // CRITICAL: Use GiveGoldAction, NOT ChangeHeroGold (see BLUEPRINT.md)
+                if (gold > 0)
+                {
+                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, gold);
+                }
+                else if (gold < 0)
+                {
+                    // For fines/losses, take gold from player
+                    GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, -gold);
+                }
                 break;
-                
+
             case "skillXp":
                 // Parse skill XP dictionary { "Perception": 15, "Athletics": 10 }
                 var skillXpDict = effect.Value as Dictionary<string, object>;
@@ -1509,17 +2683,21 @@ private void ApplyPromptEffects(Dictionary<string, object> effects)
                         if (skill != null)
                         {
                             Hero.MainHero.AddSkillXp(skill, xp);
-                            ModLogger.Debug(LogCategory, $"Awarded {xp} XP to {skill.Name}");
+                            ModLogger.Debug(LogCategory, $"[E-PROMPT-009] Awarded {xp} XP to {skill.Name}");
                         }
                     }
                 }
                 break;
                 
-            case "officer_reputation":
-            case "soldier_reputation":
             case "lord_reputation":
                 var rep = int.Parse(effect.Value.ToString());
-                EscalationManager.Instance.ModifyReputation(effect.Key, rep);
+                EscalationManager.Instance.ModifyReputation(ReputationType.Lord, rep, "prompt_outcome");
+                break;
+
+            case "party_casualties":
+                var casualties = int.Parse(effect.Value.ToString());
+                // Remove random troops from lord's party
+                PartyHelper.RemoveCasualties(EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo, casualties);
                 break;
                 
             case "company_supplies":
@@ -1560,22 +2738,62 @@ ModuleData/Enlisted/
 
 ### Classes to Create
 
-| Class | File | Purpose | .csp |
-| :--- | :--- | :--- | :--- |
-| `OrderPrompt` | `OrderPrompt.cs` | Model | ✅ |
-| `PromptOutcome` | `PromptOutcome.cs` | Enum | ✅ |
-| `PromptOutcomeData` | `PromptOutcomeData.cs` | Effects | ✅ |
-| `PromptCatalog` | `PromptCatalog.cs` | Load | ✅ |
-| `EventChainManager` | `EventChainManager.cs` | State | ✅ |
+| Class | File | Purpose |
+| :--- | :--- | :--- |
+| `OrderPrompt` | `src/Features/Orders/Models/OrderPrompt.cs` | Prompt template model |
+| `PromptOutcome` | `src/Features/Orders/Models/PromptOutcome.cs` | Outcome type enum |
+| `PromptOutcomeData` | `src/Features/Orders/Models/PromptOutcomeData.cs` | Outcome effects data |
+| `IgnoreConsequence` | `src/Features/Orders/Models/IgnoreConsequence.cs` | Ignore penalty data |
+| `PendingConsequence` | `src/Features/Orders/Models/PendingConsequence.cs` | Scheduled consequence (saveable) |
+| `DutyType` | `src/Features/Orders/Models/DutyType.cs` | Duty type enum |
+| `EventChainState` | `src/Features/Content/Models/EventChainState.cs` | Active chain state (saveable) |
+| `PromptCatalog` | `src/Features/Orders/PromptCatalog.cs` | Load/select prompts |
+| `IgnoreConsequenceCatalog` | `src/Features/Orders/IgnoreConsequenceCatalog.cs` | Load/select consequences |
+| `EventChainManager` | `src/Features/Content/EventChainManager.cs` | Chain state management |
+| `CampaignContextTracker` | `src/Features/Content/CampaignContextTracker.cs` | Battle history tracking |
+
+### EventChainState Model
+
+```csharp
+// src/Features/Content/Models/EventChainState.cs
+public class EventChainState
+{
+    [SaveableField(1)]
+    public string ChainId { get; set; }
+
+    [SaveableField(2)]
+    public int CurrentPhase { get; set; }
+
+    [SaveableField(3)]
+    public Dictionary<string, bool> Flags { get; set; } = new();
+
+    [SaveableField(4)]
+    public CampaignTime StartTime { get; set; }
+
+    [SaveableField(5)]
+    public CampaignTime? NextPhaseTime { get; set; }
+}
+```
 
 **IMPORTANT:** After creating files, manually add to `Enlisted.csproj`:
 
 ```xml
+<!-- Models -->
 <Compile Include="src\Features\Orders\Models\OrderPrompt.cs"/>
 <Compile Include="src\Features\Orders\Models\PromptOutcome.cs"/>
 <Compile Include="src\Features\Orders\Models\PromptOutcomeData.cs"/>
+<Compile Include="src\Features\Orders\Models\IgnoreConsequence.cs"/>
+<Compile Include="src\Features\Orders\Models\PendingConsequence.cs"/>
+<Compile Include="src\Features\Orders\Models\DutyType.cs"/>
+<Compile Include="src\Features\Content\Models\EventChainState.cs"/>
+
+<!-- Catalogs -->
 <Compile Include="src\Features\Orders\PromptCatalog.cs"/>
+<Compile Include="src\Features\Orders\IgnoreConsequenceCatalog.cs"/>
+
+<!-- Managers -->
 <Compile Include="src\Features\Content\EventChainManager.cs"/>
+<Compile Include="src\Features\Content\CampaignContextTracker.cs"/>
 ```
 
 ### Save System Registration
@@ -1587,6 +2805,25 @@ ModuleData/Enlisted/
 AddClassDefinition(typeof(EventChainState), 1234);
 AddEnumDefinition(typeof(PromptOutcome), 5678);
 ```
+
+---
+
+## Error Code Reference
+
+Error codes used in this system follow format `E-PROMPT-XXX`:
+
+| Code | Level | Message | Resolution |
+|:-----|:------|:--------|:-----------|
+| E-PROMPT-001 | Info | Loaded prompt templates | Normal startup |
+| E-PROMPT-002 | Error | Failed to load prompt templates | Check JSON file path/format |
+| E-PROMPT-003 | Warn | Prompts not loaded yet | LoadPrompts() not called |
+| E-PROMPT-004 | Warn | No outcome data for {outcome} | Add outcome to prompt_outcomes.json |
+| E-PROMPT-005 | Info | Prompt outcome: {outcome} | Normal operation |
+| E-PROMPT-006 | Debug | Queued event chain | Normal chain trigger |
+| E-PROMPT-007 | Warn | Event not found: {id} | Missing event in EventCatalog |
+| E-PROMPT-008 | Error | Failed to fire event chain | Check exception details |
+| E-PROMPT-009 | Debug | Awarded {xp} XP to {skill} | Normal XP grant |
+| E-PROMPT-010 | Debug | Ignore consequence scheduled | Normal ignore check |
 
 ---
 
